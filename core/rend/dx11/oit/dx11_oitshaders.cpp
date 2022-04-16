@@ -18,6 +18,7 @@
 */
 #include "dx11_oitshaders.h"
 #include "../dx11context.h"
+#include "../dx11_naomi2.h"
 
 const char * const VertexShader = R"(
 #if pp_Gouraud == 1
@@ -35,6 +36,8 @@ struct VertexIn
 	float4 col1 : COLOR2;
 	float4 spec1 : COLOR3;
 	float2 uv1 : TEXCOORD1;
+	float3 normal: NORMAL; // unused
+	uint vertexId : SV_VertexID;
 };
 
 struct VertexOut
@@ -43,18 +46,24 @@ struct VertexOut
 	float4 uv : TEXCOORD0;
 	INTERPOLATION float4 col : COLOR0;
 	INTERPOLATION float4 spec : COLOR1;
-	float4 uv1 : TEXCOORD1;
+	float2 uv1 : TEXCOORD1;
 	INTERPOLATION float4 col1 : COLOR2;
 	INTERPOLATION float4 spec1 : COLOR3;
+	nointerpolation uint index : BLENDINDICES0;
 };
 
-cbuffer constantBuffer : register(b0)
+cbuffer shaderConstants : register(b0)
 {
 	float4x4 transMatrix;
 	float4 leftPlane;
 	float4 topPlane;
 	float4 rightPlane;
 	float4 bottomPlane;
+};
+
+cbuffer polyConstants : register(b1)
+{
+	int polyNumber;
 };
 
 [clipplanes(leftPlane, topPlane, rightPlane, bottomPlane)]
@@ -75,7 +84,8 @@ VertexOut main(in VertexIn vin)
 	vo.spec1 = vin.spec1;
 #endif
 	vo.uv = float4(vin.uv * vo.pos.z, 0.f, vo.pos.z);
-	vo.uv1 = float4(vin.uv1 * vo.pos.z, 0.f, 0.f);
+	vo.uv1 = vin.uv1 * vo.pos.z;
+	vo.index = (uint(polyNumber) << 18) + vin.vertexId;
 
 	vo.pos.w = 1.f;
 	vo.pos.z = 0.f;
@@ -195,9 +205,14 @@ bool getShadowEnable(in PolyParam pp)
 	return (pp.tsp_isp_pcw & 1) != 0;
 }
 
-uint getPolyNumber(in Pixel pixel)
+uint getPolyIndex(in Pixel pixel)
 {
 	return pixel.seq_num & 0x3FFFFFFFu;
+}
+
+uint getPolyNumber(in Pixel pixel)
+{
+	return (pixel.seq_num & 0x3FFFFFFFu) >> 18;
 }
 
 #define SHADOW_STENCIL 0x40000000u
@@ -269,9 +284,10 @@ struct VertexIn
 	float4 uv : TEXCOORD0;
 	INTERPOLATION float4 col : COLOR0;
 	INTERPOLATION float4 spec : COLOR1;
-	float4 uv1 : TEXCOORD1;
+	float2 uv1 : TEXCOORD1;
 	INTERPOLATION float4 col1 : COLOR2;
 	INTERPOLATION float4 spec1 : COLOR3;
+	nointerpolation uint index : BLENDINDICES0;
 };
 
 Texture2D texture0 : register(t0);
@@ -299,7 +315,6 @@ cbuffer polyConstantBuffer : register(b1)
 	int2 blend_mode1;
 	float paletteIndex;
 	float trilinearAlpha;
-	int pp_Number;
 
 	// two volume mode
 	int shading_instr0;
@@ -406,7 +421,7 @@ PSO main(in VertexIn inpix)
 		float2 uv;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				uv = inpix.uv1.xy / inpix.uv.w;
+				uv = inpix.uv1 / inpix.uv.w;
 			else
 		#endif
 				uv = inpix.uv.xy / inpix.uv.w;
@@ -550,7 +565,7 @@ PSO main(in VertexIn inpix)
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, 0.f, 1.f));
 		pixel.depth = inpix.uv.w;
-		pixel.seq_num = uint(pp_Number);
+		pixel.seq_num = inpix.index;
 		InterlockedExchange(abufferPointers[coords], idx, pixel.next);
 		Pixels[idx] = pixel;
 		
@@ -594,7 +609,7 @@ int fillAndSortFragmentArray(in uint2 coords, out uint pixel_list[MAX_PIXELS_PER
 		uint jIdx = pixel_list[j];
 		while (j >= 0
 			   && (Pixels[jIdx].depth > Pixels[idx].depth
-				   || (Pixels[jIdx].depth == Pixels[idx].depth && getPolyNumber(Pixels[jIdx]) > getPolyNumber(Pixels[idx]))))
+				   || (Pixels[jIdx].depth == Pixels[idx].depth && getPolyIndex(Pixels[jIdx]) > getPolyIndex(Pixels[idx]))))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -819,6 +834,9 @@ const char * const MacroValues[] { "0", "1", "2", "3" };
 static D3D_SHADER_MACRO VertexMacros[]
 {
 	{ "pp_Gouraud", "1" },
+	{ "POSITION_ONLY", "0" },
+	{ "pp_TwoVolumes", "0" },
+	{ "LIGHT_ON", "1" },
 	{ nullptr, nullptr }
 };
 
@@ -907,24 +925,53 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 	return shader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11OITShaders::getVertexShader(bool gouraud)
+const ComPtr<ID3D11VertexShader>& DX11OITShaders::getVertexShader(bool gouraud, bool naomi2, bool positionOnly, bool lightOn, bool twoVolumes)
 {
-	ComPtr<ID3D11VertexShader>& vertexShader = gouraud ? gouraudVertexShader : flatVertexShader;
-	if (!vertexShader)
+	const u32 hash = (int)gouraud
+			| ((int)naomi2 << 1)
+			| ((int)positionOnly << 2)
+			| ((int)lightOn << 3)
+			| ((int)twoVolumes << 4);
+	auto& shader = vertexShaders[hash];
+	if (shader == nullptr)
 	{
 		VertexMacros[0].Definition = MacroValues[gouraud];
-		vertexShader = compileVS(VertexShader, "main", VertexMacros);
+		if (!naomi2)
+		{
+			shader = compileVS(VertexShader, "main", VertexMacros);
+		}
+		else
+		{
+			VertexMacros[1].Definition = MacroValues[positionOnly];
+			VertexMacros[2].Definition = MacroValues[twoVolumes];
+			VertexMacros[3].Definition = MacroValues[lightOn];
+			std::string source(DX11N2VertexShader);
+			if (!positionOnly && lightOn)
+				source += std::string("\n") + DX11N2ColorShader;
+			shader = compileVS(source.c_str(), "main", VertexMacros);
+		}
 	}
 
-	return vertexShader;
+	return shader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11OITShaders::getMVVertexShader()
+const ComPtr<ID3D11VertexShader>& DX11OITShaders::getMVVertexShader(bool naomi2)
 {
-	if (!modVolVertexShader)
-		modVolVertexShader = compileVS(ModVolVertexShader, "main", nullptr);
+	if (!modVolVertexShaders[naomi2])
+	{
+		if (!naomi2)
+			modVolVertexShaders[0] = compileVS(ModVolVertexShader, "main", nullptr);
+		else
+		{
+			VertexMacros[0].Definition = MacroValues[false];
+			VertexMacros[1].Definition = MacroValues[true];
+			VertexMacros[2].Definition = MacroValues[false];
+			VertexMacros[3].Definition = MacroValues[false];
+			modVolVertexShaders[1] = compileVS(DX11N2VertexShader, "main", VertexMacros);
+		}
+	}
 
-	return modVolVertexShader;
+	return modVolVertexShaders[naomi2];
 }
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
@@ -1021,13 +1068,27 @@ ComPtr<ID3D11PixelShader> DX11OITShaders::compilePS(const char* source, const ch
 
 ComPtr<ID3DBlob> DX11OITShaders::getVertexShaderBlob()
 {
-	VertexMacros[0].Definition = MacroValues[0];
-	return compileShader(VertexShader, "main", "vs_5_0", VertexMacros);
+	VertexMacros[0].Definition = MacroValues[true];
+	// FIXME code dup
+	VertexMacros[1].Definition = MacroValues[false];
+	VertexMacros[2].Definition = MacroValues[true];
+	std::string source(DX11N2VertexShader);
+	source += std::string("\n") + DX11N2ColorShader;
+	return compileShader(source.c_str(), "main", "vs_5_0", VertexMacros);
 }
 
 ComPtr<ID3DBlob> DX11OITShaders::getMVVertexShaderBlob()
 {
-	return compileShader(ModVolVertexShader, "main", "vs_5_0", nullptr);
+	// FIXME code dup
+	VertexMacros[0].Definition = MacroValues[false];
+	VertexMacros[1].Definition = MacroValues[true];
+	VertexMacros[2].Definition = MacroValues[false];
+	return compileShader(DX11N2VertexShader, "main", "vs_5_0", VertexMacros);
+}
+
+ComPtr<ID3DBlob> DX11OITShaders::getFinalVertexShaderBlob()
+{
+	return compileShader(OITFinalVertexShaderSource, "main", "vs_5_0", nullptr);
 }
 
 void DX11OITShaders::init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile)

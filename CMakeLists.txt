@@ -595,6 +595,7 @@ if(NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/hw/hwreg.h
         core/hw/aica/aica.cpp
         core/hw/aica/aica.h
         core/hw/aica/aica_if.cpp
@@ -620,7 +621,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/arm7/arm7_rec.cpp
         core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
-        core/hw/arm7/vbaARM.cpp
         core/hw/bba/bba.h
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h
@@ -676,6 +676,11 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
+        core/hw/naomi/card_reader.h
+        core/hw/naomi/card_reader.cpp
+        core/hw/pvr/elan.cpp
+        core/hw/pvr/elan.h
+        core/hw/pvr/elan_struct.h
         core/hw/pvr/helper_classes.h
         core/hw/pvr/pvr.cpp
         core/hw/pvr/pvr.h
@@ -920,7 +925,9 @@ if(USE_OPENGL)
 	        core/rend/gles/gltex.cpp
 	        core/rend/gles/quad.cpp
 	        core/rend/gles/postprocess.cpp
-	        core/rend/gles/postprocess.h)
+	        core/rend/gles/postprocess.h
+	        core/rend/gles/naomi2.cpp
+	        core/rend/gles/naomi2.h)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
@@ -935,7 +942,9 @@ if(USE_OPENGL)
 	            core/rend/gl4/abuffer.cpp
 	            core/rend/gl4/gl4.h
 	            core/rend/gl4/gldraw.cpp
-	            core/rend/gl4/gles.cpp)
+	            core/rend/gl4/gles.cpp
+	        	core/rend/gl4/gl4naomi2.cpp
+	        	core/rend/gl4/gl4naomi2.h)
 	endif()
 endif()
 
@@ -1100,6 +1109,8 @@ if(WIN32)
 		core/rend/dx11/dx11context_lr.cpp
 		core/rend/dx11/dx11context_lr.h
 		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_naomi2.cpp
+		core/rend/dx11/dx11_naomi2.h
 		core/rend/dx11/oit/dx11_oitbuffers.h
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
 		core/rend/dx11/oit/dx11_oitshaders.cpp

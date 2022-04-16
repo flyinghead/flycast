@@ -41,19 +41,22 @@ void e68k_AcceptInterrupt()
 }
 
 //Reg reads from arm side ..
-template <u32 sz,class T>
+template <typename T>
 T arm_ReadReg(u32 addr)
 {
-	addr&=0x7FFF;
-	if (addr==REG_L)
-		return e68k_reg_L;
-	else if(addr==REG_M)
-		return e68k_reg_M;	//shouldn't really happen
+	addr &= 0x7FFF;
+	if (addr == REG_L)
+		return (T)e68k_reg_L;
+	else if (addr == REG_M)
+		return (T)e68k_reg_M;	//shouldn't really happen
+	else if (sizeof(T) == 4)
+		return aicaReadReg<u16>(addr);
 	else
-		return libAICA_ReadReg(addr,sz);
-}		
-template <u32 sz,class T>
-void arm_WriteReg(u32 addr,T data)
+		return aicaReadReg<T>(addr);
+}
+
+template <typename T>
+void arm_WriteReg(u32 addr, T data)
 {
 	addr &= 0x7FFF;
 	if (addr == REG_L)
@@ -68,7 +71,10 @@ void arm_WriteReg(u32 addr,T data)
 	}
 	else
 	{
-		return libAICA_WriteReg(addr, data, sz);
+		if (sizeof(T) == 4)
+			aicaWriteReg(addr, (u16)data);
+		else
+			aicaWriteReg(addr, data);
 	}
 }
 
@@ -77,10 +83,10 @@ void arm_WriteReg(u32 addr,T data)
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 
-template u8 arm_ReadReg<1,u8>(u32 adr);
-template u16 arm_ReadReg<2,u16>(u32 adr);
-template u32 arm_ReadReg<4,u32>(u32 adr);
+template u8 arm_ReadReg<u8>(u32 adr);
+template u16 arm_ReadReg<u16>(u32 adr);
+template u32 arm_ReadReg<u32>(u32 adr);
 
-template void arm_WriteReg<1>(u32 adr,u8 data);
-template void arm_WriteReg<2>(u32 adr,u16 data);
-template void arm_WriteReg<4>(u32 adr,u32 data);
+template void arm_WriteReg<>(u32 adr,u8 data);
+template void arm_WriteReg<>(u32 adr,u16 data);
+template void arm_WriteReg<>(u32 adr,u32 data);

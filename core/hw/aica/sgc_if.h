@@ -52,8 +52,7 @@ struct DSP_OUT_VOL_REG
 
 typedef s32 SampleType;
 
-void ReadCommonReg(u32 reg,bool byte);
-void WriteCommonReg8(u32 reg,u32 data);
+void ReadCommonReg(u32 reg, bool byte);
 void channel_serialize(Serializer& ctx);
 void channel_deserialize(Deserializer& ctx);
 void vmuBeep(int on, int period);

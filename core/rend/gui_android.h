@@ -18,5 +18,5 @@
  */
 #pragma once
 
-void gui_display_vjoy_commands(float scaling);
+void gui_display_vjoy_commands();
 void vjoy_start_editing();

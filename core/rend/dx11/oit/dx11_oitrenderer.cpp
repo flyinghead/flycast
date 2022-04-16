@@ -40,6 +40,8 @@ const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 	{ "COLOR",    2, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, col1), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "COLOR",    3, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, spc1), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(Vertex, u1),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	// Naomi 2
+	{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(Vertex, nx),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 
 struct DX11OITRenderer : public DX11Renderer
@@ -51,7 +53,6 @@ struct DX11OITRenderer : public DX11Renderer
 		int blend_mode1[2];
 		float paletteIndex;
 		float trilinearAlpha;
-		int pp_Number;
 
 		// two volume mode
 		int shading_instr0;
@@ -81,7 +82,19 @@ struct DX11OITRenderer : public DX11Renderer
 		buffers.init(device, deviceContext);
 		ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
 		mainInputLayout.reset();
-		return success && SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
+		success = SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get())) && success;
+
+		blob = shaders.getFinalVertexShaderBlob();
+		success = SUCCEEDED(device->CreateInputLayout(MainLayout, 0, blob->GetBufferPointer(), blob->GetBufferSize(), &finalInputLayout.get())) && success;
+
+		desc.ByteWidth = sizeof(int);
+		desc.ByteWidth = (((desc.ByteWidth - 1) >> 4) + 1) << 4;
+		desc.Usage = D3D11_USAGE_DYNAMIC;
+		desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		success = SUCCEEDED(device->CreateBuffer(&desc, nullptr, &vtxPolyConstants.get())) && success;
+
+		return success;
 	}
 
 	void Resize(int w, int h) override {
@@ -110,6 +123,9 @@ struct DX11OITRenderer : public DX11Renderer
 
 	void Term() override
 	{
+		vtxPolyConstants.reset();
+		finalInputLayout.reset();
+		mainInputLayout.reset();
 		opaqueTextureView.reset();
 		opaqueRenderTarget.reset();
 		opaqueTex.reset();
@@ -121,7 +137,7 @@ struct DX11OITRenderer : public DX11Renderer
 	template <u32 Type, bool SortingEnabled, DX11OITShaders::Pass pass>
 	void setRenderState(const PolyParam *gp, int polyNumber)
 	{
-		ComPtr<ID3D11VertexShader> vertexShader = shaders.getVertexShader(gp->pcw.Gouraud);
+		ComPtr<ID3D11VertexShader> vertexShader = shaders.getVertexShader(gp->pcw.Gouraud, gp->isNaomi2(), false, pass != DX11OITShaders::Depth);
 		deviceContext->VSSetShader(vertexShader, nullptr, 0);
 
 		PixelPolyConstants constants;
@@ -214,7 +230,6 @@ struct DX11OITRenderer : public DX11Renderer
 				constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 			}
 		}
-		constants.pp_Number = polyNumber;
 		constants.blend_mode0[0] = gp->tsp.SrcInstr;
 		constants.blend_mode0[1] = gp->tsp.DstInstr;
 		if (two_volumes_mode)
@@ -234,6 +249,14 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->Map(pxlPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 		memcpy(mappedSubres.pData, &constants, sizeof(constants));
 		deviceContext->Unmap(pxlPolyConstants, 0);
+
+		if (!gp->isNaomi2())
+		{
+			deviceContext->Map(vtxPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+			memcpy(mappedSubres.pData, &polyNumber, sizeof(polyNumber));
+			deviceContext->Unmap(vtxPolyConstants, 0);
+			deviceContext->VSSetConstantBuffers(1, 1, &vtxPolyConstants.get());
+		}
 
 		if (pass == DX11OITShaders::Color)
 		{
@@ -280,6 +303,9 @@ struct DX11OITRenderer : public DX11Renderer
 		bool needStencil = config::ModifierVolumes && pass == DX11OITShaders::Depth && Type != ListType_Translucent;
 		const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, needStencil), stencil);
+
+		if (gp->isNaomi2())
+			n2Helper.setConstants(*gp, polyNumber);
 	}
 
 	template <u32 Type, bool SortingEnabled, DX11OITShaders::Pass pass>
@@ -318,13 +344,14 @@ struct DX11OITRenderer : public DX11Renderer
 	    unsigned int offset = 0;
 		deviceContext->IASetVertexBuffers(0, 1, &modvolBuffer.get(), &stride, &offset);
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		deviceContext->VSSetShader(shaders.getMVVertexShader(), nullptr, 0);
 		if (!Transparent)
 			deviceContext->PSSetShader(shaders.getModVolShader(), nullptr, 0);
 		deviceContext->RSSetScissorRects(1, &scissorRect);
 
 		ModifierVolumeParam* params = Transparent ? &pvrrc.global_param_mvo_tr.head()[first] : &pvrrc.global_param_mvo.head()[first];
 		int mod_base = -1;
+		const float *curMVMat = nullptr;
+		const float *curProjMat = nullptr;
 
 		for (int cmv = 0; cmv < count; cmv++)
 		{
@@ -337,6 +364,13 @@ struct DX11OITRenderer : public DX11Renderer
 
 			if (param.count > 0)
 			{
+				if (param.isNaomi2() && (param.mvMatrix != curMVMat || param.projMatrix != curProjMat))
+				{
+					curMVMat = param.mvMatrix;
+					curProjMat = param.projMatrix;
+					n2Helper.setConstants(param.mvMatrix, param.projMatrix);
+				}
+				deviceContext->VSSetShader(shaders.getMVVertexShader(param.isNaomi2()), nullptr, 0);
 				if (Transparent)
 				{
 					if (!param.isp.VolumeLast && mv_mode > 0)
@@ -393,6 +427,7 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(false, false, 0, false), 0);
 		setCullMode(0);
 
+		deviceContext->IASetInputLayout(finalInputLayout);
 		deviceContext->VSSetShader(shaders.getFinalVertexShader(), nullptr, 0);
 		deviceContext->PSSetShader(shaders.getFinalShader(), nullptr, 0);
 
@@ -529,6 +564,7 @@ struct DX11OITRenderer : public DX11Renderer
 				//
 				renderABuffer();
 			    deviceContext->PSSetShaderResources(0, 1, &p);
+				deviceContext->IASetInputLayout(mainInputLayout);
 
 				// Clear the stencil from this pass
 				deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_STENCIL, 0.f, 0);
@@ -559,6 +595,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		if (!pvrrc.isRenderFramebuffer)
 		{
+			n2Helper.resetCache();
 			uploadGeometryBuffers();
 
 			updateFogTexture();
@@ -610,6 +647,9 @@ private:
 	ComPtr<ID3D11Buffer> trPolyParamsBuffer;
 	u32 trPolyParamsBufferSize = 0;
 	ComPtr<ID3D11ShaderResourceView> trPolyParamsBufferView;
+	ComPtr<ID3D11InputLayout> mainInputLayout; // FIXME
+	ComPtr<ID3D11InputLayout> finalInputLayout;
+	ComPtr<ID3D11Buffer> vtxPolyConstants;
 };
 
 Renderer *rend_OITDirectX11()

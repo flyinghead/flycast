@@ -135,7 +135,7 @@ static void AicaInternalDMA()
 			// to regs
 			u32 addr = CommonData->DRGA << 2;
 			for (u32 i = 0; i < CommonData->DLG; i++, addr += 4)
-				WriteMem_aica_reg(addr, 0, 4);
+				WriteMem_aica_reg(addr, (u32)0);
 		}
 	}
 	else
@@ -148,13 +148,13 @@ static void AicaInternalDMA()
 		{
 			// reg to wave mem
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg(raddr, 4);
+				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg<u32>(raddr);
 		}
 		else
 		{
 			// wave mem to regs
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr], 4);
+				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr]);
 		}
 	}
 	CommonData->DEXE = 0;
@@ -165,9 +165,10 @@ static void AicaInternalDMA()
 }
 
 //Memory i/o
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data)
+template<typename T>
+void WriteAicaReg(u32 reg, T data)
 {
+	constexpr size_t sz = sizeof(T);
 	switch (reg)
 	{
 	case SCIPD_addr:
@@ -204,36 +205,34 @@ void WriteAicaReg(u32 reg,u32 data)
 		break;
 
 	case TIMER_A:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[0].RegisterWrite();
 		break;
 
 	case TIMER_B:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[1].RegisterWrite();
 		break;
 
 	case TIMER_C:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[2].RegisterWrite();
 		break;
 
 	// DEXE, DDIR, DLG
 	case 0x288C:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		AicaInternalDMA();
 		break;
 
 	default:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		break;
 	}
 }
 
-
-
-template void WriteAicaReg<1>(u32 reg,u32 data);
-template void WriteAicaReg<2>(u32 reg,u32 data);
+template void WriteAicaReg<>(u32 reg, u8 data);
+template void WriteAicaReg<>(u32 reg, u16 data);
 
 //misc :p
 s32 libAICA_Init()

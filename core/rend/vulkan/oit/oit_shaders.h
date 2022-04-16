@@ -30,8 +30,13 @@ public:
 	struct VertexShaderParams
 	{
 		bool gouraud;
+		bool naomi2;
+		bool lightOn;
+		bool twoVolume;
+		bool texture;
 
-		u32 hash() { return (u32)gouraud; }
+		u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)lightOn << 2)
+				| ((u32)twoVolume << 3) | ((u32)texture << 4); }
 	};
 
 	// alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp
@@ -64,11 +69,12 @@ public:
 
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
-	vk::ShaderModule GetModVolVertexShader()
+	vk::ShaderModule GetModVolVertexShader(bool naomi2)
 	{
-		if (!modVolVertexShader)
-			modVolVertexShader = compileModVolVertexShader();
-		return *modVolVertexShader;
+		vk::UniqueShaderModule& shader = naomi2 ? n2ModVolVertexShader : modVolVertexShader;
+		if (!shader)
+			shader = compileModVolVertexShader(naomi2);
+		return *shader;
 	}
 	vk::ShaderModule GetModVolShader()
 	{
@@ -85,9 +91,9 @@ public:
 
 	vk::ShaderModule GetFinalShader()
 	{
-		if (!finalAutosortShader)
-			finalAutosortShader = compileFinalShader();
-		return *finalAutosortShader;
+		if (!finalFragmentShader)
+			finalFragmentShader = compileFinalShader();
+		return *finalFragmentShader;
 	}
 	vk::ShaderModule GetFinalVertexShader()
 	{
@@ -114,7 +120,7 @@ private:
 	}
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
-	vk::UniqueShaderModule compileModVolVertexShader();
+	vk::UniqueShaderModule compileModVolVertexShader(bool naomi2);
 	vk::UniqueShaderModule compileModVolFragmentShader();
 	void compileTrModVolFragmentShader(ModVolMode mode);
 	vk::UniqueShaderModule compileFinalShader();
@@ -124,12 +130,12 @@ private:
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
 	vk::UniqueShaderModule modVolVertexShader;
+	vk::UniqueShaderModule n2ModVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 	std::vector<vk::UniqueShaderModule> trModVolShaders;
 
 	vk::UniqueShaderModule finalVertexShader;
-	vk::UniqueShaderModule finalAutosortShader;
-	vk::UniqueShaderModule finalSortedShader;
+	vk::UniqueShaderModule finalFragmentShader;
 	vk::UniqueShaderModule clearShader;
 };
 

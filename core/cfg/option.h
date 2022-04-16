@@ -355,6 +355,7 @@ extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int> SavestateSlot;
+extern Option<bool> ForceFreePlay;
 
 // Sound
 
@@ -462,7 +463,9 @@ extern Option<bool> NetworkEnable;
 extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
+extern Option<int> LocalPort;
 extern Option<bool> EmulateBBA;
+extern Option<bool> EnableUPnP;
 extern Option<bool> GGPOEnable;
 extern Option<int> GGPODelay;
 extern Option<bool> NetworkStats;

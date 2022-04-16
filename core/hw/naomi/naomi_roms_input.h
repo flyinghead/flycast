@@ -601,3 +601,80 @@ static InputDescriptors fotns_inputs = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "
 static InputDescriptors mslug6_inputs = AW_5_BUTTONS("SHOOT", "JUMP", "GRENADE", "METAL SLUG ATTACK", "SWITCH WEAPONS");
 
 static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
+
+static InputDescriptors kingrt66_inputs = {
+	{
+			{ NAOMI_BTN0_KEY, "HORN" },
+			{ NAOMI_BTN1_KEY, "WIPER" },
+			{ NAOMI_DOWN_KEY, "VIEW" },
+			{ NAOMI_BTN2_KEY, "SHIFT L", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
+			{ NAOMI_BTN3_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN4_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
+																// This button uses P2 inputs for P1
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
+	},
+};
+
+static InputDescriptors clubkart_inputs = {
+	{
+			{ NAOMI_DOWN_KEY, "VIEW" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
+	},
+};
+
+static InputDescriptors initd_inputs = {
+	{
+			{ NAOMI_DOWN_KEY, "VIEW" },
+			{ NAOMI_BTN0_KEY, "GEAR UP", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "GEAR DOWN", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
+	},
+};
+
+static InputDescriptors wldrider_inputs = {
+	{
+			{ NAOMI_UP_KEY, "PUSH", NAOMI_LEFT_KEY },
+			{ NAOMI_DOWN_KEY, "PULL", NAOMI_RIGHT_KEY },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "Handlebar", Full, 0 },
+			{ "Accelerator", Half, 4 },
+			{ "Front Brake", Half, 5 },
+			{ "Rear Brake", Full, 2 },
+	},
+};
+
+static InputDescriptors soulsurfer_inputs = {
+	{
+			{ NAOMI_LEFT_KEY, "LEFT", NAOMI_BTN0_KEY },
+			{ NAOMI_RIGHT_KEY, "RIGHT", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "FLOORMAT" }, // TODO this should always be on
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "SWING", Full, 2 },
+			{ "ROLL", Full, 0 },
+			{ "PITCH", Full, 1, true },
+	},
+};

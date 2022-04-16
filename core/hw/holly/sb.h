@@ -4,6 +4,7 @@
 
 #pragma once
 #include "types.h"
+#include "hw/hwreg.h"
 #include <array>
 
 u32 sb_ReadMem(u32 addr,u32 sz);
@@ -365,6 +366,9 @@ extern u32 SB_FFST;
 
 //0x005F6900    SB_ISTNRM   RW  Normal interrupt status
 extern u32 SB_ISTNRM;
+//0x025F6900    SB_ISTNRM1   RW  Normal interrupt status CLXB (Naomi 2)
+extern u32 SB_ISTNRM1;
+
 //0x005F6904    SB_ISTEXT   R   External interrupt status
 #define SB_ISTEXT SB_REG_32(ISTEXT)
 //0x005F6908    SB_ISTERR   RW  Error interrupt status

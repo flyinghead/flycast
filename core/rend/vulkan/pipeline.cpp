@@ -23,7 +23,7 @@
 #include "rend/osd.h"
 #include "quad.h"
 
-void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
+void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
 	// Vertex input state
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
@@ -138,7 +138,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(naomi2);
 	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -163,12 +163,12 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	  renderPass                                  // renderPass
 	);
 
-	modVolPipelines[hash(mode, cullMode)] =
+	modVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
 
-void PipelineManager::CreateDepthPassPipeline(int cullMode)
+void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 {
 	// Vertex input state
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false);
@@ -241,7 +241,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(naomi2);
 	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -266,7 +266,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode)
 	  renderPass                                  // renderPass
 	);
 
-	depthPassPipelines[cullMode] =
+	depthPassPipelines[hash(cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
@@ -392,7 +392,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1 });
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1, pp.isNaomi2() });
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;

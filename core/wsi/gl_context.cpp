@@ -21,7 +21,6 @@
 #include "gl_context.h"
 
 #include "rend/gles/opengl_driver.h"
-#include "rend/gui.h"
 
 void GLGraphicsContext::findGLVersion()
 {
@@ -44,17 +43,13 @@ void GLGraphicsContext::postInit()
 {
 	instance = this;
 	findGLVersion();
-#ifndef LIBRETRO
-	gui_init();
-	imguiDriver = std::unique_ptr<ImGuiDriver>(new OpenGLDriver());
-#endif
+	resetUIDriver();
 }
 
 void GLGraphicsContext::preTerm()
 {
 #ifndef LIBRETRO
 	imguiDriver.reset();
-	gui_term();
 #endif
 	instance = nullptr;
 }
@@ -65,4 +60,11 @@ std::string GLGraphicsContext::getDriverName() {
 
 std::string GLGraphicsContext::getDriverVersion() {
 	return (const char *)glGetString(GL_VERSION);
+}
+
+void GLGraphicsContext::resetUIDriver()
+{
+#ifndef LIBRETRO
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new OpenGLDriver());
+#endif
 }

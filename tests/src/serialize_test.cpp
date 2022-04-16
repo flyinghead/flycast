@@ -31,7 +31,7 @@ TEST_F(SerializeTest, SizeTest)
 	std::vector<char> data(30000000);
 	Serializer ser(data.data(), data.size());
 	dc_serialize(ser);
-	ASSERT_EQ(28191583u, ser.size());
+	ASSERT_EQ(28191595u, ser.size());
 }
 
 

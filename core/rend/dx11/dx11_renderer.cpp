@@ -29,6 +29,7 @@ const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 	{ "COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "COLOR",    1, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, spc), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(Vertex, u),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(Vertex, nx),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 const D3D11_INPUT_ELEMENT_DESC ModVolLayout[]
 {
@@ -43,7 +44,7 @@ bool DX11Renderer::Init()
 
 	shaders = &theDX11Context.getShaders();
 	samplers = &theDX11Context.getSamplers();
-	bool success = (bool)shaders->getVertexShader(true);
+	bool success = (bool)shaders->getVertexShader(true, true);
 	ComPtr<ID3DBlob> blob = shaders->getVertexShaderBlob();
 	success = success && SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
 	blob = shaders->getMVVertexShaderBlob();
@@ -146,6 +147,7 @@ bool DX11Renderer::Init()
 
 	quad = std::unique_ptr<Quad>(new Quad());
 	quad->init(device, deviceContext, shaders);
+	n2Helper.init(device, deviceContext);
 
 	fog_needs_update = true;
 	forcePaletteUpdate();
@@ -163,6 +165,7 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+	n2Helper.term();
 	vtxConstants.reset();
 	pxlConstants.reset();
 	fbTex.reset();
@@ -307,19 +310,17 @@ bool DX11Renderer::Process(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		readDCFramebuffer();
+		return true;
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx, true))
-			return false;
+		return ta_parse(ctx);
 	}
-
-	return true;
 }
 
 //
 // Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools � November 2011
+// Journal of Graphics GPU and Game Tools - November 2011
 //
 static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
 {
@@ -523,21 +524,24 @@ void DX11Renderer::uploadGeometryBuffers()
 	{
 		const ModTriangle *data = nullptr;
 		u32 size = 0;
-#if 1
-		// clip triangles
 		std::vector<ModTriangle> modVolTriangles;
-		modVolTriangles.reserve(pvrrc.modtrig.used());
-		clipModVols(pvrrc.global_param_mvo, modVolTriangles);
-		clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
-		if (!modVolTriangles.empty())
+		if (!settings.platform.isNaomi2()) // TODO for naomi2 as well?
 		{
-			size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
-			data = modVolTriangles.data();
+			// clip triangles
+			modVolTriangles.reserve(pvrrc.modtrig.used());
+			clipModVols(pvrrc.global_param_mvo, modVolTriangles);
+			clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
+			if (!modVolTriangles.empty())
+			{
+				size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
+				data = modVolTriangles.data();
+			}
 		}
-#else
-		size = pvrrc.modtrig.bytes();
-		data = pvrrc.modtrig.head();
-#endif
+		else
+		{
+			size = pvrrc.modtrig.bytes();
+			data = pvrrc.modtrig.head();
+		}
 		if (size > 0)
 		{
 			verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
@@ -598,6 +602,7 @@ bool DX11Renderer::Render()
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
+		n2Helper.resetCache();
 		uploadGeometryBuffers();
 
 		updateFogTexture();
@@ -746,7 +751,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	DX11Texture *texture = (DX11Texture *)gp->texture;
 	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
 
-	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud);
+	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud, gp->isNaomi2());
 	deviceContext->VSSetShader(vertexShader, nullptr, 0);
 	ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 			gp->pcw.Texture,
@@ -828,7 +833,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		zfunc = gp->isp.DepthMode;
 
 	bool zwriteEnable;
-	if (SortingEnabled && !config::PerStripSorting)
+	if (SortingEnabled /* && !config::PerStripSorting */)
 		zwriteEnable = false;
 	else
 	{
@@ -841,6 +846,9 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	}
 	const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
 	deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, config::ModifierVolumes), stencil);
+
+	if (gp->isNaomi2())
+		n2Helper.setConstants(*gp, 0); // poly number only used in OIT
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -909,7 +917,7 @@ void DX11Renderer::drawSorted(bool multipass)
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 		deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 
-		ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(true);
+		ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(true, settings.platform.isNaomi2());
 		deviceContext->VSSetShader(vertexShader, nullptr, 0);
 		ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 				false,
@@ -958,7 +966,6 @@ void DX11Renderer::drawModVols(int first, int count)
 
 	deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 
-	deviceContext->VSSetShader(shaders->getMVVertexShader(), nullptr, 0);
 	deviceContext->PSSetShader(shaders->getModVolShader(), nullptr, 0);
 
 	deviceContext->RSSetScissorRects(1, &scissorRect);
@@ -967,6 +974,8 @@ void DX11Renderer::drawModVols(int first, int count)
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
 	int mod_base = -1;
+	const float *curMVMat = nullptr;
+	const float *curProjMat = nullptr;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -977,6 +986,13 @@ void DX11Renderer::drawModVols(int first, int count)
 		if (mod_base == -1)
 			mod_base = param.first;
 
+		if (param.isNaomi2() && (param.mvMatrix != curMVMat || param.projMatrix != curProjMat))
+		{
+			curMVMat = param.mvMatrix;
+			curProjMat = param.projMatrix;
+			n2Helper.setConstants(param.mvMatrix, param.projMatrix);
+		}
+		deviceContext->VSSetShader(shaders->getMVVertexShader(param.isNaomi2()), nullptr, 0);
 		if (!param.isp.VolumeLast && mv_mode > 0)
 			// OR'ing (open volume or quad)
 			deviceContext->OMSetDepthStencilState(depthStencilStates.getMVState(DepthStencilStates::Or), 2);
@@ -1014,6 +1030,8 @@ void DX11Renderer::drawModVols(int first, int count)
 	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
+	// Use the background poly as a quad
+	deviceContext->VSSetShader(shaders->getMVVertexShader(false), nullptr, 0);
 	deviceContext->DrawIndexed(4, 0, 0);
 }
 

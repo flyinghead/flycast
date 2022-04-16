@@ -38,10 +38,14 @@ const char *CallbackTable = "flycast_callbacks";
 static lua_State *L;
 using namespace luabridge;
 
+static std::recursive_mutex mutex;
+using lock_guard = std::lock_guard<std::recursive_mutex>;
+
 static void emuEventCallback(Event event, void *)
 {
 	if (L == nullptr)
 		return;
+	lock_guard lock(mutex);
 	try {
 		LuaRef v = LuaRef::getGlobal(L, CallbackTable);
 		if (!v.isTable())
@@ -64,6 +68,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::LoadState:
 			key = "loadState";
 			break;
+		case Event::VBlank:
+			key = "vblank";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();
@@ -72,30 +79,23 @@ static void emuEventCallback(Event event, void *)
 	}
 }
 
-template<const char *Tag>
-void eventCallback()
+static void eventCallback(const char *tag)
 {
 	if (L == nullptr)
 		return;
+	lock_guard lock(mutex);
 	try {
 		LuaRef v = LuaRef::getGlobal(L, CallbackTable);
-		if (v.isTable() && v[Tag].isFunction())
-			v[Tag]();
+		if (v.isTable() && v[tag].isFunction())
+			v[tag]();
 	} catch (const LuaException& e) {
-		WARN_LOG(COMMON, "Lua exception[%s]: %s", Tag, e.what());
+		WARN_LOG(COMMON, "Lua exception[%s]: %s", tag, e.what());
 	}
 }
 
-const char VBlankEvent[] { "vblank" };
-void vblank()
-{
-	eventCallback<VBlankEvent>();
-}
-
-const char OverlayEvent[] { "overlay" };
 void overlay()
 {
-	eventCallback<OverlayEvent>();
+	eventCallback("overlay");
 }
 
 template<typename T>
@@ -366,7 +366,7 @@ static void beginWindow(const char *title, int x, int y, int w, int h)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(x, y));
-	ImGui::SetNextWindowSize(ImVec2(w * scaling, h * scaling));
+	ImGui::SetNextWindowSize(ImVec2(w * settings.display.uiScale, h * settings.display.uiScale));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin(title, NULL, ImGuiWindowFlags_AlwaysAutoResize |  ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
@@ -392,7 +392,7 @@ static void uiTextRightAligned(const std::string& text)
 
 static void uiBargraph(float v)
 {
-	ImGui::ProgressBar(v, ImVec2(-1, 10.f * scaling), "");
+	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
 }
 
 static int uiButton(lua_State *L)
@@ -624,6 +624,7 @@ void init()
     EventManager::listen(Event::Pause, emuEventCallback);
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
+    EventManager::listen(Event::VBlank, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -637,6 +638,7 @@ void term()
     EventManager::unlisten(Event::Pause, emuEventCallback);
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
+    EventManager::unlisten(Event::VBlank, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }

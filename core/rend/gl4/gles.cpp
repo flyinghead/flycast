@@ -21,6 +21,7 @@
 #include "rend/transform_matrix.h"
 #include "rend/osd.h"
 #include "glsl.h"
+#include "gl4naomi2.h"
 
 //Fragment and vertex shaders code
 
@@ -58,7 +59,8 @@ static const char* VertexShaderSource = R"(
 #endif
 
 // Uniforms 
-uniform mat4 normal_matrix;
+uniform mat4 ndcMat;
+uniform int pp_Number;
 
 // Input
 in vec4 in_pos;
@@ -76,16 +78,18 @@ noperspective out vec3 vtx_uv;
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
 noperspective out vec2 vtx_uv1;
+flat out uint vtx_index;
 
 void main()
 {
-	vec4 vpos = normal_matrix * in_pos;
+	vec4 vpos = ndcMat * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
 	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
 	vtx_uv1 = in_uv1 * vpos.z;
+	vtx_index = (uint(pp_Number) << 18) + uint(gl_VertexID);
 #if pp_Gouraud == 1
 	vtx_base *= vpos.z;
 	vtx_offs *= vpos.z;
@@ -130,7 +134,6 @@ uniform float sp_FOG_DENSITY;
 uniform float shade_scale_factor;
 uniform sampler2D tex0, tex1;
 layout(binding = 5) uniform sampler2D fog_table;
-uniform int pp_Number;
 uniform usampler2D shadow_stencil;
 uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
@@ -156,6 +159,7 @@ noperspective in vec3 vtx_uv;
 INTERPOLATION in vec4 vtx_base1;
 INTERPOLATION in vec4 vtx_offs1;
 noperspective in vec2 vtx_uv1;
+flat in uint vtx_index;
 
 float fog_mode2(float w)
 {
@@ -395,7 +399,7 @@ void main()
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = vtx_uv.z;
-		pixel.seq_num = uint(pp_Number);
+		pixel.seq_num = vtx_index;
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
 		
@@ -461,12 +465,17 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */, const char *vertex_source /* = nullptr */)
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */,
+		const char *vertex_source /* = nullptr */)
 {
-	Vertex4Source vertexSource(s->pp_Gouraud);
+	std::string vertexSource;
+	if (s->naomi2)
+		vertexSource = N2Vertex4Source(s).generate();
+	else
+		vertexSource = Vertex4Source(s->pp_Gouraud).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
-	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.generate().c_str(),
+	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
 			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
@@ -517,7 +526,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
-	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
 
 	// Shadow stencil for OP/PT rendering pass
 	gu = glGetUniformLocation(s->program, "shadow_stencil");
@@ -537,6 +546,9 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
+	if (s->naomi2)
+		initN2Uniforms(s);
+
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
@@ -550,19 +562,26 @@ static void gl4_delete_shaders()
 	gl4.shaders.clear();
 	glcache.DeleteProgram(gl4.modvol_shader.program);
 	gl4.modvol_shader.program = 0;
+	glcache.DeleteProgram(gl4.n2ModVolShader.program);
+	gl4.n2ModVolShader.program = 0;
 }
 
 static void gl4_term()
 {
-	glDeleteBuffers(1, &gl4.vbo.geometry);
-	gl4.vbo.geometry = 0;
-	glDeleteBuffers(1, &gl4.vbo.modvols);
-	glDeleteBuffers(1, &gl4.vbo.idxs);
-	glDeleteBuffers(1, &gl4.vbo.idxs2);
-	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
+	for (auto& buffer : gl4.vbo.geometry)
+		buffer.reset();
+	for (auto& buffer : gl4.vbo.modvols)
+		buffer.reset();
+	for (auto& buffer : gl4.vbo.idxs)
+		buffer.reset();
+	for (auto& buffer : gl4.vbo.tr_poly_params)
+		buffer.reset();
 	gl4_delete_shaders();
-	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
-	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
+	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.main_vao), gl4.vbo.main_vao);
+	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.modvol_vao), gl4.vbo.modvol_vao);
+#ifdef LIBRETRO
+	gl4TermVmuLightgun();
+#endif
 }
 
 static void create_modvol_shader()
@@ -575,36 +594,40 @@ static void create_modvol_shader()
 		.addSource(ModifierVolumeShader);
 
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
-	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
+
+	N2Vertex4Source n2VertexShader;
+	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str());
+	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");
+	gl4.n2ModVolShader.mvMat = glGetUniformLocation(gl4.n2ModVolShader.program, "mvMat");
+	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
 
 static bool gl_create_resources()
 {
-	if (gl4.vbo.geometry != 0)
+	if (gl4.vbo.geometry[0] != nullptr)
 		// Assume the resources have already been created
 		return true;
 
 	//create vao
-	glGenVertexArrays(1, &gl4.vbo.main_vao);
-	glGenVertexArrays(1, &gl4.vbo.modvol_vao);
+	glGenVertexArrays(2, &gl4.vbo.main_vao[0]);
+	glGenVertexArrays(2, &gl4.vbo.modvol_vao[0]);
 
 	//create vbos
-	glGenBuffers(1, &gl4.vbo.geometry);
-	glGenBuffers(1, &gl4.vbo.modvols);
-	glGenBuffers(1, &gl4.vbo.idxs);
-	glGenBuffers(1, &gl4.vbo.idxs2);
-
-	gl4SetupMainVBO();
-	gl4SetupModvolVBO();
+	for (u32 i = 0; i < ARRAY_SIZE(gl4.vbo.geometry); i++)
+	{
+		gl4.vbo.geometry[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+		gl4.vbo.modvols[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+		gl4.vbo.idxs[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		// Create the buffer for Translucent poly params
+		gl4.vbo.tr_poly_params[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_SHADER_STORAGE_BUFFER));
+		gl4.vbo.bufferIndex = i;
+		gl4SetupMainVBO();
+		gl4SetupModvolVBO();
+	}
 
 	create_modvol_shader();
 
-	// Create the buffer for Translucent poly params
-	glGenBuffers(1, &gl4.vbo.tr_poly_params);
-	// Bind it
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-	// Declare storage
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.tr_poly_params);
 	initQuad();
 	glCheck();
 
@@ -691,7 +714,7 @@ static bool RenderFrame(int width, int height)
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
-	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
@@ -734,9 +757,16 @@ static bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
 	pvrrc.fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
 	
-	glcache.UseProgram(gl4.modvol_shader.program);
+	if (config::Fog)
+	{
+		glcache.UseProgram(gl4.modvol_shader.program);
+		glUniformMatrix4fv(gl4.modvol_shader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
 
-	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+		glcache.UseProgram(gl4.n2ModVolShader.program);
+		glUniformMatrix4fv(gl4.n2ModVolShader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
+	}
+	for (auto& it : gl4.shaders)
+		resetN2UniformCache(&it.second);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -762,6 +792,7 @@ static bool RenderFrame(int width, int height)
 	if (output_fbo == 0)
 		return false;
 
+	gl4.vbo.nextBuffer();
 	glcache.Disable(GL_SCISSOR_TEST);
 	if (!is_rtt)
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
@@ -776,25 +807,17 @@ static bool RenderFrame(int width, int height)
 	else if (!pvrrc.isRenderFramebuffer)
 	{
 		//Main VBO
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
-
 		//move vertex to gpu
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
-
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.head(), pvrrc.verts.bytes());
+		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.head(), pvrrc.idx.bytes());
 
 		//Modvol VBO
 		if (pvrrc.modtrig.used())
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
-			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
-		}
+			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 
 		// TR PolyParam data
 		if (pvrrc.global_param_tr.used() != 0)
 		{
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
 			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
 			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
 			const PolyParam *pp = pvrrc.global_param_tr.head();
@@ -803,7 +826,9 @@ static bool RenderFrame(int width, int height)
 				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
 				trPolyParams[i + 1] = pp->tsp1.full;
 			}
-			glBufferData(GL_SHADER_STORAGE_BUFFER, trPolyParams.size() * 4, trPolyParams.data(), GL_STATIC_DRAW);
+			gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
+			// Declare storage
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
 		}
 		glCheck();
 
@@ -969,7 +994,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		void gl4DrawVmuTexture(u8 vmu_screen_number);
 		void gl4DrawGunCrosshair(u8 port);
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if (vmu_lcd_status[vmu_screen_number * 2])

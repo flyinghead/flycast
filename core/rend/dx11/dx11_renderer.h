@@ -27,6 +27,7 @@
 #include "dx11_shaders.h"
 #include "rend/sorter.h"
 #include "dx11_renderstate.h"
+#include "dx11_naomi2.h"
 #ifndef LIBRETRO
 #include "dx11_driver.h"
 #endif
@@ -118,6 +119,7 @@ protected:
 	u32 height = 0;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
+	Naomi2Helper n2Helper;
 
 private:
 	void readDCFramebuffer();

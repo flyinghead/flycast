@@ -82,7 +82,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "performance",
       "Performance",
-      "Configure threaded rendering, integer division optimisations and frame skip settings."
+      "Configure threaded rendering and frame skip settings."
    },
    {
       "hacks",
@@ -211,6 +211,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      "Set NAOMI Games to Free Play",
+      NULL,
+      "Modify to coin settings of the game to free play.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_internal_resolution",

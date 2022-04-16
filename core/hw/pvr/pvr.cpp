@@ -24,6 +24,7 @@
 #include "rend/TexCache.h"
 #include "serialize.h"
 #include "pvr_mem.h"
+#include "elan.h"
 
 // ta.cpp
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -43,17 +44,21 @@ void reset(bool hard)
 	if (hard)
 		rend_reset();
 	tactx_Term();
+	elan::reset(hard);
+	ta_parse_reset();
 }
 
 void init()
 {
 	spg_Init();
+	elan::init();
 }
 
 void term()
 {
 	tactx_Term();
 	spg_Term();
+	elan::term();
 }
 
 void serialize(Serializer& ser)
@@ -72,6 +77,7 @@ void serialize(Serializer& ser)
 
 	if (!ser.rollback())
 		ser.serialize(vram.data, vram.size);
+	elan::serialize(ser);
 }
 
 void deserialize(Deserializer& deser)
@@ -135,6 +141,7 @@ void deserialize(Deserializer& deser)
 
 	if (!deser.rollback())
 		deser.deserialize(vram.data, vram.size);
+	elan::deserialize(deser);
 	pal_needs_update = true;
 }
 

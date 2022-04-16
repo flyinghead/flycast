@@ -24,35 +24,25 @@
 #include "texture.h"
 #include "utils.h"
 #include "vulkan_context.h"
+#include "desc_set.h"
 #include <array>
+#include <unordered_map>
 
 class DescriptorSets
 {
 public:
-	DescriptorSets() = default;
-	DescriptorSets(DescriptorSets &&) = default;
-	DescriptorSets(const DescriptorSets &) = delete;
-	DescriptorSets& operator=(DescriptorSets &&) = default;
-	DescriptorSets& operator=(const DescriptorSets &) = delete;
-
-	void Init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout)
+	void init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout)
 	{
 		this->samplerManager = samplerManager;
 		this->pipelineLayout = pipelineLayout;
-		this->perFrameLayout = perFrameLayout;
-		this->perPolyLayout = perPolyLayout;
+		perFrameAlloc.setLayout(perFrameLayout);
+		perPolyAlloc.setLayout(perPolyLayout);
 
 	}
-	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView, vk::ImageView paletteImageView)
+	void updateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView, vk::ImageView paletteImageView)
 	{
-		if (perFrameDescSets.empty())
-		{
-			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
-		}
-		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
-		perFrameDescSets.pop_back();
-		vk::DescriptorSet perFrameDescSet = *perFrameDescSetsInFlight.back();
+		if (!perFrameDescSet)
+			perFrameDescSet = perFrameAlloc.alloc();
 
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
 		bufferInfos.emplace_back(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms));
@@ -83,64 +73,104 @@ public:
 			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
 			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
 		}
-		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void SetTexture(Texture *texture, TSP tsp)
+	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
+			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset)
 	{
-		auto& inFlight = perPolyDescSetsInFlight;
-		std::pair<Texture *, u32> index = std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask);
-		if (inFlight.find(index) != inFlight.end())
-			return;
-
-		if (perPolyDescSets.empty())
+		vk::DescriptorSet perPolyDescSet;
+		auto it = perPolyDescSets.find(&poly);
+		if (it == perPolyDescSets.end())
 		{
-			std::vector<vk::DescriptorSetLayout> layouts(10, perPolyLayout);
-			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), (u32)layouts.size(), &layouts[0]));
+			perPolyDescSet = perPolyAlloc.alloc();
+			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+
+			vk::DescriptorImageInfo imageInfo;
+			if (poly.texture != nullptr)
+			{
+				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp),
+						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+			}
+
+			vk::DescriptorBufferInfo uniBufferInfo;
+			vk::DescriptorBufferInfo lightBufferInfo;
+			if (poly.isNaomi2())
+			{
+				const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
+				size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
+				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
+				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+
+				if (poly.lightModel != nullptr)
+				{
+					size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(N2LightModel) };
+					writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
+				}
+				// TODO no light
+			}
+
+			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+			perPolyDescSets[&poly] = perPolyDescSet;
 		}
-		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
-
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
-
-		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
-		inFlight[index] = std::move(perPolyDescSets.back());
-		perPolyDescSets.pop_back();
+		else
+			perPolyDescSet = it->second;
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
 	}
 
-	void BindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
+	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const ModifierVolumeParam& mvParam, int polyNumber, vk::Buffer buffer,
+			vk::DeviceSize uniformOffset)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSetsInFlight.back().get(), 0, nullptr);
+		if (!mvParam.isNaomi2())
+			return;
+		vk::DescriptorSet perPolyDescSet;
+		auto it = perPolyDescSets.find(&mvParam);
+		if (it == perPolyDescSets.end())
+		{
+			perPolyDescSet = perPolyAlloc.alloc();
+
+			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
+			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
+			vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
+			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+
+			getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
+			perPolyDescSets[&mvParam] = perPolyDescSet;
+		}
+		else
+			perPolyDescSet = it->second;
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
 	}
 
-	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, Texture *texture, TSP tsp)
+	void bindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1,
-				&perPolyDescSetsInFlight[std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet, 0, nullptr);
 	}
 
-	void Reset()
+	void nextFrame()
 	{
-		for (auto& pair : perPolyDescSetsInFlight)
-			perPolyDescSets.emplace_back(std::move(pair.second));
-		perPolyDescSetsInFlight.clear();
-		for (auto& descset : perFrameDescSetsInFlight)
-			perFrameDescSets.emplace_back(std::move(descset));
-		perFrameDescSetsInFlight.clear();
+		perFrameAlloc.nextFrame();
+		perPolyAlloc.nextFrame();
+		perFrameDescSet = vk::DescriptorSet{};
+		perPolyDescSets.clear();
+	}
+
+	void term()
+	{
+		perFrameAlloc.term();
+		perPolyAlloc.term();
 	}
 
 private:
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+	VulkanContext *getContext() const { return VulkanContext::Instance(); }
 
-	vk::DescriptorSetLayout perFrameLayout;
-	vk::DescriptorSetLayout perPolyLayout;
 	vk::PipelineLayout pipelineLayout;
-
-	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
-	std::vector<vk::UniqueDescriptorSet> perFrameDescSetsInFlight;
-	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
-	std::map<std::pair<Texture *, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
+	DynamicDescSetAlloc perFrameAlloc;
+	DynamicDescSetAlloc perPolyAlloc;
+	vk::DescriptorSet perFrameDescSet = {};
+	std::unordered_map<const void *, vk::DescriptorSet> perPolyDescSets;
 
 	SamplerManager* samplerManager = nullptr;
 };
@@ -165,6 +195,8 @@ public:
 			};
 			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
+					{ 2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// Naomi2 uniforms
+					{ 3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// Naomi2 lights
 			};
 			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
@@ -195,25 +227,26 @@ public:
 		return *pipelines[pipehash];
 	}
 
-	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode, int cullMode)
+	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
 	{
-		u32 pipehash = hash(mode, cullMode);
+		u32 pipehash = hash(mode, cullMode, naomi2);
 		const auto &pipeline = modVolPipelines.find(pipehash);
 		if (pipeline != modVolPipelines.end())
 			return pipeline->second.get();
-		CreateModVolPipeline(mode, cullMode);
+		CreateModVolPipeline(mode, cullMode, naomi2);
 
 		return *modVolPipelines[pipehash];
 	}
 
-	vk::Pipeline GetDepthPassPipeline(int cullMode)
+	vk::Pipeline GetDepthPassPipeline(int cullMode, bool naomi2)
 	{
-		cullMode = std::max(std::min(cullMode, (int)depthPassPipelines.size() - 1), 0);
-		const auto &pipeline = depthPassPipelines[cullMode];
-		if (!pipeline)
-			CreateDepthPassPipeline(cullMode);
+		u32 pipehash = hash(cullMode, naomi2);
+		const auto &pipeline = depthPassPipelines.find(pipehash);
+		if (pipeline != depthPassPipelines.end())
+			return pipeline->second.get();
+		CreateDepthPassPipeline(cullMode, naomi2);
 
-		return *pipeline;
+		return *depthPassPipelines[pipehash];
 	}
 
 	void Reset()
@@ -228,8 +261,8 @@ public:
 	vk::RenderPass GetRenderPass() const { return renderPass; }
 
 private:
-	void CreateModVolPipeline(ModVolMode mode, int cullMode);
-	void CreateDepthPassPipeline(int cullMode);
+	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
+	void CreateDepthPassPipeline(int cullMode, bool naomi2);
 
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp, bool gpuPalette) const
 	{
@@ -241,13 +274,17 @@ private:
 			| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
-		hash |= ((u32)sortTriangles << 26) | ((u32)gpuPalette << 27);
+		hash |= ((u32)sortTriangles << 26) | ((u32)gpuPalette << 27) | ((u32)pp->isNaomi2() << 28);
 
 		return hash;
 	}
-	u32 hash(ModVolMode mode, int cullMode) const
+	u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
 	{
-		return ((int)mode << 2) | cullMode;
+		return ((int)mode << 2) | cullMode | ((int)naomi2 << 5);
+	}
+	u32 hash(int cullMode, bool naomi2) const
+	{
+		return cullMode | ((int)naomi2 << 2);
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const
@@ -263,6 +300,7 @@ private:
 				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, col)),	// base color
 				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, spc)),	// offset color
 				vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, u)),		// tex coord
+				vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, nx)),	// naomi2 normal
 		};
 		static const vk::VertexInputAttributeDescription vertexInputLightAttributeDescriptions[] =
 		{
@@ -280,7 +318,7 @@ private:
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
-	std::array<vk::UniquePipeline, 4> depthPassPipelines;
+	std::map<u32, vk::UniquePipeline> depthPassPipelines;
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;

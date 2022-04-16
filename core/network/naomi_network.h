@@ -1,94 +1,216 @@
 /*
-	Created on: Apr 12, 2020
+	Copyright 2022 flyinghead
 
-	Copyright 2020 flyinghead
+	This file is part of Flycast.
 
-	This file is part of flycast.
-
-    flycast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    flycast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with flycast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
 #include "types.h"
-#include <cstdint>
-#include <atomic>
-#include <future>
-#include <mutex>
-#include <vector>
 #include "net_platform.h"
 #include "miniupnp.h"
+#include "rend/gui.h"
+#include "cfg/option.h"
+#include "emulator.h"
+#include <atomic>
+#include <future>
 
 class NaomiNetwork
 {
 public:
-	NaomiNetwork() {
-#ifdef _WIN32
-		server_ip.S_un.S_addr = INADDR_NONE;
-#else
-		server_ip.s_addr = INADDR_NONE;
-#endif
+	class Exception : public FlycastException
+	{
+	public:
+		Exception(const std::string& reason) : FlycastException(reason) {}
+	};
+
+	~NaomiNetwork() { shutdown(); }
+
+	std::future<bool> startNetworkAsync()
+	{
+		networkStopping = false;
+		_startNow = false;
+		return std::async(std::launch::async, [this] {
+			bool res = startNetwork();
+			emu.setNetworkState(res);
+			return res;
+		});
 	}
-	~NaomiNetwork() { terminate(); }
-	std::future<bool> startNetworkAsync();
-	void startNow() { start_now = true; }
-	bool syncNetwork();
-	void pipeSlaves();
-	bool receive(u8 *data, u32 size);
-	void send(u8 *data, u32 size);
-	void shutdown();	// thread-safe
-	void terminate();	// thread-safe
-	int slotCount() const { return slot_count; }
-	int slotId() const { return slot_id; }
-	bool hasToken() const { return got_token; }
+
+	void shutdown()
+	{
+		emu.setNetworkState(false);
+		closesocket(sock);
+		sock = INVALID_SOCKET;
+	}
+
+	bool receive(u8 *data, u32 size, u16 *packetNumber)
+	{
+		poll();
+		if (receivedData.empty())
+			return false;
+
+		size = std::min(size, (u32)receivedData.size());
+		memcpy(data, receivedData.data(), size);
+		receivedData.erase(receivedData.begin(), receivedData.begin() + size);
+		*packetNumber = this->packetNumber;
+
+		return true;
+	}
+
+	void send(u8 *data, u32 size, u16 packetNumber)
+	{
+		verify(size < sizeof(Packet::data.payload));
+		Packet packet(Data);
+		memcpy(packet.data.payload, data, size);
+		packet.data.packetNumber = packetNumber;
+		send(&nextPeer, &packet, packet.size(size));
+	}
+
+	int getSlotCount() const { return slotCount; }
+	int getSlotId() const { return slotId; }
+	void startNow() {
+		if (config::ActAsServer)
+			_startNow = true;
+	}
 
 private:
-	bool init();
-	bool createServerSocket();
-	bool createBeaconSocket();
-	bool startNetwork();
-	void processBeacon();
-	bool findServer();
-	sock_t createAndBind(int protocol);
-	bool isMaster() const { return slot_id == 0; }
-	void closeSocket(sock_t& socket) const { closesocket(socket); socket = INVALID_SOCKET; }
-
-	struct in_addr server_ip;
-	std::string server_name;
-	// server stuff
-	sock_t server_sock = INVALID_SOCKET;
-	sock_t beacon_sock = INVALID_SOCKET;
-	enum class ClientState { Connected, Waiting, Starting, Ready, Online };
-	struct Slave {
-		Slave(sock_t socket)
-			: state(ClientState::Connected), state_time(std::chrono::steady_clock::now()), socket(socket) {}
-		void set_state(ClientState state) { this->state = state; this->state_time = std::chrono::steady_clock::now(); }
-		ClientState state;
-		std::chrono::steady_clock::time_point state_time;
-		sock_t socket;
+	enum PacketType : u16 {
+		SyncReq,
+		SyncReply,
+		Start,
+		Data,
+		Ack,
+		NAck
 	};
-	std::vector<Slave> slaves;
-	bool start_now = false;
-	// client stuff
-	sock_t client_sock = INVALID_SOCKET;
-	// common stuff
-	int slot_count = 0;
-	int slot_id = 0;
-	bool got_token = false;
-	std::atomic<bool> network_stopping{ false };
-	std::mutex mutex;
+
+	#pragma pack(push, 1)
+	struct Packet
+	{
+		Packet(PacketType type = SyncReq) : type(type) {}
+
+		PacketType type;
+		union {
+			struct {
+				u16 nodeId;
+				u16 nextNodePort;
+				u32 nextNodeIp;
+			} sync;
+			struct {
+				u16 nodeCount;
+			} start;
+			struct {
+				u16 packetNumber;
+				u8 payload[0x4000];
+			} data;
+		};
+
+		size_t size(size_t dataSize = 0) const
+		{
+			size_t sz = sizeof(type);
+			switch (type) {
+			case SyncReq:
+			case SyncReply:
+				sz += sizeof(sync);
+				break;
+			case Start:
+				sz += sizeof(start);
+				break;
+			case Data:
+				sz += sizeof(data.packetNumber) + dataSize;
+				break;
+			default:
+				break;
+			}
+			return sz;
+		}
+	};
+	#pragma pack(pop)
+
+	bool init();
+
+	void createSocket();
+
+	bool startNetwork();
+
+	void poll()
+	{
+		Packet packet;
+		sockaddr_in addr;
+		while (true)
+		{
+			socklen_t len = sizeof(addr);
+			int rc = recvfrom(sock, (char *)&packet, sizeof(packet), 0, (sockaddr *)&addr, &len);
+			if (rc == -1)
+			{
+				int error = get_last_error();
+				if (error == L_EWOULDBLOCK || error == L_EAGAIN)
+					break;
+#ifdef _WIN32
+				if (error == WSAECONNRESET)
+					// Happens if the previous send resulted in an ICMP Port Unreachable message
+					break;
+#endif
+				throw Exception("Receive error: errno " + std::to_string(error));
+			}
+			if (rc < (int)packet.size(0))
+				throw Exception("Receive error: truncated packet");
+			receive(&addr, &packet, rc);
+		}
+	}
+
+	bool receive(const sockaddr_in *addr, const Packet *packet, u32 size);
+
+	void sendAck(const sockaddr_in *addr, bool ack = true)
+	{
+		Packet packet(ack ? Ack : NAck);
+		send(addr, &packet, packet.size());
+	}
+
+	void send(const sockaddr_in *addr, const Packet *packet, u32 size)
+	{
+		int rc = sendto(sock, (const char *)packet, size, 0,
+				(sockaddr *)addr, sizeof(*addr));
+		if (rc != (int)size)
+			throw Exception("Send failed: errno " + std::to_string(get_last_error()));
+		DEBUG_LOG(NETWORK, "Sent port %d pckt %d size %x", ntohs(addr->sin_port), packet->type, size - (u32)packet->size(0));
+	}
+
+	sock_t sock;
+	int slotCount = 0;
+	int slotId = 0;
+	std::atomic<bool> networkStopping{ false };
 	MiniUPnP miniupnp;
 
-	static const uint16_t SERVER_PORT = 37391;
+	sockaddr_in nextPeer;
+	std::vector<u8> receivedData;
+	u16 packetNumber = 0;
+	bool _startNow = false;
+
+	// Server stuff
+	struct Slave
+	{
+		int state;
+		sockaddr_in addr;
+	};
+	std::vector<Slave> slaves;
+
+	// Client stuff
+	u32 serverIp;
+
+public:
+	static constexpr u16 SERVER_PORT = 37391;
 };
 extern NaomiNetwork naomiNetwork;
 

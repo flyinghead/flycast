@@ -55,6 +55,7 @@ button_list[] =
 	{ DC_AXIS_LEFT, "compat", "btn_analog_left" },
 	{ DC_AXIS_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
+	{ EMU_BTN_INSERT_CARD, "emulator", "insert_card" },
 };
 
 static struct
@@ -185,6 +186,7 @@ void InputMapping::load(FILE* fp)
 	dz = std::min(dz, 100);
 	dz = std::max(dz, 0);
 	this->dead_zone = (float)dz / 100.f;
+	this->rumblePower = mf.get_int("emulator", "rumble_power", this->rumblePower);
 
 	version = mf.get_int("emulator", "version", 1);
 	if (version < 3)
@@ -412,6 +414,7 @@ bool InputMapping::save(const std::string& name)
 
 	mf.set("emulator", "mapping_name", this->name);
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
+	mf.set_int("emulator", "rumble_power", this->rumblePower);
 	mf.set_int("emulator", "version", 3);
 
 	int bindIndex = 0;

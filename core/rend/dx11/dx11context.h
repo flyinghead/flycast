@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
-#include "imgui_impl_dx11.h"
 #include "windows/comptr.h"
 #include "dx11_overlay.h"
 #include "wsi/context.h"

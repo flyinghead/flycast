@@ -15,9 +15,7 @@
 #define reg arm_Reg
 #define armNextPC reg[R15_ARM_NEXT].I
 
-#define CPUUpdateTicksAccesint(a) 1
 #define CPUUpdateTicksAccessSeq32(a) 1
-#define CPUUpdateTicksAccesshort(a) 1
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 

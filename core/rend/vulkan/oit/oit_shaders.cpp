@@ -25,8 +25,13 @@
 static const char OITVertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
-	mat4 normal_matrix;
+	mat4 ndcMat;
 } uniformBuffer;
+
+layout (push_constant) uniform constants
+{
+	layout(offset = 96) int polyNumber;
+} pushConstants;
 
 layout (location = 0) in vec4         in_pos;
 layout (location = 1) in uvec4        in_base;
@@ -42,10 +47,11 @@ layout (location = 2) noperspective out highp vec3 vtx_uv;
 layout (location = 3) INTERPOLATION out highp vec4 vtx_base1;		// New for OIT, only for OP/PT with 2-volume
 layout (location = 4) INTERPOLATION out highp vec4 vtx_offs1;
 layout (location = 5) noperspective out highp vec2 vtx_uv1;
+layout (location = 6) flat out uint vtx_index;
 
 void main()
 {
-	vec4 vpos = uniformBuffer.normal_matrix * in_pos;
+	vec4 vpos = uniformBuffer.ndcMat * in_pos;
 	vtx_base = vec4(in_base) / 255.0;
 	vtx_offs = vec4(in_offs) / 255.0;
 	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
@@ -58,6 +64,7 @@ void main()
 	vtx_base1 *= vpos.z;
 	vtx_offs1 *= vpos.z;
 #endif
+	vtx_index = (uint(pushConstants.polyNumber) << 18) + uint(gl_VertexIndex);
 	vpos.w = 1.0;
 	vpos.z = 0.0;
 	gl_Position = vpos;
@@ -80,18 +87,18 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	uint viewportWidth;
 } uniformBuffer;
 
-layout(set = 3, binding = 2) buffer abufferPointer_ {
+layout(set = 0, binding = 9) buffer abufferPointer_ {
 	uint pointers[];
 } abufferPointer;
 
-layout(set = 3, binding = 1) buffer PixelCounter_ {
+layout(set = 0, binding = 8) buffer PixelCounter_ {
 	uint buffer_index;
 } PixelCounter;
 )"
 OIT_POLY_PARAM
 R"(
 
-layout (set = 3, binding = 0, std430) coherent restrict buffer PixelBuffer_ {
+layout (set = 0, binding = 7, std430) coherent restrict buffer PixelBuffer_ {
 	Pixel pixels[];
 } PixelBuffer;
 
@@ -137,7 +144,6 @@ layout (push_constant) uniform pushBlock
 	vec4 clipTest;
 	ivec4 blend_mode0;
 	float trilinearAlpha;
-	int pp_Number;
 	float palette_index;
 
 	// two volume mode
@@ -176,6 +182,7 @@ layout (location = 2) noperspective in highp vec3 vtx_uv;
 layout (location = 3) INTERPOLATION in highp vec4 vtx_base1;			// new for OIT. Only if 2 vol
 layout (location = 4) INTERPOLATION in highp vec4 vtx_offs1;
 layout (location = 5) noperspective in highp vec2 vtx_uv1;
+layout (location = 6) flat in uint vtx_index;
 
 #if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
@@ -421,7 +428,7 @@ void main()
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = vtx_uv.z;
-		pixel.seq_num = uint(pushConstants.pp_Number);
+		pixel.seq_num = vtx_index;
 		pixel.next = atomicExchange(abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth], idx);
 		PixelBuffer.pixels[idx] = pixel;
 		
@@ -459,20 +466,25 @@ int fillAndSortFragmentArray(ivec2 coords)
 	idx = PixelBuffer.pixels[idx].next;
 	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
 	{
-		const Pixel p = PixelBuffer.pixels[idx];
+		float depth = PixelBuffer.pixels[idx].depth;
+		uint index = getPolyIndex(PixelBuffer.pixels[idx]);
 		int j = count - 1;
-		Pixel jp = PixelBuffer.pixels[pixel_list[j]];
+		float jdepth = PixelBuffer.pixels[pixel_list[j]].depth;
+		uint jindex = getPolyIndex(PixelBuffer.pixels[pixel_list[j]]);
 		while (j >= 0
-			   && (jp.depth > p.depth
-				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
+			   && (jdepth > depth
+				   || (jdepth == depth && jindex > index)))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
 			if (j >= 0)
-				jp = PixelBuffer.pixels[pixel_list[j]];
+			{
+				jdepth = PixelBuffer.pixels[pixel_list[j]].depth;
+				jindex = getPolyIndex(PixelBuffer.pixels[pixel_list[j]]);
+			}
 		}
 		pixel_list[j + 1] = idx;
-		idx = p.next;
+		idx = PixelBuffer.pixels[idx].next;
 	}
 	return count;
 }
@@ -586,6 +598,9 @@ void main(void)
 	// Visualize the number of layers in use
 	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1);
 	FragColor = resolveAlphaBlend(coords);
+
+	// Reset pointers
+	abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth] = EOL;
 }
 )";
 
@@ -645,20 +660,135 @@ void main()
 static const char OITFinalVertexShaderSource[] = R"(
 layout (location = 0) in vec3 in_pos;
 
+layout (push_constant) uniform pushBlock
+{
+	int polyNumber_not_used;
+} pushConstants;
+
 void main()
 {
 	gl_Position = vec4(in_pos, 1.0);
 }
 )";
 
+static const char OITN2VertexShaderSource[] = R"(
+layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
+{
+	mat4 ndcMat;
+} uniformBuffer;
+
+layout (push_constant) uniform constants
+{
+	layout(offset = 96) int polyNumber_not_used;
+} pushConstants;
+
+layout (location = 0) in vec4         in_pos;
+layout (location = 1) in uvec4        in_base;
+layout (location = 2) in uvec4        in_offs;
+layout (location = 3) in mediump vec2 in_uv;
+layout (location = 4) in uvec4        in_base1;
+layout (location = 5) in uvec4        in_offs1;
+layout (location = 6) in mediump vec2 in_uv1;
+layout (location = 7) in vec3         in_normal;
+
+layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
+layout (location = 1) INTERPOLATION out highp vec4 vtx_offs;
+layout (location = 2) noperspective out highp vec3 vtx_uv;
+layout (location = 3) INTERPOLATION out highp vec4 vtx_base1;
+layout (location = 4) INTERPOLATION out highp vec4 vtx_offs1;
+layout (location = 5) noperspective out highp vec2 vtx_uv1;
+layout (location = 6) flat out uint vtx_index;
+
+void wDivide(inout vec4 vpos)
+{
+	vpos = vec4(vpos.xy / vpos.w, 1.0 / vpos.w, 1.0);
+	vpos = uniformBuffer.ndcMat * vpos;
+#if pp_Gouraud == 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+#if pp_TwoVolumes == 1
+	vtx_base1 *= vpos.z;
+	vtx_offs1 *= vpos.z;
+#endif
+#endif
+	vtx_uv = vec3(vtx_uv.xy * vpos.z, vpos.z);
+#if pp_TwoVolumes == 1
+	vtx_uv1 *= vpos.z;
+#endif
+	vpos.w = 1.0;
+	vpos.z = 0.0;
+}
+
+void main()
+{
+	vec4 vpos = n2Uniform.mvMat * in_pos;
+	vtx_base = vec4(in_base) / 255.0;
+	vtx_offs = vec4(in_offs) / 255.0;
+
+	#if LIGHT_ON == 1
+	vec3 vnorm = normalize(mat3(n2Uniform.normalMat) * in_normal);
+	#endif
+
+	#if pp_TwoVolumes == 1
+		vtx_base1 = vec4(in_base1) / 255.0;
+		vtx_offs1 = vec4(in_offs1) / 255.0;
+		vtx_uv1 = in_uv1;
+		#if LIGHT_ON == 1
+			// FIXME need offset0 and offset1 for bump maps
+			if (n2Uniform.bumpMapping == 1)
+				computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, in_normal, n2Uniform.normalMat);
+			else
+			{
+				computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm);
+				#if pp_Texture == 0
+					vtx_base1 += vtx_offs1;
+				#endif
+			}
+			if (n2Uniform.envMapping[1] == 1)
+				computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm);
+		#endif
+	#endif
+	#if LIGHT_ON == 1
+	if (n2Uniform.bumpMapping == 0)
+	{
+		computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm);
+		#if pp_Texture == 0
+				vtx_base += vtx_offs;
+		#endif
+	}
+	#endif
+
+	vtx_uv.xy = in_uv;
+	#if LIGHT_ON == 1
+		if (n2Uniform.envMapping[0] == 1)
+			computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm);
+	#endif
+
+	vpos = n2Uniform.projMat * vpos;
+	wDivide(vpos);
+	vtx_index = (uint(n2Uniform.polyNumber) << 18) + uint(gl_VertexIndex);
+
+	gl_Position = vpos;
+}
+)";
+
 extern const char ModVolVertexShaderSource[];
+extern const char N2ModVolVertexShaderSource[];
+extern const char N2LightShaderSource[];
 
 vk::UniqueShaderModule OITShaderManager::compileShader(const VertexShaderParams& params)
 {
 	VulkanSource src;
 	src.addConstant("pp_Gouraud", (int)params.gouraud)
-			.addSource(GouraudSource)
-			.addSource(OITVertexShaderSource);
+			.addSource(GouraudSource);
+	if (params.naomi2)
+		src.addConstant("pp_TwoVolumes", (int)params.twoVolume)
+			.addConstant("LIGHT_ON", (int)params.lightOn)
+			.addConstant("pp_Texture", (int)params.texture)
+			.addSource(N2LightShaderSource)
+			.addSource(OITN2VertexShaderSource);
+	else
+		src.addSource(OITVertexShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 
@@ -698,6 +828,7 @@ vk::UniqueShaderModule OITShaderManager::compileFinalVertexShader()
 {
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(OITFinalVertexShaderSource).generate());
 }
+
 vk::UniqueShaderModule OITShaderManager::compileClearShader()
 {
 	VulkanSource src;
@@ -705,9 +836,15 @@ vk::UniqueShaderModule OITShaderManager::compileClearShader()
 		.addSource(OITClearShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
-vk::UniqueShaderModule OITShaderManager::compileModVolVertexShader()
+
+vk::UniqueShaderModule OITShaderManager::compileModVolVertexShader(bool naomi2)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(ModVolVertexShaderSource).generate());
+	VulkanSource src;
+	if (naomi2)
+		src.addSource(N2ModVolVertexShaderSource);
+	else
+		src.addSource(ModVolVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader()
 {

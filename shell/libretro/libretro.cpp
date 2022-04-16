@@ -289,6 +289,8 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 // Now comes the interesting stuff
 void retro_init()
 {
+	static bool emuInited;
+
 	// Logging
 	struct retro_log_callback log;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -322,6 +324,12 @@ void retro_init()
 
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
+
+#if defined(__GNUC__) && !defined(_WIN32)
+	if (!emuInited)
+#endif
+		emu.init();
+	emuInited = true;
 }
 
 void retro_deinit()
@@ -335,6 +343,12 @@ void retro_deinit()
 		std::lock_guard<std::mutex> lock(mtx_serialization);
 	}
 	os_UninstallFaultHandler();
+	
+#if defined(__GNUC__) && !defined(_WIN32)
+	_vmem_release();
+#else
+	emu.term();
+#endif
 	libretro_supports_bitmasks = false;
 	categoriesSupported = false;
 	platformIsDreamcast = true;
@@ -360,9 +374,8 @@ static bool set_variable_visibility(void)
 	bool platformWasDreamcast = platformIsDreamcast;
 	bool platformWasArcade = platformIsArcade;
 
-	platformIsDreamcast = (settings.platform.system == DC_PLATFORM_DREAMCAST);
-	platformIsArcade = (settings.platform.system == DC_PLATFORM_NAOMI) ||
-			(settings.platform.system == DC_PLATFORM_ATOMISWAVE);
+	platformIsDreamcast = settings.platform.isConsole();
+	platformIsArcade = settings.platform.isArcade();
 
 	// Show/hide platform-dependent options
 	if (first_run || (platformIsDreamcast != platformWasDreamcast) || (platformIsArcade != platformWasArcade))
@@ -628,7 +641,7 @@ static void update_variables(bool first_startup)
 			per_content_vmus = 2;
 	}
 	if (!first_startup && per_content_vmus != previous_per_content_vmus
-			&& settings.platform.system == DC_PLATFORM_DREAMCAST)
+			&& settings.platform.isConsole())
 	{
 		// Recreate the VMUs so that the save location is taken into account.
 		// Don't do this at startup because we don't know the system type yet
@@ -756,7 +769,7 @@ static void update_variables(bool first_startup)
 	var.key = CORE_OPTION_NAME "_enable_purupuru";
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
-		if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.platform.isConsole())
 		{
 			enable_purupuru = strcmp("enabled", var.value) == 0;
 			for (int i = 0; i < MAPLE_PORTS; i++) {
@@ -1226,6 +1239,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		break;
 
 	case DC_PLATFORM_NAOMI:
+	case DC_PLATFORM_NAOMI2:
 		switch (device)
 		{
 		case RETRO_DEVICE_JOYPAD:
@@ -1265,7 +1279,9 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		return 0;
 	uint32_t mapped = joymap[id];
 	// Hack to bind Button 9 instead of Service when not used
-	if (id == RETRO_DEVICE_ID_JOYPAD_R3 && device == RETRO_DEVICE_JOYPAD && settings.platform.system == DC_PLATFORM_NAOMI && !allow_service_buttons)
+	if (id == RETRO_DEVICE_ID_JOYPAD_R3 && device == RETRO_DEVICE_JOYPAD
+			&& settings.platform.isNaomi()
+			&& !allow_service_buttons)
 		mapped = NAOMI_BTN8_KEY;
 	return mapped;
 }
@@ -1297,7 +1313,7 @@ static void set_input_descriptors()
 {
 	struct retro_input_descriptor desc[22 * 4 + 1];
 	int descriptor_index = 0;
-	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isArcade())
 	{
 		const char *name;
 
@@ -1769,12 +1785,12 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	if (game->path[0] == '\0')
 	{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 			boot_to_bios = true;
 		else
 			return false;
 	}
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isArcade())
 		boot_to_bios = false;
 
 	if (boot_to_bios)
@@ -1860,7 +1876,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (!foundRenderApi)
 		return false;
 
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isArcade())
 	{
 		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir)
 				&& dir != nullptr
@@ -1911,13 +1927,11 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	emu.stop();
+	emu.unloadGame();
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
 	blankVmus();
-
-	emu.term();
 }
 
 
@@ -2045,7 +2059,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 		{
 			case RETRO_DEVICE_JOYPAD:
 				config::MapleMainDevices[in_port] = MDT_SegaController;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 				}
@@ -2053,42 +2067,42 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			case RETRO_DEVICE_TWINSTICK:
 			case RETRO_DEVICE_TWINSTICK_SATURN:
 				config::MapleMainDevices[in_port] = MDT_TwinStick;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_ASCIISTICK:
 				config::MapleMainDevices[in_port] = MDT_AsciiStick;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_KEYBOARD:
 				config::MapleMainDevices[in_port] = MDT_Keyboard;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_MOUSE:
 				config::MapleMainDevices[in_port] = MDT_Mouse;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_LIGHTGUN:
 				config::MapleMainDevices[in_port] = MDT_LightGun;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			default:
 				config::MapleMainDevices[in_port] = MDT_None;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
@@ -2104,7 +2118,7 @@ static void refresh_devices(bool first_startup)
 
    if (!first_startup)
    {
-      if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+      if (settings.platform.isConsole())
          maple_ReconnectDevices();
 
       if (rumble.set_rumble_state)
@@ -2345,10 +2359,10 @@ static void UpdateInputStateNaomi(u32 port)
 			if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
 			{
 				force_offscreen = true;
-				if (settings.platform.system == DC_PLATFORM_NAOMI)
-					kcode[port] &= ~NAOMI_BTN0_KEY;
-				else
+				if (settings.platform.isAtomiswave())
 					kcode[port] &= ~AWAVE_TRIGGER_KEY;
+				else
+					kcode[port] &= ~NAOMI_BTN0_KEY;
 			}
 
 			if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
@@ -2359,7 +2373,7 @@ static void UpdateInputStateNaomi(u32 port)
 
 				if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER) || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
 				{
-					if (settings.platform.system == DC_PLATFORM_NAOMI)
+					if (settings.platform.isNaomi())
 						kcode[port] &= ~NAOMI_BTN1_KEY;
 				}
 			}
@@ -2393,7 +2407,8 @@ static void UpdateInputStateNaomi(u32 port)
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 					break;
 				case RETRO_DEVICE_ID_JOYPAD_R3:
-					if (settings.platform.system == DC_PLATFORM_NAOMI || allow_service_buttons)
+					if (settings.platform.isNaomi()
+							|| allow_service_buttons)
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 					break;
 				default:
@@ -2452,19 +2467,19 @@ static void UpdateInputStateNaomi(u32 port)
 	}
 
 	// Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
-	{
-		if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
-			kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
-		if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
-			kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
-	}
-	else
+	if (settings.platform.isAtomiswave())
 	{
 		if ((kcode[port] & (AWAVE_UP_KEY|AWAVE_DOWN_KEY)) == 0)
 			kcode[port] |= AWAVE_UP_KEY|AWAVE_DOWN_KEY;
 		if ((kcode[port] & (AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY)) == 0)
 			kcode[port] |= AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY;
+	}
+	else
+	{
+		if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
+			kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
+		if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
+			kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
 	}
 }
 
@@ -2473,7 +2488,7 @@ static void UpdateInputState(u32 port)
 	if (gl_ctx_resetting)
 		return;
 
-	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isArcade())
 	{
 		UpdateInputStateNaomi(port);
 		return;
@@ -2884,27 +2899,18 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 	}
 }
 
-int msgboxf(const char* text, unsigned int type, ...)
+void fatal_error(const char* text, ...)
 {
 	if (log_cb)
 	{
 		va_list args;
 		char temp[2048];
-
-		switch (type)
-		{
-		case MBX_ICONERROR:
-			va_start(args, type);
-			vsprintf(temp, text, args);
-			va_end(args);
-			strcat(temp, "\n");
-			log_cb(RETRO_LOG_ERROR, temp);
-			break;
-		default:
-			break;
-		}
+		va_start(args, text);
+		vsprintf(temp, text, args);
+		va_end(args);
+		strcat(temp, "\n");
+		log_cb(RETRO_LOG_ERROR, temp);
 	}
-	return 0;
 }
 
 void os_DebugBreak()
@@ -3145,10 +3151,4 @@ void gui_display_notification(const char *msg, int duration)
 	retromsg.msg = msg;
 	retromsg.frames = duration / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
-}
-
-void gui_init() {
-}
-
-void gui_term() {
 }

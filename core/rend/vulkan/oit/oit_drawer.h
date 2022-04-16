@@ -52,18 +52,11 @@ protected:
 		if (!quadBuffer)
 			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 		this->oitBuffers = oitBuffers;
-		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
-			descriptorSets.resize(GetContext()->GetSwapChainSize());
-		else
-			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
-			{
-				descriptorSets.emplace_back();
-				descriptorSets.back().Init(samplerManager,
-						pipelineManager->GetPipelineLayout(),
-						pipelineManager->GetPerFrameDSLayout(),
-						pipelineManager->GetPerPolyDSLayout(),
-						pipelineManager->GetColorInputDSLayout());
-			}
+		descriptorSets.init(samplerManager,
+				pipelineManager->GetPipelineLayout(),
+				pipelineManager->GetPerFrameDSLayout(),
+				pipelineManager->GetPerPolyDSLayout(),
+				pipelineManager->GetColorInputDSLayout());
 	}
 	void Term()
 	{
@@ -75,19 +68,17 @@ protected:
 		depthAttachments[0].reset();
 		depthAttachments[1].reset();
 		mainBuffers.clear();
-		descriptorSets.clear();
+		descriptorSets.term();
 	}
 
 	int GetCurrentImage() const { return imageIndex; }
 
 	void NewImage()
 	{
-		GetCurrentDescSet().Reset();
+		descriptorSets.nextFrame();
 		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
 		renderPass = 0;
 	}
-
-	OITDescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
 	BufferData* GetMainBuffer(u32 size)
 	{
@@ -138,6 +129,12 @@ private:
 		vk::DeviceSize fragmentUniformOffset = 0;
 		vk::DeviceSize polyParamsOffset = 0;
 		vk::DeviceSize polyParamsSize = 0;
+		vk::DeviceSize naomi2OpaqueOffset = 0;
+		vk::DeviceSize naomi2PunchThroughOffset = 0;
+		vk::DeviceSize naomi2TranslucentOffset = 0;
+		vk::DeviceSize naomi2ModVolOffset = 0;
+		vk::DeviceSize naomi2TrModVolOffset = 0;
+		vk::DeviceSize lightsOffset = 0;
 	} offsets;
 
 	std::unique_ptr<QuadBuffer> quadBuffer;
@@ -152,7 +149,7 @@ private:
 	bool needDepthTransition = false;
 	int imageIndex = 0;
 	int renderPass = 0;
-	std::vector<OITDescriptorSets> descriptorSets;
+	OITDescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 };
 

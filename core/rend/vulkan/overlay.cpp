@@ -202,7 +202,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 		{
 			if (config::CrosshairColor[i] == 0)
 				continue;
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
+			if (settings.platform.isConsole() && config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
 			float x, y;

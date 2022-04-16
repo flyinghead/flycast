@@ -28,8 +28,9 @@
 struct VertexShaderParams
 {
 	bool gouraud;
+	bool naomi2;
 
-	u32 hash() { return (u32)gouraud; }
+	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1); }
 };
 
 // alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp, trilinear
@@ -62,7 +63,7 @@ struct FragmentShaderParams
 // std140 alignment required
 struct VertexShaderUniforms
 {
-	glm::mat4 normal_matrix;
+	glm::mat4 ndcMat;
 };
 
 // std140 alignment required
@@ -76,16 +77,33 @@ struct FragmentShaderUniforms
 	float sp_FOG_DENSITY;
 };
 
+// std140 alignment required
+struct N2VertexShaderUniforms
+{
+	glm::mat4 mvMat;
+	glm::mat4 normalMat;
+	glm::mat4 projMat;
+	int envMapping[2];
+	int bumpMapping;
+	int polyNumber;
+
+	float glossCoef[2];
+	int constantColor[2];
+	int modelDiffuse[2];
+	int modelSpecular[2];
+};
+
 class ShaderManager
 {
 public:
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
-	vk::ShaderModule GetModVolVertexShader()
+	vk::ShaderModule GetModVolVertexShader(bool naomi2)
 	{
-		if (!modVolVertexShader)
-			modVolVertexShader = compileModVolVertexShader();
-		return *modVolVertexShader;
+		vk::UniqueShaderModule& shader = naomi2 ? n2ModVolVertexShader : modVolVertexShader;
+		if (!shader)
+			shader = compileModVolVertexShader(naomi2);
+		return *shader;
 	}
 	vk::ShaderModule GetModVolShader()
 	{
@@ -148,7 +166,7 @@ private:
 	}
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
-	vk::UniqueShaderModule compileModVolVertexShader();
+	vk::UniqueShaderModule compileModVolVertexShader(bool naomi2);
 	vk::UniqueShaderModule compileModVolFragmentShader();
 	vk::UniqueShaderModule compileQuadVertexShader(bool rotate);
 	vk::UniqueShaderModule compileQuadFragmentShader(bool ignoreTexAlpha);
@@ -158,6 +176,7 @@ private:
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
 	vk::UniqueShaderModule modVolVertexShader;
+	vk::UniqueShaderModule n2ModVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 	vk::UniqueShaderModule quadVertexShader;
 	vk::UniqueShaderModule quadRotateVertexShader;

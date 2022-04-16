@@ -112,10 +112,7 @@ struct shil_param
 	bool is_r32() const { return is_r32i() || is_r32f(); }
 	bool is_r64() const { return is_r64f(); }	//just here for symmetry ...
 
-	bool is_imm_s8() const { return is_imm() && is_s8(_imm); }
-	bool is_imm_u8() const { return is_imm() && is_u8(_imm); }
-	bool is_imm_s16() const { return is_imm() && is_s16(_imm); }
-	bool is_imm_u16() const { return is_imm() && is_u16(_imm); }
+	bool is_imm_s8() const { return is_imm() && (int8_t)_imm == (int32_t)_imm; }
 
 	u32* reg_ptr()  const { verify(is_reg()); return GetRegPtr(_reg); }
 	s32  reg_nofs()  const { verify(is_reg()); return (s32)((u8*)GetRegPtr(_reg) - (u8*)GetRegPtr(reg_xf_0)-sizeof(Sh4cntx)); }

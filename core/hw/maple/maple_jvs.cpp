@@ -65,7 +65,7 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 		val >>= 1;
 	}
 	u32 arcade_key;
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.isNaomi())
 	{
 		if (pos >= ARRAY_SIZE(naomi_button_mapping))
 			return nullptr;
@@ -643,8 +643,17 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		{
+			// reverse the board order so that P1 is P1
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
+		}
+		else
+		{
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		}
 		break;
 	case JVS::LightGun:
 		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
@@ -972,7 +981,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		{
 			int address = dma_buffer_in[1];
 			int size = dma_buffer_in[2];
-			DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
+			DEBUG_LOG(MAPLE, "EEprom write %08x %08x", address, size);
 			//printState(Command,buffer_in,buffer_in_len);
 			address = address % sizeof(eeprom);
 			size = std::min((int)sizeof(eeprom) - address, size);

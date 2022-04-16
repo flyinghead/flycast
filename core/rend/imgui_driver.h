@@ -18,11 +18,15 @@
 */
 #pragma once
 #include "imgui/imgui.h"
+#include "gui.h"
 #include <memory>
 
 class ImGuiDriver
 {
 public:
+	ImGuiDriver() {
+		gui_initFonts();
+	}
 	virtual ~ImGuiDriver() = default;
 
 	virtual void newFrame() = 0;

@@ -7,6 +7,7 @@
 #include "sh4_mem.h"
 #include "hw/holly/sb_mem.h"
 #include "sh4_mmr.h"
+#include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
@@ -50,14 +51,7 @@ static void map_area1(u32 base)
 	_vmem_mirror_mapping(0x06 | base, 0x04 | base, 0x02);
 }
 
-//AREA 2
-static void map_area2_init()
-{
-}
-
-static void map_area2(u32 base)
-{
-}
+//AREA 2: Naomi2 elan
 
 //AREA 3
 static void map_area3_init()
@@ -96,14 +90,15 @@ static void map_area4(u32 base)
 template <class T>
 T DYNACALL ReadMem_extdev_T(u32 addr)
 {
-	return (T)libExtDevice_ReadMem_A5(addr, sizeof(T));
+	INFO_LOG(SH4, "Read ext. device (Area 5) undefined @ %08x", addr);
+	return (T)0;
 }
 
 //Write Ext.Device
 template <class T>
 void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 {
-	libExtDevice_WriteMem_A5(addr, data, sizeof(T));
+	INFO_LOG(SH4, "Write ext. device (Area 5) undefined @ %08x: %x", addr, (u32)data);
 }
 
 _vmem_handler area5_handler;
@@ -152,7 +147,7 @@ void mem_map_default()
 	//Init Memmaps (register handlers)
 	map_area0_init();
 	map_area1_init();
-	map_area2_init();
+	elan::vmem_init();
 	map_area3_init();
 	map_area4_init();
 	map_area5_init();
@@ -164,7 +159,7 @@ void mem_map_default()
 	{
 		map_area0(i << 5); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
 		map_area1(i << 5); //VRAM
-		map_area2(i << 5); //Unassigned
+		elan::vmem_map(i << 5); // Naomi2 Elan
 		map_area3(i << 5); //RAM
 		map_area4(i << 5); //TA
 		map_area5(i << 5); //Ext. Device
@@ -195,7 +190,7 @@ void mem_Reset(bool hard)
 
 	//Reset registers
 	sh4_area0_Reset(hard);
-	sh4_mmr_reset(true);
+	sh4_mmr_reset(hard);
 }
 
 void mem_Term()

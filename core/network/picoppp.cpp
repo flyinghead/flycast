@@ -842,7 +842,7 @@ static void *pico_thread_func(void *)
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
 	std::string gameId;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
 		gameId = trim_trailing_ws(gameId);
@@ -873,7 +873,7 @@ static void *pico_thread_func(void *)
 		std::async(std::launch::async, [ports]() {
 			// Initialize miniupnpc and map network ports
 			MiniUPnP upnp;
-			if (ports != nullptr)
+			if (ports != nullptr && config::EnableUPnP)
 			{
 				if (!upnp.Init())
 					WARN_LOG(MODEM, "UPNP Init failed");

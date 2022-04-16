@@ -112,3 +112,21 @@ private:
 	LoadProgress progress;
 	std::future<void> future;
 };
+
+struct ScaledVec2 : public ImVec2
+{
+	ScaledVec2()
+		: ImVec2() {}
+	ScaledVec2(float x, float y)
+		: ImVec2(x * settings.display.uiScale, y * settings.display.uiScale) {}
+};
+
+inline static ImVec2 min(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(std::min(l.x, r.x), std::min(l.y, r.y));
+}
+inline static ImVec2 operator+(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(l.x + r.x, l.y + r.y);
+}
+inline static ImVec2 operator-(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(l.x - r.x, l.y - r.y);
+}

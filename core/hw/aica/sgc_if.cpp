@@ -27,6 +27,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"
+#include "hw/hwreg.h"
 
 #include <algorithm>
 #include <cmath>
@@ -779,7 +780,6 @@ struct ChannelEx
 		FEG.ReleaseRate = FEG_SPS[EG_EffRate(base_rate, ccd->FRR)];
 	}
 	
-	//WHEE :D!
 	void RegWrite(u32 offset, int size)
 	{
 		switch(offset)
@@ -1024,7 +1024,7 @@ void StreamStep(ChannelEx* ch)
 			else
 			{
 				CA = ch->loop.LSA;
-				key_printf("[%d]LPCTL : Looping LSA %x LEA %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA);
+				key_printf("[%d]LPCTL : Looping LSA %x LEA %x AEG %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA, ch->AEG.GetValue());
 			}
 		}
 
@@ -1040,52 +1040,60 @@ void StreamStep(ChannelEx* ch)
 
 }
 
-template<s32 ALFOWS>
+enum class LFOType
+{
+	Sawtooth,
+	Square,
+	Triangle,
+	Random
+};
+
+template<LFOType Type>
 void CalcAlfo(ChannelEx* ch)
 {
 	u32 rv;
-	switch(ALFOWS)
+	switch(Type)
 	{
-	case 0: // Sawtooth
+	case LFOType::Sawtooth:
 		rv=ch->lfo.state;
 		break;
 
-	case 1: // Square
+	case LFOType::Square:
 		rv=ch->lfo.state&0x80?255:0;
 		break;
 
-	case 2: // Triangle
+	case LFOType::Triangle:
 		rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
 		rv<<=1;
 		break;
 
-	case 3:// Random ! .. not :p
+	case LFOType::Random: // ... not so much
 		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
 		break;
 	}
 	ch->lfo.alfo=rv>>ch->lfo.alfo_shft;
 }
 
-template<s32 PLFOWS>
+template<LFOType Type>
 void CalcPlfo(ChannelEx* ch)
 {
 	u32 rv;
-	switch(PLFOWS)
+	switch(Type)
 	{
-	case 0: // sawtooth
+	case LFOType::Sawtooth:
 		rv = ch->lfo.state;
 		break;
 
-	case 1: // square
+	case LFOType::Square:
 		rv = ch->lfo.state & 0x80 ? 0xff : 0;
 		break;
 
-	case 2: // triangle
+	case LFOType::Triangle:
 		rv = (ch->lfo.state & 0x7f) ^ (ch->lfo.state & 0x80 ? 0x7F : 0);
 		rv <<= 1;
 		break;
 
-	case 3:// random ! .. not :p
+	case LFOType::Random:
 		rv = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
 		break;
 	}
@@ -1220,25 +1228,25 @@ static void staticinitialise()
 	STREAM_INITAL_STEP_LUT[3]=&StepDecodeSampleInitial<3>;
 	STREAM_INITAL_STEP_LUT[4]=&StepDecodeSampleInitial<-1>;
 
-	AEG_STEP_LUT[0]=&AegStep<0>;
-	AEG_STEP_LUT[1]=&AegStep<1>;
-	AEG_STEP_LUT[2]=&AegStep<2>;
-	AEG_STEP_LUT[3]=&AegStep<3>;
+	AEG_STEP_LUT[EG_Attack] = &AegStep<EG_Attack>;
+	AEG_STEP_LUT[EG_Decay1] = &AegStep<EG_Decay1>;
+	AEG_STEP_LUT[EG_Decay2] = &AegStep<EG_Decay2>;
+	AEG_STEP_LUT[EG_Release] = &AegStep<EG_Release>;
 
-	FEG_STEP_LUT[0]=&FegStep<0>;
-	FEG_STEP_LUT[1]=&FegStep<1>;
-	FEG_STEP_LUT[2]=&FegStep<2>;
-	FEG_STEP_LUT[3]=&FegStep<3>;
+	FEG_STEP_LUT[EG_Attack] = &FegStep<EG_Attack>;
+	FEG_STEP_LUT[EG_Decay1] = &FegStep<EG_Decay1>;
+	FEG_STEP_LUT[EG_Decay2] = &FegStep<EG_Decay2>;
+	FEG_STEP_LUT[EG_Release] = &FegStep<EG_Release>;
 
-	ALFOWS_CALC[0]=&CalcAlfo<0>;
-	ALFOWS_CALC[1]=&CalcAlfo<1>;
-	ALFOWS_CALC[2]=&CalcAlfo<2>;
-	ALFOWS_CALC[3]=&CalcAlfo<3>;
+	ALFOWS_CALC[(int)LFOType::Sawtooth] = &CalcAlfo<LFOType::Sawtooth>;
+	ALFOWS_CALC[(int)LFOType::Square] = &CalcAlfo<LFOType::Square>;
+	ALFOWS_CALC[(int)LFOType::Triangle] = &CalcAlfo<LFOType::Triangle>;
+	ALFOWS_CALC[(int)LFOType::Random] = &CalcAlfo<LFOType::Random>;
 
-	PLFOWS_CALC[0]=&CalcPlfo<0>;
-	PLFOWS_CALC[1]=&CalcPlfo<1>;
-	PLFOWS_CALC[2]=&CalcPlfo<2>;
-	PLFOWS_CALC[3]=&CalcPlfo<3>;
+	PLFOWS_CALC[(int)LFOType::Sawtooth] = &CalcPlfo<LFOType::Sawtooth>;
+	PLFOWS_CALC[(int)LFOType::Square] = &CalcPlfo<LFOType::Square>;
+	PLFOWS_CALC[(int)LFOType::Triangle] = &CalcPlfo<LFOType::Triangle>;
+	PLFOWS_CALC[(int)LFOType::Random] = &CalcPlfo<LFOType::Random>;
 }
 
 ChannelEx ChannelEx::Chans[64];
@@ -1362,18 +1370,6 @@ void ReadCommonReg(u32 reg,bool byte)
 			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
 		}
 		break;
-	}
-}
-
-void WriteCommonReg8(u32 reg,u32 data)
-{
-	WriteMemArr<1>(aica_reg, reg, data);
-	if (reg == 0x2804 || reg == 0x2805)
-	{
-		using namespace dsp;
-		state.RBL = (8192 << CommonData->RBL) - 1;
-		state.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
-		state.dirty = true;
 	}
 }
 

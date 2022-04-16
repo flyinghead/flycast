@@ -1331,7 +1331,7 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 			rv = new maple_sega_controller();
 		else
 			rv = new maple_atomiswave_controller();
@@ -1358,7 +1358,7 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 			rv = new maple_lightgun();
 		else
 			rv = new atomiswave_lightgun();

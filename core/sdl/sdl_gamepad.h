@@ -2,7 +2,6 @@
 #include "input/mouse.h"
 #include "oslib/oslib.h"
 #include "sdl.h"
-#include "rend/gui.h"
 
 template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
@@ -177,9 +176,9 @@ public:
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 
 #if SDL_VERSION_ATLEAST(2, 0, 18)
-		sdl_has_rumble = SDL_JoystickHasRumble(sdl_joystick);
+		rumbleEnabled = SDL_JoystickHasRumble(sdl_joystick);
 #else
-		sdl_has_rumble = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
+		rumbleEnabled = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
 #endif
 	}
 
@@ -192,17 +191,18 @@ public:
 
 	void rumble(float power, float inclination, u32 duration_ms) override
 	{
-		if (sdl_has_rumble)
+		if (rumbleEnabled)
 		{
 			vib_inclination = inclination * power;
 			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
-			SDL_JoystickRumble(sdl_joystick, (Uint16)(power * 65535), (Uint16)(power * 65535), duration_ms);
+			Uint16 intensity = (Uint16)std::min(power * rumblePower * 65535.f / 100.f, 65535.f);
+			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
 		}
 	}
 	void update_rumble() override
 	{
-		if (!sdl_has_rumble)
+		if (!rumbleEnabled)
 			return;
 		if (vib_inclination > 0)
 		{
@@ -210,7 +210,10 @@ public:
 			if (rem_time <= 0)
 				vib_inclination = 0;
 			else
-				SDL_JoystickRumble(sdl_joystick, (Uint16)(vib_inclination * rem_time * 65535), (Uint16)(vib_inclination * rem_time * 65535), rem_time);
+			{
+				Uint16 intensity = (Uint16)std::min(vib_inclination * rem_time * 65535.f * rumblePower / 100.f, 65535.f);
+				SDL_JoystickRumble(sdl_joystick, intensity, intensity, rem_time);
+			}
 		}
 	}
 
@@ -371,7 +374,6 @@ public:
 private:
 	SDL_Joystick* sdl_joystick;
 	SDL_JoystickID sdl_joystick_instance;
-    bool sdl_has_rumble = false;
 	float vib_inclination = 0;
 	double vib_stop_time = 0;
 	SDL_GameController *sdl_controller = nullptr;

@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "rend/gles/gles.h"
+#include "hw/pvr/elan_struct.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -42,8 +43,49 @@ struct gl4PipelineShader
 	GLint fog_control;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
-	GLint normal_matrix;
+	GLint ndcMat;
 	GLint palette_index;
+
+	// Naomi2
+	GLint mvMat;
+	GLint normalMat;
+	GLint projMat;
+	GLint glossCoef[2];
+	GLint envMapping[2];
+	GLint bumpMapping;
+	GLint constantColor[2];
+	GLint modelDiffuse[2];
+	GLint modelSpecular[2];
+
+	GLint lightCount;
+	GLint ambientBase[2];
+	GLint ambientOffset[2];
+	GLint ambientMaterialBase[2];
+	GLint ambientMaterialOffset[2];
+	GLint useBaseOver;
+	GLint bumpId0;
+	GLint bumpId1;
+	struct {
+		GLint color;
+		GLint direction;
+		GLint position;
+		GLint parallel;
+		GLint diffuse[2];
+		GLint specular[2];
+		GLint routing;
+		GLint dmode;
+		GLint smode;
+		GLint distAttnMode;
+		GLint attnDistA;
+		GLint attnDistB;
+		GLint attnAngleA;
+		GLint attnAngleB;
+	} lights[elan::MAX_LIGHTS];
+
+	const float *lastMvMat;
+	const float *lastNormalMat;
+	const float *lastProjMat;
+	const N2LightModel *lastLightModel;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;
@@ -59,6 +101,7 @@ struct gl4PipelineShader
 	bool pp_BumpMap;
 	bool fog_clamping;
 	bool palette;
+	bool naomi2;
 };
 
 
@@ -68,17 +111,51 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint normal_matrix;
+		GLuint ndcMat;
 	} modvol_shader;
+
+	struct
+	{
+		GLuint program;
+
+		GLuint ndcMat;
+		GLint mvMat;
+		GLint projMat;
+	} n2ModVolShader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
 
 	struct
 	{
-		GLuint geometry,modvols,idxs,idxs2;
-		GLuint main_vao;
-		GLuint modvol_vao;
-		GLuint tr_poly_params;
+		std::unique_ptr<GlBuffer> geometry[2];
+		std::unique_ptr<GlBuffer> modvols[2];
+		std::unique_ptr<GlBuffer> idxs[2];
+		GLuint main_vao[2];
+		GLuint modvol_vao[2];
+		std::unique_ptr<GlBuffer> tr_poly_params[2];
+		int bufferIndex = 0;
+
+		GlBuffer *getVertexBuffer() {
+			return geometry[bufferIndex].get();
+		}
+		GlBuffer *getIndexBuffer() {
+			return idxs[bufferIndex].get();
+		}
+		GlBuffer *getModVolBuffer() {
+			return modvols[bufferIndex].get();
+		}
+		GlBuffer *getPolyParamBuffer() {
+			return tr_poly_params[bufferIndex].get();
+		}
+		GLuint getMainVAO() {
+			return main_vao[bufferIndex];
+		}
+		GLuint getModVolVAO() {
+			return modvol_vao[bufferIndex];
+		}
+		void nextBuffer() {
+			bufferIndex = (bufferIndex + 1) % ARRAY_SIZE(geometry);
+		}
 	} vbo;
 };
 
@@ -116,6 +193,7 @@ public:
 void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
 void gl4CreateTextures(int width, int height);
+void gl4TermVmuLightgun();
 
 extern struct gl4ShaderUniforms_t
 {
@@ -131,7 +209,7 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
-	glm::mat4 normal_mat;
+	glm::mat4 ndcMat;
 	struct {
 		bool enabled;
 		int x;
@@ -149,54 +227,27 @@ extern struct gl4ShaderUniforms_t
 
 	void Set(gl4PipelineShader* s)
 	{
-		if (s->cp_AlphaTestValue!=-1)
-			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
-
-		if (s->sp_FOG_COL_RAM!=-1)
-			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-		if (s->sp_FOG_COL_VERT!=-1)
-			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->shade_scale_factor != -1)
-			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
+		glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
+		glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
+		glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
+		glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+		glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
 
 		if (s->blend_mode != -1) {
 			u32 blend_mode[] = { tsp0.SrcInstr, tsp0.DstInstr, tsp1.SrcInstr, tsp1.DstInstr };
 			glUniform2iv(s->blend_mode, 2, (GLint *)blend_mode);
 		}
 
-		if (s->use_alpha != -1)
-			setUniformArray(s->use_alpha, tsp0.UseAlpha, tsp1.UseAlpha);
-
-		if (s->ignore_tex_alpha != -1)
-			setUniformArray(s->ignore_tex_alpha, tsp0.IgnoreTexA, tsp1.IgnoreTexA);
-
-		if (s->shading_instr != -1)
-			setUniformArray(s->shading_instr, tsp0.ShadInstr, tsp1.ShadInstr);
-
-		if (s->fog_control != -1)
-			setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
-
-		if (s->pp_Number != -1)
-			glUniform1i(s->pp_Number, poly_number);
-
-		if (s->trilinear_alpha != -1)
-			glUniform1f(s->trilinear_alpha, trilinear_alpha);
-		
-		if (s->fog_clamp_min != -1)
-			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
-		if (s->fog_clamp_max != -1)
-			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
-
-		if (s->normal_matrix != -1)
-			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
-
-		if (s->palette_index != -1)
-			glUniform1i(s->palette_index, palette_index);
+		setUniformArray(s->use_alpha, tsp0.UseAlpha, tsp1.UseAlpha);
+		setUniformArray(s->ignore_tex_alpha, tsp0.IgnoreTexA, tsp1.IgnoreTexA);
+		setUniformArray(s->shading_instr, tsp0.ShadInstr, tsp1.ShadInstr);
+		setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
+		glUniform1i(s->pp_Number, poly_number);
+		glUniform1f(s->trilinear_alpha, trilinear_alpha);
+		glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
+		glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+		glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
+		glUniform1i(s->palette_index, palette_index);
 	}
 
 } gl4ShaderUniforms;

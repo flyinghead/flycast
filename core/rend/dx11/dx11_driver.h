@@ -25,6 +25,14 @@
 class DX11Driver final : public ImGuiDriver
 {
 public:
+	DX11Driver(ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
+		ImGui_ImplDX11_Init(device, deviceContext);
+	}
+
+	~DX11Driver() {
+		ImGui_ImplDX11_Shutdown();
+	}
+
     void newFrame() override {
     	ImGui_ImplDX11_NewFrame();
 	}

@@ -42,6 +42,7 @@ public:
 	}
 	std::string getDriverName() override;
 	std::string getDriverVersion() override;
+	void resetUIDriver();
 
 	bool hasPerPixel() override
 	{

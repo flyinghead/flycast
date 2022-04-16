@@ -781,39 +781,37 @@ void sh4_mmr_init()
 
 void sh4_mmr_reset(bool hard)
 {
-	if (hard)
-	{
-		for (auto& reg : CCN)
-			reg.reset();
-		for (auto& reg : UBC)
-			reg.reset();
-		for (auto& reg : BSC)
-			reg.reset();
-		for (auto& reg : DMAC)
-			reg.reset();
-		for (auto& reg : CPG)
-			reg.reset();
-		for (auto& reg : RTC)
-			reg.reset();
-		for (auto& reg : INTC)
-			reg.reset();
-		for (auto& reg : TMU)
-			reg.reset();
-		for (auto& reg : SCI)
-			reg.reset();
-		for (auto& reg : SCIF)
-			reg.reset();
-	}
+	for (auto& reg : CCN)
+		reg.reset();
+	for (auto& reg : UBC)
+		reg.reset();
+	for (auto& reg : BSC)
+		reg.reset();
+	for (auto& reg : DMAC)
+		reg.reset();
+	for (auto& reg : CPG)
+		reg.reset();
+	for (auto& reg : RTC)
+		reg.reset();
+	for (auto& reg : INTC)
+		reg.reset();
+	for (auto& reg : TMU)
+		reg.reset();
+	for (auto& reg : SCI)
+		reg.reset();
+	for (auto& reg : SCIF)
+		reg.reset();
+
 	OnChipRAM = {};
 	//Reset register values
-	bsc_reset(hard);
-	ccn_reset(hard);
+	bsc_reset(true);
+	ccn_reset(true);
 	cpg_reset();
 	dmac_reset();
 	intc_reset();
 	rtc_reset();
-	serial_reset();
-	tmu_reset(hard);
+	serial_reset(hard);
+	tmu_reset(true);
 	ubc_reset();
 
 	MMU_reset();

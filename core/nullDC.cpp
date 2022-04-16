@@ -44,7 +44,7 @@ int flycast_init(int argc, char* argv[])
 		LogManager::Init();
 		config::Settings::instance().load(false);
 	}
-
+	gui_init();
 	os_CreateWindow();
 	os_SetupInput();
 
@@ -76,6 +76,7 @@ void flycast_term()
 	gui_cancel_load();
 	lua::term();
 	emu.term();
+	gui_term();
 }
 
 void dc_savestate(int index)
