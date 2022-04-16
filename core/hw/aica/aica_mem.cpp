@@ -64,6 +64,7 @@ T aicaReadReg(u32 addr)
 }
 template u8 aicaReadReg<u8>(u32 addr);
 template u16 aicaReadReg<u16>(u32 addr);
+template u32 aicaReadReg<u32>(u32 addr);
 
 static void writeCommonReg8(u32 reg, u8 data)
 {
@@ -185,6 +186,7 @@ void aicaWriteReg(u32 addr, T data)
 }
 template void aicaWriteReg<>(u32 addr, u8 data);
 template void aicaWriteReg<>(u32 addr, u16 data);
+template void aicaWriteReg<>(u32 addr, u32 data);
 
 void init_mem()
 {
