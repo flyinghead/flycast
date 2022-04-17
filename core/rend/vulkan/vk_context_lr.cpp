@@ -237,19 +237,19 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	vk::DescriptorPoolSize pool_sizes[] =
 	{
 			{ vk::DescriptorType::eSampler, 2 },
-			{ vk::DescriptorType::eCombinedImageSampler, 4000 },
+			{ vk::DescriptorType::eCombinedImageSampler, 40000 },
 			{ vk::DescriptorType::eSampledImage, 2 },
 			{ vk::DescriptorType::eStorageImage, 12 },
 			{ vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-			{ vk::DescriptorType::eUniformBuffer, 36 },
+			{ vk::DescriptorType::eUniformBuffer, 80000 },
 			{ vk::DescriptorType::eStorageBuffer, 36 },
 			{ vk::DescriptorType::eUniformBufferDynamic, 2 },
 			{ vk::DescriptorType::eStorageBufferDynamic, 2 },
 			{ vk::DescriptorType::eInputAttachment, 36 }
 	};
 	descriptorPool = device.createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-			10000, ARRAY_SIZE(pool_sizes), pool_sizes));
+			40000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 	std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
 	FILE *f = fopen(cachePath.c_str(), "rb");

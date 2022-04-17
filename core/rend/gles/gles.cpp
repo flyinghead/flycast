@@ -475,7 +475,7 @@ void findGLVersion()
 			gl.GL_OES_packed_depth_stencil_supported = true;
 		if (strstr(extensions, "GL_OES_depth24") != NULL)
 			gl.GL_OES_depth24_supported = true;
-		if (!gl.GL_OES_packed_depth_stencil_supported)
+		if (!gl.GL_OES_packed_depth_stencil_supported && gl.gl_major < 3)
 			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
 		GLint ranges[2];
 		GLint precision;

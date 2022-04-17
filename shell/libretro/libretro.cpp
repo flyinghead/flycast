@@ -55,6 +55,7 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/spg.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/card_reader.h"
 #include "imgread/common.h"
 #include "LogManager.h"
 #include "cheats.h"
@@ -110,6 +111,7 @@ static int astick_deadzone = 0;
 static int trigger_deadzone = 0;
 static bool digital_triggers = false;
 static bool allow_service_buttons = false;
+static bool haveCardReader;
 
 static bool libretro_supports_bitmasks = false;
 
@@ -1383,7 +1385,7 @@ static void set_input_descriptors()
 				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R, "Button 5");
 				if (name != NULL)
 					desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, name };
-				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
+				name = haveCardReader ? "Insert Card" : get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
 				if (name != NULL)
 					desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, name };
 				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R2, "Button 7");
@@ -1910,8 +1912,14 @@ bool retro_load_game(const struct retro_game_info *game)
 	setRotation();
 	setFramebufferSize();
 
-	if (devices_need_refresh)
-		refresh_devices(true);
+	if (settings.content.gameId == "INITIAL D"
+			|| settings.content.gameId == "INITIAL D Ver.2"
+			|| settings.content.gameId == "INITIAL D Ver.3"
+			|| settings.content.gameId == "INITIAL D CYCRAFT")
+		haveCardReader = true;
+	else
+		haveCardReader = false;
+	refresh_devices(true);
 
 	// System may have changed - have to update hidden core options
 	set_variable_visibility();
@@ -2130,7 +2138,7 @@ static void refresh_devices(bool first_startup)
          }
       }
    }
-   else
+   else if (settings.platform.isConsole())
    {
       mcfg_DestroyDevices();
       mcfg_CreateDevices();
@@ -2404,12 +2412,21 @@ static void UpdateInputStateNaomi(u32 port)
 				{
 				case RETRO_DEVICE_ID_JOYPAD_L3:
 					if (allow_service_buttons)
-						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L3);
 					break;
 				case RETRO_DEVICE_ID_JOYPAD_R3:
 					if (settings.platform.isNaomi()
 							|| allow_service_buttons)
-						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R3);
+					break;
+				case RETRO_DEVICE_ID_JOYPAD_L:
+					if (haveCardReader)
+					{
+						 if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+							 card_reader::insertCard();
+					}
+					else
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);
 					break;
 				default:
 					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
