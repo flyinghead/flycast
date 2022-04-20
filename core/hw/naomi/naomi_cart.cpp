@@ -80,7 +80,10 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	for (int romid = 0; bios->blobs[romid].filename != NULL; romid++)
 	{
 		if (region == -1)
+		{
 			region = bios->blobs[romid].region;
+			config::Region.override(region);
+		}
 		else
 		{
 			if (bios->blobs[romid].region != (u32)region)
