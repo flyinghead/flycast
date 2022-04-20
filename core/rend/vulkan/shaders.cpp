@@ -405,7 +405,7 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 	float diffuseAlpha = 0.0;
 	float specularAlpha = 0.0;
 	vec3 reflectDir = reflect(normalize(position), normal);
-	const float BASE_FACTOR = 1.45;
+	const float BASE_FACTOR = 2.0;
 
 	for (int i = 0; i < n2Lights.lightCount; i++)
 	{
@@ -445,9 +445,9 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 			else
 			{
 				if ((n2Lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
-					diffuse += lightColor * factor;
+					diffuse += lightColor * factor * baseCol.rgb;
 				else
-					specular += lightColor * factor;
+					specular += lightColor * factor * baseCol.rgb;
 			}
 		}
 		if (n2Lights.lights[i].specular[volIdx] == 1)
@@ -463,28 +463,25 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 			else
 			{
 				if ((n2Lights.lights[i].routing & ROUTING_SPEC_TO_OFFSET) == 0)
-					diffuse += lightColor * factor;
+					diffuse += lightColor * factor * offsetCol.rgb;
 				else
-					specular += lightColor * factor;
+					specular += lightColor * factor * offsetCol.rgb;
 			}
 		}
 	}
-	// ambient with material
+	// ambient light
 	if (n2Lights.ambientMaterialBase[volIdx] == 1)
+		diffuse += n2Lights.ambientBase[volIdx].rgb * baseCol.rgb;
+	else
 		diffuse += n2Lights.ambientBase[volIdx].rgb;
 	if (n2Lights.ambientMaterialOffset[volIdx] == 1)
+		specular += n2Lights.ambientOffset[volIdx].rgb * offsetCol.rgb;
+	else
 		specular += n2Lights.ambientOffset[volIdx].rgb;
-
 	if (n2Uniform.modelDiffuse[volIdx] == 1)
-		baseCol.rgb *= diffuse;
+		baseCol.rgb = diffuse;
 	if (n2Uniform.modelSpecular[volIdx] == 1)
-		offsetCol.rgb *= specular;
-
-	// ambient w/o material
-	if (n2Lights.ambientMaterialBase[volIdx] == 0 && n2Uniform.modelDiffuse[volIdx] == 1)
-		baseCol.rgb += n2Lights.ambientBase[volIdx].rgb;
-	if (n2Lights.ambientMaterialOffset[volIdx] == 0 && n2Uniform.modelSpecular[volIdx] == 1)
-		offsetCol.rgb += n2Lights.ambientOffset[volIdx].rgb;
+		offsetCol.rgb = specular;
 
 	baseCol.a += diffuseAlpha;
 	offsetCol.a += specularAlpha;

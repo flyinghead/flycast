@@ -222,7 +222,7 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 	float diffuseAlpha = 0.f;
 	float specularAlpha = 0.f;
 	float3 reflectDir = reflect(normalize(position), normal);
-	const float BASE_FACTOR = 1.45f;
+	const float BASE_FACTOR = 2.0f;
 
 	for (int i = 0; i < lightCount; i++)
 	{
@@ -268,9 +268,9 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 			else
 			{
 				if ((routing & ROUTING_DIFF_TO_OFFSET) == 0)
-					diffuse += lightColor * factor;
+					diffuse += lightColor * factor * baseCol.rgb;
 				else
-					specular += lightColor * factor;
+					specular += lightColor * factor * baseCol.rgb;
 			}
 		}
 		if (light.diffuse_specular[2 + volIdx] == 1) // If light contributes to specular
@@ -290,28 +290,26 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 			else
 			{
 				if ((routing & ROUTING_SPEC_TO_OFFSET) == 0)
-					diffuse += lightColor * factor;
+					diffuse += lightColor * factor * offsetCol.rgb;
 				else
-					specular += lightColor * factor;
+					specular += lightColor * factor * offsetCol.rgb;
 			}
 		}
 	}
-	// ambient with material
+	// ambient light
 	if (ambientMaterial[volIdx] == 1)
+		diffuse += ambientBase[volIdx].rgb * baseCol.rgb;
+	else
 		diffuse += ambientBase[volIdx].rgb;
 	if (ambientMaterial[volIdx + 2] == 1)
+		specular += ambientOffset[volIdx].rgb * offsetCol.rgb;
+	else
 		specular += ambientOffset[volIdx].rgb;
 
 	if (model_diff_spec[volIdx] == 1)
-		baseCol.rgb *= diffuse;
+		baseCol.rgb = diffuse;
 	if (model_diff_spec[volIdx + 2] == 1)
-		offsetCol.rgb *= specular;
-
-	// ambient w/o material
-	if (ambientMaterial[volIdx] == 0 && model_diff_spec[volIdx] == 1)
-		baseCol.rgb += ambientBase[volIdx].rgb;
-	if (ambientMaterial[volIdx + 2] == 0 && model_diff_spec[volIdx + 2] == 1)
-		offsetCol.rgb += ambientOffset[volIdx].rgb;
+		offsetCol.rgb = specular;
 
 	baseCol.a += diffuseAlpha;
 	offsetCol.a += specularAlpha;
