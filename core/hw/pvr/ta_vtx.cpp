@@ -159,7 +159,7 @@ public:
 	static std::vector<PolyParam> *CurrentPPlist;
 	static PolyParam* CurrentPP;
 	static TaListFP* TaCmd;
-	static bool fetchTextures;
+	inline static bool fetchTextures = true;
 };
 
 const u32 *BaseTAParser::ta_type_lut = TaTypeLut::instance().table;
@@ -176,7 +176,6 @@ PolyParam* BaseTAParser::CurrentPP;
 std::vector<PolyParam>* BaseTAParser::CurrentPPlist;
 BaseTAParser::TaListFP *BaseTAParser::TaCmd;
 BaseTAParser::TaListFP *BaseTAParser::VertexDataFP;
-bool BaseTAParser::fetchTextures = true;
 
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 class TAParserTempl : public BaseTAParser
