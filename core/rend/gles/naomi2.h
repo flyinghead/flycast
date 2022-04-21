@@ -46,10 +46,6 @@ void initN2Uniforms(ShaderType *shader)
 	shader->bumpMapping = glGetUniformLocation(shader->program, "bumpMapping");
 	shader->constantColor[0] = glGetUniformLocation(shader->program, "constantColor[0]");
 	shader->constantColor[1] = glGetUniformLocation(shader->program, "constantColor[1]");
-	shader->modelDiffuse[0] = glGetUniformLocation(shader->program, "modelDiffuse[0]");
-	shader->modelDiffuse[1] = glGetUniformLocation(shader->program, "modelDiffuse[1]");
-	shader->modelSpecular[0] = glGetUniformLocation(shader->program, "modelSpecular[0]");
-	shader->modelSpecular[1] = glGetUniformLocation(shader->program, "modelSpecular[1]");
 
 	// Lights
 	shader->lightCount = glGetUniformLocation(shader->program, "lightCount");
@@ -126,8 +122,6 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		glUniform1f(shader->glossCoef[i], pp->glossCoef[i]);
 		glUniform1i(shader->envMapping[i], (int)pp->envMapping[i]);
 		glUniform1i(shader->constantColor[i], (int)pp->constantColor[i]);
-		glUniform1i(shader->modelDiffuse[i], (int)pp->diffuseColor[i]);
-		glUniform1i(shader->modelSpecular[i], (int)pp->specularColor[i]);
 	}
 
 	const N2LightModel *const lightModel = pp->lightModel;

@@ -89,8 +89,6 @@ struct N2VertexShaderUniforms
 
 	float glossCoef[2];
 	int constantColor[2];
-	int modelDiffuse[2];
-	int modelSpecular[2];
 };
 
 class ShaderManager

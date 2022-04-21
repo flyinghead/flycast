@@ -338,8 +338,6 @@ layout (std140, set = 1, binding = 2) uniform N2VertexShaderUniforms
 
 	vec2 glossCoef;
 	ivec2 constantColor;
-	ivec2 modelDiffuse;
-	ivec2 modelSpecular;
 } n2Uniform;
 
 #define PI 3.1415926
@@ -478,10 +476,8 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 		specular += n2Lights.ambientOffset[volIdx].rgb * offsetCol.rgb;
 	else
 		specular += n2Lights.ambientOffset[volIdx].rgb;
-	if (n2Uniform.modelDiffuse[volIdx] == 1)
-		baseCol.rgb = diffuse;
-	if (n2Uniform.modelSpecular[volIdx] == 1)
-		offsetCol.rgb = specular;
+	baseCol.rgb = diffuse;
+	offsetCol.rgb = specular;
 
 	baseCol.a += diffuseAlpha;
 	offsetCol.a += specularAlpha;
@@ -634,8 +630,6 @@ layout (std140, set = 1, binding = 2) uniform N2VertexShaderUniforms
 
 	vec2 glossCoef;
 	ivec2 constantColor;
-	ivec2 modelDiffuse;
-	ivec2 modelSpecular;
 } n2Uniform;
 
 layout (location = 0) in vec4 in_pos;

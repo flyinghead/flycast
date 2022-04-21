@@ -95,8 +95,6 @@ protected:
 					uni.envMapping[i] = pp.envMapping[i];
 					uni.glossCoef[i] = pp.glossCoef[i];
 					uni.constantColor[i] = pp.constantColor[i];
-					uni.modelDiffuse[i] = pp.diffuseColor[i];
-					uni.modelSpecular[i] = pp.specularColor[i];
 				}
 			}
 			bufIdx += n2UniformSize;

@@ -183,8 +183,6 @@ uniform int bumpId1;
 // model attributes
 uniform float glossCoef[2];
 uniform int constantColor[2];
-uniform int modelDiffuse[2];
-uniform int modelSpecular[2];
 
 void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 position, vec3 normal)
 {
@@ -269,10 +267,8 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 po
 	else
 		specular += ambientOffset[volIdx].rgb;
 
-	if (modelDiffuse[volIdx] == 1)
-		baseCol.rgb = diffuse;
-	if (modelSpecular[volIdx] == 1)
-		offsetCol.rgb = specular;
+	baseCol.rgb = diffuse;
+	offsetCol.rgb = specular;
 
 	baseCol.a += diffuseAlpha;
 	offsetCol.a += specularAlpha;

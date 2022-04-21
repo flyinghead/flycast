@@ -79,7 +79,6 @@ cbuffer polyConstants : register(b1)
 
 	float4 glossCoef;
 	int4 constantColor;
-	int4 model_diff_spec;	// diffuse0, diffuse1, specular0, specular1
 };
 
 void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, in float3 position, in float3 normal);
@@ -306,10 +305,8 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 	else
 		specular += ambientOffset[volIdx].rgb;
 
-	if (model_diff_spec[volIdx] == 1)
-		baseCol.rgb = diffuse;
-	if (model_diff_spec[volIdx + 2] == 1)
-		offsetCol.rgb = specular;
+	baseCol.rgb = diffuse;
+	offsetCol.rgb = specular;
 
 	baseCol.a += diffuseAlpha;
 	offsetCol.a += specularAlpha;
@@ -393,12 +390,9 @@ struct N2PolyConstants
 
 	float glossCoef[4];		// 208
 	int constantColor[4];	// 224
-	// int4 model_diff_spec
-	int modelDiffuse[2];	// 240
-	int modelSpecular[2];	// 248
-							// 256
+							// 240
 };
-static_assert(sizeof(N2PolyConstants) == 256, "sizeof(N2PolyConstants) should be 256");
+static_assert(sizeof(N2PolyConstants) == 240, "sizeof(N2PolyConstants) should be 240");
 
 void  Naomi2Helper::init(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContext> deviceContext)
 {
@@ -433,8 +427,6 @@ void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber)
 	{
 		polyConstants.glossCoef[i] = pp.glossCoef[i];
 		polyConstants.constantColor[i] = pp.constantColor[i];
-		polyConstants.modelDiffuse[i] = pp.diffuseColor[i];
-		polyConstants.modelSpecular[i] = pp.specularColor[i];
 	}
 	setConstBuffer(polyConstantsBuffer, polyConstants);
 	deviceContext->VSSetConstantBuffers(1, 1, &polyConstantsBuffer.get());

@@ -56,8 +56,6 @@ struct PolyParam
 	const N2LightModel *lightModel;
 	bool envMapping[2];
 	bool constantColor[2];
-	bool diffuseColor[2];
-	bool specularColor[2];
 
 	void init()
 	{
@@ -84,10 +82,6 @@ struct PolyParam
 		envMapping[1] = false;
 		constantColor[0] = false;
 		constantColor[1] = false;
-		diffuseColor[0] = false;
-		diffuseColor[1] = false;
-		specularColor[0] = false;
-		specularColor[1] = false;
 	}
 
 	bool equivalentIgnoreCullingDirection(const PolyParam& other) const
@@ -107,12 +101,8 @@ struct PolyParam
 			&& lightModel == other.lightModel
 			&& envMapping[0] == other.envMapping[0]
 			&& constantColor[0] == other.constantColor[0]
-			&& diffuseColor[0] == other.diffuseColor[0]
-			&& specularColor[0] == other.specularColor[0]
 			&& envMapping[1] == other.envMapping[1]
-			&& constantColor[1] == other.constantColor[1]
-			&& diffuseColor[1] == other.diffuseColor[1]
-			&& specularColor[1] == other.specularColor[1];
+			&& constantColor[1] == other.constantColor[1];
 	}
 
 	bool isNaomi2() const { return projMatrix != nullptr; }

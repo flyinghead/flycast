@@ -1256,11 +1256,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 		pp.glossCoef[0] = curGmp->gloss.getCoef0();
 		pp.glossCoef[1] = curGmp->gloss.getCoef1();
 		pp.constantColor[0] = curGmp->paramSelect.b0;
-		pp.diffuseColor[0] = curGmp->paramSelect.d0;
-		pp.specularColor[0] = curGmp->paramSelect.s0;
 		pp.constantColor[1] = curGmp->paramSelect.b1;
-		pp.diffuseColor[1] = curGmp->paramSelect.d1;
-		pp.specularColor[1] = curGmp->paramSelect.s1;
 
 		// Environment mapping
 		if (curGmp->paramSelect.e0)
@@ -1297,8 +1293,6 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 		pp.tcw1.full = -1;
 		pp.glossCoef[1] = 0;
 		pp.constantColor[1] = false;
-		pp.diffuseColor[1] = false;
-		pp.specularColor[1] = false;
 	}
 //	else if (pp.pcw.Volume == 1)
 //		printf("2-Volume poly listType %d vtxtype %x gmp params %x diff tcw %08x tsp %08x\n", ta_get_list_type(), list->flags, curGmp->paramSelect.full,

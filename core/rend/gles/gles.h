@@ -64,8 +64,6 @@ struct PipelineShader
 	GLint envMapping[2];
 	GLint bumpMapping;
 	GLint constantColor[2];
-	GLint modelDiffuse[2];
-	GLint modelSpecular[2];
 
 	GLint lightCount;
 	GLint ambientBase[2];
