@@ -40,16 +40,9 @@ enum PlainJoystickTriggerId
 
 struct PlainJoystickState
 {
-	PlainJoystickState()
-	{
-		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
-		trigger[0]=trigger[1]=0;
-	}
-
 	u32 kcode = ~0;
-
-	u8 joy[PJAI_Count];
-	u8 trigger[PJTI_Count];
+	u8 joy[PJAI_Count] = { 0x80, 0x80, 0x80, 0x80 };
+	u8 trigger[PJTI_Count] = { 0, 0 };
 };
 
 struct maple_device;
