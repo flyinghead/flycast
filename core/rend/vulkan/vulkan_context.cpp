@@ -458,9 +458,15 @@ bool VulkanContext::InitDevice()
 	    	if (std::fread(cacheData, 1, cacheSize, f) != cacheSize)
 	    		cacheSize = 0;
 	    	std::fclose(f);
-    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+	    	try {
+	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+	    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
+	    	}
+	    	catch (const vk::SystemError& err) {
+	    		WARN_LOG(RENDERER, "Error loading pipeline cache: %s", err.what());
+	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
+	    	}
     		delete [] cacheData;
-    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
