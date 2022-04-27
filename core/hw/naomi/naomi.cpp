@@ -748,13 +748,34 @@ void naomi_Deserialize(Deserializer& deser)
 	}
 }
 
-static void initFFBMidiReceiver(u8 data)
+static void midiSend(u8 b1, u8 b2, u8 b3)
 {
+	aica_midiSend(b1);
+	aica_midiSend(b2);
+	aica_midiSend(b3);
+	aica_midiSend((b1 ^ b2 ^ b3) & 0x7f);
+}
+
+static void forceFeedbackMidiReceiver(u8 data)
+{
+	static float position = 8192.f;
+	static float torque;
+	position = std::min(16383.f, std::max(0.f, position + torque));
 	if (data & 0x80)
 		midiTxBufIndex = 0;
 	midiTxBuf[midiTxBufIndex] = data;
 	if (midiTxBufIndex == 3 && ((midiTxBuf[0] ^ midiTxBuf[1] ^ midiTxBuf[2]) & 0x7f) == midiTxBuf[3])
 	{
+		if (midiTxBuf[0] == 0x84)
+			torque = ((midiTxBuf[1] << 7) | midiTxBuf[2]) - 0x80;
+		else if (midiTxBuf[0] == 0xff)
+		{
+			torque = 0;
+			position = 8192;
+		}
+		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
+		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
+
 		// decoding from FFB Arcade Plugin (by Boomslangnz)
 		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
 		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
@@ -763,7 +784,7 @@ static void initFFBMidiReceiver(u8 data)
 	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
 }
 
-void initdFFBInit()
+void initMidiForceFeedback()
 {
-	aica_setMidiReceiver(initFFBMidiReceiver);
+	aica_setMidiReceiver(forceFeedbackMidiReceiver);
 }

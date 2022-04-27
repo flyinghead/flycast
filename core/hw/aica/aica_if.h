@@ -14,6 +14,7 @@ void aica_Init();
 void aica_Reset(bool hard);
 void aica_Term();
 void aica_setMidiReceiver(void (*handler)(u8 data));
+void aica_midiSend(u8 data);
 
 void aica_sb_Init();
 void aica_sb_Reset(bool hard);

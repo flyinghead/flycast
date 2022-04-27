@@ -18,6 +18,7 @@ InterruptInfo* MCIRE;
 InterruptInfo* SCIEB;
 InterruptInfo* SCIPD;
 InterruptInfo* SCIRE;
+std::deque<u8> midiSendBuffer;
 
 //Interrupts
 //arm side
@@ -234,6 +235,15 @@ void WriteAicaReg(u32 reg, T data)
 template void WriteAicaReg<>(u32 reg, u8 data);
 template void WriteAicaReg<>(u32 reg, u16 data);
 template void WriteAicaReg<>(u32 reg, u32 data);
+
+void aica_midiSend(u8 data)
+{
+	midiSendBuffer.push_back(data);
+	SCIPD->MIDI_IN = 1;
+	update_arm_interrupts();
+	MCIPD->MIDI_IN = 1;
+	UpdateSh4Ints();
+}
 
 //misc :p
 s32 libAICA_Init()

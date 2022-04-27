@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <deque>
 
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)
@@ -299,6 +300,7 @@ extern InterruptInfo* MCIRE;
 extern InterruptInfo* SCIEB;
 extern InterruptInfo* SCIPD;
 extern InterruptInfo* SCIRE;
+extern std::deque<u8> midiSendBuffer;
 
 extern CommonData_struct* CommonData;
 extern DSPData_struct*	  DSPData;

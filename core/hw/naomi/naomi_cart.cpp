@@ -587,12 +587,16 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 				|| gameId == "INITIAL D CYCRAFT")
 		{
 			card_reader::initialDCardReader.init();
-			initdFFBInit();
+			initMidiForceFeedback();
 		}
 		else if (gameId == "MAXIMUM SPEED")
 		{
 			maxSpeedNetPipe.init();
 			configure_maxspeed_flash(config::NetworkEnable, config::ActAsServer);
+		}
+		else if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
+		{
+			initMidiForceFeedback();
 		}
 	}
 	else

@@ -1338,10 +1338,23 @@ void ReadCommonReg(u32 reg,bool byte)
 	{
 	case 0x2808:
 	case 0x2809:
-		CommonData->MIEMP = 1;
-		CommonData->MOEMP = 1;
+		if (!midiSendBuffer.empty())
+		{
+			if (!byte || reg == 0x2808)
+			{
+				CommonData->MIBUF = midiSendBuffer.front();
+				midiSendBuffer.pop_front();
+			}
+			CommonData->MIEMP = 0;
+			CommonData->MIFUL = 1;
+		}
+		else
+		{
+			CommonData->MIEMP = 1;
+			CommonData->MIFUL = 0;
+		}
 		CommonData->MIOVF = 0;
-		CommonData->MIFUL = 0;
+		CommonData->MOEMP = 1;
 		CommonData->MOFUL = 0;
 		break;
 	case 0x2810: // EG, SGC, LP
@@ -1627,6 +1640,9 @@ void channel_serialize(Serializer& ser)
 	ser << beepCounter;
 	ser << cdda_sector;
 	ser << cdda_index;
+	ser << (u32)midiSendBuffer.size();
+	for (u8 b : midiSendBuffer)
+		ser << b;
 }
 
 void channel_deserialize(Deserializer& deser)
@@ -1760,5 +1776,17 @@ void channel_deserialize(Deserializer& deser)
 	{
 		deser.skip(4 * 64); 		// mxlr
 		deser.skip(4);			// samples_gen
+	}
+	midiSendBuffer.clear();
+	if (deser.version() >= Deserializer::V28)
+	{
+		u32 size;
+		deser >> size;
+		for (u32 i = 0; i < size; i++)
+		{
+			u8 b;
+			deser >> b;
+			midiSendBuffer.push_back(b);
+		}
 	}
 }
