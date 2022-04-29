@@ -1301,6 +1301,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 			|| config::RendererType == RenderType::DirectX11_OIT
 			|| config::RendererType == RenderType::Vulkan_OIT;
 	TA_context *childCtx = ctx;
+	int pass = 0;
 	while (childCtx != nullptr)
 	{
 		childCtx->MarkRend();
@@ -1320,7 +1321,6 @@ static bool ta_parse_vdrc(TA_context* ctx)
 		if (vd_ctx->rend.Overrun)
 			break;
 
-		int pass = vd_rc.render_passes.used();
 		bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
 				&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
 				&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
@@ -1347,6 +1347,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->z_clear = ClearZBeforePass(pass);
 		}
 		childCtx = childCtx->nextContext;
+		pass++;
 	}
 	rv = !empty_context;
 
@@ -1882,16 +1883,16 @@ int getTAContextAddresses(u32 *addresses)
 			break;
 		// Try the opaque pointer
 		u32 opbAddr = pvr_read32p<u32>(addr + 4);
-		if (opbAddr == 0xffffffff)
+		if (opbAddr & 0x80000000)
 		{
 			// Try the translucent pointer
 			opbAddr = pvr_read32p<u32>(addr + 12);
-			if (opbAddr == 0xffffffff)
+			if (opbAddr & 0x80000000)
 			{
 				// Try the punch-through pointer
 				if (tile_size >= 24)
 					opbAddr = pvr_read32p<u32>(addr + 20);
-				if (opbAddr == 0xffffffff)
+				if (opbAddr & 0x80000000)
 				{
 					INFO_LOG(PVR, "Can't find any non-null OPB for pass %d", count);
 					break;
