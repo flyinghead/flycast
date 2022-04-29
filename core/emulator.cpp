@@ -193,17 +193,8 @@ static void loadSpecialSettings()
 		}
 		if (prod_id == "T9512N"			// The Grinch (US)
 			|| prod_id == "T9503D"		// The Grinch (EU)
-			|| prod_id == "T0000M"		// Hell Gate FIXME
-			|| prod_id == "MK-51012"	// Metropolis Street Racer (US)
-			|| prod_id == "MK-5102250"	// Metropolis Street Racer (EU)
-			|| prod_id == "T-31101N"	// Psychic Force 2012 (US)
-			|| prod_id == "T1101M"		// Psychic Force 2012 (JP)
-			|| prod_id == "T-8106D-50"	// Psychic Force 2012 (EU)
 			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "MK-51146"	// Sega Smashpack vol.1 (Sega Swirl)
-			|| prod_id == "MK-51152"	// World Series Baseball 2K2
-			|| prod_id == "T20401M"		// Zero Gunner
 			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
