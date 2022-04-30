@@ -197,7 +197,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 				{ 0x3F400000, 0x43F00000, 0, 0x43F00000, 0 } },
 		// Resident Evil: Code Veronica (USA)
 		// Code 1-4 removes the black bars on top and bottom in FMV
-		{ "T1204N",     nullptr,    { 0x329E40, 0x3838D8, 0x3838F8, 0x383918, 0x383938 },
+		{ "T1204N",     "RESIDENT EVIL CODE VERONICA                                                                                                     ",
+				{ 0x329E40, 0x3838D8, 0x3838F8, 0x383918, 0x383938 },
 				{ 0x3F400000, 0x43F00000, 0, 0x43F00000, 0 } },
 		{ "T8107D  50", nullptr,    { 0x0464FC, 0x046210 }, { 0x3A888889, 0x44200000 } },	// Re-Volt (PAL) Code 1 is a render fix
 		{ "MK-5119250", nullptr,    { 0x0C5EB4 }, { 0x3A888889 } },		// Rez (PAL)
@@ -410,7 +411,8 @@ void CheatManager::reset(const std::string& gameId)
 				if (!strcmp(gameId.c_str(), widescreen_cheats[i].game_id)
 						&& (widescreen_cheats[i].area_or_version == nullptr
 								|| !strncmp(ip_meta.area_symbols, widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
-								|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+								|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))
+								|| !strncmp(ip_meta.software_name, widescreen_cheats[i].area_or_version, sizeof(ip_meta.software_name))))
 				{
 					widescreen_cheat = &widescreen_cheats[i];
 					NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
