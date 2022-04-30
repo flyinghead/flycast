@@ -1618,14 +1618,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						}
 						else
 						{
-							// specs:
-							//u16 x = mo_x_abs * 0xFFFF / 639;
-							//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
-							// Ninja Assault:
-							u32 xr = 0x19d - 0x37;
-							u32 yr = 0x1fe - 0x40;
-							x = mapleInputState[playerNum].absPos.x * xr / 639 + 0x37;
-							y = mapleInputState[playerNum].absPos.y * yr / 479 + 0x40;
+							x = mapleInputState[playerNum].absPos.x;
+							y = mapleInputState[playerNum].absPos.y;
 						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
