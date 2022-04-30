@@ -998,8 +998,10 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
+#endif
 
 	// On the first call, we start the emulator
 	if (first_run)
@@ -1030,8 +1032,10 @@ void retro_run()
 		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
+#endif
 
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
