@@ -129,7 +129,7 @@ VertexOut main(in VertexIn vin)
 		if (envMapping0 == 1)
 			computeEnvMap(vo.uv.xy, vnorm);
 	#endif
-	vo.index = (uint(polyNumber) << 18) + vin.vertexId;
+	vo.index = uint(polyNumber) + vin.vertexId;
 #endif
 
 	vo.pos = mul(projMat, vo.pos);

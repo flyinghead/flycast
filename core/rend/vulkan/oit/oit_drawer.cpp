@@ -78,8 +78,10 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	if (!poly.isNaomi2())
 	{
-		OITDescriptorSets::VtxPushConstants vtxPushConstants = {
-				listType == ListType_Translucent ? (int)(&poly - pvrrc.global_param_tr.head()) : 0
+		OITDescriptorSets::VtxPushConstants vtxPushConstants {};
+		if (listType == ListType_Translucent) {
+			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
+			vtxPushConstants.polyNumber = (int)((&poly - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx;
 		};
 		cmdBuffer.pushConstants<OITDescriptorSets::VtxPushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex,
 				sizeof(OITDescriptorSets::PushConstants), vtxPushConstants);

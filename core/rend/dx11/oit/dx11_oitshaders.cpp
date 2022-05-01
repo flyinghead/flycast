@@ -85,7 +85,7 @@ VertexOut main(in VertexIn vin)
 #endif
 	vo.uv = float4(vin.uv * vo.pos.z, 0.f, vo.pos.z);
 	vo.uv1 = vin.uv1 * vo.pos.z;
-	vo.index = (uint(polyNumber) << 18) + vin.vertexId;
+	vo.index = uint(polyNumber) + vin.vertexId;
 
 	vo.pos.w = 1.f;
 	vo.pos.z = 0.f;
@@ -212,7 +212,7 @@ uint getPolyIndex(in Pixel pixel)
 
 uint getPolyNumber(in Pixel pixel)
 {
-	return (pixel.seq_num & 0x3FFFFFFFu) >> 18;
+	return (pixel.seq_num & 0x3FFFFFFFu) >> 17;
 }
 
 #define SHADOW_STENCIL 0x40000000u

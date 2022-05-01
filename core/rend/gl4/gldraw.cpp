@@ -294,6 +294,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 {
 	PolyParam* params = &gply.head()[first];
 
+	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx.head()[gply.head()->first] : 0;
 	while (count-- > 0)
 	{
 		if (params->count > 2)
@@ -310,7 +311,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 				params++;
 				continue;
 			}
-			gl4ShaderUniforms.poly_number = params - gply.head();
+			gl4ShaderUniforms.poly_number = ((params - gply.head()) << 17) - firstVertexIdx;
 			SetGPState<Type, SortingEnabled, pass>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}

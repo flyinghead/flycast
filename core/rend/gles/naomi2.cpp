@@ -126,7 +126,7 @@ void main()
 	wDivide(vpos);
 
 #ifdef OIT_RENDER
-	vtx_index = (uint(pp_Number) << 18) + uint(gl_VertexID);
+	vtx_index = uint(pp_Number) + uint(gl_VertexID);
 #endif
 
 	gl_Position = vpos;

@@ -89,7 +89,7 @@ void main()
 	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
 	vtx_uv1 = in_uv1 * vpos.z;
-	vtx_index = (uint(pp_Number) << 18) + uint(gl_VertexID);
+	vtx_index = uint(pp_Number) + uint(gl_VertexID);
 #if pp_Gouraud == 1
 	vtx_base *= vpos.z;
 	vtx_offs *= vpos.z;

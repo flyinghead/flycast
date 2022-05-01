@@ -105,8 +105,12 @@ protected:
 		for (const PolyParam& pp : pvrrc.global_param_pt)
 			addUniform(pp, 0);
 		size_t trOffset = bufIdx;
-		for (const PolyParam& pp : pvrrc.global_param_tr)
-			addUniform(pp, &pp - pvrrc.global_param_tr.head());
+		if (pvrrc.global_param_tr.used() > 0)
+		{
+			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
+			for (const PolyParam& pp : pvrrc.global_param_tr)
+				addUniform(pp, ((&pp - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx);
+		}
 		size_t mvOffset = bufIdx;
 		for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo)
 		{

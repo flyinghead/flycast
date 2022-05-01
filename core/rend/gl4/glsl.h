@@ -73,7 +73,7 @@ struct PolyParam { \n\
  \n\
 #define getShadowEnable(pp) (((pp).tsp_isp_pcw & 1) != 0) \n\
  \n\
-#define getPolyNumber(pixel) (((pixel).seq_num & 0x3FFFFFFFu) >> 18) \n\
+#define getPolyNumber(pixel) (((pixel).seq_num & 0x3FFFFFFFu) >> 17) \n\
  \n\
 #define getPolyIndex(pixel) ((pixel).seq_num & 0x3FFFFFFFu) \n\
  \n\

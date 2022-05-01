@@ -315,6 +315,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		PolyParam* params = &gply.head()[first];
 
+		u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx.head()[gply.head()->first] : 0;
 		while (count-- > 0)
 		{
 			if (params->count > 2)
@@ -325,7 +326,7 @@ struct DX11OITRenderer : public DX11Renderer
 					params++;
 					continue;
 				}
-				setRenderState<Type, SortingEnabled, pass>(params, (int)(params - gply.head()));
+				setRenderState<Type, SortingEnabled, pass>(params, (int)((params - gply.head()) << 17) - firstVertexIdx);
 				deviceContext->DrawIndexed(params->count, params->first, 0);
 			}
 

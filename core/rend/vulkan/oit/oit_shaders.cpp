@@ -64,7 +64,7 @@ void main()
 	vtx_base1 *= vpos.z;
 	vtx_offs1 *= vpos.z;
 #endif
-	vtx_index = (uint(pushConstants.polyNumber) << 18) + uint(gl_VertexIndex);
+	vtx_index = uint(pushConstants.polyNumber) + uint(gl_VertexIndex);
 	vpos.w = 1.0;
 	vpos.z = 0.0;
 	gl_Position = vpos;
@@ -766,7 +766,7 @@ void main()
 
 	vpos = n2Uniform.projMat * vpos;
 	wDivide(vpos);
-	vtx_index = (uint(n2Uniform.polyNumber) << 18) + uint(gl_VertexIndex);
+	vtx_index = uint(n2Uniform.polyNumber) + uint(gl_VertexIndex);
 
 	gl_Position = vpos;
 }
