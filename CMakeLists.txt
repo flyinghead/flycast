@@ -1392,7 +1392,6 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
-			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 
@@ -1400,7 +1399,6 @@ if(NOT LIBRETRO)
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
-				${MULTITOUCH_SUPPORT_LIBRARY}
 				${OPENGL_LIBRARY}
 				${IOSURFACE_LIBRARY})
 
