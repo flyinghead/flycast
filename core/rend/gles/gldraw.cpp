@@ -739,6 +739,8 @@ bool render_output_framebuffer()
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
 		drawQuad(gl.ofbo.tex, config::Rotate90);
 	}
 	else
@@ -752,7 +754,7 @@ bool render_output_framebuffer()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
 				sx, 0, settings.display.width - sx, settings.display.height,
-				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}

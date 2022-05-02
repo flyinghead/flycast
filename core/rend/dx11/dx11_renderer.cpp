@@ -705,7 +705,7 @@ void DX11Renderer::renderFramebuffer()
 	y = y * 2.f / outheight - 1.f;
 	h *= 2.f / outheight;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
-	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, x, y, w, h, config::Rotate90);
+	quad->draw(fbTextureView, samplers->getSampler(config::TextureFiltering != 1), nullptr, x, y, w, h, config::Rotate90);
 #endif
 }
 

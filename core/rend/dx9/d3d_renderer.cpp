@@ -1168,7 +1168,8 @@ void D3DRenderer::renderFramebuffer()
 			rs.left = fx;
 			rs.right = width - fx;
 		}
-		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd, D3DTEXF_LINEAR);	// This can fail if window is minimized
+		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd,
+				config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);	// This can fail if window is minimized
 	}
 	else
 	{
@@ -1178,8 +1179,8 @@ void D3DRenderer::renderFramebuffer()
 		device->SetRenderState(D3DRS_ZENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))

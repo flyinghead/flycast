@@ -859,9 +859,9 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
-		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 	else
-		quadDrawer->Draw(commandBuffer, imageView, vtx);
+		quadDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 }
 
 void VulkanContext::WaitIdle() const
