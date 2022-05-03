@@ -1243,6 +1243,7 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 	vp.MinDepth = 0.f;
 	vp.MaxDepth = 1.f;
 	deviceContext->RSSetViewports(1, &vp);
+	setRTTSize(fbw2, fbh2);
 }
 
 void DX11Renderer::readRttRenderTarget(u32 texAddress)

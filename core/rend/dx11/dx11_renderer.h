@@ -95,6 +95,7 @@ protected:
 	void readRttRenderTarget(u32 texAddress);
 	void renderFramebuffer();
 	void setCullMode(int mode);
+	virtual void setRTTSize(int width, int height) {}
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
