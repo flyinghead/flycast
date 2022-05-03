@@ -243,10 +243,10 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			{ vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
 			{ vk::DescriptorType::eUniformBuffer, 80000 },
-			{ vk::DescriptorType::eStorageBuffer, 36 },
+			{ vk::DescriptorType::eStorageBuffer, 50 },
 			{ vk::DescriptorType::eUniformBufferDynamic, 2 },
 			{ vk::DescriptorType::eStorageBufferDynamic, 2 },
-			{ vk::DescriptorType::eInputAttachment, 36 }
+			{ vk::DescriptorType::eInputAttachment, 50 }
 	};
 	descriptorPool = device.createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
 			40000, ARRAY_SIZE(pool_sizes), pool_sizes));
