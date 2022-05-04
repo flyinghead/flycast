@@ -398,7 +398,7 @@ void CheatManager::reset(const std::string& gameId)
 		if (gameId == "VF4 FINAL TUNED JAPAN")
 		{
 			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9);
+			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x0007f486, 0xe001); // mov #1, r0
 			cheats.back().builtIn = true;
 		}
 	}
@@ -537,9 +537,9 @@ void CheatManager::apply()
 				u32 address = cheat.address;
 				for (u32 repeat = 0; repeat < cheat.repeatCount; repeat++)
 				{
+					u32 curVal = readRam(address, cheat.size);
 					if (cheat.size < 8)
 					{
-						u8 curVal = readRam(address, 8);
 						for (int i = 0; i < 8; i++)
 						{
 							int bitmask = 1 << i;
@@ -548,7 +548,8 @@ void CheatManager::apply()
 								valueToSet = (valueToSet & ~bitmask) | (curVal & bitmask);
 						}
 					}
-					writeRam(address, valueToSet, cheat.size);
+					if (curVal != valueToSet)
+						writeRam(address, valueToSet, cheat.size);
 					address += cheat.repeatAddressIncrement * cheat.size / 8;
 					valueToSet += cheat.repeatValueIncrement;
 				}
