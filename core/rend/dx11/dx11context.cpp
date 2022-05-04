@@ -70,7 +70,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	    nullptr, // Specify nullptr to use the default adapter.
 	    D3D_DRIVER_TYPE_HARDWARE,
 	    nullptr,
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG,
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG,
 	    featureLevels,
 	    ARRAYSIZE(featureLevels),
 	    D3D11_SDK_VERSION,
