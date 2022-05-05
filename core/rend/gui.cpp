@@ -1642,6 +1642,9 @@ static void gui_display_settings()
 		    	}
 		    }
 	    	ImGui::Spacing();
+            ImGuiStyle& style = ImGui::GetStyle();
+            float innerSpacing = style.ItemInnerSpacing.x;
+
 		    header("Rendering Options");
 		    {
 		    	ImGui::Text("Automatic Frame Skipping:");
@@ -1684,8 +1687,6 @@ static void gui_display_settings()
 	            		afSelected = i;
 	            }
 
-                ImGuiStyle& style = ImGui::GetStyle();
-                float innerSpacing = style.ItemInnerSpacing.x;
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
                 if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
                 {
@@ -1842,6 +1843,57 @@ static void gui_display_settings()
 		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");
 		    }
+			if (perPixel)
+			{
+				ImGui::Spacing();
+				header("Per Pixel Settings");
+
+				const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
+				const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+				u32 selected = 0;
+				for (; selected < bufSizes.size(); selected++)
+					if (bufSizes[selected] == config::PixelBufferSize)
+						break;
+				if (selected == bufSizes.size())
+					selected = 0;
+				if (ImGui::BeginCombo("##PixelBuffer", bufSizesText[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+				{
+					for (u32 i = 0; i < bufSizes.size(); i++)
+					{
+						bool is_selected = i == selected;
+						if (ImGui::Selectable(bufSizesText[i].c_str(), is_selected))
+							config::PixelBufferSize = bufSizes[i];
+						if (is_selected) {
+							ImGui::SetItemDefaultFocus();
+							selected = i;
+						}
+					}
+					ImGui::EndCombo();
+				}
+                ImGui::PopItemWidth();
+				ImGui::SameLine(0, innerSpacing);
+
+				if (ImGui::ArrowButton("##Decrease BufSize", ImGuiDir_Left))
+				{
+					if (selected > 0)
+						config::PixelBufferSize = bufSizes[selected - 1];
+				}
+				ImGui::SameLine(0, innerSpacing);
+				if (ImGui::ArrowButton("##Increase BufSize", ImGuiDir_Right))
+				{
+					if (selected < bufSizes.size() - 1)
+						config::PixelBufferSize = bufSizes[selected + 1];
+				}
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Pixel Buffer Size");
+                ImGui::SameLine();
+                ShowHelpMarker("The size of the pixel buffer. May need to be increased when upscaling by a large factor.");
+
+                OptionSlider("Maximum Layers", config::PerPixelLayers, 8, 128,
+                		"Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.");
+			}
 	    	ImGui::Spacing();
 		    header("Render to Texture");
 		    {

@@ -88,7 +88,8 @@ Option<bool> ThreadedRendering(CORE_OPTION_NAME "_threaded_rendering", true);
 Option<int> AnisotropicFiltering(CORE_OPTION_NAME "_anisotropic_filtering");
 Option<int> TextureFiltering(CORE_OPTION_NAME "_texture_filtering");
 Option<bool> PowerVR2Filter(CORE_OPTION_NAME "_pvr2_filtering");
-Option<u64> PixelBufferSize("", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("", 512 * 1024 * 1024);
+IntOption PerPixelLayers(CORE_OPTION_NAME "_oit_layers");
 
 // Misc
 

@@ -477,6 +477,8 @@ static bool set_variable_visibility(void)
 		option_display.visible = oitEnabled;
 		option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_oit_layers";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		updated = true;
 	}
 #endif
@@ -728,27 +730,27 @@ static void update_variables(bool first_startup)
 		rend_resize_renderer();
 	}
 
-	if (first_startup)
-	{
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-		var.key = CORE_OPTION_NAME "_oit_abuffer_size";
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-		{
-			if (!strcmp(var.value, "512MB"))
-				config::PixelBufferSize = 0x20000000u;
-			else if (!strcmp(var.value, "1GB"))
-				config::PixelBufferSize = 0x40000000u;
-			else if (!strcmp(var.value, "2GB"))
-				config::PixelBufferSize = 0x7ff00000u;
-			else if (!strcmp(var.value, "4GB"))
-				config::PixelBufferSize = 0xFFFFFFFFu;
-			else
-				config::PixelBufferSize = 0x20000000u;
-		}
+	var.key = CORE_OPTION_NAME "_oit_abuffer_size";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		if (!strcmp(var.value, "512MB"))
+			config::PixelBufferSize = 0x20000000u;
+		else if (!strcmp(var.value, "1GB"))
+			config::PixelBufferSize = 0x40000000u;
+		else if (!strcmp(var.value, "2GB"))
+			config::PixelBufferSize = 0x7ff00000u;
+		else if (!strcmp(var.value, "4GB"))
+			config::PixelBufferSize = 0xFFFFFFFFu;
 		else
 			config::PixelBufferSize = 0x20000000u;
+	}
+	else
+		config::PixelBufferSize = 0x20000000u;
 #endif
 
+	if (first_startup)
+	{
 		if (config::ThreadedRendering)
 		{
 			bool save_state_in_background = true ;

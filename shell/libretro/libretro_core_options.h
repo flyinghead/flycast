@@ -339,7 +339,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
-      "Accumulation Pixel Buffer Size (Restart Required)",
+      "Accumulation Pixel Buffer Size",
       NULL,
       "Higher values might be required for higher resolutions to output correctly.",
       NULL,
@@ -352,6 +352,23 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      "Maximum Transparent Layers",
+      NULL,
+      "Higher values might be required for complex scenes.",
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
    },
 #endif
    {/* TODO: needs explanation */

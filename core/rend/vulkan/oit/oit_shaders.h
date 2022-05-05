@@ -21,6 +21,7 @@
 #pragma once
 #include "../vulkan.h"
 #include "../utils.h"
+#include "cfg/option.h"
 
 enum class Pass { Depth, Color, OIT };
 
@@ -84,15 +85,28 @@ public:
 	}
 	vk::ShaderModule GetTrModVolShader(ModVolMode mode)
 	{
-		if (trModVolShaders.empty() || !trModVolShaders[(size_t)mode])
+		if (trModVolShaders.empty() || !trModVolShaders[(size_t)mode] || maxLayers != config::PerPixelLayers)
+		{
+			if (maxLayers != config::PerPixelLayers)
+			{
+				trModVolShaders.clear();
+				finalFragmentShader.reset();
+			}
 			compileTrModVolFragmentShader(mode);
+			maxLayers = config::PerPixelLayers;
+		}
 		return *trModVolShaders[(size_t)mode];
 	}
 
 	vk::ShaderModule GetFinalShader()
 	{
-		if (!finalFragmentShader)
+		if (!finalFragmentShader || maxLayers != config::PerPixelLayers)
+		{
+			if (maxLayers != config::PerPixelLayers)
+				trModVolShaders.clear();
 			finalFragmentShader = compileFinalShader();
+			maxLayers = config::PerPixelLayers;
+		}
 		return *finalFragmentShader;
 	}
 	vk::ShaderModule GetFinalVertexShader()
@@ -137,5 +151,6 @@ private:
 	vk::UniqueShaderModule finalVertexShader;
 	vk::UniqueShaderModule finalFragmentShader;
 	vk::UniqueShaderModule clearShader;
+	int maxLayers = 0;
 };
 

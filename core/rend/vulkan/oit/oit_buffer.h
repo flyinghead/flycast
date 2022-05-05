@@ -38,7 +38,8 @@ public:
 
 		if (!pixelBuffer)
 		{
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(config::PixelBufferSize, context->GetMaxMemoryAllocationSize()),
+			pixelBufferSize = config::PixelBufferSize;
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)
@@ -73,6 +74,12 @@ public:
 	void OnNewFrame(vk::CommandBuffer commandBuffer)
 	{
 		firstFrameAfterInit = false;
+		if (pixelBufferSize != config::PixelBufferSize)
+		{
+			pixelBufferSize = config::PixelBufferSize;
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, VulkanContext::Instance()->GetMaxMemoryAllocationSize()),
+					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
+		}
 	}
 
 	void ResetPixelCounter(vk::CommandBuffer commandBuffer)
@@ -99,4 +106,5 @@ private:
 	bool firstFrameAfterInit = false;
 	int maxWidth = 0;
 	int maxHeight = 0;
+	int64_t pixelBufferSize = 0;
 };

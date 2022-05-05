@@ -82,6 +82,13 @@ s32 cfgLoadInt(const std::string& section, const std::string& key, s32 def)
 	return cfgdb.get_int(section, key, def);
 }
 
+int64_t cfgLoadInt64(const std::string& section, const std::string& key, int64_t def) {
+	return cfgdb.get_int64(section, key, def);
+}
+void cfgSaveInt64(const std::string& section, const std::string& key, int64_t value) {
+	cfgdb.set_int64(section, key, value);
+}
+
 void  cfgSaveBool(const std::string& section, const std::string& key, bool value)
 {
 	cfgSaveStr(section, key, value ? "yes" : "no");

@@ -80,6 +80,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		shaders.init(device, theDX11Context.getCompiler());
 		buffers.init(device, deviceContext);
+		pixelBufferSize = config::PixelBufferSize;
 		ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
 		mainInputLayout.reset();
 		success = SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get())) && success;
@@ -617,6 +618,12 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
+		if (pixelBufferSize != config::PixelBufferSize)
+		{
+			buffers.init(device, deviceContext);
+			pixelBufferSize = config::PixelBufferSize;
+		}
+
 		// Make sure to unbind the framebuffer view before setting it as render target
 		ID3D11ShaderResourceView *p = nullptr;
 	    deviceContext->PSSetShaderResources(0, 1, &p);
@@ -691,6 +698,7 @@ private:
 	ComPtr<ID3D11InputLayout> mainInputLayout; // FIXME
 	ComPtr<ID3D11InputLayout> finalInputLayout;
 	ComPtr<ID3D11Buffer> vtxPolyConstants;
+	int64_t pixelBufferSize = 0;
 };
 
 Renderer *rend_OITDirectX11()

@@ -77,6 +77,7 @@ private:
 	ComPtr<ID3D11PixelShader> clearShader;
 	ComPtr<ID3D11VertexShader> finalVertexShader;
 	pD3DCompile D3DCompile = nullptr;
+	int maxLayers = 0;
 
 	constexpr static const char *CacheFile = "dx11oit_shader_cache.bin";
 };

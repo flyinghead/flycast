@@ -11,6 +11,7 @@ struct ConfigEntry {
 	const std::string& get_string() const;
 	int get_int();
 	bool get_bool();
+	int64_t get_int64();
 };
 
 struct ConfigSection {
@@ -41,10 +42,12 @@ struct ConfigFile {
 		/* getting values */
 		std::string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");
 		int get_int(const std::string& section_name, const std::string& entry_name, int default_value = 0);
+		int64_t get_int64(const std::string& section_name, const std::string& entry_name, int64_t default_value = 0);
 		bool get_bool(const std::string& section_name, const std::string& entry_name, bool default_value = false);
 		/* setting values */
 		void set(const std::string& section_name, const std::string& entry_name, const std::string& value, bool is_virtual = false);
 		void set_int(const std::string& section_name, const std::string& entry_name, int value, bool is_virtual = false);
+		void set_int64(const std::string& section_name, const std::string& entry_name, int64_t value, bool is_virtual = false);
 		void set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual = false);
 
 		void delete_section(const std::string& section_name);

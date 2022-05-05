@@ -587,8 +587,6 @@ float modifierVolume(in MVPixel inpix) : SV_Depth
 }
 )";
 
-const char *MAX_PIXELS_PER_FRAGMENT = "32";
-
 static const char OITFinalShaderSource[] = R"(
 #include "oit_header.hlsl"
 
@@ -984,11 +982,19 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader()
 {
+	if (maxLayers != config::PerPixelLayers)
+	{
+		finalShader.reset();
+		for (auto& shader : trModVolShaders)
+			shader.reset();
+		maxLayers = config::PerPixelLayers;
+	}
 	if (!finalShader)
 	{
+		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
-			{ "MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT },
+			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
 			{ }
 		};
 		finalShader = compilePS(OITFinalShaderSource, "main", macros);
@@ -1006,13 +1012,21 @@ const ComPtr<ID3D11VertexShader>& DX11OITShaders::getFinalVertexShader()
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 {
+	if (maxLayers != config::PerPixelLayers)
+	{
+		finalShader.reset();
+		for (auto& shader : trModVolShaders)
+			shader.reset();
+		maxLayers = config::PerPixelLayers;
+	}
 	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type];
 	if (!shader)
 	{
+		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MV_MODE", MacroValues[type] },
-			{ "MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT },
+			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
 			{ }
 		};
 		shader = compilePS(OITTranslucentModvolShaderSource, "main", macros);

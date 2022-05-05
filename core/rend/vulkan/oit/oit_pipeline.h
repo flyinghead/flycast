@@ -362,8 +362,11 @@ public:
 	}
 	vk::Pipeline GetFinalPipeline()
 	{
-		if (!finalPipeline)
+		if (!finalPipeline || maxLayers != config::PerPixelLayers)
+		{
 			CreateFinalPipeline();
+			maxLayers = config::PerPixelLayers;
+		}
 		return *finalPipeline;
 	}
 	vk::Pipeline GetClearPipeline()
@@ -455,6 +458,7 @@ private:
 	vk::UniqueDescriptorSetLayout colorInputLayout;
 	vk::UniqueDescriptorSetLayout perPolyLayout;
 	RenderPasses ownRenderPasses;
+	int maxLayers = 0;
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }

@@ -21,6 +21,7 @@
 #include "oit_shaders.h"
 #include "../compiler.h"
 #include "rend/gl4/glsl.h"
+#include "cfg/option.h"
 
 static const char OITVertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
@@ -445,8 +446,6 @@ void main()
 }
 )";
 
-constexpr int MAX_PIXELS_PER_FRAGMENT = 32;
-
 static const char OITFinalShaderSource[] = R"(
 layout (input_attachment_index = 0, set = 2, binding = 0) uniform subpassInput tex;
 
@@ -818,7 +817,7 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 vk::UniqueShaderModule OITShaderManager::compileFinalShader()
 {
 	VulkanSource src;
-	src.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
 		.addSource(OITShaderHeader)
 		.addSource(OITFinalShaderSource);
 
@@ -858,7 +857,7 @@ void OITShaderManager::compileTrModVolFragmentShader(ModVolMode mode)
 	if (trModVolShaders.empty())
 		trModVolShaders.resize((size_t)ModVolMode::Final);
 	VulkanSource src;
-	src.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
 		.addConstant("MV_MODE", (int)mode)
 		.addSource(OITShaderHeader)
 		.addSource(OITTranslucentModvolShaderSource);

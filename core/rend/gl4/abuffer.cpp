@@ -25,11 +25,11 @@ static GLuint atomic_buffer;
 static gl4PipelineShader g_abuffer_final_shader;
 static gl4PipelineShader g_abuffer_clear_shader;
 static gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
+static int maxLayers;
+static int64_t pixelBufferSize;
 static std::unique_ptr<GlBuffer> g_quadBuffer;
 static std::unique_ptr<GlBuffer> g_quadIndexBuffer;
 static GLuint g_quadVertexArray;
-
-constexpr int MAX_PIXELS_PER_FRAGMENT = 32;
 
 static const char *final_shader_source = R"(
 layout(binding = 0) uniform sampler2D tex;
@@ -253,6 +253,66 @@ void main()
 
 static void abufferDrawQuad();
 
+static void compileFinalAndModVolShaders()
+{
+	if (maxLayers != config::PerPixelLayers)
+	{
+		maxLayers = config::PerPixelLayers;
+		glcache.DeleteProgram(g_abuffer_final_shader.program);
+		g_abuffer_final_shader.program = 0;
+		for (int mode = 0; mode < ModeCount; mode++)
+		{
+			glcache.DeleteProgram(g_abuffer_tr_modvol_shaders[mode].program);
+			g_abuffer_tr_modvol_shaders[mode].program = 0;
+		}
+	}
+	if (g_abuffer_final_shader.program == 0)
+	{
+		OpenGl4Source vertexShader;
+		vertexShader.addSource(VertexShaderSource);
+		OpenGl4Source finalShader;
+		finalShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+				.addSource(ShaderHeader)
+				.addSource(final_shader_source);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, finalShader.generate().c_str(), vertexShader.generate().c_str());
+	}
+	if (g_abuffer_tr_modvol_shaders[0].program == 0)
+	{
+		OpenGl4Source modVolShader;
+		modVolShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+			.addSource(ShaderHeader)
+			.addSource(tr_modvol_shader_source);
+		for (int mode = 0; mode < ModeCount; mode++)
+		{
+			modVolShader.setConstant("MV_MODE", mode);
+			g_abuffer_tr_modvol_shaders[mode].pp_Gouraud = false;
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], modVolShader.generate().c_str(), nullptr);
+		}
+	}
+}
+
+static void makePixelBuffer()
+{
+	if (pixels_buffer == 0 || pixelBufferSize != config::PixelBufferSize)
+	{
+		// get the max buffer size
+		GLint64 maxSize;
+		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxSize);
+		pixelBufferSize = config::PixelBufferSize;
+		GLsizeiptr pixel_buffer_size = std::min<int64_t>(pixelBufferSize, maxSize);
+
+		// Create the buffer
+		if (pixels_buffer == 0)
+			glGenBuffers(1, &pixels_buffer);
+		// Bind it
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
+		// Declare storage
+		glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
+		glCheck();
+	}
+}
+
 void initABuffer()
 {
 	if (max_image_width > 0 && max_image_height > 0)
@@ -268,22 +328,7 @@ void initABuffer()
 		glCheck();
 	}
 
-	if (pixels_buffer == 0 )
-	{
-		// get the max buffer size
-		GLint64 size;
-		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
-		GLsizeiptr pixel_buffer_size = std::min<GLsizeiptr>((u64)config::PixelBufferSize, size);
-
-		// Create the buffer
-		glGenBuffers(1, &pixels_buffer);
-		// Bind it
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
-		// Declare storage
-		glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
-		glCheck();
-	}
+	makePixelBuffer();
 
 	if (atomic_buffer == 0 )
 	{
@@ -299,35 +344,15 @@ void initABuffer()
 		glCheck();
 	}
 
-	OpenGl4Source vertexShader;
-	vertexShader.addSource(VertexShaderSource);
-	if (g_abuffer_final_shader.program == 0)
-	{
-		OpenGl4Source finalShader;
-		finalShader.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
-				.addSource(ShaderHeader)
-				.addSource(final_shader_source);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, finalShader.generate().c_str(), vertexShader.generate().c_str());
-	}
+	compileFinalAndModVolShaders();
 	if (g_abuffer_clear_shader.program == 0)
 	{
+		OpenGl4Source vertexShader;
+		vertexShader.addSource(VertexShaderSource);
 		OpenGl4Source clearShader;
 		clearShader.addSource(ShaderHeader)
 				.addSource(clear_shader_source);
 		gl4CompilePipelineShader(&g_abuffer_clear_shader, clearShader.generate().c_str(), vertexShader.generate().c_str());
-	}
-	if (g_abuffer_tr_modvol_shaders[0].program == 0)
-	{
-		OpenGl4Source modVolShader;
-		modVolShader.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
-			.addSource(ShaderHeader)
-			.addSource(tr_modvol_shader_source);
-		for (int mode = 0; mode < ModeCount; mode++)
-		{
-			modVolShader.setConstant("MV_MODE", mode);
-			g_abuffer_tr_modvol_shaders[mode].pp_Gouraud = false;
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], modVolShader.generate().c_str(), nullptr);
-		}
 	}
 	if (g_quadBuffer == nullptr)
 	{
@@ -404,6 +429,7 @@ void termABuffer()
 		glcache.DeleteProgram(g_abuffer_tr_modvol_shaders[mode].program);
 		g_abuffer_tr_modvol_shaders[mode].program = 0;
 	}
+	maxLayers = 0;
 }
 
 void reshapeABuffer(int w, int h)
@@ -430,6 +456,7 @@ void DrawTranslucentModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
+	compileFinalAndModVolShaders();
 	glBindVertexArray(gl4.vbo.getModVolVAO());
 	gl4.vbo.getModVolBuffer()->bind();
 
@@ -528,6 +555,7 @@ void checkOverflowAndReset()
 void renderABuffer()
 {
 	// Render to output FBO
+	compileFinalAndModVolShaders();
 	glcache.UseProgram(g_abuffer_final_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
 
@@ -540,5 +568,6 @@ void renderABuffer()
 
 	glActiveTexture(GL_TEXTURE0);
 
+	makePixelBuffer();
 	glCheck();
 }
