@@ -120,6 +120,7 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
+static bool autoSkipFrameEnabled = false;
 #ifndef TARGET_NO_OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
@@ -164,6 +165,10 @@ static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
 
+float libretro_expected_audio_samples_per_run;
+unsigned libretro_vsync_swap_interval = 1;
+bool libretro_detect_vsync_swap_interval = false;
+
 static retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb;
 
@@ -172,8 +177,8 @@ static retro_log_printf_t         log_cb;
 static retro_video_refresh_t      video_cb;
 static retro_input_poll_t         poll_cb;
 static retro_input_state_t        input_cb;
-retro_audio_sample_batch_t audio_batch_cb;
-static retro_environment_t        environ_cb;
+retro_audio_sample_batch_t        audio_batch_cb;
+retro_environment_t               environ_cb;
 
 static retro_rumble_interface rumble;
 
@@ -357,11 +362,14 @@ void retro_deinit()
 	platformIsArcade = false;
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
+	autoSkipFrameEnabled = false;
 #ifndef TARGET_NO_OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
 	lightgunSettingsShown = true;
+	libretro_vsync_swap_interval = 1;
+	libretro_detect_vsync_swap_interval = false;
 	LogManager::Shutdown();
 
 	retro_audio_deinit();
@@ -500,6 +508,24 @@ static bool set_variable_visibility(void)
 	}
 #endif
 
+	// Only if automatic frame skipping is disabled
+	bool autoSkipFrameWasEnabled = autoSkipFrameEnabled;
+
+	autoSkipFrameEnabled = false;
+	var.key = CORE_OPTION_NAME "_auto_skip_frame";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "disabled"))
+		autoSkipFrameEnabled = true;
+
+	if (first_run ||
+		 (autoSkipFrameEnabled != autoSkipFrameWasEnabled) ||
+		 (threadedRenderingEnabled != threadedRenderingWasEnabled))
+	{
+		option_display.visible = (!autoSkipFrameEnabled || !threadedRenderingEnabled);
+		option_display.key = CORE_OPTION_NAME "_detect_vsync_swap_interval";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+
 	// If categories are supported, no further action is required
 	if (categoriesSupported)
 		return updated;
@@ -596,11 +622,16 @@ static void setGameGeometry(retro_game_geometry& geometry)
 	geometry.base_height = 480;
 }
 
-static void setAVInfo(retro_system_av_info& avinfo)
+void setAVInfo(retro_system_av_info& avinfo)
 {
+	double sample_rate = 44100.0;
+	double fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+
 	setGameGeometry(avinfo.geometry);
-	avinfo.timing.sample_rate = 44100.0;
-	avinfo.timing.fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+	avinfo.timing.sample_rate = sample_rate;
+	avinfo.timing.fps = fps / (double)libretro_vsync_swap_interval;
+
+	libretro_expected_audio_samples_per_run = sample_rate / fps;
 }
 
 static void setRotation()
@@ -628,6 +659,7 @@ static void update_variables(bool first_startup)
 	int prevMaxFramebufferHeight = maxFramebufferHeight;
 	int prevMaxFramebufferWidth = maxFramebufferWidth;
 	bool prevRotateScreen = rotate_screen;
+	bool prevDetectVsyncSwapInterval = libretro_detect_vsync_swap_interval;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -748,6 +780,22 @@ static void update_variables(bool first_startup)
 	else
 		config::PixelBufferSize = 0x20000000u;
 #endif
+
+	if ((config::AutoSkipFrame != 0) && config::ThreadedRendering)
+		libretro_detect_vsync_swap_interval = false;
+	else
+	{
+		var.key = CORE_OPTION_NAME "_detect_vsync_swap_interval";
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (!strcmp(var.value, "enabled"))
+				libretro_detect_vsync_swap_interval = true;
+			else if (!strcmp(var.value, "disabled"))
+				libretro_detect_vsync_swap_interval = false;
+		}
+		else
+			libretro_detect_vsync_swap_interval = false;
+	}
 
 	if (first_startup)
 	{
@@ -972,6 +1020,16 @@ static void update_variables(bool first_startup)
 		if (rotate_game)
 			config::Widescreen.override(false);
 		setFramebufferSize();
+
+		bool avInfoChanged = false;
+		if ((libretro_detect_vsync_swap_interval != prevDetectVsyncSwapInterval) &&
+			 !libretro_detect_vsync_swap_interval &&
+			 (libretro_vsync_swap_interval != 1))
+		{
+			libretro_vsync_swap_interval = 1;
+			avInfoChanged = true;
+		}
+
 		if ((prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
 				// TODO crash with dx11
 				&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
@@ -980,6 +1038,7 @@ static void update_variables(bool first_startup)
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 			rend_resize_renderer();
+			avInfoChanged = false;
 		}
 		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
 		{
@@ -987,6 +1046,13 @@ static void update_variables(bool first_startup)
 			setGameGeometry(geometry);
 			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 			rend_resize_renderer();
+		}
+
+		if (avInfoChanged)
+		{
+			retro_system_av_info avinfo;
+			setAVInfo(avinfo);
+			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 		}
 	}
 }
