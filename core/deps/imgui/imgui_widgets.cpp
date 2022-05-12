@@ -645,10 +645,16 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
 					if (delta.x != 0.f || delta.y != 0.f)
 					{
 						ClearActiveID();
+						// Find an ancestor window that allows drag scrolling.
 						ImGuiWindow *scrollableWindow = window;
-						while ((scrollableWindow->Flags & ImGuiWindowFlags_ChildWindow) && scrollableWindow->ScrollMax.x == 0.0f && scrollableWindow->ScrollMax.y == 0.0f)
+						while (scrollableWindow != nullptr
+								&& (scrollableWindow->Flags & ImGuiWindowFlags_ChildWindow)
+								&& !(scrollableWindow->Flags & ImGuiWindowFlags_DragScrolling)
+								&& scrollableWindow->ScrollMax.x == 0.0f
+								&& scrollableWindow->ScrollMax.y == 0.0f)
 							scrollableWindow = scrollableWindow->ParentWindow;
-						scrollableWindow->DragScrolling = true;
+						if (scrollableWindow != nullptr && (scrollableWindow->Flags & ImGuiWindowFlags_DragScrolling))
+							scrollableWindow->DragScrolling = true;
 						held = false;
 						pressed = false;
 					}
@@ -1706,8 +1712,6 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             SetItemDefaultFocus();
         PopID();
     }
-    // no drag scrolling on combo popup
-	GetCurrentWindow()->DragScrolling = false;
 
     EndCombo();
     return value_changed;

@@ -141,7 +141,7 @@ public:
 		if (ctx->rend.isRenderFramebuffer)
 			result = RenderFramebuffer(ctx);
 		else
-			result = ta_parse_vdrc(ctx);
+			result = ta_parse(ctx);
 
 		if (result)
 		{
@@ -256,7 +256,8 @@ protected:
 		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
 		curTexture->SetCommandBuffer(nullptr);
 
-		Vertex *vtx = ctx->rend.verts.Append(4);
+		// Use background poly vtx and param
+		Vertex *vtx = ctx->rend.verts.head();
 		vtx[0].x = 0.f;
 		vtx[0].y = 0.f;
 		vtx[0].z = 0.1f;
@@ -278,13 +279,13 @@ protected:
 		vtx[3].v = 1.f;
 
 		u32 *idx = ctx->rend.idx.Append(4);
-		idx[0] = ctx->rend.verts.used() - 4;
-		idx[1] = idx[0] + 1;
-		idx[2] = idx[1] + 1;
-		idx[3] = idx[2] + 1;
+		idx[0] = 0;
+		idx[1] = 1;
+		idx[2] = 2;
+		idx[3] = 3;
 
-		PolyParam *pp = ctx->rend.global_param_op.Append(1);
-		pp->first = ctx->rend.idx.used() - 4;
+		PolyParam *pp = ctx->rend.global_param_op.head();
+		pp->first = 0;
 		pp->count = 4;
 
 		pp->isp.full = 0;
@@ -312,7 +313,7 @@ protected:
 		pass->autosort = false;
 		pass->mvo_count = 0;
 		pass->mvo_tr_count = 0;
-		pass->op_count = ctx->rend.global_param_op.used();
+		pass->op_count = 1;
 		pass->pt_count = 0;
 		pass->tr_count = 0;
 

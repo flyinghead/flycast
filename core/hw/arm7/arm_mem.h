@@ -2,54 +2,52 @@
 #include "types.h"
 #include "hw/aica/aica_if.h"
 
-template <u32 sz,class T>
-T arm_ReadReg(u32 addr);
-template <u32 sz,class T>
-void arm_WriteReg(u32 addr,T data);
+template <typename T> T arm_ReadReg(u32 addr);
+template <typename T> void arm_WriteReg(u32 addr, T data);
 
-template<int sz,typename T>
+template<typename T>
 static inline T DYNACALL ReadMemArm(u32 addr)
 {
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
+	addr &= 0x00FFFFFF;
+	if (addr < 0x800000)
 	{
-		T rv=*(T*)&aica_ram[addr&(ARAM_MASK-(sz-1))];
+		T rv = *(T *)&aica_ram[addr & (ARAM_MASK - (sizeof(T) - 1))];
 		
-		if (unlikely(sz==4 && addr&3))
+		if (unlikely(sizeof(T) == 4 && (addr & 3) != 0))
 		{
-			u32 sf=(addr&3)*8;
-			return (rv>>sf) | (rv<<(32-sf));
+			u32 sf = (addr & 3) * 8;
+			return (rv >> sf) | (rv << (32 - sf));
 		}
 		else
 			return rv;
 	}
 	else
 	{
-		return arm_ReadReg<sz,T>(addr);
+		return arm_ReadReg<T>(addr);
 	}
 }
 
-template<int sz,typename T>
-static inline void DYNACALL WriteMemArm(u32 addr,T data)
+template<typename T>
+static inline void DYNACALL WriteMemArm(u32 addr, T data)
 {
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
+	addr &= 0x00FFFFFF;
+	if (addr < 0x800000)
 	{
-		*(T*)&aica_ram[addr&(ARAM_MASK-(sz-1))]=data;
+		*(T *)&aica_ram[addr & (ARAM_MASK - (sizeof(T) - 1))] = data;
 	}
 	else
 	{
-		arm_WriteReg<sz,T>(addr,data);
+		arm_WriteReg(addr, data);
 	}
 }
 
-#define arm_ReadMem8 ReadMemArm<1,u8>
-#define arm_ReadMem16 ReadMemArm<2,u16>
-#define arm_ReadMem32 ReadMemArm<4,u32>
+#define arm_ReadMem8 ReadMemArm<u8>
+#define arm_ReadMem16 ReadMemArm<u16>
+#define arm_ReadMem32 ReadMemArm<u32>
 
-#define arm_WriteMem8 WriteMemArm<1,u8>
-#define arm_WriteMem16 WriteMemArm<2,u16>
-#define arm_WriteMem32 WriteMemArm<4,u32>
+#define arm_WriteMem8 WriteMemArm<u8>
+#define arm_WriteMem16 WriteMemArm<u16>
+#define arm_WriteMem32 WriteMemArm<u32>
 
 extern bool aica_interr;
 extern u32 aica_reg_L;

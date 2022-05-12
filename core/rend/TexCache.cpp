@@ -408,6 +408,7 @@ static const TextureType PAL_TYPE[4] = {
 
 void BaseTextureCacheData::PrintTextureName()
 {
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 	char str[512];
 	sprintf(str, "Texture: %s", GetPixelFormatName());
 
@@ -427,6 +428,7 @@ void BaseTextureCacheData::PrintTextureName()
 	std::string id = GetId();
 	sprintf(str + strlen(str), " id=%s", id.c_str());
 	DEBUG_LOG(RENDERER, "%s", str);
+#endif
 }
 
 //true if : dirty or paletted texture and hashes don't match
@@ -937,8 +939,10 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl
 	else
 		fb_w_ctrl = FB_W_CTRL;
 	u32 padding = (linestride == ~0u ? FB_W_LINESTRIDE.stride * 8 : linestride);
-	if (padding != 0)
+	if (padding / 2 > width)
 		padding = padding / 2 - width;
+	else
+		padding = 0;
 
 	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
 	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;

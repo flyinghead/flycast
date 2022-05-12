@@ -20,10 +20,6 @@
  */
 #pragma once
 #include "types.h"
-#include <atomic>
-#include <memory>
-#include <mutex>
-#include <thread>
 
 class NaomiM3Comm
 {
@@ -33,13 +29,13 @@ public:
 	bool DmaStart(u32 addr, u32 data);
 
 	void closeNetwork();
+	void vblank();
 
 private:
 	void connectNetwork();
-	void receiveNetwork();
+	bool receiveNetwork();
 	void sendNetwork();
-	void connectedState(bool success);
-	void startThread();
+	void connectedState();
 
 	u16 comm_ctrl = 0xC000;
 	u16 comm_offset = 0;
@@ -51,7 +47,4 @@ private:
 
 	int slot_count = 0;
 	int slot_id = 0;
-	std::atomic<bool> network_stopping{ false };
-	std::unique_ptr<std::thread> thread;
-	std::mutex mem_mutex;
 };

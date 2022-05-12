@@ -83,7 +83,7 @@ bool SDLGLGraphicsContext::init()
 
 	float hdpi, vdpi;
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWindow), nullptr, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
+		settings.display.dpi = roundf(std::max(hdpi, vdpi));
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
@@ -135,13 +135,12 @@ void SDLGLGraphicsContext::swap()
 	// Check if drawable has been resized
 	SDL_GL_GetDrawableSize((SDL_Window *)window, &settings.display.width, &settings.display.height);
 #ifdef __SWITCH__
-	float newScaling = settings.display.height == 720 ? 1.5f : 1.0f;
-	if (newScaling != scaling)
+	float newScaling = settings.display.height == 720 ? 1.5f : 1.4f;
+	if (newScaling != settings.display.uiScale)
 	{
 		// Restart the UI to take the new scaling factor into account
-		scaling = newScaling;
-		gui_term();
-		gui_init();
+		settings.display.uiScale = newScaling;
+		resetUIDriver();
 	}
 #endif
 }

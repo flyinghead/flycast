@@ -193,7 +193,6 @@ inline static void JITWriteProtect(bool enabled) {
 #include "log/Log.h"
 
 #define VER_EMUNAME		"Flycast"
-#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();
@@ -203,73 +202,10 @@ void os_DebugBreak();
 #define stricmp strcasecmp
 #endif
 
-int msgboxf(const char* text, unsigned int type, ...);
+void fatal_error(const char* text, ...);
 
-#define MBX_OK                       0
-#define MBX_ICONEXCLAMATION          0
-#define MBX_ICONERROR                0
-
-#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
-
-
-//will be removed sometime soon
-//This shit needs to be moved to proper headers
-typedef u32  RegReadAddrFP(u32 addr);
-typedef void RegWriteAddrFP(u32 addr, u32 data);
-
-/*
-	Read Write Const
-	D    D     N      -> 0			-> RIO_DATA
-	D    F     N      -> WF			-> RIO_WF
-	F    F     N      -> RF|WF		-> RIO_FUNC
-	D    X     N      -> RO|WF		-> RIO_RO
-	F    X     N      -> RF|WF|RO	-> RIO_RO_FUNC
-	D    X     Y      -> CONST|RO|WF-> RIO_CONST
-	X    F     N      -> RF|WF|WO	-> RIO_WO_FUNC
-*/
-enum RegStructFlags
-{
-	REG_RF=8,
-	REG_WF=16,
-	REG_RO=32,
-	REG_WO=64,
-	REG_NO_ACCESS=REG_RO|REG_WO,
-};
-
-enum RegIO
-{
-	RIO_DATA = 0,
-	RIO_WF = REG_WF,
-	RIO_FUNC = REG_WF | REG_RF,
-	RIO_RO = REG_RO | REG_WF,
-	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
-	RIO_CONST = REG_RO | REG_WF,
-	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
-	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
-};
-
-struct RegisterStruct
-{
-	union
-	{
-		u32 data32;					//stores data of reg variable [if used] 32b
-		u16 data16;					//stores data of reg variable [if used] 16b
-		u8  data8;					//stores data of reg variable [if used]	8b
-
-		RegReadAddrFP* readFunctionAddr; //stored pointer to reg read function
-	};
-
-	RegWriteAddrFP* writeFunctionAddr; //stored pointer to reg write function
-
-	u32 flags;					//Access flags !
-
-	void reset()
-	{
-		if (!(flags & (REG_RO | REG_RF)))
-			data32 = 0;
-	}
-};
+#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 
 enum class JVS {
 	Default,
@@ -341,6 +277,13 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
+
+		bool isNaomi1() const { return system == DC_PLATFORM_NAOMI; }
+		bool isNaomi2() const { return system == DC_PLATFORM_NAOMI2; }
+		bool isNaomi() const { return isNaomi1() || isNaomi2(); }
+		bool isAtomiswave() const { return system == DC_PLATFORM_ATOMISWAVE; }
+		bool isArcade() const { return !isConsole(); }
+		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
 	} platform;
 
 	struct {
@@ -348,6 +291,8 @@ struct settings_t
 		int height = 480;
 		float pointScale = 1.f;
 		float refreshRate = 0;
+		float dpi = 96.f;
+		float uiScale = 1.f;
 	} display;
 
 	struct
@@ -399,65 +344,6 @@ extern settings_t settings;
 #define VRAM_SIZE settings.platform.vram_size
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
-
-inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
-inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
-inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
-inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-// 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
-u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
-void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
-
-//Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
-static inline u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
-static inline void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
-
-//Area 5
-static inline u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
-static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
-
-//ARM
-s32 libARM_Init();
-void libARM_Reset(bool hard);
-void libARM_Term();
-
-template<u32 sz>
-u32 ReadMemArr(const u8 *array, u32 addr)
-{
-	switch(sz)
-	{
-	case 1:
-		return array[addr];
-	case 2:
-		return *(const u16 *)&array[addr];
-	case 4:
-		return *(const u32 *)&array[addr];
-	default:
-		die("invalid size");
-		return 0;
-	}
-}
-
-template<u32 sz>
-void WriteMemArr(u8 *array, u32 addr, u32 data)
-{
-	switch(sz)
-	{
-	case 1:
-		array[addr] = data;
-		break;
-	case 2:
-		*(u16 *)&array[addr] = data;
-		break;
-	case 4:
-		*(u32 *)&array[addr] = data;
-		break;
-	default:
-		die("invalid size");
-		break;
-	}
-}
 
 struct OnLoad
 {

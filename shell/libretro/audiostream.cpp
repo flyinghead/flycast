@@ -24,29 +24,39 @@
 #include <vector>
 #include <mutex>
 
-#define AUDIO_BUFFER_SIZE_DEFAULT (1 << 11)
-#define AUDIO_BUFFER_SIZE_MAX (1 << 20) /* 1 MiB */
-
 extern retro_audio_sample_batch_t audio_batch_cb;
 
 static std::mutex audio_buffer_mutex;
 static std::vector<int16_t> audio_buffer;
 static size_t audio_buffer_idx;
 static size_t audio_batch_frames_max;
+static bool drop_samples = true;
 
 static int16_t *audio_out_buffer = nullptr;
-static size_t audio_out_buffer_size;
 
 void retro_audio_init(void)
 {
 	const std::lock_guard<std::mutex> lock(audio_buffer_mutex);
 
-	audio_buffer.resize(AUDIO_BUFFER_SIZE_DEFAULT);
+	/* Worst case is 25 fps content with an audio sample rate
+	 * of 44.1 kHz -> 1764 stereo samples
+	 * But flycast can stop rendering for arbitrary lengths of
+	 * time, leading to multiple 'frames' worth of audio being
+	 * uploaded in retro_run(). We therefore require some leniency,
+	 * but must limit the total number of samples that can be
+	 * uploaded since the libretro frontend can 'hang' if too
+	 * many samples are sent during a single call of retro_run().
+	 * We therefore (arbitrarily) choose to allow up to 10 frames
+	 * worth of 'worst case' stereo samples... */
+	size_t audio_buffer_size = (44100 / 25) * 2 * 10;
+
+	audio_buffer.resize(audio_buffer_size);
 	audio_buffer_idx = 0;
 	audio_batch_frames_max = std::numeric_limits<size_t>::max();
 
-	audio_out_buffer_size = AUDIO_BUFFER_SIZE_DEFAULT;
-	audio_out_buffer = (int16_t*)malloc(audio_out_buffer_size * sizeof(int16_t));
+	audio_out_buffer = (int16_t*)malloc(audio_buffer_size * sizeof(int16_t));
+
+	drop_samples = false;
 }
 
 void retro_audio_deinit(void)
@@ -60,40 +70,33 @@ void retro_audio_deinit(void)
 		free(audio_out_buffer);
 
 	audio_out_buffer = nullptr;
-	audio_out_buffer_size = 0;
+
+	drop_samples = true;
 }
 
 void retro_audio_flush_buffer(void)
 {
 	const std::lock_guard<std::mutex> lock(audio_buffer_mutex);
 	audio_buffer_idx = 0;
+
+	/* We are manually 'resetting' the audio buffer
+	 * -> any 'drop samples' lock can be released */
+	drop_samples = false;
 }
 
 void retro_audio_upload(void)
 {
 	audio_buffer_mutex.lock();
 
-	if (audio_out_buffer_size < audio_buffer_idx)
-	{
-		int16_t *tmp = (int16_t *)realloc(audio_out_buffer,
-				audio_buffer_idx * sizeof(int16_t));
-
-		if (!tmp)
-		{
-			audio_buffer_idx = 0;
-			audio_buffer_mutex.unlock();
-			return;
-		}
-
-		audio_out_buffer_size = audio_buffer_idx;
-		audio_out_buffer = tmp;
-	}
-
 	for (size_t i = 0; i < audio_buffer_idx; i++)
 		audio_out_buffer[i] = audio_buffer[i];
 
 	size_t num_frames = audio_buffer_idx >> 1;
 	audio_buffer_idx = 0;
+
+	/* Uploading audio 'resets' the audio buffer
+	 * -> any 'drop samples' lock can be released */
+	drop_samples = false;
 
 	audio_buffer_mutex.unlock();
 
@@ -118,23 +121,18 @@ void WriteSample(s16 r, s16 l)
 {
 	const std::lock_guard<std::mutex> lock(audio_buffer_mutex);
 
+	if (drop_samples)
+		return;
+
 	if (audio_buffer.size() < audio_buffer_idx + 2)
 	{
-		if (audio_buffer_idx + 2 > AUDIO_BUFFER_SIZE_MAX)
-		{
-			audio_buffer_idx = 0;
-			return;
-		}
-
-		try
-		{
-			audio_buffer.resize(audio_buffer_idx + 2 + AUDIO_BUFFER_SIZE_DEFAULT);
-		}
-		catch (std::bad_alloc &)
-		{
-			audio_buffer_idx = 0;
-			return;
-		}
+		/* Audio buffer overflow...
+		 * > Drop any existing samples
+		 * > Drop any future samples until the next
+		 *   call of retro_audio_upload() */
+		audio_buffer_idx = 0;
+		drop_samples = true;
+		return;
 	}
 
 	audio_buffer[audio_buffer_idx++] = l;

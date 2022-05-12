@@ -82,7 +82,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "performance",
       "Performance",
-      "Configure threaded rendering, integer division optimisations and frame skip settings."
+      "Configure threaded rendering and frame skip settings."
    },
    {
       "hacks",
@@ -213,6 +213,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      "Set NAOMI Games to Free Play",
+      NULL,
+      "Modify to coin settings of the game to free play.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution",
       NULL,
@@ -325,7 +339,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
-      "Accumulation Pixel Buffer Size (Restart Required)",
+      "Accumulation Pixel Buffer Size",
       NULL,
       "Higher values might be required for higher resolutions to output correctly.",
       NULL,
@@ -338,6 +352,23 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      "Maximum Transparent Layers",
+      NULL,
+      "Higher values might be required for complex scenes.",
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
    },
 #endif
    {/* TODO: needs explanation */
@@ -400,7 +431,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_anisotropic_filtering",
       "Anisotropic Filtering",
       NULL,
-      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera.",
+      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera. Higher values are more demanding on the GPU. Changes to this setting only apply after restarting.",
       NULL,
       "video",
       {
@@ -412,6 +443,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      "Texture Filtering",
+      NULL,
+      "The texture filtering mode to use. This can be used to force a certain texture filtering mode on all textures to get a crisper (or smoother) appearance than Default. Values other than Default may cause various rendering issues. Changes to this setting only apply after restarting.",
+      NULL,
+      "video",
+      {
+         { "0", "Default" },
+         { "1",  "Force Nearest-Neighbor" },
+         { "2",  "Force Linear" },
+         { NULL, NULL },
+      },
+      "0",
    },
    {
       CORE_OPTION_NAME "_delay_frame_swapping",

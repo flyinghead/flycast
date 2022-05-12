@@ -44,9 +44,9 @@ public:
 
 	void* GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override;
-	std::string GetGameId() override;
 	void Serialize(Serializer& ser) const override;
 	void Deserialize(Deserializer& deser) override;
+	bool GetBootId(RomBootID *bootId) override;
 
 	void SetKey(u32 key) override { this->m4id = key; }
 	void SetKeyData(u8 *key_data) override { this->m_key_data = key_data; }

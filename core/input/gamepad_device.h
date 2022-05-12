@@ -56,7 +56,20 @@ public:
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
 	virtual void update_rumble() {}
-	bool is_rumble_enabled() const { return _rumble_enabled; }
+	bool is_rumble_enabled() const { return rumbleEnabled; }
+	int get_rumble_power() const { return rumblePower; }
+	void set_rumble_power(int power) {
+		if (power != this->rumblePower)
+		{
+			this->rumblePower = power;
+			if (input_mapper != nullptr)
+			{
+				input_mapper->rumblePower = power;
+				input_mapper->set_dirty();
+				save_mapping();
+			}
+		}
+	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 
@@ -95,7 +108,8 @@ protected:
 	std::string _name;
 	std::string _unique_id;
 	std::shared_ptr<InputMapping> input_mapper;
-	bool _rumble_enabled = true;
+	bool rumbleEnabled = false;
+	int rumblePower = 100;
 
 private:
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);

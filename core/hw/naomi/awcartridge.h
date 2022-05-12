@@ -25,7 +25,7 @@ public:
 
 	void *GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override;
-	std::string GetGameId() override;
+	bool GetBootId(RomBootID *bootId) override;
 
 	void SetKey(u32 key) override;
 	void Serialize(Serializer& ser) const override;

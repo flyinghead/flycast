@@ -49,12 +49,10 @@
 
 static bool game_started;
 
-int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
 std::unique_ptr<ImGuiDriver> imguiDriver;
 
 static bool inited = false;
-float scaling = 1;
 GuiState gui_state = GuiState::Main;
 static bool commandLineStart;
 static u32 mouseButtons;
@@ -140,7 +138,19 @@ void gui_init()
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
+    EventManager::listen(Event::Resume, emuEventCallback);
+    EventManager::listen(Event::Start, emuEventCallback);
+	EventManager::listen(Event::Terminate, emuEventCallback);
+    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+}
 
+void gui_initFonts()
+{
+	static float uiScale;
+
+	verify(inited);
+	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
+		return;
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
     // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -155,14 +165,15 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !defined(_WIN32) && !defined(__SWITCH__)
-    scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
+#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
-    	scaling = std::min(1.2f, scaling);
+    	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
 #endif
-    if (scaling > 1)
-		ImGui::GetStyle().ScaleAllSizes(scaling);
+    uiScale = settings.display.uiScale;
+    if (settings.display.uiScale > 1)
+    	ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 
     static const ImWchar ranges[] =
     {
@@ -170,7 +181,10 @@ void gui_init()
         0,
     };
 
-    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->Clear();
+	const float fontSize = 17.f * settings.display.uiScale;
+	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
 #ifdef _WIN32
@@ -181,58 +195,58 @@ void gui_init()
     case 932:	// Japanese
 		{
 			font_cfg.FontNo = 2;	// UIGothic
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
 			font_cfg.FontNo = 2;	// Meiryo UI
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
 		}
 		break;
     case 949:	// Korean
 		{
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
 			if (font == nullptr)
 			{
 				font_cfg.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
 			}
 		}
     	break;
     case 950:	// Traditional Chinese
 		{
 			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 			font_cfg.FontNo = 0;
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 		}
     	break;
     case 936:	// Simplified Chinese
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     	break;
     default:
     	break;
     }
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
-    
+
     extern std::string os_Locale();
     std::string locale = os_Locale();
-    
+
     if (locale.find("ja") == 0)             // Japanese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
     }
     else if (locale.find("ko") == 0)       // Korean
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
     }
     else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
     }
     else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     }
 #elif defined(__ANDROID__)
     if (getenv("FLYCAST_LOCALE") != nullptr)
@@ -250,17 +264,12 @@ void gui_init()
         	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
 
         if (glyphRanges != nullptr)
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &font_cfg, glyphRanges);
     }
 
     // TODO Linux, iOS, ...
 #endif
-    NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
-
-    EventManager::listen(Event::Resume, emuEventCallback);
-    EventManager::listen(Event::Start, emuEventCallback);
-	EventManager::listen(Event::Terminate, emuEventCallback);
-    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 
 void gui_keyboard_input(u16 wc)
@@ -492,7 +501,7 @@ static void gui_display_commands()
    	imguiDriver->displayVmus();
 
     centerNextWindow();
-    ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+    ImGui::SetNextWindowSize(ScaledVec2(330, 0));
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -504,7 +513,7 @@ static void gui_display_commands()
 	}
 
 	// Load State
-	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_loadstate(config::SavestateSlot);
@@ -513,7 +522,7 @@ static void gui_display_commands()
 
 	// Slot #
 	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+	if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
 		ImGui::OpenPopup("slot_select_popup");
     if (ImGui::BeginPopup("slot_select_popup"))
     {
@@ -528,7 +537,7 @@ static void gui_display_commands()
 	ImGui::SameLine();
 
 	// Save State
-	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
+	if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_savestate(config::SavestateSlot);
@@ -542,12 +551,12 @@ static void gui_display_commands()
 	ImGui::Columns(2, "buttons", false);
 
 	// Settings
-	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
 	{
 		gui_state = GuiState::Settings;
 	}
 	ImGui::NextColumn();
-	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
 		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
@@ -557,7 +566,7 @@ static void gui_display_commands()
 
 	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button(disk_label, ScaledVec2(150, 50)))
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
@@ -577,7 +586,7 @@ static void gui_display_commands()
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.network.online)
+	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
@@ -589,8 +598,8 @@ static void gui_display_commands()
 	ImGui::Columns(1, nullptr, false);
 
 	// Exit
-	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
-			50 * scaling)))
+	if (ImGui::Button("Exit", ScaledVec2(300, 50)
+			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
 		gui_stop_game();
 	}
@@ -760,6 +769,7 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -836,7 +846,7 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 }
 static void detect_input_popup(const Mapping *mapping)
 {
-	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+	ImVec2 padding = ScaledVec2(20, 20);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
@@ -915,12 +925,13 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+		const float scaling = settings.display.uiScale;
 
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
@@ -965,7 +976,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		{
 			if (gamepad->isPerGameMapping())
 			{
-				if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 				{
 					gamepad->setPerGameMapping(false);
 					if (!gamepad->find_mapping(map_system))
@@ -974,15 +985,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			else
 			{
-				if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 					gamepad->setPerGameMapping(true);
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Reset...", ImVec2(100 * scaling, 30 * scaling)))
+		if (ImGui::Button("Reset...", ScaledVec2(100, 30)))
 			ImGui::OpenPopup("Confirm Reset");
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20 * scaling, 20 * scaling));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 		if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::Text("Are you sure you want to reset the mappings to default?");
@@ -998,7 +1009,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			ImGui::NewLine();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10 * scaling, 10 * scaling));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 			if (ImGui::Button("Yes"))
 			{
 				gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
@@ -1055,7 +1066,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		char key_id[32];
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_None);
+		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_DragScrolling);
 
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
@@ -1136,17 +1147,17 @@ void error_popup()
 	
 	if (!error_msg.empty())
 	{
-		ImVec2 padding = ImVec2(10 * scaling, 10 * scaling);
+		ImVec2 padding = ScaledVec2(20, 20);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
 			ImGui::TextWrapped("%s", error_msg.c_str());
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
 			{
 				error_msg.clear();
 				ImGui::CloseCurrentPopup();
@@ -1173,21 +1184,21 @@ static void contentpath_warning_popup()
     }
     if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
         ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
         float currentwidth = ImGui::GetContentRegionAvail().x;
-        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-        if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
+        ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * settings.display.uiScale);
+        if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
         {
             scanner.content_path_looks_incorrect = false;
             ImGui::CloseCurrentPopup();
             show_contentpath_selection = true;
         }
-        
+
         ImGui::SameLine();
-        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+        ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * settings.display.uiScale);
+        if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
         {
             scanner.content_path_looks_incorrect = false;
             ImGui::CloseCurrentPopup();
@@ -1250,10 +1261,11 @@ static void gui_display_settings()
 	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
-    if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+    if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
     	if (game_started)
     		gui_state = GuiState::Commands;
@@ -1262,7 +1274,7 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-    		if (game_started && settings.platform.system == DC_PLATFORM_DREAMCAST)
+    		if (game_started && settings.platform.isConsole())
     		{
     			maple_ReconnectDevices();
     			reset_vmus();
@@ -1273,10 +1285,10 @@ static void gui_display_settings()
 	if (game_started)
 	{
 	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
-			if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
@@ -1285,13 +1297,13 @@ static void gui_display_settings()
 		}
 		else
 		{
-			if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
 	    ImGui::PopStyleVar();
 	}
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
@@ -1356,7 +1368,7 @@ static void gui_display_settings()
                 		to_delete = i;
                 	ImGui::PopID();
                 }
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
                 if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
                 select_file_popup("Select Directory", [](bool cancelled, std::string selection)
@@ -1418,6 +1430,7 @@ static void gui_display_settings()
 			ImGui::SameLine();
 			OptionCheckbox("Save", config::AutoSaveState,
 					"Save the state of the game when stopping");
+			OptionCheckbox("Naomi Free Play", config::ForceFreePlay, "Configure Naomi games in Free Play mode.");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1428,12 +1441,13 @@ static void gui_display_settings()
 			header("Physical Devices");
 		    {
 				ImGui::Columns(4, "physicalDevices", false);
-				ImGui::Text("System");
+				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
+				ImGui::TextColored(gray, "System");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
-				ImGui::Text("Name");
+				ImGui::TextColored(gray, "Name");
 				ImGui::NextColumn();
-				ImGui::Text("Port");
+				ImGui::TextColored(gray, "Port");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
 					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
@@ -1483,7 +1497,16 @@ static void gui_display_settings()
 						ImGui::SameLine();
 						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
+					else
 #endif
+					if (gamepad->is_rumble_enabled())
+					{
+						ImGui::SameLine(0, 16 * settings.display.uiScale);
+						int power = gamepad->get_rumble_power();
+						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
+						if (ImGui::SliderInt("Rumble", &power, 0, 100))
+							gamepad->set_rumble_power(power);
+					}
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}
@@ -1660,6 +1683,9 @@ static void gui_display_settings()
 		    	}
 		    }
 	    	ImGui::Spacing();
+            ImGuiStyle& style = ImGui::GetStyle();
+            float innerSpacing = style.ItemInnerSpacing.x;
+
 		    header("Rendering Options");
 		    {
 		    	ImGui::Text("Automatic Frame Skipping:");
@@ -1692,6 +1718,58 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+
+				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
+	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
+	            u32 afSelected = 0;
+	            for (u32 i = 0; i < aniso.size(); i++)
+	            {
+	            	if (aniso[i] == config::AnisotropicFiltering)
+	            		afSelected = i;
+	            }
+
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+                {
+                	for (u32 i = 0; i < aniso.size(); i++)
+                    {
+                        bool is_selected = aniso[i] == config::AnisotropicFiltering;
+                        if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
+                        	config::AnisotropicFiltering = aniso[i];
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, innerSpacing);
+
+                if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
+                {
+                    if (afSelected > 0)
+                    	config::AnisotropicFiltering = aniso[afSelected - 1];
+                }
+                ImGui::SameLine(0, innerSpacing);
+                if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
+                {
+                    if (afSelected < aniso.size() - 1)
+                    	config::AnisotropicFiltering = aniso[afSelected + 1];
+                }
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Anisotropic Filtering");
+                ImGui::SameLine();
+                ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
+
+		    	ImGui::Text("Texture Filtering:");
+		    	ImGui::Columns(3, "textureFiltering", false);
+		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
+		    	ImGui::Columns(1, nullptr, false);
+
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
 		    	ImGui::Indent();
@@ -1751,8 +1829,8 @@ static void gui_display_settings()
 					ImGui::Columns(1, nullptr, false);
 		    	}
 
-	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
-	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
+	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
+	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
 	            std::array<int, scalings.size()> vres;
 	            std::array<std::string, scalings.size()> resLabels;
 	            u32 selected = 0;
@@ -1768,8 +1846,6 @@ static void gui_display_settings()
 	            	resLabels[i] += " (" + scalingsText[i] + ")";
 	            }
 
-                ImGuiStyle& style = ImGui::GetStyle();
-                float innerSpacing = style.ItemInnerSpacing.x;
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
                 if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
                 {
@@ -1785,7 +1861,7 @@ static void gui_display_settings()
                 }
                 ImGui::PopItemWidth();
                 ImGui::SameLine(0, innerSpacing);
-                
+
                 if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
                 {
                     if (selected > 0)
@@ -1798,16 +1874,67 @@ static void gui_display_settings()
                     	config::RenderResolution = vres[selected + 1];
                 }
                 ImGui::SameLine(0, style.ItemInnerSpacing.x);
-                
+
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
-                ShowHelpMarker("Internal render resolution. Higher is better but more demanding");
+                ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
 		    			"Stretch the screen horizontally");
 		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");
 		    }
+			if (perPixel)
+			{
+				ImGui::Spacing();
+				header("Per Pixel Settings");
+
+				const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
+				const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+				u32 selected = 0;
+				for (; selected < bufSizes.size(); selected++)
+					if (bufSizes[selected] == config::PixelBufferSize)
+						break;
+				if (selected == bufSizes.size())
+					selected = 0;
+				if (ImGui::BeginCombo("##PixelBuffer", bufSizesText[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+				{
+					for (u32 i = 0; i < bufSizes.size(); i++)
+					{
+						bool is_selected = i == selected;
+						if (ImGui::Selectable(bufSizesText[i].c_str(), is_selected))
+							config::PixelBufferSize = bufSizes[i];
+						if (is_selected) {
+							ImGui::SetItemDefaultFocus();
+							selected = i;
+						}
+					}
+					ImGui::EndCombo();
+				}
+                ImGui::PopItemWidth();
+				ImGui::SameLine(0, innerSpacing);
+
+				if (ImGui::ArrowButton("##Decrease BufSize", ImGuiDir_Left))
+				{
+					if (selected > 0)
+						config::PixelBufferSize = bufSizes[selected - 1];
+				}
+				ImGui::SameLine(0, innerSpacing);
+				if (ImGui::ArrowButton("##Increase BufSize", ImGuiDir_Right))
+				{
+					if (selected < bufSizes.size() - 1)
+						config::PixelBufferSize = bufSizes[selected + 1];
+				}
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Pixel Buffer Size");
+                ImGui::SameLine();
+                ShowHelpMarker("The size of the pixel buffer. May need to be increased when upscaling by a large factor.");
+
+                OptionSlider("Maximum Layers", config::PerPixelLayers, 8, 128,
+                		"Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.");
+			}
 	    	ImGui::Spacing();
 		    header("Render to Texture");
 		    {
@@ -1989,6 +2116,7 @@ static void gui_display_settings()
 		    			"Enable networking for supported Naomi games");
 		    	if (config::GGPOEnable)
 		    	{
+		    		config::NetworkEnable = false;
 					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
 					char server_name[256];
@@ -2021,10 +2149,19 @@ static void gui_display_settings()
 						strcpy(server_name, config::NetworkServer.get().c_str());
 						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 						ImGui::SameLine();
-						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
 						config::NetworkServer.set(server_name);
 					}
+					char localPort[256];
+					sprintf(localPort, "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
 		    	}
+				OptionCheckbox("Enable UPnP", config::EnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Automatically configure your network router for netplay");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2183,15 +2320,15 @@ static void gui_display_content()
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
-    ImGui::Indent(10 * scaling);
+    ImGui::Indent(10 * settings.display.uiScale);
     ImGui::Text("GAMES");
-    ImGui::Unindent(10 * scaling);
+    ImGui::Unindent(10 * settings.display.uiScale);
 
     static ImGuiTextFilter filter;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
-	ImGui::SameLine(0, 32 * scaling);
+	ImGui::SameLine(0, 32 * settings.display.uiScale);
 	filter.Draw("Filter");
 #endif
     if (gui_state != GuiState::SelectDisk)
@@ -2213,9 +2350,9 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
@@ -2339,13 +2476,13 @@ static std::future<bool> networkStatus;
 static void gui_network_start()
 {
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
 	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
-	ImGui::SetCursorPosX(20.f * scaling);
+	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
@@ -2376,9 +2513,9 @@ static void gui_network_start()
 	ImGui::Text("%s", get_notification().c_str());
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
-	ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(126.f * scaling);
-	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -2400,13 +2537,13 @@ static void gui_network_start()
 static void gui_display_loadscreen()
 {
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
     ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
     ImGui::AlignTextToFramePadding();
-    ImGui::SetCursorPosX(20.f * scaling);
+    ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 	try {
 		if (gameLoader.ready())
 		{
@@ -2428,13 +2565,13 @@ static void gui_display_loadscreen()
 				label = "Loading...";
 			ImGui::Text("%s", label);
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
 			ImGui::PopStyleColor();
 
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			ImGui::SetCursorPosY(126.f * scaling);
-			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+			ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+			if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 				gameLoader.cancel();
 		}
 	} catch (const FlycastException& ex) {
@@ -2492,7 +2629,7 @@ void gui_display_ui()
 		break;
 	case GuiState::VJoyEditCommands:
 #ifdef __ANDROID__
-		gui_display_vjoy_commands(scaling);
+		gui_display_vjoy_commands();
 #endif
 		break;
 	case GuiState::SelectDisk:
@@ -2607,18 +2744,17 @@ void gui_term()
 	}
 }
 
-int msgboxf(const char* text, unsigned int type, ...) {
+void fatal_error(const char* text, ...)
+{
     va_list args;
 
     char temp[2048];
-    va_start(args, type);
+    va_start(args, text);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
     ERROR_LOG(COMMON, "%s", temp);
 
     gui_display_notification(temp, 2000);
-
-    return 1;
 }
 
 extern bool subfolders_read;

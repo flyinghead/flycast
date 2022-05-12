@@ -215,9 +215,10 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * gui_get_scaling() - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * settings.display.uiScale - ImGui::GetStyle().ItemSpacing.y),
+				true, ImGuiWindowFlags_DragScrolling);
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * gui_get_scaling(), 20 * gui_get_scaling()));		// from 8, 4
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 
 		for (const auto& name : subfolders)
@@ -301,7 +302,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		ImGui::EndChild();
 		if (!selectFile)
 		{
-			if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * gui_get_scaling())))
+			if (ImGui::Button("Select Current Directory", ScaledVec2(0, 30)))
 			{
 				if (callback(false, select_current_directory))
 				{
@@ -311,7 +312,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Cancel", ImVec2(0, 30 * gui_get_scaling())))
+		if (ImGui::Button("Cancel", ScaledVec2(0, 30)))
 		{
 			subfolders_read = false;
 			callback(true, "");
@@ -326,10 +327,16 @@ void select_file_popup(const char *prompt, StringCallback callback,
 // See https://github.com/ocornut/imgui/issues/3379
 void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
 {
-    ImGuiContext& g = *ImGui::GetCurrentContext();
-    ImGuiWindow* window = g.CurrentWindow;
-    while ((window->Flags & ImGuiWindowFlags_ChildWindow) && window->ScrollMax.x == 0.0f && window->ScrollMax.y == 0.0f)
-        window = window->ParentWindow;
+	ImGuiContext& g = *ImGui::GetCurrentContext();
+	ImGuiWindow* window = g.CurrentWindow;
+	while (window != nullptr
+			&& (window->Flags & ImGuiWindowFlags_ChildWindow)
+			&& !(window->Flags & ImGuiWindowFlags_DragScrolling)
+			&& window->ScrollMax.x == 0.0f
+			&& window->ScrollMax.y == 0.0f)
+		window = window->ParentWindow;
+	if (window == nullptr || !(window->Flags & ImGuiWindowFlags_DragScrolling))
+		return;
     bool hovered = false;
     bool held = false;
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft

@@ -100,7 +100,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 			{
 				maple_int_pending = false;
 				SB_MDST = 0;
-				asic_RaiseInterrupt(holly_MAPLE_DMA);
 			}
 			asic_RaiseInterrupt(holly_SCANINT1);
 		}
@@ -227,7 +226,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 			maple_int_pending = false;
 			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
 			SB_MDST = 0;
-			asic_RaiseInterrupt(holly_MAPLE_DMA);
 			lightgun_line = 0xffff;
 		}
 	}
@@ -257,6 +255,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
 		min_active = std::min(min_active, lightgun_line);
 
+	if (SPG_HBLANK_INT.hblank_int_mode == 0 && min_scanline < SPG_HBLANK_INT.line_comp_val)
+		min_active = std::min(min_active, SPG_HBLANK_INT.line_comp_val);
+
 	min_active = std::max(min_active,min_scanline);
 
 	return (min_active - prv_cur_scanline) * Line_Cycles;
@@ -282,9 +283,18 @@ void read_lightgun_position(int x, int y)
 
 int rend_end_sch(int tag, int cycl, int jitt)
 {
-	asic_RaiseInterrupt(holly_RENDER_DONE);
-	asic_RaiseInterrupt(holly_RENDER_DONE_isp);
-	asic_RaiseInterrupt(holly_RENDER_DONE_vd);
+	if (settings.platform.isNaomi2())
+	{
+		asic_RaiseInterruptBothCLX(holly_RENDER_DONE);
+		asic_RaiseInterruptBothCLX(holly_RENDER_DONE_isp);
+		asic_RaiseInterruptBothCLX(holly_RENDER_DONE_vd);
+	}
+	else
+	{
+		asic_RaiseInterrupt(holly_RENDER_DONE);
+		asic_RaiseInterrupt(holly_RENDER_DONE_isp);
+		asic_RaiseInterrupt(holly_RENDER_DONE_vd);
+	}
 	rend_end_render();
 	return 0;
 }

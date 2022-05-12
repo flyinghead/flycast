@@ -175,8 +175,7 @@ bool EGLGraphicsContext::init()
 #ifdef TARGET_PANDORA
 	fbdev = open("/dev/fb0", O_RDONLY);
 #else
-	swapOnVSync = config::VSync;
-	eglSwapInterval(display, (int)swapOnVSync);
+	setSwapInterval();
 #endif
 
 	postInit();
@@ -210,10 +209,19 @@ void EGLGraphicsContext::swap()
 {
 	do_swap_automation();
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
-	{
-		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
-		eglSwapInterval(display, (int)swapOnVSync);
-	}
+		setSwapInterval();
 	eglSwapBuffers(display, surface);
+}
+
+void EGLGraphicsContext::setSwapInterval()
+{
+	swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+	int swapInterval;
+	if (settings.display.refreshRate > 60.f)
+		swapInterval = settings.display.refreshRate / 60.f;
+	else
+		swapInterval = 1;
+
+	eglSwapInterval(display, swapOnVSync ? swapInterval : 0);
 }
 #endif // USE_EGL

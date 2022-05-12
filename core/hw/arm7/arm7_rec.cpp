@@ -145,6 +145,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 		//NV condition means VFP on newer cores, let interpreter handle it...
 		op.op_type = ArmOp::FALLBACK;
 		op.arg[0] = ArmOp::Operand(opcode);
+		op.cycles = 0;
 		return op;
 	}
 	if (op.condition != ArmOp::AL)
@@ -237,6 +238,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				else
 				{
 					op.arg[argidx].shift_reg = ArmOp::Register((Arm7Reg)bits.shift_reg);
+					op.cycles++;
 				}
 				// Compute pc-relative addresses
 				if (op.arg[argidx].getReg().armreg == RN_PC)
@@ -274,6 +276,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					op.op_type = ArmOp::B;
 					op.flags |= ArmOp::OP_SETS_PC;
 					op.rd = ArmOp::Operand();
+					op.cycles += 3;
 					return op;
 				}
 				if (op.condition != ArmOp::AL || (op.flags & ArmOp::OP_SETS_FLAGS))
@@ -287,7 +290,10 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					op.cycles = 0;
 				}
 				else
+				{
 					op.rd.getReg().armreg = R15_ARM_NEXT;
+					op.cycles++;
+				}
 				op.flags |= ArmOp::OP_SETS_PC;
 			}
 			if (op.op_type == ArmOp::ADC || op.op_type == ArmOp::SBC || op.op_type == ArmOp::RSC)
@@ -317,6 +323,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 						return op;
 					}
 					op.rd.setReg(R15_ARM_NEXT);
+					op.cycles++;
 				}
 				op.cycles += 4;
 			}
@@ -417,7 +424,9 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 
 					arm_printf("ARM: MEM TFX R %08X -> %08X", opcode, newbits.full);
 
-					return decodeArmOp(newbits.full, arm_pc);
+					op = decodeArmOp(newbits.full, arm_pc);
+					op.cycles += 4;
+					return op;
 				}
 				//STM common case
 				else
@@ -448,7 +457,9 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 
 					arm_printf("ARM: MEM TFX W %08X -> %08X", opcode, newbits.full);
 
-					return decodeArmOp(newbits.full, arm_pc);
+					op = decodeArmOp(newbits.full, arm_pc);
+					op.cycles += 4;
+					return op;
 				}
 			}
 			op.op_type = ArmOp::FALLBACK;

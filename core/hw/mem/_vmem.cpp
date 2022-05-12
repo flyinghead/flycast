@@ -1,6 +1,7 @@
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/elan.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
 #include "oslib/oslib.h"
@@ -23,6 +24,11 @@ static _vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
 
 //upper 8b of the address
 static void* _vmem_MemInfo_ptr[0x100];
+
+#define MAP_RAM_START_OFFSET  0
+#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
+#define MAP_ERAM_START_OFFSET (MAP_ARAM_START_OFFSET+ARAM_SIZE)
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
@@ -417,7 +423,8 @@ static void _vmem_set_p0_mappings()
 		{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
 		{0x06000000, 0x07000000,            MAP_VRAM_START_OFFSET, VRAM_SIZE, true},  // VRAM mirror
 		{0x07000000, 0x08000000,                               0,         0, false},  // 32 bit path (unused) mirror
-		{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
+		{0x08000000, 0x0A000000,                               0,         0, false},  // Area 2
+		{0x0A000000, 0x0C000000,            MAP_ERAM_START_OFFSET, elan::ELAN_RAM_SIZE, true},  // Area 2 (Elan RAM)
 		{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 		{0x10000000, 0x80000000,                               0,         0, false},  // Area 4-7 (unused)
 	};
@@ -434,7 +441,7 @@ bool _vmem_reserve()
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
 #if !defined(TARGET_NO_EXCEPTIONS)
 	if (!settings.dynarec.disable_nvmem)
-		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
+		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + elan::ELAN_RAM_SIZE);
 #endif
 	return true;
 }
@@ -451,6 +458,8 @@ static void _vmem_term_mappings()
 		vram.data = nullptr;
 		free_pages(aica_ram.data);
 		aica_ram.data = nullptr;
+		free_pages(elan::RAM);
+		elan::RAM = nullptr;
 	}
 }
 
@@ -478,6 +487,8 @@ void _vmem_init_mappings()
 
 		aica_ram.size = ARAM_SIZE;
 		aica_ram.data = (u8*)malloc_pages(ARAM_SIZE);
+
+		elan::RAM = (u8*)malloc_pages(elan::ELAN_RAM_SIZE);
 	}
 	else {
 		NOTICE_LOG(VMEM, "Info: nvmem is enabled, with addr space of size %s", vmemstatus == MemType4GB ? "4GB" : "512MB");
@@ -493,7 +504,8 @@ void _vmem_init_mappings()
 				{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
 				{0x06000000, 0x07000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
 				{0x07000000, 0x08000000,                               0,         0, false},  // 32 bit path (unused) mirror
-				{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
+				{0x08000000, 0x0A000000,                               0,         0, false},  // Area 2
+				{0x0A000000, 0x0C000000,           MAP_ERAM_START_OFFSET, elan::ELAN_RAM_SIZE, true},  // Area 2 (Elan RAM)
 				{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0x10000000, 0x20000000,                               0,         0, false},  // Area 4-7 (unused)
 				// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
@@ -505,6 +517,7 @@ void _vmem_init_mappings()
 			aica_ram.data = &virt_ram_base[0x20000000];  // Points to the writable AICA addrspace
 			vram.data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writable and lockable)
 			mem_b.data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
+			elan::RAM = &virt_ram_base[0x0A000000];
 		}
 		else
 		{
@@ -520,7 +533,8 @@ void _vmem_init_mappings()
 				{0x85000000, 0x86000000,                               0,         0, false},  // 32 bit path (unused)
 				{0x86000000, 0x87000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
 				{0x87000000, 0x88000000,                               0,         0, false},  // 32 bit path (unused) mirror
-				{0x88000000, 0x8C000000,                               0,         0, false},  // Area 2
+				{0x88000000, 0x8A000000,                               0,         0, false},  // Area 2
+				{0x8A000000, 0x8C000000,            MAP_ERAM_START_OFFSET, elan::ELAN_RAM_SIZE, true},  // Area 2 (Elan RAM)
 				{0x8C000000, 0x90000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0x90000000, 0xA0000000,                               0,         0, false},  // Area 4-7 (unused)
 				// P2
@@ -533,7 +547,8 @@ void _vmem_init_mappings()
 				{0xA5000000, 0xA6000000,                               0,         0, false},  // 32 bit path (unused)
 				{0xA6000000, 0xA7000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
 				{0xA7000000, 0xA8000000,                               0,         0, false},  // 32 bit path (unused) mirror
-				{0xA8000000, 0xAC000000,                               0,         0, false},  // Area 2
+				{0xA8000000, 0xAA000000,                               0,         0, false},  // Area 2
+				{0xAA000000, 0xAC000000,            MAP_ERAM_START_OFFSET, elan::ELAN_RAM_SIZE, true},  // Area 2 (Elan RAM)
 				{0xAC000000, 0xB0000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0xB0000000, 0xC0000000,                               0,         0, false},  // Area 4-7 (unused)
 				// P3
@@ -546,7 +561,8 @@ void _vmem_init_mappings()
 				{0xC5000000, 0xC6000000,                               0,         0, false},  // 32 bit path (unused)
 				{0xC6000000, 0xC7000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
 				{0xC7000000, 0xC8000000,                               0,         0, false},  // 32 bit path (unused) mirror
-				{0xC8000000, 0xCC000000,                               0,         0, false},  // Area 2
+				{0xC8000000, 0xCA000000,                               0,         0, false},  // Area 2
+				{0xCA000000, 0xCC000000,            MAP_ERAM_START_OFFSET, elan::ELAN_RAM_SIZE, true},  // Area 2 (Elan RAM)
 				{0xCC000000, 0xD0000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0xD0000000, 0x100000000L,                             0,         0, false},  // Area 4-7 (unused)
 			};
@@ -556,6 +572,7 @@ void _vmem_init_mappings()
 			aica_ram.data = &virt_ram_base[0x80800000];  // Points to the first AICA addrspace in P1
 			vram.data = &virt_ram_base[0x84000000];   // Points to first vram mirror (writable and lockable) in P1
 			mem_b.data = &virt_ram_base[0x8C000000];   // Main memory, first mirror in P1
+			elan::RAM = &virt_ram_base[0x8A000000];
 
 			vmem_4gb_space = true;
 		}

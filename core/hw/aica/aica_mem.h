@@ -1,8 +1,8 @@
 #pragma once
 #include "types.h"
 
-u32 libAICA_ReadReg(u32 addr,u32 size);
-void libAICA_WriteReg(u32 addr,u32 data,u32 size);
+template<typename T> T aicaReadReg(u32 addr);
+template<typename T> void aicaWriteReg(u32 addr, T data);
 
 void init_mem();
 void term_mem();

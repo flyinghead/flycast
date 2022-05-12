@@ -155,10 +155,10 @@ GLuint BindRTT(bool withDepthBuffer)
 		WARN_LOG(RENDERER, "Invalid framebuffer format: 7");
 		return 0;
 	}
-	u32 fbw = pvrrc.fb_X_CLIP.max + 1;
-	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
+	u32 fbw = pvrrc.getFramebufferWidth();
+	u32 fbh = pvrrc.getFramebufferHeight();
 	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
-	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
 	if (gl.rtt.texAddress != ~0u)
@@ -266,8 +266,8 @@ GLuint BindRTT(bool withDepthBuffer)
 
 void ReadRTTBuffer()
 {
-	u32 w = pvrrc.fb_X_CLIP.max + 1;
-	u32 h = pvrrc.fb_Y_CLIP.max + 1;
+	u32 w = pvrrc.getFramebufferWidth();
+	u32 h = pvrrc.getFramebufferHeight();
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
@@ -295,7 +295,7 @@ void ReadRTTBuffer()
 		gl.rtt.height = h;
 		u16 *dst = gl.gl_major >= 3 ? nullptr : (u16 *)&vram[tex_addr];
 
-		gl.rtt.linestride = FB_W_LINESTRIDE.stride * 8;
+		gl.rtt.linestride = pvrrc.fb_W_LINESTRIDE * 8;
 		if (gl.rtt.linestride == 0)
 			gl.rtt.linestride = w * 2;
 
@@ -324,7 +324,7 @@ void ReadRTTBuffer()
 				u8 *p = (u8 *)tmp_buf.data();
 				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-				WriteTextureToVRam(w, h, p, dst);
+				WriteTextureToVRam(w, h, p, dst, -1, gl.rtt.linestride);
 				gl.rtt.texAddress = ~0;
 			}
 		}

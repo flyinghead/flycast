@@ -164,8 +164,6 @@ static void updateAudioSession(Event event, void *)
 
 @end
 
-extern int screen_dpi;
-
 @implementation FlycastViewController {
 	UITextField *textField;
 	BOOL showingKeyboard;
@@ -312,7 +310,7 @@ extern int screen_dpi;
 	if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
 	  scale = [[UIScreen mainScreen] scale];
 	}
-	screen_dpi = roundf(160 * scale);
+	settings.display.dpi = 160.f * scale;
 	initRenderApi();
 	mainui_init();
 

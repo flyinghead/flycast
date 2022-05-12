@@ -29,27 +29,27 @@
 void vjoy_reset_editing();
 void vjoy_stop_editing(bool canceled);
 
-void gui_display_vjoy_commands(float scaling)
+void gui_display_vjoy_commands()
 {
     centerNextWindow();
 
     ImGui::Begin("Virtual Joystick", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
 
-	if (ImGui::Button("Save", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Save", ScaledVec2(150, 50)))
 	{
 		vjoy_stop_editing(false);
 		gui_state = GuiState::Settings;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Reset", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Reset", ScaledVec2(150, 50)))
 	{
 		vjoy_reset_editing();
 		gui_state = GuiState::VJoyEdit;
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button("Cancel", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Cancel", ScaledVec2(150, 50)))
 	{
 		vjoy_stop_editing(true);
 		gui_state = GuiState::Settings;

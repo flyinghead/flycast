@@ -49,7 +49,7 @@ static std::vector<void *> mapped_regions;
 
 // Please read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 #ifdef TARGET_UWP
 	return MemTypeError;
@@ -58,7 +58,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
 	mapped_regions.reserve(32);
 
 	// First let's try to allocate the in-memory file
-	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
+	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, ramSize, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
 	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;

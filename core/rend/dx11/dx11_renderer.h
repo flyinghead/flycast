@@ -27,6 +27,7 @@
 #include "dx11_shaders.h"
 #include "rend/sorter.h"
 #include "dx11_renderstate.h"
+#include "dx11_naomi2.h"
 #ifndef LIBRETRO
 #include "dx11_driver.h"
 #endif
@@ -94,6 +95,7 @@ protected:
 	void readRttRenderTarget(u32 texAddress);
 	void renderFramebuffer();
 	void setCullMode(int mode);
+	virtual void setRTTSize(int width, int height) {}
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -118,6 +120,7 @@ protected:
 	u32 height = 0;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
+	Naomi2Helper n2Helper;
 
 private:
 	void readDCFramebuffer();

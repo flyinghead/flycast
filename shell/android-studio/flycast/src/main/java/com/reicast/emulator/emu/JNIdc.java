@@ -25,7 +25,7 @@ public final class JNIdc
 	public static native void setupMic(SipEmulator sip);
 	public static native int getVirtualGamepadVibration();
 
-	public static native void screenDpi(int screenDpi);
+	public static native void screenCharacteristics(float screenDpi, float refreshRate);
 	public static native void guiOpenSettings();
 	public static native boolean guiIsOpen();
 	public static native boolean guiIsContentBrowser();

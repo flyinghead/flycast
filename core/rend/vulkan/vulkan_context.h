@@ -40,7 +40,7 @@ public:
 #include "wsi/context.h"
 
 struct ImDrawData;
-struct TextureCache;
+class TextureCache;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 

@@ -14,7 +14,6 @@
 
 #include "types.h"
 #include "log/LogManager.h"
-#include "rend/gui.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -130,9 +129,9 @@ extern "C" int SDL_main(int argc, char *argv[])
 
 	mainui_loop();
 
+	sdl_window_destroy();
 	emu_flycast_term();
 	os_UninstallFaultHandler();
-	sdl_window_destroy();
 
 	return 0;
 }

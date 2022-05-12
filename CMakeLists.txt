@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+	set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM} CACHE STRING "Compiler launcher for C.")
+	set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM} CACHE STRING "Compiler launcher for CXX.")
 endif()
 
 option(ENABLE_CTEST "Enables unit tests" OFF)
@@ -45,7 +45,7 @@ if(ENABLE_CTEST)
     include(CTest)
 endif()
 
-if(APPLE AND NOT LIBRETRO)
+if(IOS AND NOT LIBRETRO)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
     enable_language(Swift)
 endif()
@@ -120,7 +120,7 @@ elseif(LIBRETRO)
 		else()
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
 		endif()
-    else()
+    elseif(USE_OPENGL)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
 	    if(APPLE)
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-framework,OpenGL")
@@ -550,15 +550,18 @@ if(LIBRETRO)
 		core/deps/libretro-common/compat/fopen_utf8.c
 		core/deps/libretro-common/compat/compat_strcasestr.c
 		core/deps/libretro-common/file/retro_dirent.c
-		core/deps/libretro-common/string/stdstring.c
-		core/deps/libretro-common/glsm/glsm.c
-		core/deps/libretro-common/glsym/rglgen.c)
-	if(ANDROID OR USE_GLES)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
-	elseif(USE_GLES2)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
-	else()
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
+		core/deps/libretro-common/string/stdstring.c)
+	if(USE_OPENGL)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/libretro-common/glsm/glsm.c
+			core/deps/libretro-common/glsym/rglgen.c)
+		if(ANDROID OR USE_GLES)
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
+		elseif(USE_GLES2)
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
+		else()
+			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
+		endif()
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		shell/libretro/audiostream.cpp
@@ -596,6 +599,7 @@ if(NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/hw/hwreg.h
         core/hw/aica/aica.cpp
         core/hw/aica/aica.h
         core/hw/aica/aica_if.cpp
@@ -621,7 +625,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/arm7/arm7_rec.cpp
         core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
-        core/hw/arm7/vbaARM.cpp
         core/hw/bba/bba.h
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h
@@ -677,6 +680,11 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
+        core/hw/naomi/card_reader.h
+        core/hw/naomi/card_reader.cpp
+        core/hw/pvr/elan.cpp
+        core/hw/pvr/elan.h
+        core/hw/pvr/elan_struct.h
         core/hw/pvr/helper_classes.h
         core/hw/pvr/pvr.cpp
         core/hw/pvr/pvr.h
@@ -884,8 +892,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
-        core/wsi/libretro.cpp
-        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -895,6 +901,8 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
+            core/wsi/libretro.cpp
+            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp
@@ -921,7 +929,9 @@ if(USE_OPENGL)
 	        core/rend/gles/gltex.cpp
 	        core/rend/gles/quad.cpp
 	        core/rend/gles/postprocess.cpp
-	        core/rend/gles/postprocess.h)
+	        core/rend/gles/postprocess.h
+	        core/rend/gles/naomi2.cpp
+	        core/rend/gles/naomi2.h)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
@@ -936,7 +946,9 @@ if(USE_OPENGL)
 	            core/rend/gl4/abuffer.cpp
 	            core/rend/gl4/gl4.h
 	            core/rend/gl4/gldraw.cpp
-	            core/rend/gl4/gles.cpp)
+	            core/rend/gl4/gles.cpp
+	        	core/rend/gl4/gl4naomi2.cpp
+	        	core/rend/gl4/gl4naomi2.h)
 	endif()
 endif()
 
@@ -1048,8 +1060,32 @@ if(USE_VULKAN)
 endif()
 
 if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
-	add_subdirectory(core/rend/dx9)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
+	set(REND_DX9_FILES
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dx9_driver.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE ${REND_DX9_FILES})
+
+	if(NOT MINGW)
+		set_source_files_properties(${REND_DX9_FILES} PROPERTIES INCLUDE_DIRECTORIES "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x86")
+		endif()
+	endif()
+
+	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
 endif()
 
 if(WIN32)
@@ -1077,6 +1113,8 @@ if(WIN32)
 		core/rend/dx11/dx11context_lr.cpp
 		core/rend/dx11/dx11context_lr.h
 		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_naomi2.cpp
+		core/rend/dx11/dx11_naomi2.h
 		core/rend/dx11/oit/dx11_oitbuffers.h
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
 		core/rend/dx11/oit/dx11_oitshaders.cpp
@@ -1236,8 +1274,8 @@ if(NOT LIBRETRO)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
-		set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 		if(IOS)
+			set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 			add_subdirectory(shell/apple/emulator-ios/AltKit)
 			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
 
@@ -1292,7 +1330,8 @@ if(NOT LIBRETRO)
 				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
 				XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
 				XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
-				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast")
 				
 			find_library(UIKIT UIKit)
 			find_library(FOUNDATION Foundation)
@@ -1346,6 +1385,7 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_BUNDLE_VERSION "1"
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
 				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast"
 				BUILD_WITH_INSTALL_RPATH TRUE
 				INSTALL_RPATH "@loader_path/../Frameworks"
 			)
@@ -1353,7 +1393,6 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
-			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 
@@ -1361,7 +1400,6 @@ if(NOT LIBRETRO)
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
-				${MULTITOUCH_SUPPORT_LIBRARY}
 				${OPENGL_LIBRARY}
 				${IOSURFACE_LIBRARY})
 

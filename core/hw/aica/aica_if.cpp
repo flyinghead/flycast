@@ -45,23 +45,28 @@ u32 GetRTC_now()
 	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
-u32 ReadMem_aica_rtc(u32 addr, u32 sz)
+template<typename T>
+T ReadMem_aica_rtc(u32 addr)
 {
 	switch (addr & 0xFF)
 	{
 	case 0:
-		return RealTimeClock >> 16;
+		return (T)(RealTimeClock >> 16);
 	case 4:
-		return RealTimeClock & 0xFFFF;
+		return (T)(RealTimeClock & 0xFFFF);
 	case 8:
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, sz);
+	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, (int)sizeof(T));
 	return 0;
 }
+template u8 ReadMem_aica_rtc<>(u32 addr);
+template u16 ReadMem_aica_rtc<>(u32 addr);
+template u32 ReadMem_aica_rtc<>(u32 addr);
 
-void WriteMem_aica_rtc(u32 addr, u32 data, u32 sz)
+template<typename T>
+void WriteMem_aica_rtc(u32 addr, T data)
 {
 	switch (addr & 0xFF)
 	{
@@ -86,31 +91,41 @@ void WriteMem_aica_rtc(u32 addr, u32 data, u32 sz)
 		break;
 
 	default:
-		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, sz, data);
+		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
 		break;
 	}
 }
+template void WriteMem_aica_rtc<>(u32 addr, u8 data);
+template void WriteMem_aica_rtc<>(u32 addr, u16 data);
+template void WriteMem_aica_rtc<>(u32 addr, u32 data);
 
-u32 ReadMem_aica_reg(u32 addr, u32 sz)
+template<typename T>
+T ReadMem_aica_reg(u32 addr)
 {
 	addr &= 0x7FFF;
-	if (sz == 1)
+	if (sizeof(T) == 1)
 	{
 		switch (addr)
 		{
 		case 0x2C00:
-			return ARMRST;
+			return (T)ARMRST;
 		case 0x2C01:
-			return VREG;
+			return (T)VREG;
 		default:
 			break;
 		}
 	}
 	else if (addr == 0x2C00)
-		return (VREG << 8) | ARMRST;
+		return (T)((VREG << 8) | ARMRST);
 
-	return libAICA_ReadReg(addr, sz);
+	if (sizeof(T) == 4)
+		return aicaReadReg<u16>(addr);
+	else
+		return aicaReadReg<T>(addr);
 }
+template u8 ReadMem_aica_reg<>(u32 addr);
+template u16 ReadMem_aica_reg<>(u32 addr);
+template u32 ReadMem_aica_reg<>(u32 addr);
 
 static void ArmSetRST()
 {
@@ -118,11 +133,12 @@ static void ArmSetRST()
 	aicaarm::enable(ARMRST == 0);
 }
 
-void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
+template<typename T>
+void WriteMem_aica_reg(u32 addr, T data)
 {
 	addr &= 0x7FFF;
 
-	if (sz == 1)
+	if (sizeof(T) == 1)
 	{
 		switch (addr)
 		{
@@ -147,8 +163,14 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		ArmSetRST();
 		return;
 	}
-	libAICA_WriteReg(addr, data, sz);
+	if (sizeof(T) == 4)
+		aicaWriteReg(addr, (u16)data);
+	else
+		aicaWriteReg(addr, data);
 }
+template void WriteMem_aica_reg<>(u32 addr, u8 data);
+template void WriteMem_aica_reg<>(u32 addr, u16 data);
+template void WriteMem_aica_reg<>(u32 addr, u32 data);
 
 static int DreamcastSecond(int tag, int c, int j)
 {

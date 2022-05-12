@@ -20,6 +20,7 @@
 #include "rend/gles/glcache.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
+#include "gl4naomi2.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -34,7 +35,7 @@ GLuint depthSaveTexId;
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
-							bool palette, Pass pass)
+							bool palette, bool naomi2, Pass pass)
 {
 	u32 rv=0;
 
@@ -51,6 +52,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= (int)pp_BumpMap;
 	rv <<= 1; rv |= (int)fog_clamping;
 	rv <<= 1; rv |= (int)palette;
+	rv <<= 1; rv |= (int)naomi2;
 	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -69,6 +71,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->palette = palette;
+		shader->naomi2 = naomi2;
 		shader->pass = pass;
 		gl4CompilePipelineShader(shader);
 	}
@@ -128,6 +131,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
+				gp->isNaomi2(),
 				pass);
 	}
 	else
@@ -152,6 +156,7 @@ static void SetGPState(const PolyParam* gp)
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
 				gpuPalette,
+				gp->isNaomi2(),
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
@@ -201,7 +206,10 @@ static void SetGPState(const PolyParam* gp)
 			glActiveTexture(GL_TEXTURE0 + i);
 			TextureCacheData *texture = (TextureCacheData *)(i == 0 ? gp->texture : gp->texture1);
 
-			glBindTexture(GL_TEXTURE_2D, texture == nullptr ? 0 : texture->texID);
+			if (i == 0)
+				glcache.BindTexture(GL_TEXTURE_2D, texture == nullptr ? 0 : texture->texID);
+			else
+				glBindTexture(GL_TEXTURE_2D, texture == nullptr ? 0 : texture->texID);
 
 			if (texture != nullptr)
 			{
@@ -211,38 +219,48 @@ static void SetGPState(const PolyParam* gp)
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
+				bool nearest_filter;
+				if (config::TextureFiltering == 0) {
+					nearest_filter = tsp.FilterMode == 0;
+				} else if (config::TextureFiltering == 1) {
+					nearest_filter = true;
+				} else {
+					nearest_filter = false;
+				}
+
+				bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
+
 				//set texture filter mode
-				if (tsp.FilterMode == 0)
+				if (nearest_filter)
 				{
-					//disable filtering, mipmaps
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					//nearest-neighbor filtering
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				}
 				else
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					if (mipmapped)
-						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
-					if (gl.max_anisotropy > 1.f)
-					{
-						if (config::AnisotropicFiltering > 1)
-							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
-									std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
-						else
-							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
-					}
+				}
+
+				if (mipmapped)
+					glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
+
+				if (gl.max_anisotropy > 1.f)
+				{
+					if (config::AnisotropicFiltering > 1)
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
+								std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
+					else
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
 				}
 			}
 		}
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	//set cull mode !
-	//cflip is required when exploding triangles for triangle sorting
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
 	SetCull(gp->isp.CullMode ^ gcflip);
 
@@ -267,6 +285,8 @@ static void SetGPState(const PolyParam* gp)
 	}
 	else
 		glcache.DepthMask(GL_FALSE);
+	if (gp->isNaomi2())
+		setN2Uniforms(gp, CurrentShader);
 }
 
 template <u32 Type, bool SortingEnabled, Pass pass>
@@ -274,9 +294,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 {
 	PolyParam* params = &gply.head()[first];
 
-	if (count == 0)
-		return;
-
+	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx.head()[gply.head()->first] : 0;
 	while (count-- > 0)
 	{
 		if (params->count > 2)
@@ -293,7 +311,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 				params++;
 				continue;
 			}
-			gl4ShaderUniforms.poly_number = params - gply.head();
+			gl4ShaderUniforms.poly_number = ((params - gply.head()) << 17) - firstVertexIdx;
 			SetGPState<Type, SortingEnabled, pass>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}
@@ -304,39 +322,44 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 
 void gl4SetupMainVBO()
 {
-	glBindVertexArray(gl4.vbo.main_vao);
+	glBindVertexArray(gl4.vbo.getMainVAO());
 
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
+	gl4.vbo.getVertexBuffer()->bind();
+	gl4.vbo.getIndexBuffer()->bind();
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
 
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
 
-	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc));
 
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 
-	glEnableVertexAttribArray(VERTEX_COL_BASE1_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_BASE1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col1)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col1));
 
-	glEnableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_OFFS1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc1)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc1));
 
-	glEnableVertexAttribArray(VERTEX_UV1_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_UV1_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u1)); glCheck();
+	glEnableVertexAttribArray(VERTEX_UV1_ARRAY);
+	glVertexAttribPointer(VERTEX_UV1_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u1));
+
+	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
+	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
+
+	glCheck();
 }
 
 void gl4SetupModvolVBO()
 {
-	glBindVertexArray(gl4.vbo.modvol_vao);
+	glBindVertexArray(gl4.vbo.getModVolVAO());
 
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
+	gl4.vbo.getModVolBuffer()->bind();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
@@ -348,13 +371,11 @@ static void DrawModVols(int first, int count)
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
 
-	glBindVertexArray(gl4.vbo.modvol_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols);
+	glBindVertexArray(gl4.vbo.getModVolVAO());
+	gl4.vbo.getModVolBuffer()->bind();
 
 	glcache.Disable(GL_BLEND);
 	SetBaseClipping();
-
-	glcache.UseProgram(gl4.modvol_shader.program);
 
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_FALSE);
@@ -372,6 +393,14 @@ static void DrawModVols(int first, int count)
 
 		if (param.count == 0)
 			continue;
+		if (param.isNaomi2())
+		{
+			glcache.UseProgram(gl4.n2ModVolShader.program);
+			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);
+			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, param.projMatrix);
+		}
+		else
+			glcache.UseProgram(gl4.modvol_shader.program);
 
 		u32 mv_mode = param.isp.DepthMode;
 
@@ -395,7 +424,8 @@ static void DrawModVols(int first, int count)
 	}
 
 	//restore states
-	glBindVertexArray(gl4.vbo.main_vao);
+	glBindVertexArray(gl4.vbo.getMainVAO());
+	gl4.vbo.getVertexBuffer()->bind();
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_TRUE);
 }
@@ -422,10 +452,10 @@ void gl4CreateTextures(int width, int height)
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 
 	stencilTexId = glcache.GenTexture();
-	glBindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, width, height);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
@@ -436,10 +466,10 @@ void gl4CreateTextures(int width, int height)
 	depthTexId = glcache.GenTexture();
 	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
 	glCheck();
-	glBindTexture(GL_TEXTURE_2D, depthTexId);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glcache.BindTexture(GL_TEXTURE_2D, depthTexId);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glCheck();
 
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -456,7 +486,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 	glcache.DepthMask(GL_TRUE);
 	glClearDepth(0.0);
-	glStencilMask(0xFF);
+	glcache.StencilMask(0xFF);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 	//Draw the strips !
@@ -503,7 +533,9 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
 				current_pass.autosort);
 
-		glBindVertexArray(gl4.vbo.main_vao);
+		glBindVertexArray(gl4.vbo.getMainVAO());
+		gl4.vbo.getVertexBuffer()->bind();
+		gl4.vbo.getIndexBuffer()->bind();
 
 		if (!skip_op_pt)
 		{
@@ -519,10 +551,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				if (depthSaveTexId == 0)
 				{
 					depthSaveTexId = glcache.GenTexture();
-					glBindTexture(GL_TEXTURE_2D, depthSaveTexId);
-					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					glcache.BindTexture(GL_TEXTURE_2D, depthSaveTexId);
+					glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, max_image_width, max_image_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
 				}
@@ -651,7 +683,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 				glActiveTexture(GL_TEXTURE0);
 				glBindSampler(0, 0);
-				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
+				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 
 				renderABuffer();
 
@@ -665,7 +697,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		if (!skip_op_pt && render_pass < render_pass_count - 1)
 		{
 			// Clear the stencil from this pass
-			glStencilMask(0xFF);
+			glcache.StencilMask(0xFF);
 			glClear(GL_STENCIL_BUFFER_BIT);
 		}
 
@@ -680,7 +712,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
-	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
+	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer();
 }
 
@@ -692,6 +724,43 @@ extern GLuint lightgunTextureId[4];
 
 void UpdateVmuTexture(int vmu_screen_number);
 void UpdateLightGunTexture(int port);
+static GLuint osdVao;
+static std::unique_ptr<GlBuffer> osdVerts;
+static std::unique_ptr<GlBuffer> osdIndex;
+
+static void setupOsdVao()
+{
+	if (osdVerts == nullptr)
+		osdVerts = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	if (osdIndex == nullptr)
+	{
+		osdIndex = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+		osdIndex->update(indices, sizeof(indices));
+	}
+	if (osdVao != 0)
+	{
+		glBindVertexArray(osdVao);
+		osdVerts->bind();
+		osdIndex->bind();
+		return;
+	}
+	glGenVertexArrays(1, &osdVao);
+	glBindVertexArray(osdVao);
+
+	osdVerts->bind();
+	osdIndex->bind();
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+}
 
 void gl4DrawVmuTexture(u8 vmu_screen_number)
 {
@@ -731,7 +800,9 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	gl4SetupMainVBO();
+	setupOsdVao();
+	osdVerts->bind();
+	osdIndex->bind();
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
@@ -748,6 +819,7 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 				false,
 				false,
 				false,
+				false,
 				Pass::Color);
 	glcache.UseProgram(CurrentShader->program);
 	gl4ShaderUniforms.Set(CurrentShader);
@@ -759,12 +831,7 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
 		};
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+		osdVerts->update(vertices, sizeof(vertices));
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
@@ -797,7 +864,9 @@ void gl4DrawGunCrosshair(u8 port)
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	gl4SetupMainVBO();
+	setupOsdVao();
+	osdVerts->bind();
+	osdIndex->bind();
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 	CurrentShader = gl4GetProgram(false,
@@ -808,6 +877,7 @@ void gl4DrawGunCrosshair(u8 port)
 				0,
 				false,
 				2,
+				false,
 				false,
 				false,
 				false,
@@ -824,16 +894,18 @@ void gl4DrawGunCrosshair(u8 port)
 				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
 				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 		};
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+		osdVerts->update(vertices, sizeof(vertices));
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
 
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void gl4TermVmuLightgun()
+{
+	glDeleteVertexArrays(1, &osdVao);
+	osdVerts.reset();
+	osdIndex.reset();
 }
 #endif
