@@ -69,22 +69,9 @@ const char *PixelCompatShader = R"(
 )";
 
 const char* GouraudSource = R"(
-#if TARGET_GL == GL3
-	#define NOPERSPECTIVE noperspective
-	#if pp_Gouraud == 0
-		#define INTERPOLATION flat
-	#else
-		#define INTERPOLATION noperspective
-	#endif
-#elif TARGET_GL == GLES3
-	#define NOPERSPECTIVE
-	#if pp_Gouraud == 0
-		#define INTERPOLATION flat
-	#else
-		#define INTERPOLATION
-	#endif
+#if (TARGET_GL == GL3 || TARGET_GL == GLES3) && pp_Gouraud == 0
+	#define INTERPOLATION flat
 #else
-	#define NOPERSPECTIVE
 	#define INTERPOLATION
 #endif
 )";
@@ -103,7 +90,7 @@ in highp vec2 in_uv;
 /* output */
 INTERPOLATION out highp vec4 vtx_base;
 INTERPOLATION out highp vec4 vtx_offs;
-NOPERSPECTIVE out highp vec3 vtx_uv;
+out highp vec3 vtx_uv;
 
 void main()
 {
@@ -116,13 +103,20 @@ void main()
 	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
 	vpos.xy *= vpos.w;
 #else
-#if pp_Gouraud == 1
-	vtx_base *= vpos.z;
-	vtx_offs *= vpos.z;
-#endif
-	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
-	vpos.w = 1.0;
-	vpos.z = 0.0;
+	#if DIV_POS_Z == 1
+		vpos /= vpos.z;
+		vpos.z = vpos.w;
+	#endif
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
+		vtx_base *= vpos.z;
+		vtx_offs *= vpos.z;
+	#endif
+	vtx_uv = vec3(in_uv, vpos.z);
+	#if DIV_POS_Z != 1
+		vtx_uv.xy *= vpos.z;
+		vpos.w = 1.0;
+		vpos.z = 0.0;
+	#endif
 #endif
 	gl_Position = vpos;
 }
@@ -149,15 +143,19 @@ uniform mediump int palette_index;
 /* Vertex input*/
 INTERPOLATION in highp vec4 vtx_base;
 INTERPOLATION in highp vec4 vtx_offs;
-NOPERSPECTIVE in highp vec3 vtx_uv;
+in highp vec3 vtx_uv;
 
 lowp float fog_mode2(highp float w)
 {
+	highp float z = clamp(
 #if TARGET_GL == GLES2
-	highp float z = clamp(vtx_uv.z, 1.0, 255.9999);
+						  vtx_uv.z
+#elif DIV_POS_Z == 1
+						  sp_FOG_DENSITY / w
 #else
-	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
+						  sp_FOG_DENSITY * w
 #endif
+											, 1.0, 255.9999);
 	mediump float exp = floor(log2(z));
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	mediump float idx = floor(m) + exp * 16.0 + 0.5;
@@ -178,7 +176,7 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 lowp vec4 palettePixel(highp vec3 coords)
 {
-#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 || DIV_POS_Z == 1
 	highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
@@ -208,7 +206,7 @@ void main()
 	
 	highp vec4 color = vtx_base;
 	highp vec4 offset = vtx_offs;
-	#if pp_Gouraud == 1 && TARGET_GL != GLES2
+	#if pp_Gouraud == 1 && TARGET_GL != GLES2 && DIV_POS_Z != 1
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
 	#endif
@@ -221,7 +219,7 @@ void main()
 	#if pp_Texture==1
 	{
 		#if pp_Palette == 0
-		  #if TARGET_GL == GLES2 || TARGET_GL == GL2
+		  #if TARGET_GL == GLES2 || TARGET_GL == GL2 || DIV_POS_Z == 1
 			lowp vec4 texcol = texture(tex, vtx_uv.xy);
 		  #else
 			lowp vec4 texcol = textureProj(tex, vtx_uv);
@@ -289,7 +287,11 @@ void main()
 	
 	//color.rgb = vec3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
 #if TARGET_GL != GLES2
-	highp float w = vtx_uv.z * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / vtx_uv.z;
+#else
+	highp float w = 100000.0 * vtx_uv.z;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
 	gl_FragColor = color;
@@ -300,12 +302,16 @@ static const char* ModifierVolumeShader = R"(
 uniform lowp float sp_ShaderColor;
 
 /* Vertex input*/
-NOPERSPECTIVE in highp vec3 vtx_uv;
+in highp vec3 vtx_uv;
 
 void main()
 {
 #if TARGET_GL != GLES2
-	highp float w = vtx_uv.z * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / vtx_uv.z;
+#else
+	highp float w = 100000.0 * vtx_uv.z;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor);
@@ -635,19 +641,20 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	u32 rv=0;
 
 	rv |= pp_InsideClipping;
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-	rv<<=1; rv|=pp_Gouraud;
-	rv<<=1; rv|=pp_BumpMap;
-	rv<<=1; rv|=fog_clamping;
-	rv<<=1; rv|=trilinear;
-	rv<<=1; rv|=palette;
-	rv<<=1; rv|=naomi2;
+	rv <<= 1; rv |= cp_AlphaTest;
+	rv <<= 1; rv |= pp_Texture;
+	rv <<= 1; rv |= pp_UseAlpha;
+	rv <<= 1; rv |= pp_IgnoreTexA;
+	rv <<= 2; rv |= pp_ShadInstr;
+	rv <<= 1; rv |= pp_Offset;
+	rv <<= 2; rv |= pp_FogCtrl;
+	rv <<= 1; rv |= pp_Gouraud;
+	rv <<= 1; rv |= pp_BumpMap;
+	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= trilinear;
+	rv <<= 1; rv |= palette;
+	rv <<= 1; rv |= naomi2;
+	rv <<= 1, rv |= !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -666,6 +673,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		shader->trilinear = trilinear;
 		shader->palette = palette;
 		shader->naomi2 = naomi2;
+		shader->divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 		CompilePipelineShader(shader);
 	}
 
@@ -675,8 +683,9 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 class VertexSource : public OpenGlSource
 {
 public:
-	VertexSource(bool gouraud) : OpenGlSource() {
+	VertexSource(bool gouraud, bool divPosZ) : OpenGlSource() {
 		addConstant("pp_Gouraud", gouraud);
+		addConstant("DIV_POS_Z", divPosZ);
 
 		addSource(VertexCompatShader);
 		addSource(GouraudSource);
@@ -702,6 +711,7 @@ public:
 		addConstant("FogClamping", s->fog_clamping);
 		addConstant("pp_TriLinear", s->trilinear);
 		addConstant("pp_Palette", s->palette);
+		addConstant("DIV_POS_Z", s->divPosZ);
 
 		addSource(PixelCompatShader);
 		addSource(GouraudSource);
@@ -715,7 +725,7 @@ bool CompilePipelineShader(PipelineShader* s)
 	if (s->naomi2)
 		vertexShader = N2VertexSource(s->pp_Gouraud, false, s->pp_Texture).generate();
 	else
-		vertexShader = VertexSource(s->pp_Gouraud).generate();
+		vertexShader = VertexSource(s->pp_Gouraud, s->divPosZ).generate();
 	FragmentShaderSource fragmentSource(s);
 
 	s->program = gl_CompileAndLink(vertexShader.c_str(), fragmentSource.generate().c_str());
@@ -860,10 +870,11 @@ static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
 		return;
-	VertexSource vertexShader(false);
+	VertexSource vertexShader(false, config::NativeDepthInterpolation);
 
 	OpenGlSource fragmentShader;
 	fragmentShader.addConstant("pp_Gouraud", 0)
+			.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
 			.addSource(PixelCompatShader)
 			.addSource(GouraudSource)
 			.addSource(ModifierVolumeShader);
@@ -876,6 +887,7 @@ static void create_modvol_shader()
 	if (gl.gl_major >= 3)
 	{
 		N2VertexSource n2vertexShader(false, true, false);
+		fragmentShader.setConstant("DIV_POS_Z", false);
 		gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 		gl.n2ModVolShader.ndcMat = glGetUniformLocation(gl.n2ModVolShader.program, "ndcMat");
 		gl.n2ModVolShader.sp_ShaderColor = glGetUniformLocation(gl.n2ModVolShader.program, "sp_ShaderColor");
@@ -885,7 +897,7 @@ static void create_modvol_shader()
 	}
 }
 
-bool gl_create_resources()
+static bool gl_create_resources()
 {
 	if (gl.vbo.geometry != nullptr)
 		// Assume the resources have already been created
@@ -903,15 +915,12 @@ bool gl_create_resources()
 	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
-	create_modvol_shader();
 	initQuad();
 
 	return true;
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
-
-bool gl_create_resources();
 
 //setup
 
@@ -1200,17 +1209,21 @@ bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_min.getRGBAColor(ShaderUniforms.fog_clamp_min);
 	pvrrc.fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
 	
-	glcache.UseProgram(gl.modvol_shader.program);
-	if (gl.modvol_shader.depth_scale != -1)
-		glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniformMatrix4fv(gl.modvol_shader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
-	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+	if (config::ModifierVolumes)
+	{
+		create_modvol_shader();
+		glcache.UseProgram(gl.modvol_shader.program);
+		if (gl.modvol_shader.depth_scale != -1)
+			glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
+		glUniformMatrix4fv(gl.modvol_shader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
+		glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
-	glcache.UseProgram(gl.n2ModVolShader.program);
-	if (gl.n2ModVolShader.depth_scale != -1)
-		glUniform4fv(gl.n2ModVolShader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniformMatrix4fv(gl.n2ModVolShader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
-	glUniform1f(gl.n2ModVolShader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+		glcache.UseProgram(gl.n2ModVolShader.program);
+		if (gl.n2ModVolShader.depth_scale != -1)
+			glUniform4fv(gl.n2ModVolShader.depth_scale, 1, ShaderUniforms.depth_coefs);
+		glUniformMatrix4fv(gl.n2ModVolShader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
+		glUniform1f(gl.n2ModVolShader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+	}
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

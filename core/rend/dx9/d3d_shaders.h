@@ -36,9 +36,10 @@ public:
 	const ComPtr<IDirect3DPixelShader9>& getModVolShader();
 	void term() {
 		shaders.clear();
-		gouraudVertexShader.reset();
-		flatVertexShader.reset();
-		modVolShader.reset();
+		for (auto& shader : vertexShaders)
+			shader.reset();
+		for (auto& shader : modVolShaders)
+			shader.reset();
 		device.reset();
 	}
 
@@ -49,7 +50,6 @@ private:
 
 	ComPtr<IDirect3DDevice9> device;
 	std::unordered_map<u32, ComPtr<IDirect3DPixelShader9>> shaders;
-	ComPtr<IDirect3DVertexShader9> gouraudVertexShader;
-	ComPtr<IDirect3DVertexShader9> flatVertexShader;
-	ComPtr<IDirect3DPixelShader9> modVolShader;
+	ComPtr<IDirect3DVertexShader9> vertexShaders[4];
+	ComPtr<IDirect3DPixelShader9> modVolShaders[2];
 };

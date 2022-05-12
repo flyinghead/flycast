@@ -46,10 +46,10 @@ INTERPOLATION out highp vec4 vtx_offs;
 #if pp_TwoVolumes == 1
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
-noperspective out vec2 vtx_uv1;
+out vec2 vtx_uv1;
 #endif
 #endif
-NOPERSPECTIVE out highp vec3 vtx_uv;
+out highp vec3 vtx_uv;
 #ifdef OIT_RENDER
 flat out uint vtx_index;
 #endif

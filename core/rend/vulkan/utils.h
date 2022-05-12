@@ -82,7 +82,7 @@ static const char GouraudSource[] = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION noperspective
+#define INTERPOLATION
 #endif
 )";
 

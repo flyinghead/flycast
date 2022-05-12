@@ -1731,25 +1731,30 @@ static void gui_display_settings()
 
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-		    	ImGui::Indent();
-		    	if (!config::VSync || !isVulkan(config::RendererType))
+		    	if (isVulkan(config::RendererType))
 		    	{
-			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			    	ImGui::Indent();
+			    	if (!config::VSync)
+			    	{
+				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			    	}
+		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+			    	if (!config::VSync)
+			    	{
+				        ImGui::PopItemFlag();
+				        ImGui::PopStyleVar();
+			    	}
+			    	ImGui::Unindent();
 		    	}
-	    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-		    	if (!config::VSync || !isVulkan(config::RendererType))
-		    	{
-			        ImGui::PopItemFlag();
-			        ImGui::PopStyleVar();
-		    	}
-		    	ImGui::Unindent();
 #endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
+		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
 		    	constexpr int apiCount = 0
 					#ifdef USE_VULKAN
 		    			+ 1

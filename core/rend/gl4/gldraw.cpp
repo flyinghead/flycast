@@ -54,6 +54,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= (int)palette;
 	rv <<= 1; rv |= (int)naomi2;
 	rv <<= 2; rv |= (int)pass;
+	rv <<= 1; rv |= (int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
 	if (shader->program == 0)
@@ -73,6 +74,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 		shader->palette = palette;
 		shader->naomi2 = naomi2;
 		shader->pass = pass;
+		shader->divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 		gl4CompilePipelineShader(shader);
 	}
 

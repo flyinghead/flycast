@@ -36,20 +36,28 @@ layout (location = 3) in mediump vec2 in_uv;
 
 layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
 layout (location = 1) INTERPOLATION out highp vec4 vtx_offs;
-layout (location = 2) noperspective out highp vec3 vtx_uv;
+layout (location = 2) out highp vec3 vtx_uv;
 
 void main()
 {
 	vec4 vpos = uniformBuffer.ndcMat * in_pos;
+#if DIV_POS_Z == 1
+	vpos /= vpos.z;
+	vpos.z = vpos.w;
+#endif
 	vtx_base = vec4(in_base) / 255.0;
 	vtx_offs = vec4(in_offs) / 255.0;
-	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
-#if pp_Gouraud == 1
+	vtx_uv = vec3(in_uv, vpos.z);
+#if pp_Gouraud == 1 && DIV_POS_Z != 1
 	vtx_base *= vpos.z;
 	vtx_offs *= vpos.z;
 #endif
+
+#if DIV_POS_Z != 1
+	vtx_uv.xy *= vpos.z;
 	vpos.w = 1.0;
 	vpos.z = 0.0;
+#endif
 	gl_Position = vpos;
 }
 )";
@@ -87,14 +95,20 @@ layout (set = 0, binding = 3) uniform sampler2D palette;
 // Vertex input
 layout (location = 0) INTERPOLATION in highp vec4 vtx_base;
 layout (location = 1) INTERPOLATION in highp vec4 vtx_offs;
-layout (location = 2) noperspective in highp vec3 vtx_uv;
+layout (location = 2) in highp vec3 vtx_uv;
 
 #if pp_FogCtrl != 2
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
 
 float fog_mode2(float w)
 {
-	float z = clamp(w * uniformBuffer.sp_FOG_DENSITY, 1.0, 255.9999);
+	float z = clamp(
+#if DIV_POS_Z == 1
+					uniformBuffer.sp_FOG_DENSITY / w
+#else
+					uniformBuffer.sp_FOG_DENSITY * w
+#endif
+													, 1.0, 255.9999);
 	float exp = floor(log2(z));
 	float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	float idx = floor(m) + exp * 16.0 + 0.5;
@@ -116,7 +130,12 @@ vec4 colorClamp(vec4 col)
 
 vec4 palettePixel(sampler2D tex, vec3 coords)
 {
-	vec4 c = vec4(textureProj(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+#if DIV_POS_Z == 1
+	float texIdx = texture(tex, coords.xy).r;
+#else
+	float texIdx = textureProj(tex, coords).r;
+#endif
+	vec4 c = vec4(texIdx * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
 	return texture(palette, c.xy);
 }
 
@@ -133,7 +152,7 @@ void main()
 	
 	highp vec4 color = vtx_base;
 	highp vec4 offset = vtx_offs;
-	#if pp_Gouraud == 1
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
 	#endif
@@ -141,12 +160,16 @@ void main()
 		color.a = 1.0;
 	#endif
 	#if pp_FogCtrl == 3
-		color = vec4(uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(gl_FragCoord.w));
+		color = vec4(uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(vtx_uv.z));
 	#endif
 	#if pp_Texture == 1
 	{
 		#if pp_Palette == 0
-			vec4 texcol = textureProj(tex, vtx_uv);
+			#if DIV_POS_Z == 1
+				vec4 texcol = texture(tex, vtx_uv.xy);
+			#else
+				vec4 texcol = textureProj(tex, vtx_uv);
+			#endif
 		#else
 			vec4 texcol = palettePixel(tex, vtx_uv);
 		#endif
@@ -216,7 +239,11 @@ void main()
 	
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
-	highp float w = vtx_uv.z * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / vtx_uv.z;
+#else
+	highp float w = 100000.0 * vtx_uv.z;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 
 	gl_FragColor = color;
@@ -230,20 +257,26 @@ layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 } uniformBuffer;
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 0) noperspective out highp float depth;
+layout (location = 0) out highp float depth;
 
 void main()
 {
 	vec4 vpos = uniformBuffer.ndcMat * in_pos;
+#if DIV_POS_Z == 1
+	vpos /= vpos.z;
+	vpos.z = vpos.w;
+	depth = vpos.w;
+#else
 	depth = vpos.z;
 	vpos.w = 1.0;
 	vpos.z = 0.0;
+#endif
 	gl_Position = vpos;
 }
 )";
 
 static const char ModVolFragmentShaderSource[] = R"(
-layout (location = 0) noperspective in highp float depth;
+layout (location = 0) in highp float depth;
 layout (location = 0) out vec4 FragColor;
 
 layout (push_constant) uniform pushBlock
@@ -253,7 +286,11 @@ layout (push_constant) uniform pushBlock
 
 void main()
 {
-	highp float w = depth * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / depth;
+#else
+	highp float w = 100000.0 * depth;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 	FragColor = vec4(0.0, 0.0, 0.0, pushConstants.sp_ShaderColor);
 }
@@ -570,7 +607,7 @@ layout (location = 4) in vec3         in_normal;
 
 layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
 layout (location = 1) INTERPOLATION out highp vec4 vtx_offs;
-layout (location = 2) noperspective out highp vec3 vtx_uv;
+layout (location = 2) out highp vec3 vtx_uv;
 
 void wDivide(inout vec4 vpos)
 {
@@ -633,7 +670,7 @@ layout (std140, set = 1, binding = 2) uniform N2VertexShaderUniforms
 } n2Uniform;
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 0) noperspective out highp float depth;
+layout (location = 0) out highp float depth;
 
 void wDivide(inout vec4 vpos)
 {
@@ -660,6 +697,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const VertexShaderParams& pa
 	if (!params.naomi2)
 	{
 		src.addConstant("pp_Gouraud", (int)params.gouraud)
+				.addConstant("DIV_POS_Z", (int)params.divPosZ)
 				.addSource(GouraudSource)
 				.addSource(VertexShaderSource);
 	}
@@ -689,20 +727,24 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("ColorClamping", (int)params.clamping)
 		.addConstant("pp_TriLinear", (int)params.trilinear)
 		.addConstant("pp_Palette", (int)params.palette)
+		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addSource(GouraudSource)
 		.addSource(FragmentShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
-vk::UniqueShaderModule ShaderManager::compileModVolVertexShader(bool naomi2)
+vk::UniqueShaderModule ShaderManager::compileShader(const ModVolShaderParams& params)
 {
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex,
-			VulkanSource().addSource(naomi2 ? N2ModVolVertexShaderSource : ModVolVertexShaderSource).generate());
+			VulkanSource().addConstant("DIV_POS_Z", (int)params.divPosZ)
+				.addSource(params.naomi2 ? N2ModVolVertexShaderSource : ModVolVertexShaderSource).generate());
 }
 
-vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
+vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader(bool divPosZ)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(ModVolFragmentShaderSource).generate());
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment,
+			VulkanSource().addConstant("DIV_POS_Z", (int)divPosZ)
+				.addSource(ModVolFragmentShaderSource).generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)

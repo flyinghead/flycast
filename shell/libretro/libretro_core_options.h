@@ -535,6 +535,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
 #endif
    {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  "Native Depth Interpolation",
+	  NULL,
+	  "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.",
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_threaded_rendering",
       "Threaded Rendering",
       NULL,

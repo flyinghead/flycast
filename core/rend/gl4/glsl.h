@@ -40,7 +40,11 @@ struct Pixel { \n\
  \n\
 void setFragDepth(float z) \n\
 { \n\
+#if DIV_POS_Z == 1 \n\
+	float w = 100000.0 / z; \n\
+#else \n\
 	float w = 100000.0 * z; \n\
+#endif \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 \n\

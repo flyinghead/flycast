@@ -25,14 +25,14 @@ static const char *gouraudSource = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION noperspective
+#define INTERPOLATION
 #endif
-#define NOPERSPECTIVE noperspective
 )";
 
 N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Source()
 {
 	addConstant("OIT_RENDER");
+	addConstant("DIV_POS_Z", false);
 	if (shader == nullptr)
 	{
 		addConstant("POSITION_ONLY", 1);
