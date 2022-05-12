@@ -318,154 +318,6 @@ bool DX11Renderer::Process(TA_context* ctx)
 	}
 }
 
-//
-// Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools - November 2011
-//
-static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
-{
-	return (A * std::abs(Bdist) + B * std::abs(Adist)) / (std::abs(Adist) + std::abs(Bdist));
-}
-
-// Clip the triangle 'trig' with respect to the plane defined by the given point and normal vector.
-static int sutherlandHodgmanClip(const glm::vec2& point, const glm::vec2& normal, ModTriangle& trig, ModTriangle& newTrig)
-{
-	constexpr float clipEpsilon = 0.f; //0.00001;
-	constexpr float clipEpsilon2 = 0.f; //0.01;
-
-	glm::vec3 v0(trig.x0, trig.y0, trig.z0);
-	glm::vec3 v1(trig.x1, trig.y1, trig.z1);
-	glm::vec3 v2(trig.x2, trig.y2, trig.z2);
-
-	glm::vec3 dist = glm::vec3(
-			glm::dot(glm::vec2(v0) - point, normal),
-			glm::dot(glm::vec2(v1) - point, normal),
-			glm::dot(glm::vec2(v2) - point, normal));
-	if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2))))
-		// all clipped
-		return 0;
-	if (glm::all(glm::greaterThanEqual(dist , glm::vec3(-clipEpsilon))))
-		// none clipped
-		return 3;
-
-	// There are either 1 or 2 vertices above the clipping plane.
-	glm::bvec3 above = glm::greaterThanEqual(dist, glm::vec3(0.f));
-	bool nextIsAbove;
-	glm::vec3 v3;
-	// Find the CCW-most vertex above the plane.
-	if (above[1] && !above[0])
-	{
-		// Cycle once CCW. Use v3 as a temp
-		nextIsAbove = above[2];
-		v3 = v0;
-		v0 = v1;
-		v1 = v2;
-		v2 = v3;
-		dist = glm::vec3(dist.y, dist.z, dist.x);
-	}
-	else if (above[2] && !above[1])
-	{
-		// Cycle once CW. Use v3 as a temp.
-		nextIsAbove = above[0];
-		v3 = v2;
-		v2 = v1;
-		v1 = v0;
-		v0 = v3;
-		dist = glm::vec3(dist.z, dist.x, dist.y);
-	}
-	else
-		nextIsAbove = above[1];
-	trig.x0 = v0.x;
-	trig.y0 = v0.y;
-	trig.z0 = v0.z;
-	// We always need to clip v2-v0.
-	v3 = intersect(v0, dist[0], v2, dist[2]);
-	if (nextIsAbove)
-	{
-		v2 = intersect(v1, dist[1], v2, dist[2]);
-		trig.x1 = v1.x;
-		trig.y1 = v1.y;
-		trig.z1 = v1.z;
-		trig.x2 = v2.x;
-		trig.y2 = v2.y;
-		trig.z2 = v2.z;
-		newTrig.x0 = v0.x;
-		newTrig.y0 = v0.y;
-		newTrig.z0 = v0.z;
-		newTrig.x1 = v2.x;
-		newTrig.y1 = v2.y;
-		newTrig.z1 = v2.z;
-		newTrig.x2 = v3.x;
-		newTrig.y2 = v3.y;
-		newTrig.z2 = v3.z;
-
-		return 4;
-	}
-	else
-	{
-		v1 = intersect(v0, dist[0], v1, dist[1]);
-		trig.x1 = v1.x;
-		trig.y1 = v1.y;
-		trig.z1 = v1.z;
-		trig.x2 = v3.x;
-		trig.y2 = v3.y;
-		trig.z2 = v3.z;
-
-		return 3;
-	}
-}
-
-static void clipModVols(List<ModifierVolumeParam>& params, std::vector<ModTriangle>& triangles)
-{
-	for (ModifierVolumeParam& param : params)
-	{
-		std::vector<ModTriangle> trigs(&pvrrc.modtrig.head()[param.first], &pvrrc.modtrig.head()[param.first + param.count]);
-		std::vector<ModTriangle> nextTrigs;
-		nextTrigs.reserve(trigs.size());
-		for (int axis = 0; axis < 4; axis++)
-		{
-			glm::vec2 point;
-			glm::vec2 normal;
-			switch (axis)
-			{
-			case 0: // left
-				point = glm::vec2(-6400.f, 0.f);
-				normal = glm::vec2(1.f, 0.f);
-				break;
-			case 1: // top
-				point = glm::vec2(0.f, -4800.f);
-				normal = glm::vec2(0.f, 1.f);
-				break;
-			case 2: // right
-				point = glm::vec2(7040.f, 0.f);
-				normal = glm::vec2(-1.f, 0.f);
-				break;
-			case 3: // bottom
-				point = glm::vec2(-0.f, 5280.f);
-				normal = glm::vec2(0.f, -1.f);
-				break;
-			}
-
-			for (ModTriangle& trig : trigs)
-			{
-				ModTriangle newTrig;
-				int size = sutherlandHodgmanClip(point, normal, trig, newTrig);
-				if (size > 0)
-				{
-					nextTrigs.push_back(trig);
-					if (size == 4)
-						nextTrigs.push_back(newTrig);
-				}
-			}
-			std::swap(trigs, nextTrigs);
-			nextTrigs.clear();
-		}
-		param.first = (u32)triangles.size();
-		param.count = (u32)trigs.size();
-		triangles.insert(triangles.end(), trigs.begin(), trigs.end());
-	}
-}
-
 void DX11Renderer::configVertexShader()
 {
 	matrices.CalcMatrices(&pvrrc, width, height);
@@ -522,33 +374,12 @@ void DX11Renderer::uploadGeometryBuffers()
 
 	if (config::ModifierVolumes && pvrrc.modtrig.used())
 	{
-		const ModTriangle *data = nullptr;
-		u32 size = 0;
-		std::vector<ModTriangle> modVolTriangles;
-		if (!settings.platform.isNaomi2()) // TODO for naomi2 as well?
-		{
-			// clip triangles
-			modVolTriangles.reserve(pvrrc.modtrig.used());
-			clipModVols(pvrrc.global_param_mvo, modVolTriangles);
-			clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
-			if (!modVolTriangles.empty())
-			{
-				size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
-				data = modVolTriangles.data();
-			}
-		}
-		else
-		{
-			size = pvrrc.modtrig.bytes();
-			data = pvrrc.modtrig.head();
-		}
-		if (size > 0)
-		{
-			verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
-			deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-			memcpy(mappedSubres.pData, data, size);
-			deviceContext->Unmap(modvolBuffer, 0);
-		}
+		const ModTriangle *data = pvrrc.modtrig.head();
+		u32 size = pvrrc.modtrig.bytes();
+		verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
+		deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+		memcpy(mappedSubres.pData, data, size);
+		deviceContext->Unmap(modvolBuffer, 0);
 	}
     unsigned int stride = sizeof(Vertex);
     unsigned int offset = 0;
@@ -812,7 +643,6 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			linearFiltering = false;
 		else
 			linearFiltering = true;
-
         auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}

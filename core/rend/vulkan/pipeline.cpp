@@ -138,8 +138,9 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(naomi2);
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
+	ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(shaderParams);
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -241,8 +242,9 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(naomi2);
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
+	ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(shaderParams);
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -392,7 +394,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1, pp.isNaomi2() });
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams { pp.pcw.Gouraud == 1, pp.isNaomi2(), divPosZ });
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
@@ -407,6 +410,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through && pp.tcw.MipMapped == 1;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.palette = gpuPalette;
+	params.divPosZ = divPosZ;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {

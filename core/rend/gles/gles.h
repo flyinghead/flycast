@@ -110,6 +110,7 @@ struct PipelineShader
 	bool trilinear;
 	bool palette;
 	bool naomi2;
+	bool divPosZ;
 };
 
 class GlBuffer

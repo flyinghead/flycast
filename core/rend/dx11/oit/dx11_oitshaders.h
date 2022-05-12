@@ -35,7 +35,7 @@ public:
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
 			bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool twoVolumes, Pass pass);
-	const ComPtr<ID3D11VertexShader>& getVertexShader(bool gouraud, bool naomi2, bool positionOnly, bool lightOn, bool twoVolumes = true);
+	const ComPtr<ID3D11VertexShader>& getVertexShader(bool gouraud, bool naomi2, bool positionOnly, bool lightOn, bool twoVolumes = false);
 	const ComPtr<ID3D11PixelShader>& getModVolShader();
 	const ComPtr<ID3D11VertexShader>& getMVVertexShader(bool naomi2);
 	const ComPtr<ID3D11PixelShader>& getFinalShader();
@@ -47,8 +47,9 @@ public:
 		saveCache(CacheFile);
 		shaders.clear();
 		vertexShaders.clear();
-		modVolShader.reset();
 		for (auto& shader : modVolVertexShaders)
+			shader.reset();
+		for (auto& shader : modVolShaders)
 			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
@@ -69,8 +70,8 @@ private:
 	ComPtr<ID3D11Device> device;
 	std::unordered_map<u32, ComPtr<ID3D11PixelShader>> shaders;
 	std::unordered_map<u32, ComPtr<ID3D11VertexShader>> vertexShaders;
-	ComPtr<ID3D11PixelShader> modVolShader;
-	ComPtr<ID3D11VertexShader> modVolVertexShaders[2];
+	ComPtr<ID3D11PixelShader> modVolShaders[2];
+	ComPtr<ID3D11VertexShader> modVolVertexShaders[4];
 
 	ComPtr<ID3D11PixelShader> trModVolShaders[4];
 	ComPtr<ID3D11PixelShader> finalShader;

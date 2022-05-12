@@ -198,7 +198,7 @@ void main(void)
 )";
 
 static const char *tr_modvol_shader_source = R"(
-noperspective in vec3 vtx_uv;
+in vec3 vtx_uv;
 
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
