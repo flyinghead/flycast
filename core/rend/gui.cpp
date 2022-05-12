@@ -1238,13 +1238,13 @@ static void wireless_warning_popup()
     }
     if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
         ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
         float currentwidth = ImGui::GetContentRegionAvail().x;
 
-        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-        if (ImGui::Button("OK", ImVec2(100.f * scaling, 0.f)))
+        ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+        if (ImGui::Button("OK", ImVec2(100.f * settings.display.uiScale, 0.f)))
         {
             ImGui::CloseCurrentPopup();
         }
