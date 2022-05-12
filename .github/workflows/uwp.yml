@@ -1,6 +1,6 @@
 name: Windows UWP CI
 
-on: [push, pull_request]
+on: [public]
 
 jobs:
   build:

@@ -1,6 +1,6 @@
 name: Android CI
 
-on: [delete]
+on: [public]
 
 jobs:
   build:
