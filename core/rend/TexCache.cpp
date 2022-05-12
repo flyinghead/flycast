@@ -1,5 +1,6 @@
 #include "TexCache.h"
 #include "CustomTexture.h"
+#include "../gdxsv/gdxsv_CustomTexture.h"
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
@@ -623,6 +624,9 @@ void BaseTextureCacheData::Update()
 			return;
 		}
 	}
+#if defined(__APPLE__) || defined(_WIN32)
+    gdx_custom_texture.LoadCustomTextureAsync(this);
+#endif
 	if (config::CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
 

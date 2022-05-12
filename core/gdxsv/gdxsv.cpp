@@ -7,6 +7,7 @@
 #include "version.h"
 #include "emulator.h"
 #include <xxhash.h>
+#include "gdxsv_translation.h"
 
 bool Gdxsv::InGame() const {
     return enabled && netmode == NetMode::McsUdp;
@@ -442,6 +443,12 @@ void Gdxsv::WritePatch() {
 #include "gdxsv_patch.inc"
 
         gdxsv_WriteMem32(symbols["disk"], (int) disk);
+
+#if defined(__APPLE__) || defined(_WIN32)
+        if (disk == 2) {
+#include "gdxsv_translation_patch.h"
+        }
+#endif
     }
 }
 

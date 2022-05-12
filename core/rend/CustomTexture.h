@@ -30,16 +30,16 @@ class CustomTexture {
 public:
 	CustomTexture() : loader_thread(loader_thread_func, this) {}
 	~CustomTexture() { Terminate(); }
-	u8* LoadCustomTexture(u32 hash, int& width, int& height);
+	virtual u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
 	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
 	void Terminate();
 
-private:
-	bool Init();
-	void LoaderThread();
+protected:
+	virtual bool Init();
+    virtual void LoaderThread();
 	std::string GetGameId();
-	void LoadMap();
+    virtual void LoadMap();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	

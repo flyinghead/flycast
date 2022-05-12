@@ -114,6 +114,10 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 
+// Gdxsv
+
+Option<int> GdxLanguage("language", -1, "gdxsv");
+
 // Network
 
 Option<bool> NetworkEnable("Enable", false, "network");
