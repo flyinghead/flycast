@@ -626,3 +626,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons
     memcpy(DefaultOSDButtons.data(), b, len);
     env->ReleaseByteArrayElements(data, b, JNI_ABORT);
 }
+
+void enableNetworkBroadcast(bool enable)
+{
+    JNIEnv *env = jvm_attacher.getEnv();
+    jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
+    env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
+}

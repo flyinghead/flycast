@@ -125,3 +125,9 @@ static inline const char *inet_ntop(int af, const void* src, char* dst, int cnt)
     	return dst;
 }
 #endif
+
+#ifdef __ANDROID__
+void enableNetworkBroadcast(bool enable);
+#else
+static inline void enableNetworkBroadcast(bool enable) {}
+#endif
