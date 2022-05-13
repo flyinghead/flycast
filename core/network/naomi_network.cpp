@@ -91,6 +91,7 @@ bool NaomiNetwork::startNetwork()
 
 	if (config::ActAsServer)
 	{
+		enableNetworkBroadcast(true);
 		const auto timeout = seconds(20);
 		NOTICE_LOG(NETWORK, "Waiting for slave connections");
 		steady_clock::time_point start_time = steady_clock::now();
@@ -110,6 +111,7 @@ bool NaomiNetwork::startNetwork()
 				break;
 			std::this_thread::sleep_for(milliseconds(20));
 		}
+		enableNetworkBroadcast(false);
 		if (!slaves.empty())
 		{
 			NOTICE_LOG(NETWORK, "Master starting: %zd slaves", slaves.size());
