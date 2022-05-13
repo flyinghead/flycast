@@ -424,7 +424,7 @@ void main()
 		
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
-		pixel.depth = vtx_uv.z;
+		pixel.depth = gl_FragDepth;
 		pixel.seq_num = vtx_index;
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
