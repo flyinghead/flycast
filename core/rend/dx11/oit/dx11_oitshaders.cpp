@@ -800,6 +800,9 @@ struct MVPixel
 void main(in MVPixel inpix)
 {
 	uint2 coords = uint2(inpix.pos.xy);
+#if MV_MODE == MV_XOR || MV_MODE == MV_OR
+	float depth = getFragDepth(inpix.uv.w);
+#endif
 	
 	uint idx = abufferPointers[coords];
 	int list_len = 0;
@@ -811,10 +814,10 @@ void main(in MVPixel inpix)
 		{
 			uint prev_val;
 #if MV_MODE == MV_XOR
-			if (inpix.uv.w >= pixel.depth)
+			if (depth >= pixel.depth)
 				InterlockedXor(Pixels[idx].seq_num, SHADOW_STENCIL, prev_val);
 #elif MV_MODE == MV_OR
-			if (inpix.uv.w >= pixel.depth)
+			if (depth >= pixel.depth)
 				InterlockedOr(Pixels[idx].seq_num, SHADOW_STENCIL, prev_val);
 #elif MV_MODE == MV_INCLUSION
 			InterlockedAnd(Pixels[idx].seq_num, ~(SHADOW_STENCIL), prev_val);
@@ -913,21 +916,21 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
-			| (pp_UseAlpha << 1)
-			| (pp_IgnoreTexA << 2)
+			| ((int)pp_UseAlpha << 1)
+			| ((int)pp_IgnoreTexA << 2)
 			| (pp_ShadInstr << 3)
-			| (pp_Offset << 5)
+			| ((int)pp_Offset << 5)
 			| (pp_FogCtrl << 6)
-			| (pp_BumpMap << 8)
-			| (fog_clamping << 9)
-			| (palette << 10)
-			| (gouraud << 11)
-			| (alphaTest << 12)
-			| (clipInside << 13)
-			| (nearestWrapFix << 14)
-			| (twoVolumes << 15)
-			| (pass << 16)
-			| (divPosZ << 18);
+			| ((int)pp_BumpMap << 8)
+			| ((int)fog_clamping << 9)
+			| ((int)palette << 10)
+			| ((int)gouraud << 11)
+			| ((int)alphaTest << 12)
+			| ((int)clipInside << 13)
+			| ((int)nearestWrapFix << 14)
+			| ((int)twoVolumes << 15)
+			| ((int)pass << 16)
+			| ((int)divPosZ << 18);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -1067,7 +1070,8 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 			shader.reset();
 		maxLayers = config::PerPixelLayers;
 	}
-	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type];
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type | ((int)divPosZ << 3)];
 	if (!shader)
 	{
 		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
@@ -1075,6 +1079,7 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 		{
 			{ "MV_MODE", MacroValues[type] },
 			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
+			{ "DIV_POS_Z", MacroValues[divPosZ] },
 			{ }
 		};
 		shader = compilePS(OITTranslucentModvolShaderSource, "main", macros);
