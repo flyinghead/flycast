@@ -79,11 +79,11 @@ static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCT
             if (memory != NULL) {
                 void* data = LockResource(memory);
 
-                char hex[size+1];
+                char* hex = new char[size+1];
                 snprintf(hex, size+1, "%.*s", size, data);
                 uint32_t hash = strtoul(hex, NULL, 16);
 
-                char name[5];
+                char* name = new char[5];
                 snprintf(name, 5, "%d", lpName);
 
                 (*mapping)[hash] = name;
