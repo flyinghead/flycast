@@ -7,6 +7,10 @@
 //
 #if defined(__APPLE__) || defined(_WIN32)
 
+#ifdef _WIN32
+#define _AMD64_ // Fixing GitHub runner's winnt.h error
+#endif
+
 #include "gdxsv_CustomTexture.h"
 #include "gdxsv_translation.h"
 

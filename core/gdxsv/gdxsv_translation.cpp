@@ -5,6 +5,10 @@
 //  Created by Edward Li on 15/7/2021.
 //  Copyright © 2021 flycast. All rights reserved.
 //
+#ifdef _WIN32
+#define _AMD64_ // Fixing GitHub runner's winnt.h error
+#endif
+
 #include "cfg/option.h"
 #include "gdxsv_translation.h"
 
