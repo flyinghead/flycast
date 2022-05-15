@@ -1744,6 +1744,7 @@ elseif(WIN32)
 		)
 		add_dependencies(${PROJECT_NAME} gdxsv_translation_generate_texture)
 		set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/core/gdxsv/textures.rc PROPERTIES GENERATED 1)
+		target_sources(${PROJECT_NAME} PRIVATE core/gdxsv/textures.rc)
 endif()
 
 if(APPLE OR WIN32)
