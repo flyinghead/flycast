@@ -126,7 +126,7 @@ static inline const char *inet_ntop(int af, const void* src, char* dst, int cnt)
 }
 #endif
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 void enableNetworkBroadcast(bool enable);
 #else
 static inline void enableNetworkBroadcast(bool enable) {}
