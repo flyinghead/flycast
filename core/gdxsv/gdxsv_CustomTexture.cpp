@@ -19,7 +19,6 @@
 #include <mach-o/dyld.h>
 #include <regex>
 #elif _WIN32
-#include <windef.h>
 #include <winbase.h>
 #include <winuser.h>
 #include <winnls.h>
@@ -65,7 +64,7 @@ bool GDXCustomTexture::Init()
 
 #ifdef _WIN32
 
-static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCTSTR lpName, WORD wLang, LONG lParam)
+static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCTSTR lpName, WORD wLang, LONG_PTR lParam)
 {
     //Only add target language's hash & resource index into texture_map
     if (wLang == MAKELANGID(GDXLanguage::TextureLanguageID(), SUBLANG_NEUTRAL)){
@@ -80,14 +79,16 @@ static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCT
                 void* data = LockResource(memory);
 
                 char* hex = new char[size+1];
-                snprintf(hex, size+1, "%.*s", size, data);
+                snprintf(hex, size+1, "%.*s", size, (char *)data);
                 uint32_t hash = strtoul(hex, NULL, 16);
 
                 char* name = new char[5];
-                snprintf(name, 5, "%d", lpName);
+                snprintf(name, 5, "%u", PtrToUint(lpName));
 
                 (*mapping)[hash] = name;
 
+                delete [] hex;
+                delete [] name;
                 FreeResource(memory);
             }
         }
@@ -95,7 +96,7 @@ static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCT
     return true;
 }
 
-static BOOL CALLBACK StaticEnumRCNamesFunc(HMODULE hModule, LPCTSTR lpType, LPTSTR lpName, LONG lParam)
+static BOOL CALLBACK StaticEnumRCNamesFunc(HMODULE hModule, LPCTSTR lpType, LPTSTR lpName, LONG_PTR lParam)
 {
     EnumResourceLanguages(hModule, lpType, lpName, (ENUMRESLANGPROC)&StaticEnumRCLangsFunc, lParam);
     return true;
@@ -108,7 +109,7 @@ void GDXCustomTexture::LoadMap()
     std::map<u32, std::string> * mapping = new std::map<u32, std::string>();
     
     //Load texture hash value (hardcoded type as 777) & PNG resources index into texture_map
-    EnumResourceNames(GetModuleHandle(NULL), MAKEINTRESOURCE(777), (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LPARAM>(mapping));
+    EnumResourceNames(GetModuleHandle(NULL), MAKEINTRESOURCE(777), (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LONG_PTR>(mapping));
     
     texture_map = *mapping;
     delete mapping;
