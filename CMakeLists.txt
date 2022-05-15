@@ -1737,12 +1737,12 @@ if(APPLE)
 		source_group("Resources" FILES ${ASSETS})
 		set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-		execute_process(
+		add_custom_target(gdxsv_translation_generate_texture ALL
 			COMMAND bash "./gen_textures_rc.sh"
 			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/core/gdxsv/"
+			VERBATIM
 		)
-		target_sources(${PROJECT_NAME} PRIVATE
-				core/gdxsv/textures.rc)
+		add_dependencies(${PROJECT_NAME} gdxsv_translation_generate_texture)
 		set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/core/gdxsv/textures.rc PROPERTIES GENERATED 1)
 endif()
 
