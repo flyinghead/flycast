@@ -81,6 +81,12 @@ GDXLanguage::Lang GDXLanguage::LanguageFromOS_(){
 #ifdef __APPLE__
     extern std::string os_Locale();
     std::string locale = os_Locale();
+    
+    time_t ts = 0;
+    struct tm t;
+    char buf[16];
+    localtime_r(&ts, &t);
+    strftime(buf, sizeof(buf), "%z%Z", &t);
 #elif _WIN32
     std::string locale;
     DWORD bufferLength = 0;
@@ -104,9 +110,23 @@ GDXLanguage::Lang GDXLanguage::LanguageFromOS_(){
 #else
     std::string locale = "en";
 #endif
-    if (locale.find("ja") == 0)
+    if (locale.find("ja") == 0
+#ifdef __APPLE__
+        || strcmp(buf, "+0900JST") == 0
+#elif _WIN32
+        || strcmp(_tzname[0], "Tokyo Standard Time") == 0
+#endif
+       )
         return Lang::Japanese;
-    else if (locale.find("yue") == 0 || locale.find("zh") == 0) //Chinese fallback
+    else if (locale.find("yue") == 0 || locale.find("zh") == 0 //Chinese fallback
+#ifdef __APPLE__
+             || strcmp(buf, "+0800HKT") == 0 //Cantonese users love using English OS
+             || strcmp(buf, "+0800CST") == 0
+#elif _WIN32
+             || strcmp(_tzname[0], "China Standard Time") == 0
+             || strcmp(_tzname[0], "Taipei Standard Time") == 0
+#endif
+            )
         return Lang::Cantonese;
     else
         return Lang::English;
