@@ -501,7 +501,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "disabled",
    },
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       "Texture Upscaling (xBRZ)",
