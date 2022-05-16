@@ -24,7 +24,32 @@
 #include <vector>
 #include <mutex>
 
+/* Detect output refresh rate changes by monitoring
+ * the last 'VSYNC_SWAP_INTERVAL_FRAMES' frames:
+ * - Measure average (mean) audio samples per upload
+ *   operation
+ * - Determine vsync swap interval based on
+ *   expected samples at 60 (or 50) Hz
+ * - Check that vsync swap interval remains
+ *   'stable' for at least 'VSYNC_SWAP_INTERVAL_FRAMES' */
+#define VSYNC_SWAP_INTERVAL_FRAMES 6
+/* Calculated swap interval is 'valid' if it is
+ * within 'VSYNC_SWAP_INTERVAL_THRESHOLD' of an integer
+ * value */
+#define VSYNC_SWAP_INTERVAL_THRESHOLD 0.05f
+
+extern void setAVInfo(retro_system_av_info& avinfo);
+
+extern retro_environment_t        environ_cb;
 extern retro_audio_sample_batch_t audio_batch_cb;
+
+extern float libretro_expected_audio_samples_per_run;
+extern unsigned libretro_vsync_swap_interval;
+extern bool libretro_detect_vsync_swap_interval;
+
+static float audio_samples_per_frame_avg;
+static unsigned vsync_swap_interval_last;
+static unsigned vsync_swap_interval_conter;
 
 static std::mutex audio_buffer_mutex;
 static std::vector<int16_t> audio_buffer;
@@ -57,6 +82,10 @@ void retro_audio_init(void)
 	audio_out_buffer = (int16_t*)malloc(audio_buffer_size * sizeof(int16_t));
 
 	drop_samples = false;
+
+	audio_samples_per_frame_avg = 0.0f;
+	vsync_swap_interval_last = 1;
+	vsync_swap_interval_conter = 0;
 }
 
 void retro_audio_deinit(void)
@@ -72,6 +101,10 @@ void retro_audio_deinit(void)
 	audio_out_buffer = nullptr;
 
 	drop_samples = true;
+
+	audio_samples_per_frame_avg = 0.0f;
+	vsync_swap_interval_last = 1;
+	vsync_swap_interval_conter = 0;
 }
 
 void retro_audio_flush_buffer(void)
@@ -99,6 +132,65 @@ void retro_audio_upload(void)
 	drop_samples = false;
 
 	audio_buffer_mutex.unlock();
+
+	/* Attempt to detect changes in output refresh rate */
+	if (libretro_detect_vsync_swap_interval &&
+	    (num_frames > 0))
+	{
+		/* Simple running average (leaky-integrator) */
+		audio_samples_per_frame_avg = ((1.0f / (float)VSYNC_SWAP_INTERVAL_FRAMES) * (float)num_frames) +
+				((1.0f - (1.0f / (float)VSYNC_SWAP_INTERVAL_FRAMES)) * audio_samples_per_frame_avg);
+
+		float swap_ratio = audio_samples_per_frame_avg /
+				libretro_expected_audio_samples_per_run;
+		unsigned swap_integer;
+		float swap_remainder;
+
+		/* If internal frame rate is equal to (within threshold)
+		 * or higher than the default 60 (or 50) Hz, fall back
+		 * to a swap interval of 1 */
+		if (swap_ratio < (1.0f + VSYNC_SWAP_INTERVAL_THRESHOLD))
+		{
+			swap_integer = 1;
+			swap_remainder = 0.0f;
+		}
+		else
+		{
+			swap_integer = (unsigned)(swap_ratio + 0.5f);
+			swap_remainder = swap_ratio - (float)swap_integer;
+			swap_remainder = (swap_remainder < 0.0f) ?
+					-swap_remainder : swap_remainder;
+		}
+
+		/* > Swap interval is considered 'valid' if it is
+		 *   within VSYNC_SWAP_INTERVAL_THRESHOLD of an integer
+		 *   value
+		 * > If valid, check if new swap interval differs from
+		 *   previously logged value */
+		if ((swap_remainder <= VSYNC_SWAP_INTERVAL_THRESHOLD) &&
+			 (swap_integer != libretro_vsync_swap_interval))
+		{
+			vsync_swap_interval_conter =
+					(swap_integer == vsync_swap_interval_last) ?
+							(vsync_swap_interval_conter + 1) : 0;
+
+			/* Check whether swap interval is 'stable' */
+			if (vsync_swap_interval_conter >= VSYNC_SWAP_INTERVAL_FRAMES)
+			{
+				libretro_vsync_swap_interval = swap_integer;
+				vsync_swap_interval_conter = 0;
+
+				/* Notify frontend */
+				retro_system_av_info avinfo;
+				setAVInfo(avinfo);
+				environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+			}
+
+			vsync_swap_interval_last = swap_integer;
+		}
+		else
+			vsync_swap_interval_conter = 0;
+	}
 
 	int16_t *audio_out_buffer_ptr = audio_out_buffer;
 	while (num_frames > 0)

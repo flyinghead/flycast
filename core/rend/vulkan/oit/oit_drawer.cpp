@@ -273,6 +273,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	currentScissor = vk::Rect2D();
 
+	bool firstFrameAfterInit = oitBuffers->isFirstFrameAfterInit();
 	oitBuffers->OnNewFrame(cmdBuffer);
 
 	setFirstProvokingVertex(pvrrc);
@@ -362,7 +363,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			// TR
 			if (current_pass.autosort)
 			{
-				if (!oitBuffers->isFirstFrameAfterInit())
+				if (!firstFrameAfterInit)
 					DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 			}
 			else
@@ -382,7 +383,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		}
 		SetScissor(cmdBuffer, baseScissor);
 
-		if (oitBuffers->isFirstFrameAfterInit())
+		if (firstFrameAfterInit)
 		{
 			// missing the transparent stuff on the first frame cuz I'm lazy
 			// Clear
@@ -393,6 +394,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
 					vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+			firstFrameAfterInit = false;
 		}
 		// Tr modifier volumes
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug

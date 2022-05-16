@@ -92,6 +92,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T17720N",    nullptr,    { 0xF97F40, 0x08DCF4 }, { 0x00000168, 0 } },		// Dragonriders: Chronicles of Pern (USA) (Code 1 removes black bars)
 		{ "MK-5101350", nullptr,    { 0x4FCBC0 }, { 0x43700000 } },		// Dynamite Cop  (PAL)
 		{ "MK-51013",   nullptr,    { 0x4FCBC0 }, { 0x43700000 } },		// Dynamite Cop  (USA)
+		{ "HDR-0020",   nullptr,    { 0x4FA848 }, { 0x43700000 } },		// Dynamite Deka 2  (JP)
 		// Draconus: Cult of the Wyrm (USA)
 		// Code 1-2 increases drawing distance
 		{ "T40203N",    nullptr,    { 0x49D7F4, 0x49D8CC, 0x49D6F8 }, { 0x3F07C3BB, 0x447A0000, 0x3FAAAAAB } },
@@ -302,7 +303,7 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "TOY FIGHTER", nullptr, { 0x133E58 }, { 0x43700000 } },
 		{ "LUPIN THE THIRD  -THE SHOOTING-", nullptr, { 0x045490 }, { 0x3F400000 } },
 		{ "VF4 FINAL TUNED JAPAN", nullptr, { 0x02B834, 0x0AFB90 }, { 0x3FE38E39, 0x3FE38E39 } },
-		{ "DYNAMITE DEKA EX", nullptr, { 0x0E3598 }, { 0x3FE38E38 } },
+		{ "DYNAMITE DEKA EX", nullptr, { 0x0E3598, 0x0C8E84 }, { 0x3FE38E38, 0x3FE38E38 } },
 		{ "DEAD OR ALIVE 2", "doa2m", { 0x085B5C, 0x086AE8 }, { 0x3FE38E39, 0x3FE38E39 } },
 		{ "SLASHOUT JAPAN VERSION", nullptr, { 0x3DDBE4 }, { 0x43CFDC86 } },
 		{ "SPIKERS BATTLE JAPAN VERSION", nullptr, { 0x3626C4 }, { 0x43A551B0 } },
@@ -312,6 +313,8 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "INITIAL D Ver.3", "initdv3e", { 0x1D0B34 }, { 0x3FE38E39 } },
 		{ "AIRLINE PILOTS IN JAPAN", "alpilotj", { 0x1D62550 }, { 0x43700000 } },
 		{ "MONKEY BALL JAPAN VERSION", nullptr, { 0x345B4, 0x45244, 0x454CC }, { 0x3FE38E39, 0x3FE38E39, 0x3FE38E39 } },
+		{ "ZOMBIE REVENGE IN JAPAN", "zombrvn", { 0x7A4808 }, { 0x43700000 } },
+		{ "ZOMBIE REVENGE IN JAPAN", "zombrvno", { 0x7A2E50 }, { 0x43700000 } },
 
 		{ nullptr },
 };

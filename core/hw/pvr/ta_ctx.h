@@ -327,19 +327,19 @@ struct TA_context
 	{
 		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
-		rend.verts.InitBytes(16 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-		rend.idx.Init(512 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(32768, &rend.Overrun, "global_param_op");
+		rend.verts.Init(320 * 1024, &rend.Overrun, "verts");
+		rend.idx.Init(320 * 1024, &rend.Overrun, "idx");
+		rend.global_param_op.Init(16384, &rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(5120, &rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
-		rend.global_param_tr.Init(32768, &rend.Overrun, "global_param_tr");
+		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
 		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
 
 		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
 		rend.render_passes.Init(sizeof(RenderPass) * MAX_PASSES, &rend.Overrun, "render_passes");	// 10 render passes
 		rend.matrices.Init(2000, &rend.Overrun, "matrices");
-		rend.lightModels.Init(100, &rend.Overrun, "lightModels");
+		rend.lightModels.Init(150, &rend.Overrun, "lightModels");
 
 		Reset();
 	}
@@ -348,6 +348,7 @@ struct TA_context
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		tad.Clear();
+		nextContext = nullptr;
 		rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
@@ -377,6 +378,7 @@ extern tad_context ta_tad;
 
 TA_context* tactx_Pop(u32 addr);
 void tactx_Term();
+TA_context *tactx_Alloc();
 
 /*
 	Ta Context
