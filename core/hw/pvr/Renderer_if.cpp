@@ -268,8 +268,7 @@ void rend_vblank()
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
 		DEBUG_LOG(PVR, "Direct framebuffer write detected");
-		TA_context *ctx = new TA_context();
-		ctx->Alloc();
+		TA_context *ctx = tactx_Alloc();
 		ctx->rend.isRenderFramebuffer = true;
 		rend_start_render(ctx);
 		fb_dirty = false;

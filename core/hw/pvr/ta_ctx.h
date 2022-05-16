@@ -348,6 +348,7 @@ struct TA_context
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		tad.Clear();
+		nextContext = nullptr;
 		rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
@@ -377,6 +378,7 @@ extern tad_context ta_tad;
 
 TA_context* tactx_Pop(u32 addr);
 void tactx_Term();
+TA_context *tactx_Alloc();
 
 /*
 	Ta Context

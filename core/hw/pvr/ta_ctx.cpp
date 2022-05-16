@@ -106,7 +106,7 @@ static std::mutex mtx_pool;
 static std::vector<TA_context*> ctx_pool;
 static std::vector<TA_context*> ctx_list;
 
-static TA_context *tactx_Alloc()
+TA_context *tactx_Alloc()
 {
 	TA_context *ctx = nullptr;
 
