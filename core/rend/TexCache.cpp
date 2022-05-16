@@ -9,7 +9,7 @@
 #include <mutex>
 #include <xxhash.h>
 
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -295,7 +295,7 @@ static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	delete block;
 }
 
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 static inline int getThreadCount()
 {
 	int tcount = omp_get_num_procs() - 1;
@@ -324,7 +324,7 @@ static struct xbrz::ScalerCfg xbrz_cfg;
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha)
 {
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 	parallelize([=](int start, int end) {
 		xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB,
 				xbrz_cfg, start, end);
