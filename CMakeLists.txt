@@ -1394,13 +1394,15 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
+			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 
 			target_link_libraries(${PROJECT_NAME} PRIVATE
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
 				${OPENGL_LIBRARY}
-				${IOSURFACE_LIBRARY})
+				${IOSURFACE_LIBRARY}
+				${MULTITOUCH_SUPPORT_LIBRARY})
 
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
