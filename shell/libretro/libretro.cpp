@@ -121,7 +121,7 @@ static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
 static bool autoSkipFrameEnabled = false;
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
 static bool vmuScreenSettingsShown = true;
@@ -363,7 +363,7 @@ void retro_deinit()
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
 	autoSkipFrameEnabled = false;
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
@@ -491,7 +491,7 @@ static bool set_variable_visibility(void)
 	}
 #endif
 
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 	// Only if texture upscaling is enabled
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
