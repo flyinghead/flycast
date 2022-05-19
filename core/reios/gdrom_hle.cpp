@@ -692,9 +692,7 @@ void gdrom_hle_op()
 					discType = 0;
 					break;
 				default:
-					if (gd_hle_state.status == GDC_BUSY)
-						status = GD_STAT_BUSY;
-					else if (gd_hle_state.status == GDC_CONTINUE || SecNumber.Status == GD_PLAY)
+					if (gd_hle_state.status == GDC_CONTINUE || SecNumber.Status == GD_PLAY)
 						status = GD_STAT_PLAY;
 					else
 						status = GD_STAT_PAUSE;

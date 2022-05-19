@@ -186,13 +186,13 @@ public:
 				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
 				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
 
+				size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
+				// light at index 0 is no light
 				if (poly.lightModel != nullptr)
-				{
-					size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
-					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(N2LightModel) };
-					writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
-				}
-				// TODO no light
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head() + 1) * size, sizeof(N2LightModel) };
+				else
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset, sizeof(N2LightModel) };
+				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
 			}
 
 			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);

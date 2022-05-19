@@ -1944,7 +1944,7 @@ static void gui_display_settings()
 	    	ImGui::Spacing();
 		    header("Texture Upscaling");
 		    {
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 		    	OptionArrowButtons("Texture Upscaling", config::TextureUpscale, 1, 8,
 		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
 		    	OptionSlider("Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,

@@ -202,20 +202,20 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
-    if(MINGW)
-        target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
-        target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
-    elseif(ANDROID)
-        # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
-        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
-        target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
-    else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+if(USE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        if(MINGW)
+            target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+            target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+        elseif(ANDROID)
+            # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+            set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+            target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+        endif()
     endif()
-else()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
@@ -1395,13 +1395,15 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
+			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 
 			target_link_libraries(${PROJECT_NAME} PRIVATE
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
 				${OPENGL_LIBRARY}
-				${IOSURFACE_LIBRARY})
+				${IOSURFACE_LIBRARY}
+				${MULTITOUCH_SUPPORT_LIBRARY})
 
 			find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration) #gdxsv
 			target_link_libraries(${PROJECT_NAME} PRIVATE ${SYSTEMCONFIGURATION_LIBRARY}) #gdxsv
