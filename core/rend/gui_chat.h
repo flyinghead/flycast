@@ -21,6 +21,7 @@
 #include "gui.h"
 #include "imgui/imgui.h"
 #include "network/ggpo.h"
+#include <chrono>
 
 class Chat
 {
@@ -34,6 +35,10 @@ class Chat
 	const ImVec4 WHITE { 1, 1, 1, 1 };
 	const ImVec4 YELLOW { 1, 1, 0, 1 };
 
+	bool manual_open = false;
+	bool enable_timeout = false;
+	std::chrono::steady_clock::time_point launch_time;
+
 	std::string playerName(bool remote)
 	{
 		if (remote)
@@ -43,6 +48,15 @@ class Chat
 	}
 
 public:
+	void toggle_timeout()
+	{
+		if (config::GGPOChatTimeoutToggle && !manual_open)
+		{
+			enable_timeout = true;
+			launch_time = std::chrono::steady_clock::now();
+		}
+	}
+
 	void reset()
 	{
 		visible = false;
@@ -51,6 +65,16 @@ public:
 
 	void display()
 	{
+		auto timeout = std::chrono::seconds(config::GGPOChatTimeout.get());
+
+		if (enable_timeout &&
+			std::chrono::steady_clock::now() - launch_time > timeout)
+		{
+			visible = false;
+			enable_timeout = false;
+			manual_open = false;
+		}
+
 		if (!visible)
 			return;
 
@@ -102,16 +126,21 @@ public:
 	void receive(int playerNum, const std::string& msg)
 	{
 		if (config::GGPOChat)
+		{
 			visible = true;
+			toggle_timeout();
+		}
 		std::string line = "<" + playerName(true) + "> " + msg;
 		lines.push_back(std::make_pair(YELLOW, line));
 		newMessage = true;
 	}
 
-	void toggle()
+	void toggle(bool manual = false)
 	{
 		visible = !visible;
 		focus = visible;
+		if (manual)
+			manual_open = manual;
 	}
 
 	void setLocalPlayerName(const std::string& name) {
