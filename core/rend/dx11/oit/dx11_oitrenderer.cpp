@@ -126,6 +126,8 @@ struct DX11OITRenderer : public DX11Renderer
 			depthView.reset();
 			viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
 			device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
+
+			createDepthTexAndView(depthTex, depthTexView, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS);
 		}
 	}
 
@@ -635,7 +637,7 @@ struct DX11OITRenderer : public DX11Renderer
 		ID3D11ShaderResourceView *p = nullptr;
 	    deviceContext->PSSetShaderResources(0, 1, &p);
 	    // To avoid DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET warnings
-		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
+		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), nullptr);
 		configVertexShader();
 
 		bool is_rtt = pvrrc.isRTT;
