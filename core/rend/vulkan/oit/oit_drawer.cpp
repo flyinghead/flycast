@@ -459,7 +459,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 			depthAttachments[1]->GetImageView(),
 	};
 	vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
-			ARRAY_SIZE(attachments), attachments, width, height, 1);
+			ARRAY_SIZE(attachments), attachments, maxWidth, maxHeight, 1);
 	tempFramebuffers[0] = GetContext()->GetDevice().createFramebufferUnique(createInfo);
 	attachments[0] = attachments[1];
 	attachments[1] = colorAttachments[1]->GetImageView();
