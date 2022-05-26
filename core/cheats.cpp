@@ -83,7 +83,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T8116D  50", nullptr,    { 0x2E5530 }, { 0x43700000 } },		// Dead or Alive 2 (PAL)
 		{ "T3601N",     nullptr,    { 0x2F0670 }, { 0x43700000 } },		// Dead or Alive 2 (USA)
 		{ "T3602M",     nullptr,    { 0x2FF798 }, { 0x43700000 } },		// Dead or Alive 2 (JP)
-		{ "T3601M",     nullptr,    { 0x2FBBD0, 0x1E6658 }, { 0x43700000, 0x4414C000 } },	// Dead or Alive 2: Limited Edition (JP) (code 1 fixes HUD)
+		{ "T3601M",     nullptr,    { 0x2FBBD0 }, { 0x43700000 } },		// Dead or Alive 2: Limited Edition (JP)
 		{ "T2401N",     nullptr,    { 0x8BD5B4, 0x8BD5E4 }, { 0x43F00000, 0x3F400000 } },	// Death Crimson OX (USA)
 		{ "T23201M",    nullptr,    { 0x819F44, 0x819F74 }, { 0x43F00000, 0x3F400000 } },	// Death Crimson 2 (JP)
 		{ "T17714D50",  nullptr,    { 0x0D2ED0, 0x0D2ED4 }, { 0x3FAAAAAB, 0x3F400000 } },	// Donald Duck: Quack Attack (PAL) (Code 1 corrects the HUD)
