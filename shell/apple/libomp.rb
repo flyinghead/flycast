@@ -39,9 +39,9 @@ class Libomp < Formula
     ENV.runtime_cpu_detection
     args << "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
 
-    system "cmake", "-S", "openmp-#{version}.src", "-B", "build/shared", *std_cmake_args, *args
-    system "cmake", "--build", "build/shared"
-    system "cmake", "--install", "build/shared"
+    # system "cmake", "-S", "openmp-#{version}.src", "-B", "build/shared", *std_cmake_args, *args
+    # system "cmake", "--build", "build/shared"
+    # system "cmake", "--install", "build/shared"
 
     system "cmake", "-S", "openmp-#{version}.src", "-B", "build/static",
                     "-DLIBOMP_ENABLE_SHARED=OFF",
