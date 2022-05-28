@@ -198,6 +198,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 	if (crosshair && crosshairsNeeded())
 	{
 		pipeline->BindPipeline(commandBuffer);
+		bool imageViewBound = false;
 		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
 			if (config::CrosshairColor[i] == 0)
@@ -228,7 +229,8 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 				((color >> 16) & 0xff) / 255.f,
 				((color >> 24) & 0xff) / 255.f
 			};
-			xhairDrawer->Draw(commandBuffer, i == 0 ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
+			xhairDrawer->Draw(commandBuffer, !imageViewBound ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
+			imageViewBound = true;
 		}
 	}
 }
