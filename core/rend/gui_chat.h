@@ -109,6 +109,7 @@ public:
 					lines.push_back(std::make_pair(WHITE, line));
 					buf[0] = '\0';
 					newMessage = true;
+					enable_timeout = false;
 				}
 				ImGui::SetKeyboardFocusHere(-1);
 			}
@@ -125,7 +126,7 @@ public:
 
 	void receive(int playerNum, const std::string& msg)
 	{
-		if (config::GGPOChat)
+		if (config::GGPOChat && !visible)
 		{
 			visible = true;
 			toggle_timeout();
