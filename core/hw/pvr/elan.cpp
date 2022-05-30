@@ -1319,7 +1319,7 @@ static void sendPolygon(ICHList *list)
 			{
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
-				pp.pcw.Texture = list->pcw.texture;
+				pp.pcw.Texture = 0;
 				pp.pcw.Offset = list->pcw.offset;
 				pp.pcw.Gouraud = list->pcw.gouraud;
 				pp.pcw.Volume = list->pcw.volume;
@@ -1395,7 +1395,7 @@ static void sendPolygon(ICHList *list)
 				break;
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
-			pp.pcw.Texture = list->pcw.texture;
+			pp.pcw.Texture = 0;
 			pp.pcw.Offset = list->pcw.offset;
 			pp.pcw.Gouraud = list->pcw.gouraud;
 			pp.pcw.Volume = list->pcw.volume;
