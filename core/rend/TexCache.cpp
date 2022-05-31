@@ -214,23 +214,23 @@ void vramlock_list_add(vram_block* block)
  
 std::mutex vramlist_lock;
 
-void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
+static void vramlock_Lock(u32 start, u32 end, BaseTextureCacheData *texture)
 {
-	if (end_offset64 > VRAM_SIZE - 1)
+	if (end >= VRAM_SIZE)
 	{
-		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
-		end_offset64 = VRAM_SIZE - 1;
+		WARN_LOG(PVR, "vramlock_Lock: end >= VRAM_SIZE. Tried to lock area out of vram");
+		end = VRAM_SIZE - 1;
 	}
 
-	if (start_offset64 > end_offset64)
+	if (start > end)
 	{
-		WARN_LOG(PVR, "vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin");
+		WARN_LOG(PVR, "vramlock_Lock: start > end. Tried to lock negative block");
 		return;
 	}
 
 	vram_block *block = new vram_block();
-	block->end = end_offset64;
-	block->start = start_offset64;
+	block->end = end;
+	block->start = start;
 	block->texture = texture;
 
 	{
@@ -445,19 +445,28 @@ bool BaseTextureCacheData::NeedsUpdate() {
 	return rc;
 }
 
+void BaseTextureCacheData::protectVRam()
+{
+	vramlock_Lock(sa_tex, sa + size - 1, this);
+}
+
+void BaseTextureCacheData::unprotectVRam()
+{
+	std::lock_guard<std::mutex> lock(vramlist_lock);
+	if (lock_block)
+		libCore_vramlock_Unlock_block_wb(lock_block);
+	lock_block = nullptr;
+}
+
 bool BaseTextureCacheData::Delete()
 {
 	if (custom_load_in_progress > 0)
 		return false;
 
-	{
-		std::lock_guard<std::mutex> lock(vramlist_lock);
-		if (lock_block)
-			libCore_vramlock_Unlock_block_wb(lock_block);
-		lock_block = nullptr;
-	}
+	unprotectVRam();
 
 	free(custom_image_data);
+	custom_image_data = nullptr;
 
 	return true;
 }
@@ -777,7 +786,7 @@ void BaseTextureCacheData::Update()
 	height = original_h;
 
 	//lock the texture to detect changes in it
-	libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
+	protectVRam();
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (config::DumpTextures)

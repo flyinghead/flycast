@@ -968,7 +968,10 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 
 			texture->texture = rttTexture;
 			texture->dirty = 0;
-			libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+			if (!config::GGPOEnable)
+				texture->protectVRam();
+			else
+				texture->unprotectVRam();
 		}
 	}
 }

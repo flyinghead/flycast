@@ -678,7 +678,10 @@ void OITTextureDrawer::EndFrame()
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		if (!config::GGPOEnable)
+			texture->protectVRam();
+		else
+			texture->unprotectVRam();
 	}
 	OITDrawer::EndFrame();
 }

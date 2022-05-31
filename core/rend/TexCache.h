@@ -564,7 +564,6 @@ struct vram_block
 
 bool VramLockedWriteOffset(size_t offset);
 bool VramLockedWrite(u8* address);
-void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 
@@ -648,6 +647,9 @@ public:
 	bool NeedsUpdate();
 	virtual bool Delete();
 	virtual ~BaseTextureCacheData() = default;
+	void protectVRam();
+	void unprotectVRam();
+
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU

@@ -1338,7 +1338,10 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 			device->CreateShaderResourceView(texture->texture, &viewDesc, &texture->textureView.get());
 
 			texture->dirty = 0;
-			libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+			if (!config::GGPOEnable)
+				texture->protectVRam();
+			else
+				texture->unprotectVRam();
 		}
 	}
 }
