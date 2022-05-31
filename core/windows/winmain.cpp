@@ -217,6 +217,16 @@ void os_SetupInput()
 #endif
 }
 
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
+#endif
+#ifndef TARGET_UWP
+	if (config::UseRawInput)
+		rawinput::term();
+#endif
+}
 
 static void setupPath()
 {

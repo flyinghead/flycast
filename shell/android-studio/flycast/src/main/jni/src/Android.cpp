@@ -130,6 +130,9 @@ void common_linux_setup();
 void os_SetupInput()
 {
 }
+void os_TermInput()
+{
+}
 
 void os_SetWindowText(char const *Text)
 {

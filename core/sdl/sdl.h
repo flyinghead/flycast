@@ -4,6 +4,7 @@
 
 void input_sdl_init();
 void input_sdl_handle();
+void input_sdl_quit();
 void sdl_window_create();
 void sdl_window_set_text(const char* text);
 void sdl_window_destroy();
