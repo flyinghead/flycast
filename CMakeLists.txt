@@ -893,6 +893,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
+        core/wsi/libretro.cpp
+        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -902,8 +904,6 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
-            core/wsi/libretro.cpp
-            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp

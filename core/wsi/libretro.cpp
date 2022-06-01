@@ -19,7 +19,10 @@
 #include "libretro.h"
 
 #ifdef LIBRETRO
+
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 LibretroGraphicsContext theGLContext;
+#endif
 
 GraphicsContext *GraphicsContext::instance;
 #endif
