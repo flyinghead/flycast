@@ -35,9 +35,13 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 `brew install --cask flycast`
 
-### Xbox One
+### Xbox One/Series
 
-Open [**gamr13's github page**](https://gamr13.github.io/) from your console.
+#### Retail:
+Open [**gamr13's github page**](https://gamr13.github.io/) from your Xbox console.
+
+#### Dev Mode:
+Grab the latest build from [**the builds page**](https://flyinghead.github.io/flycast-builds/), or the [**GitHub Actions**](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml). Then install it using the **Xbox Device Portal**.
 
 ### Binaries
 
