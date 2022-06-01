@@ -23,6 +23,8 @@
 
 DX11Context theDX11Context;
 
+GraphicsContext *GraphicsContext::instance;
+
 bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel)
 {
 	NOTICE_LOG(RENDERER, "DX11 Context initializing");
