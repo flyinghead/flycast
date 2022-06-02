@@ -7,7 +7,7 @@
 
 ![flycast logo](https://github.com/flyinghead/flycast/raw/master/shell/linux/flycast.png)
 
-**Flycast** is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://reicast.com/).
+**Flycast** is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://github.com/skmp/reicast-emulator)
 
 Information about configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki).
 
