@@ -327,6 +327,8 @@ static void destroyWindow()
 	UnregisterClassA("flycastRawInput", nullptr);
 }
 
+#ifndef _MSC_VER
+// missing from mingw's cfgmgr32.h
 extern "C" CMAPI CONFIGRET CM_Get_Device_Interface_PropertyW(
   LPCWSTR          pszDeviceInterface,
   const DEVPROPKEY *PropertyKey,
@@ -334,6 +336,7 @@ extern "C" CMAPI CONFIGRET CM_Get_Device_Interface_PropertyW(
   PBYTE            PropertyBuffer,
   PULONG           PropertyBufferSize,
   ULONG            ulFlags);
+#endif
 
 static void findDevices()
 {
