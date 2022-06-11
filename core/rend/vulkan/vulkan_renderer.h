@@ -45,10 +45,6 @@ protected:
 			texCommandPool.BeginFrame();
 			vjoyTexture = std::unique_ptr<Texture>(new Texture());
 			vjoyTexture->tex_type = TextureType::_8888;
-			vjoyTexture->tcw.full = 0;
-			vjoyTexture->tsp.full = 0;
-			vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			vjoyTexture->SetDevice(GetContext()->GetDevice());
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 			vjoyTexture->SetCommandBuffer(cmdBuffer);
