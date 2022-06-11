@@ -218,9 +218,6 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 	//lookup texture
 	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw);
 
-	if (tf->texture == nullptr)
-		tf->Create();
-
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
@@ -868,21 +865,11 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	u32 fbw = pvrrc.getFramebufferWidth();
 	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
-	// Find the smallest power of two texture that fits the viewport
-	u32 fbh2 = 2;
-	while (fbh2 < fbh)
-		fbh2 *= 2;
-	u32 fbw2 = 2;
-	while (fbw2 < fbw)
-		fbw2 *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw = (u32)(fbw * config::RenderResolution / 480.f);
-		fbh = (u32)(fbh * config::RenderResolution / 480.f);
-		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
-		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
-	}
+			pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
+	u32 fbw2;
+	u32 fbh2;
+	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
+
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
 
@@ -903,7 +890,6 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 {
 	u32 w = pvrrc.getFramebufferWidth();
 	u32 h = pvrrc.getFramebufferHeight();
-	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 	if (config::RenderToTextureBuffer)
 	{
 		D3DSURFACE_DESC rttDesc;
@@ -934,44 +920,17 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verifyWin(offscreenSurface->UnlockRect());
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[gl.rtt.texAddress], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-			TCW tcw = { { texAddress >> 3, 0, 0, 1 } };
-			switch (fb_packmode) {
-			case 0:
-			case 3:
-				tcw.PixelFmt = Pixel1555;
-				break;
-			case 1:
-				tcw.PixelFmt = Pixel565;
-				break;
-			case 2:
-				tcw.PixelFmt = Pixel4444;
-				break;
-			}
-			TSP tsp = { 0 };
-			for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++)
-				;
-
-			for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++)
-				;
-
-			D3DTexture* texture = texCache.getTextureCacheData(tsp, tcw);
-			if (!texture->texture)
-				texture->Create();
-
+			D3DTexture* texture = texCache.getRTTexture(texAddress, pvrrc.fb_W_CTRL.fb_packmode, w, h);
 			texture->texture = rttTexture;
 			texture->dirty = 0;
-			if (!config::GGPOEnable)
-				texture->protectVRam();
-			else
-				texture->unprotectVRam();
+			texture->protectVRam();
 		}
 	}
 }
@@ -984,7 +943,7 @@ bool D3DRenderer::Render()
 
 	backbuffer.reset();
 	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
+	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
 	if (is_rtt)
 	{
 		prepareRttRenderTarget(texAddress);

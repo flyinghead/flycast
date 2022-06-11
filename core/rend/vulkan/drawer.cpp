@@ -376,26 +376,18 @@ void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMa
 
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
-	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
-			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, FB_W_SOF1 & VRAM_MASK);
+	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
+			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, pvrrc.fb_W_SOF1 & VRAM_MASK);
 	matrices.CalcMatrices(&pvrrc);
 
-	textureAddr = FB_W_SOF1 & VRAM_MASK;
+	textureAddr = pvrrc.fb_W_SOF1 & VRAM_MASK;
 	u32 origWidth = pvrrc.getFramebufferWidth();
 	u32 origHeight = pvrrc.getFramebufferHeight();
-	u32 heightPow2 = 8;
-	while (heightPow2 < origHeight)
-		heightPow2 *= 2;
-	u32 widthPow2 = 8;
-	while (widthPow2 < origWidth)
-		widthPow2 *= 2;
-	float upscale = 1.f;
-	if (!config::RenderToTextureBuffer)
-		upscale = config::RenderResolution / 480.f;
-	u32 upscaledWidth = origWidth * upscale;
-	u32 upscaledHeight = origHeight * upscale;
-	widthPow2 *= upscale;
-	heightPow2 *= upscale;
+	u32 upscaledWidth = origWidth;
+	u32 upscaledHeight = origHeight;
+	u32 widthPow2;
+	u32 heightPow2;
+	getRenderToTextureDimensions(upscaledWidth, upscaledHeight, widthPow2, heightPow2);
 
 	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
@@ -420,33 +412,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 	if (!config::RenderToTextureBuffer)
 	{
-		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
-		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
-		switch (FB_W_CTRL.fb_packmode) {
-		case 0:
-		case 3:
-			tcw.PixelFmt = Pixel1555;
-			break;
-		case 1:
-			tcw.PixelFmt = Pixel565;
-			break;
-		case 2:
-			tcw.PixelFmt = Pixel4444;
-			break;
-		}
-
-		TSP tsp = { { 0 } };
-		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
-		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
-
-		texture = textureCache->getTextureCacheData(tsp, tcw);
-		if (texture->IsNew())
-		{
-			texture->Create();
-			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			texture->SetDevice(device);
-		}
-		else if (textureCache->IsInFlight(texture))
+		texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
+		if (textureCache->IsInFlight(texture))
 		{
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
@@ -503,8 +470,10 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, { width, height }), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	baseScissor = vk::Rect2D(vk::Offset2D(pvrrc.fb_X_CLIP.min * upscale, pvrrc.fb_Y_CLIP.min * upscale),
-			vk::Extent2D(upscaledWidth, upscaledHeight));
+	u32 minX = pvrrc.fb_X_CLIP.min;
+	u32 minY = pvrrc.fb_Y_CLIP.min;
+	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
+	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 
@@ -551,17 +520,14 @@ void TextureDrawer::EndRenderPass()
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
-		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		if (!config::GGPOEnable)
-			texture->protectVRam();
-		else
-			texture->unprotectVRam();
+		texture->protectVRam();
 	}
 	Drawer::EndRenderPass();
 }

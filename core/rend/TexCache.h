@@ -572,7 +572,37 @@ enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
 class BaseTextureCacheData
 {
+protected:
+	BaseTextureCacheData(TSP tsp, TCW tcw);
+
 public:
+	BaseTextureCacheData(BaseTextureCacheData&& other)
+	{
+		tsp = other.tsp;
+		tcw = other.tcw;
+		tex_type = other.tex_type;
+		sa_tex = other.sa_tex;
+		dirty = other.dirty;
+		std::swap(lock_block, other.lock_block);
+		sa = other.sa;
+		width = other.width;
+		height = other.height;
+		size = other.size;
+		tex = other.tex;
+		texconv = other.texconv;
+		texconv32 = other.texconv32;
+		texconv8 = other.texconv8;
+		Updates = other.Updates;
+		palette_hash = other.palette_hash;
+		texture_hash = other.texture_hash;
+		old_texture_hash = other.old_texture_hash;
+		std::swap(custom_image_data, other.custom_image_data);
+		custom_width = other.custom_width;
+		custom_height = other.custom_height;
+		custom_load_in_progress = 0;
+		gpuPalette = other.gpuPalette;
+	}
+
 	TSP tsp;        	//dreamcast texture parameters
 	TCW tcw;
 
@@ -637,7 +667,6 @@ public:
 		return custom_load_in_progress == 0 && custom_image_data != NULL;
 	}
 
-	void Create();
 	void ComputeHash();
 	void Update();
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
@@ -649,6 +678,7 @@ public:
 	virtual ~BaseTextureCacheData() = default;
 	void protectVRam();
 	void unprotectVRam();
+	void invalidate();
 
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
@@ -694,13 +724,34 @@ public:
 		}
 		else //create if not existing
 		{
-			texture = &cache[key];
-
-			texture->tsp = tsp;
-			texture->tcw = tcw;
+			texture = &cache.emplace(std::make_pair(key, Texture(tsp, tcw))).first->second;
 		}
 
 		return texture;
+	}
+
+	Texture *getRTTexture(u32 address, u32 fb_packmode, u32 width, u32 height)
+	{
+		// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
+		TCW tcw{ { address >> 3, 0, 0, 1 } };
+		switch (fb_packmode)
+		{
+		case 0:
+		case 3:
+			tcw.PixelFmt = Pixel1555;
+			break;
+		case 1:
+			tcw.PixelFmt = Pixel565;
+			break;
+		case 2:
+			tcw.PixelFmt = Pixel4444;
+			break;
+		}
+		TSP tsp{};
+		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < width; tsp.TexU++);
+		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < height; tsp.TexV++);
+
+		return getTextureCacheData(tsp, tcw);
 	}
 
 	void CollectCleanup()
@@ -720,7 +771,7 @@ public:
 
 		for (u64 id : list)
 		{
-			if (cache[id].Delete())
+			if (cache.find(id)->second.Delete())
 				cache.erase(id);
 		}
 	}
@@ -747,7 +798,8 @@ protected:
 template<typename Packer = RGBAPacker>
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl = -1, u32 linestride = -1);
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+void getRenderToTextureDimensions(u32& width, u32& height, u32& pow2Width, u32& pow2Height);
 
 static inline void MakeFogTexture(u8 *tex_data)
 {

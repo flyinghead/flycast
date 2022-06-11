@@ -54,11 +54,8 @@ void VulkanOverlay::Term()
 
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
-	VulkanContext *context = VulkanContext::Instance();
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;
-	texture->SetDevice(context->GetDevice());
-	texture->SetPhysicalDevice(context->GetPhysicalDevice());
 	texture->SetCommandBuffer(commandBuffer);
 	texture->UploadToGPU(width, height, data, false);
 	texture->SetCommandBuffer(nullptr);

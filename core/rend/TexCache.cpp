@@ -28,7 +28,6 @@ float fb_scale_x, fb_scale_y;
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
-static void rend_text_invl(vram_block* bl);
 
 u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
@@ -214,39 +213,6 @@ void vramlock_list_add(vram_block* block)
  
 std::mutex vramlist_lock;
 
-static void vramlock_Lock(u32 start, u32 end, BaseTextureCacheData *texture)
-{
-	if (end >= VRAM_SIZE)
-	{
-		WARN_LOG(PVR, "vramlock_Lock: end >= VRAM_SIZE. Tried to lock area out of vram");
-		end = VRAM_SIZE - 1;
-	}
-
-	if (start > end)
-	{
-		WARN_LOG(PVR, "vramlock_Lock: start > end. Tried to lock negative block");
-		return;
-	}
-
-	vram_block *block = new vram_block();
-	block->end = end;
-	block->start = start;
-	block->texture = texture;
-
-	{
-		std::lock_guard<std::mutex> lock(vramlist_lock);
-
-		if (texture->lock_block == nullptr)
-		{
-			// This also protects vram if needed
-			vramlock_list_add(block);
-			texture->lock_block = block;
-		}
-		else
-			delete block;
-	}
-}
-
 bool VramLockedWriteOffset(size_t offset)
 {
 	if (offset >= VRAM_SIZE)
@@ -262,7 +228,7 @@ bool VramLockedWriteOffset(size_t offset)
 		{
 			if (lock != nullptr)
 			{
-				rend_text_invl(lock);
+				lock->texture->invalidate();
 
 				if (lock != nullptr)
 				{
@@ -447,7 +413,36 @@ bool BaseTextureCacheData::NeedsUpdate() {
 
 void BaseTextureCacheData::protectVRam()
 {
-	vramlock_Lock(sa_tex, sa + size - 1, this);
+	u32 end = sa + size - 1;
+	if (end >= VRAM_SIZE)
+	{
+		WARN_LOG(PVR, "protectVRam: end >= VRAM_SIZE. Tried to lock area out of vram");
+		end = VRAM_SIZE - 1;
+	}
+
+	if (sa_tex > end)
+	{
+		WARN_LOG(PVR, "vramlock_Lock: sa_tex > end. Tried to lock negative block");
+		return;
+	}
+
+	vram_block *block = new vram_block();
+	block->end = end;
+	block->start = sa_tex;
+	block->texture = this;
+
+	{
+		std::lock_guard<std::mutex> lock(vramlist_lock);
+
+		if (lock_block == nullptr)
+		{
+			// This also protects vram if needed
+			vramlock_list_add(block);
+			lock_block = block;
+		}
+		else
+			delete block;
+	}
 }
 
 void BaseTextureCacheData::unprotectVRam()
@@ -471,8 +466,11 @@ bool BaseTextureCacheData::Delete()
 	return true;
 }
 
-void BaseTextureCacheData::Create()
+BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 {
+	this->tsp = tsp;
+	this->tcw = tcw;
+
 	//Reset state info ..
 	Updates = 0;
 	dirty = FrameCount;
@@ -940,14 +938,9 @@ template void ReadFramebuffer<RGBAPacker>(PixelBuffer<u32>& pb, int& width, int&
 template void ReadFramebuffer<BGRAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
 
 template<int Red, int Green, int Blue, int Alpha>
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride)
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
 {
-	FB_W_CTRL_type fb_w_ctrl;
-	if (fb_w_ctrl_in != ~0u)
-		fb_w_ctrl.full = fb_w_ctrl_in;
-	else
-		fb_w_ctrl = FB_W_CTRL;
-	u32 padding = (linestride == ~0u ? FB_W_LINESTRIDE.stride * 8 : linestride);
+	u32 padding = linestride;
 	if (padding / 2 > width)
 		padding = padding / 2 - width;
 	else
@@ -989,16 +982,33 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl
 		dst += padding;
 	}
 }
-template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride);
-template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride);
+template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
 
-static void rend_text_invl(vram_block* bl)
+void BaseTextureCacheData::invalidate()
 {
-	BaseTextureCacheData* texture = bl->texture;
-	texture->dirty = FrameCount;
-	texture->lock_block = nullptr;
+	dirty = FrameCount;
 
-	libCore_vramlock_Unlock_block_wb(bl);
+	libCore_vramlock_Unlock_block_wb(lock_block);
+	lock_block = nullptr;
+}
+
+void getRenderToTextureDimensions(u32& width, u32& height, u32& pow2Width, u32& pow2Height)
+{
+	pow2Width = 8;
+	while (pow2Width < width)
+		pow2Width *= 2;
+	pow2Height = 8;
+	while (pow2Height < height)
+		pow2Height *= 2;
+	if (!config::RenderToTextureBuffer)
+	{
+		float upscale = config::RenderResolution / 480.f;
+		width *= upscale;
+		height *= upscale;
+		pow2Width *= upscale;
+		pow2Height *= upscale;
+	}
 }
 
 #ifdef TEST_AUTOMATION

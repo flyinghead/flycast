@@ -282,9 +282,6 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 	//lookup texture
 	DX11Texture* tf = texCache.getTextureCacheData(tsp, tcw);
 
-	if (tf->texture == nullptr)
-		tf->Create();
-
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
@@ -325,7 +322,7 @@ void DX11Renderer::configVertexShader()
 
 	if (pvrrc.isRTT)
 	{
-		prepareRttRenderTarget(FB_W_SOF1 & VRAM_MASK);
+		prepareRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
 	}
 	else
 	{
@@ -416,8 +413,6 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
-
 	// make sure to unbind the framebuffer view before setting it as render target
 	ID3D11ShaderResourceView *nullView = nullptr;
     deviceContext->PSSetShaderResources(0, 1, &nullView);
@@ -450,7 +445,7 @@ bool DX11Renderer::Render()
 
 	if (is_rtt)
 	{
-		readRttRenderTarget(texAddress);
+		readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
 	}
 	else
 	{
@@ -1047,21 +1042,11 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 	u32 fbw = pvrrc.getFramebufferWidth();
 	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
-	// Find the smallest power of two texture that fits the viewport
-	u32 fbh2 = 2;
-	while (fbh2 < fbh)
-		fbh2 *= 2;
-	u32 fbw2 = 2;
-	while (fbw2 < fbw)
-		fbw2 *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw = (u32)(fbw * config::RenderResolution / 480.f);
-		fbh = (u32)(fbh * config::RenderResolution / 480.f);
-		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
-		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
-	}
+			pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
+	u32 fbw2;
+	u32 fbh2;
+	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
+
 	createTexAndRenderTarget(rttTexture, rttRenderTarget, fbw2, fbh2);
 	createDepthTexAndView(rttDepthTex, rttDepthTexView, fbw2, fbh2);
 	deviceContext->ClearDepthStencilView(rttDepthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
@@ -1080,7 +1065,6 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 {
 	u32 w = pvrrc.getFramebufferWidth();
 	u32 h = pvrrc.getFramebufferHeight();
-	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 	if (config::RenderToTextureBuffer)
 	{
 		D3D11_TEXTURE2D_DESC desc;
@@ -1125,37 +1109,14 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 		deviceContext->Unmap(stagingTex, 0);
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[gl.rtt.texAddress], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-			TCW tcw = { { texAddress >> 3, 0, 0, 1 } };
-			switch (fb_packmode) {
-			case 0:
-			case 3:
-				tcw.PixelFmt = Pixel1555;
-				break;
-			case 1:
-				tcw.PixelFmt = Pixel565;
-				break;
-			case 2:
-				tcw.PixelFmt = Pixel4444;
-				break;
-			}
-			TSP tsp = { 0 };
-			for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++)
-				;
-
-			for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++)
-				;
-
-			DX11Texture* texture = texCache.getTextureCacheData(tsp, tcw);
-			if (!texture->texture)
-				texture->Create();
+			DX11Texture* texture = texCache.getRTTexture(texAddress, pvrrc.fb_W_CTRL.fb_packmode, w, h);
 
 			texture->texture = rttTexture;
 			rttTexture.reset();
@@ -1168,10 +1129,7 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 			device->CreateShaderResourceView(texture->texture, &viewDesc, &texture->textureView.get());
 
 			texture->dirty = 0;
-			if (!config::GGPOEnable)
-				texture->protectVRam();
-			else
-				texture->unprotectVRam();
+			texture->protectVRam();
 		}
 	}
 }

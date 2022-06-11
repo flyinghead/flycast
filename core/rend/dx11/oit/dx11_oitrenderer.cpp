@@ -641,7 +641,6 @@ struct DX11OITRenderer : public DX11Renderer
 		configVertexShader();
 
 		bool is_rtt = pvrrc.isRTT;
-		u32 texAddress = FB_W_SOF1 & VRAM_MASK;
 
 		deviceContext->IASetInputLayout(mainInputLayout);
 
@@ -664,7 +663,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		if (is_rtt)
 		{
-			readRttRenderTarget(texAddress);
+			readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
 		}
 		else
 		{

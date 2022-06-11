@@ -232,6 +232,8 @@ struct rend_context
 	FB_X_CLIP_type fb_X_CLIP;
 	FB_Y_CLIP_type fb_Y_CLIP;
 	u32 fb_W_LINESTRIDE;
+	u32 fb_W_SOF1;
+	FB_W_CTRL_type fb_W_CTRL;
 	
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;

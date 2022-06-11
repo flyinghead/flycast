@@ -234,6 +234,8 @@ void rend_start_render(TA_context *ctx)
 			FillBGP(ctx);
 
 			ctx->rend.isRTT = (FB_W_SOF1 & 0x1000000) != 0;
+			ctx->rend.fb_W_SOF1 = FB_W_SOF1;
+			ctx->rend.fb_W_CTRL.full = FB_W_CTRL.full;
 
 			ctx->rend.fb_X_CLIP = FB_X_CLIP;
 			ctx->rend.fb_Y_CLIP = FB_Y_CLIP;

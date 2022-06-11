@@ -123,7 +123,7 @@ bool TextureCacheData::Delete()
 GLuint BindRTT(bool withDepthBuffer)
 {
 	GLenum channels, format;
-	switch(FB_W_CTRL.fb_packmode)
+	switch(pvrrc.fb_W_CTRL.fb_packmode)
 	{
 	case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 		channels = GL_RGBA;
@@ -148,7 +148,7 @@ GLuint BindRTT(bool withDepthBuffer)
 	case 4: //0x4   888 RGB 24 bit packed
 	case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 	case 6: //0x6   8888 ARGB 32 bit
-		WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
+		WARN_LOG(RENDERER, "Unsupported render to texture format: %d", pvrrc.fb_W_CTRL.fb_packmode);
 		return 0;
 
 	case 7: //7     invalid
@@ -157,8 +157,8 @@ GLuint BindRTT(bool withDepthBuffer)
 	}
 	u32 fbw = pvrrc.getFramebufferWidth();
 	u32 fbh = pvrrc.getFramebufferHeight();
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
-	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
+	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
+	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
 	if (gl.rtt.texAddress != ~0u)
@@ -172,20 +172,9 @@ GLuint BindRTT(bool withDepthBuffer)
 	if (gl.rtt.depthb != 0)
 		glDeleteRenderbuffers(1, &gl.rtt.depthb);
 
-	// Find the smallest power of two texture that fits the viewport
-	u32 fbh2 = 2;
-	while (fbh2 < fbh)
-		fbh2 *= 2;
-	u32 fbw2 = 2;
-	while (fbw2 < fbw)
-		fbw2 *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
-	}
+	u32 fbw2;
+	u32 fbh2;
+	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
 
 #ifdef GL_PIXEL_PACK_BUFFER
 	if (gl.gl_major >= 3 && config::RenderToTextureBuffer)
@@ -269,7 +258,7 @@ void ReadRTTBuffer()
 	u32 w = pvrrc.getFramebufferWidth();
 	u32 h = pvrrc.getFramebufferHeight();
 
-	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
+	const u8 fb_packmode = pvrrc.fb_W_CTRL.fb_packmode;
 
 	if (config::RenderToTextureBuffer)
 	{
@@ -313,7 +302,7 @@ void ReadRTTBuffer()
 			gl.rtt.directXfer = false;
 			if (gl.gl_major >= 3)
 			{
-				gl.rtt.fb_w_ctrl = FB_W_CTRL.full;
+				gl.rtt.fb_w_ctrl = pvrrc.fb_W_CTRL;
 				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 			}
 			else
@@ -324,7 +313,7 @@ void ReadRTTBuffer()
 				u8 *p = (u8 *)tmp_buf.data();
 				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-				WriteTextureToVRam(w, h, p, dst, -1, gl.rtt.linestride);
+				WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, gl.rtt.linestride);
 				gl.rtt.texAddress = ~0;
 			}
 		}
@@ -338,36 +327,12 @@ void ReadRTTBuffer()
 		//memset(&vram[gl.rtt.texAddress], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-			TCW tcw = { { gl.rtt.texAddress >> 3, 0, 0, 1 } };
-			switch (fb_packmode) {
-			case 0:
-			case 3:
-				tcw.PixelFmt = Pixel1555;
-				break;
-			case 1:
-				tcw.PixelFmt = Pixel565;
-				break;
-			case 2:
-				tcw.PixelFmt = Pixel4444;
-				break;
-			}
-			TSP tsp = { 0 };
-			for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++);
-			for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++);
-
-			TextureCacheData *texture_data = TexCache.getTextureCacheData(tsp, tcw);
-			if (texture_data->texID != 0)
-				glcache.DeleteTextures(1, &texture_data->texID);
-			else
-				texture_data->Create();
+			TextureCacheData *texture_data = TexCache.getRTTexture(gl.rtt.texAddress, fb_packmode, w, h);
+			glcache.DeleteTextures(1, &texture_data->texID);
 			texture_data->texID = gl.rtt.tex;
 			gl.rtt.tex = 0;
 			texture_data->dirty = 0;
-			if (!config::GGPOEnable)
-				texture_data->protectVRam();
-			else
-				texture_data->unprotectVRam();
+			texture_data->protectVRam();
 		}
 		gl.rtt.texAddress = ~0;
 	}
@@ -416,11 +381,6 @@ BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw)
 	//lookup texture
 	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
 
-	if (tf->texID == 0)
-	{
-		tf->Create();
-		tf->texID = glcache.GenTexture();
-	}
 	readAsyncPixelBuffer(tf->sa_tex);
 
 	//update if needed

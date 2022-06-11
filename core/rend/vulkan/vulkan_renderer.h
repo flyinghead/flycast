@@ -97,13 +97,6 @@ public:
 	{
 		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
-		if (tf->IsNew())
-		{
-			tf->Create();
-			tf->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			tf->SetDevice(GetContext()->GetDevice());
-		}
-
 		//update if needed
 		if (tf->NeedsUpdate())
 		{
@@ -247,10 +240,6 @@ protected:
 		{
 			curTexture = std::unique_ptr<Texture>(new Texture());
 			curTexture->tex_type = TextureType::_8888;
-			curTexture->tcw.full = 0;
-			curTexture->tsp.full = 0;
-			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			curTexture->SetDevice(GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandBuffer);
 		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
@@ -325,8 +314,6 @@ protected:
 		if (!fogTexture)
 		{
 			fogTexture = std::unique_ptr<Texture>(new Texture());
-			fogTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			fogTexture->SetDevice(GetContext()->GetDevice());
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -347,8 +334,6 @@ protected:
 		if (!paletteTexture)
 		{
 			paletteTexture = std::unique_ptr<Texture>(new Texture());
-			paletteTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			paletteTexture->SetDevice(GetContext()->GetDevice());
 			paletteTexture->tex_type = TextureType::_8888;
 			forcePaletteUpdate();
 		}
