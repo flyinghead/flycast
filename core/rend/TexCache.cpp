@@ -786,7 +786,7 @@ void BaseTextureCacheData::Update()
 	//lock the texture to detect changes in it
 	protectVRam();
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
+	UploadToGPU(upscaled_w, upscaled_h, (const u8 *)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (config::DumpTextures)
 	{
 		ComputeHash();

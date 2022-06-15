@@ -44,6 +44,7 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "boxart/boxart.h"
 
 static bool game_started;
 
@@ -70,6 +71,7 @@ void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
+static Boxart boxart;
 static Chat chat;
 
 static void emuEventCallback(Event event, void *)
@@ -1380,6 +1382,10 @@ static void gui_display_settings()
 #endif // !linux
 #endif // !TARGET_IPHONE
 
+			OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
+					"Display game covert art in the game list.");
+			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
+					"Fetch cover images from TheGamesDB.net.");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -2289,6 +2295,8 @@ inline static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 }
 
+static std::future<const GameBoxart *> futureBoxart;
+
 static void gui_display_content()
 {
 	fullScreenWindow(false);
@@ -2329,13 +2337,22 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
+		const int itemsPerLine = ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x);
+		if (config::BoxartDisplayMode)
+			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
+		else
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		ImGui::PushID("bios");
-		if (ImGui::Selectable("Dreamcast BIOS"))
+		bool pressed;
+		if (config::BoxartDisplayMode)
+			pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
+		else
+			pressed = ImGui::Selectable("Dreamcast BIOS");
+		if (pressed)
 			gui_start_game("");
 		ImGui::PopID();
-
+		int counter = 1;
 		{
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
@@ -2348,10 +2365,63 @@ static void gui_display_content()
 						// Only dreamcast disks
 						continue;
 				}
-				if (filter.PassFilter(game.name.c_str()))
+				std::string gameName = game.name;
+				const GameBoxart *art = nullptr;
+				if (config::BoxartDisplayMode)
+				{
+					art = boxart.getBoxart(game);
+					if (art == nullptr && config::FetchBoxart)
+					{
+						if (futureBoxart.valid() && futureBoxart.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+							futureBoxart.get();
+						if (!futureBoxart.valid())
+							futureBoxart = boxart.fetchBoxart(game);
+					}
+					else if (art != nullptr)
+						gameName = art->name;
+				}
+				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
-					if (ImGui::Selectable(game.name.c_str()))
+					if (config::BoxartDisplayMode)
+					{
+						if (counter % itemsPerLine != 0)
+							ImGui::SameLine();
+						counter++;
+						ImTextureID textureId{};
+						if (art != nullptr && !art->boxartPath.empty())
+						{
+							// Get the boxart texture. Load it if needed.
+							textureId = imguiDriver->getTexture(art->boxartPath);
+							if (textureId == ImTextureID())
+							{
+								int width, height;
+								u8 *imgData = loadImage(art->boxartPath, width, height);
+								if (imgData != nullptr)
+								{
+									textureId = imguiDriver->updateTexture(art->boxartPath, imgData, width, height);
+									free(imgData);
+								}
+							}
+						}
+						if (textureId != ImTextureID())
+							pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2);
+						else
+							pressed = ImGui::Button(gameName.c_str(), ScaledVec2(200, 200));
+					    if (ImGui::IsItemHovered())
+					    {
+					        ImGui::BeginTooltip();
+					        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+					        ImGui::TextUnformatted(game.name.c_str());
+					        ImGui::PopTextWrapPos();
+					        ImGui::EndTooltip();
+					    }
+					}
+					else
+					{
+						pressed = ImGui::Selectable(gameName.c_str());
+					}
+					if (pressed)
 					{
 						if (gui_state == GuiState::SelectDisk)
 						{
@@ -2380,6 +2450,7 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
     }
+    scrollWhenDraggingOnVoid();
     windowDragScroll();
 	ImGui::EndChild();
 	ImGui::End();
@@ -2716,6 +2787,7 @@ void gui_term()
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
 	    EventManager::unlisten(Event::Terminate, emuEventCallback);
+		gui_save();
 	}
 }
 
@@ -2749,6 +2821,13 @@ static void reset_vmus()
 void gui_error(const std::string& what)
 {
 	error_msg = what;
+}
+
+void gui_save()
+{
+	if (futureBoxart.valid())
+		futureBoxart.get();
+	boxart.saveDatabase();
 }
 
 #ifdef TARGET_UWP

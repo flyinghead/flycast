@@ -345,7 +345,7 @@ public:
 
 	GLuint texID;   //gl texture
 	std::string GetId() override { return std::to_string(texID); }
-	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
 };
 

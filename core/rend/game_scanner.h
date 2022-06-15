@@ -31,6 +31,7 @@
 struct GameMedia {
 	std::string name;
 	std::string path;
+	std::string gameName;	// for arcade games, from the rom list
 };
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
@@ -82,27 +83,28 @@ class GameScanner
         	if (item.name.substr(0, 2) == "._")
         		// Ignore Mac OS turds
         		continue;
-        	std::string name(item.name);
-			std::string child_path = item.parentPath + "/" + name;
+        	std::string fileName(item.name);
+			std::string child_path = item.parentPath + "/" + fileName;
 #ifdef __APPLE__
             extern std::string os_PrecomposedString(std::string string);
-            name = os_PrecomposedString(name);
+            fileName = os_PrecomposedString(fileName);
 #endif
-
-			std::string extension = get_file_extension(name);
+            std::string gameName(item.name);
+			std::string extension = get_file_extension(fileName);
 			if (extension == "zip" || extension == "7z")
 			{
-				std::string basename = get_file_basename(name);
+				std::string basename = get_file_basename(fileName);
 				string_tolower(basename);
 				auto it = arcade_games.find(basename);
 				if (it == arcade_games.end())
 					continue;
-				name = name + " (" + std::string(it->second->description) + ")";
+				gameName = it->second->description;
+				fileName = fileName + " (" + gameName + ")";
 			}
 			else if (extension == "chd" || extension == "gdi")
 			{
 				// Hide arcade gdroms
-				std::string basename = get_file_basename(name);
+				std::string basename = get_file_basename(fileName);
 				string_tolower(basename);
 				if (arcade_gdroms.count(basename) != 0)
 					continue;
@@ -111,7 +113,7 @@ class GameScanner
 							|| (extension != "bin" && extension != "lst" && extension != "dat"))
 					&& extension != "cdi" && extension != "cue")
 				continue;
-			insert_game(GameMedia{ name, child_path });
+			insert_game(GameMedia{ fileName, child_path, gameName });
 		}
 	}
 

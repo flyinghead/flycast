@@ -639,10 +639,10 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
             {
                 g.NavDisableHighlight = true;
 				// Check if dragging (except for scrollbars)
-				if (held && !hovered && !pressed)
+				if (held && !pressed)
 				{
 					ImVec2 delta = GetMouseDragDelta(ImGuiMouseButton_Left);
-					if (delta.x != 0.f || delta.y != 0.f)
+					if (ImAbs(delta.x) >= 5.f || ImAbs(delta.y) >= 5.f)
 					{
 						ClearActiveID();
 						// Find an ancestor window that allows drag scrolling.
@@ -654,9 +654,10 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
 								&& scrollableWindow->ScrollMax.y == 0.0f)
 							scrollableWindow = scrollableWindow->ParentWindow;
 						if (scrollableWindow != nullptr && (scrollableWindow->Flags & ImGuiWindowFlags_DragScrolling))
+						{
 							scrollableWindow->DragScrolling = true;
-						held = false;
-						pressed = false;
+							held = false;
+						}
 					}
 				}
             }

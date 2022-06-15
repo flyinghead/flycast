@@ -1,5 +1,5 @@
 /*
-	Copyright 2021 flyinghead
+	Copyright 2022 flyinghead
 
 	This file is part of Flycast.
 
@@ -15,32 +15,32 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 #pragma once
-#include "imgui/imgui.h"
-#include "gui.h"
+#include "scraper.h"
+#include "../game_scanner.h"
+#include "stdclass.h"
+#include <unordered_map>
 #include <memory>
+#include <future>
 
-class ImGuiDriver
+class Boxart
 {
 public:
-	ImGuiDriver() {
-		gui_initFonts();
+	const GameBoxart *getBoxart(const GameMedia& media);
+	std::future<const GameBoxart *> fetchBoxart(const GameMedia& media);
+	void saveDatabase();
+
+private:
+	void loadDatabase();
+	std::string getSaveDirectory() const {
+		return get_writable_data_path("/boxart/");
 	}
-	virtual ~ImGuiDriver() = default;
 
-	virtual void newFrame() = 0;
-	virtual void renderDrawData(ImDrawData* drawData) = 0;
+	std::unordered_map<std::string, GameBoxart> games;
+	std::unique_ptr<Scraper> scraper;
+	bool databaseLoaded = false;
+	bool databaseDirty = false;
 
-	virtual void displayVmus() {}
-	virtual void displayCrosshairs() {}
-
-	virtual void present() = 0;
-	virtual void setFrameRendered() {}
-
-	virtual ImTextureID getTexture(const std::string& name) { return ImTextureID{}; }
-	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) { return ImTextureID{}; }
+	static constexpr char const *DB_NAME = "flycast-gamedb.json";
 };
-
-extern std::unique_ptr<ImGuiDriver> imguiDriver;
-

@@ -55,7 +55,7 @@ public:
 		std::swap(device, other.device);
 	}
 
-	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
+	void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	vk::ImageView GetImageView() const { return *imageView; }
@@ -65,7 +65,7 @@ public:
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
-	void SetImage(u32 size, void *data, bool isNew, bool genMipmaps);
+	void SetImage(u32 size, const void *data, bool isNew, bool genMipmaps);
 	void CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
 			const vk::ImageAspectFlags& aspectMask);
 	void GenerateMipmaps();

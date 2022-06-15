@@ -38,6 +38,8 @@ Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
+Option<bool> FetchBoxart("FetchBoxart", true);
+Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
 
 // Sound
 

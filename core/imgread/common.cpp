@@ -87,14 +87,7 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 		Disc *disc = driver(path.c_str(), digest);
 
 		if (disc != nullptr)
-		{
-			if (cdi_parse == driver) {
-				const char warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
-						"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
-				WARN_LOG(GDROM, "%s", warn_str);
-			}
 			return disc;
-		}
 	}
 
 	return nullptr;
@@ -247,25 +240,8 @@ void libGDR_GetToc(u32* to, DiskArea area)
 
 void libGDR_GetSessionInfo(u8* to, u8 session)
 {
-	if (!disc)
-		return;
-	to[0]=2;//status, will get overwritten anyway
-	to[1]=0;//0's
-
-	if (session==0)
-	{
-		to[2]=disc->sessions.size();//count of sessions
-		to[3]=disc->EndFAD>>16;//fad is sessions end
-		to[4]=disc->EndFAD>>8;
-		to[5]=disc->EndFAD>>0;
-	}
-	else
-	{
-		to[2]=disc->sessions[session-1].FirstTrack;//start track of this session
-		to[3]=disc->sessions[session-1].StartFAD>>16;//fad is session start
-		to[4]=disc->sessions[session-1].StartFAD>>8;
-		to[5]=disc->sessions[session-1].StartFAD>>0;
-	}
+	if (disc != nullptr)
+		disc->GetSessionInfo(to, session);
 }
 
 DiscType GuessDiscType(bool m1, bool m2, bool da)

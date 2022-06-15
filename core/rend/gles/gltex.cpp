@@ -10,7 +10,7 @@ GlTextureCache TexCache;
 
 static void readAsyncPixelBuffer(u32 addr);
 
-void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	//upload to OpenGL !
 	glcache.BindTexture(GL_TEXTURE_2D, texID);

@@ -182,7 +182,7 @@ if(IOS)
 		GLES_SILENCE_DEPRECATION)
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -273,6 +273,11 @@ if(NOT LIBRETRO)
 
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
+
+		if(UNIX AND NOT APPLE)
+			find_package(CURL REQUIRED)
+			target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
+		endif()
 	endif()
 	
 	find_package(ZLIB)
@@ -989,7 +994,15 @@ if(NOT LIBRETRO)
 	        core/rend/gui_util.cpp
 	        core/rend/gui_util.h
 	        core/rend/mainui.cpp
-	        core/rend/mainui.h)
+	        core/rend/mainui.h
+	        core/rend/boxart/boxart.cpp
+	        core/rend/boxart/boxart.h
+	        core/rend/boxart/gamesdb.cpp
+	        core/rend/boxart/gamesdb.h
+	        core/rend/boxart/http_client.cpp
+	        core/rend/boxart/http_client.h
+	        core/rend/boxart/scraper.cpp
+	        core/rend/boxart/scraper.h)
 endif()
 
 if(USE_VULKAN)
@@ -1057,6 +1070,9 @@ if(USE_VULKAN)
 	            core/rend/vulkan/vulkan_context.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.h)
+	 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
+		endif()
 	endif()
 endif()
 
@@ -1281,6 +1297,7 @@ if(NOT LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
 
 			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/common/http_client.mm
 					shell/apple/emulator-ios/emulator/AppDelegate.h
 					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
@@ -1363,6 +1380,7 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/common/http_client.mm
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
 					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
@@ -1439,11 +1457,12 @@ if(NOT LIBRETRO)
 					core/deps/SDL/src/main/winrt/SDL2-WinRTResources.rc)
 			target_sources(${PROJECT_NAME} PRIVATE
 				${ResourceFiles}
-				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp)
+				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp
+				shell/uwp/http_client.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
 		endif()
 	endif()
 endif()

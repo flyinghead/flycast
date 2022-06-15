@@ -417,7 +417,7 @@ void Emulator::init()
 	state = Init;
 }
 
-static int getGamePlatform(const char *path)
+int getGamePlatform(const char *path)
 {
 	if (path == NULL)
 		// Dreamcast BIOS

@@ -145,7 +145,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, nullptr, nullptr, imageMemoryBarrier);
 }
 
-void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded)
+void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
 	vk::Format format = vk::Format::eUndefined;
 	u32 dataSize = width * height * 2;
@@ -249,7 +249,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usa
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }
 
-void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
+void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMipmaps)
 {
 	verify((bool)commandBuffer);
 

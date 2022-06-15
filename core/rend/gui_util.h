@@ -130,3 +130,11 @@ inline static ImVec2 operator+(const ImVec2& l, const ImVec2& r) {
 inline static ImVec2 operator-(const ImVec2& l, const ImVec2& r) {
 	return ImVec2(l.x - r.x, l.y - r.y);
 }
+inline static ImVec2 operator*(const ImVec2& v, float f) {
+	return ImVec2(v.x * f, v.y * f);
+}
+inline static ImVec2 operator/(const ImVec2& v, float f) {
+	return ImVec2(v.x / f, v.y / f);
+}
+
+u8 *loadImage(const std::string& path, int& width, int& height);

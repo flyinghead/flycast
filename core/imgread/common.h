@@ -168,6 +168,27 @@ struct Disc
 			std::fclose(fo);
 		}
 	}
+
+	void GetSessionInfo(u8* to, u8 session)
+	{
+		to[0] = 2; //status, will get overwritten anyway
+		to[1] = 0;
+
+		if (session == 0)
+		{
+			to[2] = sessions.size(); 	//count of sessions
+			to[3] = EndFAD >> 16;		//fad is sessions end
+			to[4] = EndFAD >> 8;
+			to[5] = EndFAD >> 0;
+		}
+		else
+		{
+			to[2] = sessions[session - 1].FirstTrack;		//start track of this session
+			to[3] = sessions[session - 1].StartFAD >> 16;	//fad is session start
+			to[4] = sessions[session - 1].StartFAD >> 8;
+			to[5] = sessions[session - 1].StartFAD >> 0;
+		}
+	}
 };
 
 Disc* OpenDisc(const std::string& path, std::vector<u8> *digest = nullptr);

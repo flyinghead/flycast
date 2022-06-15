@@ -52,7 +52,7 @@ void VulkanOverlay::Term()
 	xhairTexture.reset();
 }
 
-std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
+std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, const u8 *data)
 {
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;

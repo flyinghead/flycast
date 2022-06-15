@@ -41,7 +41,7 @@ public:
 	void Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
 private:
-	std::unique_ptr<Texture> createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data);
+	std::unique_ptr<Texture> createTexture(vk::CommandBuffer commandBuffer, int width, int height, const u8 *data);
 
 	std::array<std::unique_ptr<Texture>, 8> vmuTextures;
 	std::vector<vk::UniqueCommandBuffer> commandBuffers;

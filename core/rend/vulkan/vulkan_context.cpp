@@ -279,7 +279,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 void VulkanContext::InitImgui()
 {
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
-	ImGui_ImplVulkan_InitInfo initInfo = {};
+	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = (VkInstance)*instance;
 	initInfo.PhysicalDevice = (VkPhysicalDevice)physicalDevice;
 	initInfo.Device = (VkDevice)*device;
@@ -287,11 +287,13 @@ void VulkanContext::InitImgui()
 	initInfo.Queue = (VkQueue)graphicsQueue;
 	initInfo.PipelineCache = (VkPipelineCache)*pipelineCache;
 	initInfo.DescriptorPool = (VkDescriptorPool)*descriptorPool;
+	initInfo.MinImageCount = 2;
+	initInfo.ImageCount = GetSwapChainSize();
 #ifdef VK_DEBUG
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass, 0))
+	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
 	{
 		die("ImGui initialization failed");
 	}
@@ -308,7 +310,7 @@ void VulkanContext::InitImgui()
 		graphicsQueue.submit(1, &submitInfo, *drawFences.front());
 
 		device->waitIdle();
-		ImGui_ImplVulkan_InvalidateFontUploadObjects();
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 }
 
@@ -1163,28 +1165,4 @@ VulkanContext::~VulkanContext()
 {
 	verify(contextInstance == this);
 	contextInstance = nullptr;
-}
-
-void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
-{
-	VulkanContext *context = VulkanContext::Instance();
-	if (!context->IsValid())
-		return;
-	try {
-		bool rendering = context->IsRendering();
-		vk::CommandBuffer vmuCmdBuffer;
-		if (!rendering)
-		{
-			context->NewFrame();
-			vmuCmdBuffer = context->PrepareOverlay(true, false);
-			context->BeginRenderPass();
-			context->PresentLastFrame();
-			context->DrawOverlay(settings.display.uiScale, true, false);
-		}
-		// Record Imgui Draw Data and draw funcs into command buffer
-		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
-		if (!rendering)
-			context->EndFrame(vmuCmdBuffer);
-	} catch (const InvalidVulkanContext& err) {
-	}
 }
