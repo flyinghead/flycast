@@ -152,7 +152,8 @@ struct flash_syscfg_block {
   // last set time (seconds since 1/1/1950 00:00)
   u16 time_lo;
   u16 time_hi;
-  u8 unknown1;
+	// in 15 mins increment, from -48 (West) to +52 (East), unused
+  int8_t time_zone;
   u8 lang;
   u8 mono;
   u8 autostart;

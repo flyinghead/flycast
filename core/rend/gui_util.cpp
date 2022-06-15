@@ -170,7 +170,6 @@ void select_file_popup(const char *prompt, StringCallback callback,
 						if (entry->d_type == DT_DIR)
 							is_dir = true;
 						if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-#endif
 						{
 							struct stat st;
 							if (flycast::stat(child_path.c_str(), &st) != 0)
@@ -178,11 +177,28 @@ void select_file_popup(const char *prompt, StringCallback callback,
 							if (S_ISDIR(st.st_mode))
 								is_dir = true;
 						}
-						if (is_dir && flycast::access(child_path.c_str(), R_OK) == 0)
+#else // _WIN32
+						nowide::wstackstring wname;
+					    if (wname.convert(child_path.c_str()))
+					    {
+							DWORD attr = GetFileAttributesW(wname.c_str());
+							if (attr != INVALID_FILE_ATTRIBUTES)
+							{
+								if (attr & FILE_ATTRIBUTE_HIDDEN)
+									continue;
+								if (attr & FILE_ATTRIBUTE_DIRECTORY)
+									is_dir = true;
+							}
+					    }
+#endif
+						if (is_dir)
 						{
-							if (name == "..")
-								dotdot_seen = true;
-							subfolders.push_back(name);
+							if (flycast::access(child_path.c_str(), R_OK) == 0)
+							{
+								if (name == "..")
+									dotdot_seen = true;
+								subfolders.push_back(name);
+							}
 						}
                         else
                         {
@@ -270,7 +286,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 #endif
 					child_path = path + native_separator + name;
 			}
-			if (ImGui::Selectable(name.c_str()))
+			if (ImGui::Selectable(name == ".." ? ".. Up to Parent Directory" : name.c_str()))
 			{
 				subfolders_read = false;
 				select_current_directory = child_path;

@@ -101,13 +101,28 @@ void FinishRender(TA_context* ctx)
 	frame_finished.Set();
 }
 
+static std::mutex mtx_pool;
+
+static std::vector<TA_context*> ctx_pool;
 static std::vector<TA_context*> ctx_list;
 
-static TA_context *tactx_Alloc()
+TA_context *tactx_Alloc()
 {
-	TA_context *ctx = new TA_context();
-	ctx->Alloc();
+	TA_context *ctx = nullptr;
 
+	mtx_pool.lock();
+	if (!ctx_pool.empty())
+	{
+		ctx = ctx_pool.back();
+		ctx_pool.pop_back();
+	}
+	mtx_pool.unlock();
+
+	if (ctx == nullptr)
+	{
+		ctx = new TA_context();
+		ctx->Alloc();
+	}
 	return ctx;
 }
 
@@ -115,7 +130,17 @@ static void tactx_Recycle(TA_context* ctx)
 {
 	if (ctx->nextContext != nullptr)
 		tactx_Recycle(ctx->nextContext);
-	delete ctx;
+	mtx_pool.lock();
+	if (ctx_pool.size() > 3)
+	{
+		delete ctx;
+	}
+	else
+	{
+		ctx->Reset();
+		ctx_pool.push_back(ctx);
+	}
+	mtx_pool.unlock();
 }
 
 static TA_context *tactx_Find(u32 addr, bool allocnew)
@@ -162,6 +187,12 @@ void tactx_Term()
 	for (TA_context *ctx : ctx_list)
 		delete ctx;
 	ctx_list.clear();
+
+	mtx_pool.lock();
+	for (TA_context *ctx : ctx_pool)
+		delete ctx;
+	ctx_pool.clear();
+	mtx_pool.unlock();
 }
 
 const u32 NULL_CONTEXT = ~0u;

@@ -90,7 +90,9 @@ struct MaxSpeedNetPipe : public SerialPipe
 		return true;
 	}
 
-	void shutdown() {
+	void shutdown()
+	{
+		enableNetworkBroadcast(false);
 		if (VALID(sock))
 			closesocket(sock);
 		sock = INVALID_SOCKET;
@@ -174,6 +176,7 @@ private:
 			{
 				peerAddress.sin_addr.s_addr = addr.sin_addr.s_addr;
 				peerAddress.sin_port = addr.sin_port;
+				enableNetworkBroadcast(false);
 			}
 		}
 	}
@@ -235,6 +238,8 @@ private:
 				freeaddrinfo(resultAddr);
 			}
 		}
+		else
+			enableNetworkBroadcast(true);
 
 		serial_setPipe(this);
 	}

@@ -50,6 +50,7 @@ public:
 
 	void shutdown()
 	{
+		enableNetworkBroadcast(false);
 		emu.setNetworkState(false);
 		closesocket(sock);
 		sock = INVALID_SOCKET;

@@ -201,20 +201,22 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
-    if(MINGW)
-        target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
-        target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
-    elseif(ANDROID)
-        # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
-        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
-        target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
-    else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+if(USE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        if(MINGW)
+            target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+            target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+        elseif(ANDROID)
+            # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+            set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+            target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
+        elseif(APPLE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX -static-openmp)
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+        endif()
     endif()
-else()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
@@ -891,6 +893,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
+        core/wsi/libretro.cpp
+        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -900,8 +904,6 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
-            core/wsi/libretro.cpp
-            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp
@@ -1394,13 +1396,15 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(IOSURFACE_LIBRARY IOSurface)
+			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 
 			target_link_libraries(${PROJECT_NAME} PRIVATE
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
 				${OPENGL_LIBRARY}
-				${IOSURFACE_LIBRARY})
+				${IOSURFACE_LIBRARY}
+				${MULTITOUCH_SUPPORT_LIBRARY})
 
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
@@ -1439,7 +1443,7 @@ if(NOT LIBRETRO)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32)
 		endif()
 	endif()
 endif()

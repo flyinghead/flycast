@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#ifdef LIBRETRO
+#if defined(LIBRETRO) && (defined(HAVE_OPENGL) || defined(HAVE_OPENGLES))
 #include "gl_context.h"
 #include <libretro.h>
 #include <glsm/glsm.h>

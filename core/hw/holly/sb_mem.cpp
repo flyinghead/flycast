@@ -140,6 +140,7 @@ static void fixUpDCFlash()
 			memset(&syscfg, 0xff, sizeof(syscfg));
 			syscfg.time_lo = 0;
 			syscfg.time_hi = 0;
+			syscfg.time_zone = 0;
 			syscfg.lang = 0;
 			syscfg.mono = 0;
 			syscfg.autostart = 1;
@@ -160,12 +161,27 @@ static void fixUpDCFlash()
      	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
      	{
      		srand(now);
+     		u8 sum = 0;
      		for (int i = 0; i < 6; i++)
      		{
      			console_id[i] = rand();
      			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
+     			sum += console_id[i];
      		}
+     		console_id[-1] = console_id[0xA0 - 1] = sum;
+     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
      	}
+     	else
+     	{
+     		// Fix checksum
+     		u8 sum = 0;
+     		for (int i = 0; i < 6; i++)
+     			sum += console_id[i];
+     		console_id[-1] = console_id[0xA0 - 1] = sum;
+     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
+     	}
+ 		// must be != 0xff
+ 		console_id[7] = console_id[0xA0 + 7] = 0xfe;
 	}
 }
 

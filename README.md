@@ -7,7 +7,7 @@
 
 ![flycast logo](https://github.com/flyinghead/flycast/raw/master/shell/linux/flycast.png)
 
-**Flycast** is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://reicast.com/).
+**Flycast** is a multi-platform Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator derived from [**reicast**](https://github.com/skmp/reicast-emulator).
 
 Information about configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki).
 
@@ -17,27 +17,31 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ### Flatpak (Linux)
 
-1. [Set up Flatpak](https://www.flatpak.org/setup/)
+1. [Set up Flatpak](https://www.flatpak.org/setup/).
 
-2. Install Flycast from [Flathub](https://flathub.org/apps/details/org.flycast.Flycast)
+2. Install Flycast from [Flathub](https://flathub.org/apps/details/org.flycast.Flycast):
 
 `flatpak install -y org.flycast.Flycast`
 
-3. Run Flycast
+3. Run Flycast:
 
 `flatpak run org.flycast.Flycast`
 
 ### Homebrew (MacOS)
 
-1. [Set up Homebrew](https://brew.sh)
+1. [Set up Homebrew](https://brew.sh).
 
-2. Install Flycast via Homebrew
+2. Install Flycast via Homebrew:
 
 `brew install --cask flycast`
 
-### Xbox One
+### Xbox One/Series
 
-Open [**gamr13's github page**](https://gamr13.github.io/) from your console.
+#### Retail:
+Open [**gamr13's github page**](https://gamr13.github.io/) from your Xbox console.
+
+#### Dev Mode:
+Grab the latest build from [**the builds page**](https://flyinghead.github.io/flycast-builds/), or the [**GitHub Actions**](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml). Then install it using the **Xbox Device Portal**.
 
 ### Binaries
 

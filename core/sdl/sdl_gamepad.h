@@ -365,6 +365,11 @@ public:
 		else
 			return NULL;
 	}
+	static void closeAllGamepads()
+	{
+		while (!sdl_gamepads.empty())
+			sdl_gamepads.begin()->second->close();
+	}
 	static void UpdateRumble()
 	{
 		for (auto& pair : sdl_gamepads)

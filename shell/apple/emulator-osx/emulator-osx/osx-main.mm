@@ -72,6 +72,13 @@ void os_SetupInput()
 #endif
 }
 
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
+#endif
+}
+
 void common_linux_setup();
 static int emu_flycast_init();
 
