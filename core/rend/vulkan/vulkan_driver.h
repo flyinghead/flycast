@@ -73,7 +73,7 @@ public:
 
 	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
 	{
-		VkTexture vkTex { std::unique_ptr<Texture>(new Texture()) };
+		VkTexture vkTex(std::unique_ptr<Texture>(new Texture()));
 		vkTex.texture->tex_type = TextureType::_8888;
 		vkTex.texture->SetCommandBuffer(getCommandBuffer());
 		vkTex.texture->UploadToGPU(width, height, data, false);
@@ -104,6 +104,10 @@ public:
 
 private:
 	struct VkTexture {
+		VkTexture() = default;
+		VkTexture(std::unique_ptr<Texture>&& texture, ImTextureID textureId = ImTextureID())
+			: texture(std::move(texture)), textureId(textureId) {}
+
 		std::unique_ptr<Texture> texture;
 		ImTextureID textureId{};
 	};

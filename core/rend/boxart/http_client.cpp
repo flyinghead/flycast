@@ -17,15 +17,15 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "build.h"
-#if !defined(__ANDROID__) && !defined(TARGET_IOS)
+#if !defined(__ANDROID__) && !defined(__APPLE__)
 #include "http_client.h"
-
-namespace http {
 
 #ifdef _WIN32
 #ifndef TARGET_UWP
 #include <windows.h>
 #include <wininet.h>
+
+namespace http {
 
 static HINTERNET hInet;
 
@@ -76,9 +76,13 @@ void term()
 	}
 }
 
-#endif
-#elif !defined(__APPLE__) && !defined(__ANDROID__)
+}
+#endif	// !TARGET_UWP
+
+#else
 #include <curl/curl.h>
+
+namespace http {
 
 void init()
 {
@@ -127,8 +131,7 @@ void term()
 {
 	curl_global_cleanup();
 }
-#endif
-
 
 }
-#endif
+#endif	// !_WIN32
+#endif	// !defined(__ANDROID__) && !defined(__APPLE__)
