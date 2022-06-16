@@ -19,7 +19,7 @@
 #include "boxart.h"
 #include "gamesdb.h"
 
-static std::string getGameFileName(const std::string path)
+static std::string getGameFileName(const std::string& path)
 {
 	size_t slash = get_last_slash_pos(path);
 	std::string fileName;
@@ -59,10 +59,14 @@ std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
 			GameBoxart boxart;
 			boxart.fileName = fileName;
 			boxart.gamePath = media.path;
-			boxart.name = trim_trailing_ws(media.gameName);
-			while (boxart.name.back() == ')')
+			boxart.name = trim_trailing_ws(get_file_basename(media.gameName));
+			while (!boxart.name.empty())
 			{
-				size_t pos = boxart.name.find_last_of('(');
+				size_t pos{ std::string::npos };
+				if (boxart.name.back() == ')')
+					pos = boxart.name.find_last_of('(');
+				else if (boxart.name.back() == ']')
+					pos = boxart.name.find_last_of('[');
 				if (pos == std::string::npos)
 					break;
 				boxart.name = trim_trailing_ws(boxart.name.substr(0, pos));

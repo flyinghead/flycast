@@ -38,8 +38,8 @@ public:
 	virtual void present() = 0;
 	virtual void setFrameRendered() {}
 
-	virtual ImTextureID getTexture(const std::string& name) { return ImTextureID{}; }
-	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) { return ImTextureID{}; }
+	virtual ImTextureID getTexture(const std::string& name) = 0;
+	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) = 0;
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

@@ -36,7 +36,7 @@ bool Scraper::downloadImage(const std::string& url, const std::string& localName
 		return false;
 	}
 	FILE *f = nowide::fopen(localName.c_str(), "wb");
-	if (f == NULL)
+	if (f == nullptr)
 	{
 		WARN_LOG(COMMON, "can't create local file %s: error %d", localName.c_str(), errno);
 		return false;
