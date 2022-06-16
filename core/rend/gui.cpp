@@ -2142,9 +2142,9 @@ static void gui_display_settings()
 					ShowHelpMarker("The local UDP port to use");
 					config::LocalPort.set(atoi(localPort));
 		    	}
-				OptionCheckbox("Enable UPnP", config::EnableUPnP);
-				ImGui::SameLine();
-				ShowHelpMarker("Automatically configure your network router for netplay");
+				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
+				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
+						"Compatible with the \"-output network\" MAME option. Arcade games only.");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2353,6 +2353,7 @@ static void gui_display_content()
 			gui_start_game("");
 		ImGui::PopID();
 		int counter = 1;
+		int loadedImages = 0;
 		{
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
@@ -2393,8 +2394,10 @@ static void gui_display_content()
 						{
 							// Get the boxart texture. Load it if needed.
 							textureId = imguiDriver->getTexture(art->boxartPath);
-							if (textureId == ImTextureID())
+							if (textureId == ImTextureID() && loadedImages < 10)
 							{
+								// Load 10 images max per frame
+								loadedImages++;
 								int width, height;
 								u8 *imgData = loadImage(art->boxartPath, width, height);
 								if (imgData != nullptr)

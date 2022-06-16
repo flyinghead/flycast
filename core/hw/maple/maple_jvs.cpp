@@ -24,6 +24,7 @@
 #include "oslib/oslib.h"
 #include "stdclass.h"
 #include "cfg/option.h"
+#include "network/output.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -195,7 +196,23 @@ protected:
 		}
 	}
 
-	virtual void write_digital_out(int count, u8 *data) { }
+	virtual void write_digital_out(int count, u8 *data)
+	{
+		u32 newOutput = digOutput;
+		for (int i = 0; i < count && i < 4; i++)
+		{
+			u32 mask = 0xff << (i * 8);
+			newOutput = (newOutput & ~mask) | (data[i] << (i * 8));
+		}
+		u32 changes = newOutput ^ digOutput;
+		for (int i = 0; i < 32; i++)
+			if (changes & (1 << i))
+			{
+				std::string name = "lamp" + std::to_string(i);
+				networkOutput.output(name.c_str(), (newOutput >> i) & 1);
+			}
+		digOutput = newOutput;
+	}
 
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
@@ -242,6 +259,7 @@ private:
 	std::array<u32, 32> cur_mapping;
 	std::array<u32, 32> p1_mapping;
 	std::array<u32, 32> p2_mapping;
+	u32 digOutput = 0;
 };
 
 // Most common JVS board
@@ -1632,9 +1650,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x32:	// switched outputs
-				case 0x33:
 					LOGJVS("output(%d) %x", buffer_in[cmdi + 1], buffer_in[cmdi + 2]);
 					write_digital_out(buffer_in[cmdi + 1], &buffer_in[cmdi + 2]);
+					JVS_STATUS1();	// report byte
+					cmdi += buffer_in[cmdi + 1] + 2;
+					break;
+
+				case 0x33:  // Analog output
+					LOGJVS("analog output(%d) %x", buffer_in[cmdi + 1], buffer_in[cmdi + 2]);
 					JVS_STATUS1();	// report byte
 					cmdi += buffer_in[cmdi + 1] + 2;
 					break;

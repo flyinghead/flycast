@@ -49,6 +49,7 @@ InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
 MaxSpeedNetPipe maxSpeedNetPipe;
+bool atomiswaveForceFeedback;
 
 extern MemChip *sys_rom;
 
@@ -573,6 +574,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	else
 		loadDecryptedRom(file, progress);
 
+	atomiswaveForceFeedback = false;
 	RomBootID bootId;
 	if (CurrentCartridge->GetBootId(&bootId))
 	{
@@ -593,6 +595,11 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			maxSpeedNetPipe.init();
 			configure_maxspeed_flash(config::NetworkEnable, config::ActAsServer);
+			atomiswaveForceFeedback = true;
+		}
+		else if (gameId == "FASTER THAN SPEED")
+		{
+			atomiswaveForceFeedback = true;
 		}
 		else if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{
