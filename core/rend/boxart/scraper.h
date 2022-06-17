@@ -41,6 +41,7 @@ struct GameBoxart
 	std::string boxartPath;
 
 	bool scraped = false;
+	bool found = false;
 
 	enum Region { JAPAN = 1, USA = 2, EUROPE = 4 };
 
@@ -57,6 +58,7 @@ struct GameBoxart
 			{ "fanart_path", fanartPath },
 			{ "boxart_path", boxartPath },
 			{ "scraped", scraped },
+			{ "found", found },
 		};
 		return j;
 	}
@@ -65,10 +67,14 @@ struct GameBoxart
 	static void loadProperty(T& i, const json& j, const std::string& propName)
 	{
 		try {
-			i = j[propName].get<T>();
+			// asan error if missing contains(). json bug?
+			if (j.contains(propName)) {
+				i = j[propName].get<T>();
+				return;
+			}
 		} catch (const json::exception& e) {
-			i = T();
 		}
+		i = T();
 	}
 
 	GameBoxart() = default;
@@ -85,6 +91,7 @@ struct GameBoxart
 		loadProperty(fanartPath, j, "fanart_path");
 		loadProperty(boxartPath, j, "boxart_path");
 		loadProperty(scraped, j, "scraped");
+		loadProperty(found, j, "found");
 	}
 };
 

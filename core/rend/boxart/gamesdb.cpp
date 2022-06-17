@@ -22,6 +22,7 @@
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "oslib/oslib.h"
+#include <cctype>
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
 
@@ -230,12 +231,21 @@ void TheGamesDb::scrape(GameBoxart& item)
 		throw std::runtime_error("");
 	blackoutPeriod = 0.0;
 
+	item.found = false;
 	int platform = getGamePlatform(item.gamePath.c_str());
 	std::string gameName;
 	std::string uniqueId;
 	if (platform == DC_PLATFORM_DREAMCAST)
 	{
-		Disc *disc = OpenDisc(item.gamePath.c_str());
+		Disc *disc;
+		try {
+			disc = OpenDisc(item.gamePath.c_str());
+		} catch (const std::exception& e) {
+			WARN_LOG(COMMON, "Can't open disk %s: %s", item.gamePath.c_str(), e.what());
+			// No need to retry if the disk is invalid/corrupted
+			item.scraped = true;
+			return;
+		}
 
 		u32 base_fad;
 		if (disc->type == GdRom) {
@@ -273,22 +283,33 @@ void TheGamesDb::scrape(GameBoxart& item)
 		gameName = item.name;
 	}
 
-	std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
-	if (platform == DC_PLATFORM_DREAMCAST)
-		url += std::to_string(dreamcastPlatformId);
-	else
-		url += std::to_string(arcadePlatformId);
-	url += "&uid=" + http::urlEncode(uniqueId);
-
-	if (uniqueId.empty() || !fetchGameInfo(item, url))
+	if (!uniqueId.empty())
 	{
-		url = makeUrl("Games/ByGameName") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
+		if (uniqueId.find('-') == std::string::npos)
+		{
+			// add a dash between letters and numbers
+			auto pos = uniqueId.find_first_of("0123456789");
+			if (pos != 0 && pos != std::string::npos)
+				uniqueId = uniqueId.substr(0, pos) + "-" + uniqueId.substr(pos);
+		}
+		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
+		if (platform == DC_PLATFORM_DREAMCAST)
+			url += std::to_string(dreamcastPlatformId);
+		else
+			url += std::to_string(arcadePlatformId);
+		url += "&uid=" + http::urlEncode(uniqueId);
+
+		item.found = fetchGameInfo(item, url);
+	}
+	if (!item.found)
+	{
+		std::string url = makeUrl("Games/ByGameName") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
 		if (platform == DC_PLATFORM_DREAMCAST)
 			url += std::to_string(dreamcastPlatformId);
 		else
 			url += std::to_string(arcadePlatformId);
 		url += "&name=" + http::urlEncode(gameName);
-		fetchGameInfo(item, url);
+		item.found = fetchGameInfo(item, url);
 	}
 	item.scraped = true;
 }
