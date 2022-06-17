@@ -2402,7 +2402,11 @@ static void gui_display_content()
 								u8 *imgData = loadImage(art->boxartPath, width, height);
 								if (imgData != nullptr)
 								{
-									textureId = imguiDriver->updateTexture(art->boxartPath, imgData, width, height);
+									try {
+										textureId = imguiDriver->updateTexture(art->boxartPath, imgData, width, height);
+									} catch (const std::exception&) {
+										// vulkan can throw during resizing
+									}
 									free(imgData);
 								}
 							}

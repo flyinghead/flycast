@@ -41,7 +41,11 @@ public:
 		try {
 			bool rendering = context->IsRendering();
 			if (!rendering)
+			{
+				if (context->recreateSwapChainIfNeeded())
+					return;
 				context->NewFrame();
+			}
 			vk::CommandBuffer vmuCmdBuffer{};
 			if (!rendering || newFrameStarted)
 			{
@@ -50,8 +54,10 @@ public:
 				context->PresentLastFrame();
 				context->DrawOverlay(settings.display.uiScale, true, false);
 			}
-			// Record Imgui Draw Data and draw funcs into command buffer
-			ImGui_ImplVulkan_RenderDrawData(drawData, (VkCommandBuffer)getCommandBuffer());
+			if (!justStarted)
+				// Record Imgui Draw Data and draw funcs into command buffer
+				ImGui_ImplVulkan_RenderDrawData(drawData, (VkCommandBuffer)getCommandBuffer());
+			justStarted = false;
 			if (!rendering || newFrameStarted)
 				context->EndFrame(vmuCmdBuffer);
 			newFrameStarted = false;
@@ -60,7 +66,7 @@ public:
 	}
 
 	void present() override {
-		getContext()->Present();
+		getContext()->Present(); // may destroy this driver
 	}
 
 	ImTextureID getTexture(const std::string& name) override {
@@ -118,15 +124,19 @@ private:
 
 	vk::CommandBuffer getCommandBuffer()
 	{
-		if (!getContext()->IsRendering())
+		VulkanContext *context = getContext();
+		if (!context->IsRendering())
 		{
-			getContext()->NewFrame();
+			if (context->recreateSwapChainIfNeeded())
+				throw InvalidVulkanContext();
+			context->NewFrame();
 			newFrameStarted = true;
 		}
-		return getContext()->GetCurrentCommandBuffer();
+		return context->GetCurrentCommandBuffer();
 	}
 
 	std::unordered_map<std::string, VkTexture> textures;
 	vk::UniqueSampler linearSampler;
 	bool newFrameStarted = false;
+	bool justStarted = true;
 };

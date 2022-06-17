@@ -109,6 +109,7 @@ public:
 				vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers), fence);
 	}
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
+	bool recreateSwapChainIfNeeded();
 
 #ifdef VK_DEBUG
 	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)

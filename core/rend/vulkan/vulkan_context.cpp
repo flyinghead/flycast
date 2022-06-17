@@ -278,6 +278,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 void VulkanContext::InitImgui()
 {
+	imguiDriver.reset();
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
 	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = (VkInstance)*instance;
@@ -751,13 +752,21 @@ bool VulkanContext::init()
 	return InitDevice();
 }
 
-void VulkanContext::NewFrame()
+bool VulkanContext::recreateSwapChainIfNeeded()
 {
 	if (resized || HasSurfaceDimensionChanged())
 	{
 		CreateSwapChain();
 		lastFrameView = vk::ImageView();
+		return true;
 	}
+	else
+		return false;
+}
+
+void VulkanContext::NewFrame()
+{
+	recreateSwapChainIfNeeded();
 	if (!IsValid())
 		throw InvalidVulkanContext();
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
