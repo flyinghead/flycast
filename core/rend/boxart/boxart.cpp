@@ -33,26 +33,29 @@ const GameBoxart *Boxart::getBoxart(const GameMedia& media)
 {
 	loadDatabase();
 	std::string fileName = getGameFileName(media.path);
-	auto it = games.find(fileName);
-	if (it != games.end())
-		return &it->second;
-	else
-		return nullptr;
+	{
+		std::lock_guard<std::mutex> guard(mutex);
+		auto it = games.find(fileName);
+		if (it != games.end())
+			return &it->second;
+		else
+			return nullptr;
+	}
 }
 
 std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
 {
+	if (scraper == nullptr)
+	{
+		scraper = std::unique_ptr<Scraper>(new TheGamesDb());
+		if (!scraper->initialize(getSaveDirectory()))
+		{
+			WARN_LOG(COMMON, "thegamesdb scraper initialization failed");
+			scraper.reset();
+		}
+	}
 	return std::async(std::launch::async, [this, media]() {
 		std::string fileName = getGameFileName(media.path);
-		if (scraper == nullptr)
-		{
-			scraper = std::unique_ptr<Scraper>(new TheGamesDb());
-			if (!scraper->initialize(getSaveDirectory()))
-			{
-				WARN_LOG(COMMON, "thegamesdb scraper initialization failed");
-				scraper.reset();
-			}
-		}
 		const GameBoxart *rv = nullptr;
 		if (scraper != nullptr)
 		{
@@ -74,8 +77,11 @@ std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
 			DEBUG_LOG(COMMON, "Scraping %s -> %s", media.name.c_str(), boxart.name.c_str());
 			try {
 				scraper->scrape(boxart);
-				games[fileName] = boxart;
-				rv = &games[fileName];
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					games[fileName] = boxart;
+					rv = &games[fileName];
+				}
 				databaseDirty = true;
 			} catch (const std::exception& e) {
 				if (*e.what() != '\0')
@@ -88,7 +94,7 @@ std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
 
 void Boxart::saveDatabase()
 {
-	if (!databaseDirty || games.empty())
+	if (!databaseDirty)
 		return;
 	std::string db_name = getSaveDirectory() + DB_NAME;
 	FILE *file = nowide::fopen(db_name.c_str(), "wt");
@@ -100,9 +106,12 @@ void Boxart::saveDatabase()
 	DEBUG_LOG(COMMON, "Saving boxart database to %s", db_name.c_str());
 
 	json array;
-	for (const auto& game : games)
-		if (game.second.scraped)
-			array.push_back(game.second.to_json());
+	{
+		std::lock_guard<std::mutex> guard(mutex);
+		for (const auto& game : games)
+			if (game.second.scraped)
+				array.push_back(game.second.to_json());
+	}
 	std::string serialized = array.dump(4);
 	fwrite(serialized.c_str(), 1, serialized.size(), file);
 	fclose(file);
@@ -135,6 +144,8 @@ void Boxart::loadDatabase()
 	}
 	fclose(f);
 	try {
+		std::lock_guard<std::mutex> guard(mutex);
+
 		json v = json::parse(all_data);
 		for (const auto& o : v)
 		{

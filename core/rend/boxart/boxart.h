@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <memory>
 #include <future>
+#include <mutex>
 
 class Boxart
 {
@@ -38,6 +39,7 @@ private:
 	}
 
 	std::unordered_map<std::string, GameBoxart> games;
+	std::mutex mutex;
 	std::unique_ptr<Scraper> scraper;
 	bool databaseLoaded = false;
 	bool databaseDirty = false;

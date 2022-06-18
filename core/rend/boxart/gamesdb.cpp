@@ -285,13 +285,6 @@ void TheGamesDb::scrape(GameBoxart& item)
 
 	if (!uniqueId.empty())
 	{
-		if (uniqueId.find('-') == std::string::npos)
-		{
-			// add a dash between letters and numbers
-			auto pos = uniqueId.find_first_of("0123456789");
-			if (pos != 0 && pos != std::string::npos)
-				uniqueId = uniqueId.substr(0, pos) + "-" + uniqueId.substr(pos);
-		}
 		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
 		if (platform == DC_PLATFORM_DREAMCAST)
 			url += std::to_string(dreamcastPlatformId);

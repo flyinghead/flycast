@@ -2343,16 +2343,20 @@ static void gui_display_content()
 		else
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
-		ImGui::PushID("bios");
-		bool pressed;
-		if (config::BoxartDisplayMode)
-			pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
-		else
-			pressed = ImGui::Selectable("Dreamcast BIOS");
-		if (pressed)
-			gui_start_game("");
-		ImGui::PopID();
-		int counter = 1;
+		int counter = 0;
+		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
+		{
+			ImGui::PushID("bios");
+			bool pressed;
+			if (config::BoxartDisplayMode)
+				pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
+			else
+				pressed = ImGui::Selectable("Dreamcast BIOS");
+			if (pressed)
+				gui_start_game("");
+			ImGui::PopID();
+			counter++;
+		}
 		int loadedImages = 0;
 		{
 			scanner.get_mutex().lock();
@@ -2373,17 +2377,20 @@ static void gui_display_content()
 					art = boxart.getBoxart(game);
 					if (art == nullptr && config::FetchBoxart)
 					{
-						if (futureBoxart.valid() && futureBoxart.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+						if (futureBoxart.valid() && futureBoxart.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 							futureBoxart.get();
-						if (!futureBoxart.valid())
+							art = boxart.getBoxart(game);
+						}
+						if (art == nullptr && !futureBoxart.valid())
 							futureBoxart = boxart.fetchBoxart(game);
 					}
-					else if (art != nullptr)
+					if (art != nullptr)
 						gameName = art->name;
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
+					bool pressed;
 					if (config::BoxartDisplayMode)
 					{
 						if (counter % itemsPerLine != 0)
