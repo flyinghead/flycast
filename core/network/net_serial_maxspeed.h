@@ -21,6 +21,9 @@
 #include "cfg/option.h"
 #include "miniupnp.h"
 #include "hw/sh4/sh4_sched.h"
+#include "naomi_network.h"
+#include "net_handshake.h"
+#include "hw/naomi/naomi_flashrom.h"
 #include <deque>
 
 struct MaxSpeedNetPipe : public SerialPipe
@@ -69,8 +72,7 @@ struct MaxSpeedNetPipe : public SerialPipe
 
 	bool init()
 	{
-		if (!config::NetworkEnable)
-			return false;
+		configure_maxspeed_flash(config::NetworkEnable, config::ActAsServer);
 #ifdef _WIN32
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
@@ -212,7 +214,7 @@ private:
 
 	    peerAddress.sin_family = AF_INET;
 	    peerAddress.sin_addr.s_addr = INADDR_BROADCAST;
-	    peerAddress.sin_port = htons(config::LocalPort);
+	    peerAddress.sin_port = htons(NaomiNetwork::SERVER_PORT);
 		if (!config::NetworkServer.get().empty())
 		{
 			auto pos = config::NetworkServer.get().find_last_of(':');
@@ -252,4 +254,24 @@ private:
 	int txPacketState = 0;
 	sockaddr_in peerAddress{};
 	u64 lastPoll = 0;
+};
+
+class MaxSpeedHandshake : public NetworkHandshake
+{
+public:
+	std::future<bool> start() override {
+		std::promise<bool> promise;
+		promise.set_value(pipe.init());
+		return promise.get_future();
+	}
+	void stop() override {
+		pipe.shutdown();
+	}
+	bool canStartNow() override {
+		return true;
+	}
+	void startNow() override {}
+
+private:
+	MaxSpeedNetPipe pipe;
 };

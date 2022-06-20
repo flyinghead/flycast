@@ -366,6 +366,10 @@ void SetNaomiNetworkConfig(int node)
 		// FIXME no input when linked
 		write_naomi_eeprom(0x3d, node == -1 ? 0x44 : node == 0 ? 0x54 : 0x64);
 	}
+	else if (!strcmp("MAXIMUM SPEED", naomi_game_id))
+	{
+		configure_maxspeed_flash(node != -1, node == 0);
+	}
 }
 
 bool NaomiNetworkSupported()
