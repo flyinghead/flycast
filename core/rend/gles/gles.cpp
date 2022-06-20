@@ -176,12 +176,16 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 lowp vec4 palettePixel(highp vec3 coords)
 {
-#if TARGET_GL == GLES2 || TARGET_GL == GL2 || DIV_POS_Z == 1
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
 	highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
-	highp int color_idx = int(floor(textureProj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	#if DIV_POS_Z == 1
+		highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	#else
+		highp int color_idx = int(floor(textureProj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	#endif
     highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 #endif
