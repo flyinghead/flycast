@@ -90,11 +90,11 @@ public:
 					vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
 							vk::Filter::eLinear, vk::Filter::eLinear,
 							vk::SamplerMipmapMode::eLinear,
-							vk::SamplerAddressMode::eClampToEdge,
-							vk::SamplerAddressMode::eClampToEdge,
+							vk::SamplerAddressMode::eClampToBorder,
+							vk::SamplerAddressMode::eClampToBorder,
 							vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-							16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
-							vk::BorderColor::eFloatOpaqueBlack));
+							0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
+							vk::BorderColor::eFloatTransparentBlack));
 		}
 		ImTextureID texId = vkTex.textureId = ImGui_ImplVulkan_AddTexture((VkSampler)*linearSampler, (VkImageView)vkTex.texture->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

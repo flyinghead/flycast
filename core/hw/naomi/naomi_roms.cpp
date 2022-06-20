@@ -263,7 +263,7 @@ Game Games[] =
     {
         "mvsc2",
         NULL,
-        "Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)",
+        "Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea)",
         0x08800000,
         0xc18b6e7c,
         NULL,
@@ -460,7 +460,7 @@ Game Games[] =
     {
         "tduno2",
         NULL,
-        "Touch de Uno! 2 (Japan)",
+        "Touch de Uno! 2",
         0x4000000,
         0x2f6f0f8d,
         NULL,
@@ -487,7 +487,7 @@ Game Games[] =
     {
         "vtenis2c",
         NULL,
-        "Virtua Tennis 2 / Power Smash 2 (Rev A)",
+        "Virtua Tennis 2 / Power Smash 2",
         0x0a000000,
         0x2d2d4743,
         NULL,
@@ -1031,7 +1031,7 @@ Game Games[] =
     {
         "crakndj2",
         NULL,
-        "Crackin' DJ Part 2 (Japan)",
+        "Crackin' DJ Part 2",
         0x0a800000,
         0x28428247,
         NULL,
@@ -1563,7 +1563,7 @@ Game Games[] =
     {
         "dybb99",
         NULL,
-        "Dynamite Baseball '99 (Japan, Rev B)",
+        "Dynamite Baseball '99 / World Series '99",
         0x0a000000,
         0x2804ae71,
         NULL,
@@ -1600,7 +1600,7 @@ Game Games[] =
     {
         "dybbnao",
         NULL,
-        "Dynamite Baseball NAOMI (Japan)",
+        "Dynamite Baseball NAOMI",
         0x0b000000,
         0x280e6ae1,
         NULL,
@@ -1792,7 +1792,7 @@ Game Games[] =
     {
         "ggram2",
         NULL,
-        "Giant Gram: All Japan Pro Wrestling 2 (Japan)",
+        "Giant Gram: All Japan Pro Wrestling 2",
         0x06000000,
         0x28074a61,
         NULL,
@@ -1881,7 +1881,7 @@ Game Games[] =
     {
         "gunsur2",
         NULL,
-        "Gun Survivor 2 Biohazard Code: Veronica (World, BHF2 Ver.E)",
+        "Gun Survivor 2 Biohazard Code: Veronica (World)",
         0x10000000,
         0x000680d0,
         NULL,
@@ -1913,7 +1913,7 @@ Game Games[] =
     {
         "gunsur2j",
         "gunsur2",
-        "Gun Survivor 2 Biohazard Code: Veronica (Japan, BHF1 Ver.E)",
+        "Gun Survivor 2 Biohazard Code: Veronica (Japan)",
         0x10000000,
         0x000680d0,
         NULL,
@@ -1968,7 +1968,7 @@ Game Games[] =
     {
         "hmgeo",
         NULL,
-        "Heavy Metal Geomatrix (Rev B)",
+        "Heavy Metal Geomatrix",
         0x06000000,
         0x00038510,
         NULL,
@@ -2149,11 +2149,11 @@ Game Games[] =
 		nullptr,
 		// no free play with eeprom
     },
-    // Inu No Osanpo / Dog Walking (Rev A)
+    // Inu No Osanpo / Dog Walking (Japan, Export, Rev A)
     {
         "inunoos",
         NULL,
-        "Inu no Osanpo / Dog Walking (Japan, Export, Rev A)",
+        "Inu no Osanpo / Dog Walking",
         0x08800000,
         0x294bc3e3,
         NULL,
@@ -2184,7 +2184,7 @@ Game Games[] =
     {
         "jambo",
         NULL,
-        "Jambo! Safari (Rev A)",
+        "Jambo! Safari",
         0x08800000,
         0x280fab95,
         NULL,
@@ -2209,7 +2209,7 @@ Game Games[] =
     {
         "marstv",
         NULL,
-        "Mars TV (Japan)",
+        "Mars TV",
         0x08000000,
         0x280b8ef5,
         NULL,
@@ -2240,7 +2240,7 @@ Game Games[] =
     {
         "mazan",
         NULL,
-        "Mazan: Flash of the Blade (World, MAZ2 Ver.A)",
+        "Mazan: Flash of the Blade (World)",
         0x10000000,
         0x280fea94,
         NULL,
@@ -2267,7 +2267,7 @@ Game Games[] =
     {
         "mazanu",
         "mazan",
-        "Mazan: Flash of the Blade (US, MAZ3 Ver.A)",
+        "Mazan: Flash of the Blade (US)",
         0x10000000,
         0x280fea94,
         NULL,
@@ -2356,7 +2356,7 @@ Game Games[] =
     {
         "mvsc2u",
         "mvsc2",
-        "Marvel Vs. Capcom 2 New Age of Heroes (USA, Rev A)",
+        "Marvel Vs. Capcom 2 New Age of Heroes (USA)",
         0x07800000,
         0x0002c840,
         NULL,
@@ -2581,7 +2581,7 @@ Game Games[] =
     {
         "pjustic",
         NULL,
-        "Project Justice / Moero! Justice Gakuen (Rev A)",
+        "Project Justice / Moero! Justice Gakuen",
         0x0b800000,
         0x000725d0,
         NULL,
@@ -2690,7 +2690,7 @@ Game Games[] =
     {
         "puyoda",
         NULL,
-        "Puyo Puyo Da! (Japan)",
+        "Puyo Puyo Da!",
         0x0a800000,
         0x000acd40,
         NULL,
@@ -3270,7 +3270,7 @@ Game Games[] =
     {
         "spawn",
         NULL,
-        "Spawn In the Demon's Hand (Rev B)",
+        "Spawn In the Demon's Hand",
         0x05800000,
         0x00078d01,
         NULL,
@@ -3298,7 +3298,7 @@ Game Games[] =
     {
         "sstrkfgt",
         NULL,
-        "Sega Strike Fighter (Rev A)",
+        "Sega Strike Fighter",
         0x0b000000,
         0x28132303,
         NULL,
@@ -3335,7 +3335,7 @@ Game Games[] =
     {
         "sstrkfgta",
         "sstrkfgt",
-        "Sega Strike Fighter (Rev A, no training mode)",
+        "Sega Strike Fighter (no training mode)",
         0x0b000000,
         0x28132303,
         NULL,
@@ -3372,7 +3372,7 @@ Game Games[] =
     {
         "suchie3",
         NULL,
-        "Idol Janshi Suchie-Pai 3 (Japan)",
+        "Idol Janshi Suchie-Pai 3",
         0x07800000,
         0x000368e1,
         NULL,
@@ -3398,11 +3398,11 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Touch de Uno! / Unou Nouryoku Check Machine
+    // Touch de Uno! / Unou Nouryoku Check Machine (Japan)
     {
         "tduno",
         NULL,
-        "Touch de Uno! / Unou Nouryoku Check Machine (Japan)",
+        "Touch de Uno! / Unou Nouryoku Check Machine",
         0x04000000,
         0x28028ea5,
         NULL,
@@ -3426,11 +3426,11 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
-	// Tokyo Bus
+	// Tokyo Bus (Rev A)
 	{
 		"tokyobus",
 		NULL,
-		"Tokyo Bus Guide (Rev A)",
+		"Tokyo Bus Guide",
 		0x09800000,
 		0x281e1242,
 		NULL,
@@ -3750,7 +3750,7 @@ Game Games[] =
     {
         "vonot",
         NULL,
-        "Virtual On Oratorio Tangram M.S.B.S. ver5.66 2000 Edition",
+        "Virtual-On Oratorio Tangram M.S.B.S. Ver. 5.66",
         0x07000000,
         0x28010715,
         NULL,
@@ -4001,7 +4001,7 @@ Game Games[] =
     {
         "wldkickspj",
         "wldkicks",
-        "World Kicks PCB (Japan, WKC1 Ver.A)",
+        "World Kicks (PCB, Japan, WKC1 Ver.A)",
         0xb000000,
         0x052e2901,
         NULL,
@@ -4026,7 +4026,7 @@ Game Games[] =
     {
         "wldkickspw",
         "wldkicks",
-        "World Kicks PCB (World, WKC2 Ver.A)",
+        "World Kicks (PCB, World, WKC2 Ver.A)",
         0xb000000,
         0x052e2901,
         NULL,
@@ -4175,7 +4175,7 @@ Game Games[] =
     {
         "ausfache",
         NULL,
-        "Akatsuki Blitzkampf Ausf. Achse (Japan)",
+        "Akatsuki Blitzkampf Ausf. Achse",
         0x10000000,
         0x5504,
         "naomi",
@@ -4238,7 +4238,7 @@ Game Games[] =
     {
         "illvelo",
         NULL,
-        "Illvelo (Illmatic Envelope) (Japan)",
+        "Illvelo (Illmatic Envelope)",
         0x10000000,
         0x5504,
         "naomi",
@@ -4259,7 +4259,7 @@ Game Games[] =
     {
         "manicpnc",
         NULL,
-        "Manic Panic Ghosts! (USA, Export)",
+        "Manic Panic Ghosts!",
         0x14000000,
         0x5505,
         "naomi",
@@ -4286,7 +4286,7 @@ Game Games[] =
     {
         "mamonoro",
         NULL,
-        "Mamoru-kun wa Norowarete Shimatta! (Japan)",
+        "Mamoru-kun wa Norowarete Shimatta!",
         0x10000000,
         0x5504,
         "naomi",
@@ -4307,7 +4307,7 @@ Game Games[] =
     {
         "mbaa",
         NULL,
-        "Melty Blood Actress Again Version A (Japan, Rev A)",
+        "Melty Blood Actress Again (Ver. A, Rev A)",
         0x18000000,
         0x5586,
         "naomi",
@@ -4332,7 +4332,7 @@ Game Games[] =
     {
         "mbaao",
         "mbaa",
-        "Melty Blood Actress Again (Japan)",
+        "Melty Blood Actress Again",
         0x18000000,
         0x5506,
         "naomi",
@@ -4356,7 +4356,7 @@ Game Games[] =
     {
         "mushi2eo",
         "mushik2e",
-        "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)",
+        "Mushiking The King Of Beetles - Mushiking II / III / III+ (World, Ver. 1.001)",
         0x8000000,
         0x5502,
         "naomi",
@@ -4373,7 +4373,7 @@ Game Games[] =
     {
         "mushik2e",
         NULL,
-        "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 2.001) (World)",
+        "Mushiking The King Of Beetles - Mushiking II / III / III+ (World, Ver. 2.001)",
         0x8000000,
         0x5582,
         "naomi",
@@ -4417,7 +4417,7 @@ Game Games[] =
     {
         "pokasuka",
 		"manicpnc",
-        "Pokasuka Ghost! (Japan)",
+        "Pokasuka Ghost!",
         0x14000000,
         0x5505,
         "naomi",
@@ -4444,7 +4444,7 @@ Game Games[] =
     {
         "radirgyn",
         NULL,
-        "Radirgy Noa (Japan)",
+        "Radirgy Noa",
         0x10000000,
         0x5504,
         "naomi",
@@ -4464,7 +4464,7 @@ Game Games[] =
     {
         "rhytngk",
         NULL,
-        "Rhythm Tengoku (Japan)",
+        "Rhythm Tengoku",
         0x10000000,
         0x5504,
         "naomi",
@@ -4484,7 +4484,7 @@ Game Games[] =
     {
         "sl2007",
         NULL,
-        "Shooting Love 2007 (Japan)",
+        "Shooting Love 2007",
         0x10000000,
         0x5504,
         "naomi",
@@ -4506,7 +4506,7 @@ Game Games[] =
     {
         "zunou",
         NULL,
-        "Touch De Zunou (Japan, Rev A)",
+        "Touch De Zunou (Rev A)",
         0x8000000,
         0x5502,
         "naomi",
@@ -4540,11 +4540,11 @@ Game Games[] =
     },
     // Naomi GD Roms
 
-    // Azumanga Daioh Puzzle Bobble (GDL-0018)
+    // Azumanga Daioh Puzzle Bobble
     {
         "azumanga",
         NULL,
-        "Azumanga Daioh Puzzle Bobble (GDL-0018)",
+        "Azumanga Daioh Puzzle Bobble",
         0x4000,
         0,
         "naomi",
@@ -4556,11 +4556,11 @@ Game Games[] =
         },
         "gdl-0018",
     },
-    // Border Down (Rev A) (GDL-0023A)
+    // Border Down (Rev A)
     {
         "bdrdown",
         NULL,
-        "Border Down (Rev A) (GDL-0023A)",
+        "Border Down",
         0x4000,
         0,
         "naomi",
@@ -4574,11 +4574,11 @@ Game Games[] =
         "gdl-0023a",
 		// SHOT, LASER, SPEED
     },
-    // Chaos Field (Japan) (GDL-0025)
+    // Chaos Field (Japan)
     {
         "cfield",
         NULL,
-        "Chaos Field (Japan) (GDL-0025)",
+        "Chaos Field",
         0x4000,
         0,
         "naomi",
@@ -4592,11 +4592,11 @@ Game Games[] =
         "gdl-0025",
 		// TRG1/2/3
     },
-    // Musapey's Choco Marker (Rev A) (GDL-0014A)
+    // Musapey's Choco Marker (Rev A)
     {
         "chocomk",
         NULL,
-        "Musapey's Choco Marker (Rev A) (GDL-0014A)",
+        "Musapey's Choco Marker (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4609,11 +4609,11 @@ Game Games[] =
         "gdl-0014a",
 		// BUTTON A/B
     },
-    // Cleopatra Fortune Plus (GDL-0012)
+    // Cleopatra Fortune Plus
     {
         "cleoftp",
         NULL,
-        "Cleopatra Fortune Plus (GDL-0012)",
+        "Cleopatra Fortune Plus",
         0x4000,
         0,
         "naomi",
@@ -4626,11 +4626,11 @@ Game Games[] =
         "gdl-0012",
 		// BUTTON 1/2
     },
-    // Confidential Mission (GDS-0001)
+    // Confidential Mission
     {
         "confmiss",
         NULL,
-        "Confidential Mission (GDS-0001)",
+        "Confidential Mission",
         0x4000,
         0,
         "naomi",
@@ -4644,11 +4644,11 @@ Game Games[] =
 		nullptr,
 		confmiss_eeprom_dump,
     },
-    // Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)
+    // Capcom Vs. SNK Millennium Fight 2000 Pro (Japan)
     {
         "cvsgd",
         NULL,
-        "Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)",
+        "Capcom Vs. SNK Millennium Fight 2000 Pro (Japan)",
         0x4000,
         0,
         "naomi",
@@ -4662,13 +4662,13 @@ Game Games[] =
 		&capcom_4btn_inputs,
 		cvsgd_eeprom_dump,
     },
-    // Capcom Vs. SNK 2 Mark Of The Millennium 2001 (GDL-0008)
+    // Capcom Vs. SNK 2 Mark Of The Millennium 2001
     // ver 010804
     // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
     {
         "cvs2",
         NULL,
-        "Capcom Vs. SNK 2 Mark Of The Millennium 2001 (USA) (GDL-0008)",
+        "Capcom Vs. SNK 2 Mark Of The Millennium 2001 (USA)",
         0x4000,
         0,
         "naomi",
@@ -4682,12 +4682,12 @@ Game Games[] =
         &capcom_6btn_inputs,
 		cvs2_eeprom_dump,
     },
-    // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
+    // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A)
     // ver 010705
     {
         "cvs2mf",
         "cvs2",
-        "Capcom Vs. SNK 2 Millionaire Fighting 2001 (Japan, Rev A) (GDL-0007A)",
+        "Capcom Vs. SNK 2 Millionaire Fighting 2001 (Japan, Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4701,11 +4701,11 @@ Game Games[] =
         &capcom_6btn_inputs,
 		cvs2_eeprom_dump,
     },
-    // Dragon Treasure (Rev B) (GDS-0030B)
+    // Dragon Treasure (Rev B)
     {
         "dragntr",
         NULL,
-        "Dragon Treasure (Rev B) (GDS-0030B)",
+        "Dragon Treasure (Rev B)",
         0x4000,
         0,
         "naomi",
@@ -4718,11 +4718,11 @@ Game Games[] =
         },
         "gds-0030b",
     },
-    // Dragon Treasure (Rev A) (GDS-0030A)
+    // Dragon Treasure (Rev A)
     {
         "dragntra",
         "dragntr",
-        "Dragon Treasure (Rev A) (GDS-0030A)",
+        "Dragon Treasure (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4735,11 +4735,11 @@ Game Games[] =
         },
         "gds-0030a",
     },
-    // Dragon Treasure 2 (Rev A) (GDS-0037A)
+    // Dragon Treasure 2 (Rev A)
     {
         "dragntr2",
         NULL,
-        "Dragon Treasure 2 (Rev A) (GDS-0037A)",
+        "Dragon Treasure 2 (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4752,11 +4752,11 @@ Game Games[] =
         },
         "gds-0037a",
     },
-    // Dragon Treasure 3 (Rev A) (GDS-0041A)
+    // Dragon Treasure 3 (Rev A)
     {
         "dragntr3",
         NULL,
-        "Dragon Treasure 3 (Rev A) (GDS-0041A)",
+        "Dragon Treasure 3 (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4769,11 +4769,11 @@ Game Games[] =
         },
         "gds-0041a",
     },
-    // Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
+    // Virtua Golf / Dynamic Golf (Rev A)
     {
         "dygolf",
         NULL,
-        "Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)",
+        "Virtua Golf / Dynamic Golf",
         0x4000,
         0,
         "naomi",
@@ -4785,11 +4785,11 @@ Game Games[] =
         },
         "gds-0009a",
     },
-    // Guilty Gear XX (GDL-0011)
+    // Guilty Gear XX
     {
         "ggxx",
         NULL,
-        "Guilty Gear XX (GDL-0011)",
+        "Guilty Gear XX",
         0x4000,
         0,
         "naomi",
@@ -4802,11 +4802,11 @@ Game Games[] =
         "gdl-0011",
 		&guilty_gear_inputs,
     },
-    // Guilty Gear XX Accent Core (Japan) (GDL-0041)
+    // Guilty Gear XX Accent Core (Japan)
     {
         "ggxxac",
         NULL,
-        "Guilty Gear XX Accent Core (Japan) (GDL-0041)",
+        "Guilty Gear XX Accent Core",
         0x4000,
         0,
         "naomi",
@@ -4820,11 +4820,11 @@ Game Games[] =
 		&guilty_gear_inputs,
 		ggxxac_eeprom_dump,
     },
-    // Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
+    // Guilty Gear XX #Reload (Japan, Rev A)
     {
         "ggxxrl",
         NULL,
-        "Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)",
+        "Guilty Gear XX #Reload (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4837,11 +4837,11 @@ Game Games[] =
         "gdl-0019a",
 		&guilty_gear_inputs,
     },
-    // Guilty Gear XX #Reload (Japan) (GDL-0019)
+    // Guilty Gear XX #Reload (Japan)
     {
         "ggxxrlo",
         "ggxxrl",
-        "Guilty Gear XX #Reload (Japan) (GDL-0019)",
+        "Guilty Gear XX #Reload",
         0x4000,
         0,
         "naomi",
@@ -4854,11 +4854,11 @@ Game Games[] =
         "gdl-0019",
 		&guilty_gear_inputs,
     },
-    // Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
+    // Guilty Gear XX Slash (Japan, Rev A)
     {
         "ggxxsla",
         NULL,
-        "Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)",
+        "Guilty Gear XX Slash (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4872,11 +4872,11 @@ Game Games[] =
 		&guilty_gear_inputs,
 		ggxxsla_eeprom_dump,
     },
-    // Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
+    // Mobile Suit Gundam: Federation Vs. Zeon
     {
         "gundmgd",
         NULL,
-        "Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)",
+        "Mobile Suit Gundam: Federation Vs. Zeon",
         0x4000,
         0,
         "naomi",
@@ -4891,11 +4891,11 @@ Game Games[] =
 		&shot1234_inputs,
 		gundmct_eeprom_dump
     },
-    // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
+    // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan)
     {
         "gundmxgd",
         NULL,
-        "Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)",
+        "Mobile Suit Gundam: Federation Vs. Zeon DX",
         0x4000,
         0,
         "naomi",
@@ -4910,11 +4910,11 @@ Game Games[] =
 		&shot1234_inputs,
 		gundmxgd_eeprom_dump
     },
-    // Ikaruga (GDL-0010)
+    // Ikaruga
     {
         "ikaruga",
         NULL,
-        "Ikaruga (GDL-0010)",
+        "Ikaruga",
         0x4000,
         0,
         "naomi",
@@ -4929,11 +4929,11 @@ Game Games[] =
 		nullptr,
 		ikaruga_eeprom_dump,
     },
-    // Jingi Storm - The Arcade (Japan) (GDL-0037)
+    // Jingi Storm - The Arcade (Japan)
     {
         "jingystm",
         NULL,
-        "Jingi Storm - The Arcade (Japan) (GDL-0037)",
+        "Jingi Storm - The Arcade",
         0x4000,
         0,
         "naomi",
@@ -4948,11 +4948,11 @@ Game Games[] =
 		nullptr,
 		jingystm_eeprom_dump,
     },
-    // Karous (Japan) (GDL-0040)
+    // Karous (Japan)
     {
         "karous",
         NULL,
-        "Karous (Japan) (GDL-0040)",
+        "Karous",
         0x4000,
         0,
         "naomi",
@@ -4966,11 +4966,11 @@ Game Games[] =
         "gdl-0040",
 		// SHOT, SWORD, SPECIAL same as radirgy
     },
-    // La Keyboard (GDS-0017)
+    // La Keyboard
     {
         "keyboard",
         NULL,
-        "La Keyboard (GDS-0017)",
+        "La Keyboard",
         0x4000,
         0,
         "naomi",
@@ -4983,11 +4983,11 @@ Game Games[] =
         },
         "gds-0017",
     },
-    // Kurukuru Chameleon (Japan) (GDL-0034)
+    // Kurukuru Chameleon (Japan)
     {
         "kurucham",
         NULL,
-        "Kurukuru Chameleon (Japan) (GDL-0034)",
+        "Kurukuru Chameleon",
         0x4000,
         0,
         "naomi",
@@ -4999,11 +4999,11 @@ Game Games[] =
         },
         "gdl-0034",
     },
-    // Lupin The Third - The Shooting (Rev A) (GDS-0018A)
+    // Lupin The Third - The Shooting (Rev A)
     {
         "lupinsho",
         NULL,
-        "Lupin The Third - The Shooting (Rev A) (GDS-0018A)",
+        "Lupin The Third - The Shooting (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -5017,11 +5017,11 @@ Game Games[] =
 		nullptr,
 		lupinsho_eeprom_dump,
     },
-    // Lupin The Third - The Shooting (GDS-0018)
+    // Lupin The Third - The Shooting
     {
         "lupinshoo",
         "lupinsho",
-        "Lupin The Third - The Shooting (GDS-0018)",
+        "Lupin The Third - The Shooting",
         0x4000,
         0,
         "naomi",
@@ -5035,11 +5035,11 @@ Game Games[] =
 		nullptr,
 		lupinsho_eeprom_dump,
     },
-    // Lupin The Third - The Typing (Rev A) (GDS-0021A)
+    // Lupin The Third - The Typing (Rev A)
     {
         "luptype",
         NULL,
-        "Lupin The Third - The Typing (Rev A) (GDS-0021A)",
+        "Lupin The Third - The Typing",
         0x4000,
         0,
         "naomi",
@@ -5053,11 +5053,11 @@ Game Games[] =
 		nullptr,
 		luptype_eeprom_dump,
     },
-    // Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)
+    // Melty Blood Act Cadenza Version B2 (Japan)
     {
         "meltyb",
         NULL,
-        "Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)",
+        "Melty Blood Act Cadenza (Ver. B2)",
         0x4000,
         0,
         "naomi",
@@ -5071,11 +5071,11 @@ Game Games[] =
 		&meltyb_inputs,
 		meltyb_eeprom_dump,
     },
-    // Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
+    // Melty Blood Act Cadenza Ver. A (Japan)
     {
         "meltybld",
         NULL,
-        "Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)",
+        "Melty Blood Act Cadenza (Ver. A)",
         0x4000,
         0,
         "naomi",
@@ -5089,11 +5089,11 @@ Game Games[] =
 		&meltyb_inputs,
 		meltybld_eeprom_dump,
     },
-    // Melty Blood Act Cadenza (Japan) (GDL-0028)
+    // Melty Blood Act Cadenza (Japan)
     {
         "meltyblo",
         "meltybld",
-        "Melty Blood Act Cadenza (Japan) (GDL-0028)",
+        "Melty Blood Act Cadenza",
         0x4000,
         0,
         "naomi",
@@ -5107,11 +5107,11 @@ Game Games[] =
 		&meltyb_inputs,
 		meltybld_eeprom_dump,
     },
-    // Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
+    // Melty Blood Act Cadenza Version B (Japan)
     {
         "meltybo",
         "meltyb",
-        "Melty Blood Act Cadenza Version B (Japan) (GDL-0039)",
+        "Melty Blood Act Cadenza (Ver. B)",
         0x4000,
         0,
         "naomi",
@@ -5125,11 +5125,11 @@ Game Games[] =
 		&meltyb_inputs,
 		meltyb_eeprom_dump,
     },
-    // Moeru Casinyo (Japan) (GDL-0013)
+    // Moeru Casinyo (Japan)
     {
         "moeru",
         NULL,
-        "Moeru Casinyo (Japan) (GDL-0013)",
+        "Moeru Casinyo",
         0x4000,
         0,
         "naomi",
@@ -5142,11 +5142,11 @@ Game Games[] =
         },
         "gdl-0013",
     },
-    // The Maze of the Kings (GDS-0022)
+    // The Maze of the Kings
     {
         "mok",
         NULL,
-        "The Maze of the Kings (GDS-0022)",
+        "The Maze of the Kings",
         0x4000,
         0,
         "naomi",
@@ -5160,11 +5160,11 @@ Game Games[] =
 		nullptr,
 		mok_eeprom_dump,
     },
-    // Monkey Ball (GDS-0008)
+    // Monkey Ball
     {
         "monkeyba",
         NULL,
-        "Monkey Ball (GDS-0008)",
+        "Monkey Ball",
         0x4000,
         0,
         "naomi",
@@ -5178,11 +5178,11 @@ Game Games[] =
         &monkeyba_inputs,
 		monkeyba_eeprom_dump,
     },
-    // Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
+    // Psyvariar 2 - The Will To Fabricate (Japan)
     {
         "psyvar2",
         NULL,
-        "Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)",
+        "Psyvariar 2 - The Will To Fabricate",
         0x4000,
         0,
         "naomi",
@@ -5198,11 +5198,11 @@ Game Games[] =
 		nullptr,
 		psyvar2_eeprom_dump,
     },
-    // Puyo Pop Fever (World) (GDS-0034)
+    // Puyo Pop Fever (World)
     {
         "puyofev",
         NULL,
-        "Puyo Pop Fever (World) (GDS-0034)",
+        "Puyo Pop Fever (World)",
         0x4000,
         0,
         "naomi",
@@ -5217,11 +5217,11 @@ Game Games[] =
 		nullptr,
 		puyofev_eeprom_dump,
     },
-    // Puyo Puyo Fever (Japan) (GDS-0031)
+    // Puyo Puyo Fever (Japan)
     {
         "puyofevj",
         "puyofev",
-        "Puyo Puyo Fever (Japan) (GDS-0031)",
+        "Puyo Puyo Fever (Japan)",
         0x4000,
         0,
         "naomi",
@@ -5277,11 +5277,11 @@ Game Games[] =
 		nullptr,
 		puyofev_eeprom_dump,
 	},
-    // Quiz Keitai Q mode (GDL-0017)
+    // Quiz Keitai Q mode
     {
         "quizqgd",
         NULL,
-        "Quiz Keitai Q mode (GDL-0017)",
+        "Quiz Keitai Q mode",
         0x4000,
         0,
         "naomi",
@@ -5294,11 +5294,11 @@ Game Games[] =
         },
         "gdl-0017",
     },
-    // Radirgy (Japan, Rev A) (GDL-0032A)
+    // Radirgy (Japan, Rev A)
     {
         "radirgy",
         NULL,
-        "Radirgy (Japan, Rev A) (GDL-0032A)",
+        "Radirgy (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -5312,11 +5312,11 @@ Game Games[] =
         "gdl-0032a",
 		// SHOT, SWORD, SPECIAL same as karous
     },
-    // Radirgy (Japan) (GDL-0032)
+    // Radirgy (Japan)
     {
         "radirgyo",
         "radirgy",
-        "Radirgy (Japan) (GDL-0032)",
+        "Radirgy",
         0x4000,
         0,
         "naomi",
@@ -5329,11 +5329,11 @@ Game Games[] =
         },
         "gdl-0032",
     },
-    // Senko No Ronde (Japan, Rev A) (GDL-0030A)
+    // Senko No Ronde (Japan, Rev A)
     {
         "senko",
         NULL,
-        "Senko no Ronde (Japan, Rev A) (GDL-0030A)",
+        "Senko no Ronde (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -5348,11 +5348,11 @@ Game Games[] =
 		nullptr,
 		senko_eeprom_dump,
     },
-    // Senko No Ronde (Japan) (GDL-0030)
+    // Senko No Ronde (Japan)
     {
         "senkoo",
         "senko",
-        "Senko no Ronde (Japan) (GDL-0030)",
+        "Senko no Ronde",
         0x4000,
         0,
         "naomi",
@@ -5367,11 +5367,11 @@ Game Games[] =
 		nullptr,
 		senko_eeprom_dump,
     },
-    // Senko No Ronde Special (Export, Japan) (GDL-0038)
+    // Senko No Ronde Special (Export, Japan)
     {
         "senkosp",
         NULL,
-        "Senko no Ronde Special (Export, Japan) (GDL-0038)",
+        "Senko no Ronde Special",
         0x4000,
         0,
         "naomi",
@@ -5385,11 +5385,11 @@ Game Games[] =
 		&senkosp_inputs,
 		senkosp_eeprom_dump,
     },
-    // Street Fighter Zero 3 Upper (Japan) (GDL-0002)
+    // Street Fighter Zero 3 Upper (Japan)
     {
         "sfz3ugd",
         NULL,
-        "Street Fighter Zero 3 Upper (Japan) (GDL-0002)",
+        "Street Fighter Zero 3 Upper",
         0x4000,
         0,
         "naomi",
@@ -5404,11 +5404,11 @@ Game Games[] =
         &capcom_6btn_inputs,
 		sfz3ugd_eeprom_dump,
     },
-    // Shakatto Tambourine (Rev B) (GDS-0002B)
+    // Shakatto Tambourine (Rev B)
     {
         "shaktam",
         NULL,
-        "Shakatto Tambourine (Rev B) (GDS-0002B)",
+        "Shakatto Tambourine (Rev B)",
         0x4000,
         0,
         "naomi",
@@ -5420,11 +5420,11 @@ Game Games[] =
         },
         "gds-0002b",
     },
-    // Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)
+    // Shakatto Tambourine Cho Powerup Chu (2K1 AUT)
     {
         "shaktamb",
         NULL,
-        "Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)",
+        "Shakatto Tambourine Cho Powerup Chu (2K1 AUT)",
         0x4000,
         0,
         "naomi",
@@ -5436,11 +5436,11 @@ Game Games[] =
         },
         "gds-0016",
     },
-    // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)
+    // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR)
     {
         "shaktmsp",
         NULL,
-        "Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)",
+        "Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR)",
         0x4000,
         0,
         "naomi",
@@ -5452,11 +5452,11 @@ Game Games[] =
         },
         "gds-0013",
     },
-    // Shikigami No Shiro II / The Castle of Shikigami II (GDL-0021)
+    // Shikigami No Shiro II / The Castle of Shikigami II
     {
         "shikgam2",
         NULL,
-        "Shikigami no Shiro II / The Castle of Shikigami II (GDL-0021)",
+        "Shikigami no Shiro II / The Castle of Shikigami II",
         0x4000,
         0,
         "naomi",
@@ -5469,11 +5469,11 @@ Game Games[] =
         },
         "gdl-0021",
     },
-    // Slashout (GDS-0004)
+    // Slashout
     {
         "slashout",
         NULL,
-        "Slashout (GDS-0004)",
+        "Slashout",
         0x4000,
         0,
         "naomi",
@@ -5487,11 +5487,11 @@ Game Games[] =
 		&slashout_inputs,
 		slashout_eeprom_dump
     },
-    // Spikers Battle (GDS-0005)
+    // Spikers Battle
     {
         "spkrbtl",
         NULL,
-        "Spikers Battle (GDS-0005)",
+        "Spikers Battle",
         0x4000,
         0,
         "naomi",
@@ -5505,11 +5505,11 @@ Game Games[] =
 		NULL, // BEAT, CHARGE ,JUMP, SHIFT
 		spkrbtl_eeprom_dump
     },
-    // Sports Jam (GDS-0003)
+    // Sports Jam
     {
         "sprtjam",
         NULL,
-        "Sports Jam (GDS-0003)",
+        "Sports Jam",
         0x4000,
         0,
         "naomi",
@@ -5522,11 +5522,11 @@ Game Games[] =
         "gds-0003",
 		&shot12_inputs,
     },
-    // Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)
+    // Super Shanghai 2005 (Japan, Rev A)
     {
         "ss2005",
         NULL,
-        "Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)",
+        "Super Shanghai 2005 (Rev A)",
         0x4000,
         0,
         "naomi",
@@ -5539,11 +5539,11 @@ Game Games[] =
         },
         "gdl-0031a",
     },
-    // Super Shanghai 2005 (Japan) (GDL-0031)
+    // Super Shanghai 2005 (Japan)
     {
         "ss2005o",
         "ss2005",
-        "Super Shanghai 2005 (Japan) (GDL-0031)",
+        "Super Shanghai 2005",
         0x4000,
         0,
         "naomi",
@@ -5556,11 +5556,11 @@ Game Games[] =
         },
         "gdl-0031",
     },
-    // Doki Doki Idol Star Seeker (GDL-0005)
+    // Doki Doki Idol Star Seeker
     {
         "starseek",
         NULL,
-        "Doki Doki Idol Star Seeker (GDL-0005)",
+        "Doki Doki Idol Star Seeker",
         0x4000,
         0,
         "naomi",
@@ -5572,11 +5572,11 @@ Game Games[] =
         },
         "gdl-0005",
     },
-    // Noukone Puzzle Takoron (Japan) (GDL-0042)
+    // Noukone Puzzle Takoron (Japan)
     {
         "takoron",
         NULL,
-        "Noukone Puzzle Takoron (Japan) (GDL-0042)",
+        "Noukone Puzzle Takoron",
         0x4000,
         0,
         "naomi",
@@ -5588,11 +5588,11 @@ Game Games[] =
         },
         "gdl-0042",
     },
-    // Tetris Kiwamemichi (Japan) (GDL-0020)
+    // Tetris Kiwamemichi (Japan)
     {
         "tetkiwam",
         NULL,
-        "Tetris Kiwamemichi (Japan) (GDL-0020)",
+        "Tetris Kiwamemichi",
         0x4000,
         0,
         "naomi",
@@ -5605,11 +5605,11 @@ Game Games[] =
         },
         "gdl-0020",
     },
-    // Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)
+    // Trigger Heart Exelica Ver.A (Japan)
     {
         "trgheart",
         NULL,
-        "Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)",
+        "Trigger Heart Exelica (Ver. A)",
         0x4000,
         0,
         "naomi",
@@ -5625,11 +5625,11 @@ Game Games[] =
 		nullptr,
 		trgheart_eeprom_dump,
     },
-    // Trigger Heart Exelica (Japan) (GDL-0036)
+    // Trigger Heart Exelica (Japan)
     {
         "trghearto",
         "trgheart",
-        "Trigger Heart Exelica (Japan) (GDL-0036)",
+        "Trigger Heart Exelica",
         0x4000,
         0,
         "naomi",
@@ -5644,11 +5644,11 @@ Game Games[] =
 		nullptr,
 		trgheart_eeprom_dump,
     },
-    // Trizeal (Japan) (GDL-0026)
+    // Trizeal (Japan)
     {
         "trizeal",
         NULL,
-        "Trizeal (Japan) (GDL-0026)",
+        "Trizeal",
         0x4000,
         0,
         "naomi",
@@ -5664,11 +5664,11 @@ Game Games[] =
 		nullptr,
 		trizeal_eeprom_dump,
     },
-    // Under Defeat (Japan) (GDL-0035)
+    // Under Defeat (Japan)
     {
         "undefeat",
         NULL,
-        "Under Defeat (Japan) (GDL-0035)",
+        "Under Defeat",
         0x4000,
         0,
         "naomi",
@@ -5683,11 +5683,11 @@ Game Games[] =
 		nullptr,
 		undefeat_eeprom_dump,
     },
-    // Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)
+    // Usagi - Yamashiro Mahjong Hen (Japan)
     {
         "usagiym",
         NULL,
-        "Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)",
+        "Usagi - Yamashiro Mahjong Hen",
         0x4000,
         0,
         "naomi",
@@ -5700,11 +5700,11 @@ Game Games[] =
         },
         "gdl-0022",
     },
-    // Virtua Athletics / Virtua Athlete (GDS-0019)
+    // Virtua Athletics / Virtua Athlete
     {
         "vathlete",
         NULL,
-        "Virtua Athletics / Virtua Athlete (GDS-0019)",
+        "Virtua Athletics / Virtua Athlete",
         0x4000,
         0,
         "naomi",
@@ -5717,11 +5717,11 @@ Game Games[] =
         "gds-0019",
 		// RUN1, ACTION, RUN2
     },
-    // Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)
+    // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
         "vtennis2",
         NULL,
-        "Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)",
+        "Virtua Tennis 2 / Power Smash 2",
         0x4000,
         0,
         "naomi",
@@ -5735,11 +5735,11 @@ Game Games[] =
 		nullptr,
 		vtennis2_eeprom_dump,
     },
-    // Virtua Tennis / Power Smash (GDS-0011)
+    // Virtua Tennis / Power Smash
     {
         "vtennisg",
         NULL,
-        "Virtua Tennis / Power Smash (GDS-0011)",
+        "Virtua Tennis / Power Smash",
         0x4000,
         0,
         "naomi",
@@ -5753,11 +5753,11 @@ Game Games[] =
         &shot12_inputs,
 		vtennisg_eeprom_dump,
     },
-    // World Series Baseball / Super Major League (GDS-0010)
+    // World Series Baseball / Super Major League
     {
         "wsbbgd",
         NULL,
-        "World Series Baseball / Super Major League (GDS-0010)",
+        "World Series Baseball / Super Major League",
         0x4000,
         0,
         "naomi",
@@ -5794,7 +5794,7 @@ Game Games[] =
     {
         "anmlbskt",
         NULL,
-        "Animal Basket (24 Jan 2005)",
+        "Animal Basket",
         0x4000000,
         0x45,
         "awbios",
@@ -5827,11 +5827,11 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Sega Bass Fishing Challenge Version A
+    // Sega Bass Fishing Challenge (Version A)
     {
         "basschal",
         NULL,
-        "Sega Bass Fishing Challenge Version A",
+        "Sega Bass Fishing Challenge (Ver. A)",
         0x8000000,
         0x2a,
         "awbios",
@@ -6417,11 +6417,11 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Samurai Spirits Tenkaichi Kenkakuden
+    // Samurai Shodown VI / Samurai Spirits Tenkaichi Kenkakuden
     {
         "samsptk",
         NULL,
-        "Samurai Spirits Tenkaichi Kenkakuden",
+        "Samurai Shodown VI",
         0x14000000,
         0x1d,
         "awbios",
@@ -6892,7 +6892,7 @@ Game Games[] =
     {
     	"clubkprz",
 		nullptr,
-		"Club Kart Prize (Export, Japan, Rev A)",
+		"Club Kart Prize (Rev A)",
 		0x9000000,
 		0x997681fe,
 		"naomi2",
@@ -6924,7 +6924,7 @@ Game Games[] =
     {
     	"clubkpzb",
 		nullptr,
-		"Club Kart Prize Version B (Export, Japan)",
+		"Club Kart Prize (Ver. B)",
 		0x9000000,
 		0x997681fe,
 		"naomi2",
@@ -7064,7 +7064,7 @@ Game Games[] =
     {
     	"vstrik3",
 		nullptr,
-		"Virtua Striker 3 (GDS-0006)",
+		"Virtua Striker 3",
 		0x4000,
 		0,
 		"naomi2",
@@ -7078,7 +7078,7 @@ Game Games[] =
     {
     	"vf4o",
 		"vf4",
-		"Virtua Fighter 4 (GDS-0012)",
+		"Virtua Fighter 4",
 		0x4000,
 		0,
 		"naomi2",
@@ -7092,7 +7092,7 @@ Game Games[] =
     {
     	"vf4b",
 		"vf4",
-		"Virtua Fighter 4 (Rev B) (GDS-0012B)",
+		"Virtua Fighter 4 (Rev B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7106,7 +7106,7 @@ Game Games[] =
     {
     	"vf4",
 		nullptr,
-		"Virtua Fighter 4 Version C (GDS-0012C)",
+		"Virtua Fighter 4 (Ver. C)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7120,7 +7120,7 @@ Game Games[] =
     {
     	"beachspi",
 		nullptr,
-		"Beach Spikers (GDS-0014)",
+		"Beach Spikers",
 		0x4000,
 		0,
 		"naomi2",
@@ -7134,7 +7134,7 @@ Game Games[] =
     {
     	"initd",
 		nullptr,
-		"Initial D Arcade Stage (Japan, Rev B) (GDS-0020B)",
+		"Initial D Arcade Stage (Japan, Rev B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7149,7 +7149,7 @@ Game Games[] =
     {
     	"initdo",
 		"initd",
-		"Initial D Arcade Stage (Japan) (GDS-0020)",
+		"Initial D Arcade Stage (Japan)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7164,7 +7164,7 @@ Game Games[] =
     {
     	"vf4evo",
 		nullptr,
-		"Virtua Fighter 4 Evolution (Version B) (Japan) (GDS-0024C)",
+		"Virtua Fighter 4 Evolution (Japan, Ver. B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7178,7 +7178,7 @@ Game Games[] =
     {
     	"vf4evob",
 		"vf4evo",
-		"Virtua Fighter 4 Evolution (Version B) (Japan) (GDS-0024B)",
+		"Virtua Fighter 4 Evolution (Japan, Ver. B, GDS-0024B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7192,7 +7192,7 @@ Game Games[] =
     {
     	"vf4evoa",
 		"vf4evo",
-		"Virtua Fighter 4 Evolution (Japan) (GDS-0024A)",
+		"Virtua Fighter 4 Evolution (Japan)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7206,7 +7206,7 @@ Game Games[] =
     {
     	"initdexp",
 		nullptr,
-		"Initial D Arcade Stage (Export, Rev A) (GDS-0025A)",
+		"Initial D Arcade Stage (Export, Rev A)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7221,7 +7221,7 @@ Game Games[] =
     {
     	"initdexpo",
 		"initdexp",
-		"Initial D Arcade Stage (Export) (GDS-0025)",
+		"Initial D Arcade Stage (Export)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7236,7 +7236,7 @@ Game Games[] =
     {
     	"initdv2j",
 		nullptr,
-		"Initial D Arcade Stage Ver. 2 (Japan, Rev B) (GDS-0026B)",
+		"Initial D Arcade Stage 2 (Japan, Rev B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7251,7 +7251,7 @@ Game Games[] =
     {
     	"initdv2jo",
 		"initdv2j",
-		"Initial D Arcade Stage Ver. 2 (Japan) (GDS-0026)",
+		"Initial D Arcade Stage 2 (Japan)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7266,7 +7266,7 @@ Game Games[] =
     {
     	"initdv2ja",
 		"initdv2j",
-		"Initial D Arcade Stage Ver. 2 (Japan, Rev A) (GDS-0026A)",
+		"Initial D Arcade Stage 2 (Japan, Rev A)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7281,7 +7281,7 @@ Game Games[] =
     {
     	"initdv2e",
 		"initdv2j",
-		"Initial D Arcade Stage Ver. 2 (Export) (GDS-0027)",
+		"Initial D Arcade Stage 2 (Export)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7296,7 +7296,7 @@ Game Games[] =
     {
     	"clubkcyco",
 		"clubkcyc",
-		"Club Kart for Cycraft (GDS-0029)",
+		"Club Kart for Cycraft",
 		0x4000,
 		0,
 		"naomi2",
@@ -7311,7 +7311,7 @@ Game Games[] =
     {
     	"clubkcyc",
 		nullptr,
-		"Club Kart for Cycraft (Rev A) (GDS-0029A)",
+		"Club Kart for Cycraft (Rev A)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7326,7 +7326,7 @@ Game Games[] =
     {
     	"initdv3j",
 		nullptr,
-		"Initial D Arcade Stage Ver. 3 (Japan, Rev C) (GDS-0032C)",
+		"Initial D Arcade Stage 3 (Japan, Rev C)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7341,7 +7341,7 @@ Game Games[] =
     {
     	"initdv3jb",
 		"initdv3j",
-		"Initial D Arcade Stage Ver. 3 (Japan, Rev B) (GDS-0032B)",
+		"Initial D Arcade Stage 3 (Japan, Rev B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7356,7 +7356,7 @@ Game Games[] =
     {
     	"initdv3e",
 		nullptr,
-		"Initial D Arcade Stage Ver. 3 (Export) (GDS-0033)",
+		"Initial D Arcade Stage 3 (Export)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7371,7 +7371,7 @@ Game Games[] =
     {
     	"vf4tuned",
 		nullptr,
-		"Virtua Fighter 4 Final Tuned (Ver. B) (GDS-0036F)",
+		"Virtua Fighter 4 Final Tuned (Ver. B)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7385,7 +7385,7 @@ Game Games[] =
     {
     	"vf4tunedd",
 		"vf4tuned",
-		"Virtua Fighter 4 Final Tuned (Ver. A) (GDS-0036D)",
+		"Virtua Fighter 4 Final Tuned (Ver. A)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7399,7 +7399,7 @@ Game Games[] =
     {
     	"vf4tuneda",
 		"vf4tuned",
-		"Virtua Fighter 4 Final Tuned (Rev A) (GDS-0036A)",
+		"Virtua Fighter 4 Final Tuned (Rev A)",
 		0x4000,
 		0,
 		"naomi2",
@@ -7413,7 +7413,7 @@ Game Games[] =
     {
     	"inidv3cy",
 		nullptr,
-		"Initial D Arcade Stage Ver. 3 Cycraft Edition (Export, Rev B) (GDS-0039B)",
+		"Initial D Arcade Stage 3 Cycraft Edition (Rev B)", // Export
 		0x4000,
 		0,
 		"naomi2",
@@ -7428,7 +7428,7 @@ Game Games[] =
     {
     	"inidv3ca",
 		"inidv3cy",
-		"Initial D Arcade Stage Ver. 3 Cycraft Edition (Export, Rev A) (GDS-0039A)",
+		"Initial D Arcade Stage 3 Cycraft Edition (Rev A)", // Export
 		0x4000,
 		0,
 		"naomi2",

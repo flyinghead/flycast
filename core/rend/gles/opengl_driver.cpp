@@ -22,6 +22,7 @@
 #include "rend/osd.h"
 #include "rend/gui.h"
 #include "glcache.h"
+#include "gles.h"
 
 static constexpr int vmu_coords[8][2] = {
 		{ 0 , 0 },
@@ -172,6 +173,20 @@ ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data,
     glcache.BindTexture(GL_TEXTURE_2D, texId);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifndef GLES2
+	if (!gl.is_gles || gl.gl_major >= 3)
+	{
+		float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	}
+	else
+#endif
+	{
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     return textures[name] = (ImTextureID)(u64)texId;

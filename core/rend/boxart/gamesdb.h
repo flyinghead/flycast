@@ -25,16 +25,18 @@ using namespace nlohmann;
 class TheGamesDb : public Scraper
 {
 public:
-	virtual bool initialize(const std::string& saveDirectory) override;
-	virtual void scrape(GameBoxart& item) override;
+	bool initialize(const std::string& saveDirectory) override;
+	void scrape(GameBoxart& item) override;
 	~TheGamesDb();
 
 private:
+	void scrape(GameBoxart& item, const std::string& diskId);
 	void fetchPlatforms();
-	bool fetchGameInfo(GameBoxart& item, const std::string& url);
+	bool fetchGameInfo(GameBoxart& item, const std::string& url, const std::string& diskId = "");
 	std::string makeUrl(const std::string& endpoint);
 	void copyFile(const std::string& from, const std::string& to);
 	bool httpGet(const std::string& url, std::vector<u8>& receivedData);
+	void parseBoxart(GameBoxart& item, const json& j, int gameId);
 
 	int dreamcastPlatformId;
 	int arcadePlatformId;

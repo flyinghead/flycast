@@ -121,10 +121,94 @@ void TheGamesDb::fetchPlatforms()
 		throw std::runtime_error("can't find dreamcast or arcade platform id");
 }
 
-bool TheGamesDb::fetchGameInfo(GameBoxart& item, const std::string& url)
+void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 {
-	fetchPlatforms();
+	std::string baseUrl;
+	try {
+		baseUrl = j["base_url"]["thumb"];
+	} catch (const json::exception& e) {
+		try {
+			baseUrl = j["base_url"]["small"];
+		} catch (const json::exception& e) {
+			return;
+		}
+	}
 
+	json dataArray = j.contains("data") ? j["data"][std::to_string(gameId)] : j["images"][std::to_string(gameId)];
+	std::string imagePath;
+	for (const auto& o : dataArray)
+	{
+		try {
+			// Look for boxart
+			if (o["type"] != "boxart")
+				continue;
+		} catch (const json::exception& e) {
+			continue;
+		}
+		try {
+			// We want the front side if specified
+			if (o["side"] == "back")
+				continue;
+		} catch (const json::exception& e) {
+			// ignore if not found
+		}
+		imagePath = o["filename"].get<std::string>();
+		break;
+	}
+	if (imagePath.empty())
+	{
+		// Use titlescreen
+		for (const auto& o : dataArray)
+		{
+			try {
+				if (o["type"] != "titlescreen")
+					continue;
+			} catch (const json::exception& e) {
+				continue;
+			}
+			imagePath = o["filename"].get<std::string>();
+			break;
+		}
+	}
+	if (imagePath.empty())
+	{
+		// Use screenshot
+		for (const auto& o : dataArray)
+		{
+			try {
+				if (o["type"] != "screenshot")
+					continue;
+			} catch (const json::exception& e) {
+				continue;
+			}
+			imagePath = o["filename"].get<std::string>();
+			break;
+		}
+	}
+	if (!imagePath.empty())
+	{
+		// Build the full URL and get from cache or download
+		std::string url = baseUrl + imagePath;
+		std::string filename = makeUniqueFilename("dummy.jpg");	// thegamesdb returns some images as png, but they are really jpeg
+		auto cached = boxartCache.find(url);
+		if (cached != boxartCache.end())
+		{
+			copyFile(cached->second, filename);
+			item.boxartPath = filename;
+		}
+		else
+		{
+			if (downloadImage(url, filename))
+			{
+				item.boxartPath = filename;
+				boxartCache[url] = filename;
+			}
+		}
+	}
+}
+
+bool TheGamesDb::fetchGameInfo(GameBoxart& item, const std::string& url, const std::string& diskId)
+{
 	DEBUG_LOG(COMMON, "TheGameDb: GET %s", url.c_str());
 	std::vector<u8> receivedData;
 	if (!httpGet(url, receivedData))
@@ -150,82 +234,71 @@ bool TheGamesDb::fetchGameInfo(GameBoxart& item, const std::string& url)
 	if (array.empty())
 		return false;
 
-	// Name
-	item.name = array[0]["game_title"];
+	for (const auto& game : array)
+	{
+		if (!diskId.empty())
+		{
+			bool found = false;
+			try {
+				for (const auto& uid : game["uids"])
+					if (uid["uid"] == diskId) {
+						found = true;
+						break;
+					}
+			} catch (const json::exception& e) {
+			}
+			if (!found)
+				continue;
+		}
+		// Name
+		item.name = game["game_title"];
 
-	// Release date
-	try {
-		item.releaseDate = array[0]["release_date"];
-	} catch (const json::exception& e) {
-	}
-
-	// Overview
-	try {
-		item.overview = array[0]["overview"];
-	} catch (const json::exception& e) {
-	}
-
-	// GameDB id
-	int id;
-	try {
-		id = array[0]["id"];
-	} catch (const json::exception& e) {
-		return true;
-	}
-
-	// Boxart
-	json boxart = v["include"]["boxart"];
-	std::string baseUrl;
-	try {
-		baseUrl = boxart["base_url"]["thumb"];
-	} catch (const json::exception& e) {
+		// Release date
 		try {
-			baseUrl = boxart["base_url"]["small"];
+			item.releaseDate = game["release_date"];
+		} catch (const json::exception& e) {
+		}
+
+		// Overview
+		try {
+			item.overview = game["overview"];
+		} catch (const json::exception& e) {
+		}
+
+		// GameDB id
+		int id;
+		try {
+			id = game["id"];
 		} catch (const json::exception& e) {
 			return true;
 		}
-	}
 
-	json dataArray = boxart["data"][std::to_string(id)];
-	for (const auto& o : dataArray)
-	{
-		try {
-			// Look for boxart
-			if (o["type"] != "boxart")
-				continue;
-		} catch (const json::exception& e) {
-			continue;
-		}
-		try {
-			// We want the front side if specified
-			if (o["side"] == "back")
-				continue;
-		} catch (const json::exception& e) {
-			// ignore if not found
-		}
-		// Build the full URL and get from cache or download
-		std::string url = baseUrl + o["filename"].get<std::string>();
-		std::string filename = makeUniqueFilename("dummy.jpg");	// thegamesdb returns some images as png, but they are really jpeg
-		auto cached = boxartCache.find(url);
-		if (cached != boxartCache.end())
+		// Boxart
+		parseBoxart(item, v["include"]["boxart"], id);
+
+		if (item.boxartPath.empty())
 		{
-			copyFile(cached->second, filename);
-			item.boxartPath = filename;
-		}
-		else
-		{
-			if (downloadImage(url, filename))
-			{
-				item.boxartPath = filename;
-				boxartCache[url] = filename;
-			}
+			std::string imgUrl = makeUrl("Games/Images") + "&games_id=" + std::to_string(id);
+			DEBUG_LOG(COMMON, "TheGameDb: GET %s", imgUrl.c_str());
+			if (!httpGet(imgUrl, receivedData))
+				throw std::runtime_error("http error");
+			content = std::string((const char *)&receivedData[0], receivedData.size());
+			DEBUG_LOG(COMMON, "TheGameDb: received [%s]", content.c_str());
+			json images = json::parse(content);
+			parseBoxart(item, images["data"], id);
 		}
 		break;
 	}
+
 	return true;
 }
 
 void TheGamesDb::scrape(GameBoxart& item)
+{
+	scrape(item, "");
+}
+
+void TheGamesDb::scrape(GameBoxart& item, const std::string& diskId)
 {
 	if (os_GetSeconds() < blackoutPeriod)
 		throw std::runtime_error("");
@@ -281,18 +354,35 @@ void TheGamesDb::scrape(GameBoxart& item)
 	else
 	{
 		gameName = item.name;
+		size_t spos = gameName.find('/');
+		if (spos != std::string::npos)
+			gameName = trim_trailing_ws(gameName.substr(0, spos));
+		while (!gameName.empty())
+		{
+			size_t pos{ std::string::npos };
+			if (gameName.back() == ')')
+				pos = gameName.find_last_of('(');
+			else if (gameName.back() == ']')
+				pos = gameName.find_last_of('[');
+			if (pos == std::string::npos)
+				break;
+			gameName = trim_trailing_ws(gameName.substr(0, pos));
+		}
 	}
+
+	fetchPlatforms();
 
 	if (!uniqueId.empty())
 	{
-		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
+		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview,uids&include=boxart&filter%5Bplatform%5D=";
 		if (platform == DC_PLATFORM_DREAMCAST)
 			url += std::to_string(dreamcastPlatformId);
 		else
 			url += std::to_string(arcadePlatformId);
+		// Can be batched, separated by commas
 		url += "&uid=" + http::urlEncode(uniqueId);
 
-		item.found = fetchGameInfo(item, url);
+		item.found = fetchGameInfo(item, url, diskId);
 	}
 	if (!item.found)
 	{

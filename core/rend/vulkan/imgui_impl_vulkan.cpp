@@ -766,13 +766,10 @@ static void ImGui_ImplVulkan_CreateDescriptorSetLayout(VkDevice device, const Vk
     if (bd->DescriptorSetLayout)
         return;
 
-    ImGui_ImplVulkan_CreateFontSampler(device, allocator);
-    VkSampler sampler[1] = { bd->FontSampler };
     VkDescriptorSetLayoutBinding binding[1] = {};
     binding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     binding[0].descriptorCount = 1;
     binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    binding[0].pImmutableSamplers = sampler;
     VkDescriptorSetLayoutCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     info.bindingCount = 1;
@@ -914,59 +911,10 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
     ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
-    VkResult err;
 
-    if (!bd->FontSampler)
-    {
-        VkSamplerCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        info.magFilter = VK_FILTER_LINEAR;
-        info.minFilter = VK_FILTER_LINEAR;
-        info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        info.minLod = -1000;
-        info.maxLod = 1000;
-        info.maxAnisotropy = 1.0f;
-        err = vkCreateSampler(v->Device, &info, v->Allocator, &bd->FontSampler);
-        check_vk_result(err);
-    }
-
-    if (!bd->DescriptorSetLayout)
-    {
-        VkSampler sampler[1] = {bd->FontSampler};
-        VkDescriptorSetLayoutBinding binding[1] = {};
-        binding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        binding[0].descriptorCount = 1;
-        binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-        binding[0].pImmutableSamplers = sampler;
-        VkDescriptorSetLayoutCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        info.bindingCount = 1;
-        info.pBindings = binding;
-        err = vkCreateDescriptorSetLayout(v->Device, &info, v->Allocator, &bd->DescriptorSetLayout);
-        check_vk_result(err);
-    }
-
-    if (!bd->PipelineLayout)
-    {
-        // Constants: we are using 'vec2 offset' and 'vec2 scale' instead of a full 3d projection matrix
-        VkPushConstantRange push_constants[1] = {};
-        push_constants[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        push_constants[0].offset = sizeof(float) * 0;
-        push_constants[0].size = sizeof(float) * 4;
-        VkDescriptorSetLayout set_layout[1] = { bd->DescriptorSetLayout };
-        VkPipelineLayoutCreateInfo layout_info = {};
-        layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        layout_info.setLayoutCount = 1;
-        layout_info.pSetLayouts = set_layout;
-        layout_info.pushConstantRangeCount = 1;
-        layout_info.pPushConstantRanges = push_constants;
-        err = vkCreatePipelineLayout(v->Device, &layout_info, v->Allocator, &bd->PipelineLayout);
-        check_vk_result(err);
-    }
-
+    ImGui_ImplVulkan_CreateFontSampler(v->Device, v->Allocator);
+    ImGui_ImplVulkan_CreateDescriptorSetLayout(v->Device, v->Allocator);
+    ImGui_ImplVulkan_CreatePipelineLayout(v->Device, v->Allocator);
     ImGui_ImplVulkan_CreatePipeline(v->Device, v->Allocator, v->PipelineCache, bd->RenderPass, v->MSAASamples, &bd->Pipeline, bd->Subpass);
 
     return true;

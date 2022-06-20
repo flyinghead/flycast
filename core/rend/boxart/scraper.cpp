@@ -52,7 +52,7 @@ std::string Scraper::makeUniqueFilename(const std::string& url)
 	std::string extension = get_file_extension(url);
 	std::string path;
 	do {
-		path = saveDirectory + "/" + std::to_string(rand()) + "." + extension;
+		path = saveDirectory + std::to_string(rand()) + "." + extension;
 	} while (file_exists(path));
 	return path;
 }

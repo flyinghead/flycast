@@ -2410,7 +2410,7 @@ static void gui_display_content()
 								if (imgData != nullptr)
 								{
 									try {
-										textureId = imguiDriver->updateTexture(art->boxartPath, imgData, width, height);
+										textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
 									} catch (const std::exception&) {
 										// vulkan can throw during resizing
 									}
@@ -2419,7 +2419,23 @@ static void gui_display_content()
 							}
 						}
 						if (textureId != ImTextureID())
-							pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2);
+						{
+							float ar = imguiDriver->getAspectRatio(textureId);
+							ImVec2 uv0 { 0.f, 0.f };
+							ImVec2 uv1 { 1.f, 1.f };
+							if (ar > 1)
+							{
+								uv0.y = -(ar - 1) / 2;
+								uv1.y = 1 + (ar - 1) / 2;
+							}
+							else if (ar != 0)
+							{
+								ar = 1 / ar;
+								uv0.x = -(ar - 1) / 2;
+								uv1.x = 1 + (ar - 1) / 2;
+							}
+							pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+						}
 						else
 							pressed = ImGui::Button(gameName.c_str(), ScaledVec2(200, 200));
 					    if (ImGui::IsItemHovered())

@@ -20,6 +20,7 @@
 #include "imgui/imgui.h"
 #include "gui.h"
 #include <memory>
+#include <unordered_map>
 
 class ImGuiDriver
 {
@@ -40,6 +41,25 @@ public:
 
 	virtual ImTextureID getTexture(const std::string& name) = 0;
 	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) = 0;
+
+	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height)
+	{
+		ImTextureID textureId = updateTexture(name, data, width, height);
+		if (textureId != ImTextureID())
+			aspectRatios[textureId] = (float)width / height;
+		return textureId;
+	}
+
+	float getAspectRatio(ImTextureID textureId) {
+		auto it = aspectRatios.find(textureId);
+		if (it != aspectRatios.end())
+			return it->second;
+		else
+			return 1;
+	}
+
+private:
+	std::unordered_map<ImTextureID, float> aspectRatios;
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

@@ -62,18 +62,7 @@ std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
 			GameBoxart boxart;
 			boxart.fileName = fileName;
 			boxart.gamePath = media.path;
-			boxart.name = trim_trailing_ws(get_file_basename(media.gameName));
-			while (!boxart.name.empty())
-			{
-				size_t pos{ std::string::npos };
-				if (boxart.name.back() == ')')
-					pos = boxart.name.find_last_of('(');
-				else if (boxart.name.back() == ']')
-					pos = boxart.name.find_last_of('[');
-				if (pos == std::string::npos)
-					break;
-				boxart.name = trim_trailing_ws(boxart.name.substr(0, pos));
-			}
+			boxart.name = trim_trailing_ws(media.gameName);
 			DEBUG_LOG(COMMON, "Scraping %s -> %s", media.name.c_str(), boxart.name.c_str());
 			try {
 				scraper->scrape(boxart);

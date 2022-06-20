@@ -89,7 +89,7 @@ class GameScanner
             extern std::string os_PrecomposedString(std::string string);
             fileName = os_PrecomposedString(fileName);
 #endif
-            std::string gameName(item.name);
+            std::string gameName(get_file_basename(item.name));
 			std::string extension = get_file_extension(fileName);
 			if (extension == "zip" || extension == "7z")
 			{
