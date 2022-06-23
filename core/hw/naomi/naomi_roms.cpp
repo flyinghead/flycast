@@ -259,11 +259,11 @@ Game Games[] =
         NULL,
         kick4csh_eeprom_dump
     },
-    // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
+    // Marvel vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
     {
         "mvsc2",
         NULL,
-        "Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea)",
+        "Marvel vs. Capcom 2 New Age of Heroes (Export, Korea)",
         0x08800000,
         0xc18b6e7c,
         NULL,
@@ -927,11 +927,11 @@ Game Games[] =
         &alienfnt_inputs,
         alienfnt_eeprom_dump
     },
-    // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
+    // Capcom vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
         "capsnk",
         NULL,
-        "Capcom Vs. SNK Millennium Fight 2000 (Rev C)",
+        "Capcom vs. SNK Millennium Fight 2000 (Rev C)",
         0x07800000,
         0x00000000,
         NULL,
@@ -952,11 +952,11 @@ Game Games[] =
         &capcom_4btn_inputs,
 		capsnk_eeprom_dump,
     },
-    // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
+    // Capcom vs. SNK Millennium Fight 2000 (Rev A)
     {
         "capsnka",
         "capsnk",
-        "Capcom Vs. SNK Millennium Fight 2000 (Rev A)",
+        "Capcom vs. SNK Millennium Fight 2000 (Rev A)",
         0x07800000,
         0x00000000,
         NULL,
@@ -977,11 +977,11 @@ Game Games[] =
         &capcom_4btn_inputs,
 		capsnk_eeprom_dump,
     },
-    // Capcom Vs. SNK Millennium Fight 2000
+    // Capcom vs. SNK Millennium Fight 2000
     {
         "capsnkb",
         "capsnk",
-        "Capcom Vs. SNK Millennium Fight 2000",
+        "Capcom vs. SNK Millennium Fight 2000",
         0x07800000,
         0x00000000,
         NULL,
@@ -1849,11 +1849,11 @@ Game Games[] =
 		&ggx_inputs,
 		// error message at boot with free play eeprom
     },
-    // Mobile Suit Gundam: Federation Vs. Zeon
+    // Mobile Suit Gundam: Federation vs. Zeon
     {
         "gundmct",
         NULL,
-        "Mobile Suit Gundam: Federation Vs. Zeon",
+        "Mobile Suit Gundam: Federation vs. Zeon",
         0x0a800000,
         0x000e8010,
         NULL,
@@ -1964,11 +1964,11 @@ Game Games[] =
         nullptr,
         &shot12_inputs,
     },
-    // Heavy Metal Geomatrix (JPN, USA, EUR, ASI, AUS) (Rev B)
+    // Heavy Metal: Geomatrix (JPN, USA, EUR, ASI, AUS) (Rev B)
     {
         "hmgeo",
         NULL,
-        "Heavy Metal Geomatrix",
+        "Heavy Metal: Geomatrix",
         0x06000000,
         0x00038510,
         NULL,
@@ -2352,11 +2352,11 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Marvel Vs. Capcom 2 New Age of Heroes (USA, Rev A)
+    // Marvel vs. Capcom 2 New Age of Heroes (USA, Rev A)
     {
         "mvsc2u",
         "mvsc2",
-        "Marvel Vs. Capcom 2 New Age of Heroes (USA)",
+        "Marvel vs. Capcom 2 New Age of Heroes (USA)",
         0x07800000,
         0x0002c840,
         NULL,
@@ -3266,11 +3266,11 @@ Game Games[] =
 		NULL,
 		&marine_fishing_inputs,
     },
-    // Spawn In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
+    // Spawn: In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
     {
         "spawn",
         NULL,
-        "Spawn In the Demon's Hand",
+        "Spawn: In the Demon's Hand",
         0x05800000,
         0x00078d01,
         NULL,
@@ -4644,11 +4644,11 @@ Game Games[] =
 		nullptr,
 		confmiss_eeprom_dump,
     },
-    // Capcom Vs. SNK Millennium Fight 2000 Pro (Japan)
+    // Capcom vs. SNK Millennium Fight 2000 Pro (Japan)
     {
         "cvsgd",
         NULL,
-        "Capcom Vs. SNK Millennium Fight 2000 Pro (Japan)",
+        "Capcom vs. SNK Millennium Fight 2000 Pro (Japan)",
         0x4000,
         0,
         "naomi",
@@ -4662,13 +4662,13 @@ Game Games[] =
 		&capcom_4btn_inputs,
 		cvsgd_eeprom_dump,
     },
-    // Capcom Vs. SNK 2 Mark Of The Millennium 2001
+    // Capcom vs. SNK 2 Mark Of The Millennium 2001
     // ver 010804
     // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
     {
         "cvs2",
         NULL,
-        "Capcom Vs. SNK 2 Mark Of The Millennium 2001 (USA)",
+        "Capcom vs. SNK 2 Mark Of The Millennium 2001 (USA)",
         0x4000,
         0,
         "naomi",
@@ -4682,12 +4682,12 @@ Game Games[] =
         &capcom_6btn_inputs,
 		cvs2_eeprom_dump,
     },
-    // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A)
+    // Capcom vs. SNK 2 Millionaire Fighting 2001 (Rev A)
     // ver 010705
     {
         "cvs2mf",
         "cvs2",
-        "Capcom Vs. SNK 2 Millionaire Fighting 2001 (Japan, Rev A)",
+        "Capcom vs. SNK 2 Millionaire Fighting 2001 (Japan, Rev A)",
         0x4000,
         0,
         "naomi",
@@ -4872,11 +4872,11 @@ Game Games[] =
 		&guilty_gear_inputs,
 		ggxxsla_eeprom_dump,
     },
-    // Mobile Suit Gundam: Federation Vs. Zeon
+    // Mobile Suit Gundam: Federation vs. Zeon
     {
         "gundmgd",
         NULL,
-        "Mobile Suit Gundam: Federation Vs. Zeon",
+        "Mobile Suit Gundam: Federation vs. Zeon",
         0x4000,
         0,
         "naomi",
@@ -4891,11 +4891,11 @@ Game Games[] =
 		&shot1234_inputs,
 		gundmct_eeprom_dump
     },
-    // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan)
+    // Mobile Suit Gundam: Federation vs. Zeon DX (USA, Japan)
     {
         "gundmxgd",
         NULL,
-        "Mobile Suit Gundam: Federation Vs. Zeon DX",
+        "Mobile Suit Gundam: Federation vs. Zeon DX",
         0x4000,
         0,
         "naomi",

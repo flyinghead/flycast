@@ -31,6 +31,7 @@ struct GameBoxart
 	std::string fileName;
 	std::string name;
 	std::string uniqueId;
+	std::string searchName;
 	u32 region = 0;
 	std::string releaseDate;
 	std::string overview;
@@ -50,10 +51,10 @@ struct GameBoxart
 		json j = {
 			{ "file_name", fileName },
 			{ "name", name },
+			{ "unique_id", uniqueId },
 			{ "region", region },
 			{ "release_date", releaseDate },
 			{ "overview", overview },
-			{ "game_path", gamePath },
 			{ "screenshot_path", screenshotPath },
 			{ "fanart_path", fanartPath },
 			{ "boxart_path", boxartPath },
@@ -83,10 +84,10 @@ struct GameBoxart
 	{
 		loadProperty(fileName, j, "file_name");
 		loadProperty(name, j, "name");
+		loadProperty(uniqueId, j, "unique_id");
 		loadProperty(region, j, "region");
 		loadProperty(releaseDate, j, "release_date");
 		loadProperty(overview, j, "overview");
-		loadProperty(gamePath, j, "game_path");
 		loadProperty(screenshotPath, j, "screenshot_path");
 		loadProperty(fanartPath, j, "fanart_path");
 		loadProperty(boxartPath, j, "boxart_path");
@@ -102,7 +103,14 @@ public:
 		this->saveDirectory = saveDirectory;
 		return true;
 	}
+
 	virtual void scrape(GameBoxart& item) = 0;
+
+	virtual void scrape(std::vector<GameBoxart>& items) {
+		for (GameBoxart& item : items)
+			scrape(item);
+	}
+
 	virtual ~Scraper() = default;
 
 protected:

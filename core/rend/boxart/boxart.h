@@ -18,18 +18,18 @@
  */
 #pragma once
 #include "scraper.h"
-#include "../game_scanner.h"
 #include "stdclass.h"
 #include <unordered_map>
 #include <memory>
 #include <future>
 #include <mutex>
 
+struct GameMedia;
+
 class Boxart
 {
 public:
 	const GameBoxart *getBoxart(const GameMedia& media);
-	std::future<const GameBoxart *> fetchBoxart(const GameMedia& media);
 	void saveDatabase();
 
 private:
@@ -37,12 +37,16 @@ private:
 	std::string getSaveDirectory() const {
 		return get_writable_data_path("/boxart/");
 	}
+	void fetchBoxart();
 
 	std::unordered_map<std::string, GameBoxart> games;
 	std::mutex mutex;
 	std::unique_ptr<Scraper> scraper;
 	bool databaseLoaded = false;
 	bool databaseDirty = false;
+
+	std::vector<GameBoxart> toFetch;
+	std::future<void> fetching;
 
 	static constexpr char const *DB_NAME = "flycast-gamedb.json";
 };

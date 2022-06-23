@@ -18,6 +18,8 @@
  */
 #include "boxart.h"
 #include "gamesdb.h"
+#include "../game_scanner.h"
+#include <chrono>
 
 static std::string getGameFileName(const std::string& path)
 {
@@ -33,56 +35,80 @@ const GameBoxart *Boxart::getBoxart(const GameMedia& media)
 {
 	loadDatabase();
 	std::string fileName = getGameFileName(media.path);
+	const GameBoxart *boxart = nullptr;
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		auto it = games.find(fileName);
 		if (it != games.end())
-			return &it->second;
-		else
-			return nullptr;
+			boxart = &it->second;
+		else if (config::FetchBoxart)
+		{
+			GameBoxart box;
+			box.fileName = fileName;
+			box.gamePath = media.path;
+			box.name = media.name;
+			box.searchName = media.gameName;	// for arcade games
+			games[box.fileName] = box;
+			toFetch.push_back(box);
+		}
 	}
+	if (config::FetchBoxart)
+		fetchBoxart();
+	return boxart;
 }
 
-std::future<const GameBoxart *> Boxart::fetchBoxart(const GameMedia& media)
+void Boxart::fetchBoxart()
 {
-	if (scraper == nullptr)
-	{
-		scraper = std::unique_ptr<Scraper>(new TheGamesDb());
-		if (!scraper->initialize(getSaveDirectory()))
+	if (fetching.valid() && fetching.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+		fetching.get();
+	if (fetching.valid())
+		return;
+	if (toFetch.empty())
+		return;
+	fetching = std::async(std::launch::async, [this]() {
+		if (scraper == nullptr)
 		{
-			WARN_LOG(COMMON, "thegamesdb scraper initialization failed");
-			scraper.reset();
-		}
-	}
-	return std::async(std::launch::async, [this, media]() {
-		std::string fileName = getGameFileName(media.path);
-		const GameBoxart *rv = nullptr;
-		if (scraper != nullptr)
-		{
-			GameBoxart boxart;
-			boxart.fileName = fileName;
-			boxart.gamePath = media.path;
-			boxart.name = trim_trailing_ws(media.gameName);
-			DEBUG_LOG(COMMON, "Scraping %s -> %s", media.name.c_str(), boxart.name.c_str());
-			try {
-				scraper->scrape(boxart);
-				{
-					std::lock_guard<std::mutex> guard(mutex);
-					games[fileName] = boxart;
-					rv = &games[fileName];
-				}
-				databaseDirty = true;
-			} catch (const std::exception& e) {
-				if (*e.what() != '\0')
-					INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
+			scraper = std::unique_ptr<Scraper>(new TheGamesDb());
+			if (!scraper->initialize(getSaveDirectory()))
+			{
+				WARN_LOG(COMMON, "thegamesdb scraper initialization failed");
+				scraper.reset();
+				return;
 			}
 		}
-		return rv;
+		std::vector<GameBoxart> boxart;
+		{
+			std::lock_guard<std::mutex> guard(mutex);
+			size_t size = std::min(toFetch.size(), (size_t)10);
+			boxart = std::vector<GameBoxart>(toFetch.begin(), toFetch.begin() + size);
+			toFetch.erase(toFetch.begin(), toFetch.begin() + size);
+		}
+		DEBUG_LOG(COMMON, "Scraping %d games", (int)boxart.size());
+		try {
+			scraper->scrape(boxart);
+			{
+				std::lock_guard<std::mutex> guard(mutex);
+				for (const GameBoxart& b : boxart)
+					if (b.scraped)
+						games[b.fileName] = b;
+			}
+			databaseDirty = true;
+		} catch (const std::exception& e) {
+			if (*e.what() != '\0')
+				INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
+			{
+				// put back items into toFetch array
+				std::lock_guard<std::mutex> guard(mutex);
+				toFetch.insert(toFetch.begin(), boxart.begin(), boxart.end());
+			}
+		}
 	});
 }
 
 void Boxart::saveDatabase()
 {
+	if (fetching.valid())
+		fetching.get();
 	if (!databaseDirty)
 		return;
 	std::string db_name = getSaveDirectory() + DB_NAME;

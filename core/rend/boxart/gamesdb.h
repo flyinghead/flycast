@@ -27,19 +27,23 @@ class TheGamesDb : public Scraper
 public:
 	bool initialize(const std::string& saveDirectory) override;
 	void scrape(GameBoxart& item) override;
+	void scrape(std::vector<GameBoxart>& items) override;
 	~TheGamesDb();
 
 private:
-	void scrape(GameBoxart& item, const std::string& diskId);
 	void fetchPlatforms();
 	bool fetchGameInfo(GameBoxart& item, const std::string& url, const std::string& diskId = "");
 	std::string makeUrl(const std::string& endpoint);
 	void copyFile(const std::string& from, const std::string& to);
-	bool httpGet(const std::string& url, std::vector<u8>& receivedData);
+	json httpGet(const std::string& url);
 	void parseBoxart(GameBoxart& item, const json& j, int gameId);
+	void getUidAndSearchName(GameBoxart& media);
+	void fetchByUids(std::vector<GameBoxart>& items);
+	void fetchByName(GameBoxart& item);
+	bool parseGameInfo(const json& gameArray, const json& boxartArray, GameBoxart& item, const std::string& diskId);
 
-	int dreamcastPlatformId;
-	int arcadePlatformId;
+	int dreamcastPlatformId = 0;
+	int arcadePlatformId = 0;
 	double blackoutPeriod = 0.0;
 
 	std::map<std::string, std::string> boxartCache;	// key: url, value: local file path

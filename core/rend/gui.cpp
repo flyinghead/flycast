@@ -2295,7 +2295,65 @@ inline static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 }
 
-static std::future<const GameBoxart *> futureBoxart;
+static void gameTooltip(const std::string& tip)
+{
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+        ImGui::TextUnformatted(tip.c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+{
+	textureId = ImTextureID{};
+	if (art->boxartPath.empty())
+		return false;
+
+	// Get the boxart texture. Load it if needed.
+	textureId = imguiDriver->getTexture(art->boxartPath);
+	if (textureId == ImTextureID() && allowLoad)
+	{
+		int width, height;
+		u8 *imgData = loadImage(art->boxartPath, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+			} catch (const std::exception&) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+		return true;
+	}
+	return false;
+}
+
+static bool gameImageButton(ImTextureID textureId, const std::string& tooltip)
+{
+	float ar = imguiDriver->getAspectRatio(textureId);
+	ImVec2 uv0 { 0.f, 0.f };
+	ImVec2 uv1 { 1.f, 1.f };
+	if (ar > 1)
+	{
+		uv0.y = -(ar - 1) / 2;
+		uv1.y = 1 + (ar - 1) / 2;
+	}
+	else if (ar != 0)
+	{
+		ar = 1 / ar;
+		uv0.x = -(ar - 1) / 2;
+		uv1.x = 1 + (ar - 1) / 2;
+	}
+	bool pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	gameTooltip(tooltip);
+
+    return pressed;
+}
 
 static void gui_display_content()
 {
@@ -2344,20 +2402,35 @@ static void gui_display_content()
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		int counter = 0;
+		int loadedImages = 0;
 		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
 		{
 			ImGui::PushID("bios");
 			bool pressed;
 			if (config::BoxartDisplayMode)
-				pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
+			{
+				ImTextureID textureId{};
+				GameMedia game;
+				const GameBoxart *art = boxart.getBoxart(game);
+				if (art != nullptr)
+				{
+					if (getGameImage(art, textureId, loadedImages < 10))
+						loadedImages++;
+				}
+				if (textureId != ImTextureID())
+					pressed = gameImageButton(textureId, "Dreamcast BIOS");
+				else
+					pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
+			}
 			else
+			{
 				pressed = ImGui::Selectable("Dreamcast BIOS");
+			}
 			if (pressed)
 				gui_start_game("");
 			ImGui::PopID();
 			counter++;
 		}
-		int loadedImages = 0;
 		{
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
@@ -2375,15 +2448,6 @@ static void gui_display_content()
 				if (config::BoxartDisplayMode)
 				{
 					art = boxart.getBoxart(game);
-					if (art == nullptr && config::FetchBoxart)
-					{
-						if (futureBoxart.valid() && futureBoxart.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-							futureBoxart.get();
-							art = boxart.getBoxart(game);
-						}
-						if (art == nullptr && !futureBoxart.valid())
-							futureBoxart = boxart.fetchBoxart(game);
-					}
 					if (art != nullptr)
 						gameName = art->name;
 				}
@@ -2397,55 +2461,19 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						ImTextureID textureId{};
-						if (art != nullptr && !art->boxartPath.empty())
+						if (art != nullptr)
 						{
-							// Get the boxart texture. Load it if needed.
-							textureId = imguiDriver->getTexture(art->boxartPath);
-							if (textureId == ImTextureID() && loadedImages < 10)
-							{
-								// Load 10 images max per frame
+							// Get the boxart texture. Load it if needed (max 10 per frame).
+							if (getGameImage(art, textureId, loadedImages < 10))
 								loadedImages++;
-								int width, height;
-								u8 *imgData = loadImage(art->boxartPath, width, height);
-								if (imgData != nullptr)
-								{
-									try {
-										textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
-									} catch (const std::exception&) {
-										// vulkan can throw during resizing
-									}
-									free(imgData);
-								}
-							}
 						}
 						if (textureId != ImTextureID())
-						{
-							float ar = imguiDriver->getAspectRatio(textureId);
-							ImVec2 uv0 { 0.f, 0.f };
-							ImVec2 uv1 { 1.f, 1.f };
-							if (ar > 1)
-							{
-								uv0.y = -(ar - 1) / 2;
-								uv1.y = 1 + (ar - 1) / 2;
-							}
-							else if (ar != 0)
-							{
-								ar = 1 / ar;
-								uv0.x = -(ar - 1) / 2;
-								uv1.x = 1 + (ar - 1) / 2;
-							}
-							pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
-						}
+							pressed = gameImageButton(textureId, game.name);
 						else
+						{
 							pressed = ImGui::Button(gameName.c_str(), ScaledVec2(200, 200));
-					    if (ImGui::IsItemHovered())
-					    {
-					        ImGui::BeginTooltip();
-					        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
-					        ImGui::TextUnformatted(game.name.c_str());
-					        ImGui::PopTextWrapPos();
-					        ImGui::EndTooltip();
-					    }
+							gameTooltip(game.name);
+						}
 					}
 					else
 					{
@@ -2855,8 +2883,6 @@ void gui_error(const std::string& what)
 
 void gui_save()
 {
-	if (futureBoxart.valid())
-		futureBoxart.get();
 	boxart.saveDatabase();
 }
 
