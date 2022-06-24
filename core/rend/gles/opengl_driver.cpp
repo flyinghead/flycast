@@ -24,6 +24,13 @@
 #include "glcache.h"
 #include "gles.h"
 
+#ifndef GL_CLAMP_TO_BORDER
+#define GL_CLAMP_TO_BORDER 0x812D
+#endif
+#ifndef GL_TEXTURE_BORDER_COLOR
+#define GL_TEXTURE_BORDER_COLOR 0x1004
+#endif
+
 static constexpr int vmu_coords[8][2] = {
 		{ 0 , 0 },
 		{ 0 , 0 },
@@ -173,8 +180,7 @@ ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data,
     glcache.BindTexture(GL_TEXTURE_2D, texId);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#ifndef GLES2
-	if (!gl.is_gles || gl.gl_major >= 3)
+    if (gl.border_clamp_supported)
 	{
 		float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
@@ -182,7 +188,6 @@ ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data,
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	}
 	else
-#endif
 	{
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

@@ -236,6 +236,7 @@ struct gl_ctx
 	bool highp_float_supported;
 	float max_anisotropy;
 	bool mesa_nouveau;
+	bool border_clamp_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
