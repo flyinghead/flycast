@@ -27,6 +27,7 @@ struct WidescreenCheat
 	const char *area_or_version;
 	u32 addresses[16];
 	u32 values[16];
+	u32 origValues[16];
 };
 
 struct Cheat
