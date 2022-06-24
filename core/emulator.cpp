@@ -652,6 +652,12 @@ void loadGameSpecificSettings()
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
+
+	if (config::ForceWindowsCE)
+	{
+		config::ExtraDepthScale.override(0.1f);
+		config::FullMMU.override(true);
+	}
 }
 
 void Emulator::step()
