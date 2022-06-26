@@ -151,7 +151,11 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 		}
 	}
 
-	json dataArray = j.contains("data") ? j["data"][std::to_string(gameId)] : j["images"][std::to_string(gameId)];
+	const json& images = j.contains("data") ? j["data"] : j["images"];
+	if (images.is_array())
+		// No boxart
+		return;
+	json dataArray = images[std::to_string(gameId)];
 	std::string imagePath;
 	for (const auto& o : dataArray)
 	{
