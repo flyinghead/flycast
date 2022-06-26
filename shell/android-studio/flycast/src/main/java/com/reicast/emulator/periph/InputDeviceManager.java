@@ -113,4 +113,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public native void mouseScrollEvent(int scrollValue);
     private native void joystickAdded(int id, String name, int maple_port, String uniqueId, int fullAxes[], int halfAxes[]);
     private native void joystickRemoved(int id);
+    public native boolean keyboardEvent(int key, boolean pressed);
+    public native void keyboardText(int c);
 }

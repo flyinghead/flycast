@@ -1289,7 +1289,10 @@ if(NOT LIBRETRO)
 	if(ANDROID)
 	    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 	
-	    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
+	    target_sources(${PROJECT_NAME} PRIVATE
+	    	shell/android-studio/flycast/src/main/jni/src/Android.cpp
+	    	shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
+	    	shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)

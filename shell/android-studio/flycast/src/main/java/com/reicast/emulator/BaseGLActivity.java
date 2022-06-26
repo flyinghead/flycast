@@ -3,11 +3,11 @@ package com.reicast.emulator;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +43,7 @@ import java.util.Locale;
 
 import tv.ouya.console.api.OuyaController;
 
+import static android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO;
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION;
@@ -61,6 +62,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     private boolean paused = true;
     private boolean resumedCalled = false;
     private String pendingIntentUrl;
+    private boolean hasKeyboard = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -134,6 +136,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
         audioBackend = new AudioBackend();
 
+        onConfigurationChanged(getResources().getConfiguration());
+
         // When viewing a resource, pass its URI to the native code for opening
         Intent intent = getIntent();
         if (intent.getAction() != null) {
@@ -204,6 +208,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         } else {
             handleStateChange(true);
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        hasKeyboard = newConfig.hardKeyboardHidden == HARDKEYBOARDHIDDEN_NO;
     }
 
     protected abstract void doPause();
@@ -291,6 +301,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), keyCode, false))
             return true;
+        if (hasKeyboard && InputDeviceManager.getInstance().keyboardEvent(keyCode, false))
+            return true;
         return super.onKeyUp(keyCode, event);
     }
 
@@ -310,6 +322,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             if (InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), keyCode, true))
                 return true;
 
+            if (hasKeyboard) {
+                InputDeviceManager.getInstance().keyboardEvent(keyCode, true);
+                if (!event.isCtrlPressed() && (event.isPrintingKey() || event.getKeyCode() == KeyEvent.KEYCODE_SPACE))
+                    InputDeviceManager.getInstance().keyboardText(event.getUnicodeChar());
+                return true;
+            }
             if (ViewConfiguration.get(this).hasPermanentMenuKey()) {
                 if (keyCode == KeyEvent.KEYCODE_MENU) {
                     return showMenu();
