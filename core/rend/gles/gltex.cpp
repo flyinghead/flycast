@@ -332,7 +332,7 @@ void ReadRTTBuffer()
 			texture_data->texID = gl.rtt.tex;
 			gl.rtt.tex = 0;
 			texture_data->dirty = 0;
-			texture_data->protectVRam();
+			texture_data->unprotectVRam();
 		}
 		gl.rtt.texAddress = ~0;
 	}
