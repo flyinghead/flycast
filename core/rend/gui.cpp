@@ -126,16 +126,6 @@ void gui_init()
 	io.KeyMap[ImGuiKey_Y] = 0x1C;
 	io.KeyMap[ImGuiKey_Z] = 0x1D;
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
-    ImGui::GetStyle().TabRounding = 0;
-    ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
-    ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
-    //ImGui::GetStyle().WindowRounding = 0;
-#if defined(__ANDROID__) || defined(TARGET_IPHONE)
-    ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
-#endif
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
@@ -147,31 +137,28 @@ void gui_initFonts()
 	static float uiScale;
 
 	verify(inited);
-	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
-		return;
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Read 'misc/fonts/README.txt' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
+
 #if !defined(TARGET_UWP) && !defined(__SWITCH__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
     	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
 #endif
-    uiScale = settings.display.uiScale;
-    if (settings.display.uiScale > 1)
-    	ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
+	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
+		return;
+	uiScale = settings.display.uiScale;
+
+    // Setup Dear ImGui style
+	ImGui::GetStyle() = ImGuiStyle{};
+    ImGui::StyleColorsDark();
+    ImGui::GetStyle().TabRounding = 0;
+    ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
+    ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+    ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
+#endif
+	if (settings.display.uiScale > 1)
+		ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 
     static const ImWchar ranges[] =
     {
