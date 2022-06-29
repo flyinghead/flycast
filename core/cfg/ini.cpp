@@ -1,8 +1,7 @@
 #include "ini.h"
 #include "types.h"
 #include <sstream>
-
-char* trim_ws(char* str);
+#include "stdclass.h"
 
 namespace emucfg {
 
@@ -23,6 +22,14 @@ int ConfigEntry::get_int()
 	{
 		return atoi(this->value.c_str());
 	}
+}
+
+int64_t ConfigEntry::get_int64()
+{
+	int base = 10;
+	if (strstr(this->value.c_str(), "0x") != nullptr)
+		base = 16;
+	return (int64_t)strtoll(this->value.c_str(), nullptr, base);
 }
 
 bool ConfigEntry::get_bool()
@@ -159,6 +166,19 @@ int ConfigFile::get_int(const std::string& section_name, const std::string& entr
 	}
 }
 
+int64_t ConfigFile::get_int64(const std::string& section_name, const std::string& entry_name, int64_t default_value)
+{
+	ConfigEntry* entry = this->get_entry(section_name, entry_name);
+	if (entry == NULL)
+	{
+		return default_value;
+	}
+	else
+	{
+		return entry->get_int64();
+	}
+}
+
 bool ConfigFile::get_bool(const std::string& section_name, const std::string& entry_name, bool default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
@@ -189,6 +209,13 @@ void ConfigFile::set_int(const std::string& section_name, const std::string& ent
 	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
+void ConfigFile::set_int64(const std::string& section_name, const std::string& entry_name, int64_t value, bool is_virtual)
+{
+	std::stringstream str_value;
+	str_value << value;
+	this->set(section_name, entry_name, str_value.str(), is_virtual);
+}
+
 void ConfigFile::set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual)
 {
 	std::string str_value = (value ? "yes" : "no");
@@ -197,74 +224,37 @@ void ConfigFile::set_bool(const std::string& section_name, const std::string& en
 
 void ConfigFile::parse(FILE* file)
 {
-	if(file == NULL)
-	{
+	if (file == nullptr)
 		return;
-	}
+
 	char line[512];
-	char current_section[512] = { '\0' };
+	std::string section;
 	int cline = 0;
-	while(file && !feof(file))
+	while (true)
 	{
-		if (std::fgets(line, 512, file) == NULL || std::feof(file))
-		{
+		if (std::fgets(line, sizeof(line), file) == nullptr)
 			break;
-		}
-
 		cline++;
-
-		if (strlen(line) < 3)
+		std::string s(line);
+		s = trim_ws(s, " \r\n");
+		if (s.empty())
+			continue;
+		if (s.length() >= 3 && s[0] == '[' && s[s.length() - 1] == ']')
 		{
+			section = s.substr(1, s.length() - 2);
 			continue;
 		}
-
-		if (line[strlen(line)-1] == '\r' ||
-			  line[strlen(line)-1] == '\n')
+		auto eqpos = s.find('=');
+		if (eqpos == std::string::npos)
 		{
-			line[strlen(line)-1] = '\0';
+			WARN_LOG(COMMON, "Malformed entry on config - ignoring line %d: %s", cline, s.c_str());
+			continue;
 		}
-
-		char* tl = trim_ws(line);
-
-		if (tl[0] == '[' && tl[strlen(tl)-1] == ']')
-		{
-			tl[strlen(tl)-1] = '\0';
-
-			// FIXME: Data loss if buffer is too small
-			strncpy(current_section, tl+1, sizeof(current_section));
-			current_section[sizeof(current_section) - 1] = '\0';
-
-			trim_ws(current_section);
-		}
-		else
-		{
-			if (strlen(current_section) == 0)
-			{
-				continue; //no open section
-			}
-
-			char* separator = strstr(tl, "=");
-
-			if (!separator)
-			{
-				WARN_LOG(COMMON, "Malformed entry on config - ignoring @ %d(%s)", cline, tl);
-				continue;
-			}
-
-			*separator = '\0';
-
-			char* name = trim_ws(tl);
-			char* value = trim_ws(separator + 1);
-			if (name == NULL || value == NULL)
-			{
-				//printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
-				continue;
-			}
-			else
-			{
-				this->set(std::string(current_section), std::string(name), std::string(value));
-			}
-		}
+		std::string property = trim_ws(s.substr(0, eqpos));
+		std::string value = trim_ws(s.substr(eqpos + 1));
+		if (value.length() >= 2 && value[0] == '"' && value[value.length() - 1] == '"')
+			value = value.substr(1, value.length() - 2);
+		set(section, property, value);
 	}
 }
 
@@ -275,7 +265,8 @@ void ConfigFile::save(FILE* file)
 		const std::string& section_name = section_it.first;
 		const ConfigSection& section = section_it.second;
 
-		std::fprintf(file, "[%s]\n", section_name.c_str());
+		if (!section_name.empty())
+			std::fprintf(file, "[%s]\n", section_name.c_str());
 
 		for (const auto& entry_it : section.entries)
 		{
@@ -283,8 +274,8 @@ void ConfigFile::save(FILE* file)
 			const ConfigEntry& entry = entry_it.second;
 			std::fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
-
-		std::fputs("\n", file);
+		if (!section_name.empty())
+			std::fputc('\n', file);
 	}
 }
 

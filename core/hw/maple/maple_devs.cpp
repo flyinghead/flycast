@@ -2,10 +2,10 @@
 #include "maple_cfg.h"
 #include "maple_helper.h"
 #include "hw/pvr/spg.h"
-#include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "oslib/oslib.h"
 #include "cfg/option.h"
-
+#include "hw/aica/sgc_if.h"
 #include <zlib.h>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
@@ -38,6 +38,12 @@ maple_device::~maple_device()
     delete config;
 }
 
+static inline void mutualExclusion(u32& keycode, u32 mask)
+{
+	if ((keycode & mask) == 0)
+		keycode |= mask;
+}
+
 /*
 	Sega Dreamcast Controller
 	No error checking of any kind, but works just fine
@@ -53,7 +59,10 @@ struct maple_sega_controller: maple_base
 		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
 	}
 
-	virtual u32 transform_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode)
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
@@ -189,7 +198,10 @@ struct maple_atomiswave_controller: maple_sega_controller
 		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
+		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
@@ -215,7 +227,12 @@ struct maple_sega_twinstick: maple_sega_controller
 		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		mutualExclusion(kcode, DC_DPAD2_UP | DC_DPAD2_DOWN);
+		mutualExclusion(kcode, DC_DPAD2_LEFT | DC_DPAD2_RIGHT);
 		return kcode | 0x0101;
 	}
 
@@ -247,7 +264,10 @@ struct maple_ascii_stick: maple_sega_controller
 		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF800;
 	}
 
@@ -303,21 +323,25 @@ struct maple_sega_vmu: maple_base
 		return MDT_SegaVMU;
 	}
 
-	bool serialize(void **data, unsigned int *total_size) override
+	void serialize(Serializer& ser) const override
 	{
-		maple_base::serialize(data, total_size);
-		REICAST_SA(flash_data,128*1024);
-		REICAST_SA(lcd_data,192);
-		REICAST_SA(lcd_data_decoded,48*32);
-		return true ;
+		maple_base::serialize(ser);
+		ser << flash_data;
+		ser << lcd_data;
+		ser << lcd_data_decoded;
 	}
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
+	void deserialize(Deserializer& deser) override
 	{
-		maple_base::unserialize(data, total_size, version);
-		REICAST_USA(flash_data,128*1024);
-		REICAST_USA(lcd_data,192);
-		REICAST_USA(lcd_data_decoded,48*32);
-		return true ;
+		maple_base::deserialize(deser);
+		deser >> flash_data;
+		deser >> lcd_data;
+		deser >> lcd_data_decoded;
+		for (u8 b : lcd_data)
+			if (b != 0)
+			{
+				config->SetImage(lcd_data_decoded);
+				break;
+			}
 	}
 
 	void initializeVmu()
@@ -343,12 +367,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		char tempy[512];
-		sprintf(tempy, "vmu_save_%s.bin", logical_port);
-		// VMU saves used to be stored in .reicast, not in .reicast/data
-		std::string apath = get_writable_config_path(tempy);
-		if (!file_exists(apath))
-			apath = get_writable_data_path(tempy);
+		std::string apath = hostfs::getVmuPath(logical_port);
 
 		file = nowide::fopen(apath.c_str(), "rb+");
 		if (file == nullptr)
@@ -661,11 +680,13 @@ struct maple_sega_vmu: maple_base
 				{
 				case MFID_3_Clock:
 					{
-						u32 bp = r32();
-						if (bp)
-							INFO_LOG(MAPLE, "BEEP : %08X", bp);
+						u8 on = r8();
+						u8 period = r8();
+						r16(); // Alarm 2
+						INFO_LOG(MAPLE, "BEEP: %d/%d", on, period);
+						vmuBeep(on, period);
 					}
-					return MDRS_DeviceReply; //just ko
+					return MDRS_DeviceReply;
 
 				default:
 					INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
@@ -675,15 +696,23 @@ struct maple_sega_vmu: maple_base
 			break;
 
 		case MDC_DeviceReset:
+			vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		case MDC_DeviceKill:
+			vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		default:
 			DEBUG_LOG(MAPLE, "Unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
+	}
+
+	const void *getData(size_t& size) const override
+	{
+		size = sizeof(flash_data);
+		return flash_data;
 	}
 };
 
@@ -704,28 +733,26 @@ struct maple_microphone: maple_base
 		return MDT_Microphone;
 	}
 
-	bool serialize(void **data, unsigned int *total_size) override
+	void serialize(Serializer& ser) const override
 	{
-		maple_base::serialize(data, total_size);
-		REICAST_S(gain);
-		REICAST_S(sampling);
-		REICAST_S(eight_khz);
-		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
-		return true;
+		maple_base::serialize(ser);
+		ser << gain;
+		ser << sampling;
+		ser << eight_khz;
 	}
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
+	void deserialize(Deserializer& deser) override
 	{
 		if (sampling)
 			StopAudioRecording();
-		maple_base::unserialize(data, total_size, version);
-		REICAST_US(gain);
-		REICAST_US(sampling);
-		REICAST_US(eight_khz);
-		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
+		maple_base::deserialize(deser);
+		deser >> gain;
+		deser >> sampling;
+		deser >> eight_khz;
+		deser.skip(480 - sizeof(u32) - sizeof(bool) * 2, Deserializer::V23);
 		if (sampling)
 			StartAudioRecording(eight_khz);
-		return true;
 	}
+
 	void OnSetup() override
 	{
 		gain = 0xf;
@@ -878,22 +905,21 @@ struct maple_sega_purupuru : maple_base
 		return MDT_PurupuruPack;
 	}
 
-   bool serialize(void **data, unsigned int *total_size) override
-   {
-	  maple_base::serialize(data, total_size);
-      REICAST_S(AST);
-      REICAST_S(AST_ms);
-      REICAST_S(VIBSET);
-      return true ;
-   }
-   bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
-   {
-	  maple_base::unserialize(data, total_size, version);
-      REICAST_US(AST);
-      REICAST_US(AST_ms);
-      REICAST_US(VIBSET);
-      return true ;
-   }
+	void serialize(Serializer& ser) const override
+	{
+		maple_base::serialize(ser);
+		ser << AST;
+		ser << AST_ms;
+		ser << VIBSET;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		maple_base::deserialize(deser);
+		deser >> AST;
+		deser >> AST_ms;
+		deser >> VIBSET;
+	}
+
 	u32 dma(u32 cmd) override
 	{
 		switch (cmd)
@@ -1011,10 +1037,6 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
-u8 kb_shift; 		// shift keys pressed (bitmask)
-u8 kb_led; 			// leds currently lit
-u8 kb_key[6]={0};	// normal keys pressed
-
 struct maple_keyboard : maple_base
 {
 	MapleDeviceType get_device_type() override
@@ -1071,18 +1093,21 @@ struct maple_keyboard : maple_base
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
-			w32(MFID_6_Keyboard);
-			//struct data
-			//int8 shift          ; shift keys pressed (bitmask)	//1
-			w8(kb_shift);
-			//int8 led            ; leds currently lit			//1
-			w8(kb_led);
-			//int8 key[6]         ; normal keys pressed			//6
-			for (int i = 0; i < 6; i++)
 			{
-				w8(kb_key[i]);
-			}
+				u8 shift;
+				u8 keys[6];
+				config->GetKeyboardInput(shift, keys);
 
+				w32(MFID_6_Keyboard);
+				//struct data
+				//int8 shift          ; shift keys pressed (bitmask)	//1
+				w8(shift);
+				//int8 led            ; leds currently lit			//1
+				w8(0);
+				//int8 key[6]         ; normal keys pressed			//6
+				for (int i = 0; i < 6; i++)
+					w8(keys[i]);
+			}
 			return MDRS_DataTransfer;
 
 		case MDC_DeviceReset:
@@ -1097,31 +1122,6 @@ struct maple_keyboard : maple_base
 		}
 	}
 };
-
-// Mouse buttons
-// bit 0: Button C
-// bit 1: Right button (B)
-// bit 2: Left button (A)
-// bit 3: Wheel button
-u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
-// Relative mouse coordinates [-512:511]
-f32 mo_x_delta[4];
-f32 mo_y_delta[4];
-f32 mo_wheel_delta[4];
-// Absolute mouse coordinates
-// Range [0:639] [0:479]
-// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs[4];
-s32 mo_y_abs[4];
-// previous mouse coordinates for relative motion
-s32 mo_x_prev[4] = { -1, -1, -1, -1 };
-s32 mo_y_prev[4] = { -1, -1, -1, -1 };
-// physical mouse coordinates (relative to window/screen)
-s32 mo_x_phy;
-s32 mo_y_phy;
-// last known screen/window size
-static s32 mo_width;
-static s32 mo_height;
 
 struct maple_mouse : maple_base
 {
@@ -1161,10 +1161,10 @@ struct maple_mouse : maple_base
 			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
-			w16(0x0069);	// 10.5 mA
+			w16(0x0190);	// 40 mA
 
 			// Maximum current consumption (2)
-			w16(0x0120);	// 28.8 mA
+			w16(0x01f4);	// 50 mA
 
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
@@ -1175,14 +1175,13 @@ struct maple_mouse : maple_base
 				config->GetMouseInput(buttons, x, y, wheel);
 
 				w32(MFID_9_Mouse);
-				//struct data
-				//int8 buttons       ; buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
+				// buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
 				w8(buttons);
-				//int8 options
+				// options
 				w8(0);
-				//int8 axes overflow
+				// axes overflow
 				w8(0);
-				//int8 reserved
+				// reserved
 				w8(0);
 				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
 				w16(mo_cvt(x));
@@ -1219,7 +1218,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
-	virtual u32 transform_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode)
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		if ((kcode & DC_BTN_RELOAD) == 0)
 			kcode &= ~DC_BTN_A;	// trigger
 		return kcode | 0xFF01;
@@ -1316,6 +1318,8 @@ struct maple_lightgun : maple_base
 struct atomiswave_lightgun : maple_lightgun
 {
 	u32 transform_kcode(u32 kcode) override {
+		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
+		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		// No need for reload on AW
 		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
@@ -1327,7 +1331,7 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 			rv = new maple_sega_controller();
 		else
 			rv = new maple_atomiswave_controller();
@@ -1354,7 +1358,7 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
-		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+		if (!settings.platform.isAtomiswave())
 			rv = new maple_lightgun();
 		else
 			rv = new atomiswave_lightgun();
@@ -1381,79 +1385,3 @@ maple_device* maple_Create(MapleDeviceType type)
 	return rv;
 }
 
-static void screenToNative(int& x, int& y, int width, int height)
-{
-	float fx, fy;
-	if (!config::Rotate90)
-	{
-		float scale = 480.f / height;
-		fy = y * scale;
-		scale /= config::ScreenStretching / 100.f;
-		fx = (x - (width - 640.f / scale) / 2.f) * scale;
-	}
-	else
-	{
-		float scale = 640.f / width;
-		fx = x * scale;
-		scale /= config::ScreenStretching / 100.f;
-		fy = (y - (height - 480.f / scale) / 2.f) * scale;
-	}
-	x = (int)std::round(fx);
-	y = (int)std::round(fy);
-}
-
-void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
-{
-	if (mouseId == 0)
-	{
-		mo_x_phy = x;
-		mo_y_phy = y;
-	}
-	mo_width = width;
-	mo_height = height;
-
-	if (config::Rotate90)
-	{
-		int t = y;
-		y = x;
-		x = height - 1 - t;
-		std::swap(width, height);
-	}
-	screenToNative(x, y, width, height);
-	mo_x_abs[mouseId] = x;
-	mo_y_abs[mouseId] = y;
-
-	if (mo_x_prev[mouseId] != -1)
-	{
-		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
-		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
-	}
-	mo_x_prev[mouseId] = x;
-	mo_y_prev[mouseId] = y;
-}
-
-void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
-{
-	int width = mo_width;
-	int height = mo_height;
-	if (config::Rotate90)
-	{
-		std::swap(xrel, yrel);
-		xrel = -xrel;
-		std::swap(width, height);
-	}
-	float dx = (float)xrel * config::MouseSensitivity / 100.f;
-	float dy = (float)yrel * config::MouseSensitivity / 100.f;
-	mo_x_delta[mouseId] += dx;
-	mo_y_delta[mouseId] += dy;
-	int minX = -width / 32;
-	int minY = -height / 32;
-	int maxX = width + width / 32;
-	int maxY = height + height / 32;
-	screenToNative(minX, minY, width, height);
-	screenToNative(maxX, maxY, width, height);
-	mo_x_abs[mouseId] += (int)std::round(dx);
-	mo_y_abs[mouseId] += (int)std::round(dy);
-	mo_x_abs[mouseId] = std::min(std::max(mo_x_abs[mouseId], minX), maxX);
-	mo_y_abs[mouseId] = std::min(std::max(mo_y_abs[mouseId], minY), maxY);
-}

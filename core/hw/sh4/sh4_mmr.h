@@ -1,7 +1,8 @@
 #pragma once
 #include <array>
 #include "types.h"
-#include "../sh4/sh4_if.h"
+#include "sh4_if.h"
+#include "hw/hwreg.h"
 
 //For mem mapping
 void map_area7_init();

@@ -62,7 +62,11 @@ public:
 	void GetInput(PlainJoystickState* pjs);
 	void GetAbsCoordinates(int& x, int& y);
 	void GetMouseInput(u8& buttons, int& x, int& y, int& wheel);
+	void GetKeyboardInput(u8& shift, u8 keys[6]);
 	void SetImage(u8 *img);
+
+	static void (*UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
+	bool invertMouseY = false;
 
 private:
 	u32 playerNum();
@@ -70,13 +74,36 @@ private:
 	maple_device* dev;
 };
 
-void mcfg_CreateDevices();
-void mcfg_CreateNAOMIJamma();
-void mcfg_CreateAtomisWaveControllers();
+struct MapleInputState
+{
+	MapleInputState() : halfAxes{}, fullAxes{} {
+		memset(keyboard.key, 0, sizeof(keyboard.key));
+	}
 
+	u32 kcode = ~0;
+	u8 halfAxes[PJTI_Count];		// LT, RT
+	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y
+	u8 mouseButtons = ~0;
+	struct {
+		int x = -1;
+		int y = -1;
+	} absPos;
+	struct {
+		int16_t x = 0;
+		int16_t y = 0;
+		int16_t wheel = 0;
+	} relPos;
+	struct {
+		u8 shift = 0;				// modifier keys bitmask
+		u8 key[6];					// normal keys pressed
+	} keyboard;
+};
+extern MapleInputState mapleInputState[4];
+
+void mcfg_CreateDevices();
 void mcfg_DestroyDevices();
-void mcfg_SerializeDevices(void **data, unsigned int *total_size);
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version);
+void mcfg_SerializeDevices(Serializer& ser);
+void mcfg_DeserializeDevices(Deserializer& deser);
 
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);

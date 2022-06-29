@@ -20,6 +20,7 @@
 #include "rtl8139c.h"
 #include "hw/holly/holly_intc.h"
 #include "network/picoppp.h"
+#include "serialize.h"
 
 static RTL8139State *rtl8139device;
 
@@ -231,28 +232,25 @@ void pci_dma_write(PCIDevice *dev, dma_addr_t addr, const void *buf, dma_addr_t 
 	memcpy(&GAPS_ram[addr & GAPSPCI_RAM_MASK], buf, len);
 }
 
-void bba_Serialize(void **data, unsigned int *total_size)
+void bba_Serialize(Serializer& ser)
 {
-	REICAST_S(GAPS_regs);
-	REICAST_S(GAPS_ram);
-	REICAST_S(dmaOffset);
-	REICAST_S(interruptPending);
-	rtl8139_serialize(rtl8139device, data, total_size);
+	ser << GAPS_regs;
+	ser << GAPS_ram;
+	ser << dmaOffset;
+	ser << interruptPending;
+	rtl8139_serialize(rtl8139device, ser);
 }
 
-void bba_Unserialize(void **data, unsigned int *total_size)
+void bba_Deserialize(Deserializer& deser)
 {
-	if (rtl8139device == nullptr)
-		bba_Init();
-	REICAST_US(GAPS_regs);
-	REICAST_US(GAPS_ram);
-	REICAST_US(dmaOffset);
-	REICAST_US(interruptPending);
-	// returns true if the receiver is enabled and the network stack must be started
-	if (rtl8139_unserialize(rtl8139device, data, total_size))
-		start_pico();
+	deser >> GAPS_regs;
+	deser >> GAPS_ram;
+	deser >> dmaOffset;
+	deser >> interruptPending;
+    // returns true if the receiver is enabled and the network stack must be started
+    if (rtl8139_deserialize(rtl8139device, deser))
+        start_pico();
 }
-
 
 #define POLYNOMIAL_BE 0x04c11db6
 

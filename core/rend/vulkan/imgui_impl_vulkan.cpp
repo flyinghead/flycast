@@ -220,6 +220,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
     // Upload Vertex and index Data:
     {
+		if (vertex_size != 0)
+			vertex_size = ((vertex_size - 1) / g_BufferMemoryAlignment + 1) * g_BufferMemoryAlignment;
+		if (index_size != 0)
+			index_size = ((index_size - 1) / g_BufferMemoryAlignment + 1) * g_BufferMemoryAlignment;
         ImDrawVert* vtx_dst = NULL;
         ImDrawIdx* idx_dst = NULL;
         err = vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));
@@ -696,7 +700,7 @@ void    ImGui_ImplVulkan_InvalidateDeviceObjects()
     }
 
     if (g_FontView)             { vkDestroyImageView(g_Device, g_FontView, g_Allocator); g_FontView = VK_NULL_HANDLE; }
-    if (g_FontImage)            { vkDestroyImage(g_Device, g_FontImage, g_Allocator); g_FontImage = VK_NULL_HANDLE; }
+    if (g_FontImage)            { vkDestroyImage(g_Device, g_FontImage, g_Allocator); g_FontImage = VK_NULL_HANDLE; ImGui::GetIO().Fonts->SetTexID(NULL); }
     if (g_FontMemory)           { vkFreeMemory(g_Device, g_FontMemory, g_Allocator); g_FontMemory = VK_NULL_HANDLE; }
     if (g_FontSampler)          { vkDestroySampler(g_Device, g_FontSampler, g_Allocator); g_FontSampler = VK_NULL_HANDLE; }
     if (g_DescriptorSetLayout)  { vkDestroyDescriptorSetLayout(g_Device, g_DescriptorSetLayout, g_Allocator); g_DescriptorSetLayout = VK_NULL_HANDLE; }

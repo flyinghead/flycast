@@ -36,7 +36,6 @@ static u32 sh4io_read_noacc(u32 addr)
 static void sh4io_write_noacc(u32 addr, u32 data)
 { 
 	INFO_LOG(SH4, "sh4io: Invalid write access @@ %08X %08X", addr, data);
-	//verify(false); 
 }
 static void sh4io_write_const(u32 addr, u32 data)
 { 
@@ -776,49 +775,52 @@ void sh4_mmr_init()
 	serial_init();
 	tmu_init();
 	ubc_init();
+
+	MMU_init();
 }
 
 void sh4_mmr_reset(bool hard)
 {
-	if (hard)
-	{
-		for (auto& reg : CCN)
-			reg.reset();
-		for (auto& reg : UBC)
-			reg.reset();
-		for (auto& reg : BSC)
-			reg.reset();
-		for (auto& reg : DMAC)
-			reg.reset();
-		for (auto& reg : CPG)
-			reg.reset();
-		for (auto& reg : RTC)
-			reg.reset();
-		for (auto& reg : INTC)
-			reg.reset();
-		for (auto& reg : TMU)
-			reg.reset();
-		for (auto& reg : SCI)
-			reg.reset();
-		for (auto& reg : SCIF)
-			reg.reset();
-	}
+	for (auto& reg : CCN)
+		reg.reset();
+	for (auto& reg : UBC)
+		reg.reset();
+	for (auto& reg : BSC)
+		reg.reset();
+	for (auto& reg : DMAC)
+		reg.reset();
+	for (auto& reg : CPG)
+		reg.reset();
+	for (auto& reg : RTC)
+		reg.reset();
+	for (auto& reg : INTC)
+		reg.reset();
+	for (auto& reg : TMU)
+		reg.reset();
+	for (auto& reg : SCI)
+		reg.reset();
+	for (auto& reg : SCIF)
+		reg.reset();
+
 	OnChipRAM = {};
 	//Reset register values
-	bsc_reset(hard);
-	ccn_reset(hard);
+	bsc_reset(true);
+	ccn_reset(true);
 	cpg_reset();
 	dmac_reset();
 	intc_reset();
 	rtc_reset();
-	serial_reset();
-	tmu_reset(hard);
+	serial_reset(hard);
+	tmu_reset(true);
 	ubc_reset();
+
+	MMU_reset();
 }
 
 void sh4_mmr_term()
 {
-	//free any alloc'd resources [if any]
+	MMU_term();
+
 	ubc_term();
 	tmu_term();
 	serial_term();

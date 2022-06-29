@@ -18,69 +18,89 @@
     You should have received a copy of the GNU General Public License
     along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+//
+// Optical communication board (837-13691)
+// Ring topology
+// 10 Mbps
+// Max packet size 0x4000
+//
 #include "naomi_m3comm.h"
 #include "naomi_regs.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "network/naomi_network.h"
+#include "emulator.h"
 #include <chrono>
+#include <memory>
+
+constexpr u16 COMM_CTRL_CPU_RAM = 1 << 0;
+constexpr u16 COMM_CTRL_RESET = 1 << 5;		// rising edge
+constexpr u16 COMM_CTRL_G1DMA = 1 << 14;	// active low
+
+struct CommBoardStat
+{
+	u16 transmode;		// communication mode (0: master, positive value: slave)
+	u16 totalnode;		// Total number of nodes (same value is entered in upper and lower 8 bits)
+	u16 nodeID;			// Local node ID (the same value is entered in the upper and lower 8 bits)
+	u16 transcnt;		// counter (value increases by 1 per frame)
+	u16 cts;			// CTS timer value (for debugging)
+	u16 dma_rx_addr;	// DMA receive address (for debugging)
+	u16 dma_rx_size;	// DMA receive size (for debugging)
+	u16 dma_tx_addr;	// DMA transmit address (for debugging)
+	u16 dma_tx_size;	// DMA transmission size (for debugging)
+	u16 dummy[7];
+};
 
 static inline u16 swap16(u16 w)
 {
 	return (w >> 8) | (w << 8);
 }
 
+static void vblankCallback(Event event, void *param) {
+	((NaomiM3Comm *)param)->vblank();
+}
+
 void NaomiM3Comm::closeNetwork()
 {
-	network_stopping = true;
+	EventManager::unlisten(Event::VBlank, vblankCallback, this);
 	naomiNetwork.shutdown();
-	if (thread && thread->joinable())
-		thread->join();
 }
 
 void NaomiM3Comm::connectNetwork()
 {
+	gui_display_notification("Network started", 5000);
 	packet_number = 0;
-	if (naomiNetwork.syncNetwork())
+	slot_count = naomiNetwork.getSlotCount();
+	slot_id = naomiNetwork.getSlotId();
+	if (slot_count >= 2)
 	{
-		slot_count = naomiNetwork.slotCount();
-		slot_id = naomiNetwork.slotId();
-		connectedState(true);
-	}
-	else
-	{
-		connectedState(false);
-		network_stopping = true;
-		naomiNetwork.shutdown();
+		connectedState();
+		EventManager::listen(Event::VBlank, vblankCallback, this);
 	}
 }
 
-void NaomiM3Comm::receiveNetwork()
+bool NaomiM3Comm::receiveNetwork()
 {
 	const u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
 	const u32 packet_size = slot_size * slot_count;
 
 	std::unique_ptr<u8[]> buf(new u8[packet_size]);
 
-	if (naomiNetwork.receive(buf.get(), packet_size))
-	{
-		packet_number += slot_count - 1;
-		*(u16*)&comm_ram[6] = swap16(packet_number);
-		std::unique_lock<std::mutex> lock(mem_mutex);
-		memcpy(&comm_ram[0x100 + slot_size], buf.get(), packet_size);
-	}
+	u16 packetNumber;
+	if (!naomiNetwork.receive(buf.get(), packet_size, &packetNumber))
+		return false;
+
+	*(u16*)&comm_ram[6] = swap16(packetNumber);
+	memcpy(&comm_ram[0x100 + slot_size], buf.get(), packet_size);
+
+	return true;
 }
 
 void NaomiM3Comm::sendNetwork()
 {
-	if (naomiNetwork.hasToken())
-	{
-		const u32 packet_size = swap16(*(u16*)&m68k_ram[0x204]) * slot_count;
-		std::unique_lock<std::mutex> lock(mem_mutex);
-		naomiNetwork.send(&comm_ram[0x100], packet_size);
-		packet_number++;
-		*(u16*)&comm_ram[6] = swap16(packet_number);
-	}
+	const u32 packet_size = swap16(*(u16*)&m68k_ram[0x204]) * slot_count;
+	naomiNetwork.send(&comm_ram[0x100], packet_size, packet_number);
+	packet_number++;
 }
 
 u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
@@ -98,13 +118,13 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 	case NAOMI_COMM2_DATA_addr & 255:
 	{
 		u16 value;
-		if (comm_ctrl & 1)
+		if (comm_ctrl & COMM_CTRL_CPU_RAM)
 			value = *(u16*)&m68k_ram[comm_offset];
 		else
 			// TODO u16 *commram = (u16*)membank("comm_ram")->base();
 			value = *(u16*)&comm_ram[comm_offset];
 		value = swap16(value);
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA %s read @ %04x: %x", (comm_ctrl & 1) ? "m68k ram" : "comm ram", comm_offset, value);
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA %s read @ %04x: %x", (comm_ctrl & COMM_CTRL_CPU_RAM) ? "m68k ram" : "comm ram", comm_offset, value);
 		comm_offset += 2;
 		return value;
 	}
@@ -123,11 +143,8 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 	}
 }
 
-void NaomiM3Comm::connectedState(bool success)
+void NaomiM3Comm::connectedState()
 {
-	if (!success)
-		return;
-
 	memset(&comm_ram[0xf000], 0, 16);
 	comm_ram[0xf000] = 1;
 	comm_ram[0xf001] = 1;
@@ -136,39 +153,16 @@ void NaomiM3Comm::connectedState(bool success)
 
 	u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
 
-	memset(&comm_ram[0], 0, 32);
-	// 80000
-	comm_ram[0] = 0;
-	comm_ram[1] = slot_id == 0 ? 0 : 1;
-	// 80002
-	comm_ram[2] = 0x01;
-	comm_ram[3] = 0x01;
-	// 80004
-	if (slot_id == 0)
-	{
-		comm_ram[4] = 0;
-		comm_ram[5] = 0;
-	}
-	else
-	{
-		comm_ram[4] = 1;
-		comm_ram[5] = 1;
-	}
-	// 80006: packet number
-	comm_ram[6] = 0;
-	comm_ram[7] = 0;
-	// 80008
-	comm_ram[8] = slot_id == 0 ? 0x78 : 0x73;
-	comm_ram[9] = slot_id == 0 ? 0x30 : 0xa2;
-	// 8000A
-	*(u16 *)(comm_ram + 10) = 0x100 + slot_size;		// offset of recvd data
-	// 8000C
-	*(u16 *)(comm_ram + 12) = slot_size * slot_count;	// recvd data size
-	// 8000E
-	*(u16 *)(comm_ram + 14) = 0x100;					// offset of sent data
-	// 80010
-	*(u16 *)(comm_ram + 16) = 0x80 + slot_size * slot_count;	// sent data size
-														// FIXME wrungp uses 100, others 80
+	CommBoardStat& stat = *(CommBoardStat *)&comm_ram[0];
+	memset(&stat, 0, sizeof(stat));
+	stat.transmode = swap16(slot_id == 0 ? 0 : 1);
+	stat.totalnode = slot_count | (slot_count << 8);
+	stat.nodeID = slot_id | (slot_id << 8);
+	stat.cts = swap16(slot_id == 0 ? 0x7830 : 0x73a2);
+	stat.dma_rx_addr = swap16(0x100 + slot_size);
+	stat.dma_rx_size = swap16(slot_size * slot_count);
+	stat.dma_tx_addr = swap16(0x100);
+	stat.dma_tx_size = swap16(slot_size * slot_count);
 
 	comm_status0 = 0xff01;	// But 1 at connect time before f000 is read
 	comm_status1 = (slot_count << 8) | slot_id;
@@ -183,20 +177,19 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 		// bit 1: comm RAM bank (seems R/O for SH4)
 		// bit 5: M68K Reset
 		// bit 6: ???
-		// bit 7: might be M68K IRQ 5 or 2
+		// bit 7: might be M68K IRQ 5 or 2 - set to 0 by nlCbIntr()
 		// bit 14: G1 DMA bus master 0 - active / 1 - disabled
 		// bit 15: 0 - enable / 1 - disable this device ???
-		if (data & (1 << 5))
+		if ((comm_ctrl & COMM_CTRL_RESET) == 0 && (data & COMM_CTRL_RESET) != 0)
 		{
 			DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL m68k reset");
 			memset(&comm_ram[0], 0, 32);
 			comm_status0 = 0; // varies...
 			comm_status1 = 0;
-			if (!thread || !thread->joinable())
-				startThread();
+			connectNetwork();
 		}
-		comm_ctrl = (u16)(data & ~(1 << 5));
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL set to %x", comm_ctrl);
+		comm_ctrl = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL = %x", comm_ctrl);
 		return;
 
 	case NAOMI_COMM2_OFFSET_addr & 255:
@@ -207,7 +200,7 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 	case NAOMI_COMM2_DATA_addr & 255:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA written @ %04x %04x", comm_offset, (u16)data);
 		data = swap16(data);
-		if (comm_ctrl & 1)
+		if (comm_ctrl & COMM_CTRL_CPU_RAM)
 			*(u16*)&m68k_ram[comm_offset] = (u16)data;
 		else
 			*(u16*)&comm_ram[comm_offset] = (u16)data;
@@ -232,11 +225,10 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 
 bool NaomiM3Comm::DmaStart(u32 addr, u32 data)
 {
-	if (comm_ctrl & 0x4000)
+	if (comm_ctrl & COMM_CTRL_G1DMA)
 		return false;
 
 	DEBUG_LOG(NAOMI, "NaomiM3Comm: DMA addr %08X <-> %04x len %d %s", SB_GDSTAR, comm_offset, SB_GDLEN, SB_GDDIR == 0 ? "OUT" : "IN");
-	std::unique_lock<std::mutex> lock(mem_mutex);
 	if (SB_GDDIR == 0)
 	{
 		// Network write
@@ -246,7 +238,8 @@ bool NaomiM3Comm::DmaStart(u32 addr, u32 data)
 	else
 	{
 		// Network read
-		if (SB_GDLEN == 32 && (comm_ctrl & 1) == 0)
+		/*
+		if (SB_GDLEN == 32 && (comm_ctrl & COMM_CTRL_CPU_RAM) == 0)
 		{
 			char buf[32 * 5 + 1];
 			buf[0] = 0;
@@ -257,42 +250,30 @@ bool NaomiM3Comm::DmaStart(u32 addr, u32 data)
 			}
 			DEBUG_LOG(NAOMI, "Comm RAM read @%x: %s", comm_offset, buf);
 		}
+		*/
 		for (u32 i = 0; i < SB_GDLEN; i++)
 			WriteMem8_nommu(SB_GDSTAR + i, comm_ram[comm_offset++]);
 	}
 	return true;
 }
 
-void NaomiM3Comm::startThread()
+void NaomiM3Comm::vblank()
 {
-	network_stopping = false;
-	thread = std::unique_ptr<std::thread>(new std::thread([this]() {
-		using the_clock = std::chrono::high_resolution_clock;
+	if ((comm_ctrl & COMM_CTRL_RESET) == 0 || comm_status1 == 0)
+		return;
 
-		connectNetwork();
-
-		the_clock::time_point token_time = the_clock::now();
-
-		while (!network_stopping)
-		{
-			naomiNetwork.pipeSlaves();
-			receiveNetwork();
-
-			if (slot_id == 0 && naomiNetwork.hasToken())
-			{
-				const auto target_duration = std::chrono::milliseconds(10);
-				auto duration = the_clock::now() - token_time;
-				if (duration < target_duration)
-				{
-					DEBUG_LOG(NAOMI, "Sleeping for %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(target_duration - duration).count());
-					std::this_thread::sleep_for(target_duration - duration);
-				}
-				token_time = the_clock::now();
-			}
-
-			sendNetwork();
-
-		}
-		DEBUG_LOG(NAOMI, "Network thread exiting");
-	}));
+	using the_clock = std::chrono::high_resolution_clock;
+	the_clock::time_point start = the_clock::now();
+	try {
+		bool received = false;
+		do {
+			received = receiveNetwork();
+		} while (!received && the_clock::now() - start < std::chrono::milliseconds(100));
+		if (!received)
+			INFO_LOG(NETWORK, "No data received");
+		sendNetwork();
+	} catch (const FlycastException& e) {
+		comm_status0 = 0;
+		comm_status1 = 0;
+	}
 }

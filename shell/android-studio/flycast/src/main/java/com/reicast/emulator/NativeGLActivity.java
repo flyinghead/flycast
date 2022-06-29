@@ -1,10 +1,12 @@
 package com.reicast.emulator;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.RelativeLayout;
+
+import androidx.annotation.Nullable;
 
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.NativeGLView;
@@ -17,6 +19,7 @@ public final class NativeGLActivity extends BaseGLActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.i("flycast", "NativeGLActivity.onCreate");
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         super.onCreate(savedInstanceState);
@@ -27,6 +30,7 @@ public final class NativeGLActivity extends BaseGLActivity {
         mLayout.addView(mView);
 
         setContentView(mLayout);
+        Log.i("flycast", "NativeGLActivity.onCreate done");
     }
 
     @Override

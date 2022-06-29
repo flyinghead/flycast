@@ -22,45 +22,46 @@
 
 #ifdef USE_VULKAN
 #include <stdexcept>
+
+class InvalidVulkanContext : public std::runtime_error {
+public:
+	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
+};
+
+#ifdef LIBRETRO
+#include "vk_context_lr.h"
+#else
+
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
 #include "rend/TexCache.h"
 #include "overlay.h"
-
-extern int screen_width, screen_height;
+#include "wsi/context.h"
 
 struct ImDrawData;
+class TextureCache;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
+static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
-#define VENDOR_AMD 0x1022
-// AMD GPU products use the ATI vendor Id
-#define VENDOR_ATI 0x1002
-#define VENDOR_ARM 0x13B5
-#define VENDOR_INTEL 0x8086
-#define VENDOR_NVIDIA 0x10DE
-#define VENDOR_QUALCOMM 0x5143
-#define VENDOR_MESA 0x10005
-
-class VulkanContext
+class VulkanContext : public GraphicsContext
 {
 public:
-	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
+	VulkanContext();
+	~VulkanContext();
 
-	bool Init();
-	void Term();
-	void SetWindow(void *window, void *display) { this->window = window; this->display = display; }
+	bool init();
+	void term() override;
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
-	void SetResized() { resized = true; }
+	void resize() override { resized = true; }
 	bool IsValid() { return width != 0 && height != 0; }
 	void NewFrame();
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -69,12 +70,11 @@ public:
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	vk::Extent2D GetViewPort() const { return { (u32)screen_width, (u32)screen_height }; }
-	size_t GetSwapChainSize() const { return imageViews.size(); }
+	vk::Extent2D GetViewPort() const { return { (u32)settings.display.width, (u32)settings.display.height }; }
+	u32 GetSwapChainSize() const { return (u32)imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;
 	bool IsRendering() const { return rendering; }
-	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
 	vk::DeviceSize GetStorageBufferAlignment() const { return storageBufferAlignment; }
 	bool IsFormatSupported(TextureType textureType)
@@ -91,13 +91,14 @@ public:
 			return true;
 		}
 	}
-	std::string GetDriverName() const;
-	std::string GetDriverVersion() const;
+	std::string getDriverName() override;
+	std::string getDriverVersion() override;
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
+	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	bool IsUnifiedMemory() const { return unifiedMemory; }
@@ -106,6 +107,11 @@ public:
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
 	void DrawOverlay(float scaling, bool vmu, bool crosshair);
+	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
+		graphicsQueue.submit(
+				vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers), fence);
+	}
+	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 
 #ifdef VK_DEBUG
 	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)
@@ -118,12 +124,19 @@ public:
 		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
 	}
 #endif
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
 	void CreateSwapChain();
 	bool InitDevice();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
-	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
 	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
@@ -133,18 +146,12 @@ private:
 	void SetWindowSize(u32 width, u32 height);
 
 	VMAllocator allocator;
-	void *window = nullptr;
-	void *display = nullptr;
 	bool rendering = false;
 	bool renderDone = false;
 	u32 width = 0;
 	u32 height = 0;
 	bool resized = false;
-#ifndef TEST_AUTOMATION
 	bool swapOnVSync = true;
-#else
-	bool swapOnVSync = false;
-#endif
 	vk::UniqueInstance instance;
 	vk::PhysicalDevice physicalDevice;
 
@@ -159,9 +166,11 @@ private:
 	bool optimalTilingSupported4444 = false;
 	bool fragmentStoresAndAtomics = false;
 	bool samplerAnisotropy = false;
+	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool unifiedMemory = false;
 	u32 vendorID = 0;
+	int swapInterval = 1;
 	vk::UniqueDevice device;
 
 	vk::UniqueSurfaceKHR surface;
@@ -191,6 +200,7 @@ private:
 
 	vk::UniquePipelineCache pipelineCache;
 
+	std::unique_ptr<QuadPipeline> quadPipelineWithAlpha;
 	std::unique_ptr<QuadPipeline> quadPipeline;
 	std::unique_ptr<QuadPipeline> quadRotatePipeline;
 	std::unique_ptr<QuadDrawer> quadDrawer;
@@ -201,6 +211,8 @@ private:
 	vk::Extent2D lastFrameExtent;
 
 	std::unique_ptr<VulkanOverlay> overlay;
+	// only used to delay the destruction of overlay textures
+	std::unique_ptr<TextureCache> textureCache;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
@@ -211,10 +223,44 @@ private:
 #endif
 	static VulkanContext *contextInstance;
 };
+#endif // !LIBRETRO
 
-class InvalidVulkanContext : public std::runtime_error {
-public:
-	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
-};
+static inline vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice)
+{
+	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
+	vk::ImageTiling tiling;
+	vk::Format depthFormat = vk::Format::eUndefined;
+	for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+	{
+		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+		{
+			tiling = vk::ImageTiling::eOptimal;
+			depthFormat = depthFormats[i];
+			break;
+		}
+	}
+	if (depthFormat == vk::Format::eUndefined)
+	{
+		// Try to find a linear format
+		for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+		{
+			vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+			if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+			{
+				tiling = vk::ImageTiling::eLinear;
+				depthFormat = depthFormats[i];
+				break;
+			}
+		}
+		if (depthFormat == vk::Format::eUndefined)
+			die("No supported depth/stencil format found");
+	}
+	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
+
+	return depthFormat;
+}
 
 #endif // USE_VULKAN

@@ -18,6 +18,7 @@ InterruptInfo* MCIRE;
 InterruptInfo* SCIEB;
 InterruptInfo* SCIPD;
 InterruptInfo* SCIRE;
+std::deque<u8> midiSendBuffer;
 
 //Interrupts
 //arm side
@@ -135,7 +136,7 @@ static void AicaInternalDMA()
 			// to regs
 			u32 addr = CommonData->DRGA << 2;
 			for (u32 i = 0; i < CommonData->DLG; i++, addr += 4)
-				WriteMem_aica_reg(addr, 0, 4);
+				WriteMem_aica_reg(addr, (u32)0);
 		}
 	}
 	else
@@ -148,13 +149,13 @@ static void AicaInternalDMA()
 		{
 			// reg to wave mem
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg(raddr, 4);
+				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg<u32>(raddr);
 		}
 		else
 		{
 			// wave mem to regs
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr], 4);
+				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr]);
 		}
 	}
 	CommonData->DEXE = 0;
@@ -165,9 +166,10 @@ static void AicaInternalDMA()
 }
 
 //Memory i/o
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data)
+template<typename T>
+void WriteAicaReg(u32 reg, T data)
 {
+	constexpr size_t sz = sizeof(T);
 	switch (reg)
 	{
 	case SCIPD_addr:
@@ -204,36 +206,44 @@ void WriteAicaReg(u32 reg,u32 data)
 		break;
 
 	case TIMER_A:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[0].RegisterWrite();
 		break;
 
 	case TIMER_B:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[1].RegisterWrite();
 		break;
 
 	case TIMER_C:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		timers[2].RegisterWrite();
 		break;
 
 	// DEXE, DDIR, DLG
 	case 0x288C:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		AicaInternalDMA();
 		break;
 
 	default:
-		WriteMemArr<sz>(aica_reg, reg, data);
+		WriteMemArr(aica_reg, reg, data);
 		break;
 	}
 }
 
+template void WriteAicaReg<>(u32 reg, u8 data);
+template void WriteAicaReg<>(u32 reg, u16 data);
+template void WriteAicaReg<>(u32 reg, u32 data);
 
-
-template void WriteAicaReg<1>(u32 reg,u32 data);
-template void WriteAicaReg<2>(u32 reg,u32 data);
+void aica_midiSend(u8 data)
+{
+	midiSendBuffer.push_back(data);
+	SCIPD->MIDI_IN = 1;
+	update_arm_interrupts();
+	MCIPD->MIDI_IN = 1;
+	UpdateSh4Ints();
+}
 
 //misc :p
 s32 libAICA_Init()
@@ -258,10 +268,7 @@ s32 libAICA_Init()
 
 	sgc_Init();
 	if (aica_schid == -1)
-	{
 		aica_schid = sh4_sched_register(0, &AicaUpdate);
-		sh4_sched_request(aica_schid, AICA_TICK);
-	}
 
 	return 0;
 }
@@ -272,6 +279,7 @@ void libAICA_Reset(bool hard)
 	{
 		init_mem();
 		sgc_Init();
+		sh4_sched_request(aica_schid, AICA_TICK);
 	}
 	for (u32 i = 0; i < 3; i++)
 		timers[i].Init(aica_reg, i);
@@ -282,4 +290,6 @@ void libAICA_Term()
 {
 	sgc_Term();
 	term_mem();
+	sh4_sched_unregister(aica_schid);
+	aica_schid = -1;
 }

@@ -44,15 +44,6 @@ enum CartridgeType {
 	GD
 };
 
-enum RegionType {
-	REGION_JAPAN = 0,
-	REGION_USA = 1,
-	REGION_EXPORT = 2,
-	REGION_KOREA = 3,
-    REGION_AUSTRALIA = 4,
-    REGION_EXPORT_ONLY = 5
-};
-
 enum RotationType {
     ROT0 = 0,
     ROT270 = 3,
@@ -85,7 +76,6 @@ struct Game
 	u32 key;
 	const char *bios;
 	CartridgeType cart_type;
-	RegionType region_flag;
     RotationType rotation_flag;
 	struct
 	{

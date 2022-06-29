@@ -233,7 +233,8 @@ static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 
 			//schedule next trigger by writing the TCNT register
 			u32 tcor = TMU_TCOR(ch);
-			write_TMU_TCNTch(ch, tcor + tcnt);
+			// Don't miss an underflow if tcor is less than -tcnt
+			write_TMU_TCNTch(ch, (u32)std::max<s64>((u64)tcor + (s32)tcnt, 0));
 		}
 		else {
 			
@@ -307,7 +308,6 @@ void tmu_reset(bool hard)
 	}
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
-//	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;
 	TMU_TCR(0) = TMU_TCR(1) = TMU_TCR(2) = 0;
 
 	UpdateTMUCounts(0);
@@ -322,4 +322,9 @@ void tmu_reset(bool hard)
 
 void tmu_term()
 {
+	for (int& sched_id : tmu_sched)
+	{
+		sh4_sched_unregister(sched_id);
+		sched_id = -1;
+	}
 }

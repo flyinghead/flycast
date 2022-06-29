@@ -49,15 +49,17 @@ u8* icPtr;
 u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
-#ifdef _WIN32
-alignas(4096) static u8 ARM7_TCB[ICacheSize];
-#elif defined(__unix__)
+#if defined(_WIN32) || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+static u8 *ARM7_TCB;
+#elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
 #endif
+
+ptrdiff_t rx_offset;
 
 #pragma pack(push,1)
 union ArmOpBits
@@ -143,6 +145,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 		//NV condition means VFP on newer cores, let interpreter handle it...
 		op.op_type = ArmOp::FALLBACK;
 		op.arg[0] = ArmOp::Operand(opcode);
+		op.cycles = 0;
 		return op;
 	}
 	if (op.condition != ArmOp::AL)
@@ -235,6 +238,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				else
 				{
 					op.arg[argidx].shift_reg = ArmOp::Register((Arm7Reg)bits.shift_reg);
+					op.cycles++;
 				}
 				// Compute pc-relative addresses
 				if (op.arg[argidx].getReg().armreg == RN_PC)
@@ -272,6 +276,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					op.op_type = ArmOp::B;
 					op.flags |= ArmOp::OP_SETS_PC;
 					op.rd = ArmOp::Operand();
+					op.cycles += 3;
 					return op;
 				}
 				if (op.condition != ArmOp::AL || (op.flags & ArmOp::OP_SETS_FLAGS))
@@ -285,7 +290,10 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					op.cycles = 0;
 				}
 				else
+				{
 					op.rd.getReg().armreg = R15_ARM_NEXT;
+					op.cycles++;
+				}
 				op.flags |= ArmOp::OP_SETS_PC;
 			}
 			if (op.op_type == ArmOp::ADC || op.op_type == ArmOp::SBC || op.op_type == ArmOp::RSC)
@@ -315,6 +323,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 						return op;
 					}
 					op.rd.setReg(R15_ARM_NEXT);
+					op.cycles++;
 				}
 				op.cycles += 4;
 			}
@@ -415,7 +424,9 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 
 					arm_printf("ARM: MEM TFX R %08X -> %08X", opcode, newbits.full);
 
-					return decodeArmOp(newbits.full, arm_pc);
+					op = decodeArmOp(newbits.full, arm_pc);
+					op.cycles += 4;
+					return op;
 				}
 				//STM common case
 				else
@@ -446,7 +457,9 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 
 					arm_printf("ARM: MEM TFX W %08X -> %08X", opcode, newbits.full);
 
-					return decodeArmOp(newbits.full, arm_pc);
+					op = decodeArmOp(newbits.full, arm_pc);
+					op.cycles += 4;
+					return op;
 				}
 			}
 			op.op_type = ArmOp::FALLBACK;
@@ -560,7 +573,7 @@ void compile()
 	// also the size of the EntryPoints table. This way the dynarec
 	// main loop doesn't have to worry about the actual aica
 	// ram size. The aica ram always wraps to 8 MB anyway.
-	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())rv;
+	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())writeToExec(rv);
 
 	block_ops.clear();
 
@@ -654,8 +667,11 @@ void flush()
 
 void init()
 {
-	if (!vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache))
-		die("vmem_platform_prepare_jit_block failed");
+#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
+#else
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
+#endif
 
 	icPtr = ICache;
 

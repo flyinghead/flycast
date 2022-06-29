@@ -1,102 +1,71 @@
 #pragma once
 #include "types.h"
+#include "serialize.h"
 
-struct dsp_t
+namespace dsp
 {
-	//Dynarec
-	u8 DynCode[4096*8];	//32 kb, 8 pages
 
-	//buffered DSP state
-	//24 bit wide
-	s32 TEMP[128];
-	//24 bit wide
-	s32 MEMS[32];
-	//20 bit wide
-	s32 MIXS[16];
+struct DSPState
+{
+	// buffered DSP state
+	s32 TEMP[128];	// 24 bits
+	s32 MEMS[32];	// 24 bits
+	s32 MIXS[16];	// 20 bits
 	
-	//RBL/RBP (decoded)
+	// RBL/RBP (decoded, from aica common regs)
 	u32 RBP;
 	u32 RBL;
 
-	struct
+	u32 MDEC_CT;
+
+	// volatile dsp regs
+	int SHIFTED;	// 24 bit
+	int B;			// 26 bit
+	int MEMVAL[4];
+	int FRC_REG;	// 13 bit
+	int Y_REG;		// 24 bit
+	u32 ADRS_REG;	// 13 bit
+
+	bool stopped;	// DSP program is a no-op
+	bool dirty;		// DSP program has changed
+
+	void serialize(Serializer& ser)
 	{
-		bool MAD_OUT;
-		bool MEM_ADDR;
-		bool MEM_RD_DATA;
-		bool MEM_WT_DATA;
-		bool FRC_REG;
-		bool ADRS_REG;
-		bool Y_REG;
+		ser << TEMP;
+		ser << MEMS;
+		ser << MIXS;
+		ser << RBP;
+		ser << RBL;
+		ser << MDEC_CT;
+	}
 
-		bool MDEC_CT;
-		bool MWT_1;
-		bool MRD_1;
-		//bool MADRS;
-		bool MEMS;
-		bool NOFL_1;
-		bool NOFL_2;
-
-		bool TEMPS;
-		bool EFREG;
-	}regs_init;
-
-	//s32 -> stored as signed extended to 32 bits
-	struct
+	void deserialize(Deserializer& deser)
 	{
-		s32 MAD_OUT;
-		s32 MEM_ADDR;
-		s32 MEM_RD_DATA;
-		s32 MEM_WT_DATA;
-		s32 FRC_REG;
-		s32 ADRS_REG;
-		s32 Y_REG;
-
-		u32 MDEC_CT;
-		u32 MWT_1;
-		u32 MRD_1;
-		u32 MADRS;
-		u32 NOFL_1;
-		u32 NOFL_2;
-	}regs;
-	//DEC counter :)
-	//u32 DEC;
-
-	//various dsp regs
-	signed int ACC;        //26 bit
-	signed int SHIFTED;    //24 bit
-	signed int B;          //26 bit
-	signed int MEMVAL[4];
-	signed int FRC_REG;    //13 bit
-	signed int Y_REG;      //24 bit
-	unsigned int ADDR;
-	unsigned int ADRS_REG; //13 bit
-
-	//Direct Mapped data :
-	//COEF  *128
-	//MADRS *64
-	//MPRO(dsp code) *4 *128
-	//EFREG *16
-	//EXTS  *2
-
-	// Interpreter flags
-	bool Stopped;
-
-	//Dynarec flags
-	bool dyndirty;
+		deser.skip(4096 * 8, Deserializer::V18);	// DynCode
+		deser >> TEMP;
+		deser >> MEMS;
+		deser >> MIXS;
+		deser >> RBP;
+		deser >> RBL;
+		deser.skip(44, Deserializer::V18);
+		deser >> MDEC_CT;
+		deser.skip(33596 - 4096 * 8 - sizeof(TEMP) - sizeof(MEMS) - sizeof(MIXS) - 4 * 3 - 44,
+				Deserializer::V18);	// other dsp stuff
+	}
 };
 
-alignas(4096) extern dsp_t dsp;
+extern DSPState state;
 
-void dsp_init();
-void dsp_term();
-void dsp_step();
-void dsp_writenmem(u32 addr);
+void init();
+void term();
+void step();
+void writeProg(u32 addr);
 
-void dsp_rec_init();
-void dsp_rec_step();
-void dsp_recompile();
+void recInit();
+void runStep();
+void recompile();
 
-struct _INST
+struct Instruction
 {
 	u8 TRA;
 	bool TWT;
@@ -127,6 +96,8 @@ struct _INST
 	bool NXADR; //MRQ set
 };
 
-void DecodeInst(const u32 *IPtr, _INST *i);
+void DecodeInst(const u32 *IPtr, Instruction *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);
+
+}

@@ -7,11 +7,10 @@
 #include "sh4_mem.h"
 #include "hw/holly/sb_mem.h"
 #include "sh4_mmr.h"
-#include "modules/modules.h"
+#include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
-#include "modules/mmu.h"
 #include "sh4_cache.h"
 
 //main system mem
@@ -52,14 +51,7 @@ static void map_area1(u32 base)
 	_vmem_mirror_mapping(0x06 | base, 0x04 | base, 0x02);
 }
 
-//AREA 2
-static void map_area2_init()
-{
-}
-
-static void map_area2(u32 base)
-{
-}
+//AREA 2: Naomi2 elan
 
 //AREA 3
 static void map_area3_init()
@@ -98,14 +90,15 @@ static void map_area4(u32 base)
 template <class T>
 T DYNACALL ReadMem_extdev_T(u32 addr)
 {
-	return (T)libExtDevice_ReadMem_A5(addr, sizeof(T));
+	INFO_LOG(SH4, "Read ext. device (Area 5) undefined @ %08x", addr);
+	return (T)0;
 }
 
 //Write Ext.Device
 template <class T>
 void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 {
-	libExtDevice_WriteMem_A5(addr, data, sizeof(T));
+	INFO_LOG(SH4, "Write ext. device (Area 5) undefined @ %08x: %x", addr, (u32)data);
 }
 
 _vmem_handler area5_handler;
@@ -154,7 +147,7 @@ void mem_map_default()
 	//Init Memmaps (register handlers)
 	map_area0_init();
 	map_area1_init();
-	map_area2_init();
+	elan::vmem_init();
 	map_area3_init();
 	map_area4_init();
 	map_area5_init();
@@ -166,7 +159,7 @@ void mem_map_default()
 	{
 		map_area0(i << 5); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
 		map_area1(i << 5); //VRAM
-		map_area2(i << 5); //Unassigned
+		elan::vmem_map(i << 5); // Naomi2 Elan
 		map_area3(i << 5); //RAM
 		map_area4(i << 5); //TA
 		map_area5(i << 5); //Ext. Device
@@ -183,7 +176,6 @@ void mem_Init()
 
 	sh4_area0_Init();
 	sh4_mmr_init();
-	MMU_init();
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
@@ -199,12 +191,10 @@ void mem_Reset(bool hard)
 	//Reset registers
 	sh4_area0_Reset(hard);
 	sh4_mmr_reset(hard);
-	MMU_reset();
 }
 
 void mem_Term()
 {
-	MMU_term();
 	sh4_mmr_term();
 	sh4_area0_Term();
 
@@ -286,25 +276,15 @@ void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 
 //Get pointer to ram area , 0 if error
 //For debugger(gdb) - dynarec
-u8* GetMemPtr(u32 Addr,u32 size)
+u8* GetMemPtr(u32 Addr, u32 size)
 {
-	verify((((Addr>>29) &0x7)!=7));
-	switch ((Addr>>26)&0x7)
-	{
-		case 3:
-			return &mem_b[Addr & RAM_MASK];
-		
-		case 0:
-		case 1:
-		case 2:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		default:
-//			INFO_LOG(COMMON, "unsupported area : addr=0x%X", Addr);
-			return 0;
-	}
+	if (((Addr >> 29) & 7) == 7)
+		// P4
+		return nullptr;
+	if (((Addr >> 26) & 7) == 3)
+		// Area 3
+		return &mem_b[Addr & RAM_MASK];
+	return nullptr;
 }
 
 static bool interpreterRunning = false;
@@ -336,6 +316,8 @@ void SetMemoryHandlers()
 		return;
 	}
 	interpreterRunning = false;
+#else
+	(void)interpreterRunning;
 #endif
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{

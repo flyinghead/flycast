@@ -7,35 +7,20 @@
 //
 #import <Carbon/Carbon.h>
 #import <AppKit/AppKit.h>
-#include <OpenGL/gl3.h>
 #include <sys/stat.h>
 #include <mach/task.h>
 #include <mach/mach_init.h>
 #include <mach/mach_port.h>
 
 #include "types.h"
-#include "hw/maple/maple_cfg.h"
-#include "hw/maple/maple_devs.h"
 #include "log/LogManager.h"
-#include "rend/gui.h"
-#include "osx_keyboard.h"
-#include "osx_gamepad.h"
-#include "emulator-osx-Bridging-Header.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
 #include "stdclass.h"
-#include "wsi/context.h"
+#include "oslib/oslib.h"
 #include "emulator.h"
-#include "hw/pvr/Renderer_if.h"
 #include "rend/mainui.h"
-
-OSXKeyboardDevice keyboard(0);
-static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
-static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
-unsigned int *pmo_buttons;
-float *pmo_wheel_delta;
-static UInt32 keyboardModifiers;
 
 int darw_printf(const char* text, ...)
 {
@@ -77,6 +62,7 @@ void os_CreateWindow() {
         printf("task_set_exception_ports: %s\n", mach_error_string(ret));
     }
 #endif
+	sdl_window_create();
 }
 
 void os_SetupInput()
@@ -84,78 +70,43 @@ void os_SetupInput()
 #if defined(USE_SDL)
 	input_sdl_init();
 #endif
+}
 
-	kb_gamepad = std::make_shared<OSXKbGamepadDevice>(0);
-	GamepadDevice::Register(kb_gamepad);
-	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
+#endif
 }
 
 void common_linux_setup();
+static int emu_flycast_init();
 
-void emu_dc_exit()
+static void emu_flycast_term()
 {
-    dc_exit();
-}
-
-void emu_dc_term()
-{
-	if (dc_is_running())
-		dc_exit();
-	dc_term();
+	flycast_term();
 	LogManager::Shutdown();
 }
 
-void emu_gui_open_settings()
+extern "C" int SDL_main(int argc, char *argv[])
 {
-	gui_open_settings();
-}
-
-void emu_dc_resume()
-{
-	dc_resume();
-}
-
-extern int screen_width,screen_height;
-extern bool rend_framePending();
-
-bool emu_frame_pending()
-{
-	return rend_framePending() || gui_is_open();
-}
-
-bool emu_renderer_enabled()
-{
-	return mainui_loop_enabled();
-}
-
-int emu_single_frame(int w, int h)
-{
-    if (!emu_frame_pending())
-        return 0;
-
-    screen_width = w;
-    screen_height = h;
-    return (int)mainui_rend_frame();
-}
-
-void emu_gles_init(int width, int height)
-{
-	// work around https://bugs.swift.org/browse/SR-12263
-	pmo_buttons = mo_buttons;
-	pmo_wheel_delta = mo_wheel_delta;
-
     char *home = getenv("HOME");
     if (home != NULL)
     {
         std::string config_dir = std::string(home) + "/.reicast/";
         if (!file_exists(config_dir))
-        	config_dir = std::string(home) + "/.flycast/";
+            config_dir = std::string(home) + "/.flycast/";
+		if (!file_exists(config_dir))
+			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
+
+        /* Different config folder for multiple instances */
         int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
-        if (instanceNumber > 1){
-            config_dir += std::to_string(instanceNumber) + "/";
-            [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
-        }
+		if (instanceNumber > 1)
+		{
+			config_dir += std::to_string(instanceNumber) + "/";
+			[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+		}
+
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         add_system_data_dir(config_dir);
@@ -177,63 +128,18 @@ void emu_gles_init(int width, int height)
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 
-	// Calculate screen DPI
-	NSScreen *screen = [NSScreen mainScreen];
-	NSDictionary *description = [screen deviceDescription];
-    CGDirectDisplayID displayID = [[description objectForKey:@"NSScreenNumber"] unsignedIntValue];
-	CGSize displayPhysicalSize = CGDisplayScreenSize(displayID);
-    
-    //Neither CGDisplayScreenSize(description's NSScreenNumber) nor [NSScreen backingScaleFactor] can calculate the correct dpi in macOS. E.g. backingScaleFactor is always 2 in all display modes for rMBP 16"
-    NSSize displayNativeSize;
-    CFStringRef dmKeys[1] = { kCGDisplayShowDuplicateLowResolutionModes };
-    CFBooleanRef dmValues[1] = { kCFBooleanTrue };
-    CFDictionaryRef dmOptions = CFDictionaryCreate(kCFAllocatorDefault, (const void**) dmKeys, (const void**) dmValues, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
-    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, dmOptions);
-    CFIndex n = CFArrayGetCount(allDisplayModes);
-    for (CFIndex i = 0; i < n; ++i)
-    {
-        CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
-        CGFloat width = CGDisplayModeGetPixelWidth(m);
-        CGFloat height = CGDisplayModeGetPixelHeight(m);
-        CGFloat modeWidth = CGDisplayModeGetWidth(m);
-        
-        //Only check 1x mode
-        if (width == modeWidth)
-        {
-            if (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
-            {
-                displayNativeSize.width = width;
-                displayNativeSize.height = height;
-                break;
-            }
-            
-            //Get the largest size even if kDisplayModeNativeFlag is not present e.g. iMac 27-Inch with 5K Retina
-            if (width > displayNativeSize.width)
-            {
-                displayNativeSize.width = width;
-                displayNativeSize.height = height;
-            }
-        }
-        
-    }
-    CFRelease(allDisplayModes);
-    CFRelease(dmOptions);
-    
-	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
-    NSSize displayResolution;
-    displayResolution.width = CGDisplayPixelsWide(displayID);
-    displayResolution.height = CGDisplayPixelsHigh(displayID);
-    scaling = displayNativeSize.width / displayResolution.width;
-    
-	screen_width = width;
-	screen_height = height;
+	emu_flycast_init();
 
-	InitRenderApi();
-	mainui_init();
-	mainui_enabled = true;
+	mainui_loop();
+
+	sdl_window_destroy();
+	emu_flycast_term();
+	os_UninstallFaultHandler();
+
+	return 0;
 }
 
-int emu_reicast_init()
+static int emu_flycast_init()
 {
 	LogManager::Init();
 	common_linux_setup();
@@ -250,48 +156,13 @@ int emu_reicast_init()
 		argv[paramCount++] = strdup(arg);
 	}
 	
-	int rc = reicast_init(paramCount, argv);
+	int rc = flycast_init(paramCount, argv);
 	
 	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);
 	free(argv);
 	
 	return rc;
-}
-
-void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
-	if (keyCode != 0xFF)
-		keyboard.keyboard_input(keyCode, pressed, 0);
-	else
-	{
-		// Modifier keys
-		UInt32 changes = keyboardModifiers ^ modifierFlags;
-		if (changes & NSEventModifierFlagShift)
-			keyboard.keyboard_input(kVK_Shift, modifierFlags & NSEventModifierFlagShift, 0);
-		if (changes & NSEventModifierFlagControl)
-			keyboard.keyboard_input(kVK_Control, modifierFlags & NSEventModifierFlagControl, 0);
-		if (changes & NSEventModifierFlagOption)
-			keyboard.keyboard_input(kVK_Option, modifierFlags & NSEventModifierFlagOption, 0);
-		keyboardModifiers = modifierFlags;
-	}
-	if ((modifierFlags
-		 & (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand)) == 0)
-		kb_gamepad->gamepad_btn_input(keyCode, pressed);
-}
-void emu_character_input(const char *characters) {
-	if (characters != NULL)
-		while (*characters != '\0')
-			keyboard.keyboard_character(*characters++);
-}
-
-void emu_mouse_buttons(int button, bool pressed)
-{
-	mouse_gamepad->gamepad_btn_input(button, pressed);
-}
-
-void emu_set_mouse_position(int x, int y, int width, int height)
-{
-	SetMousePosition(x, y, width, height);
 }
 
 std::string os_Locale(){

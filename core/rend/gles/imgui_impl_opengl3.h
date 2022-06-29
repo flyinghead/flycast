@@ -29,17 +29,10 @@
 #define IMGUI_IMPL_OPENGL_LOADER_GL3W
 #endif
 
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_Init(const char* glsl_version = NULL);
+IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_Init();
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_NewFrame();
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data);
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DrawBackground();
 IMGUI_IMPL_API ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *);
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DeleteTexture(ImTextureID);
 ImTextureID ImGui_ImplOpenGL3_CreateCrosshairTexture(const unsigned int *data);
-
-// Called by Init/NewFrame/Shutdown
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateFontsTexture();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyFontsTexture();
-IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateDeviceObjects();
-IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DestroyDeviceObjects();

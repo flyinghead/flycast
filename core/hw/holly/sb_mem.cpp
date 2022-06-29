@@ -16,9 +16,10 @@
 #include "reios/reios.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 
 MemChip *sys_rom;
-MemChip *sys_nvmem;
+WritableChip *sys_nvmem;
 
 extern bool bios_loaded;
 
@@ -30,6 +31,8 @@ static std::string getRomPrefix()
 		return "dc_";
 	case DC_PLATFORM_NAOMI:
 		return "naomi_";
+	case DC_PLATFORM_NAOMI2:
+		return "naomi2_";
 	case DC_PLATFORM_ATOMISWAVE:
 		return "aw_";
 	default:
@@ -104,9 +107,9 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 	}
 }
 
-void FixUpFlash()
+static void fixUpDCFlash()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
 
@@ -137,6 +140,7 @@ void FixUpFlash()
 			memset(&syscfg, 0xff, sizeof(syscfg));
 			syscfg.time_lo = 0;
 			syscfg.time_hi = 0;
+			syscfg.time_zone = 0;
 			syscfg.lang = 0;
 			syscfg.mono = 0;
 			syscfg.autostart = 1;
@@ -157,27 +161,49 @@ void FixUpFlash()
      	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
      	{
      		srand(now);
+     		u8 sum = 0;
      		for (int i = 0; i < 6; i++)
      		{
      			console_id[i] = rand();
      			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
+     			sum += console_id[i];
      		}
+     		console_id[-1] = console_id[0xA0 - 1] = sum;
+     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
      	}
+     	else
+     	{
+     		// Fix checksum
+     		u8 sum = 0;
+     		for (int i = 0; i < 6; i++)
+     			sum += console_id[i];
+     		console_id[-1] = console_id[0xA0 - 1] = sum;
+     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
+     	}
+ 		// must be != 0xff
+ 		console_id[7] = console_id[0xA0 + 7] = 0xfe;
 	}
 }
 
 static bool nvmem_load()
 {
 	bool rc;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 	else
-		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
+		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
 	if (!rc)
 		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+	fixUpDCFlash();
+	if (config::GGPOEnable)
+		sys_nvmem->digest(settings.network.md5.nvmem);
 	
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
+	if (settings.platform.isAtomiswave())
+	{
+		sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
+		if (config::GGPOEnable)
+			sys_nvmem->digest(settings.network.md5.nvmem2);
+	}
 	
 	return true;
 }
@@ -185,11 +211,15 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+	if (!settings.platform.isAtomiswave())
 	{
 		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+		{
+			if (config::GGPOEnable)
+				sys_rom->digest(settings.network.md5.bios);
 			bios_loaded = true;
-		else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		}
+		else if (settings.platform.isConsole())
 			return false;
 	}
 
@@ -198,12 +228,12 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
-		sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
+		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
+	if (settings.platform.isAtomiswave())
+		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
 }
 
 bool LoadHle()
@@ -223,9 +253,9 @@ static u32 ReadBios(u32 addr, u32 sz)
 {
 	return sys_rom->Read(addr, sz);
 }
-static void WriteBios(u32 addr, u32 data, u32 sz)
+static void WriteAWBios(u32 addr, u32 data, u32 sz)
 {
-	sys_rom->Write(addr, data, sz);
+	((WritableChip *)sys_rom)->Write(addr, data, sz);
 }
 
 //Area 0 mem map
@@ -246,12 +276,16 @@ static void WriteBios(u32 addr, u32 data, u32 sz)
 //0x00800000- 0x00FFFFFF	:AICA- Wave Memory
 //0x01000000- 0x01FFFFFF	:Ext. Device
 //0x02000000- 0x03FFFFFF*	:Image Area*	2MB
+// Naomi 2:
+//0x025F6800- 0x025F69FF    :PVR#2 system registers
+//0x025F7C00- 0x025F7CFF	:PVR#2 PVR i/f Control Reg.
+//0x025F8000- 0x025F9FFF	:PVR#2 TA / PVR Core Reg.
 
 template<typename T, u32 System, bool Mirror>
-T DYNACALL ReadMem_area0(u32 addr)
+T DYNACALL ReadMem_area0(u32 paddr)
 {
 	constexpr u32 sz = (u32)sizeof(T);
-	addr &= 0x01FFFFFF;
+	u32 addr = paddr & 0x01FFFFFF;
 	const u32 base = addr >> 21;
 
 	switch (expected(base, 2))
@@ -291,14 +325,14 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-			return (T)sb_ReadMem(addr, sz);
+			return (T)sb_ReadMem(paddr, sz);
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
 			if (sz != 4)
 				// House of the Dead 2
 				return 0;
-			return (T)pvr_ReadReg(addr);
+			return (T)pvr_ReadReg(paddr);
 		}
 		break;
 	case 3:
@@ -319,10 +353,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
-			return (T)ReadMem_aica_reg(addr, sz);
+			return ReadMem_aica_reg<T>(addr);
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
-			return (T)ReadMem_aica_rtc(addr, sz);
+			return ReadMem_aica_rtc<T>(addr);
 		break;
 
 	case 4:
@@ -330,12 +364,15 @@ T DYNACALL ReadMem_area0(u32 addr)
 	case 6:
 	case 7:
 		// AICA ram
-		return (T)ReadMemArr<sz>(aica_ram.data, addr & ARAM_MASK);
+		return ReadMemArr<T>(aica_ram.data, addr & ARAM_MASK);
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI)
-			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
+		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
+		{
+			INFO_LOG(MEMORY, "Read<%d> from G2 Ext area not implemented @ %08x", sz, addr);
+			return (T)0;
+		}
 		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
 		else
@@ -346,10 +383,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 }
 
 template<typename T, u32 System, bool Mirror>
-void DYNACALL WriteMem_area0(u32 addr, T data)
+void DYNACALL WriteMem_area0(u32 paddr, T data)
 {
 	constexpr u32 sz = (u32)sizeof(T);
-	addr &= 0x01FFFFFF;//to get rid of non needed bits
+	u32 addr = paddr & 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base = addr >> 21;
 
@@ -363,7 +400,7 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 			{
 				if (addr < 0x20000)
 				{
-					WriteBios(addr, data, sz);
+					WriteAWBios(addr, data, sz);
 					return;
 				}
 			}
@@ -398,14 +435,14 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 		// All SB registers
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
 		{
-			sb_WriteMem(addr, data, sz);
+			sb_WriteMem(paddr, data, sz);
 			return;
 		}
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
 			verify(sz == 4);
-			pvr_WriteReg(addr, data);
+			pvr_WriteReg(paddr, data);
 			return;
 		}
 		break;
@@ -427,13 +464,13 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
 		{
-			WriteMem_aica_reg(addr, data, sz);
+			WriteMem_aica_reg(addr, data);
 			return;
 		}
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
 		{
-			WriteMem_aica_rtc(addr, data, sz);
+			WriteMem_aica_rtc(addr, data);
 			return;
 		}
 		break;
@@ -442,18 +479,18 @@ void DYNACALL WriteMem_area0(u32 addr, T data)
 	case 6:
 	case 7:
 		// AICA ram
-		WriteMemArr<sz>(aica_ram.data, addr & ARAM_MASK, data);
+		WriteMemArr(aica_ram.data, addr & ARAM_MASK, data);
 		return;
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI)
-			libExtDevice_WriteMem_A0_010(addr, data, sz);
+		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
+			INFO_LOG(MEMORY, "Write<%d> to G2 Ext area not implemented @ %08x: %x", sz, addr, (u32)data);
 		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
 		return;
 	}
-	INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
+	INFO_LOG(MEMORY, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 }
 
 //Init/Res/Term
@@ -485,6 +522,7 @@ void sh4_area0_Reset(bool hard)
 			reios_set_flash(sys_nvmem);
 			break;
 		case DC_PLATFORM_NAOMI:
+		case DC_PLATFORM_NAOMI2:
 			sys_rom = new RomChip(settings.platform.bios_size);
 			sys_nvmem = new SRamChip(settings.platform.flash_size);
 			break;
@@ -538,6 +576,10 @@ void map_area0_init()
 	case DC_PLATFORM_NAOMI:
 		area0_handler = registerHandler(DC_PLATFORM_NAOMI, false);
 		area0_mirror_handler = registerHandler(DC_PLATFORM_NAOMI, true);
+		break;
+	case DC_PLATFORM_NAOMI2:
+		area0_handler = registerHandler(DC_PLATFORM_NAOMI2, false);
+		area0_mirror_handler = registerHandler(DC_PLATFORM_NAOMI2, true);
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		area0_handler = registerHandler(DC_PLATFORM_ATOMISWAVE, false);

@@ -1,6 +1,7 @@
 #include "types.h"
 #include "interpr/sh4_opcodes.h"
 #include "sh4_opcode_list.h"
+#include "dyna/decoder.h"
 #include "dyna/decoder_opcodes.h"
 #include "hw/sh4/dyna/shil.h"
 #include "reios/reios.h"
@@ -21,16 +22,6 @@ sh4_opcodelistentry* OpDesc[0x10000];
 #define Mask_n_ml3bit 0xF08F
 #define Mask_nh3bit 0xF1FF
 #define Mask_nh2bit 0xF3FF
-
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-#define GetImm4(str) ((str>>0) & 0xf)
-#define GetImm8(str) ((str>>0) & 0xff)
-#define GetSImm8(str) ((s8)((str>>0) & 0xff))
-#define GetImm12(str) ((str>>0) & 0xfff)
-#define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
-
-
 
 //,DEC_D_RN|DEC_S_RM|DEC_OP(shop_and)
 u64 dec_Fill(DecMode mode,DecParam d,DecParam s,shilop op,u32 extra=0)
@@ -135,10 +126,10 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0000_nnnn_1000_0011   ,Mask_n         ,0x0083 ,Normal         ,"pref @<REG_N>"                        ,1,2,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_RN,PRM_ONE,shop_pref,1)},  //pref @<REG_N>
 	{0                          ,i0000_nnnn_mmmm_0111   ,Mask_n_m       ,0x0007 ,Normal         ,"mul.l <REG_M>,<REG_N>"                ,2,4,CO,fix_none    ,dec_mul(-32)}, //mul.l <REG_M>,<REG_N>
 	{0                          ,i0000_0000_0010_1000   ,Mask_none      ,0x0028 ,Normal   | R_SP,"clrmac"                               ,1,3,LS,fix_none},  //clrmac
-	{0                          ,i0000_0000_0100_1000   ,Mask_none      ,0x0048 ,Normal         ,"clrs"                                 ,1,1,CO,fix_none    ,dec_Fill(DM_BinaryOp,PRM_SR_STATUS,PRM_TWO_INV,shop_and)}, //clrs
+	{0                          ,i0000_0000_0100_1000   ,Mask_none      ,0x0048 ,Normal         ,"clrs"                                 ,1,1,CO,fix_none    ,dec_Fill(DM_BinaryOp, PRM_SR_STATUS, PRM_TWO_INV, shop_and, 1) }, //clrs
 	{0                          ,i0000_0000_0000_1000   ,Mask_none      ,0x0008 ,Normal         ,"clrt"                                 ,1,1,MT,fix_none    ,dec_Fill(DM_UnaryOp,PRM_SR_T,PRM_ZERO,shop_mov32)},    //clrt
 	{0                          ,i0000_0000_0011_1000   ,Mask_none      ,0x0038 ,Normal         ,"ldtlb"                                ,1,1,CO,fix_none}   ,//ldtlb
-	{0                          ,i0000_0000_0101_1000   ,Mask_none      ,0x0058 ,Normal         ,"sets"                                 ,1,1,CO,fix_none    ,dec_Fill(DM_BinaryOp,PRM_SR_STATUS,PRM_TWO,shop_or)},  //sets
+	{0                          ,i0000_0000_0101_1000   ,Mask_none      ,0x0058 ,Normal         ,"sets"                                 ,1,1,CO,fix_none    ,dec_Fill(DM_BinaryOp, PRM_SR_STATUS, PRM_TWO, shop_or, 1) },  //sets
 	{0                          ,i0000_0000_0001_1000   ,Mask_none      ,0x0018 ,Normal         ,"sett"                                 ,1,1,MT,fix_none    ,dec_Fill(DM_UnaryOp,PRM_SR_T,PRM_ONE,shop_mov32)}, //sett
 	{0                          ,i0000_0000_0001_1001   ,Mask_none      ,0x0019 ,Normal         ,"div0u"                                ,1,1,EX,fix_none    ,dec_Fill(DM_DIV0,PRM_RN,PRM_RM,shop_or,1)},//div0u
 	{0                          ,i0000_nnnn_0010_1001   ,Mask_n         ,0x0029 ,Normal         ,"movt <REG_N>"                         ,1,1,EX,fix_none    ,dec_Fill(DM_UnaryOp,PRM_RN,PRM_SR_T,shop_mov32)},  //movt <REG_N>
@@ -500,11 +491,27 @@ std::string disassemble_op(const char* tx1, u32 pc, u16 opcode)
 			}
 			else if (strcmp2(tx1,"FREG_N>"))
 			{
+				sprintf(buf,"FR%d=%f ", GetN(opcode), p_sh4rcb->cntx.xffr[16 + GetN(opcode)]);
+				regs += buf;
 				sprintf(buf,"FR%d",GetN(opcode));
 			}
 			else if (strcmp2(tx1,"FREG_M>"))
 			{
+				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.xffr[16 + GetM(opcode)]);
+				regs += buf;
 				sprintf(buf,"FR%d",GetM(opcode));
+			}
+			else if (strcmp2(tx1, "FREG_M_SD_F>"))
+			{
+				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.xffr[16 + GetM(opcode)]);
+				regs += buf;
+				sprintf(buf,"FR%d", GetM(opcode));
+			}
+			else if (strcmp2(tx1,"FREG_0>"))
+			{
+				sprintf(buf,"FR0=%f ", p_sh4rcb->cntx.xffr[16]);
+				regs += buf;
+				sprintf(buf,"FR0");
 			}
 			else if (strcmp2(tx1,"RM_BANK>"))
 			{

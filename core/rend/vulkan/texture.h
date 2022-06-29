@@ -36,17 +36,32 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 class Texture final : public BaseTextureCacheData
 {
 public:
+	Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {
+		this->physicalDevice = VulkanContext::Instance()->GetPhysicalDevice();
+		this->device = VulkanContext::Instance()->GetDevice();
+	}
+	Texture(Texture&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(format, other.format);
+		std::swap(extent, other.extent);
+		std::swap(mipmapLevels, other.mipmapLevels);
+		std::swap(needsStaging, other.needsStaging);
+		std::swap(stagingBufferData, other.stagingBufferData);
+		std::swap(commandBuffer, other.commandBuffer);
+		std::swap(allocation, other.allocation);
+		std::swap(image, other.image);
+		std::swap(imageView, other.imageView);
+		std::swap(readOnlyImageView, other.readOnlyImageView);
+		std::swap(physicalDevice, other.physicalDevice);
+		std::swap(device, other.device);
+	}
+
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
-	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
-
-	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
-	void SetDevice(vk::Device device) { this->device = device; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -82,20 +97,34 @@ public:
 	{
 		u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
 		const auto& it = samplers.find(samplerHash);
-		vk::Sampler sampler;
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		vk::Filter filter;
+		if (config::TextureFiltering == 0) {
+			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		} else if (config::TextureFiltering == 1) {
+			filter = vk::Filter::eNearest;
+		} else {
+			filter = vk::Filter::eLinear;
+		}
 		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
+		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
+				&& filter == vk::Filter::eLinear;
+#ifndef __APPLE__
+		float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
+#else
+		// not supported by metal
+		float mipLodBias = 0;
+#endif
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							vk::SamplerMipmapMode::eNearest, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, D_Adjust_LoD_Bias[tsp.MipMapD],
-							VulkanContext::Instance()->SupportsSamplerAnisotropy() && filter == vk::Filter::eLinear, 4.0f,
+							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
 	}
@@ -137,6 +166,9 @@ private:
 class TextureCache final : public BaseTextureCache<Texture>
 {
 public:
+	TextureCache() {
+		Texture::SetDirectXColorOrder(false);
+	}
 	void SetCurrentIndex(int index) {
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),

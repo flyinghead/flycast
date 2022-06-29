@@ -15,9 +15,7 @@
 #define reg arm_Reg
 #define armNextPC reg[R15_ARM_NEXT].I
 
-#define CPUUpdateTicksAccesint(a) 1
 #define CPUUpdateTicksAccessSeq32(a) 1
-#define CPUUpdateTicksAccesshort(a) 1
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
@@ -48,32 +46,34 @@ static void CPUUpdateFlags();
 static void CPUSoftwareInterrupt(int comment);
 static void CPUUndefinedException();
 
-#if FEAT_AREC == DYNAREC_NONE
-
 //
 // ARM7 interpreter
 //
-static int clockTicks;
+int arm7ClockTicks;
+
+#if FEAT_AREC == DYNAREC_NONE
 
 static void runInterpreter(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
 
-	clockTicks -= CycleCount;
-	while (clockTicks < 0)
+	arm7ClockTicks -= CycleCount;
+	while (arm7ClockTicks < 0)
 	{
 		if (reg[INTR_PEND].I)
 			CPUFiq();
 
 		reg[15].I = armNextPC + 8;
+
+		int& clockTicks = arm7ClockTicks;
 		#include "arm-new.h"
 	}
 }
 
 void aicaarm::avoidRaceCondition()
 {
-	clockTicks = std::min(clockTicks, -50);
+	arm7ClockTicks = std::min(arm7ClockTicks, -50);
 }
 
 void aicaarm::run(u32 samples)

@@ -1,0 +1,131 @@
+# DESCRIPTION: GitLab CI/CD for libRetro (NOT FOR GitLab-proper)
+
+##############################################################################
+################################# BOILERPLATE ################################
+##############################################################################
+
+# Core definitions
+.core-defs:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    CORENAME: flycast
+    CORE_ARGS: -DLIBRETRO=ON -DCMAKE_BUILD_TYPE=Release
+
+.core-defs-linux:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release
+
+.core-defs-osx-x64:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
+    EXTRA_PATH: Release
+
+.core-defs-android:
+  extends: .core-defs
+  script:
+    - cmake $CORE_ARGS -DANDROID_PLATFORM=android-$API_LEVEL -DCMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_STL=c++_static -DANDROID_ABI=$ANDROID_ABI -DANDROID_ARM_MODE=arm "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR
+    - cmake --build $BUILD_DIR --target ${CORENAME}_libretro --config Release -- -j $NUMPROC
+    - mv $BUILD_DIR/${CORENAME}_libretro.so $LIBNAME
+    - if [ $STRIP_CORE_LIB -eq 1 ]; then $NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip $LIBNAME; fi
+  variables:
+    API_LEVEL: 18
+
+# Inclusion templates, required for the build to work
+include:
+  ################################## DESKTOPS ################################
+  # Windows
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/windows-cmake-mingw.yml'
+
+  # MacOS
+  - project: 'libretro-infrastructure/ci-templates'
+    file: 'osx-cmake-x86.yml'
+
+  # Linux
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/linux-cmake.yml'
+
+  ################################## CELLULAR ################################
+  # Android
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/android-cmake.yml'
+
+  ################################## CONSOLES ################################  
+  # Nintendo Switch
+#  - project: 'libretro-infrastructure/ci-templates'
+#    file: '/libnx-static.yml'
+
+# Stages for building
+stages:
+  - build-prepare
+  - build-shared
+#  - build-static
+
+##############################################################################
+#################################### STAGES ##################################
+##############################################################################
+#
+################################### DESKTOPS #################################
+# Windows 64-bit
+libretro-build-windows-x64:
+  extends:
+    - .libretro-windows-cmake-x86_64
+    - .core-defs
+
+# Windows 32-bit
+libretro-build-windows-i686:
+  extends:
+    - .libretro-windows-cmake-x86
+    - .core-defs
+
+# Linux 64-bit
+libretro-build-linux-x64:
+  extends:
+    - .libretro-linux-cmake-x86_64
+    - .core-defs-linux
+
+# Linux 32-bit
+libretro-build-linux-i686:
+  extends:
+    - .libretro-linux-cmake-x86
+    - .core-defs-linux
+
+# MacOS 64-bit
+libretro-build-osx-x64:
+  extends:
+    - .libretro-osx-cmake-x86
+    - .core-defs-osx-x64
+
+################################### CELLULAR #################################
+# Android ARMv7a
+android-armeabi-v7a:
+  extends:
+    - .libretro-android-cmake-armeabi-v7a
+    - .core-defs-android
+
+# Android ARMv8a
+android-arm64-v8a:
+  extends:
+    - .libretro-android-cmake-arm64-v8a
+    - .core-defs-android
+
+# Android 64-bit x86
+android-x86_64:
+  extends:
+    - .libretro-android-cmake-x86_64
+    - .core-defs-android
+
+# Android 32-bit x86
+android-x86:
+  extends:
+    - .libretro-android-cmake-x86
+    - .core-defs-android
+
+################################### CONSOLES #################################
+# Nintendo Switch
+#libretro-build-libnx-aarch64:
+#  extends:
+#    - .libretro-libnx-static-retroarch-master
+#    - .core-defs

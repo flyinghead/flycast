@@ -8,13 +8,19 @@ extern u32 FrameCount;
 void rend_init_renderer();
 void rend_term_renderer();
 void rend_vblank();
-void rend_start_render();
+void rend_start_render(TA_context *ctx = nullptr);
 void rend_end_render();
 void rend_cancel_emu_wait();
 bool rend_single_frame(const bool& enabled);
 void rend_swap_frame(u32 fb_r_sof1);
 void rend_set_fb_write_addr(u32 fb_w_sof1);
 void rend_reset();
+void rend_disable_rollback();
+void rend_start_rollback();
+void rend_allow_rollback();
+void rend_serialize(Serializer& ser);
+void rend_deserialize(Deserializer& deser);
+void rend_resize_renderer();
 
 ///////
 extern TA_context* _pvrrc;
@@ -38,7 +44,7 @@ struct Renderer
 
 	virtual void DrawOSD(bool clear_screen) { }
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) { return 0; }
+	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) { return nullptr; }
 };
 
 extern Renderer* renderer;

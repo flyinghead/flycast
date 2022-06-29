@@ -58,8 +58,21 @@ public:
 		vmaGetMemoryTypeProperties(allocator, allocInfo.memoryType, &flags);
 		return flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 	}
-	void *MapMemory() const {
-		return allocInfo.pMappedData;
+	void *MapMemory() const
+	{
+		if (allocInfo.pMappedData != nullptr)
+			return allocInfo.pMappedData;
+		void *p;
+		vmaMapMemory(allocator, allocation, &p);
+		return p;
+	}
+	void UnmapMemory() const
+	{
+		if (allocInfo.pMappedData != nullptr)
+			return;
+		// Only needed (and useful) for non-host coherent memory
+		vmaFlushAllocation(allocator, allocation, allocInfo.offset, allocInfo.size);
+		vmaUnmapMemory(allocator, allocation);
 	}
 
 private:
@@ -78,7 +91,7 @@ private:
 class VMAllocator
 {
 public:
-	void Init(vk::PhysicalDevice physicalDevice, vk::Device device);
+	void Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance);
 
 	void Term()
 	{

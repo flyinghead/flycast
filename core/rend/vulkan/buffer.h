@@ -21,11 +21,18 @@
 #pragma once
 #include "vulkan.h"
 #include "vmallocator.h"
+#include "utils.h"
 
 struct BufferData
 {
 	BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage,
-			const vk::MemoryPropertyFlags& propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+			const vk::MemoryPropertyFlags& propertyFlags =
+				vk::MemoryPropertyFlagBits::eHostVisible
+#ifndef __APPLE__
+				// host coherent memory not supported on apple platforms
+				| vk::MemoryPropertyFlagBits::eHostCoherent
+#endif
+				);
 	~BufferData()
 	{
 		buffer.reset();
@@ -33,16 +40,17 @@ struct BufferData
 
 	void upload(u32 size, const void *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(dataPtr, data, size);
+		allocation.UnmapMemory();
 	}
 
 	void upload(size_t count, const u32 *sizes, const void * const *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 
 		u32 totalSize = 0;
 		for (size_t i = 0; i < count; i++)
@@ -55,15 +63,17 @@ struct BufferData
 				memcpy(dataPtr, data[i], sizes[i]);
 			dataPtr = (u8 *)dataPtr + sizes[i];
 		}
+		allocation.UnmapMemory();
 	}
 
 	void download(u32 size, void *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(data, dataPtr, size);
+		allocation.UnmapMemory();
 	}
 
 	void *MapMemory()
@@ -72,6 +82,7 @@ struct BufferData
 	}
 	void UnmapMemory()
 	{
+		allocation.UnmapMemory();
 	}
 
 	vk::UniqueBuffer buffer;
@@ -81,4 +92,51 @@ struct BufferData
 private:
 	vk::BufferUsageFlags    m_usage;
 	vk::MemoryPropertyFlags m_propertyFlags;
+};
+
+class BufferPacker
+{
+public:
+	BufferPacker();
+
+	vk::DeviceSize addUniform(const void *p, size_t size) {
+		return add(p, size, uniformAlignment);
+	}
+
+	vk::DeviceSize addStorage(const void *p, size_t size) {
+		return add(p, size, storageAlignment);
+	}
+
+	vk::DeviceSize add(const void *p, size_t size, u32 alignment = 4)
+	{
+		u32 padding = align(offset, std::max(4u, alignment));
+		if (padding != 0)
+		{
+			chunks.push_back(nullptr);
+			chunkSizes.push_back(padding);
+			offset += padding;
+		}
+		vk::DeviceSize start = offset;
+		chunks.push_back(p);
+		chunkSizes.push_back(size);
+		offset += size;
+
+		return start;
+	}
+
+	void upload(BufferData& bufferData, u32 bufOffset = 0)
+	{
+		bufferData.upload(chunks.size(), &chunkSizes[0], &chunks[0], bufOffset);
+	}
+
+	vk::DeviceSize size() const {
+		return offset;
+	}
+
+private:
+	std::vector<const void *> chunks;
+	std::vector<u32> chunkSizes;
+	vk::DeviceSize offset = 0;
+	vk::DeviceSize uniformAlignment;
+	vk::DeviceSize storageAlignment;
 };

@@ -9,6 +9,7 @@
  */
 
 #include "m4cartridge.h"
+#include "serialize.h"
 
 
 // Decoder for M4-type NAOMI cart encryption
@@ -272,53 +273,47 @@ M4Cartridge::~M4Cartridge()
 	free(m_key_data);
 }
 
-std::string M4Cartridge::GetGameId()
+bool M4Cartridge::GetBootId(RomBootID *bootId)
 {
-	if (RomSize < 0x30 + 0x20)
-		return "(ROM too small)";
-
-	std::string game_id;
-	if (RomPtr[0] == 'N' && RomPtr[1] == 'A')
-		game_id = std::string((char *)(RomPtr + 0x30), 0x20);
-	else
+	if (RomSize < sizeof(RomBootID))
+		return false;
+	RomBootID *pBootId = (RomBootID *)RomPtr;
+	if (memcmp(pBootId->boardName, "NAOMI", 5))
 	{
 		rom_cur_address = 0;
 		enc_reset();
 		enc_fill();
-
-		game_id = std::string((char *)(buffer + 0x30), 0x20);
+		pBootId = (RomBootID *)buffer;
 	}
+	memcpy(bootId, pBootId, sizeof(RomBootID));
 
-	while (!game_id.empty() && game_id.back() == ' ')
-		game_id.pop_back();
-	return game_id;
+	return true;
 }
 
-void M4Cartridge::Serialize(void** data, unsigned int* total_size)
+void M4Cartridge::Serialize(Serializer& ser) const
 {
-	REICAST_S(buffer);
-	REICAST_S(rom_cur_address);
-	REICAST_S(buffer_actual_size);
-	REICAST_S(iv);
-	REICAST_S(counter);
-	REICAST_S(encryption);
-	REICAST_S(cfi_mode);
-	REICAST_S(xfer_ready);
+	ser << buffer;
+	ser << rom_cur_address;
+	ser << buffer_actual_size;
+	ser << iv;
+	ser << counter;
+	ser << encryption;
+	ser << cfi_mode;
+	ser << xfer_ready;
 
-	NaomiCartridge::Serialize(data, total_size);
+	NaomiCartridge::Serialize(ser);
 }
 
-void M4Cartridge::Unserialize(void** data, unsigned int* total_size)
+void M4Cartridge::Deserialize(Deserializer& deser)
 {
-	REICAST_US(buffer);
-	REICAST_US(rom_cur_address);
-	REICAST_US(buffer_actual_size);
-	REICAST_US(iv);
-	REICAST_US(counter);
-	REICAST_US(encryption);
-	REICAST_US(cfi_mode);
-	REICAST_US(xfer_ready);
+	deser >> buffer;
+	deser >> rom_cur_address;
+	deser >> buffer_actual_size;
+	deser >> iv;
+	deser >> counter;
+	deser >> encryption;
+	deser >> cfi_mode;
+	deser >> xfer_ready;
 
-	NaomiCartridge::Unserialize(data, total_size);
+	NaomiCartridge::Deserialize(deser);
 }
-

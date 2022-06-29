@@ -131,18 +131,45 @@ enum HollyInterruptID
 		//bit 27 = G2 : Time out in CPU accessing
 };
 
-
+#ifndef TARGET_UWP
 #include "nowide/cstdlib.hpp"
 #include "nowide/cstdio.hpp"
+#else
+#include "nowide/config.hpp"
+#include "nowide/convert.hpp"
+#include "nowide/stackstring.hpp"
+#include "nowide/cenv.hpp"
+
+#include <cstdio>
+#include <stdio.h>
+namespace nowide {
+FILE *fopen(char const *file_name, char const *mode);
+}
+#endif
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
+#endif
+
+#ifndef TARGET_IPHONE
+#if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
+#define TARGET_ARM_MAC
+#include "pthread.h"
+inline static void JITWriteProtect(bool enabled) {
+	if (__builtin_available(macOS 11.0, *))
+		pthread_jit_write_protect_np(enabled);
+}
+#else
+inline static void JITWriteProtect(bool enabled) {
+}
+#endif
 #endif
 
 //includes from c++rt
 #include <vector>
 #include <string>
 #include <map>
+#include <stdexcept>
 
 #define INLINE __forceinline
 
@@ -166,96 +193,19 @@ int darw_printf(const char* Text,...);
 #include "log/Log.h"
 
 #define VER_EMUNAME		"Flycast"
-#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
-bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
-
-#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
-#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
-
-#define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-#define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-
-#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
 
-int msgboxf(const char* text, unsigned int type, ...);
+void fatal_error(const char* text, ...);
 
-#define MBX_OK                       0
-#define MBX_ICONEXCLAMATION          0
-#define MBX_ICONERROR                0
-
-#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
-
-
-//will be removed sometime soon
-//This shit needs to be moved to proper headers
-typedef u32  RegReadAddrFP(u32 addr);
-typedef void RegWriteAddrFP(u32 addr, u32 data);
-
-/*
-	Read Write Const
-	D    D     N      -> 0			-> RIO_DATA
-	D    F     N      -> WF			-> RIO_WF
-	F    F     N      -> RF|WF		-> RIO_FUNC
-	D    X     N      -> RO|WF		-> RIO_RO
-	F    X     N      -> RF|WF|RO	-> RIO_RO_FUNC
-	D    X     Y      -> CONST|RO|WF-> RIO_CONST
-	X    F     N      -> RF|WF|WO	-> RIO_WO_FUNC
-*/
-enum RegStructFlags
-{
-	REG_RF=8,
-	REG_WF=16,
-	REG_RO=32,
-	REG_WO=64,
-	REG_NO_ACCESS=REG_RO|REG_WO,
-};
-
-enum RegIO
-{
-	RIO_DATA = 0,
-	RIO_WF = REG_WF,
-	RIO_FUNC = REG_WF | REG_RF,
-	RIO_RO = REG_RO | REG_WF,
-	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
-	RIO_CONST = REG_RO | REG_WF,
-	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
-	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
-};
-
-struct RegisterStruct
-{
-	union
-	{
-		u32 data32;					//stores data of reg variable [if used] 32b
-		u16 data16;					//stores data of reg variable [if used] 16b
-		u8  data8;					//stores data of reg variable [if used]	8b
-
-		RegReadAddrFP* readFunctionAddr; //stored pointer to reg read function
-	};
-
-	RegWriteAddrFP* writeFunctionAddr; //stored pointer to reg write function
-
-	u32 flags;					//Access flags !
-
-	void reset()
-	{
-		if (!(flags & (REG_RO | REG_RF)))
-			data32 = 0;
-	}
-};
+#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 
 enum class JVS {
 	Default,
@@ -280,8 +230,21 @@ enum class RenderType {
 	OpenGL = 0,
 	OpenGL_OIT = 3,
 	Vulkan = 4,
-	Vulkan_OIT = 5
+	Vulkan_OIT = 5,
+	DirectX9 = 1,
+	DirectX11 = 2,
+	DirectX11_OIT = 6,
 };
+
+static inline bool isOpenGL(RenderType renderType)  {
+	return renderType == RenderType::OpenGL || renderType == RenderType::OpenGL_OIT;
+}
+static inline bool isVulkan(RenderType renderType) {
+	return renderType == RenderType::Vulkan || renderType == RenderType::Vulkan_OIT;
+}
+static inline bool isDirectX(RenderType renderType) {
+	return renderType == RenderType::DirectX9 || renderType == RenderType::DirectX11 || renderType == RenderType::DirectX11_OIT;
+}
 
 enum class KeyboardLayout {
 	JP = 1,
@@ -314,7 +277,23 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
+
+		bool isNaomi1() const { return system == DC_PLATFORM_NAOMI; }
+		bool isNaomi2() const { return system == DC_PLATFORM_NAOMI2; }
+		bool isNaomi() const { return isNaomi1() || isNaomi2(); }
+		bool isAtomiswave() const { return system == DC_PLATFORM_ATOMISWAVE; }
+		bool isArcade() const { return !isConsole(); }
+		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
 	} platform;
+
+	struct {
+		int width = 640;
+		int height = 480;
+		float pointScale = 1.f;
+		float refreshRate = 0;
+		float dpi = 96.f;
+		float uiScale = 1.f;
+	} display;
 
 	struct
 	{
@@ -324,12 +303,14 @@ struct settings_t
 	struct
 	{
 		bool NoBatch;
+		bool muteAudio;
 	} aica;
 
 	struct
 	{
-		char ImagePath[512];
-	} imgread;
+		std::string path;
+		std::string gameId;
+	} content;
 
 	struct {
 		JVS JammaSetup;
@@ -337,7 +318,21 @@ struct settings_t
 		bool fastForwardMode;
 	} input;
 
-	bool gameStarted;
+	struct
+	{
+		bool online;
+		struct
+		{
+			u8 game[16];
+			u8 bios[16];
+			u8 savestate[16];
+			u8 nvmem[16];
+			u8 nvmem2[16];
+			u8 eeprom[16];
+			u8 vmu[16];
+		} md5;
+	} network;
+	bool disableRenderer;
 };
 
 extern settings_t settings;
@@ -350,72 +345,6 @@ extern settings_t settings;
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
 
-inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
-inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
-inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
-inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-//PVR
-s32 libPvr_Init();
-void libPvr_Reset(bool hard);
-void libPvr_Term();
-
-void* libPvr_GetRenderTarget();
-
-// 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
-u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
-void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
-
-//Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
-static inline u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
-static inline void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
-
-//Area 5
-static inline u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
-static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
-
-//ARM
-s32 libARM_Init();
-void libARM_Reset(bool hard);
-void libARM_Term();
-
-template<u32 sz>
-u32 ReadMemArr(const u8 *array, u32 addr)
-{
-	switch(sz)
-	{
-	case 1:
-		return array[addr];
-	case 2:
-		return *(const u16 *)&array[addr];
-	case 4:
-		return *(const u32 *)&array[addr];
-	default:
-		die("invalid size");
-		return 0;
-	}
-}
-
-template<u32 sz>
-void WriteMemArr(u8 *array, u32 addr, u32 data)
-{
-	switch(sz)
-	{
-	case 1:
-		array[addr] = data;
-		break;
-	case 2:
-		*(u16 *)&array[addr] = data;
-		break;
-	case 4:
-		*(u32 *)&array[addr] = data;
-		break;
-	default:
-		die("invalid size");
-		break;
-	}
-}
-
 struct OnLoad
 {
 	typedef void OnLoadFP();
@@ -426,33 +355,17 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-class ReicastException
+class FlycastException : public std::runtime_error
 {
 public:
-	ReicastException(std::string reason) : reason(reason) {}
-
-	std::string reason;
+	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V11_LIBRETRO = 10,
-	VCUR_LIBRETRO = V11_LIBRETRO,
-
-	V5 = 800,
-	V6 = 801,
-	V7 = 802,
-	V8 = 803,
-	V9 = 804,
-	V10 = 805,
-	V11 = 806,
-	V12 = 807,
-	V13 = 808,
-	V14 = 809,
-	V15 = 810,
-	V16 = 811,
-	VCUR_FLYCAST = V16,
+class LoadCancelledException : public FlycastException
+{
+public:
+	LoadCancelledException() : FlycastException("") {}
 };
+
+class Serializer;
+class Deserializer;

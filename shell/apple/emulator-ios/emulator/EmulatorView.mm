@@ -1,117 +1,69 @@
-//
-//  EmulatorView.m
-//  emulator
-//
-//  Created by admin on 1/18/15.
-//  Copyright (c) 2015 reicast. All rights reserved.
-//
+/*
+	Copyright 2021 flyinghead
+	Copyright (c) 2015 reicast. All rights reserved.
 
+	This file is part of Flycast.
+
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #import "EmulatorView.h"
-#import "PadViewController.h"
 
 #include "types.h"
+#include "rend/gui.h"
+#include "ios_gamepad.h"
 
-@implementation EmulatorView
-
-/*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect {
-    // Drawing code
-}
-*/
-
-NSInteger a_button = 1;
-NSInteger b_button = 2;
-NSInteger x_button = 3;
-NSInteger y_button = 4;
-NSInteger up_pad = 5;
-NSInteger down_pad = 6;
-NSInteger left_pad = 7;
-NSInteger right_pad = 8;
-NSInteger left_trigger = 9;
-NSInteger right_trigger = 10;
-NSInteger start_button = 11;
-
-- (void)setControlInput:(PadViewController *)input
-{
-	self.controllerView = input;
+@implementation EmulatorView {
+	std::shared_ptr<IOSTouchMouse> mouse;
 }
 
-- (void)handleKeyDown:(UIButton*)button 
+- (void)didMoveToSuperview
 {
-	PadViewController * controller = (PadViewController *)self.controllerView;
-	if (button == controller.img_dpad_l || button.tag == left_pad) {
-		kcode[0] &= ~(DC_DPAD_LEFT);
-	}
-	if (button == controller.img_dpad_r || button.tag == right_pad) {
-		kcode[0] &= ~(DC_DPAD_RIGHT);
-	}
-	if (button == controller.img_dpad_u || button.tag == up_pad) {
-		kcode[0] &= ~(DC_DPAD_UP);
-	}
-	if (button == controller.img_dpad_d || button.tag == down_pad) {
-		kcode[0] &= ~(DC_DPAD_DOWN);
-	}
-	if (button == controller.img_abxy_a || button.tag == a_button) {
-		kcode[0] &= ~(DC_BTN_A);
-	}
-	if (button == controller.img_abxy_b || button.tag == b_button) {
-		kcode[0] &= ~(DC_BTN_B);
-	}
-	if (button == controller.img_abxy_x || button.tag == x_button) {
-		kcode[0] &= ~(DC_BTN_X);
-	}
-	if (button == controller.img_abxy_y || button.tag == y_button) {
-		kcode[0] &= ~(DC_BTN_Y);
-	}
-	if (button == controller.img_lt || button.tag == left_trigger) {
-		lt[0] = (255);
-	}
-	if (button == controller.img_rt || button.tag == right_trigger) {
-		rt[0] = (255);
-	}
-	if (button == controller.img_start || button.tag == start_button) {
-		kcode[0] &= ~(DC_BTN_START);
-	}
+	[super didMoveToSuperview];
+	mouse = std::make_shared<IOSTouchMouse>();
+	GamepadDevice::Register(mouse);
 }
 
-- (void)handleKeyUp:(UIButton*)button
+- (void)touchLocation:(UITouch*)touch;
 {
-	PadViewController * controller = (PadViewController *)self.controllerView;
-	if (button == controller.img_dpad_l || button.tag == left_pad) {
-		kcode[0] |= ~(DC_DPAD_LEFT);
-	}
-	if (button == controller.img_dpad_r || button.tag == right_pad) {
-		kcode[0] |= ~(DC_DPAD_RIGHT);
-	}
-	if (button == controller.img_dpad_u || button.tag == up_pad) {
-		kcode[0] |= ~(DC_DPAD_UP);
-	}
-	if (button == controller.img_dpad_d || button.tag == down_pad) {
-		kcode[0] |= ~(DC_DPAD_DOWN);
-	}
-	if (button == controller.img_abxy_a || button.tag == a_button) {
-		kcode[0] |= (DC_BTN_A);
-	}
-	if (button == controller.img_abxy_b || button.tag == b_button) {
-		kcode[0] |= (DC_BTN_B);
-	}
-	if (button == controller.img_abxy_x || button.tag == x_button) {
-		kcode[0] |= (DC_BTN_X);
-	}
-	if (button == controller.img_abxy_y || button.tag == y_button) {
-		kcode[0] |= (DC_BTN_Y);
-	}
-	if (button == controller.img_lt || button.tag == left_trigger) {
-		lt[0] = (0);
-	}
-	if (button == controller.img_rt || button.tag == right_trigger) {
-		rt[0] = (0);
-	}
-	if (button == controller.img_start || button.tag == start_button) {
-		kcode[0] |= (DC_BTN_START);
-	}
+	float scale = self.contentScaleFactor;
+	CGPoint location = [touch locationInView:touch.view];
+	mouse->setAbsPos(location.x * scale, location.y * scale, self.bounds.size.width * scale, self.bounds.size.height * scale);
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+{
+	UITouch *touch = [touches anyObject];
+	[self touchLocation:touch];
+	if (gui_is_open())
+		mouse->setButton(Mouse::LEFT_BUTTON, true);
+	[super touchesBegan:touches withEvent:event];
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+{
+	UITouch *touch = [touches anyObject];
+	[self touchLocation:touch];
+	if (gui_is_open())
+		mouse->setButton(Mouse::LEFT_BUTTON, false);
+	[super touchesEnded:touches withEvent:event];
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
+{
+	UITouch *touch = [touches anyObject];
+	[self touchLocation:touch];
+	[super touchesMoved:touches withEvent:event];
 }
 
 @end

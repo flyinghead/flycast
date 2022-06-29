@@ -16,8 +16,11 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
+#include <algorithm>
 
 static jobject input_device_manager;
 static jmethodID input_device_manager_rumble;
@@ -62,32 +65,13 @@ enum {
 	KEYCODE_BUTTON_MODE = 110,
 };
 
+class AndroidGamepadDevice;
+
+template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
 {
 public:
-	DefaultInputMapping()
-	{
-		name = "Default";
-		set_button(DC_BTN_Y, KEYCODE_BUTTON_Y);
-		set_button(DC_BTN_B, KEYCODE_BUTTON_B);
-		set_button(DC_BTN_A, KEYCODE_BUTTON_A);
-		set_button(DC_BTN_X, KEYCODE_BUTTON_X);
-		set_button(DC_BTN_START, KEYCODE_BUTTON_START);
-		set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
-		set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
-		set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
-		set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
-		set_button(EMU_BTN_MENU, KEYCODE_BACK);
-
-		set_axis(DC_AXIS_X, AXIS_X, false);
-		set_axis(DC_AXIS_Y, AXIS_Y, false);
-		set_axis(DC_AXIS_LT, AXIS_LTRIGGER, false);
-		set_axis(DC_AXIS_RT, AXIS_RTRIGGER, false);
-		set_axis(DC_AXIS_X2, AXIS_RX, false);
-		set_axis(DC_AXIS_Y2, AXIS_RY, false);
-
-		dirty = false;
-	}
+	DefaultInputMapping(const AndroidGamepadDevice& gamepad);
 };
 
 class ShieldRemoteInputMapping : public InputMapping
@@ -110,8 +94,10 @@ public:
 class AndroidGamepadDevice : public GamepadDevice
 {
 public:
-	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id)
-		: GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id)
+	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id,
+			const std::vector<int>& fullAxes, const std::vector<int>& halfAxes)
+		: GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id),
+		  fullAxes(fullAxes), halfAxes(halfAxes)
 	{
 		_name = name;
 		_unique_id = unique_id;
@@ -119,33 +105,27 @@ public:
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = std::make_shared<IdentityInputMapping>();
-			axis_min_values[DC_AXIS_X] = -128;
-			axis_ranges[DC_AXIS_X] = 255;
-			axis_min_values[DC_AXIS_Y] = -128;
-			axis_ranges[DC_AXIS_Y] = 255;
-			axis_min_values[DC_AXIS_LT] = 0;
-			axis_ranges[DC_AXIS_LT] = 255;
-			axis_min_values[DC_AXIS_RT] = 0;
-			axis_ranges[DC_AXIS_RT] = 255;
-		}
-		else if (!find_mapping())
-		{
-			if (_name == "SHIELD Remote")
-				input_mapper = std::make_shared<ShieldRemoteInputMapping>();
-			else
-				input_mapper = std::make_shared<DefaultInputMapping>();
-			save_mapping();
-			INFO_LOG(INPUT, "using default mapping");
+			rumbleEnabled = true;
 		}
 		else
-			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
+		{
+			loadMapping();
+			save_mapping();
+		}
 	}
-	virtual ~AndroidGamepadDevice() override
+	~AndroidGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
+		if (_name == "SHIELD Remote")
+			return std::make_shared<ShieldRemoteInputMapping>();
+		else
+			return std::make_shared<DefaultInputMapping<>>(*this);
+	}
+
+	const char *get_button_name(u32 code) override
 	{
 		switch(code)
 		{
@@ -196,7 +176,7 @@ public:
 		}
 	}
 
-	virtual const char *get_axis_name(u32 code) override
+	const char *get_axis_name(u32 code) override
 	{
 		switch(code)
 		{
@@ -246,6 +226,9 @@ public:
 
 	static void AddAndroidGamepad(std::shared_ptr<AndroidGamepadDevice> gamepad)
 	{
+		auto it = android_gamepads.find(gamepad->android_id);
+		if (it != android_gamepads.end())
+			GamepadDevice::Unregister(it->second);
 		android_gamepads[gamepad->android_id] = gamepad;
 		GamepadDevice::Register(gamepad);
 	};
@@ -256,7 +239,7 @@ public:
 		GamepadDevice::Unregister(gamepad);
 	};
 
-	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt)
+	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt, bool fastForward)
 	{
 		// No virtual gamepad when the GUI is open: touch events only
 		if (gui_is_open())
@@ -264,108 +247,222 @@ public:
 			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;
 		}
+		if (settings.platform.isArcade())
+		{
+			if (rt > 0)
+			{
+				if ((kcode & DC_BTN_A) == 0)
+					// RT + A -> D (coin)
+					kcode &= ~DC_BTN_D;
+				if ((kcode & DC_BTN_B) == 0)
+					// RT + B -> Service
+					kcode &= ~DC_DPAD2_UP;
+				if ((kcode & DC_BTN_X) == 0)
+					// RT + X -> Test
+					kcode &= ~DC_DPAD2_DOWN;
+			}
+			// arcade mapping: X -> btn2, Y -> btn3
+			if ((kcode & DC_BTN_X) == 0)
+			{
+				kcode &= ~DC_BTN_C;
+				kcode |= DC_BTN_X;
+			}
+			if ((kcode & DC_BTN_Y) == 0)
+			{
+				kcode &= ~DC_BTN_X;
+				kcode |= DC_BTN_Y;
+			}
+			if (rt > 0)
+				// naomi btn4
+				kcode &= ~DC_BTN_Y;
+			if (lt > 0)
+				// naomi btn5
+				kcode &= ~DC_BTN_Z;
+		}
 		u32 changes = kcode ^ previous_kcode;
 		for (int i = 0; i < 32; i++)
 			if (changes & (1 << i))
 				gamepad_btn_input(1 << i, (kcode & (1 << i)) == 0);
-		gamepad_axis_input(DC_AXIS_X, joyx);
-		gamepad_axis_input(DC_AXIS_Y, joyy);
-		gamepad_axis_input(DC_AXIS_LT, lt);
-		gamepad_axis_input(DC_AXIS_RT, rt);
+		if (joyx >= 0)
+			gamepad_axis_input(DC_AXIS_RIGHT, joyx | (joyx << 8));
+		else
+			gamepad_axis_input(DC_AXIS_LEFT, -joyx | (-joyx << 8));
+		if (joyy >= 0)
+			gamepad_axis_input(DC_AXIS_DOWN, joyy | (joyy << 8));
+		else
+			gamepad_axis_input(DC_AXIS_UP, -joyy | (-joyy << 8));
+		gamepad_axis_input(DC_AXIS_LT, lt == 0 ? 0 : 0x7fff);
+		gamepad_axis_input(DC_AXIS_RT, rt == 0 ? 0 : 0x7fff);
 		previous_kcode = kcode;
+		if (fastForward != previousFastForward)
+			gamepad_btn_input(EMU_BTN_FFORWARD, fastForward);
+		previousFastForward = fastForward;
 	}
 
 	void rumble(float power, float inclination, u32 duration_ms) override
     {
         jboolean has_vibrator = jvm_attacher.getEnv()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
-        _rumble_enabled = has_vibrator;
+        rumbleEnabled = has_vibrator;
     }
 	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }
 
-	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
+	bool hasHalfAxis(int axis) const { return std::find(halfAxes.begin(), halfAxes.end(), axis) != halfAxes.end(); }
+	bool hasFullAxis(int axis) const { return std::find(fullAxes.begin(), fullAxes.end(), axis) != fullAxes.end(); }
 
-protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void resetMappingToDefault(bool arcade, bool gamepad) override
 	{
-		if (axis == AXIS_LTRIGGER || axis == AXIS_RTRIGGER)
+		NOTICE_LOG(INPUT, "Resetting Android gamepad to default: %d %d", arcade, gamepad);
+		if (arcade)
 		{
-			axis_min_values[axis] = 0;
-			axis_ranges[axis] = 32767;
+			if (gamepad)
+				input_mapper = std::make_shared<DefaultInputMapping<true, true>>(*this);
+			else
+				input_mapper = std::make_shared<DefaultInputMapping<true, false>>(*this);
 		}
 		else
-		{
-			axis_min_values[axis] = -32768;
-			axis_ranges[axis] = 65535;
-		}
+			input_mapper = std::make_shared<DefaultInputMapping<false, false>>(*this);
 	}
+
+	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
 
 private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	u32 previous_kcode = 0xffffffff;
+	bool previousFastForward = false;
+	std::vector<int> fullAxes;
+	std::vector<int> halfAxes;
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
 
-class MouseInputMapping : public InputMapping
+template<bool Arcade, bool Gamepad>
+inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(const AndroidGamepadDevice& gamepad)
 {
-public:
-	MouseInputMapping()
+	name = Arcade ? Gamepad ? "Arcade Gamepad" : "Arcade Hitbox" : "Default";
+	int ltAxis = AXIS_LTRIGGER;
+	int rtAxis = AXIS_RTRIGGER;
+	int rightStickX = AXIS_Z;
+	int rightStickY = AXIS_RZ;
+	if (!gamepad.hasHalfAxis(AXIS_LTRIGGER) || !gamepad.hasHalfAxis(AXIS_RTRIGGER))
 	{
-		name = "Android Mouse";
-		set_button(DC_BTN_A, 1);
-		set_button(DC_BTN_B, 2);
-		set_button(DC_BTN_START, 4);
-
-		dirty = false;
-	}
-};
-
-class AndroidMouseGamepadDevice : public GamepadDevice
-{
-public:
-	AndroidMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "Android")
-	{
-		_name = "Mouse";
-		_unique_id = "android_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
-
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open() && !is_detecting_input())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
-	}
-
-	virtual const char *get_button_name(u32 code) override
-	{
-		switch (code)
+		if (gamepad.hasHalfAxis(AXIS_BRAKE) && gamepad.hasHalfAxis(AXIS_GAS))
 		{
-		case 1:
-			return "Left Button";
-		case 2:
-			return "Right Button";
-		case 4:
-			return "Middle Button";
-		case 8:
-			return "Back Button";
-		case 16:
-			return "Forward Button";
-		case 32:
-			return "Stylus Primary";
-		case 64:
-			return "Stylus Second";
-		default:
-			return nullptr;
+			ltAxis = AXIS_BRAKE;
+			rtAxis = AXIS_GAS;
+		}
+		else if (gamepad.hasHalfAxis(AXIS_Z) && gamepad.hasHalfAxis(AXIS_RZ))
+		{
+			ltAxis = AXIS_Z;
+			rtAxis = AXIS_RZ;
+			rightStickX = AXIS_RX;
+			rightStickY = AXIS_RY;
+		}
+		else
+		{
+			ltAxis = -1;
+			rtAxis = -1;
 		}
 	}
+	if (!gamepad.hasFullAxis(rightStickX) || !gamepad.hasFullAxis(rightStickY))
+	{
+		rightStickX = -1;
+		rightStickY = -1;
+	}
+	else
+	{
+		set_axis(DC_AXIS2_LEFT, rightStickX, false);
+		set_axis(DC_AXIS2_RIGHT, rightStickX, true);
+		set_axis(DC_AXIS2_UP, rightStickY, false);
+		set_axis(DC_AXIS2_DOWN, rightStickY, true);
+	}
+
+	if (Arcade)
+	{
+		if (Gamepad)
+		{
+			// 1  2  3  4  5  6
+			// A  B  X  Y  L  R
+			set_button(DC_BTN_A, KEYCODE_BUTTON_A);
+			set_button(DC_BTN_B, KEYCODE_BUTTON_B);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_X);
+			set_button(DC_BTN_X, KEYCODE_BUTTON_Y);
+			if (ltAxis != -1)
+			{
+				set_axis(DC_AXIS_LT, ltAxis, true);
+				set_button(DC_BTN_Y, KEYCODE_BUTTON_L1);
+			}
+			else
+				set_button(DC_AXIS_LT, KEYCODE_BUTTON_L1);
+			if (rtAxis != -1)
+			{
+				set_axis(DC_AXIS_RT, rtAxis, true);
+				set_button(DC_BTN_Z, KEYCODE_BUTTON_R1);
+			}
+			else
+				set_button(DC_AXIS_RT, KEYCODE_BUTTON_R1);
+		}
+		else
+		{
+			// Hitbox
+			// 1  2  3  4  5  6  7  8
+			// X  Y  R1 A  B  R2 L1 L2
+			set_button(DC_BTN_A, KEYCODE_BUTTON_X);
+			set_button(DC_BTN_B, KEYCODE_BUTTON_Y);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+			set_button(DC_BTN_X, KEYCODE_BUTTON_A);
+			set_button(DC_BTN_Y, KEYCODE_BUTTON_B);
+			if (rtAxis != -1)
+				set_axis(DC_BTN_Z, rtAxis, true);
+			set_button(DC_DPAD2_LEFT, KEYCODE_BUTTON_L1);	// L1 (Naomi button 7)
+			if (ltAxis != -1)
+				set_axis(DC_DPAD2_RIGHT, ltAxis, true);		// L2 (Naomi button 8)
+		}
+	}
+	else
+	{
+		set_button(DC_BTN_A, KEYCODE_BUTTON_A);
+		set_button(DC_BTN_B, KEYCODE_BUTTON_B);
+		set_button(DC_BTN_X, KEYCODE_BUTTON_X);
+		set_button(DC_BTN_Y, KEYCODE_BUTTON_Y);
+		if (rtAxis != -1)
+		{
+			set_axis(DC_AXIS_RT, rtAxis, true);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+		}
+		else
+			set_button(DC_AXIS_RT, KEYCODE_BUTTON_R1);
+		if (ltAxis != -1)
+		{
+			set_axis(DC_AXIS_LT, ltAxis, true);
+			set_button(DC_BTN_Z, KEYCODE_BUTTON_L1);
+		}
+		else
+			set_button(DC_AXIS_LT, KEYCODE_BUTTON_L1);
+
+	}
+	set_button(DC_BTN_START, KEYCODE_BUTTON_START);
+	set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
+	set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
+	set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
+	set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
+	set_button(EMU_BTN_MENU, KEYCODE_BUTTON_SELECT);
+
+	set_axis(DC_AXIS_LEFT, AXIS_X, false);
+	set_axis(DC_AXIS_RIGHT, AXIS_X, true);
+	set_axis(DC_AXIS_UP, AXIS_Y, false);
+	set_axis(DC_AXIS_DOWN, AXIS_Y, true);
+
+	dirty = false;
+}
+
+class AndroidMouse : public SystemMouse
+{
+public:
+	AndroidMouse(int maple_port) : SystemMouse("Android", maple_port)
+	{
+		_unique_id = "android_mouse";
+		loadMapping();
+	}
 };
-// FIXME Don't connect it by default or any screen touch will register as button A press
-AndroidMouseGamepadDevice mouse_gamepad(-1);
 

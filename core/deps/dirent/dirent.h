@@ -29,6 +29,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PC_APP || WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#define FindFirstFileExW FindFirstFileExFromAppW
+#endif
+
 /* Indicates that d_type field is available in dirent structure */
 #define _DIRENT_HAVE_D_TYPE
 
@@ -613,7 +617,7 @@ dirent_first(
         /* Failed to re-open directory: no directory entry in memory */
         dirp->cached = 0;
         datap = NULL;
-
+        dirent_set_errno(GetLastError()); /* Not a valid errno but better than nothing */
     }
     return datap;
 }
@@ -647,6 +651,8 @@ dirent_next(
             FindClose (dirp->handle);
             dirp->handle = INVALID_HANDLE_VALUE;
             p = NULL;
+            if (GetLastError() != ERROR_NO_MORE_FILES)
+            	dirent_set_errno(GetLastError());
         }
 
     } else {

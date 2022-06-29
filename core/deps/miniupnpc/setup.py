@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # vim: tabstop=8 shiftwidth=8 expandtab
 # $Id: setup.py,v 1.14 2020/04/06 10:23:02 nanard Exp $
-# the MiniUPnP Project (c) 2007-2020 Thomas Bernard
+# the MiniUPnP Project (c) 2007-2021 Thomas Bernard
 # https://miniupnp.tuxfamily.org/ or http://miniupnp.free.fr/
 #
 # python script to build the miniupnpc module under unix
@@ -13,7 +13,7 @@ from setuptools.command import build_ext
 import subprocess
 import os
 
-EXT = ['libminiupnpc.a']
+EXT = ['build/libminiupnpc.a']
 
 class make_then_build_ext(build_ext.build_ext):
       def run(self):
@@ -21,7 +21,7 @@ class make_then_build_ext(build_ext.build_ext):
             build_ext.build_ext.run(self)
 
 setup(name="miniupnpc",
-      version=open('VERSION.miniupnpc').read().strip(),
+      version=open('VERSION').read().strip(),
       author='Thomas BERNARD',
       author_email='miniupnp@free.fr',
       license=open('LICENSE').read(),
@@ -29,7 +29,7 @@ setup(name="miniupnpc",
       description='miniUPnP client',
       cmdclass={'build_ext': make_then_build_ext},
       ext_modules=[
-         Extension(name="miniupnpc", sources=["miniupnpcmodule.c"],
-                   extra_objects=EXT)
+         Extension(name="miniupnpc", sources=["src/miniupnpcmodule.c"],
+                   include_dirs=['include'], extra_objects=EXT)
       ])
 

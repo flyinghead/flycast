@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -18,33 +18,33 @@
 #include "oslib/host_context.h"
 
 #include "hw/sh4/dyna/ngen.h"
+#include "rend/TexCache.h"
+#include "hw/mem/_vmem.h"
+#include "hw/mem/mem_watch.h"
+
+#ifdef __SWITCH__
+#include <ucontext.h>
+extern "C" char __start__;
+#define siginfo_t switch_siginfo_t
+#endif // __SWITCH__
 
 #if !defined(TARGET_NO_EXCEPTIONS)
-bool VramLockedWrite(u8* address);
-bool BM_LockedWrite(u8* address);
 
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
+#ifndef __SWITCH__
+static struct sigaction next_segv_handler;
+#endif
 #if defined(__APPLE__)
-void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
-	
-	host_context_t ctx;
-    
-    context_from_segfault(&ctx, segfault_ctx);
-
-	unat pc = (unat)ctx.pc;
-	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
-	
-	ERROR_LOG(COMMON, "SIGILL @ %lx -> %p was not in vram, dynacode:%d", pc, si->si_addr, dyna_cde);
-	
-	//printf("PC is used here %08X\n", pc);
-    kill(getpid(), SIGABRT);
-}
+static struct sigaction next_bus_handler;
 #endif
 
-void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
+	// Ram watcher for net rollback
+	if (memwatch::writeAccess(si->si_addr))
+		return;
 	// code protection in RAM
 	if (bm_RamWriteAccess(si->si_addr))
 		return;
@@ -68,30 +68,54 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	}
 #endif
 	ERROR_LOG(COMMON, "SIGSEGV @ %p -> %p was not in vram, dynacode:%d", (void *)ctx.pc, si->si_addr, dyna_cde);
-	die("segfault");
-	signal(SIGSEGV, SIG_DFL);
+#ifdef __SWITCH__
+	MemoryInfo meminfo;
+	u32 pageinfo;
+	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
+	ERROR_LOG(COMMON, ".text base: %p", (void*)meminfo.addr);
+#else
+	if (next_segv_handler.sa_sigaction != nullptr)
+		next_segv_handler.sa_sigaction(sn, si, segfault_ctx);
+	else
+#endif // !__SWITCH__
+		die("segfault");
 }
 #undef HOST_CTX_READY
 
-void install_fault_handler()
+void os_InstallFaultHandler()
 {
-	struct sigaction act, segv_oact;
+#ifndef __SWITCH__
+	struct sigaction act;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &act, &segv_oact);
+	sigaction(SIGSEGV, &act, &next_segv_handler);
+#endif
 #if defined(__APPLE__)
     //this is broken on osx/ios/mach in general
-    sigaction(SIGBUS, &act, &segv_oact);
-    
-    act.sa_sigaction = sigill_handler;
-    sigaction(SIGILL, &act, &segv_oact);
+    sigaction(SIGBUS, &act, &next_bus_handler);
 #endif
 }
+
+void os_UninstallFaultHandler()
+{
+#ifndef __SWITCH__
+	sigaction(SIGSEGV, &next_segv_handler, nullptr);
+#endif
+#if defined(__APPLE__)
+	sigaction(SIGBUS, &next_bus_handler, nullptr);
+#endif
+}
+
 #else  // !defined(TARGET_NO_EXCEPTIONS)
-// No exceptions/nvmem dummy handlers.
-void install_fault_handler() {}
+
+void os_InstallFaultHandler()
+{
+}
+void os_UninstallFaultHandler()
+{
+}
 #endif // !defined(TARGET_NO_EXCEPTIONS)
 
 double os_GetSeconds()
@@ -102,11 +126,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#ifdef TARGET_IPHONE
-void os_DebugBreak() {
-    __asm__("trap");
-}
-#elif !defined(__unix__)
+#if !defined(__unix__) && !defined(LIBRETRO)
 void os_DebugBreak()
 {
 	__builtin_trap();
@@ -164,7 +184,7 @@ void common_linux_setup()
 	linux_rpi2_init();
 
 	enable_runfast();
-	install_fault_handler();
+	os_InstallFaultHandler();
 	signal(SIGINT, exit);
 	
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);

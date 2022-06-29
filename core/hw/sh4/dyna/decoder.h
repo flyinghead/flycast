@@ -36,12 +36,6 @@ enum NextDecoderOperation
 	NDO_End,        //End the block, Type = BlockEndType
 	NDO_Delayslot,  //pc+=2, NextOp=DelayOp
 };
-//ngen features
-struct ngen_features
-{
-	bool OnlyDynamicEnds;     //if set the block endings aren't handled natively and only Dynamic block end type is used
-	bool InterpreterFallback; //if set all the non-branch opcodes are handled with the ifb opcode
-};
 
 struct RuntimeBlockInfo;
 bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles);
@@ -64,8 +58,6 @@ struct state_t
 		bool is_delayslot;
 	} cpu;
 
-	ngen_features ngen;
-
 	struct
 	{
 		bool has_readm;
@@ -75,5 +67,11 @@ struct state_t
 };
 
 const u32 NullAddress = 0xFFFFFFFF;
+
+#define GetN(str) ((str>>8) & 0xf)
+#define GetM(str) ((str>>4) & 0xf)
+#define GetImm4(str) ((str>>0) & 0xf)
+#define GetImm8(str) ((str>>0) & 0xff)
+#define GetSImm8(str) ((s8)((str>>0) & 0xff))
 #define GetImm12(str) ((str>>0) & 0xfff)
 #define GetSImm12(str) (((short)((GetImm12(str))<<4))>>4)

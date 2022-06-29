@@ -21,20 +21,23 @@
 #include "hw/pvr/ta.h"
 #include "commandpool.h"
 #include "pipeline.h"
-#include "rend/gui.h"
 #include "rend/osd.h"
+#include "overlay.h"
+#ifndef LIBRETRO
+#include "rend/gui.h"
+#endif
 
 #include <memory>
 #include <vector>
 
 class BaseVulkanRenderer : public Renderer
 {
-public:
-	bool Init() override
+protected:
+	bool BaseInit(vk::RenderPass renderPass, int subpass = 0)
 	{
 		texCommandPool.Init();
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		if (!vjoyTexture)
 		{
 			int w, h;
@@ -42,10 +45,6 @@ public:
 			texCommandPool.BeginFrame();
 			vjoyTexture = std::unique_ptr<Texture>(new Texture());
 			vjoyTexture->tex_type = TextureType::_8888;
-			vjoyTexture->tcw.full = 0;
-			vjoyTexture->tsp.full = 0;
-			vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			vjoyTexture->SetDevice(GetContext()->GetDevice());
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 			vjoyTexture->SetCommandBuffer(cmdBuffer);
@@ -62,13 +61,25 @@ public:
 									vk::BufferUsageFlagBits::eVertexBuffer));
 		}
 #endif
-
+#ifdef LIBRETRO
+		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
+		quadPipeline->Init(&shaderManager, renderPass, subpass);
+		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
+		overlay->Init(quadPipeline.get());
+#endif
 		return true;
 	}
 
+public:
 	void Term() override
 	{
-		GetContext()->PresentFrame(nullptr, vk::Extent2D());
+		GetContext()->WaitIdle();
+		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D());
+#ifdef LIBRETRO
+		overlay->Term();
+		overlay.reset();
+		quadPipeline.reset();
+#endif
 		osdBuffer.reset();
 		vjoyTexture.reset();
 		textureCache.Clear();
@@ -78,16 +89,9 @@ public:
 		framebufferTextures.clear();
 	}
 
-	u64 GetTexture(TSP tsp, TCW tcw) override
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
 	{
 		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
-
-		if (tf->IsNew())
-		{
-			tf->Create();
-			tf->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			tf->SetDevice(GetContext()->GetDevice());
-		}
 
 		//update if needed
 		if (tf->NeedsUpdate())
@@ -107,7 +111,7 @@ public:
 		tf->SetCommandBuffer(nullptr);
 		textureCache.SetInFlight(tf);
 
-		return tf->GetIntId();
+		return tf;
 	}
 
 	bool Process(TA_context* ctx) override
@@ -126,10 +130,14 @@ public:
 		if (ctx->rend.isRenderFramebuffer)
 			result = RenderFramebuffer(ctx);
 		else
-			result = ta_parse_vdrc(ctx);
+			result = ta_parse(ctx);
 
 		if (result)
 		{
+#ifdef LIBRETRO
+			if (!ctx->rend.isRTT)
+				overlay->Prepare(texCommandBuffer, true, true, textureCache);
+#endif
 			CheckFogTexture();
 			CheckPaletteTexture();
 			texCommandBuffer.end();
@@ -154,13 +162,14 @@ public:
 	void ReInitOSD()
 	{
 		texCommandPool.Init();
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
 	}
 
 	void DrawOSD(bool clear_screen) override
 	{
+#ifndef LIBRETRO
 		gui_display_osd();
 		if (!vjoyTexture)
 			return;
@@ -171,13 +180,13 @@ public:
 				GetContext()->BeginRenderPass();
 				GetContext()->PresentLastFrame();
 			}
-			const float dc2s_scale_h = screen_height / 480.0f;
-			const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
+			const float dc2s_scale_h = settings.display.height / 480.0f;
+			const float sidebarWidth =  (settings.display.width - dc2s_scale_h * 640.0f) / 2;
 
 			std::vector<OSDVertex> osdVertices = GetOSDVertices();
-			const float x1 = 2.0f / (screen_width / dc2s_scale_h);
+			const float x1 = 2.0f / (settings.display.width / dc2s_scale_h);
 			const float y1 = 2.0f / 480;
-			const float x2 = 1 - 2 * sidebarWidth / screen_width;
+			const float x2 = 1 - 2 * sidebarWidth / settings.display.width;
 			const float y2 = 1;
 			for (OSDVertex& vtx : osdVertices)
 			{
@@ -189,19 +198,20 @@ public:
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
 
 			osdPipeline.BindDescriptorSets(cmdBuffer);
-			const vk::Viewport viewport(0, 0, (float)screen_width, (float)screen_height, 0, 1.f);
+			const vk::Viewport viewport(0, 0, (float)settings.display.width, (float)settings.display.height, 0, 1.f);
 			cmdBuffer.setViewport(0, 1, &viewport);
-			const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
+			const vk::Rect2D scissor({ 0, 0 }, { (u32)settings.display.width, (u32)settings.display.height });
 			cmdBuffer.setScissor(0, 1, &scissor);
-			osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+			osdBuffer->upload((u32)(osdVertices.size() * sizeof(OSDVertex)), osdVertices.data());
 			const vk::DeviceSize zero = 0;
 			cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
-			for (size_t i = 0; i < osdVertices.size(); i += 4)
+			for (u32 i = 0; i < (u32)osdVertices.size(); i += 4)
 				cmdBuffer.draw(4, 1, i, 0);
 			if (clear_screen)
 				GetContext()->EndFrame();
-		} catch (const InvalidVulkanContext& err) {
+		} catch (const InvalidVulkanContext&) {
 		}
+#endif
 	}
 
 protected:
@@ -226,16 +236,13 @@ protected:
 		{
 			curTexture = std::unique_ptr<Texture>(new Texture());
 			curTexture->tex_type = TextureType::_8888;
-			curTexture->tcw.full = 0;
-			curTexture->tsp.full = 0;
-			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			curTexture->SetDevice(GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandBuffer);
 		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
 		curTexture->SetCommandBuffer(nullptr);
 
-		Vertex *vtx = ctx->rend.verts.Append(4);
+		// Use background poly vtx and param
+		Vertex *vtx = ctx->rend.verts.head();
 		vtx[0].x = 0.f;
 		vtx[0].y = 0.f;
 		vtx[0].z = 0.1f;
@@ -257,13 +264,13 @@ protected:
 		vtx[3].v = 1.f;
 
 		u32 *idx = ctx->rend.idx.Append(4);
-		idx[0] = ctx->rend.verts.used() - 4;
-		idx[1] = idx[0] + 1;
-		idx[2] = idx[1] + 1;
-		idx[3] = idx[2] + 1;
+		idx[0] = 0;
+		idx[1] = 1;
+		idx[2] = 2;
+		idx[3] = 3;
 
-		PolyParam *pp = ctx->rend.global_param_op.Append(1);
-		pp->first = ctx->rend.idx.used() - 4;
+		PolyParam *pp = ctx->rend.global_param_op.head();
+		pp->first = 0;
 		pp->count = 4;
 
 		pp->isp.full = 0;
@@ -283,15 +290,15 @@ protected:
 		pp->tsp.SrcInstr = 1;
 		pp->tsp1.full = (u32)-1;
 
-		pp->texid = (u64)reinterpret_cast<uintptr_t>(curTexture.get());
-		pp->texid1 = (u64)-1;
+		pp->texture = curTexture.get();
+		pp->texture1 = nullptr;
 		pp->tileclip = 0;
 
 		RenderPass *pass = ctx->rend.render_passes.Append(1);
 		pass->autosort = false;
 		pass->mvo_count = 0;
 		pass->mvo_tr_count = 0;
-		pass->op_count = ctx->rend.global_param_op.used();
+		pass->op_count = 1;
 		pass->pt_count = 0;
 		pass->tr_count = 0;
 
@@ -303,8 +310,6 @@ protected:
 		if (!fogTexture)
 		{
 			fogTexture = std::unique_ptr<Texture>(new Texture());
-			fogTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			fogTexture->SetDevice(GetContext()->GetDevice());
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -325,10 +330,8 @@ protected:
 		if (!paletteTexture)
 		{
 			paletteTexture = std::unique_ptr<Texture>(new Texture());
-			paletteTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			paletteTexture->SetDevice(GetContext()->GetDevice());
 			paletteTexture->tex_type = TextureType::_8888;
-			palette_updated = true;
+			forcePaletteUpdate();
 		}
 		if (!palette_updated)
 			return;
@@ -352,4 +355,8 @@ protected:
 	TextureCache textureCache;
 	vk::Extent2D viewport;
 	vk::CommandBuffer texCommandBuffer;
+#ifdef LIBRETRO
+	std::unique_ptr<VulkanOverlay> overlay;
+	std::unique_ptr<QuadPipeline> quadPipeline;
+#endif
 };

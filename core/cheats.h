@@ -27,6 +27,7 @@ struct WidescreenCheat
 	const char *area_or_version;
 	u32 addresses[16];
 	u32 values[16];
+	u32 origValues[16];
 };
 
 struct Cheat
@@ -39,17 +40,30 @@ struct Cheat
 		runNextIfEq,
 		runNextIfNeq,
 		runNextIfGt,
-		runNextIfLt
+		runNextIfLt,
+		copy
 	};
-	Type type = Type::disabled;
+	Type type;
 	std::string description;
-	bool enabled = false;
-	u32 size = 0;
-	u32 address = 0;
-	u32 value = 0;
-	u32 repeatCount = 1;
-	u32 repeatValueIncrement = 0;
-	u32 repeatAddressIncrement = 0;
+	bool enabled;
+	u32 size;
+	u32 address;
+	u32 value;
+	u8 valueMask;
+	u32 repeatCount;
+	u32 repeatValueIncrement;
+	u32 repeatAddressIncrement;
+	u32 destAddress;
+	bool builtIn;
+
+	Cheat(Type type = Type::disabled, const std::string& description = "", bool enabled = false, u32 size = 0, u32 address = 0,
+			u32 value = 0, u8 valueMask = 0, u32 repeatCount = 1, u32 repeatValueIncrement = 0,
+			u32 repeatAddressIncrement = 0, u32 destAddress = 0, bool builtIn = false)
+		: type(type), description(description), enabled(enabled), size(size), address(address), value(value), valueMask(valueMask),
+		  repeatCount(repeatCount), repeatValueIncrement(repeatValueIncrement), repeatAddressIncrement(repeatAddressIncrement),
+		  destAddress(destAddress), builtIn(builtIn)
+	{
+	}
 };
 
 class CheatManager
@@ -62,12 +76,15 @@ public:
 	bool cheatEnabled(size_t index) const { return cheats[index].enabled; }
 	void enableCheat(size_t index, bool enabled) { cheats[index].enabled = enabled; }
 	void loadCheatFile(const std::string& filename);
+	void saveCheatFile(const std::string& filename);
 	// Returns true if using 16:9 anamorphic screen ratio
 	bool isWidescreen() const { return widescreen_cheat != nullptr; }
+	void addGameSharkCheat(const std::string& name, const std::string& s);
 
 private:
 	u32 readRam(u32 addr, u32 bits);
 	void writeRam(u32 addr, u32 value, u32 bits);
+	void setActive(bool active);
 
 	static const WidescreenCheat widescreen_cheats[];
 	static const WidescreenCheat naomi_widescreen_cheats[];
@@ -75,6 +92,10 @@ private:
 	bool active = false;
 	std::vector<Cheat> cheats;
 	std::string gameId;
+
+	friend class CheatManagerTest_TestLoad_Test;
+	friend class CheatManagerTest_TestGameShark_Test;
+	friend class CheatManagerTest_TestSave_Test;
 };
 
 extern CheatManager cheatManager;

@@ -5,13 +5,15 @@
 #pragma once
 #include <cmath>
 #include "types.h"
-#include "stdclass.h"
+#include "serialize.h"
 
 struct MemChip
 {
 	u8* data;
 	u32 size;
 	u32 mask;
+
+protected:
 	u32 write_protect_size;
 	std::string load_filename;
 
@@ -22,7 +24,12 @@ struct MemChip
 		this->mask = size - 1; // must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
-	virtual ~MemChip() { delete[] data; }
+
+public:
+	virtual ~MemChip()
+	{
+		delete[] data;
+	}
 
 	virtual u8 Read8(u32 addr)
 	{
@@ -41,89 +48,43 @@ struct MemChip
 		return rv;
 	}
 
-	virtual void Write(u32 addr, u32 data, u32 size)
-	{
-		die("Method not supported");
-	}
+	bool Load(const std::string& file);
+	virtual bool Reload() { return true; }
+	bool Load(const std::string &prefix, const std::string &names_ro,
+			const std::string &title);
+	void digest(u8 md5Digest[16]);
 
-	bool Load(const std::string& file)
-	{
-		FILE *f = nowide::fopen(file.c_str(), "rb");
-		if (f)
-		{
-			bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
-			std::fclose(f);
-			if (rv)
-				this->load_filename = file;
+	virtual void Reset() {}
+	virtual void Serialize(Serializer& ser) const { }
+	virtual void Deserialize(Deserializer& deser) { }
+};
 
-			return rv;
-		}
-		return false;
-	}
+struct WritableChip : MemChip
+{
+protected:
+	WritableChip(u32 size, u32 write_protect_size = 0)
+		: MemChip(size, write_protect_size) {}
 
-	bool Reload()
+public:
+	virtual void Write(u32 addr, u32 data, u32 size) = 0;
+
+	bool Reload() override
 	{
 		return Load(this->load_filename);
 	}
-
-	void Save(const std::string& file)
-	{
-		FILE *f = nowide::fopen(file.c_str(), "wb");
-		if (f)
-		{
-			std::fwrite(data + write_protect_size, 1, size - write_protect_size, f);
-			std::fclose(f);
-		}
-	}
-
-	bool Load(const std::string& prefix, const std::string& names_ro, const std::string& title)
-	{
-		const size_t npos = std::string::npos;
-		size_t start = 0;
-		while (start < names_ro.size())
-		{
-			size_t semicolon = names_ro.find(';', start);
-			std::string name = names_ro.substr(start, semicolon == npos ? semicolon : semicolon - start);
-
-			size_t percent = name.find('%');
-			if (percent != npos)
-				name = name.replace(percent, 1, prefix);
-
-			std::string fullpath = get_readonly_data_path(name);
-			if (file_exists(fullpath) && Load(fullpath))
-			{
-				INFO_LOG(FLASHROM, "Loaded %s as %s", fullpath.c_str(), title.c_str());
-				return true;
-			}
-
-			start = semicolon;
-			if (start != npos)
-				start++;
-		}
-		return false;
-	}
-
-	void Save(const std::string& prefix, const std::string& name_ro, const std::string& title)
-	{
-		std::string path = get_writable_data_path(prefix + name_ro);
-		Save(path);
-
-		INFO_LOG(FLASHROM, "Saved %s as %s", path.c_str(), title.c_str());
-	}
-
-	virtual void Reset() {}
-	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
-	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
+	void Save(const std::string& file);
+	void Save(const std::string &prefix, const std::string &name_ro,
+			const std::string &title);
 };
 
 struct RomChip : MemChip
 {
-	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+	RomChip(u32 sz) : MemChip(sz) {}
 };
 
-struct SRamChip : MemChip
+struct SRamChip : WritableChip
 {
-	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+	SRamChip(u32 sz, u32 write_protect_size = 0) : WritableChip(sz, write_protect_size) {}
 
 	void Write(u32 addr,u32 val,u32 sz) override
 	{
@@ -146,16 +107,13 @@ struct SRamChip : MemChip
 		}
 	}
 
-	bool Serialize(void **data, unsigned int *total_size) override
+	void Serialize(Serializer& ser) const override
 	{
-		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		ser.serialize(&this->data[write_protect_size], size - write_protect_size);
 	}
-
-	bool Unserialize(void **data, unsigned int *total_size) override
+	void Deserialize(Deserializer& deser) override
 	{
-		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		deser.deserialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 };
 
@@ -194,7 +152,8 @@ struct flash_syscfg_block {
   // last set time (seconds since 1/1/1950 00:00)
   u16 time_lo;
   u16 time_hi;
-  u8 unknown1;
+	// in 15 mins increment, from -48 (West) to +52 (East), unused
+  int8_t time_zone;
   u8 lang;
   u8 mono;
   u8 autostart;
@@ -238,9 +197,9 @@ struct flash_user_block {
 
 // Macronix 29LV160TMC
 // AtomisWave uses a custom 29L001mc model
-struct DCFlashChip : MemChip
+struct DCFlashChip : WritableChip
 {
-	DCFlashChip(u32 sz, u32 write_protect_size = 0): MemChip(sz, write_protect_size), state(FS_Normal) { }
+	DCFlashChip(u32 sz, u32 write_protect_size = 0): WritableChip(sz, write_protect_size), state(FS_Normal) { }
 
 	enum FlashState
 	{
@@ -525,6 +484,8 @@ struct DCFlashChip : MemChip
 			*size = 64 * 1024;
 			break;
 		default:
+			*offset = 0;
+			*size = 0;
 			die("unknown partition");
 			break;
 		}
@@ -536,11 +497,11 @@ struct DCFlashChip : MemChip
 		bool valid = true;
 		char sysinfo[16];
 
-		for (size_t i = 0; i < sizeof(sysinfo); i++)
+		for (u32 i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a000 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 
-		for (size_t i = 0; i < sizeof(sysinfo); i++)
+		for (u32 i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a0a0 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 
@@ -750,18 +711,16 @@ private:
 		return result;
 	}
 
-	bool Serialize(void **data, unsigned int *total_size) override
+	void Serialize(Serializer& ser) const override
 	{
-		REICAST_S(state);
-		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		ser << state;
+		ser.serialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 
-	bool Unserialize(void **data, unsigned int *total_size) override
+	void Deserialize(Deserializer& deser) override
 	{
-		REICAST_US(state);
-		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		deser >> state;
+		deser.deserialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 
 	void erase_partition(u32 part_id)

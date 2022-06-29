@@ -3,6 +3,45 @@
 #include <algorithm>
 #include <string>
 #include "types.h"
+#include "emulator.h"
+
+struct RomBootID
+{
+	char boardName[16];
+	char vendorName[32];
+	char gameTitle[8][32];
+	u16  year;
+	u8   month;
+	u8   day;
+	char gameID[4];		// copied to eeprom[3]
+	u16  romMode;		// != 0 => offset | 0x20000000
+	u16  romWaitFlag;	// != 0 => configure G1 BUS
+	u32  romWait[8];	// init values for SB_G1RRC, SB_G1RWC, SB_G1FRC, SB_G1FWC, SB_G1CRC, SB_G1CWC, SB_G1GDRC, SB_G1GDWC
+	u16  romID[22][3];	// M2/M4-type ROM checksums
+	u8   coinFlag[8][16];// Init instructions for EEPROM for each region
+  	  	  	  	  	  	// b0: if 0, use default BIOS settings, if 1, use settings below
+  	  	  	  	  	    // b1: bit 0: vertical monitor, bit 1: forces attract mode sound off
+  	  	  	  	  	  	// b2: coin chute type: 0 common, 1; individual
+  	  	  	  	  	    // b3: default coin setting (1-28)
+  	  	  	  	  	    // b4: coin 1 rate (for manual coin setting)
+  	  	  	  	  	    // b5: coin 2 rate (for manual coin setting)
+  	  	  	  	  	  	// b6: credit rate (for manual coin setting)
+  	  	  	  	  	    // b7: bonus credit rate (for manual coin setting)
+  	  	  	  	  	    // b8-15: coin sequences
+	char sequence[8][32];// text ("CREDIT TO START", "CREDIT TO CONTINUE", ...)
+	u32  gameLoad[8][3]; // regions to copy from ROM to system RAM: offset, RAM address, length (offset=0xffffffff means end of list)
+	u32  testLoad[8][3]; // same for game test mode
+	u32  gamePC;		// main game entry point
+	u32  testPC;		// test mode entry point
+	u8   country;		// supported regions bitmap
+	u8   cabinet;		// supported # of players bitmap: b0 1 player, b1 2 players, ...
+	u8   resolution;	// 0: 31kHz, 1: 15kHz
+	u8   vertical;		// b0: horizontal mode, b1: vertical mode
+	u8   serialID;		// if 1, check the ROM/DIMM board serial# eeprom
+	u8   _res[211];		// _res[210]: if 0xFF then the header is unencrypted. if not then the header is encrypted starting at offset 0x010.
+
+	// Note: this structure is copied to system RAM by the BIOS at location 0c01f400
+};
 
 class Cartridge
 {
@@ -10,7 +49,10 @@ public:
 	Cartridge(u32 size);
 	virtual ~Cartridge();
 
-	virtual void Init() {}
+	virtual void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) {
+		if (digest != nullptr)
+			digest->clear();
+	}
 	virtual u32 ReadMem(u32 address, u32 size) = 0;
 	virtual void WriteMem(u32 address, u32 data, u32 size) = 0;
 
@@ -19,11 +61,11 @@ public:
 	virtual void* GetPtr(u32 offset, u32& size);
 	virtual void* GetDmaPtr(u32 &size) = 0;
 	virtual void AdvancePtr(u32 size) = 0;
-	virtual std::string GetGameId();
-	virtual void Serialize(void **data, unsigned int *total_size) {}
-	virtual void Unserialize(void **data, unsigned int *total_size) {}
+	virtual void Serialize(Serializer& ser) const {}
+	virtual void Deserialize(Deserializer& deser) {}
 	virtual void SetKey(u32 key) { }
 	virtual void SetKeyData(u8 *key_data) { }
+	virtual bool GetBootId(RomBootID *bootId) = 0;
 
 protected:
 	u8* RomPtr;
@@ -39,8 +81,9 @@ public:
 	void WriteMem(u32 address, u32 data, u32 size) override;
 	void* GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override {}
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
+	bool GetBootId(RomBootID *bootId) override;
 
 	void SetKey(u32 key) override { this->key = key; }
 
@@ -68,25 +111,26 @@ public:
 	bool Read(u32 offset, u32 size, void* dst) override;
 	bool Write(u32 offset, u32 size, u32 data) override;
 	u16 ReadCipheredData(u32 offset);
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 	void* GetDmaPtr(u32& size) override;
-	std::string GetGameId() override;
+	bool GetBootId(RomBootID *bootId) override;
 
 private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-class NaomiCartException : public ReicastException
+class NaomiCartException : public FlycastException
 {
 public:
-	NaomiCartException(std::string reason) : ReicastException(reason) {}
+	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
-void naomi_cart_LoadRom(const char* file);
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);
+void naomi_cart_ConfigureEEPROM();
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

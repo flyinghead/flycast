@@ -12,13 +12,14 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "imgread/common.h"
+#include "serialize.h"
 
 int gdrom_schid;
 
 //Sense: ASC - ASCQ - Key
-signed int sns_asc=0;
-signed int sns_ascq=0;
-signed int sns_key=0;
+int sns_asc;
+int sns_ascq;
+int sns_key;
 
 u32 set_mode_offset;
 read_params_t read_params ;
@@ -265,14 +266,8 @@ void gd_setdisc()
 		GDStatus.DRDY=1;
 		break;
 
-	case Busy:
-		SecNumber.Status = GD_BUSY;
-		GDStatus.BSY=1;
-		GDStatus.DRDY=0;
-		break;
-
 	default :
-		if (SecNumber.Status==GD_BUSY)
+		if (SecNumber.Status == GD_BUSY)
 			SecNumber.Status = GD_PAUSE;
 		else
 			SecNumber.Status = GD_STANDBY;
@@ -281,15 +276,8 @@ void gd_setdisc()
 		break;
 	}
 
-	if (gd_disk_type==Busy && newd!=Busy)
-	{
-		GDStatus.BSY=0;
-		GDStatus.DRDY=1;
-	}
-
-	gd_disk_type=newd;
-
-	SecNumber.DiscFormat=gd_disk_type>>4;
+	gd_disk_type = newd;
+	SecNumber.DiscFormat = gd_disk_type >> 4;
 }
 
 void gd_reset()
@@ -434,10 +422,10 @@ void gd_process_ata_cmd()
 		break;
 
     case ATA_IDENTIFY:
-        printf_ata("ATA_IDENTIFY\n");
+        printf_ata("ATA_IDENTIFY");
 
         // Set Signature
-        DriveSel &= 0xf0;
+        DriveSel = 0xa0;
 
         SecCount.full = 1;
         SecNumber.full = 1;
@@ -456,9 +444,79 @@ void gd_process_ata_cmd()
         break;
 
 	default:
-		ERROR_LOG(GDROM, "Unknown ATA command %x", ata_cmd.command);
+		WARN_LOG(GDROM, "Unknown ATA command %x", ata_cmd.command);
+		Error.ABRT = 1;
+		Error.Sense = 5;	// illegal request
+		GDStatus.BSY = 0;
+		GDStatus.CHECK = 1;
+		asic_RaiseInterrupt(holly_GDROM_CMD);
+		gd_set_state(gds_waitcmd);
+
 		break;
 	};
+}
+
+static u16 ccitt_crc(void *data, int len)
+{
+	static constexpr u16 crctable[256] = {
+	    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
+	    0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
+	    0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
+	    0x9339, 0x8318, 0xb37b, 0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de,
+	    0x2462, 0x3443, 0x0420, 0x1401, 0x64e6, 0x74c7, 0x44a4, 0x5485,
+	    0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee, 0xf5cf, 0xc5ac, 0xd58d,
+	    0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6, 0x5695, 0x46b4,
+	    0xb75b, 0xa77a, 0x9719, 0x8738, 0xf7df, 0xe7fe, 0xd79d, 0xc7bc,
+	    0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823,
+	    0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b,
+	    0x5af5, 0x4ad4, 0x7ab7, 0x6a96, 0x1a71, 0x0a50, 0x3a33, 0x2a12,
+	    0xdbfd, 0xcbdc, 0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a,
+	    0x6ca6, 0x7c87, 0x4ce4, 0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41,
+	    0xedae, 0xfd8f, 0xcdec, 0xddcd, 0xad2a, 0xbd0b, 0x8d68, 0x9d49,
+	    0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13, 0x2e32, 0x1e51, 0x0e70,
+	    0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a, 0x9f59, 0x8f78,
+	    0x9188, 0x81a9, 0xb1ca, 0xa1eb, 0xd10c, 0xc12d, 0xf14e, 0xe16f,
+	    0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067,
+	    0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e,
+	    0x02b1, 0x1290, 0x22f3, 0x32d2, 0x4235, 0x5214, 0x6277, 0x7256,
+	    0xb5ea, 0xa5cb, 0x95a8, 0x8589, 0xf56e, 0xe54f, 0xd52c, 0xc50d,
+	    0x34e2, 0x24c3, 0x14a0, 0x0481, 0x7466, 0x6447, 0x5424, 0x4405,
+	    0xa7db, 0xb7fa, 0x8799, 0x97b8, 0xe75f, 0xf77e, 0xc71d, 0xd73c,
+	    0x26d3, 0x36f2, 0x0691, 0x16b0, 0x6657, 0x7676, 0x4615, 0x5634,
+	    0xd94c, 0xc96d, 0xf90e, 0xe92f, 0x99c8, 0x89e9, 0xb98a, 0xa9ab,
+	    0x5844, 0x4865, 0x7806, 0x6827, 0x18c0, 0x08e1, 0x3882, 0x28a3,
+	    0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a,
+	    0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92,
+	    0xfd2e, 0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9,
+	    0x7c26, 0x6c07, 0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1,
+	    0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
+	    0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
+	};
+
+	u16 crc = 0;
+	u8 *p = (u8 *)data;
+
+	while (len-- > 0)
+		crc = ((crc & 0xff) << 8) ^ crctable[((crc >> 8) & 0xff) ^ *p++];
+
+	return ~crc;
+}
+
+static int bin2bcd(int v)
+{
+	return (v % 10) | ((v / 10) << 4);
+}
+
+static void encodeSubcode(u8 *buffer, u8 data)
+{
+	buffer[0] = (data & 0x80) ? 0x40 : 0;
+	buffer[1] = (data & 0x40) ? 0x40 : 0;
+	buffer[2] = (data & 0x20) ? 0x40 : 0;
+	buffer[3] = (data & 0x10) ? 0x40 : 0;
+	buffer[4] = (data & 0x08) ? 0x40 : 0;
+	buffer[5] = (data & 0x04) ? 0x40 : 0;
+	buffer[6] = (data & 0x02) ? 0x40 : 0;
+	buffer[7] = (data & 0x01) ? 0x40 : 0;
 }
 
 u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
@@ -486,7 +544,33 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 	case 0:	// Raw subcode
 		subc_info[2] = 0;
 		subc_info[3] = 100;
-		libGDR_ReadSubChannel(subc_info + 4, 0, 100 - 4);
+		// usually not available so let's fake it (Q data only)
+		//libGDR_ReadSubChannel(subc_info + 4, 100 - 4);
+		{
+			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : fad;
+			u32 elapsed;
+			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
+			u8 Qch[12];
+			Qch[0] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1;
+			Qch[1] = bin2bcd(tracknum);
+			Qch[2] = bin2bcd(1); 					// index
+			Qch[3] = bin2bcd(elapsed / 60 / 75); 	// min
+			Qch[4] = bin2bcd((elapsed / 75) % 60); 	// sec
+			Qch[5] = bin2bcd(elapsed % 75); 		// frame
+			Qch[6] = 0;
+			Qch[7] = bin2bcd(curFad / 60 / 75); 	// toc min
+			Qch[8] = bin2bcd((curFad / 75) % 60);	// toc sec
+			Qch[9] = bin2bcd(curFad % 75); 			// toc frame
+			u16 crc = ccitt_crc(Qch, 10);
+			Qch[10] = crc >> 8;
+			Qch[11] = crc;
+			u8 *p = &subc_info[4];
+			for (u8 q : Qch)
+			{
+				encodeSubcode(p, q);
+				p += 8;
+			}
+		}
 		break;
 
 	case 1:	// Q data only
@@ -630,7 +714,7 @@ void gd_process_spi_cmd()
 			u32 toc_gd[102];
 			
 			//toc - dd/sd
-			libGDR_GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
+			libGDR_GetToc(&toc_gd[0], (DiskArea)(packet_cmd.data_8[1] & 1));
 			 
 			gd_spi_pio_end((u8*)&toc_gd[0], std::min((u32)packet_cmd.data_8[4] | (packet_cmd.data_8[3] << 8), (u32)sizeof(toc_gd)));
 		}
@@ -887,6 +971,9 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		//cancel interrupt
 	case GD_STATUS_Read :
 		asic_CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
+		if (DriveSel & 0x10)
+			// slave drive doesn't exist
+			return 0;
 		printf_rm("GDROM: STATUS [cancel int](v=%X)",GDStatus.full);
 		return GDStatus.full;
 
@@ -1006,10 +1093,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 
 	//ATA_IOPORT_WR_DEVICE_HEAD
 	case GD_DRVSEL: 
-		if (data != 0) {
-			INFO_LOG(GDROM, "GDROM: Write to GD_DRVSEL, !=0. Value is: %02X", data);
-		}
-		DriveSel = data; 
+		DriveSel = (DriveSel & 0xe0) | (data & 0x1f);
+		if (DriveSel & 0x10)
+			INFO_LOG(GDROM, "GD_DRVSEL: slave drive selected");
 		break;
 
 		// By writing "3" as Feature Number and issuing the Set Feature command,
@@ -1031,12 +1117,16 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz==1);
-		if ((data !=ATA_NOP) && (data != ATA_SOFT_RESET))
-			verify(gd_state==gds_waitcmd);
-		//printf("\nGDROM:\tCOMMAND: %X !\n", data);
-		ata_cmd.command=(u8)data;
-		gd_set_state(gds_procata);
+		verify(sz == 1);
+		if ((DriveSel & 0x10) == 0)
+		{
+			if (data != ATA_NOP && data != ATA_SOFT_RESET)
+				verify(gd_state == gds_waitcmd);
+			ata_cmd.command = (u8)data;
+			gd_set_state(gds_procata);
+		}
+		else
+			DEBUG_LOG(GDROM, "ATA command to slave drive ignored: %x", data);
 		break;
 
 	default:
@@ -1049,6 +1139,8 @@ static int getGDROMTicks()
 {
 	if (SB_GDST & 1)
 	{
+		if (config::FastGDRomLoad)
+			return 512;
 		u32 len = SB_GDLEN == 0 ? 0x02000000 : SB_GDLEN;
 		if (len - SB_GDLEND > 10240)
 			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
@@ -1194,29 +1286,35 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 void gdrom_reg_Init()
 {
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	libCore_gdrom_disc_change();
 }
 
 void gdrom_reg_Term()
 {
-	
+	sh4_sched_unregister(gdrom_schid);
+	gdrom_schid = -1;
 }
 
 void gdrom_reg_Reset(bool hard)
 {
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+	if (hard)
+	{
+		sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
+		sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+
+		// set default hardware information
+		memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
+		GD_HardwareInfo.speed = 0x0;
+		GD_HardwareInfo.standby_hi = 0x00;
+		GD_HardwareInfo.standby_lo = 0xb4;
+		GD_HardwareInfo.read_flags = 0x19;
+		GD_HardwareInfo.read_retry = 0x08;
+		memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
+		memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
+		memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
+	}
 	SB_GDST = 0;
 	SB_GDEN = 0;
-	// set default hardware information
-	memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
-	GD_HardwareInfo.speed = 0x0;
-	GD_HardwareInfo.standby_hi = 0x00;
-	GD_HardwareInfo.standby_lo = 0xb4;
-	GD_HardwareInfo.read_flags = 0x19;
-	GD_HardwareInfo.read_retry = 0x08;
-	memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
-	memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
-	memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
 
 	gd_state = gds_waitcmd;
 	sns_asc = 0;
@@ -1232,7 +1330,7 @@ void gdrom_reg_Reset(bool hard)
 	gd_disk_type = NoDisk;
 
 	data_write_mode = 0;
-	DriveSel = 0;
+	DriveSel = 0xa0;
 	Error = {};
 	IntReason = {};
 	Features = {};
@@ -1240,4 +1338,85 @@ void gdrom_reg_Reset(bool hard)
 	SecNumber = {};
 	GDStatus = {};
 	ByteCount = {};
+
+	libCore_gdrom_disc_change();
+}
+
+namespace gdrom
+{
+
+void serialize(Serializer& ser)
+{
+	ser << GD_HardwareInfo;
+
+	ser << sns_asc;
+	ser << sns_ascq;
+	ser << sns_key;
+
+	ser << packet_cmd;
+	ser << set_mode_offset;
+	ser << read_params;
+	ser << read_buff;
+	ser << pio_buff;
+	ser << set_mode_offset;
+	ser << ata_cmd;
+	ser << cdda;
+	ser << gd_state;
+	ser << gd_disk_type;
+	ser << data_write_mode;
+	ser << DriveSel;
+	ser << Error;
+
+	ser << IntReason;
+	ser << Features;
+	ser << SecCount;
+	ser << SecNumber;
+	ser << GDStatus;
+	ser << ByteCount;
+}
+
+void deserialize(Deserializer& deser)
+{
+	deser >> GD_HardwareInfo;
+
+	deser >> sns_asc;
+	deser >> sns_ascq;
+	deser >> sns_key;
+
+	deser >> packet_cmd;
+	deser >> set_mode_offset;
+	deser >> read_params;
+	if (deser.version() >= Deserializer::V17)
+		deser >> read_buff;
+	else
+	{
+		deser >> packet_cmd;
+		read_buff.cache_size = 0;
+		// read_buff (old)
+		if (deser.version() < Deserializer::V9_LIBRETRO
+				|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
+			deser.skip(4 + 4 + 2352 * 8192);
+	}
+	deser >> pio_buff;
+	deser >> set_mode_offset;
+	deser >> ata_cmd;
+	deser >> cdda;
+	if (deser.version() < Deserializer::V10)
+		cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
+	deser >> gd_state;
+	deser >> gd_disk_type;
+	deser >> data_write_mode;
+	deser >> DriveSel;
+	deser >> Error;
+
+	deser >> IntReason;
+	deser >> Features;
+	deser >> SecCount;
+	deser >> SecNumber;
+	deser >> GDStatus;
+	deser >> ByteCount;
+	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+		deser.skip<u32>(); 			// GDROM_TICK
+}
+
 }

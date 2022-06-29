@@ -23,7 +23,18 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#ifdef __SWITCH__
+#include "nswitch.h"
+#ifndef INADDR_NONE
+#define INADDR_NONE 0xffffffff
+#endif
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN sizeof(struct sockaddr_in)
+#endif
+#define SOL_TCP 6 // Shrug
+#else
 #include <netinet/ip.h>
+#endif // __SWITCH__
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -43,14 +54,20 @@ typedef int sock_t;
 #define L_EAGAIN EAGAIN
 #define get_last_error() (errno)
 #define INVALID_SOCKET (-1)
-#define perror(s) do { INFO_LOG(MODEM, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
+#define perror(s) do { INFO_LOG(NETWORK, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
 #else
 typedef SOCKET sock_t;
 #define VALID(s) ((s) != INVALID_SOCKET)
 #define L_EWOULDBLOCK WSAEWOULDBLOCK
 #define L_EAGAIN WSAEWOULDBLOCK
 #define get_last_error() (WSAGetLastError())
-#define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
+#define perror(s) do { INFO_LOG(NETWORK, "%s: Winsock error: %d", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
+#ifndef SHUT_WR
+#define SHUT_WR SD_SEND
+#endif
+#ifndef SHUT_RD
+#define SHUT_RD SD_RECEIVE
+#endif
 #endif
 
 bool is_local_address(u32 addr);
@@ -107,4 +124,10 @@ static inline const char *inet_ntop(int af, const void* src, char* dst, int cnt)
     else
     	return dst;
 }
+#endif
+
+#if defined(__ANDROID__) && !defined(LIBRETRO)
+void enableNetworkBroadcast(bool enable);
+#else
+static inline void enableNetworkBroadcast(bool enable) {}
 #endif

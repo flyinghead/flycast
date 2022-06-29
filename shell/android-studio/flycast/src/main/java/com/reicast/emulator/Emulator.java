@@ -3,9 +3,11 @@ package com.reicast.emulator;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.JNIdc;
@@ -13,6 +15,8 @@ import com.reicast.emulator.emu.JNIdc;
 public class Emulator extends Application {
     private static Context context;
     private static BaseGLActivity currentActivity;
+    private WifiManager wifiManager = null;
+    private WifiManager.MulticastLock multicastLock = null;
 
     // see MapleDeviceType in hw/maple/maple_devs.h
     public static final int MDT_Microphone = 2;
@@ -90,5 +94,21 @@ public class Emulator extends Application {
 
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
+
+    public void enableNetworkBroadcast(boolean enable) {
+        if (enable) {
+            if (wifiManager == null)
+                wifiManager = (WifiManager)Emulator.context.getSystemService(Context.WIFI_SERVICE);
+            if (multicastLock == null)
+                multicastLock = wifiManager.createMulticastLock("Flycast");
+            if (multicastLock != null && !multicastLock.isHeld())
+                multicastLock.acquire();
+        }
+        else
+        {
+            if (multicastLock != null && multicastLock.isHeld())
+                multicastLock.release();
+        }
     }
 }

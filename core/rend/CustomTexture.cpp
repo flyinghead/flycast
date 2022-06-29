@@ -20,6 +20,7 @@
 #include "cfg/cfg.h"
 #include "oslib/directory.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 
 #include <sstream>
 #define STB_IMAGE_IMPLEMENTATION
@@ -83,7 +84,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(config::Settings::instance().getGameId());
+   std::string game_id(settings.content.gameId);
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	  return "";
@@ -101,15 +102,18 @@ bool CustomTexture::Init()
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = get_readonly_data_path("textures/" + game_id) + "/";
+			textures_path = hostfs::getTextureLoadPath(game_id);
 
-			DIR *dir = flycast::opendir(textures_path.c_str());
-			if (dir != nullptr)
+			if (!textures_path.empty())
 			{
-				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-				custom_textures_available = true;
-				flycast::closedir(dir);
-				loader_thread.Start();
+				DIR *dir = flycast::opendir(textures_path.c_str());
+				if (dir != nullptr)
+				{
+					NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
+					custom_textures_available = true;
+					flycast::closedir(dir);
+					loader_thread.Start();
+				}
 			}
 		}
 	}
@@ -162,7 +166,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
 {
-	std::string base_dump_dir = get_writable_data_path("texdump/");
+	std::string base_dump_dir = hostfs::getTextureDumpPath();
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
 	std::string game_id = GetGameId();
@@ -182,50 +186,90 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	for (int y = 0; y < h; y++)
 	{
-		switch (textype)
+		if (!isDirectX(config::RendererType))
 		{
-		case TextureType::_4444:
-			for (int x = 0; x < w; x++)
+			switch (textype)
 			{
-				*dst++ = ((*src >> 12) & 0xF) << 4;
-				*dst++ = ((*src >> 8) & 0xF) << 4;
-				*dst++ = ((*src >> 4) & 0xF) << 4;
-				*dst++ = (*src & 0xF) << 4;
-				src++;
+			case TextureType::_4444:
+				for (int x = 0; x < w; x++)
+				{
+					*dst++ = (((*src >> 12) & 0xF) << 4) | ((*src >> 12) & 0xF);
+					*dst++ = (((*src >> 8) & 0xF) << 4) | ((*src >> 8) & 0xF);
+					*dst++ = (((*src >> 4) & 0xF) << 4) | ((*src >> 4) & 0xF);
+					*dst++ = ((*src & 0xF) << 4) | (*src & 0xF);
+					src++;
+				}
+				break;
+			case TextureType::_565:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker565_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_5551:
+				for (int x = 0; x < w; x++)
+				{
+					*dst++ = (((*src >> 11) & 0x1F) << 3) | ((*src >> 13) & 7);
+					*dst++ = (((*src >> 6) & 0x1F) << 3) | ((*src >> 8) & 7);
+					*dst++ = (((*src >> 1) & 0x1F) << 3) | ((*src >> 3) & 7);
+					*dst++ = (*src & 1) ? 255 : 0;
+					src++;
+				}
+				break;
+			case TextureType::_8888:
+				memcpy(dst, src, w * 4);
+				dst += w * 4;
+				src += w * 2;
+				break;
+			default:
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				free(dst_buffer);
+				return;
 			}
-			break;
-		case TextureType::_565:
-			for (int x = 0; x < w; x++)
+		}
+		else
+		{
+			switch (textype)
 			{
-				*dst++ = ((*src >> 11) & 0x1F) << 3;
-				*dst++ = ((*src >> 5) & 0x3F) << 2;
-				*dst++ = (*src & 0x1F) << 3;
-				*dst++ = 255;
-				src++;
+			case TextureType::_4444:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker4444_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_565:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker565_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_5551:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker1555_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_8888:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker8888<RGBAPacker>::unpack(*(u32 *)src);
+					dst += 4;
+					src += 2;
+				}
+				break;
+			default:
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				free(dst_buffer);
+				return;
 			}
-			break;
-		case TextureType::_5551:
-			for (int x = 0; x < w; x++)
-			{
-				*dst++ = ((*src >> 11) & 0x1F) << 3;
-				*dst++ = ((*src >> 6) & 0x1F) << 3;
-				*dst++ = ((*src >> 1) & 0x1F) << 3;
-				*dst++ = (*src & 1) ? 255 : 0;
-				src++;
-			}
-			break;
-		case TextureType::_8888:
-			for (int x = 0; x < w; x++)
-			{
-				*(u32 *)dst = *(u32 *)src;
-				dst += 4;
-				src += 2;
-			}
-			break;
-		default:
-			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
-			free(dst_buffer);
-			return;
 		}
 	}
 

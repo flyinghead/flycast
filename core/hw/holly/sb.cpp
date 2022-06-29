@@ -13,7 +13,6 @@
 #include "hw/pvr/pvr_sb_regs.h"
 #include "emulator.h"
 #include "hw/bba/bba.h"
-#include "cfg/option.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 
@@ -27,34 +26,190 @@ std::array<RegisterStruct, 0x540> sb_regs;
 // much empty space
 
 u32 SB_ISTNRM;
+u32 SB_ISTNRM1;
+
+#define SB_REG_NAME(r) { r##_addr, #r },
+const std::map<u32, const char *> sb_reg_names = {
+		SB_REG_NAME(SB_C2DSTAT)
+		SB_REG_NAME(SB_C2DLEN)
+		SB_REG_NAME(SB_C2DST)
+		SB_REG_NAME(SB_SDSTAW)
+		SB_REG_NAME(SB_SDBAAW)
+		SB_REG_NAME(SB_SDWLT)
+		SB_REG_NAME(SB_SDLAS)
+		SB_REG_NAME(SB_SDST)
+		SB_REG_NAME(SB_SDDIV)
+		SB_REG_NAME(SB_DBREQM)
+		SB_REG_NAME(SB_BAVLWC)
+		SB_REG_NAME(SB_C2DPRYC)
+		SB_REG_NAME(SB_C2DMAXL)
+		SB_REG_NAME(SB_TFREM)
+		SB_REG_NAME(SB_LMMODE0)
+		SB_REG_NAME(SB_LMMODE1)
+		SB_REG_NAME(SB_FFST)
+		SB_REG_NAME(SB_SFRES)
+		SB_REG_NAME(SB_SBREV)
+		SB_REG_NAME(SB_RBSPLT)
+		SB_REG_NAME(SB_ISTNRM)
+		SB_REG_NAME(SB_ISTEXT)
+		SB_REG_NAME(SB_ISTERR)
+		SB_REG_NAME(SB_IML2NRM)
+		SB_REG_NAME(SB_IML2EXT)
+		SB_REG_NAME(SB_IML2ERR)
+		SB_REG_NAME(SB_IML4NRM)
+		SB_REG_NAME(SB_IML4EXT)
+		SB_REG_NAME(SB_IML4ERR)
+		SB_REG_NAME(SB_IML6NRM)
+		SB_REG_NAME(SB_IML6EXT)
+		SB_REG_NAME(SB_IML6ERR)
+		SB_REG_NAME(SB_PDTNRM)
+		SB_REG_NAME(SB_PDTEXT)
+		SB_REG_NAME(SB_G2DTNRM)
+		SB_REG_NAME(SB_G2DTEXT)
+		SB_REG_NAME(SB_MDSTAR)
+		SB_REG_NAME(SB_MDTSEL)
+		SB_REG_NAME(SB_MDEN)
+		SB_REG_NAME(SB_MDST)
+		SB_REG_NAME(SB_MSYS)
+		SB_REG_NAME(SB_MST)
+		SB_REG_NAME(SB_MSHTCL)
+		SB_REG_NAME(SB_MDAPRO)
+		SB_REG_NAME(SB_MMSEL)
+		SB_REG_NAME(SB_MTXDAD)
+		SB_REG_NAME(SB_MRXDAD)
+		SB_REG_NAME(SB_MRXDBD)
+		SB_REG_NAME(SB_GDSTAR)
+		SB_REG_NAME(SB_GDLEN)
+		SB_REG_NAME(SB_GDDIR)
+		SB_REG_NAME(SB_GDEN)
+		SB_REG_NAME(SB_GDST)
+		SB_REG_NAME(SB_G1RRC)
+		SB_REG_NAME(SB_G1RWC)
+		SB_REG_NAME(SB_G1FRC)
+		SB_REG_NAME(SB_G1FWC)
+		SB_REG_NAME(SB_G1CRC)
+		SB_REG_NAME(SB_G1CWC)
+		SB_REG_NAME(SB_G1GDRC)
+		SB_REG_NAME(SB_G1GDWC)
+		SB_REG_NAME(SB_G1SYSM)
+		SB_REG_NAME(SB_G1CRDYC)
+		SB_REG_NAME(SB_GDAPRO)
+		SB_REG_NAME(SB_GDSTARD)
+		SB_REG_NAME(SB_GDLEND)
+		SB_REG_NAME(SB_ADSTAG)
+		SB_REG_NAME(SB_ADSTAR)
+		SB_REG_NAME(SB_ADLEN)
+		SB_REG_NAME(SB_ADDIR)
+		SB_REG_NAME(SB_ADTSEL)
+		SB_REG_NAME(SB_ADEN)
+		SB_REG_NAME(SB_ADST)
+		SB_REG_NAME(SB_ADSUSP)
+		SB_REG_NAME(SB_E1STAG)
+		SB_REG_NAME(SB_E1STAR)
+		SB_REG_NAME(SB_E1LEN)
+		SB_REG_NAME(SB_E1DIR)
+		SB_REG_NAME(SB_E1TSEL)
+		SB_REG_NAME(SB_E1EN)
+		SB_REG_NAME(SB_E1ST)
+		SB_REG_NAME(SB_E1SUSP)
+		SB_REG_NAME(SB_E2STAG)
+		SB_REG_NAME(SB_E2STAR)
+		SB_REG_NAME(SB_E2LEN)
+		SB_REG_NAME(SB_E2DIR)
+		SB_REG_NAME(SB_E2TSEL)
+		SB_REG_NAME(SB_E2EN)
+		SB_REG_NAME(SB_E2ST)
+		SB_REG_NAME(SB_E2SUSP)
+		SB_REG_NAME(SB_DDSTAG)
+		SB_REG_NAME(SB_DDSTAR)
+		SB_REG_NAME(SB_DDLEN)
+		SB_REG_NAME(SB_DDDIR)
+		SB_REG_NAME(SB_DDTSEL)
+		SB_REG_NAME(SB_DDEN)
+		SB_REG_NAME(SB_DDST)
+		SB_REG_NAME(SB_DDSUSP)
+		SB_REG_NAME(SB_G2ID)
+		SB_REG_NAME(SB_G2DSTO)
+		SB_REG_NAME(SB_G2TRTO)
+		SB_REG_NAME(SB_G2MDMTO)
+		SB_REG_NAME(SB_G2MDMW)
+		SB_REG_NAME(SB_G2APRO)
+		SB_REG_NAME(SB_ADSTAGD)
+		SB_REG_NAME(SB_ADSTARD)
+		SB_REG_NAME(SB_ADLEND)
+		SB_REG_NAME(SB_E1STAGD)
+		SB_REG_NAME(SB_E1STARD)
+		SB_REG_NAME(SB_E1LEND)
+		SB_REG_NAME(SB_E2STAGD)
+		SB_REG_NAME(SB_E2STARD)
+		SB_REG_NAME(SB_E2LEND)
+		SB_REG_NAME(SB_DDSTAGD)
+		SB_REG_NAME(SB_DDSTARD)
+		SB_REG_NAME(SB_DDLEND)
+		SB_REG_NAME(SB_PDSTAP)
+		SB_REG_NAME(SB_PDSTAR)
+		SB_REG_NAME(SB_PDLEN)
+		SB_REG_NAME(SB_PDDIR)
+		SB_REG_NAME(SB_PDTSEL)
+		SB_REG_NAME(SB_PDEN)
+		SB_REG_NAME(SB_PDST)
+		SB_REG_NAME(SB_PDAPRO)
+		SB_REG_NAME(SB_PDSTAPD)
+		SB_REG_NAME(SB_PDSTARD)
+		SB_REG_NAME(SB_PDLEND)
+};
+#undef SB_REG_NAME
+
+static const char *regName(u32 addr)
+{
+	static char regName[10];
+	auto it = sb_reg_names.find(addr & 0x7fffff); // (addr - 0x5f6800) & 0x1fff);
+	if (it == sb_reg_names.end())
+	{
+		sprintf(regName, "?%06x", addr& 0x7fffff);
+		return regName;
+	}
+	else
+		return it->second;
+}
 
 u32 sb_ReadMem(u32 addr,u32 sz)
 {
-	u32 offset = (addr - SB_BASE) >> 2;
+	u32 offset = ((addr - SB_BASE) >> 2) & 0x1fff;
+	u32 rv;
 
 	if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
 	{
 		if (sz==4)
-			return sb_regs[offset].data32;
+			rv = sb_regs[offset].data32;
 		else if (sz==2)
-			return sb_regs[offset].data16;
+			rv = sb_regs[offset].data16;
 		else
-			return sb_regs[offset].data8;
+			rv = sb_regs[offset].data8;
 	}
 	else
 	{
 		if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
 		{
 			INFO_LOG(HOLLY, "sb_ReadMem write-only reg %08x %d", addr, sz);
-			return 0;
+			rv = 0;
 		}
-		return sb_regs[offset].readFunctionAddr(addr);
+		else
+			rv = sb_regs[offset].readFunctionAddr(addr);
 	}
+	if ((addr & 0xffffff) != 0x5f6c18) // SB_MDST
+		DEBUG_LOG(HOLLY, "read(%d) %s.%c == %x", sz, regName(addr),
+				((addr >> 26) & 7) == 2 ? 'b' : (addr & 0x2000000) ? '1' : '0',
+						rv);
+	return rv;
 }
 
 void sb_WriteMem(u32 addr,u32 data,u32 sz)
 {
-	u32 offset = (addr - SB_BASE) >> 2;
+	DEBUG_LOG(HOLLY, "write(%d) %s.%c = %x", sz, regName(addr),
+			((addr >> 26) & 7) == 2 ? 'b' : (addr & 0x2000000) ? '1' : '0',
+					data);
+	u32 offset = ((addr - SB_BASE) >> 2) & 0x1fff;
 
 	if (!(sb_regs[offset].flags & REG_WF))
 	{
@@ -92,8 +247,8 @@ static void sb_write_zero(u32 addr, u32 data)
 static void sb_write_gdrom_unlock(u32 addr, u32 data)
 {
 	/* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
-	verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
-			|| data == 0x3ff);
+	if (data != 0 && data != 0x001fffff && data != 0x42fe && data != 0xa677 && data != 0x3ff)
+		WARN_LOG(HOLLY, "ERROR: Unexpected GD-ROM unlock code: %x", data);
 }
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -148,7 +303,7 @@ static void sb_write_SB_SFRES(u32 addr, u32 data)
 	if ((u16)data==0x7611)
 	{
 		NOTICE_LOG(SH4, "SB/HOLLY: System reset requested");
-		dc_request_reset();
+		emu.requestReset();
 	}
 }
 
@@ -582,10 +737,8 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-	if (config::EmulateBBA)
-		bba_Init();
-	else
-		ModemInit();
+	bba_Init();
+	ModemInit();
 }
 
 void sb_Reset(bool hard)
@@ -596,16 +749,15 @@ void sb_Reset(bool hard)
 			reg.reset();
 	}
 	SB_ISTNRM = 0;
+	SB_ISTNRM1 = 0;
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 
-	if (config::EmulateBBA)
-		bba_Reset(hard);
-	else
-		ModemTerm();
+	bba_Reset(hard);
+	ModemReset();
 
 	asic_reg_Reset(hard);
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		gdrom_reg_Reset(hard);
 	else
 		naomi_reg_Reset(hard);
@@ -616,10 +768,8 @@ void sb_Reset(bool hard)
 
 void sb_Term()
 {
-	if (config::EmulateBBA)
-		bba_Term();
-	else
-		ModemTerm();
+	bba_Term();
+	ModemTerm();
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

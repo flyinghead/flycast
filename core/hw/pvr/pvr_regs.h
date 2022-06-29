@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <cmath>
 
 #define pvr_RegSize (0x8000)
 #define pvr_RegMask (pvr_RegSize-1)
@@ -112,19 +113,71 @@ union FB_R_SIZE_type
 	};
 	u32 full;
 };
-union VO_BORDER_COL_type
+
+template<typename T>
+struct RGBAColorTemplate
 {
-	struct
+	float red() const { return ((T *)this)->_red / 255.f; }
+	float green() const { return ((T *)this)->_green / 255.f; }
+	float blue() const { return ((T *)this)->_blue / 255.f; }
+	float alpha() const { return ((T *)this)->_alpha / 255.f; }
+
+	void getRGBColor(float rgb[3])
 	{
-		u32 Blue   : 8; //0
-		u32 Green  : 8; //8
-		u32 Red    : 8; //16
-		u32 Chroma : 1; //24
-		u32 res    : 7; //25
-	};
-	u32 full;
+		rgb[0] = red();
+		rgb[1] = green();
+		rgb[2] = blue();
+	}
+
+	void getRGBAColor(float rgba[4])
+	{
+		getRGBColor(rgba);
+		rgba[3] = alpha();
+	}
 };
 
+struct VO_BORDER_COL_type : RGBAColorTemplate<VO_BORDER_COL_type>
+{
+	union {
+		struct
+		{
+			u32 _blue   : 8;
+			u32 _green  : 8;
+			u32 _red    : 8;
+			u32 _chroma : 1;
+			u32 _res    : 7;
+		};
+		u32 full;
+	};
+};
+
+struct RGBColor : RGBAColorTemplate<RGBColor>
+{
+	union {
+		struct
+		{
+			u32 _blue  : 8;
+			u32 _green : 8;
+			u32 _red   : 8;
+			u32 _res   : 8;
+		};
+		u32 full;
+	};
+};
+
+struct RGBAColor : RGBAColorTemplate<RGBAColor>
+{
+	union {
+		struct
+		{
+			u32 _blue  : 8;
+			u32 _green : 8;
+			u32 _red   : 8;
+			u32 _alpha : 8;
+		};
+		u32 full;
+	};
+};
 
 union SPG_STATUS_type
 {
@@ -387,6 +440,20 @@ union TA_YUV_TEX_CTRL_type
 	u32 full;
 };
 
+union FOG_DENSITY_type
+{
+	struct
+	{
+		s8 exponent;
+		u8 mantissa;
+	};
+	u32 full;
+
+	float get() {
+		return mantissa / 128.f * std::pow(2.0f, (float)exponent);
+	}
+};
+
 // TA REGS
 #define TA_OL_BASE_addr         0x00000124 // RW  Object list write start address
 #define TA_ISP_BASE_addr        0x00000128 // RW  ISP/TSP Parameter write start address
@@ -404,7 +471,8 @@ union TA_YUV_TEX_CTRL_type
 #define TA_LIST_CONT_addr       0x00000160 // RW  TA continuation processing
 #define TA_NEXT_OPB_INIT_addr   0x00000164 // RW  Additional OPB starting address
 
-
+#define SIGNATURE1_addr         0x00000180 // ?
+#define SIGNATURE2_addr         0x00000184 // ?
 
 #define FOG_TABLE_START_addr        0x00000200 // RW  Look-up table Fog data
 #define FOG_TABLE_END_addr          0x000003FC
@@ -459,11 +527,11 @@ union TA_YUV_TEX_CTRL_type
 #define SDRAM_ARB_CFG     PvrReg(SDRAM_ARB_CFG_addr,u32)                  // RW  Texture memory arbiter control
 #define SDRAM_CFG         PvrReg(SDRAM_CFG_addr,u32)                      // RW  Texture memory control
 
-#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr,u32)                    // RW  Color for Look Up table Fog
-#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr,u32)                   // RW  Color for vertex Fog
-#define FOG_DENSITY       PvrReg(FOG_DENSITY_addr,u32)                    // RW  Fog scale value
-#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr,u32)                  // RW  Color clamping maximum value
-#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr,u32)                  // RW  Color clamping minimum value
+#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr, RGBColor)              // RW  Color for Look Up table Fog
+#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr, RGBColor)             // RW  Color for vertex Fog
+#define FOG_DENSITY       PvrReg(FOG_DENSITY_addr, FOG_DENSITY_type)      // RW  Fog scale value
+#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr, RGBAColor)           // RW  Color clamping maximum value
+#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr, RGBAColor)           // RW  Color clamping minimum value
 #define SPG_TRIGGER_POS   PvrReg(SPG_TRIGGER_POS_addr,u32)                // RW  External trigger signal HV counter value
 #define SPG_HBLANK_INT    PvrReg(SPG_HBLANK_INT_addr,SPG_HBLANK_INT_type) // RW  H-blank interrupt control
 #define SPG_VBLANK_INT    PvrReg(SPG_VBLANK_INT_addr,SPG_VBLANK_INT_type) // RW  V-blank interrupt control
@@ -508,7 +576,3 @@ union TA_YUV_TEX_CTRL_type
 #define FOG_TABLE        (&PvrReg(FOG_TABLE_START_addr,u32))      // RW Look-up table Fog data
 #define TA_OL_POINTERS   (&PvrReg(TA_OL_POINTERS_START_addr),u32) // R  TA object List Pointer data
 #define PALETTE_RAM      (&PvrReg(PALETTE_RAM_START_addr,u32))    // RW Palette RAM
-
-
-#define TA_CURRENT_CTX (TA_ISP_BASE & 0xF00000)
-#define CORE_CURRENT_CTX (PARAM_BASE & 0xF00000)

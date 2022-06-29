@@ -10,7 +10,6 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import com.reicast.emulator.Emulator;
-import com.reicast.emulator.R;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
@@ -165,8 +164,9 @@ public class VirtualJoystickDelegate {
 
     public boolean onTouchEvent(MotionEvent event, int width, int height)
     {
-        if (event.getSource() != InputDevice.SOURCE_TOUCHSCREEN)
-            // Ignore real mice, trackballs, etc.
+        // The Retroid Pocket 2+ is using a non-standard source
+        if (event.getSource() != InputDevice.SOURCE_TOUCHSCREEN && event.getSource() != 0x5002)
+        	// Ignore real mice, trackballs, etc.
             return false;
         JNIdc.show_osd();
         this.handler.removeCallbacks(hideOsdRunnable);
@@ -180,6 +180,7 @@ public class VirtualJoystickDelegate {
         float tx = (width - 640.0f * scl) / 2;
 
         int rv = 0xFFFFFFFF;
+        boolean fastForward = false;
 
         int aid = event.getActionMasked();
         int pid = event.getActionIndex();
@@ -259,8 +260,10 @@ public class VirtualJoystickDelegate {
                                         if (editVjoyMode) {
                                             selectedVjoyElement = getElementIdFromButtonId(j);
                                             resetEditMode();
-                                        } else
-                                            rv &= ~(int) vjoy[j][4];
+                                        } else if (vjoy[j][4] == VJoy.key_CONT_FFORWARD)
+                                            fastForward = true;
+                                        else
+                                            rv &= ~(int)vjoy[j][4];
                                     }
                                 }
                             }
@@ -302,6 +305,7 @@ public class VirtualJoystickDelegate {
                 reset_analog();
                 anal_id = -1;
                 rv = 0xFFFFFFFF;
+                fastForward = false;
                 right_trigger = 0;
                 left_trigger = 0;
                 lt_id = -1;
@@ -357,9 +361,10 @@ public class VirtualJoystickDelegate {
         }
         int joyx = get_anal(11, 0);
         int joyy = get_anal(11, 1);
-        InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
+        InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger, fastForward);
         // Only register the mouse event if no virtual gamepad button is down
-        if ((!editVjoyMode && rv == 0xFFFFFFFF) || JNIdc.guiIsOpen())
+        if ((!editVjoyMode && rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0 && !fastForward)
+		|| JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }

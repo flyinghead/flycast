@@ -24,26 +24,13 @@
 
 #include <memory>
 
-const vk::DeviceSize PixelBufferSize = 512 * 1024 * 1024;
-
 class OITBuffers
 {
 public:
 	void Init(int width, int height)
 	{
 		const VulkanContext *context = VulkanContext::Instance();
-		if (!descSetLayout)
-		{
-			// Descriptor set and pipeline layout
-			vk::DescriptorSetLayoutBinding descSetLayoutBindings[] = {
-					{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel buffer
-					{ 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
-					{ 2, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
-			};
 
-			descSetLayout = context->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(descSetLayoutBindings), descSetLayoutBindings));
-		}
 		if (width <= maxWidth && height <= maxHeight)
 			return;
 		maxWidth = std::max(maxWidth, width);
@@ -51,7 +38,8 @@ public:
 
 		if (!pixelBuffer)
 		{
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min(PixelBufferSize, context->GetMaxMemoryAllocationSize()),
+			pixelBufferSize = config::PixelBufferSize;
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)
@@ -64,47 +52,33 @@ public:
 		}
 		// We need to wait until this buffer is not used before deleting it
 		context->WaitIdle();
-		abufferPointerAttachment.reset();
-		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));
-		abufferPointerAttachment->Init(maxWidth, maxHeight, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
-		abufferPointerTransitionNeeded = true;
+		abufferPointer.reset();
+		abufferPointer = std::unique_ptr<BufferData>(new BufferData(maxWidth * maxHeight * sizeof(int),
+				vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		firstFrameAfterInit = true;
-
-		if (!descSet)
-			descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &descSetLayout.get())).front());
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, VK_WHOLE_SIZE);
-		writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
-		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
-		writeDescriptorSets.emplace_back(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
-		vk::DescriptorImageInfo pointerImageInfo(vk::Sampler(), abufferPointerAttachment->GetImageView(), vk::ImageLayout::eGeneral);
-		writeDescriptorSets.emplace_back(*descSet, 2, 0, 1, vk::DescriptorType::eStorageImage, &pointerImageInfo, nullptr, nullptr);
-		context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void BindDescriptorSet(vk::CommandBuffer cmdBuffer, vk::PipelineLayout pipelineLayout, u32 firstSet)
+	void updateDescriptorSet(vk::DescriptorSet descSet, std::vector<vk::WriteDescriptorSet>& writeDescSets)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, firstSet, 1, &descSet.get(), 0, nullptr);
+		static vk::DescriptorBufferInfo pixelBufferInfo({}, 0, VK_WHOLE_SIZE);
+		pixelBufferInfo.buffer = *pixelBuffer->buffer;
+		writeDescSets.emplace_back(descSet, 7, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
+		static vk::DescriptorBufferInfo pixelCounterBufferInfo({}, 0, 4);
+		pixelCounterBufferInfo.buffer = *pixelCounter->buffer;
+		writeDescSets.emplace_back(descSet, 8, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
+		static vk::DescriptorBufferInfo abufferPointerInfo({}, 0, VK_WHOLE_SIZE);
+		abufferPointerInfo.buffer = *abufferPointer->buffer;
+		writeDescSets.emplace_back(descSet, 9, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &abufferPointerInfo, nullptr);
 	}
 
 	void OnNewFrame(vk::CommandBuffer commandBuffer)
 	{
-		if (abufferPointerTransitionNeeded)
+		firstFrameAfterInit = false;
+		if (pixelBufferSize != config::PixelBufferSize)
 		{
-			abufferPointerTransitionNeeded = false;
-
-			vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-			vk::ImageMemoryBarrier imageMemoryBarrier(vk::AccessFlags(), vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
-					abufferPointerAttachment->GetImage(), imageSubresourceRange);
-			commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr,
-					imageMemoryBarrier);
-		}
-		else
-		{
-			firstFrameAfterInit = false;
+			pixelBufferSize = config::PixelBufferSize;
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, VulkanContext::Instance()->GetMaxMemoryAllocationSize()),
+					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 	}
 
@@ -119,22 +93,18 @@ public:
 		pixelBuffer.reset();
 		pixelCounter.reset();
 		pixelCounterReset.reset();
-		abufferPointerAttachment.reset();
+		abufferPointer.reset();
 	}
 
-	vk::DescriptorSetLayout GetDescriptorSetLayout() const { return *descSetLayout; }
 	bool isFirstFrameAfterInit() const { return firstFrameAfterInit; }
 
 private:
-	vk::UniqueDescriptorSet descSet;
-	vk::UniqueDescriptorSetLayout descSetLayout;
-
 	std::unique_ptr<BufferData> pixelBuffer;
 	std::unique_ptr<BufferData> pixelCounter;
 	std::unique_ptr<BufferData> pixelCounterReset;
-	std::unique_ptr<FramebufferAttachment> abufferPointerAttachment;
-	bool abufferPointerTransitionNeeded = false;
+	std::unique_ptr<BufferData> abufferPointer;
 	bool firstFrameAfterInit = false;
 	int maxWidth = 0;
 	int maxHeight = 0;
+	int64_t pixelBufferSize = 0;
 };

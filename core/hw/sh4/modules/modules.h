@@ -20,9 +20,21 @@ void intc_init();
 void intc_reset();
 void intc_term();
 
+struct SerialPipe
+{
+	// Serial TX
+	virtual void write(u8 data) = 0;
+	// RX buffer Size
+	virtual int available() = 0;
+	// Serial RX
+	virtual u8 read() = 0;
+
+	virtual ~SerialPipe() = default;
+};
 void serial_init();
-void serial_reset();
+void serial_reset(bool hard);
 void serial_term();
+void serial_setPipe(SerialPipe *pipe);
 
 void ubc_init();
 void ubc_reset();
@@ -35,7 +47,3 @@ void tmu_term();
 void ccn_init();
 void ccn_reset(bool hard);
 void ccn_term();
-
-void MMU_init();
-void MMU_reset();
-void MMU_term();

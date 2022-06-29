@@ -2,6 +2,7 @@
 # vim: tabstop=2 shiftwidth=2 expandtab
 # MiniUPnP project
 # Author : Thomas Bernard
+# Python 3
 # This Sample code is public domain.
 # website : https://miniupnp.tuxfamily.org/
 
@@ -19,14 +20,14 @@ try:
   # create the object
   u = miniupnpc.UPnP(**vars(parser.parse_args()))
 except:
-  print 'argparse not available'
+  print('argparse not available')
   i = 1
   multicastif = None
   minissdpdsocket = None
   discoverdelay = 200
   localport = 0
   while i < len(sys.argv):
-    print sys.argv[i]
+    print(sys.argv[i])
     if sys.argv[i] == '-m' or sys.argv[i] == '--multicastif':
       multicastif = sys.argv[i+1]
     elif sys.argv[i] == '-p' or sys.argv[i] == '--minissdpdsocket':
@@ -41,27 +42,29 @@ except:
   # create the object
   u = miniupnpc.UPnP(multicastif, minissdpdsocket, discoverdelay, localport)
 
-print 'inital(default) values :'
-print ' discoverdelay', u.discoverdelay
-print ' lanaddr', u.lanaddr
-print ' multicastif', u.multicastif
-print ' minissdpdsocket', u.minissdpdsocket
+print('inital(default) values :')
+print(' discoverdelay', u.discoverdelay)
+print(' lanaddr', u.lanaddr)
+print(' multicastif', u.multicastif)
+print(' minissdpdsocket', u.minissdpdsocket)
 #u.minissdpdsocket = '../minissdpd/minissdpd.sock'
 # discovery process, it usually takes several seconds (2 seconds or more)
-print 'Discovering... delay=%ums' % u.discoverdelay
-print u.discover(), 'device(s) detected'
+print('Discovering... delay=%ums' % u.discoverdelay)
+print('%d device(s) detected' % u.discover())
 # select an igd
 try:
   u.selectigd()
-except Exception, e:
-  print 'Exception :', e
+except Exception as e:
+  print('Exception :', e)
   sys.exit(1)
+# it is also possible to pass the root description URL to u.selectigd() :
+# u.selectigd('http://192.168.1.254:5678/desc/root')
 # display information about the IGD and the internet connection
-print 'local ip address :', u.lanaddr
-print 'external ip address :', u.externalipaddress()
-print u.statusinfo(), u.connectiontype()
-print 'total bytes : sent', u.totalbytesent(), 'received', u.totalbytereceived()
-print 'total packets : sent', u.totalpacketsent(), 'received', u.totalpacketreceived()
+print('local ip address :', u.lanaddr)
+print('external ip address :', u.externalipaddress())
+print( u.statusinfo(), u.connectiontype())
+print('total bytes : sent', u.totalbytesent(), 'received', u.totalbytereceived())
+print('total packets : sent', u.totalpacketsent(), 'received', u.totalpacketreceived())
 
 #print u.addportmapping(64000, 'TCP',
 #                       '192.168.1.166', 63000, 'port mapping test', '')
@@ -75,14 +78,14 @@ while True:
 	p = u.getgenericportmapping(i)
 	if p==None:
 		break
-	print i, p
+	print(i, p)
 	(port, proto, (ihost,iport), desc, c, d, e) = p
 	#print port, desc
 	i = i + 1
 
-print u.getspecificportmapping(port, proto)
+print(u.getspecificportmapping(port, proto))
 try:
-  print u.getportmappingnumberofentries()
-except Exception, e:
-  print 'GetPortMappingNumberOfEntries() is not supported :', e
+  print(u.getportmappingnumberofentries())
+except Exception as e:
+  print('GetPortMappingNumberOfEntries() is not supported :', e)
 

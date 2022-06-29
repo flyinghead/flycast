@@ -23,26 +23,14 @@
 #include "types.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
-#include "gles/imgui_impl_opengl3.h"
-#include "vulkan/vulkan_context.h"
 #include "gui.h"
+#include "emulator.h"
+#include "stdclass.h"
 
-extern int screen_width, screen_height;
-
-typedef void (*StringCallback)(bool cancelled, std::string selection);
+typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile = false, const std::string& extension = "");
-
-static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data)
-{
-#ifdef USE_VULKAN
-	if (!config::RendererType.isOpenGL())
-		ImGui_ImplVulkan_RenderDrawData(draw_data);
-	else
-#endif
-		ImGui_ImplOpenGL3_RenderDrawData(draw_data);
-}
 
 void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 
@@ -78,3 +66,67 @@ static inline bool operator!=(const ImVec2& l, const ImVec2& r)
 
 void fullScreenWindow(bool modal);
 void windowDragScroll();
+
+class BackgroundGameLoader
+{
+public:
+	void load(const std::string& path)
+	{
+		progress.reset();
+		future = std::async(std::launch::async, [this, path] {
+			emu.loadGame(path.c_str(), &progress);
+		});
+	}
+
+	void cancel()
+	{
+		if (progress.cancelled)
+			return;
+		progress.cancelled = true;
+		if (future.valid())
+			try {
+				future.get();
+			} catch (const FlycastException&) {
+			}
+		emu.unloadGame();
+		gui_state = GuiState::Main;
+	}
+
+	bool ready()
+	{
+		if (!future.valid())
+			return true;
+		if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+		{
+			future.get();
+			return true;
+		}
+		return false;
+	}
+
+	const LoadProgress& getProgress() const {
+		return progress;
+	}
+
+private:
+	LoadProgress progress;
+	std::future<void> future;
+};
+
+struct ScaledVec2 : public ImVec2
+{
+	ScaledVec2()
+		: ImVec2() {}
+	ScaledVec2(float x, float y)
+		: ImVec2(x * settings.display.uiScale, y * settings.display.uiScale) {}
+};
+
+inline static ImVec2 min(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(std::min(l.x, r.x), std::min(l.y, r.y));
+}
+inline static ImVec2 operator+(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(l.x + r.x, l.y + r.y);
+}
+inline static ImVec2 operator-(const ImVec2& l, const ImVec2& r) {
+	return ImVec2(l.x - r.x, l.y - r.y);
+}

@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 class BaseDrawer
 {
@@ -41,7 +42,6 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
-	void SetProvokingVertices();
 
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
 	{
@@ -52,51 +52,117 @@ protected:
 		}
 	}
 
-	u32 align(vk::DeviceSize offset, u32 alignment)
-	{
-		return (u32)(alignment - (offset & (alignment - 1)));
-	}
-
 	template<typename T>
 	T MakeFragmentUniforms()
 	{
 		T fragUniforms;
 
 		//VERT and RAM fog color constants
-		u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-		u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-		fragUniforms.sp_FOG_COL_VERT[0] = fog_colvert_bgra[2] / 255.0f;
-		fragUniforms.sp_FOG_COL_VERT[1] = fog_colvert_bgra[1] / 255.0f;
-		fragUniforms.sp_FOG_COL_VERT[2] = fog_colvert_bgra[0] / 255.0f;
-
-		fragUniforms.sp_FOG_COL_RAM[0] = fog_colram_bgra[2] / 255.0f;
-		fragUniforms.sp_FOG_COL_RAM[1] = fog_colram_bgra[1] / 255.0f;
-		fragUniforms.sp_FOG_COL_RAM[2] = fog_colram_bgra[0] / 255.0f;
+		FOG_COL_VERT.getRGBColor(fragUniforms.sp_FOG_COL_VERT);
+		FOG_COL_RAM.getRGBColor(fragUniforms.sp_FOG_COL_RAM);
 
 		//Fog density constant
-		u8* fog_density = (u8*)&FOG_DENSITY;
-		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-		s32 fog_den_exp = (s8)fog_density[0];
-		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * config::ExtraDepthScale;
+		fragUniforms.sp_FOG_DENSITY = FOG_DENSITY.get() * config::ExtraDepthScale;
 
-		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-
-		fragUniforms.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-		fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+		pvrrc.fog_clamp_min.getRGBAColor(fragUniforms.colorClampMin);
+		pvrrc.fog_clamp_max.getRGBAColor(fragUniforms.colorClampMax);
 
 		fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
 		return fragUniforms;
 	}
 
+	template<typename Offsets>
+	void packNaomi2Uniforms(BufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
+	{
+		size_t n2UniformSize = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), GetContext()->GetUniformBufferAlignment());
+		int items = pvrrc.global_param_op.used() + pvrrc.global_param_pt.used() + pvrrc.global_param_tr.used() + pvrrc.global_param_mvo.used();
+		if (trModVolIncluded)
+			items += pvrrc.global_param_mvo_tr.used();
+		n2uniforms.resize(items * n2UniformSize);
+		size_t bufIdx = 0;
+		auto addUniform = [&](const PolyParam& pp, int polyNumber) {
+			if (pp.isNaomi2())
+			{
+				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+				memcpy(glm::value_ptr(uni.mvMat), pp.mvMatrix, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.normalMat), pp.normalMatrix, sizeof(uni.normalMat));
+				memcpy(glm::value_ptr(uni.projMat), pp.projMatrix, sizeof(uni.projMat));
+				uni.bumpMapping = pp.pcw.Texture == 1 && pp.tcw.PixelFmt == PixelBumpMap;
+				uni.polyNumber = polyNumber;
+				for (size_t i = 0; i < 2; i++)
+				{
+					uni.envMapping[i] = pp.envMapping[i];
+					uni.glossCoef[i] = pp.glossCoef[i];
+					uni.constantColor[i] = pp.constantColor[i];
+				}
+			}
+			bufIdx += n2UniformSize;
+		};
+		for (const PolyParam& pp : pvrrc.global_param_op)
+			addUniform(pp, 0);
+		size_t ptOffset = bufIdx;
+		for (const PolyParam& pp : pvrrc.global_param_pt)
+			addUniform(pp, 0);
+		size_t trOffset = bufIdx;
+		if (pvrrc.global_param_tr.used() > 0)
+		{
+			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
+			for (const PolyParam& pp : pvrrc.global_param_tr)
+				addUniform(pp, ((&pp - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx);
+		}
+		size_t mvOffset = bufIdx;
+		for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo)
+		{
+			if (mvp.isNaomi2())
+			{
+				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+				memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+			}
+			bufIdx += n2UniformSize;
+		}
+		size_t trMvOffset = bufIdx;
+		if (trModVolIncluded)
+			for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo_tr)
+			{
+				if (mvp.isNaomi2())
+				{
+					N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+					memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
+					memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+				}
+				bufIdx += n2UniformSize;
+			}
+		offsets.naomi2OpaqueOffset = packer.addUniform(n2uniforms.data(), bufIdx);
+		offsets.naomi2PunchThroughOffset = offsets.naomi2OpaqueOffset + ptOffset;
+		offsets.naomi2TranslucentOffset = offsets.naomi2OpaqueOffset + trOffset;
+		offsets.naomi2ModVolOffset = offsets.naomi2OpaqueOffset + mvOffset;
+		offsets.naomi2TrModVolOffset = offsets.naomi2OpaqueOffset + trMvOffset;
+	}
+
+	vk::DeviceSize packNaomi2Lights(BufferPacker& packer)
+	{
+		constexpr static N2LightModel noLight{};
+		vk::DeviceSize offset = packer.addUniform(&noLight, sizeof(noLight));
+
+		size_t n2LightSize = sizeof(N2LightModel) + align(sizeof(N2LightModel), GetContext()->GetUniformBufferAlignment());
+		if (n2LightSize == sizeof(N2LightModel))
+		{
+			packer.addUniform(pvrrc.lightModels.head(), pvrrc.lightModels.bytes());
+		}
+		else
+		{
+			for (const N2LightModel& model : pvrrc.lightModels)
+				packer.addUniform(&model, sizeof(N2LightModel));
+		}
+
+		return offset;
+	}
+
 	vk::Rect2D baseScissor;
 	vk::Rect2D currentScissor;
-	TransformMatrix<false> matrices;
+	TransformMatrix<COORD_VULKAN> matrices;
 	CommandPool *commandPool = nullptr;
 };
 
@@ -106,13 +172,14 @@ public:
 	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() { renderPass++; }
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
-	virtual size_t GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
+	virtual u32 GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	void NewImage()
 	{
-		GetCurrentDescSet().Reset();
+		descriptorSets.nextFrame();
 		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		if (perStripSorting != config::PerStripSorting)
 		{
@@ -127,18 +194,10 @@ protected:
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
 
-		size_t size = GetSwapChainSize();
-		if (descriptorSets.size() > size)
-			descriptorSets.resize(size);
-		else
-			while (descriptorSets.size() < size)
-			{
-				descriptorSets.emplace_back();
-				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-			}
+		descriptorSets.init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 	}
+
 	int GetCurrentImage() const { return imageIndex; }
-	DescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
 	BufferData* GetMainBuffer(u32 size)
 	{
@@ -150,7 +209,7 @@ protected:
 		}
 		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
+			u32 newSize = (u32)mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
@@ -158,7 +217,7 @@ protected:
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffers[bufferIndex].get();
-	};
+	}
 
 	vk::CommandBuffer currentCommandBuffer;
 	SamplerManager *samplerManager = nullptr;
@@ -166,7 +225,7 @@ protected:
 private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
-	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
+	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
@@ -178,8 +237,14 @@ private:
 		vk::DeviceSize modVolOffset = 0;
 		vk::DeviceSize vertexUniformOffset = 0;
 		vk::DeviceSize fragmentUniformOffset = 0;
+		vk::DeviceSize naomi2OpaqueOffset = 0;
+		vk::DeviceSize naomi2PunchThroughOffset = 0;
+		vk::DeviceSize naomi2TranslucentOffset = 0;
+		vk::DeviceSize naomi2ModVolOffset = 0;
+		vk::DeviceSize naomi2TrModVolOffset = 0;
+		vk::DeviceSize lightsOffset = 0;
 	} offsets;
-	std::vector<DescriptorSets> descriptorSets;
+	DescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	PipelineManager *pipelineManager = nullptr;
 
@@ -194,13 +259,15 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
+	vk::RenderPass GetRenderPass() const { return *renderPassClear; }
 	void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
+		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
+				colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
 		NewImage();
 
 		return true;
@@ -208,7 +275,7 @@ public:
 
 protected:
 	vk::CommandBuffer BeginRenderPass() override;
-	size_t GetSwapChainSize() override { return 2; }
+	u32 GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;

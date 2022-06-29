@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package
+	xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"	xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+	IgnorableNamespaces="uap mp">
+
+	<Identity Name="AF75D068-D5AC-3D3C-B52A-2791C2F3491A" Publisher="CN=Flyinghead" Version="9.9.9.9" />
+	<mp:PhoneIdentity PhoneProductId="AF75D068-D5AC-3D3C-B52A-2791C2F3491A" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+	<Properties>
+		<DisplayName>Flycast</DisplayName>
+		<PublisherDisplayName>Flyinghead</PublisherDisplayName>
+		<Logo>flycast50.png</Logo>
+	</Properties>
+	<Dependencies>
+		<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+	</Dependencies>
+	<Resources>
+		<Resource Language="x-generate" />
+	</Resources>
+	<Applications>
+		<Application Id="App" Executable="flycast.exe" EntryPoint="flycast.App">
+			<uap:VisualElements
+				DisplayName="Flycast"
+				Description="Flycast - Dreamcast emulator"
+				BackgroundColor="transparent"
+				Square150x150Logo="flycast150.png"
+				Square44x44Logo="flycast44.png">
+				<uap:SplashScreen Image="splash.png"  BackgroundColor="#000000"/>
+				<uap:InitialRotationPreference>
+				  <uap:Rotation Preference="landscape" />
+				  <uap:Rotation Preference="landscapeFlipped"/>
+				</uap:InitialRotationPreference>
+				<uap:DefaultTile/>
+			</uap:VisualElements>
+		</Application>
+	</Applications>
+	<Capabilities>
+		<Capability Name="codeGeneration"/>
+		<Capability Name="internetClientServer"/>
+		<Capability Name="privateNetworkClientServer"/>
+    <uap:Capability Name="removableStorage" />
+    <DeviceCapability Name="microphone"/>
+	</Capabilities>
+</Package>

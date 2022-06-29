@@ -9,12 +9,13 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/dmac.h"
+#include "hw/aica/aica_if.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
-#include "network/naomi_network.h"
+#include "serialize.h"
 
 //#define NAOMI_COMM
 
@@ -44,6 +45,9 @@ P-Z		(0x50-0x5A)
 */
 static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+
+static u8 midiTxBuf[4];
+static u32 midiTxBufIndex;
 
 static unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 {
@@ -366,6 +370,10 @@ void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
 	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
 	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
+	// command: param1 & 3f << 9 | param2
+	//   offsetl, paraml, paramh: params 3 4 5
+	//   HOLLY::SB_IML2EXT |= 8 when done
+
 
 	u32 param=(command&0xFF);
 	if (param==0xFF)
@@ -405,7 +413,8 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr && settings.platform.system == DC_PLATFORM_NAOMI)
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr
+			&& settings.platform.isNaomi())
 		m3comm.WriteMem(address, data, size);
 	else
 		CurrentCartridge->WriteMem(address, data, size);
@@ -531,7 +540,6 @@ void naomi_reg_Term()
 	}
 #endif
 	m3comm.closeNetwork();
-	naomiNetwork.terminate();
 }
 
 void naomi_reg_Reset(bool hard)
@@ -564,11 +572,13 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_parameterh = 0;
 	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
-	naomiNetwork.terminate();
+	if (hard)
+		naomi_cart_Close();
 }
 
 static u8 aw_maple_devs;
 static u64 coin_chute_time[4];
+static u8 ffbOuput;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -625,7 +635,8 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	case 0x288:
 		// ??? Dolphin Blue
 		return 0;
-
+	case 0x28c:
+		return ffbOuput;
 	}
 	INFO_LOG(NAOMI, "Unhandled read @ %x sz %d", addr, size);
 	return 0xFF;
@@ -643,69 +654,137 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	case 0x288:
 		// ??? Dolphin Blue
 		return;
-	//case 0x28C:		// Wheel force feedback?
+	case 0x28C:		// Wheel force feedback
+		// bit 0    direction (0 pos, 1 neg)
+		// bit 1-4  strength
+		ffbOuput = data;
+		DEBUG_LOG(NAOMI, "AW output %02x", data);
+		return;
 	default:
 		break;
 	}
 	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }
 
-void naomi_Serialize(void **data, unsigned int *total_size)
+void naomi_Serialize(Serializer& ser)
 {
-	REICAST_S(GSerialBuffer);
-	REICAST_S(BSerialBuffer);
-	REICAST_S(GBufPos);
-	REICAST_S(BBufPos);
-	REICAST_S(GState);
-	REICAST_S(BState);
-	REICAST_S(GOldClk);
-	REICAST_S(BOldClk);
-	REICAST_S(BControl);
-	REICAST_S(BCmd);
-	REICAST_S(BLastCmd);
-	REICAST_S(GControl);
-	REICAST_S(GCmd);
-	REICAST_S(GLastCmd);
-	REICAST_S(SerStep);
-	REICAST_S(SerStep2);
-	REICAST_SA(BSerial,69);
-	REICAST_SA(GSerial,69);
-	REICAST_S(reg_dimm_command);
-	REICAST_S(reg_dimm_offsetl);
-	REICAST_S(reg_dimm_parameterl);
-	REICAST_S(reg_dimm_parameterh);
-	REICAST_S(reg_dimm_status);
-	REICAST_S(aw_maple_devs);
+	ser << GSerialBuffer;
+	ser << BSerialBuffer;
+	ser << GBufPos;
+	ser << BBufPos;
+	ser << GState;
+	ser << BState;
+	ser << GOldClk;
+	ser << BOldClk;
+	ser << BControl;
+	ser << BCmd;
+	ser << BLastCmd;
+	ser << GControl;
+	ser << GCmd;
+	ser << GLastCmd;
+	ser << SerStep;
+	ser << SerStep2;
+	ser.serialize(BSerial, 69);
+	ser.serialize(GSerial, 69);
+	ser << reg_dimm_command;
+	ser << reg_dimm_offsetl;
+	ser << reg_dimm_parameterl;
+	ser << reg_dimm_parameterh;
+	ser << reg_dimm_status;
+	ser << aw_maple_devs;
+	ser << coin_chute_time;
+	ser << aw_ram_test_skipped;
+	ser << midiTxBuf;
+	ser << midiTxBufIndex;
+	// TODO serialize m3comm?
+}
+void naomi_Deserialize(Deserializer& deser)
+{
+	if (deser.version() < Deserializer::V9_LIBRETRO)
+	{
+		deser.skip<u32>();		// naomi_updates
+		deser.skip<u32>();		// BoardID
+	}
+	deser >> GSerialBuffer;
+	deser >> BSerialBuffer;
+	deser >> GBufPos;
+	deser >> BBufPos;
+	deser >> GState;
+	deser >> BState;
+	deser >> GOldClk;
+	deser >> BOldClk;
+	deser >> BControl;
+	deser >> BCmd;
+	deser >> BLastCmd;
+	deser >> GControl;
+	deser >> GCmd;
+	deser >> GLastCmd;
+	deser >> SerStep;
+	deser >> SerStep2;
+	deser.deserialize(BSerial, 69);
+	deser.deserialize(GSerial, 69);
+	deser >> reg_dimm_command;
+	deser >> reg_dimm_offsetl;
+	deser >> reg_dimm_parameterl;
+	deser >> reg_dimm_parameterh;
+	deser >> reg_dimm_status;
+	if (deser.version() < Deserializer::V11)
+		deser.skip<u8>();
+	else if (deser.version() >= Deserializer::V14)
+		deser >> aw_maple_devs;
+	if (deser.version() >= Deserializer::V20)
+	{
+		deser >> coin_chute_time;
+		deser >> aw_ram_test_skipped;
+	}
+	if (deser.version() >= Deserializer::V27)
+	{
+		deser >> midiTxBuf;
+		deser >> midiTxBufIndex;
+	}
+	else
+	{
+		midiTxBufIndex = 0;
+	}
 }
 
-void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+static void midiSend(u8 b1, u8 b2, u8 b3)
 {
-	REICAST_US(GSerialBuffer);
-	REICAST_US(BSerialBuffer);
-	REICAST_US(GBufPos);
-	REICAST_US(BBufPos);
-	REICAST_US(GState);
-	REICAST_US(BState);
-	REICAST_US(GOldClk);
-	REICAST_US(BOldClk);
-	REICAST_US(BControl);
-	REICAST_US(BCmd);
-	REICAST_US(BLastCmd);
-	REICAST_US(GControl);
-	REICAST_US(GCmd);
-	REICAST_US(GLastCmd);
-	REICAST_US(SerStep);
-	REICAST_US(SerStep2);
-	REICAST_USA(BSerial,69);
-	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_command);
-	REICAST_US(reg_dimm_offsetl);
-	REICAST_US(reg_dimm_parameterl);
-	REICAST_US(reg_dimm_parameterh);
-	REICAST_US(reg_dimm_status);
-	if (version < V11)
-		REICAST_SKIP(1); // NaomiDataRead
-	else if (version >= V14)
-		REICAST_US(aw_maple_devs);
+	aica_midiSend(b1);
+	aica_midiSend(b2);
+	aica_midiSend(b3);
+	aica_midiSend((b1 ^ b2 ^ b3) & 0x7f);
+}
 
+static void forceFeedbackMidiReceiver(u8 data)
+{
+	static float position = 8192.f;
+	static float torque;
+	position = std::min(16383.f, std::max(0.f, position + torque));
+	if (data & 0x80)
+		midiTxBufIndex = 0;
+	midiTxBuf[midiTxBufIndex] = data;
+	if (midiTxBufIndex == 3 && ((midiTxBuf[0] ^ midiTxBuf[1] ^ midiTxBuf[2]) & 0x7f) == midiTxBuf[3])
+	{
+		if (midiTxBuf[0] == 0x84)
+			torque = ((midiTxBuf[1] << 7) | midiTxBuf[2]) - 0x80;
+		else if (midiTxBuf[0] == 0xff)
+		{
+			torque = 0;
+			position = 8192;
+		}
+		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
+		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
+
+		// decoding from FFB Arcade Plugin (by Boomslangnz)
+		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
+		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
+			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
+	}
+	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
+}
+
+void initMidiForceFeedback()
+{
+	aica_setMidiReceiver(forceFeedbackMidiReceiver);
 }

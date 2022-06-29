@@ -1,9 +1,11 @@
 #ifndef PICO_SUPPORT_MSVC
 #define PICO_SUPPORT_MSVC
 
+#pragma pack(push, 8)
 #include <stdio.h>
 #include <time.h>
 #include <windows.h>
+#pragma pack(pop)
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
   #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
@@ -11,7 +13,7 @@
   #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
 #endif
 
-#define dbg printf
+#define dbg(format, ...) do { char buf[256]; snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); OutputDebugStringA(buf); } while(0)
 
 #define stack_fill_pattern(...) do {} while(0)
 #define stack_count_free_words(...) do {} while(0)
@@ -19,6 +21,8 @@
 
 #define pico_zalloc(x) calloc(x, 1)
 #define pico_free(x) free(x)
+
+#define strcasecmp stricmp
 
 static inline uint32_t PICO_TIME_MS(void)
 {
@@ -45,8 +49,10 @@ static inline uint32_t PICO_TIME(void)
 
 static inline void PICO_IDLE(void)
 {
-    // Not used anyway usleep(5000);
+    Sleep(5);
 }
+
+#define alloca _alloca
 
 #endif  /* PICO_SUPPORT_MSVC */
 

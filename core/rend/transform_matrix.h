@@ -26,9 +26,17 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-extern int screen_width, screen_height;
-
-template<bool invertY>
+// Dreamcast:
+// +Y is down
+// Open GL:
+// +Y is up in clip, NDC and framebuffer coordinates
+// Vulkan:
+// +Y is down in clip, NDC and framebuffer coordinates
+// DirectX9:
+// +Y is up in clip and NDC coordinates, but down in framebuffer coordinates
+// Y must also be flipped for render-to-texture so that the top of the texture comes first
+enum CoordSystem { COORD_OPENGL, COORD_VULKAN, COORD_DIRECTX };
+template<CoordSystem System>
 class TransformMatrix
 {
 public:
@@ -68,17 +76,21 @@ public:
 
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
-		renderViewport = { width == 0 ? screen_width : width, height == 0 ? screen_height : height };
+		constexpr int screenFlipY = System == COORD_OPENGL || System == COORD_DIRECTX ? -1 : 1;
+		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
+		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
+
+		renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
 		this->renderingContext = renderingContext;
 
 		GetFramebufferScaling(false, scale_x, scale_y);
 
 		if (renderingContext->isRTT)
 		{
-			dcViewport.x = renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1;
-			dcViewport.y = renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1;
-			normalMatrix = glm::translate(glm::vec3(-1, -1, 0))
-				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y, 1.f));
+			dcViewport.x = (float)(renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1);
+			dcViewport.y = (float)(renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1);
+			normalMatrix = glm::translate(glm::vec3(-1, -rttFlipY, 0))
+				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * rttFlipY, 1.f));
 			scissorMatrix = normalMatrix;
 			sidebarWidth = 0;
 		}
@@ -142,7 +154,7 @@ public:
 				float dc2s_scale_h = renderViewport.x / 640.0f;
 
 				sidebarWidth = 0;
-				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * (invertY ? -1 : 1);
+				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * screenFlipY;
 				x_coef = 2.0f / dcViewport.x;
 			}
 			else
@@ -151,9 +163,9 @@ public:
 
 				sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
 				x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
-				y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
+				y_coef = 2.0f / dcViewport.y * screenFlipY;
 			}
-			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, invertY ? 1 : -1, 0));
+			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, -screenFlipY, 0));
 
 			normalMatrix = trans_rot
 				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
@@ -165,15 +177,15 @@ public:
 		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
 
-		glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
+		glm::mat4 vp_trans = glm::translate(glm::vec3(1, framebufferFlipY, 0));
 		if (renderingContext->isRTT)
 		{
-			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2, 1.f))
+			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * framebufferFlipY, 1.f))
 				* vp_trans;
 		}
 		else
 		{
-			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2, 1.f))
+			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * framebufferFlipY, 1.f))
 				* vp_trans;
 		}
 		viewportMatrix = vp_trans * normalMatrix;
@@ -196,7 +208,7 @@ private:
 			if (SCALER_CTL.vscalefactor > 0x400)
 			{
 				// Interlace mode A (single framebuffer)
-				if (SCALER_CTL.interlace == 0 && !scissor)
+				if (SCALER_CTL.interlace == 0)
 					scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
 				else if (SCALER_CTL.interlace == 1 && scissor)
 					// Interlace mode B (alternating framebuffers)

@@ -21,7 +21,7 @@
 #include "oit_pipeline.h"
 #include "../quad.h"
 
-void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass)
+void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -139,11 +139,14 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(OITShaderManager::VertexShaderParams{ pp.pcw.Gouraud == 1 });
+	bool twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(
+			OITShaderManager::VertexShaderParams{ pp.pcw.Gouraud == 1, pp.isNaomi2(), pass != Pass::Depth, twoVolume, pp.pcw.Texture == 1, divPosZ });
 	OITShaderManager::FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
-	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
@@ -153,8 +156,9 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	params.texture = pp.pcw.Texture;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.pass = pass;
-	params.twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
-	params.palette = BaseTextureCacheData::IsGpuHandledPaletted(pp.tsp, pp.tcw);
+	params.twoVolume = twoVolume;
+	params.palette = gpuPalette;
+	params.divPosZ = divPosZ;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -180,7 +184,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	  pass == Pass::Depth ? (listType == ListType_Translucent ? 2 : 0) : 1 // subpass
 	);
 
-	pipelines[hash(listType, autosort, &pp, pass)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+	pipelines[hash(listType, autosort, &pp, pass, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
 
@@ -346,7 +350,7 @@ void OITPipelineManager::CreateClearPipeline()
 	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
+void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -438,8 +442,8 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation });
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -464,12 +468,12 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	  0                                           // subpass
 	);
 
-	modVolPipelines[hash(mode, cullMode)] =
+	modVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
+void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -533,8 +537,9 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(mode);
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, divPosZ });
+	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(OITShaderManager::TrModVolShaderParams{ mode, divPosZ });
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -559,7 +564,7 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
       2                                           // subpass
 	);
 
-	trModVolPipelines[hash(mode, cullMode)] =
+	trModVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }

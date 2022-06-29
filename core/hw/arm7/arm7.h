@@ -98,7 +98,9 @@ typedef union
 
 alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
-#define ARM_CYCLES_PER_SAMPLE 256
+// AICA ARM cpu clock: 22.5792 MHz
+#define ARM_CYCLES_PER_SAMPLE 512
+extern int arm7ClockTicks;
 
 void CPUFiq();
 void CPUUpdateCPSR();

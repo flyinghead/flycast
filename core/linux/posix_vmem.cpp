@@ -2,7 +2,9 @@
 // Implementation of the vmem related function for POSIX-like platforms.
 // There's some minimal amount of platform specific hacks to support
 // Android and OSX since they are slightly different in some areas.
+#include "types.h"
 
+#ifndef __SWITCH__
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,19 +17,11 @@
 #include "stdclass.h"
 
 #ifndef MAP_NOSYNC
-#define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
+#define MAP_NOSYNC 0
 #endif
 
 #ifdef __ANDROID__
-	#include <linux/ashmem.h>
-	#ifndef ASHMEM_DEVICE
-		#define ASHMEM_DEVICE "/dev/ashmem"
-		#undef PAGE_MASK
-		#define PAGE_MASK (PAGE_SIZE-1)
-	#else
-		#define PAGE_SIZE 4096
-		#define PAGE_MASK (PAGE_SIZE-1)
-	#endif
+#include <linux/ashmem.h>
 
 // Only available in SDK 26+. Required in SDK 29+ (android 10)
 extern "C" int __attribute__((weak)) ASharedMemory_create(const char*, size_t);
@@ -35,16 +29,22 @@ extern "C" int __attribute__((weak)) ASharedMemory_create(const char*, size_t);
 // Android specific ashmem-device stuff for creating shared memory regions
 int ashmem_create_region(const char *name, size_t size)
 {
+	int fd = -1;
 	if (ASharedMemory_create != nullptr)
-		return ASharedMemory_create(name, size);
+	{
+		fd = ASharedMemory_create(name, size);
+		if (fd < 0)
+			WARN_LOG(VMEM, "ASharedMemory_create failed: errno %d", errno);
+	}
 
-	int fd = open(ASHMEM_DEVICE, O_RDWR);
 	if (fd < 0)
-		return -1;
-
-	if (ioctl(fd, ASHMEM_SET_SIZE, size) < 0) {
-		close(fd);
-		return -1;
+	{
+		fd = open("/" ASHMEM_NAME_DEF, O_RDWR);
+		if (fd >= 0 && ioctl(fd, ASHMEM_SET_SIZE, size) < 0)
+		{
+			close(fd);
+			fd = -1;
+		}
 	}
 
 	return fd;
@@ -71,7 +71,11 @@ bool mem_region_unlock(void *start, size_t len)
 bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
-	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
+    int protFlags = PROT_READ | PROT_EXEC;
+#ifndef TARGET_IPHONE
+    protFlags |= PROT_WRITE;
+#endif
+	if (mprotect((u8*)start - inpage, len + inpage, protFlags))
 	{
 		WARN_LOG(VMEM, "mem_region_set_exec: mprotect failed. errno %d", errno);
 		return false;
@@ -79,7 +83,7 @@ bool mem_region_set_exec(void *start, size_t len)
 	return true;
 }
 
-void *mem_region_reserve(void *start, size_t len)
+static void *mem_region_reserve(void *start, size_t len)
 {
 	void *p = mmap(start, len, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	if (p == MAP_FAILED)
@@ -91,12 +95,12 @@ void *mem_region_reserve(void *start, size_t len)
 		return p;
 }
 
-bool mem_region_release(void *start, size_t len)
+static bool mem_region_release(void *start, size_t len)
 {
 	return munmap(start, len) == 0;
 }
 
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
 {
 	int flags = MAP_SHARED | MAP_NOSYNC | (dest != NULL ? MAP_FIXED : 0);
 	void *p = mmap(dest, len, PROT_READ | (readwrite ? PROT_WRITE : 0), flags, (int)(uintptr_t)file_handle, offset);
@@ -107,11 +111,6 @@ void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offs
 	}
 	else
 		return p;
-}
-
-bool mem_region_unmap_file(void *start, size_t len)
-{
-	return mem_region_release(start, len);
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
@@ -132,17 +131,18 @@ static int allocate_shared_filemem(unsigned size) {
 		fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRWXU|S_IRWXG|S_IRWXO);
 		unlink(path.c_str());
 	}
-	// If we can't open the file, fallback to slow mem.
-	if (fd < 0)
-		return -1;
-
-	// Finally make the file as big as we need!
-	if (ftruncate(fd, size)) {
-		// Can't get as much memory as needed, fallback.
-		close(fd);
-		return -1;
+	if (fd >= 0)
+	{
+		// Finally make the file as big as we need!
+		if (ftruncate(fd, size)) {
+			// Can't get as much memory as needed, fallback.
+			close(fd);
+			fd = -1;
+		}
 	}
 #endif
+	if (fd < 0)
+		WARN_LOG(VMEM, "Virtual memory file allocation failed: errno %d", errno);
 
 	return fd;
 }
@@ -159,9 +159,9 @@ static size_t reserved_size;
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize) {
 	// Firt let's try to allocate the shm-backed memory
-	vmem_fd = allocate_shared_filemem(RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
+	vmem_fd = allocate_shared_filemem(ramSize);
 	if (vmem_fd < 0)
 		return MemTypeError;
 
@@ -198,9 +198,18 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 }
 
 // Just tries to wipe as much as possible in the relevant area.
-void vmem_platform_destroy() {
-	if (reserved_base != NULL)
+void vmem_platform_destroy()
+{
+	if (reserved_base != nullptr)
+	{
 		mem_region_release(reserved_base, reserved_size);
+		reserved_base = nullptr;
+	}
+	if (vmem_fd >= 0)
+	{
+		close(vmem_fd);
+		vmem_fd = -1;
+	}
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -235,7 +244,6 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-//			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
 			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
@@ -243,26 +251,44 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
-	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
-	if (!mem_region_set_exec(code_area, size))
-	{
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx)
+{
+    // Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
+	if (code_area != nullptr && mem_region_set_exec(code_area, size))
+    {
+        // Pointer location should be same:
+        *code_area_rwx = code_area;
+        return true;
+    }
+#ifndef TARGET_ARM_MAC
+    void *ret_ptr = MAP_FAILED;
+    if (code_area != nullptr)
+    {
 		// Well it failed, use another approach, unmap the memory area and remap it back.
 		// Seems it works well on Darwin according to reicast code :P
-		munmap(code_area, size);
-		void *ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-		// Ensure it's the area we requested
-		if (ret_ptr != code_area)
-			return false;   // Couldn't remap it? Perhaps RWX is disabled? This should never happen in any supported Unix platform.
-	}
-
-	// Pointer location should be same:
-	*code_area_rwx = code_area;
-	return true;
+        munmap(code_area, size);
+        ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    }
+    if (ret_ptr == MAP_FAILED)
+    {
+        // mmap at the requested code_area location failed, so let the OS pick one for us
+        ret_ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
+        if (ret_ptr == MAP_FAILED)
+            return false;
+    }
+#else
+    // MAP_JIT and toggleable write protection is required on Apple Silicon
+    // Cannot use MAP_FIXED with MAP_JIT
+    void *ret_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
+    if ( ret_ptr == MAP_FAILED )
+        return false;
+#endif
+    *code_area_rwx = ret_ptr;
+    return true;
 }
 
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset) {
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset) {
 	shmem_fd2 = allocate_shared_filemem(size);
 	if (shmem_fd2 < 0)
 		return false;
@@ -282,9 +308,13 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
+	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld", ptr_rx, ptr_rw, (long)*rx_offset);
 
 	return (ptr_rw != MAP_FAILED);
+}
+#endif // !__SWITCH__
+
+void vmem_platform_jit_set_exec(void* code, size_t size, bool enable) {
 }
 
 // Some OSes restrict cache flushing, cause why not right? :D
@@ -364,7 +394,11 @@ static void CacheFlush(void* code, void* pEnd)
 static void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(__ANDROID__)
+#ifdef __GNUC__
+	__builtin___clear_cache((char *)code, (char *)pEnd);
+#else
 	__clear_cache((void*)code, pEnd);
+#endif
 #else // defined(__ANDROID__)
 	void* start=code;
 	size_t size=(u8*)pEnd-(u8*)start+4;

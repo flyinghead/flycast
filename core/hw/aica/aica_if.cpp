@@ -20,13 +20,18 @@ VArray2 aica_ram;
 u32 VREG;
 u32 ARMRST;
 u32 rtc_EN;
-int dma_sched_id;
+int dma_sched_id = -1;
 u32 RealTimeClock;
 int rtc_schid = -1;
 u32 SB_ADST;
 
 u32 GetRTC_now()
 {
+	// rtc kept static for netplay when savestate is not loaded
+	if (config::GGPOEnable)
+		// 1/1/70 00:00:00
+		return (20 * 365 + 5) * 24 * 60 * 60;
+
 	// The Dreamcast Epoch time is 1/1/50 00:00 but without support for time zone or DST.
 	// We compute the TZ/DST current time offset and add it to the result
 	// as if we were in the UTC time zone (as well as the DC Epoch)
@@ -40,23 +45,28 @@ u32 GetRTC_now()
 	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
-u32 ReadMem_aica_rtc(u32 addr, u32 sz)
+template<typename T>
+T ReadMem_aica_rtc(u32 addr)
 {
 	switch (addr & 0xFF)
 	{
 	case 0:
-		return RealTimeClock >> 16;
+		return (T)(RealTimeClock >> 16);
 	case 4:
-		return RealTimeClock & 0xFFFF;
+		return (T)(RealTimeClock & 0xFFFF);
 	case 8:
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, sz);
+	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, (int)sizeof(T));
 	return 0;
 }
+template u8 ReadMem_aica_rtc<>(u32 addr);
+template u16 ReadMem_aica_rtc<>(u32 addr);
+template u32 ReadMem_aica_rtc<>(u32 addr);
 
-void WriteMem_aica_rtc(u32 addr, u32 data, u32 sz)
+template<typename T>
+void WriteMem_aica_rtc(u32 addr, T data)
 {
 	switch (addr & 0xFF)
 	{
@@ -81,31 +91,41 @@ void WriteMem_aica_rtc(u32 addr, u32 data, u32 sz)
 		break;
 
 	default:
-		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, sz, data);
+		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
 		break;
 	}
 }
+template void WriteMem_aica_rtc<>(u32 addr, u8 data);
+template void WriteMem_aica_rtc<>(u32 addr, u16 data);
+template void WriteMem_aica_rtc<>(u32 addr, u32 data);
 
-u32 ReadMem_aica_reg(u32 addr, u32 sz)
+template<typename T>
+T ReadMem_aica_reg(u32 addr)
 {
 	addr &= 0x7FFF;
-	if (sz == 1)
+	if (sizeof(T) == 1)
 	{
 		switch (addr)
 		{
 		case 0x2C00:
-			return ARMRST;
+			return (T)ARMRST;
 		case 0x2C01:
-			return VREG;
+			return (T)VREG;
 		default:
 			break;
 		}
 	}
 	else if (addr == 0x2C00)
-		return (VREG << 8) | ARMRST;
+		return (T)((VREG << 8) | ARMRST);
 
-	return libAICA_ReadReg(addr, sz);
+	if (sizeof(T) == 4)
+		return aicaReadReg<u16>(addr);
+	else
+		return aicaReadReg<T>(addr);
 }
+template u8 ReadMem_aica_reg<>(u32 addr);
+template u16 ReadMem_aica_reg<>(u32 addr);
+template u32 ReadMem_aica_reg<>(u32 addr);
 
 static void ArmSetRST()
 {
@@ -113,11 +133,12 @@ static void ArmSetRST()
 	aicaarm::enable(ARMRST == 0);
 }
 
-void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
+template<typename T>
+void WriteMem_aica_reg(u32 addr, T data)
 {
 	addr &= 0x7FFF;
 
-	if (sz == 1)
+	if (sizeof(T) == 1)
 	{
 		switch (addr)
 		{
@@ -142,8 +163,14 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		ArmSetRST();
 		return;
 	}
-	libAICA_WriteReg(addr, data, sz);
+	if (sizeof(T) == 4)
+		aicaWriteReg(addr, (u16)data);
+	else
+		aicaWriteReg(addr, data);
 }
+template void WriteMem_aica_reg<>(u32 addr, u8 data);
+template void WriteMem_aica_reg<>(u32 addr, u16 data);
+template void WriteMem_aica_reg<>(u32 addr, u32 data);
 
 static int DreamcastSecond(int tag, int c, int j)
 {
@@ -163,23 +190,24 @@ void aica_Init()
 {
 	RealTimeClock = GetRTC_now();
 	if (rtc_schid == -1)
-	{
 		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
-		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
-	}
 }
 
 void aica_Reset(bool hard)
 {
 	if (hard)
+	{
 		aica_Init();
+		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+	}
 	VREG = 0;
 	ARMRST = 0;
 }
 
 void aica_Term()
 {
-
+	sh4_sched_unregister(rtc_schid);
+	rtc_schid = -1;
 }
 
 static int dma_end_sched(int tag, int cycl, int jitt)
@@ -470,4 +498,6 @@ void aica_sb_Reset(bool hard)
 
 void aica_sb_Term()
 {
+	sh4_sched_unregister(dma_sched_id);
+	dma_sched_id = -1;
 }

@@ -77,8 +77,6 @@ void dispmanx_window_create()
 	native_window.height = window_height;
 	vc_dispmanx_update_submit_sync( dispman_update );
 
-	theGLContext.SetNativeWindow((EGLNativeWindowType)&native_window);
-	theGLContext.SetNativeDisplay((EGLNativeDisplayType)dispman_display);
-	InitRenderApi();
+	initRenderApi(&native_window, (void *)dispman_display);
 }
 #endif

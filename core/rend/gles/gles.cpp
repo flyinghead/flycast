@@ -2,12 +2,17 @@
 #include "gles.h"
 #include "cfg/cfg.h"
 #include "hw/pvr/ta.h"
+#ifndef LIBRETRO
 #include "rend/gui.h"
+#else
+#include "vmu_xhair.h"
+#endif
 #include "rend/osd.h"
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
 #include "emulator.h"
+#include "naomi2.h"
 
 #include <cmath>
 
@@ -18,88 +23,106 @@
 #ifndef GL_MAJOR_VERSION
 #define GL_MAJOR_VERSION                  0x821B
 #endif
+#ifndef GL_MINOR_VERSION
+#define GL_MINOR_VERSION                  0x821C
+#endif
 #endif
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = "%s"
-VTX_SHADER_COMPAT
-R"(
-#define pp_Gouraud %d
+const char* ShaderCompatSource = R"(
+#define GLES2 0 							
+#define GLES3 1 							
+#define GL2 2								
+#define GL3 3								
+											
+#if TARGET_GL == GL2 						
+#define highp								
+#define lowp								
+#define mediump								
+#endif										
+#if TARGET_GL == GLES3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL a						
+#elif TARGET_GL == GL3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL r						
+#else										
+#define texture texture2D					
+#define FOG_CHANNEL a						
+#endif										
+)";
 
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
+const char *VertexCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in attribute
+#define out varying
 #endif
-#else
-#define INTERPOLATION
-#endif
+)";
 
+const char *PixelCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in varying
+#endif
+)";
+
+const char* GouraudSource = R"(
+#if (TARGET_GL == GL3 || TARGET_GL == GLES3) && pp_Gouraud == 0
+	#define INTERPOLATION flat
+#else
+	#define INTERPOLATION
+#endif
+)";
+
+static const char* VertexShaderSource = R"(
 /* Vertex constants*/ 
-uniform highp vec4      depth_scale;
-uniform highp mat4 normal_matrix;
+uniform highp vec4 depth_scale;
+uniform highp mat4 ndcMat;
 uniform highp float sp_FOG_DENSITY;
 
 /* Vertex input */
-in highp vec4    in_pos;
-in lowp vec4     in_base;
-in lowp vec4     in_offs;
-in mediump vec2  in_uv;
+in highp vec4 in_pos;
+in lowp vec4 in_base;
+in lowp vec4 in_offs;
+in highp vec2 in_uv;
 /* output */
-INTERPOLATION out lowp vec4 vtx_base;
-INTERPOLATION out lowp vec4 vtx_offs;
-              out mediump vec2 vtx_uv;
-#if TARGET_GL == GLES2
-			  out highp float fog_depth;
-#endif
+INTERPOLATION out highp vec4 vtx_base;
+INTERPOLATION out highp vec4 vtx_offs;
+out highp vec3 vtx_uv;
+
 void main()
 {
+	highp vec4 vpos = ndcMat * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
-	vtx_uv = in_uv;
-	highp vec4 vpos = normal_matrix * in_pos;
-	
+#if TARGET_GL == GLES2
+	vtx_uv = vec3(in_uv, vpos.z * sp_FOG_DENSITY);
 	vpos.w = 1.0 / vpos.z;
-#if TARGET_GL != GLES2
-	vpos.z = vpos.w;
-#else
-	fog_depth = vpos.z * sp_FOG_DENSITY;
 	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
-#endif
 	vpos.xy *= vpos.w;
+#else
+	#if DIV_POS_Z == 1
+		vpos /= vpos.z;
+		vpos.z = vpos.w;
+	#endif
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
+		vtx_base *= vpos.z;
+		vtx_offs *= vpos.z;
+	#endif
+	vtx_uv = vec3(in_uv, vpos.z);
+	#if DIV_POS_Z != 1
+		vtx_uv.xy *= vpos.z;
+		vpos.w = 1.0;
+		vpos.z = 0.0;
+	#endif
+#endif
 	gl_Position = vpos;
 }
 )";
 
-const char* PixelPipelineShader = "%s"
-PIX_SHADER_COMPAT
-R"(
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define FogClamping %d
-#define pp_TriLinear %d
-#define pp_Palette %d
-
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
-#else
-#define INTERPOLATION
-#endif
-
+const char* PixelPipelineShader = R"(
 #define PI 3.1415926
 
 /* Shader program params*/
@@ -118,20 +141,21 @@ uniform mediump int palette_index;
 #endif
 
 /* Vertex input*/
-INTERPOLATION in lowp vec4 vtx_base;
-INTERPOLATION in lowp vec4 vtx_offs;
-			  in mediump vec2 vtx_uv;
-#if TARGET_GL == GLES2
-			  in highp float fog_depth;
-#endif
+INTERPOLATION in highp vec4 vtx_base;
+INTERPOLATION in highp vec4 vtx_offs;
+in highp vec3 vtx_uv;
 
 lowp float fog_mode2(highp float w)
 {
+	highp float z = clamp(
 #if TARGET_GL == GLES2
-	highp float z = clamp(fog_depth, 1.0, 255.9999);
+						  vtx_uv.z
+#elif DIV_POS_Z == 1
+						  sp_FOG_DENSITY / w
 #else
-	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
+						  sp_FOG_DENSITY * w
 #endif
+											, 1.0, 255.9999);
 	mediump float exp = floor(log2(z));
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	mediump float idx = floor(m) + exp * 16.0 + 0.5;
@@ -150,14 +174,29 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 #if pp_Palette == 1
 
-lowp vec4 palettePixel(highp vec2 coords)
+lowp vec4 palettePixel(highp vec3 coords)
 {
-	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-    highp vec2 c = vec2(mod(float(color_idx), 32.0) / 31.0, float(color_idx / 32) / 31.0);
-    //highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+	highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+    highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
+#else
+	#if DIV_POS_Z == 1
+		highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	#else
+		highp int color_idx = int(floor(textureProj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	#endif
+    highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+	return texelFetch(palette, c, 0);
+#endif
 }
 
+#endif
+
+#if TARGET_GL == GLES2
+#define depth gl_FragCoord.w
+#else
+#define depth vtx_uv.z
 #endif
 
 void main()
@@ -169,17 +208,26 @@ void main()
 			discard;
 	#endif
 	
-	lowp vec4 color=vtx_base;
+	highp vec4 color = vtx_base;
+	highp vec4 offset = vtx_offs;
+	#if pp_Gouraud == 1 && TARGET_GL != GLES2 && DIV_POS_Z != 1
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
 	#if pp_UseAlpha==0
 		color.a=1.0;
 	#endif
 	#if pp_FogCtrl==3
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));
+		color = vec4(sp_FOG_COL_RAM.rgb, fog_mode2(depth));
 	#endif
 	#if pp_Texture==1
 	{
 		#if pp_Palette == 0
-			lowp vec4 texcol = texture(tex, vtx_uv);
+		  #if TARGET_GL == GLES2 || TARGET_GL == GL2 || DIV_POS_Z == 1
+			lowp vec4 texcol = texture(tex, vtx_uv.xy);
+		  #else
+			lowp vec4 texcol = textureProj(tex, vtx_uv);
+		  #endif
 		#else
 			lowp vec4 texcol = palettePixel(vtx_uv);
 		#endif
@@ -187,7 +235,7 @@ void main()
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
-			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
 			#if pp_IgnoreTexA==1
@@ -223,9 +271,7 @@ void main()
 		#endif
 		
 		#if pp_Offset==1 && pp_BumpMap == 0
-		{
-			color.rgb+=vtx_offs.rgb;
-		}
+			color.rgb += offset.rgb;
 		#endif
 	}
 	#endif
@@ -233,47 +279,50 @@ void main()
 	color = fog_clamp(color);
 	
 	#if pp_FogCtrl == 0
-	{
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); 
-	}
+		color.rgb = mix(color.rgb, sp_FOG_COL_RAM.rgb, fog_mode2(depth)); 
 	#endif
 	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0
-	{
-		color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a);
-	}
+		color.rgb = mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a);
 	#endif
 	
 	#if pp_TriLinear == 1
 	color *= trilinear_alpha;
 	#endif
 	
-	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
+	//color.rgb = vec3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
 #if TARGET_GL != GLES2
-	highp float w = gl_FragCoord.w * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / vtx_uv.z;
+#else
+	highp float w = 100000.0 * vtx_uv.z;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
-	gl_FragColor =color;
+	gl_FragColor = color;
 }
 )";
 
-static const char* ModifierVolumeShader = "%s"
-PIX_SHADER_COMPAT
-R"(
+static const char* ModifierVolumeShader = R"(
 uniform lowp float sp_ShaderColor;
+
 /* Vertex input*/
+in highp vec3 vtx_uv;
+
 void main()
 {
 #if TARGET_GL != GLES2
-	highp float w = gl_FragCoord.w * 100000.0;
+#if DIV_POS_Z == 1
+	highp float w = 100000.0 / vtx_uv.z;
+#else
+	highp float w = 100000.0 * vtx_uv.z;
+#endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor);
 }
 )";
 
-const char* OSD_VertexShader = "%s"
-VTX_SHADER_COMPAT
-R"(
+const char* OSD_VertexShader = R"(
 uniform highp vec4      scale;
 
 in highp vec4    in_pos;
@@ -296,9 +345,7 @@ void main()
 }
 )";
 
-const char* OSD_Shader = "%s"
-PIX_SHADER_COMPAT
-R"(
+const char* OSD_Shader = R"(
 in lowp vec4 vtx_base;
 in mediump vec2 vtx_uv;
 
@@ -312,8 +359,6 @@ void main()
 GLCache glcache;
 gl_ctx gl;
 
-int screen_width;
-int screen_height;
 GLuint fogTextureId;
 GLuint paletteTextureId;
 
@@ -333,6 +378,7 @@ void do_swap_automation()
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
 		fwrite(img, 1, bytesz, video_file);
+		delete[] img;
 		fflush(video_file);
 	}
 
@@ -347,7 +393,7 @@ void do_swap_automation()
 		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
 		delete[] img;
 		dc_exit();
-		theGLContext.Term();
+		flycast_term();
 		exit(0);
 	}
 }
@@ -364,44 +410,52 @@ static void gl_delete_shaders()
 	gl.shaders.clear();
 	glcache.DeleteProgram(gl.modvol_shader.program);
 	gl.modvol_shader.program = 0;
+	glcache.DeleteProgram(gl.n2ModVolShader.program);
+	gl.n2ModVolShader.program = 0;
 }
 
-static void gles_term()
+void termGLCommon()
 {
 	termQuad();
-#ifndef GLES2
-	glDeleteVertexArrays(1, &gl.vbo.mainVAO);
-	gl.vbo.mainVAO = 0;
-	glDeleteVertexArrays(1, &gl.vbo.modvolVAO);
-	gl.vbo.modvolVAO = 0;
-#endif
-	glDeleteBuffers(1, &gl.vbo.geometry);
-	gl.vbo.geometry = 0;
-	glDeleteBuffers(1, &gl.vbo.modvols);
-	glDeleteBuffers(1, &gl.vbo.idxs);
-	glDeleteBuffers(1, &gl.vbo.idxs2);
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
+	postProcessor.term();
+
+	// palette, fog
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
 	glcache.DeleteTextures(1, &paletteTextureId);
 	paletteTextureId = 0;
-	if (gl.rtt.pbo != 0)
-		glDeleteBuffers(1, &gl.rtt.pbo);
+	// RTT
+	glDeleteBuffers(1, &gl.rtt.pbo);
 	gl.rtt.pbo = 0;
 	gl.rtt.pboSize = 0;
-	if (gl.rtt.fbo != 0)
-		glDeleteFramebuffers(1, &gl.rtt.fbo);
+	glDeleteFramebuffers(1, &gl.rtt.fbo);
 	gl.rtt.fbo = 0;
-	if (gl.rtt.tex != 0)
-		glcache.DeleteTextures(1, &gl.rtt.tex);
+	glcache.DeleteTextures(1, &gl.rtt.tex);
 	gl.rtt.tex = 0;
-	if (gl.rtt.depthb != 0)
-		glDeleteRenderbuffers(1, &gl.rtt.depthb);
+	glDeleteRenderbuffers(1, &gl.rtt.depthb);
 	gl.rtt.depthb = 0;
 	gl.rtt.texAddress = ~0;
+
 	gl_free_osd_resources();
 	free_output_framebuffer();
+	glcache.DeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
+#ifdef LIBRETRO
+	termVmuLightgun();
+#endif
+}
+
+static void gles_term()
+{
+	deleteVertexArray(gl.vbo.mainVAO);
+	gl.vbo.mainVAO = 0;
+	deleteVertexArray(gl.vbo.modvolVAO);
+	gl.vbo.modvolVAO = 0;
+	gl.vbo.geometry.reset();
+	gl.vbo.modvols.reset();
+	gl.vbo.idxs.reset();
+	gl.vbo.idxs2.reset();
+	termGLCommon();
 
 	gl_delete_shaders();
 }
@@ -409,9 +463,9 @@ static void gles_term()
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
-	gl.gl_major = theGLContext.GetMajorVersion();
-	gl.gl_minor = theGLContext.GetMinorVersion();
-	gl.is_gles = theGLContext.IsGLES();
+	gl.gl_major = theGLContext.getMajorVersion();
+	gl.gl_minor = theGLContext.getMinorVersion();
+	gl.is_gles = theGLContext.isGLES();
 	if (gl.is_gles)
 	{
 		if (gl.gl_major >= 3)
@@ -431,8 +485,12 @@ void findGLVersion()
 			gl.GL_OES_packed_depth_stencil_supported = true;
 		if (strstr(extensions, "GL_OES_depth24") != NULL)
 			gl.GL_OES_depth24_supported = true;
-		if (!gl.GL_OES_packed_depth_stencil_supported)
+		if (!gl.GL_OES_packed_depth_stencil_supported && gl.gl_major < 3)
 			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
+		GLint ranges[2];
+		GLint precision;
+		glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+		gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 	}
 	else
 	{
@@ -452,11 +510,40 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 120";
 			gl.single_channel_format = GL_ALPHA;
 		}
+    	gl.highp_float_supported = true;
 	}
-	GLint ranges[2];
-	GLint precision;
-	glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
-	gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
+	gl.max_anisotropy = 1.f;
+#if !defined(GLES2)
+	if (gl.gl_major >= 3)
+	{
+		bool anisotropicExtension = false;
+		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
+		// glGetString(GL_EXTENSIONS) is deprecated and might return NULL in core contexts.
+		// In that case, use glGetStringi instead
+		if (extensions == nullptr)
+		{
+			GLint n = 0;
+			glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+			for (GLint i = 0; i < n; i++)
+			{
+				const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
+				if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+				{
+					anisotropicExtension = true;
+					break;
+				}
+			}
+		}
+		else if (strstr(extensions, "GL_EXT_texture_filter_anisotropic") != nullptr)
+			anisotropicExtension = true;
+		if (anisotropicExtension)
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
+	}
+#endif
+	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
+	NOTICE_LOG(RENDERER, "Open GL%s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
+	while (glGetError() != GL_NO_ERROR)
+		;
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -487,11 +574,11 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 	return rv;
 }
 
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 {
 	//create shaders
-	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
+	GLuint vs = gl_CompileShader(vertexShader, GL_VERTEX_SHADER);
+	GLuint ps = gl_CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
 
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vs);
@@ -502,11 +589,14 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+	// Per-pixel attributes
 	glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
+	// Naomi 2
+	glBindAttribLocation(program, VERTEX_NORM_ARRAY,     "in_normal");
 
-#ifdef glBindFragDataLocation
+#ifndef GLES
 	if (!gl.is_gles && gl.gl_major >= 3)
 		glBindFragDataLocation(program, 0, "FragColor");
 #endif
@@ -532,8 +622,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		free(compile_log);
 
 		// Dump the shaders source for troubleshooting
-		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", VertexShader);
-		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", FragmentShader);
+		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", vertexShader);
+		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
 
@@ -550,23 +640,25 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette)
+		bool palette, bool naomi2)
 {
 	u32 rv=0;
 
 	rv |= pp_InsideClipping;
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-	rv<<=1; rv|=pp_Gouraud;
-	rv<<=1; rv|=pp_BumpMap;
-	rv<<=1; rv|=fog_clamping;
-	rv<<=1; rv|=trilinear;
-	rv<<=1; rv|=palette;
+	rv <<= 1; rv |= cp_AlphaTest;
+	rv <<= 1; rv |= pp_Texture;
+	rv <<= 1; rv |= pp_UseAlpha;
+	rv <<= 1; rv |= pp_IgnoreTexA;
+	rv <<= 2; rv |= pp_ShadInstr;
+	rv <<= 1; rv |= pp_Offset;
+	rv <<= 2; rv |= pp_FogCtrl;
+	rv <<= 1; rv |= pp_Gouraud;
+	rv <<= 1; rv |= pp_BumpMap;
+	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= trilinear;
+	rv <<= 1; rv |= palette;
+	rv <<= 1; rv |= naomi2;
+	rv <<= 1, rv |= !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -584,29 +676,63 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		shader->fog_clamping = fog_clamping;
 		shader->trilinear = trilinear;
 		shader->palette = palette;
+		shader->naomi2 = naomi2;
+		shader->divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 		CompilePipelineShader(shader);
 	}
 
 	return shader;
 }
 
-bool CompilePipelineShader(	PipelineShader* s)
+class VertexSource : public OpenGlSource
 {
-	char vshader[8192];
+public:
+	VertexSource(bool gouraud, bool divPosZ) : OpenGlSource() {
+		addConstant("pp_Gouraud", gouraud);
+		addConstant("DIV_POS_Z", divPosZ);
 
-	int rc = sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
-	verify(rc + 1 <= (int)sizeof(vshader));
+		addSource(VertexCompatShader);
+		addSource(GouraudSource);
+		addSource(VertexShaderSource);
+	}
+};
 
-	char pshader[8192];
+class FragmentShaderSource : public OpenGlSource
+{
+public:
+	FragmentShaderSource(const PipelineShader* s) : OpenGlSource()
+	{
+		addConstant("cp_AlphaTest", s->cp_AlphaTest);
+		addConstant("pp_ClipInside", s->pp_InsideClipping);
+		addConstant("pp_UseAlpha", s->pp_UseAlpha);
+		addConstant("pp_Texture", s->pp_Texture);
+		addConstant("pp_IgnoreTexA", s->pp_IgnoreTexA);
+		addConstant("pp_ShadInstr", s->pp_ShadInstr);
+		addConstant("pp_Offset", s->pp_Offset);
+		addConstant("pp_FogCtrl", s->pp_FogCtrl);
+		addConstant("pp_Gouraud", s->pp_Gouraud);
+		addConstant("pp_BumpMap", s->pp_BumpMap);
+		addConstant("FogClamping", s->fog_clamping);
+		addConstant("pp_TriLinear", s->trilinear);
+		addConstant("pp_Palette", s->palette);
+		addConstant("DIV_POS_Z", s->divPosZ);
 
-	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
-                s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping, s->trilinear, s->palette);
-	verify(rc + 1 <= (int)sizeof(pshader));
+		addSource(PixelCompatShader);
+		addSource(GouraudSource);
+		addSource(PixelPipelineShader);
+	}
+};
 
-	s->program=gl_CompileAndLink(vshader, pshader);
+bool CompilePipelineShader(PipelineShader* s)
+{
+	std::string vertexShader;
+	if (s->naomi2)
+		vertexShader = N2VertexSource(s->pp_Gouraud, false, s->pp_Texture).generate();
+	else
+		vertexShader = VertexSource(s->pp_Gouraud, s->divPosZ).generate();
+	FragmentShaderSource fragmentSource(s);
 
+	s->program = gl_CompileAndLink(vertexShader.c_str(), fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex");
@@ -657,7 +783,10 @@ bool CompilePipelineShader(	PipelineShader* s)
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
-	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
+
+	if (s->naomi2)
+		initN2Uniforms(s);
 
 	ShaderUniforms.Set(s);
 
@@ -667,15 +796,10 @@ bool CompilePipelineShader(	PipelineShader* s)
 static void SetupOSDVBO()
 {
 #ifndef GLES2
-	if (gl.OSD_SHADER.vao != 0)
-	{
-	   glBindVertexArray(gl.OSD_SHADER.vao);
-	   return;
-	}
 	if (gl.gl_major >= 3)
 	{
-	   glGenVertexArrays(1, &gl.OSD_SHADER.vao);
-	   glBindVertexArray(gl.OSD_SHADER.vao);
+		glGenVertexArrays(1, &gl.OSD_SHADER.vao);
+		glBindVertexArray(gl.OSD_SHADER.vao);
 	}
 #endif
 	if (gl.OSD_SHADER.geometry == 0)
@@ -695,17 +819,19 @@ static void SetupOSDVBO()
 
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glCheck();
+	bindVertexArray(0);
 }
 
 void gl_load_osd_resources()
 {
-	char vshader[8192];
-	char fshader[8192];
+	OpenGlSource vertexSource;
+	vertexSource.addSource(VertexCompatShader)
+			.addSource(OSD_VertexShader);
+	OpenGlSource fragmentSource;
+	fragmentSource.addSource(PixelCompatShader)
+			.addSource(OSD_Shader);
 
-	sprintf(vshader, OSD_VertexShader, gl.glsl_version_header, gl.gl_version);
-	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
-
-	gl.OSD_SHADER.program = gl_CompileAndLink(vshader, fshader);
+	gl.OSD_SHADER.program = gl_CompileAndLink(vertexSource.generate().c_str(), fragmentSource.generate().c_str());
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
@@ -740,30 +866,44 @@ void gl_free_osd_resources()
     }
 	glDeleteBuffers(1, &gl.OSD_SHADER.geometry);
 	gl.OSD_SHADER.geometry = 0;
-#ifndef GLES2
-	glDeleteVertexArrays(1, &gl.OSD_SHADER.vao);
+	deleteVertexArray(gl.OSD_SHADER.vao);
 	gl.OSD_SHADER.vao = 0;
-#endif
 }
 
 static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
 		return;
-	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
-	char fshader[8192];
-	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
+	VertexSource vertexShader(false, config::NativeDepthInterpolation);
 
-	gl.modvol_shader.program = gl_CompileAndLink(vshader, fshader);
-	gl.modvol_shader.normal_matrix  = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
+	OpenGlSource fragmentShader;
+	fragmentShader.addConstant("pp_Gouraud", 0)
+			.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
+			.addSource(PixelCompatShader)
+			.addSource(GouraudSource)
+			.addSource(ModifierVolumeShader);
+
+	gl.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
+	gl.modvol_shader.ndcMat = glGetUniformLocation(gl.modvol_shader.program, "ndcMat");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+
+	if (gl.gl_major >= 3)
+	{
+		N2VertexSource n2vertexShader(false, true, false);
+		fragmentShader.setConstant("DIV_POS_Z", false);
+		gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str());
+		gl.n2ModVolShader.ndcMat = glGetUniformLocation(gl.n2ModVolShader.program, "ndcMat");
+		gl.n2ModVolShader.sp_ShaderColor = glGetUniformLocation(gl.n2ModVolShader.program, "sp_ShaderColor");
+		gl.n2ModVolShader.depth_scale = glGetUniformLocation(gl.n2ModVolShader.program, "depth_scale");
+		gl.n2ModVolShader.mvMat = glGetUniformLocation(gl.n2ModVolShader.program, "mvMat");
+		gl.n2ModVolShader.projMat = glGetUniformLocation(gl.n2ModVolShader.program, "projMat");
+	}
 }
 
-bool gl_create_resources()
+static bool gl_create_resources()
 {
-	if (gl.vbo.geometry != 0)
+	if (gl.vbo.geometry != nullptr)
 		// Assume the resources have already been created
 		return true;
 
@@ -774,12 +914,11 @@ bool gl_create_resources()
 		verify(glGenVertexArrays != nullptr);
 
 	//create vbos
-	glGenBuffers(1, &gl.vbo.geometry);
-	glGenBuffers(1, &gl.vbo.modvols);
-	glGenBuffers(1, &gl.vbo.idxs);
-	glGenBuffers(1, &gl.vbo.idxs2);
+	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
-	create_modvol_shader();
 	initQuad();
 
 	return true;
@@ -787,12 +926,10 @@ bool gl_create_resources()
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
 
-bool gl_create_resources();
-
 //setup
 
 #ifndef __APPLE__
-static void gl_DebugOutput(GLenum source,
+void gl_DebugOutput(GLenum source,
         GLenum type,
         GLuint id,
         GLenum severity,
@@ -837,7 +974,7 @@ bool gles_init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-#ifdef GL_GENERATE_MIPMAP_HINT
+#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__)
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
@@ -851,7 +988,8 @@ bool gles_init()
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
+	TextureCacheData::SetDirectXColorOrder(false);
 
 	return true;
 }
@@ -906,6 +1044,21 @@ void UpdatePaletteTexture(GLenum texture_slot)
 
 void OSD_DRAW(bool clear_screen)
 {
+#ifdef LIBRETRO
+	void DrawVmuTexture(u8 vmu_screen_number);
+	void DrawGunCrosshair(u8 port);
+
+	if (settings.platform.isConsole())
+	{
+		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+			if (vmu_lcd_status[vmu_screen_number * 2])
+				DrawVmuTexture(vmu_screen_number);
+	}
+
+	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+		DrawGunCrosshair(lightgun_port);
+
+#else
 	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
@@ -913,14 +1066,14 @@ void OSD_DRAW(bool clear_screen)
 	if (gl.OSD_SHADER.osd_tex != 0)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
+		glViewport(0, 0, settings.display.width, settings.display.height);
 
 		if (clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			render_output_framebuffer();
-			glViewport(0, 0, screen_width, screen_height);
+			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
 #ifndef GLES2
@@ -930,24 +1083,25 @@ void OSD_DRAW(bool clear_screen)
 #endif
 			SetupOSDVBO();
 
-		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
-
 		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
-		float scale_h = screen_height / 480.f;
-		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
+		float scale_h = settings.display.height / 480.f;
+		float offs_x = (settings.display.width - scale_h * 640.f) / 2.f;
 		float scale[4];
-		scale[0] = 2.f / (screen_width / scale_h);
+		scale[0] = 2.f / (settings.display.width / scale_h);
 		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / screen_width;
+		scale[2]= 1.f - 2.f * offs_x / settings.display.width;
 		scale[3]= -1.f;
 		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
 
 		glActiveTexture(GL_TEXTURE0);
 		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
@@ -966,11 +1120,14 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 
 		glCheck();
+		imguiDriver->setFrameRendered();
 	}
 #endif
+#endif
+	bindVertexArray(0);
 }
 
-bool ProcessFrame(TA_context* ctx)
+bool OpenGLRenderer::Process(TA_context* ctx)
 {
 	if (KillTex)
 		TexCache.Clear();
@@ -979,14 +1136,22 @@ bool ProcessFrame(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		RenderFramebuffer();
+		return true;
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
+		if (fog_needs_update && config::Fog)
+		{
+			fog_needs_update = false;
+			UpdateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
+		}
+		if (palette_updated)
+		{
+			UpdatePaletteTexture(getPaletteTextureSlot());
+			palette_updated = false;
+		}
+		return ta_parse(ctx);
 	}
-
-	return true;
 }
 
 static void upload_vertex_indices()
@@ -1000,17 +1165,15 @@ static void upload_vertex_indices()
 		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
 		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
 			*(short_idx.Append()) = *p;
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.bytes(), short_idx.head(), GL_STREAM_DRAW);
+		gl.vbo.idxs->update(short_idx.head(), short_idx.bytes());
 	}
 	else
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		gl.vbo.idxs->update(pvrrc.idx.head(), pvrrc.idx.bytes());
 	glCheck();
 }
 
 bool RenderFrame(int width, int height)
 {
-	create_modvol_shader();
-
 	bool is_rtt = pvrrc.isRTT;
 
 	float vtx_min_fZ = 0.f;	//pvrrc.fZ_min;
@@ -1025,8 +1188,8 @@ bool RenderFrame(int width, int height)
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<true> matrices(pvrrc, width, height);
-	ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
@@ -1041,58 +1204,47 @@ bool RenderFrame(int width, int height)
 	ShaderUniforms.depth_coefs[3] = 0;
 
 	//VERT and RAM fog color constants
-	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-	ShaderUniforms.ps_FOG_COL_VERT[0] = fog_colvert_bgra[2] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[1] = fog_colvert_bgra[1] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[2] = fog_colvert_bgra[0] / 255.0f;
-
-	ShaderUniforms.ps_FOG_COL_RAM[0] = fog_colram_bgra[2] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[1] = fog_colram_bgra[1] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[2] = fog_colram_bgra[0] / 255.0f;
+	FOG_COL_VERT.getRGBColor(ShaderUniforms.ps_FOG_COL_VERT);
+	FOG_COL_RAM.getRGBColor(ShaderUniforms.ps_FOG_COL_RAM);
 
 	//Fog density constant
-	u8* fog_density = (u8*)&FOG_DENSITY;
-	float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-	s32 fog_den_exp = (s8)fog_density[0];
-	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp) * config::ExtraDepthScale;
+	ShaderUniforms.fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 
-	ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+	pvrrc.fog_clamp_min.getRGBAColor(ShaderUniforms.fog_clamp_min);
+	pvrrc.fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
 	
-	ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
-	
-	if (fog_needs_update && config::Fog)
+	if (config::ModifierVolumes)
 	{
-		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.single_channel_format);
-	}
-	if (palette_updated)
-	{
-		UpdatePaletteTexture(GL_TEXTURE2);
-		palette_updated = false;
-	}
+		create_modvol_shader();
+		glcache.UseProgram(gl.modvol_shader.program);
+		if (gl.modvol_shader.depth_scale != -1)
+			glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
+		glUniformMatrix4fv(gl.modvol_shader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
+		glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
-	glcache.UseProgram(gl.modvol_shader.program);
-
-	if (gl.modvol_shader.depth_scale != -1)
-		glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
+		glcache.UseProgram(gl.n2ModVolShader.program);
+		if (gl.n2ModVolShader.depth_scale != -1)
+			glUniform4fv(gl.n2ModVolShader.depth_scale, 1, ShaderUniforms.depth_coefs);
+		glUniformMatrix4fv(gl.n2ModVolShader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
+		glUniform1f(gl.n2ModVolShader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+	}
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	for (const auto& it : gl.shaders)
+	for (auto& it : gl.shaders)
 	{
 		glcache.UseProgram(it.second.program);
 		ShaderUniforms.Set(&it.second);
+		resetN2UniformCache(&it.second);
 	}
 
 	//setup render target first
+#ifdef LIBRETRO
+	gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+	gl.ofbo.origFbo = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
 	if (is_rtt)
 	{
 		if (BindRTT() == 0)
@@ -1100,8 +1252,18 @@ bool RenderFrame(int width, int height)
 	}
 	else
 	{
+#ifdef LIBRETRO
+		gl.ofbo.width = width;
+		gl.ofbo.height = height;
+		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
+		else
+			glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
+		glViewport(0, 0, width, height);
+#else
 		if (init_output_framebuffer(width, height) == 0)
 			return false;
+#endif
 	}
 
 	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
@@ -1115,25 +1277,25 @@ bool RenderFrame(int width, int height)
 	glStencilMask(0xFF); glCheck();
     glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+	if (!is_rtt)
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 
-	//move vertex to gpu
-
-	if (!pvrrc.isRenderFramebuffer)
+	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
 	{
+		// Video output disabled
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	else if (!pvrrc.isRenderFramebuffer)
+	{
+		//move vertex to gpu
 		//Main VBO
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
-
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+		gl.vbo.geometry->update(pvrrc.verts.head(), pvrrc.verts.bytes());
 
 		upload_vertex_indices();
 
 		//Modvol VBO
 		if (pvrrc.modtrig.used())
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
-			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
-		}
+			gl.vbo.modvols->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 
 		if (!wide_screen_on)
 		{
@@ -1167,7 +1329,6 @@ bool RenderFrame(int width, int height)
 				{
 					float scaled_offs_x = matrices.GetSidebarWidth();
 
-					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
 					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)height);
 					glClear(GL_COLOR_BUFFER_BIT);
@@ -1204,18 +1365,24 @@ bool RenderFrame(int width, int height)
 		}
 
 		DrawStrips();
+#ifdef LIBRETRO
+		if (config::PowerVR2Filter && !is_rtt)
+			postProcessor.render(glsm_get_current_framebuffer());
+#endif
 	}
 	else
 	{
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+#ifndef LIBRETRO
 	else
 		render_output_framebuffer();
+#endif
+	bindVertexArray(0);
 
 	return !is_rtt;
 }

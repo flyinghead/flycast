@@ -32,6 +32,7 @@ public:
 	size_t Size() const { return size; }
 	size_t Read(void *data, size_t length);
 	size_t Write(const void *data, size_t length);
+	FILE *rawFile() const { return file; }
 
 private:
 	FILE *file = nullptr;

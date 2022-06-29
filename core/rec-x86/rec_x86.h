@@ -45,10 +45,7 @@ public:
 	{
 		genCallCdecl((void (*)())function);
 	}
-	void ngen_CC_Finish(const shil_opcode& op)
-	{
-		add(esp, CC_stackSize);
-	}
+	void ngen_CC_Finish(const shil_opcode &op);
 
 	void regPreload(u32 reg, Xbyak::Operand::Code nreg)
 	{
@@ -81,14 +78,7 @@ private:
 	bool genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo *block);
 	bool genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo *block);
 	void genMemHandlers();
-	void alignStack(int amount) {
-#ifndef _WIN32
-		if (amount > 0)
-			add(esp, amount);
-		else
-			sub(esp, -amount);
-#endif
-	}
+	void alignStack(int amount);
 
 	void checkBlock(bool smc_checks, RuntimeBlockInfo *block);
 	void freezeXMM();
