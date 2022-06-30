@@ -18,6 +18,16 @@ fi
 
 if [[ -z "${VULKAN_SDK}" ]]; then
     echo 'Warning: VULKAN_SDK is not set in environment variable'
+    read -p "Type y to install Vulkan SDK: " v
+    if [ $v == "y" ]; then
+        curl https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.dmg -o vulkan-sdk.dmg
+        hdiutil attach ./vulkan-sdk.dmg
+        /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
+        hdiutil detach /Volumes/vulkansdk-macos-*
+        rm ./vulkan-sdk.dmg
+        echo "export VULKAN_SDK=$HOME/VulkanSDK/macOS" >> ~/.zshrc
+        echo "VULKAN_SDK is now set in .zshrc (Will be effective after you restart the shell)"
+    fi
 fi
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release $option -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
