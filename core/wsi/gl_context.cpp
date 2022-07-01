@@ -65,6 +65,7 @@ std::string GLGraphicsContext::getDriverVersion() {
 void GLGraphicsContext::resetUIDriver()
 {
 #ifndef LIBRETRO
+	imguiDriver.reset();
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new OpenGLDriver());
 #endif
 }

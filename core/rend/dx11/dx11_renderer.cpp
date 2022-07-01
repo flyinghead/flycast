@@ -1129,7 +1129,7 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 			device->CreateShaderResourceView(texture->texture, &viewDesc, &texture->textureView.get());
 
 			texture->dirty = 0;
-			texture->protectVRam();
+			texture->unprotectVRam();
 		}
 	}
 }

@@ -646,7 +646,7 @@ void OITTextureDrawer::EndFrame()
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		texture->protectVRam();
+		texture->unprotectVRam();
 	}
 	OITDrawer::EndFrame();
 }

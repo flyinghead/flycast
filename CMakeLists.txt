@@ -711,7 +711,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/pvr/ta.h
         core/hw/pvr/ta_structs.h
         core/hw/pvr/ta_vtx.cpp
-        core/hw/sh4/dyna
         core/hw/sh4/dyna/blockmanager.cpp
         core/hw/sh4/dyna/blockmanager.h
         core/hw/sh4/dyna/decoder.cpp
@@ -726,12 +725,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/ssa.h
         core/hw/sh4/dyna/ssa_regalloc.h
         core/hw/sh4/fsca-table.h
-        core/hw/sh4/interpr
         core/hw/sh4/interpr/sh4_fpu.cpp
         core/hw/sh4/interpr/sh4_interpreter.cpp
         core/hw/sh4/interpr/sh4_opcodes.cpp
         core/hw/sh4/interpr/sh4_opcodes.h
-        core/hw/sh4/modules
         core/hw/sh4/modules/bsc.cpp
         core/hw/sh4/modules/ccn.cpp
         core/hw/sh4/modules/ccn.h
@@ -1533,3 +1530,6 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 		)
 	endforeach()
 endif()
+
+file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.mm)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})

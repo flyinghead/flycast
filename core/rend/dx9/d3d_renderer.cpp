@@ -930,7 +930,7 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 			D3DTexture* texture = texCache.getRTTexture(texAddress, pvrrc.fb_W_CTRL.fb_packmode, w, h);
 			texture->texture = rttTexture;
 			texture->dirty = 0;
-			texture->protectVRam();
+			texture->unprotectVRam();
 		}
 	}
 }
