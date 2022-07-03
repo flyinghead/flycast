@@ -67,7 +67,7 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Compile a universal OpenMP
+      - name: Compile a universal OpenMP (macOS)
         run: export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1; brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: runner.os == 'macOS'
 
@@ -130,7 +130,7 @@ jobs:
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
-      - name: Upload symbols to S3
+      - name: Upload symbols to S3 (Windows-MinGW, macOS)
         run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
         shell: bash
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.name == 'x86_64-w64-mingw32' }}
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
