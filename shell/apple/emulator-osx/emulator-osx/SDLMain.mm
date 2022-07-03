@@ -10,6 +10,10 @@
 #include <unistd.h>
 #include "rend/gui.h"
 
+#ifdef USE_BREAKPAD
+#include "client/mac/handler/exception_handler.h"
+#endif
+
 /* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
  but the method still is there and works. To avoid warnings, we declare
  it ourselves here. */
@@ -318,6 +322,13 @@ static void CustomApplicationMain (int argc, char **argv)
 #endif
 
 
+#ifdef USE_BREAKPAD
+static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
+{
+    printf("Minidump saved to '%s'\n", dump_dir);
+    return succeeded;
+}
+#endif
 /*
  * Catch document open requests...this lets us notice files when the app
  *  was launched by double-clicking a document, or when a document was
@@ -370,6 +381,10 @@ static void CustomApplicationMain (int argc, char **argv)
 /* Called when the internal event loop has just started running */
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
+#if defined(USE_BREAKPAD)
+    google_breakpad::ExceptionHandler eh("/tmp", NULL, dumpCallback, NULL, true, NULL);
+#endif
+    
     int status;
     
     /* Set the working directory to the .app's parent directory */
