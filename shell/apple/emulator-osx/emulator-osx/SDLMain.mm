@@ -70,7 +70,7 @@ static NSString *getApplicationName(void)
 
 @implementation NSApplication (SDLApplication)
 /* Invoked from the Quit menu item */
-- (void)terminate:(id)sender
+- (void)quitAction:(id)sender
 {
     /* Post a SDL_QUIT event */
     SDL_Event event;
@@ -187,7 +187,7 @@ static void setApplicationMenu(void)
     [appleMenu addItem:[NSMenuItem separatorItem]];
     
     title = [@"Quit " stringByAppendingString:appName];
-    [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
+    [appleMenu addItemWithTitle:title action:@selector(quitAction:) keyEquivalent:@"q"];
     
     
     /* Put menu into the menubar */
