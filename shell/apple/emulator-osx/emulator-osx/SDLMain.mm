@@ -325,7 +325,7 @@ static void CustomApplicationMain (int argc, char **argv)
 #ifdef USE_BREAKPAD
 static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
 {
-    printf("Minidump saved to '%s'\n", dump_dir);
+    printf("Minidump saved to '%s/%s.dmp'\n", dump_dir, minidump_id);
     return succeeded;
 }
 #endif
