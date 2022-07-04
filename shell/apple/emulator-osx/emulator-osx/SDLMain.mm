@@ -381,8 +381,9 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 /* Called when the internal event loop has just started running */
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
-#if defined(USE_BREAKPAD)
+#ifdef USE_BREAKPAD
     google_breakpad::ExceptionHandler eh("/tmp", NULL, dumpCallback, NULL, true, NULL);
+    task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
 #endif
     
     int status;
