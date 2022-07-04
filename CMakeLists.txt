@@ -200,16 +200,49 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PUBLIC breakpad_client)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 	elseif(APPLE AND NOT IOS AND APPLE_BREAKPAD)
-		add_custom_target(breakpad COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/client/mac/Breakpad.xcodeproj -target Breakpad -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
-		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
-		ADD_DEPENDENCIES(${PROJECT_NAME} breakpad)
-		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/breakpad/src/client/minidump_file_writer-inl.h
+			core/deps/breakpad/src/client/minidump_file_writer.cc
+			core/deps/breakpad/src/client/minidump_file_writer.h
+			core/deps/breakpad/src/client/mac/handler/breakpad_nlist_64.cc
+			core/deps/breakpad/src/client/mac/handler/breakpad_nlist_64.h
+			core/deps/breakpad/src/client/mac/handler/dynamic_images.cc
+			core/deps/breakpad/src/client/mac/handler/dynamic_images.h
+			core/deps/breakpad/src/client/mac/handler/exception_handler.cc
+			core/deps/breakpad/src/client/mac/handler/exception_handler.h
+			core/deps/breakpad/src/client/mac/handler/minidump_generator.cc
+			core/deps/breakpad/src/client/mac/handler/minidump_generator.h
+			core/deps/breakpad/src/client/mac/handler/protected_memory_allocator.cc
+			core/deps/breakpad/src/client/mac/handler/protected_memory_allocator.h
+			core/deps/breakpad/src/client/mac/crash_generation/ConfigFile.h
+			core/deps/breakpad/src/client/mac/crash_generation/ConfigFile.mm
+			core/deps/breakpad/src/client/mac/crash_generation/client_info.h
+			core/deps/breakpad/src/client/mac/crash_generation/crash_generation_client.h
+			core/deps/breakpad/src/client/mac/crash_generation/crash_generation_client.cc
+			core/deps/breakpad/src/common/convert_UTF.cc
+			core/deps/breakpad/src/common/convert_UTF.h
+			core/deps/breakpad/src/common/md5.cc
+			core/deps/breakpad/src/common/string_conversion.cc
+			core/deps/breakpad/src/common/string_conversion.h
+			core/deps/breakpad/src/common/mac/file_id.cc
+			core/deps/breakpad/src/common/mac/file_id.h
+			core/deps/breakpad/src/common/mac/MachIPC.mm
+			core/deps/breakpad/src/common/mac/MachIPC.h
+			core/deps/breakpad/src/common/mac/bootstrap_compat.cc
+			core/deps/breakpad/src/common/mac/bootstrap_compat.h
+			core/deps/breakpad/src/common/mac/macho_id.cc
+			core/deps/breakpad/src/common/mac/macho_id.h
+			core/deps/breakpad/src/common/mac/macho_utilities.cc
+			core/deps/breakpad/src/common/mac/macho_utilities.h
+			core/deps/breakpad/src/common/mac/macho_walker.cc
+			core/deps/breakpad/src/common/mac/macho_walker.h
+			core/deps/breakpad/src/common/mac/string_utilities.cc
+			core/deps/breakpad/src/common/mac/string_utilities.h
+		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
-		target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/Breakpad.framework)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            	COMMAND ditto "${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/Breakpad.framework"
-            		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/Breakpad.framework)
+		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
 		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 			COMMAND sleep 20
 			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
@@ -1538,5 +1571,5 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 	endforeach()
 endif()
 
-file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.mm)
+file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.cc *.mm)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})
