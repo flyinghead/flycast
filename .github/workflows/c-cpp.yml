@@ -31,7 +31,7 @@ jobs:
         run: |
           brew update
           brew install libao ldid ninja pulseaudio
-          wget https://sdk.lunarg.com/sdk/download/1.3.211.0/mac/vulkansdk-macos-1.3.211.0.dmg
+          VULKAN_VER=1.3.211.0 && aria2c --parameterized-uri=true https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
           hdiutil attach ./vulkansdk-macos-*.dmg
           sudo /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/vulkansdk-macos-*
