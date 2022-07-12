@@ -38,6 +38,7 @@ bool fb_dirty;
 static bool pend_rend;
 
 TA_context* _pvrrc;
+extern bool rend_needs_resize;
 
 static bool rend_frame(TA_context* ctx)
 {
@@ -363,32 +364,44 @@ void rend_deserialize(Deserializer& deser)
 		deser >> fb_watch_addr_end;
 	}
 	pend_rend = false;
+	rend_needs_resize = true;
 }
 
 void rend_resize_renderer()
 {
 	if (renderer == nullptr)
 		return;
-	float hres;
-	int vres = config::RenderResolution;
+	int fbwidth = VO_CONTROL.pixel_double ? 320 : 640;
+	int fbheight = (SPG_CONTROL.PAL == SPG_CONTROL.NTSC) || SPG_CONTROL.interlace == 1 ? 480 : 240;
+
+	float upscaling = config::RenderResolution / 480.f;
+	float hres = fbwidth * upscaling;
+	float vres = fbheight * upscaling;
 	if (config::Widescreen && !config::Rotate90)
 	{
 		if (config::SuperWidescreen)
-			hres = (float)config::RenderResolution * settings.display.width / settings.display.height;
+			hres = vres * settings.display.width / settings.display.height;
 		else
-			hres = config::RenderResolution * 16.f / 9.f;
+			hres *= 4.f / 3.f;
 	}
 	else if (config::Rotate90)
 	{
-		vres = vres * config::ScreenStretching / 100;
-		hres = config::RenderResolution * 4.f / 3.f;
+		vres *= config::ScreenStretching / 100.f;
 	}
 	else
 	{
-		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+		hres *= config::ScreenStretching / 100.f;
 	}
 	if (!config::Rotate90)
 		hres = std::roundf(hres / 2.f) * 2.f;
-	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, vres);
-	renderer->Resize((int)hres, vres);
+	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, (int)vres);
+	renderer->Resize((int)hres, (int)vres);
+	rend_needs_resize = false;
+}
+
+void rend_resize_renderer_if_needed()
+{
+	if (!rend_needs_resize)
+		return;
+	rend_resize_renderer();
 }

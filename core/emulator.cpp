@@ -811,6 +811,7 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
+	rend_resize_renderer_if_needed();
 	if (!config::ThreadedRendering)
 	{
 		if (state != Running)
