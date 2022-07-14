@@ -173,25 +173,24 @@ void TermDrive()
 //
 //convert our nice toc struct to dc's native one :)
 
-static u32 CreateTrackInfo(u32 ctrl, u32 addr, u32 fad)
+static u32 createTrackInfo(const Track& track, u32 fad)
 {
+	u32 addr = track.ADDR;
+	if (!track.isDataTrack())
+		// audio tracks: sub-q channel indicates current position
+		addr |= 1;
 	u8 p[4];
-	p[0]=(ctrl<<4)|(addr<<0);
-	p[1]=fad>>16;
-	p[2]=fad>>8;
-	p[3]=fad>>0;
+	p[0] = (track.CTRL << 4) | addr;
+	p[1] = fad >> 16;
+	p[2] = fad >> 8;
+	p[3] = fad >> 0;
 
-	return *(u32*)p;
+	return *(u32 *)p;
 }
 
-static u32 CreateTrackInfo_se(u32 ctrl, u32 addr, u32 tracknum)
+static u32 createTrackInfoFirstLast(const Track& track, u32 tracknum)
 {
-	u8 p[4];
-	p[0]=(ctrl<<4)|(addr<<0);
-	p[1]=tracknum;
-	p[2]=0;
-	p[3]=0;
-	return *(u32*)p;
+	return createTrackInfo(track, tracknum << 16);
 }
 
 void libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize)
@@ -202,40 +201,38 @@ void libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSiz
 
 void libGDR_GetToc(u32* to, DiskArea area)
 {
+	memset(to, 0xFF, 102 * 4);
 	if (!disc)
 		return;
-	memset(to, 0xFF, 102 * 4);
 
 	//can't get toc on the second area on discs that don't have it
-	verify(area != DoubleDensity || disc->type == GdRom);
+	if (area == DoubleDensity && disc->type != GdRom)
+		return;
 
 	//normal CDs: 1 .. tc
 	//GDROM: area0 is 1 .. 2, area1 is 3 ... tc
 
-	u32 first_track=1;
-	u32 last_track=disc->tracks.size();
-	if (area==DoubleDensity)
-		first_track=3;
-	else if (disc->type==GdRom)
-		last_track=2;
+	u32 first_track = 1;
+	u32 last_track = disc->tracks.size();
+	if (area == DoubleDensity)
+		first_track = 3;
+	else if (disc->type == GdRom)
+		last_track = 2;
 
 	//Generate the TOC info
 
 	//-1 for 1..99 0 ..98
-	to[99]=CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track);
-	to[100]=CreateTrackInfo_se(disc->tracks[last_track-1].CTRL,disc->tracks[last_track-1].ADDR,last_track);
+	to[99] = createTrackInfoFirstLast(disc->tracks[first_track - 1], first_track);
+	to[100] = createTrackInfoFirstLast(disc->tracks[last_track - 1], last_track);
 
-	if (disc->type==GdRom)
-	{
-		//use smaller LEADOUT
-		if (area==SingleDensity)
-			to[101]=CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,13085);
-	}
+	if (disc->type == GdRom && area == SingleDensity)
+		// use smaller LEADOUT
+		to[101] = createTrackInfo(disc->LeadOut, 13085);
 	else
-		to[101] = CreateTrackInfo(disc->LeadOut.CTRL, disc->LeadOut.ADDR, disc->LeadOut.StartFAD);
+		to[101] = createTrackInfo(disc->LeadOut, disc->LeadOut.StartFAD);
 
-	for (u32 i=first_track-1;i<last_track;i++)
-		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD);
+	for (u32 i = first_track - 1; i < last_track; i++)
+		to[i] = createTrackInfo(disc->tracks[i], disc->tracks[i].StartFAD);
 }
 
 void libGDR_GetSessionInfo(u8* to, u8 session)
