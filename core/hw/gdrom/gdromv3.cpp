@@ -853,7 +853,9 @@ void gd_process_spi_cmd()
 					cdda.EndAddr.FAD = ses_inf[3] << 16 | ses_inf[4] << 8 | ses_inf[5];
 				}
 				cdda.repeats = packet_cmd.data_8[6] & 0xF;
-				if (cdda.status != cdda_t::Playing || cdda.CurrAddr.FAD < cdda.StartAddr.FAD || cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+				if ((cdda.status != cdda_t::Playing && cdda.status != cdda_t::Paused)
+						|| cdda.CurrAddr.FAD < cdda.StartAddr.FAD
+						|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
 					cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 				cdda.status = cdda_t::Playing;
 				SecNumber.Status = GD_PLAY;
