@@ -252,7 +252,7 @@ static void SetGPState(const PolyParam* gp)
 
 				if (gl.max_anisotropy > 1.f)
 				{
-					if (config::AnisotropicFiltering > 1)
+					if (config::AnisotropicFiltering > 1 && !nearest_filter)
 						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
 								std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
 					else
