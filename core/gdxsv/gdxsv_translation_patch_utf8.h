@@ -697,10 +697,11 @@ Translation translations[] = {
 //              R"( )",
 //              R"( )"
 //              ),
-    TRANSLATE(0x1BED64,28,
+    CUSTOMIZE(0x1BED64,28,
                 R"(マルチマッチングサーバーに)",
                 R"(     GDXSV 免費SERVER)",
-                R"(GDXSV FREE OF CHARGE SERVER)"
+                R"(GDXSV FREE OF CHARGE SERVER)",
+                R"(    無料GDXSVサーバー)"
                 ),
 //    TRANSLATE(0x1BED80,12,
 //              R"(接続中です)",
@@ -737,10 +738,11 @@ Translation translations[] = {
 //              R"( )",
 //              R"( )"
 //              ),
-    TRANSLATE(0x1BEE2C,32,
+    CUSTOMIZE(0x1BEE2C,32,
                 R"(接続中は通信料金がかかります)",
                 R"(  原來撥號連線所産生的費用)",
-                R"( Original charges by dial-up)"
+                R"( Original charges by dial-up)",
+                R"(    オリジナルモデム料金)"
                 ),
     TRANSLATE(0x1BEE4C,36,
                 R"(マルチマッチングサーバーに接続中は)",
