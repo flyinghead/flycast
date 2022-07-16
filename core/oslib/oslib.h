@@ -10,6 +10,7 @@ double os_GetSeconds();
 void os_DoEvents();
 void os_CreateWindow();
 void os_SetupInput();
+void os_TermInput();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
 

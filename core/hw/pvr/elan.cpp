@@ -1319,7 +1319,7 @@ static void sendPolygon(ICHList *list)
 			{
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
-				pp.pcw.Texture = list->pcw.texture;
+				pp.pcw.Texture = 0;
 				pp.pcw.Offset = list->pcw.offset;
 				pp.pcw.Gouraud = list->pcw.gouraud;
 				pp.pcw.Volume = list->pcw.volume;
@@ -1395,7 +1395,7 @@ static void sendPolygon(ICHList *list)
 				break;
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
-			pp.pcw.Texture = list->pcw.texture;
+			pp.pcw.Texture = 0;
 			pp.pcw.Offset = list->pcw.offset;
 			pp.pcw.Gouraud = list->pcw.gouraud;
 			pp.pcw.Volume = list->pcw.volume;
@@ -1582,6 +1582,12 @@ static void executeCommand(u8 *data, int size)
 					if (link->offset & 0x80000000)
 					{
 						// elan v10 only
+						if (link->size > VRAM_SIZE)
+						{
+							WARN_LOG(PVR, "Texture DMA from %x to %x (%x invalid)", DMAC_SAR(2), link->vramAddress & 0x1ffffff8, link->size);
+							size = 0;
+							break;
+						}
 						DEBUG_LOG(PVR, "Texture DMA from %x to %x (%x)", DMAC_SAR(2), link->vramAddress & 0x1ffffff8, link->size);
 						memcpy(&vram[link->vramAddress & VRAM_MASK], &mem_b[DMAC_SAR(2) & RAM_MASK], link->size);
 						reg74 |= 1;
@@ -1589,6 +1595,12 @@ static void executeCommand(u8 *data, int size)
 					else if (link->offset & 0x20000000)
 					{
 						// elan v10 only
+						if (link->size > VRAM_SIZE)
+						{
+							WARN_LOG(PVR, "Texture DMA from eram %x -> %x (%x invalid)", link->offset & ELAN_RAM_MASK, link->vramAddress & VRAM_MASK, link->size);
+							size = 0;
+							break;
+						}
 						DEBUG_LOG(PVR, "Texture DMA from eram %x -> %x (%x)", link->offset & ELAN_RAM_MASK, link->vramAddress & VRAM_MASK, link->size);
 						memcpy(&vram[link->vramAddress & VRAM_MASK], &RAM[link->offset & ELAN_RAM_MASK], link->size);
 						reg74 |= 1;

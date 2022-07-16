@@ -36,6 +36,7 @@
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
+#include "wsi/gl_context.h"
 #endif
 #ifdef HAVE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
@@ -62,7 +63,6 @@
 #include "rend/CustomTexture.h"
 #include "rend/osd.h"
 #include "cfg/option.h"
-#include "wsi/gl_context.h"
 #include "version.h"
 
 constexpr char slash = path_default_slash_c();
@@ -332,7 +332,7 @@ void retro_init()
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 
-#if defined(__GNUC__) && !defined(_WIN32)
+#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
 	if (!emuInited)
 #endif
 		emu.init();
@@ -351,7 +351,7 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	
-#if defined(__GNUC__) && !defined(_WIN32)
+#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
 	_vmem_release();
 #else
 	emu.term();

@@ -83,6 +83,7 @@ void flycast_term()
 	lua::term();
 	emu.term();
 	gui_term();
+	os_TermInput();
 }
 
 void dc_savestate(int index)

@@ -47,8 +47,9 @@ public:
 		saveCache(CacheFile);
 		shaders.clear();
 		vertexShaders.clear();
-		modVolShader.reset();
 		for (auto& shader : modVolVertexShaders)
+			shader.reset();
+		for (auto& shader : modVolShaders)
 			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
@@ -69,10 +70,10 @@ private:
 	ComPtr<ID3D11Device> device;
 	std::unordered_map<u32, ComPtr<ID3D11PixelShader>> shaders;
 	std::unordered_map<u32, ComPtr<ID3D11VertexShader>> vertexShaders;
-	ComPtr<ID3D11PixelShader> modVolShader;
-	ComPtr<ID3D11VertexShader> modVolVertexShaders[2];
+	ComPtr<ID3D11PixelShader> modVolShaders[2];
+	ComPtr<ID3D11VertexShader> modVolVertexShaders[4];
 
-	ComPtr<ID3D11PixelShader> trModVolShaders[4];
+	ComPtr<ID3D11PixelShader> trModVolShaders[16];
 	ComPtr<ID3D11PixelShader> finalShader;
 	ComPtr<ID3D11PixelShader> clearShader;
 	ComPtr<ID3D11VertexShader> finalVertexShader;

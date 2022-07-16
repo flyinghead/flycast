@@ -10,15 +10,16 @@
 #include <unistd.h>
 #include "rend/gui.h"
 
+#ifdef USE_BREAKPAD
+#include "client/mac/handler/exception_handler.h"
+#endif
+
 /* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
  but the method still is there and works. To avoid warnings, we declare
  it ourselves here. */
 @interface NSApplication(SDL_Missing_Methods)
 - (void)setAppleMenu:(NSMenu *)menu;
 @end
-
-/* Use this flag to determine whether we use SDLMain.nib or not */
-#define        SDL_USE_NIB_FILE    0
 
 /* Use this flag to determine whether we use CPS (docking) or not */
 #define        SDL_USE_CPS        1
@@ -58,43 +59,18 @@ static NSString *getApplicationName(void)
     return appName;
 }
 
-#if SDL_USE_NIB_FILE
-/* A helper category for NSString */
-@interface NSString (ReplaceSubString)
-- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString;
-@end
-#endif
-
 @interface NSApplication (SDLApplication)
 @end
 
 @implementation NSApplication (SDLApplication)
 /* Invoked from the Quit menu item */
-- (void)terminate:(id)sender
+- (void)quitAction:(id)sender
 {
     /* Post a SDL_QUIT event */
     SDL_Event event;
     event.type = SDL_QUIT;
     SDL_PushEvent(&event);
 }
-
-///// Start of menu items subroutines emendelson
-
-// link to ReadMeFirst.pdf // emendelson
-- (void)openReadMeFirst:(id)sender
-{
-    NSString* helpPath = [[NSBundle mainBundle] pathForResource:@"Read Me First" ofType:@"pdf" inDirectory:@"SheepShaver Help"];
-    [[NSWorkspace sharedWorkspace] openFile:helpPath];
-}
-
-// link to setup guide at emaculation.com; webloc file containing URL required as above // emendelson
-- (void)openSetupGuide:(id)sender
-{
-    NSString* helpPath = [[NSBundle mainBundle] pathForResource:@"setup" ofType:@"webloc" inDirectory:@"SheepShaver Help"];
-    [[NSWorkspace sharedWorkspace] openFile:helpPath];
-}
-
-///// end of menu items subroutines emendelson
 
 @end
 
@@ -116,32 +92,6 @@ static NSString *getApplicationName(void)
         CFRelease(url2);
     }
 }
-
-#if SDL_USE_NIB_FILE
-
-/* Fix menu to contain the real app name instead of "SDL App" */
-- (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
-{
-    NSRange aRange;
-    NSEnumerator *enumerator;
-    NSMenuItem *menuItem;
-    
-    aRange = [[aMenu title] rangeOfString:@"SDL App"];
-    if (aRange.length != 0)
-        [aMenu setTitle: [[aMenu title] stringByReplacingRange:aRange with:appName]];
-    
-    enumerator = [[aMenu itemArray] objectEnumerator];
-    while ((menuItem = [enumerator nextObject]))
-    {
-        aRange = [[menuItem title] rangeOfString:@"SDL App"];
-        if (aRange.length != 0)
-            [menuItem setTitle: [[menuItem title] stringByReplacingRange:aRange with:appName]];
-        if ([menuItem hasSubmenu])
-            [self fixMenu:[menuItem submenu] withAppName:appName];
-    }
-}
-
-#else
 
 - (void)newInstance:(id)sender
 {
@@ -187,7 +137,7 @@ static void setApplicationMenu(void)
     [appleMenu addItem:[NSMenuItem separatorItem]];
     
     title = [@"Quit " stringByAppendingString:appName];
-    [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
+    [appleMenu addItemWithTitle:title action:@selector(quitAction:) keyEquivalent:@"q"];
     
     
     /* Put menu into the menubar */
@@ -241,31 +191,8 @@ static void setupHelpMenu(void)
     helpMenu = [[NSMenu alloc] initWithTitle:@"Help"];
     
     /* Standard Apple Help item */
-    // NSString *appName = getApplicationName();
-    // title = [appName stringByAppendingString:@" Help"];
-    title = @"SheepShaver Help";
-    
-    /* next line requires correctly formatted help book in English.lprog/SheepShaver Help */
-    /* for some reason I can't make "?" work correctly here, so used "/" instead, but could be "" */
-    menuItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(showHelp:) keyEquivalent:@"/"];
+    menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(showHelp:) keyEquivalent:@"/"];
 
-    /* [menuItem setKeyEquivalentModifierMask:(NSAlternateKeyMask|NSCommandKeyMask)]; */
-    
-    ///// start emendelson
-    
-    /* next two lines open local file as described above
-    [helpMenu addItemWithTitle:@"Read Me First (PDF)" action:@selector(openReadMeFirst:) keyEquivalent:@""];
-    [helpMenu addItemWithTitle:@"Setup Guide" action:@selector(openSetupGuide:) keyEquivalent:@"s"];
-    //[helpMenu addItemWithTitle:@"Usage Guide" action:@selector(openInfoPage:) keyEquivalent:@"u"];
-    
-    ///// end emendelson
-    
-    
-    [helpMenu addItem:[NSMenuItem separatorItem]];
-    
-    [helpMenu addItem:menuItem];
-    [menuItem release];
-    
     /* Put menu into the menubar */
     helpMenuItem = [[NSMenuItem alloc] initWithTitle:@"Help" action:nil keyEquivalent:@""];
     [helpMenuItem setSubmenu:helpMenu];
@@ -315,9 +242,14 @@ static void CustomApplicationMain (int argc, char **argv)
     [pool release];
 }
 
+
+#ifdef USE_BREAKPAD
+static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
+{
+    printf("Minidump saved to '%s/%s.dmp'\n", dump_dir, minidump_id);
+    return succeeded;
+}
 #endif
-
-
 /*
  * Catch document open requests...this lets us notice files when the app
  *  was launched by double-clicking a document, or when a document was
@@ -370,15 +302,15 @@ static void CustomApplicationMain (int argc, char **argv)
 /* Called when the internal event loop has just started running */
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
+#ifdef USE_BREAKPAD
+    google_breakpad::ExceptionHandler eh("/tmp", NULL, dumpCallback, NULL, true, NULL);
+    task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
+#endif
+    
     int status;
     
     /* Set the working directory to the .app's parent directory */
     [self setupWorkingDirectory:gFinderLaunch];
-    
-#if SDL_USE_NIB_FILE
-    /* Set the main menu to contain the real app name instead of "SDL App" */
-    [self fixMenu:[NSApp mainMenu] withAppName:getApplicationName()];
-#endif
     
     /* Hand off to main application code */
     gCalledAppMainline = TRUE;
@@ -468,11 +400,7 @@ int main (int argc, char **argv)
         task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
     }
     
-#if SDL_USE_NIB_FILE
-    NSApplicationMain (argc, argv);
-#else
     CustomApplicationMain (argc, argv);
-#endif
     return 0;
 }
 

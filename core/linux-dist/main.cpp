@@ -54,6 +54,16 @@ void os_SetupInput()
 #endif
 }
 
+void os_TermInput()
+{
+#if defined(USE_EVDEV)
+	input_evdev_close();
+#endif
+#if defined(USE_SDL)
+	input_sdl_quit();
+#endif
+}
+
 void UpdateInputState()
 {
 	#if defined(USE_EVDEV)
@@ -426,9 +436,6 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-#if defined(USE_EVDEV)
-	input_evdev_close();
-#endif
 #if defined(SUPPORT_X11)
 	x11_window_destroy();
 #endif

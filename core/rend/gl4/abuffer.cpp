@@ -198,7 +198,7 @@ void main(void)
 )";
 
 static const char *tr_modvol_shader_source = R"(
-noperspective in vec3 vtx_uv;
+in vec3 vtx_uv;
 
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
@@ -208,6 +208,9 @@ noperspective in vec3 vtx_uv;
 
 void main(void)
 {
+#if MV_MODE == MV_XOR || MV_MODE == MV_OR
+	setFragDepth(vtx_uv.z);
+#endif
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	
 	uint idx = imageLoad(abufferPointerImg, coords).x;
@@ -219,10 +222,10 @@ void main(void)
 		if (getShadowEnable(pp))
 		{
 #if MV_MODE == MV_XOR
-			if (vtx_uv.z >= pixel.depth)
+			if (gl_FragDepth >= pixel.depth)
 				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_OR
-			if (vtx_uv.z >= pixel.depth)
+			if (gl_FragDepth >= pixel.depth)
 				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_INCLUSION
 			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL));
@@ -280,6 +283,7 @@ static void compileFinalAndModVolShaders()
 	{
 		OpenGl4Source modVolShader;
 		modVolShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+			.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
 			.addSource(ShaderHeader)
 			.addSource(tr_modvol_shader_source);
 		for (int mode = 0; mode < ModeCount; mode++)

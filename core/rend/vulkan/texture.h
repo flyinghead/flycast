@@ -36,17 +36,32 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 class Texture final : public BaseTextureCacheData
 {
 public:
+	Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {
+		this->physicalDevice = VulkanContext::Instance()->GetPhysicalDevice();
+		this->device = VulkanContext::Instance()->GetDevice();
+	}
+	Texture(Texture&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(format, other.format);
+		std::swap(extent, other.extent);
+		std::swap(mipmapLevels, other.mipmapLevels);
+		std::swap(needsStaging, other.needsStaging);
+		std::swap(stagingBufferData, other.stagingBufferData);
+		std::swap(commandBuffer, other.commandBuffer);
+		std::swap(allocation, other.allocation);
+		std::swap(image, other.image);
+		std::swap(imageView, other.imageView);
+		std::swap(readOnlyImageView, other.readOnlyImageView);
+		std::swap(physicalDevice, other.physicalDevice);
+		std::swap(device, other.device);
+	}
+
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
-	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
-
-	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
-	void SetDevice(vk::Device device) { this->device = device; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);

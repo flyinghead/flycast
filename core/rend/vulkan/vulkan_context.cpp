@@ -436,10 +436,10 @@ bool VulkanContext::InitDevice()
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
             { vk::DescriptorType::eUniformBuffer, 80000 },
-            { vk::DescriptorType::eStorageBuffer, 50 },
+            { vk::DescriptorType::eStorageBuffer, 100 },
             { vk::DescriptorType::eUniformBufferDynamic, 2 },
             { vk::DescriptorType::eStorageBufferDynamic, 2 },
-            { vk::DescriptorType::eInputAttachment, 50 }
+            { vk::DescriptorType::eInputAttachment, 100 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
 	    		40000, ARRAY_SIZE(pool_sizes), pool_sizes));

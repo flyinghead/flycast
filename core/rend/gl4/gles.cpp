@@ -55,7 +55,7 @@ static const char* VertexShaderSource = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION noperspective
+#define INTERPOLATION
 #endif
 
 // Uniforms 
@@ -74,31 +74,39 @@ in vec2 in_uv1;
 // Output
 INTERPOLATION out vec4 vtx_base;
 INTERPOLATION out vec4 vtx_offs;
-noperspective out vec3 vtx_uv;
+out vec3 vtx_uv;
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
-noperspective out vec2 vtx_uv1;
+out vec2 vtx_uv1;
 flat out uint vtx_index;
 
 void main()
 {
 	vec4 vpos = ndcMat * in_pos;
+	#if DIV_POS_Z == 1
+		vpos /= vpos.z;
+		vpos.z = vpos.w;
+	#endif
 	vtx_base = in_base;
 	vtx_offs = in_offs;
-	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
+	vtx_uv = vec3(in_uv, vpos.z);
 	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
-	vtx_uv1 = in_uv1 * vpos.z;
+	vtx_uv1 = in_uv1;
 	vtx_index = uint(pp_Number) + uint(gl_VertexID);
-#if pp_Gouraud == 1
-	vtx_base *= vpos.z;
-	vtx_offs *= vpos.z;
-	vtx_base1 *= vpos.z;
-	vtx_offs1 *= vpos.z;
-#endif
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
+		vtx_base *= vpos.z;
+		vtx_offs *= vpos.z;
+		vtx_base1 *= vpos.z;
+		vtx_offs1 *= vpos.z;
+	#endif
 	
-	vpos.w = 1.0;
-	vpos.z = 0.0;
+	#if DIV_POS_Z != 1
+		vtx_uv.xy *= vpos.z;
+		vtx_uv1 *= vpos.z;
+		vpos.w = 1.0;
+		vpos.z = 0.0;
+	#endif
 	gl_Position = vpos;
 }
 )";
@@ -123,7 +131,7 @@ out vec4 FragColor;
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION noperspective
+#define INTERPOLATION
 #endif
 
 // Uniforms
@@ -155,15 +163,21 @@ uniform int fog_control[2];
 // Input
 INTERPOLATION in vec4 vtx_base;
 INTERPOLATION in vec4 vtx_offs;
-noperspective in vec3 vtx_uv;
+in vec3 vtx_uv;
 INTERPOLATION in vec4 vtx_base1;
 INTERPOLATION in vec4 vtx_offs1;
-noperspective in vec2 vtx_uv1;
+in vec2 vtx_uv1;
 flat in uint vtx_index;
 
 float fog_mode2(float w)
 {
-	float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
+	float z = clamp(
+#if DIV_POS_Z == 1
+					sp_FOG_DENSITY / w
+#else
+					sp_FOG_DENSITY * w
+#endif
+									  , 1.0, 255.9999);
 	float exp = floor(log2(z));
 	float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	float idx = floor(m) + exp * 16.0 + 0.5;
@@ -184,7 +198,12 @@ vec4 fog_clamp(vec4 col)
 
 vec4 palettePixel(sampler2D tex, vec3 coords)
 {
-	int color_idx = int(floor(textureProj(tex, coords).r * 255.0 + 0.5)) + palette_index;
+#if DIV_POS_Z == 1
+	float colIdx = texture(tex, coords.xy).r;
+#else
+	float colIdx = textureProj(tex, coords).r;
+#endif
+	int color_idx = int(floor(colIdx * 255.0 + 0.5)) + palette_index;
 	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 }
@@ -233,7 +252,7 @@ void main()
 			}
 		#endif
 	#endif
-	#if pp_Gouraud == 1
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
 	#endif
@@ -250,10 +269,17 @@ void main()
 	{
 		vec4 texcol;
 		#if pp_Palette == 0
-			if (area1)
-				texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-			else
-				texcol = textureProj(tex0, vtx_uv);
+			#if DIV_POS_Z == 1
+				if (area1)
+					texcol = texture(tex1, vtx_uv1);
+				else
+					texcol = texture(tex0, vtx_uv.xy);
+			#else
+				if (area1)
+					texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+				else
+					texcol = textureProj(tex0, vtx_uv);
+			#endif
 		#else
 			if (area1)
 				texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
@@ -398,7 +424,7 @@ void main()
 		
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
-		pixel.depth = vtx_uv.z;
+		pixel.depth = gl_FragDepth;
 		pixel.seq_num = vtx_index;
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
@@ -415,7 +441,7 @@ void main()
 )";
 
 static const char* ModifierVolumeShader = R"(
-noperspective in vec3 vtx_uv;
+in vec3 vtx_uv;
 
 void main()
 {
@@ -426,8 +452,9 @@ void main()
 class Vertex4Source : public OpenGl4Source
 {
 public:
-	Vertex4Source(bool gouraud) : OpenGl4Source() {
+	Vertex4Source(bool gouraud, bool divPosZ) : OpenGl4Source() {
 		addConstant("pp_Gouraud", gouraud);
+		addConstant("DIV_POS_Z", divPosZ);
 
 		addSource(VertexShaderSource);
 	}
@@ -453,6 +480,7 @@ public:
 		addConstant("pp_Palette", s->palette);
 		addConstant("NOUVEAU", gl.mesa_nouveau);
 		addConstant("PASS", (int)s->pass);
+		addConstant("DIV_POS_Z", s->divPosZ);
 
 		addSource(ShaderHeader);
 		addSource(gl4PixelPipelineShader);
@@ -472,7 +500,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	if (s->naomi2)
 		vertexSource = N2Vertex4Source(s).generate();
 	else
-		vertexSource = Vertex4Source(s->pp_Gouraud).generate();
+		vertexSource = Vertex4Source(s->pp_Gouraud, s->divPosZ).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
 	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
@@ -588,15 +616,17 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	Vertex4Source vertexShader(false);
+	Vertex4Source vertexShader(false, config::NativeDepthInterpolation);
 	OpenGl4Source fragmentShader;
-	fragmentShader.addSource(ShaderHeader)
+	fragmentShader.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
+		.addSource(ShaderHeader)
 		.addSource(ModifierVolumeShader);
 
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
 
 	N2Vertex4Source n2VertexShader;
+	fragmentShader.setConstant("DIV_POS_Z", false);
 	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");
 	gl4.n2ModVolShader.mvMat = glGetUniformLocation(gl4.n2ModVolShader.program, "mvMat");
@@ -625,8 +655,6 @@ static bool gl_create_resources()
 		gl4SetupMainVBO();
 		gl4SetupModvolVBO();
 	}
-
-	create_modvol_shader();
 
 	initQuad();
 	glCheck();
@@ -757,8 +785,9 @@ static bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
 	pvrrc.fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
 	
-	if (config::Fog)
+	if (config::ModifierVolumes)
 	{
+		create_modvol_shader();
 		glcache.UseProgram(gl4.modvol_shader.program);
 		glUniformMatrix4fv(gl4.modvol_shader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
 

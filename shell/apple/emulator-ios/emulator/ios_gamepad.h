@@ -50,7 +50,13 @@ enum IOSButton {
 	IOS_BTN_PADDLE4,
 	IOS_BTN_TOUCHPAD,
 
-	IOS_BTN_MAX
+	IOS_BTN_MAX,
+
+	IOS_BTN_UP_RIGHT = 10,
+	IOS_BTN_UP_LEFT,
+	IOS_BTN_DOWN_LEFT,
+	IOS_BTN_DOWN_RIGHT,
+
 };
 enum IOSAxis {
 	IOS_AXIS_L1 = 1,
@@ -554,6 +560,27 @@ public:
 						code = IOS_BTN_R1; // C, btn2
 					if (code == IOS_BTN_Y)
 						code = IOS_BTN_X;  // btn3
+				}
+				switch (code)
+				{
+					case IOS_BTN_UP_RIGHT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_UP, pressed);
+						code = IOS_BTN_RIGHT;
+						break;
+					case IOS_BTN_DOWN_RIGHT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_DOWN, pressed);
+						code = IOS_BTN_RIGHT;
+						break;
+					case IOS_BTN_DOWN_LEFT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_DOWN, pressed);
+						code = IOS_BTN_LEFT;
+						break;
+					case IOS_BTN_UP_LEFT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_UP, pressed);
+						code = IOS_BTN_LEFT;
+						break;
+					default:
+						break;
 				}
 
 				return GamepadDevice::gamepad_btn_input(code, pressed);

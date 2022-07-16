@@ -459,6 +459,7 @@ extern Option<int> AnisotropicFiltering;
 extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force linear
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
+extern Option<bool> NativeDepthInterpolation;
 
 // Misc
 
@@ -490,6 +491,8 @@ extern Option<int> GGPODelay;
 extern Option<bool> NetworkStats;
 extern Option<int> GGPOAnalogAxes;
 extern Option<bool> GGPOChat;
+extern Option<bool> GGPOChatTimeoutToggle;
+extern Option<int> GGPOChatTimeout;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

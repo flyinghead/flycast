@@ -24,6 +24,11 @@
 class D3DTexture final : public BaseTextureCacheData
 {
 public:
+	D3DTexture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
+	D3DTexture(D3DTexture&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(texture, other.texture);
+	}
+
 	ComPtr<IDirect3DTexture9> texture;
 	std::string GetId() override { return std::to_string((uintptr_t)texture.get()); }
 	void UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped,
