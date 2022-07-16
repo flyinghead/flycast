@@ -100,6 +100,7 @@ struct gl4PipelineShader
 	bool fog_clamping;
 	bool palette;
 	bool naomi2;
+	bool divPosZ;
 };
 
 

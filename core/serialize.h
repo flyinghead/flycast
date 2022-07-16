@@ -152,7 +152,7 @@ class Serializer : public SerializeBase
 {
 public:
 	Serializer()
-		: SerializeBase(std::numeric_limits<size_t>::max(), false), data(nullptr) { }
+		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
 	Serializer(void *data, size_t limit, bool rollback = false)
 		: SerializeBase(limit, rollback), data((u8 *)data)
@@ -179,7 +179,6 @@ public:
 	}
 	void skip(size_t size)
 	{
-		verify(this->_size + size <= limit);
 		if (data != nullptr)
 			data += size;
 		this->_size += size;
@@ -189,7 +188,6 @@ public:
 private:
 	void doSerialize(const void *src, size_t size)
 	{
-		verify(this->_size + size <= limit);
 		if (data != nullptr)
 		{
 			memcpy(data, src, size);

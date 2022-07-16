@@ -405,12 +405,13 @@ private:
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);
 		hash |= ((u32)gpuPalette << 26) | ((u32)pass << 27) | ((u32)pp->isNaomi2() << 29);
+		hash |= (u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
 
 		return hash;
 	}
 	u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
 	{
-		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5);
+		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5) | ((u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const

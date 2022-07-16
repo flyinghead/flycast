@@ -110,6 +110,7 @@ struct PipelineShader
 	bool trilinear;
 	bool palette;
 	bool naomi2;
+	bool divPosZ;
 };
 
 class GlBuffer
@@ -208,7 +209,7 @@ struct gl_ctx
 		bool directXfer;
 		u32 width;
 		u32 height;
-		u32 fb_w_ctrl;
+		FB_W_CTRL_type fb_w_ctrl;
 		u32 linestride;
 	} rtt;
 
@@ -336,6 +337,12 @@ extern struct ShaderUniforms_t
 class TextureCacheData final : public BaseTextureCacheData
 {
 public:
+	TextureCacheData(TSP tsp, TCW tcw) : BaseTextureCacheData(tsp, tcw), texID(glcache.GenTexture()) {
+	}
+	TextureCacheData(TextureCacheData&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(texID, other.texID);
+	}
+
 	GLuint texID;   //gl texture
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;

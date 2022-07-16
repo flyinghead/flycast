@@ -70,9 +70,9 @@ private:
 
 	ComPtr<ID3D11Device> device;
 	std::unordered_map<u32, ComPtr<ID3D11PixelShader>> shaders;
-	ComPtr<ID3D11VertexShader> vertexShaders[4];
+	ComPtr<ID3D11VertexShader> vertexShaders[8];
 	ComPtr<ID3D11PixelShader> modVolShader;
-	ComPtr<ID3D11VertexShader> modVolVertexShaders[2];
+	ComPtr<ID3D11VertexShader> modVolVertexShaders[4];
 	ComPtr<ID3D11PixelShader> quadPixelShader;
 	ComPtr<ID3D11VertexShader> quadVertexShader;
 	ComPtr<ID3D11VertexShader> quadRotateVertexShader;

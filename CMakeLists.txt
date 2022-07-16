@@ -19,6 +19,7 @@ option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use Open GL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
+option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -199,6 +200,65 @@ if(NOT LIBRETRO)
 		endif()
 		target_link_libraries(${PROJECT_NAME} PUBLIC breakpad_client)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+	elseif(APPLE AND NOT IOS AND APPLE_BREAKPAD)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/breakpad/src/client/minidump_file_writer-inl.h
+			core/deps/breakpad/src/client/minidump_file_writer.cc
+			core/deps/breakpad/src/client/minidump_file_writer.h
+			core/deps/breakpad/src/client/mac/handler/breakpad_nlist_64.cc
+			core/deps/breakpad/src/client/mac/handler/breakpad_nlist_64.h
+			core/deps/breakpad/src/client/mac/handler/dynamic_images.cc
+			core/deps/breakpad/src/client/mac/handler/dynamic_images.h
+			core/deps/breakpad/src/client/mac/handler/exception_handler.cc
+			core/deps/breakpad/src/client/mac/handler/exception_handler.h
+			core/deps/breakpad/src/client/mac/handler/minidump_generator.cc
+			core/deps/breakpad/src/client/mac/handler/minidump_generator.h
+			core/deps/breakpad/src/client/mac/handler/protected_memory_allocator.cc
+			core/deps/breakpad/src/client/mac/handler/protected_memory_allocator.h
+			core/deps/breakpad/src/client/mac/crash_generation/ConfigFile.h
+			core/deps/breakpad/src/client/mac/crash_generation/ConfigFile.mm
+			core/deps/breakpad/src/client/mac/crash_generation/client_info.h
+			core/deps/breakpad/src/client/mac/crash_generation/crash_generation_client.h
+			core/deps/breakpad/src/client/mac/crash_generation/crash_generation_client.cc
+			core/deps/breakpad/src/common/convert_UTF.cc
+			core/deps/breakpad/src/common/convert_UTF.h
+			core/deps/breakpad/src/common/md5.cc
+			core/deps/breakpad/src/common/string_conversion.cc
+			core/deps/breakpad/src/common/string_conversion.h
+			core/deps/breakpad/src/common/mac/file_id.cc
+			core/deps/breakpad/src/common/mac/file_id.h
+			core/deps/breakpad/src/common/mac/MachIPC.mm
+			core/deps/breakpad/src/common/mac/MachIPC.h
+			core/deps/breakpad/src/common/mac/bootstrap_compat.cc
+			core/deps/breakpad/src/common/mac/bootstrap_compat.h
+			core/deps/breakpad/src/common/mac/macho_id.cc
+			core/deps/breakpad/src/common/mac/macho_id.h
+			core/deps/breakpad/src/common/mac/macho_utilities.cc
+			core/deps/breakpad/src/common/mac/macho_utilities.h
+			core/deps/breakpad/src/common/mac/macho_walker.cc
+			core/deps/breakpad/src/common/mac/macho_walker.h
+			core/deps/breakpad/src/common/mac/string_utilities.cc
+			core/deps/breakpad/src/common/mac/string_utilities.h
+		)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND sleep 20
+			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+				-a x86_64
+				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+				-a arm64
+				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		)
 	endif()
 endif()
 
@@ -212,6 +272,8 @@ if(USE_OPENMP)
             # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
             set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
             target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
+        elseif(APPLE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX -static-openmp)
         else()
             target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
         endif()
@@ -705,7 +767,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/pvr/ta.h
         core/hw/pvr/ta_structs.h
         core/hw/pvr/ta_vtx.cpp
-        core/hw/sh4/dyna
         core/hw/sh4/dyna/blockmanager.cpp
         core/hw/sh4/dyna/blockmanager.h
         core/hw/sh4/dyna/decoder.cpp
@@ -720,12 +781,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/ssa.h
         core/hw/sh4/dyna/ssa_regalloc.h
         core/hw/sh4/fsca-table.h
-        core/hw/sh4/interpr
         core/hw/sh4/interpr/sh4_fpu.cpp
         core/hw/sh4/interpr/sh4_interpreter.cpp
         core/hw/sh4/interpr/sh4_opcodes.cpp
         core/hw/sh4/interpr/sh4_opcodes.h
-        core/hw/sh4/modules
         core/hw/sh4/modules/bsc.cpp
         core/hw/sh4/modules/ccn.cpp
         core/hw/sh4/modules/ccn.h
@@ -892,6 +951,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
+        core/wsi/libretro.cpp
+        core/wsi/libretro.h
         core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
@@ -901,8 +962,6 @@ if(USE_OPENGL)
 	        core/wsi/egl.h
 	        core/wsi/gl_context.cpp
 	        core/wsi/gl_context.h
-            core/wsi/libretro.cpp
-            core/wsi/libretro.h
 	        core/wsi/osx.cpp
 	        core/wsi/osx.h
 	        core/wsi/sdl.cpp
@@ -1384,6 +1443,10 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
 				MACOSX_BUNDLE_BUNDLE_VERSION "1"
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
+				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf"
+				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=RelWithDebInfo] "dwarf-with-dsym"
+				XCODE_ATTRIBUTE_CLANG_DEBUG_INFORMATION_LEVEL[variant=RelWithDebInfo] "line-tables-only"
+				XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=RelWithDebInfo] YES
 				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
 				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast"
 				BUILD_WITH_INSTALL_RPATH TRUE
@@ -1445,7 +1508,7 @@ if(NOT LIBRETRO)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32)
 			target_link_libraries(${PROJECT_NAME} PRIVATE wininet.lib iphlpapi.lib) #gdxsv
 		endif()
 	endif()
@@ -1728,3 +1791,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/lbs_message.h
         core/gdxsv/mcs_message.h)
 ## End of gdxsv
+
+file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.cc *.mm)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})

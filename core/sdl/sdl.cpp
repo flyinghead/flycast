@@ -44,6 +44,16 @@ static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
 
+static struct SDLDeInit
+{
+	~SDLDeInit() {
+		if (initialized)
+			SDL_Quit();
+	}
+
+	bool initialized = false;
+} sqlDeinit;
+
 static void sdl_open_joystick(int index)
 {
 	SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
@@ -176,8 +186,8 @@ void input_sdl_init()
 
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");
-			
 	}
+	sqlDeinit.initialized = true;
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -209,6 +219,12 @@ void input_sdl_init()
 			}
 		});
 	}
+}
+
+void input_sdl_quit()
+{
+	SDLGamepad::closeAllGamepads();
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
 inline void SDLMouse::setAbsPos(int x, int y) {
@@ -604,6 +620,7 @@ void sdl_window_create()
 		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
 #endif
 	}
+	sqlDeinit.initialized = true;
 	initRenderApi();
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
@@ -623,4 +640,5 @@ void sdl_window_destroy()
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }

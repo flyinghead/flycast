@@ -25,6 +25,12 @@
 class DX11Texture final : public BaseTextureCacheData
 {
 public:
+	DX11Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
+	DX11Texture(DX11Texture&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(texture, other.texture);
+		std::swap(textureView, other.textureView);
+	}
+
 	ComPtr<ID3D11Texture2D> texture;
 	ComPtr<ID3D11ShaderResourceView> textureView;
 

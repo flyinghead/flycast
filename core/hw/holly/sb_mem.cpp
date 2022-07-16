@@ -142,6 +142,7 @@ static void fixUpDCFlash()
 			memset(&syscfg, 0xff, sizeof(syscfg));
 			syscfg.time_lo = 0;
 			syscfg.time_hi = 0;
+			syscfg.time_zone = 0;
 			syscfg.lang = 0;
 			syscfg.mono = 0;
 			syscfg.autostart = 1;
@@ -181,6 +182,8 @@ static void fixUpDCFlash()
      		console_id[-1] = console_id[0xA0 - 1] = sum;
      		console_id[-2] = console_id[0xA0 - 2] = ~sum;
      	}
+ 		// must be != 0xff
+ 		console_id[7] = console_id[0xA0 + 7] = 0xfe;
 	}
 }
 

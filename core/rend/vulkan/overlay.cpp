@@ -54,11 +54,8 @@ void VulkanOverlay::Term()
 
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
-	VulkanContext *context = VulkanContext::Instance();
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;
-	texture->SetDevice(context->GetDevice());
-	texture->SetPhysicalDevice(context->GetPhysicalDevice());
 	texture->SetCommandBuffer(commandBuffer);
 	texture->UploadToGPU(width, height, data, false);
 	texture->SetCommandBuffer(nullptr);
@@ -198,6 +195,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 	if (crosshair && crosshairsNeeded())
 	{
 		pipeline->BindPipeline(commandBuffer);
+		bool imageViewBound = false;
 		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
 			if (config::CrosshairColor[i] == 0)
@@ -228,7 +226,8 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 				((color >> 16) & 0xff) / 255.f,
 				((color >> 24) & 0xff) / 255.f
 			};
-			xhairDrawer->Draw(commandBuffer, i == 0 ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
+			xhairDrawer->Draw(commandBuffer, !imageViewBound ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
+			imageViewBound = true;
 		}
 	}
 }

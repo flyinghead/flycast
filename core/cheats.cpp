@@ -83,7 +83,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T8116D  50", nullptr,    { 0x2E5530 }, { 0x43700000 } },		// Dead or Alive 2 (PAL)
 		{ "T3601N",     nullptr,    { 0x2F0670 }, { 0x43700000 } },		// Dead or Alive 2 (USA)
 		{ "T3602M",     nullptr,    { 0x2FF798 }, { 0x43700000 } },		// Dead or Alive 2 (JP)
-		{ "T3601M",     nullptr,    { 0x2FBBD0, 0x1E6658 }, { 0x43700000, 0x4414C000 } },	// Dead or Alive 2: Limited Edition (JP) (code 1 fixes HUD)
+		{ "T3601M",     nullptr,    { 0x2FBBD0 }, { 0x43700000 } },		// Dead or Alive 2: Limited Edition (JP)
 		{ "T2401N",     nullptr,    { 0x8BD5B4, 0x8BD5E4 }, { 0x43F00000, 0x3F400000 } },	// Death Crimson OX (USA)
 		{ "T23201M",    nullptr,    { 0x819F44, 0x819F74 }, { 0x43F00000, 0x3F400000 } },	// Death Crimson 2 (JP)
 		{ "T17714D50",  nullptr,    { 0x0D2ED0, 0x0D2ED4 }, { 0x3FAAAAAB, 0x3F400000 } },	// Donald Duck: Quack Attack (PAL) (Code 1 corrects the HUD)
@@ -218,7 +218,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "HDR-0151",   nullptr,    { 0xAF57DC, 0xAF580C, 0x2122A0 },
 				{ 0x43F00000, 0x3F400000, 0x3F400000 } },					// SGGG – Segagaga (JP)
 		{ "MK-5105950", nullptr,    { 0x231EF8, 0x1EF370 }, { 0x43800000, 0x7C1EF400 } },	// Shenmue (PAL) code 1 reduces clipping
-		{ "MK-51059",   nullptr,    { 0x230250 }, { 0x43800000 } },		// Shenmue (USA) Clipping
+		{ "MK-51059",   nullptr,    { 0x230250 }, { 0x43800000 }, { 0x43a00000 } },		// Shenmue (USA) Clipping
 		{ "HDR-0016",   nullptr,    { 0x22E8A0, 0x1EBE70 }, { 0x43800000, 0x7C1EBF00 } },	// Shenmue (JP) code 1 reduces clipping
 		{ "MK-5118450", nullptr,    { 0x31186C }, { 0x43800000 } },		// Shenmue II (PAL) 01160FF4 0000E100 for black bars in cutscenes
 		// Shenmue II (PAL) Alternative code without clipping or black bars. Might be demanding on real hardware.
@@ -485,7 +485,12 @@ void CheatManager::apply()
 	if (widescreen_cheat != nullptr)
 	{
 		for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
-			writeRam(widescreen_cheat->addresses[i], widescreen_cheat->values[i], 32);
+		{
+			u32 address = widescreen_cheat->addresses[i];
+			u32 curVal = readRam(address, 32);
+			if (curVal != widescreen_cheat->values[i] && (widescreen_cheat->origValues[i] == 0 || widescreen_cheat->origValues[i] == curVal))
+				writeRam(address, widescreen_cheat->values[i], 32);
+		}
 	}
 	if (active && !settings.network.online)
 	{

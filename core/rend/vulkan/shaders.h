@@ -29,8 +29,9 @@ struct VertexShaderParams
 {
 	bool gouraud;
 	bool naomi2;
+	bool divPosZ;
 
-	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1); }
+	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2); }
 };
 
 // alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp, trilinear
@@ -49,6 +50,7 @@ struct FragmentShaderParams
 	bool clamping;
 	bool trilinear;
 	bool palette;
+	bool divPosZ;
 
 	u32 hash()
 	{
@@ -56,8 +58,16 @@ struct FragmentShaderParams
 			| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 			| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
-			| ((u32)palette << 14);
+			| ((u32)palette << 14) | ((u32)divPosZ << 15);
 	}
+};
+
+struct ModVolShaderParams
+{
+	bool naomi2;
+	bool divPosZ;
+
+	u32 hash() { return (u32)naomi2 | ((u32)divPosZ << 1); }
 };
 
 // std140 alignment required
@@ -96,17 +106,13 @@ class ShaderManager
 public:
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
-	vk::ShaderModule GetModVolVertexShader(bool naomi2)
+	vk::ShaderModule GetModVolVertexShader(const ModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
+
+	vk::ShaderModule GetModVolShader(bool divPosZ)
 	{
-		vk::UniqueShaderModule& shader = naomi2 ? n2ModVolVertexShader : modVolVertexShader;
-		if (!shader)
-			shader = compileModVolVertexShader(naomi2);
-		return *shader;
-	}
-	vk::ShaderModule GetModVolShader()
-	{
+		auto& modVolShader = modVolShaders[divPosZ];
 		if (!modVolShader)
-			modVolShader = compileModVolFragmentShader();
+			modVolShader = compileModVolFragmentShader(divPosZ);
 		return *modVolShader;
 	}
 	vk::ShaderModule GetQuadVertexShader(bool rotate = false)
@@ -156,16 +162,17 @@ private:
 	template<typename T>
 	vk::ShaderModule getShader(std::map<u32, vk::UniqueShaderModule>& map, T params)
 	{
-		auto it = map.find(params.hash());
+		u32 h = params.hash();
+		auto it = map.find(h);
 		if (it != map.end())
 			return it->second.get();
-		map[params.hash()] = compileShader(params);
-		return map[params.hash()].get();
+		map[h] = compileShader(params);
+		return map[h].get();
 	}
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
-	vk::UniqueShaderModule compileModVolVertexShader(bool naomi2);
-	vk::UniqueShaderModule compileModVolFragmentShader();
+	vk::UniqueShaderModule compileShader(const ModVolShaderParams& params);
+	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ);
 	vk::UniqueShaderModule compileQuadVertexShader(bool rotate);
 	vk::UniqueShaderModule compileQuadFragmentShader(bool ignoreTexAlpha);
 	vk::UniqueShaderModule compileOSDVertexShader();
@@ -173,9 +180,8 @@ private:
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
-	vk::UniqueShaderModule modVolVertexShader;
-	vk::UniqueShaderModule n2ModVolVertexShader;
-	vk::UniqueShaderModule modVolShader;
+	std::map<u32, vk::UniqueShaderModule> modVolVertexShaders;
+	vk::UniqueShaderModule modVolShaders[2];
 	vk::UniqueShaderModule quadVertexShader;
 	vk::UniqueShaderModule quadRotateVertexShader;
 	vk::UniqueShaderModule quadFragmentShader;

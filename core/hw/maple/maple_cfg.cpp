@@ -209,7 +209,6 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 
 static void createNaomiDevices()
 {
-	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
 	{
@@ -229,7 +228,6 @@ static void createNaomiDevices()
 
 static void createAtomiswaveDevices()
 {
-	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);

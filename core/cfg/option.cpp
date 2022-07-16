@@ -101,6 +101,7 @@ Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
+Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 
 // Misc
 
@@ -128,6 +129,8 @@ Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<bool> GGPOChat("GGPOChat", true, "network");
+Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
+Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
