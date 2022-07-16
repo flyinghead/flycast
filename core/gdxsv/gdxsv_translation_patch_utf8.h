@@ -972,7 +972,7 @@ Translation translations[] = {
                 ),
     TRANSLATE(0x1BF2E0,20,
                 R"(回線を切断しました)",
-                R"(連線已被自動中斷)",
+                R"(  連線已被自動中斷)",
                 R"(Auto-disconnected)"
                 ),
     TRANSLATE(0x1BF2F4,24,
