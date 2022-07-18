@@ -41,7 +41,7 @@ class TransformMatrix
 {
 public:
 	TransformMatrix() = default;
-	TransformMatrix(const rend_context& renderingContext, int width = 0, int height = 0)
+	TransformMatrix(const rend_context& renderingContext, int width, int height)
 	{
 		CalcMatrices(&renderingContext, width, height);
 	}
@@ -141,36 +141,28 @@ public:
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
-			const float screen_stretching = config::ScreenStretching / 100.f;
 			float scissoring_scale_x, scissoring_scale_y;
 			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
 
-			float x_coef;
-			float y_coef;
-			glm::mat4 trans_rot;
-
-			if (config::Rotate90)
+			if (config::Widescreen && !config::Rotate90)
 			{
-				float dc2s_scale_h = renderViewport.x / 640.0f;
-
-				sidebarWidth = 0;
-				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * screenFlipY;
-				x_coef = 2.0f / dcViewport.x;
+				sidebarWidth = (1 - dcViewport.x / dcViewport.y * renderViewport.y / renderViewport.x) / 2;
+				if (config::SuperWidescreen)
+					dcViewport.x *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
+				else
+					dcViewport.x *= 4.f / 3.f;
 			}
 			else
-			{
-				float dc2s_scale_h = renderViewport.y / 480.0f;
+				sidebarWidth = 0;
+			float x_coef = 2.0f / dcViewport.x;
+			float y_coef = 2.0f / dcViewport.y * screenFlipY;
 
-				sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-				x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
-				y_coef = 2.0f / dcViewport.y * screenFlipY;
-			}
-			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, -screenFlipY, 0));
+			glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -screenFlipY, 0));
 
-			normalMatrix = trans_rot
+			normalMatrix = trans
 				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
 				* normalMatrix;
-			scissorMatrix = trans_rot
+			scissorMatrix = trans
 				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
 				* scissorMatrix;
 		}
@@ -200,11 +192,8 @@ private:
 
 		if (!renderingContext->isRTT && !renderingContext->isRenderFramebuffer)
 		{
-			if (!scissor)
-			{
-				scale_x = fb_scale_x;
-				scale_y = fb_scale_y;
-			}
+			if (!scissor && (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0))
+				scale_y /= 2.f;
 			if (SCALER_CTL.vscalefactor > 0x400)
 			{
 				// Interlace mode A (single framebuffer)
@@ -216,9 +205,8 @@ private:
 			}
 
 			// VO pixel doubling is done after fb rendering/clipping
-			// so it should be used for scissoring as well
 			if (VO_CONTROL.pixel_double && !scissor)
-				scale_x *= 0.5f;
+				scale_x /= 2.f;
 
 			// the X Scaler halves the horizontal resolution but
 			// before clipping/scissoring
@@ -238,3 +226,25 @@ private:
 	float scale_y = 0;
 	float sidebarWidth = 0;
 };
+
+inline static float getOutputFramebufferAspectRatio()
+{
+	float renderAR;
+	if (config::Rotate90)
+	{
+		renderAR = 3.f / 4.f;
+	}
+	else
+	{
+		if (config::Widescreen)
+		{
+			if (config::SuperWidescreen)
+				renderAR = (float)settings.display.width / settings.display.height;
+			else
+				renderAR = 16.f / 9.f;
+		}
+		else
+			renderAR = 4.f / 3.f;
+	}
+	return renderAR * config::ScreenStretching / 100.f;
+}

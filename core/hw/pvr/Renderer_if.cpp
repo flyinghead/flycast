@@ -371,8 +371,10 @@ void rend_resize_renderer()
 {
 	if (renderer == nullptr)
 		return;
-	int fbwidth = VO_CONTROL.pixel_double ? 320 : 640;
-	int fbheight = (SPG_CONTROL.PAL == SPG_CONTROL.NTSC) || SPG_CONTROL.interlace == 1 ? 480 : 240;
+	int fbwidth = 640 / (1 + VO_CONTROL.pixel_double) * (1 + SCALER_CTL.hscale);
+	int fbheight = FB_R_CTRL.vclk_div == 1 || SPG_CONTROL.interlace == 1 ? 480 : 240;
+	if (SPG_CONTROL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
+		fbheight *= std::roundf((float)SCALER_CTL.vscalefactor / 0x400);
 
 	float upscaling = config::RenderResolution / 480.f;
 	float hres = fbwidth * upscaling;
@@ -380,17 +382,9 @@ void rend_resize_renderer()
 	if (config::Widescreen && !config::Rotate90)
 	{
 		if (config::SuperWidescreen)
-			hres = vres * settings.display.width / settings.display.height;
+			hres *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
 		else
 			hres *= 4.f / 3.f;
-	}
-	else if (config::Rotate90)
-	{
-		vres *= config::ScreenStretching / 100.f;
-	}
-	else
-	{
-		hres *= config::ScreenStretching / 100.f;
 	}
 	if (!config::Rotate90)
 		hres = std::roundf(hres / 2.f) * 2.f;

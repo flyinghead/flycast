@@ -32,6 +32,7 @@
 #include "emulator.h"
 #include "oslib/oslib.h"
 #include "vulkan_driver.h"
+#include "rend/transform_matrix.h"
 
 void ReInitOSD();
 
@@ -861,14 +862,18 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float marginWidth;
-	if (config::Rotate90)
-		marginWidth = ((float)width - (float)extent.height / extent.width * height) / 2.f;
+	float renderAR = getOutputFramebufferAspectRatio();
+	float screenAR = (float)width / height;
+	float dx = 0;
+	float dy = 0;
+	if (renderAR > screenAR)
+		dy = height * (1 - screenAR / renderAR) / 2;
 	else
-		marginWidth = ((float)width - (float)extent.width / extent.height * height) / 2.f;
-	vk::Viewport viewport(marginWidth, 0, width - marginWidth * 2.f, height);
+		dx = width * (1 - renderAR / screenAR) / 2;
+
+	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, 1, &viewport);
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 	else

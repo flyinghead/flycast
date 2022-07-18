@@ -132,6 +132,8 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 		vmu_width *= 2.f;
 		float blendConstants[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		color = blendConstants;
+#else
+		vmu_width /= config::ScreenStretching / 100.f;
 #endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -207,8 +209,9 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			std::tie(x, y) = getCrosshairPosition(i);
 
 #ifdef LIBRETRO
-			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling / config::ScreenStretching * 100.f;
 			float h = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			x /= config::ScreenStretching / 100.f;
 #else
 			float w = XHAIR_WIDTH * scaling;
 			float h = XHAIR_HEIGHT * scaling;

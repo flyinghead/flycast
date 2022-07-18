@@ -178,7 +178,10 @@ void pvr_WriteReg(u32 paddr,u32 data)
 			bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
 			PvrReg(addr, u32) = data;
 			if (vclk_div_changed)
+			{
 				CalculateSync();
+				rend_needs_resize = true;
+			}
 		}
 		return;
 

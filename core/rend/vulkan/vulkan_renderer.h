@@ -153,8 +153,6 @@ public:
 
 	void Resize(int w, int h) override
 	{
-		if ((u32)w == viewport.width && (u32)h == viewport.height)
-			return;
 		viewport.width = w;
 		viewport.height = h;
 	}
