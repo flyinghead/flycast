@@ -369,8 +369,6 @@ void rend_deserialize(Deserializer& deser)
 
 void rend_resize_renderer()
 {
-	if (renderer == nullptr)
-		return;
 	int fbwidth = 640 / (1 + VO_CONTROL.pixel_double) * (1 + SCALER_CTL.hscale);
 	int fbheight = FB_R_CTRL.vclk_div == 1 || SPG_CONTROL.interlace == 1 ? 480 : 240;
 	if (SPG_CONTROL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
@@ -389,8 +387,14 @@ void rend_resize_renderer()
 	if (!config::Rotate90)
 		hres = std::roundf(hres / 2.f) * 2.f;
 	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, (int)vres);
-	renderer->Resize((int)hres, (int)vres);
+	if (renderer != nullptr)
+		renderer->Resize((int)hres, (int)vres);
 	rend_needs_resize = false;
+#ifdef LIBRETRO
+	void retro_resize_renderer(int w, int h);
+
+	retro_resize_renderer((int)hres, (int)vres);
+#endif
 }
 
 void rend_resize_renderer_if_needed()

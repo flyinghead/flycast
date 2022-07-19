@@ -822,10 +822,12 @@ void DrawVmuTexture(u8 vmu_screen_number)
 	glActiveTexture(GL_TEXTURE0);
 
 	const float vmu_padding = 8.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 ? -(640.f * 4.f / 3.f - 640.f) / 2 : 0) + vmu_padding;
+	const float x_scale = 100.f / config::ScreenStretching;
+	const float y_scale = (float)gl.ofbo.width / gl.ofbo.height >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 ? -1 / ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
 	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult / config::ScreenStretching * 100.f;
-	float h = VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
+	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;
 
 	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
 		UpdateVmuTexture(vmu_screen_number);
@@ -835,14 +837,14 @@ void DrawVmuTexture(u8 vmu_screen_number)
 		case UPPER_LEFT:
 			break;
 		case UPPER_RIGHT:
-			x = 640 - x - w;
+			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
 			break;
 		case LOWER_LEFT:
-			y = 480 - y - h;
+			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
 			break;
 		case LOWER_RIGHT:
-			x = 640 - x - w;
-			y = 480 - y - h;
+			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
+			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
 			break;
 	}
 
