@@ -42,6 +42,7 @@ private:
 	std::unordered_map<std::string, GameBoxart> games;
 	std::mutex mutex;
 	std::unique_ptr<Scraper> scraper;
+	std::unique_ptr<Scraper> offlineScraper;
 	bool databaseLoaded = false;
 	bool databaseDirty = false;
 

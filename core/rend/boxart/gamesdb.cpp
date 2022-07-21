@@ -18,10 +18,9 @@
  */
 #include "gamesdb.h"
 #include "http_client.h"
-#include "reios/reios.h"
-#include "imgread/common.h"
 #include "stdclass.h"
 #include "oslib/oslib.h"
+#include "emulator.h"
 #include <cctype>
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
@@ -215,13 +214,13 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 		if (cached != boxartCache.end())
 		{
 			copyFile(cached->second, filename);
-			item.boxartPath = filename;
+			item.setBoxartPath(filename);
 		}
 		else
 		{
 			if (downloadImage(url, filename))
 			{
-				item.boxartPath = filename;
+				item.setBoxartPath(filename);
 				boxartCache[url] = filename;
 			}
 		}
@@ -293,90 +292,8 @@ bool TheGamesDb::fetchGameInfo(GameBoxart& item, const std::string& url, const s
 	return parseGameInfo(array, v["include"]["boxart"], item, diskId);
 }
 
-void TheGamesDb::getUidAndSearchName(GameBoxart& media)
-{
-	int platform = getGamePlatform(media.gamePath.c_str());
-	if (platform == DC_PLATFORM_DREAMCAST)
-	{
-		if (media.gamePath.empty())
-		{
-			// Dreamcast BIOS
-			media.uniqueId.clear();
-			media.searchName.clear();
-			return;
-		}
-		Disc *disc;
-		try {
-			disc = OpenDisc(media.gamePath.c_str());
-		} catch (const std::exception& e) {
-			WARN_LOG(COMMON, "Can't open disk %s: %s", media.gamePath.c_str(), e.what());
-			// No need to retry if the disk is invalid/corrupted
-			media.scraped = true;
-			media.uniqueId.clear();
-			media.searchName.clear();
-			return;
-		}
-
-		u32 base_fad;
-		if (disc->type == GdRom) {
-			base_fad = 45150;
-		} else {
-			u8 ses[6];
-			disc->GetSessionInfo(ses, 0);
-			disc->GetSessionInfo(ses, ses[2]);
-			base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		}
-		u8 sector[2048];
-		disc->ReadSectors(base_fad, 1, sector, sizeof(sector));
-		ip_meta_t diskId;
-		memcpy(&diskId, sector, sizeof(diskId));
-		delete disc;
-
-		media.uniqueId = trim_trailing_ws(std::string(diskId.product_number, sizeof(diskId.product_number)));
-
-		media.searchName = trim_trailing_ws(std::string(diskId.software_name, sizeof(diskId.software_name)));
-		if (media.searchName.empty())
-			media.searchName = media.name;
-
-		if (diskId.area_symbols[0] != '\0')
-		{
-			media.region = 0;
-			if (diskId.area_symbols[0] == 'J')
-				media.region |= GameBoxart::JAPAN;
-			if (diskId.area_symbols[1] == 'U')
-				media.region |= GameBoxart::USA;
-			if (diskId.area_symbols[2] == 'E')
-				media.region |= GameBoxart::EUROPE;
-		}
-		else
-			media.region = GameBoxart::JAPAN | GameBoxart::USA | GameBoxart::EUROPE;
-	}
-	else
-	{
-		media.uniqueId.clear();
-		// Use first one in case of alternate names (Virtua Tennis / Power Smash)
-		size_t spos = media.searchName.find('/');
-		if (spos != std::string::npos)
-			media.searchName = trim_trailing_ws(media.searchName.substr(0, spos));
-		// Delete trailing (...) and [...]
-		while (!media.searchName.empty())
-		{
-			size_t pos{ std::string::npos };
-			if (media.searchName.back() == ')')
-				pos = media.searchName.find_last_of('(');
-			else if (media.searchName.back() == ']')
-				pos = media.searchName.find_last_of('[');
-			if (pos == std::string::npos)
-				break;
-			media.searchName = trim_trailing_ws(media.searchName.substr(0, pos));
-		}
-	}
-}
-
 void TheGamesDb::scrape(GameBoxart& item)
 {
-	item.found = false;
-	getUidAndSearchName(item);
 	if (item.searchName.empty())
 		// invalid rom or disk
 		return;
@@ -387,7 +304,7 @@ void TheGamesDb::scrape(GameBoxart& item)
 		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview,uids&include=boxart&filter%5Bplatform%5D="
 			+ std::to_string(dreamcastPlatformId) + "&uid=" + http::urlEncode(item.uniqueId);
 		if (fetchGameInfo(item, url, item.uniqueId))
-			item.scraped = item.found = true;
+			item.scraped = true;
 	}
 	if (!item.scraped)
 		fetchByName(item);
@@ -407,7 +324,7 @@ void TheGamesDb::fetchByName(GameBoxart& item)
 		url += std::to_string(arcadePlatformId);
 	url += "&name=" + http::urlEncode(item.searchName);
 	if (fetchGameInfo(item, url))
-		item.scraped = item.found = true;
+		item.scraped = true;
 }
 
 void TheGamesDb::fetchByUids(std::vector<GameBoxart>& items)
@@ -433,7 +350,7 @@ void TheGamesDb::fetchByUids(std::vector<GameBoxart>& items)
 	for (GameBoxart& item : items)
 	{
 		if (!item.scraped && !item.uniqueId.empty() && parseGameInfo(array, boxartArray, item, item.uniqueId))
-			item.scraped = item.found = true;
+			item.scraped = true;
 	}
 }
 
@@ -444,12 +361,6 @@ void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 	blackoutPeriod = 0.0;
 
 	fetchPlatforms();
-	for (GameBoxart& item : items)
-	{
-		if (!item.scraped)
-			item.found = false;
-		getUidAndSearchName(item);
-	}
 	fetchByUids(items);
 	for (GameBoxart& item : items)
 	{
@@ -461,9 +372,9 @@ void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 			{
 				std::string localPath = makeUniqueFilename("dreamcast_logo_grey.png");
 				if (downloadImage("https://flyinghead.github.io/flycast-builds/dreamcast_logo_grey.png", localPath))
-					item.boxartPath = localPath;
+					item.setBoxartPath(localPath);
 			}
+			item.scraped = true;
 		}
-		item.scraped = true;
 	}
 }

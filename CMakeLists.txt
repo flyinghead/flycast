@@ -771,7 +771,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/cue.cpp
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp)
+        core/imgread/ioctl.cpp
+        core/imgread/isofs.cpp
+        core/imgread/isofs.h)
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE

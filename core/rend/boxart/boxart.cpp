@@ -35,25 +35,33 @@ const GameBoxart *Boxart::getBoxart(const GameMedia& media)
 {
 	loadDatabase();
 	std::string fileName = getGameFileName(media.path);
-	const GameBoxart *boxart = nullptr;
+	GameBoxart *boxart = nullptr;
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		auto it = games.find(fileName);
 		if (it != games.end())
+		{
 			boxart = &it->second;
-		else if (config::FetchBoxart)
+			if (config::FetchBoxart && !boxart->busy && !boxart->scraped)
+			{
+				boxart->busy = true;
+				boxart->gamePath = media.path;
+				toFetch.push_back(*boxart);
+			}
+		}
+		else
 		{
 			GameBoxart box;
 			box.fileName = fileName;
 			box.gamePath = media.path;
 			box.name = media.name;
 			box.searchName = media.gameName;	// for arcade games
+			box.busy = true;
 			games[box.fileName] = box;
 			toFetch.push_back(box);
 		}
 	}
-	if (config::FetchBoxart)
-		fetchBoxart();
+	fetchBoxart();
 	return boxart;
 }
 
@@ -66,12 +74,17 @@ void Boxart::fetchBoxart()
 	if (toFetch.empty())
 		return;
 	fetching = std::async(std::launch::async, [this]() {
-		if (scraper == nullptr)
+		if (offlineScraper == nullptr)
+		{
+			offlineScraper = std::unique_ptr<Scraper>(new OfflineScraper());
+			offlineScraper->initialize(getSaveDirectory());
+		}
+		if (config::FetchBoxart && scraper == nullptr)
 		{
 			scraper = std::unique_ptr<Scraper>(new TheGamesDb());
 			if (!scraper->initialize(getSaveDirectory()))
 			{
-				WARN_LOG(COMMON, "thegamesdb scraper initialization failed");
+				ERROR_LOG(COMMON, "thegamesdb scraper initialization failed");
 				scraper.reset();
 				return;
 			}
@@ -84,22 +97,49 @@ void Boxart::fetchBoxart()
 			toFetch.erase(toFetch.begin(), toFetch.begin() + size);
 		}
 		DEBUG_LOG(COMMON, "Scraping %d games", (int)boxart.size());
-		try {
-			scraper->scrape(boxart);
-			{
-				std::lock_guard<std::mutex> guard(mutex);
-				for (const GameBoxart& b : boxart)
-					if (b.scraped)
+		offlineScraper->scrape(boxart);
+		{
+			std::lock_guard<std::mutex> guard(mutex);
+			for (GameBoxart& b : boxart)
+				if (b.scraped || b.parsed)
+				{
+					if (!config::FetchBoxart || b.scraped)
+						b.busy = false;
+					games[b.fileName] = b;
+					databaseDirty = true;
+				}
+		}
+		if (config::FetchBoxart)
+		{
+			try {
+				scraper->scrape(boxart);
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					for (GameBoxart& b : boxart)
+					{
+						b.busy = false;
 						games[b.fileName] = b;
-			}
-			databaseDirty = true;
-		} catch (const std::exception& e) {
-			if (*e.what() != '\0')
-				INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
-			{
-				// put back items into toFetch array
-				std::lock_guard<std::mutex> guard(mutex);
-				toFetch.insert(toFetch.begin(), boxart.begin(), boxart.end());
+					}
+				}
+				databaseDirty = true;
+			} catch (const std::exception& e) {
+				if (*e.what() != '\0')
+					INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
+				{
+					// put back failed items into toFetch array
+					std::lock_guard<std::mutex> guard(mutex);
+					for (GameBoxart& b : boxart)
+						if (b.scraped)
+						{
+							b.busy = false;
+							games[b.fileName] = b;
+							databaseDirty = true;
+						}
+						else
+						{
+							toFetch.push_back(b);
+						}
+				}
 			}
 		}
 	});
@@ -124,7 +164,7 @@ void Boxart::saveDatabase()
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		for (const auto& game : games)
-			if (game.second.scraped)
+			if (game.second.scraped || game.second.parsed)
 				array.push_back(game.second.to_json());
 	}
 	std::string serialized = array.dump(4);

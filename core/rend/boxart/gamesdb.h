@@ -37,7 +37,6 @@ private:
 	void copyFile(const std::string& from, const std::string& to);
 	json httpGet(const std::string& url);
 	void parseBoxart(GameBoxart& item, const json& j, int gameId);
-	void getUidAndSearchName(GameBoxart& media);
 	void fetchByUids(std::vector<GameBoxart>& items);
 	void fetchByName(GameBoxart& item);
 	bool parseGameInfo(const json& gameArray, const json& boxartArray, GameBoxart& item, const std::string& diskId);

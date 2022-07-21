@@ -37,12 +37,11 @@ struct GameBoxart
 	std::string overview;
 
 	std::string gamePath;
-	std::string screenshotPath;
-	std::string fanartPath;
 	std::string boxartPath;
 
+	bool parsed = false;
 	bool scraped = false;
-	bool found = false;
+	bool busy = false;
 
 	enum Region { JAPAN = 1, USA = 2, EUROPE = 4 };
 
@@ -52,14 +51,13 @@ struct GameBoxart
 			{ "file_name", fileName },
 			{ "name", name },
 			{ "unique_id", uniqueId },
+			{ "search_name", searchName },
 			{ "region", region },
 			{ "release_date", releaseDate },
 			{ "overview", overview },
-			{ "screenshot_path", screenshotPath },
-			{ "fanart_path", fanartPath },
 			{ "boxart_path", boxartPath },
+			{ "parsed", parsed },
 			{ "scraped", scraped },
-			{ "found", found },
 		};
 		return j;
 	}
@@ -85,14 +83,19 @@ struct GameBoxart
 		loadProperty(fileName, j, "file_name");
 		loadProperty(name, j, "name");
 		loadProperty(uniqueId, j, "unique_id");
+		loadProperty(searchName, j, "search_name");
 		loadProperty(region, j, "region");
 		loadProperty(releaseDate, j, "release_date");
 		loadProperty(overview, j, "overview");
-		loadProperty(screenshotPath, j, "screenshot_path");
-		loadProperty(fanartPath, j, "fanart_path");
 		loadProperty(boxartPath, j, "boxart_path");
+		loadProperty(parsed, j, "parsed");
 		loadProperty(scraped, j, "scraped");
-		loadProperty(found, j, "found");
+	}
+
+	void setBoxartPath(const std::string& path) {
+		if (!boxartPath.empty())
+			nowide::remove(boxartPath.c_str());
+		boxartPath = path;
 	}
 };
 
@@ -119,4 +122,10 @@ protected:
 
 private:
 	std::string saveDirectory;
+};
+
+class OfflineScraper : public Scraper
+{
+public:
+	void scrape(GameBoxart& item) override;
 };

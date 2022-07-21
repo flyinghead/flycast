@@ -21,12 +21,12 @@
 #include "hw/holly/sb_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
-#include "iso9660.h"
 #include "font.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/aica_mem.h"
 #include "hw/pvr/pvr_regs.h"
 #include "imgread/common.h"
+#include "imgread/isofs.h"
 #include "oslib/oslib.h"
 
 #include <map>
@@ -50,120 +50,82 @@ static MemChip *flashrom;
 static u32 base_fad = 45150;
 static bool descrambl = false;
 static u32 bootSectors;
+extern Disc *disc;
 
 static void reios_pre_init()
 {
-	if (libGDR_GetDiscType() == GdRom) {
-		base_fad = 45150;
-		descrambl = false;
-	} else {
-		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
-		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		descrambl = true;
+	if (disc != nullptr)
+	{
+		base_fad = disc->GetBaseFAD();
+		descrambl = disc->type != GdRom;
 	}
-}
-
-static u32 decode_iso733(iso733_t v)
-{
-	return ((v >> 56) & 0x000000FF)
-			| ((v >> 40) & 0x0000FF00)
-			| ((v >> 24) & 0x00FF0000)
-			| ((v >> 8) & 0xFF000000);
 }
 
 static bool reios_locate_bootfile(const char* bootfile)
 {
 	reios_pre_init();
+	if (ip_meta.wince == '1' && descrambl)
+	{
+		ERROR_LOG(REIOS, "Unsupported CDI: wince == '1'");
+		return false;
+	}
 
 	// Load IP.BIN bootstrap
 	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
 
-	u32 data_len = 2048 * 1024;
-	u8* temp = new u8[data_len];
-
-	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
-	iso9660_pvd_t *pvd = (iso9660_pvd_t *)temp;
-
-	if (pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1)
+	IsoFs isofs(disc);
+	std::unique_ptr<IsoFs::Directory> root(isofs.getRoot());
+	if (root == nullptr)
 	{
-		INFO_LOG(REIOS, "iso9660 PVD found");
-		u32 lba = decode_iso733(pvd->root_directory_record.extent);
-		u32 len = decode_iso733(pvd->root_directory_record.size);
-		
-		data_len = ((len + 2047) / 2048) * 2048;
-
-		INFO_LOG(REIOS, "iso9660 root_directory, FAD: %d, len: %d", 150 + lba, data_len);
-		libGDR_ReadSector(temp, 150 + lba, data_len / 2048, 2048);
+		ERROR_LOG(REIOS, "ISO file system root not found");
+		return false;
 	}
-	else {
-		libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
-	}
-
-	int bootfile_len = strlen(bootfile);
-	while (bootfile_len > 0 && isspace(bootfile[bootfile_len - 1]))
-		bootfile_len--;
-	for (u32 i = 0; i < data_len; )
+	std::unique_ptr<IsoFs::Entry> bootEntry(root->getEntry(trim_trailing_ws(bootfile)));
+	if (bootEntry == nullptr || bootEntry->isDirectory())
 	{
-		iso9660_dir_t *dir = (iso9660_dir_t *)&temp[i];
-		if (dir->length == 0)
-			break;
+		ERROR_LOG(REIOS, "Boot file '%s' not found", bootfile);
+		return false;
+	}
+	IsoFs::File *bootFile = (IsoFs::File *)bootEntry.get();
 
-		if ((dir->file_flags & ISO_DIRECTORY) == 0 && memcmp(dir->filename.str + 1, bootfile, bootfile_len) == 0)
-		{
-			INFO_LOG(REIOS, "Found %.*s at offset %X", bootfile_len, bootfile, i);
+	u32 offset = 0;
+	u32 size = bootFile->getSize();
+	if (ip_meta.wince == '1')
+	{
+		bootFile->read(GetMemPtr(0x8ce01000, 2048), 2048);
+		offset = 2048;
+		size -= offset;
+	}
+	bootSectors = size / 2048;
 
-			u32 lba = decode_iso733(dir->extent) + 150;
-			u32 len = decode_iso733(dir->size);
-
-			if (ip_meta.wince == '1')
-			{
-				if (descrambl)
-				{
-					WARN_LOG(REIOS, "Unsupported CDI: wince == '1'");
-					delete[] temp;
-					return false;
-				}
-				libGDR_ReadSector(GetMemPtr(0x8ce01000, 0), lba, 1, 2048);
-				lba++;
-				len -= 2048;
-			}
-
-			INFO_LOG(REIOS, "file LBA: %d", lba);
-			INFO_LOG(REIOS, "file LEN: %d", len);
-
-			bootSectors = (len + 2047) / 2048;
-			if (descrambl)
-				descrambl_file(lba, len, GetMemPtr(0x8c010000, 0));
-			else
-				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba, bootSectors, 2048);
-
-			delete[] temp;
-
-			u8 data[24] = {0};
-			// system id
-			for (u32 j = 0; j < 8; j++)
-				data[j] = _vmem_ReadMem8(0x0021a056 + j);
-
-			// system properties
-			for (u32 j = 0; j < 5; j++)
-				data[8 + j] = _vmem_ReadMem8(0x0021a000 + j);
-
-			// system settings
-			flash_syscfg_block syscfg{};
-			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
-			memcpy(&data[16], &syscfg.time_lo, 8);
-
-			memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
-
-			return true;
-		}
-		i += dir->length;
+	if (descrambl)
+	{
+		std::vector<u8> buf(size);
+		bootFile->read(buf.data(), size, offset);
+		descrambl_buffer(buf.data(), GetMemPtr(0x8c010000, size), size);
+	}
+	else
+	{
+		bootFile->read(GetMemPtr(0x8c010000, size), size, offset);
 	}
 
-	delete[] temp;
-	return false;
+	u8 data[24] = {0};
+	// system id
+	for (u32 j = 0; j < 8; j++)
+		data[j] = _vmem_ReadMem8(0x0021a056 + j);
+
+	// system properties
+	for (u32 j = 0; j < 5; j++)
+		data[8 + j] = _vmem_ReadMem8(0x0021a000 + j);
+
+	// system settings
+	flash_syscfg_block syscfg{};
+	verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
+	memcpy(&data[16], &syscfg.time_lo, 8);
+
+	memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
+
+	return true;
 }
 
 ip_meta_t ip_meta;
