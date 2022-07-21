@@ -14,7 +14,7 @@
 
 ConsoleListener::ConsoleListener()
 {
-#ifdef LOG_TO_PTY
+#if defined(LOG_TO_PTY) || defined(__APPLE__)
   m_use_color = 1;
 #elif defined(__SWITCH__)
   m_use_color = 0;
