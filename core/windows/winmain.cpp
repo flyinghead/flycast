@@ -821,6 +821,16 @@ FILE *fopen(char const *file_name, char const *mode)
 	return _fdopen(fd, mode);
 }
 
+int remove(char const *name)
+{
+    wstackstring wname;
+    if(!wname.convert(name)) {
+        errno = EINVAL;
+        return -1;
+    }
+    return _wremove(wname.c_str());
+}
+
 }
 
 extern "C" int SDL_main(int argc, char* argv[])
