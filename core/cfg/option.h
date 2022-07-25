@@ -142,7 +142,11 @@ public:
 		else if (PerGameOption && settings.hasPerGameConfig())
 		{
 			if (value == doLoad(section, name))
+			{
+				// delete existing per-game option if any
+				cfgDeleteEntry(settings.gameId, section + "." + name);
 				return;
+			}
 		}
 		if (PerGameOption && settings.hasPerGameConfig())
 			doSave(settings.gameId, section + "." + name);

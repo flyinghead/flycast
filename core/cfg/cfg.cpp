@@ -119,6 +119,11 @@ void cfgDeleteSection(const std::string& section)
 	cfgdb.delete_section(section);
 }
 
+void cfgDeleteEntry(const std::string& section, const std::string& key)
+{
+	cfgdb.delete_entry(section, key);
+}
+
 void cfgSetAutoSave(bool autoSave)
 {
 	::autoSave = autoSave;
