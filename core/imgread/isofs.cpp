@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "isofs.h"
-#include "reios/iso9660.h"
+#include "iso9660.h"
 
 static u32 decode_iso733(iso733_t v)
 {

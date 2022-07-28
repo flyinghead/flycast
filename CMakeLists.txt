@@ -772,6 +772,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
         core/imgread/ioctl.cpp
+        core/imgread/iso9660.h
         core/imgread/isofs.cpp
         core/imgread/isofs.h)
 
@@ -891,7 +892,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/reios/font.h
         core/reios/gdrom_hle.cpp
         core/reios/gdrom_hle.h
-        core/reios/iso9660.h
         core/reios/reios.cpp
         core/reios/reios.h
         core/reios/reios_elf.cpp
