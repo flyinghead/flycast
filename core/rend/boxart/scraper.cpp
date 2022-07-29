@@ -94,6 +94,16 @@ void OfflineScraper::scrape(GameBoxart& item)
 		disc->ReadSectors(disc->GetBaseFAD(), 1, sector, sizeof(sector));
 		ip_meta_t diskId;
 		memcpy(&diskId, sector, sizeof(diskId));
+		// Sanity check
+		if (memcmp(diskId.hardware_id, "SEGA SEGAKATANA ", sizeof(diskId.hardware_id))
+				|| memcmp(diskId.maker_id, "SEGA ENTERPRISES", sizeof(diskId.maker_id)))
+		{
+			WARN_LOG(COMMON, "Invalid IP META for disk %s", item.gamePath.c_str());
+			item.scraped = true;
+			item.uniqueId.clear();
+			item.searchName.clear();
+			return;
+		}
 
 		if (item.boxartPath.empty())
 		{
@@ -122,6 +132,9 @@ void OfflineScraper::scrape(GameBoxart& item)
 		delete disc;
 
 		item.uniqueId = trim_trailing_ws(std::string(diskId.product_number, sizeof(diskId.product_number)));
+		for (char& c : item.uniqueId)
+			if (!std::isprint(c))
+				c = ' ';
 
 		item.searchName = trim_trailing_ws(std::string(diskId.software_name, sizeof(diskId.software_name)));
 		if (item.searchName.empty())
