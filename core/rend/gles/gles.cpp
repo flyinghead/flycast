@@ -1205,7 +1205,7 @@ bool gles_init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__)
+#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__) && !defined(__vita__)
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
@@ -1243,8 +1243,9 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
-
+#ifndef __vita__
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#endif
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
@@ -1265,8 +1266,9 @@ void UpdatePaletteTexture(GLenum texture_slot)
 	}
 	else
 		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
-
+#ifndef __vita__
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#endif
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
 	glCheck();
 
