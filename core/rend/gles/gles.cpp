@@ -29,7 +29,238 @@
 #endif
 
 //Fragment and vertex shaders code
+#ifdef __vita__
+const char* ShaderCompatSource = R"(
+#define GLES2 0
+#define GLES3 1
+#define GL2 2
+#define GL3 3
+#define FOG_CHANNEL a
+)";
 
+const char *VertexCompatShader = R"(
+)";
+
+const char *PixelCompatShader = R"(
+)";
+
+const char* GouraudSource = R"(
+	#define INTERPOLATION
+)";
+
+static const char* VertexShaderSource = R"(
+/* Vertex constants*/ 
+uniform float4 depth_scale;
+uniform float4x4 ndcMat;
+uniform float sp_FOG_DENSITY;
+
+void main(
+	float4 in_pos,
+	float4 in_base,
+	float4 in_offs,
+	float2 in_uv,
+	float4 out vtx_base : TEXCOORD0,
+	float4 out vtx_offs : TEXCOORD1,
+	float3 out vtx_uv : TEXCOORD2,
+	float4 out gl_Position : POSITION
+) {
+	float4 vpos = mul(in_pos, ndcMat);
+	vtx_base = in_base;
+	vtx_offs = in_offs;
+	vtx_uv = float3(in_uv, vpos.z * sp_FOG_DENSITY);
+	vpos.w = 1.0 / vpos.z;
+	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
+	vpos.xy *= vpos.w;
+	gl_Position = vpos;
+}
+)";
+
+const char* PixelPipelineShader = R"(
+#define PI 3.1415926
+
+/* Shader program params*/
+/* gles has no alpha test stage, so its emulated on the shader */
+uniform float cp_AlphaTestValue;
+uniform float4 pp_ClipTest;
+uniform float3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
+uniform float sp_FOG_DENSITY;
+uniform sampler2D tex,fog_table;
+uniform float trilinear_alpha;
+uniform float4 fog_clamp_min;
+uniform float4 fog_clamp_max;
+#if pp_Palette == 1
+uniform sampler2D palette;
+uniform int palette_index;
+#endif
+
+float fog_mode2(float w, float3 vtx_uv)
+{
+	float z = clamp(vtx_uv.z, 1.0, 255.9999);
+	float exp = floor(log2(z));
+	float m = z * 16.0 / pow(2.0, exp) - 16.0;
+	float idx = floor(m) + exp * 16.0 + 0.5;
+	float4 fog_coef = tex2D(fog_table, float2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
+	return fog_coef.FOG_CHANNEL;
+}
+
+float4 fog_clamp(float4 col)
+{
+#if FogClamping == 1
+	return clamp(col, fog_clamp_min, fog_clamp_max);
+#else
+	return col;
+#endif
+}
+
+#if pp_Palette == 1
+
+float4 palettePixel(float3 coords)
+{
+	int color_idx = int(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+    float2 c = float2((fmod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
+	return tex2D(palette, c);
+}
+
+#endif
+
+#define depth gl_FragCoord.w
+
+float4 main(
+	float4 vtx_base : TEXCOORD0,
+	float4 vtx_offs : TEXCOORD1,
+	float3 vtx_uv : TEXCOORD2,
+	float4 gl_FragCoord : WPOS
+) {
+	// Clip inside the box
+	#if pp_ClipInside == 1
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
+			discard;
+	#endif
+	
+	float4 color = vtx_base;
+	float4 offset = vtx_offs;
+	#if pp_Gouraud == 1 && TARGET_GL != GLES2 && DIV_POS_Z != 1
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
+	#if pp_UseAlpha==0
+		color.a=1.0;
+	#endif
+	#if pp_FogCtrl==3
+		color = float4(sp_FOG_COL_RAM.rgb, fog_mode2(depth, vtx_uv));
+	#endif
+	#if pp_Texture==1
+	{
+		#if pp_Palette == 0
+			float4 texcol = tex2D(tex, vtx_uv.xy);
+		#else
+			float4 texcol = palettePixel(vtx_uv);
+		#endif
+		
+		#if pp_BumpMap == 1
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
+			texcol.rgb = float3(1.0, 1.0, 1.0);	
+		#else
+			#if pp_IgnoreTexA==1
+				texcol.a=1.0;	
+			#endif
+			
+			#if cp_AlphaTest == 1
+				if (cp_AlphaTestValue > texcol.a)
+					discard;
+				texcol.a = 1.0;
+			#endif 
+		#endif
+		#if pp_ShadInstr==0
+		{
+			color=texcol;
+		}
+		#endif
+		#if pp_ShadInstr==1
+		{
+			color.rgb*=texcol.rgb;
+			color.a=texcol.a;
+		}
+		#endif
+		#if pp_ShadInstr==2
+		{
+			color.rgb=lerp(color.rgb,texcol.rgb,texcol.a);
+		}
+		#endif
+		#if  pp_ShadInstr==3
+		{
+			color*=texcol;
+		}
+		#endif
+		
+		#if pp_Offset==1 && pp_BumpMap == 0
+			color.rgb += offset.rgb;
+		#endif
+	}
+	#endif
+	
+	color = fog_clamp(color);
+	
+	#if pp_FogCtrl == 0
+		color.rgb = lerp(color.rgb, sp_FOG_COL_RAM.rgb, fog_mode2(depth, vtx_uv)); 
+	#endif
+	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0
+		color.rgb = lerp(color.rgb, sp_FOG_COL_VERT.rgb, offset.a);
+	#endif
+	
+	#if pp_TriLinear == 1
+	color *= trilinear_alpha;
+	#endif
+	
+	//color.rgb = float3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
+	return color;
+}
+)";
+
+static const char* ModifierVolumeShader = R"(
+uniform float sp_ShaderColor;
+
+
+float4 main() {
+	return float4(0.0, 0.0, 0.0, sp_ShaderColor);
+}
+)";
+
+const char* OSD_VertexShader = R"(
+uniform float4      scale;
+
+void main(
+	float4 in_pos,
+	float4 in_base,
+	float2 in_uv,
+	float4 out vtx_base : TEXCOORD0,
+	float2 out vtx_uv : TEXCOORD1,
+	float4 out gl_Position : POSITION
+) {
+	vtx_base = in_base;
+	vtx_uv = in_uv;
+	float4 vpos = in_pos;
+	
+	vpos.w = 1.0;
+	vpos.z = vpos.w;
+	vpos.xy = vpos.xy * scale.xy - scale.zw; 
+	gl_Position = vpos;
+}
+)";
+
+const char* OSD_Shader = R"(
+uniform sampler2D tex;
+float4 main(
+	float4 vtx_base : TEXCOORD0,
+	float2 vtx_uv : TEXCOORD1
+) {
+	return vtx_base * tex2D(tex, vtx_uv);
+}
+)";
+#else
 const char* ShaderCompatSource = R"(
 #define GLES2 0 							
 #define GLES3 1 							
@@ -355,7 +586,7 @@ void main()
 	gl_FragColor = vtx_base * texture(tex, vtx_uv);
 }
 )";
-
+#endif
 GLCache glcache;
 gl_ctx gl;
 
