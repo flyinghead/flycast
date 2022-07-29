@@ -121,7 +121,10 @@ void common_linux_setup();
 // If no folder exists, $HOME/.config/flycast is created and used.
 std::string find_user_config_dir()
 {
-#ifdef __SWITCH__
+#ifdef __vita__
+	flycast::mkdir("ux0:data/flycast", 0777);
+	return "ux0:data/flycast/";
+#elif defined(__SWITCH__)
 	flycast::mkdir("/flycast", 0755);
 	return "/flycast/";
 #else
@@ -175,7 +178,10 @@ std::string find_user_config_dir()
 // If no folder exists, $HOME/.local/share/flycast is created and used.
 std::string find_user_data_dir()
 {
-#ifdef __SWITCH__
+#ifdef __vita__
+	flycast::mkdir("ux0:data/flycast/data", 0777);
+	return "ux0:data/flycast/data/";
+#elif defined(__SWITCH__)
 	flycast::mkdir("/flycast/data", 0755);
 	return "/flycast/data/";
 #else
@@ -255,6 +261,8 @@ std::vector<std::string> find_system_config_dirs()
 
 #ifdef __SWITCH__
 	dirs.push_back("/flycast/");
+#elif defined(__vita__)
+	dirs.push_back("ux0:data/flycast/");
 #else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -316,6 +324,8 @@ std::vector<std::string> find_system_data_dirs()
 
 #ifdef __SWITCH__
 	dirs.push_back("/flycast/data/");
+#elif defined(__vita__)
+	dirs.push_back("ux0:data/flycast/data/");
 #else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
