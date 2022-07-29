@@ -15,12 +15,25 @@
 #include "stdclass.h"
 #include "serialize.h"
 
+#ifdef __vita__
+#include <vitasdk.h
+SceUID vm_memblock;
+void *sh4_ptr;
+void *arm_ptr;
+#endif
+
 int flycast_init(int argc, char* argv[])
 {
 #if defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
 	settings.aica.muteAudio = true;
+#endif
+#ifdef __vita__
+	vm_memblock = sceKernelAllocMemBlockForVM("code", 10 * 1024 * 1024 + 1024 * 1024 + 4 * 1024 * 1024);
+	sceKernelGetMemBlockBase(vm_memblock, (void**)&arm_ptr);
+	sh4_ptr = (uint8_t*)arm_ptr + 1024 * 1024;
+	sceKernelOpenVMDomain();
 #endif
 	if (!_vmem_reserve())
 	{

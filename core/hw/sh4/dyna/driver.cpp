@@ -19,8 +19,9 @@
 #include <xxhash.h>
 
 #if FEAT_SHREC != DYNAREC_NONE
-
-#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+#ifdef __vita__
+extern void *sh4_ptr;
+#elif defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *SH4_TCB;
 #else
 static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
@@ -397,11 +398,15 @@ static void recSh4_Init()
 	}
 
 	// Prepare some pointer to the pre-allocated code cache:
+	#ifndef __vita__
 	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
+	#endif
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = NULL;
-	#ifdef FEAT_NO_RWX_PAGES
+	#ifdef __vita__
+	CodeCache = sh4_ptr;
+	#elif defined(FEAT_NO_RWX_PAGES)
 	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
 	#else
 	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache));
