@@ -18,6 +18,32 @@
 */
 #include "gles.h"
 
+#ifdef __vita__
+static const char* VertexShader = R"(
+void main(
+	float3 in_pos,
+	float2 in_uv,
+	float2 out vtx_uv : TEXCOORD0,
+	float4 out gl_Position : POSITION
+) {
+	vtx_uv = in_uv;
+#if ROTATE == 1
+	gl_Position = float4(-in_pos.y, in_pos.x, in_pos.z, 1.0);
+#else
+	gl_Position = float4(in_pos, 1.0);
+#endif
+}
+)";
+
+static const char* FragmentShader = R"(
+uniform sampler2D tex;
+
+float4 main(float2 vtx_uv : TEXCOORD0)
+{
+	gl_FragColor = tex2D(tex, vtx_uv);
+}
+)";
+#else
 static const char* VertexShader = R"(
 in highp vec3 in_pos;
 in mediump vec2 in_uv;
@@ -44,7 +70,7 @@ void main()
 	gl_FragColor = texture(tex, vtx_uv);
 }
 )";
-
+#endif
 static GLuint shader;
 static GLuint rot90shader;
 static GLuint quadVertexArray;
