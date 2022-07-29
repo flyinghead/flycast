@@ -15,6 +15,11 @@
 #include <csignal>
 #include <unistd.h>
 
+#ifdef __vita__
+#include <vitasdk.h>
+#include <vitaGL.h>
+#endif
+
 #if defined(__SWITCH__)
 #include "nswitch.h"
 #endif
@@ -406,6 +411,10 @@ int main(int argc, char* argv[])
 
 	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
+	
+#ifdef __vita__
+	vglInitExtended(0, 960, 544, 12 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+#endif
 
 	mainui_loop();
 

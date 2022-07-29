@@ -385,7 +385,7 @@ extern "C" {
 extern SceUID vm_memblock;
 static void CacheFlush(void* code, void* pEnd)
 {
-    sceKernelSyncVMDomain(vm_memblock, code, (u8*)pEnd - (u8*)code + 1);
+	sceKernelSyncVMDomain(vm_memblock, code, (u8*)pEnd - (u8*)code + 1);
 }
 
 #elif defined(__APPLE__)
