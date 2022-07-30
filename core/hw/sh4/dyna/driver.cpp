@@ -405,7 +405,7 @@ static void recSh4_Init()
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = NULL;
 	#ifdef __vita__
-	CodeCache = sh4_ptr;
+	CodeCache = (u8 *)sh4_ptr;
 	#elif defined(FEAT_NO_RWX_PAGES)
 	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
 	#else

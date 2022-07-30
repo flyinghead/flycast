@@ -404,7 +404,7 @@ void recompile()
 #ifndef __vita__
 	DSPAssembler assembler(DynCode, CodeSize);
 #else
-	DSPAssembler assembler(aica_ptr, CodeSize);
+	DSPAssembler assembler((u8 *)aica_ptr, CodeSize);
 #endif
 	assembler.compile(&state);
 	JITWriteProtect(true);

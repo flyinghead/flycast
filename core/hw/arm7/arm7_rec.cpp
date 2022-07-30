@@ -674,7 +674,7 @@ void flush()
 void init()
 {
 #ifdef __vita__
-	ICache = arm_ptr;
+	ICache = (u8 *)arm_ptr;
 #elif defined(FEAT_NO_RWX_PAGES)
 	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
 #else
