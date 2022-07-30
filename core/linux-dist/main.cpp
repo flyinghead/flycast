@@ -423,7 +423,7 @@ int main(int argc, char* argv[])
 		die("Flycast initialization failed\n");
 	
 #ifdef __vita__
-	vglInitExtended(0, 960, 544, 12 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+	vglInitWithCustomThreshold(0, 960, 544, 12 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 #endif
 
 	mainui_loop();

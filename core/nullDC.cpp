@@ -16,10 +16,11 @@
 #include "serialize.h"
 
 #ifdef __vita__
-#include <vitasdk.h
+#include <vitasdk.h>
 SceUID vm_memblock;
 void *sh4_ptr;
 void *arm_ptr;
+void *aica_ptr;
 #endif
 
 int flycast_init(int argc, char* argv[])

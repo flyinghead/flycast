@@ -401,7 +401,11 @@ private:
 void recompile()
 {
 	JITWriteProtect(false);
+#ifndef __vita__
 	DSPAssembler assembler(DynCode, CodeSize);
+#else
+	DSPAssembler assembler(aica_ptr, CodeSize);
+#endif
 	assembler.compile(&state);
 	JITWriteProtect(true);
 }
@@ -418,7 +422,11 @@ void recInit()
 
 void runStep()
 {
+#ifdef __vita__
+	((void (*)())aica_ptr)();
+#else
 	((void (*)())DynCode)();
+#endif
 }
 
 }

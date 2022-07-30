@@ -91,6 +91,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(VITA)
 	include("${VITASDK}/share/vita.cmake" REQUIRED)
+	
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
 	set(VITA_APP_NAME "Flycast")
 	set(VITA_TITLEID  "FLYCAST01")
@@ -448,7 +450,7 @@ if(NINTENDO_SWITCH AND USE_GLES)
 endif()
 
 if(VITA)
-	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub pthread)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
