@@ -148,7 +148,7 @@ char *read_name(char *reader, char *buffer, int *count)
 	return name;
 }
 
-#if !defined(_WIN32) && !defined(__SWITCH__)
+#if !defined(_WIN32) && !defined(__SWITCH__) && !defined(__vita__)
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif
@@ -197,7 +197,9 @@ bool is_local_address(u32 addr)
 
 #elif defined(__SWITCH__)
 		// TODO
-#else // !_WIN32 && !__SWITCH__
+#elif defined(__vita__)
+        // TODO
+#else // !_WIN32 && !__SWITCH__ && !__vita__
 
 		ifaddrs *myaddrs;
 		if (getifaddrs(&myaddrs) != 0)

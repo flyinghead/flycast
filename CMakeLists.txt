@@ -34,6 +34,16 @@ if(APPLE)
 	endif()
 endif()
 
+if (VITA)
+	if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+		if(DEFINED ENV{VITASDK})
+			set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+		else()
+			message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+		endif()
+	endif()
+endif()
+
 if(LIBRETRO)
     project(flycast_libretro)
 else()
@@ -79,7 +89,28 @@ endif()
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
-if(NINTENDO_SWITCH)
+if(VITA)
+	include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+	set(VITA_APP_NAME "Flycast")
+	set(VITA_TITLEID  "FLYCAST01")
+	set(VITA_VPKNAME  "Flycast")
+	set(VITA_VERSION  "01.00")
+	set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+
+	set(USE_VULKAN OFF)
+	set(USE_GLES2 ON)
+	enable_language(ASM)
+
+	add_executable(${PROJECT_NAME} core/emulator.cpp)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
+
+	# For proper fseek/ftell definition in external dependency "libchdr", doesn't impact anything else:
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __PS3__)
+
+elseif(NINTENDO_SWITCH)
     set(USE_VULKAN OFF)
     enable_language(ASM)
 
@@ -265,7 +296,7 @@ if(USE_OPENMP)
     find_package(OpenMP)
     if(OpenMP_CXX_FOUND)
         if(MINGW)
-            target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
             target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
         elseif(ANDROID)
             # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
@@ -322,7 +353,7 @@ if(NOT LIBRETRO)
 			set(SDL2_FOUND 1)
 		endif()
 
-		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+		if((APPLE OR WIN32 OR VITA) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
@@ -416,6 +447,10 @@ if(NINTENDO_SWITCH AND USE_GLES)
 	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GLESV2)
 endif()
 
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub)
+endif()
+
 if(UNIX AND NOT APPLE AND NOT ANDROID)
 	add_definitions(
 		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
@@ -490,7 +525,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
 if(NOT MINIUPNP_FOUND)
-	if(NINTENDO_SWITCH)
+	if(NINTENDO_SWITCH OR VITA)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_NO_MINIUPNPC)
 	else()
 		option(UPNPC_BUILD_SHARED "Build shared library" OFF)
@@ -507,7 +542,7 @@ if(NOT MINIUPNP_FOUND)
 	endif()
 endif()
 
-if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
+if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH OR VITA)
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
@@ -525,6 +560,26 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	add_subdirectory(core/deps/libzip)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip/lib)
 	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+endif()
+
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+			#-Wl,--whole-archive pthread -Wl,--no-whole-archive
+			stdc++
+			ScePgf_stub
+			mathneon
+			SceHid_stub
+			SceAppMgr_stub
+			SceAppUtil_stub
+			SceAudio_stub
+			SceAudioIn_stub
+			SceDisplay_stub
+			SceKernelDmacMgr_stub
+			#SceFios2_stub
+			SceCtrl_stub
+			SceGxm_stub
+			SceVshBridge_stub
+	)
 endif()
 
 if(WIN32)
@@ -1471,7 +1526,7 @@ if(NOT LIBRETRO)
             	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
             		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 		endif()
-	elseif(UNIX OR NINTENDO_SWITCH)
+	elseif(UNIX OR NINTENDO_SWITCH OR VITA)
 	    if(NOT BUILD_TESTING)
 	        target_sources(${PROJECT_NAME} PRIVATE
 	                core/linux-dist/main.cpp)
@@ -1540,10 +1595,25 @@ if(NINTENDO_SWITCH)
 	endif()
 endif()
 
+if(VITA)
+	vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE)
+	vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
+		VERSION ${VITA_VERSION}
+		NAME ${VITA_APP_NAME}
+		#FILE ${CMAKE_SOURCE_DIR}/livearea/icon0.png sce_sys/icon0.png
+		#${CMAKE_SOURCE_DIR}/livearea/default_gate.png sce_sys/livearea/contents/default_gate.png
+		#${CMAKE_SOURCE_DIR}/livearea/bg0.png sce_sys/livearea/contents/bg0.png
+		#${CMAKE_SOURCE_DIR}/livearea/template.xml sce_sys/livearea/contents/template.xml
+		#${VPK_INCLUDES}
+	)
+endif()
+
 if(IOS)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" TYPE BIN)
 elseif(NINTENDO_SWITCH AND NOT LIBRETRO)
 	install(FILES ${CMAKE_BINARY_DIR}/flycast.nro DESTINATION "${CMAKE_INSTALL_BINDIR}")
+elseif(VITA)
+	install(FILES ${CMAKE_BINARY_DIR}/${VITA_VPKNAME}.vpk DESTINATION "${CMAKE_INSTALL_BINDIR}")
 else()
 	install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()

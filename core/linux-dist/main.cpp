@@ -3,7 +3,7 @@
 #endif
 #include "types.h"
 
-#if defined(__unix__) || defined(__SWITCH__)
+#if defined(__unix__) || defined(__SWITCH__) || defined(__vita__)
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"

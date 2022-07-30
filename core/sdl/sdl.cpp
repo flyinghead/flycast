@@ -16,7 +16,7 @@
 #include "emulator.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__) && !defined(__vita__)
 #include "linux-dist/icon.h"
 #endif
 #ifdef _WIN32
@@ -539,7 +539,7 @@ bool sdl_recreate_window(u32 flags)
 	settings.display.width = windowPos.w * hdpiScaling;
 	settings.display.height = windowPos.h * hdpiScaling;
 
-#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__)
+#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__) && !defined(__vita__)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
@@ -628,7 +628,7 @@ void sdl_window_create()
 
 void sdl_window_destroy()
 {
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__vita__)
 	get_window_state();
 	cfgSaveInt("window", "left", windowPos.x);
 	cfgSaveInt("window", "top", windowPos.y);

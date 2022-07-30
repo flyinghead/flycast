@@ -32,6 +32,16 @@
 #define INET_ADDRSTRLEN sizeof(struct sockaddr_in)
 #endif
 #define SOL_TCP 6 // Shrug
+#elif defined(__vita__)
+#ifndef INADDR_NONE
+#define INADDR_NONE 0xffffffff
+#endif
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN sizeof(struct sockaddr_in)
+#endif
+#ifndef SOL_TCP
+#define SOL_TCP 6
+#endif
 #else
 #include <netinet/ip.h>
 #endif // __SWITCH__

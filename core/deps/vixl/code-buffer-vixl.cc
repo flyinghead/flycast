@@ -24,9 +24,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef __vita__
 extern "C" {
 #include <sys/mman.h>
 }
+#endif
 
 #include "code-buffer-vixl.h"
 #include "utils-vixl.h"
