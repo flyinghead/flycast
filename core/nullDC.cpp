@@ -30,9 +30,10 @@ int flycast_init(int argc, char* argv[])
 	settings.aica.muteAudio = true;
 #endif
 #ifdef __vita__
-	vm_memblock = sceKernelAllocMemBlockForVM("code", 10 * 1024 * 1024 + 1024 * 1024 + 4 * 1024 * 1024);
+	vm_memblock = sceKernelAllocMemBlockForVM("code", 10 * 1024 * 1024 + 1024 * 1024 + 4 * 1024 * 1024 + 1024 * 1024);
 	sceKernelGetMemBlockBase(vm_memblock, (void**)&arm_ptr);
-	sh4_ptr = (uint8_t*)arm_ptr + 1024 * 1024;
+	aica_ptr = (uint8_t*)arm_ptr + 1024 * 1024;
+	sh4_ptr = (uint8_t*)aica_ptr + 1024 * 1024;
 	sceKernelOpenVMDomain();
 #endif
 	if (!_vmem_reserve())
