@@ -18,6 +18,12 @@
 #ifdef __vita__
 #include <vitasdk.h>
 #include <vitaGL.h>
+#include <kubridge.h>
+int _newlib_heap_size_user = 256 * 1024 * 1024;
+SceUID vm_memblock;
+void *sh4_ptr;
+void *arm_ptr;
+void *aica_ptr;
 #endif
 
 #if defined(__SWITCH__)
@@ -407,6 +413,21 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
+#ifdef __vita__
+	SceKernelAllocMemBlockKernelOpt opt;
+	memset(&opt, 0, sizeof(SceKernelAllocMemBlockKernelOpt));
+	opt.size = sizeof(SceKernelAllocMemBlockKernelOpt);
+	opt.attr = 0x1;
+	opt.field_C = (SceUInt32)0x98000000;
+	vm_memblock = kuKernelAllocMemBlock("code", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, 16 * 1024 * 1024, &opt);
+	sceKernelGetMemBlockBase(vm_memblock, &arm_ptr);
+	aica_ptr = (uint8_t *)arm_ptr + 1024 * 1024;
+	sh4_ptr = (uint8_t *)aica_ptr + 1024 * 1024;
+	kuKernelMemProtect(arm_ptr, 16 * 1024 * 1024, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
+	printf("arm %x aica %x sh4 %x\n", arm_ptr, aica_ptr, sh4_ptr);
+	vglInitWithCustomThreshold(0, 960, 544, 8 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+#endif
+
 #if defined(USE_SDL)
 	// init video now: on rpi3 it installs a sigsegv handler(?)
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -421,10 +442,6 @@ int main(int argc, char* argv[])
 
 	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
-	
-#ifdef __vita__
-	vglInitWithCustomThreshold(0, 960, 544, 12 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
-#endif
 
 	mainui_loop();
 

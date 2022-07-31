@@ -415,9 +415,7 @@ void recompile()
 void recInit()
 {
 	u8 *pCodeBuffer;
-#ifdef __vita__
-	pCodeBuffer = (u8*)aica_ptr;
-#else
+#ifndef __vita__
 	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
 #endif
 }

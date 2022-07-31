@@ -92,6 +92,9 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(VITA)
 	include("${VITASDK}/share/vita.cmake" REQUIRED)
 
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+
 	set(VITA_APP_NAME "Flycast")
 	set(VITA_TITLEID  "FLYCAST01")
 	set(VITA_VPKNAME  "Flycast")
@@ -569,6 +572,7 @@ if(VITA)
 	target_link_libraries(${PROJECT_NAME} PRIVATE
 			-Wl,--whole-archive pthread -Wl,--no-whole-archive
 			stdc++
+			kubridge_stub
 			ScePgf_stub
 			SceHid_stub
 			SceAppMgr_stub
