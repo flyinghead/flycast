@@ -720,7 +720,9 @@ void findGLVersion()
 			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
 		GLint ranges[2];
 		GLint precision;
+#ifndef __vita__
 		glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+#endif
 		gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 	}
 	else
@@ -770,6 +772,9 @@ void findGLVersion()
 		if (anisotropicExtension)
 			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
 	}
+#endif
+#ifdef __vita__
+	gl.glsl_version_header = "";
 #endif
 	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
 	NOTICE_LOG(RENDERER, "Open GL%s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
@@ -862,9 +867,9 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 	glDeleteShader(ps);
 
 	glcache.UseProgram(program);
-
+#ifndef __vita__
 	verify(glIsProgram(program));
-
+#endif
 	return program;
 }
 
@@ -1020,8 +1025,11 @@ bool CompilePipelineShader(PipelineShader* s)
 		initN2Uniforms(s);
 
 	ShaderUniforms.Set(s);
-
+#ifdef __vita__
+	return true;
+#else
 	return glIsProgram(s->program)==GL_TRUE;
+#endif
 }
 
 static void SetupOSDVBO()
@@ -1315,8 +1323,9 @@ void OSD_DRAW(bool clear_screen)
 		else
 #endif
 			SetupOSDVBO();
-
+#ifndef __vita__
 		verify(glIsProgram(gl.OSD_SHADER.program));
+#endif
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		float scale_h = settings.display.height / 480.f;

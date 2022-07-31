@@ -25,6 +25,10 @@
 #include "aica_if.h"
 #include "hw/mem/_vmem.h"
 #include <aarch32/macro-assembler-aarch32.h>
+#if defined(__vita__)
+extern void *aica_ptr;
+#endif
+
 using namespace vixl::aarch32;
 
 namespace dsp
@@ -34,9 +38,7 @@ constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
 
 #if defined(__unix__)
 alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
-#elif defined(__vita__)
-extern void *aica_ptr;
-#else
+#elif !defined(__vita__)
 #error "Unsupported platform for arm32 DSP dynarec"
 #endif
 

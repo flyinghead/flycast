@@ -88,7 +88,7 @@ static GL3WglProc get_proc(const char *proc)
 	*(void **)(&res) = dlsym(libgl, proc);
 	return res;
 }
-#elif defined(__ANDROID__) || defined(__SWITCH__)
+#elif defined(__ANDROID__) || defined(__SWITCH__) || defined(__vita__)
 #ifdef __ANDROID__
 #include <dlfcn.h>
 #endif
@@ -145,6 +145,7 @@ static struct {
 
 static int parse_version(void)
 {
+#ifndef __vita__
 	if (!glGetIntegerv)
 		return GL3W_ERROR_INIT;
 
@@ -153,6 +154,7 @@ static int parse_version(void)
 
 	if (version.major < 3)
 		return GL3W_ERROR_OPENGL_VERSION;
+#endif
 	return GL3W_OK;
 }
 
@@ -178,11 +180,15 @@ int gl3wInit2(GL3WGetProcAddressProc proc)
 
 int gl3wIsSupported(int major, int minor)
 {
+#ifdef __vita__
+	return 1;
+#else
 	if (major < 3)
 		return 0;
 	if (version.major == major)
 		return version.minor >= minor;
 	return version.major >= major;
+#endif
 }
 
 GL3WglProc gl3wGetProcAddress(const char *proc)

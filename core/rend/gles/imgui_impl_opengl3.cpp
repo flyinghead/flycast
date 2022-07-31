@@ -319,7 +319,7 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     // Parse GLSL version string
     int glsl_version = 130;
 #ifdef __vita__
-	    const GLchar* vertex_shader_glsl_120 = "";
+	const GLchar* vertex_shader_glsl_120 = "";
 
     const GLchar* vertex_shader_glsl_130 =
         "uniform float4x4 ProjMtx;\n"
@@ -329,7 +329,7 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
         "float4 Color,\n"
         "float2 out Frag_UV : TEXCOORD0,\n"
         "float4 out Frag_Color : COLOR,\n"
-		"float4 out gl_Position : 	POSITION,\n"
+		"float4 out gl_Position : 	POSITION\n"
 		") {\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
@@ -343,12 +343,12 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     const GLchar* fragment_shader_glsl_120 = "";
 
     const GLchar* fragment_shader_glsl_130 =
-        "uniform sampler2D Texture;\n"
+        "uniform sampler2D tex;\n"
         "float4 main(\n"
 		"float2 Frag_UV : TEXCOORD0,\n"
-		"float4 Frag_Color : COLOR,\n"
+		"float4 Frag_Color : COLOR\n"
 		") {\n"
-        "    return Frag_Color * tex2D(Texture, Frag_UV);\n"
+        "    return Frag_Color * tex2D(tex, Frag_UV);\n"
         "}\n";
 
     const GLchar* fragment_shader_glsl_300_es = "";
@@ -498,8 +498,11 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     glAttachShader(g_ShaderHandle, g_FragHandle);
     glLinkProgram(g_ShaderHandle);
     CheckProgram(g_ShaderHandle, "shader program");
-
+#ifdef __vita__
+	g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "tex");
+#else
     g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
+#endif
     g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
     g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
     g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");

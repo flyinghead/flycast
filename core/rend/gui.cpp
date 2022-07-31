@@ -138,7 +138,7 @@ void gui_initFonts()
 
 	verify(inited);
 
-#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+#if !defined(TARGET_UWP) && !defined(__SWITCH__) && !defined(__vita__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)

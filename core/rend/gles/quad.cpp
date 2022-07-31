@@ -40,7 +40,7 @@ uniform sampler2D tex;
 
 float4 main(float2 vtx_uv : TEXCOORD0)
 {
-	gl_FragColor = tex2D(tex, vtx_uv);
+	return tex2D(tex, vtx_uv);
 }
 )";
 #else

@@ -91,8 +91,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(VITA)
 	include("${VITASDK}/share/vita.cmake" REQUIRED)
-	
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 	set(VITA_APP_NAME "Flycast")
 	set(VITA_TITLEID  "FLYCAST01")
@@ -108,6 +106,7 @@ if(VITA)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 
 	# For proper fseek/ftell definition in external dependency "libchdr", doesn't impact anything else:
 	target_compile_definitions(${PROJECT_NAME} PRIVATE __PS3__)
@@ -182,9 +181,11 @@ if(WINDOWS_STORE)
 else()
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 endif()
+if(NOT VITA)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
+endif()
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 	if(WINDOWS_STORE)
@@ -450,7 +451,7 @@ if(NINTENDO_SWITCH AND USE_GLES)
 endif()
 
 if(VITA)
-	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub -Wl,--whole-archive pthread -Wl,--no-whole-archive)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
@@ -566,10 +567,9 @@ endif()
 
 if(VITA)
 	target_link_libraries(${PROJECT_NAME} PRIVATE
-			#-Wl,--whole-archive pthread -Wl,--no-whole-archive
+			-Wl,--whole-archive pthread -Wl,--no-whole-archive
 			stdc++
 			ScePgf_stub
-			mathneon
 			SceHid_stub
 			SceAppMgr_stub
 			SceAppUtil_stub
@@ -577,7 +577,7 @@ if(VITA)
 			SceAudioIn_stub
 			SceDisplay_stub
 			SceKernelDmacMgr_stub
-			#SceFios2_stub
+			SceIme_stub
 			SceCtrl_stub
 			SceGxm_stub
 			SceVshBridge_stub

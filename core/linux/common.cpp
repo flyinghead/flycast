@@ -131,7 +131,9 @@ double os_GetSeconds()
 #if !defined(__unix__) && !defined(LIBRETRO)
 void os_DebugBreak()
 {
+#ifndef __vita__
 	__builtin_trap();
+#endif
 }
 #endif
 
@@ -188,8 +190,9 @@ void common_linux_setup()
 	enable_runfast();
 	os_InstallFaultHandler();
 	signal(SIGINT, exit);
-	
+#ifndef __vita__
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }
 #endif
