@@ -19,8 +19,7 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <kubridge.h>
-int _newlib_heap_size_user = 256 * 1024 * 1024;
-extern SceUID vm_memblock;
+int _newlib_heap_size_user = 300 * 1024 * 1024;
 void *sh4_ptr;
 void *arm_ptr;
 void *aica_ptr;
@@ -414,11 +413,11 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
 #ifdef __vita__
-	arm_ptr = memalign(4096, 1024 * 1024);
-	aica_ptr = memalign(4096, 4 * 1024 * 1024);
+	arm_ptr = memalign(4096, 4 * 1024 * 1024);
+	aica_ptr = memalign(4096, 4096 * 8);
 	sh4_ptr = memalign(4096, 11 * 1024 * 1024 + 4096);
-	kuKernelMemProtect(arm_ptr, 1024 * 1024, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
-	kuKernelMemProtect(aica_ptr, 4 * 1024 * 1024, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
+	kuKernelMemProtect(arm_ptr, 4 * 1024 * 1024, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
+	kuKernelMemProtect(aica_ptr, 4096 * 8, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
 	kuKernelMemProtect(sh4_ptr, 11 * 1024 * 1024 + 4096, KU_KERNEL_PROT_EXEC | KU_KERNEL_PROT_WRITE | KU_KERNEL_PROT_READ);
 	printf("arm %x aica %x sh4 %x\n", arm_ptr, aica_ptr, sh4_ptr);
 	vglInitWithCustomThreshold(0, 960, 544, 8 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
