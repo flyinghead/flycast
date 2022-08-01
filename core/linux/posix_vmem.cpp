@@ -394,15 +394,10 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 #elif HOST_CPU == CPU_ARM
 
 #if defined(__vita__)
-typedef unsigned int SceSize;
-typedef int SceUID;
-extern "C" {
-	int sceKernelSyncVMDomain(SceUID uid, void *data, SceSize size);
-};
-extern SceUID vm_memblock;
+#include <kubridge.h>
 static void CacheFlush(void* code, void* pEnd)
 {
-	sceKernelSyncVMDomain(vm_memblock, code, (u8*)pEnd - (u8*)code + 1);
+	kuKernelFlushCaches(code, (u8*)pEnd - (u8*)code + 1);
 }
 
 #elif defined(__APPLE__)
