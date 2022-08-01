@@ -105,7 +105,7 @@ if(VITA)
 	set(USE_GLES2 ON)
 	enable_language(ASM)
 
-	add_executable(${PROJECT_NAME} core/emulator.cpp)
+	add_executable(${PROJECT_NAME} core/emulator.cpp core/vita/sbrk.c)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
