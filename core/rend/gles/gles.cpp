@@ -96,9 +96,9 @@ uniform int palette_index;
 float fog_mode2(float w, float3 vtx_uv)
 {
 	float z = clamp(vtx_uv.z, 1.0, 255.9999);
-	float exp = floor(log2(z));
-	float m = z * 16.0 / pow(2.0, exp) - 16.0;
-	float idx = floor(m) + exp * 16.0 + 0.5;
+	float _exp = floor(log2(z));
+	float m = z * 16.0 / pow(2.0, _exp) - 16.0;
+	float idx = floor(m) + _exp * 16.0 + 0.5;
 	float4 fog_coef = tex2D(fog_table, float2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
 	return fog_coef.FOG_CHANNEL;
 }
