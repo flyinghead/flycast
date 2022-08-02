@@ -44,6 +44,9 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 static bool game_started;
 
@@ -373,6 +376,15 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
+
+	if (io.WantTextInput && !SDL_IsTextInputActive())
+	{
+		SDL_StartTextInput();
+	}
+	else if (!io.WantTextInput && SDL_IsTextInputActive())
+	{
+		SDL_StopTextInput();
+	}
 }
 
 static void delayedKeysUp()
