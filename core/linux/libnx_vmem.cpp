@@ -123,7 +123,7 @@ static mem_handle_t allocate_shared_filemem(unsigned size)
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 	return MemTypeError;
 #if 0

@@ -21,6 +21,7 @@
 #include "gui.h"
 #include "imgui/imgui.h"
 #include "network/ggpo.h"
+#include <chrono>
 
 class Chat
 {
@@ -34,6 +35,10 @@ class Chat
 	const ImVec4 WHITE { 1, 1, 1, 1 };
 	const ImVec4 YELLOW { 1, 1, 0, 1 };
 
+	bool manual_open = false;
+	bool enable_timeout = false;
+	std::chrono::steady_clock::time_point launch_time;
+
 	std::string playerName(bool remote)
 	{
 		if (remote)
@@ -43,6 +48,15 @@ class Chat
 	}
 
 public:
+	void toggle_timeout()
+	{
+		if (config::GGPOChatTimeoutToggle && !manual_open)
+		{
+			enable_timeout = true;
+			launch_time = std::chrono::steady_clock::now();
+		}
+	}
+
 	void reset()
 	{
 		visible = false;
@@ -51,18 +65,29 @@ public:
 
 	void display()
 	{
+		auto timeout = std::chrono::seconds(config::GGPOChatTimeout.get());
+
+		if (enable_timeout &&
+			std::chrono::steady_clock::now() - launch_time > timeout)
+		{
+			visible = false;
+			enable_timeout = false;
+			manual_open = false;
+		}
+
 		if (!visible)
 			return;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-		ImGui::SetNextWindowPos(ImVec2((settings.display.width - 400 * scaling) / 2, settings.display.height - 220 * scaling), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(400 * scaling, 220 * scaling), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2, settings.display.height) - ScaledVec2(200.f, 220.f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ScaledVec2(400, 220), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.7f);
 		ImGui::SetNextWindowFocus();
 		if (ImGui::Begin("Chat", &visible, ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::BeginChild(ImGui::GetID("log"), ImVec2(0, -ImGui::GetStyle().ItemSpacing.x - ImGui::GetFontSize() - ImGui::GetStyle().FramePadding.x * 2), true);
+			ImGui::BeginChild(ImGui::GetID("log"), ImVec2(0, -ImGui::GetStyle().ItemSpacing.x - ImGui::GetFontSize() - ImGui::GetStyle().FramePadding.x * 2),
+					true, ImGuiWindowFlags_DragScrolling);
 			ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
 			for (const auto& p : lines)
 				ImGui::TextColored(p.first, "%s", p.second.c_str());
@@ -84,6 +109,7 @@ public:
 					lines.push_back(std::make_pair(WHITE, line));
 					buf[0] = '\0';
 					newMessage = true;
+					enable_timeout = false;
 				}
 				ImGui::SetKeyboardFocusHere(-1);
 			}
@@ -100,17 +126,22 @@ public:
 
 	void receive(int playerNum, const std::string& msg)
 	{
-		if (config::GGPOChat)
+		if (config::GGPOChat && !visible)
+		{
 			visible = true;
+			toggle_timeout();
+		}
 		std::string line = "<" + playerName(true) + "> " + msg;
 		lines.push_back(std::make_pair(YELLOW, line));
 		newMessage = true;
 	}
 
-	void toggle()
+	void toggle(bool manual = false)
 	{
 		visible = !visible;
 		focus = visible;
+		if (manual)
+			manual_open = manual;
 	}
 
 	void setLocalPlayerName(const std::string& name) {

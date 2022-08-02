@@ -66,7 +66,7 @@ void maple_vblank()
 			maple_ddt_pending_reset = false;
 		}
 	}
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		maple_handle_reconnect();
 }
 

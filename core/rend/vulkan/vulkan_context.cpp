@@ -279,7 +279,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 void VulkanContext::InitImgui()
 {
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
-	gui_init();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
 	initInfo.Instance = (VkInstance)*instance;
 	initInfo.PhysicalDevice = (VkPhysicalDevice)physicalDevice;
@@ -431,19 +430,19 @@ bool VulkanContext::InitDevice()
         vk::DescriptorPoolSize pool_sizes[] =
         {
             { vk::DescriptorType::eSampler, 2 },
-            { vk::DescriptorType::eCombinedImageSampler, 15000 },
+            { vk::DescriptorType::eCombinedImageSampler, 40000 },
             { vk::DescriptorType::eSampledImage, 2 },
             { vk::DescriptorType::eStorageImage, 12 },
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-            { vk::DescriptorType::eUniformBuffer, 36 },
-            { vk::DescriptorType::eStorageBuffer, 36 },
+            { vk::DescriptorType::eUniformBuffer, 80000 },
+            { vk::DescriptorType::eStorageBuffer, 100 },
             { vk::DescriptorType::eUniformBufferDynamic, 2 },
             { vk::DescriptorType::eStorageBufferDynamic, 2 },
-            { vk::DescriptorType::eInputAttachment, 36 }
+            { vk::DescriptorType::eInputAttachment, 100 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
+	    		40000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 
 	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
@@ -459,9 +458,15 @@ bool VulkanContext::InitDevice()
 	    	if (std::fread(cacheData, 1, cacheSize, f) != cacheSize)
 	    		cacheSize = 0;
 	    	std::fclose(f);
-    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+	    	try {
+	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+	    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
+	    	}
+	    	catch (const vk::SystemError& err) {
+	    		WARN_LOG(RENDERER, "Error loading pipeline cache: %s", err.what());
+	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
+	    	}
     		delete [] cacheData;
-    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
@@ -719,7 +724,7 @@ bool VulkanContext::init()
     settings.display.pointScale = (float)settings.display.width / w;
 	float hdpi, vdpi;
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWin), nullptr, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
+		settings.display.dpi = roundf(std::max(hdpi, vdpi));
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -854,9 +859,9 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
-		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 	else
-		quadDrawer->Draw(commandBuffer, imageView, vtx);
+		quadDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 }
 
 void VulkanContext::WaitIdle() const
@@ -913,7 +918,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			if (lastFrameView) // Might have been nullified if swap chain recreated
 				DrawFrame(imageView, extent);
 
-			DrawOverlay(gui_get_scaling(), config::FloatVMUs, true);
+			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
 		} catch (const InvalidVulkanContext& err) {
@@ -935,8 +940,6 @@ void VulkanContext::term()
 		return;
 	WaitIdle();
 	imguiDriver.reset();
-	ImGui_ImplVulkan_Shutdown();
-	gui_term();
 	if (device && pipelineCache)
     {
         std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
@@ -1102,7 +1105,7 @@ void VulkanContext::DoSwapAutomation()
 			device->unmapMemory(*deviceMemory);
 		}
 		dc_exit();
-		Term();
+		flycast_term();
 		exit(0);
 	}
 #endif
@@ -1176,7 +1179,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
 			vmuCmdBuffer = context->PrepareOverlay(true, false);
 			context->BeginRenderPass();
 			context->PresentLastFrame();
-			context->DrawOverlay(gui_get_scaling(), true, false);
+			context->DrawOverlay(settings.display.uiScale, true, false);
 		}
 		// Record Imgui Draw Data and draw funcs into command buffer
 		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());

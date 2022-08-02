@@ -164,8 +164,9 @@ public class VirtualJoystickDelegate {
 
     public boolean onTouchEvent(MotionEvent event, int width, int height)
     {
-        if (event.getSource() != InputDevice.SOURCE_TOUCHSCREEN)
-            // Ignore real mice, trackballs, etc.
+        // The Retroid Pocket 2+ is using a non-standard source
+        if (event.getSource() != InputDevice.SOURCE_TOUCHSCREEN && event.getSource() != 0x5002)
+        	// Ignore real mice, trackballs, etc.
             return false;
         JNIdc.show_osd();
         this.handler.removeCallbacks(hideOsdRunnable);

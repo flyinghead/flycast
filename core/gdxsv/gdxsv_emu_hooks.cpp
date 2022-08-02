@@ -69,21 +69,21 @@ void gdxsv_update_popup() {
         gdxsv_update_available = false;
     }
     if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
         ImGui::TextWrapped("  %s is available for download!  ", gdxsv_latest_version_tag.c_str());
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
         float currentwidth = ImGui::GetContentRegionAvail().x;
         ImGui::SetCursorPosX(
-                (currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-        if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f))) {
+                (currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * settings.display.uiScale);
+        if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
             gdxsv_update_available = false;
             os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         ImGui::SetCursorPosX(
-                (currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f))) {
+                (currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * settings.display.uiScale);
+        if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
             gdxsv_update_available = false;
             ImGui::CloseCurrentPopup();
         }

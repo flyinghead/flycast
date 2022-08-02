@@ -55,6 +55,8 @@ void UpdateInputState() {
 
 void os_SetupInput() {
 }
+void os_TermInput() {
+}
 
 std::string os_Locale(){
     return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];

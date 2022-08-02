@@ -81,9 +81,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_getVirtual
     return (jint)config::VirtualGamepadVibration;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env, jobject obj, jint screenDpi)
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenCharacteristics(JNIEnv *env, jobject obj, jfloat screenDpi, jfloat refreshRate)
 {
-    screen_dpi = screenDpi;
+	settings.display.dpi = screenDpi;
+	settings.display.refreshRate = refreshRate;
 }
 
 std::shared_ptr<AndroidMouse> mouse;
@@ -128,6 +129,9 @@ void UpdateInputState()
 void common_linux_setup();
 
 void os_SetupInput()
+{
+}
+void os_TermInput()
 {
 }
 
@@ -216,11 +220,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
     	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
         int rc = flycast_init(0, NULL);
-        if (rc == -4)
-            msg = env->NewStringUTF("Cannot find configuration");
-        else if (rc == 69)
-            msg = env->NewStringUTF("Invalid command line");
-        else if (rc == -1)
+        if (rc == -1)
             msg = env->NewStringUTF("Memory initialization failed");
         return msg;
     }
@@ -659,4 +659,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons
     jbyte* b = env->GetByteArrayElements(data, &isCopy);
     memcpy(DefaultOSDButtons.data(), b, len);
     env->ReleaseByteArrayElements(data, b, JNI_ABORT);
+}
+
+void enableNetworkBroadcast(bool enable)
+{
+    JNIEnv *env = jvm_attacher.getEnv();
+    jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
+    env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
 }

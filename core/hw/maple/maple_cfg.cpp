@@ -71,7 +71,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
 	const MapleInputState& inputState = mapleInputState[playerNum()];
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		pjs->kcode = inputState.kcode;
 		pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
@@ -79,7 +79,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
 		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
 	}
-	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.isAtomiswave())
 	{
 #ifdef LIBRETRO
 		pjs->kcode = inputState.kcode;
@@ -209,7 +209,6 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 
 static void createNaomiDevices()
 {
-	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
 	{
@@ -229,7 +228,6 @@ static void createNaomiDevices()
 
 static void createAtomiswaveDevices()
 {
-	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
@@ -347,6 +345,7 @@ void mcfg_CreateDevices()
 		createDreamcastDevices();
 		break;
 	case DC_PLATFORM_NAOMI:
+	case DC_PLATFORM_NAOMI2:
 		createNaomiDevices();
 		break;
 	case DC_PLATFORM_ATOMISWAVE:

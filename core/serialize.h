@@ -41,25 +41,30 @@ public:
 		VLAST_LIBRETRO = V13_LIBRETRO,
 
 		V5 = 800,
-		V6 = 801,
-		V7 = 802,
-		V8 = 803,
-		V9 = 804,
-		V10 = 805,
-		V11 = 806,
-		V12 = 807,
-		V13 = 808,
-		V14 = 809,
-		V15 = 810,
-		V16 = 811,
-		V17 = 812,
-		V18 = 813,
-		V19 = 814,
-		V20 = 815,
-		V21 = 816,
-		V22 = 817,
-		V23 = 818,
-		Current = V23,
+		V6,
+		V7,
+		V8,
+		V9,
+		V10,
+		V11,
+		V12,
+		V13,
+		V14,
+		V15,
+		V16,
+		V17,
+		V18,
+		V19,
+		V20,
+		V21,
+		V22,
+		V23,
+		V24,
+		V25,
+		V26,
+		V27,
+		V28,
+		Current = V28,
 
 		Next = Current + 1,
 	};
@@ -147,7 +152,7 @@ class Serializer : public SerializeBase
 {
 public:
 	Serializer()
-		: SerializeBase(std::numeric_limits<size_t>::max(), false), data(nullptr) { }
+		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
 	Serializer(void *data, size_t limit, bool rollback = false)
 		: SerializeBase(limit, rollback), data((u8 *)data)
@@ -174,7 +179,6 @@ public:
 	}
 	void skip(size_t size)
 	{
-		verify(this->_size + size <= limit);
 		if (data != nullptr)
 			data += size;
 		this->_size += size;
@@ -184,7 +188,6 @@ public:
 private:
 	void doSerialize(const void *src, size_t size)
 	{
-		verify(this->_size + size <= limit);
 		if (data != nullptr)
 		{
 			memcpy(data, src, size);

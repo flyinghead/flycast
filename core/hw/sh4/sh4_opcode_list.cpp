@@ -491,11 +491,27 @@ std::string disassemble_op(const char* tx1, u32 pc, u16 opcode)
 			}
 			else if (strcmp2(tx1,"FREG_N>"))
 			{
+				sprintf(buf,"FR%d=%f ", GetN(opcode), p_sh4rcb->cntx.xffr[16 + GetN(opcode)]);
+				regs += buf;
 				sprintf(buf,"FR%d",GetN(opcode));
 			}
 			else if (strcmp2(tx1,"FREG_M>"))
 			{
+				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.xffr[16 + GetM(opcode)]);
+				regs += buf;
 				sprintf(buf,"FR%d",GetM(opcode));
+			}
+			else if (strcmp2(tx1, "FREG_M_SD_F>"))
+			{
+				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.xffr[16 + GetM(opcode)]);
+				regs += buf;
+				sprintf(buf,"FR%d", GetM(opcode));
+			}
+			else if (strcmp2(tx1,"FREG_0>"))
+			{
+				sprintf(buf,"FR0=%f ", p_sh4rcb->cntx.xffr[16]);
+				regs += buf;
+				sprintf(buf,"FR0");
 			}
 			else if (strcmp2(tx1,"RM_BANK>"))
 			{

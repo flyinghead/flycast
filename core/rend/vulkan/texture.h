@@ -36,17 +36,32 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 class Texture final : public BaseTextureCacheData
 {
 public:
+	Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {
+		this->physicalDevice = VulkanContext::Instance()->GetPhysicalDevice();
+		this->device = VulkanContext::Instance()->GetDevice();
+	}
+	Texture(Texture&& other) : BaseTextureCacheData(std::move(other)) {
+		std::swap(format, other.format);
+		std::swap(extent, other.extent);
+		std::swap(mipmapLevels, other.mipmapLevels);
+		std::swap(needsStaging, other.needsStaging);
+		std::swap(stagingBufferData, other.stagingBufferData);
+		std::swap(commandBuffer, other.commandBuffer);
+		std::swap(allocation, other.allocation);
+		std::swap(image, other.image);
+		std::swap(imageView, other.imageView);
+		std::swap(readOnlyImageView, other.readOnlyImageView);
+		std::swap(physicalDevice, other.physicalDevice);
+		std::swap(device, other.device);
+	}
+
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
-	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
-
-	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
-	void SetDevice(vk::Device device) { this->device = device; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -84,7 +99,14 @@ public:
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		vk::Filter filter;
+		if (config::TextureFiltering == 0) {
+			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		} else if (config::TextureFiltering == 1) {
+			filter = vk::Filter::eNearest;
+		} else {
+			filter = vk::Filter::eLinear;
+		}
 		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
@@ -101,7 +123,7 @@ public:
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							vk::SamplerMipmapMode::eNearest, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
 							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();

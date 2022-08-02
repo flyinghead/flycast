@@ -82,7 +82,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "performance",
       "Performance",
-      "Configure threaded rendering, integer division optimisations and frame skip settings."
+      "Configure threaded rendering and frame skip settings."
    },
    {
       "hacks",
@@ -213,6 +213,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      "Set NAOMI Games to Free Play",
+      NULL,
+      "Modify to coin settings of the game to free play.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution",
       NULL,
@@ -325,7 +339,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
-      "Accumulation Pixel Buffer Size (Restart Required)",
+      "Accumulation Pixel Buffer Size",
       NULL,
       "Higher values might be required for higher resolutions to output correctly.",
       NULL,
@@ -338,6 +352,23 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      "Maximum Transparent Layers",
+      NULL,
+      "Higher values might be required for complex scenes.",
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
    },
 #endif
    {/* TODO: needs explanation */
@@ -400,7 +431,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_anisotropic_filtering",
       "Anisotropic Filtering",
       NULL,
-      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera.",
+      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera. Higher values are more demanding on the GPU. Changes to this setting only apply after restarting.",
       NULL,
       "video",
       {
@@ -414,10 +445,39 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      "Texture Filtering",
+      NULL,
+      "The texture filtering mode to use. This can be used to force a certain texture filtering mode on all textures to get a crisper (or smoother) appearance than Default. Values other than Default may cause various rendering issues. Changes to this setting only apply after restarting.",
+      NULL,
+      "video",
+      {
+         { "0", "Default" },
+         { "1",  "Force Nearest-Neighbor" },
+         { "2",  "Force Linear" },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
       NULL,
       "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      "Detect Frame Rate Changes",
+      NULL,
+      "Notify frontend when internal frame rate changes (e.g. from 60 fps to 30 fps). Improves frame pacing in games that run at a locked 30 fps or 20 fps, but should be disabled for games with unlocked (unstable) frame rates (e.g. Ecco the Dolphin, Unreal Tournament). Note: Unavailable when 'Auto Skip Frame' is enabled.",
       NULL,
       "video",
       {
@@ -441,7 +501,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "disabled",
    },
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       "Texture Upscaling (xBRZ)",
@@ -474,6 +534,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  "Native Depth Interpolation",
+	  NULL,
+	  "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.",
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       "Threaded Rendering",

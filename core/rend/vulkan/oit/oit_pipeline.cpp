@@ -139,7 +139,10 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(OITShaderManager::VertexShaderParams{ pp.pcw.Gouraud == 1 });
+	bool twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(
+			OITShaderManager::VertexShaderParams{ pp.pcw.Gouraud == 1, pp.isNaomi2(), pass != Pass::Depth, twoVolume, pp.pcw.Texture == 1, divPosZ });
 	OITShaderManager::FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
@@ -153,8 +156,9 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	params.texture = pp.pcw.Texture;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.pass = pass;
-	params.twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
+	params.twoVolume = twoVolume;
 	params.palette = gpuPalette;
+	params.divPosZ = divPosZ;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -346,7 +350,7 @@ void OITPipelineManager::CreateClearPipeline()
 	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
+void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -438,8 +442,8 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation });
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -464,12 +468,12 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 	  0                                           // subpass
 	);
 
-	modVolPipelines[hash(mode, cullMode)] =
+	modVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
+void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -533,8 +537,9 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(mode);
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, divPosZ });
+	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(OITShaderManager::TrModVolShaderParams{ mode, divPosZ });
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -559,7 +564,7 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
       2                                           // subpass
 	);
 
-	trModVolPipelines[hash(mode, cullMode)] =
+	trModVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }

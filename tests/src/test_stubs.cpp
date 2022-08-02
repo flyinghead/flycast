@@ -22,6 +22,9 @@ HWND getNativeHwnd()
 void os_SetupInput()
 {
 }
+void os_TermInput()
+{
+}
 
 void UpdateInputState()
 {

@@ -65,7 +65,7 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 		val >>= 1;
 	}
 	u32 arcade_key;
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.isNaomi())
 	{
 		if (pos >= ARRAY_SIZE(naomi_button_mapping))
 			return nullptr;
@@ -643,8 +643,17 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		{
+			// reverse the board order so that P1 is P1
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
+		}
+		else
+		{
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+		}
 		break;
 	case JVS::LightGun:
 		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
@@ -847,7 +856,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 	u8 channel = 0;
 	if (dma_count_in >= 3)
 	{
-		if (dma_buffer_in[1] > 31 && dma_buffer_in[1] != 0xff && dma_count_in >= 8)	// TODO what is this?
+		if (subcode != 0x13 && dma_count_in >= 8)
 		{
 			node_id = dma_buffer_in[6];
 			len = dma_buffer_in[7];
@@ -972,7 +981,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		{
 			int address = dma_buffer_in[1];
 			int size = dma_buffer_in[2];
-			DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
+			DEBUG_LOG(MAPLE, "EEprom write %08x %08x", address, size);
 			//printState(Command,buffer_in,buffer_in_len);
 			address = address % sizeof(eeprom);
 			size = std::min((int)sizeof(eeprom) - address, size);
@@ -1609,14 +1618,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						}
 						else
 						{
-							// specs:
-							//u16 x = mo_x_abs * 0xFFFF / 639;
-							//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
-							// Ninja Assault:
-							u32 xr = 0x19d - 0x37;
-							u32 yr = 0x1fe - 0x40;
-							x = mapleInputState[playerNum].absPos.x * xr / 639 + 0x37;
-							y = mapleInputState[playerNum].absPos.y * yr / 479 + 0x40;
+							x = mapleInputState[playerNum].absPos.x;
+							y = mapleInputState[playerNum].absPos.y;
 						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB

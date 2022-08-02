@@ -189,6 +189,7 @@ void dc_serialize(Serializer& ser)
 
 	register_serialize(sb_regs, ser);
 	ser << SB_ISTNRM;
+	ser << SB_ISTNRM1;
 	ser << SB_FFST_rc;
 	ser << SB_FFST;
 	ser << SB_ADST;
@@ -354,16 +355,16 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	deser.skip<u32>(); // sys_nvmem->size
 	deser.skip<u32>(); // sys_nvmem->mask
-	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isArcade())
 		sys_nvmem->Deserialize(deser);
 
 	deser.skip<u32>(); // sys_nvmem/sys_rom->size
 	deser.skip<u32>(); // sys_nvmem/sys_rom->mask
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		sys_nvmem->Deserialize(deser);
 	}
-	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.isAtomiswave())
 	{
 		deser >> static_cast<DCFlashChip*>(sys_rom)->state;
 		deser.deserialize(sys_rom->data, sys_rom->size);
@@ -578,7 +579,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	deser >> config::Cable.get();
 	deser >> config::Region.get();
 
-	if (CurrentCartridge != nullptr && (settings.platform.system != DC_PLATFORM_ATOMISWAVE || deser.version() >= Deserializer::V10_LIBRETRO))
+	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
 		CurrentCartridge->Deserialize(deser);
 	if (deser.version() >= Deserializer::V7_LIBRETRO)
 		gd_hle_state.Deserialize(deser);
@@ -636,6 +637,10 @@ void dc_deserialize(Deserializer& deser)
 
 	register_deserialize(sb_regs, deser);
 	deser >> SB_ISTNRM;
+	if (deser.version() >= Deserializer::V24)
+		deser >> SB_ISTNRM1;
+	else
+		SB_ISTNRM1 = 0;
 	deser >> SB_FFST_rc;
 	deser >> SB_FFST;
 	if (deser.version() >= Deserializer::V15)

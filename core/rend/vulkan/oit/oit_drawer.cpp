@@ -61,7 +61,6 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			},
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
-			listType == ListType_Translucent ? (int)(&poly - pvrrc.global_param_tr.head()) : 0,
 			palette_index,
 	};
 	if (twoVolumes)
@@ -77,15 +76,44 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 		pushConstants.ignore_tex_alpha1 = poly.tsp1.IgnoreTexA;
 	}
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+	if (!poly.isNaomi2())
+	{
+		OITDescriptorSets::VtxPushConstants vtxPushConstants {};
+		if (listType == ListType_Translucent) {
+			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
+			vtxPushConstants.polyNumber = (int)((&poly - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx;
+		};
+		cmdBuffer.pushConstants<OITDescriptorSets::VtxPushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex,
+				sizeof(OITDescriptorSets::PushConstants), vtxPushConstants);
+	}
 
-	bool needTexture = poly.pcw.Texture;
-	if (needTexture)
-		GetCurrentDescSet().SetTexture((Texture *)poly.texture, poly.tsp, (Texture *)poly.texture1, poly.tsp1);
+	if (poly.pcw.Texture == 1 || poly.isNaomi2())
+	{
+		vk::DeviceSize offset = 0;
+		u32 polyNumber = 0;
+		if (poly.isNaomi2())
+		{
+			switch (listType)
+			{
+			case ListType_Opaque:
+				offset = offsets.naomi2OpaqueOffset;
+				polyNumber = &poly - pvrrc.global_param_op.head();
+				break;
+			case ListType_Punch_Through:
+				offset = offsets.naomi2PunchThroughOffset;
+				polyNumber = &poly - pvrrc.global_param_pt.head();
+				break;
+			case ListType_Translucent:
+				offset = offsets.naomi2TranslucentOffset;
+				polyNumber = &poly - pvrrc.global_param_tr.head();
+				break;
+			}
+		}
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, polyNumber, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset);
+	}
 
 	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, autosort, poly, pass, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-	if (needTexture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp, (Texture *)poly.texture1, poly.tsp1);
 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
@@ -132,19 +160,23 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 		{
 			// OR'ing (open volume or quad)
 			if (Translucent)
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);
+				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());
 		}
 		else
 		{
 			// XOR'ing (closed volume)
 			if (Translucent)
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);
+				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());
 		}
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+		vk::DeviceSize uniformOffset = Translucent ? offsets.naomi2TrModVolOffset : offsets.naomi2ModVolOffset;
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, *GetMainBuffer(0)->buffer, uniformOffset);
+
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
 
 		if (mv_mode == 1 || mv_mode == 2)
@@ -155,10 +187,10 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 				vk::MemoryBarrier barrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 				cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
 						vk::DependencyFlagBits::eByRegion, barrier, nullptr, nullptr);
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
 			}
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
+				pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
 
@@ -178,57 +210,19 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
 		const OITDescriptorSets::FragmentShaderUniforms& fragmentUniforms)
 {
-	using VertexShaderUniforms = OITDescriptorSets::VertexShaderUniforms;
-	using FragmentShaderUniforms = OITDescriptorSets::FragmentShaderUniforms;
-
-	// TODO Put this logic in an allocator
-	std::vector<const void *> chunks;
-	std::vector<u32> chunkSizes;
+	BufferPacker packer;
 
 	// Vertex
-	chunks.push_back(pvrrc.verts.head());
-	chunkSizes.push_back(pvrrc.verts.bytes());
-
-	u32 padding = align(pvrrc.verts.bytes(), 4);
-	offsets.modVolOffset = pvrrc.verts.bytes() + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
+	packer.add(pvrrc.verts.head(), pvrrc.verts.bytes());
 	// Modifier Volumes
-	chunks.push_back(pvrrc.modtrig.head());
-	chunkSizes.push_back(pvrrc.modtrig.bytes());
-	padding = align(offsets.modVolOffset + pvrrc.modtrig.bytes(), 4);
-	offsets.indexOffset = offsets.modVolOffset + pvrrc.modtrig.bytes() + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
+	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 	// Index
-	chunks.push_back(pvrrc.idx.head());
-	chunkSizes.push_back(pvrrc.idx.bytes());
-
+	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
 	// Uniform buffers
-	u32 indexSize = pvrrc.idx.bytes();
-	padding = align(offsets.indexOffset + indexSize, std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
-	offsets.vertexUniformOffset = offsets.indexOffset + indexSize + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
-	chunks.push_back(&vertexUniforms);
-	chunkSizes.push_back(sizeof(vertexUniforms));
-	padding = align(offsets.vertexUniformOffset + sizeof(VertexShaderUniforms), std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
-	offsets.fragmentUniformOffset = offsets.vertexUniformOffset + sizeof(VertexShaderUniforms) + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
-	chunks.push_back(&fragmentUniforms);
-	chunkSizes.push_back(sizeof(fragmentUniforms));
+	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
+	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
 
 	// Translucent poly params
-	padding = align(offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms), std::max(4, (int)GetContext()->GetStorageBufferAlignment()));
-	offsets.polyParamsOffset = offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms) + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
 	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
 	if (pvrrc.global_param_tr.used() == 0)
 		trPolyParams.push_back(0);	// makes the validation layers happy
@@ -243,12 +237,17 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 		}
 	}
 	offsets.polyParamsSize = trPolyParams.size() * 4;
-	chunks.push_back(trPolyParams.data());
-	chunkSizes.push_back((u32)offsets.polyParamsSize);
-	u32 totalSize = (u32)(offsets.polyParamsOffset + offsets.polyParamsSize);
+	offsets.polyParamsOffset = packer.addStorage(trPolyParams.data(), offsets.polyParamsSize);
 
-	BufferData *buffer = GetMainBuffer(totalSize);
-	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
+	std::vector<u8> n2uniforms;
+	if (settings.platform.isNaomi2())
+	{
+		packNaomi2Uniforms(packer, offsets, n2uniforms, true);
+		offsets.lightsOffset = packNaomi2Lights(packer);
+	}
+
+	BufferData *buffer = GetMainBuffer(packer.size());
+	packer.upload(*buffer);
 }
 
 bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
@@ -264,7 +263,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	}
 
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
-	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
+	vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
 	OITDescriptorSets::FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<OITDescriptorSets::FragmentShaderUniforms>();
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
@@ -274,6 +273,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	currentScissor = vk::Rect2D();
 
+	bool firstFrameAfterInit = oitBuffers->isFirstFrameAfterInit();
 	oitBuffers->OnNewFrame(cmdBuffer);
 
 	setFirstProvokingVertex(pvrrc);
@@ -285,14 +285,13 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	// Update per-frame descriptor set and bind it
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
-	GetCurrentDescSet().UpdateUniforms(mainBuffer, (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
+	descriptorSets.updateUniforms(mainBuffer, (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), (u32)offsets.polyParamsOffset,
 			(u32)offsets.polyParamsSize, depthAttachments[0]->GetStencilView(),
-			depthAttachments[0]->GetImageView(), paletteTexture->GetImageView());
-	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
-	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
-	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
-	oitBuffers->BindDescriptorSet(cmdBuffer, pipelineManager->GetPipelineLayout(), 3);
+			depthAttachments[0]->GetImageView(), paletteTexture->GetImageView(), oitBuffers);
+	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
+	descriptorSets.updateColorInputDescSet(0, colorAttachments[0]->GetImageView());
+	descriptorSets.updateColorInputDescSet(1, colorAttachments[1]->GetImageView());
 
 	// Bind vertex and index buffers
 	const vk::DeviceSize zeroOffset[] = { 0 };
@@ -302,6 +301,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	// Make sure to push constants even if not used
 	OITDescriptorSets::PushConstants pushConstants = { };
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+	OITDescriptorSets::VtxPushConstants vtxPushConstants = { };
+	cmdBuffer.pushConstants<OITDescriptorSets::VtxPushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex,
+			sizeof(pushConstants), vtxPushConstants);
 
 	const std::array<vk::ClearValue, 4> clear_colors = {
 			pvrrc.isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
@@ -361,7 +363,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			// TR
 			if (current_pass.autosort)
 			{
-				if (!oitBuffers->isFirstFrameAfterInit())
+				if (!firstFrameAfterInit)
 					DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 			}
 			else
@@ -370,7 +372,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+		descriptorSets.bindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
 
 		if (initialPass && !pvrrc.isRTT && clearNeeded[GetCurrentImage()])
 		{
@@ -381,38 +383,27 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		}
 		SetScissor(cmdBuffer, baseScissor);
 
-		if (!oitBuffers->isFirstFrameAfterInit())
-		{
-			// Tr modifier volumes
-			if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
-				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
-
-			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
-			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-			quadBuffer->Bind(cmdBuffer);
-			quadBuffer->Draw(cmdBuffer);
-		}
-
-		// Clear
-		vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite);
-		cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-		vk::Pipeline pipeline = pipelineManager->GetClearPipeline();
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-		quadBuffer->Bind(cmdBuffer);
-		quadBuffer->Draw(cmdBuffer);
-
-		if (oitBuffers->isFirstFrameAfterInit())
+		if (firstFrameAfterInit)
 		{
 			// missing the transparent stuff on the first frame cuz I'm lazy
+			// Clear
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager->GetClearPipeline());
+			quadBuffer->Bind(cmdBuffer);
+			quadBuffer->Draw(cmdBuffer);
+
 			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
 					vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-			pipeline = pipelineManager->GetFinalPipeline();
-			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-			quadBuffer->Bind(cmdBuffer);
-			quadBuffer->Draw(cmdBuffer);
+			firstFrameAfterInit = false;
 		}
+		// Tr modifier volumes
+		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
+			DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+
+		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
+		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		quadBuffer->Bind(cmdBuffer);
+		quadBuffer->Draw(cmdBuffer);
 
 		if (!finalPass)
 		{
@@ -468,7 +459,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 			depthAttachments[1]->GetImageView(),
 	};
 	vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
-			ARRAY_SIZE(attachments), attachments, width, height, 1);
+			ARRAY_SIZE(attachments), attachments, maxWidth, maxHeight, 1);
 	tempFramebuffers[0] = GetContext()->GetDevice().createFramebufferUnique(createInfo);
 	attachments[0] = attachments[1];
 	attachments[1] = colorAttachments[1]->GetImageView();
@@ -508,28 +499,20 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 
 vk::CommandBuffer OITTextureDrawer::NewFrame()
 {
-	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, FB_W_SOF1 & VRAM_MASK);
+	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
+			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, pvrrc.fb_W_SOF1 & VRAM_MASK);
 	NewImage();
 
 	matrices.CalcMatrices(&pvrrc);
 
-	textureAddr = FB_W_SOF1 & VRAM_MASK;
-	u32 origWidth = pvrrc.fb_X_CLIP.max + 1;
-	u32 origHeight = pvrrc.fb_Y_CLIP.max + 1;
-	float upscale = 1.f;
-	if (!config::RenderToTextureBuffer)
-		upscale = config::RenderResolution / 480.f;
-	u32 heightPow2 = 8;
-	while (heightPow2 < origHeight)
-		heightPow2 *= 2;
-	u32 widthPow2 = 8;
-	while (widthPow2 < origWidth)
-		widthPow2 *= 2;
-	u32 upscaledWidth = origWidth * upscale;
-	u32 upscaledHeight = origHeight * upscale;
-	widthPow2 *= upscale;
-	heightPow2 *= upscale;
+	textureAddr = pvrrc.fb_W_SOF1 & VRAM_MASK;
+	u32 origWidth = pvrrc.getFramebufferWidth();
+	u32 origHeight = pvrrc.getFramebufferHeight();
+	u32 upscaledWidth = origWidth;
+	u32 upscaledHeight = origHeight;
+	u32 widthPow2;
+	u32 heightPow2;
+	getRenderToTextureDimensions(upscaledWidth, upscaledHeight, widthPow2, heightPow2);
 
 	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
@@ -545,33 +528,8 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 
 	if (!config::RenderToTextureBuffer)
 	{
-		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
-		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
-		switch (FB_W_CTRL.fb_packmode) {
-		case 0:
-		case 3:
-			tcw.PixelFmt = Pixel1555;
-			break;
-		case 1:
-			tcw.PixelFmt = Pixel565;
-			break;
-		case 2:
-			tcw.PixelFmt = Pixel4444;
-			break;
-		}
-
-		TSP tsp = {};
-		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
-		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
-
-		texture = textureCache->getTextureCacheData(tsp, tcw);
-		if (texture->IsNew())
-		{
-			texture->Create();
-			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			texture->SetDevice(device);
-		}
-		else if (textureCache->IsInFlight(texture))
+		texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
+		if (textureCache->IsInFlight(texture))
 		{
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
@@ -629,8 +587,10 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	baseScissor = vk::Rect2D(vk::Offset2D(pvrrc.fb_X_CLIP.min * upscale, pvrrc.fb_Y_CLIP.min * upscale),
-			vk::Extent2D(upscaledWidth, upscaledHeight));
+	u32 minX = pvrrc.fb_X_CLIP.min;
+	u32 minY = pvrrc.fb_Y_CLIP.min;
+	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
+	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 
@@ -641,8 +601,8 @@ void OITTextureDrawer::EndFrame()
 {
 	currentCommandBuffer.endRenderPass();
 
-	u32 clippedWidth = pvrrc.fb_X_CLIP.max + 1;
-	u32 clippedHeight = pvrrc.fb_Y_CLIP.max + 1;
+	u32 clippedWidth = pvrrc.getFramebufferWidth();
+	u32 clippedHeight = pvrrc.getFramebufferHeight();
 
 	if (config::RenderToTextureBuffer)
 	{
@@ -679,14 +639,14 @@ void OITTextureDrawer::EndFrame()
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
-		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		texture->unprotectVRam();
 	}
 	OITDrawer::EndFrame();
 }

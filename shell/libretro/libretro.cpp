@@ -36,6 +36,7 @@
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
+#include "wsi/gl_context.h"
 #endif
 #ifdef HAVE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
@@ -55,13 +56,13 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/spg.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/card_reader.h"
 #include "imgread/common.h"
 #include "LogManager.h"
 #include "cheats.h"
 #include "rend/CustomTexture.h"
 #include "rend/osd.h"
 #include "cfg/option.h"
-#include "wsi/gl_context.h"
 #include "version.h"
 
 constexpr char slash = path_default_slash_c();
@@ -110,6 +111,7 @@ static int astick_deadzone = 0;
 static int trigger_deadzone = 0;
 static bool digital_triggers = false;
 static bool allow_service_buttons = false;
+static bool haveCardReader;
 
 static bool libretro_supports_bitmasks = false;
 
@@ -118,7 +120,8 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
-#ifndef TARGET_NO_OPENMP
+static bool autoSkipFrameEnabled = false;
+#ifdef _OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
 static bool vmuScreenSettingsShown = true;
@@ -162,6 +165,10 @@ static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
 
+float libretro_expected_audio_samples_per_run;
+unsigned libretro_vsync_swap_interval = 1;
+bool libretro_detect_vsync_swap_interval = false;
+
 static retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb;
 
@@ -170,8 +177,8 @@ static retro_log_printf_t         log_cb;
 static retro_video_refresh_t      video_cb;
 static retro_input_poll_t         poll_cb;
 static retro_input_state_t        input_cb;
-retro_audio_sample_batch_t audio_batch_cb;
-static retro_environment_t        environ_cb;
+retro_audio_sample_batch_t        audio_batch_cb;
+retro_environment_t               environ_cb;
 
 static retro_rumble_interface rumble;
 
@@ -289,6 +296,8 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 // Now comes the interesting stuff
 void retro_init()
 {
+	static bool emuInited;
+
 	// Logging
 	struct retro_log_callback log;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -322,6 +331,12 @@ void retro_init()
 
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
+
+#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+	if (!emuInited)
+#endif
+		emu.init();
+	emuInited = true;
 }
 
 void retro_deinit()
@@ -335,17 +350,26 @@ void retro_deinit()
 		std::lock_guard<std::mutex> lock(mtx_serialization);
 	}
 	os_UninstallFaultHandler();
+	
+#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+	_vmem_release();
+#else
+	emu.term();
+#endif
 	libretro_supports_bitmasks = false;
 	categoriesSupported = false;
 	platformIsDreamcast = true;
 	platformIsArcade = false;
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
-#ifndef TARGET_NO_OPENMP
+	autoSkipFrameEnabled = false;
+#ifdef _OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
 	lightgunSettingsShown = true;
+	libretro_vsync_swap_interval = 1;
+	libretro_detect_vsync_swap_interval = false;
 	LogManager::Shutdown();
 
 	retro_audio_deinit();
@@ -360,9 +384,8 @@ static bool set_variable_visibility(void)
 	bool platformWasDreamcast = platformIsDreamcast;
 	bool platformWasArcade = platformIsArcade;
 
-	platformIsDreamcast = (settings.platform.system == DC_PLATFORM_DREAMCAST);
-	platformIsArcade = (settings.platform.system == DC_PLATFORM_NAOMI) ||
-			(settings.platform.system == DC_PLATFORM_ATOMISWAVE);
+	platformIsDreamcast = settings.platform.isConsole();
+	platformIsArcade = settings.platform.isArcade();
 
 	// Show/hide platform-dependent options
 	if (first_run || (platformIsDreamcast != platformWasDreamcast) || (platformIsArcade != platformWasArcade))
@@ -462,11 +485,13 @@ static bool set_variable_visibility(void)
 		option_display.visible = oitEnabled;
 		option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_oit_layers";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		updated = true;
 	}
 #endif
 
-#ifndef TARGET_NO_OPENMP
+#ifdef _OPENMP
 	// Only if texture upscaling is enabled
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
@@ -482,6 +507,24 @@ static bool set_variable_visibility(void)
 		updated = true;
 	}
 #endif
+
+	// Only if automatic frame skipping is disabled
+	bool autoSkipFrameWasEnabled = autoSkipFrameEnabled;
+
+	autoSkipFrameEnabled = false;
+	var.key = CORE_OPTION_NAME "_auto_skip_frame";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "disabled"))
+		autoSkipFrameEnabled = true;
+
+	if (first_run ||
+		 (autoSkipFrameEnabled != autoSkipFrameWasEnabled) ||
+		 (threadedRenderingEnabled != threadedRenderingWasEnabled))
+	{
+		option_display.visible = (!autoSkipFrameEnabled || !threadedRenderingEnabled);
+		option_display.key = CORE_OPTION_NAME "_detect_vsync_swap_interval";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
 
 	// If categories are supported, no further action is required
 	if (categoriesSupported)
@@ -579,11 +622,16 @@ static void setGameGeometry(retro_game_geometry& geometry)
 	geometry.base_height = 480;
 }
 
-static void setAVInfo(retro_system_av_info& avinfo)
+void setAVInfo(retro_system_av_info& avinfo)
 {
+	double sample_rate = 44100.0;
+	double fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+
 	setGameGeometry(avinfo.geometry);
-	avinfo.timing.sample_rate = 44100.0;
-	avinfo.timing.fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+	avinfo.timing.sample_rate = sample_rate;
+	avinfo.timing.fps = fps / (double)libretro_vsync_swap_interval;
+
+	libretro_expected_audio_samples_per_run = sample_rate / fps;
 }
 
 static void setRotation()
@@ -611,6 +659,7 @@ static void update_variables(bool first_startup)
 	int prevMaxFramebufferHeight = maxFramebufferHeight;
 	int prevMaxFramebufferWidth = maxFramebufferWidth;
 	bool prevRotateScreen = rotate_screen;
+	bool prevDetectVsyncSwapInterval = libretro_detect_vsync_swap_interval;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -628,7 +677,7 @@ static void update_variables(bool first_startup)
 			per_content_vmus = 2;
 	}
 	if (!first_startup && per_content_vmus != previous_per_content_vmus
-			&& settings.platform.system == DC_PLATFORM_DREAMCAST)
+			&& settings.platform.isConsole())
 	{
 		// Recreate the VMUs so that the save location is taken into account.
 		// Don't do this at startup because we don't know the system type yet
@@ -713,27 +762,43 @@ static void update_variables(bool first_startup)
 		rend_resize_renderer();
 	}
 
-	if (first_startup)
-	{
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-		var.key = CORE_OPTION_NAME "_oit_abuffer_size";
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-		{
-			if (!strcmp(var.value, "512MB"))
-				config::PixelBufferSize = 0x20000000u;
-			else if (!strcmp(var.value, "1GB"))
-				config::PixelBufferSize = 0x40000000u;
-			else if (!strcmp(var.value, "2GB"))
-				config::PixelBufferSize = 0x7ff00000u;
-			else if (!strcmp(var.value, "4GB"))
-				config::PixelBufferSize = 0xFFFFFFFFu;
-			else
-				config::PixelBufferSize = 0x20000000u;
-		}
+	var.key = CORE_OPTION_NAME "_oit_abuffer_size";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		if (!strcmp(var.value, "512MB"))
+			config::PixelBufferSize = 0x20000000u;
+		else if (!strcmp(var.value, "1GB"))
+			config::PixelBufferSize = 0x40000000u;
+		else if (!strcmp(var.value, "2GB"))
+			config::PixelBufferSize = 0x7ff00000u;
+		else if (!strcmp(var.value, "4GB"))
+			config::PixelBufferSize = 0xFFFFFFFFu;
 		else
 			config::PixelBufferSize = 0x20000000u;
+	}
+	else
+		config::PixelBufferSize = 0x20000000u;
 #endif
 
+	if ((config::AutoSkipFrame != 0) && config::ThreadedRendering)
+		libretro_detect_vsync_swap_interval = false;
+	else
+	{
+		var.key = CORE_OPTION_NAME "_detect_vsync_swap_interval";
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (!strcmp(var.value, "enabled"))
+				libretro_detect_vsync_swap_interval = true;
+			else if (!strcmp(var.value, "disabled"))
+				libretro_detect_vsync_swap_interval = false;
+		}
+		else
+			libretro_detect_vsync_swap_interval = false;
+	}
+
+	if (first_startup)
+	{
 		if (config::ThreadedRendering)
 		{
 			bool save_state_in_background = true ;
@@ -756,7 +821,7 @@ static void update_variables(bool first_startup)
 	var.key = CORE_OPTION_NAME "_enable_purupuru";
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
-		if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.platform.isConsole())
 		{
 			enable_purupuru = strcmp("enabled", var.value) == 0;
 			for (int i = 0; i < MAPLE_PORTS; i++) {
@@ -955,6 +1020,16 @@ static void update_variables(bool first_startup)
 		if (rotate_game)
 			config::Widescreen.override(false);
 		setFramebufferSize();
+
+		bool avInfoChanged = false;
+		if ((libretro_detect_vsync_swap_interval != prevDetectVsyncSwapInterval) &&
+			 !libretro_detect_vsync_swap_interval &&
+			 (libretro_vsync_swap_interval != 1))
+		{
+			libretro_vsync_swap_interval = 1;
+			avInfoChanged = true;
+		}
+
 		if ((prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
 				// TODO crash with dx11
 				&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
@@ -963,6 +1038,7 @@ static void update_variables(bool first_startup)
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 			rend_resize_renderer();
+			avInfoChanged = false;
 		}
 		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
 		{
@@ -970,6 +1046,13 @@ static void update_variables(bool first_startup)
 			setGameGeometry(geometry);
 			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 			rend_resize_renderer();
+		}
+
+		if (avInfoChanged)
+		{
+			retro_system_av_info avinfo;
+			setAVInfo(avinfo);
+			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 		}
 	}
 }
@@ -983,8 +1066,10 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
+#endif
 
 	// On the first call, we start the emulator
 	if (first_run)
@@ -1015,15 +1100,17 @@ void retro_run()
 		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
+#endif
+
+	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
 	if (!config::ThreadedRendering || config::LimitFPS)
 		retro_audio_upload();
 	else
 		retro_audio_flush_buffer();
-
-	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
 	first_run = false;
 }
@@ -1226,6 +1313,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		break;
 
 	case DC_PLATFORM_NAOMI:
+	case DC_PLATFORM_NAOMI2:
 		switch (device)
 		{
 		case RETRO_DEVICE_JOYPAD:
@@ -1265,7 +1353,9 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		return 0;
 	uint32_t mapped = joymap[id];
 	// Hack to bind Button 9 instead of Service when not used
-	if (id == RETRO_DEVICE_ID_JOYPAD_R3 && device == RETRO_DEVICE_JOYPAD && settings.platform.system == DC_PLATFORM_NAOMI && !allow_service_buttons)
+	if (id == RETRO_DEVICE_ID_JOYPAD_R3 && device == RETRO_DEVICE_JOYPAD
+			&& settings.platform.isNaomi()
+			&& !allow_service_buttons)
 		mapped = NAOMI_BTN8_KEY;
 	return mapped;
 }
@@ -1297,7 +1387,7 @@ static void set_input_descriptors()
 {
 	struct retro_input_descriptor desc[22 * 4 + 1];
 	int descriptor_index = 0;
-	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isArcade())
 	{
 		const char *name;
 
@@ -1367,7 +1457,7 @@ static void set_input_descriptors()
 				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R, "Button 5");
 				if (name != NULL)
 					desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, name };
-				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
+				name = haveCardReader ? "Insert Card" : get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
 				if (name != NULL)
 					desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, name };
 				name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R2, "Button 7");
@@ -1769,12 +1859,12 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	if (game->path[0] == '\0')
 	{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 			boot_to_bios = true;
 		else
 			return false;
 	}
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isArcade())
 		boot_to_bios = false;
 
 	if (boot_to_bios)
@@ -1860,7 +1950,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (!foundRenderApi)
 		return false;
 
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isArcade())
 	{
 		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir)
 				&& dir != nullptr
@@ -1894,8 +1984,14 @@ bool retro_load_game(const struct retro_game_info *game)
 	setRotation();
 	setFramebufferSize();
 
-	if (devices_need_refresh)
-		refresh_devices(true);
+	if (settings.content.gameId == "INITIAL D"
+			|| settings.content.gameId == "INITIAL D Ver.2"
+			|| settings.content.gameId == "INITIAL D Ver.3"
+			|| settings.content.gameId == "INITIAL D CYCRAFT")
+		haveCardReader = true;
+	else
+		haveCardReader = false;
+	refresh_devices(true);
 
 	// System may have changed - have to update hidden core options
 	set_variable_visibility();
@@ -1911,13 +2007,11 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	emu.stop();
+	emu.unloadGame();
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
 	blankVmus();
-
-	emu.term();
 }
 
 
@@ -1941,11 +2035,13 @@ size_t retro_serialize_size()
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	Serializer ser;
 	dc_serialize(ser);
-	emu.start();
+	if (!first_run)
+		emu.start();
 
 	return ser.size();
 }
@@ -1955,11 +2051,13 @@ bool retro_serialize(void *data, size_t size)
 	DEBUG_LOG(SAVESTATE, "retro_serialize %d bytes", (int)size);
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	Serializer ser(data, size);
 	dc_serialize(ser);
-	emu.start();
+	if (!first_run)
+		emu.start();
 
 	return true;
 }
@@ -1969,13 +2067,15 @@ bool retro_unserialize(const void * data, size_t size)
 	DEBUG_LOG(SAVESTATE, "retro_unserialize");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	emu.stop();
+	if (!first_run)
+		emu.stop();
 
 	try {
 		Deserializer deser(data, size);
 		dc_loadstate(deser);
 	    retro_audio_flush_buffer();
-		emu.start();
+		if (!first_run)
+			emu.start();
 
 		return true;
 	} catch (const Deserializer::Exception& e) {
@@ -2045,7 +2145,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 		{
 			case RETRO_DEVICE_JOYPAD:
 				config::MapleMainDevices[in_port] = MDT_SegaController;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 				}
@@ -2053,42 +2153,42 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			case RETRO_DEVICE_TWINSTICK:
 			case RETRO_DEVICE_TWINSTICK_SATURN:
 				config::MapleMainDevices[in_port] = MDT_TwinStick;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_ASCIISTICK:
 				config::MapleMainDevices[in_port] = MDT_AsciiStick;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_KEYBOARD:
 				config::MapleMainDevices[in_port] = MDT_Keyboard;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_MOUSE:
 				config::MapleMainDevices[in_port] = MDT_Mouse;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			case RETRO_DEVICE_LIGHTGUN:
 				config::MapleMainDevices[in_port] = MDT_LightGun;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
 				break;
 			default:
 				config::MapleMainDevices[in_port] = MDT_None;
-				if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
+				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = MDT_None;
 					config::MapleExpansionDevices[in_port][1] = MDT_None;
 				}
@@ -2104,7 +2204,7 @@ static void refresh_devices(bool first_startup)
 
    if (!first_startup)
    {
-      if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+      if (settings.platform.isConsole())
          maple_ReconnectDevices();
 
       if (rumble.set_rumble_state)
@@ -2116,7 +2216,7 @@ static void refresh_devices(bool first_startup)
          }
       }
    }
-   else
+   else if (settings.platform.isConsole())
    {
       mcfg_DestroyDevices();
       mcfg_CreateDevices();
@@ -2345,10 +2445,10 @@ static void UpdateInputStateNaomi(u32 port)
 			if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
 			{
 				force_offscreen = true;
-				if (settings.platform.system == DC_PLATFORM_NAOMI)
-					kcode[port] &= ~NAOMI_BTN0_KEY;
-				else
+				if (settings.platform.isAtomiswave())
 					kcode[port] &= ~AWAVE_TRIGGER_KEY;
+				else
+					kcode[port] &= ~NAOMI_BTN0_KEY;
 			}
 
 			if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
@@ -2359,7 +2459,7 @@ static void UpdateInputStateNaomi(u32 port)
 
 				if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER) || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
 				{
-					if (settings.platform.system == DC_PLATFORM_NAOMI)
+					if (settings.platform.isNaomi())
 						kcode[port] &= ~NAOMI_BTN1_KEY;
 				}
 			}
@@ -2390,11 +2490,21 @@ static void UpdateInputStateNaomi(u32 port)
 				{
 				case RETRO_DEVICE_ID_JOYPAD_L3:
 					if (allow_service_buttons)
-						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L3);
 					break;
 				case RETRO_DEVICE_ID_JOYPAD_R3:
-					if (settings.platform.system == DC_PLATFORM_NAOMI || allow_service_buttons)
-						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
+					if (settings.platform.isNaomi()
+							|| allow_service_buttons)
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R3);
+					break;
+				case RETRO_DEVICE_ID_JOYPAD_L:
+					if (haveCardReader)
+					{
+						 if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+							 card_reader::insertCard();
+					}
+					else
+						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);
 					break;
 				default:
 					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
@@ -2452,19 +2562,19 @@ static void UpdateInputStateNaomi(u32 port)
 	}
 
 	// Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
-	{
-		if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
-			kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
-		if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
-			kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
-	}
-	else
+	if (settings.platform.isAtomiswave())
 	{
 		if ((kcode[port] & (AWAVE_UP_KEY|AWAVE_DOWN_KEY)) == 0)
 			kcode[port] |= AWAVE_UP_KEY|AWAVE_DOWN_KEY;
 		if ((kcode[port] & (AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY)) == 0)
 			kcode[port] |= AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY;
+	}
+	else
+	{
+		if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
+			kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
+		if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
+			kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
 	}
 }
 
@@ -2473,7 +2583,7 @@ static void UpdateInputState(u32 port)
 	if (gl_ctx_resetting)
 		return;
 
-	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isArcade())
 	{
 		UpdateInputStateNaomi(port);
 		return;
@@ -2884,27 +2994,18 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 	}
 }
 
-int msgboxf(const char* text, unsigned int type, ...)
+void fatal_error(const char* text, ...)
 {
 	if (log_cb)
 	{
 		va_list args;
 		char temp[2048];
-
-		switch (type)
-		{
-		case MBX_ICONERROR:
-			va_start(args, type);
-			vsprintf(temp, text, args);
-			va_end(args);
-			strcat(temp, "\n");
-			log_cb(RETRO_LOG_ERROR, temp);
-			break;
-		default:
-			break;
-		}
+		va_start(args, text);
+		vsprintf(temp, text, args);
+		va_end(args);
+		strcat(temp, "\n");
+		log_cb(RETRO_LOG_ERROR, temp);
 	}
-	return 0;
 }
 
 void os_DebugBreak()
@@ -3145,10 +3246,4 @@ void gui_display_notification(const char *msg, int duration)
 	retromsg.msg = msg;
 	retromsg.frames = duration / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
-}
-
-void gui_init() {
-}
-
-void gui_term() {
 }

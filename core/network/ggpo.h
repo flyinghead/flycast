@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "types.h"
 #include <future>
 
@@ -34,4 +35,11 @@ void displayStats();
 void endOfFrame();
 void sendChatMessage(int playerNum, const std::string& msg);
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg));
+
+static inline bool rollbacking() {
+	extern bool inRollback;
+
+	return inRollback;
+}
+
 }

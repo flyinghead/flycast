@@ -198,8 +198,7 @@ static void reios_sys_system() {
 			debugf("reios_sys_system: SYSINFO_INIT");
 			// 0x00-0x07: system_id
 			// 0x08-0x0c: system_props
-			// 0x0d-0x0f: padding (zeroed out)
-			// 0x10-0x17: settings
+			// 0x0d-0x17: padding (zeroed out)
 			u8 data[24] = {0};
 
 			// read system_id from 0x0001a056
@@ -209,11 +208,6 @@ static void reios_sys_system() {
 			// read system_props from 0x0001a000
 			for (u32 i  = 0; i < 5; i++)
 				data[8 + i] = flashrom->Read8(0x1a000 + i);
-
-			// system settings
-			flash_syscfg_block syscfg{};
-			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
-			memcpy(&data[16], &syscfg.time_lo, 8);
 
 			memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
 
@@ -308,7 +302,7 @@ static void reios_sys_flashrom() {
 					r5 = pointer to destination buffer
 					r6 = number of bytes to read
 					Returns:
-					r0 = number of read bytes if successful, -1 if read failed
+					r0 = 0 if successful, -1 if read failed
 				*/
 				u32 offset = p_sh4rcb->cntx.r[4];
 				u32 dest = p_sh4rcb->cntx.r[5];
@@ -318,7 +312,7 @@ static void reios_sys_flashrom() {
 				for (u32 i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
 
-				p_sh4rcb->cntx.r[0] = size;
+				p_sh4rcb->cntx.r[0] = 0;
 			}
 			break;
 
@@ -427,10 +421,10 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 static void reios_setup_state(u32 boot_addr)
 {
 	// Set up AICA interrupt masks
-	libAICA_WriteReg(SCIEB_addr, 0x48, 2);
-	libAICA_WriteReg(SCILV0_addr, 0x18, 1);
-	libAICA_WriteReg(SCILV1_addr, 0x50, 1);
-	libAICA_WriteReg(SCILV2_addr, 0x08, 1);
+	aicaWriteReg(SCIEB_addr, (u16)0x48);
+	aicaWriteReg(SCILV0_addr, (u8)0x18);
+	aicaWriteReg(SCILV1_addr, (u8)0x50);
+	aicaWriteReg(SCILV2_addr, (u8)0x08);
 
 	/*
 	Post Boot registers from actual bios boot
@@ -652,7 +646,7 @@ static void reios_boot()
 		reios_setup_state(0x8C010000);
 	}
 	else {
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			char bootfile[sizeof(ip_meta.boot_filename) + 1] = {0};
 			memcpy(bootfile, ip_meta.boot_filename, sizeof(ip_meta.boot_filename));
@@ -661,7 +655,7 @@ static void reios_boot()
 			reios_setup_state(0xac008300);
 		}
 		else {
-			verify(settings.platform.system == DC_PLATFORM_NAOMI);
+			verify(settings.platform.isNaomi());
 			if (CurrentCartridge == NULL)
 			{
 				WARN_LOG(REIOS, "No cartridge loaded");

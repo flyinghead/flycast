@@ -50,7 +50,13 @@ enum IOSButton {
 	IOS_BTN_PADDLE4,
 	IOS_BTN_TOUCHPAD,
 
-	IOS_BTN_MAX
+	IOS_BTN_MAX,
+
+	IOS_BTN_UP_RIGHT = 10,
+	IOS_BTN_UP_LEFT,
+	IOS_BTN_DOWN_LEFT,
+	IOS_BTN_DOWN_RIGHT,
+
 };
 enum IOSAxis {
 	IOS_AXIS_L1 = 1,
@@ -314,7 +320,7 @@ public:
 					NSLog(@"Haptic engine error: \(error)");
 				else {
 					this->hapticEngine = hapticEngine;
-					_rumble_enabled = true;
+					rumbleEnabled = true;
 				}
 			}
 		}
@@ -505,14 +511,14 @@ public:
 		{
 			case IOS_BTN_L2:
 				gamepad_axis_input(IOS_AXIS_L2, pressed ? 0x7fff : 0);
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				if (settings.platform.isArcade())
 					GamepadDevice::gamepad_btn_input(IOS_BTN_L1, pressed);	// Z, btn5
 				return true;
 			case IOS_BTN_R2:
 				if (!pressed && maple_port() >= 0 && maple_port() <= 3)
 					kcode[maple_port()] |= DC_DPAD2_UP | DC_BTN_D | DC_DPAD2_DOWN;
 				gamepad_axis_input(IOS_AXIS_R2, pressed ? 0x7fff : 0);
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				if (settings.platform.isArcade())
 					GamepadDevice::gamepad_btn_input(IOS_BTN_Y, pressed);	// Y, btn4
 				return true;
 			default:
@@ -527,7 +533,7 @@ public:
 					gui_open_settings();
 					return true;
 				}
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST && maple_port() >= 0 && maple_port() <= 3)
+				if (settings.platform.isArcade() && maple_port() >= 0 && maple_port() <= 3)
 				{
 					u32& keycode = kcode[maple_port()];
 					if ((buttonState & (1 << IOS_BTN_R2)) != 0)
@@ -554,6 +560,27 @@ public:
 						code = IOS_BTN_R1; // C, btn2
 					if (code == IOS_BTN_Y)
 						code = IOS_BTN_X;  // btn3
+				}
+				switch (code)
+				{
+					case IOS_BTN_UP_RIGHT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_UP, pressed);
+						code = IOS_BTN_RIGHT;
+						break;
+					case IOS_BTN_DOWN_RIGHT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_DOWN, pressed);
+						code = IOS_BTN_RIGHT;
+						break;
+					case IOS_BTN_DOWN_LEFT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_DOWN, pressed);
+						code = IOS_BTN_LEFT;
+						break;
+					case IOS_BTN_UP_LEFT:
+						GamepadDevice::gamepad_btn_input(IOS_BTN_UP, pressed);
+						code = IOS_BTN_LEFT;
+						break;
+					default:
+						break;
 				}
 
 				return GamepadDevice::gamepad_btn_input(code, pressed);

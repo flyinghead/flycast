@@ -18,7 +18,6 @@
 */
 #include "d3d_overlay.h"
 #include "rend/osd.h"
-#include "rend/gui.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -39,8 +38,8 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 	setupRenderState(width, height);
 	if (vmu)
 	{
-		float vmu_padding = 8.f * scaling;
-		float vmu_height = 70.f * scaling;
+		float vmu_padding = 8.f * settings.display.uiScale;
+		float vmu_height = 70.f * settings.display.uiScale;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -112,13 +111,13 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 		{
 			if (config::CrosshairColor[i] == 0)
 				continue;
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST
+			if (settings.platform.isConsole()
 					&& config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
-			float halfWidth = XHAIR_WIDTH * gui_get_scaling() / 2.f;
+			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)
 					| ((config::CrosshairColor[i] >> 16) & 0xFF)

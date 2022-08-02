@@ -18,6 +18,7 @@
 */
 #include "dx11_oitshaders.h"
 #include "../dx11context.h"
+#include "../dx11_naomi2.h"
 
 const char * const VertexShader = R"(
 #if pp_Gouraud == 1
@@ -35,6 +36,8 @@ struct VertexIn
 	float4 col1 : COLOR2;
 	float4 spec1 : COLOR3;
 	float2 uv1 : TEXCOORD1;
+	float3 normal: NORMAL; // unused
+	uint vertexId : SV_VertexID;
 };
 
 struct VertexOut
@@ -43,12 +46,13 @@ struct VertexOut
 	float4 uv : TEXCOORD0;
 	INTERPOLATION float4 col : COLOR0;
 	INTERPOLATION float4 spec : COLOR1;
-	float4 uv1 : TEXCOORD1;
+	float2 uv1 : TEXCOORD1;
 	INTERPOLATION float4 col1 : COLOR2;
 	INTERPOLATION float4 spec1 : COLOR3;
+	nointerpolation uint index : BLENDINDICES0;
 };
 
-cbuffer constantBuffer : register(b0)
+cbuffer shaderConstants : register(b0)
 {
 	float4x4 transMatrix;
 	float4 leftPlane;
@@ -57,28 +61,43 @@ cbuffer constantBuffer : register(b0)
 	float4 bottomPlane;
 };
 
+cbuffer polyConstants : register(b1)
+{
+	int polyNumber;
+};
+
 [clipplanes(leftPlane, topPlane, rightPlane, bottomPlane)]
 VertexOut main(in VertexIn vin)
 {
 	VertexOut vo;
 	vo.pos = mul(transMatrix, float4(vin.pos.xyz, 1.f));
-#if pp_Gouraud == 1
-	vo.col = vin.col * vo.pos.z;
-	vo.spec = vin.spec * vo.pos.z;
-	vo.col1 = vin.col1 * vo.pos.z;
-	vo.spec1 = vin.spec1 * vo.pos.z;
-#else
-	// flat shading: no interpolation
+#if DIV_POS_Z == 1
+	vo.pos /= vo.pos.z;
+	vo.pos.z = vo.pos.w;
+#endif
 	vo.col = vin.col;
 	vo.spec = vin.spec;
 	vo.col1 = vin.col1;
 	vo.spec1 = vin.spec1;
+#if pp_Gouraud == 1 && DIV_POS_Z != 1
+	vo.col *= vo.pos.z;
+	vo.spec *= vo.pos.z;
+	vo.col1 *= vo.pos.z;
+	vo.spec1 *= vo.pos.z;
 #endif
-	vo.uv = float4(vin.uv * vo.pos.z, 0.f, vo.pos.z);
-	vo.uv1 = float4(vin.uv1 * vo.pos.z, 0.f, 0.f);
+	vo.uv.xyz = float3(vin.uv, 0.f);
+	vo.uv1 = vin.uv1;
+	vo.index = uint(polyNumber) + vin.vertexId;
 
+#if DIV_POS_Z == 1
+	vo.uv.w = vo.pos.w;
+#else
+	vo.uv.xy *= vo.pos.z;
+	vo.uv.w = vo.pos.z;
+	vo.uv1 *= vo.pos.z;
 	vo.pos.w = 1.f;
 	vo.pos.z = 0.f;
+#endif
 
 	return vo;
 }
@@ -121,7 +140,11 @@ struct Pixel {
 
 float getFragDepth(float z)
 {
+#if DIV_POS_Z == 1
+	float w = 100000.0 / z;
+#else
 	float w = 100000.0 * z;
+#endif
 	return log2(1.0 + w) / 34.0;
 }
 
@@ -195,9 +218,14 @@ bool getShadowEnable(in PolyParam pp)
 	return (pp.tsp_isp_pcw & 1) != 0;
 }
 
-uint getPolyNumber(in Pixel pixel)
+uint getPolyIndex(in Pixel pixel)
 {
 	return pixel.seq_num & 0x3FFFFFFFu;
+}
+
+uint getPolyNumber(in Pixel pixel)
+{
+	return (pixel.seq_num & 0x3FFFFFFFu) >> 17;
 }
 
 #define SHADOW_STENCIL 0x40000000u
@@ -269,9 +297,10 @@ struct VertexIn
 	float4 uv : TEXCOORD0;
 	INTERPOLATION float4 col : COLOR0;
 	INTERPOLATION float4 spec : COLOR1;
-	float4 uv1 : TEXCOORD1;
+	float2 uv1 : TEXCOORD1;
 	INTERPOLATION float4 col1 : COLOR2;
 	INTERPOLATION float4 spec1 : COLOR3;
+	nointerpolation uint index : BLENDINDICES0;
 };
 
 Texture2D texture0 : register(t0);
@@ -299,7 +328,6 @@ cbuffer polyConstantBuffer : register(b1)
 	int2 blend_mode1;
 	float paletteIndex;
 	float trilinearAlpha;
-	int pp_Number;
 
 	// two volume mode
 	int shading_instr0;
@@ -314,7 +342,13 @@ cbuffer polyConstantBuffer : register(b1)
 
 float fog_mode2(float w)
 {
-	float z = clamp(w * fogDensity, 1.0f, 255.9999f);
+	float z = clamp(
+#if DIV_POS_Z == 1
+					fogDensity / w
+#else
+					fogDensity * w
+#endif
+									, 1.0f, 255.9999f);
 	float exp = floor(log2(z));
 	float m = z * 16.0f / pow(2.0, exp) - 16.0f;
 	float idx = floor(m) + exp * 16.0f + 0.5f;
@@ -389,7 +423,7 @@ PSO main(in VertexIn inpix)
 			}
 		#endif
 	#endif
-	#if pp_Gouraud == 1
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		color /= inpix.uv.w;
 		specular /= inpix.uv.w;
 	#endif
@@ -406,10 +440,14 @@ PSO main(in VertexIn inpix)
 		float2 uv;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				uv = inpix.uv1.xy / inpix.uv.w;
+				uv = inpix.uv1;
 			else
 		#endif
-				uv = inpix.uv.xy / inpix.uv.w;
+				uv = inpix.uv.xy;
+		#if DIV_POS_Z != 1
+			uv /= inpix.uv.w;
+		#endif
+
 		#if NearestWrapFix == 1
 			uv = min(fmod(uv, 1.f), 0.9997f);
 		#endif
@@ -549,8 +587,8 @@ PSO main(in VertexIn inpix)
 		
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, 0.f, 1.f));
-		pixel.depth = inpix.uv.w;
-		pixel.seq_num = uint(pp_Number);
+		pixel.depth = pso.z;
+		pixel.seq_num = inpix.index;
 		InterlockedExchange(abufferPointers[coords], idx, pixel.next);
 		Pixels[idx] = pixel;
 		
@@ -572,8 +610,6 @@ float modifierVolume(in MVPixel inpix) : SV_Depth
 }
 )";
 
-const char *MAX_PIXELS_PER_FRAGMENT = "32";
-
 static const char OITFinalShaderSource[] = R"(
 #include "oit_header.hlsl"
 
@@ -594,7 +630,7 @@ int fillAndSortFragmentArray(in uint2 coords, out uint pixel_list[MAX_PIXELS_PER
 		uint jIdx = pixel_list[j];
 		while (j >= 0
 			   && (Pixels[jIdx].depth > Pixels[idx].depth
-				   || (Pixels[jIdx].depth == Pixels[idx].depth && getPolyNumber(Pixels[jIdx]) > getPolyNumber(Pixels[idx]))))
+				   || (Pixels[jIdx].depth == Pixels[idx].depth && getPolyIndex(Pixels[jIdx]) > getPolyIndex(Pixels[idx]))))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -764,6 +800,9 @@ struct MVPixel
 void main(in MVPixel inpix)
 {
 	uint2 coords = uint2(inpix.pos.xy);
+#if MV_MODE == MV_XOR || MV_MODE == MV_OR
+	float depth = getFragDepth(inpix.uv.w);
+#endif
 	
 	uint idx = abufferPointers[coords];
 	int list_len = 0;
@@ -775,10 +814,10 @@ void main(in MVPixel inpix)
 		{
 			uint prev_val;
 #if MV_MODE == MV_XOR
-			if (inpix.uv.w >= pixel.depth)
+			if (depth >= pixel.depth)
 				InterlockedXor(Pixels[idx].seq_num, SHADOW_STENCIL, prev_val);
 #elif MV_MODE == MV_OR
-			if (inpix.uv.w >= pixel.depth)
+			if (depth >= pixel.depth)
 				InterlockedOr(Pixels[idx].seq_num, SHADOW_STENCIL, prev_val);
 #elif MV_MODE == MV_INCLUSION
 			InterlockedAnd(Pixels[idx].seq_num, ~(SHADOW_STENCIL), prev_val);
@@ -816,15 +855,26 @@ struct IncludeManager : public ID3DInclude
 
 const char * const MacroValues[] { "0", "1", "2", "3" };
 
+enum VertexMacroEnum {
+	MacroGouraud,
+	MacroTwoVolumes,
+	MacroDivPosZ,
+	MacroPositionOnly,
+	MacroLightOn,
+};
+
 static D3D_SHADER_MACRO VertexMacros[]
 {
 	{ "pp_Gouraud", "1" },
+	{ "pp_TwoVolumes", "0" },
+	{ "DIV_POS_Z", "0" },
+	{ "POSITION_ONLY", "0" },
+	{ "LIGHT_ON", "1" },
 	{ nullptr, nullptr }
 };
 
 enum PixelMacroEnum {
-	MacroGouraud,
-	MacroTexture,
+	MacroTexture = 3,
 	MacroUseAlpha,
 	MacroIgnoreTexA,
 	MacroShadInstr,
@@ -836,13 +886,14 @@ enum PixelMacroEnum {
 	MacroAlphaTest,
 	MacroClipInside,
 	MacroNearestWrapFix,
-	MacroTwoVolumes,
 	MacroPass
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
 {
 	{ "pp_Gouraud", "1" },
+	{ "pp_TwoVolumes", "0" },
+	{ "DIV_POS_Z", "0" },
 	{ "pp_Texture", "0" },
 	{ "pp_UseAlpha", "0" },
 	{ "pp_IgnoreTexA", "0" },
@@ -855,7 +906,6 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
 	{ "NearestWrapFix", "0" },
-	{ "pp_TwoVolumes", "0" },
 	{ "PASS", "0" },
 	{ nullptr, nullptr }
 };
@@ -864,21 +914,23 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
 		bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool twoVolumes, Pass pass)
 {
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
-			| (pp_UseAlpha << 1)
-			| (pp_IgnoreTexA << 2)
+			| ((int)pp_UseAlpha << 1)
+			| ((int)pp_IgnoreTexA << 2)
 			| (pp_ShadInstr << 3)
-			| (pp_Offset << 5)
+			| ((int)pp_Offset << 5)
 			| (pp_FogCtrl << 6)
-			| (pp_BumpMap << 8)
-			| (fog_clamping << 9)
-			| (palette << 10)
-			| (gouraud << 11)
-			| (alphaTest << 12)
-			| (clipInside << 13)
-			| (nearestWrapFix << 14)
-			| (twoVolumes << 15)
-			| (pass << 16);
+			| ((int)pp_BumpMap << 8)
+			| ((int)fog_clamping << 9)
+			| ((int)palette << 10)
+			| ((int)gouraud << 11)
+			| ((int)alphaTest << 12)
+			| ((int)clipInside << 13)
+			| ((int)nearestWrapFix << 14)
+			| ((int)twoVolumes << 15)
+			| ((int)pass << 16)
+			| ((int)divPosZ << 18);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -899,6 +951,7 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 		PixelMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
+		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroPass].Definition = MacroValues[pass];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
@@ -907,41 +960,92 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 	return shader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11OITShaders::getVertexShader(bool gouraud)
+const ComPtr<ID3D11VertexShader>& DX11OITShaders::getVertexShader(bool gouraud, bool naomi2, bool positionOnly, bool lightOn, bool twoVolumes)
 {
-	ComPtr<ID3D11VertexShader>& vertexShader = gouraud ? gouraudVertexShader : flatVertexShader;
-	if (!vertexShader)
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	const u32 hash = (int)gouraud
+			| ((int)naomi2 << 1)
+			| ((int)positionOnly << 2)
+			| ((int)lightOn << 3)
+			| ((int)twoVolumes << 4)
+			| ((int)divPosZ << 5);
+	auto& shader = vertexShaders[hash];
+	if (shader == nullptr)
 	{
-		VertexMacros[0].Definition = MacroValues[gouraud];
-		vertexShader = compileVS(VertexShader, "main", VertexMacros);
+		VertexMacros[MacroGouraud].Definition = MacroValues[gouraud];
+		if (!naomi2)
+		{
+			VertexMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
+			shader = compileVS(VertexShader, "main", VertexMacros);
+		}
+		else
+		{
+			VertexMacros[MacroDivPosZ].Definition = MacroValues[false];
+			VertexMacros[MacroPositionOnly].Definition = MacroValues[positionOnly];
+			VertexMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
+			VertexMacros[MacroLightOn].Definition = MacroValues[lightOn];
+			std::string source(DX11N2VertexShader);
+			if (!positionOnly && lightOn)
+				source += std::string("\n") + DX11N2ColorShader;
+			shader = compileVS(source.c_str(), "main", VertexMacros);
+		}
 	}
 
-	return vertexShader;
+	return shader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11OITShaders::getMVVertexShader()
+const ComPtr<ID3D11VertexShader>& DX11OITShaders::getMVVertexShader(bool naomi2)
 {
-	if (!modVolVertexShader)
-		modVolVertexShader = compileVS(ModVolVertexShader, "main", nullptr);
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	auto& mvVertexShader = modVolVertexShaders[(int)naomi2 | ((int)divPosZ << 1)];
+	if (!mvVertexShader)
+	{
+		if (!naomi2)
+		{
+			VertexMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
+			mvVertexShader = compileVS(ModVolVertexShader, "main", VertexMacros);
+		}
+		else
+		{
+			VertexMacros[MacroGouraud].Definition = MacroValues[false];
+			VertexMacros[MacroPositionOnly].Definition = MacroValues[true];
+			VertexMacros[MacroTwoVolumes].Definition = MacroValues[false];
+			VertexMacros[MacroLightOn].Definition = MacroValues[false];
+			mvVertexShader = compileVS(DX11N2VertexShader, "main", VertexMacros);
+		}
+	}
 
-	return modVolVertexShader;
+	return mvVertexShader;
 }
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
 {
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	auto& modVolShader = modVolShaders[divPosZ];
 	if (!modVolShader)
+	{
+		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		modVolShader = compilePS(PixelShader, "modifierVolume", PixelMacros);
+	}
 
 	return modVolShader;
 }
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader()
 {
+	if (maxLayers != config::PerPixelLayers)
+	{
+		finalShader.reset();
+		for (auto& shader : trModVolShaders)
+			shader.reset();
+		maxLayers = config::PerPixelLayers;
+	}
 	if (!finalShader)
 	{
+		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
-			{ "MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT },
+			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
 			{ }
 		};
 		finalShader = compilePS(OITFinalShaderSource, "main", macros);
@@ -959,13 +1063,23 @@ const ComPtr<ID3D11VertexShader>& DX11OITShaders::getFinalVertexShader()
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 {
-	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type];
+	if (maxLayers != config::PerPixelLayers)
+	{
+		finalShader.reset();
+		for (auto& shader : trModVolShaders)
+			shader.reset();
+		maxLayers = config::PerPixelLayers;
+	}
+	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type | ((int)divPosZ << 3)];
 	if (!shader)
 	{
+		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MV_MODE", MacroValues[type] },
-			{ "MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT },
+			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
+			{ "DIV_POS_Z", MacroValues[divPosZ] },
 			{ }
 		};
 		shader = compilePS(OITTranslucentModvolShaderSource, "main", macros);
@@ -1021,13 +1135,27 @@ ComPtr<ID3D11PixelShader> DX11OITShaders::compilePS(const char* source, const ch
 
 ComPtr<ID3DBlob> DX11OITShaders::getVertexShaderBlob()
 {
-	VertexMacros[0].Definition = MacroValues[0];
-	return compileShader(VertexShader, "main", "vs_5_0", VertexMacros);
+	VertexMacros[MacroGouraud].Definition = MacroValues[true];
+	// FIXME code dup
+	VertexMacros[MacroPositionOnly].Definition = MacroValues[false];
+	VertexMacros[MacroTwoVolumes].Definition = MacroValues[true];
+	std::string source(DX11N2VertexShader);
+	source += std::string("\n") + DX11N2ColorShader;
+	return compileShader(source.c_str(), "main", "vs_5_0", VertexMacros);
 }
 
 ComPtr<ID3DBlob> DX11OITShaders::getMVVertexShaderBlob()
 {
-	return compileShader(ModVolVertexShader, "main", "vs_5_0", nullptr);
+	// FIXME code dup
+	VertexMacros[MacroGouraud].Definition = MacroValues[false];
+	VertexMacros[MacroPositionOnly].Definition = MacroValues[true];
+	VertexMacros[MacroTwoVolumes].Definition = MacroValues[false];
+	return compileShader(DX11N2VertexShader, "main", "vs_5_0", VertexMacros);
+}
+
+ComPtr<ID3DBlob> DX11OITShaders::getFinalVertexShaderBlob()
+{
+	return compileShader(OITFinalVertexShaderSource, "main", "vs_5_0", nullptr);
 }
 
 void DX11OITShaders::init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile)

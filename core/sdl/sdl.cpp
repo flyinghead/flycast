@@ -44,6 +44,16 @@ static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
 
+static struct SDLDeInit
+{
+	~SDLDeInit() {
+		if (initialized)
+			SDL_Quit();
+	}
+
+	bool initialized = false;
+} sqlDeinit;
+
 static void sdl_open_joystick(int index)
 {
 	SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
@@ -176,8 +186,8 @@ void input_sdl_init()
 
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");
-			
 	}
+	sqlDeinit.initialized = true;
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -209,6 +219,12 @@ void input_sdl_init()
 			}
 		});
 	}
+}
+
+void input_sdl_quit()
+{
+	SDLGamepad::closeAllGamepads();
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
 inline void SDLMouse::setAbsPos(int x, int y) {
@@ -467,11 +483,9 @@ bool sdl_recreate_window(u32 flags)
         if (SetProcessDpiAwareness) {
             SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
             
-            float ddpi;
-            if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
+            if (SDL_GetDisplayDPI(0, &settings.display.dpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
                 //When using HiDPI mode, set correct DPI scaling
-                scaling = ddpi/96.f;
-                hdpiScaling = scaling;
+            	hdpiScaling = settings.display.dpi / 96.f;
             }
         }
         SDL_UnloadObject(shcoreDLL);
@@ -484,13 +498,13 @@ bool sdl_recreate_window(u32 flags)
 	{
 		windowPos.w  = 1280;
 		windowPos.h = 720;
-		scaling = 1.5f;
+		settings.display.uiScale = 1.5f;
 	}
 	else
 	{
 		windowPos.w  = 1920;
 		windowPos.h = 1080;
-		scaling = 1.0f;
+		settings.display.uiScale = 1.4f;
 	}
 #else
 	windowPos.x = cfgLoadInt("window", "left", windowPos.x);
@@ -606,6 +620,7 @@ void sdl_window_create()
 		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
 #endif
 	}
+	sqlDeinit.initialized = true;
 	initRenderApi();
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
@@ -625,4 +640,5 @@ void sdl_window_destroy()
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }

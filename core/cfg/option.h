@@ -142,7 +142,11 @@ public:
 		else if (PerGameOption && settings.hasPerGameConfig())
 		{
 			if (value == doLoad(section, name))
+			{
+				// delete existing per-game option if any
+				cfgDeleteEntry(settings.gameId, section + "." + name);
 				return;
+			}
 		}
 		if (PerGameOption && settings.hasPerGameConfig())
 			doSave(settings.gameId, section + "." + name);
@@ -176,8 +180,15 @@ protected:
 	}
 
 	template <typename U = T>
+	enable_if_t<std::is_same<U, int64_t>::value, T>
+	doLoad(const std::string& section, const std::string& name) const
+	{
+		return cfgLoadInt64(section, name, value);
+	}
+
+	template <typename U = T>
 	enable_if_t<(std::is_integral<U>::value || std::is_enum<U>::value)
-			&& !std::is_same<U, bool>::value, T>
+			&& !std::is_same<U, bool>::value && !std::is_same<U, int64_t>::value, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		return (T)cfgLoadInt(section, name, (int)value);
@@ -268,8 +279,15 @@ protected:
 	}
 
 	template <typename U = T>
+	enable_if_t<std::is_same<U, int64_t>::value>
+	doSave(const std::string& section, const std::string& name) const
+	{
+		cfgSaveInt64(section, name, value);
+	}
+
+	template <typename U = T>
 	enable_if_t<(std::is_integral<U>::value || std::is_enum<U>::value)
-		&& !std::is_same<U, bool>::value>
+		&& !std::is_same<U, bool>::value && !std::is_same<U, int64_t>::value>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		cfgSaveInt(section, name, (int)value);
@@ -355,6 +373,7 @@ extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int> SavestateSlot;
+extern Option<bool> ForceFreePlay;
 
 // Sound
 
@@ -421,6 +440,7 @@ constexpr bool Clipping = true;
 #ifndef LIBRETRO
 extern Option<int> TextureUpscale;
 extern Option<int> MaxFilteredTextureSize;
+extern Option<int> PerPixelLayers;
 #endif
 extern Option<float> ExtraDepthScale;
 extern Option<bool> CustomTextures;
@@ -438,10 +458,12 @@ extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
 extern Option<bool> VSync;
-extern Option<u64> PixelBufferSize;
+extern Option<int64_t> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;
+extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force linear
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
+extern Option<bool> NativeDepthInterpolation;
 
 // Misc
 
@@ -461,12 +483,16 @@ extern Option<bool> NetworkEnable;
 extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
+extern Option<int> LocalPort;
 extern Option<bool> EmulateBBA;
+extern Option<bool> EnableUPnP;
 extern Option<bool> GGPOEnable;
 extern Option<int> GGPODelay;
 extern Option<bool> NetworkStats;
 extern Option<int> GGPOAnalogAxes;
 extern Option<bool> GGPOChat;
+extern Option<bool> GGPOChatTimeoutToggle;
+extern Option<int> GGPOChatTimeout;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;
@@ -491,7 +517,6 @@ constexpr bool UseRawInput = false;
 
 #ifdef USE_LUA
 extern OptionString LuaFileName;
-#endif 
+#endif
 
 } // namespace config
-

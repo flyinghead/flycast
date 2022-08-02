@@ -38,7 +38,6 @@
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
 #include "rend/gui.h"
-#include "lua/lua.h"
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
@@ -50,7 +49,7 @@ settings_t settings;
 
 static void loadSpecialSettings()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
 		prod_id = trim_trailing_ws(prod_id);
@@ -98,7 +97,7 @@ static void loadSpecialSettings()
 				// JSR (EU)
 				|| prod_id == "MK-5105850")
 		{
-			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
+			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
 		}
 		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
@@ -196,17 +195,8 @@ static void loadSpecialSettings()
 		}
 		if (prod_id == "T9512N"			// The Grinch (US)
 			|| prod_id == "T9503D"		// The Grinch (EU)
-			|| prod_id == "T0000M"		// Hell Gate FIXME
-			|| prod_id == "MK-51012"	// Metropolis Street Racer (US)
-			|| prod_id == "MK-5102250"	// Metropolis Street Racer (EU)
-			|| prod_id == "T-31101N"	// Psychic Force 2012 (US)
-			|| prod_id == "T1101M"		// Psychic Force 2012 (JP)
-			|| prod_id == "T-8106D-50"	// Psychic Force 2012 (EU)
 			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "MK-51146"	// Sega Smashpack vol.1 (Sega Swirl)
-			|| prod_id == "MK-51152"	// World Series Baseball 2K2
-			|| prod_id == "T20401M"		// Zero Gunner
 			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
@@ -218,8 +208,19 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
 		}
+		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
+			|| prod_id == "MK-51146")	// Sega Smash Pack - Volume 1
+		{
+			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
+			config::Broadcast.override(0);
+		}
+		else if (prod_id == "T-9709D-50")	// San Francisco Rush 2049 (EU)
+		{
+			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
+			config::Broadcast.override(1);
+		}
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.isArcade())
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
@@ -231,6 +232,11 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
 			config::TranslucentPolygonDepthMask.override(true);
+		}
+		if (!strcmp(naomi_game_id, "BEACH SPIKERS JAPAN"))
+		{
+			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", naomi_game_id);
+			config::RenderToTextureBuffer.override(true);
 		}
 		// Input configuration
 		settings.input.JammaSetup = JVS::Default;
@@ -257,7 +263,8 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
-		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
+		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id)
+				|| !strcmp("VIRTUA ATHLETE", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::DualIOBoards4P;
@@ -339,7 +346,7 @@ void dc_reset(bool hard)
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	libAICA_Reset(hard);
-	libARM_Reset(hard);
+	aicaarm::reset();
 	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 	gdxsv_emu_reset();
@@ -361,6 +368,13 @@ static void setPlatform(int platform)
 	case DC_PLATFORM_NAOMI:
 		settings.platform.ram_size = 32 * 1024 * 1024;
 		settings.platform.vram_size = 16 * 1024 * 1024;
+		settings.platform.aram_size = 8 * 1024 * 1024;
+		settings.platform.bios_size = 2 * 1024 * 1024;
+		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
+		break;
+	case DC_PLATFORM_NAOMI2:
+		settings.platform.ram_size = 32 * 1024 * 1024;
+		settings.platform.vram_size = 16 * 1024 * 1024; // 2x16 MB VRAM, only 16 emulated
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
 		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
@@ -395,7 +409,7 @@ void Emulator::init()
 
 	pvr::init();
 	libAICA_Init();
-	libARM_Init();
+	aicaarm::init();
 	mem_Init();
 	reios_init();
 
@@ -450,11 +464,14 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		mem_map_default();
 
 		config::Settings::instance().reset();
-		dc_reset(true);
 		config::Settings::instance().load(false);
+		dc_reset(true);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isNaomi2() && config::RendererType == RenderType::DirectX9)
+			throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
+
+		if (settings.platform.isConsole())
 		{
 			if (settings.content.path.empty())
 			{
@@ -495,7 +512,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				}
 			}
 		}
-		else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		else if (settings.platform.isArcade())
 		{
 			LoadRomFiles();
 			naomi_cart_LoadRom(path, progress);
@@ -503,7 +520,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
 		}
+		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
+		if (settings.platform.isNaomi())
+			// Must be done after the maple devices are created and EEPROM is accessible
+			naomi_cart_ConfigureEEPROM();
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
@@ -578,7 +599,6 @@ void Emulator::term()
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
-		libARM_Term();
 		libAICA_Term();
 		pvr::term();
 		mem_Term();
@@ -622,7 +642,7 @@ void Emulator::requestReset()
 void loadGameSpecificSettings()
 {
 	char *reios_id;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		static char _disk_id[sizeof(ip_meta.product_number) + 1];
 
@@ -649,6 +669,12 @@ void loadGameSpecificSettings()
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
+
+	if (config::ForceWindowsCE)
+	{
+		config::ExtraDepthScale.override(0.1f);
+		config::FullMMU.override(true);
+	}
 }
 
 void Emulator::step()
@@ -818,7 +844,7 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
-	lua::vblank();
+	EventManager::event(Event::VBlank);
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;

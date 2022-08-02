@@ -15,8 +15,9 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "cfg/option.h"
+#include "modules.h"
 
-static int tty = 1;	// stdout by default
+static SerialPipe *serialPipe;
 
 SCIF_SCFSR2_type SCIF_SCFSR2;
 SCIF_SCSCR2_type SCIF_SCSCR2;
@@ -66,8 +67,9 @@ static void Serial_UpdateInterrupts()
 
 static void SerialWrite(u32 addr, u32 data)
 {
-	if (config::SerialConsole)
-		write(tty, &data, 1);
+	//DEBUG_LOG(COMMON, "serial %02x", data);
+	if (serialPipe != nullptr)
+		serialPipe->write(data);
 
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
@@ -78,18 +80,17 @@ static void SerialWrite(u32 addr, u32 data)
 //SCIF_SCFSR2 read
 static u32 ReadSerialStatus(u32 addr)
 {
-#if defined(__unix__) || defined(__APPLE__)
-	int count = 0;
-	if (config::SerialConsole && tty != 1
-			&& ioctl(tty, FIONREAD, &count) == 0 && count > 0)
+	if (serialPipe != nullptr)
 	{
-		return SCIF_SCFSR2.full | 2;
+		constexpr int trigLevels[] { 1, 4, 8, 14 };
+		int avail = serialPipe->available();
+
+		if (avail >= trigLevels[SCIF_SCFCR2.RTRG1 * 2 + SCIF_SCFCR2.RTRG0])
+			return SCIF_SCFSR2.full | 3; // RDF | DR
+		else if (avail >= 1)
+			return SCIF_SCFSR2.full | 1; // DR
 	}
-	else
-#endif
-	{
-		return SCIF_SCFSR2.full | 0;
-	}
+	return SCIF_SCFSR2.full;
 }
 
 static void WriteSerialStatus(u32 addr,u32 data)
@@ -108,14 +109,19 @@ static void WriteSerialStatus(u32 addr,u32 data)
 //SCIF_SCFDR2 - 16b
 static u32 Read_SCFDR2(u32 addr)
 {
-	return 0;
+	if (serialPipe != nullptr && serialPipe->available() > 0)
+		return 1; // TODO more?
+	else
+		return 0;
 }
+
 //SCIF_SCFRDR2
 static u32 ReadSerialData(u32 addr)
 {
 	u8 data = 0;
-	if (tty != 1)
-		read(tty, &data, 1);
+	if (serialPipe != nullptr)
+		data = serialPipe->read();
+
 	return data;
 }
 
@@ -132,6 +138,65 @@ static void SCSCR2_write(u32 addr, u32 data)
 
 	Serial_UpdateInterrupts();
 }
+
+struct PTYPipe : public SerialPipe
+{
+	void write(u8 data) override {
+		if (config::SerialConsole)
+			::write(tty, &data, 1);
+	}
+
+	int available() override {
+		int count = 0;
+#if defined(__unix__) || defined(__APPLE__)
+		if (config::SerialConsole && tty != 1)
+			ioctl(tty, FIONREAD, &count);
+#endif
+		return count;
+	}
+
+	u8 read() override {
+		u8 data = 0;
+		if (tty != 1)
+			::read(tty, &data, 1);
+		return data;
+	}
+
+	void init()
+	{
+#if defined(__unix__) || defined(__APPLE__)
+		if (config::SerialConsole && config::SerialPTY && tty == 1)
+		{
+			tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
+			if (tty < 0)
+			{
+				ERROR_LOG(BOOT, "Cannot open /dev/ptmx: errno %d", errno);
+				tty = 1;
+			}
+			else
+			{
+				grantpt(tty);
+				unlockpt(tty);
+				NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
+			}
+		}
+#endif
+		serial_setPipe(this);
+	}
+
+	void term()
+	{
+		if (tty != 1)
+		{
+			::close(tty);
+			tty = 1;
+		}
+	}
+
+private:
+	int tty = 1;
+};
+static PTYPipe ptyPipe;
 
 //Init term res
 void serial_init()
@@ -171,21 +236,6 @@ void serial_init()
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
 
-#if defined(__unix__) || defined(__APPLE__)
-	if (config::SerialConsole && config::SerialPTY)
-	{
-		tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
-		if (tty < 0)
-			ERROR_LOG(BOOT, "Cannot open /dev/ptmx: errno %d", errno);
-		else
-		{
-			grantpt(tty);
-			unlockpt(tty);
-			NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
-		}
-	}
-#endif
-
 	// Serial Communication Interface
 	sh4_rio_reg(SCI, SCI_SCSMR1_addr, RIO_DATA, 8);
 	sh4_rio_reg(SCI, SCI_SCBRR1_addr, RIO_DATA, 8);
@@ -195,7 +245,8 @@ void serial_init()
 	sh4_rio_reg(SCI, SCI_SCRDR1_addr, RIO_RO, 8);
 	sh4_rio_reg(SCI, SCI_SCSPTR1_addr, RIO_DATA, 8);
 }
-void serial_reset()
+
+void serial_reset(bool hard)
 {
 	/*
 	SCIF SCSMR2 H'FFE8 0000 H'1FE8 0000 16 H'0000 H'0000 Held Held Pclk
@@ -224,14 +275,17 @@ void serial_reset()
 	SCI_SCSSR1 = 0x84;
 	SCI_SCRDR1 = 0;
 	SCI_SCSPTR1 = 0;
+
+	if (hard)
+		ptyPipe.init();
 }
 
 void serial_term()
 {
-	if (tty > 2)
-	{
-		close(tty);
-		tty = 1;
-	}
+	ptyPipe.term();
 }
 
+void serial_setPipe(SerialPipe *pipe)
+{
+	serialPipe = pipe;
+}

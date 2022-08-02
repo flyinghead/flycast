@@ -410,18 +410,53 @@ void AWCartridge::AdvancePtr(u32 size)
 	dma_offset += size;
 }
 
-std::string AWCartridge::GetGameId()
+struct AtomiswaveBootID
 {
-	if (RomSize < 0x30 + 0x20)
-		return "(ROM too small)";
+  char	boardName[16];		// SYSTEM_X_APP
+  char	vendorName[32];
+  char	gameTitle[32];
+  char	year[4];
+  char	month[2];
+  char	day[2];
+  u32  _unkn0;
+  u32  _unkn1;
+  u32  _unkn2;
+  u32	gamePC;
+  u32  _unkn3;
+  u32	testPC;
+};
 
-	dma_offset = 0x30;
-	u32 limit = 0x20;
-	char *name = (char *)GetDmaPtr(limit);
-	std::string game_id(name, limit);
-	while (!game_id.empty() && game_id.back() == ' ')
-		game_id.pop_back();
-	return game_id;
+bool AWCartridge::GetBootId(RomBootID *bootId)
+{
+	if (RomSize < sizeof(AtomiswaveBootID))
+		return false;
+	AtomiswaveBootID awBootId;
+	u8 *p = (u8 *)&awBootId;
+	u32 size = sizeof(AtomiswaveBootID);
+	dma_offset = 0;
+	recalc_dma_offset(EPR);
+	while (size > 0)
+	{
+		u32 chunkSize = size;
+		void *src = GetDmaPtr(chunkSize);
+		if (chunkSize == 0)
+			return false;
+		memcpy(p, src, chunkSize);
+		p += chunkSize;
+		size -= chunkSize;
+		AdvancePtr(chunkSize);
+	}
+	memset(bootId, 0, sizeof(RomBootID));
+	memcpy(bootId->boardName, awBootId.boardName, sizeof(bootId->boardName));
+	memcpy(bootId->vendorName, awBootId.vendorName, sizeof(bootId->vendorName));
+	memcpy(bootId->gameTitle[0], awBootId.gameTitle, sizeof(bootId->gameTitle[0]));
+	bootId->gamePC = awBootId.gamePC;
+	bootId->testPC = awBootId.testPC;
+	bootId->year = atoi(std::string(awBootId.year, awBootId.year + 4).c_str());
+	bootId->month = atoi(std::string(awBootId.month, awBootId.month + 2).c_str());
+	bootId->day = atoi(std::string(awBootId.day, awBootId.day + 2).c_str());
+
+	return true;
 }
 
 void AWCartridge::Serialize(Serializer& ser) const

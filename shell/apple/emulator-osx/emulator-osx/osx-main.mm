@@ -14,7 +14,6 @@
 
 #include "types.h"
 #include "log/LogManager.h"
-#include "rend/gui.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -33,8 +32,16 @@ int darw_printf(const char* text, ...)
     va_start(args, text);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-
-    NSLog(@"%s", temp);
+    
+    NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
+    if (getenv("TERM") == NULL) //Xcode console does not support colors
+    {
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[0m" withString:@""];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[92m" withString:@"ℹ️ "];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[91m" withString:@"⚠️ "];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[93m" withString:@"🛑 "];
+    }
+    NSLog(@"%@", log);
 
     return 0;
 }
@@ -74,6 +81,13 @@ void os_SetupInput()
 {
 #if defined(USE_SDL)
 	input_sdl_init();
+#endif
+}
+
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
 #endif
 }
 
@@ -130,9 +144,9 @@ extern "C" int SDL_main(int argc, char *argv[])
 
 	mainui_loop();
 
+	sdl_window_destroy();
 	emu_flycast_term();
 	os_UninstallFaultHandler();
-	sdl_window_destroy();
 
 	return 0;
 }

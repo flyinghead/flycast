@@ -20,6 +20,7 @@
 #include "cfg/option.h"
 #include "ggpo.h"
 #include "naomi_network.h"
+#include "net_serial_maxspeed.h"
 
 NetworkHandshake *NetworkHandshake::instance;
 
@@ -46,7 +47,7 @@ public:
 	}
 
 	void stop() override {
-		naomiNetwork.terminate();
+		naomiNetwork.shutdown();
 	}
 
 	bool canStartNow() override {
@@ -60,13 +61,15 @@ public:
 
 void NetworkHandshake::init()
 {
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.isArcade())
 		SetNaomiNetworkConfig(-1);
 
 	if (config::GGPOEnable)
 		instance = new GGPONetworkHandshake();
 	else if (NaomiNetworkSupported())
 		instance = new NaomiNetworkHandshake();
+	else if (config::NetworkEnable && settings.content.gameId == "MAXIMUM SPEED")
+		instance = new MaxSpeedHandshake();
 	else
 		instance = nullptr;
 }

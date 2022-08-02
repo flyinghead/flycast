@@ -18,7 +18,6 @@
 */
 #include "dx11context.h"
 #ifndef LIBRETRO
-#include "rend/gui.h"
 #include "rend/osd.h"
 #ifdef USE_SDL
 #include "sdl/sdl.h"
@@ -26,6 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx11_driver.h"
+#include "imgui_impl_dx11.h"
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>
@@ -44,32 +44,18 @@ bool DX11Context::init(bool keepCurrentWindow)
 #ifdef TARGET_UWP
 	GAMING_DEVICE_MODEL_INFORMATION info {};
 	GetGamingDeviceModelInformation(&info);
-	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT)
+	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT && info.deviceId != GAMING_DEVICE_DEVICE_ID_NONE)
 	{
-		switch (info.deviceId)
-		{
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
-			{
-				Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-				Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
-				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
-				settings.display.width = displayMode->ResolutionWidthInRawPixels;
-				settings.display.height = displayMode->ResolutionHeightInRawPixels;
-				if (settings.display.width == 3840)
-					// 4K
-					scaling = 2.8f;
-				else
-					scaling = 1.4f;
-			}
-			break;
-
-		default:
-			scaling = 1.f;
-		    break;
-		}
+		Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+		Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
+		NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
+		settings.display.width = displayMode->ResolutionWidthInRawPixels;
+		settings.display.height = displayMode->ResolutionHeightInRawPixels;
+		if (settings.display.width == 3840)
+			// 4K
+			settings.display.uiScale = 2.8f;
+		else
+			settings.display.uiScale = 1.4f;
 	}
 #endif
 
@@ -170,12 +156,12 @@ bool DX11Context::init(bool keepCurrentWindow)
 			NOTICE_LOG(RENDERER, "No system-provided shader cache");
 	}
 
-	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver());
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver(pDevice, pDeviceContext));
 	resize();
-	gui_init();
 	shaders.init(pDevice, &D3DCompile);
 	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
-	return ImGui_ImplDX11_Init(pDevice, pDeviceContext);
+
+	return true;
 }
 
 void DX11Context::term()
@@ -186,8 +172,6 @@ void DX11Context::term()
 	samplers.term();
 	shaders.term();
 	imguiDriver.reset();
-	ImGui_ImplDX11_Shutdown();
-	gui_term();
 	renderTargetView.reset();
 	swapchain1.reset();
 	swapchain.reset();

@@ -1,10 +1,5 @@
-//structs were getting tooo many , so i moved em here !
-
 #pragma once
 #include "types.h"
-
-//bits that affect drawing (for caching params)
-#define PCW_DRAW_MASK (0x000000CE)
 
 #pragma pack(push, 1)   // n = 1
 //	Global Param/misc structs
@@ -37,13 +32,6 @@ union PCW
 		u32 ParaType    : 3;
 	};
 	u8 obj_ctrl;
-	struct
-	{
-		u32 padin  : 8;
-		u32 S6X    : 1;    //set by TA preprocessing if sz64
-		u32 padin2 : 19;
-		u32 PTEOS  : 4;
-	};
 	u32 full;
 };
 

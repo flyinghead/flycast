@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "option.h"
+#include "network/naomi_network.h"
 
 namespace config {
 
@@ -36,6 +37,7 @@ Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
 Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
+Option<bool> ForceFreePlay("ForceFreePlay", true);
 
 // Sound
 
@@ -93,10 +95,13 @@ Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
-Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
+Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
+Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
+Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 
 // Misc
 
@@ -116,12 +121,16 @@ Option<bool> NetworkEnable("Enable", false, "network");
 Option<bool> ActAsServer("ActAsServer", false, "network");
 OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
+Option<int> LocalPort("LocalPort", NaomiNetwork::SERVER_PORT, "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
+Option<bool> EnableUPnP("EnableUPnP", true, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<bool> GGPOChat("GGPOChat", true, "network");
+Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
+Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

@@ -126,6 +126,7 @@ bool D3DRenderer::Init()
 		WARN_LOG(RENDERER, "Pixel shader version %x", caps.PixelShaderVersion);
 		return false;
 	}
+	maxAnisotropy = caps.MaxAnisotropy;
 
 	device = theDXContext.getDevice();
 	devCache.setDevice(device);
@@ -217,9 +218,6 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 	//lookup texture
 	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw);
 
-	if (tf->texture == nullptr)
-		tf->Create();
-
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
@@ -285,14 +283,12 @@ bool D3DRenderer::Process(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		readDCFramebuffer();
+		return true;
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx, true))
-			return false;
+		return ta_parse(ctx);
 	}
-
-	return true;
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)
@@ -391,7 +387,15 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		setTexMode(D3DSAMP_ADDRESSV, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		//set texture filter mode
-		if (gp->tsp.FilterMode == 0 || gpuPalette)
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+
+		if (!linearFiltering)
 		{
 			//disable filtering, mipmaps
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
@@ -404,6 +408,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MAXANISOTROPY, std::min(maxAnisotropy, (int)config::AnisotropicFiltering));
 		}
 	}
 
@@ -857,24 +862,14 @@ void D3DRenderer::setBaseScissor()
 
 void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 {
-	u32 fbw = pvrrc.fb_X_CLIP.max + 1;
-	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
+	u32 fbw = pvrrc.getFramebufferWidth();
+	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8, fbw, fbh, texAddress);
-	// Find the smallest power of two texture that fits the viewport
-	u32 fbh2 = 2;
-	while (fbh2 < fbh)
-		fbh2 *= 2;
-	u32 fbw2 = 2;
-	while (fbw2 < fbw)
-		fbw2 *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw = (u32)(fbw * config::RenderResolution / 480.f);
-		fbh = (u32)(fbh * config::RenderResolution / 480.f);
-		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
-		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
-	}
+			pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
+	u32 fbw2;
+	u32 fbh2;
+	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
+
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
 
@@ -893,9 +888,8 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 
 void D3DRenderer::readRttRenderTarget(u32 texAddress)
 {
-	u32 w = pvrrc.fb_X_CLIP.max + 1;
-	u32 h = pvrrc.fb_Y_CLIP.max + 1;
-	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
+	u32 w = pvrrc.getFramebufferWidth();
+	u32 h = pvrrc.getFramebufferHeight();
 	if (config::RenderToTextureBuffer)
 	{
 		D3DSURFACE_DESC rttDesc;
@@ -926,41 +920,17 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verifyWin(offscreenSurface->UnlockRect());
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[gl.rtt.texAddress], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-			TCW tcw = { { texAddress >> 3, 0, 0, 1 } };
-			switch (fb_packmode) {
-			case 0:
-			case 3:
-				tcw.PixelFmt = Pixel1555;
-				break;
-			case 1:
-				tcw.PixelFmt = Pixel565;
-				break;
-			case 2:
-				tcw.PixelFmt = Pixel4444;
-				break;
-			}
-			TSP tsp = { 0 };
-			for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++)
-				;
-
-			for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++)
-				;
-
-			D3DTexture* texture = texCache.getTextureCacheData(tsp, tcw);
-			if (!texture->texture)
-				texture->Create();
-
+			D3DTexture* texture = texCache.getRTTexture(texAddress, pvrrc.fb_W_CTRL.fb_packmode, w, h);
 			texture->texture = rttTexture;
 			texture->dirty = 0;
-			libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+			texture->unprotectVRam();
 		}
 	}
 }
@@ -973,7 +943,7 @@ bool D3DRenderer::Render()
 
 	backbuffer.reset();
 	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
+	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
 	if (is_rtt)
 	{
 		prepareRttRenderTarget(texAddress);
@@ -1160,7 +1130,8 @@ void D3DRenderer::renderFramebuffer()
 			rs.left = fx;
 			rs.right = width - fx;
 		}
-		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd, D3DTEXF_LINEAR);	// This can fail if window is minimized
+		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd,
+				config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);	// This can fail if window is minimized
 	}
 	else
 	{
@@ -1170,8 +1141,8 @@ void D3DRenderer::renderFramebuffer()
 		device->SetRenderState(D3DRS_ZENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))

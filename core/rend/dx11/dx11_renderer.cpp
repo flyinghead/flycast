@@ -29,6 +29,7 @@ const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 	{ "COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "COLOR",    1, DXGI_FORMAT_B8G8R8A8_UNORM, 0, (UINT)offsetof(Vertex, spc), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(Vertex, u),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(Vertex, nx),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
 };
 const D3D11_INPUT_ELEMENT_DESC ModVolLayout[]
 {
@@ -43,7 +44,7 @@ bool DX11Renderer::Init()
 
 	shaders = &theDX11Context.getShaders();
 	samplers = &theDX11Context.getSamplers();
-	bool success = (bool)shaders->getVertexShader(true);
+	bool success = (bool)shaders->getVertexShader(true, true);
 	ComPtr<ID3DBlob> blob = shaders->getVertexShaderBlob();
 	success = success && SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
 	blob = shaders->getMVVertexShaderBlob();
@@ -146,6 +147,7 @@ bool DX11Renderer::Init()
 
 	quad = std::unique_ptr<Quad>(new Quad());
 	quad->init(device, deviceContext, shaders);
+	n2Helper.init(device, deviceContext);
 
 	fog_needs_update = true;
 	forcePaletteUpdate();
@@ -163,6 +165,7 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+	n2Helper.term();
 	vtxConstants.reset();
 	pxlConstants.reset();
 	fbTex.reset();
@@ -279,9 +282,6 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 	//lookup texture
 	DX11Texture* tf = texCache.getTextureCacheData(tsp, tcw);
 
-	if (tf->texture == nullptr)
-		tf->Create();
-
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
@@ -307,161 +307,11 @@ bool DX11Renderer::Process(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		readDCFramebuffer();
+		return true;
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx, true))
-			return false;
-	}
-
-	return true;
-}
-
-//
-// Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools � November 2011
-//
-static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
-{
-	return (A * std::abs(Bdist) + B * std::abs(Adist)) / (std::abs(Adist) + std::abs(Bdist));
-}
-
-// Clip the triangle 'trig' with respect to the plane defined by the given point and normal vector.
-static int sutherlandHodgmanClip(const glm::vec2& point, const glm::vec2& normal, ModTriangle& trig, ModTriangle& newTrig)
-{
-	constexpr float clipEpsilon = 0.f; //0.00001;
-	constexpr float clipEpsilon2 = 0.f; //0.01;
-
-	glm::vec3 v0(trig.x0, trig.y0, trig.z0);
-	glm::vec3 v1(trig.x1, trig.y1, trig.z1);
-	glm::vec3 v2(trig.x2, trig.y2, trig.z2);
-
-	glm::vec3 dist = glm::vec3(
-			glm::dot(glm::vec2(v0) - point, normal),
-			glm::dot(glm::vec2(v1) - point, normal),
-			glm::dot(glm::vec2(v2) - point, normal));
-	if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2))))
-		// all clipped
-		return 0;
-	if (glm::all(glm::greaterThanEqual(dist , glm::vec3(-clipEpsilon))))
-		// none clipped
-		return 3;
-
-	// There are either 1 or 2 vertices above the clipping plane.
-	glm::bvec3 above = glm::greaterThanEqual(dist, glm::vec3(0.f));
-	bool nextIsAbove;
-	glm::vec3 v3;
-	// Find the CCW-most vertex above the plane.
-	if (above[1] && !above[0])
-	{
-		// Cycle once CCW. Use v3 as a temp
-		nextIsAbove = above[2];
-		v3 = v0;
-		v0 = v1;
-		v1 = v2;
-		v2 = v3;
-		dist = glm::vec3(dist.y, dist.z, dist.x);
-	}
-	else if (above[2] && !above[1])
-	{
-		// Cycle once CW. Use v3 as a temp.
-		nextIsAbove = above[0];
-		v3 = v2;
-		v2 = v1;
-		v1 = v0;
-		v0 = v3;
-		dist = glm::vec3(dist.z, dist.x, dist.y);
-	}
-	else
-		nextIsAbove = above[1];
-	trig.x0 = v0.x;
-	trig.y0 = v0.y;
-	trig.z0 = v0.z;
-	// We always need to clip v2-v0.
-	v3 = intersect(v0, dist[0], v2, dist[2]);
-	if (nextIsAbove)
-	{
-		v2 = intersect(v1, dist[1], v2, dist[2]);
-		trig.x1 = v1.x;
-		trig.y1 = v1.y;
-		trig.z1 = v1.z;
-		trig.x2 = v2.x;
-		trig.y2 = v2.y;
-		trig.z2 = v2.z;
-		newTrig.x0 = v0.x;
-		newTrig.y0 = v0.y;
-		newTrig.z0 = v0.z;
-		newTrig.x1 = v2.x;
-		newTrig.y1 = v2.y;
-		newTrig.z1 = v2.z;
-		newTrig.x2 = v3.x;
-		newTrig.y2 = v3.y;
-		newTrig.z2 = v3.z;
-
-		return 4;
-	}
-	else
-	{
-		v1 = intersect(v0, dist[0], v1, dist[1]);
-		trig.x1 = v1.x;
-		trig.y1 = v1.y;
-		trig.z1 = v1.z;
-		trig.x2 = v3.x;
-		trig.y2 = v3.y;
-		trig.z2 = v3.z;
-
-		return 3;
-	}
-}
-
-static void clipModVols(List<ModifierVolumeParam>& params, std::vector<ModTriangle>& triangles)
-{
-	for (ModifierVolumeParam& param : params)
-	{
-		std::vector<ModTriangle> trigs(&pvrrc.modtrig.head()[param.first], &pvrrc.modtrig.head()[param.first + param.count]);
-		std::vector<ModTriangle> nextTrigs;
-		nextTrigs.reserve(trigs.size());
-		for (int axis = 0; axis < 4; axis++)
-		{
-			glm::vec2 point;
-			glm::vec2 normal;
-			switch (axis)
-			{
-			case 0: // left
-				point = glm::vec2(-6400.f, 0.f);
-				normal = glm::vec2(1.f, 0.f);
-				break;
-			case 1: // top
-				point = glm::vec2(0.f, -4800.f);
-				normal = glm::vec2(0.f, 1.f);
-				break;
-			case 2: // right
-				point = glm::vec2(7040.f, 0.f);
-				normal = glm::vec2(-1.f, 0.f);
-				break;
-			case 3: // bottom
-				point = glm::vec2(-0.f, 5280.f);
-				normal = glm::vec2(0.f, -1.f);
-				break;
-			}
-
-			for (ModTriangle& trig : trigs)
-			{
-				ModTriangle newTrig;
-				int size = sutherlandHodgmanClip(point, normal, trig, newTrig);
-				if (size > 0)
-				{
-					nextTrigs.push_back(trig);
-					if (size == 4)
-						nextTrigs.push_back(newTrig);
-				}
-			}
-			std::swap(trigs, nextTrigs);
-			nextTrigs.clear();
-		}
-		param.first = (u32)triangles.size();
-		param.count = (u32)trigs.size();
-		triangles.insert(triangles.end(), trigs.begin(), trigs.end());
+		return ta_parse(ctx);
 	}
 }
 
@@ -472,7 +322,7 @@ void DX11Renderer::configVertexShader()
 
 	if (pvrrc.isRTT)
 	{
-		prepareRttRenderTarget(FB_W_SOF1 & VRAM_MASK);
+		prepareRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
 	}
 	else
 	{
@@ -521,30 +371,12 @@ void DX11Renderer::uploadGeometryBuffers()
 
 	if (config::ModifierVolumes && pvrrc.modtrig.used())
 	{
-		const ModTriangle *data = nullptr;
-		u32 size = 0;
-#if 1
-		// clip triangles
-		std::vector<ModTriangle> modVolTriangles;
-		modVolTriangles.reserve(pvrrc.modtrig.used());
-		clipModVols(pvrrc.global_param_mvo, modVolTriangles);
-		clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
-		if (!modVolTriangles.empty())
-		{
-			size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
-			data = modVolTriangles.data();
-		}
-#else
-		size = pvrrc.modtrig.bytes();
-		data = pvrrc.modtrig.head();
-#endif
-		if (size > 0)
-		{
-			verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
-			deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-			memcpy(mappedSubres.pData, data, size);
-			deviceContext->Unmap(modvolBuffer, 0);
-		}
+		const ModTriangle *data = pvrrc.modtrig.head();
+		u32 size = pvrrc.modtrig.bytes();
+		verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
+		deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+		memcpy(mappedSubres.pData, data, size);
+		deviceContext->Unmap(modvolBuffer, 0);
 	}
     unsigned int stride = sizeof(Vertex);
     unsigned int offset = 0;
@@ -581,8 +413,6 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
-	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
-
 	// make sure to unbind the framebuffer view before setting it as render target
 	ID3D11ShaderResourceView *nullView = nullptr;
     deviceContext->PSSetShaderResources(0, 1, &nullView);
@@ -598,6 +428,7 @@ bool DX11Renderer::Render()
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
+		n2Helper.resetCache();
 		uploadGeometryBuffers();
 
 		updateFogTexture();
@@ -614,7 +445,7 @@ bool DX11Renderer::Render()
 
 	if (is_rtt)
 	{
-		readRttRenderTarget(texAddress);
+		readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
 	}
 	else
 	{
@@ -700,7 +531,7 @@ void DX11Renderer::renderFramebuffer()
 	y = y * 2.f / outheight - 1.f;
 	h *= 2.f / outheight;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
-	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, x, y, w, h, config::Rotate90);
+	quad->draw(fbTextureView, samplers->getSampler(config::TextureFiltering != 1), nullptr, x, y, w, h, config::Rotate90);
 #endif
 }
 
@@ -746,7 +577,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	DX11Texture *texture = (DX11Texture *)gp->texture;
 	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
 
-	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud);
+	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud, gp->isNaomi2());
 	deviceContext->VSSetShader(vertexShader, nullptr, 0);
 	ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 			gp->pcw.Texture,
@@ -800,7 +631,14 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	if (texture != nullptr)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
-        auto sampler = samplers->getSampler(gp->tsp.FilterMode != 0 && !gpuPalette, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 
@@ -820,7 +658,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		zfunc = gp->isp.DepthMode;
 
 	bool zwriteEnable;
-	if (SortingEnabled && !config::PerStripSorting)
+	if (SortingEnabled /* && !config::PerStripSorting */)
 		zwriteEnable = false;
 	else
 	{
@@ -833,6 +671,9 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	}
 	const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
 	deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, config::ModifierVolumes), stencil);
+
+	if (gp->isNaomi2())
+		n2Helper.setConstants(*gp, 0); // poly number only used in OIT
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -901,7 +742,7 @@ void DX11Renderer::drawSorted(bool multipass)
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 		deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 
-		ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(true);
+		ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(true, settings.platform.isNaomi2());
 		deviceContext->VSSetShader(vertexShader, nullptr, 0);
 		ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 				false,
@@ -950,7 +791,6 @@ void DX11Renderer::drawModVols(int first, int count)
 
 	deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 
-	deviceContext->VSSetShader(shaders->getMVVertexShader(), nullptr, 0);
 	deviceContext->PSSetShader(shaders->getModVolShader(), nullptr, 0);
 
 	deviceContext->RSSetScissorRects(1, &scissorRect);
@@ -959,6 +799,8 @@ void DX11Renderer::drawModVols(int first, int count)
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
 	int mod_base = -1;
+	const float *curMVMat = nullptr;
+	const float *curProjMat = nullptr;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -969,6 +811,13 @@ void DX11Renderer::drawModVols(int first, int count)
 		if (mod_base == -1)
 			mod_base = param.first;
 
+		if (param.isNaomi2() && (param.mvMatrix != curMVMat || param.projMatrix != curProjMat))
+		{
+			curMVMat = param.mvMatrix;
+			curProjMat = param.projMatrix;
+			n2Helper.setConstants(param.mvMatrix, param.projMatrix);
+		}
+		deviceContext->VSSetShader(shaders->getMVVertexShader(param.isNaomi2()), nullptr, 0);
 		if (!param.isp.VolumeLast && mv_mode > 0)
 			// OR'ing (open volume or quad)
 			deviceContext->OMSetDepthStencilState(depthStencilStates.getMVState(DepthStencilStates::Or), 2);
@@ -1006,6 +855,8 @@ void DX11Renderer::drawModVols(int first, int count)
 	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
+	// Use the background poly as a quad
+	deviceContext->VSSetShader(shaders->getMVVertexShader(false), nullptr, 0);
 	deviceContext->DrawIndexed(4, 0, 0);
 }
 
@@ -1188,24 +1039,14 @@ void DX11Renderer::setBaseScissor()
 
 void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 {
-	u32 fbw = pvrrc.fb_X_CLIP.max + 1;
-	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
+	u32 fbw = pvrrc.getFramebufferWidth();
+	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8, fbw, fbh, texAddress);
-	// Find the smallest power of two texture that fits the viewport
-	u32 fbh2 = 2;
-	while (fbh2 < fbh)
-		fbh2 *= 2;
-	u32 fbw2 = 2;
-	while (fbw2 < fbw)
-		fbw2 *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw = (u32)(fbw * config::RenderResolution / 480.f);
-		fbh = (u32)(fbh * config::RenderResolution / 480.f);
-		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
-		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
-	}
+			pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
+	u32 fbw2;
+	u32 fbh2;
+	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
+
 	createTexAndRenderTarget(rttTexture, rttRenderTarget, fbw2, fbh2);
 	createDepthTexAndView(rttDepthTex, rttDepthTexView, fbw2, fbh2);
 	deviceContext->ClearDepthStencilView(rttDepthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
@@ -1217,13 +1058,13 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 	vp.MinDepth = 0.f;
 	vp.MaxDepth = 1.f;
 	deviceContext->RSSetViewports(1, &vp);
+	setRTTSize(fbw2, fbh2);
 }
 
 void DX11Renderer::readRttRenderTarget(u32 texAddress)
 {
-	u32 w = pvrrc.fb_X_CLIP.max + 1;
-	u32 h = pvrrc.fb_Y_CLIP.max + 1;
-	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
+	u32 w = pvrrc.getFramebufferWidth();
+	u32 h = pvrrc.getFramebufferHeight();
 	if (config::RenderToTextureBuffer)
 	{
 		D3D11_TEXTURE2D_DESC desc;
@@ -1268,37 +1109,14 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 		deviceContext->Unmap(stagingTex, 0);
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
 		//memset(&vram[gl.rtt.texAddress], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-			TCW tcw = { { texAddress >> 3, 0, 0, 1 } };
-			switch (fb_packmode) {
-			case 0:
-			case 3:
-				tcw.PixelFmt = Pixel1555;
-				break;
-			case 1:
-				tcw.PixelFmt = Pixel565;
-				break;
-			case 2:
-				tcw.PixelFmt = Pixel4444;
-				break;
-			}
-			TSP tsp = { 0 };
-			for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++)
-				;
-
-			for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++)
-				;
-
-			DX11Texture* texture = texCache.getTextureCacheData(tsp, tcw);
-			if (!texture->texture)
-				texture->Create();
+			DX11Texture* texture = texCache.getRTTexture(texAddress, pvrrc.fb_W_CTRL.fb_packmode, w, h);
 
 			texture->texture = rttTexture;
 			rttTexture.reset();
@@ -1311,7 +1129,7 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 			device->CreateShaderResourceView(texture->texture, &viewDesc, &texture->textureView.get());
 
 			texture->dirty = 0;
-			libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+			texture->unprotectVRam();
 		}
 	}
 }

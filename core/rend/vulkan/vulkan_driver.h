@@ -24,6 +24,10 @@
 class VulkanDriver final : public ImGuiDriver
 {
 public:
+	~VulkanDriver() {
+		ImGui_ImplVulkan_Shutdown();
+	}
+
 	void newFrame() override {
 	}
 

@@ -20,7 +20,6 @@
 */
 #ifndef LIBRETRO
 #include "context.h"
-#include "rend/gui.h"
 #include "cfg/option.h"
 
 #include "gl_context.h"

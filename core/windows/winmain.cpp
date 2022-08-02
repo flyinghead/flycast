@@ -223,6 +223,16 @@ void os_SetupInput()
 #endif
 }
 
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
+#endif
+#ifndef TARGET_UWP
+	if (config::UseRawInput)
+		rawinput::term();
+#endif
+}
 
 static void setupPath()
 {
@@ -889,10 +899,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	mainui_loop();
 
-	flycast_term();
-
-	os_UninstallFaultHandler();
-
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else
@@ -905,6 +911,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		cfgSaveInt("window", "height", settings.display.height);
 	}
 #endif
+
+	flycast_term();
+	os_UninstallFaultHandler();
 
 	return 0;
 }
