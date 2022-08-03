@@ -377,6 +377,7 @@ static void gui_newFrame()
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
 
+#if defined(USE_SDL)
 	if (io.WantTextInput && !SDL_IsTextInputActive())
 	{
 		SDL_StartTextInput();
@@ -385,6 +386,7 @@ static void gui_newFrame()
 	{
 		SDL_StopTextInput();
 	}
+#endif
 }
 
 static void delayedKeysUp()
