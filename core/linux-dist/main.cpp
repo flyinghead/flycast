@@ -411,6 +411,11 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
 #ifdef __vita__
+	scePowerSetArmClockFrequency(444);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+	
 	vglInitWithCustomThreshold(0, 960, 544, 8 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 #endif
 
