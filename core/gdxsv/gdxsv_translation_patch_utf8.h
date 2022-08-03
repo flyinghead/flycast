@@ -2508,24 +2508,29 @@ Translation translations[] = {
 //
 //
 //
-    TRANSLATE(0x1C2E80,8,
+//    TRANSLATE(0x1C2E80,8,
+//                R"(%8u円)",
+//                R"(%8u円)",
+//                R"(¥%8u)"
+//                ),
+//    TRANSLATE(0x1C2E88,16,
+//                R"(課金予測情報)",
+//                R"(預計課金金額)",
+//                R"(Est Service Fee)"
+//                ),
+    CUSTOMIZE(0x1C2E80,8,
                 R"(%8u円)",
-                R"(%8u円)",
-                R"(¥%8u)"
+                R"(%8u人)",
+                R"(%8u)",
+                R"(%8u人)"
                 ),
-    TRANSLATE(0x1C2E88,16,
+    CUSTOMIZE(0x1C2E88,16,
                 R"(課金予測情報)",
-                R"(預計課金金額)",
-                R"(Est Service Fee)"
+                R"(對戰中人數)",
+                R"(In battle)",
+                R"(対戦中人数)"
                 ),
-//    CUSTOMIZE(0x1C2E88,16,
-//              R"(課金予測情報)",
-//              R"(對戰中人數)",
-//              R"(In battle)",
-//              R"(対戦中人数)"
-//              ),
-//
-//
+
     TRANSLATE(0x1C2E98,32,
                 R"(更新情報、メンテナンス情報等の)",
                 R"(査閲最新情報、server維護等資料)",

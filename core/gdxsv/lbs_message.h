@@ -38,6 +38,7 @@ public:
     static const u16 lbsShutdown = 0x6003;
     static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;
+    static const u16 lbsBattleUserCount = 0x9965;
 
     int Serialize(std::deque<u8> &buf) const {
         buf.push_back(direction);
