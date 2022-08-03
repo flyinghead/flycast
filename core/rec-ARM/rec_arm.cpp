@@ -1969,6 +1969,9 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 		reg.OpBegin(&block->oplist[0], 0);
 
 	// block checks
+#ifdef __vita__
+	if (config::DynarecSmcChecks) {
+#endif
 	if (force_checks || mmu_enabled())
 	{
 		u32 addr = block->addr;
@@ -1980,10 +1983,13 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 			ass.Cmp(r2, r1);
 			jump(ngen_blockcheckfail, ne);
 		}
-
 		if (force_checks)
 		{
+#ifdef __vita__
+			s32 sz = config::DynarecSmcChecks == 1 ? 4 : block->sh4_code_size;
+#else
 			s32 sz = block->sh4_code_size;
+#endif
 			while (sz > 0)
 			{
 				if (sz > 2)
@@ -2035,7 +2041,9 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 			ass.Bind(&fpu_enabled);
 		}
 	}
-
+#ifdef __vita__
+	}
+#endif
 	//scheduler
 	u32 cyc = block->guest_cycles;
 	if (!ImmediateA32::IsImmediateA32(cyc))

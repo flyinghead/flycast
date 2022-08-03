@@ -929,7 +929,9 @@ void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
 {
 	if (!mmu_enabled())
 	{
+	#if !defined(__vita__)
 		if (op < 0xF000)
+	#endif
 			block->guest_cycles++;
 	}
 	else
@@ -1108,8 +1110,12 @@ _end:
 		blk->guest_cycles*=1.5;
 	}
 	// Win CE boost
+#ifndef __vita__
 	if (mmu_enabled())
 		blk->guest_cycles *= 1.5f;
+#else
+	blk->guest_cycles *= config::DynarecDownclock;
+#endif
 
 	//make sure we don't use wayy-too-many cycles
 	blk->guest_cycles = std::min(blk->guest_cycles, max_cycles);

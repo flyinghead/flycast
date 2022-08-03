@@ -360,6 +360,10 @@ using OptionString = Option<std::string>;
 
 extern Option<bool> DynarecEnabled;
 extern Option<bool> DynarecIdleSkip;
+#ifdef __vita__
+extern Option<float> DynarecDownclock;
+extern Option<int> DynarecSmcChecks;
+#endif
 constexpr bool DynarecSafeMode = false;
 
 // General

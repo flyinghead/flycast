@@ -2055,6 +2055,19 @@ static void gui_display_settings()
 		    	ImGui::Spacing();
 		    	header("Dynarec Options");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
+#ifdef __vita__
+				OptionFloatSlider("Downclock Ratio", config::DynarecDownclock, 1.0f, 5.0f,
+		    			"Ratio at which downclock SH4 processor");
+						
+				ImGui::Text("Self-Modifying Code Checks:");
+		    	ImGui::Columns(3, "DynarecSmcChecks", false);
+		    	OptionRadioButton("Off", config::DynarecSmcChecks, 0, "Disables checks for self-modifying code");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Reduced", config::DynarecSmcChecks, 1, "Performs a simplified check for self-modifying code");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Full", config::DynarecSmcChecks, 2, "Checks the whole code block for self-modifying code");
+		    	ImGui::Columns(1, nullptr, false);
+#endif
 		    }
 	    	ImGui::Spacing();
 		    header("Network");
