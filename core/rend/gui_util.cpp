@@ -689,6 +689,30 @@ bool OptionSlider(const char *name, config::Option<int>& option, int min, int ma
 	return valueChanged;
 }
 
+bool OptionFloatSlider(const char *name, config::Option<float>& option, float min, float max, const char *help)
+{
+	float v = option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool valueChanged = ImGui::SliderFloat(name, &v, min, max);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	else if (valueChanged)
+		option.set(v);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return valueChanged;
+}
+
 bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help)
 {
 	const float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
