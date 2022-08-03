@@ -28,7 +28,7 @@ extern "C" char __start__;
 #define siginfo_t switch_siginfo_t
 #endif // __SWITCH__
 
-#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__vita__)
 
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
@@ -110,7 +110,7 @@ void os_UninstallFaultHandler()
 #endif
 }
 
-#else  // !defined(TARGET_NO_EXCEPTIONS)
+#elif !defined(__vita__)  // !defined(TARGET_NO_EXCEPTIONS)
 
 void os_InstallFaultHandler()
 {
@@ -131,9 +131,7 @@ double os_GetSeconds()
 #if !defined(__unix__) && !defined(LIBRETRO)
 void os_DebugBreak()
 {
-#ifndef __vita__
 	__builtin_trap();
-#endif
 }
 #endif
 

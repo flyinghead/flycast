@@ -5,22 +5,7 @@
 #include "types.h"
 
 #if !defined(__SWITCH__)
-#ifdef __vita__
-#define PROT_READ 0
-#define PROT_WRITE 0
-#define PROT_NONE 0
-#define PROT_EXEC 0
-#define MAP_FAILED 0
-#define MAP_PRIVATE 0
-#define MAP_FIXED 0
-#define MAP_ANON 0
-#define MAP_SHARED 0
-void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) { return nullptr; }
-int	mprotect(const void *, size_t, int) { return 0; }
-int munmap(void *addr, size_t len) { return 0; }
-#else
 #include <sys/mman.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -135,7 +120,7 @@ static int allocate_shared_filemem(unsigned size) {
 	// Use Android's specific shmem stuff.
 	fd = ashmem_create_region("RAM", size);
 #else
-	#if !defined(__APPLE__) && !defined(__vita__)
+	#if !defined(__APPLE__)
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
 	#endif
@@ -232,9 +217,7 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 	// Mark them as non accessible.
 	mprotect(ptr, size_bytes, PROT_NONE);
 	// Tell the kernel to flush'em all (FIXME: perhaps unmap+mmap 'd be better?)
-	#if defined(MADV_DONTNEED)
 	madvise(ptr, size_bytes, MADV_DONTNEED);
-	#endif
 	#if defined(MADV_REMOVE)
 	madvise(ptr, size_bytes, MADV_REMOVE);
 	#elif defined(MADV_FREE)
@@ -393,14 +376,7 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 
 #elif HOST_CPU == CPU_ARM
 
-#if defined(__vita__)
-#include <kubridge.h>
-static void CacheFlush(void* code, void* pEnd)
-{
-	kuKernelFlushCaches(code, (u8*)pEnd - (u8*)code + 1);
-}
-
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 
 #include <libkern/OSCacheControl.h>
 static void CacheFlush(void* code, void* pEnd)

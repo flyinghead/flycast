@@ -34,10 +34,6 @@
 #include <sstream>
 #endif
 
-#ifdef __vita__
-extern void *arm_ptr;
-#endif
-
 extern bool Arm7Enabled;
 
 namespace aicaarm {
@@ -53,16 +49,14 @@ u8* icPtr;
 u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
-#ifndef __vita__
 #if defined(_WIN32) || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *ARM7_TCB;
-#elif defined(__unix__) || defined(__SWITCH__)
+#elif defined(__unix__) || defined(__SWITCH__) || defined(__vita__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
-#endif
 #endif
 
 ptrdiff_t rx_offset;
@@ -673,9 +667,7 @@ void flush()
 
 void init()
 {
-#ifdef __vita__
-	ICache = (u8 *)arm_ptr;
-#elif defined(FEAT_NO_RWX_PAGES)
+#if defined(FEAT_NO_RWX_PAGES)
 	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
 #else
 	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));

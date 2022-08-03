@@ -107,7 +107,7 @@ if(VITA)
 
 	add_executable(${PROJECT_NAME} core/emulator.cpp)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
+	# target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 
@@ -907,6 +907,12 @@ if(WIN32)
 			core/windows/fault_handler.cpp
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
+elseif(VITA)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/linux/common.cpp
+		core/linux/unwind_info.cpp
+		core/linux/vita_fault_handler.cpp
+		core/linux/vita_vmem.cpp)
 else()
     target_sources(${PROJECT_NAME} PRIVATE
 			core/linux/common.cpp
@@ -1602,7 +1608,7 @@ if(NINTENDO_SWITCH)
 endif()
 
 if(VITA)
-	vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE)
+	vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE STRIPPED NOASLR)
 	vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
 		VERSION ${VITA_VERSION}
 		NAME ${VITA_APP_NAME}
