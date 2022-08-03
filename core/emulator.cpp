@@ -208,6 +208,17 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
 		}
+		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
+			|| prod_id == "MK-51146")	// Sega Smash Pack - Volume 1
+		{
+			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
+			config::Broadcast.override(0);
+		}
+		else if (prod_id == "T-9709D-50")	// San Francisco Rush 2049 (EU)
+		{
+			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
+			config::Broadcast.override(1);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
