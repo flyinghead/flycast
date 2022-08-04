@@ -7,6 +7,7 @@
 #include <kubridge.h>
 
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/pvr/elan.h"
 #include "stdclass.h"
@@ -84,6 +85,7 @@ void vmem_platform_destroy()
 void vmem_platform_reset_mem(void *ptr, unsigned size_bytes)
 {
 	// Mark them as non accessible.
+	bm_vmem_pagefill((void **)ptr, size_bytes);
 	verify(kuKernelMemProtect(ptr, size_bytes, KU_KERNEL_PROT_NONE) == 0);
 }
 
