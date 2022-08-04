@@ -363,6 +363,7 @@ extern Option<bool> DynarecIdleSkip;
 #ifdef __vita__
 extern Option<float> DynarecDownclock;
 extern Option<int> DynarecSmcChecks;
+extern Option<bool> DynarecUseNeon;
 #endif
 constexpr bool DynarecSafeMode = false;
 

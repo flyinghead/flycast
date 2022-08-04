@@ -1803,9 +1803,9 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				ass.Mov(eq, reg.mapReg(op->rd), 1);
 #else
 			if (op->op == shop_fsetgt)
-				ass.Vcgt(d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
+				ass.Vcgt(DataType(F32), d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
 			else
-				ass.Vceq(d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
+				ass.Vceq(DataType(F32), d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
 
 			ass.Vmov(r0, s0);
 			ass.And(reg.mapReg(op->rd), r0, 1);
@@ -1854,8 +1854,8 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				ass.Vmla(reg.mapFReg(op->rd), s3, SRegister(fs2.GetCode() + 3));
 #else			
 				ass.Vmul(q0, _r1, _r2);
-				ass.Vpadd(d0, d0, d1);
-				ass.Vadd(reg.mapFReg(op->rd), f0, f1);
+				ass.Vpadd(DataType(F32), d0, d0, d1);
+				ass.Vadd(reg.mapFReg(op->rd), s0, s1);
 #endif
 			}
 			break;
@@ -1871,54 +1871,60 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 					ass.Sub(r0, r8, op->rd.reg_aofs());
 				}
 	
-#if 1
-				//f0,f1,f2,f3	  : vin
-				//f4,f5,f6,f7     : out
-				//f8,f9,f10,f11   : mtx temp
-				//f12,f13,f14,f15 : mtx temp
-				//(This is actually faster than using neon)
+#ifdef __vita__
+				if (!config::DynarecUseNeon) {
+#endif
+					//f0,f1,f2,f3	  : vin
+					//f4,f5,f6,f7     : out
+					//f8,f9,f10,f11   : mtx temp
+					//f12,f13,f14,f15 : mtx temp
+					//(This is actually faster than using neon)
 
-				ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
-				ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 2));
+					ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
+					ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 2));
 
-				ass.Vmul(s4, vixl::aarch32::s8, s0);
-				ass.Vmul(s5, s9, s0);
-				ass.Vmul(s6, s10, s0);
-				ass.Vmul(s7, s11, s0);
+					ass.Vmul(s4, vixl::aarch32::s8, s0);
+					ass.Vmul(s5, s9, s0);
+					ass.Vmul(s6, s10, s0);
+					ass.Vmul(s7, s11, s0);
 				
-				ass.Vldm(r2, WRITE_BACK, DRegisterList(d6, 2));
+					ass.Vldm(r2, WRITE_BACK, DRegisterList(d6, 2));
 
-				ass.Vmla(s4, s12, s1);
-				ass.Vmla(s5, s13, s1);
-				ass.Vmla(s6, s14, s1);
-				ass.Vmla(s7, s15, s1);
+					ass.Vmla(s4, s12, s1);
+					ass.Vmla(s5, s13, s1);
+					ass.Vmla(s6, s14, s1);
+					ass.Vmla(s7, s15, s1);
 
-				ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
+					ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
 
-				ass.Vmla(s4, vixl::aarch32::s8, s2);
-				ass.Vmla(s5, s9, s2);
-				ass.Vmla(s6, s10, s2);
-				ass.Vmla(s7, s11, s2);
+					ass.Vmla(s4, vixl::aarch32::s8, s2);
+					ass.Vmla(s5, s9, s2);
+					ass.Vmla(s6, s10, s2);
+					ass.Vmla(s7, s11, s2);
 
-				ass.Vldm(r2, NO_WRITE_BACK, DRegisterList(d6, 2));
+					ass.Vldm(r2, NO_WRITE_BACK, DRegisterList(d6, 2));
 
-				ass.Vmla(s4, s12, s3);
-				ass.Vmla(s5, s13, s3);
-				ass.Vmla(s6, s14, s3);
-				ass.Vmla(s7, s15, s3);
+					ass.Vmla(s4, s12, s3);
+					ass.Vmla(s5, s13, s3);
+					ass.Vmla(s6, s14, s3);
+					ass.Vmla(s7, s15, s3);
 
-				ass.Vstm(rdp, NO_WRITE_BACK, DRegisterList(d2, 2));
-#else
-				//this fits really nicely to NEON !
-				// TODO
-				ass.Vldm(d16,r2,8);
-				ass.Vldm(d0,r1,2);
+					ass.Vstm(rdp, NO_WRITE_BACK, DRegisterList(d2, 2));
+#ifdef __vita__
+				} else {
+					//this fits really nicely to NEON !
+					ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 4));
+					ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 2));
 
-				ass.Vmla(q2,q8,d0,0);
-				ass.Vmla(q2,q9,d0,1);
-				ass.Vmla(q2,q10,d1,0);
-				ass.Vmla(q2,q11,d1,1);
-				ass.Vstm(d4,rdp,2);
+					ass.Vmul(DataType(F32), q1, q2, d0, 0);
+					ass.Vmla(DataType(F32), q1, q3, DRegisterLane(d0, 1));
+
+					ass.Vldm(r2, NO_WRITE_BACK, DRegisterList(d4, 4));
+					ass.Vmla(DataType(F32), q1, q2, DRegisterLane(d1, 0));
+					ass.Vmla(DataType(F32), q1, q3, DRegisterLane(d1, 1));
+
+					ass.Vstm(rdp, NO_WRITE_BACK, DRegisterList(d2, 2));
+				}
 #endif
 			}
 			break;

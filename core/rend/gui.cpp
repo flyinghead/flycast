@@ -2056,6 +2056,7 @@ static void gui_display_settings()
 		    	header("Dynarec Options");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 #ifdef __vita__
+				OptionCheckbox("Use Neon SIMD", config::DynarecUseNeon, "Enables usage of NEON SIMD processor inside Dynarec");
 				OptionFloatSlider("Downclock Ratio", config::DynarecDownclock, 1.0f, 5.0f,
 		    			"Ratio at which downclock SH4 processor");
 						

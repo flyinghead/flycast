@@ -28,6 +28,7 @@ Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 #ifdef __vita__
 Option<float> DynarecDownclock("Dynarec.downclock", 3.f);
 Option<int> DynarecSmcChecks("Dynarec.smcChecks", 0);
+Option<bool> DynarecUseNeon("Dynarec.useNeon", true);
 #endif
 
 // General
