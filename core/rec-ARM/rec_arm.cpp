@@ -1844,18 +1844,22 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 					_r2 = q1;
 				}
 
-#if 1
-				//VFP
-				SRegister fs2 = _r2.Is(q0) ? s0 : s4;
+#ifdef __vita__
+				if (!config::DynarecUseNeon) {
+#endif
+					//VFP
+					SRegister fs2 = _r2.Is(q0) ? s0 : s4;
 
-				ass.Vmul(reg.mapFReg(op->rd), s0, fs2);
-				ass.Vmla(reg.mapFReg(op->rd), s1, SRegister(fs2.GetCode() + 1));
-				ass.Vmla(reg.mapFReg(op->rd), s2, SRegister(fs2.GetCode() + 2));
-				ass.Vmla(reg.mapFReg(op->rd), s3, SRegister(fs2.GetCode() + 3));
-#else			
-				ass.Vmul(q0, _r1, _r2);
-				ass.Vpadd(DataType(F32), d0, d0, d1);
-				ass.Vadd(reg.mapFReg(op->rd), s0, s1);
+					ass.Vmul(reg.mapFReg(op->rd), s0, fs2);
+					ass.Vmla(reg.mapFReg(op->rd), s1, SRegister(fs2.GetCode() + 1));
+					ass.Vmla(reg.mapFReg(op->rd), s2, SRegister(fs2.GetCode() + 2));
+					ass.Vmla(reg.mapFReg(op->rd), s3, SRegister(fs2.GetCode() + 3));
+#ifdef __vita__
+				} else {
+					ass.Vmul(DataType(F32), q0, _r1, _r2);
+					ass.Vpadd(DataType(F32), d0, d0, d1);
+					ass.Vadd(reg.mapFReg(op->rd), s0, s1);
+				}
 #endif
 			}
 			break;
