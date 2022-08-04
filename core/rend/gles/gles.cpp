@@ -90,7 +90,7 @@ uniform float4 fog_clamp_min;
 uniform float4 fog_clamp_max;
 #if pp_Palette == 1
 uniform sampler2D palette;
-uniform int palette_index;
+uniform short palette_index;
 #endif
 
 float fog_mode2(float w, float3 vtx_uv)
@@ -116,7 +116,7 @@ float4 fog_clamp(float4 col)
 
 float4 palettePixel(float3 coords)
 {
-	int color_idx = int(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	short color_idx = short(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     float2 c = float2((fmod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return tex2D(palette, c);
 }
