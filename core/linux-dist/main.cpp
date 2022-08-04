@@ -19,7 +19,7 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <kubridge.h>
-int _newlib_heap_size_user = 300 * 1024 * 1024;
+int _newlib_heap_size_user = 160 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 2 * 1024 * 1024;
 #endif
 
@@ -416,7 +416,7 @@ int main(int argc, char* argv[])
 	scePowerSetGpuClockFrequency(222);
 	scePowerSetGpuXbarClockFrequency(166);
 	
-	vglInitWithCustomThreshold(0, 960, 544, 8 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+	vglInitWithCustomThreshold(0, 960, 544, 148 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 #endif
 
 #if defined(USE_SDL)

@@ -49,23 +49,26 @@ static SceUID backing_block = -1;
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
-	return MemTypeError; // vmem isn't working yet
+	// return MemTypeError; // vmem isn't working yet
 
 	// Now try to allocate a contiguous piece of memory.
-	// reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + ARAM_SIZE_MAX;
-	// reserved_base = nullptr;
-	// reserved_block = kuKernelMemReserve(&reserved_base, reserved_size, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
+	reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + ARAM_SIZE_MAX;
+	reserved_base = nullptr;
+	reserved_block = kuKernelMemReserve(&reserved_base, reserved_size, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 
-	// verify(reserved_block >= 0); // Block is allocated in _init_vita_heap
+	verify(reserved_block >= 0);
 
-	// uintptr_t ptrint = (uintptr_t)reserved_base;
-	// *sh4rcb_addr = (void *)ptrint;
-	// *vmem_base_addr = (void *)(ptrint + ALIGN(sizeof(Sh4RCB), PAGE_SIZE));
+	uintptr_t ptrint = (uintptr_t)reserved_base;
+	*sh4rcb_addr = (void *)ptrint;
+	*vmem_base_addr = (void *)(ptrint + sizeof(Sh4RCB));
+	const size_t fpcb_size = sizeof(((Sh4RCB *)NULL)->fpcb);
 
-	// // Now commit the memory for the SH4RCB
-	// verify(kuKernelMemCommit(*sh4rcb_addr, sizeof(Sh4RCB), KU_KERNEL_PROT_READ | KU_KERNEL_PROT_WRITE, NULL) == 0);
+	// Now commit the memory for the SH4RCB
+	verify(kuKernelMemCommit(*sh4rcb_addr, sizeof(Sh4RCB), KU_KERNEL_PROT_READ | KU_KERNEL_PROT_WRITE, NULL) == 0);
+	// Set the fpcb to be non-accessible so that it can be configured upon use.
+	verify(kuKernelMemProtect(*sh4rcb_addr, fpcb_size, KU_KERNEL_PROT_NONE) == 0);
 
-	// return MemType512MB;
+	return MemType512MB;
 }
 
 // Just tries to wipe as much as possible in the relevant area.
