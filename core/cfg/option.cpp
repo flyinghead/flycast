@@ -26,7 +26,7 @@ namespace config {
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
 Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 #ifdef __vita__
-Option<float> DynarecDownclock("Dynarec.downclock", 2.f);
+Option<float> DynarecDownclock("Dynarec.downclock", 1.5f);
 Option<int> DynarecSmcChecks("Dynarec.smcChecks", 0);
 Option<bool> DynarecUseNeon("Dynarec.useNeon", true);
 #endif

@@ -388,7 +388,6 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 
 int main(int argc, char* argv[])
 {
-	argc=0;
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
@@ -412,6 +411,9 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
 #ifdef __vita__
+#if 0 // Devkit
+	argc = 0;
+#endif
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);
