@@ -19,8 +19,8 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <kubridge.h>
-int _newlib_heap_size_user = 180 * 1024 * 1024;
-unsigned int sceUserMainThreadStackSize = 2 * 1024 * 1024;
+int _newlib_heap_size_user = 188 * 1024 * 1024;
+unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
 #endif
 
 #if defined(__SWITCH__)
@@ -388,6 +388,7 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 
 int main(int argc, char* argv[])
 {
+	argc=0;
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
@@ -416,7 +417,7 @@ int main(int argc, char* argv[])
 	scePowerSetGpuClockFrequency(222);
 	scePowerSetGpuXbarClockFrequency(166);
 	
-	vglInitWithCustomThreshold(0, 960, 544, 128 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+	vglInitWithCustomThreshold(0, 960, 544, 256 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 #endif
 
 #if defined(USE_SDL)
