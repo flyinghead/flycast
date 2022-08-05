@@ -146,6 +146,7 @@ endif()
 
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
+	set(USE_VULKAN OFF)
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
 else()
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_14)
