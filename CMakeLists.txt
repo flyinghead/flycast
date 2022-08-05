@@ -92,8 +92,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(VITA)
 	include("${VITASDK}/share/vita.cmake" REQUIRED)
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-q,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
 
 	set(VITA_APP_NAME "Flycast")
 	set(VITA_TITLEID  "FLYCAST01")
