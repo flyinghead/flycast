@@ -67,10 +67,20 @@ void main(
 	float4 vpos = mul(in_pos, ndcMat);
 	vtx_base = in_base;
 	vtx_offs = in_offs;
-	vtx_uv = float3(in_uv, vpos.z * sp_FOG_DENSITY);
-	vpos.w = 1.0 / vpos.z;
-	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
-	vpos.xy *= vpos.w;
+#if DIV_POS_Z == 1
+	vpos /= vpos.z;
+	vpos.z = vpos.w;
+#endif
+#if pp_Gouraud == 1 && DIV_POS_Z != 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+#endif
+	vtx_uv = float3(in_uv, vpos.z);
+#if DIV_POS_Z != 1
+	vtx_uv.xy *= vpos.z;
+	vpos.w = 1.0;
+	vpos.z = 0.0;
+#endif
 	gl_Position = vpos;
 }
 )";
@@ -95,7 +105,13 @@ uniform short palette_index;
 
 float fog_mode2(float w, float3 vtx_uv)
 {
-	float z = clamp(vtx_uv.z, 1.0, 255.9999);
+	float z = clamp(
+#if DIV_POS_Z == 1
+		sp_FOG_DENSITY / w
+#else
+		sp_FOG_DENSITY * w
+#endif
+	, 1.0, 255.9999);
 	float _exp = floor(log2(z));
 	float m = z * 16.0 / pow(2.0, _exp) - 16.0;
 	float idx = floor(m) + _exp * 16.0 + 0.5;
@@ -116,20 +132,26 @@ float4 fog_clamp(float4 col)
 
 float4 palettePixel(float3 coords)
 {
+#if DIV_POS_Z == 1
 	short color_idx = short(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-    float2 c = float2((fmod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
-	return tex2D(palette, c);
+#else
+	short color_idx = short(floor(tex2Dproj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+#endif
+    int2 c = int2(color_idx % 32, color_idx / 32);
+	return tex2Dfetch(palette, int4(c, 0, 0));
 }
 
 #endif
 
-#define depth gl_FragCoord.w
+#define depth vtx_uv.z
 
-float4 main(
+void main(
 	float4 vtx_base : TEXCOORD0,
 	float4 vtx_offs : TEXCOORD1,
 	float3 vtx_uv : TEXCOORD2,
-	float4 gl_FragCoord : WPOS
+	float4 gl_FragCoord : WPOS,
+	float out gl_FragDepth : DEPTH,
+	float4 out gl_FragColor : COLOR
 ) {
 	// Clip inside the box
 	#if pp_ClipInside == 1
@@ -140,7 +162,7 @@ float4 main(
 	
 	float4 color = vtx_base;
 	float4 offset = vtx_offs;
-	#if pp_Gouraud == 1 && TARGET_GL != GLES2 && DIV_POS_Z != 1
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
 	#endif
@@ -152,8 +174,10 @@ float4 main(
 	#endif
 	#if pp_Texture==1
 	{
-		#if pp_Palette == 0
+		#if DIV_POS_Z == 1
 			float4 texcol = tex2D(tex, vtx_uv.xy);
+		#elif pp_Palette == 0
+			float4 texcol = tex2Dproj(tex, vtx_uv);
 		#else
 			float4 texcol = palettePixel(vtx_uv);
 		#endif
@@ -216,7 +240,15 @@ float4 main(
 	#endif
 	
 	//color.rgb = float3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
-	return color;
+	
+#if DIV_POS_Z == 1
+	float w = 100000.0 / vtx_uv.z;
+#else
+	float w = 100000.0 * vtx_uv.z;
+#endif
+	gl_FragDepth = log2(1.0 + w) / 34.0;
+	
+	gl_FragColor = color;
 }
 )";
 
@@ -224,8 +256,19 @@ static const char* ModifierVolumeShader = R"(
 uniform float sp_ShaderColor;
 
 
-float4 main() {
-	return float4(0.0, 0.0, 0.0, sp_ShaderColor);
+void main(
+	float3 vtx_uv : TEXCOORD2
+	float out gl_FragDepth : DEPTH,
+	float4 out gl_FragColor : COLOR,
+) {
+#if DIV_POS_Z == 1
+	float w = 100000.0 / vtx_uv.z;
+#else
+	float w = 100000.0 * vtx_uv.z;
+#endif
+	gl_FragDepth = log2(1.0 + w) / 34.0;
+#endif
+	glFragColor = float4(0.0, 0.0, 0.0, sp_ShaderColor);
 }
 )";
 
