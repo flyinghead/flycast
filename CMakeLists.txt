@@ -96,7 +96,7 @@ if(VITA)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
 
 	set(VITA_APP_NAME "Flycast")
-	set(VITA_TITLEID  "FLYCAST01")
+	set(VITA_TITLEID  "FLYCASTDC")
 	set(VITA_VPKNAME  "Flycast")
 	set(VITA_VERSION  "01.00")
 	set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
@@ -1613,11 +1613,11 @@ if(VITA)
 	vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
 		VERSION ${VITA_VERSION}
 		NAME ${VITA_APP_NAME}
-		#FILE ${CMAKE_SOURCE_DIR}/livearea/icon0.png sce_sys/icon0.png
-		#${CMAKE_SOURCE_DIR}/livearea/default_gate.png sce_sys/livearea/contents/default_gate.png
-		#${CMAKE_SOURCE_DIR}/livearea/bg0.png sce_sys/livearea/contents/bg0.png
-		#${CMAKE_SOURCE_DIR}/livearea/template.xml sce_sys/livearea/contents/template.xml
-		#${VPK_INCLUDES}
+		FILE ${CMAKE_SOURCE_DIR}/shell/vita/icon0.png sce_sys/icon0.png
+		${CMAKE_SOURCE_DIR}/shell/vita/startup.png sce_sys/livearea/contents/startup.png
+		${CMAKE_SOURCE_DIR}/shell/vita/bg.png sce_sys/livearea/contents/bg.png
+		${CMAKE_SOURCE_DIR}/shell/vita/template.xml sce_sys/livearea/contents/template.xml
+		${VPK_INCLUDES}
 	)
 endif()
 
