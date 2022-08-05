@@ -132,13 +132,9 @@ float4 fog_clamp(float4 col)
 
 float4 palettePixel(float3 coords)
 {
-#if DIV_POS_Z == 1
 	short color_idx = short(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-#else
-	short color_idx = short(floor(tex2Dproj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-#endif
-    int2 c = int2(color_idx % 32, color_idx / 32);
-	return tex2Dfetch(palette, int4(c, 0, 0));
+	float2 c = float2((fmod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
+	return tex2D(palette, c);
 }
 
 #endif
