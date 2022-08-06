@@ -253,9 +253,9 @@ uniform float sp_ShaderColor;
 
 
 void main(
-	float3 vtx_uv : TEXCOORD2
+	float3 vtx_uv : TEXCOORD2,
 	float out gl_FragDepth : DEPTH,
-	float4 out gl_FragColor : COLOR,
+	float4 out gl_FragColor : COLOR
 ) {
 #if DIV_POS_Z == 1
 	float w = 100000.0 / vtx_uv.z;
@@ -263,8 +263,7 @@ void main(
 	float w = 100000.0 * vtx_uv.z;
 #endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
-#endif
-	glFragColor = float4(0.0, 0.0, 0.0, sp_ShaderColor);
+	gl_FragColor = float4(0.0, 0.0, 0.0, sp_ShaderColor);
 }
 )";
 
