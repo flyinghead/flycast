@@ -67,6 +67,12 @@ void main(
 	float4 vpos = mul(in_pos, ndcMat);
 	vtx_base = in_base;
 	vtx_offs = in_offs;
+#if USE_GLES2 == 1
+	vtx_uv = float3(in_uv, vpos.z * sp_FOG_DENSITY);
+	vpos.w = 1.0 / vpos.z;
+	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
+	vpos.xy *= vpos.w;
+#else
 #if DIV_POS_Z == 1
 	vpos /= vpos.z;
 	vpos.z = vpos.w;
@@ -80,6 +86,7 @@ void main(
 	vtx_uv.xy *= vpos.z;
 	vpos.w = 1.0;
 	vpos.z = 0.0;
+#endif
 #endif
 	gl_Position = vpos;
 }
@@ -106,10 +113,14 @@ uniform short palette_index;
 float fog_mode2(float w, float3 vtx_uv)
 {
 	float z = clamp(
+#if USE_GLES2 == 1
+		vtx_uv.z
+#else
 #if DIV_POS_Z == 1
 		sp_FOG_DENSITY / w
 #else
 		sp_FOG_DENSITY * w
+#endif
 #endif
 	, 1.0, 255.9999);
 	float _exp = floor(log2(z));
@@ -139,14 +150,20 @@ float4 palettePixel(float3 coords)
 
 #endif
 
+#if USE_GLES2 == 1
+#define depth gl_FragCoord.w
+#else
 #define depth vtx_uv.z
+#endif
 
 void main(
 	float4 vtx_base : TEXCOORD0,
 	float4 vtx_offs : TEXCOORD1,
 	float3 vtx_uv : TEXCOORD2,
 	float4 gl_FragCoord : WPOS,
+#if USE_GLES2 == 0
 	float out gl_FragDepth : DEPTH,
+#endif
 	float4 out gl_FragColor : COLOR
 ) {
 	// Clip inside the box
@@ -158,7 +175,7 @@ void main(
 	
 	float4 color = vtx_base;
 	float4 offset = vtx_offs;
-	#if pp_Gouraud == 1 && DIV_POS_Z != 1
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1 && USE_GLES2 == 0
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
 	#endif
@@ -171,7 +188,7 @@ void main(
 	#if pp_Texture==1
 	{
 		#if pp_Palette == 0
-		  #if DIV_POS_Z == 1
+		  #if USE_GLES2 == 1 || DIV_POS_Z == 1
 			float4 texcol = tex2D(tex, vtx_uv.xy);
 		  #else
 			float4 texcol = tex2Dproj(tex, vtx_uv);
@@ -238,14 +255,14 @@ void main(
 	#endif
 	
 	//color.rgb = float3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
-	
+#if USE_GLES2 == 0
 #if DIV_POS_Z == 1
 	float w = 100000.0 / vtx_uv.z;
 #else
 	float w = 100000.0 * vtx_uv.z;
 #endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
-	
+#endif
 	gl_FragColor = color;
 }
 )";
@@ -255,16 +272,20 @@ uniform float sp_ShaderColor;
 
 
 void main(
+#if USE_GLES2 == 0
 	float3 vtx_uv : TEXCOORD2,
 	float out gl_FragDepth : DEPTH,
+#endif
 	float4 out gl_FragColor : COLOR
 ) {
+#if USE_GLES2 == 0
 #if DIV_POS_Z == 1
 	float w = 100000.0 / vtx_uv.z;
 #else
 	float w = 100000.0 * vtx_uv.z;
 #endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
+#endif
 	gl_FragColor = float4(0.0, 0.0, 0.0, sp_ShaderColor);
 }
 )";
@@ -966,7 +987,9 @@ public:
 	VertexSource(bool gouraud, bool divPosZ) : OpenGlSource() {
 		addConstant("pp_Gouraud", gouraud);
 		addConstant("DIV_POS_Z", divPosZ);
-
+#ifdef __vita__
+		addConstant("USE_GLES2", config::UseSimpleShaders);
+#endif
 		addSource(VertexCompatShader);
 		addSource(GouraudSource);
 		addSource(VertexShaderSource);
@@ -992,6 +1015,9 @@ public:
 		addConstant("pp_TriLinear", s->trilinear);
 		addConstant("pp_Palette", s->palette);
 		addConstant("DIV_POS_Z", s->divPosZ);
+#ifdef __vita__
+		addConstant("USE_GLES2", config::UseSimpleShaders);
+#endif
 
 		addSource(PixelCompatShader);
 		addSource(GouraudSource);
@@ -1158,6 +1184,9 @@ static void create_modvol_shader()
 	OpenGlSource fragmentShader;
 	fragmentShader.addConstant("pp_Gouraud", 0)
 			.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
+#ifdef __vita__
+			.addConstant("USE_GLES2", config::UseSimpleShaders)
+#endif
 			.addSource(PixelCompatShader)
 			.addSource(GouraudSource)
 			.addSource(ModifierVolumeShader);
@@ -1166,7 +1195,6 @@ static void create_modvol_shader()
 	gl.modvol_shader.ndcMat = glGetUniformLocation(gl.modvol_shader.program, "ndcMat");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-
 	if (gl.gl_major >= 3)
 	{
 		N2VertexSource n2vertexShader(false, true, false);

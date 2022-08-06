@@ -1715,7 +1715,9 @@ static void gui_display_settings()
             	ImGui::NextColumn();
 		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
 		    	ImGui::Columns(1, nullptr, false);
-
+#ifdef __vita__
+				OptionCheckbox("Use Simple Shaders", config::UseSimpleShaders, "Enables usage of simplified shaders");
+#endif
 				OptionCheckbox("Use Mipmaps", config::UseMipmaps, "Enables the generation and use of texture mipmaps");
 
 #ifndef TARGET_IPHONE

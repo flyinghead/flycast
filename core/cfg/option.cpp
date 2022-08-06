@@ -83,6 +83,9 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
+#ifdef __vita__
+Option<bool> UseSimpleShaders("rend.UseSimpleShaders", true);
+#endif
 #ifdef __APPLE__
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
 #else
