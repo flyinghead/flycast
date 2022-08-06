@@ -170,10 +170,12 @@ void main(
 	#endif
 	#if pp_Texture==1
 	{
-		#if DIV_POS_Z == 1
+		#if pp_Palette == 0
+		  #if DIV_POS_Z == 1
 			float4 texcol = tex2D(tex, vtx_uv.xy);
-		#elif pp_Palette == 0
+		  #else
 			float4 texcol = tex2Dproj(tex, vtx_uv);
+		  #endif
 		#else
 			float4 texcol = palettePixel(vtx_uv);
 		#endif
