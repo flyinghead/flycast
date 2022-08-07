@@ -21,6 +21,7 @@
 #include <kubridge.h>
 int _newlib_heap_size_user = 188 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
+bool is_standalone = false;
 
 extern "C" {
 void *__wrap_calloc(uint32_t nmember, uint32_t size) { return vglCalloc(nmember, size); }
@@ -419,9 +420,19 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
 #ifdef __vita__
-#if 0 // Devkit
+	char boot_params[1024];
+	char *launch_argv[2];
 	argc = 0;
-#endif
+
+	// Check if we launched flycast from a custom bubble
+	sceAppMgrGetAppParam(boot_params);
+	if (strstr(boot_params,"psgm:play") && strstr(boot_params, "&param=")) {
+		argc = 2;
+		launch_argv[1] = strstr(boot_params, "&param=") + 7;
+		is_standalone = true;
+	}
+	argv = launch_argv;
+
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);

@@ -45,6 +45,11 @@
 #include "gui_chat.h"
 #include "imgui_driver.h"
 
+#ifdef __vita__
+#include <vitasdk.h>
+extern bool is_standalone;
+#endif
+
 static bool game_started;
 
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -586,7 +591,12 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ScaledVec2(300, 50)
 			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
-		gui_stop_game();
+#ifdef __vita__
+		if (is_standalone)
+			sceKernelExitProcess(0);
+		else
+#endif
+			gui_stop_game();
 	}
 
 	ImGui::End();
