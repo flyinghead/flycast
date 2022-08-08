@@ -29,6 +29,8 @@ void __wrap_free(void *addr) { vglFree(addr); };
 void *__wrap_malloc(uint32_t size) { return vglMalloc(size); };
 void *__wrap_memalign(uint32_t alignment, uint32_t size) { return vglMemalign(alignment, size); };
 void *__wrap_realloc(void *ptr, uint32_t size) { return vglRealloc(ptr, size); };
+void *__wrap_memcpy (void *dst, const void *src, size_t num) { return sceClibMemcpy(dst, src, num); };
+void *__wrap_memset (void *ptr, int value, size_t num) { return sceClibMemset(ptr, value, num); };
 };
 #endif
 
