@@ -1752,6 +1752,8 @@ void init()
 
 void reset(bool hard)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	if (hard)
 	{
 		memset(RAM, 0, ELAN_RAM_SIZE);
@@ -1765,6 +1767,8 @@ void term()
 
 void vmem_init()
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	elanRegHandler = _vmem_register_handler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
 	elanCmdHandler = _vmem_register_handler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
 	elanRamHandler = _vmem_register_handler_Template(read_elanram, write_elanram);
@@ -1772,6 +1776,8 @@ void vmem_init()
 
 void vmem_map(u32 base)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
 	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
 	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);

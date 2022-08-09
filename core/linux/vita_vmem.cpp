@@ -41,7 +41,7 @@ bool mem_region_set_exec(void *start, size_t len)
 // The function supports allocating 512MB or 4GB addr spaces.
 static void *reserved_base;
 static size_t reserved_size;
-static SceUID reserved_block;
+static SceUID reserved_block = -1;
 static SceUID backing_block = -1;
 
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
@@ -50,14 +50,14 @@ static SceUID backing_block = -1;
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
-	// return MemTypeError; // vmem isn't working yet
-
 	// Now try to allocate a contiguous piece of memory.
 	reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + ARAM_SIZE_MAX;
 	reserved_base = nullptr;
 	reserved_block = kuKernelMemReserve(&reserved_base, reserved_size, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
-
 	verify(reserved_block >= 0);
+
+	backing_block = sceKernelAllocMemBlock("vmem_backing_block", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, ALIGN(ramSize, PAGE_SIZE), NULL);
+	verify(backing_block >= 0);
 
 	uintptr_t ptrint = (uintptr_t)reserved_base;
 	*sh4rcb_addr = (void *)ptrint;
@@ -75,38 +75,29 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ra
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy()
 {
-	if (backing_block != -1)
-		sceKernelFreeMemBlock(backing_block);
 	if (reserved_block != -1)
 		sceKernelFreeMemBlock(reserved_block);
+	if (backing_block != -1)
+		sceKernelFreeMemBlock(backing_block);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
 void vmem_platform_reset_mem(void *ptr, unsigned size_bytes)
 {
 	// Mark them as non accessible.
-	bm_vmem_pagefill((void **)ptr, size_bytes);
+	bm_vmem_pagefill((void **)ptr, size_bytes); // TODO: Figure out why this call is needed
 	verify(kuKernelMemProtect(ptr, size_bytes, KU_KERNEL_PROT_NONE) == 0);
 }
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes)
 {
-	// kuKernelMemCommit(address, size_bytes, KU_KERNEL_PROT_READ | KU_KERNEL_PROT_WRITE, NULL);
 	verify(mem_region_unlock(address, size_bytes));
 }
 
 // Creates mappings to the underlying file including mirroring sections
 void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps)
 {
-	if (backing_block != -1)
-	{
-		sceKernelFreeMemBlock(backing_block);
-	}
-	
-	backing_block = sceKernelAllocMemBlock("vmem_backing_mem", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, RAM_SIZE + VRAM_SIZE + ARAM_SIZE + elan::ELAN_RAM_SIZE, NULL);
-	verify(backing_block > 0);
-
 	KuKernelMemCommitOpt opt;
 	opt.size = sizeof(opt);
 	opt.attr = 0x1;

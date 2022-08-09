@@ -19,7 +19,7 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <kubridge.h>
-int _newlib_heap_size_user = 188 * 1024 * 1024;
+int _newlib_heap_size_user = 240 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
 bool is_standalone = false;
 

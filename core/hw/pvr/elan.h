@@ -32,6 +32,11 @@ void serialize(Serializer& ser);
 void deserialize(Deserializer& deser);
 
 extern u8 *RAM;
+#if !defined(__vita__)
 constexpr u32 ELAN_RAM_SIZE = 32 * 1024 * 1024;
 constexpr u32 ELAN_RAM_MASK = ELAN_RAM_SIZE - 1;
+#else
+constexpr u32 ELAN_RAM_SIZE = 0;
+constexpr u32 ELAN_RAM_MASK = 0;
+#endif
 }

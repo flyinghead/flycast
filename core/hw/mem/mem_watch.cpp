@@ -110,6 +110,8 @@ u32 AicaRamWatcher::getMemOffset(void *p)
 
 void ElanRamWatcher::protectMem(u32 addr, u32 size)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	using namespace elan;
 	size = std::min(ELAN_RAM_SIZE - addr, size) & ~PAGE_MASK;
 	if (_nvmem_enabled())
@@ -127,6 +129,8 @@ void ElanRamWatcher::protectMem(u32 addr, u32 size)
 
 void ElanRamWatcher::unprotectMem(u32 addr, u32 size)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	using namespace elan;
 	size = std::min(ELAN_RAM_SIZE - addr, size) & ~PAGE_MASK;
 	if (_nvmem_enabled())
@@ -144,6 +148,8 @@ void ElanRamWatcher::unprotectMem(u32 addr, u32 size)
 
 u32 ElanRamWatcher::getMemOffset(void *p)
 {
+	if (!settings.platform.isNaomi2())
+		return -1;
 	using namespace elan;
 	u32 addr;
 	if (_nvmem_enabled())
