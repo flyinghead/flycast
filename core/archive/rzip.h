@@ -33,6 +33,7 @@ public:
 	size_t Read(void *data, size_t length);
 	size_t Write(const void *data, size_t length);
 	FILE *rawFile() const { return file; }
+	size_t Skip(size_t length);
 
 private:
 	FILE *file = nullptr;
@@ -41,4 +42,6 @@ private:
 	u8 *chunk = nullptr;
 	u32 chunkSize = 0;
 	u32 chunkIndex = 0;
+	bool writing = false;
+	u32 pos;
 };

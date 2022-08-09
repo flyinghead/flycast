@@ -36,6 +36,7 @@ bool RZipFile::Open(const std::string& path, bool write)
 			|| std::fread(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
 			|| std::fread(&size, sizeof(size), 1, file) != 1)
 		{
+			WARN_LOG(SAVESTATE, "I/O error: Failed to validate header");
 			Close();
 			return false;
 		}
@@ -48,6 +49,22 @@ bool RZipFile::Open(const std::string& path, bool write)
 		chunk = new u8[maxChunkSize];
 		chunkIndex = 0;
 		chunkSize = 0;
+		writing = false;
+	}
+	else
+	{
+		writing = true;
+		size = 0;
+		maxChunkSize = 1024 * 1024;
+
+		if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
+			|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
+			|| std::fseek(file, sizeof(size), SEEK_CUR) != 0)
+		{
+			WARN_LOG(SAVESTATE, "I/O error: Failed to write header");
+			Close();
+			return false;
+		}
 	}
 
 	return true;
@@ -81,27 +98,78 @@ size_t RZipFile::Read(void *data, size_t length)
 			chunkIndex = 0;
 			u32 zippedSize;
 			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read the size of compressed data");
 				break;
+			}
 			if (zippedSize == 0)
 				continue;
 			u8 *zipped = new u8[zippedSize];
 			if (std::fread(zipped, zippedSize, 1, file) != 1)
 			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read compressed data");
 				delete [] zipped;
 				break;
 			}
 			uLongf tl = maxChunkSize;
-			if (uncompress(chunk, &tl, zipped, zippedSize) != Z_OK)
+			u32 rc = uncompress(chunk, &tl, zipped, zippedSize);
+			if (rc != Z_OK)
 			{
+				WARN_LOG(SAVESTATE, "Decompression error: %d", rc);
 				delete [] zipped;
 				break;
 			}
 			delete [] zipped;
 			chunkSize = (u32)tl;
 		}
-		u32 l = std::min(chunkSize - chunkIndex, (u32)length);
+		u32 l = std::min(chunkSize - chunkIndex, (u32)length - rv);
 		memcpy(p, chunk + chunkIndex, l);
 		p += l;
+		chunkIndex += l;
+		rv += l;
+	}
+
+	return rv;
+}
+
+size_t RZipFile::Skip(size_t length)
+{
+	verify(file != nullptr);
+
+	size_t rv = 0;
+	while (rv < length)
+	{
+		if (chunkIndex == chunkSize)
+		{
+			chunkSize = 0;
+			chunkIndex = 0;
+			u32 zippedSize;
+			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read the size of compressed data");
+				break;
+			}
+			if (zippedSize == 0)
+				continue;
+			u8 *zipped = new u8[zippedSize];
+			if (std::fread(zipped, zippedSize, 1, file) != 1)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read compressed data");
+				delete [] zipped;
+				break;
+			}
+			uLongf tl = maxChunkSize;
+			u32 rc = uncompress(chunk, &tl, zipped, zippedSize);
+			if (rc != Z_OK)
+			{
+				WARN_LOG(SAVESTATE, "Decompression error: %d", rc);
+				delete [] zipped;
+				break;
+			}
+			delete [] zipped;
+			chunkSize = (u32)tl;
+		}
+		u32 l = std::min(chunkSize - chunkIndex, (u32)length - rv);
 		chunkIndex += l;
 		rv += l;
 	}
@@ -112,14 +180,7 @@ size_t RZipFile::Read(void *data, size_t length)
 size_t RZipFile::Write(const void *data, size_t length)
 {
 	verify(file != nullptr);
-	verify(std::ftell(file) == 0);
 
-	maxChunkSize = 1024 * 1024;
-	size = length;
-	if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
-		|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-		|| std::fwrite(&size, sizeof(size), 1, file) != 1)
-		return 0;
 	const u8 *p = (const u8 *)data;
 	// compression output buffer must be 0.1% larger + 12 bytes
 	uLongf maxZippedSize = maxChunkSize + maxChunkSize / 1000 + 12;
@@ -139,13 +200,19 @@ size_t RZipFile::Write(const void *data, size_t length)
 		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
 			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
 		{
-			rv = 0;
+			WARN_LOG(SAVESTATE, "I/O error: Failed to write compressed data");
 			break;
 		}
 		p += uncompressedSize;
 		rv += uncompressedSize;
+		size += uncompressedSize;
 	}
 	delete [] zipped;
-	
+
+	u64 pos = ftell(file);
+	verify(std::fseek(file, sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET) == 0);
+	verify(std::fwrite(&size, sizeof(size), 1, file) == 1);
+	verify(std::fseek(file, pos, SEEK_SET) == 0);
+
 	return rv;
 }

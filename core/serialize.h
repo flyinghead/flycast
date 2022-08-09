@@ -18,8 +18,10 @@
 */
 #pragma once
 #include "types.h"
+#include "archive/rzip.h"
 
 #include <limits>
+#include <cstring>
 
 class SerializeBase
 {
@@ -100,6 +102,26 @@ public:
 			throw Exception("Version too recent");
 	}
 
+	Deserializer(size_t limit, RZipFile *fh, bool rollback = false)
+		: SerializeBase(limit, rollback), zipHandle(fh)
+	{
+		deserialize(_version);
+		if (_version > V13_LIBRETRO && _version < V5)
+			throw Exception("Unsupported version");
+		if (_version > Current)
+			throw Exception("Version too recent");
+	}
+
+	Deserializer(size_t limit, FILE *fh, bool rollback = false)
+		: SerializeBase(limit, rollback), fileHandle(fh)
+	{
+		deserialize(_version);
+		if (_version > V13_LIBRETRO && _version < V5)
+			throw Exception("Unsupported version");
+		if (_version > Current)
+			throw Exception("Version too recent");
+	}
+
 	template<typename T>
 	void deserialize(T& obj)
 	{
@@ -125,7 +147,26 @@ public:
 			WARN_LOG(SAVESTATE, "Savestate overflow: current %d limit %d sz %d", (int)this->_size, (int)limit, (int)size);
 			throw Exception("Invalid savestate");
 		}
-		data += size;
+		if (data != nullptr)
+			data += size;
+		else if (zipHandle != nullptr)
+		{
+			size_t skipSize = zipHandle->Skip(size);
+			if (skipSize != size)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to skip %d bytes", size);
+				throw Exception("Failed to skip ahead in file");
+			}
+		}
+		else if (fileHandle != nullptr)
+		{
+			if (std::fseek(fileHandle, size, SEEK_CUR) != 0)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to skip %d bytes", size);
+				throw Exception("Failed to skip ahead in file");
+			}
+		}
+
 		this->_size += size;
 	}
 
@@ -139,13 +180,36 @@ private:
 			WARN_LOG(SAVESTATE, "Savestate overflow: current %d limit %d sz %d", (int)this->_size, (int)limit, (int)size);
 			throw Exception("Invalid savestate");
 		}
-		memcpy(dest, data, size);
-		data += size;
+		if (data != nullptr) 
+		{
+			memcpy(dest, data, size);
+			data += size;
+		}
+		else if (zipHandle != nullptr)
+		{
+			size_t readSize = zipHandle->Read(dest, size);
+			if (readSize != size)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read %d bytes", size);
+				throw Exception("Failed to read from file");
+			}
+		}
+		else if (fileHandle != nullptr)
+		{
+			size_t readSize = std::fread(dest, 1, size, fileHandle);
+			if (readSize != size)
+			{
+				WARN_LOG(SAVESTATE, "I/O error: Failed to read %d bytes", size);
+				throw Exception("Failed to read from file");
+			}
+		}
 		this->_size += size;
 	}
 
 	Version _version;
-	const u8 *data;
+	const u8 *data = nullptr;
+	RZipFile *zipHandle = nullptr;
+	FILE *fileHandle = nullptr;
 };
 
 class Serializer : public SerializeBase
@@ -156,6 +220,20 @@ public:
 
 	Serializer(void *data, size_t limit, bool rollback = false)
 		: SerializeBase(limit, rollback), data((u8 *)data)
+	{
+		Version v = Current;
+		serialize(v);
+	}
+
+	Serializer(void *buf, size_t bufSize, size_t limit, RZipFile *fh, bool rollback = false)
+		: SerializeBase(limit, rollback), buf((u8 *)buf), bufSize(bufSize), zipHandle(fh)
+	{
+		Version v = Current;
+		serialize(v);
+	}
+
+	Serializer(size_t limit, FILE *fh, bool rollback = false)
+		: SerializeBase(limit, rollback), fileHandle(fh)
 	{
 		Version v = Current;
 		serialize(v);
@@ -181,9 +259,45 @@ public:
 	{
 		if (data != nullptr)
 			data += size;
+		else if (zipHandle != nullptr)
+		{
+			size_t skipSize = std::min(size, bufSize - bufPos);
+
+			bufPos += skipSize;
+
+			if (bufPos == bufSize)
+				flush();
+
+			skipSize = size - skipSize;
+			if (skipSize != 0)
+			{
+				memset(buf, 0, bufSize);
+				while (skipSize >= bufSize)
+				{
+					bufPos += bufSize;
+					flush();
+					skipSize -= bufSize;
+				}
+
+				bufPos += skipSize;
+			}
+		}
+		else if (fileHandle != nullptr)
+			std::fseek(fileHandle, size, SEEK_CUR);
+
 		this->_size += size;
 	}
-	bool dryrun() const { return data == nullptr; }
+	bool dryrun() const { return (data == nullptr) && (zipHandle == nullptr) && (fileHandle == nullptr); }
+
+	void flush()
+	{
+		if (zipHandle != nullptr && bufPos > 0)
+		{
+			if (zipHandle->Write(buf, bufPos) != bufPos)
+				WARN_LOG(SAVESTATE, "I/O error: Failed to flush buffer");
+			bufPos = 0;
+		}
+	}
 
 private:
 	void doSerialize(const void *src, size_t size)
@@ -193,10 +307,41 @@ private:
 			memcpy(data, src, size);
 			data += size;
 		}
+		else if (zipHandle != nullptr)
+		{
+			u8 *srcPtr = (u8 *)src;
+			size_t copySize = std::min(size, bufSize - bufPos);
+			memcpy(buf + bufPos, srcPtr, copySize);
+			bufPos += copySize;
+			srcPtr += copySize;
+
+			if (bufPos == bufSize)
+				flush();
+
+			copySize = size - copySize;
+			if (copySize >= bufSize)
+			{
+				if (zipHandle->Write(srcPtr, copySize) != copySize)
+					WARN_LOG(SAVESTATE, "I/O error: Failed to write %d bytes", copySize);
+			}
+			else if (copySize != 0)
+			{
+				memcpy(buf + bufPos, srcPtr, copySize);
+				bufPos += copySize;
+			}
+		}
+		else if (fileHandle != nullptr)
+			std::fwrite(src, 1, size, fileHandle);
+		
 		this->_size += size;
 	}
 
-	u8 *data;
+	u8 *buf = nullptr;
+	size_t bufPos = 0;
+	size_t bufSize;
+	u8 *data = nullptr;
+	RZipFile *zipHandle = nullptr;
+	FILE *fileHandle = nullptr;
 };
 
 template<typename T>
