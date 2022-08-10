@@ -929,9 +929,7 @@ void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
 {
 	if (!mmu_enabled())
 	{
-	#if !defined(__vita__)
 		if (op < 0xF000)
-	#endif
 			block->guest_cycles++;
 	}
 	else
