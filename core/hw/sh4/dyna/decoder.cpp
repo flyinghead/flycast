@@ -929,7 +929,11 @@ void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
 {
 	if (!mmu_enabled())
 	{
+#ifdef __vita__
+		if (op < 0xF000 || config::DynarecFloatHack)
+#else
 		if (op < 0xF000)
+#endif
 			block->guest_cycles++;
 	}
 	else

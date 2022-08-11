@@ -29,6 +29,7 @@ Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 Option<float> DynarecDownclock("Dynarec.downclock", 1.5f);
 Option<int> DynarecSmcChecks("Dynarec.smcChecks", 0);
 Option<bool> DynarecUseNeon("Dynarec.useNeon", true);
+Option<bool> DynarecFloatHack("Dynarec.floatHack", false);
 #endif
 
 // General

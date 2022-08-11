@@ -365,6 +365,7 @@ extern Option<float> DynarecDownclock;
 extern Option<int> DynarecSmcChecks;
 extern Option<bool> DynarecUseNeon;
 extern Option<bool> UseSimpleShaders;
+extern Option<bool> DynarecFloatHack;
 #endif
 constexpr bool DynarecSafeMode = false;
 
