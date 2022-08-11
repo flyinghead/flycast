@@ -33,6 +33,9 @@ static std::string select_current_directory;
 static std::vector<std::string> subfolders;
 static std::vector<std::string> folderFiles;
 bool subfolders_read;
+#ifdef __vita__
+bool folder_reset = true;
+#endif
 #ifdef _WIN32
 static const std::string separators = "/\\";
 static const std::string native_separator = "\\";
@@ -45,9 +48,21 @@ static const std::string native_separator = "/";
 extern int insetLeft, insetRight, insetTop, insetBottom;
 void error_popup();
 
+#ifdef __vita__
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile, const std::string& selectExtension, std::string startDir)
+#else
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
+#endif
 {
+#ifdef __vita__
+	if (folder_reset) {
+		select_current_directory = startDir.c_str();
+		folder_reset = false;
+	}
+#endif
+
 	if (select_current_directory.empty())
 	{
 #if defined(__ANDROID__)
@@ -75,7 +90,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 #elif defined(__SWITCH__)
 		select_current_directory = "/";
 #elif defined(__vita__)
-        select_current_directory = "ux0:/";
+        select_current_directory = startDir.c_str();
 #endif
 		if (select_current_directory.empty())
 		{
@@ -309,7 +324,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
     			{
     				subfolders_read = false;
     				if (callback(false, select_current_directory + native_separator + name))
-    					ImGui::CloseCurrentPopup();
+						ImGui::CloseCurrentPopup();
     			}
         	}
         	else

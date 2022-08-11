@@ -48,6 +48,8 @@
 #ifdef __vita__
 #include <vitasdk.h>
 extern bool is_standalone;
+extern bool folder_reset;
+extern bool subfolders_read;
 #endif
 
 static bool game_started;
@@ -1325,7 +1327,72 @@ static void gui_display_settings()
                 	ImGui::PopID();
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-                if (ImGui::Button("Add"))
+#ifdef __vita__
+                if (ImGui::Button("Add from ux0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 1");
+				}
+                select_file_popup("Select Directory 1", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "ux0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from uma0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 2");
+				}
+                select_file_popup("Select Directory 2", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "uma0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from imc0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 3");
+				}
+                select_file_popup("Select Directory 3", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "imc0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from xmc0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 4");
+				}
+                select_file_popup("Select Directory 4", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "xmc0:/");
+#else
+				if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
                 select_file_popup("Select Directory", [](bool cancelled, std::string selection)
                 		{
@@ -1337,6 +1404,7 @@ static void gui_display_settings()
                 			}
                 			return true;
                 		});
+#endif
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
@@ -2070,6 +2138,7 @@ static void gui_display_settings()
 		    	header("Dynarec Options");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 #ifdef __vita__
+				OptionCheckbox("Float Ops Gamehack", config::DynarecFloatHack, "Enables a gamehack that makes most float operations clock free");
 				OptionCheckbox("Use Neon SIMD", config::DynarecUseNeon, "Enables usage of NEON SIMD processor inside Dynarec");
 				OptionFloatSlider("Downclock Ratio", config::DynarecDownclock, 1.0f, 5.0f,
 		    			"Ratio at which downclock SH4 processor");
