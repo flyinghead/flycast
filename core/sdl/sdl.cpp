@@ -195,7 +195,10 @@ void input_sdl_init()
 	EventManager::listen(Event::Resume, emuEventCallback);
 
 	checkRawInput();
-
+#ifdef __vita__
+	for (int joy = 0; joy < SDL_NumJoysticks(); joy++)
+		sdl_open_joystick(joy);
+#endif
 #ifdef __SWITCH__
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
