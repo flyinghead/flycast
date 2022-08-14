@@ -27,6 +27,8 @@ class VulkanDriver final : public ImGuiDriver
 {
 public:
 	~VulkanDriver() {
+		textures.clear();
+		linearSampler.reset();
 		ImGui_ImplVulkan_Shutdown();
 	}
 

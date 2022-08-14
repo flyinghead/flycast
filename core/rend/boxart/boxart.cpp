@@ -122,7 +122,7 @@ void Boxart::fetchBoxart()
 					}
 				}
 				databaseDirty = true;
-			} catch (const std::exception& e) {
+			} catch (const std::runtime_error& e) {
 				if (*e.what() != '\0')
 					INFO_LOG(COMMON, "thegamesdb error: %s", e.what());
 				{

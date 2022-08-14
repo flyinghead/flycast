@@ -2310,7 +2310,7 @@ static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool all
 		{
 			try {
 				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
-			} catch (const std::exception&) {
+			} catch (...) {
 				// vulkan can throw during resizing
 			}
 			free(imgData);
