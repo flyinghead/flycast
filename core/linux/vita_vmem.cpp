@@ -15,6 +15,8 @@
 
 #define ALIGN(addr, align) (((uintptr_t)addr + (align - 1)) & ~(align - 1))
 
+extern bool is_standalone;
+
 bool mem_region_lock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
@@ -121,6 +123,9 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			verify(kuKernelMemCommit(&virt_ram_base[offset], vmem_maps[i].memsize, KU_KERNEL_PROT_READ | (vmem_maps[i].allow_writes ? KU_KERNEL_PROT_WRITE : 0), &opt) == 0);
 		}
 	}
+	
+	if (is_standalone)
+		sceKernelDelayThread(1000 * 1000 * 4);
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
