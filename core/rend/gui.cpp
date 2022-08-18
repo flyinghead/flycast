@@ -1742,7 +1742,7 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-
+#ifndef __vita__
 				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
 	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
 	            u32 afSelected = 0;
@@ -1784,7 +1784,7 @@ static void gui_display_settings()
                 ImGui::Text("Anisotropic Filtering");
                 ImGui::SameLine();
                 ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
-
+#endif
 		    	ImGui::Text("Texture Filtering:");
 		    	ImGui::Columns(3, "textureFiltering", false);
 		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
