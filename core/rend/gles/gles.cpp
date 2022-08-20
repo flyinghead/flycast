@@ -928,9 +928,7 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 	glDeleteShader(ps);
 
 	glcache.UseProgram(program);
-#ifndef __vita__
 	verify(glIsProgram(program));
-#endif
 	return program;
 }
 
@@ -1091,11 +1089,8 @@ bool CompilePipelineShader(PipelineShader* s)
 		initN2Uniforms(s);
 
 	ShaderUniforms.Set(s);
-#ifdef __vita__
-	return true;
-#else
+
 	return glIsProgram(s->program)==GL_TRUE;
-#endif
 }
 
 static void SetupOSDVBO()
@@ -1391,9 +1386,7 @@ void OSD_DRAW(bool clear_screen)
 		else
 #endif
 			SetupOSDVBO();
-#ifndef __vita__
 		verify(glIsProgram(gl.OSD_SHADER.program));
-#endif
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		float scale_h = settings.display.height / 480.f;
