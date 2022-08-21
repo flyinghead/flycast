@@ -44,7 +44,7 @@ bool mem_region_set_exec(void *start, size_t len)
 static void *reserved_base;
 static size_t reserved_size;
 static SceUID reserved_block = -1;
-static SceUID backing_block = -1;
+static SceUID vmem_block = -1;
 
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
@@ -52,14 +52,15 @@ static SceUID backing_block = -1;
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
+
 	// Now try to allocate a contiguous piece of memory.
 	reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + ARAM_SIZE_MAX;
 	reserved_base = nullptr;
 	reserved_block = kuKernelMemReserve(&reserved_base, reserved_size, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	verify(reserved_block >= 0);
 
-	backing_block = sceKernelAllocMemBlock("vmem_backing_block", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, ALIGN(ramSize, PAGE_SIZE), NULL);
-	verify(backing_block >= 0);
+	vmem_block = sceKernelAllocMemBlock("vmem_backing_block", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, ALIGN(ramSize, PAGE_SIZE), NULL);
+	verify(vmem_block >= 0);
 
 	uintptr_t ptrint = (uintptr_t)reserved_base;
 	*sh4rcb_addr = (void *)ptrint;
@@ -79,8 +80,8 @@ void vmem_platform_destroy()
 {
 	if (reserved_block != -1)
 		sceKernelFreeMemBlock(reserved_block);
-	if (backing_block != -1)
-		sceKernelFreeMemBlock(backing_block);
+	if (vmem_block != -1)
+		sceKernelFreeMemBlock(vmem_block);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -103,7 +104,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	KuKernelMemCommitOpt opt;
 	opt.size = sizeof(opt);
 	opt.attr = 0x1;
-	opt.baseBlock = backing_block;
+	opt.baseBlock = vmem_block;
 
 	for (unsigned i = 0; i < nummaps; i++)
 	{
@@ -123,9 +124,6 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			verify(kuKernelMemCommit(&virt_ram_base[offset], vmem_maps[i].memsize, KU_KERNEL_PROT_READ | (vmem_maps[i].allow_writes ? KU_KERNEL_PROT_WRITE : 0), &opt) == 0);
 		}
 	}
-	
-	if (is_standalone)
-		sceKernelDelayThread(1000 * 1000 * 4);
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX

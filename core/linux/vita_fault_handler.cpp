@@ -1,4 +1,5 @@
 #include <kubridge.h>
+#include <psp2/kernel/threadmgr.h>
 
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -10,6 +11,7 @@
 #include "hw/mem/mem_watch.h"
 
 static KuKernelAbortHandler nextHandler;
+static __thread bool threadInFault = false;
 
 void context_to_segfault(host_context_t *hostctx, void *segfault_ctx)
 {
@@ -55,8 +57,17 @@ void abortHandler(KuKernelAbortContext *abortContext)
 		return;
 	}
 #endif
+	if (!threadInFault)
+	{
+		threadInFault = true;
+		ERROR_LOG(COMMON, "Memory remap race condition detected for address %p (0x%08X) Waiting 10 ms...", (void *)abortContext->FAR, *(uint32_t *)abortContext->FAR);
+		sceKernelDelayThread(10 * 1000);
+		threadInFault = false;
+
+		return;
+	}
+
 	ERROR_LOG(COMMON, "SIGSEGV @ %p -> %p was not in vram, dynacode:%d", (void *)ctx.pc, (void *)abortContext->FAR, dyna_cde);
-	// abortContext->pc = abortContext->lr - 4;
 	if (nextHandler != nullptr)
 		nextHandler(abortContext);
 	else
