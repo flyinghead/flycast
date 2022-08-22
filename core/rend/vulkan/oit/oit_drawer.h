@@ -118,7 +118,7 @@ private:
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 			const List<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
-	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);
+	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count, const ModifierVolumeParam *modVolParams);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
 			const OITDescriptorSets::FragmentShaderUniforms& fragmentUniforms);
 

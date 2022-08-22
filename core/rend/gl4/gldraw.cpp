@@ -532,7 +532,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count,
-				current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
+				current_pass.mv_op_tr_shared ? current_pass.mvo_count - previous_pass.mvo_count : current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
 				current_pass.autosort);
 
 		glBindVertexArray(gl4.vbo.getMainVAO());
@@ -645,7 +645,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				if (config::ModifierVolumes)
 				{
 					SetBaseClipping();
-					DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+					if (current_pass.mv_op_tr_shared)
+						DrawTranslucentModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, true);
+					else
+						DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, false);
 				}
 
 				// Rebind the depth/stencil texture to the framebuffer
