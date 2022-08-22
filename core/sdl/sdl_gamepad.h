@@ -67,10 +67,22 @@ public:
 					return false;
 
 				bool invert_axis = false;
-				const char *s = SDL_GameControllerGetStringForAxis(sdl_axis);
-				if (s != nullptr && s[strlen(s) - 1] == '~')
-					invert_axis = true;
+				char *gcdb = SDL_GameControllerMapping(sdlController);
+				const char *axisName = SDL_GameControllerGetStringForAxis(sdl_axis);
+				if (gcdb != nullptr && axisName != nullptr)
+				{
+					const char *p = strstr(gcdb, axisName);
+					if (p != nullptr)
+					{
+						const char *pend = strchr(p, ',');
+						if (pend == nullptr)
+							pend = p + strlen(p);
+						invert_axis = pend[-1] == '~';
+					}
+				}
 				set_axis(dc_axis, bind.value.axis, invert_axis ^ positive);
+				SDL_free(gcdb);
+
 				return true;
 			};
 

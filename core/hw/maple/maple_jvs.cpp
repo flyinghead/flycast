@@ -874,7 +874,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 	u8 channel = 0;
 	if (dma_count_in >= 3)
 	{
-		if (dma_buffer_in[1] > 31 && dma_buffer_in[1] != 0xff && dma_count_in >= 8)	// TODO what is this?
+		if (subcode != 0x13 && dma_count_in >= 8)
 		{
 			node_id = dma_buffer_in[6];
 			len = dma_buffer_in[7];

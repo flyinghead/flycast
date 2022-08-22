@@ -30,8 +30,16 @@ int darw_printf(const char* text, ...)
     va_start(args, text);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-
-    NSLog(@"%s", temp);
+    
+    NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
+    if (getenv("TERM") == NULL) //Xcode console does not support colors
+    {
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[0m" withString:@""];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[92m" withString:@"ℹ️ "];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[91m" withString:@"⚠️ "];
+        log = [log stringByReplacingOccurrencesOfString:@"\x1b[93m" withString:@"🛑 "];
+    }
+    NSLog(@"%@", log);
 
     return 0;
 }

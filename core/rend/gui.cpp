@@ -45,6 +45,9 @@
 #include "gui_chat.h"
 #include "imgui_driver.h"
 #include "boxart/boxart.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 static bool game_started;
 
@@ -375,6 +378,17 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
+
+#if defined(USE_SDL)
+	if (io.WantTextInput && !SDL_IsTextInputActive())
+	{
+		SDL_StartTextInput();
+	}
+	else if (!io.WantTextInput && SDL_IsTextInputActive())
+	{
+		SDL_StopTextInput();
+	}
+#endif
 }
 
 static void delayedKeysUp()
@@ -1361,6 +1375,15 @@ static void gui_display_settings()
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
                 	gui_state = GuiState::Onboarding;
+#endif
+#if defined(__APPLE__) && TARGET_OS_OSX
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
+                if (ImGui::Button("Reveal in Finder"))
+                {
+                    char temp[512];
+                    sprintf(temp, "open \"%s\"", get_writable_config_path("").c_str());
+                    system(temp);
+                }
 #endif
                 ImGui::ListBoxFooter();
             }

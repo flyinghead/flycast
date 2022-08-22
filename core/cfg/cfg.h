@@ -19,3 +19,4 @@ bool ParseCommandLine(int argc, char *argv[]);
 void cfgSetAutoSave(bool autoSave);
 bool cfgHasSection(const std::string& section);
 void cfgDeleteSection(const std::string& section);
+void cfgDeleteEntry(const std::string& section, const std::string& key);
