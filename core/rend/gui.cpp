@@ -48,6 +48,8 @@
 #ifdef __vita__
 #include <vitasdk.h>
 extern bool is_standalone;
+extern bool is_ap_on;
+extern bool is_bypass_on;
 extern bool folder_reset;
 extern bool subfolders_read;
 #endif
@@ -2380,6 +2382,21 @@ static void gui_display_content()
 	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	
+#ifdef __vita__
+	if (is_ap_on || is_bypass_on) {
+		ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+		ImGui::TextWrapped("AutoPlugin 2 installation has been detected. The authors of this software encourage to get rid of it.\nBy proceeding, you agree at submitting any request for help to Henkaku Discord Server #help-and-support channel. Invitation Link: https://discord.gg/m7MwpKA.\nAny request of help to the original authors will be ignored unless you get rid of AutoPlugin 2.");
+		if (ImGui::Button("Proceed")) {
+			is_ap_on = false;
+			is_bypass_on = false;
+		}
+		ImGui::End();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+		return;
+	}
+#endif
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
