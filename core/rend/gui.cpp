@@ -2382,21 +2382,6 @@ static void gui_display_content()
 	fullScreenWindow(false);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	
-#ifdef __vita__
-	if (is_ap_on || is_bypass_on) {
-		ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
-		ImGui::TextWrapped("AutoPlugin 2 installation has been detected. The authors of this software encourage users to uninstall it, since it's well known to be cause of a lot of issues for a wide amount of users.\nBy proceeding, you agree to submit any request for help to the Henkaku Discord Server #help-and-support channel. Invitation Link: https://discord.gg/m7MwpKA.\nAny request for help to the original authors will be ignored unless  AutoPlugin 2 is uninstalled or a server helper agrees the issue is not caused by AutoPlugin 2.");
-		if (ImGui::Button("Proceed")) {
-			is_ap_on = false;
-			is_bypass_on = false;
-		}
-		ImGui::End();
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar();
-		return;
-	}
-#endif
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 

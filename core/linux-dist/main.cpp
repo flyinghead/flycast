@@ -19,11 +19,14 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <kubridge.h>
+#include <xxhash.h>
+#ifdef DISABLE_NAOMI
 int _newlib_heap_size_user = 240 * 1024 * 1024;
+#else
+int _newlib_heap_size_user = 188 * 1024 * 1024;
+#endif
 unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
 bool is_standalone = false;
-bool is_ap_on = false;
-bool is_bypass_on = false;
 
 extern "C" {
 void *__wrap_calloc(uint32_t nmember, uint32_t size) { return vglCalloc(nmember, size); }
@@ -34,6 +37,23 @@ void *__wrap_realloc(void *ptr, uint32_t size) { return vglRealloc(ptr, size); }
 void *__wrap_memcpy (void *dst, const void *src, size_t num) { return sceClibMemcpy(dst, src, num); };
 void *__wrap_memset (void *ptr, int value, size_t num) { return sceClibMemset(ptr, value, num); };
 };
+
+void early_fatal_error(const char *msg) {
+	vglInit(0);
+	SceMsgDialogUserMessageParam msg_param;
+	sceClibMemset(&msg_param, 0, sizeof(SceMsgDialogUserMessageParam));
+	msg_param.buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK;
+	msg_param.msg = (const SceChar8*)msg;
+	SceMsgDialogParam param;
+	sceMsgDialogParamInit(&param);
+	param.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
+	param.userMsgParam = &msg_param;
+	sceMsgDialogInit(&param);
+	while (sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED) {
+		vglSwapBuffers(GL_TRUE);
+	}
+	sceKernelExitProcess(0);
+}
 #endif
 
 #if defined(__SWITCH__)
@@ -426,23 +446,28 @@ int main(int argc, char* argv[])
 #ifdef __vita__
 	SceIoStat st1, st2;
 	// Checking for libshacccg.suprx existence
-	if (!(sceIoGetstat("ur0:/data/libshacccg.suprx", &st1) >= 0 || sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st2) >= 0)) {
-		vglInit(0);
-		SceMsgDialogUserMessageParam msg_param;
-		sceClibMemset(&msg_param, 0, sizeof(SceMsgDialogUserMessageParam));
-		msg_param.buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK;
-		msg_param.msg = (const SceChar8*)"Error: Runtime shader compiler (libshacccg.suprx) is not installed.";
-		SceMsgDialogParam param;
-		sceMsgDialogParamInit(&param);
-		param.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
-		param.userMsgParam = &msg_param;
-		sceMsgDialogInit(&param);
-		while (sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED) {
-			vglSwapBuffers(GL_TRUE);
-		}
-		sceKernelExitProcess(0);
-	}
-
+	if (!(sceIoGetstat("ur0:/data/libshacccg.suprx", &st1) >= 0 || sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st2) >= 0))
+		early_fatal_error("Error: Runtime shader compiler (libshacccg.suprx) is not installed.");
+	
+	// Checking for kubridge existence
+	if (!(sceIoGetstat("ux0:/tai/kubridge.skprx", &st1) >= 0 || sceIoGetstat("ur0:/tai/kubridge.skprx", &st2) >= 0))
+		early_fatal_error("Error: kubridge.skprx is not installed.");
+	
+	// Checking for kubridge version
+	FILE *f = fopen("ux0:/tai/kubridge.skprx", "rb");
+	if (!f)
+		f = fopen("ur0:/tai/kubridge.skprx", "rb");
+	fseek(f, 0, SEEK_END);
+	long size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	void *buf = vglMalloc(size);
+	fread(buf, 1, size, f);
+	fclose(f);
+	uint32_t kubridge_hash = XXH32(buf, size, 7);
+	vglFree(buf);
+	if (kubridge_hash == 0xFDAE199B)
+		early_fatal_error("Error: kubridge.skprx is outdated.");
+	
 	char boot_params[1024];
 	char *launch_argv[2];
 	argc = 0;
@@ -464,19 +489,6 @@ int main(int argc, char* argv[])
 	vglSetParamBufferSize(8 * 1024 * 1024);
 	vglUseCachedMem(GL_TRUE);
 	vglInitWithCustomThreshold(0, 960, 544, 256 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
-
-	int search_unk[2];
-	SceIoStat st0, st3, st4;
-	is_bypass_on = _vshKernelSearchModuleByName("hideautopl", search_unk) >= 0;
-	if (!sceIoGetstat("ux0:app/AUTOPLUG2", &st0) ||
-		!sceIoGetstat("ur0:app/AUTOPLUG2", &st1) ||
-		!sceIoGetstat("uma0:app/AUTOPLUG2", &st2) ||
-		!sceIoGetstat("imc0:app/AUTOPLUG2", &st3) ||
-		!sceIoGetstat("xmc0:app/AUTOPLUG2", &st4) ||
-		is_bypass_on) {
-		is_ap_on = true;
-	}
-	printf("AP2 State: %s\nBypass State: %s\n", is_ap_on ? "yes" : "no", is_bypass_on ? "yes" : "no");
 #endif
 
 #if defined(USE_SDL)
