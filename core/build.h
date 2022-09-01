@@ -236,7 +236,7 @@
 #if !defined(__vita__)
 #define RAM_SIZE_MAX (32*1024*1024)
 #define VRAM_SIZE_MAX (16*1024*1024)
-#else // Vita does not target Naomi
+#else // Vita does not target Atomiswave/Naomi
 #define RAM_SIZE_MAX (16*1024*1024)
 #define VRAM_SIZE_MAX (8*1024*1024)
 #endif

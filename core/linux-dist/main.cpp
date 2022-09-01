@@ -20,11 +20,7 @@
 #include <vitaGL.h>
 #include <kubridge.h>
 #include <xxhash.h>
-#ifdef DISABLE_NAOMI
-int _newlib_heap_size_user = 240 * 1024 * 1024;
-#else
-int _newlib_heap_size_user = 188 * 1024 * 1024;
-#endif
+int _newlib_heap_size_user = 246 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
 bool is_standalone = false;
 
