@@ -456,6 +456,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		else
 			settings.content.path.clear();
 
+#if defined(__vita__)
+		if (getGamePlatform(path) != DC_PLATFORM_DREAMCAST)
+			throw FlycastException("PS Vita doesn't support this platform");
+#endif
+
 		setPlatform(getGamePlatform(path));
 		mem_map_default();
 
@@ -466,11 +471,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 
 		if (settings.platform.isNaomi2() && config::RendererType == RenderType::DirectX9)
 			throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
-
-#if defined(__vita__)
-		if (settings.platform.isNaomi())
-			throw FlycastException("PS Vita doesn't support Naomi games");
-#endif
 
 		if (settings.platform.isConsole())
 		{
