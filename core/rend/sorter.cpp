@@ -15,6 +15,7 @@
 	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "sorter.h"
+#include "cfg/option.h"
 #include "hw/pvr/Renderer_if.h"
 #include <algorithm>
 #include <glm/glm.hpp>
@@ -114,8 +115,13 @@ void SortPParams(int first, int count)
 		}
 		pp++;
 	}
+#ifdef __vita__
+	if (config::FastSorting)
+		std::sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
+	else
+#endif
+		std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
 
-	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
 }
 
 const static Vertex *vtx_sort_base;
@@ -225,7 +231,13 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 	lst.resize(aused);
 
 	//sort them
-	std::stable_sort(lst.begin(),lst.end());
+#ifdef __vita__
+	if (config::FastSorting)
+		std::sort(lst.begin(),lst.end());
+	else
+#endif
+		std::stable_sort(lst.begin(),lst.end());
+
 
 	//Merge pids/draw cmds if two different pids are actually equal
 	for (u32 k = 1; k < aused; k++)

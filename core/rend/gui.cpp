@@ -1708,6 +1708,9 @@ static void gui_display_settings()
 		    		break;
 		    	}
 		    }
+#ifdef __vita__
+			OptionCheckbox("Fast Sorting", config::FastSorting, "Uses a more unsafe but faster algorithm for transparency sorting");
+#endif
 	    	ImGui::Spacing();
             ImGuiStyle& style = ImGui::GetStyle();
             float innerSpacing = style.ItemInnerSpacing.x;

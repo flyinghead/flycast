@@ -86,6 +86,7 @@ Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
 #ifdef __vita__
 Option<bool> UseSimpleShaders("rend.UseSimpleShaders", true);
+Option<bool> FastSorting("rend.FastSorting", true);
 #endif
 #ifdef __APPLE__
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
