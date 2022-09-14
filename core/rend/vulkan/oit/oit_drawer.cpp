@@ -483,7 +483,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 	finalColorAttachments.clear();
 	transitionNeeded.clear();
 	clearNeeded.clear();
-	while (finalColorAttachments.size() < GetContext()->GetSwapChainSize())
+	while (finalColorAttachments.size() < GetSwapChainSize())
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
@@ -588,7 +588,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		depthAttachments[0]->GetImageView(),
 		depthAttachments[1]->GetImageView(),
 	};
-	framebuffers.resize(GetContext()->GetSwapChainSize());
+	framebuffers.resize(GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 

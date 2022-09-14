@@ -45,6 +45,7 @@ public:
 	virtual void EndFrame() {  renderPass++; };
 
 protected:
+	u32 GetSwapChainSize() { return 2; }
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
 	{
 		this->pipelineManager = pipelineManager;
@@ -76,13 +77,13 @@ protected:
 	void NewImage()
 	{
 		descriptorSets.nextFrame();
-		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		renderPass = 0;
 	}
 
 	BufferData* GetMainBuffer(u32 size)
 	{
-		u32 bufferIndex = imageIndex + renderPass * GetContext()->GetSwapChainSize();
+		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
 		while (mainBuffers.size() <= bufferIndex)
 		{
 			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
