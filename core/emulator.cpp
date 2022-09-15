@@ -44,6 +44,7 @@
 #include <chrono>
 
 #include "gdxsv/gdxsv_emu_hooks.h"
+#include "gdxsv/gdxsv_CustomTexture.h"
 
 settings_t settings;
 
@@ -588,6 +589,7 @@ void Emulator::unloadGame()
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
+    gdx_custom_texture.Terminate();
 }
 
 void Emulator::term()
@@ -598,6 +600,7 @@ void Emulator::term()
 		debugger::term();
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
+        gdx_custom_texture.Terminate();
 		reios_term();
 		libAICA_Term();
 		pvr::term();
@@ -688,6 +691,7 @@ void Emulator::step()
 void dc_loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
+    gdx_custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
 	aicaarm::recompiler::flush();
 #endif

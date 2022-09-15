@@ -26,9 +26,6 @@ const char * Translation::Text() {
 GDXLanguage::Lang GDXLanguage::language_ = Lang::NOT_SET;
 
 GDXLanguage::Lang GDXLanguage::Language() {
-    if (language_ != Lang::NOT_SET)
-        return language_;
-    
     int lang = config::GdxLanguage;
     switch (lang) {
         case (int)Lang::NOT_SET:
