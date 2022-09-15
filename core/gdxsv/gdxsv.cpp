@@ -451,7 +451,7 @@ void Gdxsv::WritePatch() {
 
 #if defined(__APPLE__) || defined(_WIN32)
         if (disk == 2) {
-#include "gdxsv_translation_patch.h"
+#include "gdxsv_translation_patch.inc"
         }
 #endif
     }
