@@ -75,7 +75,7 @@ void Gdxsv::Reset() {
                 ERROR_LOG(COMMON, "patch_list deserialize error");
             }
         }
-        if (lbs_msg.command == LbsMessage::lbsBattleUserCount && GDXLanguage::Language() != GDXLanguage::Lang::Disabled) {
+        if (disk == 2 && lbs_msg.command == LbsMessage::lbsBattleUserCount && GDXLanguage::Language() != GDXLanguage::Lang::Disabled) {
             u32 battle_user_count = u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
             const u32 offset = 0x8C000000 + 0x00010000;
             gdxsv_WriteMem32(offset + 0x3839FC, battle_user_count);
