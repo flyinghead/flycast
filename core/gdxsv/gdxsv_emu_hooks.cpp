@@ -100,7 +100,7 @@ inline static void gui_header(const char *title) {
 }
 
 void gdxsv_emu_settings() {
-    gui_header("gdxsv Shortcut Settings");
+    gui_header("gdxsv Settings");
     
     ImGui::Columns(5, "gdxlang", false);
     ImGui::SetColumnWidth(0, 200.0f * settings.display.uiScale);
