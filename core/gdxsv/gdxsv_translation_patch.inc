@@ -9,18 +9,16 @@
 #define TRANSLATE(offset,length,original,cantonese,english) TranslationWithMaxLength<length>(offset,original,cantonese,english)
 #define CUSTOMIZE(offset,length,original,cantonese,english,japanese) TranslationWithMaxLength<length>(offset,original,cantonese,english,japanese)
 
-const u32 offset = 0x8C000000 + 0x00010000;
-
-Translation translations[] = {
+const static Translation translations[] = {
     
     TRANSLATE(0x1BA264, 28, R"(オートロード中です・・・)", R"(正在讀取存档・・・)", R"(Loading save file...)"),
     TRANSLATE(0x1BA104, 36, R"(メモリーカードがささっていません)", R"(未插入Sega VMU。 請到)", R"(Sega VMU is not inserted. Go to)"),
     CUSTOMIZE(0x1BA128, 20, R"(セーブを行うには)", R"(Flycast > Settings)", R"(Flycast > Settings)", R"(Flycast > Settings)"),
     CUSTOMIZE(0x1BA13C, 4, R"(4)", R"(　)", R"(　)", R"(　)"),
     CUSTOMIZE(0x1BA140, 12, R"(ブロックの)", R"( > Controls)", R"( > Controls)", R"( > Controls)"),
-    CUSTOMIZE(0x1BA14C, 36, R"(空きがあるメモリーカードが必要です)", R"(Device A > 選擇 'Sega Controller')", R"(Device A > Select 'Sega Controller')", R"(Device A > セレクト Sega Controller)"),
-    CUSTOMIZE(0x1BA170, 48, R"(スタートボタンを押すとゲームを開始できますが)", R"(在第二行，選擇 'Sega VMU')", R"(In the second column, select 'Sega VMU')", R"(2番目の列では, セレクト Sega VMU)"),
-    CUSTOMIZE(0x1BA1A0, 40, R"(ゲームの内容はオートセーブされません)", R"(否則無法開始遊戲)", R"(Or else you cannot start the game)", R"(でないとゲームを開始できません。)"),
+    CUSTOMIZE(0x1BA14C, 36, R"(空きがあるメモリーカードが必要です)", R"(Device A > 選擇 'Sega Controller')", R"(Device A > Select 'Sega Controller')", R"(Device A > Sega Controller を選択)"),
+    CUSTOMIZE(0x1BA170, 48, R"(スタートボタンを押すとゲームを開始できますが)", R"(在第二行，選擇 'Sega VMU')", R"(In the second column, select 'Sega VMU')", R"(2番目の列では, Sega VMU を選択)"),
+    CUSTOMIZE(0x1BA1A0, 40, R"(ゲームの内容はオートセーブされません)", R"(否則無法開始遊戲)", R"(Or else you cannot start the game)", R"(しないとゲームを開始できません。)"),
     CUSTOMIZE(0x1BA1C8, 40, R"(ＰＲＥＳＳ　ＳＴＡＲＴ　ＢＵＴＴＯＮ)", R"(　)", R"(　)", R"(　)"),
     TRANSLATE(0x1BA1F0, 32, R"(空きブロックが不足しています)", R"(沒有充足的記憶體)", R"(Not enough memory)"),
     TRANSLATE(0x1BA210, 44, R"(スタートボタンを押すとファイルを作成します)", R"(按ＳＴＡＲＴ掣建立存档)", R"(Press ＳＴＡＲＴ to create save file)"),
@@ -102,12 +100,12 @@ Translation translations[] = {
     TRANSLATE(0x1BEC68, 24, R"(Ａボタンを押して下さい)", R"(       請按Ａ掣)", R"(Please press Button A)"),
     TRANSLATE(0x1BEC80, 36, R"(ハンドルネームが入力されていません)", R"(          未輸入網絡名稱)", R"(    Handle Name cannot be blank)"),
     TRANSLATE(0x1BECA4, 36, R"(このハンドルネームで登録しますか？)", R"(        確認使用此網絡名稱？)", R"(  Confirm using this Handle Name?)"),
-    CUSTOMIZE(0x1BED64, 28, R"(マルチマッチングサーバーに)", R"(     GDXSV 免費SERVER)", R"(GDXSV FREE OF CHARGE SERVER)", R"(    無料GDXSVサーバー)"),
-    CUSTOMIZE(0x1BEE2C, 32, R"(接続中は通信料金がかかります)", R"(  原來撥號連線所産生的費用)", R"( Original charges by dial-up)", R"(    オリジナルモデム料金)"),
-    TRANSLATE(0x1BEE4C, 36, R"(マルチマッチングサーバーに接続中は)", R"(         連接到遊戲大廳時)", R"(  while connected to lobby server)"),
-    TRANSLATE(0x1BEE70, 32, R"(３分１０円の接続料がかかります)", R"(        毎３分鐘１０円)", R"(       \10 per 3 minutes)"),
-    TRANSLATE(0x1BEE90, 12, R"(対戦時には)", R"(  對戰時)", R"(For battle)"),
-    TRANSLATE(0x1BEE9C, 32, R"(１分１３円の接続料がかかります)", R"(        毎１分鐘１３円)", R"(       \13 per 1 minutes)"),
+    CUSTOMIZE(0x1BED64, 28, R"(マルチマッチングサーバーに)", R"(     GDXSV 免費SERVER)", R"(GDXSV FREE OF CHARGE SERVER)", R"(  無料のGDXSVサーバーに)"),
+    CUSTOMIZE(0x1BEE2C, 32, R"(接続中は通信料金がかかります)", R"( )", R"( )", R"( )"),
+    CUSTOMIZE(0x1BEE4C, 36, R"(マルチマッチングサーバーに接続中は)", R"( )", R"( )", R"( )"),
+    CUSTOMIZE(0x1BEE70, 32, R"(３分１０円の接続料がかかります)", R"( )", R"( )", R"( )"),
+    CUSTOMIZE(0x1BEE90, 12, R"(対戦時には)", R"( )", R"( )", R"( )"),
+    CUSTOMIZE(0x1BEE9C, 32, R"(１分１３円の接続料がかかります)", R"( )", R"( )", R"( )"),
     TRANSLATE(0x1BEEBC, 20, R"(接続しますか？)", R"(   是否連接？)", R"(   Connect?)"),
     TRANSLATE(0x1BEEF0, 32, R"(電源を切ったりメモリーカードを)", R"(     請勿關機或移除記憶槽)", R"( Do not turn off Dreamcast or)"),
     TRANSLATE(0x1BEF10, 24, R"(抜いたりしないで下さい)", R"( )", R"(or remove memory card)"),
@@ -265,7 +263,7 @@ Translation translations[] = {
     TRANSLATE(0x1C31AC, 8, R"(検索中)", R"(搜尋中)", R"(Finding)"),
     TRANSLATE(0x1C31B4, 8, R"(選択中)", R"(選擇中)", R"(Select)"),
     TRANSLATE(0x1C31BC, 16, R"(%4d戦%4d勝%4d敗)", R"(%4d戰%4d勝%4d敗)", R"(%4dB%4dW%4dL)"),
-    CUSTOMIZE(0x1C31CC, 44, R"(これより先は１分１３円の課金がかかります)", R"(由而家起直到番去大廳,千祈唔好閂game斷線)", R"(DON'T DISCONNECT until you're back to lobby)", R"(ロビーに戻るまで接続を解除しないでください)"),
+    CUSTOMIZE(0x1C31CC, 44, R"(これより先は１分１３円の課金がかかります)", R"(由而家起直到番去大廳,千祈唔好閂game斷線)", R"(DON'T DISCONNECT until you're back to lobby)", R"(  ロビーに戻るまで切断しないでください)"),
     TRANSLATE(0x1C3218, 16, R"(戦　友　登　録)", R"(戰　友　加　入)", R"( Add Friend)"),
     TRANSLATE(0x1C3230, 8, R"(ＨＮ)", R"(網名)", R"(ＨＮ)"),
     TRANSLATE(0x1C3238, 8, R"(登録)", R"(加戰友)", R"(Add)"),
@@ -335,17 +333,21 @@ Translation translations[] = {
     TRANSLATE(0x1C3B44, 8, R"(いいえ)", R"(取消)", R"(No)"),
 
 };
+#undef TRANSLATE
+#undef CUSTOMIZE
 
 for (Translation translation : translations)
 {
+    const static u32 offset = 0x8C000000 + 0x00010000;
     const char * text = translation.Text();
     if (text)
     {
-        for (int i = 0; i < strlen(text); ++i)
+        const auto length = strlen(text);
+        for (int i = 0; i < length; ++i)
         {
             WriteMem8_nommu(offset + translation.offset + i, u8(text[i]));
         }
-        WriteMem8_nommu(offset + translation.offset + (u32)strlen(text), u8(0));
+        WriteMem8_nommu(offset + translation.offset + (u32)length, u8(0));
     }
 }
     
