@@ -35,6 +35,10 @@ GDXLanguage::Lang GDXLanguage::Language() {
             language_ = LanguageFromOS_();
             config::GdxLanguage = (int)language_;
             break;
+        
+        case (int)Lang::Japanese:
+            language_ = Lang::Japanese;
+            break;
             
         case (int)Lang::Cantonese:
             language_ = Lang::Cantonese;
@@ -42,6 +46,10 @@ GDXLanguage::Lang GDXLanguage::Language() {
             
         case (int)Lang::English:
             language_ = Lang::English;
+            break;
+            
+        case (int)Lang::Disabled:
+            language_ = Lang::Disabled;
             break;
             
         default:

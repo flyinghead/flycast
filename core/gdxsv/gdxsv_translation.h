@@ -60,7 +60,8 @@ public:
         NOT_SET = -1,
         Japanese,
         Cantonese,
-        English
+        English,
+        Disabled
     };
     
     static Lang Language();

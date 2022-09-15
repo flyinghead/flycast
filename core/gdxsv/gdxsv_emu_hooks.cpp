@@ -102,17 +102,19 @@ inline static void gui_header(const char *title) {
 void gdxsv_emu_settings() {
     gui_header("gdxsv Shortcut Settings");
     
-    ImGui::Columns(4, "gdxlang", false);
+    ImGui::Columns(5, "gdxlang", false);
     ImGui::SetColumnWidth(0, 200.0f * settings.display.uiScale);
-    ImGui::Text("Language hack:");
+    ImGui::Text("Language mod:");
     ImGui::SameLine();
-    ShowHelpMarker("Modify game language, for DX only");
+    ShowHelpMarker("Patch game language and texture, for DX only");
     ImGui::NextColumn();
-    OptionRadioButton("Japanese (None)", config::GdxLanguage, 0);
+    OptionRadioButton("Japanese (Patched)", config::GdxLanguage, 0);
     ImGui::NextColumn();
     OptionRadioButton("Cantonese", config::GdxLanguage, 1);
     ImGui::NextColumn();
     OptionRadioButton("English", config::GdxLanguage, 2);
+    ImGui::NextColumn();
+    OptionRadioButton("Disabled", config::GdxLanguage, 3);
     ImGui::Columns(1, nullptr, false);
     
     if (ImGui::Button("Apply Recommended Settings")) {

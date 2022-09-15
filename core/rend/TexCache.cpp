@@ -632,7 +632,8 @@ void BaseTextureCacheData::Update()
 		}
 	}
 #if defined(__APPLE__) || defined(_WIN32)
-    gdx_custom_texture.LoadCustomTextureAsync(this);
+	if (config::GdxLanguage != 3) // 3 = Disabled
+		gdx_custom_texture.LoadCustomTextureAsync(this);
 #endif
 	if (config::CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
