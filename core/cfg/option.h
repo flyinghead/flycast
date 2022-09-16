@@ -477,6 +477,10 @@ extern Option<bool> OpenGlChecks;
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 
+// Gdxsv
+
+extern Option<int> GdxLanguage;
+
 // Network
 
 extern Option<bool> NetworkEnable;
