@@ -447,13 +447,14 @@ void Gdxsv::WritePatch() {
 
 #include "gdxsv_patch.inc"
 
-        gdxsv_WriteMem32(symbols["disk"], (int) disk);
+        gdxsv_WriteMem32(symbols["disk"], (int)disk);
+    }
 
-#if defined(__APPLE__) || defined(_WIN32)
-        if (disk == 2 && GDXLanguage::Language() != GDXLanguage::Lang::Disabled) {
+    if (symbols["lang_patch_id"] == 0 ||
+        gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
+        symbols[":lang_patch_lang"] != (u8)GDXLanguage::Language()) {
+        NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"], GDXLanguage::Language());
 #include "gdxsv_translation_patch.inc"
-        }
-#endif
     }
 }
 

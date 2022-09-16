@@ -18,8 +18,10 @@ const char * Translation::Text() {
             return english;
         case GDXLanguage::Lang::Cantonese:
             return cantonese;
+        case GDXLanguage::Lang::Japanese:
+            return japanese ? japanese : original;
         default:
-            return japanese;
+            return original;
     }
 }
 
