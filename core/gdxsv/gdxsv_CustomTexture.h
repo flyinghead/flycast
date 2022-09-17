@@ -10,7 +10,7 @@
 
 #include "../rend/CustomTexture.h"
 
-class GDXCustomTexture : public CustomTexture {
+class GdxsvCustomTexture : public CustomTexture {
 public:
     bool Init() override;
 #ifdef _WIN32
@@ -19,5 +19,5 @@ protected:
     void LoadMap() override;
 #endif
 };
-extern GDXCustomTexture gdx_custom_texture;
+extern GdxsvCustomTexture gdx_custom_texture;
 #endif

@@ -1790,11 +1790,15 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/lbs_message.h
         core/gdxsv/mcs_message.h)
 
+if(MSVC)
+    set(CMAKE_VS_SDK_INCLUDE_DIRECTORIES ${CUSTOM_INCLUDE_DIRECTORIES})
+    target_sources(${PROJECT_NAME} PRIVATE core/gdxsv/textures.rc)
+endif()
 if(APPLE)
-		set(ASSETS core/gdxsv/Textures)
-		target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
-		source_group("Resources" FILES ${ASSETS})
-		set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    set(ASSETS core/gdxsv/Textures)
+    target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
+    source_group("Resources" FILES ${ASSETS})
+    set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 ## End of gdxsv
 

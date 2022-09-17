@@ -25,9 +25,9 @@
 #include <stb_image.h>
 #endif
 
-GDXCustomTexture gdx_custom_texture;
+GdxsvCustomTexture gdx_custom_texture;
 
-bool GDXCustomTexture::Init()
+bool GdxsvCustomTexture::Init()
 {
     if (!initialized)
     {
@@ -36,16 +36,16 @@ bool GDXCustomTexture::Init()
         if (GetGameId() == "T13306M")
         {
 #ifdef __APPLE__
-            uint32_t bufSize = PATH_MAX+1;
-            char result [bufSize];
+            uint32_t bufSize = PATH_MAX + 1;
+            char result[bufSize];
             if (_NSGetExecutablePath(result, &bufSize) == 0)
             {
-                textures_path = std::string (result);
+                textures_path = std::string(result);
                 textures_path.replace(textures_path.find("MacOS/Flycast"), sizeof("MacOS/Flycast") - 1, "Resources/Textures/");
                 textures_path += GdxsvLanguage::TextureDirectoryName();
             }
 
-            DIR *dir = flycast::opendir(textures_path.c_str());
+            DIR* dir = flycast::opendir(textures_path.c_str());
             if (dir != nullptr)
             {
                 INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
@@ -64,63 +64,38 @@ bool GDXCustomTexture::Init()
 
 #ifdef _WIN32
 
-static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCTSTR lpName, WORD wLang, LONG_PTR lParam)
-{
-    //Only add target language's hash & resource index into texture_map
-    if (wLang == MAKELANGID(GdxsvLanguage::TextureLanguageID(), SUBLANG_NEUTRAL)){
-        std::map<u32, std::string> * mapping = reinterpret_cast<std::map<u32, std::string>*>(lParam);
-        HRSRC source = FindResourceExA(GetModuleHandle(NULL), MAKEINTRESOURCE(777),  lpName, wLang);
-        if (source != NULL)
-        {
-            unsigned int size = SizeofResource(NULL, source);
-            HGLOBAL memory = LoadResource(NULL, source);
-
-            if (memory != NULL) {
-                void* data = LockResource(memory);
-
-                char* hex = new char[size+1];
-                snprintf(hex, size+1, "%.*s", size, (char *)data);
-                uint32_t hash = strtoul(hex, NULL, 16);
-
-                char* name = new char[5];
-                snprintf(name, 5, "%u", PtrToUint(lpName));
-
-                (*mapping)[hash] = name;
-
-                delete [] hex;
-                delete [] name;
-                FreeResource(memory);
-            }
-        }
-    }
-    return true;
-}
-
 static BOOL CALLBACK StaticEnumRCNamesFunc(HMODULE hModule, LPCTSTR lpType, LPTSTR lpName, LONG_PTR lParam)
 {
-    EnumResourceLanguages(hModule, lpType, lpName, (ENUMRESLANGPROC)&StaticEnumRCLangsFunc, lParam);
+    //Only add target language's hash & resource index into texture_map
+    auto mapping = reinterpret_cast<std::map<u32, std::string>*>(lParam);
+    const auto name = std::string(lpName);
+    auto lang_dir = GdxsvLanguage::TextureDirectoryName();
+    std::transform(lang_dir.begin(), lang_dir.end(), lang_dir.begin(), ::toupper);
+
+    if (name.find(lang_dir) == 0 || name.find("COMMON") == 0) {
+        auto tex_hash = name.substr(name.find_last_of('_') + 1);
+        u32 hash = strtoul(tex_hash.c_str(), NULL, 16);
+        mapping->emplace(hash, name);
+    }
+
     return true;
 }
 
-void GDXCustomTexture::LoadMap()
+void GdxsvCustomTexture::LoadMap()
 {
     texture_map.clear();
+    std::map<u32, std::string> mapping;
     
-    std::map<u32, std::string> * mapping = new std::map<u32, std::string>();
-    
-    //Load texture hash value (hardcoded type as 777) & PNG resources index into texture_map
-    auto ret = EnumResourceNames(GetModuleHandle(NULL), MAKEINTRESOURCE(777), (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LONG_PTR>(mapping));
+    auto ret = EnumResourceNames(GetModuleHandle(NULL), "GDXSV_TEXTURE", (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LONG_PTR>(&mapping));
     if (!ret) {
         ERROR_LOG(COMMON, "EnumResourceNames error:%d", GetLastError());
     }
     
-    texture_map = *mapping;
-    delete mapping;
-    
+    texture_map = mapping;
     custom_textures_available = !texture_map.empty();
 }
 
-u8* GDXCustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
+u8* GdxsvCustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 {
     auto it = texture_map.find(hash);
     if (it == texture_map.end())
@@ -129,7 +104,7 @@ u8* GDXCustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
     u8 *imgData = nullptr;
     
     //Load PNG data from resource
-    HRSRC source = FindResourceA(GetModuleHandle(NULL), MAKEINTRESOURCE(std::stoi(it->second)), "PNG");
+    HRSRC source = FindResourceA(GetModuleHandle(NULL), it->second.c_str(), "GDXSV_TEXTURE");
     if (source != NULL)
     {
         unsigned int size = SizeofResource(NULL, source);
