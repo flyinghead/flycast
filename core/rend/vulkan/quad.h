@@ -23,6 +23,8 @@
 #include "buffer.h"
 #include "shaders.h"
 
+#include <memory>
+
 struct QuadVertex
 {
 	f32 pos[3];
