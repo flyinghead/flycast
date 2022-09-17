@@ -56,12 +56,9 @@ public:
         English,
         Disabled
     };
-    
+
     static Lang Language();
     static std::string TextureDirectoryName();
-#ifdef _WIN32
-    static USHORT TextureLanguageID();
-#endif
 private:
     static Lang LanguageFromOS();
 };

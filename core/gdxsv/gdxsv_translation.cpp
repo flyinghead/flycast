@@ -44,17 +44,11 @@ std::string GdxsvLanguage::TextureDirectoryName() {
     default: return "Japanese";
     }
 }
+
 #ifdef _WIN32
 #include <winnls.h>
 #include <locale>
 #include <codecvt>
-USHORT GdxsvLanguage::TextureLanguageID() {
-    switch (Language()) {
-    case Lang::English: return LANG_ENGLISH;
-    case Lang::Cantonese: return LANG_CHINESE;
-    default: return LANG_JAPANESE;
-    }
-}
 #endif
 
 GdxsvLanguage::Lang GdxsvLanguage::LanguageFromOS() {
