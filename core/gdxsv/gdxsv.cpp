@@ -75,7 +75,7 @@ void Gdxsv::Reset() {
                 ERROR_LOG(COMMON, "patch_list deserialize error");
             }
         }
-        if (disk == 2 && lbs_msg.command == LbsMessage::lbsBattleUserCount && GDXLanguage::Language() != GDXLanguage::Lang::Disabled) {
+        if (disk == 2 && lbs_msg.command == LbsMessage::lbsBattleUserCount && GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
             u32 battle_user_count = u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
             const u32 offset = 0x8C000000 + 0x00010000;
             gdxsv_WriteMem32(offset + 0x3839FC, battle_user_count);
@@ -447,13 +447,14 @@ void Gdxsv::WritePatch() {
 
 #include "gdxsv_patch.inc"
 
-        gdxsv_WriteMem32(symbols["disk"], (int) disk);
+        gdxsv_WriteMem32(symbols["disk"], (int)disk);
+    }
 
-#if defined(__APPLE__) || defined(_WIN32)
-        if (disk == 2 && GDXLanguage::Language() != GDXLanguage::Lang::Disabled) {
+    if (symbols["lang_patch_id"] == 0 ||
+        gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
+        symbols[":lang_patch_lang"] != (u8)GdxsvLanguage::Language()) {
+        NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"], GdxsvLanguage::Language());
 #include "gdxsv_translation_patch.inc"
-        }
-#endif
     }
 }
 

@@ -12,77 +12,52 @@
 #include "cfg/option.h"
 #include "gdxsv_translation.h"
 
-const char * Translation::Text() {
-    switch (GDXLanguage::Language()) {
-        case GDXLanguage::Lang::English:
-            return english;
-        case GDXLanguage::Lang::Cantonese:
-            return cantonese;
-        default:
-            return japanese;
+const char * GdxsvTranslation::Text() const {
+    switch (GdxsvLanguage::Language()) {
+    case GdxsvLanguage::Lang::English: return english;
+    case GdxsvLanguage::Lang::Cantonese: return cantonese;
+    case GdxsvLanguage::Lang::Japanese: return japanese ? japanese : original;
     }
+    return original;
 }
 
-GDXLanguage::Lang GDXLanguage::language_ = Lang::NOT_SET;
-
-GDXLanguage::Lang GDXLanguage::Language() {
-    int lang = config::GdxLanguage;
+GdxsvLanguage::Lang GdxsvLanguage::Language() {
+    Lang lang = static_cast<Lang>(config::GdxLanguage.get());
     switch (lang) {
-        case (int)Lang::NOT_SET:
-            language_ = LanguageFromOS_();
-            config::GdxLanguage = (int)language_;
-            break;
-        
-        case (int)Lang::Japanese:
-            language_ = Lang::Japanese;
-            break;
-            
-        case (int)Lang::Cantonese:
-            language_ = Lang::Cantonese;
-            break;
-            
-        case (int)Lang::English:
-            language_ = Lang::English;
-            break;
-            
-        case (int)Lang::Disabled:
-            language_ = Lang::Disabled;
-            break;
-            
-        default:
-            language_ = Lang::Japanese;
-            break;
+    case Lang::Japanese:
+    case Lang::Cantonese:
+    case Lang::English:
+    case Lang::Disabled:
+        return lang;
+    case Lang::NOT_SET:
+    default:
+        lang = LanguageFromOS();
+        config::GdxLanguage.set((int)lang);
+        return lang;
     }
-    return language_;
 }
 
-std::string GDXLanguage::LanguageString() {
+std::string GdxsvLanguage::TextureDirectoryName() {
     switch (Language()) {
-        case Lang::English:
-            return "English";
-        case Lang::Cantonese:
-            return "Cantonese";
-        default:
-            return "Japanese";
+    case Lang::English: return "English";
+    case Lang::Cantonese: return "Cantonese";
+    default: return "Japanese";
     }
 }
 #ifdef _WIN32
 #include <winnls.h>
 #include <locale>
 #include <codecvt>
-USHORT GDXLanguage::TextureLanguageID() {
+USHORT GdxsvLanguage::TextureLanguageID() {
     switch (Language()) {
-        case Lang::English:
-            return LANG_ENGLISH;
-        case Lang::Cantonese:
-            return LANG_CHINESE;
-        default:
-            return LANG_JAPANESE;
+    case Lang::English: return LANG_ENGLISH;
+    case Lang::Cantonese: return LANG_CHINESE;
+    default: return LANG_JAPANESE;
     }
 }
 #endif
 
-GDXLanguage::Lang GDXLanguage::LanguageFromOS_(){
+GdxsvLanguage::Lang GdxsvLanguage::LanguageFromOS() {
 #ifdef __APPLE__
     extern std::string os_Locale();
     std::string locale = os_Locale();
