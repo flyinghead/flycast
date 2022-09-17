@@ -29,12 +29,12 @@ static inline VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkI
 }
 
 #elif !defined(TARGET_IPHONE)
-#include "volk/volk.h"
+#include <volk.h>
 #endif
 
 #if !defined(TARGET_IPHONE)
 #undef VK_NO_PROTOTYPES
 #endif
-#include "vulkan/vulkan.hpp"
+#include <vulkan/vulkan.hpp>
 
 //#define VK_DEBUG

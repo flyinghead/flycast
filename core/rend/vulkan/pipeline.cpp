@@ -166,7 +166,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 
 	modVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-					graphicsPipelineCreateInfo);
+					graphicsPipelineCreateInfo).value;
 }
 
 void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
@@ -270,7 +270,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 
 	depthPassPipelines[hash(cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-					graphicsPipelineCreateInfo);
+					graphicsPipelineCreateInfo).value;
 }
 
 void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
@@ -436,7 +436,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	);
 
 	pipelines[hash(listType, sortTriangles, &pp, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-			graphicsPipelineCreateInfo);
+			graphicsPipelineCreateInfo).value;
 }
 
 void OSDPipeline::CreatePipeline()
@@ -522,5 +522,5 @@ void OSDPipeline::CreatePipeline()
 	  0                                           // subpass
 	);
 
-	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }

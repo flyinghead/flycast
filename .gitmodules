@@ -10,3 +10,15 @@
 [submodule "core/deps/breakpad"]
 	path = core/deps/breakpad
 	url = https://github.com/flyinghead/mingw-breakpad
+[submodule "core/deps/Vulkan-Headers"]
+	path = core/deps/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "core/deps/VulkanMemoryAllocator"]
+	path = core/deps/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "core/deps/glslang"]
+	path = core/deps/glslang
+	url = https://github.com/KhronosGroup/glslang.git
+[submodule "core/deps/volk"]
+	path = core/deps/volk
+	url = https://github.com/zeux/volk.git
