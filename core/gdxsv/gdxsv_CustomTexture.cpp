@@ -42,7 +42,7 @@ bool GDXCustomTexture::Init()
             {
                 textures_path = std::string (result);
                 textures_path.replace(textures_path.find("MacOS/Flycast"), sizeof("MacOS/Flycast") - 1, "Resources/Textures/");
-                textures_path += GDXLanguage::LanguageString();
+                textures_path += GdxsvLanguage::TextureDirectoryName();
             }
 
             DIR *dir = flycast::opendir(textures_path.c_str());
@@ -67,7 +67,7 @@ bool GDXCustomTexture::Init()
 static BOOL CALLBACK StaticEnumRCLangsFunc(HMODULE hModule, LPCTSTR lpType, LPCTSTR lpName, WORD wLang, LONG_PTR lParam)
 {
     //Only add target language's hash & resource index into texture_map
-    if (wLang == MAKELANGID(GDXLanguage::TextureLanguageID(), SUBLANG_NEUTRAL)){
+    if (wLang == MAKELANGID(GdxsvLanguage::TextureLanguageID(), SUBLANG_NEUTRAL)){
         std::map<u32, std::string> * mapping = reinterpret_cast<std::map<u32, std::string>*>(lParam);
         HRSRC source = FindResourceExA(GetModuleHandle(NULL), MAKEINTRESOURCE(777),  lpName, wLang);
         if (source != NULL)
@@ -109,7 +109,10 @@ void GDXCustomTexture::LoadMap()
     std::map<u32, std::string> * mapping = new std::map<u32, std::string>();
     
     //Load texture hash value (hardcoded type as 777) & PNG resources index into texture_map
-    EnumResourceNames(GetModuleHandle(NULL), MAKEINTRESOURCE(777), (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LONG_PTR>(mapping));
+    auto ret = EnumResourceNames(GetModuleHandle(NULL), MAKEINTRESOURCE(777), (ENUMRESNAMEPROC)&StaticEnumRCNamesFunc, reinterpret_cast<LONG_PTR>(mapping));
+    if (!ret) {
+        ERROR_LOG(COMMON, "EnumResourceNames error:%d", GetLastError());
+    }
     
     texture_map = *mapping;
     delete mapping;
