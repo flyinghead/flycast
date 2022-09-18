@@ -117,7 +117,7 @@ jobs:
           cp shell/apple/HowToOpen.pdf artifact/bin/
           cd artifact/bin
           mv Flycast.app Flycast-gdxsv.app
-          zip -rm ${{ matrix.config.packageName }} Flycast-gdxsv.app HowToOpen.pdf
+          zip -y -rm ${{ matrix.config.packageName }} Flycast-gdxsv.app HowToOpen.pdf
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
