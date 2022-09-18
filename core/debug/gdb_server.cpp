@@ -496,8 +496,7 @@ private:
 				const u32 *data = agent.getStack(len);
 				len /= 4;
 
-				char reply[len * 9 * 2 + 1];
-				char *r = reply;
+				char *r = new char[len * 9 * 2 + 1];
 				for (u32 i = 0; i < len; i++)
 				{
 					char n[10];
@@ -509,7 +508,8 @@ private:
 					}
 				}
 				*r = 0;
-				sendPacket(reply);
+				sendPacket(r);
+				delete [] r;
 			}
 			else
 				sendPacket("");
