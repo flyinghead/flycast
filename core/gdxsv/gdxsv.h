@@ -9,6 +9,7 @@
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
 #include "gdxsv_backend_replay.h"
+#include "gdxsv_backend_rollback.h"
 #include "types.h"
 
 #include "cfg/cfg.h"
@@ -24,11 +25,13 @@ public:
         Lbs,
         McsUdp,
         Replay,
+        RollbackTest,
     };
 
     Gdxsv() : lbs_net(symbols),
               udp_net(symbols, maxlag),
-              replay_net(symbols, maxlag) {};
+              replay_net(symbols, maxlag),
+              rollback_net(symbols, maxlag) {};
 
     bool Enabled() const;
 
@@ -38,6 +41,8 @@ public:
 
     void Update();
 
+    void HookMainUiLoop();
+
     void HandleRPC();
 
     void RestoreOnlinePatch();
@@ -45,6 +50,8 @@ public:
     void StartPingTest();
 
     bool StartReplayFile(const char *path);
+
+    bool StartRollbackTest(const char *path);
 
 private:
     void GcpPingTest();
@@ -78,6 +85,7 @@ private:
     GdxsvBackendTcp lbs_net;
     GdxsvBackendUdp udp_net;
     GdxsvBackendReplay replay_net;
+    GdxsvBackendRollback rollback_net;
 
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;

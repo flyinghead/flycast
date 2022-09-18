@@ -17,12 +17,17 @@ void gdxsv_emu_start() {
     gdxsv.Reset();
 
     if (gdxsv.Enabled()) {
-        gdxsv.StartPingTest();
-
         auto replay = cfgLoadStr("gdxsv", "replay", "");
         if (!replay.empty()) {
             dc_loadstate(99);
         }
+        else if (!cfgLoadStr("gdxsv", "rbk_test", "").empty()) {
+            dc_loadstate(99);
+        }
+        else {
+            gdxsv.StartPingTest();
+        }
+
     }
 }
 
@@ -53,6 +58,11 @@ void gdxsv_emu_loadstate(int slot) {
         auto replay = cfgLoadStr("gdxsv", "replay", "");
         if (!replay.empty() && slot == 99) {
             gdxsv.StartReplayFile(replay.c_str());
+        }
+
+        auto rbk_test = cfgLoadStr("gdxsv", "rbk_test", "");
+        if (!rbk_test.empty() && slot == 99) {
+            gdxsv.StartRollbackTest(rbk_test.c_str());
         }
     }
 }
@@ -235,3 +245,8 @@ void gdxsv_latest_version_check() {
         }).detach();
     });
 }
+
+void gdxsv_mainui_loop() {
+    gdxsv.HookMainUiLoop();
+}
+

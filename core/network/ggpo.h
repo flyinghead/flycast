@@ -35,6 +35,7 @@ void displayStats();
 void endOfFrame();
 void sendChatMessage(int playerNum, const std::string& msg);
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg));
+void gdxsvStartSession(int localPort, int localPlayerNum);
 
 static inline bool rollbacking() {
 	extern bool inRollback;

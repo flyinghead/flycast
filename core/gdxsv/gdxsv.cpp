@@ -115,6 +115,10 @@ void Gdxsv::Update() {
     }
 }
 
+void Gdxsv::HookMainUiLoop() {
+    gdxsv.rollback_net.OnGuiMainUiLoop();
+}
+
 std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;
     ss << "cpu=" <<
@@ -216,6 +220,8 @@ void Gdxsv::HandleRPC() {
 
         if (netmode == NetMode::Replay) {
             replay_net.Open();
+        } else if (netmode == NetMode::RollbackTest) {
+            rollback_net.Open();
         } else if (tolobby == 1) {
             udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
             if (lbs_net.Connect(host, port)) {
@@ -241,6 +247,8 @@ void Gdxsv::HandleRPC() {
     if (gdx_rpc.request == GDX_RPC_SOCK_CLOSE) {
         if (netmode == NetMode::Replay) {
             replay_net.Close();
+        } else if (netmode == NetMode::RollbackTest) {
+            rollback_net.Close();
         } else {
             lbs_net.Close();
 
@@ -265,6 +273,8 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
+        } else if (netmode == NetMode::RollbackTest) {
+            response = rollback_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
 
@@ -275,6 +285,8 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
+        } else if (netmode == NetMode::RollbackTest) {
+            response = rollback_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
 
@@ -285,6 +297,8 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockPoll();
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockPoll();
+        } else if (netmode == NetMode::RollbackTest) {
+            response = rollback_net.OnSockPoll();
         }
     }
 
@@ -440,6 +454,8 @@ void Gdxsv::RestoreOnlinePatch() {
 }
 
 void Gdxsv::WritePatch() {
+    if (ggpo::active()) return;
+
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || gdxsv_ReadMem32(symbols["patch_id"]) != symbols[":patch_id"]) {
@@ -637,6 +653,16 @@ bool Gdxsv::StartReplayFile(const char *path) {
             return true;
         }
     }
+    return false;
+}
+
+bool Gdxsv::StartRollbackTest(const char *path) {
+    rollback_net.Reset();
+    if (rollback_net.StartFile(path)) {
+        netmode = NetMode::RollbackTest;
+        return true;
+    }
+
     return false;
 }
 

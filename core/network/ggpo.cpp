@@ -83,13 +83,13 @@ static void getLocalInput(MapleInputState inputState[4])
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
-//#define SYNC_TEST 1
+#define SYNC_TEST 1
 
 namespace ggpo
 {
 using namespace std::chrono;
 
-constexpr int MAX_PLAYERS = 2;
+constexpr int MAX_PLAYERS = 4;
 constexpr int SERVER_PORT = 19713;
 
 constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
@@ -106,6 +106,7 @@ struct VerificationData
 
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
+static GGPOPlayerHandle playerHandles[MAX_PLAYERS];
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
 static bool synchronized;
@@ -333,7 +334,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 	verify(ser.size() < allocSize);
 	*len = ser.size();
 #ifdef SYNC_TEST
-	*checksum = XXH32(*buffer, usedSize, 7);
+	*checksum = XXH32(*buffer, *len, 7);
 #endif
 	if (frame > 0)
 	{
@@ -465,7 +466,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.on_message      = on_message;
 
 #ifdef SYNC_TEST
-	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
+	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), 2, sizeof(kcode[0]), 1);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
@@ -738,10 +739,13 @@ bool nextFrame()
 		ggpo_idle(ggpoSession, 0);
 	} while (active());
 #ifdef SYNC_TEST
-	u32 input = ~kcode[1 - localPlayerNum];
-	GGPOErrorCode result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
-	if (result != GGPO_OK)
-		WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (playerHandles[i] == localPlayer) continue;
+        u32 input = ~kcode[0];
+        GGPOErrorCode result = ggpo_add_local_input(ggpoSession, playerHandles[i], &input, sizeof(input));
+        if (result != GGPO_OK)
+            WARN_LOG(NETWORK, "ggpo_add_local_input(%d) failed %d", i, result);
+    }
 #endif
 	return active();
 }
@@ -893,6 +897,58 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 	chatCallback = callback;
 }
 
+
+void gdxsvStartSession(int localPort, int localPlayerNum)
+{
+	GGPOSessionCallbacks cb{};
+	cb.begin_game      = begin_game;
+	cb.advance_frame   = advance_frame;
+	cb.load_game_state = load_game_state;
+	cb.save_game_state = save_game_state;
+	cb.free_buffer     = free_buffer;
+	cb.on_event        = on_event;
+	cb.log_game_state  = log_game_state;
+	cb.on_message      = on_message;
+
+#ifdef SYNC_TEST
+	inputSize = sizeof(kcode[0]);
+	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, 1);
+	if (result != GGPO_OK)
+	{
+		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
+		ggpoSession = nullptr;
+		throw FlycastException("GGPO start sync session failed");
+	}
+	ggpo_idle(ggpoSession, 0);
+	ggpo::localPlayerNum = localPlayerNum;
+
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+        GGPOPlayer player{ sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1 };
+		if (i != localPlayerNum) {
+            player.type = GGPO_PLAYERTYPE_REMOTE;
+		} 
+
+        result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
+		if (result != GGPO_OK) {
+            WARN_LOG(NETWORK, "add_player failed: %d", result);
+            ggpoSession = nullptr;
+            throw FlycastException("GGPO start sync session failed");
+		}
+
+		if (i == localPlayerNum) {
+			localPlayer = playerHandles[i];
+		}
+		else {
+			remotePlayer = playerHandles[i];
+		}
+	}
+
+	synchronized = true;
+	analogAxes = 0;
+	NOTICE_LOG(NETWORK, "GGPO synctest session started");
+#else
+#endif
+}
 }
 
 #else // LIBRETRO

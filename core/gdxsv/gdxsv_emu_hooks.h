@@ -17,3 +17,6 @@ bool gdxsv_emu_ingame();
 void gdxsv_update_popup();
 
 void gdxsv_emu_settings();
+
+void gdxsv_mainui_loop();
+

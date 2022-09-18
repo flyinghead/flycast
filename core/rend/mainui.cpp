@@ -26,6 +26,7 @@
 #include "cfg/option.h"
 #include "emulator.h"
 #include "imgui_driver.h"
+#include "../gdxsv/gdxsv_emu_hooks.h"
 
 static bool mainui_enabled;
 u32 MainFrameCount;
@@ -97,6 +98,8 @@ void mainui_loop()
 			forceReinit = false;
 			currentRenderer = config::RendererType;
 		}
+
+		gdxsv_mainui_loop();
 	}
 
 	mainui_term();
