@@ -11,6 +11,8 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
 #include "hw/sh4/dyna/decoder.h"
+#include "debug/debug_agent.h"
+
 
 #ifdef STRICT_MODE
 #include "hw/sh4/sh4_cache.h"
@@ -934,6 +936,8 @@ sh4op(i1100_0011_iiii_iiii)
 {
 	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
 	debugger::debugTrap(Sh4Ex_Trap);
+	emu.stop();
+	throw debugger::Stop();
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc, Sh4Ex_Trap);
 }

@@ -1193,6 +1193,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/stdclass.cpp
 		core/stdclass.h
 		core/types.h
+		core/debug/debug_agent.cpp
+		core/debug/debug_agent.h
+		core/debug/gdb_server.cpp
 		core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1218,6 +1221,8 @@ if(NOT LIBRETRO)
 			core/rend/gui_cheats.cpp
 			core/rend/gui_util.cpp
 			core/rend/gui_util.h
+			core/rend/gui_debugger.cpp
+			core/rend/gui_debugger.h
 			core/rend/mainui.cpp
 			core/rend/mainui.h
 			core/rend/boxart/boxart.cpp
