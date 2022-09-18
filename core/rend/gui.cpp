@@ -42,6 +42,7 @@
 #include "implot/implot.h"
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
+#include "gui_debugger.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -186,6 +187,11 @@ void gui_initFonts()
 	io.Fonts->Clear();
 	const float fontSize = 17.f * settings.display.uiScale;
 	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
+	
+	ImFontConfig defaultFontConfig;
+	defaultFontConfig.SizePixels = 13.f * settings.display.uiScale;
+	io.Fonts->AddFontDefault(&defaultFontConfig);
+	
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
 #ifdef _WIN32
@@ -595,6 +601,13 @@ static void gui_display_commands()
 			gui_state = GuiState::Cheats;
 	}
 	ImGui::Columns(1, nullptr, false);
+	
+	// Debugger
+	if (ImGui::Button("Debugger", ScaledVec2(300, 50)
+			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
+	{
+		gui_state = GuiState::Debugger;
+	}
 
 	// Exit
 	if (ImGui::Button("Exit", ScaledVec2(300, 50)
@@ -2745,6 +2758,8 @@ void gui_display_ui()
 	case GuiState::Cheats:
 		gui_cheats();
 		break;
+	case GuiState::Debugger:
+		break;
 	default:
 		die("Unknown UI state");
 		break;
@@ -2784,6 +2799,20 @@ void gui_display_osd()
 {
 	if (gui_state == GuiState::VJoyEdit)
 		return;
+	
+	if (gui_state == GuiState::Debugger)
+	{
+		gui_newFrame();
+		ImGui::NewFrame();
+
+		gui_debugger();
+
+		lua::overlay();
+
+		gui_endFrame(gui_is_open());
+
+		return;
+	}
 	std::string message = get_notification();
 	if (message.empty())
 		message = getFPSNotification();
@@ -2926,3 +2955,16 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 	return false;
 }
 #endif
+
+void gui_debugger()
+{
+	gui_debugger_control();
+
+	gui_debugger_disasm();
+
+	gui_debugger_memdump();
+
+	gui_debugger_breakpoints();
+
+	gui_debugger_sh4();
+}

@@ -12,6 +12,7 @@
 #include "../sh4_sched.h"
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
+#include "emulator.h"
 
 #define CPU_RATIO      (8)
 

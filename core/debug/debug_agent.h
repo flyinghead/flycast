@@ -232,7 +232,7 @@ public:
 
 	u32 interrupt()
 	{
-		config::DynarecEnabled = false;
+		//config::DynarecEnabled = false;
 		exception = SIGINT;
 		emu.stop();
 		return exception;
@@ -313,17 +313,9 @@ public:
 			return nullptr;
 	}
 
-	void subroutineCall()
-	{
-		subroutineReturn();
-		stack.push_back(std::make_pair(Sh4cntx.pc, Sh4cntx.r[15]));
-	}
+	void subroutineCall();
 
-	void subroutineReturn()
-	{
-		while (!stack.empty() && Sh4cntx.r[15] >= stack.back().second)
-			stack.pop_back();
-	}
+	void subroutineReturn();
 
 	u32 exception = 0;
 
@@ -347,3 +339,5 @@ public:
 	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
 };
+
+extern DebugAgent debugAgent;
