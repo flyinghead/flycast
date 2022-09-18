@@ -173,3 +173,5 @@ private:
 	bool renderTimeout = false;
 };
 extern Emulator emu;
+
+extern std::map<u32, std::string> knownTasks;

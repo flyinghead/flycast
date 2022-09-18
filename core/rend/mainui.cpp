@@ -39,7 +39,12 @@ bool mainui_rend_frame()
 	os_DoEvents();
 	UpdateInputState();
 
-	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
+	if (gui_state == GuiState::Debugger)
+ 	{
+ 		emu.render();
+ 		renderer->DrawOSD(false);
+ 	}
+ 	else if (gui_is_open() || gui_state == GuiState::VJoyEdit)
 	{
 		gui_display_ui();
 		// TODO refactor android vjoy out of renderer

@@ -685,14 +685,6 @@ private:
 		}
 	}
 
-	void interrupt()
-	{
-		u32 signal = agent.interrupt();
-		char s[10];
-		sprintf(s, "S%02x", signal);
-		sendPacket(s);
-	}
-
 	char recvChar()
 	{
 		char c;
@@ -842,6 +834,7 @@ static GdbServer gdbServer;
 
 void init()
 {
+	NOTICE_LOG(COMMON, "GDB Server initting...");
 	gdbServer.init();
 }
 
@@ -880,6 +873,22 @@ static void emuEventCallback(Event event, void *)
 		break;
 	}
 }
+
+void interrupt()
+{
+	gdbServer.agent.interrupt();
+}
+
+void step()
+{
+	gdbServer.agent.step();
+}
+
+void doContinue()
+{
+	gdbServer.agent.doContinue();
+}
+
 
 }
 #endif
