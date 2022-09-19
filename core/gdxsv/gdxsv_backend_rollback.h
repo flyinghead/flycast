@@ -29,6 +29,22 @@ public:
         End,
     };
 
+    // maple input to mcs pad input
+    u16 conv_input(u32 kcode) {
+        // TODO: Not complete
+        u16 r = 0;
+        if (kcode & 0x0004) r |= 0x4000; // A
+        if (kcode & 0x0002) r |= 0x2000; // B
+        if (kcode & 0x0400) r |= 0x0002; // X
+        if (kcode & 0x0200) r |= 0x0001; // Y
+        if (kcode & 0x0010) r |= 0x0020; // up
+        if (kcode & 0x0020) r |= 0x0010; // down
+        if (kcode & 0x0080) r |= 0x0004; // right
+        if (kcode & 0x0040) r |= 0x0008; // left
+        if (kcode & 0x2000) r |= 0x0080; // Start
+        return r;
+    }
+
     void Reset() {
         RestorePatch();
         state_ = State::None;
@@ -47,34 +63,30 @@ public:
 
     struct FrameInfo {
         void Reset() {
-            recv_start_cmd = false;
-            current_ggpo_frame = 0;
+            start_session = false;
+            end_session = false;
         }
 
-        bool recv_start_cmd;
-        int current_ggpo_frame;
+        bool start_session;
+        bool end_session;
     } frame_info;
 
     void OnGuiMainUiLoop() {
-        if (frame_info.recv_start_cmd) {
-            // gui_open_settings();
-            // emu.stop();
-            // gui_state = GuiState::Commands;
-
-            // sh4_cpu.Stop();
+        if (frame_info.start_session && !ggpo::active()) {
             emu.stop();
-            rend_allow_rollback();
             config::GGPOEnable.override(1);
             settings.aica.NoBatch = 1;
             ggpo::gdxsvStartSession(0, 0);
             if (ggpo::active()) { MapleInputState state[4]; ggpo::getInput(state); }
             emu.start();
-
         }
 
-        if (ggpo::active()) {
+        if (frame_info.end_session && ggpo::active()) {
+            emu.stop();
+            ggpo::stopSession();
+            config::GGPOEnable.override(0);
+            emu.start();
         }
-
 
         frame_info.Reset();
     }
@@ -119,8 +131,8 @@ public:
         if (state_ != State::End) {
             PrintDisconnectionSummary();
         }
+        frame_info.end_session = true;
         RestorePatch();
-        config::GGPOEnable.override(0);
         state_ = State::End;
     }
 
@@ -139,7 +151,10 @@ public:
         if (state_ <= State::LbsStartBattleFlow) {
             ProcessLbsMessage();
         } else {
-            ProcessMcsMessage();
+            McsMessage msg;
+            if (mcs_tx_reader_.Read(msg)) {
+                NOTICE_LOG(COMMON, "Send: %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+            }
         }
 
         ApplyPatch(false);
@@ -151,111 +166,113 @@ public:
         if (state_ <= State::LbsStartBattleFlow) {
             ProcessLbsMessage();
         }
+        else {
+            const int InetBuf = 0x0c3ab984;
+            int msg_len = gdxsv_ReadMem8(InetBuf);
+            McsMessage msg;
+            if (0 < msg_len) {
+                if (0 < msg_len == 0x82) {
+                    msg_len = 20;
+                }
+                msg.body.resize(msg_len);
+                for (int i = 0; i < msg_len; i++) {
+                    msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
+                    gdxsv_WriteMem8(InetBuf + i, 0);
+                }
 
-        if (ggpo::active()) {
-            for (int i = 0; i < 4; ++i) {
-                auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
-                auto input = mapleInputState[i];
-                msg.body[2] = input.kcode & 0xff;
-                msg.body[3] = (input.kcode >> 8) & 0xff;
-                std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
+                NOTICE_LOG(COMMON, "InetBuf:%s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+                switch (msg.Type()) {
+                case McsMessage::MsgType::ConnectionIdMsg:
+                    frame_info.start_session = true;
+                    state_ = State::McsInBattle;
+                    break;
+                case McsMessage::MsgType::IntroMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me_) {
+                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
+                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::IntroMsgReturn:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me_) {
+                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
+                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::PingMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me_) {
+                            auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
+                            pong_msg.SetPongTo(me_);
+                            pong_msg.PongCount(msg.PingCount());
+                            std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::PongMsg:
+                    break;
+                case McsMessage::MsgType::StartMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me_) {
+                            auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
+                            std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    PrepareKeyMsgIndex();
+                    break;
+                case McsMessage::MsgType::ForceMsg:
+                    break;
+                case McsMessage::MsgType::KeyMsg1: {
+                    NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
+                    for (int i = 0; i < 4; ++i) {
+                        auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
+                        auto input = conv_input(~mapleInputState[0].kcode);
+                        msg.body[2] = input >> 8 & 0xff;
+                        msg.body[3] = input & 0xff;
+                        std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
+                        if (i == 0) {
+                            NOTICE_LOG(COMMON, "AAAAAAA:%s", msg.ToHex().c_str());
+                        }
+                    }
+                    break;
+                }
+                case McsMessage::MsgType::KeyMsg2:
+                    verify(false);
+                    break;
+                case McsMessage::MsgType::LoadStartMsg:
+                    // It will be dropped because InetBuf is cleared. 
+                    break;
+                case McsMessage::MsgType::LoadEndMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me_) {
+                            auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
+                            std::copy(load_start_msg.body.begin(), load_start_msg.body.end(),
+                                std::back_inserter(recv_buf_));
+                            auto load_end_msg = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
+                            std::copy(load_end_msg.body.begin(), load_end_msg.body.end(),
+                                std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                default:
+                    WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.Type()));
+                    WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
+                    break;
+                }
+
+                verify(recv_buf_.size() <= size);
             }
         }
-        
-        if (!last_msg.body.empty()) {
-            auto msg = last_msg;
-            switch (msg.Type()) {
-            case McsMessage::MsgType::ConnectionIdMsg:
-                state_ = State::McsInBattle;
-                break;
-            case McsMessage::MsgType::IntroMsg:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
-                        std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
-                break;
-            case McsMessage::MsgType::IntroMsgReturn:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
-                        std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
-                break;
-            case McsMessage::MsgType::PingMsg:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
-                        pong_msg.SetPongTo(me_);
-                        pong_msg.PongCount(msg.PingCount());
-                        std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
-                break;
-            case McsMessage::MsgType::PongMsg:
-                break;
-            case McsMessage::MsgType::StartMsg:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
-                        std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
-                PrepareKeyMsgIndex();
-                frame_info.recv_start_cmd = true;
-                break;
-            case McsMessage::MsgType::ForceMsg:
-                break;
-            case McsMessage::MsgType::KeyMsg1: {
-                NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
-                /*
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (msg.FirstSeq() < key_msg_index_[i].size()) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                        NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
-                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
-*/
-                break;
-            }
-            case McsMessage::MsgType::KeyMsg2:
-                verify(false);
-                break;
-            case McsMessage::MsgType::LoadStartMsg:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
-                        std::copy(load_start_msg.body.begin(), load_start_msg.body.end(),
-                            std::back_inserter(recv_buf_));
-                    }
-                }
-                break;
-            case McsMessage::MsgType::LoadEndMsg:
-                for (int i = 0; i < log_file_.users_size(); ++i) {
-                    if (i != me_) {
-                        auto load_end_msg = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
-                        std::copy(load_end_msg.body.begin(), load_end_msg.body.end(),
-                            std::back_inserter(recv_buf_));
-                    }
-                }
-                break;
-            default:
-                WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.Type()));
-                WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
-                break;
-            }
-        }
-
 
         if (recv_buf_.empty()) {
             return 0;
         }
 
         int n = std::min<int>(recv_buf_.size(), size);
-        for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < n;  ++i) {
             gdxsv_WriteMem8(addr + i, recv_buf_.front());
             recv_buf_.pop_front();
         }
@@ -513,10 +530,6 @@ private:
 
     void ProcessMcsMessage() {
         McsMessage msg;
-        if (mcs_tx_reader_.Read(msg)) {
-            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
-            last_msg = msg;
-        }
     }
 
     void ApplyPatch(bool first_time) {
@@ -596,5 +609,4 @@ private:
     std::vector<McsMessage> msg_list_;
     std::array<int, 4> start_index_;
     std::array<std::vector<int>, 4> key_msg_index_;
-    McsMessage last_msg;
 };
