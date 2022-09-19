@@ -36,7 +36,7 @@ int flycast_init(int argc, char* argv[])
 
 	// TODO: remove
 	settings.content.path = "C:\\rom\\gdx-disc2\\gdx-disc2.gdi";
-	cfgSetVirtual("gdxsv", "rbk_test", "diskdc2-1621175915425.pb");
+	cfgSetVirtual("gdxsv", "rbk_test", "test");
 	// cfgSetVirtual("gdxsv", "replay", "diskdc2-1621175915425.pb");
 
 

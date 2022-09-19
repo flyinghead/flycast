@@ -4,6 +4,7 @@
 #include <queue>
 #include <string>
 #include <map>
+#include <future>
 
 #include "libs.h"
 #include "gdxsv.pb.h"
@@ -14,6 +15,12 @@
 #include "emulator.h"
 #include "hw/pvr/Renderer_if.h"
 
+// Note Button mapping may be affected.
+static char dummy_game_param[] = { 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+static const char dummy_rule_data[] = { 0x03,0x02,0x03,0x00,0x00,0x01,0x58,0x02,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00,0x00,0xff,0x01,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00
+};
+
 class GdxsvBackendRollback {
 public:
     GdxsvBackendRollback(const std::map<std::string, u32> &symbols, std::atomic<int> &maxlag)
@@ -21,7 +28,7 @@ public:
     }
     enum class State {
         None,
-        Start,
+        StartLocalTest,
         LbsStartBattleFlow,
         McsWaitJoin,
         McsSessionExchange,
@@ -30,18 +37,18 @@ public:
     };
 
     // maple input to mcs pad input
-    u16 conv_input(u32 kcode) {
+    u16 conv_input(MapleInputState input) {
         // TODO: Not complete
         u16 r = 0;
-        if (kcode & 0x0004) r |= 0x4000; // A
-        if (kcode & 0x0002) r |= 0x2000; // B
-        if (kcode & 0x0400) r |= 0x0002; // X
-        if (kcode & 0x0200) r |= 0x0001; // Y
-        if (kcode & 0x0010) r |= 0x0020; // up
-        if (kcode & 0x0020) r |= 0x0010; // down
-        if (kcode & 0x0080) r |= 0x0004; // right
-        if (kcode & 0x0040) r |= 0x0008; // left
-        if (kcode & 0x2000) r |= 0x0080; // Start
+        if (~input.kcode & 0x0004) r |= 0x4000; // A
+        if (~input.kcode & 0x0002) r |= 0x2000; // B
+        if (~input.kcode & 0x0400) r |= 0x0002; // X
+        if (~input.kcode & 0x0200) r |= 0x0001; // Y
+        if (~input.kcode & 0x0010) r |= 0x0020; // up
+        if (~input.kcode & 0x0020) r |= 0x0010; // down
+        if (~input.kcode & 0x0080) r |= 0x0004; // right
+        if (~input.kcode & 0x0040) r |= 0x0008; // left
+        if (~input.kcode & 0x2000) r |= 0x0080; // Start
         return r;
     }
 
@@ -50,34 +57,26 @@ public:
         state_ = State::None;
         lbs_tx_reader_.Clear();
         mcs_tx_reader_.Clear();
-        log_file_.Clear();
         recv_buf_.clear();
         recv_delay_ = 0;
         me_ = 0;
-        msg_list_.clear();
-        for (int i = 0; i < 4; ++i) {
-            key_msg_index_[i].clear();
-        }
-        std::fill(start_index_.begin(), start_index_.end(), 0);
     }
-
-    struct FrameInfo {
-        void Reset() {
-            start_session = false;
-            end_session = false;
-        }
-
-        bool start_session;
-        bool end_session;
-    } frame_info;
 
     void OnGuiMainUiLoop() {
         if (frame_info.start_session && !ggpo::active()) {
             emu.stop();
             config::GGPOEnable.override(1);
             settings.aica.NoBatch = 1;
-            ggpo::gdxsvStartSession(0, 0);
-            if (ggpo::active()) { MapleInputState state[4]; ggpo::getInput(state); }
+            start_network_ = ggpo::gdxsvStartNetwork(0, 0);
+        }
+
+        if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            start_network_ = std::future<bool>();
+
+            if (!ggpo::active()) {
+                NOTICE_LOG(COMMON, "StartNetwork failure");
+                // TODO
+            }
             emu.start();
         }
 
@@ -91,34 +90,12 @@ public:
         frame_info.Reset();
     }
 
-    bool StartFile(const char *path) {
-#ifdef NOWIDE_CONFIG_H_INCLUDED
-        FILE *fp = nowide::fopen(path, "rb");
-#else
-        FILE *fp = fopen(path, "rb");
-#endif
-        if (fp == nullptr) {
-            NOTICE_LOG(COMMON, "fopen failed");
-            return false;
-        }
-
-        bool ok = log_file_.ParseFromFileDescriptor(fileno(fp));
-        if (!ok) {
-            NOTICE_LOG(COMMON, "ParseFromFileDescriptor failed");
-            return false;
-        }
-        fclose(fp);
-
-        return Start();
-    }
-
-    bool StartBuffer(const char *buf, int size) {
-        bool ok = log_file_.ParseFromArray(buf, size);
-        if (!ok) {
-            NOTICE_LOG(COMMON, "ParseFromArray failed");
-            return false;
-        }
-        return Start();
+    bool StartLocalTest(const char* param) {
+        player_count_ = 4;
+        state_ = State::StartLocalTest;
+        maxlag_ = 1;
+        NOTICE_LOG(COMMON, "RollbackNet StartLocalTest");
+        return true;
     }
 
     void Open() {
@@ -128,9 +105,6 @@ public:
     }
 
     void Close() {
-        if (state_ != State::End) {
-            PrintDisconnectionSummary();
-        }
         frame_info.end_session = true;
         RestorePatch();
         state_ = State::End;
@@ -181,13 +155,14 @@ public:
                 }
 
                 NOTICE_LOG(COMMON, "InetBuf:%s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+
                 switch (msg.Type()) {
                 case McsMessage::MsgType::ConnectionIdMsg:
                     frame_info.start_session = true;
                     state_ = State::McsInBattle;
                     break;
                 case McsMessage::MsgType::IntroMsg:
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                    for (int i = 0; i < player_count_; i++) {
                         if (i != me_) {
                             auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
                             std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
@@ -195,7 +170,7 @@ public:
                     }
                     break;
                 case McsMessage::MsgType::IntroMsgReturn:
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                    for (int i = 0; i < player_count_; i++) {
                         if (i != me_) {
                             auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
                             std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
@@ -203,7 +178,7 @@ public:
                     }
                     break;
                 case McsMessage::MsgType::PingMsg:
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                    for (int i = 0; i < player_count_; i++) {
                         if (i != me_) {
                             auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
                             pong_msg.SetPongTo(me_);
@@ -215,21 +190,20 @@ public:
                 case McsMessage::MsgType::PongMsg:
                     break;
                 case McsMessage::MsgType::StartMsg:
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                    for (int i = 0; i < player_count_; i++) {
                         if (i != me_) {
                             auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
                             std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
-                    PrepareKeyMsgIndex();
                     break;
                 case McsMessage::MsgType::ForceMsg:
                     break;
                 case McsMessage::MsgType::KeyMsg1: {
                     NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
-                    for (int i = 0; i < 4; ++i) {
+                    for (int i = 0; i < player_count_; ++i) {
                         auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
-                        auto input = conv_input(~mapleInputState[0].kcode);
+                        auto input = conv_input(mapleInputState[i]);
                         msg.body[2] = input >> 8 & 0xff;
                         msg.body[3] = input & 0xff;
                         std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
@@ -246,14 +220,12 @@ public:
                     // It will be dropped because InetBuf is cleared. 
                     break;
                 case McsMessage::MsgType::LoadEndMsg:
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                    for (int i = 0; i < player_count_; i++) {
                         if (i != me_) {
-                            auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
-                            std::copy(load_start_msg.body.begin(), load_start_msg.body.end(),
-                                std::back_inserter(recv_buf_));
-                            auto load_end_msg = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
-                            std::copy(load_end_msg.body.begin(), load_end_msg.body.end(),
-                                std::back_inserter(recv_buf_));
+                            auto a = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
+                            std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+                            auto b = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
+                            std::copy(b.body.begin(), b.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
                     break;
@@ -292,162 +264,8 @@ public:
     }
 
 private:
-    bool Start() {
-        NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
-
-        McsMessageReader r;
-        McsMessage msg;
-
-        if (log_file_.log_file_version() < 20210802) {
-            for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-                auto data = log_file_.mutable_battle_data(i);
-                const auto &fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
-                if (!fields.empty()) {
-                    for (int j = 0; j < fields.field_count(); ++j) {
-                        const auto &field = fields.field(j);
-                        if (j == 0 && field.type() == google::protobuf::UnknownField::TYPE_LENGTH_DELIMITED) {
-                            const auto &body = field.length_delimited();
-                            data->set_body(body.data(), body.size());
-                        }
-                        if (j == 1 && field.type() == google::protobuf::UnknownField::TYPE_VARINT) {
-                            data->set_seq(field.varint());
-                        }
-                    }
-                }
-            }
-
-            std::map<std::string, int> player_position;
-            for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-                const auto &data = log_file_.battle_data(i);
-                if (player_position.find(data.user_id()) == player_position.end()) {
-                    r.Write(data.body().data(), data.body().size());
-                    while (r.Read(msg)) {
-                        if (msg.Type() == McsMessage::MsgType::PingMsg) {
-                            player_position[data.user_id()] = msg.Sender();
-                            break;
-                        }
-                    }
-                }
-                if (log_file_.users_size() == player_position.size()) {
-                    break;
-                }
-            }
-
-            for (int i = 0; i < log_file_.users_size(); ++i) {
-                int pos = player_position[log_file_.users(i).user_id()];
-                log_file_.mutable_users(i)->set_pos(pos + 1);
-                log_file_.mutable_users(i)->set_team(1 + pos / 2);
-                // NOTE: Surprisingly, player's grade seems to affect the game.
-                log_file_.mutable_users(i)->set_grade(std::min(14, log_file_.users(i).win_count() / 100));
-                log_file_.mutable_users(i)->set_user_name_sjis(log_file_.users(i).user_id());
-            }
-
-            std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
-                      [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
-        }
-
-        msg_list_.clear();
-        r.Clear();
-        for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-            const auto &data = log_file_.battle_data(i);
-            r.Write(data.body().data(), data.body().size());
-            while (r.Read(msg)) {
-                // NOTICE_LOG(COMMON, "MSG:%s", msg.ToHex().c_str());
-                if (msg.Type() == McsMessage::KeyMsg2) {
-                    msg_list_.emplace_back(msg.FirstKeyMsg());
-                    msg_list_.emplace_back(msg.SecondKeyMsg());
-                } else {
-                    msg_list_.emplace_back(msg);
-                }
-            }
-        }
-
-        NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
-        NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
-        NOTICE_LOG(COMMON, "msg_list.size = %d", msg_list_.size());
-        PrintDisconnectionSummary();
-
-        std::fill(start_index_.begin(), start_index_.end(), 0);
-        state_ = State::Start;
-        maxlag_ = 1;
-        NOTICE_LOG(COMMON, "Replay Start");
-        return true;
-    }
-
-    void PrintDisconnectionSummary() {
-        std::vector<int> last_keymsg_seq(log_file_.users_size());
-        std::vector<int> last_force_msg_index(log_file_.users_size());
-        for (int i = 0; i < msg_list_.size(); ++i) {
-            const auto& msg = msg_list_[i];
-            if (msg.Type() == McsMessage::KeyMsg1) {
-                last_keymsg_seq[msg.Sender()] = msg.FirstSeq();
-                last_force_msg_index[msg.Sender()] = 0;
-            }
-            if (msg.Type() == McsMessage::KeyMsg2) {
-                last_keymsg_seq[msg.Sender()] = msg.SecondSeq();
-                last_force_msg_index[msg.Sender()] = 0;
-            }
-            if (msg.Type() == McsMessage::ForceMsg) {
-                last_force_msg_index[msg.Sender()] = i;
-            }
-        }
-
-        NOTICE_LOG(COMMON, "== Disconnection Summary ==");
-        NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
-        for (int i = 0; i < log_file_.users_size(); ++i) {
-            NOTICE_LOG(COMMON, "%9d %12d %6s %s",
-                       last_keymsg_seq[i],
-                       last_force_msg_index[i],
-                       log_file_.users(i).user_id().c_str(),
-                       log_file_.users(i).user_name().c_str());
-        }
-
-        const auto it_seq_min = std::min_element(begin(last_keymsg_seq), end(last_keymsg_seq));
-        const auto it_seq_max = std::max_element(begin(last_keymsg_seq), end(last_keymsg_seq));
-        if (*it_seq_min != *it_seq_max) {
-            int i = it_seq_min - begin(last_keymsg_seq);
-            bool no_force_msg = last_force_msg_index[i] == 0;
-            bool other_player_send_force_msg = std::count(begin(last_force_msg_index), end(last_force_msg_index), 0) == 1;
-            if (no_force_msg && other_player_send_force_msg) {
-                NOTICE_LOG(COMMON, "!! Disconnected Player Detected !!");
-                NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
-                NOTICE_LOG(COMMON, "%9d %12d %6s %s",
-                           last_keymsg_seq[i],
-                           last_force_msg_index[i],
-                           log_file_.users(i).user_id().c_str(),
-                           log_file_.users(i).user_name().c_str());
-            }
-        }
-    }
-
-    void PrepareKeyMsgIndex() {
-        for (int p = 0; p < log_file_.users_size(); ++p) {
-            key_msg_index_[p].clear();
-
-            for (int i = start_index_[p]; i < msg_list_.size(); ++i) {
-                const auto &msg = msg_list_[i];
-                if (msg.Sender() == p) {
-                    if (!key_msg_index_[p].empty()) {
-                        if (msg.Type() == McsMessage::MsgType::StartMsg) {
-                            start_index_[p] = i + 1;
-                            break;
-                        }
-                    }
-
-                    if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
-                        if (!key_msg_index_[p].empty()) {
-                            verify(msg_list_[key_msg_index_[p].back()].FirstSeq() + 1 == msg.FirstSeq());
-                        }
-                        key_msg_index_[p].emplace_back(i);
-                    }
-                    verify(msg.Type() != McsMessage::KeyMsg2);
-                }
-            }
-        }
-    }
-
     void ProcessLbsMessage() {
-        if (state_ == State::Start) {
+        if (state_ == State::StartLocalTest) {
             LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
             recv_delay_ = 1;
             state_ = State::LbsStartBattleFlow;
@@ -455,9 +273,7 @@ private:
 
         LbsMessage msg;
         if (lbs_tx_reader_.Read(msg)) {
-            // NOTICE_LOG(COMMON, "RECV cmd=%04x seq=%d", msg.command, msg.seq);
-
-            if (state_ == State::Start) {
+            if (state_ == State::StartLocalTest) {
                 state_ = State::LbsStartBattleFlow;
             }
 
@@ -467,8 +283,7 @@ private:
             }
 
             if (msg.command == LbsMessage::lbsAskMatchingJoin) {
-                int n = log_file_.users_size();
-                LbsMessage::SvAnswer(msg).Write8(n)->Serialize(recv_buf_);
+                LbsMessage::SvAnswer(msg).Write8(player_count_)->Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskPlayerSide) {
@@ -479,33 +294,33 @@ private:
 
             if (msg.command == LbsMessage::lbsAskPlayerInfo) {
                 int pos = msg.Read8();
-                const auto &user = log_file_.users(pos - 1);
-                NOTICE_LOG(COMMON, "pos=%d game_param.size=%d", pos, user.game_param().size());
+                dummy_game_param[16] = '0' + pos;
+                dummy_game_param[17] = 0;
                 LbsMessage::SvAnswer(msg).
                         Write8(pos)->
-                        WriteString(user.user_id())->
-                        WriteBytes(user.user_name_sjis().data(), user.user_name_sjis().size())->
-                        WriteBytes(user.game_param().data(), user.game_param().size())->
-                        Write16(user.grade())->
-                        Write16(user.win_count())->
-                        Write16(user.lose_count())->
+                        WriteString("USER0" + std::to_string(pos))->
+                        WriteString("USER0" + std::to_string(pos))->
+                        WriteBytes(dummy_game_param, sizeof(dummy_game_param))->
+                        Write16(1)->
                         Write16(0)->
-                        Write16(user.battle_count() - user.win_count() - user.lose_count())->
                         Write16(0)->
-                        Write16(user.team())->
+                        Write16(0)->
+                        Write16(0)->
+                        Write16(0)->
+                        Write16(1 + (pos - 1) / 2)->
                         Write16(0)->
                         Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskRuleData) {
                 LbsMessage::SvAnswer(msg).
-                        WriteBytes(log_file_.rule_bin().data(), log_file_.rule_bin().size())->
+                        WriteBytes(dummy_rule_data, sizeof(dummy_rule_data))->
                         Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskBattleCode) {
                 LbsMessage::SvAnswer(msg).
-                        WriteBytes(log_file_.battle_code().data(), log_file_.battle_code().size())->
+                        WriteString("012345")->
                         Serialize(recv_buf_);
             }
 
@@ -528,72 +343,25 @@ private:
         }
     }
 
-    void ProcessMcsMessage() {
-        McsMessage msg;
-    }
-
     void ApplyPatch(bool first_time) {
         if (state_ == State::None || state_ == State::End) {
             return;
         }
 
         // Skip Key MsgPush
-        // TODO: disk1
-        if (log_file_.game_disk() == "dc2") {
+        auto it = symbols_.find("disk");
+        if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
             gdxsv_WriteMem16(0x8c045f64, 9);
             gdxsv_WriteMem8(0x0c3abb90, 1);
-        }
-        if (log_file_.game_disk() == "ps2") {
-            gdxsv_WriteMem32(0x0037f5a0, 0);
-            gdxsv_WriteMem8(0x00580340, 1);
-        }
-
-        // Online Patch
-        for (int i = 0; i < log_file_.patches_size(); ++i) {
-            if (log_file_.patches(i).write_once() && !first_time) {
-                continue;
-            }
-
-            for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
-                const auto &code = log_file_.patches(i).codes(j);
-                if (code.size() == 8) {
-                    gdxsv_WriteMem8(code.address(), code.changed());
-                }
-                if (code.size() == 16) {
-                    gdxsv_WriteMem16(code.address(), code.changed());
-                }
-                if (code.size() == 32) {
-                    gdxsv_WriteMem32(code.address(), code.changed());
-                }
-            }
         }
     }
 
     void RestorePatch() {
-        if (log_file_.game_disk() == "dc2") {
+        // Skip Key MsgPush
+        auto it = symbols_.find("disk");
+        if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
             gdxsv_WriteMem16(0x8c045f64, 0x410b);
             gdxsv_WriteMem8(0x0c3abb90, 2);
-        }
-
-        if (log_file_.game_disk() == "ps2") {
-            gdxsv_WriteMem32(0x0037f5a0, 0x0c0e0be4);
-            gdxsv_WriteMem8(0x00580340, 2);
-        }
-
-        // Online Patch
-        for (int i = 0; i < log_file_.patches_size(); ++i) {
-            for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
-                const auto &code = log_file_.patches(i).codes(j);
-                if (code.size() == 8) {
-                    gdxsv_WriteMem8(code.address(), code.original());
-                }
-                if (code.size() == 16) {
-                    gdxsv_WriteMem16(code.address(), code.original());
-                }
-                if (code.size() == 32) {
-                    gdxsv_WriteMem32(code.address(), code.original());
-                }
-            }
         }
     }
 
@@ -602,11 +370,19 @@ private:
     State state_;
     LbsMessageReader lbs_tx_reader_;
     McsMessageReader mcs_tx_reader_;
-    proto::BattleLogFile log_file_;
     std::deque<u8> recv_buf_;
     int recv_delay_;
+    int player_count_;
     int me_;
-    std::vector<McsMessage> msg_list_;
-    std::array<int, 4> start_index_;
-    std::array<std::vector<int>, 4> key_msg_index_;
+    struct FrameInfo {
+        void Reset() {
+            start_session = false;
+            end_session = false;
+        }
+
+        bool start_session;
+        bool end_session;
+    } frame_info;
+
+    std::future<bool> start_network_;
 };

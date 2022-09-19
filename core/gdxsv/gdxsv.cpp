@@ -656,9 +656,10 @@ bool Gdxsv::StartReplayFile(const char *path) {
     return false;
 }
 
-bool Gdxsv::StartRollbackTest(const char *path) {
+bool Gdxsv::StartRollbackTest(const char* param) {
     rollback_net.Reset();
-    if (rollback_net.StartFile(path)) {
+
+    if (rollback_net.StartLocalTest(param)) {
         netmode = NetMode::RollbackTest;
         return true;
     }

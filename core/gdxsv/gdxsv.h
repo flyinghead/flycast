@@ -49,9 +49,9 @@ public:
 
     void StartPingTest();
 
-    bool StartReplayFile(const char *path);
+    bool StartReplayFile(const char* path);
 
-    bool StartRollbackTest(const char *path);
+    bool StartRollbackTest(const char* param);
 
 private:
     void GcpPingTest();

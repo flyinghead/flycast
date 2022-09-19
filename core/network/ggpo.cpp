@@ -898,6 +898,47 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 }
 
 
+std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum) {
+	synchronized = false;
+	return std::async(std::launch::async, []{
+		{
+			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+#ifdef SYNC_TEST
+			gdxsvStartSession(0, 0);
+#else
+			// TODO
+#endif
+		}
+		while (!synchronized && active())
+		{
+			{
+				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+				if (ggpoSession == nullptr)
+					break;
+				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
+				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
+					throw FlycastException("Peer verification failed");
+				else if (result != GGPO_OK)
+				{
+					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
+					throw FlycastException("GGPO error");
+				}
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
+#ifdef SYNC_TEST
+		// save initial state (frame 0)
+		if (active())
+		{
+			MapleInputState state[4];
+			getInput(state);
+		}
+#endif
+		emu.setNetworkState(active());
+		return active();
+	});
+}
+
 void gdxsvStartSession(int localPort, int localPlayerNum)
 {
 	GGPOSessionCallbacks cb{};
