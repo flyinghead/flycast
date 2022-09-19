@@ -143,8 +143,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		{
 			u32 apiVersion;
 			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
-				vulkan11 = VK_VERSION_MAJOR(apiVersion) > 1
-					|| (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 1);
+				vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
+					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
 		}
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
@@ -231,7 +231,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
 		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 		vendorID = properties->vendorID;
-		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
+		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName.data());
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -877,16 +877,16 @@ std::string VulkanContext::getDriverName()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
-	return std::string(props.deviceName);
+	return props.deviceName;
 }
 
 std::string VulkanContext::getDriverVersion()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
-	return std::to_string(VK_VERSION_MAJOR(props.driverVersion)) + "."
-			+ std::to_string(VK_VERSION_MINOR(props.driverVersion)) + "."
-			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
+	return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
+			+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
+			+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
 }
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
