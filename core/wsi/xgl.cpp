@@ -60,14 +60,14 @@ bool XGLGraphicsContext::init()
 	context = glXCreateContextAttribsARB((Display *)display, *framebufferConfigs, 0, True, context_attribs);
 	if (!context)
 	{
-		INFO_LOG(RENDERER, "Open GL 4.3 not supported");
+		INFO_LOG(RENDERER, "OpenGL 4.3 not supported");
 		// Try GL 3.0
 		context_attribs[1] = 3;
 		context_attribs[3] = 0;
 		context = glXCreateContextAttribsARB((Display *)display, *framebufferConfigs, 0, True, context_attribs);
 		if (!context)
 		{
-			ERROR_LOG(RENDERER, "Open GL 3.0 not supported\n");
+			ERROR_LOG(RENDERER, "OpenGL 3.0 not supported\n");
 			return false;
 		}
 	}

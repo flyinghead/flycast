@@ -125,7 +125,7 @@ public:
 
 #define clamp(minv, maxv, x) ((x) < (minv) ? (minv) : (x) > (maxv) ? (maxv) : (x))
 
-// Open GL
+// OpenGL
 struct RGBAPacker {
 	static u32 pack(u8 r, u8 g, u8 b, u8 a) {
 		return r | (g << 8) | (b << 16) | (a << 24);
@@ -485,7 +485,7 @@ constexpr TexConvFP32 texPAL4_VQ32 = texture_VQ<ConvertTwiddlePal4<UnpackerPalTo
 constexpr TexConvFP32 texPAL8_VQ32 = texture_VQ<ConvertTwiddlePal8<UnpackerPalToRgb<u32>>>;
 
 namespace opengl {
-// Open GL
+// OpenGL
 
 //Planar
 constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<Unpacker1555>>;
