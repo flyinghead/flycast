@@ -83,7 +83,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
-#define SYNC_TEST 1
+// #define SYNC_TEST 1
 
 namespace ggpo
 {
@@ -904,12 +904,13 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 
 std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum) {
 	synchronized = false;
-	return std::async(std::launch::async, []{
+	return std::async(std::launch::async, [=]{
 		{
 			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
-			gdxsvStartSession(0, 0);
+			gdxsvStartSession(0, 0, "");
 #else
+			gdxsvStartSession(localPort, localPlayerNum, "dummy");
 			// TODO
 #endif
 		}
@@ -943,7 +944,7 @@ std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum) {
 	});
 }
 
-void gdxsvStartSession(int localPort, int localPlayerNum)
+void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode)
 {
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
@@ -992,6 +993,53 @@ void gdxsvStartSession(int localPort, int localPlayerNum)
 	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
+	// TODO: Analog support
+	ggpo::localPlayerNum = localPlayerNum;
+	inputSize = sizeof(kcode[0]);
+
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, SERVER_PORT + localPlayerNum, battleCode, strlen(battleCode));
+	if (result != GGPO_OK)
+	{
+		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
+		ggpoSession = nullptr;
+		throw FlycastException("GGPO network initialization failed");
+	}
+
+    NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", localPlayerNum);
+
+	// automatically disconnect clients after 3000 ms and start our count-down timer
+	// for disconnects after 1000 ms.   To completely disable disconnects, simply use
+	// a value of 0 for ggpo_set_disconnect_timeout.
+	ggpo_set_disconnect_timeout(ggpoSession, 3000);
+	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
+
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+        GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1};
+		if (i != localPlayerNum) {
+			player.type = GGPO_PLAYERTYPE_REMOTE;
+            strcpy(player.u.remote.ip_address, "127.0.0.1");
+            player.u.remote.port = SERVER_PORT + i;
+		}
+
+        result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
+        if (result != GGPO_OK)
+        {
+            WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
+            stopSession();
+            throw FlycastException("GGPO cannot add remote player");
+        }
+
+		if (i == localPlayerNum) {
+			ggpo::localPlayer = playerHandles[i];
+		} else {
+			ggpo::remotePlayer = playerHandles[i];
+		}
+	}
+
+	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
+
+	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
 }
 }

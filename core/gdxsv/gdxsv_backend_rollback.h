@@ -1,7 +1,5 @@
 #pragma once
-#include <array>
 #include <vector>
-#include <queue>
 #include <string>
 #include <map>
 #include <future>
@@ -13,10 +11,9 @@
 
 #include "network/ggpo.h"
 #include "emulator.h"
-#include "hw/pvr/Renderer_if.h"
 
-static char dummy_game_param[640] = { 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07 };
-static const char dummy_rule_data[] = { 0x03,0x02,0x03,0x00,0x00,0x01,0x58,0x02,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00,0x00,0xff,0x01,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00 };
+static u8 dummy_game_param[640] = { 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07 };
+static const u8 dummy_rule_data[] = { 0x03,0x02,0x03,0x00,0x00,0x01,0x58,0x02,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00,0x00,0xff,0x01,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00 };
 
 class GdxsvBackendRollback {
 public:
@@ -65,7 +62,7 @@ public:
             emu.stop();
             config::GGPOEnable.override(1);
             settings.aica.NoBatch = 1;
-            start_network_ = ggpo::gdxsvStartNetwork(0, 0);
+            start_network_ = ggpo::gdxsvStartNetwork(0, me_);
         }
 
         if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
@@ -73,7 +70,6 @@ public:
 
             if (!ggpo::active()) {
                 NOTICE_LOG(COMMON, "StartNetwork failure");
-                // TODO
             }
             emu.start();
         }
@@ -90,9 +86,13 @@ public:
 
     bool StartLocalTest(const char* param) {
         player_count_ = 4;
+        auto args = std::string(param);
+        if (0 < args.size() && '1' <= args[0] && args[0] <= '4') {
+            me_ = args[0] - '1';
+        }
         state_ = State::StartLocalTest;
         maxlag_ = 1;
-        NOTICE_LOG(COMMON, "RollbackNet StartLocalTest");
+        NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me_);
         return true;
     }
 
@@ -285,8 +285,6 @@ private:
             }
 
             if (msg.command == LbsMessage::lbsAskPlayerSide) {
-                // camera player id
-                me_ = 0;
                 LbsMessage::SvAnswer(msg).Write8(me_ + 1)->Serialize(recv_buf_);
             }
 
@@ -298,7 +296,7 @@ private:
                         Write8(pos)->
                         WriteString("USER0" + std::to_string(pos))->
                         WriteString("USER0" + std::to_string(pos))->
-                        WriteBytes(dummy_game_param, sizeof(dummy_game_param))->
+                        WriteBytes(reinterpret_cast<char*>(dummy_game_param), sizeof(dummy_game_param))->
                         Write16(1)->
                         Write16(0)->
                         Write16(0)->
@@ -312,7 +310,7 @@ private:
 
             if (msg.command == LbsMessage::lbsAskRuleData) {
                 LbsMessage::SvAnswer(msg).
-                        WriteBytes(dummy_rule_data, sizeof(dummy_rule_data))->
+                        WriteBytes((char*)dummy_rule_data, sizeof(dummy_rule_data))->
                         Serialize(recv_buf_);
             }
 
