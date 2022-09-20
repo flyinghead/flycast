@@ -742,6 +742,10 @@ bool nextFrame()
     for (int i = 0; i < MAX_PLAYERS; i++) {
         if (playerHandles[i] == localPlayer) continue;
         u32 input = ~kcode[0];
+        if (rt[0] >= 64) input |= BTN_TRIGGER_RIGHT;
+        else input &= ~BTN_TRIGGER_RIGHT;
+        if (lt[0] >= 64) input |= BTN_TRIGGER_LEFT;
+        else input &= ~BTN_TRIGGER_LEFT;
         GGPOErrorCode result = ggpo_add_local_input(ggpoSession, playerHandles[i], &input, sizeof(input));
         if (result != GGPO_OK)
             WARN_LOG(NETWORK, "ggpo_add_local_input(%d) failed %d", i, result);
