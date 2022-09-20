@@ -35,10 +35,6 @@ public:
 
     // maple input to mcs pad input
     u16 conv_input(MapleInputState input) {
-        // TODO: Not complete
-        auto hoge = ~input.kcode;
-        NOTICE_LOG(COMMON, "HOGE %08x", hoge);
-
         u16 r = 0;
         if (~input.kcode & 0x0004) r |= 0x4000; // A
         if (~input.kcode & 0x0002) r |= 0x2000; // B
