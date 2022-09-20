@@ -1767,6 +1767,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.cc
         core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
 
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/gdxsv)
 target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/libs.h
         core/gdxsv/gdx_rpc.h
@@ -1775,6 +1776,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/gdxsv.pb.cc
         core/gdxsv/gdxsv.pb.h
         core/gdxsv/gdxsv_backend_replay.h
+		core/gdxsv/gdxsv_backend_replay.cpp
         core/gdxsv/gdxsv_backend_rollback.h
         core/gdxsv/gdxsv_backend_tcp.h
         core/gdxsv/gdxsv_backend_udp.h
