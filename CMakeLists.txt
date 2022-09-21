@@ -17,7 +17,7 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
-option(USE_OPENGL "Use Open GL API" ON)
+option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 

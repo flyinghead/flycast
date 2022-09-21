@@ -1826,11 +1826,17 @@ static void gui_display_settings()
 		    		ImGui::Text("Graphics API:");
 					ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_OPENGL
-					ImGui::RadioButton("Open GL", &renderApi, 0);
+					ImGui::RadioButton("OpenGL", &renderApi, 0);
 					ImGui::NextColumn();
 #endif
 #ifdef USE_VULKAN
+#ifdef __APPLE__
+					ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
+					ImGui::SameLine(0, style.ItemInnerSpacing.x);
+					ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
+#else
 					ImGui::RadioButton("Vulkan", &renderApi, 1);
+#endif // __APPLE__
 					ImGui::NextColumn();
 #endif
 #ifdef USE_DX9
@@ -2292,7 +2298,7 @@ static void gui_display_settings()
 		    }
 	    	ImGui::Spacing();
 	    	if (isOpenGL(config::RendererType))
-				header("Open GL");
+				header("OpenGL");
 	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
 	    	else if (isDirectX(config::RendererType))

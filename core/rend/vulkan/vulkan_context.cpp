@@ -884,9 +884,19 @@ std::string VulkanContext::getDriverVersion()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
+#ifdef __APPLE__
+	return std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
+			+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
+			+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
+			// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
+			+ std::to_string(props.driverVersion / 10000) + "."
+			+ std::to_string((props.driverVersion % 10000) / 100) + "."
+			+ std::to_string(props.driverVersion % 100);
+#else
 	return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 			+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
 			+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
+#endif
 }
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
