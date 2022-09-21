@@ -33,8 +33,11 @@ bool nextFrame();
 bool active();
 void displayStats();
 void endOfFrame();
+bool getCurrentFrame(int* frame, bool* rollback);
 void sendChatMessage(int playerNum, const std::string& msg);
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg));
+void sendKeyFrameMessage(int playerNum, int frameType, int frameCount);
+void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int frameCount));
 
 std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum);
 void gdxsvStartSession(int localPort, int localPlayerNum, const char* code);

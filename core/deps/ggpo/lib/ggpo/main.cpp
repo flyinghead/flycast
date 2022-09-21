@@ -274,3 +274,11 @@ GGPOErrorCode ggpo_send_message(GGPOSession *ggpo,
 	return ggpo->SendMessage(msg, len, spectators);
 }
 
+GGPOErrorCode ggpo_get_current_frame(
+    GGPOSession *ggpo, int *frame, bool *rollback)
+{
+	if (ggpo == nullptr)
+		return GGPO_ERRORCODE_INVALID_SESSION;
+
+	return ggpo->GetCurrentFrame(frame, rollback);
+}

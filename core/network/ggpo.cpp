@@ -123,6 +123,7 @@ static bool keyboardGame;
 static bool mouseGame;
 static int inputSize;
 static void (*chatCallback)(int playerNum, const std::string& msg);
+static void (*keyFrameCallback)(int playerNum, int frameType, int frameCount);
 
 struct MemPages
 {
@@ -172,13 +173,19 @@ static_assert(sizeof(Inputs) == 10, "wrong Inputs size");
 struct GameEvent
 {
 	enum : char {
-		Chat
+		Chat,
+		KeyFrame,
 	} type;
 	union {
 		struct {
 			u8 playerNum;
 			char message[512 - sizeof(playerNum) - sizeof(type)];
 		} chat;
+		struct {
+			u8 playerNum;
+			u32 frameType;
+			u32 frameCount;
+		} keyFrame;
 	} u;
 
 	constexpr static int chatMessageLen(int len) { return len - sizeof(u.chat.playerNum) - sizeof(type); }
@@ -445,6 +452,10 @@ static void on_message(u8 *msg, int len)
 	case GameEvent::Chat:
 		if (chatCallback != nullptr && GameEvent::chatMessageLen(len) > 0)
 			chatCallback(event->u.chat.playerNum, std::string(event->u.chat.message, GameEvent::chatMessageLen(len)));
+		break;
+	case GameEvent::KeyFrame:
+		if (keyFrameCallback != nullptr)
+			keyFrameCallback(event->u.keyFrame.playerNum, event->u.keyFrame.frameType, event->u.keyFrame.frameCount);
 		break;
 
 	default:
@@ -885,6 +896,15 @@ void endOfFrame()
 	}
 }
 
+bool getCurrentFrame(int* frame, bool* rollback)
+{
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	if (ggpoSession == nullptr) {
+		return false;
+	}
+	return ggpo_get_current_frame(ggpoSession, frame, rollback) == GGPO_OK;
+}
+
 void sendChatMessage(int playerNum, const std::string& msg) {
 	if (!active())
 		return;
@@ -899,6 +919,22 @@ void sendChatMessage(int playerNum, const std::string& msg) {
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg))
 {
 	chatCallback = callback;
+}
+
+void sendKeyFrameMessage(int playerNum, int frameType, int frameCount) {
+	if (!active())
+		return;
+	GameEvent event;
+	event.type = GameEvent::KeyFrame;
+	event.u.keyFrame.playerNum = playerNum;
+	event.u.keyFrame.frameType = frameType;
+	event.u.keyFrame.frameCount = frameCount;
+	ggpo_send_message(ggpoSession, &event, sizeof(event.u.keyFrame), true);
+}
+
+void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int frameCount))
+{
+	keyFrameCallback = callback;
 }
 
 
