@@ -7,6 +7,7 @@
 #include "version.h"
 #include "emulator.h"
 #include <xxhash.h>
+#include "network/ggpo.h"
 #include "gdxsv_translation.h"
 
 bool Gdxsv::InGame() const {
@@ -455,7 +456,6 @@ void Gdxsv::RestoreOnlinePatch() {
 
 void Gdxsv::WritePatch() {
     if (ggpo::active()) return;
-
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || gdxsv_ReadMem32(symbols["patch_id"]) != symbols[":patch_id"]) {
