@@ -26,19 +26,31 @@
 // NAOMI Games
 //
 
+#ifndef LIBRETRO
+#define NAO_DIRECTIONS_DESC { NAOMI_UP_KEY, "" }, \
+						{ NAOMI_DOWN_KEY, "" }, \
+						{ NAOMI_LEFT_KEY, "" }, \
+						{ NAOMI_RIGHT_KEY, "" },
 #define NAO_BASE_BTN_DESC { NAOMI_COIN_KEY, "" }, \
 						 { NAOMI_TEST_KEY, "" }, \
 						 { NAOMI_SERVICE_KEY, "" },
 #define NAO_START_DESC { NAOMI_START_KEY, "" },
+#else
+#define NAO_DIRECTIONS_DESC { NAOMI_UP_KEY, "Up" }, \
+						{ NAOMI_DOWN_KEY, "Down" }, \
+						{ NAOMI_LEFT_KEY, "Left" }, \
+						{ NAOMI_RIGHT_KEY, "Right" },
+#define NAO_BASE_BTN_DESC { NAOMI_COIN_KEY, "Coin" }, \
+						 { NAOMI_TEST_KEY, "Test" }, \
+						 { NAOMI_SERVICE_KEY, "Service" },
+#define NAO_START_DESC { NAOMI_START_KEY, "Start" },
+#endif
 
 #define INPUT_2_BUTTONS(btn0, btn1) {	\
 	{									\
 		{ NAOMI_BTN0_KEY, btn0 },		\
 		{ NAOMI_BTN1_KEY, btn1 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DIRECTIONS_DESC				\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -49,10 +61,7 @@
 		{ NAOMI_BTN0_KEY, btn0 },		\
 		{ NAOMI_BTN1_KEY, btn1 },		\
 		{ NAOMI_BTN2_KEY, btn2 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DIRECTIONS_DESC				\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -64,10 +73,7 @@
 		{ NAOMI_BTN1_KEY, btn1 },		\
 		{ NAOMI_BTN2_KEY, btn2 },		\
 		{ NAOMI_BTN3_KEY, btn3 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DIRECTIONS_DESC				\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -80,10 +86,7 @@
 		{ NAOMI_BTN2_KEY, btn2 },		\
 		{ NAOMI_BTN3_KEY, btn3 },		\
 		{ NAOMI_BTN5_KEY, btn4, NAOMI_BTN4_KEY },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DIRECTIONS_DESC				\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -147,10 +150,7 @@ static InputDescriptors capcom_4btn_inputs = {
 			{ NAOMI_BTN1_KEY, "HEAVY PUNCH" },
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "HEAVY KICK" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DIRECTIONS_DESC
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -164,10 +164,7 @@ static InputDescriptors capcom_6btn_inputs = {
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "MEDIUM KICK" },
 			{ NAOMI_BTN5_KEY, "HEAVY KICK" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DIRECTIONS_DESC
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -243,10 +240,7 @@ static InputDescriptors mvsc2_inputs = {
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "STRONG KICK" },
 			{ NAOMI_BTN5_KEY, "ASSIST B" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DIRECTIONS_DESC
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -397,10 +391,7 @@ static InputDescriptors zombie_inputs = {
 			{ NAOMI_BTN0_KEY, "L" },
 			{ NAOMI_BTN1_KEY, "R" },
 			{ NAOMI_BTN2_KEY, "G" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DIRECTIONS_DESC
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -473,10 +464,7 @@ static InputDescriptors hmgeo_inputs = {
 		{ NAOMI_BTN1_KEY, "Attack" },
 		{ NAOMI_BTN3_KEY, "Jump" },
 		{ NAOMI_BTN4_KEY, "Target" },
-		{ NAOMI_UP_KEY, "" },
-		{ NAOMI_DOWN_KEY, "" },
-		{ NAOMI_LEFT_KEY, "" },
-		{ NAOMI_RIGHT_KEY, "" },
+		NAO_DIRECTIONS_DESC
 		NAO_START_DESC
 		NAO_BASE_BTN_DESC
 	},
@@ -486,10 +474,25 @@ static InputDescriptors hmgeo_inputs = {
 // AtomisWave games
 //
 
+#ifndef LIBRETRO
+#define AW_DIRECTIONS_DESC { AWAVE_UP_KEY, "" }, \
+						{ AWAVE_DOWN_KEY, "" }, \
+						{ AWAVE_LEFT_KEY, "" }, \
+						{ AWAVE_RIGHT_KEY, "" },
 #define AW_BASE_BTN_DESC { AWAVE_COIN_KEY, "" }, \
 						 { AWAVE_TEST_KEY, "" }, \
 						 { AWAVE_SERVICE_KEY, "" },
 #define AW_START_DESC { AWAVE_START_KEY, "" },
+#else
+#define AW_DIRECTIONS_DESC { AWAVE_UP_KEY, "Up" }, \
+						{ AWAVE_DOWN_KEY, "Down" }, \
+						{ AWAVE_LEFT_KEY, "Left" }, \
+						{ AWAVE_RIGHT_KEY, "Right" },
+#define AW_BASE_BTN_DESC { AWAVE_COIN_KEY, "Coin" }, \
+						 { AWAVE_TEST_KEY, "Test" }, \
+						 { AWAVE_SERVICE_KEY, "Service" },
+#define AW_START_DESC { AWAVE_START_KEY, "Start" },
+#endif
 
 #define AW_5_BUTTONS(btn0, btn1, btn2, btn3, btn4) {	\
 	{									\
@@ -498,10 +501,7 @@ static InputDescriptors hmgeo_inputs = {
 		{ AWAVE_BTN2_KEY, btn2 },		\
 		{ AWAVE_BTN3_KEY, btn3 },		\
 		{ AWAVE_BTN4_KEY, btn4 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DIRECTIONS_DESC				\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
@@ -513,10 +513,7 @@ static InputDescriptors hmgeo_inputs = {
 		{ AWAVE_BTN1_KEY, btn1 },		\
 		{ AWAVE_BTN2_KEY, btn2 },		\
 		{ AWAVE_BTN3_KEY, btn3 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DIRECTIONS_DESC				\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
@@ -527,10 +524,7 @@ static InputDescriptors hmgeo_inputs = {
 		{ AWAVE_BTN0_KEY, btn0 },		\
 		{ AWAVE_BTN1_KEY, btn1 },		\
 		{ AWAVE_BTN2_KEY, btn2 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DIRECTIONS_DESC				\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
