@@ -90,7 +90,7 @@ bool WGLGraphicsContext::init()
 
 	if (!ourOpenGLRenderingContext)
 	{
-		INFO_LOG(RENDERER, "Open GL 4.3 not supported");
+		INFO_LOG(RENDERER, "OpenGL 4.3 not supported");
 		// Try Gl 3.1
 		attribs[1] = 3;
 		attribs[3] = 1;

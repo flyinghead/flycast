@@ -64,7 +64,7 @@ public:
 	{
 		if (CurrentList == ListType_None)
 			return;
-		if (CurrentPP != nullptr && CurrentPP->count == 0)
+		if (CurrentPP != nullptr && CurrentPP->count == 0 && CurrentPP == CurrentPPlist->LastPtr())
 			CurrentPPlist->PopLast();
 		CurrentPP = nullptr;
 		CurrentPPlist = nullptr;
@@ -250,7 +250,7 @@ case num : {\
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		TA_VertexParam* vp=(TA_VertexParam*)data;
-		if (data==data_end)
+		if (data == data_end - SZ32)
 		{
 			AppendModVolVertexA(&vp->mvolA);
 			//32B more needed , 32B done :)
@@ -277,7 +277,7 @@ case num : {\
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
-		if (data==data_end)
+		if (data == data_end - SZ32)
 		{
 			//32B more needed , 32B done :)
 			TaCmd=ta_spriteB_data;
@@ -301,10 +301,10 @@ case num : {\
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		verify(data<=data_end);
+		verify(data < data_end);
 
 					//If SZ64  && 32 bytes
-#define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
+#define IS_FIST_HALF (poly_size != SZ32 && data == data_end - SZ32)
 
 		if (IS_FIST_HALF)
 			goto fist_half;
@@ -316,7 +316,7 @@ case num : {\
 			if (data->pcw.EndOfStrip)
 				goto strip_end;
 			data += poly_size;
-		} while (poly_size == SZ32 ? data <= data_end : data < data_end);
+		} while (data <= data_end - poly_size);
 			
 		if (IS_FIST_HALF)
 		{
@@ -425,7 +425,7 @@ strip_end:
 						VertexDataFP = ta_poly_data_lut[pdid];
 							
 
-						if (data != data_end || psz==1)
+						if (data <= data_end - psz)
 						{
 
 							//poly , 32B/64B

@@ -17,7 +17,7 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
-option(USE_OPENGL "Use Open GL API" ON)
+option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 
@@ -293,6 +293,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
+	option(SKIP_GLSLANG_INSTALL "Skip installation" ON)
+	option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" OFF)
+	option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" OFF)
+	option(ENABLE_HLSL "Enables HLSL input support" OFF)
+	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
@@ -1063,6 +1068,13 @@ if(NOT LIBRETRO)
 endif()
 
 if(USE_VULKAN)
+	add_subdirectory(core/deps/Vulkan-Headers)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
+
+	add_library(VulkanMemoryAllocator INTERFACE)
+	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
+	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
+
 	if(NOT LIBRETRO)
 	    if(ANDROID)
 	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
@@ -1076,7 +1088,7 @@ if(USE_VULKAN)
 	
 	    set(VOLK_PULL_IN_VULKAN OFF)
 	    add_subdirectory(core/deps/volk)
-	    target_include_directories(volk PRIVATE core/khronos)
+	    target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
 	endif()
 
@@ -1108,7 +1120,6 @@ if(USE_VULKAN)
             core/rend/vulkan/texture.cpp
             core/rend/vulkan/texture.h
             core/rend/vulkan/utils.h
-            core/rend/vulkan/vk_mem_alloc.h
             core/rend/vulkan/vmallocator.cpp
             core/rend/vulkan/vmallocator.h
             core/rend/vulkan/overlay.cpp

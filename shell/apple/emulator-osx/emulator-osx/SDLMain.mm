@@ -326,6 +326,13 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
     [menu addItemWithTitle:@"New Instance" action:@selector(newInstance:) keyEquivalent:@"n"];
     return menu;
 }
+
+// Handle Dock menu's Quit action
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+    [[NSApplication sharedApplication] quitAction:sender];
+    return NSTerminateNow;
+}
 @end
 
 

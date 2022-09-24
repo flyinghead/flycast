@@ -28,7 +28,7 @@
 
 // Dreamcast:
 // +Y is down
-// Open GL:
+// OpenGL:
 // +Y is up in clip, NDC and framebuffer coordinates
 // Vulkan:
 // +Y is down in clip, NDC and framebuffer coordinates
