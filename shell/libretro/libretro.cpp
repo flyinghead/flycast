@@ -1369,7 +1369,12 @@ static const char *get_button_name(unsigned device, unsigned id, const char *def
 		return NULL;
 	for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
 		if (NaomiGameInputs->buttons[i].source == mask)
-			return NaomiGameInputs->buttons[i].name;
+		{
+			if (NaomiGameInputs->buttons[i].name[0] != '\0')
+				return NaomiGameInputs->buttons[i].name;
+			else
+				return default_name;
+		}
 	return NULL;
 }
 
@@ -1379,7 +1384,13 @@ static const char *get_axis_name(unsigned index, const char *default_name)
 		return default_name;
 	for (int i = 0; NaomiGameInputs->axes[i].name != NULL; i++)
 		if (NaomiGameInputs->axes[i].axis == index)
-			return NaomiGameInputs->axes[i].name;
+		{
+			if (NaomiGameInputs->axes[i].name[0] != '\0')
+				return NaomiGameInputs->axes[i].name;
+			else
+				return default_name;
+		}
+
 	return NULL;
 }
 
