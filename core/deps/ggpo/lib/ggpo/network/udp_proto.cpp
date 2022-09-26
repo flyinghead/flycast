@@ -466,7 +466,8 @@ UdpProtocol::LogMsg(const char *prefix, UdpMsg *msg)
       Log("%s app data (%d bytes).\n", prefix, msg->u.app_data.size);
       break;
    default:
-      ASSERT(false && "Unknown UdpMsg type.");
+      Log("%s unknown type.\n", prefix);
+      break;
    }
 }
 
