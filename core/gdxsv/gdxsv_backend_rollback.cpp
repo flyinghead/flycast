@@ -17,34 +17,54 @@ namespace {
     u8 dummy_game_param[640] = { 0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07 };
     const u8 dummy_rule_data[] = { 0x03,0x02,0x03,0x00,0x00,0x01,0x58,0x02,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00,0x00,0xff,0x01,0xff,0xff,0xff,0x3f,0xff,0xff,0xff,0x3f,0x00 };
 
-    std::mutex wait_mutex;
-    int waiting_keyframe_players = 0;
-    int waiting_keyframe_type = 0;
-    int waiting_keyframe_max = 0;
+    struct KeyFrame
+    {
+        static const int WaitKeyFrameDelta = 30;
+
+        bool Test(int current_frame)
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+
+            if (key_frame_type_[0] == 0) return true;
+            for (int i = 0; i < 4; i++)
+                if (key_frame_type_[i] != key_frame_type_[0]) return false;
+            return key_frame_count_[0] + WaitKeyFrameDelta == current_frame;
+        }
+
+        int Type() const
+        {
+            return key_frame_type_[0];
+        }
+
+        void Reset()
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            for (int i = 0; i < 4; i++)
+            {
+                key_frame_type_[i] = 0;
+                key_frame_count_[i] = 0;
+            }
+        }
+
+        void Set(int player_num, int frame_type, int frame_count)
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            verify(0 <= player_num);
+            verify(player_num < 4);
+            key_frame_type_[player_num] = frame_type;
+            key_frame_count_[player_num] = frame_count;
+        }
+
+        std::mutex mutex_;
+        int key_frame_type_[4];
+        int key_frame_count_[4];
+    } keyFrame;
 
     void onKeyFrameMessage(int playerNum, int frameType, int frameCount)
     {
-        std::lock_guard<std::mutex> lock(wait_mutex);
-
         NOTICE_LOG(NETWORK, "Player:%d is waiting for key frame to %s Message since %d",
             playerNum, McsMessage::MsgTypeName((McsMessage::MsgType)frameType), frameCount);
-
-        if (waiting_keyframe_type != frameType) {
-            NOTICE_LOG(NETWORK, "Waiting key frame type is updated %d -> %d", waiting_keyframe_type, frameType);
-            waiting_keyframe_players = 0;
-        }
-
-        if (waiting_keyframe_players >> playerNum & 1) {
-            return;
-        }
-
-        if (waiting_keyframe_max < frameCount) {
-            NOTICE_LOG(NETWORK, "Waiting key frame max is updated %d -> %d", waiting_keyframe_max, frameCount);
-        }
-
-        waiting_keyframe_players |= 1 << playerNum;
-        waiting_keyframe_type = frameType;
-        waiting_keyframe_max = std::max(waiting_keyframe_max, frameCount);
+        keyFrame.Set(playerNum, frameType, frameCount);
     }
 
     // maple input to mcs pad input
@@ -77,8 +97,8 @@ void GdxsvBackendRollback::Reset() {
 }
 
 
-void GdxsvBackendRollback::OnGuiMainUiLoop() {
-    if (frame_info.start_session && !ggpo::active()) {
+void GdxsvBackendRollback::OnMainUiLoop() {
+    if (frame_info_.start_session && !ggpo::active()) {
         emu.stop();
         config::GGPOEnable.override(1);
         settings.aica.NoBatch = 1;
@@ -91,11 +111,12 @@ void GdxsvBackendRollback::OnGuiMainUiLoop() {
 
         if (!ggpo::active()) {
             NOTICE_LOG(COMMON, "StartNetwork failure");
+            // TODO
         }
         emu.start();
     }
 
-    if (frame_info.end_session && ggpo::active()) {
+    if (frame_info_.end_session && ggpo::active()) {
         emu.stop();
         ggpo::stopSession();
         config::GGPOEnable.override(0);
@@ -103,7 +124,7 @@ void GdxsvBackendRollback::OnGuiMainUiLoop() {
         emu.start();
     }
 
-    frame_info.Reset();
+    frame_info_.Reset();
 }
 
 bool GdxsvBackendRollback::StartLocalTest(const char* param) {
@@ -114,6 +135,7 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
     }
     state_ = State::StartLocalTest;
     maxlag_ = 0;
+    keyFrame.Reset();
     NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me_);
     return true;
 }
@@ -121,11 +143,12 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 void GdxsvBackendRollback::Open() {
     recv_buf_.assign({ 0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd });
     state_ = State::McsSessionExchange;
+    keyFrame.Reset();
     ApplyPatch(true);
 }
 
 void GdxsvBackendRollback::Close() {
-    frame_info.end_session = true;
+    frame_info_.end_session = true;
     RestorePatch();
     state_ = State::End;
 }
@@ -171,8 +194,9 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         bool rollback = false;
         ggpo::getCurrentFrame(&frame, &rollback);
         const int InetBuf = 0x0c3ab984;
-        const int ConnectionStatus = 0x0c3abb88;
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d vvvvvvvv", frame, rollback, gdxsv_ReadMem8(ConnectionStatus));
+        const int ConnectionStatus = 0x0c3abb84;
+        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d %d",
+            frame, rollback, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
         int msg_len = gdxsv_ReadMem8(InetBuf);
         McsMessage msg;
@@ -190,7 +214,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 
             switch (msg.Type()) {
             case McsMessage::MsgType::ConnectionIdMsg:
-                frame_info.start_session = true;
+                frame_info_.start_session = true;
                 state_ = State::McsInBattle;
                 break;
             case McsMessage::MsgType::IntroMsg:
@@ -271,13 +295,9 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             verify(recv_buf_.size() <= size);
         }
 
-        wait_mutex.lock();
-        const int wait_type = waiting_keyframe_type;
-        const int join_frame = waiting_keyframe_max + WaitKeyFrameDelta;
-        wait_mutex.unlock();
-
-        if (frame == join_frame) {
-            if (wait_type == McsMessage::MsgType::StartMsg) {
+        if (keyFrame.Test(frame))
+        {
+            if (keyFrame.Type() == McsMessage::MsgType::StartMsg) {
                 NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
                 for (int i = 0; i < player_count_; i++) {
                     if (i != me_) {
@@ -286,7 +306,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                     }
                 }
             }
-            if (wait_type == McsMessage::MsgType::LoadEndMsg) {
+            if (keyFrame.Type() == McsMessage::MsgType::LoadEndMsg) {
                 NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
                 for (int i = 0; i < player_count_; i++) {
                     if (i != me_) {
@@ -299,8 +319,8 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 
         verify(recv_buf_.size() <= size);
 
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d END ======",
-            frame, rollback, gdxsv_ReadMem8(ConnectionStatus));
+        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d %d",
+            frame, rollback, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
     }
 
     if (recv_buf_.empty()) {

@@ -22,10 +22,8 @@ public:
         End,
     };
 
-    static const int WaitKeyFrameDelta = 20;
-
     void Reset();
-    void OnGuiMainUiLoop();
+    void OnMainUiLoop();
     bool StartLocalTest(const char* param);
     void Open();
     void Close();
@@ -45,6 +43,7 @@ public:
     int recv_delay_;
     int player_count_;
     int me_;
+
     struct FrameInfo {
         void Reset() {
             start_session = false;
@@ -53,7 +52,7 @@ public:
 
         bool start_session;
         bool end_session;
-    } frame_info;
+    } frame_info_;
 
     std::future<bool> start_network_;
 };
