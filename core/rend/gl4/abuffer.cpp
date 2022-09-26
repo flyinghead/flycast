@@ -456,7 +456,7 @@ static void abufferDrawQuad()
 	glCheck();
 }
 
-void DrawTranslucentModVols(int first, int count)
+void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
@@ -478,7 +478,7 @@ void DrawTranslucentModVols(int first, int count)
 
 	glCheck();
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo_tr.head()[first];
+	ModifierVolumeParam* params = useOpaqueGeom ? &pvrrc.global_param_mvo.head()[first] : &pvrrc.global_param_mvo_tr.head()[first];
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 

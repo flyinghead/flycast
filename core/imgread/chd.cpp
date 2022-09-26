@@ -194,7 +194,7 @@ void CHDDisc::tryOpen(const char* file)
 		u32 sectorSize = getSectorSize(type);
 		t.file = new CHDTrack(this, Offset - t.StartFAD, sectorSize,
 							  // audio tracks are byteswapped in recent CHDv5+
-							  t.CTRL == 0 && needAudioSwap);
+							  !t.isDataTrack() && needAudioSwap);
 
 		// CHD files are padded, so we have to respect the offset
 		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;

@@ -374,6 +374,8 @@ extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int> SavestateSlot;
 extern Option<bool> ForceFreePlay;
+extern Option<bool> FetchBoxart;
+extern Option<bool> BoxartDisplayMode;
 
 // Sound
 
@@ -493,6 +495,7 @@ extern Option<int> GGPOAnalogAxes;
 extern Option<bool> GGPOChat;
 extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
+extern Option<bool> NetworkOutput;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

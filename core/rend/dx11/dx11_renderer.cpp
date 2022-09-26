@@ -503,28 +503,22 @@ void DX11Renderer::renderFramebuffer()
 	deviceContext->ClearRenderTargetView(theDX11Context.getRenderTarget(), colors);
 	int outwidth = settings.display.width;
 	int outheight = settings.display.height;
+	float renderAR = getOutputFramebufferAspectRatio();
+	float screenAR = (float)outwidth / outheight;
 	if (config::Rotate90)
 		std::swap(outwidth, outheight);
-	float renderAR = (float)width / height;
-	float screenAR = (float)outwidth / outheight;
 	int dy = 0;
 	int dx = 0;
 	if (renderAR > screenAR)
-		dy = (int)roundf((outheight - outwidth / renderAR) / 2.f);
+		dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
 	else
-		dx = (int)roundf((outwidth - outheight * renderAR) / 2.f);
+		dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);
 
-	float x = 0, y = 0, w = (float)outwidth, h = (float)outheight;
-	if (dx != 0)
-	{
-		x = (float)dx;
-		w = (float)(outwidth - 2 * dx);
-	}
-	else
-	{
-		y = (float)dy;
-		h = (float)(outheight - 2 * dy);
-	}
+	float x = (float)dx;
+	float y = (float)dy;
+	float w = (float)(outwidth - 2 * dx);
+	float h = (float)(outheight - 2 * dy);
+
 	// Normalize
 	x = x * 2.f / outwidth - 1.f;
 	w *= 2.f / outwidth;

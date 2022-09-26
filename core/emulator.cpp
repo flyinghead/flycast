@@ -128,6 +128,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
+		// South Park Rally
+		else if (prod_id == "T-8116N" || prod_id == "T-8112D-50")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(1000.f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
@@ -428,7 +434,7 @@ void Emulator::init()
 	state = Init;
 }
 
-static int getGamePlatform(const char *path)
+int getGamePlatform(const char *path)
 {
 	if (path == NULL)
 		// Dreamcast BIOS
@@ -823,6 +829,7 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
+	rend_resize_renderer_if_needed();
 	if (!config::ThreadedRendering)
 	{
 		if (state != Running)

@@ -168,6 +168,7 @@ struct  tad_context
 struct RenderPass {
 	bool autosort;
 	bool z_clear;
+	bool mv_op_tr_shared;	// Use opaque modvols geometry for translucent modvols
 	u32 op_count;
 	u32 mvo_count;
 	u32 pt_count;

@@ -166,3 +166,4 @@ struct InputDescriptors
 };
 
 extern InputDescriptors *NaomiGameInputs;
+extern bool atomiswaveForceFeedback;

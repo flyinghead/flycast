@@ -13,7 +13,7 @@
 #include <omp.h>
 #endif
 
-u8* vq_codebook;
+const u8 *vq_codebook;
 u32 palette_index;
 bool KillTex=false;
 u32 palette16_ram[1024];
@@ -22,7 +22,6 @@ u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 bool palette_updated;
 extern bool pal_needs_update;
-float fb_scale_x, fb_scale_y;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
@@ -339,7 +338,7 @@ namespace directx {
 #undef TEX_CONV_TABLE
 static const PvrTexInfo *pvrTexInfo = opengl::pvrTexInfo;
 
-static const u32 VQMipPoint[11] =
+extern const u32 VQMipPoint[11] =
 {
 	0x00000,//1
 	0x00001,//2
@@ -353,7 +352,7 @@ static const u32 VQMipPoint[11] =
 	0x05556,//512
 	0x15556//1024
 };
-static const u32 OtherMipPoint[11] =
+extern const u32 OtherMipPoint[11] =
 {
 	0x00003,//1
 	0x00004,//2
@@ -786,7 +785,7 @@ void BaseTextureCacheData::Update()
 	//lock the texture to detect changes in it
 	protectVRam();
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
+	UploadToGPU(upscaled_w, upscaled_h, (const u8 *)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (config::DumpTextures)
 	{
 		ComputeHash();

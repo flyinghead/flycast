@@ -75,6 +75,8 @@ private:
 static thread_local JVMAttacher jvm_attacher;
 
 #include "android_gamepad.h"
+#include "android_keyboard.h"
+#include "http_client.h"
 
 extern "C" JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_getVirtualGamepadVibration(JNIEnv *env, jobject obj)
 {
@@ -88,6 +90,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenChar
 }
 
 std::shared_ptr<AndroidMouse> mouse;
+std::shared_ptr<AndroidKeyboard> keyboard;
 
 float vjoy_pos[15][8];
 
@@ -273,6 +276,15 @@ jmethodID audioInitMid;
 jmethodID audioTermMid;
 static jobject g_audioBackend;
 
+// Activity
+static jobject g_activity;
+static jmethodID VJoyStartEditingMID;
+static jmethodID VJoyStopEditingMID;
+static jmethodID VJoyResetEditingMID;
+static jmethodID showTextInputMid;
+static jmethodID hideTextInputMid;
+static jmethodID isScreenKeyboardShownMid;
+
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
     sipemu = env->NewGlobalRef(sip);
@@ -290,6 +302,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
     }
+    gui_save();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
@@ -510,6 +523,19 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     // FIXME Don't connect it by default or any screen touch will register as button A press
     mouse = std::make_shared<AndroidMouse>(-1);
     GamepadDevice::Register(mouse);
+    keyboard = std::make_shared<AndroidKeyboard>();
+    GamepadDevice::Register(keyboard);
+    gui_setOnScreenKeyboardCallback([](bool show) {
+        JNIEnv *env = jvm_attacher.getEnv();
+        if (show != env->CallBooleanMethod(g_activity, isScreenKeyboardShownMid))
+        {
+            INFO_LOG(INPUT, "show/hide keyboard %d", show);
+            if (show)
+                env->CallVoidMethod(g_activity, showTextInputMid, 0, 0, 16, 100);
+            else
+                env->CallVoidMethod(g_activity, hideTextInputMid);
+        }
+    });
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
@@ -554,6 +580,18 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDevi
 
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_keyboardEvent(JNIEnv *env, jobject obj, jint key, jboolean pressed)
+{
+       keyboard->keyboard_input(key, pressed);
+       return true;
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_keyboardText(JNIEnv *env, jobject obj, jint c)
+{
+       gui_keyboard_input((u16)c);
+}
+
 static std::map<std::pair<jint, jint>, jint> previous_axis_values;
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
@@ -578,11 +616,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     mouse->setWheel(scrollValue);
 }
 
-static jobject g_activity;
-static jmethodID VJoyStartEditingMID;
-static jmethodID VJoyStopEditingMID;
-static jmethodID VJoyResetEditingMID;
-
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
     if (g_activity != NULL)
@@ -595,6 +628,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_regis
         VJoyStartEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStartEditing", "()V");
         VJoyStopEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStopEditing", "(Z)V");
         VJoyResetEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyResetEditing", "()V");
+        showTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "showTextInput", "(IIII)V");
+        hideTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "hideTextInput", "()V");
+        isScreenKeyboardShownMid = env->GetMethodID(env->GetObjectClass(activity), "isScreenKeyboardShown", "()Z");
     }
 }
 

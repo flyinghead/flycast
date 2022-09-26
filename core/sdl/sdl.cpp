@@ -607,6 +607,24 @@ static void setClipboardText(void *, const char *text)
 	SDL_SetClipboardText(text);
 }
 
+#ifdef TARGET_UWP
+static int suspendEventFilter(void *userdata, SDL_Event *event)
+{
+	if (event->type == SDL_APP_WILLENTERBACKGROUND)
+	{
+		gui_save();
+	    if (gameRunning)
+	    {
+	        emu.stop();
+	        if (config::AutoSaveState)
+	            dc_savestate(config::SavestateSlot);
+	    }
+	    return 0;
+	}
+	return 1;
+}
+#endif
+
 void sdl_window_create()
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
@@ -624,6 +642,10 @@ void sdl_window_create()
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
 	ImGui::GetIO().SetClipboardTextFn = setClipboardText;
+#ifdef TARGET_UWP
+	// Must be fast so an event filter is required
+	SDL_SetEventFilter(suspendEventFilter, nullptr);
+#endif
 }
 
 void sdl_window_destroy()

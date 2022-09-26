@@ -45,6 +45,7 @@ public:
 	virtual void EndFrame() {  renderPass++; };
 
 protected:
+	u32 GetSwapChainSize() { return 2; }
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
 	{
 		this->pipelineManager = pipelineManager;
@@ -76,13 +77,13 @@ protected:
 	void NewImage()
 	{
 		descriptorSets.nextFrame();
-		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		renderPass = 0;
 	}
 
 	BufferData* GetMainBuffer(u32 size)
 	{
-		u32 bufferIndex = imageIndex + renderPass * GetContext()->GetSwapChainSize();
+		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
 		while (mainBuffers.size() <= bufferIndex)
 		{
 			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
@@ -118,7 +119,7 @@ private:
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 			const List<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
-	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);
+	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count, const ModifierVolumeParam *modVolParams);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
 			const OITDescriptorSets::FragmentShaderUniforms& fragmentUniforms);
 
