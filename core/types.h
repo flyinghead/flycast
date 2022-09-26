@@ -144,6 +144,7 @@ enum HollyInterruptID
 #include <stdio.h>
 namespace nowide {
 FILE *fopen(char const *file_name, char const *mode);
+int remove(const char *pathname);
 }
 #endif
 

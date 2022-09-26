@@ -9,7 +9,7 @@
 #include <memory>
 #include <unordered_map>
 
-extern u8* vq_codebook;
+extern const u8 *vq_codebook;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
@@ -227,9 +227,9 @@ struct ConvertPlanar
 	using unpacked_type = typename Unpacker::unpacked_type;
 	static constexpr u32 xpp = 4;
 	static constexpr u32 ypp = 1;
-	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
-		u16 *p_in = (u16 *)data;
+		const u16 *p_in = (const u16 *)data;
 		pb->prel(0, Unpacker::unpack(p_in[0]));
 		pb->prel(1, Unpacker::unpack(p_in[1]));
 		pb->prel(2, Unpacker::unpack(p_in[2]));
@@ -243,10 +243,10 @@ struct ConvertPlanarYUV
 	using unpacked_type = u32;
 	static constexpr u32 xpp = 4;
 	static constexpr u32 ypp = 1;
-	static void Convert(PixelBuffer<u32> *pb, u8 *data)
+	static void Convert(PixelBuffer<u32> *pb, const u8 *data)
 	{
 		//convert 4x1 4444 to 4x1 8888
-		u32 *p_in = (u32 *)data;
+		const u32 *p_in = (const u32 *)data;
 
 
 		s32 Y0 = (p_in[0] >> 8) & 255; //
@@ -280,9 +280,9 @@ struct ConvertTwiddle
 	using unpacked_type = typename Unpacker::unpacked_type;
 	static constexpr u32 xpp = 2;
 	static constexpr u32 ypp = 2;
-	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
-		u16 *p_in = (u16 *)data;
+		const u16 *p_in = (const u16 *)data;
 		pb->prel(0, 0, Unpacker::unpack(p_in[0]));
 		pb->prel(0, 1, Unpacker::unpack(p_in[1]));
 		pb->prel(1, 0, Unpacker::unpack(p_in[2]));
@@ -296,10 +296,10 @@ struct ConvertTwiddleYUV
 	using unpacked_type = u32;
 	static constexpr u32 xpp = 2;
 	static constexpr u32 ypp = 2;
-	static void Convert(PixelBuffer<u32> *pb, u8 *data)
+	static void Convert(PixelBuffer<u32> *pb, const u8 *data)
 	{
 		//convert 4x1 4444 to 4x1 8888
-		u16* p_in = (u16 *)data;
+		const u16* p_in = (const u16 *)data;
 
 		s32 Y0 = (p_in[0] >> 8) & 255; //
 		s32 Yu = (p_in[0] >> 0) & 255; //p_in[0]
@@ -342,9 +342,9 @@ struct ConvertTwiddlePal4
 	using unpacked_type = typename Unpacker::unpacked_type;
 	static constexpr u32 xpp = 4;
 	static constexpr u32 ypp = 4;
-	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
-		u8 *p_in = (u8 *)data;
+		const u8 *p_in = data;
 
 		pb->prel(0, 0, Unpacker::unpack(p_in[0] & 0xF));
 		pb->prel(0, 1, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
@@ -374,9 +374,9 @@ struct ConvertTwiddlePal8
 	using unpacked_type = typename Unpacker::unpacked_type;
 	static constexpr u32 xpp = 2;
 	static constexpr u32 ypp = 4;
-	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
-		u8* p_in = (u8 *)data;
+		const u8* p_in = (const u8 *)data;
 
 		pb->prel(0, 0, Unpacker::unpack(p_in[0])); p_in++;
 		pb->prel(0, 1, Unpacker::unpack(p_in[0])); p_in++;
@@ -392,7 +392,7 @@ struct ConvertTwiddlePal8
 
 //handler functions
 template<class PixelConvertor>
-void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
+void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
 	pb->amove(0,0);
 
@@ -403,7 +403,7 @@ void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 	{
 		for (u32 x=0;x<Width;x++)
 		{
-			u8* p = p_in;
+			const u8* p = p_in;
 			PixelConvertor::Convert(pb,p);
 			p_in+=8;
 
@@ -414,7 +414,7 @@ void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 }
 
 template<class PixelConvertor>
-void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
+void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
 	pb->amove(0, 0);
 
@@ -427,7 +427,7 @@ void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 	{
 		for (u32 x = 0; x < Width; x += PixelConvertor::xpp)
 		{
-			u8* p = &p_in[(twop(x, y, bcx, bcy) / divider) << 3];
+			const u8* p = &p_in[(twop(x, y, bcx, bcy) / divider) << 3];
 			PixelConvertor::Convert(pb, p);
 
 			pb->rmovex(PixelConvertor::xpp);
@@ -437,7 +437,7 @@ void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 }
 
 template<class PixelConvertor>
-void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
+void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
 	p_in += 256 * 4 * 2;	// Skip VQ codebook
 	pb->amove(0, 0);
@@ -459,9 +459,9 @@ void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 	}
 }
 
-typedef void (*TexConvFP)(PixelBuffer<u16> *pb, u8 *p_in, u32 width, u32 height);
-typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, u8 *p_in, u32 width, u32 height);
-typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP)(PixelBuffer<u16> *pb, const u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, const u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, const u8 *p_in, u32 width, u32 height);
 
 //Planar
 constexpr TexConvFP tex565_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
@@ -669,7 +669,7 @@ public:
 
 	void ComputeHash();
 	void Update();
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
+	virtual void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
 	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match
@@ -815,10 +815,3 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;
 #undef clamp
-
-extern float fb_scale_x, fb_scale_y;
-static inline void rend_set_fb_scale(float x, float y)
-{
-	fb_scale_x = x;
-	fb_scale_y = y;
-}

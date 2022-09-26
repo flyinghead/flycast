@@ -49,7 +49,7 @@ jobs:
       - name: Set up build environment (Linux)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev
         if: runner.os == 'Linux'
 
       - name: Set up build environment (Windows, MinGW)

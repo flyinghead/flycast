@@ -16,6 +16,7 @@
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
 #include "serialize.h"
+#include "network/output.h"
 
 //#define NAOMI_COMM
 
@@ -525,6 +526,7 @@ void naomi_reg_Init()
 	}
 	#endif
 	NaomiInit();
+	networkOutput.init();
 }
 
 void naomi_reg_Term()
@@ -540,6 +542,7 @@ void naomi_reg_Term()
 	}
 #endif
 	m3comm.closeNetwork();
+	networkOutput.term();
 }
 
 void naomi_reg_Reset(bool hard)
@@ -578,7 +581,7 @@ void naomi_reg_Reset(bool hard)
 
 static u8 aw_maple_devs;
 static u64 coin_chute_time[4];
-static u8 ffbOuput;
+static u8 awDigitalOuput;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -636,7 +639,7 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		// ??? Dolphin Blue
 		return 0;
 	case 0x28c:
-		return ffbOuput;
+		return awDigitalOuput;
 	}
 	INFO_LOG(NAOMI, "Unhandled read @ %x sz %d", addr, size);
 	return 0xFF;
@@ -654,11 +657,27 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	case 0x288:
 		// ??? Dolphin Blue
 		return;
-	case 0x28C:		// Wheel force feedback
-		// bit 0    direction (0 pos, 1 neg)
-		// bit 1-4  strength
-		ffbOuput = data;
-		DEBUG_LOG(NAOMI, "AW output %02x", data);
+	case 0x28C:		// Digital output
+		if ((u8)data != awDigitalOuput)
+		{
+			if (atomiswaveForceFeedback)
+				// Wheel force feedback:
+				// bit 0    direction (0 pos, 1 neg)
+				// bit 1-4  strength
+				networkOutput.output("awffb", (u8)data);
+			else
+			{
+				u8 changes = data ^ awDigitalOuput;
+				for (int i = 0; i < 8; i++)
+					if (changes & (1 << i))
+					{
+						std::string name = "lamp" + std::to_string(i);
+						networkOutput.output(name.c_str(), (data >> i) & 1);
+					}
+			}
+			awDigitalOuput = data;
+			DEBUG_LOG(NAOMI, "AW output %02x", data);
+		}
 		return;
 	default:
 		break;
@@ -780,6 +799,8 @@ static void forceFeedbackMidiReceiver(u8 data)
 		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
 		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
 			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
+		if (midiTxBuf[0] != 0xfd)
+			networkOutput.output("midiffb", (midiTxBuf[0] << 16) | (midiTxBuf[1]) << 8 | midiTxBuf[2]);
 	}
 	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
 }

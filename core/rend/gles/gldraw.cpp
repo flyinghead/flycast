@@ -4,6 +4,7 @@
 #include "rend/tileclip.h"
 #include "rend/osd.h"
 #include "naomi2.h"
+#include "rend/transform_matrix.h"
 
 /*
 
@@ -700,12 +701,7 @@ void DrawStrips()
 
 void DrawFramebuffer()
 {
-	float aspectRatio = 4.f / 3.f;
-	if (config::Rotate90)
-		aspectRatio /= config::ScreenStretching / 100.f;
-	else
-		aspectRatio *= config::ScreenStretching / 100.f;
-	int sx = (int)roundf((gl.ofbo.width - aspectRatio * gl.ofbo.height) / 2.f);
+	int sx = (int)roundf((gl.ofbo.width - 4.f / 3.f * gl.ofbo.height) / 2.f);
 	glViewport(sx, 0, gl.ofbo.width - sx * 2, gl.ofbo.height);
 	drawQuad(fbTextureId, false, true);
 	glcache.DeleteTextures(1, &fbTextureId);
@@ -715,27 +711,21 @@ void DrawFramebuffer()
 bool render_output_framebuffer()
 {
 	glcache.Disable(GL_SCISSOR_TEST);
-	int fx = 0;
-	int sx = 0;
 	float screenAR = (float)settings.display.width / settings.display.height;
-	int fbwidth = gl.ofbo.width;
-	int fbheight = gl.ofbo.height;
-	if (config::Rotate90)
-		std::swap(fbwidth, fbheight);
-	float renderAR = (float)fbwidth / fbheight;
+	float renderAR = getOutputFramebufferAspectRatio();
+
+	int dx = 0;
+	int dy = 0;
 	if (renderAR > screenAR)
-		fx = (int)roundf((fbwidth - screenAR * fbheight) / 2.f);
+		dy = (int)roundf(settings.display.height * (1 - screenAR / renderAR) / 2.f);
 	else
-		sx = (int)roundf((settings.display.width - renderAR * settings.display.height) / 2.f);
+		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);
 
 	if (gl.gl_major < 3 || config::Rotate90)
 	{
 		if (gl.ofbo.tex == 0)
 			return false;
-		if (sx != 0)
-			glViewport(sx, 0, settings.display.width - sx * 2, settings.display.height);
-		else
-			glViewport(-fx, 0, settings.display.width + fx * 2, settings.display.height);
+		glViewport(dx, dy, settings.display.width - dx * 2, settings.display.height - dy * 2);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -752,8 +742,8 @@ bool render_output_framebuffer()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
-				sx, 0, settings.display.width - sx, settings.display.height,
+		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+				dx, dy, settings.display.width - dx, settings.display.height - dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
@@ -832,10 +822,12 @@ void DrawVmuTexture(u8 vmu_screen_number)
 	glActiveTexture(GL_TEXTURE0);
 
 	const float vmu_padding = 8.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 ? -(640.f * 4.f / 3.f - 640.f) / 2 : 0) + vmu_padding;
+	const float x_scale = 100.f / config::ScreenStretching;
+	const float y_scale = (float)gl.ofbo.width / gl.ofbo.height >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 ? -1 / ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
 	float y = vmu_padding;
-	float w = VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
-	float h = VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
+	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;
 
 	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
 		UpdateVmuTexture(vmu_screen_number);
@@ -845,14 +837,14 @@ void DrawVmuTexture(u8 vmu_screen_number)
 		case UPPER_LEFT:
 			break;
 		case UPPER_RIGHT:
-			x = 640 - x - w;
+			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
 			break;
 		case LOWER_LEFT:
-			y = 480 - y - h;
+			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
 			break;
 		case LOWER_RIGHT:
-			x = 640 - x - w;
-			y = 480 - y - h;
+			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
+			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
 			break;
 	}
 
@@ -938,11 +930,12 @@ void DrawGunCrosshair(u8 port)
 
 	glActiveTexture(GL_TEXTURE0);
 
-	float x = lightgun_params[port].x;
+	float stretch = config::ScreenStretching / 100.f;
+	float x = lightgun_params[port].x / stretch;
 	float y = lightgun_params[port].y;
 
-	float w = LIGHTGUN_CROSSHAIR_SIZE;
-	float h = LIGHTGUN_CROSSHAIR_SIZE;
+	float w = (float)LIGHTGUN_CROSSHAIR_SIZE / stretch;
+	float h = (float)LIGHTGUN_CROSSHAIR_SIZE;
 	x -= w / 2;
 	y -= h / 2;
 
