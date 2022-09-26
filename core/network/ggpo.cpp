@@ -937,50 +937,7 @@ void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int 
 	keyFrameCallback = callback;
 }
 
-
-std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum) {
-	synchronized = false;
-	return std::async(std::launch::async, [=]{
-		{
-			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
-#ifdef SYNC_TEST
-			gdxsvStartSession(0, 0, "");
-#else
-			gdxsvStartSession(localPort, localPlayerNum, "dummy");
-			// TODO
-#endif
-		}
-		while (!synchronized && active())
-		{
-			{
-				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
-				if (ggpoSession == nullptr)
-					break;
-				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
-				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
-					throw FlycastException("Peer verification failed");
-				else if (result != GGPO_OK)
-				{
-					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
-					throw FlycastException("GGPO error");
-				}
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
-		}
-#ifdef SYNC_TEST
-		// save initial state (frame 0)
-		if (active())
-		{
-			MapleInputState state[4];
-			getInput(state);
-		}
-#endif
-		emu.setNetworkState(active());
-		return active();
-	});
-}
-
-void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode)
+void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
 {
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
@@ -1030,10 +987,11 @@ void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
 	// TODO: Analog support
-	ggpo::localPlayerNum = localPlayerNum;
+	ggpo::localPlayerNum = me;
 	inputSize = sizeof(kcode[0]);
-
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, SERVER_PORT + localPlayerNum, battleCode, strlen(battleCode));
+	GGPOErrorCode result = ggpo_start_session(
+		&ggpoSession, &cb, settings.content.gameId.c_str(),
+		ips.size(), inputSize, ports[me], sessionCode, strlen(sessionCode));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
@@ -1041,7 +999,7 @@ void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode
 		throw FlycastException("GGPO network initialization failed");
 	}
 
-    NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", localPlayerNum);
+    NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", me);
 
 	// automatically disconnect clients after 3000 ms and start our count-down timer
 	// for disconnects after 1000 ms.   To completely disable disconnects, simply use
@@ -1049,13 +1007,22 @@ void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode
 	ggpo_set_disconnect_timeout(ggpoSession, 3000);
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
 
-	for (int i = 0; i < MAX_PLAYERS; i++)
+	for (int i = 0; i < ips.size(); i++)
 	{
         GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1};
-		if (i != localPlayerNum) {
+		if (i != me) {
 			player.type = GGPO_PLAYERTYPE_REMOTE;
-            strcpy(player.u.remote.ip_address, "127.0.0.1");
-            player.u.remote.port = SERVER_PORT + i;
+			if (ips[i].empty()) {
+                strcpy(player.u.remote.ip_address, "127.0.0.1");
+			} else {
+				strcpy(player.u.remote.ip_address, ips[i].c_str());
+			}
+
+			if (ports[i] == 0) {
+				player.u.remote.port = SERVER_PORT + i;
+			} else {
+				player.u.remote.port = ports[i];
+			}
 		}
 
         result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
@@ -1066,7 +1033,7 @@ void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode
             throw FlycastException("GGPO cannot add remote player");
         }
 
-		if (i == localPlayerNum) {
+		if (i == me) {
 			ggpo::localPlayer = playerHandles[i];
 		} else {
 			ggpo::remotePlayer = playerHandles[i];
@@ -1078,6 +1045,49 @@ void gdxsvStartSession(int localPort, int localPlayerNum, const char* battleCode
 	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
 }
+
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
+	synchronized = false;
+	return std::async(std::launch::async, [=]{
+		{
+			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+#ifdef SYNC_TEST
+			gdxsvStartSession(0, 0, "");
+#else
+			gdxsvStartSession(sessionCode, me, ips, ports);
+			// TODO
+#endif
+		}
+		while (!synchronized && active())
+		{
+			{
+				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+				if (ggpoSession == nullptr)
+					break;
+				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
+				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
+					throw FlycastException("Peer verification failed");
+				else if (result != GGPO_OK)
+				{
+					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
+					throw FlycastException("GGPO error");
+				}
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
+#ifdef SYNC_TEST
+		// save initial state (frame 0)
+		if (active())
+		{
+			MapleInputState state[4];
+			getInput(state);
+		}
+#endif
+		emu.setNetworkState(active());
+		return active();
+	});
+}
+
 }
 
 #else // LIBRETRO

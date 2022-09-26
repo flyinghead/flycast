@@ -8,6 +8,7 @@
 #include "libs.h"
 #include "gdx_rpc.h"
 #include "gdxsv.pb.h"
+#include "network/net_platform.h"
 #include "network/ggpo.h"
 #include "rend/gui.h"
 #include "emulator.h"
@@ -83,7 +84,6 @@ namespace {
         if (~input.kcode & 0x00040000) r |= 0x1000; // RT
         return r;
     }
-
 }
 
 void GdxsvBackendRollback::Reset() {
@@ -98,12 +98,53 @@ void GdxsvBackendRollback::Reset() {
 
 
 void GdxsvBackendRollback::OnMainUiLoop() {
-    if (frame_info_.start_session && !ggpo::active()) {
+    if (frame_info_.start_session) {
         emu.stop();
-        config::GGPOEnable.override(1);
-        settings.aica.NoBatch = 1;
-        start_network_ = ggpo::gdxsvStartNetwork(0, me_);
-        ggpo::receiveKeyFrameMessages(onKeyFrameMessage);
+        state_ = State::StartGGPOSession;
+
+        for (int i = 0; i < player_count_; i++) {
+            if (i != me_) {
+                ping_pong_.AddCandidate(i, "127.0.0.1", 29713 + i);
+            }
+        }
+        ping_pong_.Start(10111, me_, 29713 + me_, 10000);
+        NOTICE_LOG(COMMON, "UdpPingPong Start");
+    }
+
+    if (state_ == State::StartGGPOSession && !ping_pong_.Running()) {
+        bool ok = true;
+        std::vector<std::string> ips(player_count_);
+        std::vector<u16> ports(player_count_);
+        for (int i = 0; i < player_count_; i++)
+        {
+            if (i == me_) {
+                ips[i] = "";
+                ports[i] = 29713 + me_; // TODO dummy
+            } else {
+                sockaddr_in addr;
+                int rtt;
+                if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
+                    char str[INET_ADDRSTRLEN] = {};
+                    inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+                    ips[i] = str;
+                    ports[i] = ntohs(addr.sin_port);
+                } else {
+                    ok = false;
+                }
+            }
+        }
+
+        if (ok) {
+            config::GGPOEnable.override(1);
+            settings.aica.NoBatch = 1;
+            start_network_ = ggpo::gdxsvStartNetwork("session", me_, ips, ports);
+            ggpo::receiveKeyFrameMessages(onKeyFrameMessage);
+            state_ = State::WaitGGPOSession;
+        } else {
+            // TODO: error handle
+            emu.start();
+            state_ = State::End;
+        }
     }
 
     if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
@@ -195,8 +236,8 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         ggpo::getCurrentFrame(&frame, &rollback);
         const int InetBuf = 0x0c3ab984;
         const int ConnectionStatus = 0x0c3abb84;
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d %d",
-            frame, rollback, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
+        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d",
+            frame, rollback, state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
         int msg_len = gdxsv_ReadMem8(InetBuf);
         McsMessage msg;
@@ -215,7 +256,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             switch (msg.Type()) {
             case McsMessage::MsgType::ConnectionIdMsg:
                 frame_info_.start_session = true;
-                state_ = State::McsInBattle;
                 break;
             case McsMessage::MsgType::IntroMsg:
                 for (int i = 0; i < player_count_; i++) {

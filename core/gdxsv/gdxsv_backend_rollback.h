@@ -3,6 +3,7 @@
 #include <map>
 #include <future>
 
+#include "gdxsv_network.h"
 #include "lbs_message.h"
 #include "mcs_message.h"
 
@@ -16,6 +17,8 @@ public:
         None,
         StartLocalTest,
         LbsStartBattleFlow,
+        StartGGPOSession,
+        WaitGGPOSession,
         McsWaitJoin,
         McsSessionExchange,
         McsInBattle,
@@ -54,5 +57,6 @@ public:
         bool end_session;
     } frame_info_;
 
+    UdpPingPong ping_pong_;
     std::future<bool> start_network_;
 };

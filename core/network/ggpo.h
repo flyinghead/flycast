@@ -39,8 +39,7 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 void sendKeyFrameMessage(int playerNum, int frameType, int frameCount);
 void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int frameCount));
 
-std::future<bool> gdxsvStartNetwork(int localPort, int localPlayerNum);
-void gdxsvStartSession(int localPort, int localPlayerNum, const char* code);
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports);
 
 static inline bool rollbacking() {
 	extern bool inRollback;

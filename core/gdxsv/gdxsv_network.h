@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <deque>
+#include <future>
 
 #include "types.h"
 #include "network/net_platform.h"
@@ -116,4 +117,57 @@ private:
     sock_t sock_ = INVALID_SOCKET;
     int bind_port_;
     std::string bind_ip_;
+};
+
+class UdpPingPong {
+public:
+    static const int N = 4;
+
+    void Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_ms);
+
+    void Stop();
+
+    void Reset();
+
+    bool Running();
+
+    void AddCandidate(uint8_t peer_id, const std::string& ip, int port);
+
+    bool GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, int* rtt);
+
+    void GetRttMatrix(uint8_t matrix[N][N]);
+
+private:
+    static const uint32_t MAGIC = 1434750950;
+    static const uint8_t PING = 1;
+    static const uint8_t PONG = 2;
+
+    struct Candidate {
+        uint8_t peer_id;
+        UdpRemote remote;
+        int ping_count;
+        int pong_count;
+        int rtt;
+    };
+
+#pragma pack(1)
+    struct Packet {
+        uint32_t magic;
+        uint32_t session_id;
+        uint8_t type;
+        uint8_t from_peer_id;
+        uint8_t to_peer_id;
+        uint64_t send_timestamp;
+        uint64_t ping_timestamp;
+        uint8_t rtt_matrix[N][N];
+    };
+#pragma pack()
+
+    bool GetCandidate(Candidate* c);
+
+    std::atomic<bool> running_;
+    UdpClient client_ = UdpClient{};
+    std::recursive_mutex mutex_;
+    uint8_t rtt_matrix_[N][N];
+    std::vector<Candidate> candidates_;
 };
