@@ -1089,29 +1089,23 @@ if(NOT LIBRETRO)
 endif()
 
 if(USE_VULKAN)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_NO_PROTOTYPES)
+	if(ANDROID)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_ANDROID_KHR)
+	elseif(X11_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_XLIB_KHR)
+	elseif(WIN32)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+	elseif(APPLE)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_MACOS_MVK)
+	endif()
+
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
 	add_library(VulkanMemoryAllocator INTERFACE)
 	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
-
-	if(NOT LIBRETRO)
-		if(ANDROID)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
-		elseif(X11_FOUND)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-		elseif(WIN32)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
-		elseif(APPLE)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_MACOS_MVK)
-		endif()
-
-		set(VOLK_PULL_IN_VULKAN OFF)
-		add_subdirectory(core/deps/volk)
-		target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
-		target_link_libraries(${PROJECT_NAME} PRIVATE volk)
-	endif()
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1151,9 +1145,9 @@ if(USE_VULKAN)
 	if(LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vk_context_lr.cpp
-				core/rend/vulkan/vk_context_lr.h
-				core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
+				core/rend/vulkan/vk_context_lr.h)
 	else()
+		target_compile_definitions(${PROJECT_NAME} PUBLIC IMGUI_IMPL_VULKAN_NO_PROTOTYPES)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vulkan_driver.h
 				core/rend/vulkan/vulkan_context.cpp

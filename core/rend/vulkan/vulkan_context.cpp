@@ -34,6 +34,10 @@
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
 
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
+
 void ReInitOSD();
 
 VulkanContext *VulkanContext::contextInstance;
@@ -130,23 +134,19 @@ static void CheckImGuiResult(VkResult err)
 
 bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
-#ifndef TARGET_IPHONE
-	if (volkInitialize() != VK_SUCCESS)
-	{
-		ERROR_LOG(RENDERER, "Cannot load Vulkan libraries");
-		return false;
-	}
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+	static vk::DynamicLoader dl;
+	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 #endif
+
 	try
 	{
-		bool vulkan11 = false;
-		if (::vkEnumerateInstanceVersion != nullptr)
-		{
-			u32 apiVersion;
-			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
-				vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
-					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
-		}
+		u32 apiVersion = vk::enumerateInstanceVersion();
+
+		bool vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
+				|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
+
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (uint32_t i = 0; i < extensions_count; i++)
@@ -171,8 +171,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
-#ifndef TARGET_IPHONE
-		volkLoadInstance(static_cast<VkInstance>(*instance));
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
 #endif
 
 #ifdef VK_DEBUG
@@ -207,7 +207,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			physicalDevice = instance->enumeratePhysicalDevices().front();
 
 		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11 && ::vkGetPhysicalDeviceProperties2 != nullptr)
+		if (vulkan11)
 		{
 			static vk::PhysicalDeviceProperties2 properties2;
 			vk::PhysicalDeviceMaintenance3Properties properties3;
@@ -292,6 +292,12 @@ void VulkanContext::InitImgui()
 	initInfo.ImageCount = GetSwapChainSize();
 #ifdef VK_DEBUG
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
+#endif
+
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+	ImGui_ImplVulkan_LoadFunctions([](const char *function_name, void *) {
+		return VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr((VkInstance) *contextInstance->instance, function_name);
+	});
 #endif
 
 	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
@@ -420,9 +426,8 @@ bool VulkanContext::InitDevice()
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
 				layers, deviceExtensions, &features));
 
-#ifndef TARGET_IPHONE
-		// This links entry points directly from the driver and isn't absolutely necessary
-		volkLoadDevice(static_cast<VkDevice>(*device));
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
 #endif
 
 	    // Queues
