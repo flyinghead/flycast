@@ -1103,33 +1103,19 @@ void D3DRenderer::renderFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
-	int fx = 0;
-	int sx = 0;
+	float renderAR = getOutputFramebufferAspectRatio();
 	float screenAR = (float)settings.display.width / settings.display.height;
-	int fbwidth = width;
-	int fbheight = height;
-	if (config::Rotate90)
-		std::swap(fbwidth, fbheight);
-	float renderAR = (float)fbwidth / fbheight;
+	int dx = 0;
+	int dy = 0;
 	if (renderAR > screenAR)
-		fx = (int)roundf((fbwidth - screenAR * fbheight) / 2.f);
+		dy = (int)roundf(settings.display.height * (1 - screenAR / renderAR) / 2.f);
 	else
-		sx = (int)roundf((settings.display.width - renderAR * settings.display.height) / 2.f);
+		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);
 
 	if (!config::Rotate90)
 	{
 		RECT rs { 0, 0, (long)width, (long)height };
-		RECT rd { 0, 0, settings.display.width, settings.display.height };
-		if (sx != 0)
-		{
-			rd.left = sx;
-			rd.right = settings.display.width - sx;
-		}
-		else
-		{
-			rs.left = fx;
-			rs.right = width - fx;
-		}
+		RECT rd { dx, dy, settings.display.width - dx, settings.display.height - dy };
 		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd,
 				config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);	// This can fail if window is minimized
 	}
@@ -1154,10 +1140,10 @@ void D3DRenderer::renderFramebuffer()
 
 		device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 		D3DVIEWPORT9 viewport;
-		viewport.X = sx;
-		viewport.Y = fx * settings.display.width / height;
-		viewport.Width = settings.display.width - sx * 2;
-		viewport.Height = settings.display.height - 2 * fx * settings.display.width / height;
+		viewport.X = dx;
+		viewport.Y = dy;
+		viewport.Width = settings.display.width - dx * 2;
+		viewport.Height = settings.display.height - dy * 2;
 		viewport.MinZ = 0;
 		viewport.MaxZ = 1;
 		verifyWin(device->SetViewport(&viewport));

@@ -31,7 +31,7 @@ public:
 
 	ComPtr<IDirect3DTexture9> texture;
 	std::string GetId() override { return std::to_string((uintptr_t)texture.get()); }
-	void UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped,
+	void UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped,
 			bool mipmapsIncluded = false) override;
 	bool Delete() override;
 	void loadCustomTexture();

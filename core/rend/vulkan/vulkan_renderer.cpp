@@ -45,6 +45,7 @@ public:
 		if ((u32)w == viewport.width && (u32)h == viewport.height)
 			return;
 		BaseVulkanRenderer::Resize(w, h);
+		GetContext()->WaitIdle();
 		screenDrawer.Init(&samplerManager, &shaderManager, viewport);
 	}
 

@@ -47,6 +47,8 @@ char naomi_game_id[33];
 InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
+bool atomiswaveForceFeedback;
+
 extern MemChip *sys_rom;
 
 static bool loadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
@@ -570,6 +572,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	else
 		loadDecryptedRom(file, progress);
 
+	atomiswaveForceFeedback = false;
 	RomBootID bootId;
 	if (CurrentCartridge->GetBootId(&bootId))
 	{
@@ -585,6 +588,10 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			card_reader::initialDCardReader.init();
 			initMidiForceFeedback();
+		}
+		else if (gameId == "MAXIMUM SPEED" || gameId == "FASTER THAN SPEED")
+		{
+			atomiswaveForceFeedback = true;
 		}
 		else if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{

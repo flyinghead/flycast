@@ -236,6 +236,7 @@ struct gl_ctx
 	bool highp_float_supported;
 	float max_anisotropy;
 	bool mesa_nouveau;
+	bool border_clamp_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
@@ -345,7 +346,7 @@ public:
 
 	GLuint texID;   //gl texture
 	std::string GetId() override { return std::to_string(texID); }
-	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
 };
 

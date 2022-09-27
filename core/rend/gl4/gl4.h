@@ -170,7 +170,7 @@ void initABuffer();
 void termABuffer();
 void reshapeABuffer(int width, int height);
 void renderABuffer();
-void DrawTranslucentModVols(int first, int count);
+void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom);
 void checkOverflowAndReset();
 
 extern GLuint stencilTexId;

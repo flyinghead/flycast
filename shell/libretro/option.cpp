@@ -117,6 +117,7 @@ Option<bool> GGPOEnable("", false);
 Option<int> GGPODelay("", 0);
 Option<bool> NetworkStats("", false);
 Option<int> GGPOAnalogAxes("", 0);
+Option<bool> NetworkOutput(CORE_OPTION_NAME "_network_output", false);
 
 // Maple
 

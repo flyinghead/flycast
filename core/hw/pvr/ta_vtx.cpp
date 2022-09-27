@@ -1122,9 +1122,8 @@ private:
 	}
 };
 
-static bool ClearZBeforePass(int pass_number);
-static bool UsingAutoSort(int pass_number);
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
+static void getRegionSettings(int passNumber, RenderPass& pass);
 
 //
 // Check if a vertex has huge x,y,z values or negative z
@@ -1343,8 +1342,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 					render_pass->tr_count, mergeTranslucent, &vd_rc);
 			tr_poly_count = render_pass->tr_count;
 			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-			render_pass->autosort = UsingAutoSort(pass);
-			render_pass->z_clear = ClearZBeforePass(pass);
+			getRegionSettings(pass, *render_pass);
 		}
 		childCtx = childCtx->nextContext;
 		pass++;
@@ -1769,6 +1767,27 @@ void FillBGP(TA_context* ctx)
 	cv[3].v = max_v;
 }
 
+static void getRegionTileAddrAndSize(u32& address, u32& size)
+{
+	address = REGION_BASE;
+	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
+	size = (type1_tile ? 5 : 6) * 4;
+	bool empty_first_region = true;
+	for (int i = type1_tile ? 4 : 5; i > 0; i--)
+		if ((pvr_read32p<u32>(address + i * 4) & 0x80000000) == 0)
+		{
+			empty_first_region = false;
+			break;
+		}
+	if (empty_first_region)
+		address += size;
+	RegionArrayTile tile;
+	tile.full = pvr_read32p<u32>(address);
+	if (tile.PreSort)
+		// Windows CE weirdness
+		size = 6 * 4;
+}
+
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 {
 	xmin = 20;
@@ -1776,18 +1795,9 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 	ymin = 15;
 	ymax = 0;
 
-	u32 addr = REGION_BASE;
-	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
-	int tile_size = (type1_tile ? 5 : 6) * 4;
-	bool empty_first_region = true;
-	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
-		{
-			empty_first_region = false;
-			break;
-		}
-	if (empty_first_region)
-		addr += tile_size;
+	u32 addr;
+	u32 tile_size;
+	getRegionTileAddrAndSize(addr, tile_size);
 
 	RegionArrayTile tile;
 	do {
@@ -1796,9 +1806,6 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 		xmax = std::max(xmax, tile.X);
 		ymin = std::min(ymin, tile.Y);
 		ymax = std::max(ymax, tile.Y);
-		if (type1_tile && tile.PreSort)
-			// Windows CE weirdness
-			tile_size = 6 * 4;
 		addr += tile_size;
 	} while (!tile.LastRegion);
 
@@ -1808,72 +1815,14 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 	ymax *= 32;
 }
 
-static RegionArrayTile getRegionTile(int pass_number)
-{
-	u32 addr = REGION_BASE;
-	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
-	int tile_size = (type1_tile ? 5 : 6) * 4;
-	bool empty_first_region = true;
-	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
-		{
-			empty_first_region = false;
-			break;
-		}
-	if (empty_first_region)
-		addr += tile_size;
-
-	RegionArrayTile tile;
-	tile.full = pvr_read32p<u32>(addr);
-	if (type1_tile && tile.PreSort)
-		// Windows CE weirdness
-		tile_size = 6 * 4;
-	tile.full = pvr_read32p<u32>(addr + pass_number * tile_size);
-
-	return tile;
-}
-
-static bool UsingAutoSort(int pass_number)
-{
-	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
-		// Type 1 region header type
-		return ((ISP_FEED_CFG & 1) == 0);
-	else
-	{
-		// Type 2
-		RegionArrayTile tile = getRegionTile(pass_number);
-
-		return !tile.PreSort;
-	}
-}
-
-static bool ClearZBeforePass(int pass_number)
-{
-	RegionArrayTile tile = getRegionTile(pass_number);
-
-	return !tile.NoZClear;
-}
-
 int getTAContextAddresses(u32 *addresses)
 {
-	u32 addr = REGION_BASE;
-	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
-	int tile_size = (type1_tile ? 5 : 6) * 4;
-	bool empty_first_region = true;
-	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
-		{
-			empty_first_region = false;
-			break;
-		}
-	if (empty_first_region)
-		addr += tile_size;
+	u32 addr;
+	u32 tile_size;
+	getRegionTileAddrAndSize(addr, tile_size);
 
 	RegionArrayTile tile;
 	tile.full = pvr_read32p<u32>(addr);
-	if (type1_tile && tile.PreSort)
-		// Windows CE weirdness
-		tile_size = 6 * 4;
 	u32 x = tile.X;
 	u32 y = tile.Y;
 	u32 count = 0;
@@ -1906,6 +1855,25 @@ int getTAContextAddresses(u32 *addresses)
 	return count;
 }
 
+static void getRegionSettings(int passNumber, RenderPass& pass)
+{
+	u32 addr;
+	u32 tileSize;
+	getRegionTileAddrAndSize(addr, tileSize);
+	addr += passNumber * tileSize;
+	RegionArrayTile tile;
+	tile.full = pvr_read32p<u32>(addr);
+
+	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
+		// Type 1 region header type
+		pass.autosort = (ISP_FEED_CFG & 1) == 0;
+	else
+		// Type 2
+		pass.autosort = !tile.PreSort;
+	pass.z_clear = !tile.NoZClear;
+	pass.mv_op_tr_shared = pvr_read32p<u32>(addr + 8) == pvr_read32p<u32>(addr + 16);
+}
+
 void rend_context::newRenderPass()
 {
 	RenderPass pass;
@@ -1914,7 +1882,6 @@ void rend_context::newRenderPass()
 	pass.pt_count = global_param_pt.used();
 	pass.mvo_count = global_param_mvo.used();
 	pass.mvo_tr_count = global_param_mvo_tr.used();
-	pass.autosort = UsingAutoSort(render_passes.used());
-	pass.z_clear = ClearZBeforePass(render_passes.used());
+	getRegionSettings(render_passes.used(), pass);
 	*render_passes.Append() = pass;
 }

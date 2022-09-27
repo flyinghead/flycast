@@ -1,4 +1,4 @@
 #pragma once
 #include "types.h"
 
-void descrambl_file(u32 FAD, u32 file_size, u8* dst);
+void descrambl_buffer(const u8 *src, u8 *dst, u32 size);

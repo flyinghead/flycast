@@ -222,7 +222,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 
 	// Get rid of the pregap for audio tracks
 	for (Track& t : disc->tracks)
-		if (t.CTRL == 0)
+		if (!t.isDataTrack())
 			t.StartFAD += 150;
 	if (digest != nullptr)
 		*digest = md5.getDigest();
