@@ -17,7 +17,7 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
-option(USE_OPENGL "Use Open GL API" ON)
+option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 
@@ -138,10 +138,12 @@ elseif(ANDROID)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
     set(CMAKE_ANDROID_STL_TYPE "c++_static")
-elseif(MSVC)
+elseif(WIN32)
     add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
-else()
+elseif(APPLE)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
+else()
+    add_executable(${PROJECT_NAME} core/emulator.cpp)
 endif()
 
 if(WINDOWS_STORE)
@@ -185,7 +187,7 @@ if(IOS)
 		GLES_SILENCE_DEPRECATION)
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -292,6 +294,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
+	option(SKIP_GLSLANG_INSTALL "Skip installation" ON)
+	option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" OFF)
+	option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" OFF)
+	option(ENABLE_HLSL "Enables HLSL input support" OFF)
+	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
@@ -328,6 +335,11 @@ if(NOT LIBRETRO)
 
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
+
+		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
+			find_package(CURL REQUIRED)
+			target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
+		endif()
 	endif()
 	
 	find_package(ZLIB)
@@ -821,7 +833,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/cue.cpp
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp)
+        core/imgread/ioctl.cpp
+        core/imgread/iso9660.h
+        core/imgread/isofs.cpp
+        core/imgread/isofs.h)
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -892,6 +907,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/net_handshake.cpp
         core/network/net_handshake.h
         core/network/net_platform.h
+        core/network/output.cpp
+        core/network/output.h
         core/network/picoppp.cpp
         core/network/picoppp.h)
 
@@ -937,7 +954,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/reios/font.h
         core/reios/gdrom_hle.cpp
         core/reios/gdrom_hle.h
-        core/reios/iso9660.h
         core/reios/reios.cpp
         core/reios/reios.h
         core/reios/reios_elf.cpp
@@ -1041,10 +1057,25 @@ if(NOT LIBRETRO)
 	        core/rend/gui_util.cpp
 	        core/rend/gui_util.h
 	        core/rend/mainui.cpp
-	        core/rend/mainui.h)
+	        core/rend/mainui.h
+	        core/rend/boxart/boxart.cpp
+	        core/rend/boxart/boxart.h
+	        core/rend/boxart/gamesdb.cpp
+	        core/rend/boxart/gamesdb.h
+	        core/rend/boxart/http_client.cpp
+	        core/rend/boxart/http_client.h
+	        core/rend/boxart/scraper.cpp
+	        core/rend/boxart/scraper.h)
 endif()
 
 if(USE_VULKAN)
+	add_subdirectory(core/deps/Vulkan-Headers)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
+
+	add_library(VulkanMemoryAllocator INTERFACE)
+	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
+	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
+
 	if(NOT LIBRETRO)
 	    if(ANDROID)
 	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
@@ -1058,7 +1089,7 @@ if(USE_VULKAN)
 	
 	    set(VOLK_PULL_IN_VULKAN OFF)
 	    add_subdirectory(core/deps/volk)
-	    target_include_directories(volk PRIVATE core/khronos)
+	    target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
 	endif()
 
@@ -1090,7 +1121,6 @@ if(USE_VULKAN)
             core/rend/vulkan/texture.cpp
             core/rend/vulkan/texture.h
             core/rend/vulkan/utils.h
-            core/rend/vulkan/vk_mem_alloc.h
             core/rend/vulkan/vmallocator.cpp
             core/rend/vulkan/vmallocator.h
             core/rend/vulkan/overlay.cpp
@@ -1109,6 +1139,9 @@ if(USE_VULKAN)
 	            core/rend/vulkan/vulkan_context.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.h)
+	 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
+		endif()
 	endif()
 endif()
 
@@ -1323,16 +1356,22 @@ if(NOT LIBRETRO)
 	if(ANDROID)
 	    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 	
-	    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
+	    target_sources(${PROJECT_NAME} PRIVATE
+	    	shell/android-studio/flycast/src/main/jni/src/Android.cpp
+	    	shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
+	    	shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
+		string(TIMESTAMP YEAR "%Y")
+		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
 		if(IOS)
 			set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 			add_subdirectory(shell/apple/emulator-ios/AltKit)
 			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
 
 			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/common/http_client.mm
 					shell/apple/emulator-ios/emulator/AppDelegate.h
 					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
@@ -1370,9 +1409,9 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
 				MACOSX_BUNDLE_BUNDLE_NAME "com.flyinghead.Flycast"
 				MACOSX_BUNDLE_LONG_VERSION_STRING "${GIT_VERSION}"
-				MACOSX_BUNDLE_SHORT_VERSION_STRING "${GIT_VERSION}"
-				MACOSX_BUNDLE_BUNDLE_VERSION "1"
-				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2021 Flycast contributors. All rights reserved."
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "${TAG_VERSION}"
+				MACOSX_BUNDLE_BUNDLE_VERSION "${GIT_HASH}"
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © ${YEAR} Flycast contributors. All rights reserved."
 				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/plist.in
 
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
@@ -1415,6 +1454,7 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/common/http_client.mm
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
 					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
@@ -1431,12 +1471,10 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_ICON_FILE "AppIcon"
 				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
 				MACOSX_BUNDLE_LONG_VERSION_STRING "${GIT_VERSION}"
-				MACOSX_BUNDLE_SHORT_VERSION_STRING "${GIT_VERSION}"
-				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "${TAG_VERSION}"
+				MACOSX_BUNDLE_BUNDLE_VERSION "${GIT_HASH}"
 				MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
-				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
-				MACOSX_BUNDLE_BUNDLE_VERSION "1"
-				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © ${YEAR} Flycast contributors. All rights reserved."
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf"
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=RelWithDebInfo] "dwarf-with-dsym"
 				XCODE_ATTRIBUTE_CLANG_DEBUG_INFORMATION_LEVEL[variant=RelWithDebInfo] "line-tables-only"
@@ -1498,12 +1536,13 @@ if(NOT LIBRETRO)
 					core/deps/SDL/src/main/winrt/SDL2-WinRTResources.rc)
 			target_sources(${PROJECT_NAME} PRIVATE
 				${ResourceFiles}
-				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp)
+				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp
+				shell/uwp/http_client.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32)
-			target_link_libraries(${PROJECT_NAME} PRIVATE wininet.lib iphlpapi.lib) #gdxsv
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
+			target_link_libraries(${PROJECT_NAME} PRIVATE iphlpapi.lib) #gdxsv
 		endif()
 	endif()
 endif()

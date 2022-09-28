@@ -18,7 +18,7 @@
 */
 #pragma once
 
-// GLSL code for poly params handling, used by Open GL and Vulkan per-pixel renderers
+// GLSL code for poly params handling, used by OpenGL and Vulkan per-pixel renderers
 
 #define OIT_POLY_PARAM " \n\
 struct Pixel { \n\

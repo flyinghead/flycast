@@ -128,7 +128,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 }
 
 template<bool Translucent>
-void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count)
+void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count, const ModifierVolumeParam *modVolParams)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 		return;
@@ -137,14 +137,14 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
-	ModifierVolumeParam* params = Translucent ? &pvrrc.global_param_mvo_tr.head()[first] : &pvrrc.global_param_mvo.head()[first];
+	const ModifierVolumeParam *params = &modVolParams[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
-		ModifierVolumeParam& param = params[cmv];
+		const ModifierVolumeParam& param = params[cmv];
 
 		if (param.count == 0)
 			continue;
@@ -322,7 +322,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count,
-				current_pass.mvo_tr_count - previous_pass.mvo_tr_count, current_pass.autosort);
+				current_pass.mv_op_tr_shared ? current_pass.mvo_count - previous_pass.mvo_count : current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
+				current_pass.autosort);
 
         // Reset the pixel counter
     	oitBuffers->ResetPixelCounter(cmdBuffer);
@@ -351,7 +352,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
 			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.head());
 
 			// Color subpass
 			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -398,7 +399,12 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		}
 		// Tr modifier volumes
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
-			DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+		{
+			if (current_pass.mv_op_tr_shared)
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.head());
+			else
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.head());
+		}
 
 		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
@@ -477,7 +483,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 	finalColorAttachments.clear();
 	transitionNeeded.clear();
 	clearNeeded.clear();
-	while (finalColorAttachments.size() < GetContext()->GetSwapChainSize())
+	while (finalColorAttachments.size() < GetSwapChainSize())
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
@@ -582,7 +588,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		depthAttachments[0]->GetImageView(),
 		depthAttachments[1]->GetImageView(),
 	};
-	framebuffers.resize(GetContext()->GetSwapChainSize());
+	framebuffers.resize(GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 

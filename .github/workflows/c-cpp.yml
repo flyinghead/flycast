@@ -39,7 +39,7 @@ jobs:
         run: |
           brew update
           brew install libao ldid ninja pulseaudio
-          VULKAN_VER=1.3.211.0 && aria2c --parameterized-uri=true https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
+          VULKAN_VER=1.3.224.1 && aria2c --parameterized-uri=true https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
           hdiutil attach ./vulkansdk-macos-*.dmg
           sudo /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/vulkansdk-macos-*
@@ -49,7 +49,7 @@ jobs:
       - name: Set up build environment (Linux)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev
         if: runner.os == 'Linux'
 
       - name: Set up build environment (Windows, MinGW)
@@ -117,7 +117,7 @@ jobs:
           cp shell/apple/HowToOpen.pdf artifact/bin/
           cd artifact/bin
           mv Flycast.app Flycast-gdxsv.app
-          zip -rm ${{ matrix.config.packageName }} Flycast-gdxsv.app HowToOpen.pdf
+          zip -y -rm ${{ matrix.config.packageName }} Flycast-gdxsv.app HowToOpen.pdf
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)

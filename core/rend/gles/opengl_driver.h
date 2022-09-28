@@ -19,6 +19,7 @@
 #pragma once
 #include "rend/imgui_driver.h"
 #include "emulator.h"
+#include <unordered_map>
 
 class OpenGLDriver final : public ImGuiDriver
 {
@@ -37,15 +38,25 @@ public:
 		frameRendered = true;
 	}
 
+	ImTextureID getTexture(const std::string& name) override {
+		auto it = textures.find(name);
+		if (it != textures.end())
+			return it->second;
+		else
+			return ImTextureID{};
+	}
+
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override;
+
 private:
 	void emuEvent(Event event)
 	{
 		switch (event)
 		{
-		case Event::Start:
+		case Event::Resume:
 			gameStarted = true;
 			break;
-		case Event::Terminate:
+		case Event::Pause:
 			gameStarted = false;
 			break;
 		default:
@@ -60,4 +71,5 @@ private:
 	ImTextureID crosshairTexId = ImTextureID();
 	bool gameStarted = false;
 	bool frameRendered = false;
+	std::unordered_map<std::string, ImTextureID> textures;
 };

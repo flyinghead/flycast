@@ -7,6 +7,7 @@
 
 bool pal_needs_update=true;
 bool fog_needs_update=true;
+bool rend_needs_resize = true;
 
 u8 pvr_regs[pvr_RegSize];
 
@@ -159,6 +160,16 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		{
 			PvrReg(addr, u32) = data;
 			CalculateSync();
+			if (addr == SPG_CONTROL_addr)
+				rend_needs_resize = true;
+		}
+		return;
+
+	case VO_CONTROL_addr:
+		if (PvrReg(addr, u32) != data)
+		{
+			PvrReg(addr, u32) = data;
+			rend_needs_resize = true;
 		}
 		return;
 
@@ -167,7 +178,10 @@ void pvr_WriteReg(u32 paddr,u32 data)
 			bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
 			PvrReg(addr, u32) = data;
 			if (vclk_div_changed)
+			{
 				CalculateSync();
+				rend_needs_resize = true;
+			}
 		}
 		return;
 

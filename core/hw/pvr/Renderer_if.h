@@ -21,6 +21,7 @@ void rend_allow_rollback();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
 void rend_resize_renderer();
+void rend_resize_renderer_if_needed();
 
 ///////
 extern TA_context* _pvrrc;

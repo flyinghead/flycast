@@ -28,6 +28,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "hw/maple/maple_devs.h"
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
+#include <stb_image.h>
 
 static std::string select_current_directory;
 static std::vector<std::string> subfolders;
@@ -863,4 +866,17 @@ void windowDragScroll()
 			ImGui::SetScrollY(window, window->Scroll.y - window->ScrollSpeed.y);
 		}
 	}
+}
+
+u8 *loadImage(const std::string& path, int& width, int& height)
+{
+	FILE *file = nowide::fopen(path.c_str(), "rb");
+	if (file == nullptr)
+		return nullptr;
+
+	int channels;
+	stbi_set_flip_vertically_on_load(0);
+	u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
+	std::fclose(file);
+	return imgData;
 }

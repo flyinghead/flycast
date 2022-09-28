@@ -20,7 +20,7 @@
 #include "dx11context.h"
 #include <versionhelpers.h>
 
-void DX11Texture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	D3D11_TEXTURE2D_DESC desc{};
 	desc.Width = width;

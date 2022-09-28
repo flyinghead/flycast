@@ -96,6 +96,10 @@ struct Track
 		delete file;
 		file = nullptr;
 	}
+
+	bool isDataTrack() const {
+		return CTRL & 4;
+	}
 };
 
 struct Disc
@@ -153,7 +157,7 @@ struct Disc
 	{
 		for (u32 i=0;i<tracks.size();i++)
 		{
-			u32 fmt=tracks[i].CTRL==4?2048:2352;
+			u32 fmt = tracks[i].isDataTrack() ? 2048 : 2352;
 			char fsto[1024];
 			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
 			
@@ -167,6 +171,38 @@ struct Disc
 			}
 			std::fclose(fo);
 		}
+	}
+
+	void GetSessionInfo(u8* to, u8 session) const
+	{
+		to[0] = 2; //status, will get overwritten anyway
+		to[1] = 0;
+
+		if (session == 0)
+		{
+			to[2] = sessions.size(); 	//count of sessions
+			to[3] = EndFAD >> 16;		//fad is sessions end
+			to[4] = EndFAD >> 8;
+			to[5] = EndFAD >> 0;
+		}
+		else
+		{
+			to[2] = sessions[session - 1].FirstTrack;		//start track of this session
+			to[3] = sessions[session - 1].StartFAD >> 16;	//fad is session start
+			to[4] = sessions[session - 1].StartFAD >> 8;
+			to[5] = sessions[session - 1].StartFAD >> 0;
+		}
+	}
+
+	u32 GetBaseFAD() const
+	{
+		if (type == GdRom)
+			return 45150;
+
+		u8 ses[6];
+		GetSessionInfo(ses, 0);
+		GetSessionInfo(ses, ses[2]);
+		return (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
 	}
 };
 

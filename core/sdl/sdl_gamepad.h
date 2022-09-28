@@ -201,6 +201,10 @@ public:
 		return GamepadDevice::gamepad_axis_input(code, value);
 	}
 
+	u16 getRumbleIntensity(float power)	{
+		return (u16)std::min(power * 65535.f / std::pow(1.06f, 100.f - rumblePower), 65535.f);
+	}
+
 	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		if (rumbleEnabled)
@@ -208,7 +212,7 @@ public:
 			vib_inclination = inclination * power;
 			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
-			Uint16 intensity = (Uint16)std::min(power * rumblePower * 65535.f / 100.f, 65535.f);
+			u16 intensity = getRumbleIntensity(power);
 			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
 		}
 	}
@@ -223,7 +227,7 @@ public:
 				vib_inclination = 0;
 			else
 			{
-				Uint16 intensity = (Uint16)std::min(vib_inclination * rem_time * 65535.f * rumblePower / 100.f, 65535.f);
+				u16 intensity = getRumbleIntensity(vib_inclination * rem_time);
 				SDL_JoystickRumble(sdl_joystick, intensity, intensity, rem_time);
 			}
 		}

@@ -173,3 +173,5 @@ private:
 	bool renderTimeout = false;
 };
 extern Emulator emu;
+
+int getGamePlatform(const char *path);

@@ -841,11 +841,8 @@ void gd_process_spi_cmd()
 
 			if (param_type == 1 || param_type == 2)
 			{
-				cdda.status = cdda_t::Playing;
-				SecNumber.Status = GD_PLAY;
-
 				bool min_sec_frame = param_type == 2;
-				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
+				cdda.StartAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
 				cdda.EndAddr.FAD = GetFAD(&packet_cmd.data_8[8], min_sec_frame);
 				if (cdda.EndAddr.FAD == 0)
 				{
@@ -856,6 +853,13 @@ void gd_process_spi_cmd()
 					cdda.EndAddr.FAD = ses_inf[3] << 16 | ses_inf[4] << 8 | ses_inf[5];
 				}
 				cdda.repeats = packet_cmd.data_8[6] & 0xF;
+				if ((cdda.status != cdda_t::Playing && cdda.status != cdda_t::Paused)
+						|| cdda.CurrAddr.FAD < cdda.StartAddr.FAD
+						|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+					cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
+				cdda.status = cdda_t::Playing;
+				SecNumber.Status = GD_PLAY;
+
 				GDStatus.DSC = 1;
 			}
 			else if (param_type == 7)

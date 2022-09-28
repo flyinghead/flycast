@@ -32,6 +32,7 @@
 #include "emulator.h"
 #include "oslib/oslib.h"
 #include "vulkan_driver.h"
+#include "rend/transform_matrix.h"
 
 void ReInitOSD();
 
@@ -143,8 +144,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		{
 			u32 apiVersion;
 			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
-				vulkan11 = VK_VERSION_MAJOR(apiVersion) > 1
-					|| (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 1);
+				vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
+					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
 		}
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
@@ -231,7 +232,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
 		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 		vendorID = properties->vendorID;
-		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
+		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName.data());
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -278,8 +279,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 void VulkanContext::InitImgui()
 {
+	imguiDriver.reset();
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
-	ImGui_ImplVulkan_InitInfo initInfo = {};
+	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = (VkInstance)*instance;
 	initInfo.PhysicalDevice = (VkPhysicalDevice)physicalDevice;
 	initInfo.Device = (VkDevice)*device;
@@ -287,11 +289,13 @@ void VulkanContext::InitImgui()
 	initInfo.Queue = (VkQueue)graphicsQueue;
 	initInfo.PipelineCache = (VkPipelineCache)*pipelineCache;
 	initInfo.DescriptorPool = (VkDescriptorPool)*descriptorPool;
+	initInfo.MinImageCount = 2;
+	initInfo.ImageCount = GetSwapChainSize();
 #ifdef VK_DEBUG
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass, 0))
+	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
 	{
 		die("ImGui initialization failed");
 	}
@@ -308,7 +312,7 @@ void VulkanContext::InitImgui()
 		graphicsQueue.submit(1, &submitInfo, *drawFences.front());
 
 		device->waitIdle();
-		ImGui_ImplVulkan_InvalidateFontUploadObjects();
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 }
 
@@ -749,13 +753,21 @@ bool VulkanContext::init()
 	return InitDevice();
 }
 
-void VulkanContext::NewFrame()
+bool VulkanContext::recreateSwapChainIfNeeded()
 {
 	if (resized || HasSurfaceDimensionChanged())
 	{
 		CreateSwapChain();
 		lastFrameView = vk::ImageView();
+		return true;
 	}
+	else
+		return false;
+}
+
+void VulkanContext::NewFrame()
+{
+	recreateSwapChainIfNeeded();
 	if (!IsValid())
 		throw InvalidVulkanContext();
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
@@ -850,14 +862,18 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float marginWidth;
-	if (config::Rotate90)
-		marginWidth = ((float)width - (float)extent.height / extent.width * height) / 2.f;
+	float renderAR = getOutputFramebufferAspectRatio();
+	float screenAR = (float)width / height;
+	float dx = 0;
+	float dy = 0;
+	if (renderAR > screenAR)
+		dy = height * (1 - screenAR / renderAR) / 2;
 	else
-		marginWidth = ((float)width - (float)extent.width / extent.height * height) / 2.f;
-	vk::Viewport viewport(marginWidth, 0, width - marginWidth * 2.f, height);
+		dx = width * (1 - renderAR / screenAR) / 2;
+
+	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, 1, &viewport);
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
 	else
@@ -877,16 +893,26 @@ std::string VulkanContext::getDriverName()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
-	return std::string(props.deviceName);
+	return props.deviceName;
 }
 
 std::string VulkanContext::getDriverVersion()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
-	return std::to_string(VK_VERSION_MAJOR(props.driverVersion)) + "."
-			+ std::to_string(VK_VERSION_MINOR(props.driverVersion)) + "."
-			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
+#ifdef __APPLE__
+	return std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
+			+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
+			+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
+			// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
+			+ std::to_string(props.driverVersion / 10000) + "."
+			+ std::to_string((props.driverVersion % 10000) / 100) + "."
+			+ std::to_string(props.driverVersion % 100);
+#else
+	return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
+			+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
+			+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
+#endif
 }
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
@@ -1163,28 +1189,4 @@ VulkanContext::~VulkanContext()
 {
 	verify(contextInstance == this);
 	contextInstance = nullptr;
-}
-
-void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
-{
-	VulkanContext *context = VulkanContext::Instance();
-	if (!context->IsValid())
-		return;
-	try {
-		bool rendering = context->IsRendering();
-		vk::CommandBuffer vmuCmdBuffer;
-		if (!rendering)
-		{
-			context->NewFrame();
-			vmuCmdBuffer = context->PrepareOverlay(true, false);
-			context->BeginRenderPass();
-			context->PresentLastFrame();
-			context->DrawOverlay(settings.display.uiScale, true, false);
-		}
-		// Record Imgui Draw Data and draw funcs into command buffer
-		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
-		if (!rendering)
-			context->EndFrame(vmuCmdBuffer);
-	} catch (const InvalidVulkanContext& err) {
-	}
 }

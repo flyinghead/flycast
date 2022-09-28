@@ -185,7 +185,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	);
 
 	pipelines[hash(listType, autosort, &pp, pass, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-			graphicsPipelineCreateInfo);
+			graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateFinalPipeline()
@@ -271,8 +271,7 @@ void OITPipelineManager::CreateFinalPipeline()
 	  2                                           // subpass
 	);
 
-	finalPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
-
+	finalPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateClearPipeline()
@@ -347,7 +346,7 @@ void OITPipelineManager::CreateClearPipeline()
 	  2                                           // subpass
 	);
 
-	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
@@ -470,7 +469,7 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, boo
 
 	modVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-					graphicsPipelineCreateInfo);
+					graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
@@ -566,5 +565,5 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, b
 
 	trModVolPipelines[hash(mode, cullMode, naomi2)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
-					graphicsPipelineCreateInfo);
+					graphicsPipelineCreateInfo).value;
 }

@@ -185,9 +185,9 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	physicalDevice.getProperties(&props);
 
 	NOTICE_LOG(RENDERER, "GPU Supports Vulkan API: %u.%u.%u",
-			VK_VERSION_MAJOR(props.apiVersion),
-			VK_VERSION_MINOR(props.apiVersion),
-			VK_VERSION_PATCH(props.apiVersion));
+			VK_API_VERSION_MAJOR(props.apiVersion),
+			VK_API_VERSION_MINOR(props.apiVersion),
+			VK_API_VERSION_PATCH(props.apiVersion));
 	if (VK_VERSION_MINOR(props.apiVersion) >= 1 && ::vkGetPhysicalDeviceFormatProperties2 != nullptr)
 	{
 		NOTICE_LOG(RENDERER, "GPU Supports vkGetPhysicalDeviceProperties2");

@@ -113,7 +113,7 @@ void QuadPipeline::CreatePipeline()
 	  subpass                                     // subpass
 	);
 
-	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass, int subpass)
