@@ -30,7 +30,7 @@ public:
     void Reset();
     void OnMainUiLoop();
     bool StartLocalTest(const char* param);
-    void Prepare(const proto::P2PMatching matching, int port);
+    void Prepare(const proto::P2PMatching& matching, int port);
     void Open();
     void Close();
     u32 OnSockWrite(u32 addr, u32 size);

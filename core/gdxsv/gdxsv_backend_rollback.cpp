@@ -177,7 +177,8 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
     return true;
 }
 
-void GdxsvBackendRollback::Prepare(const proto::P2PMatching matching, int port) {
+void GdxsvBackendRollback::Prepare(const proto::P2PMatching& matching, int port) {
+    matching_ = matching;
     player_count_ = matching.player_count();
     me_ = matching.peer_id();
     port_ = port;
