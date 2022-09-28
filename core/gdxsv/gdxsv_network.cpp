@@ -355,19 +355,22 @@ void MessageFilter::Clear() {
     recv_seq.clear();
 }
 
-void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_ms) {
+void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms) {
     if (running_) return;
     verify(peer_id < N);
     client_.Close();
     client_.Bind(port);
     running_ = true;
 
-    std::thread([this, session_id, peer_id, timeout_ms]() {
+    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms]() {
         WARN_LOG(COMMON, "Start UdpPingPong Thread");
         auto start_time = std::chrono::high_resolution_clock::now();
         std::string sender;
 
         for (int loop_count = 0; running_; loop_count++) {
+            auto now = std::chrono::high_resolution_clock::now();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
+
             while (true) {
                 Packet recv{};
 
@@ -507,7 +510,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                     }
                 }
 
-                if (matrix_ok) {
+                if (matrix_ok && timeout_min_ms < ms) {
                     NOTICE_LOG(COMMON, "UdpPingTest Finish ok");
                     client_.Close();
                     running_ = false;
@@ -515,9 +518,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                 }
             }
 
-            auto now = std::chrono::high_resolution_clock::now();
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
-            if (timeout_ms < ms) {
+            if (timeout_max_ms < ms) {
                 NOTICE_LOG(COMMON, "UdpPingTest Finish timeout");
                 client_.Close();
                 running_ = false;
@@ -545,9 +546,11 @@ bool UdpPingPong::Running() {
     return running_;
 }
 
-void UdpPingPong::AddCandidate(uint8_t peer_id, const std::string& ip, int port) {
+void UdpPingPong::AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     Candidate c{};
+    user_to_peer_[user_id] = peer_id;
+    peer_to_user_[peer_id] = user_id;
     c.peer_id = peer_id;
     c.remote.Open(ip.c_str(), port);
     candidates_.push_back(c);

@@ -4,6 +4,8 @@ import os
 import subprocess
 import shutil
 import sys
+import glob
+import time
 import threading
 from pathlib import Path
 
@@ -16,24 +18,31 @@ FLYCAST = os.getenv("FLYCAST", "out/build/x64-Debug/flycast.exe")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
-W = 640
+W = 480
 H = 480
 
 
 def prepare_workdir(idx: int):
-    os.makedirs(f"work/flycast{idx}", exist_ok=True)
+    os.makedirs(f"work/flycast{idx}/data", exist_ok=True)
     shutil.copy(Path(FLYCAST), f"work/flycast{idx}/")
+    for file in glob.glob(os.path.join("work/state", "*.state")):
+        if os.path.isfile(file):
+            shutil.copy(file, f"work/flycast{idx}/data")
     return f"work/flycast{idx}"
 
 
 def conf_log(idx: int):
-    return f"--config log:Verbosity={1}"
+    return f"--config log:Verbosity={1} --config log:LogToFile=1"
+
+
+def conf_gdxsv(idx: int):
+    return f"--config gdxsv:server=127.0.0.1"
 
 
 def conf_window_layout(idx: int):
     x = X_OFFSET + W * (idx % 2)
     y = Y_OFFSET + H * (idx // 2)
-    return f"--config window:top={y},left={x},width={W},height={H}"
+    return f"--config window:top={y} --config window:left={x} --config window:width={W} --config window:height={H}"
 
 
 def run(*arg_list) -> subprocess.Popen[str]:
@@ -45,14 +54,16 @@ def run(*arg_list) -> subprocess.Popen[str]:
 def run_rom(idx: int) -> subprocess.Popen[str]:
     return run(
         FLYCAST_NAME, ROM,
-        conf_window_layout(idx),
+        conf_gdxsv(idx),
         conf_log(idx),
+        conf_window_layout(idx),
     )
 
 
 def run_replay(idx: int) -> subprocess.Popen[str]:
     return run(
         FLYCAST_NAME, ROM,
+        conf_gdxsv(idx),
         conf_window_layout(idx),
         conf_log(idx),
     )
@@ -61,6 +72,7 @@ def run_replay(idx: int) -> subprocess.Popen[str]:
 def run_rbk_test(idx: int) -> subprocess.Popen[str]:
     return run(
         FLYCAST_NAME, ROM,
+        conf_gdxsv(idx),
         conf_window_layout(idx),
         conf_log(idx),
         f"--config gdxsv:rbk_test={idx+1}"
@@ -91,19 +103,23 @@ def main():
 
     popens: [subprocess.Popen[str]] = []
 
-    for i in reversed(range(N)):
-        wdir = prepare_workdir(i+1)
-        os.chdir(wdir)
-        truncate("flycast.log")
-        if i == 0:
-            threading.Thread(target=tail, args=("flycast.log",), name="tail", daemon=True).start()
-        p = run_funcs[sys.argv[1]](i)
-        popens.append(p)
-        os.chdir(cwd)
-
-
-    for p in popens:
-        p.wait()
+    try:
+        for i in reversed(range(N)):
+            wdir = prepare_workdir(i+1)
+            os.chdir(wdir)
+            truncate("flycast.log")
+            if i == 0:
+                threading.Thread(target=tail, args=("flycast.log",), name="tail", daemon=True).start()
+            p = run_funcs[sys.argv[1]](i)
+            popens.append(p)
+            os.chdir(cwd)
+        time.sleep(24*60*60)
+    finally:
+        for p in popens:
+            if os.name == 'nt':
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(p.pid)])
+            else:
+                p.kill()
 
 
 if __name__ == "__main__":

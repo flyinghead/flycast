@@ -100,26 +100,22 @@ void GdxsvBackendRollback::Reset() {
 void GdxsvBackendRollback::OnMainUiLoop() {
     if (frame_info_.start_session) {
         emu.stop();
-        state_ = State::StartGGPOSession;
-
-        for (int i = 0; i < player_count_; i++) {
-            if (i != me_) {
-                ping_pong_.AddCandidate(i, "127.0.0.1", 29713 + i);
-            }
-        }
-        ping_pong_.Start(10111, me_, 29713 + me_, 10000);
-        NOTICE_LOG(COMMON, "UdpPingPong Start");
+        state_ = State::WaitPingPong;
     }
 
-    if (state_ == State::StartGGPOSession && !ping_pong_.Running()) {
+    if (state_ == State::WaitPingPong && !ping_pong_.Running()) {
+        state_ = State::StartGGPOSession;
+    }
+
+    if (state_ == State::StartGGPOSession) {
         bool ok = true;
+        player_count_ = matching_.player_count();
         std::vector<std::string> ips(player_count_);
         std::vector<u16> ports(player_count_);
-        for (int i = 0; i < player_count_; i++)
-        {
+        for (int i = 0; i < player_count_; i++) {
             if (i == me_) {
                 ips[i] = "";
-                ports[i] = 29713 + me_; // TODO dummy
+                ports[i] = port_;
             } else {
                 sockaddr_in addr;
                 int rtt;
@@ -137,7 +133,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         if (ok) {
             config::GGPOEnable.override(1);
             settings.aica.NoBatch = 1;
-            start_network_ = ggpo::gdxsvStartNetwork("session", me_, ips, ports);
+            start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), me_, ips, ports);
             ggpo::receiveKeyFrameMessages(onKeyFrameMessage);
             state_ = State::WaitGGPOSession;
         } else {
@@ -181,9 +177,24 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
     return true;
 }
 
+void GdxsvBackendRollback::Prepare(const proto::P2PMatching matching, int port) {
+    player_count_ = matching.player_count();
+    me_ = matching.peer_id();
+    port_ = port;
+
+    ping_pong_.Reset();
+    for (const auto& c : matching.candidates()) {
+        if (c.peer_id() != me_) {
+			ping_pong_.AddCandidate(c.user_id(), c.peer_id(), c.ip(), c.port());
+        }
+    }
+    ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_min_ms(), matching.timeout_max_ms());
+}
+
 void GdxsvBackendRollback::Open() {
     recv_buf_.assign({ 0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd });
     state_ = State::McsSessionExchange;
+    maxlag_ = 0;
     keyFrame.Reset();
     ApplyPatch(true);
 }
@@ -452,8 +463,8 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 
         if (msg.command == LbsMessage::lbsAskMcsAddress) {
             LbsMessage::SvAnswer(msg).
-                Write16(4)->Write8(127)->Write8(0)->Write8(0)->Write8(1)->
-                Write16(2)->Write16(3333)->Serialize(recv_buf_);
+                Write16(4)->Write8(255)->Write8(255)->Write8(255)->Write8(255)->
+                Write16(2)->Write16(255)->Serialize(recv_buf_);
         }
 
         if (msg.command == LbsMessage::lbsLogout) {

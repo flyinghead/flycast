@@ -17,10 +17,12 @@ public:
         None,
         StartLocalTest,
         LbsStartBattleFlow,
+        McsWaitJoin,
+
+        McsSessionExchange,
+        WaitPingPong,
         StartGGPOSession,
         WaitGGPOSession,
-        McsWaitJoin,
-        McsSessionExchange,
         McsInBattle,
         End,
     };
@@ -28,6 +30,7 @@ public:
     void Reset();
     void OnMainUiLoop();
     bool StartLocalTest(const char* param);
+    void Prepare(const proto::P2PMatching matching, int port);
     void Open();
     void Close();
     u32 OnSockWrite(u32 addr, u32 size);
@@ -46,7 +49,10 @@ public:
     int recv_delay_;
     int player_count_;
     int me_;
-
+    int port_;
+    UdpPingPong ping_pong_;
+    std::future<bool> start_network_;
+    proto::P2PMatching matching_;
     struct FrameInfo {
         void Reset() {
             start_session = false;
@@ -57,6 +63,4 @@ public:
         bool end_session;
     } frame_info_;
 
-    UdpPingPong ping_pong_;
-    std::future<bool> start_network_;
 };

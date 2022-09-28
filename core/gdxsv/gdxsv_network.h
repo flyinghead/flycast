@@ -29,7 +29,7 @@ public:
 
     u32 ReadableSize() const;
 
-    const std::string &host() { return host_; }
+    const std::string &host() const { return host_; }
 
     const std::string &local_ip() const { return local_ip_; }
 
@@ -123,7 +123,7 @@ class UdpPingPong {
 public:
     static const int N = 4;
 
-    void Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_ms);
+    void Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms);
 
     void Stop();
 
@@ -131,7 +131,7 @@ public:
 
     bool Running();
 
-    void AddCandidate(uint8_t peer_id, const std::string& ip, int port);
+    void AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port);
 
     bool GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, int* rtt);
 
@@ -170,4 +170,6 @@ private:
     std::recursive_mutex mutex_;
     uint8_t rtt_matrix_[N][N];
     std::vector<Candidate> candidates_;
+    std::map<std::string, int> user_to_peer_;
+    std::map<int, std::string> peer_to_user_;
 };

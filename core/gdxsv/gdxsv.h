@@ -16,6 +16,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 #include "emulator.h"
+#include "network/miniupnp.h"
 
 
 class Gdxsv {
@@ -24,8 +25,8 @@ public:
         Offline,
         Lbs,
         McsUdp,
+        McsRollback,
         Replay,
-        RollbackTest,
     };
 
     Gdxsv() : lbs_net(symbols),
@@ -79,8 +80,17 @@ private:
     std::string loginkey;
     std::map<std::string, u32> symbols;
 
+    MiniUPnP upnp;
+    std::future<bool> upnp_init;
+    std::future<bool> port_mapping;
+    int upnp_port;
+    int udp_port;
+    std::string user_id;
+
+    UdpRemote lbs_remote;
+    UdpClient udp;
+
     proto::GamePatchList patch_list;
-    std::vector<proto::ExtPlayerInfo> ext_player_info;
 
     GdxsvBackendTcp lbs_net;
     GdxsvBackendUdp udp_net;

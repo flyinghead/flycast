@@ -23,6 +23,11 @@ void Gdxsv::Reset() {
     udp_net.Reset();
     RestoreOnlinePatch();
 
+    if (upnp_init.valid()) {
+        upnp_init = std::future<bool>();
+		upnp.Term();
+    }
+
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
@@ -49,23 +54,63 @@ void Gdxsv::Reset() {
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
 
+    udp_port = config::GdxLocalPort;
+    if (config::EnableUPnP) {
+        upnp_init = std::async(std::launch::async, [this]() { return upnp.Init(); });
+    }
+
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
+    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int) disk, server.c_str(), loginkey.c_str(), udp_port);
 
-    lbs_net.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
-        if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
-            proto::ExtPlayerInfo player_info;
-            if (player_info.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-                ext_player_info.push_back(player_info);
+    lbs_net.callback_lbs_packet([this](const LbsMessage& lbs_msg) {
+        if (lbs_msg.command == LbsMessage::lbsUserRegist ||
+            lbs_msg.command == LbsMessage::lbsUserDecide) {
+            std::string id(6, ' ');
+            for (int i = 0; i < 6; i++) {
+                id[i] = lbs_msg.body[2 + i];
+            }
+            user_id = id;
+        }
+        if (lbs_msg.command == LbsMessage::lbsUserRegist ||
+            lbs_msg.command == LbsMessage::lbsUserDecide ||
+            lbs_msg.command == LbsMessage::lbsLineCheck) {
+            if (udp.Initialized()) {
+				if (!lbs_remote.is_open()) {
+					lbs_remote.Open(lbs_net.RemoteHost().c_str(), lbs_net.RemotePort());
+				}
+
+				proto::Packet pkt;
+				pkt.set_type(proto::MessageType::HelloLbs);
+				pkt.mutable_hello_lbs_data()->set_user_id(user_id);
+				char buf[128];
+				if (pkt.SerializePartialToArray((void*)buf, (int)sizeof(buf))) {
+					udp.SendTo((const char*)buf, pkt.GetCachedSize(), lbs_remote);
+				}
+				else {
+					ERROR_LOG(COMMON, "packet serialize error");
+				}
+			}
+
+			lbs_net.Send(GeneratePlatformInfoPacket());
+        }
+        if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
+            proto::P2PMatching matching;
+            if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
+                int port = udp.bind_port();
+                udp.Close();
+                lbs_remote.Close();
+                rollback_net.Prepare(matching, port);
+            }
+            else {
+                ERROR_LOG(COMMON, "p2p matching deserialize error");
             }
         }
         if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
             // Reset current patches for no-patched game
             RestoreOnlinePatch();
-            ext_player_info.clear();
         }
         if (lbs_msg.command == LbsMessage::lbsGamePatch) {
             // Reset current patches and update patch_list
@@ -76,7 +121,8 @@ void Gdxsv::Reset() {
                 ERROR_LOG(COMMON, "patch_list deserialize error");
             }
         }
-        if (disk == 2 && lbs_msg.command == LbsMessage::lbsBattleUserCount && GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
+        if (lbs_msg.command == LbsMessage::lbsBattleUserCount &&
+            disk == 2 && GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
             u32 battle_user_count = u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
             const u32 offset = 0x8C000000 + 0x00010000;
             gdxsv_WriteMem32(offset + 0x3839FC, battle_user_count);
@@ -154,7 +200,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     ss << "local_ip=" << lbs_net.LocalIP() << "\n";
-    // ss << "bind_port=" << .bind_port() << "\n";
+    ss << "udp_port=" << udp_port << "\n";
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
         auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
@@ -212,26 +258,40 @@ void Gdxsv::HandleRPC() {
 
         if (netmode == NetMode::Replay) {
             replay_net.Open();
-        } else if (netmode == NetMode::RollbackTest) {
-            rollback_net.Open();
         } else if (tolobby == 1) {
             udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
             if (lbs_net.Connect(host, port)) {
                 netmode = NetMode::Lbs;
-                auto packet = GeneratePlatformInfoPacket();
-                lbs_net.Send(packet);
+                lbs_net.Send(GeneratePlatformInfoPacket());
+                lbs_remote.Open(host.c_str(), port);
+                if (udp.Bind(udp_port)) {
+					udp_port = udp.bind_port();
+                    if (config::EnableUPnP && udp_port != upnp_port) {
+                        upnp_port = udp_port;
+						port_mapping = std::async(std::launch::async, [this]() {
+							return upnp.AddPortMapping(udp_port, false);
+						});
+                    }
+                }
             } else {
                 netmode = NetMode::Offline;
             }
         } else {
-            lbs_net.Close();
-            char addr_buf[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
-            host = std::string(addr_buf);
-            if (udp_net.Connect(host, port)) {
-                netmode = NetMode::McsUdp;
+			lbs_net.Close();
+            if (~host_ip == 0) {
+                lbs_remote.Close();
+                udp.Close();
+                rollback_net.Open();
+				netmode = NetMode::McsRollback;
             } else {
-                netmode = NetMode::Offline;
+				char addr_buf[INET_ADDRSTRLEN];
+				inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
+				host = std::string(addr_buf);
+				if (udp_net.Connect(host, port)) {
+					netmode = NetMode::McsUdp;
+				} else {
+					netmode = NetMode::Offline;
+				}
             }
         }
     }
@@ -239,7 +299,7 @@ void Gdxsv::HandleRPC() {
     if (gdx_rpc.request == GDX_RPC_SOCK_CLOSE) {
         if (netmode == NetMode::Replay) {
             replay_net.Close();
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             rollback_net.Close();
         } else {
             lbs_net.Close();
@@ -265,7 +325,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
@@ -277,7 +337,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
@@ -289,7 +349,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockPoll();
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockPoll();
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockPoll();
         }
     }
@@ -651,7 +711,7 @@ bool Gdxsv::StartRollbackTest(const char* param) {
     rollback_net.Reset();
 
     if (rollback_net.StartLocalTest(param)) {
-        netmode = NetMode::RollbackTest;
+        netmode = NetMode::McsRollback;
         return true;
     }
 
