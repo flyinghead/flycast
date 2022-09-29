@@ -143,6 +143,7 @@ struct MemPages
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
+static int lastLoadStateFrame = -1;
 
 static int timesyncOccurred;
 
@@ -295,6 +296,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
+	lastLoadStateFrame = frame;
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
 		const MemPages& pages = deltaStates[f];
@@ -836,8 +838,17 @@ void displayStats()
 {
 	if (!active())
 		return;
+
 	GGPONetworkStats stats;
-	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
+	int rollbackedFrame = 0;
+
+	if (lastLoadStateFrame != -1) {
+		int frame;
+		bool dummy;
+		getCurrentFrame(&frame, &dummy);
+		rollbackedFrame = frame - lastLoadStateFrame - 1;
+		lastLoadStateFrame = -1;
+	}
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
@@ -847,44 +858,59 @@ void displayStats()
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
-	// Send Queue
-	ImGui::Text("Send Q");
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		ggpo_get_network_stats(ggpoSession, playerHandles[i], &stats);
 
-	// Frame Delay
-	ImGui::Text("Delay");
-	std::string delay = std::to_string(config::GGPODelay.get());
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
-	ImGui::Text("%s", delay.c_str());
+		if (i == 0) {
+			// Frame Delay
+			ImGui::Text("Delay");
+			std::string delay = std::to_string(config::GGPODelay.get());
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+			ImGui::Text("%s", delay.c_str());
 
-	// Ping
-	ImGui::Text("Ping");
-	std::string ping = std::to_string(stats.network.ping);
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
-	ImGui::Text("%s", ping.c_str());
+			ImGui::Text("Rollback");
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("0").x);
+			ImGui::Text("%d", rollbackedFrame);
 
-	// Predicted Frames
-	if (stats.sync.predicted_frames >= 7)
-		// red
-	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
-	else if (stats.sync.predicted_frames >= 5)
-		// yellow
-	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
-	ImGui::Text("Predicted");
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
-	if (stats.sync.predicted_frames >= 5)
-		ImGui::PopStyleColor();
+			// Predicted Frames
+			if (stats.sync.predicted_frames >= 7)
+				// red
+				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+			else if (stats.sync.predicted_frames >= 5)
+				// yellow
+				ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+			ImGui::Text("Predicted");
+			ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+			if (stats.sync.predicted_frames >= 5)
+				ImGui::PopStyleColor();
+		}
 
-	// Frames behind
-	int timesync = timesyncOccurred;
-	if (timesync > 0)
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-	ImGui::Text("Behind");
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
-	if (timesync > 0)
-	{
-		ImGui::PopStyleColor();
-		timesyncOccurred--;
+		if (i == localPlayerNum) continue;
+		if (playerHandles[i] == 0) continue;
+
+		ImGui::Text("-- %dP --", i+1);
+
+		// Ping
+		ImGui::Text("Ping");
+		std::string ping = std::to_string(stats.network.ping);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+		ImGui::Text("%s", ping.c_str());
+
+		// Send Queue
+		ImGui::Text("Send Q");
+		ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+
+		// Frames behind
+		int timesync = timesyncOccurred;
+		if (timesync > 0)
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+		ImGui::Text("Behind");
+		ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+		if (timesync > 0)
+		{
+			ImGui::PopStyleColor();
+			timesyncOccurred--;
+		}
 	}
 
 	ImGui::PopStyleColor();
