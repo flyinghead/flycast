@@ -106,6 +106,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         bool ok = true;
         std::vector<std::string> ips(matching_.player_count());
         std::vector<u16> ports(matching_.player_count());
+        int max_rtt = 0;
         for (int i = 0; i < matching_.player_count(); i++) {
             if (i == matching_.peer_id()) {
                 ips[i] = "";
@@ -115,6 +116,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
                 sockaddr_in addr;
                 int rtt;
                 if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
+                    max_rtt = std::max(max_rtt, rtt);
                     char str[INET_ADDRSTRLEN] = {};
                     inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
                     ips[i] = str;
@@ -127,7 +129,10 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         }
 
         if (ok) {
+            int delay = std::max(2, int(max_rtt / 2.0 / 16.66 + 0.5));
+            NOTICE_LOG(COMMON, "max_rtt=%d delay=%d", max_rtt, delay);
             config::GGPOEnable.override(1);
+            config::GGPODelay.override(delay);
             start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports);
             ggpo::receiveKeyFrameMessages(onKeyFrameMessage);
             ggpo::receiveChatMessages(nullptr);
@@ -235,15 +240,6 @@ u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
     if (state_ <= State::LbsStartBattleFlow) {
         ProcessLbsMessage();
     }
-    else {
-        McsMessage msg;
-        if (mcs_tx_reader_.Read(msg)) {
-            int frame = 0;
-            bool rollback = false;
-            ggpo::getCurrentFrame(&frame, &rollback);
-            NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockSend: %s %s", frame, rollback, McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
-        }
-    }
 
     ApplyPatch(false);
 
@@ -258,8 +254,8 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         int frame = 0;
         bool rollback = false;
         ggpo::getCurrentFrame(&frame, &rollback);
-        const int InetBuf = 0x0c3ab984;
-        const int ConnectionStatus = 0x0c3abb84;
+        const int InetBuf = 0x0c3ab984; // TODO: disk2
+        const int ConnectionStatus = 0x0c3abb84; // TODO: disk2
         NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d",
             frame, rollback, state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
@@ -275,7 +271,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                 gdxsv_WriteMem8(InetBuf + i, 0);
             }
 
-            NOTICE_LOG(COMMON, "InetBuf:%s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+            // NOTICE_LOG(COMMON, "InetBuf:%s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
 
             switch (msg.Type()) {
             case McsMessage::MsgType::ConnectionIdMsg:
@@ -344,11 +340,11 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                     }
                 }
 
-                if (ggpo::getCurrentFrame(&frame, &rollback) && !rollback) {
+                if (!rollback) {
                     gui_display_notification("Sync...", 1000);
                     NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
-                    ggpo::sendKeyFrameMessage( matching_.peer_id(), McsMessage::MsgType::LoadEndMsg, frame);
-                    onKeyFrameMessage( matching_.peer_id(), McsMessage::MsgType::LoadEndMsg, frame);
+                    ggpo::sendKeyFrameMessage(matching_.peer_id(), McsMessage::MsgType::LoadEndMsg, frame);
+                    onKeyFrameMessage(matching_.peer_id(), McsMessage::MsgType::LoadEndMsg, frame);
                 }
                 break;
             default:
@@ -360,8 +356,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             verify(recv_buf_.size() <= size);
         }
 
-        if (keyFrame.Test(frame))
-        {
+        if (keyFrame.Test(frame)) {
             if (keyFrame.Type() == McsMessage::MsgType::StartMsg) {
                 NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
                 for (int i = 0; i < matching_.player_count(); i++) {
@@ -427,23 +422,19 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
         }
 
         if (msg.command == LbsMessage::lbsLobbyMatchingEntry) {
-            NOTICE_LOG(COMMON, "lbsLobbyMatchingEntry");
             LbsMessage::SvAnswer(msg).Serialize(recv_buf_);
             LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
         }
 
         if (msg.command == LbsMessage::lbsAskMatchingJoin) {
-            NOTICE_LOG(COMMON, "lbsAskMatchingJoin");
             LbsMessage::SvAnswer(msg).Write8(matching_.player_count())->Serialize(recv_buf_);
         }
 
         if (msg.command == LbsMessage::lbsAskPlayerSide) {
-            NOTICE_LOG(COMMON, "lbsAskPlayerSide");
             LbsMessage::SvAnswer(msg).Write8(matching_.peer_id() + 1)->Serialize(recv_buf_);
         }
 
         if (msg.command == LbsMessage::lbsAskPlayerInfo) {
-            NOTICE_LOG(COMMON, "lbsAskPlayerInfo");
             int pos = msg.Read8();
             DummyGameParam[16] = '0' + pos;
             DummyGameParam[17] = 0;

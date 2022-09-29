@@ -45,14 +45,17 @@ def conf_window_layout(idx: int):
     return f"--config window:top={y} --config window:left={x} --config window:width={W} --config window:height={H}"
 
 
-def run(*arg_list) -> subprocess.Popen[str]:
+def run(idx, *arg_list) -> subprocess.Popen[str]:
     cmd = " ".join(arg_list)
     print(cmd)
-    return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    new_env = os.environ.copy()
+    #if idx == 0: new_env["GGPO_NETWORK_DELAY"] = "16"
+    #else: new_env["GGPO_NETWORK_DELAY"] = "16"
+    return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
 
 
 def run_rom(idx: int) -> subprocess.Popen[str]:
-    return run(
+    return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
         conf_log(idx),
@@ -61,7 +64,7 @@ def run_rom(idx: int) -> subprocess.Popen[str]:
 
 
 def run_replay(idx: int) -> subprocess.Popen[str]:
-    return run(
+    return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
         conf_window_layout(idx),
@@ -70,7 +73,7 @@ def run_replay(idx: int) -> subprocess.Popen[str]:
 
 
 def run_rbk_test(idx: int) -> subprocess.Popen[str]:
-    return run(
+    return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
         conf_window_layout(idx),
