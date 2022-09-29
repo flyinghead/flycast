@@ -301,6 +301,7 @@ void Gdxsv::HandleRPC() {
             replay_net.Close();
         } else if (netmode == NetMode::McsRollback) {
             rollback_net.Close();
+            netmode = NetMode::Offline;
         } else {
             lbs_net.Close();
 

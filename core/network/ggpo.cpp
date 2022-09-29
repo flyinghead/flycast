@@ -109,6 +109,7 @@ static int localPlayerNum;
 static GGPOPlayerHandle playerHandles[MAX_PLAYERS];
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
+static std::map<GGPOPlayerHandle, bool> connected;
 static bool synchronized;
 static std::recursive_mutex ggpoMutex;
 static std::array<int, 5> msPerFrame;
@@ -122,6 +123,7 @@ static bool absPointerPos;
 static bool keyboardGame;
 static bool mouseGame;
 static int inputSize;
+static void (*eventCallback)(GGPOEvent* event);
 static void (*chatCallback)(int playerNum, const std::string& msg);
 static void (*keyFrameCallback)(int playerNum, int frameType, int frameCount);
 
@@ -220,6 +222,7 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
 		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
+		connected[info->u.synchronized.player] = true;
 		gui_display_notification("Synchronized with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_RUNNING:
@@ -229,7 +232,8 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
 		INFO_LOG(NETWORK, "Disconnected from peer %d", info->u.disconnected.player);
-		throw FlycastException("Disconnected from peer");
+		connected[info->u.connected.player] = false;
+		// throw FlycastException("Disconnected from peer");
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
@@ -475,6 +479,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.on_event        = on_event;
 	cb.log_game_state  = log_game_state;
 	cb.on_message      = on_message;
+	connected.clear();
 
 #ifdef SYNC_TEST
 	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), 2, sizeof(kcode[0]), 1);
@@ -937,6 +942,11 @@ void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int 
 	keyFrameCallback = callback;
 }
 
+bool isConnected(int playerNum) {
+	if (playerNum == localPlayerNum) return true;
+	return connected[playerHandles[playerNum]];
+}
+
 void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
 {
 	GGPOSessionCallbacks cb{};
@@ -948,6 +958,7 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	cb.on_event        = on_event;
 	cb.log_game_state  = log_game_state;
 	cb.on_message      = on_message;
+	memset(playerHandles, 0, sizeof(playerHandles));
 
 #ifdef SYNC_TEST
 	inputSize = sizeof(kcode[0]);
@@ -1055,7 +1066,6 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::
 			gdxsvStartSession(0, 0, "");
 #else
 			gdxsvStartSession(sessionCode, me, ips, ports);
-			// TODO
 #endif
 		}
 		while (!synchronized && active())
