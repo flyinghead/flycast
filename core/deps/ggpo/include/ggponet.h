@@ -615,11 +615,9 @@ GGPO_API GGPOErrorCode __cdecl ggpo_send_message(GGPOSession *,
 /*
  * ggpo_get_current_frame --
  *
- * Get current frame number which ggpo managed and a flag whether
- * in rollback or not.
+ * Get current frame number
  */
-GGPO_API GGPOErrorCode __cdecl ggpo_get_current_frame(
-    GGPOSession*, int *frame, bool *rollback);
+GGPO_API GGPOErrorCode __cdecl ggpo_get_current_frame(GGPOSession*, int *frame);
 
 #ifdef __cplusplus
 };

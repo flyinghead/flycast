@@ -31,6 +31,7 @@ namespace ggpo
 {
 
 bool inRollback;
+u32 localExInput;
 
 static void getLocalInput(MapleInputState inputState[4])
 {
@@ -122,10 +123,10 @@ static int analogAxes;
 static bool absPointerPos;
 static bool keyboardGame;
 static bool mouseGame;
+static bool useExInput;
 static int inputSize;
 static void (*eventCallback)(GGPOEvent* event);
 static void (*chatCallback)(int playerNum, const std::string& msg);
-static void (*keyFrameCallback)(int playerNum, int frameType, int frameCount);
 
 struct MemPages
 {
@@ -169,6 +170,7 @@ struct Inputs
 			s16 wheel;
 		} relPos;
 		u8 keys[6];
+		u32 exInput;
 	} u;
 };
 static_assert(sizeof(Inputs) == 10, "wrong Inputs size");
@@ -177,18 +179,12 @@ struct GameEvent
 {
 	enum : char {
 		Chat,
-		KeyFrame,
 	} type;
 	union {
 		struct {
 			u8 playerNum;
 			char message[512 - sizeof(playerNum) - sizeof(type)];
 		} chat;
-		struct {
-			u8 playerNum;
-			u32 frameType;
-			u32 frameCount;
-		} keyFrame;
 	} u;
 
 	constexpr static int chatMessageLen(int len) { return len - sizeof(u.chat.playerNum) - sizeof(type); }
@@ -459,10 +455,6 @@ static void on_message(u8 *msg, int len)
 		if (chatCallback != nullptr && GameEvent::chatMessageLen(len) > 0)
 			chatCallback(event->u.chat.playerNum, std::string(event->u.chat.message, GameEvent::chatMessageLen(len)));
 		break;
-	case GameEvent::KeyFrame:
-		if (keyFrameCallback != nullptr)
-			keyFrameCallback(event->u.keyFrame.playerNum, event->u.keyFrame.frameType, event->u.keyFrame.frameCount);
-		break;
 
 	default:
 		WARN_LOG(NETWORK, "Unknown app message type %d", event->type);
@@ -501,6 +493,8 @@ void startSession(int localPort, int localPlayerNum)
 	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
+	useExInput = false;
+
 	if (settings.platform.isConsole())
 		analogAxes = config::GGPOAnalogAxes;
 	else
@@ -662,6 +656,10 @@ void getInput(MapleInputState inputState[4])
 			state.relPos.wheel = inputs->u.relPos.wheel;
 			state.mouseButtons = ~inputs->mouseButtons;
 		}
+		else if (useExInput)
+		{
+			state.exInput = inputs->u.exInput;
+		}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
@@ -742,6 +740,10 @@ bool nextFrame()
 			mo_x_delta[0] -= inputs.u.relPos.x;
 			mo_y_delta[0] -= inputs.u.relPos.y;
 			mo_wheel_delta[0] -= inputs.u.relPos.wheel;
+		}
+		else if (useExInput)
+		{
+			inputs.u.exInput = localExInput;
 		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
 		if (result == GGPO_OK)
@@ -844,8 +846,7 @@ void displayStats()
 
 	if (lastLoadStateFrame != -1) {
 		int frame;
-		bool dummy;
-		getCurrentFrame(&frame, &dummy);
+		getCurrentFrame(&frame);
 		rollbackedFrame = frame - lastLoadStateFrame - 1;
 		lastLoadStateFrame = -1;
 	}
@@ -927,13 +928,13 @@ void endOfFrame()
 	}
 }
 
-bool getCurrentFrame(int* frame, bool* rollback)
+bool getCurrentFrame(int* frame)
 {
 	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr) {
 		return false;
 	}
-	return ggpo_get_current_frame(ggpoSession, frame, rollback) == GGPO_OK;
+	return ggpo_get_current_frame(ggpoSession, frame) == GGPO_OK;
 }
 
 void sendChatMessage(int playerNum, const std::string& msg) {
@@ -950,22 +951,6 @@ void sendChatMessage(int playerNum, const std::string& msg) {
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg))
 {
 	chatCallback = callback;
-}
-
-void sendKeyFrameMessage(int playerNum, int frameType, int frameCount) {
-	if (!active())
-		return;
-	GameEvent event;
-	event.type = GameEvent::KeyFrame;
-	event.u.keyFrame.playerNum = playerNum;
-	event.u.keyFrame.frameType = frameType;
-	event.u.keyFrame.frameCount = frameCount;
-	ggpo_send_message(ggpoSession, &event, sizeof(event.u.keyFrame), true);
-}
-
-void receiveKeyFrameMessages(void (*callback)(int playerNum, int frameType, int frameCount))
-{
-	keyFrameCallback = callback;
 }
 
 bool isConnected(int playerNum) {
@@ -986,8 +971,9 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	cb.on_message      = on_message;
 	memset(playerHandles, 0, sizeof(playerHandles));
 
+	useExInput = true;
+	inputSize = sizeof(kcode[0] + sizeof(Inputs::u.exInput));
 #ifdef SYNC_TEST
-	inputSize = sizeof(kcode[0]);
 	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, 1);
 	if (result != GGPO_OK)
 	{
@@ -1025,7 +1011,6 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 #else
 	// TODO: Analog support
 	ggpo::localPlayerNum = me;
-	inputSize = sizeof(kcode[0]);
 	GGPOErrorCode result = ggpo_start_session(
 		&ggpoSession, &cb, settings.content.gameId.c_str(),
 		ips.size(), inputSize, ports[me], sessionCode, strlen(sessionCode));

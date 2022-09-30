@@ -25,11 +25,7 @@ public:
    virtual GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags);
    virtual GGPOErrorCode IncrementFrame(void);
    virtual GGPOErrorCode Logv(char *fmt, va_list list);
-   GGPOErrorCode GetCurrentFrame(int* frame, bool* rollback) override {
-       *frame = _sync.GetFrameCount();
-       *rollback = _rollingback;
-       return GGPO_OK;
-   }
+   GGPOErrorCode GetCurrentFrame(int* frame) override { *frame = _sync.GetFrameCount(); return GGPO_OK; }
 
 protected:
    struct SavedInfo {

@@ -37,7 +37,7 @@ class GdxsvBackendRollback {
     u32 OnSockRead(u32 addr, u32 size);
     u32 OnSockPoll();
 
-private:
+   private:
     void ApplyPatch(bool first_time);
     void RestorePatch();
     void ProcessLbsMessage();

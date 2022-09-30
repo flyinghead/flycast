@@ -97,6 +97,7 @@ struct MapleInputState
 		u8 shift = 0;				// modifier keys bitmask
 		u8 key[6];					// normal keys pressed
 	} keyboard;
+	u32 exInput;
 };
 extern MapleInputState mapleInputState[4];
 
