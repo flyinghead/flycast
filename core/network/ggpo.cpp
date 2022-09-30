@@ -85,6 +85,11 @@ static void getLocalInput(MapleInputState inputState[4])
 #include "hw/naomi/naomi_cart.h"
 
 // #define SYNC_TEST 1
+// #define RAND_TEST 1
+
+#ifdef RAND_TEST
+#include <random>
+#endif
 
 namespace ggpo
 {
@@ -699,6 +704,18 @@ bool nextFrame()
 		else if (error != GGPO_OK)
 			throw FlycastException("GGPO error");
 	}
+
+#ifdef RAND_TEST
+	{
+		static const u32 rand_mask = 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040;
+		static std::mt19937 mt;
+		int frame;
+		ggpo::getCurrentFrame(&frame);
+		if (frame % 5 == 0) {
+			kcode[0] = ~(mt() & rand_mask);
+		}
+	}
+#endif
 
 	// may call save_game_state
 	do {
