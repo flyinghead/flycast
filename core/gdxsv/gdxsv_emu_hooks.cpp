@@ -157,6 +157,10 @@ void gdxsv_emu_settings() {
         config::DynarecIdleSkip = true;
         config::ThreadedRendering = false;
 
+        // Network
+        config::EnableUPnP = true;
+        config::GdxLocalPort = 0;
+
         maple_ReconnectDevices();
     }
     ImGui::SameLine();
@@ -181,7 +185,11 @@ void gdxsv_emu_settings() {
     Advanced:
       CPU Mode: Dynarec
       Dynarec Idle Skip: Yes
-      Multi-threaded emulation: No)");
+      Multi-threaded emulation: No
+
+    Network:
+      Enable UPnP
+      Gdx Local UDP Port: 0)");
 
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
     bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
@@ -193,6 +201,15 @@ void gdxsv_emu_settings() {
     ShowHelpMarker(R"(Use the following rendering options:
     rend.WideScreen=true
     rend.WidescreenGameHacks=true)");
+
+	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
+
+	char local_port[256];
+	sprintf(local_port, "%d", (int)config::GdxLocalPort);
+	ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+	ImGui::SameLine();
+	ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
+	config::GdxLocalPort.set(atoi(local_port));
 
     ImGui::NewLine();
     gui_header("Flycast Settings");

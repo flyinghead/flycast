@@ -259,13 +259,17 @@ void Gdxsv::HandleRPC() {
             if (lbs_net.Connect(host, port)) {
                 netmode = NetMode::Lbs;
                 lbs_net.Send(GeneratePlatformInfoPacket());
+
                 lbs_remote.Open(host.c_str(), port);
                 if (udp.Bind(udp_port)) {
-                    udp_port = udp.bind_port();
-                    if (config::EnableUPnP && udp_port != upnp_port) {
-                        upnp_port = udp_port;
+                    if (udp_port != udp.bind_port()) {
+                        config::GdxLocalPort = udp_port = udp.bind_port();
+                    }
+
+                    if (config::EnableUPnP && upnp_port != udp.bind_port()) {
+                        upnp_port = udp.bind_port();
                         port_mapping =
-                            std::async(std::launch::async, [this]() { return upnp.AddPortMapping(udp_port, false); });
+                            std::async(std::launch::async, [this]() { return upnp.AddPortMapping(upnp_port, false); });
                     }
                 }
             } else {
