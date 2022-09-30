@@ -67,6 +67,10 @@ void gdxsv_emu_loadstate(int slot) {
     }
 }
 
+bool gdxsv_emu_enabled() {
+    return gdxsv.Enabled();
+}
+
 bool gdxsv_emu_ingame() {
     return gdxsv.InGame();
 }
