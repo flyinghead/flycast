@@ -757,17 +757,17 @@ bool nextFrame()
 		ggpo_idle(ggpoSession, 0);
 	} while (active());
 #ifdef SYNC_TEST
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (playerHandles[i] == localPlayer) continue;
-        u32 input = ~kcode[0];
-        if (rt[0] >= 64) input |= BTN_TRIGGER_RIGHT;
-        else input &= ~BTN_TRIGGER_RIGHT;
-        if (lt[0] >= 64) input |= BTN_TRIGGER_LEFT;
-        else input &= ~BTN_TRIGGER_LEFT;
-        GGPOErrorCode result = ggpo_add_local_input(ggpoSession, playerHandles[i], &input, sizeof(input));
-        if (result != GGPO_OK)
-            WARN_LOG(NETWORK, "ggpo_add_local_input(%d) failed %d", i, result);
-    }
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		if (playerHandles[i] == localPlayer) continue;
+		u32 input = ~kcode[0];
+		if (rt[0] >= 64) input |= BTN_TRIGGER_RIGHT;
+		else input &= ~BTN_TRIGGER_RIGHT;
+		if (lt[0] >= 64) input |= BTN_TRIGGER_LEFT;
+		else input &= ~BTN_TRIGGER_LEFT;
+		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, playerHandles[i], &input, sizeof(input));
+		if (result != GGPO_OK)
+			WARN_LOG(NETWORK, "ggpo_add_local_input(%d) failed %d", i, result);
+	}
 #endif
 	return active();
 }
@@ -999,16 +999,16 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	ggpo::localPlayerNum = localPlayerNum;
 
 	for (int i = 0; i < MAX_PLAYERS; i++) {
-        GGPOPlayer player{ sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1 };
+		GGPOPlayer player{ sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1 };
 		if (i != localPlayerNum) {
-            player.type = GGPO_PLAYERTYPE_REMOTE;
-		} 
+			player.type = GGPO_PLAYERTYPE_REMOTE;
+		}
 
-        result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
+		result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
 		if (result != GGPO_OK) {
-            WARN_LOG(NETWORK, "add_player failed: %d", result);
-            ggpoSession = nullptr;
-            throw FlycastException("GGPO start sync session failed");
+			WARN_LOG(NETWORK, "add_player failed: %d", result);
+			ggpoSession = nullptr;
+			throw FlycastException("GGPO start sync session failed");
 		}
 
 		if (i == localPlayerNum) {
@@ -1036,7 +1036,7 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 		throw FlycastException("GGPO network initialization failed");
 	}
 
-    NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", me);
+	NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", me);
 
 	// automatically disconnect clients after 3000 ms and start our count-down timer
 	// for disconnects after 1000 ms.   To completely disable disconnects, simply use
@@ -1062,13 +1062,13 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 			}
 		}
 
-        result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
-        if (result != GGPO_OK)
-        {
-            WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
-            stopSession();
-            throw FlycastException("GGPO cannot add remote player");
-        }
+		result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
+		if (result != GGPO_OK)
+		{
+			WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
+			stopSession();
+			throw FlycastException("GGPO cannot add remote player");
+		}
 
 		if (i == me) {
 			ggpo::localPlayer = playerHandles[i];
