@@ -12,7 +12,7 @@
 #include "oslib/oslib.h"
 #include "version.h"
 
-bool Gdxsv::InGame() const { return enabled && netmode == NetMode::McsUdp; }
+bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
 
 bool Gdxsv::Enabled() const { return enabled; }
 
@@ -134,22 +134,15 @@ void Gdxsv::Update() {
     }
 
     WritePatch();
-
-    u8 dump_buf[1024];
-    if (gdxsv_ReadMem32(symbols["print_buf_pos"])) {
-        int n = gdxsv_ReadMem32(symbols["print_buf_pos"]);
-        n = std::min(n, (int)sizeof(dump_buf));
-        for (int i = 0; i < n; i++) {
-            dump_buf[i] = gdxsv_ReadMem8(symbols["print_buf"] + i);
-        }
-        dump_buf[n] = 0;
-        gdxsv_WriteMem32(symbols["print_buf_pos"], 0);
-        gdxsv_WriteMem32(symbols["print_buf"], 0);
-        NOTICE_LOG(COMMON, "%s", dump_buf);
-    }
 }
 
-void Gdxsv::HookMainUiLoop() { gdxsv.rollback_net.OnMainUiLoop(); }
+void Gdxsv::HookMainUiLoop() {
+    if (enabled) {
+        if (netmode == NetMode::McsRollback) {
+			gdxsv.rollback_net.OnMainUiLoop();
+        }
+    }
+}
 
 std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;

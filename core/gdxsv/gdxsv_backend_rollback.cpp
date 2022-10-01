@@ -119,6 +119,12 @@ void GdxsvBackendRollback::OnMainUiLoop() {
             emu.start();
         }
     }
+
+    const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
+    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active()) {
+        ggpo::stopSession();
+        state_ = State::End;
+    }
 }
 
 bool GdxsvBackendRollback::StartLocalTest(const char *param) {
