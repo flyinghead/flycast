@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "gdxsv.h"
 #include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv.pb.h"
@@ -459,12 +460,14 @@ void GdxsvBackendRollback::ApplyPatch(bool first_time) {
         return;
     }
 
-    // Skip Key MsgPush
-    auto it = symbols_.find("disk");
-    if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
-        gdxsv_WriteMem16(0x8c045f64, 9);
-        gdxsv_WriteMem8(0x0c3abb90, 1);
-    }
+	gdxsv.WritePatch();
+
+	// Skip Key MsgPush
+	auto it = symbols_.find("disk");
+	if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
+		gdxsv_WriteMem16(0x8c045f64, 9);
+		gdxsv_WriteMem8(0x0c3abb90, 1);
+	}
 }
 
 void GdxsvBackendRollback::RestorePatch() {

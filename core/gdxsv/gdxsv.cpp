@@ -5,11 +5,14 @@
 #include <random>
 #include <sstream>
 
+#include "cfg/cfg.h"
 #include "emulator.h"
 #include "gdxsv_translation.h"
+#include "hw/sh4/sh4_mem.h"
 #include "lzma/CpuArch.h"
 #include "network/ggpo.h"
 #include "oslib/oslib.h"
+#include "reios/reios.h"
 #include "version.h"
 
 bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
@@ -133,7 +136,10 @@ void Gdxsv::Update() {
         settings.input.fastForwardMode = false;
     }
 
-    WritePatch();
+    if (!ggpo::active()) {
+        // Don't edit memory at vsync if ggpo::active
+        WritePatch();
+    }
 }
 
 void Gdxsv::HookMainUiLoop() {
@@ -500,7 +506,6 @@ void Gdxsv::RestoreOnlinePatch() {
 }
 
 void Gdxsv::WritePatch() {
-    if (ggpo::active()) return;
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || gdxsv_ReadMem32(symbols["patch_id"]) != symbols[":patch_id"]) {

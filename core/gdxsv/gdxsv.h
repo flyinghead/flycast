@@ -11,11 +11,6 @@
 #include "gdxsv_backend_replay.h"
 #include "gdxsv_backend_rollback.h"
 #include "types.h"
-
-#include "cfg/cfg.h"
-#include "hw/sh4/sh4_mem.h"
-#include "reios/reios.h"
-#include "emulator.h"
 #include "network/miniupnp.h"
 
 
@@ -32,7 +27,8 @@ public:
     Gdxsv() : lbs_net(symbols),
               udp_net(symbols, maxlag),
               replay_net(symbols, maxlag),
-              rollback_net(symbols, maxlag) {};
+              rollback_net(symbols, maxlag),
+              upnp_port(0), udp_port(0) {};
 
     bool Enabled() const;
 
@@ -54,6 +50,7 @@ public:
 
     bool StartRollbackTest(const char* param);
 
+    void WritePatch();
 private:
     void GcpPingTest();
 
@@ -62,8 +59,6 @@ private:
     std::vector<u8> GeneratePlatformInfoPacket();
 
     std::string GeneratePlatformInfoString();
-
-    void WritePatch();
 
     void ApplyOnlinePatch(bool first_time);
 
