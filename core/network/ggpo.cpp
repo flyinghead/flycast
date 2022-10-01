@@ -31,7 +31,7 @@ namespace ggpo
 {
 
 bool inRollback;
-u32 localExInput;
+u16 localExInput;
 
 static void getLocalInput(MapleInputState inputState[4])
 {
@@ -159,6 +159,7 @@ struct Inputs
 	u32 kcode:20;
 	u32 mouseButtons:4;
 	u32 kbModifiers:8;
+	u16 exInput;
 
 	union {
 		struct {
@@ -175,10 +176,9 @@ struct Inputs
 			s16 wheel;
 		} relPos;
 		u8 keys[6];
-		u32 exInput;
 	} u;
 };
-static_assert(sizeof(Inputs) == 10, "wrong Inputs size");
+static_assert(sizeof(Inputs) == 12, "wrong Inputs size");
 
 struct GameEvent
 {
@@ -662,9 +662,11 @@ void getInput(MapleInputState inputState[4])
 			state.relPos.wheel = inputs->u.relPos.wheel;
 			state.mouseButtons = ~inputs->mouseButtons;
 		}
-		else if (useExInput)
+
+		if (useExInput)
 		{
-			state.exInput = inputs->u.exInput;
+			state.exInput = inputs->exInput;
+			if (state.exInput) NOTICE_LOG(NETWORK,"[%d] exInput%d", player, state.exInput);
 		}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
@@ -759,9 +761,10 @@ bool nextFrame()
 			mo_y_delta[0] -= inputs.u.relPos.y;
 			mo_wheel_delta[0] -= inputs.u.relPos.wheel;
 		}
-		else if (useExInput)
+
+		if (useExInput)
 		{
-			inputs.u.exInput = localExInput;
+			inputs.exInput = localExInput;
 		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
 		if (result == GGPO_OK)
@@ -1001,7 +1004,10 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	memset(playerHandles, 0, sizeof(playerHandles));
 
 	useExInput = true;
-	inputSize = sizeof(kcode[0] + sizeof(Inputs::u.exInput));
+	localExInput = 0;
+	analogAxes = 2;
+	inputSize = sizeof(kcode[0]) + sizeof(Inputs::exInput) + analogAxes;
+	NOTICE_LOG(NETWORK, "inputSize:%d", inputSize);
 #ifdef SYNC_TEST
 	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, 1);
 	if (result != GGPO_OK)
@@ -1035,7 +1041,6 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	}
 
 	synchronized = true;
-	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
 	// TODO: Analog support

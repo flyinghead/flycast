@@ -5,19 +5,18 @@
 #include <string>
 #include <vector>
 
-#include "gdxsv.h"
 #include "emulator.h"
 #include "gdx_rpc.h"
+#include "gdxsv.h"
 #include "gdxsv.pb.h"
+#include "hw/maple/maple_if.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "libs.h"
 #include "network/ggpo.h"
 #include "network/net_platform.h"
 #include "rend/gui.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
 #include "rend/gui_util.h"
-#include "hw/maple/maple_if.h"
-
 
 namespace {
 u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04,
@@ -27,9 +26,9 @@ u8 DummyRuleData[] = {0x03, 0x02, 0x03, 0x00, 0x00, 0x01, 0x58, 0x02, 0x58, 0x02
                       0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00, 0x00,
                       0xff, 0x01, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00};
 
-const u32 ExInputNone = 0;
-const u32 ExInputWaitStart = 1;
-const u32 ExInputWaitLoadEnd = 2;
+const u16 ExInputNone = 0;
+const u16 ExInputWaitStart = 1;
+const u16 ExInputWaitLoadEnd = 2;
 
 // maple input to mcs pad input
 u16 convertInput(MapleInputState input) {
@@ -45,6 +44,11 @@ u16 convertInput(MapleInputState input) {
     if (~input.kcode & 0x0008) r |= 0x0080;      // Start
     if (~input.kcode & 0x00020000) r |= 0x8000;  // LT
     if (~input.kcode & 0x00040000) r |= 0x1000;  // RT
+
+    if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;  // left
+    if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;  // right
+    if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;  // up
+    if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;  // down
     return r;
 }
 
@@ -74,7 +78,6 @@ ImColor msColor(int ms) {
 }
 }  // namespace
 
-
 void GdxsvBackendRollback::DisplayOSD() {
     const auto ms = ping_pong_.ElapsedMs();
     if (2000 < ms && ms < 6500) {
@@ -85,12 +88,15 @@ void GdxsvBackendRollback::DisplayOSD() {
         const auto H = ImGui::GetIO().DisplaySize.y;
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
+                                ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(W, H));
         ImGui::SetNextWindowBgAlpha(0.0f);
-        ImGui::Begin("##gdxsvosd", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs);
+        ImGui::Begin("##gdxsvosd", NULL,
+                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
+                         ImGuiWindowFlags_NoInputs);
 
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImDrawList *draw_list = ImGui::GetWindowDrawList();
         ImVec2 points[] = {fromCenter(-48, -55), fromCenter(48, -55), fromCenter(-48, 55), fromCenter(48, 55)};
         for (int i = 0; i < 4; ++i) {
             auto ms = matrix[matching_.peer_id()][i];
@@ -337,12 +343,15 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                 case McsMessage::MsgType::ForceMsg:
                     break;
                 case McsMessage::MsgType::KeyMsg1:
+                    NOTICE_LOG(COMMON, "KeyMsg1: %02x%02x", msg.body[2], msg.body[3]);
+
                     for (int i = 0; i < matching_.player_count(); ++i) {
                         if (ggpo::isConnected(i)) {
                             auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
                             auto input = convertInput(mapleInputState[i]);
                             msg.body[2] = input >> 8 & 0xff;
                             msg.body[3] = input & 0xff;
+                            if (i == 0) NOTICE_LOG(COMMON, "ModMsg1: %02x%02x", msg.body[2], msg.body[3]);
                             std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
@@ -520,14 +529,14 @@ void GdxsvBackendRollback::ApplyPatch(bool first_time) {
         return;
     }
 
-	gdxsv.WritePatch();
+    gdxsv.WritePatch();
 
-	// Skip Key MsgPush
-	auto it = symbols_.find("disk");
-	if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
-		gdxsv_WriteMem16(0x8c045f64, 9);
-		gdxsv_WriteMem8(0x0c3abb90, 1);
-	}
+    // Skip Key MsgPush
+    auto it = symbols_.find("disk");
+    if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
+        gdxsv_WriteMem16(0x8c045f64, 9);
+        gdxsv_WriteMem8(0x0c3abb90, 1);
+    }
 }
 
 void GdxsvBackendRollback::RestorePatch() {

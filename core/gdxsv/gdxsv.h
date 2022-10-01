@@ -69,6 +69,7 @@ private:
     void WritePatchDisk2();
 
     NetMode netmode = NetMode::Offline;
+    std::atomic<bool> testmode;
     std::atomic<bool> enabled;
     std::atomic<int> disk;
     std::atomic<int> maxlag;

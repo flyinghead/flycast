@@ -15,7 +15,9 @@
 #include "reios/reios.h"
 #include "version.h"
 
-bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
+bool Gdxsv::InGame() const {
+    return enabled && !testmode && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback);
+}
 
 bool Gdxsv::Enabled() const { return enabled; }
 
@@ -691,6 +693,7 @@ void Gdxsv::WritePatchDisk2() {
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {
+    testmode = true;
     replay_net.Reset();
     if (replay_net.StartFile(path)) {
         netmode = NetMode::Replay;
@@ -709,6 +712,7 @@ bool Gdxsv::StartReplayFile(const char *path) {
 }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
+    testmode = true;
     rollback_net.Reset();
 
     if (rollback_net.StartLocalTest(param)) {

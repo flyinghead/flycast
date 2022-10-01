@@ -45,8 +45,8 @@ static inline bool rollbacking() {
 	return inRollback;
 }
 
-static inline void setExInput(u32 exInput) {
-	extern u32 localExInput;
+static inline void setExInput(u16 exInput) {
+	extern u16 localExInput;
 	localExInput = exInput;
 }
 
