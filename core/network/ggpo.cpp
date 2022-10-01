@@ -854,6 +854,15 @@ std::future<bool> startNetwork()
 	});
 }
 
+static ImColor msColor(int ms) {
+    if (ms <= 30) return ImColor(87, 213, 213);
+    if (ms <= 60) return ImColor(0, 255, 149);
+    if (ms <= 90) return ImColor(255, 255, 0);
+    if (ms <= 120) return ImColor(255, 170, 0);
+    if (ms <= 150) return ImColor(255, 0, 0);
+    return ImColor(128, 128, 128);
+}
+
 void displayStats()
 {
 	if (!active())
@@ -911,9 +920,11 @@ void displayStats()
 
 		// Ping
 		ImGui::Text("Ping");
+		ImGui::PushStyleColor(ImGuiCol_Text, msColor(stats.network.ping).Value);
 		std::string ping = std::to_string(stats.network.ping);
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
 		ImGui::Text("%s", ping.c_str());
+		ImGui::PopStyleColor();
 
 		// Send Queue
 		ImGui::Text("Send Q");
