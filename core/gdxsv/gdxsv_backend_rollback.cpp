@@ -203,8 +203,19 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         ggpo::getCurrentFrame(&frame);
         const int InetBuf = 0x0c3ab984;           // TODO: disk2
         const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_,
-                   gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
+        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(),
+                   state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
+
+        // Fast disconnect
+        if (gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+            for (int i = 0; i < matching_.player_count(); ++i) {
+                if (!ggpo::isConnected(i)) {
+                    gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
+                    ggpo::setExInput(ExInputNone);
+                    break;
+                }
+            }
+        }
 
         int msg_len = gdxsv_ReadMem8(InetBuf);
         McsMessage msg;
@@ -328,7 +339,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                 }
             }
         }
-
         verify(recv_buf_.size() <= size);
 
         NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(),

@@ -609,6 +609,7 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
+	connected.clear();
 	miniupnp.Term();
 	emu.setNetworkState(false);
 }
