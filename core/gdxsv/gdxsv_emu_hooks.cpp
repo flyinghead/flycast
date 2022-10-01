@@ -160,6 +160,7 @@ void gdxsv_emu_settings() {
         // Network
         config::EnableUPnP = true;
         config::GdxLocalPort = 0;
+        config::GdxMinDelay = 2;
 
         maple_ReconnectDevices();
     }
@@ -189,7 +190,8 @@ void gdxsv_emu_settings() {
 
     Network:
       Enable UPnP
-      Gdx Local UDP Port: 0)");
+      Gdx Local UDP Port: 0
+      Gdx Minimum Delay: 2)");
 
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
     bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
