@@ -482,6 +482,8 @@ extern Option<bool, false> HideLegacyNaomiRoms;
 // Gdxsv
 
 extern Option<int> GdxLanguage;
+extern Option<int> GdxLocalPort;
+extern Option<int> GdxMinDelay;
 
 // Network
 

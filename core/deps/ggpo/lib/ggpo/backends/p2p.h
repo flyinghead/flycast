@@ -34,6 +34,7 @@ public:
    GGPOErrorCode SetDisconnectTimeout(int timeout) override;
    GGPOErrorCode SetDisconnectNotifyStart(int timeout) override;
    GGPOErrorCode SendMessage(const void *msg, int len, bool spectators) override;
+   GGPOErrorCode GetCurrentFrame(int* frame) override { *frame = _sync.GetFrameCount(); return GGPO_OK; }
 
 public:
    void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) override;

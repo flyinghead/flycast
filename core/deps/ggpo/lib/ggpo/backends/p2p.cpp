@@ -263,6 +263,12 @@ Peer2PeerBackend::AddPlayer(GGPOPlayer *player,
    if (player->type == GGPO_PLAYERTYPE_REMOTE) {
       AddRemotePlayer(player->u.remote.ip_address, player->u.remote.port, queue);
    }
+
+   if (player->type == GGPO_PLAYERTYPE_LOCAL) {
+       for (int q = 0; q < _num_players; q++) {
+           _endpoints[q].SetLocalPlayerQueue(queue);
+       }
+   }
    return GGPO_OK;
 }
 

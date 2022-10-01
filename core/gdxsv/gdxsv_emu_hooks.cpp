@@ -17,12 +17,17 @@ void gdxsv_emu_start() {
     gdxsv.Reset();
 
     if (gdxsv.Enabled()) {
-        gdxsv.StartPingTest();
-
         auto replay = cfgLoadStr("gdxsv", "replay", "");
         if (!replay.empty()) {
             dc_loadstate(99);
         }
+        else if (!cfgLoadStr("gdxsv", "rbk_test", "").empty()) {
+            dc_loadstate(99);
+        }
+        else {
+            gdxsv.StartPingTest();
+        }
+
     }
 }
 
@@ -54,7 +59,16 @@ void gdxsv_emu_loadstate(int slot) {
         if (!replay.empty() && slot == 99) {
             gdxsv.StartReplayFile(replay.c_str());
         }
+
+        auto rbk_test = cfgLoadStr("gdxsv", "rbk_test", "");
+        if (!rbk_test.empty() && slot == 99) {
+            gdxsv.StartRollbackTest(rbk_test.c_str());
+        }
     }
+}
+
+bool gdxsv_emu_enabled() {
+    return gdxsv.Enabled();
 }
 
 bool gdxsv_emu_ingame() {
@@ -143,6 +157,11 @@ void gdxsv_emu_settings() {
         config::DynarecIdleSkip = true;
         config::ThreadedRendering = false;
 
+        // Network
+        config::EnableUPnP = true;
+        config::GdxLocalPort = 0;
+        config::GdxMinDelay = 2;
+
         maple_ReconnectDevices();
     }
     ImGui::SameLine();
@@ -167,7 +186,12 @@ void gdxsv_emu_settings() {
     Advanced:
       CPU Mode: Dynarec
       Dynarec Idle Skip: Yes
-      Multi-threaded emulation: No)");
+      Multi-threaded emulation: No
+
+    Network:
+      Enable UPnP
+      Gdx Local UDP Port: 0
+      Gdx Minimum Delay: 2)");
 
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
     bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
@@ -179,6 +203,19 @@ void gdxsv_emu_settings() {
     ShowHelpMarker(R"(Use the following rendering options:
     rend.WideScreen=true
     rend.WidescreenGameHacks=true)");
+
+    gui_header("Network Settings (P2P Lobby Only)");
+	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
+
+	char local_port[256];
+	sprintf(local_port, "%d", (int)config::GdxLocalPort);
+	ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+	ImGui::SameLine();
+	ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
+	config::GdxLocalPort.set(atoi(local_port));
+
+	OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
+		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and introduces glitches.");
 
     ImGui::NewLine();
     gui_header("Flycast Settings");
@@ -234,4 +271,13 @@ void gdxsv_latest_version_check() {
             gdxsv_handle_release_json(json);
         }).detach();
     });
+}
+
+void gdxsv_mainui_loop() {
+    gdxsv.HookMainUiLoop();
+}
+
+
+void gdxsv_gui_display_osd() {
+    gdxsv.DisplayOSD();
 }

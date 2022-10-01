@@ -2881,6 +2881,8 @@ void gui_display_osd()
 		}
 		lua::overlay();
 
+		gdxsv_gui_display_osd();
+
 		gui_endFrame();
 	}
 }

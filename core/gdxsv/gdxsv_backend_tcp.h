@@ -45,8 +45,16 @@ public:
         return tcp_client_.Send((const char *) packet.data(), packet.size());
     }
 
-    const std::string &LocalIP() {
+    const std::string &LocalIP() const {
         return tcp_client_.local_ip();
+    }
+
+    const std::string &RemoteHost() const {
+        return tcp_client_.host();
+    }
+
+    const int RemotePort() const {
+        return tcp_client_.port();
     }
 
     u32 OnSockRead(u32 addr, u32 size) {

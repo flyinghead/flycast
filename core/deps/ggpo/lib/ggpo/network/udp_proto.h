@@ -89,6 +89,7 @@ public:
    bool GetEvent(UdpProtocol::Event &e);
    void GGPONetworkStats(Stats *stats);
    void SetLocalFrameNumber(int num);
+   void SetLocalPlayerQueue(int queue);
    int RecommendFrameDelay();
    void SetVerificationData(const void *verification, int verification_size) {
 	   ASSERT(verification_size <= MAX_VERIFICATION_SIZE);
@@ -143,6 +144,7 @@ protected:
    Udp            *_udp;
    sockaddr_in    _peer_addr; 
    uint16         _magic_number;
+   int            _local_player_queue;
    int            _queue;
    uint16         _remote_magic_number;
    bool           _connected;

@@ -25,6 +25,10 @@ public:
     static const u32 StatusError = 0xFFFFFFFFu;
     static const u32 StatusSuccess = 0x00FFFFFFu;
 
+    static const u16 lbsLineCheck = 0x6001;
+    static const u16 lbsUserRegist = 0x6112;
+    static const u16 lbsUserDecide = 0x6113;
+
     static const u16 lbsLobbyMatchingEntry = 0x640e;
     static const u16 lbsReadyBattle = 0x6910;
     static const u16 lbsAskMatchingJoin = 0x6911;
@@ -36,8 +40,8 @@ public:
     static const u16 lbsAskMcsVersion = 0x6917;
     static const u16 lbsLogout = 0x6002;
     static const u16 lbsShutdown = 0x6003;
-    static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;
+    static const u16 lbsP2PMatching = 0x9961;
     static const u16 lbsBattleUserCount = 0x9965;
 
     int Serialize(std::deque<u8> &buf) const {
