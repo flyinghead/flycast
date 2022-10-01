@@ -166,7 +166,7 @@ private:
 #pragma pack()
 
     std::atomic<bool> running_;
-    std::chrono::steady_clock::time_point start_time_;
+    std::chrono::high_resolution_clock::time_point start_time_;
     UdpClient client_ = UdpClient{};
     std::recursive_mutex mutex_;
     uint8_t rtt_matrix_[N][N];
