@@ -37,13 +37,13 @@ struct UdpMsg
    struct {
       uint16         magic;
       uint16         sequence_number;
+      uint8          remote_endpoint;
       uint8          type;            /* packet type */
    } hdr;
    union {
       struct {
          uint32      random_request;  /* please reply back with this random data */
          uint16      remote_magic;
-         uint8       remote_endpoint;
          uint8       verification[MAX_VERIFICATION_SIZE];
       } sync_request;
       
