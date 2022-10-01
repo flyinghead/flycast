@@ -100,8 +100,8 @@ void GdxsvBackendRollback::DisplayOSD() {
         ImVec2 points[] = {fromCenter(-48, -55), fromCenter(48, -55), fromCenter(-48, 55), fromCenter(48, 55)};
         for (int i = 0; i < 4; ++i) {
             auto ms = matrix[matching_.peer_id()][i];
-            draw_list->AddCircleFilled(points[i], scaled(10), ImColor(0, 0, 0), 12);
-            draw_list->AddCircleFilled(points[i], scaled(7), msColor(ms), 12);
+            draw_list->AddCircleFilled(points[i], scaled(15), ImColor(0, 0, 0, 128), 20);
+            draw_list->AddCircleFilled(points[i], scaled(12), msColor(ms), 20);
         }
 
         ImGui::End();
@@ -276,8 +276,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         ggpo::getCurrentFrame(&frame);
         const int InetBuf = 0x0c3ab984;           // TODO: disk2
         const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(),
-                   state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
+        // NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
         // Fast disconnect
         if (gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -343,15 +342,12 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                 case McsMessage::MsgType::ForceMsg:
                     break;
                 case McsMessage::MsgType::KeyMsg1:
-                    NOTICE_LOG(COMMON, "KeyMsg1: %02x%02x", msg.body[2], msg.body[3]);
-
                     for (int i = 0; i < matching_.player_count(); ++i) {
                         if (ggpo::isConnected(i)) {
                             auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
                             auto input = convertInput(mapleInputState[i]);
                             msg.body[2] = input >> 8 & 0xff;
                             msg.body[3] = input & 0xff;
-                            if (i == 0) NOTICE_LOG(COMMON, "ModMsg1: %02x%02x", msg.body[2], msg.body[3]);
                             std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
@@ -416,9 +412,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             }
         }
         verify(recv_buf_.size() <= size);
-
-        NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(),
-                   gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
     }
 
     if (recv_buf_.empty()) {

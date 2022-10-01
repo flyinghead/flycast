@@ -666,7 +666,6 @@ void getInput(MapleInputState inputState[4])
 		if (useExInput)
 		{
 			state.exInput = inputs->exInput;
-			if (state.exInput) NOTICE_LOG(NETWORK,"[%d] exInput%d", player, state.exInput);
 		}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
