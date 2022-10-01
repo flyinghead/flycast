@@ -202,6 +202,7 @@ void gdxsv_emu_settings() {
     rend.WideScreen=true
     rend.WidescreenGameHacks=true)");
 
+    gui_header("Network Settings (P2P Lobby Only)");
 	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 
 	char local_port[256];
@@ -210,6 +211,9 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
 	config::GdxLocalPort.set(atoi(local_port));
+
+	OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
+		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and introduces glitches.");
 
     ImGui::NewLine();
     gui_header("Flycast Settings");

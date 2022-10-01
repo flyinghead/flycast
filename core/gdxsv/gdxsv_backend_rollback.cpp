@@ -154,7 +154,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         }
 
         if (ok) {
-            int delay = std::max(2, int(max_rtt / 2.0 / 16.66 + 0.5));
+            int delay = std::max(0, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
             NOTICE_LOG(COMMON, "max_rtt=%d delay=%d", max_rtt, delay);
             config::GGPOEnable.override(1);
             config::GGPODelay.override(delay);

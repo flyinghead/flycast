@@ -121,6 +121,7 @@ Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 
 Option<int> GdxLanguage("language", -1, "gdxsv");
 Option<int> GdxLocalPort("LocalPort", 0, "gdxsv");
+Option<int> GdxMinDelay("MinDelay", 2, "gdxsv");
 
 // Network
 
