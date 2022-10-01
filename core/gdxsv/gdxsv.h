@@ -34,6 +34,8 @@ public:
 
     bool InGame() const;
 
+    void DisplayOSD();
+
     void Reset();
 
     void Update();

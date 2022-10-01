@@ -271,3 +271,7 @@ void gdxsv_mainui_loop() {
     gdxsv.HookMainUiLoop();
 }
 
+
+void gdxsv_gui_display_osd() {
+    gdxsv.DisplayOSD();
+}

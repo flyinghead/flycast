@@ -131,6 +131,8 @@ public:
 
     bool Running();
 
+    int ElapsedMs();
+
     void AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port);
 
     bool GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, int* rtt);
@@ -163,9 +165,8 @@ private:
     };
 #pragma pack()
 
-    bool GetCandidate(Candidate* c);
-
     std::atomic<bool> running_;
+    std::chrono::steady_clock::time_point start_time_;
     UdpClient client_ = UdpClient{};
     std::recursive_mutex mutex_;
     uint8_t rtt_matrix_[N][N];

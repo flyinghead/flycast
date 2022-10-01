@@ -364,12 +364,12 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 
     std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms]() {
         WARN_LOG(COMMON, "Start UdpPingPong Thread");
-        auto start_time = std::chrono::high_resolution_clock::now();
+        start_time_ = std::chrono::high_resolution_clock::now();
         std::string sender;
 
         for (int loop_count = 0; running_; loop_count++) {
             auto now = std::chrono::high_resolution_clock::now();
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
 
             while (true) {
                 Packet recv{};
@@ -544,6 +544,11 @@ void UdpPingPong::Reset() {
 
 bool UdpPingPong::Running() {
     return running_;
+}
+
+int UdpPingPong::ElapsedMs() {
+	auto now = std::chrono::high_resolution_clock::now();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
 }
 
 void UdpPingPong::AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port) {

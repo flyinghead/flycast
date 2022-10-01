@@ -27,6 +27,7 @@ class GdxsvBackendRollback {
         End,
     };
 
+    void DisplayOSD();
     void Reset();
     void OnMainUiLoop();
     bool StartLocalTest(const char *param);

@@ -13,6 +13,11 @@
 #include "network/ggpo.h"
 #include "network/net_platform.h"
 #include "rend/gui.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
+#include "rend/gui_util.h"
+#include "hw/maple/maple_if.h"
+
 
 namespace {
 u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04,
@@ -42,7 +47,62 @@ u16 convertInput(MapleInputState input) {
     if (~input.kcode & 0x00040000) r |= 0x1000;  // RT
     return r;
 }
+
+ImVec2 fromCenter(float x, float y) {
+    const auto W = ImGui::GetIO().DisplaySize.x;
+    const auto H = ImGui::GetIO().DisplaySize.y;
+    const auto S = std::min(W / 640.f, H / 480.f);
+    const auto CX = W / 2.f;
+    const auto CY = H / 2.f;
+    return ImVec2(CX + (x * S), CY + (y * S));
+}
+
+float scaled(float size) {
+    const auto W = ImGui::GetIO().DisplaySize.x;
+    const auto H = ImGui::GetIO().DisplaySize.y;
+    const auto S = std::min(W / 640.f, H / 480.f);
+    return S * size;
+}
+
+ImColor msColor(int ms) {
+    if (ms <= 30) return ImColor(87, 213, 213);
+    if (ms <= 60) return ImColor(0, 255, 149);
+    if (ms <= 90) return ImColor(255, 255, 0);
+    if (ms <= 120) return ImColor(255, 170, 0);
+    if (ms <= 150) return ImColor(255, 0, 0);
+    return ImColor(128, 128, 128);
+}
 }  // namespace
+
+
+void GdxsvBackendRollback::DisplayOSD() {
+    const auto ms = ping_pong_.ElapsedMs();
+    if (2000 < ms && ms < 6500) {
+        uint8_t matrix[4][4];
+        ping_pong_.GetRttMatrix(matrix);
+
+        const auto W = ImGui::GetIO().DisplaySize.x;
+        const auto H = ImGui::GetIO().DisplaySize.y;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(W, H));
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::Begin("##gdxsvosd", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs);
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 points[] = {fromCenter(-48, -55), fromCenter(48, -55), fromCenter(-48, 55), fromCenter(48, 55)};
+        for (int i = 0; i < 4; ++i) {
+            auto ms = matrix[matching_.peer_id()][i];
+            draw_list->AddCircleFilled(points[i], scaled(10), ImColor(0, 0, 0), 12);
+            draw_list->AddCircleFilled(points[i], scaled(7), msColor(ms), 12);
+        }
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
+    }
+}
 
 void GdxsvBackendRollback::Reset() {
     RestorePatch();

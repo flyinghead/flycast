@@ -19,6 +19,10 @@ bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || ne
 
 bool Gdxsv::Enabled() const { return enabled; }
 
+void Gdxsv::DisplayOSD() {
+    rollback_net.DisplayOSD();
+}
+
 void Gdxsv::Reset() {
     lbs_net.Reset();
     udp_net.Reset();
