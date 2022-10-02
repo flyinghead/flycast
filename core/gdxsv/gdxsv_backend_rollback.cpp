@@ -177,13 +177,21 @@ void GdxsvBackendRollback::OnMainUiLoop() {
     if (state_ == State::WaitGGPOSession) {
         auto now = std::chrono::high_resolution_clock::now();
         auto timeout = 10000 <= std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time).count();
+
         if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-            start_network_ = std::future<bool>();
-            state_ = State::McsInBattle;
-            emu.start();
+            if (ggpo::active()) {
+                start_network_ = std::future<bool>();
+                state_ = State::McsInBattle;
+                emu.start();
+            }
+            else {
+                NOTICE_LOG(COMMON, "StartNetwork failure");
+                state_ = State::End;
+                emu.start();
+            }
         }
         else if (timeout) {
-            NOTICE_LOG(COMMON, "StartNetwork timeout", timeout);
+            NOTICE_LOG(COMMON, "StartNetwork timeout");
             ggpo::stopSession();
             state_ = State::End;
             emu.start();
