@@ -53,6 +53,8 @@ public:
     bool StartRollbackTest(const char* param);
 
     void WritePatch();
+
+    int Disk() const { return disk; }
 private:
     void GcpPingTest();
 

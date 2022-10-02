@@ -119,6 +119,10 @@ void GdxsvBackendRollback::Reset() {
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
+    const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
+    const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
+    const int NetCountDown = 0x0c3ab942;  // TODO: disk2
+
     if (state_ == State::StopEmulator) {
         emu.stop();
         state_ = State::WaitPingPong;
@@ -148,6 +152,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
                     ips[i] = str;
                     ports[i] = ntohs(addr.sin_port);
                 } else {
+                    NOTICE_LOG(COMMON, "No available address %d", i);
                     ok = false;
                 }
             }
@@ -163,7 +168,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
             session_start_time = std::chrono::high_resolution_clock::now();
             state_ = State::WaitGGPOSession;
         } else {
-            // TODO: error handle
+            gdxsv_WriteMem16(NetCountDown, 1);
             emu.start();
             state_ = State::End;
         }
@@ -171,26 +176,33 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
     if (state_ == State::WaitGGPOSession) {
         auto now = std::chrono::high_resolution_clock::now();
-        auto timeout = 5000 <= std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time).count();
-        if (timeout) {
-            ggpo::stopSession();
-        }
-
-        if (start_network_.valid() &&
-            start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        auto timeout = 10000 <= std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time).count();
+        if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
             start_network_ = std::future<bool>();
-            if (!ggpo::active()) {
-                NOTICE_LOG(COMMON, "StartNetwork failure");
-            }
             state_ = State::McsInBattle;
+            emu.start();
+        }
+        else if (timeout) {
+            NOTICE_LOG(COMMON, "StartNetwork timeout", timeout);
+            ggpo::stopSession();
+            state_ = State::End;
             emu.start();
         }
     }
 
-    const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
+    // Rebattle end
     if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active()) {
         ggpo::stopSession();
         state_ = State::End;
+    }
+
+    // Fast return to lobby on error
+    if (gdxsv_ReadMem16(ConnectionStatus) == 1 &&
+        gdxsv_ReadMem16(ConnectionStatus + 4) == 10 &&
+        1 < gdxsv_ReadMem16(NetCountDown)) {
+        ggpo::stopSession();
+        state_ = State::End;
+        gdxsv_WriteMem16(NetCountDown, 1);
     }
 }
 
@@ -241,6 +253,7 @@ void GdxsvBackendRollback::Prepare(const proto::P2PMatching &matching, int port)
 }
 
 void GdxsvBackendRollback::Open() {
+    NOTICE_LOG(COMMON, "GdxsvBackendRollback.Open");
     recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
     state_ = State::McsSessionExchange;
     maxlag_ = 0;
@@ -524,18 +537,15 @@ void GdxsvBackendRollback::ApplyPatch(bool first_time) {
 
     gdxsv.WritePatch();
 
-    // Skip Key MsgPush
-    auto it = symbols_.find("disk");
-    if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
+    if (gdxsv.Disk() == 2) {
+        // Skip Key MsgPush
         gdxsv_WriteMem16(0x8c045f64, 9);
         gdxsv_WriteMem8(0x0c3abb90, 1);
     }
 }
 
 void GdxsvBackendRollback::RestorePatch() {
-    // Skip Key MsgPush
-    auto it = symbols_.find("disk");
-    if (it != symbols_.end() && gdxsv_ReadMem32(it->second) == 2) {
+    if (gdxsv.Disk() == 2) {
         gdxsv_WriteMem16(0x8c045f64, 0x410b);
         gdxsv_WriteMem8(0x0c3abb90, 2);
     }
