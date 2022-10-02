@@ -69,6 +69,8 @@ private:
     void WritePatchDisk1();
 
     void WritePatchDisk2();
+    
+    void WriteWidescreenPatchDisk2();
 
     NetMode netmode = NetMode::Offline;
     std::atomic<bool> testmode;
