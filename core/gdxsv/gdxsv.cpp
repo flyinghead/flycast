@@ -138,7 +138,7 @@ void Gdxsv::Update() {
         // Don't edit memory at vsync if ggpo::active
         WritePatch();
     }
-    WriteWidescreenPatchDisk2();
+    // WriteWidescreenPatchDisk2();
 }
 
 void Gdxsv::HookMainUiLoop() {
