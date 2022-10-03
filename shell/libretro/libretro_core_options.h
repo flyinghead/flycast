@@ -325,7 +325,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "per-strip (fast, least accurate)", "Per-Strip (fast, least accurate)" },
          { "per-triangle (normal)",            "Per-Triangle (normal)" },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             "Per-Pixel (accurate, but slowest)" },
 #endif
          { NULL, NULL },
@@ -336,7 +336,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       "Accumulation Pixel Buffer Size",
