@@ -30,11 +30,6 @@ void Gdxsv::Reset() {
     udp_net.Reset();
     RestoreOnlinePatch();
 
-    if (upnp_init.valid()) {
-        upnp_init = std::future<bool>();
-        upnp.Term();
-    }
-
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
@@ -62,9 +57,6 @@ void Gdxsv::Reset() {
     if (disk_num == "2") disk = 2;
 
     udp_port = config::GdxLocalPort;
-    if (config::EnableUPnP) {
-        upnp_init = std::async(std::launch::async, [this]() { return upnp.Init(); });
-    }
 
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
@@ -259,7 +251,8 @@ void Gdxsv::HandleRPC() {
 
         if (netmode == NetMode::Replay) {
             replay_net.Open();
-        } else if (tolobby == 1) {
+        }
+        else if (tolobby == 1) {
             udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
             if (lbs_net.Connect(host, port)) {
                 netmode = NetMode::Lbs;
@@ -273,8 +266,9 @@ void Gdxsv::HandleRPC() {
 
                     if (config::EnableUPnP && upnp_port != udp.bind_port()) {
                         upnp_port = udp.bind_port();
-                        port_mapping =
-                            std::async(std::launch::async, [this]() { return upnp.AddPortMapping(upnp_port, false); });
+                        upnp_result = std::async(std::launch::async, [this]() -> std::string {
+                            return (upnp.Init() && upnp.AddPortMapping(upnp_port, false)) ? "Success" : upnp.getLastError();
+                        });
                     }
                 }
             } else {

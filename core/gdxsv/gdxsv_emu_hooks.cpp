@@ -207,15 +207,32 @@ void gdxsv_emu_settings() {
     gui_header("Network Settings (P2P Lobby Only)");
 	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 
-	char local_port[256];
-	sprintf(local_port, "%d", (int)config::GdxLocalPort);
-	ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
-	ImGui::SameLine();
-	ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
-	config::GdxLocalPort.set(atoi(local_port));
+    char local_port[256];
+    sprintf(local_port, "%d", (int)config::GdxLocalPort);
+    ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+    ImGui::SameLine();
+    ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
+    config::GdxLocalPort.set(atoi(local_port));
 
-	OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
-		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and introduces glitches.");
+    static char upnp_result[256];
+    if (config::GdxLocalPort == 0) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
+    if (ImGui::Button("UPnP Now")) {
+        auto upnp = gdxsv.UPnP();
+        if (upnp.Init() && upnp.AddPortMapping(config::GdxLocalPort, false)) strcpy(upnp_result, "Success");
+        else strcpy(upnp_result, upnp.getLastError());
+    }
+    if (config::GdxLocalPort == 0) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+    }
+    ImGui::SameLine();
+    ImGui::Text(upnp_result);
+
+    OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
+        "Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and introduces glitches.");
 
     ImGui::NewLine();
     gui_header("Flycast Settings");
