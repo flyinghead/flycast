@@ -38,14 +38,16 @@ bool MiniUPnP::Init()
 #endif
 	if (devlist == nullptr)
 	{
-		WARN_LOG(NETWORK, "UPnP discover failed: error %d", error);
+		snprintf(lastError, sizeof(lastError), "UPnP discover failed: error %d", error);
+		WARN_LOG(NETWORK, lastError);
 		return false;
 	}
 	error = UPNP_GetValidIGD(devlist, &urls, &data, lanAddress, sizeof(lanAddress));
 	freeUPNPDevlist(devlist);
 	if (error != 1)
 	{
-		WARN_LOG(NETWORK, "Internet Gateway not found: error %d", error);
+		snprintf(lastError, sizeof(lastError), "Internet Gateway not found: error %d", error);
+		WARN_LOG(NETWORK, lastError);
 		return false;
 	}
 	wanAddress[0] = 0;
@@ -83,7 +85,8 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 								"86400");  // port map lease duration (in seconds) or zero for "as long as possible"
 	if (error != 0)
 	{
-		WARN_LOG(NETWORK, "Port %d redirection failed: error %d", port, error);
+		snprintf(lastError, sizeof(lastError), "Port %d redirection failed: error %d", port, error);
+		WARN_LOG(NETWORK, lastError);
 		return false;
 	}
 	mappedPorts.emplace_back(portStr, tcp);

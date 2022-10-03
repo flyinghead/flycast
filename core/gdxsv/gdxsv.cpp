@@ -30,11 +30,6 @@ void Gdxsv::Reset() {
     udp_net.Reset();
     RestoreOnlinePatch();
 
-    if (upnp_init.valid()) {
-        upnp_init = std::future<bool>();
-        upnp.Term();
-    }
-
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
@@ -62,9 +57,6 @@ void Gdxsv::Reset() {
     if (disk_num == "2") disk = 2;
 
     udp_port = config::GdxLocalPort;
-    if (config::EnableUPnP) {
-        upnp_init = std::async(std::launch::async, [this]() { return upnp.Init(); });
-    }
 
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
@@ -259,7 +251,8 @@ void Gdxsv::HandleRPC() {
 
         if (netmode == NetMode::Replay) {
             replay_net.Open();
-        } else if (tolobby == 1) {
+        }
+        else if (tolobby == 1) {
             udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
             if (lbs_net.Connect(host, port)) {
                 netmode = NetMode::Lbs;
@@ -273,8 +266,9 @@ void Gdxsv::HandleRPC() {
 
                     if (config::EnableUPnP && upnp_port != udp.bind_port()) {
                         upnp_port = udp.bind_port();
-                        port_mapping =
-                            std::async(std::launch::async, [this]() { return upnp.AddPortMapping(upnp_port, false); });
+                        upnp_result = std::async(std::launch::async, [this]() -> std::string {
+                            return (upnp.Init() && upnp.AddPortMapping(upnp_port, false)) ? "Success" : upnp.getLastError();
+                        });
                     }
                 }
             } else {
@@ -660,36 +654,6 @@ void Gdxsv::WritePatchDisk2() {
 
     // Online patch
     ApplyOnlinePatch(false);
-
-    // Dirty widescreen cheat
-    if (config::WidescreenGameHacks.get()) {
-        u32 ratio = 0x3faaaaab;  // default 4/3
-        int stretching = 100;
-        bool update = false;
-        if (gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) {  // In main game part
-            // Changing this value outside the game part will break UI layout.
-            // For 0x0c3d16d5: 4=load briefing, 5=briefing, 7=battle, 0xd=rebattle/end selection
-            if (config::ScreenStretching == 100) {
-                // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
-                // stretching = 134;
-                // Use a little wider than 16/9 because of a glitch at the edges of the screen.
-                ratio = 0x40155555;
-                stretching = 175;
-                update = true;
-            }
-        } else {
-            if (config::ScreenStretching != 100) {
-                update = true;
-            }
-        }
-        if (update) {
-            config::ScreenStretching.override(stretching);
-            gdxsv_WriteMem32(0x0c1e7948, ratio);
-            gdxsv_WriteMem32(0x0c1e7958, ratio);
-            gdxsv_WriteMem32(0x0c1e7968, ratio);
-            gdxsv_WriteMem32(0x0c1e7978, ratio);
-        }
-    }
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {

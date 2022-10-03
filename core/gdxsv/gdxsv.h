@@ -53,6 +53,10 @@ public:
     bool StartRollbackTest(const char* param);
 
     void WritePatch();
+
+    int Disk() const { return disk; }
+
+    MiniUPnP& UPnP() { return upnp; }
 private:
     void GcpPingTest();
 
@@ -67,6 +71,8 @@ private:
     void WritePatchDisk1();
 
     void WritePatchDisk2();
+    
+    void WriteWidescreenPatchDisk2();
 
     NetMode netmode = NetMode::Offline;
     std::atomic<bool> testmode;
@@ -79,8 +85,7 @@ private:
     std::map<std::string, u32> symbols;
 
     MiniUPnP upnp;
-    std::future<bool> upnp_init;
-    std::future<bool> port_mapping;
+    std::future<std::string> upnp_result;
     int upnp_port;
     int udp_port;
     std::string user_id;
