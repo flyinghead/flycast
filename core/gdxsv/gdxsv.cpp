@@ -138,6 +138,7 @@ void Gdxsv::Update() {
         // Don't edit memory at vsync if ggpo::active
         WritePatch();
     }
+    WriteWidescreenPatchDisk2();
 }
 
 void Gdxsv::HookMainUiLoop() {
@@ -654,7 +655,10 @@ void Gdxsv::WritePatchDisk2() {
 
     // Online patch
     ApplyOnlinePatch(false);
+}
 
+void Gdxsv::WriteWidescreenPatchDisk2() {
+    if (disk != 2) return;
     // Dirty widescreen cheat
     if (config::WidescreenGameHacks.get()) {
         u32 ratio = 0x3faaaaab;  // default 4/3
