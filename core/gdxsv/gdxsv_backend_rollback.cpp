@@ -61,6 +61,16 @@ ImVec2 fromCenter(float x, float y) {
     return ImVec2(CX + (x * S), CY + (y * S));
 }
 
+static void screenToNative(int& x, int& y, int width, int height) {
+    float fx, fy;
+    float scale = 480.f / height;
+    fy = y * scale;
+    scale /= config::ScreenStretching / 100.f;
+    fx = (x - (width - 640.f / scale) / 2.f) * scale;
+    x = (int)std::round(fx);
+    y = (int)std::round(fy);
+}
+
 float scaled(float size) {
     const auto W = ImGui::GetIO().DisplaySize.x;
     const auto H = ImGui::GetIO().DisplaySize.y;
@@ -76,6 +86,7 @@ ImColor msColor(int ms) {
     if (ms <= 150) return ImColor(255, 0, 0);
     return ImColor(128, 128, 128);
 }
+
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {

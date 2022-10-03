@@ -117,12 +117,12 @@ void gdxsv_emu_settings() {
     gui_header("gdxsv Settings");
     
     ImGui::Columns(5, "gdxlang", false);
-    ImGui::SetColumnWidth(0, 200.0f * settings.display.uiScale);
+    ImGui::SetColumnWidth(0, 135.0f * settings.display.uiScale);
     ImGui::Text("Language mod:");
     ImGui::SameLine();
     ShowHelpMarker("Patch game language and texture, for DX only");
     ImGui::NextColumn();
-    OptionRadioButton("Japanese (Patched)", config::GdxLanguage, 0);
+    OptionRadioButton("Japanese", config::GdxLanguage, 0);
     ImGui::NextColumn();
     OptionRadioButton("Cantonese", config::GdxLanguage, 1);
     ImGui::NextColumn();
@@ -131,7 +131,7 @@ void gdxsv_emu_settings() {
     OptionRadioButton("Disabled", config::GdxLanguage, 3);
     ImGui::Columns(1, nullptr, false);
     
-    if (ImGui::Button("Apply Recommended Settings")) {
+    if (ImGui::Button("Apply Recommended Settings", ImVec2(0, 40))) {
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
@@ -192,17 +192,6 @@ void gdxsv_emu_settings() {
       Enable UPnP
       Gdx Local UDP Port: 0
       Gdx Minimum Delay: 2)");
-
-    bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
-    bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
-    if (pressed) {
-        config::Widescreen.set(widescreen);
-        config::WidescreenGameHacks.set(widescreen);
-    }
-    ImGui::SameLine();
-    ShowHelpMarker(R"(Use the following rendering options:
-    rend.WideScreen=true
-    rend.WidescreenGameHacks=true)");
 
     gui_header("Network Settings (P2P Lobby Only)");
 	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
