@@ -1,5 +1,6 @@
 #include "gdxsv_backend_rollback.h"
 
+#include <algorithm>
 #include <future>
 #include <map>
 #include <string>
@@ -17,6 +18,7 @@
 #include "network/net_platform.h"
 #include "rend/gui.h"
 #include "rend/gui_util.h"
+#include "rend/transform_matrix.h"
 
 namespace {
 u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04,
@@ -52,51 +54,134 @@ u16 convertInput(MapleInputState input) {
     return r;
 }
 
-ImVec2 fromCenter(float x, float y) {
+float getScale() {
     const auto W = ImGui::GetIO().DisplaySize.x;
     const auto H = ImGui::GetIO().DisplaySize.y;
     const auto S = std::min(W / 640.f, H / 480.f);
     const auto CX = W / 2.f;
     const auto CY = H / 2.f;
-    return ImVec2(CX + (x * S), CY + (y * S));
+    float renderAR = getOutputFramebufferAspectRatio();
+    float screenAR = W / H;
+    float dx = 0;
+    float dy = 0;
+    if (renderAR > screenAR)
+        dy = H * (1 - screenAR / renderAR) / 2;
+    else
+        dx = W * (1 - renderAR / screenAR) / 2;
+
+    return std::min((W - dx * 2) / 640.f, (H - dy * 2) / 480.f);
 }
 
-static void screenToNative(int& x, int& y, int width, int height) {
-    float fx, fy;
-    float scale = 480.f / height;
-    fy = y * scale;
-    scale /= config::ScreenStretching / 100.f;
-    fx = (x - (width - 640.f / scale) / 2.f) * scale;
-    x = (int)std::round(fx);
-    y = (int)std::round(fy);
-}
-
-float scaled(float size) {
+ImVec2 fromCenter(float x, float y, float scale) {
     const auto W = ImGui::GetIO().DisplaySize.x;
     const auto H = ImGui::GetIO().DisplaySize.y;
-    const auto S = std::min(W / 640.f, H / 480.f);
-    return S * size;
+    const auto CX = W / 2.f;
+    const auto CY = H / 2.f;
+    return ImVec2(CX + (x * scale), CY + (y * scale));
 }
 
-ImColor msColor(int ms) {
+ImColor fadeColor(ImColor color, int elapsed) {
+    if (elapsed <= 1800)
+        color.Value.w *= (elapsed - 1550) / 250.0;
+    else if (elapsed >= 6600 && elapsed < 6900)
+        color.Value.w *= 1.0 - (elapsed - 6600) / 300.0;
+    return color;
+}
+
+ImColor barColor(int ms) {
+    if (ms <= 0) return ImColor(64, 64, 64);
     if (ms <= 30) return ImColor(87, 213, 213);
     if (ms <= 60) return ImColor(0, 255, 149);
     if (ms <= 90) return ImColor(255, 255, 0);
     if (ms <= 120) return ImColor(255, 170, 0);
-    if (ms <= 150) return ImColor(255, 0, 0);
-    return ImColor(128, 128, 128);
+    return ImColor(255, 0, 0);
+}
+
+ImColor barStep(int ms) {
+    if (ms <= 0) return 5;
+    if (ms <= 30) return 5;
+    if (ms <= 60) return 4;
+    if (ms <= 90) return 3;
+    if (ms <= 120) return 2;
+    return 1;
+}
+
+ImColor barColor(int ms, int elapsed) {
+    return fadeColor(barColor(ms), elapsed);
+}
+
+void drawDot(ImDrawList *draw_list, ImVec2 center, ImColor c, float scale) {
+    draw_list->AddCircleFilled(center, 7.5 * scale, ImColor(0, 0, 0, 128), 20);
+    draw_list->AddCircleFilled(center, 6.5 * scale, c, 20);
+}
+
+void baseRect(ImVec2 points[4], float sx, float sy) {
+    float v = sx / 2.0;
+    float w = sy / 2.0;
+    points[0].x = -v;
+    points[0].y = -w;
+    points[1].x = v;
+    points[1].y = -w;
+    points[2].x = v;
+    points[2].y = w;
+    points[3].x = -v;
+    points[3].y = w;
+}
+
+void scaleRect(ImVec2 points[4], float scale) {
+    for (int i = 0; i < 4; i++) {
+        points[i].x *= scale;
+        points[i].y *= scale;
+    }
+}
+
+void scaleRectX(ImVec2 points[4], float scale) {
+    for (int i = 0; i < 4; i++) {
+        points[i].x *= scale;
+    }
+}
+
+void moveRect(ImVec2 points[4], ImVec2 delta) {
+    for (int i = 0; i < 4; i++) {
+        points[i].x += delta.x;
+        points[i].y += delta.y;
+    }
+}
+
+void rotRect(ImVec2 points[4], float rad) {
+    for (int i = 0; i < 4; i++) {
+        auto x = points[i].x;
+        auto y = points[i].y;
+        points[i].x = x * cos(rad) - y * sin(rad);
+        points[i].y = y * cos(rad) + x * sin(rad);
+    }
+}
+
+void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir) {
+    float rad = (3.141592 / 4) * dir;
+    ImVec2 points[4];
+    for (int i = 0; i < 5; i++) {
+        baseRect(points, 5, 4);
+        ImColor c = step <= i ? ImColor(64, 64, 64) : color;
+        moveRect(points, ImVec2(0, i * 5.3));
+        scaleRectX(points, 1 + i * 0.50);
+        scaleRect(points, scale);
+        moveRect(points, ImVec2(0, scale * 10));
+        rotRect(points, rad);
+        moveRect(points, anchor);
+        draw_list->AddConvexPolyFilled(points, sizeof(points) / sizeof(points[0]), c);
+        draw_list->AddPolyline(points, sizeof(points) / sizeof(points[0]), ImColor(0, 0, 0), true, 1.0);
+    }
 }
 
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {
-    const auto ms = ping_pong_.ElapsedMs();
-    if (2000 < ms && ms < 6500) {
-        uint8_t matrix[4][4];
-        ping_pong_.GetRttMatrix(matrix);
-
+    const auto elapsed = ping_pong_.ElapsedMs();
+    if (1550 < elapsed && elapsed < 6900) {
         const auto W = ImGui::GetIO().DisplaySize.x;
         const auto H = ImGui::GetIO().DisplaySize.y;
+        float scale = getScale();
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
@@ -108,11 +193,56 @@ void GdxsvBackendRollback::DisplayOSD() {
                          ImGuiWindowFlags_NoInputs);
 
         ImDrawList *draw_list = ImGui::GetWindowDrawList();
-        ImVec2 points[] = {fromCenter(-48, -55), fromCenter(48, -55), fromCenter(-48, 55), fromCenter(48, 55)};
-        for (int i = 0; i < 4; ++i) {
-            auto ms = matrix[matching_.peer_id()][i];
-            draw_list->AddCircleFilled(points[i], scaled(15), ImColor(0, 0, 0, 128), 20);
-            draw_list->AddCircleFilled(points[i], scaled(12), msColor(ms), 20);
+
+        // Draw background
+        draw_list->AddRectFilled(fromCenter(-45, -97, scale), fromCenter(45.25, -51.875, scale), fadeColor(ImColor(0, 0, 0), elapsed));
+        draw_list->AddRectFilled(fromCenter(-45, 53.125, scale), fromCenter(45.25, 98.25, scale), fadeColor(ImColor(0, 0, 0), elapsed));
+
+        uint8_t matrix[4][4] = {};
+        ping_pong_.GetRttMatrix(matrix);
+
+        std::map<int, int> id_to_team;
+        std::map<int, int> pos_to_id;
+        for (const auto& c : matching_.candidates()) {
+            id_to_team[c.peer_id()] = c.team();
+        }
+
+        for (const auto& p : id_to_team) {
+            int pos = (p.second == 2 ? 2 : 0);
+            if (pos_to_id.find(pos) != pos_to_id.end()) pos++;
+            pos_to_id[pos] = p.first;
+        }
+
+        ImVec2 d(36, 89);
+        ImVec2 origins[4] = {
+            fromCenter(0, 0, scale) + ImVec2(-d.x * scale, -d.y * scale),
+            fromCenter(0, 0, scale) + ImVec2(d.x * scale, -d.y * scale),
+            fromCenter(0, 0, scale) + ImVec2(-d.x * scale, d.y * scale),
+            fromCenter(0, 0, scale) + ImVec2(d.x * scale, d.y * scale),
+        };
+
+        int dirs[4][4] = {};
+        dirs[0][1] = dirs[2][3] = 6;
+        dirs[0][3] = 7;
+        dirs[0][2] = dirs[1][3] = 0;
+        dirs[1][2] = 1;
+        dirs[1][0] = dirs[3][2] = 2;
+        dirs[3][0] = 3;
+        dirs[2][0] = dirs[3][1] = 4;
+        dirs[2][1] = 5;
+
+        for (const auto& p : pos_to_id) {
+            int i = p.first;
+            if (i < 0 || i >= 4) continue; // ignore
+            int max_ms = 0;
+            for (int j = 0; j < 4; j++) {
+                if (i == j) continue;
+                if (pos_to_id.find(j) == pos_to_id.end()) continue;
+                auto ms = matrix[pos_to_id[i]][pos_to_id[j]];
+                drawRectWave(draw_list, origins[i], barColor(ms, elapsed), scale, barStep(ms), dirs[i][j]); // 0-1
+                max_ms = std::max(max_ms, (int)ms);
+            }
+            drawDot(draw_list, origins[i], barColor(max_ms, elapsed), scale);
         }
 
         ImGui::End();
@@ -250,6 +380,7 @@ bool GdxsvBackendRollback::StartLocalTest(const char *param) {
         player.set_port(10010 + i);
         player.set_user_id(std::to_string(i));
         player.set_peer_id(i);
+        player.set_team(i/2 + 1);
         matching_.mutable_candidates()->Add(std::move(player));
     }
     Prepare(matching_, 10010 + me);
