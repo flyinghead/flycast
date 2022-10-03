@@ -248,9 +248,6 @@ inline static float getOutputFramebufferAspectRatio()
 		else
 			renderAR = 4.f / 3.f;
 	}
-	// GDXSV: Do not use stretched size for framebuffer
-	if (gdxsv_emu_enabled())
-		return renderAR;
 	
 	return renderAR * config::ScreenStretching / 100.f;
 }
