@@ -16,7 +16,13 @@ static void alsa_init()
 	std::string device = cfgLoadStr("alsa", "device", "");
 
 	int rc = -1;
-	if (device.empty() || device == "auto")
+
+	if (!device.empty() && device != "auto") {
+		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+		if (rc < 0)
+			WARN_LOG(AUDIO, "ALSA: Cannot open device %s. Trying auto", device.c_str());
+	}
+	if (rc < 0)
 	{
 		INFO_LOG(AUDIO, "ALSA: trying to determine audio device");
 
@@ -54,13 +60,10 @@ static void alsa_init()
 		if (rc < 0)
 			INFO_LOG(AUDIO, "ALSA: unable to automatically determine audio device.");
 	}
-	else {
-		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
-	}
 
 	if (rc < 0)
 	{
-		WARN_LOG(AUDIO, "ALSA: unable to open PCM device %s: %s", device.c_str(), snd_strerror(rc));
+		ERROR_LOG(AUDIO, "ALSA: unable to open PCM device %s: %s", device.c_str(), snd_strerror(rc));
 		return;
 	}
 
