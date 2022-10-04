@@ -278,14 +278,14 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         bool ok = true;
         std::vector<std::string> ips(matching_.player_count());
         std::vector<u16> ports(matching_.player_count());
-        int max_rtt = 0;
+        float max_rtt = 0;
         for (int i = 0; i < matching_.player_count(); i++) {
             if (i == matching_.peer_id()) {
                 ips[i] = "";
                 ports[i] = port_;
             } else {
                 sockaddr_in addr;
-                int rtt;
+                float rtt;
                 if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
                     max_rtt = std::max(max_rtt, rtt);
                     char str[INET_ADDRSTRLEN] = {};

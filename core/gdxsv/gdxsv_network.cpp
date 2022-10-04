@@ -450,11 +450,9 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                             return c.peer_id == recv.from_peer_id && c.remote.str_addr() == sender;
                         });
                     if (it != candidates_.end()) {
+                        it->rtt = float(it->pong_count * it->rtt + rtt) / float(it->pong_count + 1);
                         it->pong_count++;
-                        if (rtt == 0)
-                        it->rtt = rtt;
-
-                        rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, rtt));
+                        rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(it->rtt)));
                         for (int j = 0; j < N; j++) {
                             rtt_matrix_[recv.from_peer_id][j] = recv.rtt_matrix[recv.from_peer_id][j];
                         }
@@ -561,16 +559,13 @@ void UdpPingPong::AddCandidate(const std::string& user_id, uint8_t peer_id, cons
     candidates_.push_back(c);
 }
 
-bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, int* rtt) {
+bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, float* rtt) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    int min_rtt = INT_MAX;
+    float min_rtt = 1000.0f;
     bool found = false;
-    for (auto& c : candidates_)
-    {
-        if (c.peer_id == peer_id && c.pong_count)
-        {
-            if (c.rtt < min_rtt)
-            {
+    for (auto& c : candidates_) {
+        if (c.peer_id == peer_id && c.pong_count) {
+            if (c.rtt < min_rtt) {
                 min_rtt = c.rtt;
                 *dst = c.remote.net_addr();
                 *rtt = c.rtt;
