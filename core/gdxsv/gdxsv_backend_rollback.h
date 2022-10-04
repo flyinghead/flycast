@@ -24,6 +24,7 @@ class GdxsvBackendRollback {
         StartGGPOSession,
         WaitGGPOSession,
         McsInBattle,
+        CloseWait,
         End,
     };
 

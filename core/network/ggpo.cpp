@@ -989,6 +989,14 @@ bool isConnected(int playerNum) {
 	return connected[playerHandles[playerNum]];
 }
 
+void disconnect(int playerNum) {
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	if (ggpoSession == nullptr) {
+		return;
+	}
+	ggpo_disconnect_player(ggpoSession, playerHandles[playerNum]);
+}
+
 void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
 {
 	GGPOSessionCallbacks cb{};

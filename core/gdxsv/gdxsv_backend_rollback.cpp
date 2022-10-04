@@ -279,14 +279,17 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         std::vector<std::string> ips(matching_.player_count());
         std::vector<u16> ports(matching_.player_count());
         float max_rtt = 0;
+        NOTICE_LOG(COMMON, "Peer count %d", matching_.player_count());
         for (int i = 0; i < matching_.player_count(); i++) {
             if (i == matching_.peer_id()) {
+                NOTICE_LOG(COMMON, "Peer%d is self", i);
                 ips[i] = "";
                 ports[i] = port_;
             } else {
                 sockaddr_in addr;
                 float rtt;
                 if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
+                    NOTICE_LOG(COMMON, "Peer%d rtt%.2f", i, rtt);
                     max_rtt = std::max(max_rtt, rtt);
                     char str[INET_ADDRSTRLEN] = {};
                     inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
@@ -340,7 +343,13 @@ void GdxsvBackendRollback::OnMainUiLoop() {
     }
 
     // Rebattle end
-    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active()) {
+    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
+        ggpo::disconnect(matching_.peer_id());
+        state_ = State::CloseWait;
+    }
+
+    // Friend save scene
+    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
         ggpo::stopSession();
         state_ = State::End;
     }
@@ -358,8 +367,12 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 bool GdxsvBackendRollback::StartLocalTest(const char *param) {
     auto args = std::string(param);
     int me = 0;
+    int n = 4;
     if (0 < args.size() && '1' <= args[0] && args[0] <= '4') {
         me = args[0] - '1';
+    }
+    if (2 < args.size() && args[1] == '/' && '1' <= args[2] && args[2] <= '4') {
+        n = args[2] - '0';
     }
     Reset();
     DummyRuleData[6] = 1;
@@ -373,8 +386,8 @@ bool GdxsvBackendRollback::StartLocalTest(const char *param) {
     matching_.set_session_id(12345);
     matching_.set_timeout_min_ms(1000);
     matching_.set_timeout_max_ms(10000);
-    matching_.set_player_count(4);
-    for (int i = 0; i < 4; i++) {
+    matching_.set_player_count(n);
+    for (int i = 0; i < n; i++) {
         proto::PlayerAddress player{};
         player.set_ip("127.0.0.1");
         player.set_port(10010 + i);
@@ -452,6 +465,9 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             }
         }
 
+        auto inputState = mapleInputState;
+        auto memExInputAddr = symbols_.at("print_buf"); // TODO
+
         int msg_len = gdxsv_ReadMem8(InetBuf);
         McsMessage msg;
         if (0 < msg_len) {
@@ -497,6 +513,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                 case McsMessage::MsgType::PongMsg:
                     break;
                 case McsMessage::MsgType::StartMsg:
+                    gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
                     if (!ggpo::rollbacking()) {
                         ggpo::setExInput(ExInputWaitStart);
                         NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
@@ -504,17 +521,18 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                     break;
                 case McsMessage::MsgType::ForceMsg:
                     break;
-                case McsMessage::MsgType::KeyMsg1:
+                case McsMessage::MsgType::KeyMsg1: {
                     for (int i = 0; i < matching_.player_count(); ++i) {
                         if (ggpo::isConnected(i)) {
                             auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
-                            auto input = convertInput(mapleInputState[i]);
+                            auto input = convertInput(inputState[i]);
                             msg.body[2] = input >> 8 & 0xff;
                             msg.body[3] = input & 0xff;
                             std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
                     break;
+                }
                 case McsMessage::MsgType::KeyMsg2:
                     verify(false);
                     break;
@@ -529,6 +547,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                         }
                     }
 
+                    gdxsv_WriteMem16(memExInputAddr, ExInputWaitLoadEnd);
                     if (!ggpo::rollbacking()) {
                         ggpo::setExInput(ExInputWaitLoadEnd);
                         NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
@@ -543,11 +562,11 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             verify(recv_buf_.size() <= size);
         }
 
-        if (mapleInputState[0].exInput) {
-            auto exInput = mapleInputState[0].exInput;
+        if (gdxsv_ReadMem16(memExInputAddr) != ExInputNone) {
+            auto exInput = gdxsv_ReadMem16(memExInputAddr);
             bool ok = true;
             for (int i = 0; i < matching_.player_count(); i++) {
-                ok &= mapleInputState[i].exInput == exInput;
+                ok &= inputState[i].exInput == exInput;
             }
             if (ok && exInput == ExInputWaitStart) {
                 NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
@@ -557,6 +576,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                         std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                 }
+                gdxsv_WriteMem16(memExInputAddr, ExInputNone);
                 if (!ggpo::rollbacking()) {
                     ggpo::setExInput(ExInputNone);
                 }
@@ -569,6 +589,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
                         std::copy(b.body.begin(), b.body.end(), std::back_inserter(recv_buf_));
                     }
                 }
+                gdxsv_WriteMem16(memExInputAddr, ExInputNone);
                 if (!ggpo::rollbacking()) {
                     ggpo::setExInput(ExInputNone);
                 }

@@ -12,9 +12,9 @@ from pathlib import Path
 print = functools.partial(print, flush=True)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-N = os.getenv("N", 4)
-ROM = os.getenv("ROM", r"C:\data\rom\gdx-disc2\gdx-disc2.gdi")
-FLYCAST = os.getenv("FLYCAST", "out/build/x64-Debug/flycast.exe")
+N = int(os.getenv("N", 4))
+ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
+FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
@@ -49,8 +49,10 @@ def run(idx, *arg_list) -> subprocess.Popen[str]:
     cmd = " ".join(arg_list)
     print(cmd)
     new_env = os.environ.copy()
-    #if idx == 0: new_env["GGPO_NETWORK_DELAY"] = "16"
-    #else: new_env["GGPO_NETWORK_DELAY"] = "16"
+    if idx == 0:
+        new_env["GGPO_NETWORK_DELAY"] = "100"
+    else:
+        new_env["GGPO_NETWORK_DELAY"] = "100"
     return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
 
 
@@ -78,7 +80,7 @@ def run_rbk_test(idx: int) -> subprocess.Popen[str]:
         conf_gdxsv(idx),
         conf_window_layout(idx),
         conf_log(idx),
-        f"--config gdxsv:rbk_test={idx+1}"
+        f"--config gdxsv:rbk_test={idx+1}/{N}"
     )
 
 

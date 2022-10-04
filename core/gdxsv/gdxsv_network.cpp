@@ -363,7 +363,14 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
     client_.Bind(port);
     running_ = true;
 
-    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms]() {
+    std::set<int> peer_ids;
+    peer_ids.insert(peer_id);
+    for (const auto& c : candidates_) {
+        peer_ids.insert(c.peer_id);
+    }
+    int peer_count = peer_ids.size();
+
+    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count]() {
         WARN_LOG(COMMON, "Start UdpPingPong Thread");
         start_time_ = std::chrono::high_resolution_clock::now();
         std::string sender;
@@ -499,8 +506,9 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                         i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
                 }
 
-                for (int i = 0; i < 4; i++) {
-                    for (int j = 0; j < 4; j++) {
+                NOTICE_LOG(COMMON, "peer_count%d", peer_count);
+                for (int i = 0; i < peer_count; i++) {
+                    for (int j = 0; j < peer_count; j++) {
                         if (i != j) {
                             if (rtt_matrix_[i][j] == 0) {
                                 matrix_ok = false;
