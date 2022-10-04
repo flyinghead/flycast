@@ -295,7 +295,10 @@ public:
 	{
 		verify(!Sh4cntx.CpuRunning);
 		size = stack.size() * 8;
-		return (const u32 *)&stack[0];
+		if (!stack.empty())
+			return (const u32 *)&stack[0];
+		else
+			return nullptr;
 	}
 
 	void subroutineCall()
