@@ -1,4 +1,5 @@
 #include "gdxsv_network.h"
+#include <cmath>
 
 #ifndef _WIN32
 #include <sys/ioctl.h>
