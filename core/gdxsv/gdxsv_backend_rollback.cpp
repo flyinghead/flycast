@@ -111,8 +111,8 @@ ImColor barColor(int ms, int elapsed) {
 }
 
 void drawDot(ImDrawList *draw_list, ImVec2 center, ImColor c, float scale) {
-    draw_list->AddCircleFilled(center, 7.5 * scale, ImColor(0, 0, 0, 128), 20);
-    draw_list->AddCircleFilled(center, 6.5 * scale, c, 20);
+    draw_list->AddCircleFilled(center, 6.5 * scale, ImColor(0, 0, 0, 128), 20);
+    draw_list->AddCircleFilled(center, 5.5 * scale, c, 20);
 }
 
 void baseRect(ImVec2 points[4], float sx, float sy) {
@@ -195,8 +195,8 @@ void GdxsvBackendRollback::DisplayOSD() {
         ImDrawList *draw_list = ImGui::GetWindowDrawList();
 
         // Draw background
-        draw_list->AddRectFilled(fromCenter(-45, -97, scale), fromCenter(45.25, -51.875, scale), fadeColor(ImColor(0, 0, 0), elapsed));
-        draw_list->AddRectFilled(fromCenter(-45, 53.125, scale), fromCenter(45.25, 98.25, scale), fadeColor(ImColor(0, 0, 0), elapsed));
+        draw_list->AddRectFilled(fromCenter(-45, -97, scale), fromCenter(45.25, -51.875, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
+        draw_list->AddRectFilled(fromCenter(-45, 53.125, scale), fromCenter(45.25, 98.25, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
 
         uint8_t matrix[4][4] = {};
         ping_pong_.GetRttMatrix(matrix);
