@@ -485,6 +485,7 @@ class PlayerAddress PROTOBUF_FINAL :
     kIpFieldNumber = 3,
     kPeerIdFieldNumber = 2,
     kPortFieldNumber = 4,
+    kTeamFieldNumber = 5,
   };
   // string user_id = 1;
   void clear_user_id();
@@ -536,6 +537,15 @@ class PlayerAddress PROTOBUF_FINAL :
   void _internal_set_port(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 team = 5;
+  void clear_team();
+  ::PROTOBUF_NAMESPACE_ID::int32 team() const;
+  void set_team(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_team() const;
+  void _internal_set_team(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proto.PlayerAddress)
  private:
   class _Internal;
@@ -547,6 +557,7 @@ class PlayerAddress PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr ip_;
   ::PROTOBUF_NAMESPACE_ID::int32 peer_id_;
   ::PROTOBUF_NAMESPACE_ID::int32 port_;
+  ::PROTOBUF_NAMESPACE_ID::int32 team_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_gdxsv_2eproto;
 };
@@ -3287,6 +3298,26 @@ inline void PlayerAddress::_internal_set_port(::PROTOBUF_NAMESPACE_ID::int32 val
 inline void PlayerAddress::set_port(::PROTOBUF_NAMESPACE_ID::int32 value) {
   _internal_set_port(value);
   // @@protoc_insertion_point(field_set:proto.PlayerAddress.port)
+}
+
+// int32 team = 5;
+inline void PlayerAddress::clear_team() {
+  team_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 PlayerAddress::_internal_team() const {
+  return team_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 PlayerAddress::team() const {
+  // @@protoc_insertion_point(field_get:proto.PlayerAddress.team)
+  return _internal_team();
+}
+inline void PlayerAddress::_internal_set_team(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  team_ = value;
+}
+inline void PlayerAddress::set_team(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_team(value);
+  // @@protoc_insertion_point(field_set:proto.PlayerAddress.team)
 }
 
 // -------------------------------------------------------------------

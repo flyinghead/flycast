@@ -135,7 +135,7 @@ public:
 
     void AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port);
 
-    bool GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, int* rtt);
+    bool GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, float* rtt);
 
     void GetRttMatrix(uint8_t matrix[N][N]);
 
@@ -149,7 +149,7 @@ private:
         UdpRemote remote;
         int ping_count;
         int pong_count;
-        int rtt;
+        float rtt;
     };
 
 #pragma pack(1)
