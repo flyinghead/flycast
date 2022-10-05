@@ -610,11 +610,12 @@ static void gui_display_commands()
 		gui_stop_game();
 	}
 
-	if (ImGui::Button("Debugger", ScaledVec2(300, 50)
-			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
-	{
-		gui_state = GuiState::Debugger;
-		// debugger::insertMatchpoint(0, 0x8C010080, 2);
+	if (config::DisplayDebuggerMenu) {
+		if (ImGui::Button("Debugger", ScaledVec2(300, 50)
+				+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
+		{
+			gui_state = GuiState::Debugger;
+		}
 	}
 
 	ImGui::End();
@@ -2227,6 +2228,8 @@ static void gui_display_settings()
 #endif
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
+
+	            OptionCheckbox("DebuggerMenu", config::DisplayDebuggerMenu, "Debugger button on the option menu");
 
 	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;

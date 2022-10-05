@@ -473,6 +473,7 @@ extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
+extern Option<bool> DisplayDebuggerMenu;
 
 extern Option<bool> OpenGlChecks;
 
