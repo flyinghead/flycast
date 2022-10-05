@@ -11,12 +11,13 @@
 #include "../rend/CustomTexture.h"
 
 class GdxsvCustomTexture : public CustomTexture {
-public:
-    bool Init() override;
+   public:
+	bool Init() override;
 #ifdef _WIN32
-    u8* LoadCustomTexture(u32 hash, int& width, int& height) override;
-protected:
-    void LoadMap() override;
+	u8* LoadCustomTexture(u32 hash, int& width, int& height) override;
+
+   protected:
+	void LoadMap() override;
 #endif
 };
 extern GdxsvCustomTexture gdx_custom_texture;
