@@ -5,6 +5,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
 #include "oslib/oslib.h"
+#include "emulator.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -111,6 +112,19 @@ Trv DYNACALL _vmem_readt(u32 addr)
 {
 	constexpr u32 sz = sizeof(T);
 
+	// if (emu.running()) {
+		// if (addr == 0x8c1ba3c8) {
+		// 	NOTICE_LOG(VMEM, "Reading from 0x8c1ba3c8 at %08x", sh4rcb.cntx.pc);
+		// }
+		// if (addr == 0x8C894F00) {
+		// 	NOTICE_LOG(VMEM, "Reading bus_font at %08X", sh4rcb.cntx.pc);
+		// } else if (addr == 0x8C893EE0) {
+		// 	NOTICE_LOG(VMEM, "Reading busstop.dat at %08X", sh4rcb.cntx.pc);
+		// } else if (addr == 0x8C881C40) {
+		// 	NOTICE_LOG(VMEM, "Reading title.dat at %08X", sh4rcb.cntx.pc);
+		// }
+	// }
+
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
 	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
@@ -161,6 +175,19 @@ template<typename T>
 void DYNACALL _vmem_writet(u32 addr, T data)
 {
 	constexpr u32 sz = sizeof(T);
+
+	// if (emu.running()) {
+	// 	// if (addr == 0x8c226568) {
+	// 	// 	NOTICE_LOG(VMEM, "Writing to 0x8c226568 at %08x", sh4rcb.cntx.pc);
+	// 	// }
+	// 	// if (addr == 0x8C894F00) {
+	// 	// 	NOTICE_LOG(VMEM, "Reading bus_font at %08X", sh4rcb.cntx.pc);
+	// 	// } else if (addr == 0x8C893EE0) {
+	// 	// 	NOTICE_LOG(VMEM, "Reading busstop.dat at %08X", sh4rcb.cntx.pc);
+	// 	// } else if (addr == 0x8C881C40) {
+	// 	// 	NOTICE_LOG(VMEM, "Reading title.dat at %08X", sh4rcb.cntx.pc);
+	// 	// }
+	// }
 
 	u32 page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];

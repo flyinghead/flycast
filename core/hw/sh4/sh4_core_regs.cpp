@@ -245,3 +245,23 @@ u32* GetRegPtr(u32 reg)
 {
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
+
+f32* GetFloatRegPtr(u32 reg)
+{
+	auto type = (Sh4RegType) reg;
+
+	if ((reg>=reg_fr_0) && (reg<=reg_fr_15))
+	{
+		return &fr[reg-reg_fr_0];
+	}
+	else if ((reg>=reg_xf_0) && (reg<=reg_xf_15))
+	{
+		return &xf[reg-reg_xf_0];
+	}
+
+	ERROR_LOG(SH4, "Unknown fp register ID %d", reg);
+	die("Invalid reg");
+	return 0;
+	
+	// return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+}

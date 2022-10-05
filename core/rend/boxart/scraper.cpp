@@ -33,12 +33,17 @@ bool Scraper::downloadImage(const std::string& url, const std::string& localName
 	std::string contentType;
 	if (!http::success(http::get(url, content, contentType)))
 	{
-		WARN_LOG(COMMON, "download_image http error: %s", url.c_str());
+		WARN_LOG(COMMON, "downloadImage http error: %s", url.c_str());
 		return false;
 	}
 	if (contentType.substr(0, 6) != "image/")
 	{
-		WARN_LOG(COMMON, "download_image bad content type %s", contentType.c_str());
+		WARN_LOG(COMMON, "downloadImage bad content type %s", contentType.c_str());
+		return false;
+	}
+	if (content.empty())
+	{
+		WARN_LOG(COMMON, "downloadImage: empty content");
 		return false;
 	}
 	FILE *f = nowide::fopen(localName.c_str(), "wb");

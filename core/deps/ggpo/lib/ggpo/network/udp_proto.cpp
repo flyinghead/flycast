@@ -585,8 +585,8 @@ UdpProtocol::OnInput(UdpMsg *msg, int len)
        */
       UdpMsg::connect_status* remote_status = msg->u.input.peer_connect_status;
       for (unsigned i = 0; i < ARRAY_SIZE(_peer_connect_status); i++) {
-         ASSERT(remote_status[i].last_frame >= _peer_connect_status[i].last_frame);
-         _peer_connect_status[i].disconnected = _peer_connect_status[i].disconnected || remote_status[i].disconnected;
+         _peer_connect_status[i].disconnected |= remote_status[i].disconnected;
+         if (!_peer_connect_status[i].disconnected) ASSERT(remote_status[i].last_frame >= _peer_connect_status[i].last_frame);
          _peer_connect_status[i].last_frame = MAX(_peer_connect_status[i].last_frame, remote_status[i].last_frame);
       }
    }

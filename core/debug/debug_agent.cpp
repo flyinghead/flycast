@@ -16,31 +16,19 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
+#include "types.h"
+#include "debug_agent.h"
 
-namespace debugger {
+DebugAgent debugAgent;
 
-// exception thrown in response to trap
-struct Stop { };
+void DebugAgent::subroutineCall()
+{
+    subroutineReturn();
+    stack.push_back(std::make_pair(Sh4cntx.pc, Sh4cntx.r[15]));
+}
 
-#ifdef GDB_SERVER
-
-	void init();
-	void term();
-	void run();
-	void debugTrap(u32 event);
-	void subroutineCall();
-	void subroutineReturn();
-	void interrupt();
-	void step();
-	void doContinue();
-
-#else
-	static inline void init() {}
-	static inline void term() {}
-	static inline void run() {}
-	static inline void debugTrap(u32 event) {}
-	static inline void subroutineCall() {}
-	static inline void subroutineReturn() {}
-#endif
+void DebugAgent::subroutineReturn()
+{
+    while (!stack.empty() && Sh4cntx.r[15] >= stack.back().second)
+        stack.pop_back();
 }
