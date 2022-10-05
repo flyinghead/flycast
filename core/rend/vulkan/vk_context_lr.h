@@ -74,9 +74,9 @@ public:
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
 
-		return std::to_string(VK_VERSION_MAJOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_MINOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_PATCH(props.driverVersion));
+		return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion))
+			+ "." + std::to_string(VK_API_VERSION_MINOR(props.driverVersion))
+			+ "." + std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
 	}
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }

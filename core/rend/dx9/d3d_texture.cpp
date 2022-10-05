@@ -18,7 +18,7 @@
 */
 #include "d3d_texture.h"
 
-void D3DTexture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+void D3DTexture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	D3DFORMAT d3dFormat;
 	u32 bpp = 2;
@@ -90,7 +90,7 @@ void D3DTexture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mi
 		else
 		{
 			u8 *dst = (u8 *)rect.pBits;
-			u8 *src = temp_tex_buffer;
+			const u8 *src = temp_tex_buffer;
 			for (u32 l = 0; l < h; l++)
 			{
 				memcpy(dst, src, w * bpp);

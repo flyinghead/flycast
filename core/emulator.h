@@ -175,3 +175,4 @@ private:
 extern Emulator emu;
 
 extern std::map<u32, std::string> knownTasks;
+int getGamePlatform(const char *path);

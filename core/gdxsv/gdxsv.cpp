@@ -1,20 +1,28 @@
 #include "gdxsv.h"
-#include <sstream>
-#include <random>
 
-#include "lzma/CpuArch.h"
-#include "oslib/oslib.h"
-#include "version.h"
-#include "emulator.h"
 #include <xxhash.h>
+
+#include <random>
+#include <sstream>
+
+#include "cfg/cfg.h"
+#include "emulator.h"
 #include "gdxsv_translation.h"
+#include "hw/sh4/sh4_mem.h"
+#include "lzma/CpuArch.h"
+#include "network/ggpo.h"
+#include "oslib/oslib.h"
+#include "reios/reios.h"
+#include "version.h"
 
 bool Gdxsv::InGame() const {
-    return enabled && netmode == NetMode::McsUdp;
+    return enabled && !testmode && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback);
 }
 
-bool Gdxsv::Enabled() const {
-    return enabled;
+bool Gdxsv::Enabled() const { return enabled; }
+
+void Gdxsv::DisplayOSD() {
+    rollback_net.DisplayOSD();
 }
 
 void Gdxsv::Reset() {
@@ -48,23 +56,57 @@ void Gdxsv::Reset() {
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
 
+    udp_port = config::GdxLocalPort;
+
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
+    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk, server.c_str(), loginkey.c_str(),
+               udp_port);
 
     lbs_net.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
-        if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
-            proto::ExtPlayerInfo player_info;
-            if (player_info.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-                ext_player_info.push_back(player_info);
+        if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide) {
+            std::string id(6, ' ');
+            for (int i = 0; i < 6; i++) {
+                id[i] = lbs_msg.body[2 + i];
+            }
+            user_id = id;
+        }
+        if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide ||
+            lbs_msg.command == LbsMessage::lbsLineCheck) {
+            if (udp.Initialized()) {
+                if (!lbs_remote.is_open()) {
+                    lbs_remote.Open(lbs_net.RemoteHost().c_str(), lbs_net.RemotePort());
+                }
+
+                proto::Packet pkt;
+                pkt.set_type(proto::MessageType::HelloLbs);
+                pkt.mutable_hello_lbs_data()->set_user_id(user_id);
+                char buf[128];
+                if (pkt.SerializePartialToArray((void *)buf, (int)sizeof(buf))) {
+                    udp.SendTo((const char *)buf, pkt.GetCachedSize(), lbs_remote);
+                } else {
+                    ERROR_LOG(COMMON, "packet serialize error");
+                }
+            }
+
+            lbs_net.Send(GeneratePlatformInfoPacket());
+        }
+        if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
+            proto::P2PMatching matching;
+            if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
+                int port = udp.bind_port();
+                udp.Close();
+                lbs_remote.Close();
+                rollback_net.Prepare(matching, port);
+            } else {
+                ERROR_LOG(COMMON, "p2p matching deserialize error");
             }
         }
         if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
             // Reset current patches for no-patched game
             RestoreOnlinePatch();
-            ext_player_info.clear();
         }
         if (lbs_msg.command == LbsMessage::lbsGamePatch) {
             // Reset current patches and update patch_list
@@ -75,8 +117,10 @@ void Gdxsv::Reset() {
                 ERROR_LOG(COMMON, "patch_list deserialize error");
             }
         }
-        if (disk == 2 && lbs_msg.command == LbsMessage::lbsBattleUserCount && GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
-            u32 battle_user_count = u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
+        if (lbs_msg.command == LbsMessage::lbsBattleUserCount && disk == 2 &&
+            GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
+            u32 battle_user_count =
+                u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
             const u32 offset = 0x8C000000 + 0x00010000;
             gdxsv_WriteMem32(offset + 0x3839FC, battle_user_count);
         }
@@ -90,79 +134,66 @@ void Gdxsv::Update() {
         settings.input.fastForwardMode = false;
     }
 
-    WritePatch();
-
-    /*
-    static int framecount = 0;
-    if (disk == 2 && framecount % 60 == 0) {
-        char osd_msg[128] = {};
-        sprintf(osd_msg, "DELAY: %d/%d", gdxsv_ReadMem8(0x0c3ab954), gdxsv_ReadMem8(0x0c3abb91));
-        gui_display_notification(osd_msg, 1000);
-    }
-     */
-
-    u8 dump_buf[1024];
-    if (gdxsv_ReadMem32(symbols["print_buf_pos"])) {
-        int n = gdxsv_ReadMem32(symbols["print_buf_pos"]);
-        n = std::min(n, (int) sizeof(dump_buf));
-        for (int i = 0; i < n; i++) {
-            dump_buf[i] = gdxsv_ReadMem8(symbols["print_buf"] + i);
-        }
-        dump_buf[n] = 0;
-        gdxsv_WriteMem32(symbols["print_buf_pos"], 0);
-        gdxsv_WriteMem32(symbols["print_buf"], 0);
-        NOTICE_LOG(COMMON, "%s", dump_buf);
+    if (!ggpo::active()) {
+        // Don't edit memory at vsync if ggpo::active
+        WritePatch();
     }
 }
 
 void Gdxsv::HookMainUiLoop() {
-    gdxsv.rollback_net.OnGuiMainUiLoop();
+    if (enabled) {
+        if (netmode == NetMode::McsRollback) {
+			gdxsv.rollback_net.OnMainUiLoop();
+        }
+    }
 }
 
 std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;
-    ss << "cpu=" <<
-       #if HOST_CPU == CPU_X86
-       "x86"
-       #elif HOST_CPU == CPU_ARM
-       "ARM"
-       #elif HOST_CPU == CPU_MIPS
-       "MIPS"
-       #elif HOST_CPU == CPU_X64
-       "x86/64"
-       #elif HOST_CPU == CPU_GENERIC
-       "Generic"
-       #elif HOST_CPU == CPU_ARM64
-       "ARM64"
-       #else
-       "Unknown"
-       #endif
+    ss << "cpu="
+       <<
+#if HOST_CPU == CPU_X86
+        "x86"
+#elif HOST_CPU == CPU_ARM
+        "ARM"
+#elif HOST_CPU == CPU_MIPS
+        "MIPS"
+#elif HOST_CPU == CPU_X64
+        "x86/64"
+#elif HOST_CPU == CPU_GENERIC
+        "Generic"
+#elif HOST_CPU == CPU_ARM64
+        "ARM64"
+#else
+        "Unknown"
+#endif
        << "\n";
-    ss << "os=" <<
-       #ifdef __ANDROID__
-       "Android"
-       #elif defined(__unix__)
-       "Linux"
-       #elif defined(__APPLE__)
-       #ifdef TARGET_IPHONE
-       "iOS"
-       #else
-       "macOS"
-       #endif
-       #elif defined(_WIN32)
-       "Windows"
-       #else
-       "Unknown"
-       #endif
+    ss << "os="
+       <<
+#ifdef __ANDROID__
+        "Android"
+#elif defined(__unix__)
+        "Linux"
+#elif defined(__APPLE__)
+#ifdef TARGET_IPHONE
+        "iOS"
+#else
+        "macOS"
+#endif
+#elif defined(_WIN32)
+        "Windows"
+#else
+        "Unknown"
+#endif
        << "\n";
     ss << "flycast=" << GIT_VERSION << "\n";
     ss << "git_hash=" << GIT_HASH << "\n";
     ss << "build_date=" << BUILD_DATE << "\n";
-    ss << "disk=" << (int) disk << "\n";
-    ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
+    ss << "disk=" << (int)disk << "\n";
+    ss << "wireless=" << (int)(os_GetConnectionMedium() == "Wireless") << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     ss << "local_ip=" << lbs_net.LocalIP() << "\n";
-    // ss << "bind_port=" << .bind_port() << "\n";
+    ss << "udp_port=" << udp_port << "\n";
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
         auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
@@ -189,7 +220,7 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
     packet.push_back((e_loginkey.size() >> 8) & 0xffu);
     packet.push_back(e_loginkey.size() & 0xffu);
     std::copy(std::begin(e_loginkey), std::end(e_loginkey), std::back_inserter(packet));
-    u16 payload_size = (u16) (packet.size() - 12);
+    u16 payload_size = (u16)(packet.size() - 12);
     packet[4] = (payload_size >> 8) & 0xffu;
     packet[5] = payload_size & 0xffu;
     return packet;
@@ -220,26 +251,45 @@ void Gdxsv::HandleRPC() {
 
         if (netmode == NetMode::Replay) {
             replay_net.Open();
-        } else if (netmode == NetMode::RollbackTest) {
-            rollback_net.Open();
-        } else if (tolobby == 1) {
+        }
+        else if (tolobby == 1) {
             udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
             if (lbs_net.Connect(host, port)) {
                 netmode = NetMode::Lbs;
-                auto packet = GeneratePlatformInfoPacket();
-                lbs_net.Send(packet);
+                lbs_net.Send(GeneratePlatformInfoPacket());
+
+                lbs_remote.Open(host.c_str(), port);
+                if (udp.Bind(udp_port)) {
+                    if (udp_port != udp.bind_port()) {
+                        config::GdxLocalPort = udp_port = udp.bind_port();
+                    }
+
+                    if (config::EnableUPnP && upnp_port != udp.bind_port()) {
+                        upnp_port = udp.bind_port();
+                        upnp_result = std::async(std::launch::async, [this]() -> std::string {
+                            return (upnp.Init() && upnp.AddPortMapping(upnp_port, false)) ? "Success" : upnp.getLastError();
+                        });
+                    }
+                }
             } else {
                 netmode = NetMode::Offline;
             }
         } else {
             lbs_net.Close();
-            char addr_buf[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
-            host = std::string(addr_buf);
-            if (udp_net.Connect(host, port)) {
-                netmode = NetMode::McsUdp;
+            if (~host_ip == 0) {
+                lbs_remote.Close();
+                udp.Close();
+                rollback_net.Open();
+                netmode = NetMode::McsRollback;
             } else {
-                netmode = NetMode::Offline;
+                char addr_buf[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
+                host = std::string(addr_buf);
+                if (udp_net.Connect(host, port)) {
+                    netmode = NetMode::McsUdp;
+                } else {
+                    netmode = NetMode::Offline;
+                }
             }
         }
     }
@@ -247,8 +297,9 @@ void Gdxsv::HandleRPC() {
     if (gdx_rpc.request == GDX_RPC_SOCK_CLOSE) {
         if (netmode == NetMode::Replay) {
             replay_net.Close();
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             rollback_net.Close();
+            netmode = NetMode::Offline;
         } else {
             lbs_net.Close();
 
@@ -273,7 +324,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockRead(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
@@ -285,7 +336,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockWrite(gdx_rpc.param1, gdx_rpc.param2);
         }
     }
@@ -297,7 +348,7 @@ void Gdxsv::HandleRPC() {
             response = udp_net.OnSockPoll();
         } else if (netmode == NetMode::Replay) {
             response = replay_net.OnSockPoll();
-        } else if (netmode == NetMode::RollbackTest) {
+        } else if (netmode == NetMode::McsRollback) {
             response = rollback_net.OnSockPoll();
         }
     }
@@ -323,39 +374,42 @@ void Gdxsv::GcpPingTest() {
     // powered by https://github.com/cloudharmony/network
     static const std::string get_path = "/probe/ping.js";
     static const std::map<std::string, std::string> gcp_region_hosts = {
-            {"asia-east1",              "asia-east1-gce.cloudharmony.net"},
-            {"asia-east2",              "asia-east2-gce.cloudharmony.net"},
-            {"asia-northeast1",         "asia-northeast1-gce.cloudharmony.net"},
-            {"asia-northeast2",         "asia-northeast2-gce.cloudharmony.net"},
-            {"asia-northeast3",         "asia-northeast3-gce.cloudharmony.net"},
-            // {"asia-south1",             "asia-south1-gce.cloudharmony.net"}, // inactive now.
-            {"asia-southeast1",         "asia-southeast1-gce.cloudharmony.net"},
-            {"australia-southeast1",    "australia-southeast1-gce.cloudharmony.net"},
-            {"europe-north1",           "europe-north1-gce.cloudharmony.net"},
-            {"europe-west1",            "europe-west1-gce.cloudharmony.net"},
-            {"europe-west2",            "europe-west2-gce.cloudharmony.net"},
-            {"europe-west3",            "europe-west3-gce.cloudharmony.net"},
-            {"europe-west4",            "europe-west4-gce.cloudharmony.net"},
-            {"europe-west6",            "europe-west6-gce.cloudharmony.net"},
-            {"northamerica-northeast1", "northamerica-northeast1-gce.cloudharmony.net"},
-            {"southamerica-east1",      "southamerica-east1-gce.cloudharmony.net"},
-            {"us-central1",             "us-central1-gce.cloudharmony.net"},
-            {"us-east1",                "us-east1-gce.cloudharmony.net"},
-            {"us-east4",                "us-east4-gce.cloudharmony.net"},
-            {"us-west1",                "us-west1-gce.cloudharmony.net"},
-            {"us-west2",                "us-west2-a-gce.cloudharmony.net"},
-            {"us-west3",                "us-west3-gce.cloudharmony.net"},
+        {"asia-east1", "asia-east1-gce.cloudharmony.net"},
+        {"asia-east2", "asia-east2-gce.cloudharmony.net"},
+        {"asia-northeast1", "asia-northeast1-gce.cloudharmony.net"},
+        {"asia-northeast2", "asia-northeast2-gce.cloudharmony.net"},
+        {"asia-northeast3", "asia-northeast3-gce.cloudharmony.net"},
+        // {"asia-south1",             "asia-south1-gce.cloudharmony.net"}, // inactive now.
+        {"asia-southeast1", "asia-southeast1-gce.cloudharmony.net"},
+        {"australia-southeast1", "australia-southeast1-gce.cloudharmony.net"},
+        {"europe-north1", "europe-north1-gce.cloudharmony.net"},
+        {"europe-west1", "europe-west1-gce.cloudharmony.net"},
+        {"europe-west2", "europe-west2-gce.cloudharmony.net"},
+        {"europe-west3", "europe-west3-gce.cloudharmony.net"},
+        {"europe-west4", "europe-west4-gce.cloudharmony.net"},
+        {"europe-west6", "europe-west6-gce.cloudharmony.net"},
+        {"northamerica-northeast1", "northamerica-northeast1-gce.cloudharmony.net"},
+        {"southamerica-east1", "southamerica-east1-gce.cloudharmony.net"},
+        {"us-central1", "us-central1-gce.cloudharmony.net"},
+        {"us-east1", "us-east1-gce.cloudharmony.net"},
+        {"us-east4", "us-east4-gce.cloudharmony.net"},
+        {"us-west1", "us-west1-gce.cloudharmony.net"},
+        {"us-west2", "us-west2-a-gce.cloudharmony.net"},
+        {"us-west3", "us-west3-gce.cloudharmony.net"},
     };
 
     for (const auto &region_host : gcp_region_hosts) {
         gui_display_notification("Ping testing...", 1000);
         TcpClient client;
         std::stringstream ss;
-        ss << "HEAD " << get_path << " HTTP/1.1" << "\r\n";
+        ss << "HEAD " << get_path << " HTTP/1.1"
+           << "\r\n";
         ss << "Host: " << region_host.second << "\r\n";
-        ss << "User-Agent: flycast for gdxsv" << "\r\n";
-        ss << "Accept: */*" << "\r\n";
-        ss << "\r\n"; // end of header
+        ss << "User-Agent: flycast for gdxsv"
+           << "\r\n";
+        ss << "Accept: */*"
+           << "\r\n";
+        ss << "\r\n";  // end of header
 
         if (!client.Connect(region_host.second.c_str(), 80)) {
             ERROR_LOG(COMMON, "connect failed : %s", region_host.first.c_str());
@@ -380,7 +434,7 @@ void Gdxsv::GcpPingTest() {
         }
 
         auto t2 = std::chrono::high_resolution_clock::now();
-        int rtt = (int) std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        int rtt = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         const std::string response_header(buf, n);
         if (response_header.find("200 OK") != std::string::npos) {
             gcp_ping_test_result[region_host.first] = rtt;
@@ -403,9 +457,7 @@ std::string Gdxsv::GenerateLoginKey() {
     std::string chars = "0123456789";
     std::uniform_int_distribution<> dist(0, chars.length() - 1);
     std::string key(n, 0);
-    std::generate_n(key.begin(), n, [&]() {
-        return chars[dist(gen)];
-    });
+    std::generate_n(key.begin(), n, [&]() { return chars[dist(gen)]; });
     return key;
 }
 
@@ -421,10 +473,10 @@ void Gdxsv::ApplyOnlinePatch(bool first_time) {
         for (int j = 0; j < patch.codes_size(); ++j) {
             auto &code = patch.codes(j);
             if (code.size() == 8) {
-                gdxsv_WriteMem8(code.address(), (u8) (code.changed() & 0xff));
+                gdxsv_WriteMem8(code.address(), (u8)(code.changed() & 0xff));
             }
             if (code.size() == 16) {
-                gdxsv_WriteMem16(code.address(), (u16) (code.changed() & 0xffff));
+                gdxsv_WriteMem16(code.address(), (u16)(code.changed() & 0xffff));
             }
             if (code.size() == 32) {
                 gdxsv_WriteMem32(code.address(), code.changed());
@@ -440,10 +492,10 @@ void Gdxsv::RestoreOnlinePatch() {
         for (int j = 0; j < patch.codes_size(); ++j) {
             auto &code = patch.codes(j);
             if (code.size() == 8) {
-                gdxsv_WriteMem8(code.address(), (u8) (code.original() & 0xff));
+                gdxsv_WriteMem8(code.address(), (u8)(code.original() & 0xff));
             }
             if (code.size() == 16) {
-                gdxsv_WriteMem16(code.address(), (u16) (code.original() & 0xffff));
+                gdxsv_WriteMem16(code.address(), (u16)(code.original() & 0xffff));
             }
             if (code.size() == 32) {
                 gdxsv_WriteMem32(code.address(), code.original());
@@ -454,8 +506,6 @@ void Gdxsv::RestoreOnlinePatch() {
 }
 
 void Gdxsv::WritePatch() {
-    if (ggpo::active()) return;
-
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || gdxsv_ReadMem32(symbols["patch_id"]) != symbols[":patch_id"]) {
@@ -466,10 +516,10 @@ void Gdxsv::WritePatch() {
         gdxsv_WriteMem32(symbols["disk"], (int)disk);
     }
 
-    if (symbols["lang_patch_id"] == 0 ||
-        gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
+    if (symbols["lang_patch_id"] == 0 || gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
         symbols[":lang_patch_lang"] != (u8)GdxsvLanguage::Language()) {
-        NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"], GdxsvLanguage::Language());
+        NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]),
+                   symbols[":lang_patch_id"], GdxsvLanguage::Language());
 #include "gdxsv_translation_patch.inc"
     }
 }
@@ -501,16 +551,15 @@ void Gdxsv::WritePatchDisk1() {
     }
 
     // Skip form validation
-    gdxsv_WriteMem16(offset + 0x0003b0c4, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x0003b0cc, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x0003b0d4, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x0003b0dc, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x0003b0c4, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x0003b0cc, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x0003b0d4, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x0003b0dc, u16(9));  // nop
 
     // Write LoginKey
     if (gdxsv_ReadMem8(offset - 0x10000 + 0x002f6924) == 0) {
         for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-            gdxsv_WriteMem8(offset - 0x10000 + 0x002f6924 + i,
-                            (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
+            gdxsv_WriteMem8(offset - 0x10000 + 0x002f6924 + i, (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
 
@@ -568,16 +617,15 @@ void Gdxsv::WritePatchDisk2() {
     }
 
     // Skip form validation
-    gdxsv_WriteMem16(offset + 0x000284f0, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x000284f8, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x00028500, u16(9)); // nop
-    gdxsv_WriteMem16(offset + 0x00028508, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x000284f0, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x000284f8, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x00028500, u16(9));  // nop
+    gdxsv_WriteMem16(offset + 0x00028508, u16(9));  // nop
 
     // Write LoginKey
     if (gdxsv_ReadMem8(offset - 0x10000 + 0x00392064) == 0) {
         for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-            gdxsv_WriteMem8(offset - 0x10000 + 0x00392064 + i,
-                            (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
+            gdxsv_WriteMem8(offset - 0x10000 + 0x00392064 + i, (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
 
@@ -606,39 +654,10 @@ void Gdxsv::WritePatchDisk2() {
 
     // Online patch
     ApplyOnlinePatch(false);
-
-    // Dirty widescreen cheat
-    if (config::WidescreenGameHacks.get()) {
-        u32 ratio = 0x3faaaaab; // default 4/3
-        int stretching = 100;
-        bool update = false;
-        if (gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) { // In main game part
-            // Changing this value outside the game part will break UI layout.
-            // For 0x0c3d16d5: 4=load briefing, 5=briefing, 7=battle, 0xd=rebattle/end selection
-            if (config::ScreenStretching == 100) {
-                // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
-                // stretching = 134;
-                // Use a little wider than 16/9 because of a glitch at the edges of the screen.
-                ratio = 0x40155555;
-                stretching = 175;
-                update = true;
-            }
-        } else {
-            if (config::ScreenStretching != 100) {
-                update = true;
-            }
-        }
-        if (update) {
-            config::ScreenStretching.override(stretching);
-            gdxsv_WriteMem32(0x0c1e7948, ratio);
-            gdxsv_WriteMem32(0x0c1e7958, ratio);
-            gdxsv_WriteMem32(0x0c1e7968, ratio);
-            gdxsv_WriteMem32(0x0c1e7978, ratio);
-        }
-    }
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {
+    testmode = true;
     replay_net.Reset();
     if (replay_net.StartFile(path)) {
         netmode = NetMode::Replay;
@@ -656,10 +675,12 @@ bool Gdxsv::StartReplayFile(const char *path) {
     return false;
 }
 
-bool Gdxsv::StartRollbackTest(const char *path) {
+bool Gdxsv::StartRollbackTest(const char *param) {
+    testmode = true;
     rollback_net.Reset();
-    if (rollback_net.StartFile(path)) {
-        netmode = NetMode::RollbackTest;
+
+    if (rollback_net.StartLocalTest(param)) {
+        netmode = NetMode::McsRollback;
         return true;
     }
 

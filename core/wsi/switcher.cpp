@@ -41,8 +41,8 @@ void initRenderApi(void *window, void *display)
 		theVulkanContext.setWindow(window, display);
 		if (theVulkanContext.init())
 			return;
-		// Fall back to Open GL
-		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
+		// Fall back to OpenGL
+		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to OpenGL.");
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
@@ -62,8 +62,8 @@ void initRenderApi(void *window, void *display)
 		theDXContext.setWindow(window, display);
 		if (theDXContext.init())
 			return;
-		// Fall back to Open GL
-		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to Open GL.");
+		// Fall back to OpenGL
+		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to OpenGL.");
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif

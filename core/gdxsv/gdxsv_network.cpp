@@ -1,4 +1,5 @@
 #include "gdxsv_network.h"
+#include <cmath>
 
 #ifndef _WIN32
 #include <sys/ioctl.h>
@@ -209,6 +210,13 @@ bool UdpClient::Bind(int port) {
         return false;
     }
 
+    int optval = 0;
+    if (port != 0) {
+        setsockopt(new_sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval, sizeof optval);
+    }
+    optval = 0;
+    setsockopt(new_sock, SOL_SOCKET, SO_LINGER, (const char*)&optval, sizeof optval);
+
     sockaddr_in recv_addr;
     memset(&recv_addr, 0, sizeof(recv_addr));
     recv_addr.sin_port = htons(port); // if port == 0 then the system assign an available port.
@@ -346,4 +354,238 @@ bool MessageFilter::IsNextMessage(const proto::BattleMessage &msg) {
 
 void MessageFilter::Clear() {
     recv_seq.clear();
+}
+
+void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms) {
+    if (running_) return;
+    verify(peer_id < N);
+    client_.Close();
+    client_.Bind(port);
+    running_ = true;
+
+    std::set<int> peer_ids;
+    peer_ids.insert(peer_id);
+    for (const auto& c : candidates_) {
+        peer_ids.insert(c.peer_id);
+    }
+    int peer_count = peer_ids.size();
+
+    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count]() {
+        WARN_LOG(COMMON, "Start UdpPingPong Thread");
+        start_time_ = std::chrono::high_resolution_clock::now();
+        std::string sender;
+
+        for (int loop_count = 0; running_; loop_count++) {
+            auto now = std::chrono::high_resolution_clock::now();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
+
+            while (true) {
+                Packet recv{};
+
+                int n = client_.ReadableSize();
+                if (n <= 0) {
+                    break;
+                }
+
+                n = client_.RecvFrom(reinterpret_cast<char*>(&recv), sizeof(Packet), sender);
+                if (n <= 0) {
+                    break;
+                }
+
+                if (recv.magic != MAGIC) {
+                    WARN_LOG(COMMON, "invalid magic");
+                    continue;
+                }
+
+                if (recv.session_id != session_id) {
+                    WARN_LOG(COMMON, "invalid session_id");
+                    continue;
+                }
+
+                if (recv.to_peer_id != peer_id) {
+                    WARN_LOG(COMMON, "invalid to_peer_id");
+                    continue;
+                }
+
+                if (recv.from_peer_id == recv.to_peer_id) {
+                    WARN_LOG(COMMON, "invalid peer_id");
+                    continue;
+                }
+
+                if (recv.type == PING) {
+                    NOTICE_LOG(COMMON, "Recv PING from %d", recv.from_peer_id);
+                    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+                    Packet p{};
+                    p.magic = MAGIC;
+                    p.type = PONG;
+                    p.session_id = session_id;
+                    p.from_peer_id = peer_id;
+                    p.to_peer_id = recv.from_peer_id;
+                    p.send_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                    p.ping_timestamp = recv.send_timestamp;
+                    UdpRemote remote;
+                    memcpy(p.rtt_matrix, rtt_matrix_, sizeof(rtt_matrix_));
+
+                    auto it = std::find_if(candidates_.begin(), candidates_.end(),
+                        [&recv, &sender](const Candidate& c) {
+                            return c.peer_id == recv.from_peer_id && c.remote.str_addr() == sender;
+                        });
+                    if (it != candidates_.end()) {
+                        remote = it->remote;
+                    } else {
+                        Candidate c{};
+                        c.peer_id = recv.from_peer_id;
+                        c.remote.Open(sender);
+                        candidates_.push_back(c);
+                        remote = c.remote;
+                    }
+                    if (remote.is_open()) {
+                        client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), remote);
+                    }
+                }
+
+                if (recv.type == PONG) {
+                    NOTICE_LOG(COMMON, "Recv PONG from %d", recv.from_peer_id);
+                    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                    auto rtt = static_cast<int>(now - recv.ping_timestamp);
+                    if (rtt == 0) rtt = 1;
+
+                    auto it = std::find_if(candidates_.begin(), candidates_.end(),
+                        [&recv, &sender](const Candidate& c) {
+                            return c.peer_id == recv.from_peer_id && c.remote.str_addr() == sender;
+                        });
+                    if (it != candidates_.end()) {
+                        it->rtt = float(it->pong_count * it->rtt + rtt) / float(it->pong_count + 1);
+                        it->pong_count++;
+                        rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(it->rtt)));
+                        for (int j = 0; j < N; j++) {
+                            rtt_matrix_[recv.from_peer_id][j] = recv.rtt_matrix[recv.from_peer_id][j];
+                        }
+                    } else {
+                        Candidate c{};
+                        c.peer_id = recv.from_peer_id;
+                        c.remote.Open(sender);
+                        candidates_.push_back(c);
+                    }
+                }
+            }
+
+            if (loop_count % 100 == 0) {
+                std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+                for (auto& c : candidates_) {
+                    NOTICE_LOG(COMMON, "Send PING to %d %s", c.peer_id, c.remote.str_addr().c_str());
+                    if (c.remote.is_open()) {
+                        Packet p{};
+                        p.magic = MAGIC;
+                        p.type = PING;
+                        p.session_id = session_id;
+                        p.from_peer_id = peer_id;
+                        p.to_peer_id = c.peer_id;
+                        p.send_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                        p.ping_timestamp = 0;
+                        memcpy(p.rtt_matrix, rtt_matrix_, sizeof(rtt_matrix_));
+                        client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), c.remote);
+                        c.ping_count++;
+                    }
+                }
+            }
+
+            if (loop_count % 500 == 0) {
+                bool matrix_ok = true;
+                std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+                NOTICE_LOG(COMMON, "RTT MATRIX");
+                NOTICE_LOG(COMMON, "  %4d%4d%4d%4d", 0, 1, 2, 3);
+                for (int i = 0; i < 4; i++) {
+                    NOTICE_LOG(COMMON, "%d>%4d%4d%4d%4d",
+                        i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
+                }
+
+                NOTICE_LOG(COMMON, "peer_count%d", peer_count);
+                for (int i = 0; i < peer_count; i++) {
+                    for (int j = 0; j < peer_count; j++) {
+                        if (i != j) {
+                            if (rtt_matrix_[i][j] == 0) {
+                                matrix_ok = false;
+                            }
+                        }
+                    }
+                }
+
+                if (matrix_ok && timeout_min_ms < ms) {
+                    NOTICE_LOG(COMMON, "UdpPingTest Finish ok");
+                    client_.Close();
+                    running_ = false;
+                    break;
+                }
+            }
+
+            if (timeout_max_ms < ms) {
+                NOTICE_LOG(COMMON, "UdpPingTest Finish timeout");
+                client_.Close();
+                running_ = false;
+                break;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        WARN_LOG(COMMON, "End UdpPingPong Thread");
+    }).detach();
+}
+
+void UdpPingPong::Stop() {
+    running_ = false;
+}
+
+void UdpPingPong::Reset() {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    client_.Close();
+    candidates_.clear();
+}
+
+bool UdpPingPong::Running() {
+    return running_;
+}
+
+int UdpPingPong::ElapsedMs() {
+	auto now = std::chrono::high_resolution_clock::now();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
+}
+
+void UdpPingPong::AddCandidate(const std::string& user_id, uint8_t peer_id, const std::string& ip, int port) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    Candidate c{};
+    user_to_peer_[user_id] = peer_id;
+    peer_to_user_[peer_id] = user_id;
+    c.peer_id = peer_id;
+    c.remote.Open(ip.c_str(), port);
+    candidates_.push_back(c);
+}
+
+bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_in* dst, float* rtt) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    float min_rtt = 1000.0f;
+    bool found = false;
+    for (auto& c : candidates_) {
+        if (c.peer_id == peer_id && c.pong_count) {
+            if (c.rtt < min_rtt) {
+                min_rtt = c.rtt;
+                *dst = c.remote.net_addr();
+                *rtt = c.rtt;
+                found = true;
+            }
+        }
+    }
+    return found;
+}
+
+void UdpPingPong::GetRttMatrix(uint8_t matrix[N][N]) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    memcpy(matrix, rtt_matrix_, sizeof(rtt_matrix_));
 }

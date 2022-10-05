@@ -33,13 +33,6 @@ int flycast_init(int argc, char* argv[])
 	{
         return 69;
 	}
-
-	// TODO: remove
-	settings.content.path = "C:\\rom\\gdx-disc2\\gdx-disc2.gdi";
-	cfgSetVirtual("gdxsv", "rbk_test", "diskdc2-1621175915425.pb");
-	// cfgSetVirtual("gdxsv", "replay", "diskdc2-1621175915425.pb");
-
-
 	config::Settings::instance().reset();
 	LogManager::Shutdown();
 	if (!cfgOpen())
@@ -57,7 +50,6 @@ int flycast_init(int argc, char* argv[])
 			config::ContentPath.get().push_back("./");
 		}
 	}
-
 	gui_init();
 	os_CreateWindow();
 	os_SetupInput();

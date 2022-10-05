@@ -10,7 +10,7 @@ GlTextureCache TexCache;
 
 static void readAsyncPixelBuffer(u32 addr);
 
-void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	//upload to OpenGL !
 	glcache.BindTexture(GL_TEXTURE_2D, texID);
@@ -52,7 +52,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			dim >>= 1;
 		}
 #if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
-		// Open GL 4.2 or GLES 3.0 min
+		// OpenGL 4.2 or GLES 3.0 min
 		if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
 				|| (gl.is_gles && gl.gl_major >= 3))
 		{

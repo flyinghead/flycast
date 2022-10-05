@@ -48,6 +48,7 @@ static ID3D11InputLayout*       g_pInputLayout = NULL;
 static ID3D11Buffer*            g_pVertexConstantBuffer = NULL;
 static ID3D11PixelShader*       g_pPixelShader = NULL;
 ID3D11SamplerState*      g_pFontSampler = NULL;
+ID3D11SamplerState*      g_pTextureSampler = NULL;
 ID3D11ShaderResourceView*g_pFontTextureView = NULL;
 static ID3D11RasterizerState*   g_pRasterizerState = NULL;
 static ID3D11BlendState*        g_pBlendState = NULL;
@@ -81,7 +82,6 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, ID3D11DeviceC
     ctx->VSSetShader(g_pVertexShader, NULL, 0);
     ctx->VSSetConstantBuffers(0, 1, &g_pVertexConstantBuffer);
     ctx->PSSetShader(g_pPixelShader, NULL, 0);
-    ctx->PSSetSamplers(0, 1, &g_pFontSampler);
     ctx->GSSetShader(NULL, NULL, 0);
     ctx->HSSetShader(NULL, NULL, 0); // In theory we should backup and restore this as well.. very infrequently used..
     ctx->DSSetShader(NULL, NULL, 0); // In theory we should backup and restore this as well.. very infrequently used..
@@ -249,6 +249,10 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
 
                 // Bind texture, Draw
                 ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)pcmd->TextureId;
+                if (pcmd->TextureId != (ImTextureID)g_pFontTextureView)
+                	ctx->PSSetSamplers(0, 1, &g_pTextureSampler);
+                else
+                    ctx->PSSetSamplers(0, 1, &g_pFontSampler);
                 ctx->PSSetShaderResources(0, 1, &texture_srv);
                 ctx->DrawIndexed(pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset);
             }
@@ -321,7 +325,7 @@ static void ImGui_ImplDX11_CreateFontsTexture()
     // Store our identifier
     io.Fonts->SetTexID((ImTextureID)g_pFontTextureView);
 
-    // Create texture sampler
+    // Create texture samplers
     {
         D3D11_SAMPLER_DESC desc;
         ZeroMemory(&desc, sizeof(desc));
@@ -334,6 +338,10 @@ static void ImGui_ImplDX11_CreateFontsTexture()
         desc.MinLOD = 0.f;
         desc.MaxLOD = 0.f;
         g_pd3dDevice->CreateSamplerState(&desc, &g_pFontSampler);
+
+        desc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+        desc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+        g_pd3dDevice->CreateSamplerState(&desc, &g_pTextureSampler);
     }
 }
 
@@ -496,6 +504,7 @@ void    ImGui_ImplDX11_InvalidateDeviceObjects()
         return;
 
     if (g_pFontSampler) { g_pFontSampler->Release(); g_pFontSampler = NULL; }
+    if (g_pTextureSampler) { g_pTextureSampler->Release(); g_pTextureSampler = NULL; }
     if (g_pFontTextureView) { g_pFontTextureView->Release(); g_pFontTextureView = NULL; ImGui::GetIO().Fonts->SetTexID(NULL); } // We copied g_pFontTextureView to io.Fonts->TexID so let's clear that as well.
     if (g_pIB) { g_pIB->Release(); g_pIB = NULL; }
     if (g_pVB) { g_pVB->Release(); g_pVB = NULL; }

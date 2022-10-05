@@ -468,10 +468,13 @@ void findGLVersion()
 	gl.is_gles = theGLContext.isGLES();
 	if (gl.is_gles)
 	{
+		gl.border_clamp_supported = false;
 		if (gl.gl_major >= 3)
 		{
 			gl.gl_version = "GLES3";
 			gl.glsl_version_header = "#version 300 es";
+			if (gl.gl_major > 3 || gl.gl_minor >= 2)
+		    	gl.border_clamp_supported = true;
 		}
 		else
 		{
@@ -491,6 +494,8 @@ void findGLVersion()
 		GLint precision;
 		glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
 		gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
+		if (!gl.border_clamp_supported)
+			gl.border_clamp_supported = strstr(extensions, "GL_EXT_texture_border_clamp") != nullptr;
 	}
 	else
 	{
@@ -511,6 +516,7 @@ void findGLVersion()
 			gl.single_channel_format = GL_ALPHA;
 		}
     	gl.highp_float_supported = true;
+    	gl.border_clamp_supported = true;
 	}
 	gl.max_anisotropy = 1.f;
 #if !defined(GLES2)
@@ -541,7 +547,7 @@ void findGLVersion()
 	}
 #endif
 	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
-	NOTICE_LOG(RENDERER, "Open GL%s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
+	NOTICE_LOG(RENDERER, "OpenGL%s version %d.%d", gl.is_gles ? " ES" : "", gl.gl_major, gl.gl_minor);
 	while (glGetError() != GL_NO_ERROR)
 		;
 }

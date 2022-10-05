@@ -11,11 +11,7 @@
 #include "gdxsv_backend_replay.h"
 #include "gdxsv_backend_rollback.h"
 #include "types.h"
-
-#include "cfg/cfg.h"
-#include "hw/sh4/sh4_mem.h"
-#include "reios/reios.h"
-#include "emulator.h"
+#include "network/miniupnp.h"
 
 
 class Gdxsv {
@@ -24,18 +20,21 @@ public:
         Offline,
         Lbs,
         McsUdp,
+        McsRollback,
         Replay,
-        RollbackTest,
     };
 
     Gdxsv() : lbs_net(symbols),
               udp_net(symbols, maxlag),
               replay_net(symbols, maxlag),
-              rollback_net(symbols, maxlag) {};
+              rollback_net(symbols, maxlag),
+              upnp_port(0), udp_port(0) {};
 
     bool Enabled() const;
 
     bool InGame() const;
+
+    void DisplayOSD();
 
     void Reset();
 
@@ -49,10 +48,15 @@ public:
 
     void StartPingTest();
 
-    bool StartReplayFile(const char *path);
+    bool StartReplayFile(const char* path);
 
-    bool StartRollbackTest(const char *path);
+    bool StartRollbackTest(const char* param);
 
+    void WritePatch();
+
+    int Disk() const { return disk; }
+
+    MiniUPnP& UPnP() { return upnp; }
 private:
     void GcpPingTest();
 
@@ -62,15 +66,16 @@ private:
 
     std::string GeneratePlatformInfoString();
 
-    void WritePatch();
-
     void ApplyOnlinePatch(bool first_time);
 
     void WritePatchDisk1();
 
     void WritePatchDisk2();
+    
+    void WriteWidescreenPatchDisk2();
 
     NetMode netmode = NetMode::Offline;
+    std::atomic<bool> testmode;
     std::atomic<bool> enabled;
     std::atomic<int> disk;
     std::atomic<int> maxlag;
@@ -79,8 +84,16 @@ private:
     std::string loginkey;
     std::map<std::string, u32> symbols;
 
+    MiniUPnP upnp;
+    std::future<std::string> upnp_result;
+    int upnp_port;
+    int udp_port;
+    std::string user_id;
+
+    UdpRemote lbs_remote;
+    UdpClient udp;
+
     proto::GamePatchList patch_list;
-    std::vector<proto::ExtPlayerInfo> ext_player_info;
 
     GdxsvBackendTcp lbs_net;
     GdxsvBackendUdp udp_net;

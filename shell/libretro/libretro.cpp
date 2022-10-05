@@ -64,6 +64,7 @@
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "version.h"
+#include "rend/transform_matrix.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -597,22 +598,9 @@ static bool set_variable_visibility(void)
 	return updated;
 }
 
-static void setFramebufferSize()
-{
-	framebufferHeight = config::RenderResolution;
-	if (config::Widescreen)
-		framebufferWidth = config::RenderResolution * 16.f / 9.f;
-	else if (!rotate_screen)
-		framebufferWidth = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
-	else
-		framebufferWidth = config::RenderResolution * 4.f / 3.f;
-	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
-	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
-}
-
 static void setGameGeometry(retro_game_geometry& geometry)
 {
-	geometry.aspect_ratio = (float)framebufferWidth / framebufferHeight;
+	geometry.aspect_ratio = getOutputFramebufferAspectRatio();
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
 	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
@@ -632,6 +620,32 @@ void setAVInfo(retro_system_av_info& avinfo)
 	avinfo.timing.fps = fps / (double)libretro_vsync_swap_interval;
 
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
+}
+
+void retro_resize_renderer(int w, int h)
+{
+	if (w == framebufferWidth && h == framebufferHeight)
+		return;
+	framebufferWidth = w;
+	framebufferHeight = h;
+	bool avinfoNeeded = framebufferHeight > maxFramebufferHeight || framebufferWidth > maxFramebufferWidth;
+	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
+	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
+
+	if (avinfoNeeded
+			// TODO crash with dx11
+			&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
+	{
+		retro_system_av_info avinfo;
+		setAVInfo(avinfo);
+		environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+	}
+	else
+	{
+		retro_game_geometry geometry;
+		setGameGeometry(geometry);
+		environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+	}
 }
 
 static void setRotation()
@@ -654,10 +668,6 @@ static void setRotation()
 static void update_variables(bool first_startup)
 {
 	bool wasThreadedRendering = config::ThreadedRendering;
-	int prevFramebufferHeight = framebufferHeight;
-	int prevFramebufferWidth = framebufferWidth;
-	int prevMaxFramebufferHeight = maxFramebufferHeight;
-	int prevMaxFramebufferWidth = maxFramebufferWidth;
 	bool prevRotateScreen = rotate_screen;
 	bool prevDetectVsyncSwapInterval = libretro_detect_vsync_swap_interval;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
@@ -1009,47 +1019,24 @@ static void update_variables(bool first_startup)
 			config::ThreadedRendering = !wasThreadedRendering;
 			emu.start();
 		}
-		bool geometryChanged = false;
 		if (rotate_screen != (prevRotateScreen ^ rotate_game))
 		{
 			setRotation();
-			geometryChanged = true;
+			retro_game_geometry geometry;
+			setGameGeometry(geometry);
+			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 		}
 		else
 			rotate_screen ^= rotate_game;
 		if (rotate_game)
 			config::Widescreen.override(false);
-		setFramebufferSize();
+		rend_resize_renderer();
 
-		bool avInfoChanged = false;
 		if ((libretro_detect_vsync_swap_interval != prevDetectVsyncSwapInterval) &&
 			 !libretro_detect_vsync_swap_interval &&
 			 (libretro_vsync_swap_interval != 1))
 		{
 			libretro_vsync_swap_interval = 1;
-			avInfoChanged = true;
-		}
-
-		if ((prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
-				// TODO crash with dx11
-				&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
-		{
-			retro_system_av_info avinfo;
-			setAVInfo(avinfo);
-			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
-			rend_resize_renderer();
-			avInfoChanged = false;
-		}
-		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
-		{
-			retro_game_geometry geometry;
-			setGameGeometry(geometry);
-			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
-			rend_resize_renderer();
-		}
-
-		if (avInfoChanged)
-		{
 			retro_system_av_info avinfo;
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
@@ -1140,7 +1127,7 @@ void retro_reset()
 		config::Widescreen.override(false);
 	config::Rotate90 = false;
 
-	setFramebufferSize();
+	rend_resize_renderer();
 	retro_game_geometry geometry;
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
@@ -1153,7 +1140,7 @@ void retro_reset()
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset()
 {
-	INFO_LOG(RENDERER, "context_reset.");
+	INFO_LOG(RENDERER, "GL context_reset");
 	gl_ctx_resetting = false;
 	glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
 	glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
@@ -1369,7 +1356,12 @@ static const char *get_button_name(unsigned device, unsigned id, const char *def
 		return NULL;
 	for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
 		if (NaomiGameInputs->buttons[i].source == mask)
-			return NaomiGameInputs->buttons[i].name;
+		{
+			if (NaomiGameInputs->buttons[i].name[0] != '\0')
+				return NaomiGameInputs->buttons[i].name;
+			else
+				return default_name;
+		}
 	return NULL;
 }
 
@@ -1379,7 +1371,13 @@ static const char *get_axis_name(unsigned index, const char *default_name)
 		return default_name;
 	for (int i = 0; NaomiGameInputs->axes[i].name != NULL; i++)
 		if (NaomiGameInputs->axes[i].axis == index)
-			return NaomiGameInputs->axes[i].name;
+		{
+			if (NaomiGameInputs->axes[i].name[0] != '\0')
+				return NaomiGameInputs->axes[i].name;
+			else
+				return default_name;
+		}
+
 	return NULL;
 }
 
@@ -1605,6 +1603,7 @@ static VulkanContext theVulkanContext;
 
 static void retro_vk_context_reset()
 {
+	NOTICE_LOG(RENDERER, "retro_vk_context_reset");
 	retro_hw_render_interface* vulkan;
 	if (!environ_cb(RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE, (void**)&vulkan) || !vulkan)
 	{
@@ -1619,6 +1618,7 @@ static void retro_vk_context_reset()
 
 static void retro_vk_context_destroy()
 {
+	NOTICE_LOG(RENDERER, "retro_vk_context_destroy");
 	rend_term_renderer();
 	theVulkanContext.term();
 }
@@ -1982,7 +1982,6 @@ bool retro_load_game(const struct retro_game_info *game)
 	config::Rotate90 = false;	// actual framebuffer rotation is done by frontend
 
 	setRotation();
-	setFramebufferSize();
 
 	if (settings.content.gameId == "INITIAL D"
 			|| settings.content.gameId == "INITIAL D Ver.2"
@@ -2126,7 +2125,11 @@ void retro_get_system_av_info(retro_system_av_info *info)
 		msg.frames = 120;
 		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 	}
+	framebufferWidth = config::RenderResolution * 16 / 9;
+	framebufferHeight = config::RenderResolution;
 	setAVInfo(*info);
+	maxFramebufferWidth = info->geometry.max_width;
+	maxFramebufferHeight = info->geometry.max_height;
 }
 
 unsigned retro_get_region()

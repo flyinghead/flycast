@@ -611,6 +611,14 @@ GGPO_API GGPOErrorCode __cdecl ggpo_send_message(GGPOSession *,
                                                  int len,
 												 bool spectators);
 
+
+/*
+ * ggpo_get_current_frame --
+ *
+ * Get current frame number
+ */
+GGPO_API GGPOErrorCode __cdecl ggpo_get_current_frame(GGPOSession*, int *frame);
+
 #ifdef __cplusplus
 };
 #endif

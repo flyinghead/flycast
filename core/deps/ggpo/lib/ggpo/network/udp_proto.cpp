@@ -24,6 +24,7 @@ static const int MAX_SEQ_DISTANCE = (1 << 15);
 UdpProtocol::UdpProtocol() :
    _udp(NULL),
    _magic_number(0),
+   _local_player_queue(-1),
    _queue(-1),
    _remote_magic_number(0),
    _connected(false),
@@ -294,6 +295,7 @@ UdpProtocol::SendMsg(UdpMsg *msg)
 
 	   msg->hdr.magic = _magic_number;
 	   msg->hdr.sequence_number = _next_send_seq++;
+	   msg->hdr.remote_endpoint = _local_player_queue;
 
 	   _send_queue.push(QueueEntry(GGPOPlatform::GetCurrentTimeMS(), _peer_addr, msg));
    }
@@ -307,14 +309,21 @@ UdpProtocol::HandlesMsg(sockaddr_in &from,
    if (!_udp) {
       return false;
    }
-   if (_peer_addr.sin_addr.s_addr == 0)
-   {
-	   _peer_addr.sin_addr.s_addr = from.sin_addr.s_addr;
-	   _peer_addr.sin_port = from.sin_port;
-	   return true;
+
+   if (msg->hdr.remote_endpoint < 0) {
+       return false;
    }
-   return _peer_addr.sin_addr.s_addr == from.sin_addr.s_addr &&
-          _peer_addr.sin_port == from.sin_port;
+
+   // FIXME: spectator may not work
+   if (msg->hdr.remote_endpoint == _queue) {
+       if (_peer_addr.sin_addr.s_addr == 0) {
+           _peer_addr.sin_addr.s_addr = from.sin_addr.s_addr;
+           _peer_addr.sin_port = from.sin_port;
+       }
+       return true;
+   }
+
+   return false;
 }
 
 void
@@ -466,7 +475,8 @@ UdpProtocol::LogMsg(const char *prefix, UdpMsg *msg)
       Log("%s app data (%d bytes).\n", prefix, msg->u.app_data.size);
       break;
    default:
-      ASSERT(false && "Unknown UdpMsg type.");
+      Log("%s unknown type.\n", prefix);
+      break;
    }
 }
 
@@ -731,6 +741,13 @@ UdpProtocol::SetLocalFrameNumber(int localFrame)
     * pop more frequenetly.
     */
    _local_frame_advantage = remoteFrame - localFrame;
+}
+
+void
+UdpProtocol::SetLocalPlayerQueue(int queue)
+{
+    ASSERT(_local_player_queue == -1);
+    _local_player_queue = queue;
 }
 
 int

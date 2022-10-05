@@ -741,6 +741,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      "Broadcast Digital Outputs",
+      NULL,
+      "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option.",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       "Show Light Gun Settings",
       NULL,

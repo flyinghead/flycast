@@ -67,6 +67,10 @@ void gdxsv_emu_loadstate(int slot) {
     }
 }
 
+bool gdxsv_emu_enabled() {
+    return gdxsv.Enabled();
+}
+
 bool gdxsv_emu_ingame() {
     return gdxsv.InGame();
 }
@@ -113,12 +117,12 @@ void gdxsv_emu_settings() {
     gui_header("gdxsv Settings");
     
     ImGui::Columns(5, "gdxlang", false);
-    ImGui::SetColumnWidth(0, 200.0f * settings.display.uiScale);
+    ImGui::SetColumnWidth(0, 135.0f * settings.display.uiScale);
     ImGui::Text("Language mod:");
     ImGui::SameLine();
     ShowHelpMarker("Patch game language and texture, for DX only");
     ImGui::NextColumn();
-    OptionRadioButton("Japanese (Patched)", config::GdxLanguage, 0);
+    OptionRadioButton("Japanese", config::GdxLanguage, 0);
     ImGui::NextColumn();
     OptionRadioButton("Cantonese", config::GdxLanguage, 1);
     ImGui::NextColumn();
@@ -127,7 +131,7 @@ void gdxsv_emu_settings() {
     OptionRadioButton("Disabled", config::GdxLanguage, 3);
     ImGui::Columns(1, nullptr, false);
     
-    if (ImGui::Button("Apply Recommended Settings")) {
+    if (ImGui::Button("Apply Recommended Settings", ImVec2(0, 40))) {
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
@@ -153,6 +157,11 @@ void gdxsv_emu_settings() {
         config::DynarecIdleSkip = true;
         config::ThreadedRendering = false;
 
+        // Network
+        config::EnableUPnP = true;
+        config::GdxLocalPort = 0;
+        config::GdxMinDelay = 2;
+
         maple_ReconnectDevices();
     }
     ImGui::SameLine();
@@ -177,18 +186,42 @@ void gdxsv_emu_settings() {
     Advanced:
       CPU Mode: Dynarec
       Dynarec Idle Skip: Yes
-      Multi-threaded emulation: No)");
+      Multi-threaded emulation: No
 
-    bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
-    bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
-    if (pressed) {
-        config::Widescreen.set(widescreen);
-        config::WidescreenGameHacks.set(widescreen);
+    Network:
+      Enable UPnP
+      Gdx Local UDP Port: 0
+      Gdx Minimum Delay: 2)");
+
+    gui_header("Network Settings (P2P Lobby Only)");
+	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
+
+    char local_port[256];
+    sprintf(local_port, "%d", (int)config::GdxLocalPort);
+    ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+    ImGui::SameLine();
+    ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
+    config::GdxLocalPort.set(atoi(local_port));
+
+    static char upnp_result[256];
+    if (config::GdxLocalPort == 0) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
+    if (ImGui::Button("UPnP Now")) {
+        auto upnp = gdxsv.UPnP();
+        if (upnp.Init() && upnp.AddPortMapping(config::GdxLocalPort, false)) strcpy(upnp_result, "Success");
+        else strcpy(upnp_result, upnp.getLastError());
+    }
+    if (config::GdxLocalPort == 0) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
     }
     ImGui::SameLine();
-    ShowHelpMarker(R"(Use the following rendering options:
-    rend.WideScreen=true
-    rend.WidescreenGameHacks=true)");
+    ImGui::Text(upnp_result);
+
+    OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
+        "Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and introduces glitches.");
 
     ImGui::NewLine();
     gui_header("Flycast Settings");
@@ -250,3 +283,7 @@ void gdxsv_mainui_loop() {
     gdxsv.HookMainUiLoop();
 }
 
+
+void gdxsv_gui_display_osd() {
+    gdxsv.DisplayOSD();
+}

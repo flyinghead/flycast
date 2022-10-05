@@ -33,14 +33,22 @@ bool nextFrame();
 bool active();
 void displayStats();
 void endOfFrame();
+bool getCurrentFrame(int* frame);
 void sendChatMessage(int playerNum, const std::string& msg);
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg));
-void gdxsvStartSession(int localPort, int localPlayerNum);
+bool isConnected(int playerNum);
+void disconnect(int playerNum);
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports);
 
 static inline bool rollbacking() {
 	extern bool inRollback;
 
 	return inRollback;
+}
+
+static inline void setExInput(u16 exInput) {
+	extern u16 localExInput;
+	localExInput = exInput;
 }
 
 }

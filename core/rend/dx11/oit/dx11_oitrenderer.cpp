@@ -364,7 +364,7 @@ struct DX11OITRenderer : public DX11Renderer
 	}
 
 	template<bool Transparent>
-	void drawModVols(int first, int count)
+	void drawModVols(int first, int count, const ModifierVolumeParam *modVolParams)
 	{
 		if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 			return;
@@ -378,14 +378,14 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->PSSetShader(shaders.getModVolShader(), nullptr, 0);
 		deviceContext->RSSetScissorRects(1, &scissorRect);
 
-		ModifierVolumeParam* params = Transparent ? &pvrrc.global_param_mvo_tr.head()[first] : &pvrrc.global_param_mvo.head()[first];
+		const ModifierVolumeParam *params = &modVolParams[first];
 		int mod_base = -1;
 		const float *curMVMat = nullptr;
 		const float *curProjMat = nullptr;
 
 		for (int cmv = 0; cmv < count; cmv++)
 		{
-			ModifierVolumeParam& param = params[cmv];
+			const ModifierVolumeParam& param = params[cmv];
 
 			u32 mv_mode = param.isp.DepthMode;
 
@@ -533,7 +533,9 @@ struct DX11OITRenderer : public DX11Renderer
 			u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
 			u32 mvo_count = current_pass.mvo_count - previous_pass.mvo_count;
 			DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d Tr MV %d autosort %d", render_pass + 1,
-					op_count, pt_count, tr_count, mvo_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, current_pass.autosort);
+					op_count, pt_count, tr_count, mvo_count,
+					current_pass.mv_op_tr_shared ? mvo_count : current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
+					current_pass.autosort);
 
 			//
 			// PASS 1: Geometry pass to update depth and stencil
@@ -547,7 +549,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
-			drawModVols<false>(previous_pass.mvo_count, mvo_count);
+			drawModVols<false>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.head());
 
 			//
 			// PASS 2: Render OP and PT to opaque render target
@@ -580,8 +582,13 @@ struct DX11OITRenderer : public DX11Renderer
 				ID3D11ShaderResourceView *p = nullptr;
 			    deviceContext->PSSetShaderResources(4, 1, &p);
 			    if (!theDX11Context.isIntel())
+			    {
 			    	// Intel Iris Plus 640 just crashes
-			    	drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+			    	if (current_pass.mv_op_tr_shared)
+			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.head());
+			    	else
+			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.head());
+			    }
 			}
 			else
 			{

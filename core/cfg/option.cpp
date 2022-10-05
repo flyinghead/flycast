@@ -38,6 +38,8 @@ Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
+Option<bool> FetchBoxart("FetchBoxart", true);
+Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
 
 // Sound
 
@@ -118,6 +120,8 @@ Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 // Gdxsv
 
 Option<int> GdxLanguage("language", -1, "gdxsv");
+Option<int> GdxLocalPort("LocalPort", 0, "gdxsv");
+Option<int> GdxMinDelay("MinDelay", 2, "gdxsv");
 
 // Network
 
@@ -135,6 +139,7 @@ Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 Option<bool> GGPOChat("GGPOChat", true, "network");
 Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
+Option<bool> NetworkOutput("NetworkOutput", false, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
