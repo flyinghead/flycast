@@ -1070,37 +1070,38 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	ggpo_set_disconnect_timeout(ggpoSession, 3000);
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
 
-	for (int i = 0; i < ips.size(); i++)
-	{
-        GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, i + 1};
-		if (i != me) {
-			player.type = GGPO_PLAYERTYPE_REMOTE;
-			if (ips[i].empty()) {
-                strcpy(player.u.remote.ip_address, "127.0.0.1");
-			} else {
-				strcpy(player.u.remote.ip_address, ips[i].c_str());
-			}
+	GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, me + 1};
+	result = ggpo_add_player(ggpoSession, &player, &playerHandles[me]);
+	if (result != GGPO_OK) {
+		WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
+		stopSession();
+		return;
+	}
+	ggpo::localPlayer = playerHandles[me];
 
-			if (ports[i] == 0) {
-				player.u.remote.port = SERVER_PORT + i;
-			} else {
-				player.u.remote.port = ports[i];
-			}
+	for (int i = 0; i < ips.size(); i++) {
+		if (i == me) continue;
+        GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_REMOTE, i + 1};
+		if (ips[i].empty()) {
+			strcpy(player.u.remote.ip_address, "127.0.0.1");
+		} else {
+			strcpy(player.u.remote.ip_address, ips[i].c_str());
+		}
+
+		if (ports[i] == 0) {
+			player.u.remote.port = SERVER_PORT + i;
+		} else {
+			player.u.remote.port = ports[i];
 		}
 
 		result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
-		if (result != GGPO_OK)
-		{
+		if (result != GGPO_OK) {
 			WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
 			stopSession();
-			throw FlycastException("GGPO cannot add remote player");
+			return;
 		}
 
-		if (i == me) {
-			ggpo::localPlayer = playerHandles[i];
-		} else {
-			ggpo::remotePlayer = playerHandles[i];
-		}
+		ggpo::remotePlayer = playerHandles[i];
 	}
 
 	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
