@@ -21,12 +21,10 @@
 #include "rend/transform_matrix.h"
 
 namespace {
-u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04,
-                          0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x76, 0x83, 0x8c, 0x83, 0x43,
-                          0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07};
-u8 DummyRuleData[] = {0x03, 0x02, 0x03, 0x00, 0x00, 0x01, 0x58, 0x02, 0x58, 0x02, 0x00, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00, 0x00,
-                      0xff, 0x01, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00};
+u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83,
+						  0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07};
+u8 DummyRuleData[] = {0x03, 0x02, 0x03, 0x00, 0x00, 0x01, 0x58, 0x02, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+					  0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00, 0x00, 0xff, 0x01, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00};
 
 const u16 ExInputNone = 0;
 const u16 ExInputWaitStart = 1;
@@ -34,284 +32,280 @@ const u16 ExInputWaitLoadEnd = 2;
 
 // maple input to mcs pad input
 u16 convertInput(MapleInputState input) {
-    u16 r = 0;
-    if (~input.kcode & 0x0004) r |= 0x4000;      // A
-    if (~input.kcode & 0x0002) r |= 0x2000;      // B
-    if (~input.kcode & 0x0400) r |= 0x0002;      // X
-    if (~input.kcode & 0x0200) r |= 0x0001;      // Y
-    if (~input.kcode & 0x0010) r |= 0x0020;      // up
-    if (~input.kcode & 0x0020) r |= 0x0010;      // down
-    if (~input.kcode & 0x0080) r |= 0x0004;      // right
-    if (~input.kcode & 0x0040) r |= 0x0008;      // left
-    if (~input.kcode & 0x0008) r |= 0x0080;      // Start
-    if (~input.kcode & 0x00020000) r |= 0x8000;  // LT
-    if (~input.kcode & 0x00040000) r |= 0x1000;  // RT
+	u16 r = 0;
+	if (~input.kcode & 0x0004) r |= 0x4000;		 // A
+	if (~input.kcode & 0x0002) r |= 0x2000;		 // B
+	if (~input.kcode & 0x0400) r |= 0x0002;		 // X
+	if (~input.kcode & 0x0200) r |= 0x0001;		 // Y
+	if (~input.kcode & 0x0010) r |= 0x0020;		 // up
+	if (~input.kcode & 0x0020) r |= 0x0010;		 // down
+	if (~input.kcode & 0x0080) r |= 0x0004;		 // right
+	if (~input.kcode & 0x0040) r |= 0x0008;		 // left
+	if (~input.kcode & 0x0008) r |= 0x0080;		 // Start
+	if (~input.kcode & 0x00020000) r |= 0x8000;	 // LT
+	if (~input.kcode & 0x00040000) r |= 0x1000;	 // RT
 
-    if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;  // left
-    if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;  // right
-    if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;  // up
-    if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;  // down
-    return r;
+	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
+	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
+	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
+	if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;	 // down
+	return r;
 }
 
 void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id);
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {
-    const auto elapsed = ping_pong_.ElapsedMs();
-    if (1550 < elapsed && elapsed < 6900) {
-        uint8_t matrix[4][4] = {};
-        ping_pong_.GetRttMatrix(matrix);
-        std::map<int, int> id_to_team, pos_to_id;
-        for (const auto& c : matching_.candidates()) {
-            id_to_team[c.peer_id()] = c.team();
-        }
-        for (const auto& p : id_to_team) {
-            int pos = (p.second == 2 ? 2 : 0);
-            if (pos_to_id.find(pos) != pos_to_id.end()) pos++;
-            pos_to_id[pos] = p.first;
-        }
-        drawConnectionDiagram(elapsed, matrix, pos_to_id);
-    }
+	const auto elapsed = ping_pong_.ElapsedMs();
+	if (1550 < elapsed && elapsed < 6900) {
+		uint8_t matrix[4][4] = {};
+		ping_pong_.GetRttMatrix(matrix);
+		std::map<int, int> id_to_team, pos_to_id;
+		for (const auto& c : matching_.candidates()) {
+			id_to_team[c.peer_id()] = c.team();
+		}
+		for (const auto& p : id_to_team) {
+			int pos = (p.second == 2 ? 2 : 0);
+			if (pos_to_id.find(pos) != pos_to_id.end()) pos++;
+			pos_to_id[pos] = p.first;
+		}
+		drawConnectionDiagram(elapsed, matrix, pos_to_id);
+	}
 }
 
 void GdxsvBackendRollback::Reset() {
-    RestorePatch();
-    state_ = State::None;
-    lbs_tx_reader_.Clear();
-    recv_buf_.clear();
-    recv_delay_ = 0;
+	RestorePatch();
+	state_ = State::None;
+	lbs_tx_reader_.Clear();
+	recv_buf_.clear();
+	recv_delay_ = 0;
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
-    const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
-    const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-    const int NetCountDown = 0x0c3ab942;  // TODO: disk2
+	const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
+	const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
+	const int NetCountDown = 0x0c3ab942;	  // TODO: disk2
 
-    if (state_ == State::StopEmulator) {
-        emu.stop();
-        state_ = State::WaitPingPong;
-    }
+	if (state_ == State::StopEmulator) {
+		emu.stop();
+		state_ = State::WaitPingPong;
+	}
 
-    if (state_ == State::WaitPingPong && !ping_pong_.Running()) {
-        state_ = State::StartGGPOSession;
-    }
+	if (state_ == State::WaitPingPong && !ping_pong_.Running()) {
+		state_ = State::StartGGPOSession;
+	}
 
-    static auto session_start_time = std::chrono::high_resolution_clock::now();
-    if (state_ == State::StartGGPOSession) {
-        bool ok = true;
-        std::vector<std::string> ips(matching_.player_count());
-        std::vector<u16> ports(matching_.player_count());
-        float max_rtt = 0;
-        NOTICE_LOG(COMMON, "Peer count %d", matching_.player_count());
-        for (int i = 0; i < matching_.player_count(); i++) {
-            if (i == matching_.peer_id()) {
-                NOTICE_LOG(COMMON, "Peer%d is self", i);
-                ips[i] = "";
-                ports[i] = port_;
-            } else {
-                sockaddr_in addr;
-                float rtt;
-                if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
-                    NOTICE_LOG(COMMON, "Peer%d rtt%.2f", i, rtt);
-                    max_rtt = std::max(max_rtt, rtt);
-                    char str[INET_ADDRSTRLEN] = {};
-                    inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
-                    ips[i] = str;
-                    ports[i] = ntohs(addr.sin_port);
-                } else {
-                    NOTICE_LOG(COMMON, "No available address %d", i);
-                    ok = false;
-                }
-            }
-        }
+	static auto session_start_time = std::chrono::high_resolution_clock::now();
+	if (state_ == State::StartGGPOSession) {
+		bool ok = true;
+		std::vector<std::string> ips(matching_.player_count());
+		std::vector<u16> ports(matching_.player_count());
+		float max_rtt = 0;
+		NOTICE_LOG(COMMON, "Peer count %d", matching_.player_count());
+		for (int i = 0; i < matching_.player_count(); i++) {
+			if (i == matching_.peer_id()) {
+				NOTICE_LOG(COMMON, "Peer%d is self", i);
+				ips[i] = "";
+				ports[i] = port_;
+			} else {
+				sockaddr_in addr;
+				float rtt;
+				if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
+					NOTICE_LOG(COMMON, "Peer%d rtt%.2f", i, rtt);
+					max_rtt = std::max(max_rtt, rtt);
+					char str[INET_ADDRSTRLEN] = {};
+					inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+					ips[i] = str;
+					ports[i] = ntohs(addr.sin_port);
+				} else {
+					NOTICE_LOG(COMMON, "No available address %d", i);
+					ok = false;
+				}
+			}
+		}
 
-        if (ok) {
-            int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
-            NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
-            config::GGPOEnable.override(1);
-            config::GGPODelay.override(delay);
-            start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports);
-            ggpo::receiveChatMessages(nullptr);
-            session_start_time = std::chrono::high_resolution_clock::now();
-            state_ = State::WaitGGPOSession;
-        } else {
-            gdxsv_WriteMem16(NetCountDown, 1);
-            emu.start();
-            state_ = State::End;
-        }
-    }
+		if (ok) {
+			int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
+			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
+			config::GGPOEnable.override(1);
+			config::GGPODelay.override(delay);
+			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports);
+			ggpo::receiveChatMessages(nullptr);
+			session_start_time = std::chrono::high_resolution_clock::now();
+			state_ = State::WaitGGPOSession;
+		} else {
+			gdxsv_WriteMem16(NetCountDown, 1);
+			emu.start();
+			state_ = State::End;
+		}
+	}
 
-    if (state_ == State::WaitGGPOSession) {
-        auto now = std::chrono::high_resolution_clock::now();
-        auto timeout = 10000 <= std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time).count();
+	if (state_ == State::WaitGGPOSession) {
+		auto now = std::chrono::high_resolution_clock::now();
+		auto timeout = 10000 <= std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time).count();
 
-        if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-            if (ggpo::active()) {
-                start_network_ = std::future<bool>();
-                state_ = State::McsInBattle;
-                emu.start();
-            }
-            else {
-                NOTICE_LOG(COMMON, "StartNetwork failure");
-                state_ = State::End;
-                emu.start();
-            }
-        }
-        else if (timeout) {
-            NOTICE_LOG(COMMON, "StartNetwork timeout");
-            ggpo::stopSession();
-            state_ = State::End;
-            emu.start();
-        }
-    }
+		if (start_network_.valid() && start_network_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+			if (ggpo::active()) {
+				start_network_ = std::future<bool>();
+				state_ = State::McsInBattle;
+				emu.start();
+			} else {
+				NOTICE_LOG(COMMON, "StartNetwork failure");
+				state_ = State::End;
+				emu.start();
+			}
+		} else if (timeout) {
+			NOTICE_LOG(COMMON, "StartNetwork timeout");
+			ggpo::stopSession();
+			state_ = State::End;
+			emu.start();
+		}
+	}
 
-    // Rebattle end
-    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
-        ggpo::disconnect(matching_.peer_id());
-        state_ = State::CloseWait;
-    }
+	// Rebattle end
+	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
+		ggpo::disconnect(matching_.peer_id());
+		state_ = State::CloseWait;
+	}
 
-    // Friend save scene
-    if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
-        ggpo::stopSession();
-        state_ = State::End;
-    }
+	// Friend save scene
+	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
+		ggpo::stopSession();
+		state_ = State::End;
+	}
 
-    // Fast return to lobby on error
-    if (gdxsv_ReadMem16(ConnectionStatus) == 1 &&
-        gdxsv_ReadMem16(ConnectionStatus + 4) == 10 &&
-        1 < gdxsv_ReadMem16(NetCountDown)) {
-        ggpo::stopSession();
-        state_ = State::End;
-        gdxsv_WriteMem16(NetCountDown, 1);
-    }
+	// Fast return to lobby on error
+	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
+		ggpo::stopSession();
+		state_ = State::End;
+		gdxsv_WriteMem16(NetCountDown, 1);
+	}
 }
 
-bool GdxsvBackendRollback::StartLocalTest(const char *param) {
-    auto args = std::string(param);
-    int me = 0;
-    int n = 4;
-    if (0 < args.size() && '1' <= args[0] && args[0] <= '4') {
-        me = args[0] - '1';
-    }
-    if (2 < args.size() && args[1] == '/' && '1' <= args[2] && args[2] <= '4') {
-        n = args[2] - '0';
-    }
-    Reset();
-    DummyRuleData[6] = 1;
-    DummyRuleData[7] = 0;
-    DummyRuleData[8] = 1;
-    DummyRuleData[9] = 0;
-    state_ = State::StartLocalTest;
-    maxlag_ = 0;
-    matching_.set_battle_code("0123456");
-    matching_.set_peer_id(me);
-    matching_.set_session_id(12345);
-    matching_.set_timeout_min_ms(1000);
-    matching_.set_timeout_max_ms(10000);
-    matching_.set_player_count(n);
-    for (int i = 0; i < n; i++) {
-        proto::PlayerAddress player{};
-        player.set_ip("127.0.0.1");
-        player.set_port(20010 + i);
-        player.set_user_id(std::to_string(i));
-        player.set_peer_id(i);
-        player.set_team(i/2 + 1);
-        matching_.mutable_candidates()->Add(std::move(player));
-    }
-    Prepare(matching_, 20010 + me);
-    NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
-    return true;
+bool GdxsvBackendRollback::StartLocalTest(const char* param) {
+	auto args = std::string(param);
+	int me = 0;
+	int n = 4;
+	if (0 < args.size() && '1' <= args[0] && args[0] <= '4') {
+		me = args[0] - '1';
+	}
+	if (2 < args.size() && args[1] == '/' && '1' <= args[2] && args[2] <= '4') {
+		n = args[2] - '0';
+	}
+	Reset();
+	DummyRuleData[6] = 1;
+	DummyRuleData[7] = 0;
+	DummyRuleData[8] = 1;
+	DummyRuleData[9] = 0;
+	state_ = State::StartLocalTest;
+	maxlag_ = 0;
+	matching_.set_battle_code("0123456");
+	matching_.set_peer_id(me);
+	matching_.set_session_id(12345);
+	matching_.set_timeout_min_ms(1000);
+	matching_.set_timeout_max_ms(10000);
+	matching_.set_player_count(n);
+	for (int i = 0; i < n; i++) {
+		proto::PlayerAddress player{};
+		player.set_ip("127.0.0.1");
+		player.set_port(20010 + i);
+		player.set_user_id(std::to_string(i));
+		player.set_peer_id(i);
+		player.set_team(i / 2 + 1);
+		matching_.mutable_candidates()->Add(std::move(player));
+	}
+	Prepare(matching_, 20010 + me);
+	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
+	return true;
 }
 
-void GdxsvBackendRollback::Prepare(const proto::P2PMatching &matching, int port) {
-    matching_ = matching;
-    port_ = port;
+void GdxsvBackendRollback::Prepare(const proto::P2PMatching& matching, int port) {
+	matching_ = matching;
+	port_ = port;
 
-    ping_pong_.Reset();
-    for (const auto &c : matching.candidates()) {
-        if (c.peer_id() != matching_.peer_id()) {
-            ping_pong_.AddCandidate(c.user_id(), c.peer_id(), c.ip(), c.port());
-        }
-    }
-    ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_min_ms(),
-                     matching.timeout_max_ms());
+	ping_pong_.Reset();
+	for (const auto& c : matching.candidates()) {
+		if (c.peer_id() != matching_.peer_id()) {
+			ping_pong_.AddCandidate(c.user_id(), c.peer_id(), c.ip(), c.port());
+		}
+	}
+	ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_min_ms(), matching.timeout_max_ms());
 }
 
 void GdxsvBackendRollback::Open() {
-    NOTICE_LOG(COMMON, "GdxsvBackendRollback.Open");
-    recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
-    state_ = State::McsSessionExchange;
-    maxlag_ = 0;
-    ApplyPatch(true);
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Open");
+	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
+	state_ = State::McsSessionExchange;
+	maxlag_ = 0;
+	ApplyPatch(true);
 }
 
 void GdxsvBackendRollback::Close() {
-    ggpo::stopSession();
-    RestorePatch();
-    state_ = State::End;
+	ggpo::stopSession();
+	RestorePatch();
+	state_ = State::End;
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
-    if (state_ <= State::LbsStartBattleFlow) {
-        u8 buf[InetBufSize];
-        for (int i = 0; i < size; ++i) {
-            buf[i] = gdxsv_ReadMem8(addr + i);
-        }
+	if (state_ <= State::LbsStartBattleFlow) {
+		u8 buf[InetBufSize];
+		for (int i = 0; i < size; ++i) {
+			buf[i] = gdxsv_ReadMem8(addr + i);
+		}
 
-        lbs_tx_reader_.Write((const char *)buf, size);
-        ProcessLbsMessage();
-    }
+		lbs_tx_reader_.Write((const char*)buf, size);
+		ProcessLbsMessage();
+	}
 
-    ApplyPatch(false);
-    return size;
+	ApplyPatch(false);
+	return size;
 }
 
 u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
-    if (state_ <= State::LbsStartBattleFlow) {
-        ProcessLbsMessage();
-    } else {
-        int frame = 0;
-        ggpo::getCurrentFrame(&frame);
-		const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
-        const int InetBuf = 0x0c3ab984;           // TODO: disk2
-        const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-        // NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
+	if (state_ <= State::LbsStartBattleFlow) {
+		ProcessLbsMessage();
+	} else {
+		int frame = 0;
+		ggpo::getCurrentFrame(&frame);
+		const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
+		const int InetBuf = 0x0c3ab984;			  // TODO: disk2
+		const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
+		// NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_,
+		// gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
-        // Notify disconnect in game part if other player is disconnect on ggpo
-        if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
-            for (int i = 0; i < matching_.player_count(); ++i) {
-                if (!ggpo::isConnected(i)) {
-                    gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
-                    ggpo::setExInput(ExInputNone);
-                    break;
-                }
-            }
-        }
+		// Notify disconnect in game part if other player is disconnect on ggpo
+		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+			for (int i = 0; i < matching_.player_count(); ++i) {
+				if (!ggpo::isConnected(i)) {
+					gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
+					ggpo::setExInput(ExInputNone);
+					break;
+				}
+			}
+		}
 
-        auto inputState = mapleInputState;
-        auto memExInputAddr = symbols_.at("print_buf"); // TODO
+		auto inputState = mapleInputState;
+		auto memExInputAddr = symbols_.at("print_buf");	 // TODO
 
-        int msg_len = gdxsv_ReadMem8(InetBuf);
-        if (0 < msg_len) {
-            if (msg_len == 0x82) {
-                msg_len = 20;
-            }
-            McsMessage msg;
-            msg.body.resize(msg_len);
-            for (int i = 0; i < msg_len; i++) {
-                msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
-                gdxsv_WriteMem8(InetBuf + i, 0);
-            }
+		int msg_len = gdxsv_ReadMem8(InetBuf);
+		if (0 < msg_len) {
+			if (msg_len == 0x82) {
+				msg_len = 20;
+			}
+			McsMessage msg;
+			msg.body.resize(msg_len);
+			for (int i = 0; i < msg_len; i++) {
+				msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
+				gdxsv_WriteMem8(InetBuf + i, 0);
+			}
 
-            if (msg.Type() == McsMessage::ConnectionIdMsg) {
+			if (msg.Type() == McsMessage::ConnectionIdMsg) {
 				state_ = State::StopEmulator;
-            }
+			}
 
 			if (msg.Type() == McsMessage::IntroMsg) {
 				for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::IntroMsg, i);
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 				}
@@ -319,31 +313,31 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 
 			if (msg.Type() == McsMessage::IntroMsgReturn) {
 				for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::IntroMsgReturn, i);
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 				}
 			}
 
-            if (msg.Type() == McsMessage::PingMsg) {
+			if (msg.Type() == McsMessage::PingMsg) {
 				for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::PongMsg, i);
 					a.SetPongTo(matching_.peer_id());
 					a.PongCount(msg.PingCount());
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 				}
-            }
+			}
 
-            if (msg.Type() == McsMessage::StartMsg) {
+			if (msg.Type() == McsMessage::StartMsg) {
 				gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
 				if (!ggpo::rollbacking()) {
 					ggpo::setExInput(ExInputWaitStart);
 					NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
 				}
-            }
+			}
 
-            if (msg.Type() == McsMessage::KeyMsg1) {
+			if (msg.Type() == McsMessage::KeyMsg1) {
 				for (int i = 0; i < matching_.player_count(); ++i) {
 					auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
 					auto input = convertInput(inputState[i]);
@@ -351,11 +345,11 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 					a.body[3] = input & 0xff;
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 				}
-            }
+			}
 
-            if (msg.Type() == McsMessage::LoadEndMsg) {
+			if (msg.Type() == McsMessage::LoadEndMsg) {
 				for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::LoadStartMsg, i);
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 				}
@@ -365,152 +359,161 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 					ggpo::setExInput(ExInputWaitLoadEnd);
 					NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
 				}
-            }
+			}
 
-            verify(recv_buf_.size() <= size);
-        }
+			verify(recv_buf_.size() <= size);
+		}
 
-        if (gdxsv_ReadMem16(memExInputAddr) != ExInputNone) {
-            auto exInput = gdxsv_ReadMem16(memExInputAddr);
-            bool ok = true;
-            for (int i = 0; i < matching_.player_count(); i++) {
-                ok &= inputState[i].exInput == exInput;
-            }
+		if (gdxsv_ReadMem16(memExInputAddr) != ExInputNone) {
+			auto exInput = gdxsv_ReadMem16(memExInputAddr);
+			bool ok = true;
+			for (int i = 0; i < matching_.player_count(); i++) {
+				ok &= inputState[i].exInput == exInput;
+			}
 
-            if (ok && exInput == ExInputWaitStart) {
-                NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
-                gdxsv_WriteMem16(memExInputAddr, ExInputNone);
-                if (!ggpo::rollbacking()) {
-                    ggpo::setExInput(ExInputNone);
-                }
-                for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+			if (ok && exInput == ExInputWaitStart) {
+				NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
+				gdxsv_WriteMem16(memExInputAddr, ExInputNone);
+				if (!ggpo::rollbacking()) {
+					ggpo::setExInput(ExInputNone);
+				}
+				for (int i = 0; i < matching_.player_count(); i++) {
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-                }
-            }
+				}
+			}
 
-            if (ok && exInput == ExInputWaitLoadEnd) {
-                NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
-                gdxsv_WriteMem16(memExInputAddr, ExInputNone);
-                if (!ggpo::rollbacking()) {
-                    ggpo::setExInput(ExInputNone);
-                }
-                for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i == matching_.peer_id()) continue;
+			if (ok && exInput == ExInputWaitLoadEnd) {
+				NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
+				gdxsv_WriteMem16(memExInputAddr, ExInputNone);
+				if (!ggpo::rollbacking()) {
+					ggpo::setExInput(ExInputNone);
+				}
+				for (int i = 0; i < matching_.player_count(); i++) {
+					if (i == matching_.peer_id()) continue;
 					auto a = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-                }
-            }
-        }
-        verify(recv_buf_.size() <= size);
-    }
+				}
+			}
+		}
+		verify(recv_buf_.size() <= size);
+	}
 
-    if (recv_buf_.empty()) {
-        return 0;
-    }
+	if (recv_buf_.empty()) {
+		return 0;
+	}
 
-    int n = std::min<int>(recv_buf_.size(), size);
-    for (int i = 0; i < n; ++i) {
-        gdxsv_WriteMem8(addr + i, recv_buf_.front());
-        recv_buf_.pop_front();
-    }
-    return n;
+	int n = std::min<int>(recv_buf_.size(), size);
+	for (int i = 0; i < n; ++i) {
+		gdxsv_WriteMem8(addr + i, recv_buf_.front());
+		recv_buf_.pop_front();
+	}
+	return n;
 }
 
 u32 GdxsvBackendRollback::OnSockPoll() {
-    if (state_ <= State::LbsStartBattleFlow) {
-        ProcessLbsMessage();
-    }
-    if (0 < recv_delay_) {
-        recv_delay_--;
-        return 0;
-    }
+	if (state_ <= State::LbsStartBattleFlow) {
+		ProcessLbsMessage();
+	}
+	if (0 < recv_delay_) {
+		recv_delay_--;
+		return 0;
+	}
 
-    return recv_buf_.size();
+	return recv_buf_.size();
 }
 
 void GdxsvBackendRollback::ProcessLbsMessage() {
-    if (state_ == State::StartLocalTest) {
-        LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
-        recv_delay_ = 1;
-        state_ = State::LbsStartBattleFlow;
-    }
+	if (state_ == State::StartLocalTest) {
+		LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
+		recv_delay_ = 1;
+		state_ = State::LbsStartBattleFlow;
+	}
 
-    LbsMessage msg;
-    if (lbs_tx_reader_.Read(msg)) {
-        if (state_ == State::StartLocalTest) {
-            state_ = State::LbsStartBattleFlow;
-        }
+	LbsMessage msg;
+	if (lbs_tx_reader_.Read(msg)) {
+		if (state_ == State::StartLocalTest) {
+			state_ = State::LbsStartBattleFlow;
+		}
 
-        if (msg.command == LbsMessage::lbsLobbyMatchingEntry) {
-            LbsMessage::SvAnswer(msg).Serialize(recv_buf_);
-            LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsLobbyMatchingEntry) {
+			LbsMessage::SvAnswer(msg).Serialize(recv_buf_);
+			LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskMatchingJoin) {
-            LbsMessage::SvAnswer(msg).Write8(matching_.player_count())->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskMatchingJoin) {
+			LbsMessage::SvAnswer(msg).Write8(matching_.player_count())->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskPlayerSide) {
-            LbsMessage::SvAnswer(msg).Write8(matching_.peer_id() + 1)->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskPlayerSide) {
+			LbsMessage::SvAnswer(msg).Write8(matching_.peer_id() + 1)->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskPlayerInfo) {
-            int pos = msg.Read8();
-            DummyGameParam[16] = '0' + pos;
-            DummyGameParam[17] = 0;
-            LbsMessage::SvAnswer(msg)
-				.Write8(pos)->WriteString("USER0" + std::to_string(pos))->WriteString("USER0" + std::to_string(pos))
-                ->WriteBytes(reinterpret_cast<char *>(DummyGameParam), sizeof(DummyGameParam))
-				->Write16(1)->Write16(0)->Write16(0)->Write16(0)->Write16(0)->Write16(0)
-                ->Write16(1 + (pos - 1) / 2)->Write16(0)
-                ->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskPlayerInfo) {
+			int pos = msg.Read8();
+			DummyGameParam[16] = '0' + pos;
+			DummyGameParam[17] = 0;
+			LbsMessage::SvAnswer(msg)
+				.Write8(pos)
+				->WriteString("USER0" + std::to_string(pos))
+				->WriteString("USER0" + std::to_string(pos))
+				->WriteBytes(reinterpret_cast<char*>(DummyGameParam), sizeof(DummyGameParam))
+				->Write16(1)
+				->Write16(0)
+				->Write16(0)
+				->Write16(0)
+				->Write16(0)
+				->Write16(0)
+				->Write16(1 + (pos - 1) / 2)
+				->Write16(0)
+				->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskRuleData) {
-            LbsMessage::SvAnswer(msg).WriteBytes((char *)DummyRuleData, sizeof(DummyRuleData))->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskRuleData) {
+			LbsMessage::SvAnswer(msg).WriteBytes((char*)DummyRuleData, sizeof(DummyRuleData))->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskBattleCode) {
-            LbsMessage::SvAnswer(msg).WriteString("012345")->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskBattleCode) {
+			LbsMessage::SvAnswer(msg).WriteString("012345")->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskMcsVersion) {
-            LbsMessage::SvAnswer(msg).Write8(10)->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskMcsVersion) {
+			LbsMessage::SvAnswer(msg).Write8(10)->Serialize(recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsAskMcsAddress) {
-			LbsMessage::SvAnswer(msg).Write16(4)->Write8(255)->Write8(255)->Write8(255)->Write8(255)->Write16(2)->Write16(255)->Serialize(recv_buf_);
-        }
+		if (msg.command == LbsMessage::lbsAskMcsAddress) {
+			LbsMessage::SvAnswer(msg).Write16(4)->Write8(255)->Write8(255)->Write8(255)->Write8(255)->Write16(2)->Write16(255)->Serialize(
+				recv_buf_);
+		}
 
-        if (msg.command == LbsMessage::lbsLogout) {
-            state_ = State::McsWaitJoin;
-        }
+		if (msg.command == LbsMessage::lbsLogout) {
+			state_ = State::McsWaitJoin;
+		}
 
-        recv_delay_ = 1;
-    }
+		recv_delay_ = 1;
+	}
 }
 
 void GdxsvBackendRollback::ApplyPatch(bool first_time) {
-    if (state_ == State::None || state_ == State::End) {
-        return;
-    }
+	if (state_ == State::None || state_ == State::End) {
+		return;
+	}
 
-    gdxsv.WritePatch();
+	gdxsv.WritePatch();
 
-    if (gdxsv.Disk() == 2) {
-        // Skip Key MsgPush
-        gdxsv_WriteMem16(0x8c045f64, 9);
-        gdxsv_WriteMem8(0x0c3abb90, 1);
-    }
+	if (gdxsv.Disk() == 2) {
+		// Skip Key MsgPush
+		gdxsv_WriteMem16(0x8c045f64, 9);
+		gdxsv_WriteMem8(0x0c3abb90, 1);
+	}
 }
 
 void GdxsvBackendRollback::RestorePatch() {
-    if (gdxsv.Disk() == 2) {
-        gdxsv_WriteMem16(0x8c045f64, 0x410b);
-        gdxsv_WriteMem8(0x0c3abb90, 2);
-    }
+	if (gdxsv.Disk() == 2) {
+		gdxsv_WriteMem16(0x8c045f64, 0x410b);
+		gdxsv_WriteMem8(0x0c3abb90, 2);
+	}
 }
 
 namespace {
@@ -566,9 +569,7 @@ ImColor barStep(int ms) {
 	return 1;
 }
 
-ImColor barColor(int ms, int elapsed) {
-	return fadeColor(barColor(ms), elapsed);
-}
+ImColor barColor(int ms, int elapsed) { return fadeColor(barColor(ms), elapsed); }
 
 void drawDot(ImDrawList* draw_list, ImVec2 center, ImColor c, float scale) {
 	draw_list->AddCircleFilled(center, 6.5 * scale, ImColor(0, 0, 0, 128), 20);
@@ -623,7 +624,8 @@ void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float sca
 	for (int i = 0; i < 5; i++) {
 		baseRect(points, 5, 3.5);
 		auto c = color;
-		if (step <= i) c = ImColor(64, 64, 64);
+		if (step <= i)
+			c = ImColor(64, 64, 64);
 		else if (i == (elapsed / 100 % 5)) {
 			c.Value.x *= 2;
 			c.Value.y *= 2;
@@ -646,13 +648,12 @@ void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::m
 	float scale = getScale();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
-		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always,
+							ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(W, H));
 	ImGui::SetNextWindowBgAlpha(0.0f);
 	ImGui::Begin("##gdxsvosd", NULL,
-		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoInputs);
+				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs);
 
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
@@ -695,4 +696,4 @@ void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::m
 	ImGui::PopStyleVar();
 	ImGui::PopStyleVar();
 }
-}
+}  // namespace

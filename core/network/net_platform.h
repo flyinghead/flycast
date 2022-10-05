@@ -19,6 +19,8 @@
     along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "types.h"
+
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>

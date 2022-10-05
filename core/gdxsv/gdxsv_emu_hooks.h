@@ -23,4 +23,3 @@ void gdxsv_emu_settings();
 void gdxsv_mainui_loop();
 
 void gdxsv_gui_display_osd();
-

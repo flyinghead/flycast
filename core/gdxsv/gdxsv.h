@@ -1,107 +1,109 @@
 #pragma once
 
-#include <string>
-#include <deque>
-#include <chrono>
 #include <atomic>
+#include <chrono>
+#include <deque>
+#include <string>
 
 #include "gdxsv.pb.h"
-#include "gdxsv_backend_tcp.h"
-#include "gdxsv_backend_udp.h"
 #include "gdxsv_backend_replay.h"
 #include "gdxsv_backend_rollback.h"
-#include "types.h"
+#include "gdxsv_backend_tcp.h"
+#include "gdxsv_backend_udp.h"
 #include "network/miniupnp.h"
-
+#include "types.h"
 
 class Gdxsv {
-public:
-    enum class NetMode {
-        Offline,
-        Lbs,
-        McsUdp,
-        McsRollback,
-        Replay,
-    };
+   public:
+	enum class NetMode {
+		Offline,
+		Lbs,
+		McsUdp,
+		McsRollback,
+		Replay,
+	};
 
-    Gdxsv() : lbs_net(symbols),
-              udp_net(symbols, maxlag),
-              replay_net(symbols, maxlag),
-              rollback_net(symbols, maxlag),
-              upnp_port(0), udp_port(0) {};
+	Gdxsv()
+		: lbs_net(symbols),
+		  udp_net(symbols, maxlag),
+		  replay_net(symbols, maxlag),
+		  rollback_net(symbols, maxlag),
+		  upnp_port(0),
+		  udp_port(0){};
 
-    bool Enabled() const;
+	bool Enabled() const;
 
-    bool InGame() const;
+	bool InGame() const;
 
-    void DisplayOSD();
+	void DisplayOSD();
 
-    void Reset();
+	void Reset();
 
-    void Update();
+	void Update();
 
-    void HookMainUiLoop();
+	void HookMainUiLoop();
 
-    void HandleRPC();
+	void HandleRPC();
 
-    void RestoreOnlinePatch();
+	void RestoreOnlinePatch();
 
-    void StartPingTest();
+	void StartPingTest();
 
-    bool StartReplayFile(const char* path);
+	bool StartReplayFile(const char* path);
 
-    bool StartRollbackTest(const char* param);
+	bool StartRollbackTest(const char* param);
 
-    void WritePatch();
+	void WritePatch();
 
-    int Disk() const { return disk; }
+	int Disk() const { return disk; }
 
-    MiniUPnP& UPnP() { return upnp; }
-private:
-    void GcpPingTest();
+	MiniUPnP& UPnP() { return upnp; }
 
-    static std::string GenerateLoginKey();
+   private:
+	void GcpPingTest();
 
-    std::vector<u8> GeneratePlatformInfoPacket();
+	static std::string GenerateLoginKey();
 
-    std::string GeneratePlatformInfoString();
+	std::vector<u8> GeneratePlatformInfoPacket();
 
-    void ApplyOnlinePatch(bool first_time);
+	std::string GeneratePlatformInfoString();
 
-    void WritePatchDisk1();
+	void ApplyOnlinePatch(bool first_time);
 
-    void WritePatchDisk2();
-    
-    void WriteWidescreenPatchDisk2();
+	void WritePatchDisk1();
 
-    NetMode netmode = NetMode::Offline;
-    std::atomic<bool> testmode;
-    std::atomic<bool> enabled;
-    std::atomic<int> disk;
-    std::atomic<int> maxlag;
+	void WritePatchDisk2();
 
-    std::string server;
-    std::string loginkey;
-    std::map<std::string, u32> symbols;
+	void WriteWidescreenPatchDisk2();
 
-    MiniUPnP upnp;
-    std::future<std::string> upnp_result;
-    int upnp_port;
-    int udp_port;
-    std::string user_id;
+	NetMode netmode = NetMode::Offline;
+	std::atomic<bool> testmode;
+	std::atomic<bool> enabled;
+	std::atomic<int> disk;
+	std::atomic<int> maxlag;
 
-    UdpRemote lbs_remote;
-    UdpClient udp;
+	std::string server;
+	std::string loginkey;
+	std::map<std::string, u32> symbols;
 
-    proto::GamePatchList patch_list;
+	MiniUPnP upnp;
+	std::future<std::string> upnp_result;
+	int upnp_port;
+	int udp_port;
+	std::string user_id;
 
-    GdxsvBackendTcp lbs_net;
-    GdxsvBackendUdp udp_net;
-    GdxsvBackendReplay replay_net;
-    GdxsvBackendRollback rollback_net;
+	UdpRemote lbs_remote;
+	UdpClient udp;
 
-    std::atomic<bool> gcp_ping_test_finished;
-    std::map<std::string, int> gcp_ping_test_result;
+	proto::GamePatchList patch_list;
+
+	GdxsvBackendTcp lbs_net;
+	GdxsvBackendUdp udp_net;
+	GdxsvBackendReplay replay_net;
+	GdxsvBackendRollback rollback_net;
+
+	std::atomic<bool> gcp_ping_test_finished;
+	std::map<std::string, int> gcp_ping_test_result;
 };
 
 extern Gdxsv gdxsv;
