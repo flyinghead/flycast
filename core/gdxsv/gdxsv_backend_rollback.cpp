@@ -54,200 +54,24 @@ u16 convertInput(MapleInputState input) {
     return r;
 }
 
-float getScale() {
-    const auto W = ImGui::GetIO().DisplaySize.x;
-    const auto H = ImGui::GetIO().DisplaySize.y;
-    const auto S = std::min(W / 640.f, H / 480.f);
-    const auto CX = W / 2.f;
-    const auto CY = H / 2.f;
-    float renderAR = getOutputFramebufferAspectRatio();
-    float screenAR = W / H;
-    float dx = 0;
-    float dy = 0;
-    if (renderAR > screenAR)
-        dy = H * (1 - screenAR / renderAR) / 2;
-    else
-        dx = W * (1 - renderAR / screenAR) / 2;
-
-    return std::min((W - dx * 2) / 640.f, (H - dy * 2) / 480.f);
-}
-
-ImVec2 fromCenter(float x, float y, float scale) {
-    const auto W = ImGui::GetIO().DisplaySize.x;
-    const auto H = ImGui::GetIO().DisplaySize.y;
-    const auto CX = W / 2.f;
-    const auto CY = H / 2.f;
-    return ImVec2(CX + (x * scale), CY + (y * scale));
-}
-
-ImColor fadeColor(ImColor color, int elapsed) {
-    if (elapsed <= 1800)
-        color.Value.w *= (elapsed - 1550) / 250.0;
-    else if (elapsed >= 6600 && elapsed < 6900)
-        color.Value.w *= 1.0 - (elapsed - 6600) / 300.0;
-    return color;
-}
-
-ImColor barColor(int ms) {
-    if (ms <= 0) return ImColor(64, 64, 64);
-    if (ms <= 30) return ImColor(87, 213, 213);
-    if (ms <= 60) return ImColor(0, 255, 149);
-    if (ms <= 90) return ImColor(255, 255, 0);
-    if (ms <= 120) return ImColor(255, 170, 0);
-    return ImColor(255, 0, 0);
-}
-
-ImColor barStep(int ms) {
-    if (ms <= 0) return 5;
-    if (ms <= 30) return 5;
-    if (ms <= 60) return 4;
-    if (ms <= 90) return 3;
-    if (ms <= 120) return 2;
-    return 1;
-}
-
-ImColor barColor(int ms, int elapsed) {
-    return fadeColor(barColor(ms), elapsed);
-}
-
-void drawDot(ImDrawList *draw_list, ImVec2 center, ImColor c, float scale) {
-    draw_list->AddCircleFilled(center, 6.5 * scale, ImColor(0, 0, 0, 128), 20);
-    draw_list->AddCircleFilled(center, 5.5 * scale, c, 20);
-}
-
-void baseRect(ImVec2 points[4], float sx, float sy) {
-    float v = sx / 2.0;
-    float w = sy / 2.0;
-    points[0].x = -v;
-    points[0].y = -w;
-    points[1].x = v;
-    points[1].y = -w;
-    points[2].x = v;
-    points[2].y = w;
-    points[3].x = -v;
-    points[3].y = w;
-}
-
-void scaleRect(ImVec2 points[4], float scale) {
-    for (int i = 0; i < 4; i++) {
-        points[i].x *= scale;
-        points[i].y *= scale;
-    }
-}
-
-void scaleRectX(ImVec2 points[4], float scale) {
-    for (int i = 0; i < 4; i++) {
-        points[i].x *= scale;
-    }
-}
-
-void moveRect(ImVec2 points[4], ImVec2 delta) {
-    for (int i = 0; i < 4; i++) {
-        points[i].x += delta.x;
-        points[i].y += delta.y;
-    }
-}
-
-void rotRect(ImVec2 points[4], float rad) {
-    for (int i = 0; i < 4; i++) {
-        auto x = points[i].x;
-        auto y = points[i].y;
-        points[i].x = x * cos(rad) - y * sin(rad);
-        points[i].y = y * cos(rad) + x * sin(rad);
-    }
-}
-
-void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir) {
-    float rad = (3.141592 / 4) * dir;
-    ImVec2 points[4];
-    for (int i = 0; i < 5; i++) {
-        baseRect(points, 5, 4);
-        ImColor c = step <= i ? ImColor(64, 64, 64) : color;
-        moveRect(points, ImVec2(0, i * 5.3));
-        scaleRectX(points, 1 + i * 0.50);
-        scaleRect(points, scale);
-        moveRect(points, ImVec2(0, scale * 10));
-        rotRect(points, rad);
-        moveRect(points, anchor);
-        draw_list->AddConvexPolyFilled(points, sizeof(points) / sizeof(points[0]), c);
-        draw_list->AddPolyline(points, sizeof(points) / sizeof(points[0]), ImColor(0, 0, 0), true, 1.0);
-    }
-}
-
+void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id);
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {
     const auto elapsed = ping_pong_.ElapsedMs();
     if (1550 < elapsed && elapsed < 6900) {
-        const auto W = ImGui::GetIO().DisplaySize.x;
-        const auto H = ImGui::GetIO().DisplaySize.y;
-        float scale = getScale();
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
-                                ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-        ImGui::SetNextWindowSize(ImVec2(W, H));
-        ImGui::SetNextWindowBgAlpha(0.0f);
-        ImGui::Begin("##gdxsvosd", NULL,
-                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
-                         ImGuiWindowFlags_NoInputs);
-
-        ImDrawList *draw_list = ImGui::GetWindowDrawList();
-
-        // Draw background
-        draw_list->AddRectFilled(fromCenter(-45, -97, scale), fromCenter(45.25, -51.875, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
-        draw_list->AddRectFilled(fromCenter(-45, 53.125, scale), fromCenter(45.25, 98.25, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
-
         uint8_t matrix[4][4] = {};
         ping_pong_.GetRttMatrix(matrix);
-
-        std::map<int, int> id_to_team;
-        std::map<int, int> pos_to_id;
+        std::map<int, int> id_to_team, pos_to_id;
         for (const auto& c : matching_.candidates()) {
             id_to_team[c.peer_id()] = c.team();
         }
-
         for (const auto& p : id_to_team) {
             int pos = (p.second == 2 ? 2 : 0);
             if (pos_to_id.find(pos) != pos_to_id.end()) pos++;
             pos_to_id[pos] = p.first;
         }
-
-        ImVec2 d(36, 89);
-        ImVec2 origins[4] = {
-            fromCenter(0, 0, scale) + ImVec2(-d.x * scale, -d.y * scale),
-            fromCenter(0, 0, scale) + ImVec2(d.x * scale, -d.y * scale),
-            fromCenter(0, 0, scale) + ImVec2(-d.x * scale, d.y * scale),
-            fromCenter(0, 0, scale) + ImVec2(d.x * scale, d.y * scale),
-        };
-
-        int dirs[4][4] = {};
-        dirs[0][1] = dirs[2][3] = 6;
-        dirs[0][3] = 7;
-        dirs[0][2] = dirs[1][3] = 0;
-        dirs[1][2] = 1;
-        dirs[1][0] = dirs[3][2] = 2;
-        dirs[3][0] = 3;
-        dirs[2][0] = dirs[3][1] = 4;
-        dirs[2][1] = 5;
-
-        for (const auto& p : pos_to_id) {
-            int i = p.first;
-            if (i < 0 || i >= 4) continue; // ignore
-            int max_ms = 0;
-            for (int j = 0; j < 4; j++) {
-                if (i == j) continue;
-                if (pos_to_id.find(j) == pos_to_id.end()) continue;
-                auto ms = matrix[pos_to_id[i]][pos_to_id[j]];
-                drawRectWave(draw_list, origins[i], barColor(ms, elapsed), scale, barStep(ms), dirs[i][j]); // 0-1
-                max_ms = std::max(max_ms, (int)ms);
-            }
-            drawDot(draw_list, origins[i], barColor(max_ms, elapsed), scale);
-        }
-
-        ImGui::End();
-        ImGui::PopStyleVar();
-        ImGui::PopStyleVar();
+        drawConnectionDiagram(elapsed, matrix, pos_to_id);
     }
 }
 
@@ -303,8 +127,8 @@ void GdxsvBackendRollback::OnMainUiLoop() {
         }
 
         if (ok) {
-            int delay = std::max(0, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
-            NOTICE_LOG(COMMON, "max_rtt=%d delay=%d", max_rtt, delay);
+            int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
+            NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
             config::GGPOEnable.override(1);
             config::GGPODelay.override(delay);
             start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports);
@@ -390,13 +214,13 @@ bool GdxsvBackendRollback::StartLocalTest(const char *param) {
     for (int i = 0; i < n; i++) {
         proto::PlayerAddress player{};
         player.set_ip("127.0.0.1");
-        player.set_port(10010 + i);
+        player.set_port(20010 + i);
         player.set_user_id(std::to_string(i));
         player.set_peer_id(i);
         player.set_team(i/2 + 1);
         matching_.mutable_candidates()->Add(std::move(player));
     }
-    Prepare(matching_, 10010 + me);
+    Prepare(matching_, 20010 + me);
     NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
     return true;
 }
@@ -450,12 +274,13 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
     } else {
         int frame = 0;
         ggpo::getCurrentFrame(&frame);
+		const int COM_R_No0 = 0x0c391d79;  // TODO:disk2
         const int InetBuf = 0x0c3ab984;           // TODO: disk2
         const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
         // NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_, gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
-        // Fast disconnect
-        if (gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+        // Notify disconnect in game part if other player is disconnect on ggpo
+        if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
             for (int i = 0; i < matching_.player_count(); ++i) {
                 if (!ggpo::isConnected(i)) {
                     gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
@@ -469,94 +294,77 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
         auto memExInputAddr = symbols_.at("print_buf"); // TODO
 
         int msg_len = gdxsv_ReadMem8(InetBuf);
-        McsMessage msg;
         if (0 < msg_len) {
             if (msg_len == 0x82) {
                 msg_len = 20;
             }
+            McsMessage msg;
             msg.body.resize(msg_len);
             for (int i = 0; i < msg_len; i++) {
                 msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
                 gdxsv_WriteMem8(InetBuf + i, 0);
             }
 
-            switch (msg.Type()) {
-                case McsMessage::MsgType::ConnectionIdMsg:
-                    state_ = State::StopEmulator;
-                    break;
-                case McsMessage::MsgType::IntroMsg:
-                    for (int i = 0; i < matching_.player_count(); i++) {
-                        if (i != matching_.peer_id()) {
-                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
-                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
-                        }
-                    }
-                    break;
-                case McsMessage::MsgType::IntroMsgReturn:
-                    for (int i = 0; i < matching_.player_count(); i++) {
-                        if (i != matching_.peer_id()) {
-                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
-                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
-                        }
-                    }
-                    break;
-                case McsMessage::MsgType::PingMsg:
-                    for (int i = 0; i < matching_.player_count(); i++) {
-                        if (i != matching_.peer_id()) {
-                            auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
-                            pong_msg.SetPongTo(matching_.peer_id());
-                            pong_msg.PongCount(msg.PingCount());
-                            std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
-                        }
-                    }
-                    break;
-                case McsMessage::MsgType::PongMsg:
-                    break;
-                case McsMessage::MsgType::StartMsg:
-                    gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
-                    if (!ggpo::rollbacking()) {
-                        ggpo::setExInput(ExInputWaitStart);
-                        NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
-                    }
-                    break;
-                case McsMessage::MsgType::ForceMsg:
-                    break;
-                case McsMessage::MsgType::KeyMsg1: {
-                    for (int i = 0; i < matching_.player_count(); ++i) {
-                        if (ggpo::isConnected(i)) {
-                            auto msg = McsMessage::Create(McsMessage::KeyMsg1, i);
-                            auto input = convertInput(inputState[i]);
-                            msg.body[2] = input >> 8 & 0xff;
-                            msg.body[3] = input & 0xff;
-                            std::copy(msg.body.begin(), msg.body.end(), std::back_inserter(recv_buf_));
-                        }
-                    }
-                    break;
-                }
-                case McsMessage::MsgType::KeyMsg2:
-                    verify(false);
-                    break;
-                case McsMessage::MsgType::LoadStartMsg:
-                    // It will be dropped because InetBuf is cleared.
-                    break;
-                case McsMessage::MsgType::LoadEndMsg:
-                    for (int i = 0; i < matching_.player_count(); i++) {
-                        if (i != matching_.peer_id()) {
-                            auto a = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
-                            std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-                        }
-                    }
+            if (msg.Type() == McsMessage::ConnectionIdMsg) {
+				state_ = State::StopEmulator;
+            }
 
-                    gdxsv_WriteMem16(memExInputAddr, ExInputWaitLoadEnd);
-                    if (!ggpo::rollbacking()) {
-                        ggpo::setExInput(ExInputWaitLoadEnd);
-                        NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
-                    }
-                    break;
-                default:
-                    WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.Type()));
-                    WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
-                    break;
+			if (msg.Type() == McsMessage::IntroMsg) {
+				for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::IntroMsg, i);
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				}
+			}
+
+			if (msg.Type() == McsMessage::IntroMsgReturn) {
+				for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::IntroMsgReturn, i);
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				}
+			}
+
+            if (msg.Type() == McsMessage::PingMsg) {
+				for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::PongMsg, i);
+					a.SetPongTo(matching_.peer_id());
+					a.PongCount(msg.PingCount());
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				}
+            }
+
+            if (msg.Type() == McsMessage::StartMsg) {
+				gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
+				if (!ggpo::rollbacking()) {
+					ggpo::setExInput(ExInputWaitStart);
+					NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
+				}
+            }
+
+            if (msg.Type() == McsMessage::KeyMsg1) {
+				for (int i = 0; i < matching_.player_count(); ++i) {
+					auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
+					auto input = convertInput(inputState[i]);
+					a.body[2] = input >> 8 & 0xff;
+					a.body[3] = input & 0xff;
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				}
+            }
+
+            if (msg.Type() == McsMessage::LoadEndMsg) {
+				for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::LoadStartMsg, i);
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				}
+
+				gdxsv_WriteMem16(memExInputAddr, ExInputWaitLoadEnd);
+				if (!ggpo::rollbacking()) {
+					ggpo::setExInput(ExInputWaitLoadEnd);
+					NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
+				}
             }
 
             verify(recv_buf_.size() <= size);
@@ -568,30 +376,30 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
             for (int i = 0; i < matching_.player_count(); i++) {
                 ok &= inputState[i].exInput == exInput;
             }
+
             if (ok && exInput == ExInputWaitStart) {
                 NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
-                for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i != matching_.peer_id()) {
-                        auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
-                        std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
                 gdxsv_WriteMem16(memExInputAddr, ExInputNone);
                 if (!ggpo::rollbacking()) {
                     ggpo::setExInput(ExInputNone);
+                }
+                for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
                 }
             }
+
             if (ok && exInput == ExInputWaitLoadEnd) {
                 NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
-                for (int i = 0; i < matching_.player_count(); i++) {
-                    if (i != matching_.peer_id()) {
-                        auto b = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
-                        std::copy(b.body.begin(), b.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
                 gdxsv_WriteMem16(memExInputAddr, ExInputNone);
                 if (!ggpo::rollbacking()) {
                     ggpo::setExInput(ExInputNone);
+                }
+                for (int i = 0; i < matching_.player_count(); i++) {
+                    if (i == matching_.peer_id()) continue;
+					auto a = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
+					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
                 }
             }
         }
@@ -631,7 +439,6 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 
     LbsMessage msg;
     if (lbs_tx_reader_.Read(msg)) {
-        NOTICE_LOG(COMMON, "%s", msg.to_hex().c_str());
         if (state_ == State::StartLocalTest) {
             state_ = State::LbsStartBattleFlow;
         }
@@ -654,18 +461,10 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
             DummyGameParam[16] = '0' + pos;
             DummyGameParam[17] = 0;
             LbsMessage::SvAnswer(msg)
-                .Write8(pos)
-                ->WriteString("USER0" + std::to_string(pos))
-                ->WriteString("USER0" + std::to_string(pos))
+				.Write8(pos)->WriteString("USER0" + std::to_string(pos))->WriteString("USER0" + std::to_string(pos))
                 ->WriteBytes(reinterpret_cast<char *>(DummyGameParam), sizeof(DummyGameParam))
-                ->Write16(1)
-                ->Write16(0)
-                ->Write16(0)
-                ->Write16(0)
-                ->Write16(0)
-                ->Write16(0)
-                ->Write16(1 + (pos - 1) / 2)
-                ->Write16(0)
+				->Write16(1)->Write16(0)->Write16(0)->Write16(0)->Write16(0)->Write16(0)
+                ->Write16(1 + (pos - 1) / 2)->Write16(0)
                 ->Serialize(recv_buf_);
         }
 
@@ -682,15 +481,7 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
         }
 
         if (msg.command == LbsMessage::lbsAskMcsAddress) {
-            LbsMessage::SvAnswer(msg)
-                .Write16(4)
-                ->Write8(255)
-                ->Write8(255)
-                ->Write8(255)
-                ->Write8(255)
-                ->Write16(2)
-                ->Write16(255)
-                ->Serialize(recv_buf_);
+			LbsMessage::SvAnswer(msg).Write16(4)->Write8(255)->Write8(255)->Write8(255)->Write8(255)->Write16(2)->Write16(255)->Serialize(recv_buf_);
         }
 
         if (msg.command == LbsMessage::lbsLogout) {
@@ -720,4 +511,182 @@ void GdxsvBackendRollback::RestorePatch() {
         gdxsv_WriteMem16(0x8c045f64, 0x410b);
         gdxsv_WriteMem8(0x0c3abb90, 2);
     }
+}
+
+namespace {
+float getScale() {
+	const auto W = ImGui::GetIO().DisplaySize.x;
+	const auto H = ImGui::GetIO().DisplaySize.y;
+	const auto S = std::min(W / 640.f, H / 480.f);
+	const auto CX = W / 2.f;
+	const auto CY = H / 2.f;
+	float renderAR = getOutputFramebufferAspectRatio();
+	float screenAR = W / H;
+	float dx = 0;
+	float dy = 0;
+	if (renderAR > screenAR)
+		dy = H * (1 - screenAR / renderAR) / 2;
+	else
+		dx = W * (1 - renderAR / screenAR) / 2;
+
+	return std::min((W - dx * 2) / 640.f, (H - dy * 2) / 480.f);
+}
+
+ImVec2 fromCenter(float x, float y, float scale) {
+	const auto W = ImGui::GetIO().DisplaySize.x;
+	const auto H = ImGui::GetIO().DisplaySize.y;
+	const auto CX = W / 2.f;
+	const auto CY = H / 2.f;
+	return ImVec2(CX + (x * scale), CY + (y * scale));
+}
+
+ImColor fadeColor(ImColor color, int elapsed) {
+	if (elapsed <= 1800)
+		color.Value.w *= (elapsed - 1550) / 250.0;
+	else if (elapsed >= 6600 && elapsed < 6900)
+		color.Value.w *= 1.0 - (elapsed - 6600) / 300.0;
+	return color;
+}
+
+ImColor barColor(int ms) {
+	if (ms <= 0) return ImColor(64, 64, 64);
+	if (ms <= 30) return ImColor(87, 213, 213);
+	if (ms <= 60) return ImColor(0, 255, 149);
+	if (ms <= 90) return ImColor(255, 255, 0);
+	if (ms <= 120) return ImColor(255, 170, 0);
+	return ImColor(255, 0, 0);
+}
+
+ImColor barStep(int ms) {
+	if (ms <= 0) return 5;
+	if (ms <= 30) return 5;
+	if (ms <= 60) return 4;
+	if (ms <= 90) return 3;
+	if (ms <= 120) return 2;
+	return 1;
+}
+
+ImColor barColor(int ms, int elapsed) {
+	return fadeColor(barColor(ms), elapsed);
+}
+
+void drawDot(ImDrawList* draw_list, ImVec2 center, ImColor c, float scale) {
+	draw_list->AddCircleFilled(center, 6.5 * scale, ImColor(0, 0, 0, 128), 20);
+	draw_list->AddCircleFilled(center, 5.5 * scale, c, 20);
+}
+
+void baseRect(ImVec2 points[4], float sx, float sy) {
+	float v = sx / 2.0;
+	float w = sy / 2.0;
+	points[0].x = -v;
+	points[0].y = -w;
+	points[1].x = v;
+	points[1].y = -w;
+	points[2].x = v;
+	points[2].y = w;
+	points[3].x = -v;
+	points[3].y = w;
+}
+
+void scaleRect(ImVec2 points[4], float scale) {
+	for (int i = 0; i < 4; i++) {
+		points[i].x *= scale;
+		points[i].y *= scale;
+	}
+}
+
+void scaleRectX(ImVec2 points[4], float scale) {
+	for (int i = 0; i < 4; i++) {
+		points[i].x *= scale;
+	}
+}
+
+void moveRect(ImVec2 points[4], ImVec2 delta) {
+	for (int i = 0; i < 4; i++) {
+		points[i].x += delta.x;
+		points[i].y += delta.y;
+	}
+}
+
+void rotRect(ImVec2 points[4], float rad) {
+	for (int i = 0; i < 4; i++) {
+		auto x = points[i].x;
+		auto y = points[i].y;
+		points[i].x = x * cos(rad) - y * sin(rad);
+		points[i].y = y * cos(rad) + x * sin(rad);
+	}
+}
+
+void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir) {
+	float rad = (3.141592 / 4) * dir;
+	ImVec2 points[4];
+	for (int i = 0; i < 5; i++) {
+		baseRect(points, 5, 4);
+		ImColor c = step <= i ? ImColor(64, 64, 64) : color;
+		moveRect(points, ImVec2(0, i * 5.3));
+		scaleRectX(points, 1 + i * 0.50);
+		scaleRect(points, scale);
+		moveRect(points, ImVec2(0, scale * 10));
+		rotRect(points, rad);
+		moveRect(points, anchor);
+		draw_list->AddConvexPolyFilled(points, sizeof(points) / sizeof(points[0]), c);
+		draw_list->AddPolyline(points, sizeof(points) / sizeof(points[0]), ImColor(0, 0, 0), true, 1.0);
+	}
+}
+
+void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id) {
+	const auto W = ImGui::GetIO().DisplaySize.x;
+	const auto H = ImGui::GetIO().DisplaySize.y;
+	float scale = getScale();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
+		ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(W, H));
+	ImGui::SetNextWindowBgAlpha(0.0f);
+	ImGui::Begin("##gdxsvosd", NULL,
+		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoInputs);
+
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+	draw_list->AddRectFilled(fromCenter(-45, -97, scale), fromCenter(45.25, -51.875, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
+	draw_list->AddRectFilled(fromCenter(-45, 53.125, scale), fromCenter(45.25, 98.25, scale), fadeColor(ImColor(0, 0, 0, 128), elapsed));
+
+	ImVec2 d(36, 89);
+	ImVec2 origins[4] = {
+		fromCenter(0, 0, scale) + ImVec2(-d.x * scale, -d.y * scale),
+		fromCenter(0, 0, scale) + ImVec2(d.x * scale, -d.y * scale),
+		fromCenter(0, 0, scale) + ImVec2(-d.x * scale, d.y * scale),
+		fromCenter(0, 0, scale) + ImVec2(d.x * scale, d.y * scale),
+	};
+
+	int dirs[4][4] = {};
+	dirs[0][1] = dirs[2][3] = 6;
+	dirs[0][3] = 7;
+	dirs[0][2] = dirs[1][3] = 0;
+	dirs[1][2] = 1;
+	dirs[1][0] = dirs[3][2] = 2;
+	dirs[3][0] = 3;
+	dirs[2][0] = dirs[3][1] = 4;
+	dirs[2][1] = 5;
+
+	for (const auto& p : pos_to_id) {
+		int i = p.first;
+		if (i < 0 || i >= 4) continue;
+		int max_ms = 0;
+		for (int j = 0; j < 4; j++) {
+			if (i == j) continue;
+			if (pos_to_id.find(j) == pos_to_id.end()) continue;
+			auto ms = matrix[pos_to_id.at(i)][pos_to_id.at(j)];
+			drawRectWave(draw_list, origins[i], barColor(ms, elapsed), scale, barStep(ms), dirs[i][j]);
+			max_ms = std::max(max_ms, (int)ms);
+		}
+		drawDot(draw_list, origins[i], barColor(max_ms, elapsed), scale);
+	}
+
+	ImGui::End();
+	ImGui::PopStyleVar();
+	ImGui::PopStyleVar();
+}
 }
