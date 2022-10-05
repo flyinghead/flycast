@@ -362,6 +362,12 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
     client_.Close();
     client_.Bind(port);
     running_ = true;
+    int network_delay = 0;
+    const auto delay_option = std::getenv("GGPO_NETWORK_DELAY");
+    if (delay_option != nullptr) {
+        network_delay = atoi(delay_option);
+        NOTICE_LOG(COMMON, "GGPO_NETWORK_DELAY is %d", network_delay);
+    }
 
     std::set<int> peer_ids;
     peer_ids.insert(peer_id);
@@ -370,7 +376,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
     }
     int peer_count = peer_ids.size();
 
-    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count]() {
+    std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count, network_delay]() {
         WARN_LOG(COMMON, "Start UdpPingPong Thread");
         start_time_ = std::chrono::high_resolution_clock::now();
         std::string sender;
@@ -425,6 +431,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                     p.send_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::high_resolution_clock::now().time_since_epoch()).count();
                     p.ping_timestamp = recv.send_timestamp;
+                    p.ping_timestamp -= network_delay;
                     UdpRemote remote;
                     memcpy(p.rtt_matrix, rtt_matrix_, sizeof(rtt_matrix_));
 
@@ -451,7 +458,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                     const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::high_resolution_clock::now().time_since_epoch()).count();
                     auto rtt = static_cast<int>(now - recv.ping_timestamp);
-                    if (rtt == 0) rtt = 1;
+                    if (rtt <= 0) rtt = 1;
 
                     auto it = std::find_if(candidates_.begin(), candidates_.end(),
                         [&recv, &sender](const Candidate& c) {
@@ -487,6 +494,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
                         p.to_peer_id = c.peer_id;
                         p.send_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                        p.send_timestamp -= network_delay;
                         p.ping_timestamp = 0;
                         memcpy(p.rtt_matrix, rtt_matrix_, sizeof(rtt_matrix_));
                         client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), c.remote);
