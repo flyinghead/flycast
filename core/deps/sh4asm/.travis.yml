@@ -1,0 +1,12 @@
+language: c
+compiler:
+- gcc
+- clang
+os:
+- linux
+script:
+  mkdir build ;
+  cd build ;
+  cmake .. ;
+  make ;
+  ./sh4asm_test

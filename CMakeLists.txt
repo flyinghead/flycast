@@ -20,6 +20,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(GDB_SERVER "Build with GDB Server support" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -178,6 +179,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+		$<$<BOOL:${GDB_SERVER}>:GDB_SERVER>
         $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 if(IOS)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -823,7 +825,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_rom.cpp
         core/hw/sh4/sh4_rom.h
         core/hw/sh4/sh4_sched.cpp
-        core/hw/sh4/sh4_sched.h)
+        core/hw/sh4/sh4_sched.h
+		core/hw/sh4/disasm/disasm.cpp
+        core/hw/sh4/disasm/disasm.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/cdi.cpp
@@ -1032,6 +1036,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/stdclass.cpp
         core/stdclass.h
         core/types.h
+		core/debug/debug_agent.cpp
+        core/debug/debug_agent.h
+		core/debug/gdb_server.cpp
         core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1056,6 +1063,8 @@ if(NOT LIBRETRO)
 	        core/rend/gui_cheats.cpp
 	        core/rend/gui_util.cpp
 	        core/rend/gui_util.h
+			core/rend/gui_debugger.cpp
+	        core/rend/gui_debugger.h
 	        core/rend/mainui.cpp
 	        core/rend/mainui.h
 	        core/rend/boxart/boxart.cpp
