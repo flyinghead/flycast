@@ -617,20 +617,26 @@ void rotRect(ImVec2 points[4], float rad) {
 	}
 }
 
-void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir) {
+void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir, int elapsed) {
 	float rad = (3.141592 / 4) * dir;
 	ImVec2 points[4];
 	for (int i = 0; i < 5; i++) {
-		baseRect(points, 5, 4);
-		ImColor c = step <= i ? ImColor(64, 64, 64) : color;
+		baseRect(points, 5, 3.5);
+		auto c = color;
+		if (step <= i) c = ImColor(64, 64, 64);
+		else if (i == (elapsed / 100 % 5)) {
+			c.Value.x *= 2;
+			c.Value.y *= 2;
+			c.Value.z *= 2;
+		}
 		moveRect(points, ImVec2(0, i * 5.3));
 		scaleRectX(points, 1 + i * 0.50);
 		scaleRect(points, scale);
-		moveRect(points, ImVec2(0, scale * 10));
+		moveRect(points, ImVec2(0, scale * 9.5));
 		rotRect(points, rad);
 		moveRect(points, anchor);
 		draw_list->AddConvexPolyFilled(points, sizeof(points) / sizeof(points[0]), c);
-		draw_list->AddPolyline(points, sizeof(points) / sizeof(points[0]), ImColor(0, 0, 0), true, 1.0);
+		draw_list->AddPolyline(points, sizeof(points) / sizeof(points[0]), ImColor(0, 0, 0, 128), true, 1.0 * scale);
 	}
 }
 
@@ -679,7 +685,7 @@ void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::m
 			if (i == j) continue;
 			if (pos_to_id.find(j) == pos_to_id.end()) continue;
 			auto ms = matrix[pos_to_id.at(i)][pos_to_id.at(j)];
-			drawRectWave(draw_list, origins[i], barColor(ms, elapsed), scale, barStep(ms), dirs[i][j]);
+			drawRectWave(draw_list, origins[i], barColor(ms, elapsed), scale, barStep(ms), dirs[i][j], elapsed);
 			max_ms = std::max(max_ms, (int)ms);
 		}
 		drawDot(draw_list, origins[i], barColor(max_ms, elapsed), scale);
