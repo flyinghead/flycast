@@ -102,8 +102,8 @@ public:
 		bufferInfos.emplace_back(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms));
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr);
-		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[0]);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[1]);
 		if (fogImageView)
 		{
 			TSP fogTsp = {};
@@ -113,7 +113,7 @@ public:
 			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 		}
 		if (paletteImageView)
 		{
@@ -124,18 +124,18 @@ public:
 			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 6, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+			writeDescriptorSets.emplace_back(perFrameDescSet, 6, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 		}
 		if (polyParamsSize > 0)
 		{
 			static vk::DescriptorBufferInfo polyParamsBufferInfo;
 			polyParamsBufferInfo = vk::DescriptorBufferInfo(buffer, polyParamsOffset, polyParamsSize);
-			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr);
+			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, vk::DescriptorType::eStorageBuffer, nullptr, polyParamsBufferInfo);
 		}
 		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.emplace_back(perFrameDescSet, 4, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 4, 0, vk::DescriptorType::eInputAttachment, stencilImageInfo);
 		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.emplace_back(perFrameDescSet, 5, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 5, 0, vk::DescriptorType::eInputAttachment, depthImageInfo);
 		oitBuffers->updateDescriptorSet(perFrameDescSet, writeDescriptorSets);
 
 		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
@@ -147,9 +147,9 @@ public:
 			colorInputDescSets[index] = colorInputAlloc.alloc();
 
 		vk::DescriptorImageInfo colorImageInfo(vk::Sampler(), colorImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		vk::WriteDescriptorSet writeDescriptorSet(colorInputDescSets[index], 0, 0, 1, vk::DescriptorType::eInputAttachment, &colorImageInfo, nullptr, nullptr);
+		vk::WriteDescriptorSet writeDescriptorSet(colorInputDescSets[index], 0, 0, vk::DescriptorType::eInputAttachment, colorImageInfo);
 
-		getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
+		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
 	}
 
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
@@ -167,14 +167,14 @@ public:
 			{
 				imageInfo0 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly.tsp), ((Texture *)poly.texture)->GetReadOnlyImageView(),
 						vk::ImageLayout::eShaderReadOnlyOptimal };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo0);
 			}
 			vk::DescriptorImageInfo imageInfo1;
 			if (poly.texture1 != nullptr)
 			{
 				imageInfo1 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly.tsp1), ((Texture *)poly.texture1)->GetReadOnlyImageView(),
 					vk::ImageLayout::eShaderReadOnlyOptimal };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo1, nullptr, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo1);
 			}
 
 			vk::DescriptorBufferInfo uniBufferInfo;
@@ -184,7 +184,7 @@ public:
 				const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
 				size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
 				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
 
 				size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
 				// light at index 0 is no light
@@ -192,7 +192,7 @@ public:
 					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head() + 1) * size, sizeof(N2LightModel) };
 				else
 					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset, sizeof(N2LightModel) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, vk::DescriptorType::eUniformBuffer, nullptr, lightBufferInfo);
 			}
 
 			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
@@ -200,7 +200,7 @@ public:
 		}
 		else
 			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
 	}
 
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const ModifierVolumeParam& mvParam, int polyNumber, vk::Buffer buffer, vk::DeviceSize uniformOffset)
@@ -216,24 +216,24 @@ public:
 			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
 			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
 			vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
 
-			getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
+			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
 			perPolyDescSets[&mvParam] = perPolyDescSet;
 		}
 		else
 			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
 	}
 
 	void bindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, perFrameDescSet, nullptr);
 	}
 
 	void bindColorInputDescSet(vk::CommandBuffer cmdBuffer, int index)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &colorInputDescSets[index], 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, colorInputDescSets[index], nullptr);
 	}
 
 	void nextFrame()
@@ -283,45 +283,43 @@ public:
 		{
 			vk::Device device = GetContext()->GetDevice();
 			// Descriptor set and pipeline layout
-			vk::DescriptorSetLayoutBinding perFrameBindings[] = {
-					{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
-					{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
-					{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
-					{ 3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// Tr poly params
-					{ 4, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
-					{ 5, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
-					{ 6, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// palette texture
+			std::array<vk::DescriptorSetLayoutBinding, 10> perFrameBindings = {
+					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// vertex uniforms
+					vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// fragment uniforms
+					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// fog texture
+					vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// Tr poly params
+					vk::DescriptorSetLayoutBinding(4, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment),		// stencil input attachment
+					vk::DescriptorSetLayoutBinding(5, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment),		// depth input attachment
+					vk::DescriptorSetLayoutBinding(6, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// palette texture
 					// OIT buffers
-					{ 7, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel buffer
-					{ 8, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
-					{ 9, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
+					vk::DescriptorSetLayoutBinding(7, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// pixel buffer
+					vk::DescriptorSetLayoutBinding(8, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// pixel counter
+					vk::DescriptorSetLayoutBinding(9, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// a-buffer pointers
 			};
 			perFrameLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perFrameBindings));
 
-			vk::DescriptorSetLayoutBinding colorInputBindings[] = {
-					{ 0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// color input attachment
-			};
+			vk::DescriptorSetLayoutBinding colorInputBinding(0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment);		// color input attachment
 			colorInputLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(colorInputBindings), colorInputBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), colorInputBinding));
 
-			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
-					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },	// texture 0
-					{ 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },	// texture 1 (for 2-volume mode)
-					{ 2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },				// Naomi2 uniforms
-					{ 3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },				// Naomi2 lights
+			std::array<vk::DescriptorSetLayoutBinding, 4> perPolyBindings = {
+					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),	// texture 0
+					vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),	// texture 1 (for 2-volume mode)
+					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),				// Naomi2 uniforms
+					vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),				// Naomi2 lights
 			};
 			perPolyLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perPolyBindings));
 
-			vk::PushConstantRange pushConstants[] = {
+			std::array<vk::PushConstantRange, 2> pushConstants = {
 					vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(OITDescriptorSets::PushConstants)),
 					vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, sizeof(OITDescriptorSets::PushConstants), sizeof(OITDescriptorSets::VtxPushConstants)),
 			};
 
-			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *colorInputLayout };
+			std::array<vk::DescriptorSetLayout, 3> layouts = { *perFrameLayout, *perPolyLayout, *colorInputLayout };
 			pipelineLayout = device.createPipelineLayoutUnique(
-					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, ARRAY_SIZE(pushConstants), pushConstants));
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), layouts, pushConstants));
 		}
 
 		pipelines.clear();
