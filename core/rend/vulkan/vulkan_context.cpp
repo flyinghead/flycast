@@ -866,7 +866,7 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	float screenAR = (float)width / height;
 	float dx = 0;
 	float dy = 0;
-	if (renderAR > screenAR)
+	if (renderAR > screenAR && config::AspectFill == false)
 		dy = height * (1 - screenAR / renderAR) / 2;
 	else
 		dx = width * (1 - renderAR / screenAR) / 2;

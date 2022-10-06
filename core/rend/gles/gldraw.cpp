@@ -716,7 +716,7 @@ bool render_output_framebuffer()
 
 	int dx = 0;
 	int dy = 0;
-	if (renderAR > screenAR)
+	if (renderAR > screenAR && config::AspectFill == false)
 		dy = (int)roundf(settings.display.height * (1 - screenAR / renderAR) / 2.f);
 	else
 		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);

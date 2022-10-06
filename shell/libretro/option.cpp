@@ -73,6 +73,7 @@ Option<bool> Rotate90("");
 Option<bool> PerStripSorting("rend.PerStripSorting");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
 Option<bool> WidescreenGameHacks(CORE_OPTION_NAME "_widescreen_cheats");
+Option<bool> AspectFill("", false);
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>(""),
 	Option<int>(""),

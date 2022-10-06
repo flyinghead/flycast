@@ -509,7 +509,7 @@ void DX11Renderer::renderFramebuffer()
 		std::swap(outwidth, outheight);
 	int dy = 0;
 	int dx = 0;
-	if (renderAR > screenAR)
+	if (renderAR > screenAR && config::AspectFill == false)
 		dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
 	else
 		dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);

@@ -1771,6 +1771,8 @@ static void gui_display_settings()
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
 		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
 		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+		    	OptionCheckbox("Aspect Fill", config::AspectFill,
+                        "Content fills up the entire window while keeping aspect ratio, can remove top & bottom black bars but content might be cropped.");
 		    	constexpr int apiCount = 0
 					#ifdef USE_VULKAN
 		    			+ 1

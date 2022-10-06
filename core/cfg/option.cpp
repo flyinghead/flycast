@@ -86,6 +86,7 @@ Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", true);
 #endif
 Option<bool> WidescreenGameHacks("rend.WidescreenGameHacks");
+Option<bool> AspectFill("rend.AspectFill", false);
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor1"),
 	Option<int>("rend.CrossHairColor2"),
