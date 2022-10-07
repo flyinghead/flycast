@@ -130,7 +130,7 @@ static void (*eventCallback)(GGPOEvent* event);
 static void (*chatCallback)(int playerNum, const std::string& msg);
 
 static bool useRandInput;
-static u32 randInputMask = 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040;
+static u32 randInputMask;
 static std::mt19937 randSource;
 
 struct MemPages
