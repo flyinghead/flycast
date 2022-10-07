@@ -56,6 +56,7 @@ int flycast_init(int argc, char* argv[])
 
 	debugger::init();
 	lua::init();
+	gdxsv_flycast_init();
 
 	return 0;
 }

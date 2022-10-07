@@ -1,5 +1,9 @@
 #pragma once
 
+void gdxsv_flycast_init();
+
+void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id);
+
 void gdxsv_emu_start();
 
 void gdxsv_emu_reset();

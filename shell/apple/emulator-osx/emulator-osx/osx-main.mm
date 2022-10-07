@@ -214,6 +214,55 @@ std::string os_FetchStringFromURL(const std::string& url) {
     return result;
 }
 
+int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files) {
+    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+    __block int result;
+
+    NSURL *URL = [NSURL URLWithString:[[NSString alloc] initWithCString:url.c_str() encoding:NSASCIIStringEncoding]];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
+    request.HTTPMethod = @"POST";
+    NSString *boundary = @"----BoundaryFlycastIsAwesome";
+    NSData* newLine = [@"\r\n" dataUsingEncoding:NSUTF8StringEncoding];
+    
+    [request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@",boundary] forHTTPHeaderField:@"Content-Type"];
+    
+    
+    NSMutableData* data = [NSMutableData data];
+    for (auto const &file : files) {
+        NSString *path = [NSString stringWithUTF8String:file.second.c_str()];
+        NSURL* fileURL = [NSURL fileURLWithPath:path relativeToURL:NULL];
+        
+        if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            NSData *fileData = [[NSFileManager defaultManager] contentsAtPath:path];
+            [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+            [data appendData:newLine];
+            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", file.first.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
+            [data appendData:newLine];
+            [data appendData: [@"Content-Type: application/octet-stream" dataUsingEncoding:NSUTF8StringEncoding]];
+            [data appendData:newLine];
+            [data appendData:newLine];
+            [data appendData:fileData];
+            [data appendData:newLine];
+        }
+    }
+    [data appendData:[[NSString stringWithFormat:@"--%@--",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+    [request setHTTPBody:data];
+
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                            completionHandler:
+                                  ^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        result = [httpResponse statusCode];
+        dispatch_semaphore_signal(sem);
+    }];
+
+    [task resume];
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+
+    return result;
+}
+
 std::string os_GetMachineID(){
     io_service_t    platformExpert = IOServiceGetMatchingService(kIOMasterPortDefault,IOServiceMatching("IOPlatformExpertDevice"));
     CFStringRef serialNumberAsCFString = NULL;

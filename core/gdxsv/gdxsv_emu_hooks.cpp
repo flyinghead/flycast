@@ -9,10 +9,85 @@
 #include "oslib/oslib.h"
 #include "rend/gui_util.h"
 #include "version.h"
+#include <fstream>
+
+#ifdef _WIN32
+#define CHAR_PATH_SEPARATOR '\\'
+#else
+#define CHAR_PATH_SEPARATOR '/'
+#endif
 
 void gdxsv_latest_version_check();
 static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
+
+extern int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files);
+void gdxsv_flycast_init() {
+	std::ifstream fs;
+	fs.open(get_writable_data_path("crash_dmp_list.txt"));
+	std::vector<std::string> unhandled_dmp = {};
+	if (fs.is_open()) {
+		std::string line;
+		
+		while (std::getline(fs, line)) {
+			std::map<std::string, std::string> files = {};
+			files["upload_file_minidump"] = line;
+			
+			std::string log = line;
+			if (log.find(".dmp") != -1) {
+				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
+				files["flycast_log"] = log;
+			}
+			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", files);
+			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, line.c_str());
+			if (result != 200) {
+				unhandled_dmp.push_back(line);
+			}
+		}
+		fs.close();
+	}
+	
+	
+	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
+	if (fp == nullptr) {
+		NOTICE_LOG(COMMON, "fopen failed");
+	} else {
+		if (unhandled_dmp.size()) {
+			for (auto dmp : unhandled_dmp) {
+				fprintf(fp, "%s\n", dmp.c_str());
+			}
+		}
+	}
+	fclose(fp);
+}
+
+void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
+	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "at");
+	if (fp == nullptr) {
+		NOTICE_LOG(COMMON, "fopen failed");
+	} else {
+		fprintf(fp, "%s%c%s.dmp\n", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
+	}
+	fclose(fp);
+	
+	size_t size = strlen(dump_dir) + strlen(minidump_id) + 6;
+	char* slog_path = new char[size];
+	std::snprintf(slog_path, size, "%s%c%s.log", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
+	FILE* slog_fp = nowide::fopen(slog_path, "w");
+	delete[] slog_path;
+	
+	std::ifstream fs;
+	fs.open(get_writable_data_path("flycast.log"));
+	
+	if (slog_fp != nullptr && fs.is_open()) {
+		fs.seekg(-10000, std::ios_base::end);
+		std::string line;
+		while(std::getline(fs, line)){
+			fprintf(slog_fp, "%s\n", line.c_str());
+		}
+	}
+	fs.close();
+}
 
 void gdxsv_emu_start() {
 	gdxsv.Reset();
@@ -271,3 +346,5 @@ void gdxsv_latest_version_check() {
 void gdxsv_mainui_loop() { gdxsv.HookMainUiLoop(); }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
+
+#undef CHAR_PATH_SEPARATOR
