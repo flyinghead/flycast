@@ -43,7 +43,6 @@ void gdxsv_flycast_init() {
 				unhandled_dmp.push_back(line);
 			}
 		}
-		fs.close();
 	}
 	
 	
@@ -56,8 +55,8 @@ void gdxsv_flycast_init() {
 				fprintf(fp, "%s\n", dmp.c_str());
 			}
 		}
+		fclose(fp);
 	}
-	fclose(fp);
 }
 
 void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
@@ -66,26 +65,27 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 		NOTICE_LOG(COMMON, "fopen failed");
 	} else {
 		fprintf(fp, "%s%c%s.dmp\n", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
+		fclose(fp);
 	}
-	fclose(fp);
 	
 	size_t size = strlen(dump_dir) + strlen(minidump_id) + 6;
 	char* slog_path = new char[size];
 	std::snprintf(slog_path, size, "%s%c%s.log", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
 	FILE* slog_fp = nowide::fopen(slog_path, "w");
 	delete[] slog_path;
+	if (slog_fp == nullptr) return;
 	
 	std::ifstream fs;
 	fs.open(get_writable_data_path("flycast.log"));
 	
-	if (slog_fp != nullptr && fs.is_open()) {
+	if (fs.is_open()) {
 		fs.seekg(-10000, std::ios_base::end);
 		std::string line;
 		while(std::getline(fs, line)){
 			fprintf(slog_fp, "%s\n", line.c_str());
 		}
 	}
-	fs.close();
+	fclose(slog_fp);
 }
 
 void gdxsv_emu_start() {
