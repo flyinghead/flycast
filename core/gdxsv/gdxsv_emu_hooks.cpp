@@ -43,8 +43,9 @@ void gdxsv_flycast_init() {
 				unhandled_dmp.push_back(line);
 			}
 		}
+	} else {
+		return;
 	}
-	
 	
 	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
 	if (fp == nullptr) {
