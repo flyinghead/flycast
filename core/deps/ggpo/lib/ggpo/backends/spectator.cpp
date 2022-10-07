@@ -36,7 +36,7 @@ SpectatorBackend::SpectatorBackend(GGPOSessionCallbacks *cb,
     * Init the host endpoint
     */
    _host.SetVerificationData(verification, verification_size);
-   _host.Init(&_udp, _poll, 0, hostip, hostport, NULL);
+   _host.Init(&_udp, _poll, 0, hostip, hostport, false,NULL);
    _host.Synchronize();
 
    /*

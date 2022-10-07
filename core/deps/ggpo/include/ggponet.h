@@ -89,6 +89,7 @@ typedef struct GGPOPlayer {
       struct {
          char           ip_address[32];
          unsigned short port;
+         bool relay;
       } remote;
    } u;
 } GGPOPlayer;

@@ -26,6 +26,7 @@ UdpProtocol::UdpProtocol() :
    _magic_number(0),
    _local_player_queue(-1),
    _queue(-1),
+   _relay(false),
    _remote_magic_number(0),
    _connected(false),
    _packets_sent(0),
@@ -70,10 +71,11 @@ UdpProtocol::Init(Udp *udp,
                   int queue,
                   char *ip,
                   u_short port,
-                  UdpMsg::connect_status *status)
+                  bool relay, UdpMsg::connect_status *status)
 {  
    _udp = udp;
    _queue = queue;
+   _relay = relay;
    _local_connect_status = status;
 
    _peer_addr.sin_family = AF_INET;
@@ -297,6 +299,13 @@ UdpProtocol::SendMsg(UdpMsg *msg)
 	   msg->hdr.magic = _magic_number;
 	   msg->hdr.sequence_number = _next_send_seq++;
 	   msg->hdr.remote_endpoint = _local_player_queue;
+
+       if (_relay) {
+          msg->hdr.relay_magic = RELAY_MAGIC;
+          msg->hdr.relay_to_endpoint = _queue;
+          msg->hdr.org_type = msg->hdr.type;
+          msg->hdr.type = UdpMsg::MsgType::Relay;
+       }
 
 	   _send_queue.push(QueueEntry(GGPOPlatform::GetCurrentTimeMS(), _peer_addr, msg));
    }
@@ -850,4 +859,14 @@ bool UdpProtocol::OnAppData(UdpMsg *msg, int len)
     memcpy(evt.u.app_data.data, msg->u.app_data.data, msg->u.app_data.size);
     QueueEvent(evt);
 	return true;
+}
+
+void UdpProtocol::SendUnmanagedMsg(UdpMsg* msg, int len)
+{
+	if (_udp == nullptr)
+		return;
+
+	if (_peer_addr.sin_addr.s_addr != 0) {
+		_udp->SendTo((char*)msg, len, 0, (struct sockaddr*)&_peer_addr, sizeof(_peer_addr));
+	}
 }
