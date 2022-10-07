@@ -37,6 +37,8 @@ void gdxsv_flycast_init() {
 				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
 				files["flycast_log"] = log;
 			}
+			files["emu_cfg"] = get_writable_config_path("emu.cfg");
+			
 			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", files);
 			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, line.c_str());
 			if (result != 200) {
