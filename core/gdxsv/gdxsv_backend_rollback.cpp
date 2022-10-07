@@ -263,9 +263,8 @@ void GdxsvBackendRollback::Open() {
 
 void GdxsvBackendRollback::Close() {
 	ggpo::stopSession();
-	if (state_ <= State::McsWaitJoin) {
-		// do nothing
-	} else {
+	RestorePatch();
+	if (State::McsSessionExchange <= state_) {
 		Reset();
 	}
 }

@@ -247,6 +247,7 @@ void Gdxsv::HandleRPC() {
 			replay_net.Open();
 		} else if (tolobby == 1) {
 			udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
+			rollback_net.Close();
 			if (lbs_net.Connect(host, port)) {
 				netmode = NetMode::Lbs;
 				lbs_net.Send(GeneratePlatformInfoPacket());
