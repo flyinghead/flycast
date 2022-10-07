@@ -200,7 +200,7 @@ if(NINTENDO_SWITCH)
 endif()
 
 if(NOT LIBRETRO)
-	if((WIN32 AND NOT MSVC) OR (UNIX AND NOT APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
+	if(WIN32 OR (UNIX AND NOT APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 		add_subdirectory(core/deps/breakpad)
 		if(WIN32)
 			target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--build-id")
