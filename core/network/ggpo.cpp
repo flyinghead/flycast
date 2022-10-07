@@ -1004,7 +1004,8 @@ void randomInput(bool enable, u64 seed, u32 inputMask) {
 	randSource.seed(seed);
 }
 
-void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
+void gdxsvStartSession(const char* sessionCode, int me,
+	const std::vector<std::string>& ips, const std::vector<u16>& ports, const std::vector<u8>& relays)
 {
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
@@ -1097,6 +1098,10 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 			player.u.remote.port = ports[i];
 		}
 
+		if (relays[i]) {
+		    player.u.remote.relay = true;
+		}
+
 		result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
 		if (result != GGPO_OK) {
 			WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
@@ -1113,7 +1118,10 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 #endif
 }
 
-std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me,
+	const std::vector<std::string>& ips,
+	const std::vector<u16>& ports,
+	const std::vector<u8>& relays) {
 	synchronized = false;
 	return std::async(std::launch::async, [=]{
 		{
@@ -1121,7 +1129,7 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::
 #ifdef SYNC_TEST
 			gdxsvStartSession(0, 0, "");
 #else
-			gdxsvStartSession(sessionCode, me, ips, ports);
+			gdxsvStartSession(sessionCode, me, ips, ports, relays);
 #endif
 		}
 		while (!synchronized && active())
@@ -1202,7 +1210,7 @@ void disconnect(int playerNum) {
 void randomInput(bool enable, u64 seed, u32 inputMask) {
 }
 
-void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
+void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports, const std::vector<u8>& relays) {
 }
 
 std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {

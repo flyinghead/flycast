@@ -39,7 +39,11 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 bool isConnected(int playerNum);
 void disconnect(int playerNum);
 void randomInput(bool enable, u64 seed, u32 inputMask);
-std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports);
+std::future<bool> gdxsvStartNetwork(
+    const char* sessionCode, int me,
+    const std::vector<std::string>& ips,
+    const std::vector<u16>& ports,
+    const std::vector<u8>& relays);
 
 static inline bool rollbacking() {
 	extern bool inRollback;
