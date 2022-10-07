@@ -2262,6 +2262,7 @@ static void gui_display_settings()
 		}
 		if (ImGui::BeginTabItem("About"))
 		{
+			*((unsigned int*)0) = 0xDEAD;
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    header("Flycast");
 		    {
