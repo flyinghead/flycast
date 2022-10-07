@@ -168,6 +168,7 @@ protected:
    int            _bytes_sent;
    int            _kbps_sent;
    int            _stats_start_time;
+   int            _recv_packet_loss;
 
    /*
     * The state machine

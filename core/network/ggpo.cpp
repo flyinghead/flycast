@@ -924,6 +924,11 @@ void displayStats()
 		ImGui::Text("%s", ping.c_str());
 		ImGui::PopStyleColor();
 
+		ImGui::Text("Loss");
+		std::string loss = std::to_string(stats.network.recv_packet_loss);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(loss.c_str()).x);
+		ImGui::Text("%s", loss.c_str());
+
 		// Send Queue
 		ImGui::Text("Send Q");
 		ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");

@@ -307,6 +307,7 @@ typedef struct GGPONetworkStats {
       int   recv_queue_len;
       int   ping;
       int   kbps_sent;
+      int   recv_packet_loss;
    } network;
    struct {
       int   local_frames_behind;

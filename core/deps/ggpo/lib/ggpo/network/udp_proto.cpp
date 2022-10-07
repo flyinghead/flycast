@@ -359,6 +359,10 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
          Log("dropping out of order packet (seq: %d, last seq:%d)\n", seq, _next_recv_seq);
          return;
       }
+
+	  if (_next_recv_seq < seq && skipped != 1) {
+          _recv_packet_loss++;
+	  }
    }
 
    _next_recv_seq = seq;
@@ -720,6 +724,7 @@ UdpProtocol::GetNetworkStats(struct GGPONetworkStats *s)
    s->network.ping = _round_trip_time;
    s->network.send_queue_len = _pending_output.size();
    s->network.kbps_sent = _kbps_sent;
+   s->network.recv_packet_loss = _recv_packet_loss;
    s->timesync.remote_frames_behind = _remote_frame_advantage;
    s->timesync.local_frames_behind = _local_frame_advantage;
 }
