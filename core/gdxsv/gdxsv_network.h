@@ -136,6 +136,8 @@ class UdpPingPong {
 
 	void GetRttMatrix(uint8_t matrix[N][N]);
 
+	void DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id);
+
    private:
 	static const uint32_t MAGIC = 1434750950;
 	static const uint8_t PING = 1;

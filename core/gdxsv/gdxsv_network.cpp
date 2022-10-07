@@ -578,3 +578,14 @@ void UdpPingPong::GetRttMatrix(uint8_t matrix[N][N]) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
 	memcpy(matrix, rtt_matrix_, sizeof(rtt_matrix_));
 }
+
+void UdpPingPong::DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id) {
+	std::lock_guard<std::recursive_mutex> lock(mutex_);
+	for (auto& c : candidates_) {
+		if (c.peer_id == remote_peer_id) {
+			c.pong_count = 0;
+			c.rtt = 0;
+		}
+	}
+	rtt_matrix_[peer_id][remote_peer_id] = 0;
+}

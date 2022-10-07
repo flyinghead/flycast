@@ -106,9 +106,23 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	static auto session_start_time = std::chrono::high_resolution_clock::now();
 	if (state_ == State::StartGGPOSession) {
+		/*
+		if (matching_.peer_id() == 0) {
+			ping_pong_.DebugUnreachable(0, 1);
+			ping_pong_.DebugUnreachable(0, 2);
+		}
+		if (matching_.peer_id() == 3) {
+			ping_pong_.DebugUnreachable(3, 1);
+			ping_pong_.DebugUnreachable(3, 2);
+		}
+		*/
 		bool ok = true;
+		uint8_t rtt_matrix[4][4] = {};
+		ping_pong_.GetRttMatrix(rtt_matrix);
+
 		std::vector<std::string> ips(matching_.player_count());
 		std::vector<u16> ports(matching_.player_count());
+		std::vector<u8> relays(matching_.player_count());
 		float max_rtt = 0;
 		NOTICE_LOG(COMMON, "Peer count %d", matching_.player_count());
 		for (int i = 0; i < matching_.player_count(); i++) {
@@ -128,7 +142,33 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					ports[i] = ntohs(addr.sin_port);
 				} else {
 					NOTICE_LOG(COMMON, "No available address %d", i);
-					ok = false;
+					int relay_rtt = INT_MAX;
+					int relay_peer = -1;
+					for (int j = 0; j < matching_.player_count(); j++) {
+						if (j == i) continue;
+						if (j == matching_.peer_id()) continue;
+						if (rtt_matrix[matching_.peer_id()][j] && rtt_matrix[j][i]) {
+							int rtt = rtt_matrix[matching_.peer_id()][j] + rtt_matrix[j][i];
+							if (rtt < relay_rtt) {
+								relay_rtt = rtt;
+								relay_peer = j;
+							}
+						}
+					}
+
+					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr, &rtt)) {
+						NOTICE_LOG(COMMON, "Use relay via %d", relay_peer);
+						max_rtt = std::max(max_rtt, rtt + (float)rtt_matrix[relay_peer][i]);
+						char str[INET_ADDRSTRLEN] = {};
+						inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+						ips[i] = str;
+						ports[i] = ntohs(addr.sin_port);
+						relays[i] = true;
+					}
+					else {
+						NOTICE_LOG(COMMON, "Peer %d unreachable", i);
+						ok = false;
+					}
 				}
 			}
 		}
@@ -138,7 +178,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
 			config::GGPOEnable.override(1);
 			config::GGPODelay.override(delay);
-			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports);
+			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports, relays);
 			ggpo::receiveChatMessages(nullptr);
 			session_start_time = std::chrono::high_resolution_clock::now();
 			state_ = State::WaitGGPOSession;
