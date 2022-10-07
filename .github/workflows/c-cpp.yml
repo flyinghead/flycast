@@ -29,7 +29,7 @@ jobs:
           - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, debugFile: build/RelWithDebInfo/Flycast.app.dSYM/Contents/Resources/DWARF/Flycast, buildType: RelWithDebInfo, packageName: flycast-gdxsv-macos-x86_64.zip}
           # - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -G Ninja, buildType: Release, packageName: flycast-gdxsv-linux-x86_64.zip}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, debugFile: build/flycast.pdb, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-msvc.zip}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: 'msys2 {0}', arch: x64, cmakeArgs: -G Ninja, debugFile: build/flycast.pdb, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-msvc.zip}
           # - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
           # - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
           # - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -G Ninja, buildType: Release}
