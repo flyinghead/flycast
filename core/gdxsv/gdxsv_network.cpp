@@ -529,14 +529,20 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 void UdpPingPong::Stop() { running_ = false; }
 
 void UdpPingPong::Reset() {
-	std::lock_guard<std::recursive_mutex> lock(mutex_);
+	running_ = false;
+	start_time_ = std::chrono::high_resolution_clock::time_point{};
 	client_.Close();
+
+	std::lock_guard<std::recursive_mutex> lock(mutex_);
+	memset(rtt_matrix_, 0, sizeof(rtt_matrix_));
 	candidates_.clear();
+	user_to_peer_.clear();
+	peer_to_user_.clear();
 }
 
-bool UdpPingPong::Running() { return running_; }
+bool UdpPingPong::Running() const { return running_; }
 
-int UdpPingPong::ElapsedMs() {
+int UdpPingPong::ElapsedMs() const {
 	auto now = std::chrono::high_resolution_clock::now();
 	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
 }

@@ -15,7 +15,7 @@
 #include "reios/reios.h"
 #include "version.h"
 
-bool Gdxsv::InGame() const { return enabled && !testmode && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
+bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
 
 bool Gdxsv::Enabled() const { return enabled; }
 
@@ -52,6 +52,7 @@ void Gdxsv::Reset() {
 	if (disk_num == "1") disk = 1;
 	if (disk_num == "2") disk = 2;
 
+	maxrebattle = 5;
 	udp_port = config::GdxLocalPort;
 
 #ifdef __APPLE__
@@ -520,7 +521,7 @@ void Gdxsv::WritePatchDisk1() {
 	const u32 offset = 0x8C000000 + 0x00010000;
 
 	// Max Rebattle Patch
-	gdxsv_WriteMem8(0x0c0345b0, 5);
+	gdxsv_WriteMem8(0x0c0345b0, maxrebattle);
 
 	// Fix cost 300 to 295
 	gdxsv_WriteMem16(0x0c1b0fd0, 295);
@@ -584,7 +585,7 @@ void Gdxsv::WritePatchDisk2() {
 	const u32 offset = 0x8C000000 + 0x00010000;
 
 	// Max Rebattle Patch
-	gdxsv_WriteMem8(0x0c0219ec, 5);
+	gdxsv_WriteMem8(0x0c0219ec, maxrebattle);
 
 	// Fix cost 300 to 295
 	gdxsv_WriteMem16(0x0c21bfec, 295);
@@ -649,7 +650,6 @@ void Gdxsv::WritePatchDisk2() {
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {
-	testmode = true;
 	replay_net.Reset();
 	if (replay_net.StartFile(path)) {
 		netmode = NetMode::Replay;
@@ -668,7 +668,6 @@ bool Gdxsv::StartReplayFile(const char *path) {
 }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
-	testmode = true;
 	rollback_net.Reset();
 
 	if (rollback_net.StartLocalTest(param)) {

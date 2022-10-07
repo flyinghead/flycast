@@ -18,7 +18,7 @@ FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
-W = 480
+W = 640
 H = 480
 
 
@@ -49,10 +49,8 @@ def run(idx, *arg_list) -> subprocess.Popen[str]:
     cmd = " ".join(arg_list)
     print(cmd)
     new_env = os.environ.copy()
-    if idx == 0:
-        new_env["GGPO_NETWORK_DELAY"] = "100"
-    else:
-        new_env["GGPO_NETWORK_DELAY"] = "100"
+    new_env["GGPO_NETWORK_DELAY"] = "16"
+    # else: new_env["GGPO_NETWORK_DELAY"] = "100"
     return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
 
 
@@ -80,7 +78,7 @@ def run_rbk_test(idx: int) -> subprocess.Popen[str]:
         conf_gdxsv(idx),
         conf_window_layout(idx),
         conf_log(idx),
-        f"--config gdxsv:rbk_test={idx+1}/{N}"
+        f"--config gdxsv:rbk_test={idx+1}/{N} --config gdxsv:rand_input=12345"
     )
 
 
@@ -118,13 +116,16 @@ def main():
             p = run_funcs[sys.argv[1]](i)
             popens.append(p)
             os.chdir(cwd)
-        time.sleep(24*60*60)
+        while popens[0].poll() == None:
+            time.sleep(1)
     finally:
         for p in popens:
             if os.name == 'nt':
                 subprocess.run(['taskkill', '/F', '/T', '/PID', str(p.pid)])
             else:
                 p.kill()
+        for p in popens:
+            print(f"exit {p.poll()} {p.args}")
 
 
 if __name__ == "__main__":

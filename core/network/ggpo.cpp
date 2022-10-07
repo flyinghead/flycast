@@ -79,17 +79,13 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
+#include <random>
 #include <xxhash.h>
 #include "imgui/imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
 // #define SYNC_TEST 1
-// #define RAND_TEST 1
-
-#ifdef RAND_TEST
-#include <random>
-#endif
 
 namespace ggpo
 {
@@ -132,6 +128,10 @@ static bool useExInput;
 static int inputSize;
 static void (*eventCallback)(GGPOEvent* event);
 static void (*chatCallback)(int playerNum, const std::string& msg);
+
+static bool useRandInput;
+static u32 randInputMask = 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040;
+static std::mt19937 randSource;
 
 struct MemPages
 {
@@ -707,17 +707,13 @@ bool nextFrame()
 			throw FlycastException("GGPO error");
 	}
 
-#ifdef RAND_TEST
-	{
-		static const u32 rand_mask = 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040;
-		static std::mt19937 mt;
+	if (useRandInput) {
 		int frame;
 		ggpo::getCurrentFrame(&frame);
 		if (frame % 5 == 0) {
-			kcode[0] = ~(mt() & rand_mask);
+			kcode[0] = ~(randSource() & randInputMask);
 		}
 	}
-#endif
 
 	// may call save_game_state
 	do {
@@ -997,6 +993,12 @@ void disconnect(int playerNum) {
 	ggpo_disconnect_player(ggpoSession, playerHandles[playerNum]);
 }
 
+void randomInput(bool enable, u64 seed, u32 inputMask) {
+	useRandInput = enable;
+	randInputMask = inputMask;
+	randSource.seed(seed);
+}
+
 void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
 {
 	GGPOSessionCallbacks cb{};
@@ -1188,6 +1190,21 @@ void sendChatMessage(int playerNum, const std::string& msg) {
 }
 
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)) {
+}
+
+bool isConnected(int playerNum) {
+}
+
+void disconnect(int playerNum) {
+}
+
+void randomInput(bool enable, u64 seed, u32 inputMask) {
+}
+
+void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
+}
+
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
 }
 
 }

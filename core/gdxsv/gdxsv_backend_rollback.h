@@ -9,8 +9,8 @@
 
 class GdxsvBackendRollback {
    public:
-	GdxsvBackendRollback(const std::map<std::string, u32> &symbols, std::atomic<int> &maxlag)
-		: state_(State::None), symbols_(symbols), maxlag_(maxlag), recv_delay_(0), port_(0) {}
+	GdxsvBackendRollback(const std::map<std::string, u32> &symbols, std::atomic<int> &maxlag, std::atomic<int> &maxrebattle)
+		: state_(State::None), symbols_(symbols), maxlag_(maxlag), maxrebattle_(maxrebattle), recv_delay_(0), port_(0) {}
 
 	enum class State {
 		None,
@@ -45,8 +45,10 @@ class GdxsvBackendRollback {
 	void ProcessLbsMessage();
 
 	State state_;
+	bool is_local_test_;
 	const std::map<std::string, u32> &symbols_;
 	std::atomic<int> &maxlag_;
+	std::atomic<int> &maxrebattle_;
 	int recv_delay_;
 	int port_;
 	std::deque<u8> recv_buf_;

@@ -13,10 +13,10 @@
 #include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
+#include "input/gamepad_device.h"
 #include "libs.h"
 #include "network/ggpo.h"
 #include "network/net_platform.h"
-#include "rend/gui.h"
 #include "rend/gui_util.h"
 #include "rend/transform_matrix.h"
 
@@ -77,14 +77,23 @@ void GdxsvBackendRollback::Reset() {
 	RestorePatch();
 	state_ = State::None;
 	lbs_tx_reader_.Clear();
-	recv_buf_.clear();
 	recv_delay_ = 0;
+	port_ = 0;
+	recv_buf_.clear();
+	lbs_tx_reader_.Clear();
+	matching_.Clear();
+	ping_pong_.Reset();
+	start_network_ = std::future<bool>();
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
 	const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
 	const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
 	const int NetCountDown = 0x0c3ab942;	  // TODO: disk2
+
+	if (state_ == State::StartLocalTest) {
+		kcode[0] = ~0x0004;
+	}
 
 	if (state_ == State::StopEmulator) {
 		emu.stop();
@@ -172,6 +181,11 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
 		ggpo::stopSession();
 		state_ = State::End;
+
+		if (is_local_test_) {
+			dc_exit();
+			return;
+		}
 	}
 
 	// Fast return to lobby on error
@@ -192,13 +206,20 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	if (2 < args.size() && args[1] == '/' && '1' <= args[2] && args[2] <= '4') {
 		n = args[2] - '0';
 	}
+	u64 seed = cfgLoadInt64("gdxsv", "rand_input", 0);
+	if (seed) {
+		NOTICE_LOG(COMMON, "RandomInput Seed=%d", seed + me);
+		ggpo::randomInput(true, seed + me, 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040);
+	}
 	Reset();
 	DummyRuleData[6] = 1;
 	DummyRuleData[7] = 0;
 	DummyRuleData[8] = 1;
 	DummyRuleData[9] = 0;
 	state_ = State::StartLocalTest;
+	is_local_test_ = true;
 	maxlag_ = 0;
+	maxrebattle_ = 1;
 	matching_.set_battle_code("0123456");
 	matching_.set_peer_id(me);
 	matching_.set_session_id(12345);
@@ -242,8 +263,11 @@ void GdxsvBackendRollback::Open() {
 
 void GdxsvBackendRollback::Close() {
 	ggpo::stopSession();
-	RestorePatch();
-	state_ = State::End;
+	if (state_ <= State::McsWaitJoin) {
+		// do nothing
+	} else {
+		Reset();
+	}
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -270,8 +294,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
 		const int InetBuf = 0x0c3ab984;			  // TODO: disk2
 		const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-		// NOTICE_LOG(COMMON, "[FRAME:%4d :RBK=%d] State=%d OnSockRead CONNECTION: %d %d", frame, ggpo::rollbacking(), state_,
-		// gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 4));
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -518,29 +540,26 @@ void GdxsvBackendRollback::RestorePatch() {
 
 namespace {
 float getScale() {
-	const auto W = ImGui::GetIO().DisplaySize.x;
-	const auto H = ImGui::GetIO().DisplaySize.y;
-	const auto S = std::min(W / 640.f, H / 480.f);
-	const auto CX = W / 2.f;
-	const auto CY = H / 2.f;
-	float renderAR = getOutputFramebufferAspectRatio();
-	float screenAR = W / H;
+	const float w = ImGui::GetIO().DisplaySize.x;
+	const float h = ImGui::GetIO().DisplaySize.y;
+	const float renderAR = getOutputFramebufferAspectRatio();
+	const float screenAR = w / h;
 	float dx = 0;
 	float dy = 0;
 	if (renderAR > screenAR)
-		dy = H * (1 - screenAR / renderAR) / 2;
+		dy = h * (1 - screenAR / renderAR) / 2;
 	else
-		dx = W * (1 - renderAR / screenAR) / 2;
+		dx = w * (1 - renderAR / screenAR) / 2;
 
-	return std::min((W - dx * 2) / 640.f, (H - dy * 2) / 480.f);
+	return std::min((w - dx * 2) / 640.f, (h - dy * 2) / 480.f);
 }
 
 ImVec2 fromCenter(float x, float y, float scale) {
-	const auto W = ImGui::GetIO().DisplaySize.x;
-	const auto H = ImGui::GetIO().DisplaySize.y;
-	const auto CX = W / 2.f;
-	const auto CY = H / 2.f;
-	return ImVec2(CX + (x * scale), CY + (y * scale));
+	const float w = ImGui::GetIO().DisplaySize.x;
+	const float h = ImGui::GetIO().DisplaySize.y;
+	const float cx = w / 2.f;
+	const float cy = h / 2.f;
+	return ImVec2(cx + (x * scale), cy + (y * scale));
 }
 
 ImColor fadeColor(ImColor color, int elapsed) {
@@ -577,8 +596,8 @@ void drawDot(ImDrawList* draw_list, ImVec2 center, ImColor c, float scale) {
 }
 
 void baseRect(ImVec2 points[4], float sx, float sy) {
-	float v = sx / 2.0;
-	float w = sy / 2.0;
+	const float v = sx / 2.0;
+	const float w = sy / 2.0;
 	points[0].x = -v;
 	points[0].y = -w;
 	points[1].x = v;
@@ -619,8 +638,8 @@ void rotRect(ImVec2 points[4], float rad) {
 }
 
 void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float scale, int step, int dir, int elapsed) {
-	float rad = (3.141592 / 4) * dir;
-	ImVec2 points[4];
+	const float rad = (3.141592 / 4) * dir;
+	ImVec2 points[4] = {};
 	for (int i = 0; i < 5; i++) {
 		baseRect(points, 5, 3.5);
 		auto c = color;
@@ -643,14 +662,14 @@ void drawRectWave(ImDrawList* draw_list, ImVec2 anchor, ImColor color, float sca
 }
 
 void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id) {
-	const auto W = ImGui::GetIO().DisplaySize.x;
-	const auto H = ImGui::GetIO().DisplaySize.y;
-	float scale = getScale();
+	const float w = ImGui::GetIO().DisplaySize.x;
+	const float h = ImGui::GetIO().DisplaySize.y;
+	const float scale = getScale();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always,
 							ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize(ImVec2(W, H));
+	ImGui::SetNextWindowSize(ImVec2(w, h));
 	ImGui::SetNextWindowBgAlpha(0.0f);
 	ImGui::Begin("##gdxsvosd", NULL,
 				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs);

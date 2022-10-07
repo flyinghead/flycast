@@ -126,9 +126,9 @@ class UdpPingPong {
 
 	void Reset();
 
-	bool Running();
+	bool Running() const;
 
-	int ElapsedMs();
+	int ElapsedMs() const;
 
 	void AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port);
 
@@ -165,8 +165,9 @@ class UdpPingPong {
 	std::atomic<bool> running_;
 	std::chrono::high_resolution_clock::time_point start_time_;
 	UdpClient client_ = UdpClient{};
+
 	std::recursive_mutex mutex_;
-	uint8_t rtt_matrix_[N][N];
+	uint8_t rtt_matrix_[N][N] = {};
 	std::vector<Candidate> candidates_;
 	std::map<std::string, int> user_to_peer_;
 	std::map<int, std::string> peer_to_user_;
