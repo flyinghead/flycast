@@ -31,6 +31,7 @@ UdpProtocol::UdpProtocol() :
    _packets_sent(0),
    _bytes_sent(0),
    _stats_start_time(0),
+   _recv_packet_loss(0),
    _local_frame_advantage(0),
    _remote_frame_advantage(0),
    _last_send_time(0),
@@ -360,9 +361,9 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
          return;
       }
 
-	  if (_next_recv_seq < seq && skipped != 1) {
-          _recv_packet_loss++;
-	  }
+      if (_next_recv_seq < seq && skipped != 1) {
+        _recv_packet_loss++;
+      }
    }
 
    _next_recv_seq = seq;
