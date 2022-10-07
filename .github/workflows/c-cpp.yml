@@ -105,7 +105,7 @@ jobs:
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
           strip artifact/bin/flycast.exe
-        if: matrix.config.name == 'x86_64-pc-windows-msvc'
+        if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - uses: actions/upload-artifact@v3
         with:
