@@ -51,6 +51,7 @@
 #ifdef USE_BREAKPAD
 #include "breakpad/client/windows/handler/exception_handler.h"
 #include "version.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 #endif
 
 #include <ws2ipdef.h>
@@ -743,6 +744,12 @@ static bool dumpCallback(const wchar_t* dump_path,
 		wchar_t s[MAX_PATH + 32];
 		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
+		
+		char path_buffer[MAX_PATH];
+		char id_buffer[MAX_PATH];
+		wcstombs(path_buffer, dump_path, sizeof(path_buffer));
+		wcstombs(id_buffer, minidump_id, sizeof(id_buffer));
+		gdxsv_prepare_crashlog(path_buffer, id_buffer);
 	}
 	return succeeded;
 }
@@ -982,6 +989,11 @@ std::string os_FetchStringFromURL(const std::string& url)
     }
     InternetCloseHandle(interwebs);
     return result;
+}
+
+int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files)
+{
+	return 501;
 }
 
 std::string os_GetMachineID()
