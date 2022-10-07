@@ -248,7 +248,7 @@ static void CustomApplicationMain (int argc, char **argv)
 static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
 {
     printf("Minidump saved to '%s/%s.dmp'\n", dump_dir, minidump_id);
-	gdxsv_prepare_crashlog(dump_dir, minidump_id);
+    gdxsv_prepare_crashlog(dump_dir, minidump_id);
     return succeeded;
 }
 #endif

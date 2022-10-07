@@ -119,6 +119,12 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
+int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files)
+{
+	//Not implemented
+	return 501;
+}
+
 std::string os_GetMachineID()
 {
     //Not implemented

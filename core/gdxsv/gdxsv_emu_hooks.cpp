@@ -21,7 +21,6 @@ void gdxsv_latest_version_check();
 static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 
-extern int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files);
 void gdxsv_flycast_init() {
 	std::ifstream fs;
 	fs.open(get_writable_data_path("crash_dmp_list.txt"));
