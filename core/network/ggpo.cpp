@@ -1052,7 +1052,6 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	synchronized = true;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	// TODO: Analog support
 	ggpo::localPlayerNum = me;
 	GGPOErrorCode result = ggpo_start_session(
 		&ggpoSession, &cb, settings.content.gameId.c_str(),
@@ -1066,10 +1065,7 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 
 	NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", me);
 
-	// automatically disconnect clients after 3000 ms and start our count-down timer
-	// for disconnects after 1000 ms.   To completely disable disconnects, simply use
-	// a value of 0 for ggpo_set_disconnect_timeout.
-	ggpo_set_disconnect_timeout(ggpoSession, 3000);
+	ggpo_set_disconnect_timeout(ggpoSession, 10000);
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
 
 	GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, me + 1};
