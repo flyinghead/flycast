@@ -26,10 +26,10 @@ jobs:
       matrix:
         config:
           # - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo, packageName: flycast-gdxsv-macos-x86_64.zip}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, debugFile: Flycast.app.dSYM, buildType: RelWithDebInfo, packageName: flycast-gdxsv-macos-x86_64.zip}
           # - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -G Ninja, buildType: Release, packageName: flycast-gdxsv-linux-x86_64.zip}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-msvc.zip}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, debugFile: flycast.pdb, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-msvc.zip}
           # - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
           # - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
           # - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -G Ninja, buildType: Release}
@@ -153,6 +153,24 @@ jobs:
         run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
+
+      - name: Setup Sentry CLI
+        uses: mathieu-bour/setup-sentry-cli@1.2.0
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        with:
+          url: https://sentry.io
+          token: ${{ env.SENTRY_TOKEN }}
+          organization: gdxsv-project
+          project: minidump
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
+      
+      - name: Upload symbols to Sentry (Windows-MSVC, macOS)
+        run: sentry-cli upload-dif -o gdxsv-project -p minidump ${{ matrix.config.debugFile }}
+        shell: bash
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
 
       - name: Release flycast-gdxsv
         uses: softprops/action-gh-release@v1

@@ -249,23 +249,23 @@ if(NOT LIBRETRO)
 		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
-		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
-		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-			COMMAND sleep 20
-			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-				-a x86_64
-				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			# COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-			# 	-a arm64
-			# 	-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-			# 	${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-			# COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			# COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-		)
+		# add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		# ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		# 	COMMAND sleep 20
+		# 	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+		# 		-a x86_64
+		# 		-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+		# 		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+		# 	COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+		# 		-a arm64
+		# 		-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+		# 		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+		# 	COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# )
 	endif()
 endif()
 
