@@ -49,7 +49,11 @@
 #include "rawinput.h"
 #include "oslib/directory.h"
 #ifdef USE_BREAKPAD
+#ifdef _MSC_VER
+#include "client/windows/handler/exception_handler.h"
+#else
 #include "breakpad/client/windows/handler/exception_handler.h"
+#endif
 #include "version.h"
 #include "gdxsv/gdxsv_emu_hooks.h"
 #endif
