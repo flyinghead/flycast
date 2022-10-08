@@ -276,8 +276,6 @@ if(USE_OPENMP)
             # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
             set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
             target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
-        elseif(APPLE)
-            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX -static-openmp)
         else()
             target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
         endif()
