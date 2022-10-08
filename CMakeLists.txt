@@ -209,8 +209,29 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PUBLIC breakpad_client)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 	elseif(MSVC AND MSVC_BREAKPAD)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/breakpad/src/client/windows/common/ipc_protocol.h
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.h
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.cc
+			core/deps/breakpad/src/client/windows/crash_generation/client_info.h
+			core/deps/breakpad/src/client/windows/crash_generation/client_info.cc
+			core/deps/breakpad/src/client/windows/common/auto_critical_section.h
+			core/deps/breakpad/src/client/windows/handler/exception_handler.h
+			core/deps/breakpad/src/client/windows/handler/exception_handler.cc
+			core/deps/breakpad/src/common/scoped_ptr.h
+			core/deps/breakpad/src/common/windows/string_utils-inl.h
+			core/deps/breakpad/src/common/windows/string_utils.cc
+			core/deps/breakpad/src/common/windows/guid_string.h
+			core/deps/breakpad/src/common/windows/guid_string.cc
+			core/deps/breakpad/src/google_breakpad/common/minidump_format.h
+			core/deps/breakpad/src/google_breakpad/common/breakpad_types.h
+		)
+		set_source_files_properties(
+			core/deps/breakpad/src/client/windows/handler/exception_handler.cc
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.cc
+			PROPERTIES COMPILE_OPTIONS -DUNICODE -D_UNICODE -g
+		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
-		target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/windows/libbreakpad_client.a)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 	elseif(APPLE AND NOT IOS AND APPLE_BREAKPAD)
 		target_sources(${PROJECT_NAME} PRIVATE
