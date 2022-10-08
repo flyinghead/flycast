@@ -79,7 +79,11 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 	if (slog_fp == nullptr) return;
 	
 	std::ifstream fs;
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
 	fs.open(get_writable_data_path("flycast.log"));
+#else
+	fs.open("flycast.log");
+#endif
 	
 	if (fs.is_open()) {
 		fs.seekg(-10000, std::ios_base::end);
