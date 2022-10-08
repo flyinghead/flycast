@@ -166,9 +166,7 @@ jobs:
         if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
       
       - name: Upload symbols to Sentry (Windows-MSVC, macOS)
-        run: |
-          sentry-cli difutil check ${{ matrix.config.debugFile }}
-          sentry-cli upload-dif -o gdxsv-project -p minidump ${{ matrix.config.debugFile }}
+        run: sentry-cli upload-dif -o gdxsv-project -p minidump ${{ matrix.config.debugFile }}
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
