@@ -16,7 +16,7 @@ public:
 	void Log(LogTypes::LOG_LEVELS, const char* msg) override;
 	void SetMaxLines(int maxLines) { m_max_lines = maxLines; }
 	void Clear();
-	std::list<std::string> InMemoryListener::GetLines(int start_line_no, int* tail_line_no);
+	std::list<std::string> GetLines(int start_line_no, int* tail_line_no);
 private:
 	std::mutex m_log_lock;
 	std::list<std::pair<int, std::string>> m_log;
