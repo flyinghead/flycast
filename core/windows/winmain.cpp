@@ -1037,7 +1037,6 @@ int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std:
 		return 418;
 	}
 	
-	ERROR_LOG(COMMON, "%d", components.nPort);
 	std::unique_ptr<HINTERNET, InetCloser> connect (InternetConnect(interwebs.get(), host, components.nPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0));
 	if (connect.get() == NULL)
 	{
@@ -1062,25 +1061,26 @@ int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std:
 		std::size_t found = file.second.find_last_of("\\");
 		if (found == std::string::npos) continue;
 		
-		std::string filename = file.second.substr(found+1);
-		std::ostringstream sbuf;
-		sbuf << "------BoundaryFlycastIsAwesome"
-			<< newline
-			<< "Content-Disposition: form-data; name=\"" << file.first << "\"; filename=\"" << filename << "\""
-			<< newline
-			<< "Content-Type: application/octet-stream"
-			<< newline
-			<< newline;
-		std::string header = sbuf.str();
-		vec_buf.insert(vec_buf.end(), header.begin(), header.end());
-		
 		std::ifstream input (file.second.c_str(), std::ios::binary);
-		if (input.good()) {
+		if (input.good())
+		{
+			std::string filename = file.second.substr(found+1);
+			std::ostringstream sbuf;
+			sbuf << "------BoundaryFlycastIsAwesome"
+				<< newline
+				<< "Content-Disposition: form-data; name=\"" << file.first << "\"; filename=\"" << filename << "\""
+				<< newline
+				<< "Content-Type: application/octet-stream"
+				<< newline
+				<< newline;
+			std::string header = sbuf.str();
+			vec_buf.insert(vec_buf.end(), header.begin(), header.end());
+			
 			std::vector<uint8_t> file_buf((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 			vec_buf.insert(vec_buf.end(), file_buf.begin(), file_buf.end());
+			
+			vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
 		}
-
-		vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
 	}
 	const std::string endline = "------BoundaryFlycastIsAwesome--";
 	vec_buf.insert(vec_buf.end(), endline.begin(), endline.end());
