@@ -60,6 +60,20 @@ private:
 	bool m_enable;
 };
 
+class TailLogListener : public LogListener
+{
+public:
+	std::deque<std::string> logs = {};
+
+	void Log(LogTypes::LOG_LEVELS, const char* msg) override
+	{
+		while (logs.size() >= 100) {
+			logs.pop_front();
+		}
+		logs.push_back(msg);
+	}
+};
+
 void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file, int line,
 		const char* fmt, ...)
 {
@@ -150,6 +164,9 @@ LogManager::LogManager()
 	}
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
 	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+	
+	RegisterListener(LogListener::TAIL_LISTENER, new TailLogListener());
+	EnableListener(LogListener::TAIL_LISTENER, true);
 
 	for (LogContainer& container : m_log)
 	{
@@ -164,6 +181,7 @@ LogManager::~LogManager()
 	// The log window listener pointer is owned by the GUI code.
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
 	delete m_listeners[LogListener::FILE_LISTENER];
+	delete m_listeners[LogListener::TAIL_LISTENER];
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds
@@ -253,6 +271,12 @@ static LogManager* s_log_manager;
 LogManager* LogManager::GetInstance()
 {
 	return s_log_manager;
+}
+
+const std::deque<std::string> LogManager::GetTailLogs()
+{
+	TailLogListener* tll = (TailLogListener*)m_listeners[LogListener::TAIL_LISTENER];
+	return tll->logs;
 }
 
 void LogManager::Init()

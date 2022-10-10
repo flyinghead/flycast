@@ -10,6 +10,7 @@
 #include "rend/gui_util.h"
 #include "version.h"
 #include <fstream>
+#include "log/LogManager.h"
 
 #ifdef _WIN32
 #define CHAR_PATH_SEPARATOR '\\'
@@ -77,21 +78,12 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 	FILE* slog_fp = nowide::fopen(slog_path, "w");
 	delete[] slog_path;
 	if (slog_fp == nullptr) return;
-	
-	std::ifstream fs;
-#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
-	fs.open(get_writable_data_path("flycast.log"));
-#else
-	fs.open("flycast.log");
-#endif
-	
-	if (fs.is_open()) {
-		fs.seekg(-10000, std::ios_base::end);
-		std::string line;
-		while(std::getline(fs, line)){
-			fprintf(slog_fp, "%s\n", line.c_str());
-		}
+
+	const std::deque<std::string> tails = LogManager::GetInstance()->GetTailLogs();
+	for (auto line : tails) {
+		fprintf(slog_fp, "%s", line.c_str());
 	}
+	
 	fclose(slog_fp);
 }
 
