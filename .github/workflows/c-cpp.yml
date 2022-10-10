@@ -158,19 +158,19 @@ jobs:
         uses: mathieu-bour/setup-sentry-cli@1.2.0
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+          SENTRY_PROJECT: "${{ startsWith(github.ref, 'refs/tags/gdxsv-') && 'public' || 'dev' }}"
         with:
           url: https://sentry.io
           token: ${{ env.SENTRY_TOKEN }}
           organization: gdxsv-project
-          project: minidump
+          project: ${{ env.SENTRY_PROJECT }}
         if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
       
       - name: Upload symbols to Sentry (Windows-MSVC, macOS)
         run: |
           VERSION=$(git describe --tags --always --match "gdxsv-*" | sed -E "s/-([0-9]+)-g(.+)$/-dev.\\1+\\2/g")
-          sentry-cli releases -o gdxsv-project -p minidump new "$VERSION"
-          sentry-cli releases -o gdxsv-project -p minidump set-commits "$VERSION" --auto
-          sentry-cli upload-dif -o gdxsv-project -p minidump ${{ matrix.config.debugFile }}
+          sentry-cli releases new "$VERSION"
+          sentry-cli upload-dif ${{ matrix.config.debugFile }}
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
