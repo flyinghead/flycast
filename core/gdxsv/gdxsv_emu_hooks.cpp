@@ -34,7 +34,7 @@ void gdxsv_flycast_init() {
 			files["upload_file_minidump"] = line;
 			
 			std::string log = line;
-			if (log.find(".dmp") != -1) {
+			if (log.find(".dmp") != std::string::npos) {
 				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
 				files["flycast_log"] = log;
 			}
