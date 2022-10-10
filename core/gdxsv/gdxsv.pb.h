@@ -48,7 +48,7 @@ struct TableStruct_gdxsv_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[14]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[15]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -86,6 +86,9 @@ extern HelloServerMessageDefaultTypeInternal _HelloServerMessage_default_instanc
 class P2PMatching;
 class P2PMatchingDefaultTypeInternal;
 extern P2PMatchingDefaultTypeInternal _P2PMatching_default_instance_;
+class P2PMatchingReport;
+class P2PMatchingReportDefaultTypeInternal;
+extern P2PMatchingReportDefaultTypeInternal _P2PMatchingReport_default_instance_;
 class Packet;
 class PacketDefaultTypeInternal;
 extern PacketDefaultTypeInternal _Packet_default_instance_;
@@ -110,6 +113,7 @@ template<> ::proto::GamePatchList* Arena::CreateMaybeMessage<::proto::GamePatchL
 template<> ::proto::HelloLbsMessage* Arena::CreateMaybeMessage<::proto::HelloLbsMessage>(Arena*);
 template<> ::proto::HelloServerMessage* Arena::CreateMaybeMessage<::proto::HelloServerMessage>(Arena*);
 template<> ::proto::P2PMatching* Arena::CreateMaybeMessage<::proto::P2PMatching>(Arena*);
+template<> ::proto::P2PMatchingReport* Arena::CreateMaybeMessage<::proto::P2PMatchingReport>(Arena*);
 template<> ::proto::Packet* Arena::CreateMaybeMessage<::proto::Packet>(Arena*);
 template<> ::proto::PingMessage* Arena::CreateMaybeMessage<::proto::PingMessage>(Arena*);
 template<> ::proto::PlayerAddress* Arena::CreateMaybeMessage<::proto::PlayerAddress>(Arena*);
@@ -148,6 +152,238 @@ inline bool MessageType_Parse(
     MessageType_descriptor(), name, value);
 }
 // ===================================================================
+
+class P2PMatchingReport PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:proto.P2PMatchingReport) */ {
+ public:
+  inline P2PMatchingReport() : P2PMatchingReport(nullptr) {}
+  virtual ~P2PMatchingReport();
+
+  P2PMatchingReport(const P2PMatchingReport& from);
+  P2PMatchingReport(P2PMatchingReport&& from) noexcept
+    : P2PMatchingReport() {
+    *this = ::std::move(from);
+  }
+
+  inline P2PMatchingReport& operator=(const P2PMatchingReport& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline P2PMatchingReport& operator=(P2PMatchingReport&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const P2PMatchingReport& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const P2PMatchingReport* internal_default_instance() {
+    return reinterpret_cast<const P2PMatchingReport*>(
+               &_P2PMatchingReport_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    0;
+
+  friend void swap(P2PMatchingReport& a, P2PMatchingReport& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(P2PMatchingReport* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(P2PMatchingReport* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline P2PMatchingReport* New() const final {
+    return CreateMaybeMessage<P2PMatchingReport>(nullptr);
+  }
+
+  P2PMatchingReport* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<P2PMatchingReport>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const P2PMatchingReport& from);
+  void MergeFrom(const P2PMatchingReport& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(P2PMatchingReport* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "proto.P2PMatchingReport";
+  }
+  protected:
+  explicit P2PMatchingReport(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_gdxsv_2eproto);
+    return ::descriptor_table_gdxsv_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kLogsFieldNumber = 10,
+    kBattleCodeFieldNumber = 1,
+    kCloseReasonFieldNumber = 5,
+    kSessionIdFieldNumber = 2,
+    kPlayerCountFieldNumber = 3,
+    kPeerIdFieldNumber = 4,
+    kFrameCountFieldNumber = 6,
+  };
+  // repeated string logs = 10;
+  int logs_size() const;
+  private:
+  int _internal_logs_size() const;
+  public:
+  void clear_logs();
+  const std::string& logs(int index) const;
+  std::string* mutable_logs(int index);
+  void set_logs(int index, const std::string& value);
+  void set_logs(int index, std::string&& value);
+  void set_logs(int index, const char* value);
+  void set_logs(int index, const char* value, size_t size);
+  std::string* add_logs();
+  void add_logs(const std::string& value);
+  void add_logs(std::string&& value);
+  void add_logs(const char* value);
+  void add_logs(const char* value, size_t size);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& logs() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_logs();
+  private:
+  const std::string& _internal_logs(int index) const;
+  std::string* _internal_add_logs();
+  public:
+
+  // string battle_code = 1;
+  void clear_battle_code();
+  const std::string& battle_code() const;
+  void set_battle_code(const std::string& value);
+  void set_battle_code(std::string&& value);
+  void set_battle_code(const char* value);
+  void set_battle_code(const char* value, size_t size);
+  std::string* mutable_battle_code();
+  std::string* release_battle_code();
+  void set_allocated_battle_code(std::string* battle_code);
+  private:
+  const std::string& _internal_battle_code() const;
+  void _internal_set_battle_code(const std::string& value);
+  std::string* _internal_mutable_battle_code();
+  public:
+
+  // string close_reason = 5;
+  void clear_close_reason();
+  const std::string& close_reason() const;
+  void set_close_reason(const std::string& value);
+  void set_close_reason(std::string&& value);
+  void set_close_reason(const char* value);
+  void set_close_reason(const char* value, size_t size);
+  std::string* mutable_close_reason();
+  std::string* release_close_reason();
+  void set_allocated_close_reason(std::string* close_reason);
+  private:
+  const std::string& _internal_close_reason() const;
+  void _internal_set_close_reason(const std::string& value);
+  std::string* _internal_mutable_close_reason();
+  public:
+
+  // int32 session_id = 2;
+  void clear_session_id();
+  ::PROTOBUF_NAMESPACE_ID::int32 session_id() const;
+  void set_session_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_session_id() const;
+  void _internal_set_session_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 player_count = 3;
+  void clear_player_count();
+  ::PROTOBUF_NAMESPACE_ID::int32 player_count() const;
+  void set_player_count(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_player_count() const;
+  void _internal_set_player_count(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 peer_id = 4;
+  void clear_peer_id();
+  ::PROTOBUF_NAMESPACE_ID::int32 peer_id() const;
+  void set_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_peer_id() const;
+  void _internal_set_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 frame_count = 6;
+  void clear_frame_count();
+  ::PROTOBUF_NAMESPACE_ID::int32 frame_count() const;
+  void set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_frame_count() const;
+  void _internal_set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:proto.P2PMatchingReport)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> logs_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr close_reason_;
+  ::PROTOBUF_NAMESPACE_ID::int32 session_id_;
+  ::PROTOBUF_NAMESPACE_ID::int32 player_count_;
+  ::PROTOBUF_NAMESPACE_ID::int32 peer_id_;
+  ::PROTOBUF_NAMESPACE_ID::int32 frame_count_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_gdxsv_2eproto;
+};
+// -------------------------------------------------------------------
 
 class P2PMatching PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:proto.P2PMatching) */ {
@@ -191,7 +427,7 @@ class P2PMatching PROTOBUF_FINAL :
                &_P2PMatching_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    0;
+    1;
 
   friend void swap(P2PMatching& a, P2PMatching& b) {
     a.Swap(&b);
@@ -410,7 +646,7 @@ class PlayerAddress PROTOBUF_FINAL :
                &_PlayerAddress_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    2;
 
   friend void swap(PlayerAddress& a, PlayerAddress& b) {
     a.Swap(&b);
@@ -605,7 +841,7 @@ class GamePatch PROTOBUF_FINAL :
                &_GamePatch_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   friend void swap(GamePatch& a, GamePatch& b) {
     a.Swap(&b);
@@ -798,7 +1034,7 @@ class GamePatchCode PROTOBUF_FINAL :
                &_GamePatchCode_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   friend void swap(GamePatchCode& a, GamePatchCode& b) {
     a.Swap(&b);
@@ -968,7 +1204,7 @@ class GamePatchList PROTOBUF_FINAL :
                &_GamePatchList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(GamePatchList& a, GamePatchList& b) {
     a.Swap(&b);
@@ -1114,7 +1350,7 @@ class BattleLogUser PROTOBUF_FINAL :
                &_BattleLogUser_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(BattleLogUser& a, BattleLogUser& b) {
     a.Swap(&b);
@@ -1414,7 +1650,7 @@ class BattleLogFile PROTOBUF_FINAL :
                &_BattleLogFile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(BattleLogFile& a, BattleLogFile& b) {
     a.Swap(&b);
@@ -1705,7 +1941,7 @@ class BattleMessage PROTOBUF_FINAL :
                &_BattleMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(BattleMessage& a, BattleMessage& b) {
     a.Swap(&b);
@@ -1878,7 +2114,7 @@ class PingMessage PROTOBUF_FINAL :
                &_PingMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(PingMessage& a, PingMessage& b) {
     a.Swap(&b);
@@ -2033,7 +2269,7 @@ class PongMessage PROTOBUF_FINAL :
                &_PongMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(PongMessage& a, PongMessage& b) {
     a.Swap(&b);
@@ -2206,7 +2442,7 @@ class HelloServerMessage PROTOBUF_FINAL :
                &_HelloServerMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(HelloServerMessage& a, HelloServerMessage& b) {
     a.Swap(&b);
@@ -2379,7 +2615,7 @@ class FinMessage PROTOBUF_FINAL :
                &_FinMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(FinMessage& a, FinMessage& b) {
     a.Swap(&b);
@@ -2523,7 +2759,7 @@ class HelloLbsMessage PROTOBUF_FINAL :
                &_HelloLbsMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(HelloLbsMessage& a, HelloLbsMessage& b) {
     a.Swap(&b);
@@ -2667,7 +2903,7 @@ class Packet PROTOBUF_FINAL :
                &_Packet_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(Packet& a, Packet& b) {
     a.Swap(&b);
@@ -2929,6 +3165,288 @@ class Packet PROTOBUF_FINAL :
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// P2PMatchingReport
+
+// string battle_code = 1;
+inline void P2PMatchingReport::clear_battle_code() {
+  battle_code_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& P2PMatchingReport::battle_code() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.battle_code)
+  return _internal_battle_code();
+}
+inline void P2PMatchingReport::set_battle_code(const std::string& value) {
+  _internal_set_battle_code(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.battle_code)
+}
+inline std::string* P2PMatchingReport::mutable_battle_code() {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatchingReport.battle_code)
+  return _internal_mutable_battle_code();
+}
+inline const std::string& P2PMatchingReport::_internal_battle_code() const {
+  return battle_code_.Get();
+}
+inline void P2PMatchingReport::_internal_set_battle_code(const std::string& value) {
+  
+  battle_code_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void P2PMatchingReport::set_battle_code(std::string&& value) {
+  
+  battle_code_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.P2PMatchingReport.battle_code)
+}
+inline void P2PMatchingReport::set_battle_code(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  battle_code_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.P2PMatchingReport.battle_code)
+}
+inline void P2PMatchingReport::set_battle_code(const char* value,
+    size_t size) {
+  
+  battle_code_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatchingReport.battle_code)
+}
+inline std::string* P2PMatchingReport::_internal_mutable_battle_code() {
+  
+  return battle_code_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* P2PMatchingReport::release_battle_code() {
+  // @@protoc_insertion_point(field_release:proto.P2PMatchingReport.battle_code)
+  return battle_code_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void P2PMatchingReport::set_allocated_battle_code(std::string* battle_code) {
+  if (battle_code != nullptr) {
+    
+  } else {
+    
+  }
+  battle_code_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), battle_code,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.P2PMatchingReport.battle_code)
+}
+
+// int32 session_id = 2;
+inline void P2PMatchingReport::clear_session_id() {
+  session_id_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::_internal_session_id() const {
+  return session_id_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::session_id() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.session_id)
+  return _internal_session_id();
+}
+inline void P2PMatchingReport::_internal_set_session_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  session_id_ = value;
+}
+inline void P2PMatchingReport::set_session_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_session_id(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.session_id)
+}
+
+// int32 player_count = 3;
+inline void P2PMatchingReport::clear_player_count() {
+  player_count_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::_internal_player_count() const {
+  return player_count_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::player_count() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.player_count)
+  return _internal_player_count();
+}
+inline void P2PMatchingReport::_internal_set_player_count(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  player_count_ = value;
+}
+inline void P2PMatchingReport::set_player_count(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_player_count(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.player_count)
+}
+
+// int32 peer_id = 4;
+inline void P2PMatchingReport::clear_peer_id() {
+  peer_id_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::_internal_peer_id() const {
+  return peer_id_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::peer_id() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.peer_id)
+  return _internal_peer_id();
+}
+inline void P2PMatchingReport::_internal_set_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  peer_id_ = value;
+}
+inline void P2PMatchingReport::set_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_peer_id(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.peer_id)
+}
+
+// string close_reason = 5;
+inline void P2PMatchingReport::clear_close_reason() {
+  close_reason_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& P2PMatchingReport::close_reason() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.close_reason)
+  return _internal_close_reason();
+}
+inline void P2PMatchingReport::set_close_reason(const std::string& value) {
+  _internal_set_close_reason(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.close_reason)
+}
+inline std::string* P2PMatchingReport::mutable_close_reason() {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatchingReport.close_reason)
+  return _internal_mutable_close_reason();
+}
+inline const std::string& P2PMatchingReport::_internal_close_reason() const {
+  return close_reason_.Get();
+}
+inline void P2PMatchingReport::_internal_set_close_reason(const std::string& value) {
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void P2PMatchingReport::set_close_reason(std::string&& value) {
+  
+  close_reason_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.P2PMatchingReport.close_reason)
+}
+inline void P2PMatchingReport::set_close_reason(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.P2PMatchingReport.close_reason)
+}
+inline void P2PMatchingReport::set_close_reason(const char* value,
+    size_t size) {
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatchingReport.close_reason)
+}
+inline std::string* P2PMatchingReport::_internal_mutable_close_reason() {
+  
+  return close_reason_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* P2PMatchingReport::release_close_reason() {
+  // @@protoc_insertion_point(field_release:proto.P2PMatchingReport.close_reason)
+  return close_reason_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void P2PMatchingReport::set_allocated_close_reason(std::string* close_reason) {
+  if (close_reason != nullptr) {
+    
+  } else {
+    
+  }
+  close_reason_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), close_reason,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.P2PMatchingReport.close_reason)
+}
+
+// int32 frame_count = 6;
+inline void P2PMatchingReport::clear_frame_count() {
+  frame_count_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::_internal_frame_count() const {
+  return frame_count_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::frame_count() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.frame_count)
+  return _internal_frame_count();
+}
+inline void P2PMatchingReport::_internal_set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  frame_count_ = value;
+}
+inline void P2PMatchingReport::set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_frame_count(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.frame_count)
+}
+
+// repeated string logs = 10;
+inline int P2PMatchingReport::_internal_logs_size() const {
+  return logs_.size();
+}
+inline int P2PMatchingReport::logs_size() const {
+  return _internal_logs_size();
+}
+inline void P2PMatchingReport::clear_logs() {
+  logs_.Clear();
+}
+inline std::string* P2PMatchingReport::add_logs() {
+  // @@protoc_insertion_point(field_add_mutable:proto.P2PMatchingReport.logs)
+  return _internal_add_logs();
+}
+inline const std::string& P2PMatchingReport::_internal_logs(int index) const {
+  return logs_.Get(index);
+}
+inline const std::string& P2PMatchingReport::logs(int index) const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.logs)
+  return _internal_logs(index);
+}
+inline std::string* P2PMatchingReport::mutable_logs(int index) {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatchingReport.logs)
+  return logs_.Mutable(index);
+}
+inline void P2PMatchingReport::set_logs(int index, const std::string& value) {
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.logs)
+  logs_.Mutable(index)->assign(value);
+}
+inline void P2PMatchingReport::set_logs(int index, std::string&& value) {
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.logs)
+  logs_.Mutable(index)->assign(std::move(value));
+}
+inline void P2PMatchingReport::set_logs(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  logs_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:proto.P2PMatchingReport.logs)
+}
+inline void P2PMatchingReport::set_logs(int index, const char* value, size_t size) {
+  logs_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatchingReport.logs)
+}
+inline std::string* P2PMatchingReport::_internal_add_logs() {
+  return logs_.Add();
+}
+inline void P2PMatchingReport::add_logs(const std::string& value) {
+  logs_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:proto.P2PMatchingReport.logs)
+}
+inline void P2PMatchingReport::add_logs(std::string&& value) {
+  logs_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:proto.P2PMatchingReport.logs)
+}
+inline void P2PMatchingReport::add_logs(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  logs_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:proto.P2PMatchingReport.logs)
+}
+inline void P2PMatchingReport::add_logs(const char* value, size_t size) {
+  logs_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:proto.P2PMatchingReport.logs)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
+P2PMatchingReport::logs() const {
+  // @@protoc_insertion_point(field_list:proto.P2PMatchingReport.logs)
+  return logs_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
+P2PMatchingReport::mutable_logs() {
+  // @@protoc_insertion_point(field_mutable_list:proto.P2PMatchingReport.logs)
+  return &logs_;
+}
+
+// -------------------------------------------------------------------
+
 // P2PMatching
 
 // string battle_code = 1;
@@ -5804,6 +6322,8 @@ inline void Packet::set_allocated_hello_lbs_data(::proto::HelloLbsMessage* hello
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

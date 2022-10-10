@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
-#include <deque>
 #include <string>
 
 #include "gdxsv.pb.h"
@@ -10,6 +8,7 @@
 #include "gdxsv_backend_rollback.h"
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
+#include "log/InMemoryListener.h"
 #include "network/miniupnp.h"
 #include "types.h"
 
@@ -24,12 +23,13 @@ class Gdxsv {
 	};
 
 	Gdxsv()
-		: lbs_net(symbols),
+		: upnp_port(0),
+		  udp_port(0),
+		  lbs_net(symbols),
 		  udp_net(symbols, maxlag),
 		  replay_net(symbols, maxlag),
 		  rollback_net(symbols, maxlag, maxrebattle),
-		  upnp_port(0),
-		  udp_port(0){};
+		  in_memory_log(100) {}
 
 	bool Enabled() const;
 
@@ -68,6 +68,10 @@ class Gdxsv {
 
 	std::string GeneratePlatformInfoString();
 
+	std::vector<u8> GenerateP2PMatchReportPacket();
+
+	LbsMessage GenerateP2PMatchReportMessage();
+
 	void ApplyOnlinePatch(bool first_time);
 
 	void WritePatchDisk1();
@@ -92,8 +96,8 @@ class Gdxsv {
 	int udp_port;
 	std::string user_id;
 
-	UdpRemote lbs_remote;
-	UdpClient udp;
+	UdpRemote lbs_remote = {};
+	UdpClient udp = {};
 
 	proto::GamePatchList patch_list;
 
@@ -104,6 +108,7 @@ class Gdxsv {
 
 	std::atomic<bool> gcp_ping_test_finished;
 	std::map<std::string, int> gcp_ping_test_result;
+	InMemoryListener in_memory_log;
 };
 
 extern Gdxsv gdxsv;

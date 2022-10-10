@@ -41,8 +41,10 @@ class LbsMessage {
 	static const u16 lbsAskMcsVersion = 0x6917;
 	static const u16 lbsLogout = 0x6002;
 	static const u16 lbsShutdown = 0x6003;
+	static const u16 lbsPlatformInfo = 0x9950;
 	static const u16 lbsGamePatch = 0x9960;
 	static const u16 lbsP2PMatching = 0x9961;
+	static const u16 lbsP2PMatchingReport = 0x9962;
 	static const u16 lbsBattleUserCount = 0x9965;
 
 	int Serialize(std::deque<u8> &buf) const {
@@ -110,6 +112,16 @@ class LbsMessage {
 	}
 
 	static LbsMessage SvNotice(u16 cmd) {
+		LbsMessage msg;
+		msg.direction = ServerToClient;
+		msg.category = CategoryNotice;
+		msg.command = cmd;
+		msg.seq = 1;
+		msg.status = StatusSuccess;
+		return msg;
+	}
+
+	static LbsMessage ClNotice(u16 cmd) {
 		LbsMessage msg;
 		msg.direction = ServerToClient;
 		msg.category = CategoryNotice;

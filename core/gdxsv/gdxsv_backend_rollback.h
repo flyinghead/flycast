@@ -5,7 +5,6 @@
 
 #include "gdxsv_network.h"
 #include "lbs_message.h"
-#include "mcs_message.h"
 
 class GdxsvBackendRollback {
    public:
@@ -38,6 +37,9 @@ class GdxsvBackendRollback {
 	u32 OnSockWrite(u32 addr, u32 size);
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockPoll();
+	void SetCloseReason(const char *reason);
+	proto::P2PMatchingReport &GetReport() { return report_; }
+	void ClearReport() { report_.Clear(); }
 
    private:
 	void ApplyPatch(bool first_time);
@@ -54,6 +56,8 @@ class GdxsvBackendRollback {
 	std::deque<u8> recv_buf_;
 	LbsMessageReader lbs_tx_reader_;
 	proto::P2PMatching matching_;
+	proto::P2PMatchingReport report_;
 	UdpPingPong ping_pong_;
 	std::future<bool> start_network_;
+	std::string close_reason_;
 };

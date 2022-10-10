@@ -1,6 +1,7 @@
 #include "gdxsv.h"
 
 #include <xxhash.h>
+#include <zlib.h>
 
 #include <random>
 #include <sstream>
@@ -9,6 +10,8 @@
 #include "emulator.h"
 #include "gdxsv_translation.h"
 #include "hw/sh4/sh4_mem.h"
+#include "log/InMemoryListener.h"
+#include "log/LogManager.h"
 #include "lzma/CpuArch.h"
 #include "network/ggpo.h"
 #include "oslib/oslib.h"
@@ -24,12 +27,15 @@ void Gdxsv::DisplayOSD() { rollback_net.DisplayOSD(); }
 void Gdxsv::Reset() {
 	lbs_net.Reset();
 	udp_net.Reset();
-	RestoreOnlinePatch();
+	rollback_net.Reset();
 
 	// Automatically add ContentPath if it is empty.
 	if (config::ContentPath.get().empty()) {
 		config::ContentPath.get().push_back("./");
 	}
+
+	LogManager::GetInstance()->RegisterListener(LogListener::IN_MEMORY_LISTENER, nullptr);
+	LogManager::GetInstance()->EnableListener(LogListener::IN_MEMORY_LISTENER, false);
 
 	auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
 	if (game_id != "T13306M   ") {
@@ -37,6 +43,11 @@ void Gdxsv::Reset() {
 		return;
 	}
 	enabled = true;
+
+	LogManager::GetInstance()->RegisterListener(LogListener::IN_MEMORY_LISTENER, &in_memory_log);
+	LogManager::GetInstance()->EnableListener(LogListener::IN_MEMORY_LISTENER, true);
+	NOTICE_LOG(COMMON, "IN_MEMORY_LISTENER Enabled");
+	RestoreOnlinePatch();
 
 	server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
 	loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -220,6 +231,62 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	return packet;
 }
 
+std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
+	auto msg = GenerateP2PMatchReportMessage();
+	if (32700 <= msg.body.size()) {
+		ERROR_LOG(COMMON, "too large body");
+	} else {
+		std::deque<u8> buf;
+		msg.Serialize(buf);
+		return {buf.begin(), buf.end()};
+	}
+
+	return {};
+}
+
+LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
+	auto rbk_report = rollback_net.GetReport();
+	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
+	auto lines = in_memory_log.GetTailLines(0);
+
+	while (100 < lines.size()) {
+		lines.pop_front();
+	}
+
+	for (const auto &line : lines) {
+		*rbk_report.mutable_logs()->Add() = line;
+	}
+
+	std::string data;
+	if (rbk_report.SerializePartialToString(&data)) {
+		z_stream z{};
+		int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
+		if (ret == Z_OK) {
+			char zbuf[1024];
+			z.next_in = (Bytef *)data.c_str();
+			z.avail_in = (uInt)data.size();
+			for (;;) {
+				z.next_out = (Bytef *)zbuf;
+				z.avail_out = sizeof(zbuf);
+				ret = deflate(&z, 0 < z.avail_in ? Z_NO_FLUSH : Z_FINISH);
+				if (ret != Z_OK && ret != Z_STREAM_END) {
+					ERROR_LOG(COMMON, "zlib serialize error: %d", ret);
+					break;
+				}
+				std::copy_n(zbuf, sizeof(zbuf) - z.avail_out, std::back_inserter(msg.body));
+				if (ret == Z_STREAM_END) break;
+			}
+			deflateEnd(&z);
+		} else {
+			ERROR_LOG(COMMON, "zlib init error: %d", ret);
+		}
+	} else {
+		ERROR_LOG(COMMON, "report serialize error");
+	}
+
+	return msg;
+}
+
 void Gdxsv::HandleRPC() {
 	u32 gdx_rpc_addr = symbols["gdx_rpc"];
 	if (gdx_rpc_addr == 0) {
@@ -247,10 +314,23 @@ void Gdxsv::HandleRPC() {
 			replay_net.Open();
 		} else if (tolobby == 1) {
 			udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
+			rollback_net.SetCloseReason("cl_to_lobby");
 			rollback_net.Close();
+
 			if (lbs_net.Connect(host, port)) {
 				netmode = NetMode::Lbs;
 				lbs_net.Send(GeneratePlatformInfoPacket());
+
+				if (!rollback_net.GetReport().battle_code().empty()) {
+					const auto data = GenerateP2PMatchReportPacket();
+					if (!data.empty()) {
+						NOTICE_LOG(COMMON, "Sending matching report..");
+						lbs_net.Send(data);
+					} else {
+						NOTICE_LOG(COMMON, "Failed to generate matching report packet");
+					}
+					rollback_net.ClearReport();
+				}
 
 				lbs_remote.Open(host.c_str(), port);
 				if (udp.Bind(udp_port)) {
@@ -261,7 +341,10 @@ void Gdxsv::HandleRPC() {
 					if (config::EnableUPnP && upnp_port != udp.bind_port()) {
 						upnp_port = udp.bind_port();
 						upnp_result = std::async(std::launch::async, [this]() -> std::string {
-							return (upnp.Init() && upnp.AddPortMapping(upnp_port, false)) ? "Success" : upnp.getLastError();
+							NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", upnp_port);
+							std::string result = upnp.Init() && upnp.AddPortMapping(upnp_port, false) ? "Success" : upnp.getLastError();
+							NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", upnp_port, result.c_str());
+							return result;
 						});
 					}
 				}
@@ -292,7 +375,19 @@ void Gdxsv::HandleRPC() {
 		if (netmode == NetMode::Replay) {
 			replay_net.Close();
 		} else if (netmode == NetMode::McsRollback) {
+			lbs_net.Close();
+
+			if (gdx_rpc.param2 == 0) {
+				rollback_net.SetCloseReason("cl_app_close");
+			} else if (gdx_rpc.param2 == 1) {
+				rollback_net.SetCloseReason("cl_ppp_close");
+			} else if (gdx_rpc.param2 == 2) {
+				rollback_net.SetCloseReason("cl_soft_reset");
+			} else {
+				rollback_net.SetCloseReason("cl_tcp_close");
+			}
 			rollback_net.Close();
+
 			netmode = NetMode::Offline;
 		} else {
 			lbs_net.Close();

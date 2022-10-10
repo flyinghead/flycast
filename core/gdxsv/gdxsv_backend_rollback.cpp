@@ -83,6 +83,7 @@ void GdxsvBackendRollback::Reset() {
 	lbs_tx_reader_.Clear();
 	matching_.Clear();
 	ping_pong_.Reset();
+	report_.Clear();
 	start_network_ = std::future<bool>();
 }
 
@@ -96,6 +97,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	}
 
 	if (state_ == State::StopEmulator) {
+		NOTICE_LOG(COMMON, "StopEmulator");
 		emu.stop();
 		state_ = State::WaitPingPong;
 	}
@@ -106,6 +108,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	static auto session_start_time = std::chrono::high_resolution_clock::now();
 	if (state_ == State::StartGGPOSession) {
+		NOTICE_LOG(COMMON, "StartGGPOSession");
 		/*
 		if (matching_.peer_id() == 0) {
 			ping_pong_.DebugUnreachable(0, 1);
@@ -164,8 +167,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 						ips[i] = str;
 						ports[i] = ntohs(addr.sin_port);
 						relays[i] = true;
-					}
-					else {
+					} else {
 						NOTICE_LOG(COMMON, "Peer %d unreachable", i);
 						ok = false;
 					}
@@ -176,7 +178,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		if (ok) {
 			int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
-			config::GGPOEnable.override(1);
+			config::GGPOEnable.override(true);
 			config::GGPODelay.override(delay);
 			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports, relays);
 			ggpo::receiveChatMessages(nullptr);
@@ -200,11 +202,13 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 				emu.start();
 			} else {
 				NOTICE_LOG(COMMON, "StartNetwork failure");
+				SetCloseReason("ggpo_start_failure");
 				state_ = State::End;
 				emu.start();
 			}
 		} else if (timeout) {
 			NOTICE_LOG(COMMON, "StartNetwork timeout");
+			SetCloseReason("ggpo_start_timeout");
 			ggpo::stopSession();
 			state_ = State::End;
 			emu.start();
@@ -219,6 +223,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	// Friend save scene
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
+		SetCloseReason("game_end");
 		ggpo::stopSession();
 		state_ = State::End;
 
@@ -230,6 +235,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	// Fast return to lobby on error
 	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
+		SetCloseReason("error_fast_return");
 		ggpo::stopSession();
 		state_ = State::End;
 		gdxsv_WriteMem16(NetCountDown, 1);
@@ -251,7 +257,6 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 		NOTICE_LOG(COMMON, "RandomInput Seed=%d", seed + me);
 		ggpo::randomInput(true, seed + me, 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040);
 	}
-	Reset();
 	DummyRuleData[6] = 1;
 	DummyRuleData[7] = 0;
 	DummyRuleData[8] = 1;
@@ -260,12 +265,13 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	is_local_test_ = true;
 	maxlag_ = 0;
 	maxrebattle_ = 1;
-	matching_.set_battle_code("0123456");
-	matching_.set_peer_id(me);
-	matching_.set_session_id(12345);
-	matching_.set_timeout_min_ms(1000);
-	matching_.set_timeout_max_ms(10000);
-	matching_.set_player_count(n);
+	proto::P2PMatching matching;
+	matching.set_battle_code("0123456");
+	matching.set_peer_id(me);
+	matching.set_session_id(12345);
+	matching.set_timeout_min_ms(1000);
+	matching.set_timeout_max_ms(10000);
+	matching.set_player_count(n);
 	for (int i = 0; i < n; i++) {
 		proto::PlayerAddress player{};
 		player.set_ip("127.0.0.1");
@@ -273,24 +279,33 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 		player.set_user_id(std::to_string(i));
 		player.set_peer_id(i);
 		player.set_team(i / 2 + 1);
-		matching_.mutable_candidates()->Add(std::move(player));
+		matching.mutable_candidates()->Add(std::move(player));
 	}
-	Prepare(matching_, 20010 + me);
+	Prepare(matching, 20010 + me);
 	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
 	return true;
 }
 
 void GdxsvBackendRollback::Prepare(const proto::P2PMatching& matching, int port) {
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Prepare");
+	Reset();
+
 	matching_ = matching;
 	port_ = port;
 
-	ping_pong_.Reset();
 	for (const auto& c : matching.candidates()) {
 		if (c.peer_id() != matching_.peer_id()) {
 			ping_pong_.AddCandidate(c.user_id(), c.peer_id(), c.ip(), c.port());
 		}
 	}
 	ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_min_ms(), matching.timeout_max_ms());
+
+	report_.Clear();
+	report_.set_battle_code(matching.battle_code());
+	report_.set_session_id(matching.session_id());
+	report_.set_frame_count(0);
+	report_.set_peer_id(matching.peer_id());
+	report_.set_player_count(matching.player_count());
 }
 
 void GdxsvBackendRollback::Open() {
@@ -302,11 +317,9 @@ void GdxsvBackendRollback::Open() {
 }
 
 void GdxsvBackendRollback::Close() {
+	SetCloseReason("close");
 	ggpo::stopSession();
 	RestorePatch();
-	if (State::McsSessionExchange <= state_) {
-		Reset();
-	}
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -338,6 +351,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
 			for (int i = 0; i < matching_.player_count(); ++i) {
 				if (!ggpo::isConnected(i)) {
+					SetCloseReason("player_disconnected");
 					gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
 					ggpo::setExInput(ExInputNone);
 					break;
@@ -458,6 +472,11 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 				}
 			}
 		}
+
+		if (!ggpo::rollbacking()) {
+			report_.set_frame_count(frame);
+		}
+
 		verify(recv_buf_.size() <= size);
 	}
 
@@ -553,6 +572,12 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 		}
 
 		recv_delay_ = 1;
+	}
+}
+
+void GdxsvBackendRollback::SetCloseReason(const char* reason) {
+	if (!report_.close_reason().empty()) {
+		report_.set_close_reason(reason);
 	}
 }
 
