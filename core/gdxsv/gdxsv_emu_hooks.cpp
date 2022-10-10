@@ -47,7 +47,13 @@ void gdxsv_flycast_init() {
 			fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
 			fields.push_back({"sentry[release]", "", "", git_version});
 			
-			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", fields);
+			std::string minidump_upload_url;
+			if (git_version.find("dev") == std::string::npos)
+				minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968";
+			else
+				minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
+			
+			int result = os_UploadFilesToURL(minidump_upload_url, fields);
 			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
 			if (result != 200) {
 				unhandled_dmp.push_back(line);
