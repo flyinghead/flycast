@@ -30,18 +30,25 @@ void gdxsv_flycast_init() {
 		std::string line;
 		
 		while (std::getline(fs, line)) {
-			std::vector<UploadField> fields = {};
-			fields.push_back({"upload_file_minidump", line, "application/octet-stream"});
+			std::size_t found = line.find_last_of(",");
+			if (found == std::string::npos) continue;
+			std::string file_path = line.substr(0, found);
+			std::string git_version = line.substr(found+1);
 			
-			std::string log = line;
+			std::vector<UploadField> fields = {};
+			
+			fields.push_back({"upload_file_minidump", file_path, "application/octet-stream"});
+			
+			std::string log = file_path;
 			if (log.find(".dmp") != std::string::npos) {
 				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
 				fields.push_back({"flycast_log", log, "text/plain"});
 			}
 			fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
+			fields.push_back({"sentry[release]", "", "", git_version});
 			
 			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", fields);
-			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, line.c_str());
+			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
 			if (result != 200) {
 				unhandled_dmp.push_back(line);
 			}
@@ -68,7 +75,7 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 	if (fp == nullptr) {
 		NOTICE_LOG(COMMON, "fopen failed");
 	} else {
-		fprintf(fp, "%s%c%s.dmp\n", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
+		fprintf(fp, "%s%c%s.dmp,%s\n", dump_dir, CHAR_PATH_SEPARATOR, minidump_id, GIT_VERSION);
 		fclose(fp);
 	}
 	

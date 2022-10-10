@@ -229,22 +229,34 @@ int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& 
     
     NSMutableData* data = [NSMutableData data];
     for (auto const &field : fields) {
-        NSString *path = [NSString stringWithUTF8String:field.file_path.c_str()];
-        NSURL* fileURL = [NSURL fileURLWithPath:path relativeToURL:NULL];
         
-        if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            NSData *fileData = [[NSFileManager defaultManager] contentsAtPath:path];
+        if (field.field_value.empty()) {
+            NSString *path = [NSString stringWithUTF8String:field.file_path.c_str()];
+            NSURL* fileURL = [NSURL fileURLWithPath:path relativeToURL:NULL];
+            
+            if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+                NSData *fileData = [[NSFileManager defaultManager] contentsAtPath:path];
+                [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                [data appendData:newLine];
+                [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", field.field_name.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
+                [data appendData:newLine];
+                [data appendData:[[NSString stringWithFormat:@"Content-Type: %s", field.content_type.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
+                [data appendData:newLine];
+                [data appendData:newLine];
+                [data appendData:fileData];
+                [data appendData:newLine];
+            }
+        } else {
             [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
-            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", field.field_name.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
-            [data appendData:newLine];
-			[data appendData:[[NSString stringWithFormat:@"Content-Type: %s", field.content_type.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
+            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"", field.field_name.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
             [data appendData:newLine];
-            [data appendData:fileData];
+            [data appendData:[[NSString stringWithFormat:@"%s", field.field_value.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
         }
     }
+    
     [data appendData:[[NSString stringWithFormat:@"--%@--",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
     [request setHTTPBody:data];
 

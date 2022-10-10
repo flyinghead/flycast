@@ -1058,29 +1058,47 @@ int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& 
 	
 	for (auto const &field : fields)
 	{
-		std::size_t found = field.file_path.find_last_of("\\");
-		if (found == std::string::npos) continue;
+		std::ostringstream sbuf;
 		
-		std::ifstream input (field.file_path.c_str(), std::ios::binary);
-		if (input.good())
+		if (field.field_value.empty())
 		{
-			std::string filename = field.file_path.substr(found+1);
-			std::ostringstream sbuf;
+			std::size_t found = field.file_path.find_last_of("\\");
+			if (found == std::string::npos) continue;
+			
+			std::ifstream input (field.file_path.c_str(), std::ios::binary);
+			if (input.good())
+			{
+				std::string filename = field.file_path.substr(found+1);
+				
+				sbuf << "------BoundaryFlycastIsAwesome"
+					<< newline
+					<< "Content-Disposition: form-data; name=\"" << field.field_name << "\"; filename=\"" << filename << "\""
+					<< newline
+					<< "Content-Type: " << field.content_type
+					<< newline
+					<< newline;
+				std::string header = sbuf.str();
+				vec_buf.insert(vec_buf.end(), header.begin(), header.end());
+				
+				std::vector<uint8_t> file_buf((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+				vec_buf.insert(vec_buf.end(), file_buf.begin(), file_buf.end());
+				
+				vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
+			}
+		}
+		else
+		{
 			sbuf << "------BoundaryFlycastIsAwesome"
 				<< newline
-				<< "Content-Disposition: form-data; name=\"" << field.field_name << "\"; filename=\"" << filename << "\""
+				<< "Content-Disposition: form-data; name=\"" << field.field_name << "\""
 				<< newline
-				<< "Content-Type: " << field.content_type;
 				<< newline
+				<< field.field_value
 				<< newline;
-			std::string header = sbuf.str();
-			vec_buf.insert(vec_buf.end(), header.begin(), header.end());
-			
-			std::vector<uint8_t> file_buf((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-			vec_buf.insert(vec_buf.end(), file_buf.begin(), file_buf.end());
-			
-			vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
+			std::string field_data = sbuf.str();
+			vec_buf.insert(vec_buf.end(), field_data.begin(), field_data.end());
 		}
+		
 	}
 	const std::string endline = "------BoundaryFlycastIsAwesome--";
 	vec_buf.insert(vec_buf.end(), endline.begin(), endline.end());
