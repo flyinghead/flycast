@@ -1,11 +1,5 @@
 #include "InMemoryListener.h"
 
-InMemoryListener::InMemoryListener(int max_lines) {
-	SetEnable(true);
-	m_max_lines = max_lines;
-	m_next_line_no = 1;
-}
-
 void InMemoryListener::Log(LogTypes::LOG_LEVELS, const char* msg) {
 	if (!IsEnabled() || m_max_lines == 0)
 		return;
