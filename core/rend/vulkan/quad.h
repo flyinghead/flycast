@@ -43,8 +43,7 @@ public:
 
 	void Bind(vk::CommandBuffer commandBuffer)
 	{
-		const vk::DeviceSize zero = 0;
-		commandBuffer.bindVertexBuffers(0, 1, &buffer->buffer.get(), &zero);
+		commandBuffer.bindVertexBuffers(0, buffer->buffer.get(), {0});
 	}
 	void Draw(vk::CommandBuffer commandBuffer)
 	{

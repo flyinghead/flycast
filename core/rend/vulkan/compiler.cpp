@@ -213,5 +213,5 @@ vk::UniqueShaderModule ShaderCompiler::Compile(vk::ShaderStageFlagBits shaderSta
 	verify(ok);
 
 	return VulkanContext::Instance()->GetDevice().createShaderModuleUnique
-			(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV.size() * sizeof(unsigned int), shaderSPV.data()));
+			(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV));
 }

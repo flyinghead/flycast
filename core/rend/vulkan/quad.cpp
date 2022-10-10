@@ -82,23 +82,21 @@ void QuadPipeline::CreatePipeline()
 	  vk::PipelineColorBlendStateCreateFlags(),   // flags
 	  false,                                      // logicOpEnable
 	  vk::LogicOp::eNoOp,                         // logicOp
-	  1,                                          // attachmentCount
-	  &pipelineColorBlendAttachmentState,         // pAttachments
+	  pipelineColorBlendAttachmentState,         // attachments
 	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
-	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates), dynamicStates);
+	std::array<vk::DynamicState, 2> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
-	vk::PipelineShaderStageCreateInfo stages[] = {
-			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(rotate), "main" },
-			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(ignoreTexAlpha), "main" },
+	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
+			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(rotate), "main"),
+			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(ignoreTexAlpha), "main"),
 	};
 	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
 	(
 	  vk::PipelineCreateFlags(),                  // flags
-	  2,                                          // stageCount
-	  stages,                                     // pStages
+	  stages,                                     // stages
 	  &pipelineVertexInputStateCreateInfo,        // pVertexInputState
 	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
 	  nullptr,                                    // pTessellationState
@@ -121,14 +119,12 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 	this->shaderManager = shaderManager;
 	if (!pipelineLayout)
 	{
-		vk::DescriptorSetLayoutBinding bindings[] = {
-			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }, // texture
-		};
+		vk::DescriptorSetLayoutBinding binding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment); // texture
 		descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), binding));
 		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 4 * sizeof(float));
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get(), 1, &pushConstant));
+				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), descSetLayout.get(), pushConstant));
 	}
 	if (!linearSampler)
 	{
@@ -179,16 +175,15 @@ void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, 
 	{
 		vk::DescriptorSetLayout layout = pipeline->GetDescSetLayout();
 		descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
-				vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &layout)).front());
+				vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), layout)).front());
 	}
 	if (imageView)
 	{
 		vk::DescriptorImageInfo imageInfo(nearestFilter ? pipeline->GetNearestSampler() : pipeline->GetLinearSampler(), imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
-		context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+		vk::WriteDescriptorSet writeDescriptorSet(*descSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
+		context->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
 	}
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &descSet.get(), 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, descSet.get(), nullptr);
 
 	buffer->Update(vertices);
 	buffer->Bind(commandBuffer);

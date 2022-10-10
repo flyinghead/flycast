@@ -167,8 +167,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 #endif
 #endif
-		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names.size(), layer_names.data(),
-				vext.size(), vext.data());
+		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names, vext);
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
@@ -302,14 +301,14 @@ void VulkanContext::InitImgui()
 	if (ImGui::GetIO().Fonts->TexID == 0)
 	{
 		// Upload Fonts
-		device->resetFences(1, &(*drawFences.front()));
+		device->resetFences(*drawFences.front());
 		device->resetCommandPool(*commandPools.front(), vk::CommandPoolResetFlagBits::eReleaseResources);
 		vk::CommandBuffer& commandBuffer = *commandBuffers.front();
 		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 		ImGui_ImplVulkan_CreateFontsTexture((VkCommandBuffer)commandBuffer);
 		commandBuffer.end();
-		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &commandBuffer);
-		graphicsQueue.submit(1, &submitInfo, *drawFences.front());
+		vk::SubmitInfo submitInfo(nullptr, nullptr, commandBuffer);
+		graphicsQueue.submit(submitInfo, *drawFences.front());
 
 		device->waitIdle();
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
@@ -418,8 +417,8 @@ bool VulkanContext::InitDevice()
 		if (samplerAnisotropy)
 			features.samplerAnisotropy = true;
 		const char *layers[] = { "VK_LAYER_ARM_AGA" };
-		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
-				0, layers, deviceExtensions.size(), &deviceExtensions[0], &features));
+		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
+				layers, deviceExtensions, &features));
 
 #ifndef TARGET_IPHONE
 		// This links entry points directly from the driver and isn't absolutely necessary
@@ -431,22 +430,22 @@ bool VulkanContext::InitDevice()
 	    presentQueue = device->getQueue(presentQueueIndex, 0);
 
 	    // Descriptor pool
-        vk::DescriptorPoolSize pool_sizes[] =
+        std::array<vk::DescriptorPoolSize, 11> pool_sizes =
         {
-            { vk::DescriptorType::eSampler, 2 },
-            { vk::DescriptorType::eCombinedImageSampler, 40000 },
-            { vk::DescriptorType::eSampledImage, 2 },
-            { vk::DescriptorType::eStorageImage, 12 },
-            { vk::DescriptorType::eUniformTexelBuffer, 2 },
-			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-            { vk::DescriptorType::eUniformBuffer, 80000 },
-            { vk::DescriptorType::eStorageBuffer, 100 },
-            { vk::DescriptorType::eUniformBufferDynamic, 2 },
-            { vk::DescriptorType::eStorageBufferDynamic, 2 },
-            { vk::DescriptorType::eInputAttachment, 100 }
+            vk::DescriptorPoolSize(vk::DescriptorType::eSampler, 2),
+            vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 40000),
+            vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, 2),
+            vk::DescriptorPoolSize(vk::DescriptorType::eStorageImage, 12),
+            vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageTexelBuffer, 2),
+            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 80000),
+            vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 100),
+            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, 2),
+            vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, 2),
+            vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, 100)
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		40000, ARRAY_SIZE(pool_sizes), pool_sizes));
+	    		40000, pool_sizes));
 
 
 	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
@@ -538,7 +537,7 @@ void VulkanContext::CreateSwapChain()
 			vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
 			DEBUG_LOG(RENDERER, "Surface capabilities: %d x %d, %s, image count: %d - %d", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height,
 					vk::to_string(surfaceCapabilities.currentTransform).c_str(), surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
-			VkExtent2D swapchainExtent;
+			vk::Extent2D swapchainExtent;
 			if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 			{
 				// If the surface size is undefined, the size is set to the size of the images requested.
@@ -645,11 +644,11 @@ void VulkanContext::CreateSwapChain()
 				vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
 
 	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference,
+	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference,
 	    		nullptr, nullptr);
 
 	    renderPass = device->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-	    		1, &attachmentDescription,	1, &subpass));
+	    		attachmentDescription,	subpass));
 
 	    // Framebuffers, fences, semaphores
 
@@ -660,7 +659,7 @@ void VulkanContext::CreateSwapChain()
 	    for (auto const& view : imageViews)
 	    {
 	    	framebuffers.push_back(device->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(), *renderPass,
-	    			1, &view.get(), width, height, 1)));
+	    			view.get(), width, height, 1)));
 	    	drawFences.push_back(device->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
@@ -771,8 +770,8 @@ void VulkanContext::NewFrame()
 	if (!IsValid())
 		throw InvalidVulkanContext();
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
-	device->waitForFences(1, &(*drawFences[currentImage]), true, UINT64_MAX);
-	device->resetFences(1, &(*drawFences[currentImage]));
+	device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
+	device->resetFences(*drawFences[currentImage]);
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -785,9 +784,9 @@ void VulkanContext::BeginRenderPass()
 {
 	if (!IsValid())
 		return;
-	const vk::ClearValue clear_colors[] = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
+	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
-	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
+	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), clear_colors),
 			vk::SubpassContents::eInline);
 }
 
@@ -798,14 +797,13 @@ void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.endRenderPass();
 	commandBuffer.end();
-	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	vk::PipelineStageFlags wait_stage(vk::PipelineStageFlagBits::eColorAttachmentOutput);
 	std::vector<vk::CommandBuffer> allCmdBuffers;
 	if (overlayCmdBuffer)
 		allCmdBuffers.push_back(overlayCmdBuffer);
 	allCmdBuffers.push_back(commandBuffer);
-	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, allCmdBuffers.size(),allCmdBuffers.data(),
-			1, &(*renderCompleteSemaphores[currentSemaphore]));
-	graphicsQueue.submit(1, &submitInfo, *drawFences[currentImage]);
+	vk::SubmitInfo submitInfo(*imageAcquiredSemaphores[currentSemaphore], wait_stage, allCmdBuffers, *renderCompleteSemaphores[currentSemaphore]);
+	graphicsQueue.submit(submitInfo, *drawFences[currentImage]);
 	verify(rendering);
 	rendering = false;
 	renderDone = true;
@@ -872,7 +870,7 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 		dx = width * (1 - renderAR / screenAR) / 2;
 
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
-	commandBuffer.setViewport(0, 1, &viewport);
+	commandBuffer.setViewport(0, viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
@@ -1003,7 +1001,7 @@ void VulkanContext::term()
 #ifndef USE_SDL
 	surface.reset();
 #else
-	::vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface.release(), nullptr);
+	instance->destroySurfaceKHR(surface.release());
 #endif
 	pipelineCache.reset();
 	device.reset();
@@ -1039,7 +1037,7 @@ void VulkanContext::DoSwapAutomation()
 			vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
 					vk::Extent3D(width, height, 1), 1, 1,
 					vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
-					vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
+					vk::SharingMode::eExclusive, nullptr, vk::ImageLayout::eUndefined);
 			vk::UniqueImage dstImage = device->createImageUnique(imageCreateInfo);
 
 			vk::MemoryRequirements memReq = device->getImageMemoryRequirements(*dstImage);
@@ -1099,8 +1097,8 @@ void VulkanContext::DoSwapAutomation()
 					vk::DependencyFlags(), nullptr, nullptr, barrier);
 			cmdBuffer->end();
 			vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-			vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &cmdBuffer.get(), 0, nullptr);
-			graphicsQueue.submit(1, &submitInfo, nullptr);
+			vk::SubmitInfo submitInfo(nullptr, nullptr, cmdBuffer.get(), nullptr);
+			graphicsQueue.submit(submitInfo, nullptr);
 			graphicsQueue.waitIdle();
 
 			vk::ImageSubresource subresource(vk::ImageAspectFlagBits::eColor, 0, 0);
@@ -1141,7 +1139,7 @@ bool VulkanContext::HasSurfaceDimensionChanged() const
 {
 	vk::SurfaceCapabilitiesKHR surfaceCapabilities =
 			physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
-	VkExtent2D swapchainExtent;
+	vk::Extent2D swapchainExtent;
 	if (surfaceCapabilities.currentExtent.width == std::numeric_limits < uint32_t > ::max())
 	{
 		// If the surface size is undefined, the size is set to the size of the images requested.
