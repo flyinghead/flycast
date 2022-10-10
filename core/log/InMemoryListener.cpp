@@ -1,11 +1,11 @@
 #include "InMemoryListener.h"
 
 void InMemoryListener::Log(LogTypes::LOG_LEVELS, const char* msg) {
-	if (!IsEnabled() || m_max_lines == 0)
+	if (m_max_lines == 0)
 		return;
 
 	std::lock_guard<std::mutex> lk(m_log_lock);
-	m_log.emplace_back(m_next_line_no++, msg);
+	m_log.emplace_back(++m_line_no, msg);
 	if (m_max_lines < m_log.size() && !m_log.empty()) {
 		m_log.pop_front();
 	}
@@ -14,14 +14,10 @@ void InMemoryListener::Log(LogTypes::LOG_LEVELS, const char* msg) {
 void InMemoryListener::Clear() {
 	std::lock_guard<std::mutex> lk(m_log_lock);
 	m_log.clear();
+	m_line_no = 0;
 }
 
-int InMemoryListener::GetTailLineNo() const {
-	if (m_log.empty()) return -1;
-	return m_log.back().first;
-}
-
-std::list<std::string> InMemoryListener::GetTailLines(int start_line_no) {
+std::list<std::string> InMemoryListener::GetLines(int start_line_no, int* tail_line_no) {
 	std::lock_guard<std::mutex> lk(m_log_lock);
 	std::list<std::string> dst;
 	int i = 0;
@@ -30,5 +26,10 @@ std::list<std::string> InMemoryListener::GetTailLines(int start_line_no) {
 		dst.emplace_back(it->second);
 	}
 	std::reverse(dst.begin(), dst.end());
+	if (tail_line_no != nullptr) {
+		*tail_line_no = m_log.back().first;
+	}
 	return dst;
 }
+
+InMemoryListener inMemoryListener;

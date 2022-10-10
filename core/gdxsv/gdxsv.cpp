@@ -34,9 +34,6 @@ void Gdxsv::Reset() {
 		config::ContentPath.get().push_back("./");
 	}
 
-	LogManager::GetInstance()->RegisterListener(LogListener::IN_MEMORY_LISTENER, nullptr);
-	LogManager::GetInstance()->EnableListener(LogListener::IN_MEMORY_LISTENER, false);
-
 	auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
 	if (game_id != "T13306M   ") {
 		enabled = false;
@@ -44,8 +41,7 @@ void Gdxsv::Reset() {
 	}
 	enabled = true;
 
-	LogManager::GetInstance()->RegisterListener(LogListener::IN_MEMORY_LISTENER, &in_memory_log);
-	LogManager::GetInstance()->EnableListener(LogListener::IN_MEMORY_LISTENER, true);
+	inMemoryListener.SetMaxLines(100);
 	NOTICE_LOG(COMMON, "IN_MEMORY_LISTENER Enabled");
 	RestoreOnlinePatch();
 
@@ -247,7 +243,7 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
 	auto rbk_report = rollback_net.GetReport();
 	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
-	auto lines = in_memory_log.GetTailLines(0);
+	auto lines = inMemoryListener.GetLines(0, nullptr);
 
 	while (100 < lines.size()) {
 		lines.pop_front();
@@ -605,11 +601,13 @@ void Gdxsv::WritePatch() {
 		gdxsv_WriteMem32(symbols["disk"], (int)disk);
 	}
 
-	if (symbols["lang_patch_id"] == 0 || gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
-		symbols[":lang_patch_lang"] != (u8)GdxsvLanguage::Language()) {
-		NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"],
-				   GdxsvLanguage::Language());
+	if (disk == 2) {
+		if (symbols["lang_patch_id"] == 0 || gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
+			symbols[":lang_patch_lang"] != (u8)GdxsvLanguage::Language()) {
+			NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"],
+				GdxsvLanguage::Language());
 #include "gdxsv_translation_patch.inc"
+		}
 	}
 }
 

@@ -15,6 +15,7 @@
 #include <list>
 
 #include "ConsoleListener.h"
+#include "InMemoryListener.h"
 #include "Log.h"
 #include "StringUtil.h"
 #include "cfg/cfg.h"
@@ -151,6 +152,9 @@ LogManager::LogManager()
 	}
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
 	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+
+	RegisterListener(LogListener::IN_MEMORY_LISTENER, &inMemoryListener);
+	EnableListener(LogListener::IN_MEMORY_LISTENER, true);
 
 	for (LogContainer& container : m_log)
 	{

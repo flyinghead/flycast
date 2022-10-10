@@ -28,8 +28,7 @@ class Gdxsv {
 		  lbs_net(symbols),
 		  udp_net(symbols, maxlag),
 		  replay_net(symbols, maxlag),
-		  rollback_net(symbols, maxlag, maxrebattle),
-		  in_memory_log(100) {}
+		  rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;
 
@@ -108,7 +107,6 @@ class Gdxsv {
 
 	std::atomic<bool> gcp_ping_test_finished;
 	std::map<std::string, int> gcp_ping_test_result;
-	InMemoryListener in_memory_log;
 };
 
 extern Gdxsv gdxsv;

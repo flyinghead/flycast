@@ -10,21 +10,18 @@
 class InMemoryListener : public LogListener
 {
 public:
-	InMemoryListener(int max_lines):
-		m_enable(false),
-		m_max_lines(max_lines),
-		m_next_line_no(1) {}
+	InMemoryListener() = default;
+	~InMemoryListener() override = default;
 
 	void Log(LogTypes::LOG_LEVELS, const char* msg) override;
-	bool IsEnabled() const { return m_enable; }
-	void SetEnable(bool enable) { m_enable = enable; }
+	void SetMaxLines(int maxLines) { m_max_lines = maxLines; }
 	void Clear();
-	int GetTailLineNo() const;
-	std::list<std::string> GetTailLines(int start_line_no);
+	std::list<std::string> InMemoryListener::GetLines(int start_line_no, int* tail_line_no);
 private:
 	std::mutex m_log_lock;
 	std::list<std::pair<int, std::string>> m_log;
-	bool m_enable;
-	int m_max_lines;
-	int m_next_line_no;
+	int m_max_lines = 0;
+	int m_line_no = 0;
 };
+
+extern InMemoryListener inMemoryListener;
