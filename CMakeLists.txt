@@ -898,6 +898,8 @@ if(NOT LIBRETRO)
 	        core/log/ConsoleListenerDroid.cpp
 	        core/log/ConsoleListenerNix.cpp
 	        core/log/ConsoleListenerWin.cpp
+	        core/log/InMemoryListener.cpp
+	        core/log/InMemoryListener.h
 	        core/log/LogManager.cpp
 	        core/log/LogManager.h)
 endif()
