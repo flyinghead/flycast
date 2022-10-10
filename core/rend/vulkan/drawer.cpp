@@ -210,7 +210,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
+	cmdBuffer.bindVertexBuffers(0, buffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
@@ -249,8 +249,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			mod_base = -1;
 		}
 	}
-	const vk::DeviceSize offset = 0;
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offset);
+	cmdBuffer.bindVertexBuffers(0, buffer, {0});
 
 	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
@@ -327,9 +326,8 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
 
 	// Bind vertex and index buffers
-	const vk::DeviceSize zeroOffset[] = { 0 };
 	const vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, zeroOffset);
+	cmdBuffer.bindVertexBuffers(0, buffer, {0});
 	cmdBuffer.bindIndexBuffer(buffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 	// Make sure to push constants even if not used
@@ -458,17 +456,17 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
-	vk::ImageView imageViews[] = {
+	std::array<vk::ImageView, 2> imageViews = {
 		colorImageView,
 		depthAttachment->GetImageView(),
 	};
 	framebuffers.resize(GetContext()->GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+			rttPipelineManager->GetRenderPass(), imageViews, widthPow2, heightPow2, 1));
 
-	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
-			vk::Rect2D( { 0, 0 }, { width, height }), 2, clear_colors), vk::SubpassContents::eInline);
+			vk::Rect2D( { 0, 0 }, { width, height }), clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	u32 minX = pvrrc.fb_X_CLIP.min;
 	u32 minY = pvrrc.fb_Y_CLIP.min;
@@ -490,7 +488,7 @@ void TextureDrawer::EndRenderPass()
 	if (config::RenderToTextureBuffer)
 	{
 		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
-				vk::Extent3D(vk::Extent2D(clippedWidth, clippedHeight), 1));
+				vk::Extent3D(clippedWidth, clippedHeight, 1));
 		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
 				*colorAttachment->GetBufferData()->buffer, copyRegion);
 
@@ -513,7 +511,7 @@ void TextureDrawer::EndRenderPass()
 	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
-		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
+		GetContext()->GetDevice().waitForFences(fence, true, UINT64_MAX);
 
 		u16 *dst = (u16 *)&vram[textureAddr];
 
@@ -555,7 +553,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 	if (!renderPassLoad)
 	{
-		vk::AttachmentDescription attachmentDescriptions[] = {
+		std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
 				// Color attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
@@ -570,27 +568,25 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
 		vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-		vk::SubpassDescription subpasses[] = {
-				vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-						0, nullptr,
-						1, &colorReference,
+		vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
 						nullptr,
-						&depthReference),
-		};
+						colorReference,
+						nullptr,
+						&depthReference);
 
-		std::vector<vk::SubpassDependency> dependencies;
-		dependencies.emplace_back(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
+		vk::SubpassDependency dependency(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
 
 		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-				ARRAY_SIZE(subpasses), subpasses,
-				dependencies.size(), dependencies.data()));
+				attachmentDescriptions,
+				subpass,
+				dependency));
+
 		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
 		renderPassClear = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-				ARRAY_SIZE(subpasses), subpasses,
-				dependencies.size(), dependencies.data()));
+				attachmentDescriptions,
+				subpass,
+				dependency));
 	}
 	size_t size = GetSwapChainSize();
 	if (colorAttachments.size() > size)
@@ -602,7 +598,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	}
 	else
 	{
-		vk::ImageView attachments[] = {
+		std::array<vk::ImageView, 2> attachments = {
 				nullptr,
 				depthAttachment->GetImageView(),
 		};
@@ -614,7 +610,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 			attachments[0] = colorAttachments.back()->GetImageView();
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
-					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
+					attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 			transitionNeeded.push_back(true);
 			clearNeeded.push_back(true);
@@ -642,9 +638,9 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 
 	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] ? *renderPassClear : *renderPassLoad;
 	clearNeeded[GetCurrentImage()] = false;
-	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
-			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
+			vk::Rect2D( { 0, 0 }, viewport), clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
 
 	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);

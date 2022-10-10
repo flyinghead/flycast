@@ -57,14 +57,14 @@ public:
 	void EndFrame()
 	{
 		std::vector<vk::CommandBuffer> commandBuffers = vk::uniqueToRaw(inFlightBuffers[index]);
-		VulkanContext::Instance()->SubmitCommandBuffers((u32)commandBuffers.size(), commandBuffers.data(), *fences[index]);
+		VulkanContext::Instance()->SubmitCommandBuffers(commandBuffers, *fences[index]);
 	}
 
 	void BeginFrame()
 	{
 		index = (index + 1) % chainSize;
-		VulkanContext::Instance()->GetDevice().waitForFences(1, &fences[index].get(), true, UINT64_MAX);
-		VulkanContext::Instance()->GetDevice().resetFences(1, &fences[index].get());
+		VulkanContext::Instance()->GetDevice().waitForFences(fences[index].get(), true, UINT64_MAX);
+		VulkanContext::Instance()->GetDevice().resetFences(fences[index].get());
 		std::vector<vk::UniqueCommandBuffer>& inFlight = inFlightBuffers[index];
 		std::vector<vk::UniqueCommandBuffer>& freeBuf = freeBuffers[index];
 		std::move(inFlight.begin(), inFlight.end(), std::back_inserter(freeBuf));
