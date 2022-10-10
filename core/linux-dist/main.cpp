@@ -119,7 +119,7 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
-int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files)
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
 {
 	//Not implemented
 	return 501;

@@ -1015,7 +1015,7 @@ std::string os_FetchStringFromURL(const std::string& url)
 	return result;
 }
 
-int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files)
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
 {
 	char scheme[16], host[256], path[256];
 	URL_COMPONENTS components;
@@ -1056,21 +1056,21 @@ int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std:
 	
 	std::vector<uint8_t> vec_buf;
 	
-	for (auto const &file : files)
+	for (auto const &field : fields)
 	{
-		std::size_t found = file.second.find_last_of("\\");
+		std::size_t found = field.file_path.find_last_of("\\");
 		if (found == std::string::npos) continue;
 		
-		std::ifstream input (file.second.c_str(), std::ios::binary);
+		std::ifstream input (field.file_path.c_str(), std::ios::binary);
 		if (input.good())
 		{
-			std::string filename = file.second.substr(found+1);
+			std::string filename = field.file_path.substr(found+1);
 			std::ostringstream sbuf;
 			sbuf << "------BoundaryFlycastIsAwesome"
 				<< newline
-				<< "Content-Disposition: form-data; name=\"" << file.first << "\"; filename=\"" << filename << "\""
+				<< "Content-Disposition: form-data; name=\"" << field.field_name << "\"; filename=\"" << filename << "\""
 				<< newline
-				<< "Content-Type: application/octet-stream"
+				<< "Content-Type: " << field.content_type;
 				<< newline
 				<< newline;
 			std::string header = sbuf.str();

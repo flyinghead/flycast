@@ -30,17 +30,17 @@ void gdxsv_flycast_init() {
 		std::string line;
 		
 		while (std::getline(fs, line)) {
-			std::map<std::string, std::string> files = {};
-			files["upload_file_minidump"] = line;
+			std::vector<UploadField> fields = {};
+			fields.push_back({"upload_file_minidump", line, "application/octet-stream"});
 			
 			std::string log = line;
 			if (log.find(".dmp") != std::string::npos) {
 				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
-				files["flycast_log"] = log;
+				fields.push_back({"flycast_log", log, "text/plain"});
 			}
-			files["emu_cfg"] = get_writable_config_path("emu.cfg");
+			fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
 			
-			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", files);
+			int result = os_UploadFilesToURL("https://o4503934635540480.ingest.sentry.io/api/4503936127270912/minidump/?sentry_key=3da24b2132294f8d9e02a11a5e3db8ec", fields);
 			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, line.c_str());
 			if (result != 200) {
 				unhandled_dmp.push_back(line);

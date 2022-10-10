@@ -214,7 +214,7 @@ std::string os_FetchStringFromURL(const std::string& url) {
     return result;
 }
 
-int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files) {
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields) {
     dispatch_semaphore_t sem = dispatch_semaphore_create(0);
     __block int result;
 
@@ -228,17 +228,17 @@ int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std:
     
     
     NSMutableData* data = [NSMutableData data];
-    for (auto const &file : files) {
-        NSString *path = [NSString stringWithUTF8String:file.second.c_str()];
+    for (auto const &field : fields) {
+        NSString *path = [NSString stringWithUTF8String:field.file_path.c_str()];
         NSURL* fileURL = [NSURL fileURLWithPath:path relativeToURL:NULL];
         
         if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
             NSData *fileData = [[NSFileManager defaultManager] contentsAtPath:path];
             [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
-            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", file.first.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
+            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", field.field_name.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
-            [data appendData: [@"Content-Type: application/octet-stream" dataUsingEncoding:NSUTF8StringEncoding]];
+			[data appendData:[[NSString stringWithFormat:@"Content-Type: %s", field.content_type.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
             [data appendData:newLine];
             [data appendData:newLine];
             [data appendData:fileData];

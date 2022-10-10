@@ -16,7 +16,12 @@ void os_UninstallFaultHandler();
 
 void os_LaunchFromURL(const std::string& url);
 std::string os_FetchStringFromURL(const std::string& url);
-int os_UploadFilesToURL(const std::string& url, const std::map<std::string, std::string>& files);
+struct UploadField {
+  std::string field_name;
+  std::string file_path;
+  std::string content_type;
+};
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields);
 std::string os_GetMachineID();
 std::string os_GetConnectionMedium();
 
