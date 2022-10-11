@@ -25,6 +25,10 @@ extern PROTOBUF_INTERNAL_EXPORT_gdxsv_2eproto ::PROTOBUF_NAMESPACE_ID::internal:
 extern PROTOBUF_INTERNAL_EXPORT_gdxsv_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_PlayerAddress_gdxsv_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_gdxsv_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_PongMessage_gdxsv_2eproto;
 namespace proto {
+class P2PMatchingReportDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<P2PMatchingReport> _instance;
+} _P2PMatchingReport_default_instance_;
 class P2PMatchingDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<P2PMatching> _instance;
@@ -228,6 +232,20 @@ static void InitDefaultsscc_info_P2PMatching_gdxsv_2eproto() {
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_P2PMatching_gdxsv_2eproto}, {
       &scc_info_PlayerAddress_gdxsv_2eproto.base,}};
 
+static void InitDefaultsscc_info_P2PMatchingReport_gdxsv_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::proto::_P2PMatchingReport_default_instance_;
+    new (ptr) ::proto::P2PMatchingReport();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::proto::P2PMatchingReport::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_P2PMatchingReport_gdxsv_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_P2PMatchingReport_gdxsv_2eproto}, {}};
+
 static void InitDefaultsscc_info_Packet_gdxsv_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -290,11 +308,23 @@ static void InitDefaultsscc_info_PongMessage_gdxsv_2eproto() {
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_PongMessage_gdxsv_2eproto =
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_PongMessage_gdxsv_2eproto}, {}};
 
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_gdxsv_2eproto[14];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_gdxsv_2eproto[15];
 static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_gdxsv_2eproto[1];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_gdxsv_2eproto = nullptr;
 
 const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_gdxsv_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, battle_code_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, session_id_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, player_count_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, peer_id_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, close_reason_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, frame_count_),
+  PROTOBUF_FIELD_OFFSET(::proto::P2PMatchingReport, logs_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::proto::P2PMatching, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -433,23 +463,25 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_gdxsv_2eproto::offsets[] PROTO
   PROTOBUF_FIELD_OFFSET(::proto::Packet, hello_lbs_data_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::proto::P2PMatching)},
-  { 12, -1, sizeof(::proto::PlayerAddress)},
-  { 22, -1, sizeof(::proto::GamePatch)},
-  { 31, -1, sizeof(::proto::GamePatchCode)},
-  { 40, -1, sizeof(::proto::GamePatchList)},
-  { 46, -1, sizeof(::proto::BattleLogUser)},
-  { 63, -1, sizeof(::proto::BattleLogFile)},
-  { 78, -1, sizeof(::proto::BattleMessage)},
-  { 86, -1, sizeof(::proto::PingMessage)},
-  { 93, -1, sizeof(::proto::PongMessage)},
-  { 101, -1, sizeof(::proto::HelloServerMessage)},
-  { 109, -1, sizeof(::proto::FinMessage)},
-  { 115, -1, sizeof(::proto::HelloLbsMessage)},
-  { 121, -1, sizeof(::proto::Packet)},
+  { 0, -1, sizeof(::proto::P2PMatchingReport)},
+  { 12, -1, sizeof(::proto::P2PMatching)},
+  { 24, -1, sizeof(::proto::PlayerAddress)},
+  { 34, -1, sizeof(::proto::GamePatch)},
+  { 43, -1, sizeof(::proto::GamePatchCode)},
+  { 52, -1, sizeof(::proto::GamePatchList)},
+  { 58, -1, sizeof(::proto::BattleLogUser)},
+  { 75, -1, sizeof(::proto::BattleLogFile)},
+  { 90, -1, sizeof(::proto::BattleMessage)},
+  { 98, -1, sizeof(::proto::PingMessage)},
+  { 105, -1, sizeof(::proto::PongMessage)},
+  { 113, -1, sizeof(::proto::HelloServerMessage)},
+  { 121, -1, sizeof(::proto::FinMessage)},
+  { 127, -1, sizeof(::proto::HelloLbsMessage)},
+  { 133, -1, sizeof(::proto::Packet)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::proto::_P2PMatchingReport_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::proto::_P2PMatching_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::proto::_PlayerAddress_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::proto::_GamePatch_default_instance_),
@@ -467,57 +499,61 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_gdxsv_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\013gdxsv.proto\022\005proto\"\267\001\n\013P2PMatching\022\023\n\013"
-  "battle_code\030\001 \001(\t\022\022\n\nsession_id\030\002 \001(\005\022\024\n"
-  "\014player_count\030\003 \001(\005\022\017\n\007peer_id\030\004 \001(\005\022\026\n\016"
-  "timeout_min_ms\030\005 \001(\005\022\026\n\016timeout_max_ms\030\006"
-  " \001(\005\022(\n\ncandidates\030\n \003(\0132\024.proto.PlayerA"
-  "ddress\"Y\n\rPlayerAddress\022\017\n\007user_id\030\001 \001(\t"
-  "\022\017\n\007peer_id\030\002 \001(\005\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030\004 "
-  "\001(\005\022\014\n\004team\030\005 \001(\005\"e\n\tGamePatch\022\021\n\tgame_d"
-  "isk\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\022\n\nwrite_once\030\004 "
-  "\001(\010\022#\n\005codes\030\n \003(\0132\024.proto.GamePatchCode"
-  "\"Q\n\rGamePatchCode\022\014\n\004size\030\001 \001(\005\022\017\n\007addre"
-  "ss\030\002 \001(\r\022\020\n\010original\030\003 \001(\r\022\017\n\007changed\030\004 "
-  "\001(\r\"2\n\rGamePatchList\022!\n\007patches\030\001 \003(\0132\020."
-  "proto.GamePatch\"\354\001\n\rBattleLogUser\022\017\n\007use"
-  "r_id\030\001 \001(\t\022\021\n\tuser_name\030\002 \001(\t\022\022\n\npilot_n"
-  "ame\030\003 \001(\t\022\022\n\ngame_param\030\004 \001(\014\022\024\n\014battle_"
-  "count\030\005 \001(\005\022\021\n\twin_count\030\006 \001(\005\022\022\n\nlose_c"
-  "ount\030\007 \001(\005\022\r\n\005grade\030\010 \001(\005\022\014\n\004team\030\t \001(\005\022"
-  "\020\n\010platform\030\n \001(\t\022\026\n\016user_name_sjis\030\013 \001("
-  "\014\022\013\n\003pos\030\014 \001(\005\"\217\002\n\rBattleLogFile\022\021\n\tgame"
-  "_disk\030\005 \001(\t\022\025\n\rgdxsv_version\030\002 \001(\t\022\023\n\013ba"
-  "ttle_code\030\003 \001(\t\022\030\n\020log_file_version\030\004 \001("
-  "\005\022!\n\007patches\030\007 \003(\0132\020.proto.GamePatch\022\020\n\010"
-  "rule_bin\030\n \001(\014\022#\n\005users\030\013 \003(\0132\024.proto.Ba"
-  "ttleLogUser\022)\n\013battle_data\030\014 \003(\0132\024.proto"
-  ".BattleMessage\022\020\n\010start_at\030\024 \001(\003\022\016\n\006end_"
-  "at\030\025 \001(\003\";\n\rBattleMessage\022\017\n\007user_id\030\001 \001"
-  "(\t\022\013\n\003seq\030\002 \001(\r\022\014\n\004body\030\003 \001(\014\"1\n\013PingMes"
-  "sage\022\021\n\ttimestamp\030\001 \001(\003\022\017\n\007user_id\030\002 \001(\t"
-  "\"F\n\013PongMessage\022\021\n\ttimestamp\030\001 \001(\003\022\017\n\007us"
-  "er_id\030\002 \001(\t\022\023\n\013public_addr\030\003 \001(\t\"P\n\022Hell"
-  "oServerMessage\022\035\n\025session_id_deprecated\030"
-  "\001 \001(\t\022\n\n\002ok\030\002 \001(\010\022\017\n\007user_id\030\003 \001(\t\"\034\n\nFi"
-  "nMessage\022\016\n\006detail\030\001 \001(\t\"\"\n\017HelloLbsMess"
-  "age\022\017\n\007user_id\030\001 \001(\t\"\334\002\n\006Packet\022 \n\004type\030"
-  "\001 \001(\0162\022.proto.MessageType\022\013\n\003seq\030\002 \001(\r\022\013"
-  "\n\003ack\030\003 \001(\r\022\022\n\nsession_id\030\005 \001(\t\0224\n\021hello"
-  "_server_data\030\n \001(\0132\031.proto.HelloServerMe"
-  "ssage\022%\n\tping_data\030\013 \001(\0132\022.proto.PingMes"
-  "sage\022%\n\tpong_data\030\014 \001(\0132\022.proto.PongMess"
-  "age\022)\n\013battle_data\030\r \003(\0132\024.proto.BattleM"
-  "essage\022#\n\010fin_data\030\016 \001(\0132\021.proto.FinMess"
-  "age\022.\n\016hello_lbs_data\030\017 \001(\0132\026.proto.Hell"
-  "oLbsMessage*_\n\013MessageType\022\010\n\004None\020\000\022\017\n\013"
-  "HelloServer\020\001\022\010\n\004Ping\020\002\022\010\n\004Pong\020\003\022\n\n\006Bat"
-  "tle\020\004\022\007\n\003Fin\020\005\022\014\n\010HelloLbs\020\nB\rZ\013gdxsv/pr"
-  "otob\006proto3"
+  "\n\013gdxsv.proto\022\005proto\"\234\001\n\021P2PMatchingRepo"
+  "rt\022\023\n\013battle_code\030\001 \001(\t\022\022\n\nsession_id\030\002 "
+  "\001(\005\022\024\n\014player_count\030\003 \001(\005\022\017\n\007peer_id\030\004 \001"
+  "(\005\022\024\n\014close_reason\030\005 \001(\t\022\023\n\013frame_count\030"
+  "\006 \001(\005\022\014\n\004logs\030\n \003(\t\"\267\001\n\013P2PMatching\022\023\n\013b"
+  "attle_code\030\001 \001(\t\022\022\n\nsession_id\030\002 \001(\005\022\024\n\014"
+  "player_count\030\003 \001(\005\022\017\n\007peer_id\030\004 \001(\005\022\026\n\016t"
+  "imeout_min_ms\030\005 \001(\005\022\026\n\016timeout_max_ms\030\006 "
+  "\001(\005\022(\n\ncandidates\030\n \003(\0132\024.proto.PlayerAd"
+  "dress\"Y\n\rPlayerAddress\022\017\n\007user_id\030\001 \001(\t\022"
+  "\017\n\007peer_id\030\002 \001(\005\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030\004 \001"
+  "(\005\022\014\n\004team\030\005 \001(\005\"e\n\tGamePatch\022\021\n\tgame_di"
+  "sk\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\022\n\nwrite_once\030\004 \001"
+  "(\010\022#\n\005codes\030\n \003(\0132\024.proto.GamePatchCode\""
+  "Q\n\rGamePatchCode\022\014\n\004size\030\001 \001(\005\022\017\n\007addres"
+  "s\030\002 \001(\r\022\020\n\010original\030\003 \001(\r\022\017\n\007changed\030\004 \001"
+  "(\r\"2\n\rGamePatchList\022!\n\007patches\030\001 \003(\0132\020.p"
+  "roto.GamePatch\"\354\001\n\rBattleLogUser\022\017\n\007user"
+  "_id\030\001 \001(\t\022\021\n\tuser_name\030\002 \001(\t\022\022\n\npilot_na"
+  "me\030\003 \001(\t\022\022\n\ngame_param\030\004 \001(\014\022\024\n\014battle_c"
+  "ount\030\005 \001(\005\022\021\n\twin_count\030\006 \001(\005\022\022\n\nlose_co"
+  "unt\030\007 \001(\005\022\r\n\005grade\030\010 \001(\005\022\014\n\004team\030\t \001(\005\022\020"
+  "\n\010platform\030\n \001(\t\022\026\n\016user_name_sjis\030\013 \001(\014"
+  "\022\013\n\003pos\030\014 \001(\005\"\217\002\n\rBattleLogFile\022\021\n\tgame_"
+  "disk\030\005 \001(\t\022\025\n\rgdxsv_version\030\002 \001(\t\022\023\n\013bat"
+  "tle_code\030\003 \001(\t\022\030\n\020log_file_version\030\004 \001(\005"
+  "\022!\n\007patches\030\007 \003(\0132\020.proto.GamePatch\022\020\n\010r"
+  "ule_bin\030\n \001(\014\022#\n\005users\030\013 \003(\0132\024.proto.Bat"
+  "tleLogUser\022)\n\013battle_data\030\014 \003(\0132\024.proto."
+  "BattleMessage\022\020\n\010start_at\030\024 \001(\003\022\016\n\006end_a"
+  "t\030\025 \001(\003\";\n\rBattleMessage\022\017\n\007user_id\030\001 \001("
+  "\t\022\013\n\003seq\030\002 \001(\r\022\014\n\004body\030\003 \001(\014\"1\n\013PingMess"
+  "age\022\021\n\ttimestamp\030\001 \001(\003\022\017\n\007user_id\030\002 \001(\t\""
+  "F\n\013PongMessage\022\021\n\ttimestamp\030\001 \001(\003\022\017\n\007use"
+  "r_id\030\002 \001(\t\022\023\n\013public_addr\030\003 \001(\t\"P\n\022Hello"
+  "ServerMessage\022\035\n\025session_id_deprecated\030\001"
+  " \001(\t\022\n\n\002ok\030\002 \001(\010\022\017\n\007user_id\030\003 \001(\t\"\034\n\nFin"
+  "Message\022\016\n\006detail\030\001 \001(\t\"\"\n\017HelloLbsMessa"
+  "ge\022\017\n\007user_id\030\001 \001(\t\"\334\002\n\006Packet\022 \n\004type\030\001"
+  " \001(\0162\022.proto.MessageType\022\013\n\003seq\030\002 \001(\r\022\013\n"
+  "\003ack\030\003 \001(\r\022\022\n\nsession_id\030\005 \001(\t\0224\n\021hello_"
+  "server_data\030\n \001(\0132\031.proto.HelloServerMes"
+  "sage\022%\n\tping_data\030\013 \001(\0132\022.proto.PingMess"
+  "age\022%\n\tpong_data\030\014 \001(\0132\022.proto.PongMessa"
+  "ge\022)\n\013battle_data\030\r \003(\0132\024.proto.BattleMe"
+  "ssage\022#\n\010fin_data\030\016 \001(\0132\021.proto.FinMessa"
+  "ge\022.\n\016hello_lbs_data\030\017 \001(\0132\026.proto.Hello"
+  "LbsMessage*_\n\013MessageType\022\010\n\004None\020\000\022\017\n\013H"
+  "elloServer\020\001\022\010\n\004Ping\020\002\022\010\n\004Pong\020\003\022\n\n\006Batt"
+  "le\020\004\022\007\n\003Fin\020\005\022\014\n\010HelloLbs\020\nB\rZ\013gdxsv/pro"
+  "tob\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_gdxsv_2eproto_deps[1] = {
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_gdxsv_2eproto_sccs[14] = {
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_gdxsv_2eproto_sccs[15] = {
   &scc_info_BattleLogFile_gdxsv_2eproto.base,
   &scc_info_BattleLogUser_gdxsv_2eproto.base,
   &scc_info_BattleMessage_gdxsv_2eproto.base,
@@ -528,6 +564,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_gdx
   &scc_info_HelloLbsMessage_gdxsv_2eproto.base,
   &scc_info_HelloServerMessage_gdxsv_2eproto.base,
   &scc_info_P2PMatching_gdxsv_2eproto.base,
+  &scc_info_P2PMatchingReport_gdxsv_2eproto.base,
   &scc_info_Packet_gdxsv_2eproto.base,
   &scc_info_PingMessage_gdxsv_2eproto.base,
   &scc_info_PlayerAddress_gdxsv_2eproto.base,
@@ -535,10 +572,10 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_gdx
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_gdxsv_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_gdxsv_2eproto = {
-  false, false, descriptor_table_protodef_gdxsv_2eproto, "gdxsv.proto", 1851,
-  &descriptor_table_gdxsv_2eproto_once, descriptor_table_gdxsv_2eproto_sccs, descriptor_table_gdxsv_2eproto_deps, 14, 0,
+  false, false, descriptor_table_protodef_gdxsv_2eproto, "gdxsv.proto", 2010,
+  &descriptor_table_gdxsv_2eproto_once, descriptor_table_gdxsv_2eproto_sccs, descriptor_table_gdxsv_2eproto_deps, 15, 0,
   schemas, file_default_instances, TableStruct_gdxsv_2eproto::offsets,
-  file_level_metadata_gdxsv_2eproto, 14, file_level_enum_descriptors_gdxsv_2eproto, file_level_service_descriptors_gdxsv_2eproto,
+  file_level_metadata_gdxsv_2eproto, 15, file_level_enum_descriptors_gdxsv_2eproto, file_level_service_descriptors_gdxsv_2eproto,
 };
 
 // Force running AddDescriptors() at dynamic initialization time.
@@ -561,6 +598,397 @@ bool MessageType_IsValid(int value) {
     default:
       return false;
   }
+}
+
+
+// ===================================================================
+
+void P2PMatchingReport::InitAsDefaultInstance() {
+}
+class P2PMatchingReport::_Internal {
+ public:
+};
+
+P2PMatchingReport::P2PMatchingReport(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  logs_(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:proto.P2PMatchingReport)
+}
+P2PMatchingReport::P2PMatchingReport(const P2PMatchingReport& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
+      logs_(from.logs_) {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  battle_code_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_battle_code().empty()) {
+    battle_code_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_battle_code(),
+      GetArena());
+  }
+  close_reason_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_close_reason().empty()) {
+    close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_close_reason(),
+      GetArena());
+  }
+  ::memcpy(&session_id_, &from.session_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&frame_count_) -
+    reinterpret_cast<char*>(&session_id_)) + sizeof(frame_count_));
+  // @@protoc_insertion_point(copy_constructor:proto.P2PMatchingReport)
+}
+
+void P2PMatchingReport::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_P2PMatchingReport_gdxsv_2eproto.base);
+  battle_code_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  close_reason_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  ::memset(&session_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&frame_count_) -
+      reinterpret_cast<char*>(&session_id_)) + sizeof(frame_count_));
+}
+
+P2PMatchingReport::~P2PMatchingReport() {
+  // @@protoc_insertion_point(destructor:proto.P2PMatchingReport)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void P2PMatchingReport::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  battle_code_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  close_reason_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+void P2PMatchingReport::ArenaDtor(void* object) {
+  P2PMatchingReport* _this = reinterpret_cast< P2PMatchingReport* >(object);
+  (void)_this;
+}
+void P2PMatchingReport::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void P2PMatchingReport::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const P2PMatchingReport& P2PMatchingReport::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_P2PMatchingReport_gdxsv_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void P2PMatchingReport::Clear() {
+// @@protoc_insertion_point(message_clear_start:proto.P2PMatchingReport)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  logs_.Clear();
+  battle_code_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  close_reason_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::memset(&session_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&frame_count_) -
+      reinterpret_cast<char*>(&session_id_)) + sizeof(frame_count_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* P2PMatchingReport::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // string battle_code = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_battle_code();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "proto.P2PMatchingReport.battle_code"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 session_id = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          session_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 player_count = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          player_count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 peer_id = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
+          peer_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string close_reason = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          auto str = _internal_mutable_close_reason();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "proto.P2PMatchingReport.close_reason"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 frame_count = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48)) {
+          frame_count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated string logs = 10;
+      case 10:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 82)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            auto str = _internal_add_logs();
+            ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+            CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "proto.P2PMatchingReport.logs"));
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<82>(ptr));
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* P2PMatchingReport::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:proto.P2PMatchingReport)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string battle_code = 1;
+  if (this->battle_code().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_battle_code().data(), static_cast<int>(this->_internal_battle_code().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "proto.P2PMatchingReport.battle_code");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_battle_code(), target);
+  }
+
+  // int32 session_id = 2;
+  if (this->session_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_session_id(), target);
+  }
+
+  // int32 player_count = 3;
+  if (this->player_count() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(3, this->_internal_player_count(), target);
+  }
+
+  // int32 peer_id = 4;
+  if (this->peer_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(4, this->_internal_peer_id(), target);
+  }
+
+  // string close_reason = 5;
+  if (this->close_reason().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_close_reason().data(), static_cast<int>(this->_internal_close_reason().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "proto.P2PMatchingReport.close_reason");
+    target = stream->WriteStringMaybeAliased(
+        5, this->_internal_close_reason(), target);
+  }
+
+  // int32 frame_count = 6;
+  if (this->frame_count() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(6, this->_internal_frame_count(), target);
+  }
+
+  // repeated string logs = 10;
+  for (int i = 0, n = this->_internal_logs_size(); i < n; i++) {
+    const auto& s = this->_internal_logs(i);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      s.data(), static_cast<int>(s.length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "proto.P2PMatchingReport.logs");
+    target = stream->WriteString(10, s, target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:proto.P2PMatchingReport)
+  return target;
+}
+
+size_t P2PMatchingReport::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:proto.P2PMatchingReport)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // repeated string logs = 10;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(logs_.size());
+  for (int i = 0, n = logs_.size(); i < n; i++) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+      logs_.Get(i));
+  }
+
+  // string battle_code = 1;
+  if (this->battle_code().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_battle_code());
+  }
+
+  // string close_reason = 5;
+  if (this->close_reason().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_close_reason());
+  }
+
+  // int32 session_id = 2;
+  if (this->session_id() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_session_id());
+  }
+
+  // int32 player_count = 3;
+  if (this->player_count() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_player_count());
+  }
+
+  // int32 peer_id = 4;
+  if (this->peer_id() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_peer_id());
+  }
+
+  // int32 frame_count = 6;
+  if (this->frame_count() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_frame_count());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void P2PMatchingReport::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:proto.P2PMatchingReport)
+  GOOGLE_DCHECK_NE(&from, this);
+  const P2PMatchingReport* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<P2PMatchingReport>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:proto.P2PMatchingReport)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:proto.P2PMatchingReport)
+    MergeFrom(*source);
+  }
+}
+
+void P2PMatchingReport::MergeFrom(const P2PMatchingReport& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:proto.P2PMatchingReport)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  logs_.MergeFrom(from.logs_);
+  if (from.battle_code().size() > 0) {
+    _internal_set_battle_code(from._internal_battle_code());
+  }
+  if (from.close_reason().size() > 0) {
+    _internal_set_close_reason(from._internal_close_reason());
+  }
+  if (from.session_id() != 0) {
+    _internal_set_session_id(from._internal_session_id());
+  }
+  if (from.player_count() != 0) {
+    _internal_set_player_count(from._internal_player_count());
+  }
+  if (from.peer_id() != 0) {
+    _internal_set_peer_id(from._internal_peer_id());
+  }
+  if (from.frame_count() != 0) {
+    _internal_set_frame_count(from._internal_frame_count());
+  }
+}
+
+void P2PMatchingReport::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:proto.P2PMatchingReport)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void P2PMatchingReport::CopyFrom(const P2PMatchingReport& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:proto.P2PMatchingReport)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool P2PMatchingReport::IsInitialized() const {
+  return true;
+}
+
+void P2PMatchingReport::InternalSwap(P2PMatchingReport* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  logs_.InternalSwap(&other->logs_);
+  battle_code_.Swap(&other->battle_code_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  close_reason_.Swap(&other->close_reason_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(P2PMatchingReport, frame_count_)
+      + sizeof(P2PMatchingReport::frame_count_)
+      - PROTOBUF_FIELD_OFFSET(P2PMatchingReport, session_id_)>(
+          reinterpret_cast<char*>(&session_id_),
+          reinterpret_cast<char*>(&other->session_id_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata P2PMatchingReport::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -5098,6 +5526,9 @@ void Packet::InternalSwap(Packet* other) {
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace proto
 PROTOBUF_NAMESPACE_OPEN
+template<> PROTOBUF_NOINLINE ::proto::P2PMatchingReport* Arena::CreateMaybeMessage< ::proto::P2PMatchingReport >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::proto::P2PMatchingReport >(arena);
+}
 template<> PROTOBUF_NOINLINE ::proto::P2PMatching* Arena::CreateMaybeMessage< ::proto::P2PMatching >(Arena* arena) {
   return Arena::CreateMessageInternal< ::proto::P2PMatching >(arena);
 }

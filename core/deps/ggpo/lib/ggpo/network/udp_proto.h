@@ -71,7 +71,7 @@ public:
    UdpProtocol();
    virtual ~UdpProtocol();
 
-   void Init(Udp *udp, Poll &p, int queue, char *ip, u_short port, UdpMsg::connect_status *status);
+   void Init(Udp *udp, Poll &p, int queue, char *ip, u_short port, bool relay, UdpMsg::connect_status *status);
 
    void Synchronize();
    bool GetPeerConnectStatus(int id, int *frame);
@@ -84,6 +84,7 @@ public:
    void OnMsg(UdpMsg *msg, int len);
    void Disconnect();
    void SendAppData(const void *data, int len, bool spectators);
+   void SendUnmanagedMsg(UdpMsg* msg, int len);
   
    void GetNetworkStats(struct GGPONetworkStats *stats);
    bool GetEvent(UdpProtocol::Event &e);
@@ -146,6 +147,7 @@ protected:
    uint16         _magic_number;
    int            _local_player_queue;
    int            _queue;
+   bool           _relay;
    uint16         _remote_magic_number;
    bool           _connected;
    int            _send_latency;
@@ -168,6 +170,7 @@ protected:
    int            _bytes_sent;
    int            _kbps_sent;
    int            _stats_start_time;
+   int            _recv_packet_loss;
 
    /*
     * The state machine

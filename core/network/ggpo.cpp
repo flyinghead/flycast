@@ -79,17 +79,13 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
+#include <random>
 #include <xxhash.h>
 #include "imgui/imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
 // #define SYNC_TEST 1
-// #define RAND_TEST 1
-
-#ifdef RAND_TEST
-#include <random>
-#endif
 
 namespace ggpo
 {
@@ -132,6 +128,10 @@ static bool useExInput;
 static int inputSize;
 static void (*eventCallback)(GGPOEvent* event);
 static void (*chatCallback)(int playerNum, const std::string& msg);
+
+static bool useRandInput;
+static u32 randInputMask;
+static std::mt19937 randSource;
 
 struct MemPages
 {
@@ -707,17 +707,13 @@ bool nextFrame()
 			throw FlycastException("GGPO error");
 	}
 
-#ifdef RAND_TEST
-	{
-		static const u32 rand_mask = 0x0004 | 0x0400 | 0x0200 | 0x0010 | 0x0040;
-		static std::mt19937 mt;
+	if (useRandInput) {
 		int frame;
 		ggpo::getCurrentFrame(&frame);
 		if (frame % 5 == 0) {
-			kcode[0] = ~(mt() & rand_mask);
+			kcode[0] = ~(randSource() & randInputMask);
 		}
 	}
-#endif
 
 	// may call save_game_state
 	do {
@@ -928,6 +924,11 @@ void displayStats()
 		ImGui::Text("%s", ping.c_str());
 		ImGui::PopStyleColor();
 
+		ImGui::Text("Loss");
+		std::string loss = std::to_string(stats.network.recv_packet_loss);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(loss.c_str()).x);
+		ImGui::Text("%s", loss.c_str());
+
 		// Send Queue
 		ImGui::Text("Send Q");
 		ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
@@ -997,7 +998,14 @@ void disconnect(int playerNum) {
 	ggpo_disconnect_player(ggpoSession, playerHandles[playerNum]);
 }
 
-void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports)
+void randomInput(bool enable, u64 seed, u32 inputMask) {
+	useRandInput = enable;
+	randInputMask = inputMask;
+	randSource.seed(seed);
+}
+
+void gdxsvStartSession(const char* sessionCode, int me,
+	const std::vector<std::string>& ips, const std::vector<u16>& ports, const std::vector<u8>& relays)
 {
 	GGPOSessionCallbacks cb{};
 	cb.begin_game      = begin_game;
@@ -1050,7 +1058,6 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 	synchronized = true;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	// TODO: Analog support
 	ggpo::localPlayerNum = me;
 	GGPOErrorCode result = ggpo_start_session(
 		&ggpoSession, &cb, settings.content.gameId.c_str(),
@@ -1064,10 +1071,7 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 
 	NOTICE_LOG(NETWORK, "LOCAL PLAYER: %d", me);
 
-	// automatically disconnect clients after 3000 ms and start our count-down timer
-	// for disconnects after 1000 ms.   To completely disable disconnects, simply use
-	// a value of 0 for ggpo_set_disconnect_timeout.
-	ggpo_set_disconnect_timeout(ggpoSession, 3000);
+	ggpo_set_disconnect_timeout(ggpoSession, 10000);
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
 
 	GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, me + 1};
@@ -1094,6 +1098,10 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 			player.u.remote.port = ports[i];
 		}
 
+		if (relays[i]) {
+		    player.u.remote.relay = true;
+		}
+
 		result = ggpo_add_player(ggpoSession, &player, &playerHandles[i]);
 		if (result != GGPO_OK) {
 			WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
@@ -1110,7 +1118,10 @@ void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::s
 #endif
 }
 
-std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me,
+	const std::vector<std::string>& ips,
+	const std::vector<u16>& ports,
+	const std::vector<u8>& relays) {
 	synchronized = false;
 	return std::async(std::launch::async, [=]{
 		{
@@ -1118,7 +1129,7 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::
 #ifdef SYNC_TEST
 			gdxsvStartSession(0, 0, "");
 #else
-			gdxsvStartSession(sessionCode, me, ips, ports);
+			gdxsvStartSession(sessionCode, me, ips, ports, relays);
 #endif
 		}
 		while (!synchronized && active())
@@ -1188,6 +1199,21 @@ void sendChatMessage(int playerNum, const std::string& msg) {
 }
 
 void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)) {
+}
+
+bool isConnected(int playerNum) {
+}
+
+void disconnect(int playerNum) {
+}
+
+void randomInput(bool enable, u64 seed, u32 inputMask) {
+}
+
+void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports, const std::vector<u8>& relays) {
+}
+
+std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports) {
 }
 
 }
