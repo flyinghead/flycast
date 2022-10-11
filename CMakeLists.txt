@@ -165,6 +165,10 @@ if(MSVC)
 	if(WINDOWS_STORE)
 		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
 	endif()
+	target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/Zi>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/DEBUG>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:REF>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
