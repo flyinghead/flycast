@@ -12,6 +12,7 @@
 #define UDP_MSG_MAX_PLAYERS          4
 #define MAX_VERIFICATION_SIZE      256
 #define MAX_APPDATA_SIZE           512
+#define RELAY_MAGIC              26315
 
 #pragma pack(push, 1)
 
@@ -26,7 +27,8 @@ struct UdpMsg
       QualityReply  = 5,
       KeepAlive     = 6,
       InputAck      = 7,
-	  AppData       = 8
+      AppData       = 8,
+      Relay         = 99
    };
 
    struct connect_status {
@@ -39,7 +41,13 @@ struct UdpMsg
       uint16         sequence_number;
       uint8          remote_endpoint;
       uint8          type;            /* packet type */
+
+      /* for packet relay */
+      uint16 relay_magic; /* for not to relay irrelevant packets */
+      uint8 relay_to_endpoint;
+      uint8 org_type;
    } hdr;
+
    union {
       struct {
          uint32      random_request;  /* please reply back with this random data */
@@ -83,18 +91,17 @@ struct UdpMsg
     	  uint8 spectators;
     	  uint8 data[MAX_APPDATA_SIZE];
       } app_data;
-
    } u;
 
    int verification_size = 0;
 
 public:
    int PacketSize() {
-      return sizeof(hdr) + PayloadSize();
+      return sizeof(hdr) + PayloadSize(hdr.type);
    }
 
-   int PayloadSize() {
-      switch (hdr.type) {
+   int PayloadSize(uint8 type) {
+      switch (type) {
       case SyncRequest:   return (int)(&u.sync_request.verification[0] - (uint8 *)&u) + verification_size;
       case SyncReply:     return sizeof(u.sync_reply);
       case QualityReport: return sizeof(u.quality_report);
@@ -108,6 +115,7 @@ public:
 			 return size;
 		  }
       case AppData:       return sizeof(u.app_data) - sizeof(u.app_data.data) + u.app_data.size;
+      case Relay:         return PayloadSize(hdr.org_type);
       }
       ASSERT(false);
       return 0;

@@ -37,86 +37,86 @@ if(APPLE)
 endif()
 
 if(LIBRETRO)
-    project(flycast_libretro)
+	project(flycast_libretro)
 else()
-    project(flycast)
+	project(flycast)
 endif()
 
 include(GNUInstallDirs)
 
 if(ENABLE_CTEST)
-    include(CTest)
+	include(CTest)
 endif()
 
 if(IOS AND NOT LIBRETRO)
-    set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
-    enable_language(Swift)
+	set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
+	enable_language(Swift)
 endif()
 
 find_package(Git)
 if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} describe --tags --always --match "gdxsv-*"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    string(REGEX REPLACE "-([0-9]+)-g(.+)$" "-dev.\\1+\\2" GIT_VERSION "${GIT_VERSION}")
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_HASH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(WINDOWS_STORE)
-	    string(REPLACE "v" "" MS_VERSION ${GIT_VERSION})
-	    string(REPLACE "-" "." MS_VERSION  ${MS_VERSION})
-	    string(REGEX REPLACE "\.g[0-9a-f]+" "" MS_VERSION  ${MS_VERSION})
-	    string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" VERSION_3PARTS ${MS_VERSION})
-	    if (VERSION_3PARTS STREQUAL "")
-	    	string(APPEND MS_VERSION ".0.0")
-	    else()
-	    	string(APPEND MS_VERSION ".0")
-	    endif()
-    endif()
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} describe --tags --always --match "gdxsv-*"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	string(REGEX REPLACE "-([0-9]+)-g(.+)$" "-dev.\\1+\\2" GIT_VERSION "${GIT_VERSION}")
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_HASH
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(WINDOWS_STORE)
+		string(REPLACE "v" "" MS_VERSION ${GIT_VERSION})
+		string(REPLACE "-" "." MS_VERSION  ${MS_VERSION})
+		string(REGEX REPLACE "\.g[0-9a-f]+" "" MS_VERSION  ${MS_VERSION})
+		string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" VERSION_3PARTS ${MS_VERSION})
+		if (VERSION_3PARTS STREQUAL "")
+			string(APPEND MS_VERSION ".0.0")
+		else()
+			string(APPEND MS_VERSION ".0")
+		endif()
+	endif()
 endif()
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
 if(NINTENDO_SWITCH)
-    set(USE_VULKAN OFF)
-    enable_language(ASM)
+	set(USE_VULKAN OFF)
+	enable_language(ASM)
 
-    if(LIBRETRO)
-        add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO HAVE_LIBNX HAVE_OPENGL HAVE_OIT)
+	if(LIBRETRO)
+		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO HAVE_LIBNX HAVE_OPENGL HAVE_OIT)
 		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro_libnx")
 		set(CMAKE_STATIC_LIBRARY_PREFIX "")
-    else()
-        add_executable(${PROJECT_NAME} core/emulator.cpp)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
-    endif()
+	else()
+		add_executable(${PROJECT_NAME} core/emulator.cpp)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+	endif()
 	if(USE_GLES)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
 
 elseif(LIBRETRO)
-    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
-    if(APPLE)
+	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+	if(APPLE)
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,error")
 	else()
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 	endif()
-    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
-    set(CMAKE_SHARED_LIBRARY_PREFIX "")
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
-    if(ANDROID OR USE_GLES)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
+	set(CMAKE_SHARED_LIBRARY_PREFIX "")
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
+	if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES3_LIBRARIES})
-    elseif(USE_GLES2)
+	elseif(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2 HAVE_OPENGLES HAVE_OPENGLES2)
 		if(USE_VIDEOCORE)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_STENCIL)
@@ -125,37 +125,37 @@ elseif(LIBRETRO)
 		else()
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
 		endif()
-    elseif(USE_OPENGL)
+	elseif(USE_OPENGL)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
-	    if(APPLE)
+		if(APPLE)
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-framework,OpenGL")
-	    else()
+		else()
 			target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OIT)
 		endif()
-	    if(WIN32)
+		if(WIN32)
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lopengl32")
 		endif()
 	endif()
 elseif(ANDROID)
-    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-    target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
-    set(CMAKE_ANDROID_STL_TYPE "c++_static")
+	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+	target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
+	set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(WIN32)
-    add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
+	add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
 elseif(APPLE)
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
+	add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
 else()
-    add_executable(${PROJECT_NAME} core/emulator.cpp)
+	add_executable(${PROJECT_NAME} core/emulator.cpp)
 endif()
 
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
-    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
+	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
 else()
-    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_14)
+	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_14)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
@@ -176,14 +176,14 @@ else()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-        $<$<BOOL:APPLE>:GL_SILENCE_DEPRECATION>
-        $<$<BOOL:MSVC>:_CRT_NONSTDC_NO_WARNINGS>
-        $<$<BOOL:MSVC>:_CRT_SECURE_NO_WARNINGS>
-        $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
-        $<$<BOOL:MSVC>:NOMINMAX>
-        $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+		$<$<BOOL:APPLE>:GL_SILENCE_DEPRECATION>
+		$<$<BOOL:MSVC>:_CRT_NONSTDC_NO_WARNINGS>
+		$<$<BOOL:MSVC>:_CRT_SECURE_NO_WARNINGS>
+		$<$<BOOL:MSVC>:_USE_MATH_DEFINES>
+		$<$<BOOL:MSVC>:NOMINMAX>
+		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
 		$<$<BOOL:${GDB_SERVER}>:GDB_SERVER>
-        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
+		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 if(IOS)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
 		TARGET_IPHONE
@@ -296,21 +296,19 @@ if(NOT LIBRETRO)
 endif()
 
 if(USE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
-        if(MINGW)
-            target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
-            target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
-        elseif(ANDROID)
-            # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
-            set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
-            target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
-        elseif(APPLE)
-            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX -static-openmp)
-        else()
-            target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-        endif()
-    endif()
+	find_package(OpenMP)
+	if(OpenMP_CXX_FOUND)
+		if(MINGW)
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+			target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+		elseif(ANDROID)
+			# Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+			set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+			target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
+		else()
+			target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+		endif()
+	endif()
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
@@ -336,9 +334,9 @@ endif()
 if(NOT LIBRETRO)
 	find_package(ALSA)
 	if(ALSA_FOUND AND NOT ANDROID)
-	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
-	    target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
-	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
 	
 	if(MINGW)
@@ -374,16 +372,16 @@ if(NOT LIBRETRO)
 	
 	find_package(ZLIB)
 	if(TARGET ZLIB::ZLIB AND NOT ANDROID AND (NOT WIN32 OR WINDOWS_STORE))
-	    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
-	    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+		set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
+		target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
 	endif()
 	
 	find_package(Lua)
 	if(NOT APPLE AND LUA_FOUND)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LUA)
-	    target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
-	    list(TRANSFORM LUA_LIBRARIES REPLACE "\.dll" "")
-	    target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
+		target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
+		list(TRANSFORM LUA_LIBRARIES REPLACE "\.dll" "")
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
 	endif()
 endif()
 
@@ -392,60 +390,60 @@ target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
 
 if(NOT WITH_SYSTEM_ZLIB)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
-    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
-    # help libzip find the package
-    set(ZLIB_FOUND TRUE)
-    set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
-    cmake_policy(SET CMP0026 OLD)
-    get_target_property(ZLIB_LIBRARY zlib LOCATION)
+	target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
+	target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+	# help libzip find the package
+	set(ZLIB_FOUND TRUE)
+	set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
+	cmake_policy(SET CMP0026 OLD)
+	get_target_property(ZLIB_LIBRARY zlib LOCATION)
 endif()
 
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
-    pkg_check_modules(AO IMPORTED_TARGET ao)
-    if(AO_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::AO)
-    endif()
-
-	if(NOT SDL2_FOUND)
-	    pkg_check_modules(LIBEVDEV IMPORTED_TARGET libevdev)
-	    if(LIBEVDEV_FOUND)
-	        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
-	        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBEVDEV)
-	
-	        pkg_check_modules(LIBUDEV IMPORTED_TARGET libudev)
-	        if(LIBUDEV_FOUND)
-	            target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
-	            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBUDEV)
-	        endif()
-	    endif()
+	pkg_check_modules(AO IMPORTED_TARGET ao)
+	if(AO_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
+		target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::AO)
 	endif()
 
-    pkg_check_modules(LIBPULSE IMPORTED_TARGET libpulse)
-    if(LIBPULSE_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PULSEAUDIO)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBPULSE)
-    endif()
+	if(NOT SDL2_FOUND)
+		pkg_check_modules(LIBEVDEV IMPORTED_TARGET libevdev)
+		if(LIBEVDEV_FOUND)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBEVDEV)
+	
+			pkg_check_modules(LIBUDEV IMPORTED_TARGET libudev)
+			if(LIBUDEV_FOUND)
+				target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
+				target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBUDEV)
+			endif()
+		endif()
+	endif()
+
+	pkg_check_modules(LIBPULSE IMPORTED_TARGET libpulse)
+	if(LIBPULSE_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PULSEAUDIO)
+		target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBPULSE)
+	endif()
 
 	if(USE_HOST_LIBZIP)
 		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
 		if(LIBZIP_FOUND)
 			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
 		endif()
-    endif()
+	endif()
 
-    if(ENABLE_OPROFILE)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
-        target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
-    endif()
+	if(ENABLE_OPROFILE)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
+		target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
+	endif()
 
-    find_package(MiniUPnPc)
-    if (MINIUPNP_FOUND)
+	find_package(MiniUPnPc)
+	if (MINIUPNP_FOUND)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
-    endif()
+	endif()
 endif()
 
 if(NINTENDO_SWITCH AND USE_GLES)
@@ -475,37 +473,37 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES3_LIBRARIES})
 	elseif(USE_OPENGL)
-	    set(OpenGL_GL_PREFERENCE LEGACY)
-	    find_package(OpenGL REQUIRED)
-	    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+		set(OpenGL_GL_PREFERENCE LEGACY)
+		find_package(OpenGL REQUIRED)
+		target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 	endif()
 
-    find_package(Threads REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*" AND NOT LIBRETRO)
-        set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
-        if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
-        endif()
-    endif()
+	find_package(Threads REQUIRED)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*" AND NOT LIBRETRO)
+		set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
+		if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+		endif()
+	endif()
 
-    if(NOT SDL2_FOUND AND NOT LIBRETRO)
-        find_package(X11 REQUIRED)
-        if(X11_FOUND)
-            target_compile_definitions(${PROJECT_NAME} PRIVATE SUPPORT_X11)
-            target_include_directories(${PROJECT_NAME} PRIVATE ${X11_INCLUDE_DIR})
-            target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
-        endif()
+	if(NOT SDL2_FOUND AND NOT LIBRETRO)
+		find_package(X11 REQUIRED)
+		if(X11_FOUND)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE SUPPORT_X11)
+			target_include_directories(${PROJECT_NAME} PRIVATE ${X11_INCLUDE_DIR})
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
+		endif()
 	else()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_X11)
-    endif()
+	endif()
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
+	target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
 endif()
 
 if(ASAN)
-    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
+	target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
 if(ANDROID AND NOT LIBRETRO)
@@ -521,8 +519,8 @@ if(ANDROID AND NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/chdpsr/cdipsr.cpp
-        core/deps/chdpsr/cdipsr.h)
+		core/deps/chdpsr/cdipsr.cpp
+		core/deps/chdpsr/cdipsr.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
@@ -565,68 +563,68 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 endif()
 
 if(WIN32)
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
 target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/picotcp/include/arch/pico_arm9.h
-        core/deps/picotcp/include/arch/pico_atsamd21j18.h
-        core/deps/picotcp/include/arch/pico_avr.h
-        core/deps/picotcp/include/arch/pico_cortex_m.h
-        core/deps/picotcp/include/arch/pico_dos.h
-        core/deps/picotcp/include/arch/pico_esp8266.h
-        core/deps/picotcp/include/arch/pico_generic_gcc.h
-        core/deps/picotcp/include/arch/pico_linux.h
-        core/deps/picotcp/include/arch/pico_mbed.h
-        core/deps/picotcp/include/arch/pico_msp430.h
-        core/deps/picotcp/include/arch/pico_msvc.h
-        core/deps/picotcp/include/arch/pico_none.h
-        core/deps/picotcp/include/arch/pico_pic24.h
-        core/deps/picotcp/include/arch/pico_pic32.h
-        core/deps/picotcp/include/arch/pico_posix.h
-        core/deps/picotcp/include/heap.h
-        core/deps/picotcp/include/pico_addressing.h
-        core/deps/picotcp/include/pico_config.h
-        core/deps/picotcp/include/pico_constants.h
-        core/deps/picotcp/include/pico_defines.h
-        core/deps/picotcp/include/pico_defines_msvc.h
-        core/deps/picotcp/include/pico_device.h
-        core/deps/picotcp/include/pico_eth.h
-        core/deps/picotcp/include/pico_frame.h
-        core/deps/picotcp/include/pico_md5.h
-        core/deps/picotcp/include/pico_module_eth.h
-        core/deps/picotcp/include/pico_protocol.h
-        core/deps/picotcp/include/pico_queue.h
-        core/deps/picotcp/include/pico_socket.h
-        core/deps/picotcp/include/pico_socket_multicast.h
-        core/deps/picotcp/include/pico_stack.h
-        core/deps/picotcp/include/pico_tree.h
-        core/deps/picotcp/modules/pico_arp.c
-        core/deps/picotcp/modules/pico_dev_ppp.c
-        core/deps/picotcp/modules/pico_dhcp_common.c
-        core/deps/picotcp/modules/pico_dhcp_common.h
-        core/deps/picotcp/modules/pico_dhcp_server.c
-        core/deps/picotcp/modules/pico_dhcp_server.h
-        core/deps/picotcp/modules/pico_dns_client.c
-        core/deps/picotcp/modules/pico_dns_common.c
-        core/deps/picotcp/modules/pico_ethernet.c
-        core/deps/picotcp/modules/pico_fragments.c
-        core/deps/picotcp/modules/pico_icmp4.c
-        core/deps/picotcp/modules/pico_ipv4.c
-        core/deps/picotcp/modules/pico_socket_tcp.c
-        core/deps/picotcp/modules/pico_socket_udp.c
-        core/deps/picotcp/modules/pico_strings.c
-        core/deps/picotcp/modules/pico_tcp.c
-        core/deps/picotcp/modules/pico_udp.c
-        core/deps/picotcp/stack/pico_device.c
-        core/deps/picotcp/stack/pico_frame.c
-        core/deps/picotcp/stack/pico_md5.c
-        core/deps/picotcp/stack/pico_protocol.c
-        core/deps/picotcp/stack/pico_socket.c
-        core/deps/picotcp/stack/pico_socket_multicast.c
-        core/deps/picotcp/stack/pico_stack.c
-        core/deps/picotcp/stack/pico_tree.c)
+		core/deps/picotcp/include/arch/pico_arm9.h
+		core/deps/picotcp/include/arch/pico_atsamd21j18.h
+		core/deps/picotcp/include/arch/pico_avr.h
+		core/deps/picotcp/include/arch/pico_cortex_m.h
+		core/deps/picotcp/include/arch/pico_dos.h
+		core/deps/picotcp/include/arch/pico_esp8266.h
+		core/deps/picotcp/include/arch/pico_generic_gcc.h
+		core/deps/picotcp/include/arch/pico_linux.h
+		core/deps/picotcp/include/arch/pico_mbed.h
+		core/deps/picotcp/include/arch/pico_msp430.h
+		core/deps/picotcp/include/arch/pico_msvc.h
+		core/deps/picotcp/include/arch/pico_none.h
+		core/deps/picotcp/include/arch/pico_pic24.h
+		core/deps/picotcp/include/arch/pico_pic32.h
+		core/deps/picotcp/include/arch/pico_posix.h
+		core/deps/picotcp/include/heap.h
+		core/deps/picotcp/include/pico_addressing.h
+		core/deps/picotcp/include/pico_config.h
+		core/deps/picotcp/include/pico_constants.h
+		core/deps/picotcp/include/pico_defines.h
+		core/deps/picotcp/include/pico_defines_msvc.h
+		core/deps/picotcp/include/pico_device.h
+		core/deps/picotcp/include/pico_eth.h
+		core/deps/picotcp/include/pico_frame.h
+		core/deps/picotcp/include/pico_md5.h
+		core/deps/picotcp/include/pico_module_eth.h
+		core/deps/picotcp/include/pico_protocol.h
+		core/deps/picotcp/include/pico_queue.h
+		core/deps/picotcp/include/pico_socket.h
+		core/deps/picotcp/include/pico_socket_multicast.h
+		core/deps/picotcp/include/pico_stack.h
+		core/deps/picotcp/include/pico_tree.h
+		core/deps/picotcp/modules/pico_arp.c
+		core/deps/picotcp/modules/pico_dev_ppp.c
+		core/deps/picotcp/modules/pico_dhcp_common.c
+		core/deps/picotcp/modules/pico_dhcp_common.h
+		core/deps/picotcp/modules/pico_dhcp_server.c
+		core/deps/picotcp/modules/pico_dhcp_server.h
+		core/deps/picotcp/modules/pico_dns_client.c
+		core/deps/picotcp/modules/pico_dns_common.c
+		core/deps/picotcp/modules/pico_ethernet.c
+		core/deps/picotcp/modules/pico_fragments.c
+		core/deps/picotcp/modules/pico_icmp4.c
+		core/deps/picotcp/modules/pico_ipv4.c
+		core/deps/picotcp/modules/pico_socket_tcp.c
+		core/deps/picotcp/modules/pico_socket_udp.c
+		core/deps/picotcp/modules/pico_strings.c
+		core/deps/picotcp/modules/pico_tcp.c
+		core/deps/picotcp/modules/pico_udp.c
+		core/deps/picotcp/stack/pico_device.c
+		core/deps/picotcp/stack/pico_frame.c
+		core/deps/picotcp/stack/pico_md5.c
+		core/deps/picotcp/stack/pico_protocol.c
+		core/deps/picotcp/stack/pico_socket.c
+		core/deps/picotcp/stack/pico_socket_multicast.c
+		core/deps/picotcp/stack/pico_stack.c
+		core/deps/picotcp/stack/pico_tree.c)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7zBuf.c core/deps/lzma/7zCrc.c core/deps/lzma/7zCrcOpt.c core/deps/lzma/7zDec.c core/deps/lzma/7zFile.c core/deps/lzma/7zStream.c core/deps/lzma/Alloc.c core/deps/lzma/Bcj2.c core/deps/lzma/Bra86.c core/deps/lzma/Bra.c core/deps/lzma/BraIA64.c core/deps/lzma/CpuArch.c core/deps/lzma/Delta.c core/deps/lzma/LzFind.c core/deps/lzma/Lzma2Dec.c core/deps/lzma/Lzma86Dec.c core/deps/lzma/Lzma86Enc.c core/deps/lzma/LzmaDec.c core/deps/lzma/LzmaEnc.c core/deps/lzma/LzmaLib.c core/deps/lzma/Sort.c)
@@ -638,7 +636,7 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
 
 if(LIBRETRO)
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/libretro-common/memmap/memalign.c
 		core/deps/libretro-common/file/file_path.c
@@ -676,210 +674,210 @@ if(LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/archive/7zArchive.cpp
-        core/archive/7zArchive.h
-        core/archive/archive.cpp
-        core/archive/archive.h
-        core/archive/rzip.cpp
-        core/archive/rzip.h
-        core/archive/ZipArchive.cpp
-        core/archive/ZipArchive.h
-        core/cfg/option.h)
+		core/archive/7zArchive.cpp
+		core/archive/7zArchive.h
+		core/archive/archive.cpp
+		core/archive/archive.h
+		core/archive/rzip.cpp
+		core/archive/rzip.h
+		core/archive/ZipArchive.cpp
+		core/archive/ZipArchive.h
+		core/cfg/option.h)
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/cfg/cfg.cpp
-	        core/cfg/cfg.h
-	        core/cfg/cl.cpp
-	        core/cfg/ini.cpp
-	        core/cfg/ini.h
-	        core/cfg/option.cpp)
+			core/cfg/cfg.cpp
+			core/cfg/cfg.h
+			core/cfg/cl.cpp
+			core/cfg/ini.cpp
+			core/cfg/ini.h
+			core/cfg/option.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/hw/hwreg.h
-        core/hw/aica/aica.cpp
-        core/hw/aica/aica.h
-        core/hw/aica/aica_if.cpp
-        core/hw/aica/aica_if.h
-        core/hw/aica/aica_mem.cpp
-        core/hw/aica/aica_mem.h
-        core/hw/aica/dsp.cpp
-        core/hw/aica/dsp.h
-        core/hw/aica/dsp_arm32.cpp
-        core/hw/aica/dsp_arm64.cpp
-        core/hw/aica/dsp_interp.cpp
-        core/hw/aica/dsp_x64.cpp
-        core/hw/aica/dsp_x86.cpp
-        core/hw/aica/sgc_if.cpp
-        core/hw/aica/sgc_if.h
-        core/hw/arm7/arm7.cpp
-        core/hw/arm7/arm7.h
-        core/hw/arm7/arm_mem.cpp
-        core/hw/arm7/arm_mem.h
-        core/hw/arm7/arm7_rec_arm32.cpp
-        core/hw/arm7/arm7_rec_arm64.cpp
-        core/hw/arm7/arm7_rec_x64.cpp
-        core/hw/arm7/arm7_rec.cpp
-        core/hw/arm7/arm7_rec.h
-        core/hw/arm7/arm-new.h
-        core/hw/bba/bba.h
-        core/hw/bba/bba.cpp
-        core/hw/bba/rtl8139c.h
-        core/hw/bba/rtl8139c.cpp
-        core/hw/flashrom/flashrom.cpp
-        core/hw/flashrom/flashrom.h
-        core/hw/gdrom/gdrom_if.h
-        core/hw/gdrom/gdrom_response.cpp
-        core/hw/gdrom/gdromv3.cpp
-        core/hw/gdrom/gdromv3.h
-        core/hw/holly/holly_intc.cpp
-        core/hw/holly/holly_intc.h
-        core/hw/holly/sb.cpp
-        core/hw/holly/sb.h
-        core/hw/holly/sb_mem.cpp
-        core/hw/holly/sb_mem.h
-        core/hw/maple/maple_cfg.cpp
-        core/hw/maple/maple_cfg.h
-        core/hw/maple/maple_devs.cpp
-        core/hw/maple/maple_devs.h
-        core/hw/maple/maple_helper.cpp
-        core/hw/maple/maple_helper.h
-        core/hw/maple/maple_if.cpp
-        core/hw/maple/maple_if.h
-        core/hw/maple/maple_jvs.cpp
-        core/hw/mem/_vmem.cpp
-        core/hw/mem/_vmem.h
-        core/hw/mem/mem_watch.cpp
-        core/hw/mem/mem_watch.h
-        core/hw/modem/modem.cpp
-        core/hw/modem/modem.h
-        core/hw/modem/modem_regs.h
-        core/hw/naomi/awave_regs.h
-        core/hw/naomi/awcartridge.cpp
-        core/hw/naomi/awcartridge.h
-        core/hw/naomi/decrypt.cpp
-        core/hw/naomi/decrypt.h
-        core/hw/naomi/gdcartridge.cpp
-        core/hw/naomi/gdcartridge.h
-        core/hw/naomi/m1cartridge.cpp
-        core/hw/naomi/m1cartridge.h
-        core/hw/naomi/m4cartridge.cpp
-        core/hw/naomi/m4cartridge.h
-        core/hw/naomi/naomi_cart.cpp
-        core/hw/naomi/naomi_cart.h
-        core/hw/naomi/naomi_flashrom.cpp
-        core/hw/naomi/naomi_flashrom.h
-        core/hw/naomi/naomi_m3comm.cpp
-        core/hw/naomi/naomi_m3comm.h
-        core/hw/naomi/naomi.cpp
-        core/hw/naomi/naomi.h
-        core/hw/naomi/naomi_regs.h
-        core/hw/naomi/naomi_roms.cpp
-        core/hw/naomi/naomi_roms.h
-        core/hw/naomi/naomi_roms_input.h
-        core/hw/naomi/card_reader.h
-        core/hw/naomi/card_reader.cpp
-        core/hw/pvr/elan.cpp
-        core/hw/pvr/elan.h
-        core/hw/pvr/elan_struct.h
-        core/hw/pvr/helper_classes.h
-        core/hw/pvr/pvr.cpp
-        core/hw/pvr/pvr.h
-        core/hw/pvr/pvr_mem.cpp
-        core/hw/pvr/pvr_mem.h
-        core/hw/pvr/pvr_regs.cpp
-        core/hw/pvr/pvr_regs.h
-        core/hw/pvr/pvr_sb_regs.cpp
-        core/hw/pvr/pvr_sb_regs.h
-        core/hw/pvr/Renderer_if.cpp
-        core/hw/pvr/Renderer_if.h
-        core/hw/pvr/spg.cpp
-        core/hw/pvr/spg.h
-        core/hw/pvr/ta_const_df.h
-        core/hw/pvr/ta.cpp
-        core/hw/pvr/ta_ctx.cpp
-        core/hw/pvr/ta_ctx.h
-        core/hw/pvr/ta.h
-        core/hw/pvr/ta_structs.h
-        core/hw/pvr/ta_vtx.cpp
-        core/hw/sh4/dyna/blockmanager.cpp
-        core/hw/sh4/dyna/blockmanager.h
-        core/hw/sh4/dyna/decoder.cpp
-        core/hw/sh4/dyna/decoder.h
-        core/hw/sh4/dyna/decoder_opcodes.h
-        core/hw/sh4/dyna/driver.cpp
-        core/hw/sh4/dyna/ngen.h
-        core/hw/sh4/dyna/shil_canonical.h
-        core/hw/sh4/dyna/shil.cpp
-        core/hw/sh4/dyna/shil.h
-        core/hw/sh4/dyna/ssa.cpp
-        core/hw/sh4/dyna/ssa.h
-        core/hw/sh4/dyna/ssa_regalloc.h
-        core/hw/sh4/fsca-table.h
-        core/hw/sh4/interpr/sh4_fpu.cpp
-        core/hw/sh4/interpr/sh4_interpreter.cpp
-        core/hw/sh4/interpr/sh4_opcodes.cpp
-        core/hw/sh4/interpr/sh4_opcodes.h
-        core/hw/sh4/modules/bsc.cpp
-        core/hw/sh4/modules/ccn.cpp
-        core/hw/sh4/modules/ccn.h
-        core/hw/sh4/modules/cpg.cpp
-        core/hw/sh4/modules/dmac.cpp
-        core/hw/sh4/modules/dmac.h
-        core/hw/sh4/modules/fastmmu.cpp
-        core/hw/sh4/modules/intc.cpp
-        core/hw/sh4/modules/mmu.cpp
-        core/hw/sh4/modules/mmu.h
-        core/hw/sh4/modules/modules.h
-        core/hw/sh4/modules/rtc.cpp
-        core/hw/sh4/modules/serial.cpp
-        core/hw/sh4/modules/tmu.cpp
-        core/hw/sh4/modules/ubc.cpp
-        core/hw/sh4/modules/wince.h
-        core/hw/sh4/sh4_cache.h
-        core/hw/sh4/sh4_core.h
-        core/hw/sh4/sh4_core_regs.cpp
-        core/hw/sh4/sh4_if.h
-        core/hw/sh4/sh4_interpreter.h
-        core/hw/sh4/sh4_interrupts.cpp
-        core/hw/sh4/sh4_interrupts.h
-        core/hw/sh4/sh4_mem.cpp
-        core/hw/sh4/sh4_mem.h
-        core/hw/sh4/sh4_mmr.cpp
-        core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode_list.cpp
-        core/hw/sh4/sh4_opcode_list.h
-        core/hw/sh4/sh4_rom.cpp
-        core/hw/sh4/sh4_rom.h
-        core/hw/sh4/sh4_sched.cpp
-        core/hw/sh4/sh4_sched.h
+		core/hw/hwreg.h
+		core/hw/aica/aica.cpp
+		core/hw/aica/aica.h
+		core/hw/aica/aica_if.cpp
+		core/hw/aica/aica_if.h
+		core/hw/aica/aica_mem.cpp
+		core/hw/aica/aica_mem.h
+		core/hw/aica/dsp.cpp
+		core/hw/aica/dsp.h
+		core/hw/aica/dsp_arm32.cpp
+		core/hw/aica/dsp_arm64.cpp
+		core/hw/aica/dsp_interp.cpp
+		core/hw/aica/dsp_x64.cpp
+		core/hw/aica/dsp_x86.cpp
+		core/hw/aica/sgc_if.cpp
+		core/hw/aica/sgc_if.h
+		core/hw/arm7/arm7.cpp
+		core/hw/arm7/arm7.h
+		core/hw/arm7/arm_mem.cpp
+		core/hw/arm7/arm_mem.h
+		core/hw/arm7/arm7_rec_arm32.cpp
+		core/hw/arm7/arm7_rec_arm64.cpp
+		core/hw/arm7/arm7_rec_x64.cpp
+		core/hw/arm7/arm7_rec.cpp
+		core/hw/arm7/arm7_rec.h
+		core/hw/arm7/arm-new.h
+		core/hw/bba/bba.h
+		core/hw/bba/bba.cpp
+		core/hw/bba/rtl8139c.h
+		core/hw/bba/rtl8139c.cpp
+		core/hw/flashrom/flashrom.cpp
+		core/hw/flashrom/flashrom.h
+		core/hw/gdrom/gdrom_if.h
+		core/hw/gdrom/gdrom_response.cpp
+		core/hw/gdrom/gdromv3.cpp
+		core/hw/gdrom/gdromv3.h
+		core/hw/holly/holly_intc.cpp
+		core/hw/holly/holly_intc.h
+		core/hw/holly/sb.cpp
+		core/hw/holly/sb.h
+		core/hw/holly/sb_mem.cpp
+		core/hw/holly/sb_mem.h
+		core/hw/maple/maple_cfg.cpp
+		core/hw/maple/maple_cfg.h
+		core/hw/maple/maple_devs.cpp
+		core/hw/maple/maple_devs.h
+		core/hw/maple/maple_helper.cpp
+		core/hw/maple/maple_helper.h
+		core/hw/maple/maple_if.cpp
+		core/hw/maple/maple_if.h
+		core/hw/maple/maple_jvs.cpp
+		core/hw/mem/_vmem.cpp
+		core/hw/mem/_vmem.h
+		core/hw/mem/mem_watch.cpp
+		core/hw/mem/mem_watch.h
+		core/hw/modem/modem.cpp
+		core/hw/modem/modem.h
+		core/hw/modem/modem_regs.h
+		core/hw/naomi/awave_regs.h
+		core/hw/naomi/awcartridge.cpp
+		core/hw/naomi/awcartridge.h
+		core/hw/naomi/decrypt.cpp
+		core/hw/naomi/decrypt.h
+		core/hw/naomi/gdcartridge.cpp
+		core/hw/naomi/gdcartridge.h
+		core/hw/naomi/m1cartridge.cpp
+		core/hw/naomi/m1cartridge.h
+		core/hw/naomi/m4cartridge.cpp
+		core/hw/naomi/m4cartridge.h
+		core/hw/naomi/naomi_cart.cpp
+		core/hw/naomi/naomi_cart.h
+		core/hw/naomi/naomi_flashrom.cpp
+		core/hw/naomi/naomi_flashrom.h
+		core/hw/naomi/naomi_m3comm.cpp
+		core/hw/naomi/naomi_m3comm.h
+		core/hw/naomi/naomi.cpp
+		core/hw/naomi/naomi.h
+		core/hw/naomi/naomi_regs.h
+		core/hw/naomi/naomi_roms.cpp
+		core/hw/naomi/naomi_roms.h
+		core/hw/naomi/naomi_roms_input.h
+		core/hw/naomi/card_reader.h
+		core/hw/naomi/card_reader.cpp
+		core/hw/pvr/elan.cpp
+		core/hw/pvr/elan.h
+		core/hw/pvr/elan_struct.h
+		core/hw/pvr/helper_classes.h
+		core/hw/pvr/pvr.cpp
+		core/hw/pvr/pvr.h
+		core/hw/pvr/pvr_mem.cpp
+		core/hw/pvr/pvr_mem.h
+		core/hw/pvr/pvr_regs.cpp
+		core/hw/pvr/pvr_regs.h
+		core/hw/pvr/pvr_sb_regs.cpp
+		core/hw/pvr/pvr_sb_regs.h
+		core/hw/pvr/Renderer_if.cpp
+		core/hw/pvr/Renderer_if.h
+		core/hw/pvr/spg.cpp
+		core/hw/pvr/spg.h
+		core/hw/pvr/ta_const_df.h
+		core/hw/pvr/ta.cpp
+		core/hw/pvr/ta_ctx.cpp
+		core/hw/pvr/ta_ctx.h
+		core/hw/pvr/ta.h
+		core/hw/pvr/ta_structs.h
+		core/hw/pvr/ta_vtx.cpp
+		core/hw/sh4/dyna/blockmanager.cpp
+		core/hw/sh4/dyna/blockmanager.h
+		core/hw/sh4/dyna/decoder.cpp
+		core/hw/sh4/dyna/decoder.h
+		core/hw/sh4/dyna/decoder_opcodes.h
+		core/hw/sh4/dyna/driver.cpp
+		core/hw/sh4/dyna/ngen.h
+		core/hw/sh4/dyna/shil_canonical.h
+		core/hw/sh4/dyna/shil.cpp
+		core/hw/sh4/dyna/shil.h
+		core/hw/sh4/dyna/ssa.cpp
+		core/hw/sh4/dyna/ssa.h
+		core/hw/sh4/dyna/ssa_regalloc.h
+		core/hw/sh4/fsca-table.h
+		core/hw/sh4/interpr/sh4_fpu.cpp
+		core/hw/sh4/interpr/sh4_interpreter.cpp
+		core/hw/sh4/interpr/sh4_opcodes.cpp
+		core/hw/sh4/interpr/sh4_opcodes.h
+		core/hw/sh4/modules/bsc.cpp
+		core/hw/sh4/modules/ccn.cpp
+		core/hw/sh4/modules/ccn.h
+		core/hw/sh4/modules/cpg.cpp
+		core/hw/sh4/modules/dmac.cpp
+		core/hw/sh4/modules/dmac.h
+		core/hw/sh4/modules/fastmmu.cpp
+		core/hw/sh4/modules/intc.cpp
+		core/hw/sh4/modules/mmu.cpp
+		core/hw/sh4/modules/mmu.h
+		core/hw/sh4/modules/modules.h
+		core/hw/sh4/modules/rtc.cpp
+		core/hw/sh4/modules/serial.cpp
+		core/hw/sh4/modules/tmu.cpp
+		core/hw/sh4/modules/ubc.cpp
+		core/hw/sh4/modules/wince.h
+		core/hw/sh4/sh4_cache.h
+		core/hw/sh4/sh4_core.h
+		core/hw/sh4/sh4_core_regs.cpp
+		core/hw/sh4/sh4_if.h
+		core/hw/sh4/sh4_interpreter.h
+		core/hw/sh4/sh4_interrupts.cpp
+		core/hw/sh4/sh4_interrupts.h
+		core/hw/sh4/sh4_mem.cpp
+		core/hw/sh4/sh4_mem.h
+		core/hw/sh4/sh4_mmr.cpp
+		core/hw/sh4/sh4_mmr.h
+		core/hw/sh4/sh4_opcode_list.cpp
+		core/hw/sh4/sh4_opcode_list.h
+		core/hw/sh4/sh4_rom.cpp
+		core/hw/sh4/sh4_rom.h
+		core/hw/sh4/sh4_sched.cpp
+		core/hw/sh4/sh4_sched.h
 		core/hw/sh4/disasm/disasm.cpp
-        core/hw/sh4/disasm/disasm.h)
+		core/hw/sh4/disasm/disasm.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/imgread/cdi.cpp
-        core/imgread/chd.cpp
-        core/imgread/common.cpp
-        core/imgread/common.h
-        core/imgread/cue.cpp
-        core/imgread/gdi.cpp
-        core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp
-        core/imgread/iso9660.h
-        core/imgread/isofs.cpp
-        core/imgread/isofs.h)
+		core/imgread/cdi.cpp
+		core/imgread/chd.cpp
+		core/imgread/common.cpp
+		core/imgread/common.h
+		core/imgread/cue.cpp
+		core/imgread/gdi.cpp
+		core/imgread/ImgReader.cpp
+		core/imgread/ioctl.cpp
+		core/imgread/iso9660.h
+		core/imgread/isofs.cpp
+		core/imgread/isofs.h)
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/input/gamepad.h
-	        core/input/gamepad_device.cpp
-	        core/input/gamepad_device.h
-	        core/input/keyboard_device.h
-	        core/input/mapping.cpp
-	        core/input/mapping.h
-	        core/input/mouse.cpp
-	        core/input/mouse.h)
+			core/input/gamepad.h
+			core/input/gamepad_device.cpp
+			core/input/gamepad_device.h
+			core/input/keyboard_device.h
+			core/input/mapping.cpp
+			core/input/mapping.h
+			core/input/mouse.cpp
+			core/input/mouse.h)
 endif()
 
 if(WIN32)
@@ -889,220 +887,222 @@ if(WIN32)
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
 else()
-    target_sources(${PROJECT_NAME} PRIVATE
+	target_sources(${PROJECT_NAME} PRIVATE
 			core/linux/common.cpp
-            core/linux/context.cpp
-            core/linux/posix_vmem.cpp
-            core/linux/unwind_info.cpp)
-    if(NINTENDO_SWITCH)
-        target_sources(${PROJECT_NAME} PRIVATE
-        		core/linux/libnx_vmem.cpp
-        		shell/switch/stubs.c
-        		shell/switch/context_switch.S)
-    endif()
+			core/linux/context.cpp
+			core/linux/posix_vmem.cpp
+			core/linux/unwind_info.cpp)
+	if(NINTENDO_SWITCH)
+		target_sources(${PROJECT_NAME} PRIVATE
+				core/linux/libnx_vmem.cpp
+				shell/switch/stubs.c
+				shell/switch/context_switch.S)
+	endif()
 endif()
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/linux-dist/dispmanx.cpp
-	        core/linux-dist/dispmanx.h
-	        core/linux-dist/evdev.cpp
-	        core/linux-dist/evdev.h
-	        core/linux-dist/icon.h
-	        core/linux-dist/x11.cpp
-	        core/linux-dist/x11.h
-	        core/linux-dist/x11_keyboard.h)
+			core/linux-dist/dispmanx.cpp
+			core/linux-dist/dispmanx.h
+			core/linux-dist/evdev.cpp
+			core/linux-dist/evdev.h
+			core/linux-dist/icon.h
+			core/linux-dist/x11.cpp
+			core/linux-dist/x11.h
+			core/linux-dist/x11_keyboard.h)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/log/BitSet.h
-        core/log/Log.h
-        core/log/StringUtil.h)
+		core/log/BitSet.h
+		core/log/Log.h
+		core/log/StringUtil.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/log/ConsoleListener.h
-	        core/log/ConsoleListenerDroid.cpp
-	        core/log/ConsoleListenerNix.cpp
-	        core/log/ConsoleListenerWin.cpp
-	        core/log/LogManager.cpp
-	        core/log/LogManager.h)
+			core/log/ConsoleListener.h
+			core/log/ConsoleListenerDroid.cpp
+			core/log/ConsoleListenerNix.cpp
+			core/log/ConsoleListenerWin.cpp
+			core/log/InMemoryListener.cpp
+			core/log/InMemoryListener.h
+			core/log/LogManager.cpp
+			core/log/LogManager.h)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/network/dns.cpp
-        core/network/ggpo.cpp
-        core/network/ggpo.h
-        core/network/miniupnp.cpp
-        core/network/miniupnp.h
-        core/network/naomi_network.cpp
-        core/network/naomi_network.h
-        core/network/net_handshake.cpp
-        core/network/net_handshake.h
-        core/network/net_platform.h
-        core/network/output.cpp
-        core/network/output.h
-        core/network/picoppp.cpp
-        core/network/picoppp.h)
+		core/network/dns.cpp
+		core/network/ggpo.cpp
+		core/network/ggpo.h
+		core/network/miniupnp.cpp
+		core/network/miniupnp.h
+		core/network/naomi_network.cpp
+		core/network/naomi_network.h
+		core/network/net_handshake.cpp
+		core/network/net_handshake.h
+		core/network/net_platform.h
+		core/network/output.cpp
+		core/network/output.h
+		core/network/picoppp.cpp
+		core/network/picoppp.h)
 
 if(ANDROID)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/network/ifaddrs.c)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/network/ifaddrs.c)
 endif()
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/oslib/audiobackend_alsa.cpp
-	        core/oslib/audiobackend_coreaudio.cpp
-	        core/oslib/audiobackend_directsound.cpp
-	        core/oslib/audiobackend_libao.cpp
-	        core/oslib/audiobackend_null.cpp
-	        core/oslib/audiobackend_oboe.cpp
-	        core/oslib/audiobackend_omx.cpp
-	        core/oslib/audiobackend_oss.cpp
-	        core/oslib/audiobackend_pulseaudio.cpp
-	        core/oslib/audiobackend_sdl2.cpp
-	        core/oslib/audiostream.cpp
-	        core/oslib/oslib.cpp)
+			core/oslib/audiobackend_alsa.cpp
+			core/oslib/audiobackend_coreaudio.cpp
+			core/oslib/audiobackend_directsound.cpp
+			core/oslib/audiobackend_libao.cpp
+			core/oslib/audiobackend_null.cpp
+			core/oslib/audiobackend_oboe.cpp
+			core/oslib/audiobackend_omx.cpp
+			core/oslib/audiobackend_oss.cpp
+			core/oslib/audiobackend_pulseaudio.cpp
+			core/oslib/audiobackend_sdl2.cpp
+			core/oslib/audiostream.cpp
+			core/oslib/oslib.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/oslib/audiostream.h
-        core/oslib/directory.h
-        core/oslib/host_context.h
-        core/oslib/oslib.h
-        core/lua/lua.cpp
-        core/lua/lua.h)
+		core/oslib/audiostream.h
+		core/oslib/directory.h
+		core/oslib/host_context.h
+		core/oslib/oslib.h
+		core/lua/lua.cpp
+		core/lua/lua.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/profiler/profiler.cpp
-        core/profiler/profiler.h)
+		core/profiler/profiler.cpp
+		core/profiler/profiler.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/rec-cpp/rec_cpp.cpp)
+		core/rec-cpp/rec_cpp.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/reios/descrambl.cpp
-        core/reios/descrambl.h
-        core/reios/font.h
-        core/reios/gdrom_hle.cpp
-        core/reios/gdrom_hle.h
-        core/reios/reios.cpp
-        core/reios/reios.h
-        core/reios/reios_elf.cpp
-        core/reios/reios_elf.h)
+		core/reios/descrambl.cpp
+		core/reios/descrambl.h
+		core/reios/font.h
+		core/reios/gdrom_hle.cpp
+		core/reios/gdrom_hle.h
+		core/reios/reios.cpp
+		core/reios/reios.h
+		core/reios/reios_elf.cpp
+		core/reios/reios_elf.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/wsi/context.h
-        core/wsi/libretro.cpp
-        core/wsi/libretro.h
-        core/wsi/switcher.cpp)
+		core/wsi/context.h
+		core/wsi/libretro.cpp
+		core/wsi/libretro.h
+		core/wsi/switcher.cpp)
 
 if(USE_OPENGL)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/wsi/egl.cpp
-	        core/wsi/egl.h
-	        core/wsi/gl_context.cpp
-	        core/wsi/gl_context.h
-	        core/wsi/osx.cpp
-	        core/wsi/osx.h
-	        core/wsi/sdl.cpp
-	        core/wsi/sdl.h
-	        core/wsi/wgl.cpp
-	        core/wsi/wgl.h
-	        core/wsi/xgl.cpp
-	        core/wsi/xgl.h)
+			core/wsi/egl.cpp
+			core/wsi/egl.h
+			core/wsi/gl_context.cpp
+			core/wsi/gl_context.h
+			core/wsi/osx.cpp
+			core/wsi/osx.h
+			core/wsi/sdl.cpp
+			core/wsi/sdl.h
+			core/wsi/wgl.cpp
+			core/wsi/wgl.h
+			core/wsi/xgl.cpp
+			core/wsi/xgl.h)
 
 	if(NOT APPLE AND NOT LIBRETRO)
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            core/wsi/gl32funcs.c
-	            core/wsi/gl32funcs.h)
+		target_sources(${PROJECT_NAME} PRIVATE
+				core/wsi/gl32funcs.c
+				core/wsi/gl32funcs.h)
 	endif()
 	if(NOT (NINTENDO_SWITCH AND LIBRETRO))
 		target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
 	endif()
 
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/rend/gles/glcache.h
-	        core/rend/gles/gldraw.cpp
-	        core/rend/gles/gles.cpp
-	        core/rend/gles/gles.h
-	        core/rend/gles/gltex.cpp
-	        core/rend/gles/quad.cpp
-	        core/rend/gles/postprocess.cpp
-	        core/rend/gles/postprocess.h
-	        core/rend/gles/naomi2.cpp
-	        core/rend/gles/naomi2.h)
+			core/rend/gles/glcache.h
+			core/rend/gles/gldraw.cpp
+			core/rend/gles/gles.cpp
+			core/rend/gles/gles.h
+			core/rend/gles/gltex.cpp
+			core/rend/gles/quad.cpp
+			core/rend/gles/postprocess.cpp
+			core/rend/gles/postprocess.h
+			core/rend/gles/naomi2.cpp
+			core/rend/gles/naomi2.h)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
-		        core/rend/gles/imgui_impl_opengl3.cpp
-		        core/rend/gles/imgui_impl_opengl3.h
-		        core/rend/gles/opengl_driver.cpp
-		        core/rend/gles/opengl_driver.h)
+				core/rend/gles/imgui_impl_opengl3.cpp
+				core/rend/gles/imgui_impl_opengl3.h
+				core/rend/gles/opengl_driver.cpp
+				core/rend/gles/opengl_driver.h)
 	endif()
 	
 	if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            core/rend/gl4/abuffer.cpp
-	            core/rend/gl4/gl4.h
-	            core/rend/gl4/gldraw.cpp
-	            core/rend/gl4/gles.cpp
-	        	core/rend/gl4/gl4naomi2.cpp
-	        	core/rend/gl4/gl4naomi2.h)
+		target_sources(${PROJECT_NAME} PRIVATE
+				core/rend/gl4/abuffer.cpp
+				core/rend/gl4/gl4.h
+				core/rend/gl4/gldraw.cpp
+				core/rend/gl4/gles.cpp
+				core/rend/gl4/gl4naomi2.cpp
+				core/rend/gl4/gl4naomi2.h)
 	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/build.h
-        core/cheats.cpp
-        core/cheats.h
-        core/emulator.h
-        core/nullDC.cpp
-        core/serialize.cpp
-        core/serialize.h
-        core/stdclass.cpp
-        core/stdclass.h
-        core/types.h
+		core/build.h
+		core/cheats.cpp
+		core/cheats.h
+		core/emulator.h
+		core/nullDC.cpp
+		core/serialize.cpp
+		core/serialize.h
+		core/stdclass.cpp
+		core/stdclass.h
+		core/types.h
 		core/debug/debug_agent.cpp
-        core/debug/debug_agent.h
+		core/debug/debug_agent.h
 		core/debug/gdb_server.cpp
-        core/debug/gdb_server.h)
+		core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/rend/CustomTexture.cpp
-        core/rend/CustomTexture.h
+		core/rend/CustomTexture.cpp
+		core/rend/CustomTexture.h
 		core/rend/osd.cpp
 		core/rend/osd.h
-        core/rend/sorter.cpp
-        core/rend/sorter.h
-        core/rend/tileclip.h
-        core/rend/TexCache.cpp
-        core/rend/TexCache.h)
+		core/rend/sorter.cpp
+		core/rend/sorter.h
+		core/rend/tileclip.h
+		core/rend/TexCache.cpp
+		core/rend/TexCache.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/rend/game_scanner.h
-	        core/rend/imgui_driver.h
-	        core/rend/gui.cpp
-	        core/rend/gui.h
-	        core/rend/gui_android.cpp
-	        core/rend/gui_android.h
-	        core/rend/gui_chat.h
-	        core/rend/gui_cheats.cpp
-	        core/rend/gui_util.cpp
-	        core/rend/gui_util.h
+			core/rend/game_scanner.h
+			core/rend/imgui_driver.h
+			core/rend/gui.cpp
+			core/rend/gui.h
+			core/rend/gui_android.cpp
+			core/rend/gui_android.h
+			core/rend/gui_chat.h
+			core/rend/gui_cheats.cpp
+			core/rend/gui_util.cpp
+			core/rend/gui_util.h
 			core/rend/gui_debugger.cpp
-	        core/rend/gui_debugger.h
-	        core/rend/mainui.cpp
-	        core/rend/mainui.h
-	        core/rend/boxart/boxart.cpp
-	        core/rend/boxart/boxart.h
-	        core/rend/boxart/gamesdb.cpp
-	        core/rend/boxart/gamesdb.h
-	        core/rend/boxart/http_client.cpp
-	        core/rend/boxart/http_client.h
-	        core/rend/boxart/scraper.cpp
-	        core/rend/boxart/scraper.h)
+			core/rend/gui_debugger.h
+			core/rend/mainui.cpp
+			core/rend/mainui.h
+			core/rend/boxart/boxart.cpp
+			core/rend/boxart/boxart.h
+			core/rend/boxart/gamesdb.cpp
+			core/rend/boxart/gamesdb.h
+			core/rend/boxart/http_client.cpp
+			core/rend/boxart/http_client.h
+			core/rend/boxart/scraper.cpp
+			core/rend/boxart/scraper.h)
 endif()
 
 if(USE_VULKAN)
@@ -1114,68 +1114,68 @@ if(USE_VULKAN)
 	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
 
 	if(NOT LIBRETRO)
-	    if(ANDROID)
-	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
-	    elseif(X11_FOUND)
-	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-	    elseif(WIN32)
-	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+		if(ANDROID)
+			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
+		elseif(X11_FOUND)
+			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
+		elseif(WIN32)
+			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 		elseif(APPLE)
-	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_MACOS_MVK)
-	    endif()
+			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_MACOS_MVK)
+		endif()
 	
-	    set(VOLK_PULL_IN_VULKAN OFF)
-	    add_subdirectory(core/deps/volk)
-	    target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
-	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
+		set(VOLK_PULL_IN_VULKAN OFF)
+		add_subdirectory(core/deps/volk)
+		target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
+		target_link_libraries(${PROJECT_NAME} PRIVATE volk)
 	endif()
 
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/rend/vulkan/oit/oit_buffer.h
-            core/rend/vulkan/oit/oit_drawer.cpp
-            core/rend/vulkan/oit/oit_drawer.h
-            core/rend/vulkan/oit/oit_pipeline.cpp
-            core/rend/vulkan/oit/oit_pipeline.h
-            core/rend/vulkan/oit/oit_renderer.cpp
-            core/rend/vulkan/oit/oit_renderpass.cpp
-            core/rend/vulkan/oit/oit_renderpass.h
-            core/rend/vulkan/oit/oit_shaders.cpp
-            core/rend/vulkan/oit/oit_shaders.h
-            core/rend/vulkan/buffer.cpp
-            core/rend/vulkan/buffer.h
-            core/rend/vulkan/commandpool.h
-            core/rend/vulkan/compiler.cpp
-            core/rend/vulkan/compiler.h
-            core/rend/vulkan/drawer.cpp
-            core/rend/vulkan/drawer.h
-            core/rend/vulkan/pipeline.cpp
-            core/rend/vulkan/pipeline.h
-            core/rend/vulkan/quad.cpp
-            core/rend/vulkan/quad.h
-            core/rend/vulkan/shaders.cpp
-            core/rend/vulkan/shaders.h
-            core/rend/vulkan/texture.cpp
-            core/rend/vulkan/texture.h
-            core/rend/vulkan/utils.h
-            core/rend/vulkan/vmallocator.cpp
-            core/rend/vulkan/vmallocator.h
-            core/rend/vulkan/overlay.cpp
-            core/rend/vulkan/overlay.h
-            core/rend/vulkan/vulkan_context.h
-            core/rend/vulkan/vulkan.h
-            core/rend/vulkan/vulkan_renderer.cpp)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/vulkan/oit/oit_buffer.h
+			core/rend/vulkan/oit/oit_drawer.cpp
+			core/rend/vulkan/oit/oit_drawer.h
+			core/rend/vulkan/oit/oit_pipeline.cpp
+			core/rend/vulkan/oit/oit_pipeline.h
+			core/rend/vulkan/oit/oit_renderer.cpp
+			core/rend/vulkan/oit/oit_renderpass.cpp
+			core/rend/vulkan/oit/oit_renderpass.h
+			core/rend/vulkan/oit/oit_shaders.cpp
+			core/rend/vulkan/oit/oit_shaders.h
+			core/rend/vulkan/buffer.cpp
+			core/rend/vulkan/buffer.h
+			core/rend/vulkan/commandpool.h
+			core/rend/vulkan/compiler.cpp
+			core/rend/vulkan/compiler.h
+			core/rend/vulkan/drawer.cpp
+			core/rend/vulkan/drawer.h
+			core/rend/vulkan/pipeline.cpp
+			core/rend/vulkan/pipeline.h
+			core/rend/vulkan/quad.cpp
+			core/rend/vulkan/quad.h
+			core/rend/vulkan/shaders.cpp
+			core/rend/vulkan/shaders.h
+			core/rend/vulkan/texture.cpp
+			core/rend/vulkan/texture.h
+			core/rend/vulkan/utils.h
+			core/rend/vulkan/vmallocator.cpp
+			core/rend/vulkan/vmallocator.h
+			core/rend/vulkan/overlay.cpp
+			core/rend/vulkan/overlay.h
+			core/rend/vulkan/vulkan_context.h
+			core/rend/vulkan/vulkan.h
+			core/rend/vulkan/vulkan_renderer.cpp)
 	if(LIBRETRO)
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            core/rend/vulkan/vk_context_lr.cpp
-	            core/rend/vulkan/vk_context_lr.h
-	            core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
+		target_sources(${PROJECT_NAME} PRIVATE
+				core/rend/vulkan/vk_context_lr.cpp
+				core/rend/vulkan/vk_context_lr.h
+				core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
 	else()
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            core/rend/vulkan/vulkan_driver.h
-	            core/rend/vulkan/vulkan_context.cpp
-	            core/rend/vulkan/imgui_impl_vulkan.cpp
-	            core/rend/vulkan/imgui_impl_vulkan.h)
+		target_sources(${PROJECT_NAME} PRIVATE
+				core/rend/vulkan/vulkan_driver.h
+				core/rend/vulkan/vulkan_context.cpp
+				core/rend/vulkan/imgui_impl_vulkan.cpp
+				core/rend/vulkan/imgui_impl_vulkan.h)
 	 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
 		endif()
@@ -1247,10 +1247,10 @@ endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
-    target_sources(${PROJECT_NAME} PRIVATE
-    	core/rec-ARM/rec_arm.cpp
-    	core/deps/vixl/aarch32/location-aarch32.cc
-    	core/deps/vixl/aarch32/location-aarch32.h
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/rec-ARM/rec_arm.cpp
+		core/deps/vixl/aarch32/location-aarch32.cc
+		core/deps/vixl/aarch32/location-aarch32.h
 		core/deps/vixl/aarch32/assembler-aarch32.cc
 		core/deps/vixl/aarch32/assembler-aarch32.h
 		core/deps/vixl/aarch32/instructions-aarch32.cc
@@ -1263,91 +1263,91 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 		core/deps/vixl/aarch32/operands-aarch32.h
 		core/deps/vixl/aarch32/disasm-aarch32.cc
 		core/deps/vixl/aarch32/disasm-aarch32.h
-    	core/deps/vixl/assembler-base-vixl.h
-    	core/deps/vixl/code-buffer-vixl.cc
-    	core/deps/vixl/code-buffer-vixl.h
-    	core/deps/vixl/code-generation-scopes-vixl.h
-    	core/deps/vixl/compiler-intrinsics-vixl.cc
-    	core/deps/vixl/compiler-intrinsics-vixl.h
-    	core/deps/vixl/cpu-features.cc
-    	core/deps/vixl/cpu-features.h
-    	core/deps/vixl/globals-vixl.h
-    	core/deps/vixl/invalset-vixl.h
-    	core/deps/vixl/macro-assembler-interface.h
-    	core/deps/vixl/platform-vixl.h
-    	core/deps/vixl/pool-manager.h
-    	core/deps/vixl/pool-manager-impl.h
-    	core/deps/vixl/utils-vixl.cc
-    	core/deps/vixl/utils-vixl.h)
-     set(KNOWN_ARCHITECTURE_DETECTED ON)
+		core/deps/vixl/assembler-base-vixl.h
+		core/deps/vixl/code-buffer-vixl.cc
+		core/deps/vixl/code-buffer-vixl.h
+		core/deps/vixl/code-generation-scopes-vixl.h
+		core/deps/vixl/compiler-intrinsics-vixl.cc
+		core/deps/vixl/compiler-intrinsics-vixl.h
+		core/deps/vixl/cpu-features.cc
+		core/deps/vixl/cpu-features.h
+		core/deps/vixl/globals-vixl.h
+		core/deps/vixl/invalset-vixl.h
+		core/deps/vixl/macro-assembler-interface.h
+		core/deps/vixl/platform-vixl.h
+		core/deps/vixl/pool-manager.h
+		core/deps/vixl/pool-manager-impl.h
+		core/deps/vixl/utils-vixl.cc
+		core/deps/vixl/utils-vixl.h)
+	 set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
-    target_sources(${PROJECT_NAME} PRIVATE
-    	core/deps/vixl/aarch64/abi-aarch64.h
-    	core/deps/vixl/aarch64/assembler-aarch64.cc
-    	core/deps/vixl/aarch64/assembler-aarch64.h
-    	core/deps/vixl/aarch64/constants-aarch64.h
-    	core/deps/vixl/aarch64/cpu-aarch64.cc
-    	core/deps/vixl/aarch64/cpu-aarch64.h
-    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
-    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
-    	core/deps/vixl/aarch64/decoder-aarch64.cc
-    	core/deps/vixl/aarch64/decoder-aarch64.h
-    	core/deps/vixl/aarch64/disasm-aarch64.cc
-    	core/deps/vixl/aarch64/disasm-aarch64.h
-    	core/deps/vixl/aarch64/instructions-aarch64.cc
-    	core/deps/vixl/aarch64/instructions-aarch64.h
-    	core/deps/vixl/aarch64/instrument-aarch64.cc
-    	core/deps/vixl/aarch64/instrument-aarch64.h
-    	core/deps/vixl/aarch64/logic-aarch64.cc
-    	core/deps/vixl/aarch64/macro-assembler-aarch64.cc
-    	core/deps/vixl/aarch64/macro-assembler-aarch64.h
-    	core/deps/vixl/aarch64/operands-aarch64.cc
-    	core/deps/vixl/aarch64/operands-aarch64.h
-    	core/deps/vixl/aarch64/pointer-auth-aarch64.cc
-    	core/deps/vixl/aarch64/simulator-aarch64.cc
-    	core/deps/vixl/aarch64/simulator-aarch64.h
-    	core/deps/vixl/aarch64/simulator-constants-aarch64.h
-    	core/deps/vixl/assembler-base-vixl.h
-    	core/deps/vixl/code-buffer-vixl.cc
-    	core/deps/vixl/code-buffer-vixl.h
-    	core/deps/vixl/code-generation-scopes-vixl.h
-    	core/deps/vixl/compiler-intrinsics-vixl.cc
-    	core/deps/vixl/compiler-intrinsics-vixl.h
-    	core/deps/vixl/cpu-features.cc
-    	core/deps/vixl/cpu-features.h
-    	core/deps/vixl/globals-vixl.h
-    	core/deps/vixl/invalset-vixl.h
-    	core/deps/vixl/macro-assembler-interface.h
-    	core/deps/vixl/platform-vixl.h
-    	core/deps/vixl/pool-manager.h
-    	core/deps/vixl/pool-manager-impl.h
-    	core/deps/vixl/utils-vixl.cc
-    	core/deps/vixl/utils-vixl.h)
-    target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-    set(KNOWN_ARCHITECTURE_DETECTED ON)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/deps/vixl/aarch64/abi-aarch64.h
+		core/deps/vixl/aarch64/assembler-aarch64.cc
+		core/deps/vixl/aarch64/assembler-aarch64.h
+		core/deps/vixl/aarch64/constants-aarch64.h
+		core/deps/vixl/aarch64/cpu-aarch64.cc
+		core/deps/vixl/aarch64/cpu-aarch64.h
+		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
+		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
+		core/deps/vixl/aarch64/decoder-aarch64.cc
+		core/deps/vixl/aarch64/decoder-aarch64.h
+		core/deps/vixl/aarch64/disasm-aarch64.cc
+		core/deps/vixl/aarch64/disasm-aarch64.h
+		core/deps/vixl/aarch64/instructions-aarch64.cc
+		core/deps/vixl/aarch64/instructions-aarch64.h
+		core/deps/vixl/aarch64/instrument-aarch64.cc
+		core/deps/vixl/aarch64/instrument-aarch64.h
+		core/deps/vixl/aarch64/logic-aarch64.cc
+		core/deps/vixl/aarch64/macro-assembler-aarch64.cc
+		core/deps/vixl/aarch64/macro-assembler-aarch64.h
+		core/deps/vixl/aarch64/operands-aarch64.cc
+		core/deps/vixl/aarch64/operands-aarch64.h
+		core/deps/vixl/aarch64/pointer-auth-aarch64.cc
+		core/deps/vixl/aarch64/simulator-aarch64.cc
+		core/deps/vixl/aarch64/simulator-aarch64.h
+		core/deps/vixl/aarch64/simulator-constants-aarch64.h
+		core/deps/vixl/assembler-base-vixl.h
+		core/deps/vixl/code-buffer-vixl.cc
+		core/deps/vixl/code-buffer-vixl.h
+		core/deps/vixl/code-generation-scopes-vixl.h
+		core/deps/vixl/compiler-intrinsics-vixl.cc
+		core/deps/vixl/compiler-intrinsics-vixl.h
+		core/deps/vixl/cpu-features.cc
+		core/deps/vixl/cpu-features.h
+		core/deps/vixl/globals-vixl.h
+		core/deps/vixl/invalset-vixl.h
+		core/deps/vixl/macro-assembler-interface.h
+		core/deps/vixl/platform-vixl.h
+		core/deps/vixl/pool-manager.h
+		core/deps/vixl/pool-manager-impl.h
+		core/deps/vixl/utils-vixl.cc
+		core/deps/vixl/utils-vixl.h)
+	target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
+	set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
-    add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
-    target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    	target_sources(${PROJECT_NAME} PRIVATE
-    		core/rec-x64/xbyak_base.h
-    		core/rec-x86/rec_x86.h
-    		core/rec-x86/x86_regalloc.h
-    		core/rec-x86/rec_x86.cpp
-    		core/rec-x86/x86_ops.cpp)
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        target_sources(${PROJECT_NAME} PRIVATE
-        	core/rec-x64/xbyak_base.h
-        	core/rec-x64/rec_x64.cpp
-        	core/rec-x64/x64_regalloc.h)
-    endif()
-    set(KNOWN_ARCHITECTURE_DETECTED ON)
+	add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/rec-x64/xbyak_base.h
+			core/rec-x86/rec_x86.h
+			core/rec-x86/x86_regalloc.h
+			core/rec-x86/rec_x86.cpp
+			core/rec-x86/x86_ops.cpp)
+	elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/rec-x64/xbyak_base.h
+			core/rec-x64/rec_x64.cpp
+			core/rec-x64/x64_regalloc.h)
+	endif()
+	set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(NOT KNOWN_ARCHITECTURE_DETECTED)
-    message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
+	message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(NOT LIBRETRO)
@@ -1391,14 +1391,14 @@ if(NOT LIBRETRO)
 		core/deps/ggpo/lib/ggpo/network/udp.h)
 
 	if(ANDROID)
-	    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 	
-	    target_sources(${PROJECT_NAME} PRIVATE
-	    	shell/android-studio/flycast/src/main/jni/src/Android.cpp
-	    	shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
-	    	shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
+		target_sources(${PROJECT_NAME} PRIVATE
+			shell/android-studio/flycast/src/main/jni/src/Android.cpp
+			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
+			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 	
-	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
+		target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "gdxsv-[^-]+" TAG_VERSION ${GIT_VERSION})
@@ -1541,23 +1541,23 @@ if(NOT LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE ${SYSTEMCONFIGURATION_LIBRARY}) #gdxsv
 
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
-            		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
+				COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
-	    if(NOT BUILD_TESTING)
-	        target_sources(${PROJECT_NAME} PRIVATE
-	                core/linux-dist/main.cpp)
-	    endif()
+		if(NOT BUILD_TESTING)
+			target_sources(${PROJECT_NAME} PRIVATE
+					core/linux-dist/main.cpp)
+		endif()
 	elseif(WIN32)
-	    if(NOT BUILD_TESTING)
-	        target_sources(${PROJECT_NAME} PRIVATE
-	        	core/windows/rawinput.cpp
-	        	core/windows/rawinput.h
-	            core/windows/win_keyboard.h
-	            core/windows/winmain.cpp
-	            core/windows/xinput_gamepad.h)
-	    endif()
+		if(NOT BUILD_TESTING)
+			target_sources(${PROJECT_NAME} PRIVATE
+				core/windows/rawinput.cpp
+				core/windows/rawinput.h
+				core/windows/win_keyboard.h
+				core/windows/winmain.cpp
+				core/windows/xinput_gamepad.h)
+		endif()
 		if(WINDOWS_STORE)
 			file(READ shell/uwp/Package.appxmanifest MANIFEST)
 			string(REPLACE "9.9.9.9" ${MS_VERSION} MANIFEST ${MANIFEST})
@@ -1585,30 +1585,30 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/deps/gtest/src/gtest-all.cc
-            core/deps/gtest/src/gtest_main.cc)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/gtest/src/gtest-all.cc
+			core/deps/gtest/src/gtest_main.cc)
 
-    target_sources(${PROJECT_NAME} PRIVATE
-            tests/src/CheatManagerTest.cpp
-            tests/src/ConfigFileTest.cpp
-            tests/src/div32_test.cpp
-            tests/src/test_stubs.cpp
-            tests/src/serialize_test.cpp
-            tests/src/AicaArmTest.cpp
-            tests/src/Sh4InterpreterTest.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE
+			tests/src/CheatManagerTest.cpp
+			tests/src/ConfigFileTest.cpp
+			tests/src/div32_test.cpp
+			tests/src/test_stubs.cpp
+			tests/src/serialize_test.cpp
+			tests/src/AicaArmTest.cpp
+			tests/src/Sh4InterpreterTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)
 	if(LIBRETRO)
 		add_custom_target(combined ALL
-	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
-	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
-	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
-	    	COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
-	    	COMMAND rm *.obj
-	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
-	    	DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.o
+			COMMAND rm *.o
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+			DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
 	else()
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
@@ -1650,235 +1650,235 @@ endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PTHREAD)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/protobuf-3.13.0/src)
 target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/protobuf-3.13.0/src/google/protobuf/any.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/any.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/any.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/any.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/any_lite.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/api.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/api.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/arena.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/arena.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/arenastring.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/arena_impl.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor_database.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/descriptor_database.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/duration.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/duration.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/dynamic_message.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/dynamic_message.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/empty.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/empty.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/extension_set.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/extension_set.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/extension_set_heavy.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/extension_set_inl.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/field_mask.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/field_mask.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_reflection.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_reflection.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_reflection.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven_lite.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/has_bits.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/implicit_weak_message.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/implicit_weak_message.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/inlined_string_field.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/coded_stream.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/coded_stream.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/gzip_stream.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/gzip_stream.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/io_win32.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/io_win32.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/package_info.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/printer.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/printer.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/strtod.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/strtod.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/tokenizer.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/tokenizer.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl_lite.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_entry.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_entry_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_field.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_field.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_field_inl.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_field_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/map_type_handler.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/message.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/message.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/message_lite.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/message_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/metadata.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/metadata_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/package_info.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/parse_context.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/parse_context.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/port.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/reflection.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/reflection_internal.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/reflection_ops.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/reflection_ops.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/repeated_field.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/repeated_field.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/service.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/service.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/source_context.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/source_context.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/struct.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/struct.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/bytestream.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/bytestream.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/callback.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/casts.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/common.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/common.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/fastmem.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/hash.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/int128.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/int128.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/logging.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/macros.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/map_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/mathutil.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/mutex.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/once.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/platform_macros.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/port.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/statusor.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/statusor.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status_macros.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stl_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringpiece.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringpiece.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringprintf.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringprintf.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/structurally_valid.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/strutil.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/strutil.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/substitute.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/substitute.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/template_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/time.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/stubs/time.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/text_format.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/text_format.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/timestamp.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/timestamp.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/type.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/type.pb.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/unknown_field_set.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/unknown_field_set.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/delimited_message_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/delimited_message_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/field_comparator.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/field_comparator.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/field_mask_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/field_mask_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/constants.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/datapiece.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/datapiece.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/default_value_objectwriter.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/default_value_objectwriter.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/error_listener.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/error_listener.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/expecting_objectwriter.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/field_mask_utility.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/field_mask_utility.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_escaping.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_escaping.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_objectwriter.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_objectwriter.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_stream_parser.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_stream_parser.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/location_tracker.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/mock_error_listener.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_location_tracker.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_source.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_writer.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_writer.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectsource.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectsource.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectwriter.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectwriter.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/proto_writer.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/proto_writer.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/structured_objectwriter.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/type_info.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/type_info.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/utility.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/utility.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/json_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/json_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/message_differencer.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/message_differencer.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/package_info.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/time_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/time_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver_util.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver_util.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/wire_format.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/wire_format.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/wire_format_lite.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/wire_format_lite.h
-        core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.cc
-        core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
+		core/deps/protobuf-3.13.0/src/google/protobuf/any.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/any.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/any.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/any.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/any_lite.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/api.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/api.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/arena.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/arena.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/arenastring.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/arena_impl.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor_database.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/descriptor_database.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/duration.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/duration.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/dynamic_message.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/dynamic_message.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/empty.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/empty.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/extension_set.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/extension_set.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/extension_set_heavy.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/extension_set_inl.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/field_mask.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/field_mask.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_reflection.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_enum_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_reflection.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_reflection.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven_lite.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_table_driven_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/generated_message_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/has_bits.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/implicit_weak_message.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/implicit_weak_message.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/inlined_string_field.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/coded_stream.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/coded_stream.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/gzip_stream.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/gzip_stream.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/io_win32.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/io_win32.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/package_info.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/printer.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/printer.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/strtod.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/strtod.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/tokenizer.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/tokenizer.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl_lite.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/io/zero_copy_stream_impl_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_entry.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_entry_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_field.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_field.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_field_inl.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_field_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/map_type_handler.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/message.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/message.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/message_lite.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/message_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/metadata.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/metadata_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/package_info.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/parse_context.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/parse_context.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/port.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/reflection.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/reflection_internal.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/reflection_ops.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/reflection_ops.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/repeated_field.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/repeated_field.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/service.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/service.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/source_context.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/source_context.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/struct.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/struct.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/bytestream.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/bytestream.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/callback.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/casts.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/common.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/common.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/fastmem.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/hash.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/int128.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/int128.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/logging.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/macros.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/map_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/mathutil.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/mutex.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/once.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/platform_macros.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/port.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/statusor.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/statusor.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/status_macros.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stl_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringpiece.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringpiece.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringprintf.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/stringprintf.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/structurally_valid.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/strutil.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/strutil.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/substitute.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/substitute.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/template_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/time.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/stubs/time.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/text_format.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/text_format.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/timestamp.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/timestamp.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/type.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/type.pb.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/unknown_field_set.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/unknown_field_set.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/delimited_message_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/delimited_message_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/field_comparator.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/field_comparator.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/field_mask_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/field_mask_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/constants.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/datapiece.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/datapiece.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/default_value_objectwriter.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/default_value_objectwriter.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/error_listener.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/error_listener.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/expecting_objectwriter.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/field_mask_utility.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/field_mask_utility.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_escaping.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_escaping.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_objectwriter.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_objectwriter.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_stream_parser.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/json_stream_parser.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/location_tracker.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/mock_error_listener.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_location_tracker.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_source.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_writer.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/object_writer.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectsource.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectsource.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectwriter.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/protostream_objectwriter.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/proto_writer.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/proto_writer.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/structured_objectwriter.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/type_info.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/type_info.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/utility.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/internal/utility.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/json_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/json_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/message_differencer.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/message_differencer.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/package_info.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/time_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/time_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver_util.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/util/type_resolver_util.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/wire_format.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/wire_format.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/wire_format_lite.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/wire_format_lite.h
+		core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.cc
+		core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/gdxsv)
 target_sources(${PROJECT_NAME} PRIVATE
-        core/gdxsv/libs.h
-        core/gdxsv/gdx_rpc.h
-        core/gdxsv/gdxsv.cpp
-        core/gdxsv/gdxsv.h
-        core/gdxsv/gdxsv.pb.cc
-        core/gdxsv/gdxsv.pb.h
-        core/gdxsv/gdxsv_backend_replay.h
+		core/gdxsv/libs.h
+		core/gdxsv/gdx_rpc.h
+		core/gdxsv/gdxsv.cpp
+		core/gdxsv/gdxsv.h
+		core/gdxsv/gdxsv.pb.cc
+		core/gdxsv/gdxsv.pb.h
+		core/gdxsv/gdxsv_backend_replay.h
 		core/gdxsv/gdxsv_backend_replay.cpp
-        core/gdxsv/gdxsv_backend_rollback.h
-        core/gdxsv/gdxsv_backend_rollback.cpp
-        core/gdxsv/gdxsv_backend_tcp.h
-        core/gdxsv/gdxsv_backend_udp.h
-        core/gdxsv/gdxsv_network.cpp
-        core/gdxsv/gdxsv_network.h
-        core/gdxsv/gdxsv_patch.inc
-        core/gdxsv/gdxsv_emu_hooks.cpp
-        core/gdxsv/gdxsv_emu_hooks.h
-        core/gdxsv/gdxsv_translation.h
-        core/gdxsv/gdxsv_translation.cpp
-        core/gdxsv/gdxsv_translation_patch.inc
-        core/gdxsv/gdxsv_CustomTexture.h
-        core/gdxsv/gdxsv_CustomTexture.cpp
-        core/gdxsv/lbs_message.h
-        core/gdxsv/mcs_message.h)
+		core/gdxsv/gdxsv_backend_rollback.h
+		core/gdxsv/gdxsv_backend_rollback.cpp
+		core/gdxsv/gdxsv_backend_tcp.h
+		core/gdxsv/gdxsv_backend_udp.h
+		core/gdxsv/gdxsv_network.cpp
+		core/gdxsv/gdxsv_network.h
+		core/gdxsv/gdxsv_patch.inc
+		core/gdxsv/gdxsv_emu_hooks.cpp
+		core/gdxsv/gdxsv_emu_hooks.h
+		core/gdxsv/gdxsv_translation.h
+		core/gdxsv/gdxsv_translation.cpp
+		core/gdxsv/gdxsv_translation_patch.inc
+		core/gdxsv/gdxsv_CustomTexture.h
+		core/gdxsv/gdxsv_CustomTexture.cpp
+		core/gdxsv/lbs_message.h
+		core/gdxsv/mcs_message.h)
 
 if(MSVC)
-    set(CMAKE_VS_SDK_INCLUDE_DIRECTORIES ${CUSTOM_INCLUDE_DIRECTORIES})
-    target_sources(${PROJECT_NAME} PRIVATE core/gdxsv/textures.rc)
+	set(CMAKE_VS_SDK_INCLUDE_DIRECTORIES ${CUSTOM_INCLUDE_DIRECTORIES})
+	target_sources(${PROJECT_NAME} PRIVATE core/gdxsv/textures.rc)
 endif()
 if(APPLE)
-    set(ASSETS core/gdxsv/Textures)
-    target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
-    source_group("Resources" FILES ${ASSETS})
-    set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+	set(ASSETS core/gdxsv/Textures)
+	target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
+	source_group("Resources" FILES ${ASSETS})
+	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 ## End of gdxsv
 

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
-#include <deque>
 #include <string>
 
 #include "gdxsv.pb.h"
@@ -10,6 +8,7 @@
 #include "gdxsv_backend_rollback.h"
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
+#include "log/InMemoryListener.h"
 #include "network/miniupnp.h"
 #include "types.h"
 
@@ -24,12 +23,12 @@ class Gdxsv {
 	};
 
 	Gdxsv()
-		: lbs_net(symbols),
+		: upnp_port(0),
+		  udp_port(0),
+		  lbs_net(symbols),
 		  udp_net(symbols, maxlag),
 		  replay_net(symbols, maxlag),
-		  rollback_net(symbols, maxlag),
-		  upnp_port(0),
-		  udp_port(0){};
+		  rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;
 
@@ -68,6 +67,10 @@ class Gdxsv {
 
 	std::string GeneratePlatformInfoString();
 
+	std::vector<u8> GenerateP2PMatchReportPacket();
+
+	LbsMessage GenerateP2PMatchReportMessage();
+
 	void ApplyOnlinePatch(bool first_time);
 
 	void WritePatchDisk1();
@@ -77,10 +80,10 @@ class Gdxsv {
 	void WriteWidescreenPatchDisk2();
 
 	NetMode netmode = NetMode::Offline;
-	std::atomic<bool> testmode;
 	std::atomic<bool> enabled;
 	std::atomic<int> disk;
 	std::atomic<int> maxlag;
+	std::atomic<int> maxrebattle;
 
 	std::string server;
 	std::string loginkey;
@@ -92,8 +95,8 @@ class Gdxsv {
 	int udp_port;
 	std::string user_id;
 
-	UdpRemote lbs_remote;
-	UdpClient udp;
+	UdpRemote lbs_remote = {};
+	UdpClient udp = {};
 
 	proto::GamePatchList patch_list;
 

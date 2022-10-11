@@ -13,7 +13,6 @@
 
 #endif
 
-#include "gdx_rpc.h"
 #include "gdxsv_network.h"
 
 class GdxsvBackendUdp {

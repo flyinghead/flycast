@@ -49,8 +49,8 @@ public:
 		bufferInfos.emplace_back(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms));
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr);
-		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[0]);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[1]);
 		if (fogImageView)
 		{
 			TSP fogTsp = {};
@@ -60,7 +60,7 @@ public:
 			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 		}
 		if (paletteImageView)
 		{
@@ -71,7 +71,7 @@ public:
 			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 		}
 		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
@@ -91,7 +91,7 @@ public:
 			{
 				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp),
 						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
-				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 			}
 
 			vk::DescriptorBufferInfo uniBufferInfo;
@@ -101,7 +101,7 @@ public:
 				const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
 				size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
 				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
 
 				size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
 				// light at index 0 is no light
@@ -109,7 +109,7 @@ public:
 					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head() + 1) * size, sizeof(N2LightModel) };
 				else
 					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset, sizeof(N2LightModel) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, vk::DescriptorType::eUniformBuffer, nullptr, lightBufferInfo);
 			}
 
 			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
@@ -117,7 +117,7 @@ public:
 		}
 		else
 			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
 	}
 
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const ModifierVolumeParam& mvParam, int polyNumber, vk::Buffer buffer,
@@ -134,19 +134,19 @@ public:
 			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
 			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
 			vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
 
-			getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
+			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
 			perPolyDescSets[&mvParam] = perPolyDescSet;
 		}
 		else
 			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
 	}
 
 	void bindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet, 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, perFrameDescSet, nullptr);
 	}
 
 	void nextFrame()
@@ -187,25 +187,25 @@ public:
 		if (!perFrameLayout)
 		{
 			// Descriptor set and pipeline layout
-			vk::DescriptorSetLayoutBinding perFrameBindings[] = {
-					{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
-					{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
-					{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
-					{ 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// palette texture
+			std::array<vk::DescriptorSetLayoutBinding, 4> perFrameBindings = {
+					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// vertex uniforms
+					vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// fragment uniforms
+					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// fog texture
+					vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// palette texture
 			};
-			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
-					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
-					{ 2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// Naomi2 uniforms
-					{ 3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// Naomi2 lights
+			std::array<vk::DescriptorSetLayoutBinding, 3> perPolyBindings = {
+					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// texture
+					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// Naomi2 uniforms
+					vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// Naomi2 lights
 			};
 			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perFrameBindings));
 			perPolyLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
-			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perPolyBindings));
+			std::array<vk::DescriptorSetLayout, 2> layouts = { *perFrameLayout, *perPolyLayout };
 			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 24);
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), layouts, pushConstant));
 		}
 
 		if (this->renderPass != renderPass)
@@ -350,7 +350,7 @@ public:
 	    };
 	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
 	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference);
+	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference, nullptr, &depthReference);
 	    vk::SubpassDependency dependencies[] {
 	    	vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
 	    			vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eColorAttachmentWrite),
@@ -388,13 +388,11 @@ public:
 		this->shaderManager = shaderManager;
 		if (!pipelineLayout)
 		{
-			vk::DescriptorSetLayoutBinding bindings[] = {
-					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
-			};
+			vk::DescriptorSetLayoutBinding binding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment); // texture
 			descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), binding));
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), descSetLayout.get()));
 		}
 		if (!sampler)
 		{
@@ -412,12 +410,11 @@ public:
 		if (!descriptorSet)
 		{
 			descriptorSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), descSetLayout.get())).front());
 		}
 		vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
-		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+		vk::WriteDescriptorSet writeDescriptorSet(*descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
+		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
 	}
 
 	vk::Pipeline GetPipeline()
@@ -429,7 +426,7 @@ public:
 
 	void BindDescriptorSets(vk::CommandBuffer cmdBuffer) const
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, 1, &descriptorSet.get(), 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, descriptorSet.get(), nullptr);
 	}
 
 private:

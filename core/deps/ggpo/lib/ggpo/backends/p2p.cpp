@@ -70,14 +70,15 @@ Peer2PeerBackend::~Peer2PeerBackend()
 void
 Peer2PeerBackend::AddRemotePlayer(char *ip,
                                   uint16 port,
-                                  int queue)
+                                  int queue,
+                                  bool relay)
 {
    /*
     * Start the state machine (xxx: no)
     */
    _synchronizing = true;
    
-   _endpoints[queue].Init(&_udp, _poll, queue, ip, port, _local_connect_status);
+   _endpoints[queue].Init(&_udp, _poll, queue, ip, port, relay, _local_connect_status);
    _endpoints[queue].SetDisconnectTimeout(_disconnect_timeout);
    _endpoints[queue].SetDisconnectNotifyStart(_disconnect_notify_start);
    _endpoints[queue].Synchronize();
@@ -97,7 +98,7 @@ GGPOErrorCode Peer2PeerBackend::AddSpectator(char *ip,
    }
    int queue = _num_spectators++;
 
-   _spectators[queue].Init(&_udp, _poll, queue + 1000, ip, port, _local_connect_status);
+   _spectators[queue].Init(&_udp, _poll, queue + 1000, ip, port, false, _local_connect_status);
    _spectators[queue].SetDisconnectTimeout(_disconnect_timeout);
    _spectators[queue].SetDisconnectNotifyStart(_disconnect_notify_start);
    _spectators[queue].Synchronize();
@@ -261,7 +262,7 @@ Peer2PeerBackend::AddPlayer(GGPOPlayer *player,
    *handle = QueueToPlayerHandle(queue);
 
    if (player->type == GGPO_PLAYERTYPE_REMOTE) {
-      AddRemotePlayer(player->u.remote.ip_address, player->u.remote.port, queue);
+      AddRemotePlayer(player->u.remote.ip_address, player->u.remote.port, queue, player->u.remote.relay);
    }
 
    if (player->type == GGPO_PLAYERTYPE_LOCAL) {
@@ -611,6 +612,19 @@ Peer2PeerBackend::PlayerHandleToQueue(GGPOPlayerHandle player, int *queue)
 void
 Peer2PeerBackend::OnMsg(sockaddr_in &from, UdpMsg *msg, int len)
 {
+   if (msg->hdr.type == UdpMsg::Relay) {
+      if (msg->hdr.relay_magic == RELAY_MAGIC) {
+         int i = msg->hdr.relay_to_endpoint;
+         if (i < _num_players) {
+            msg->hdr.type = msg->hdr.org_type;
+            msg->hdr.relay_magic = 0;
+            msg->hdr.relay_to_endpoint = 0;
+            Log("Relay msg %d->%d type:%d", msg->hdr.remote_endpoint, msg->hdr.relay_to_endpoint, msg->hdr.type);
+            _endpoints[i].SendUnmanagedMsg(msg, len);
+         }
+      }
+      return;
+   }
    for (int i = 0; i < _num_players; i++) {
       if (_endpoints[i].HandlesMsg(from, msg)) {
          _endpoints[i].OnMsg(msg, len);

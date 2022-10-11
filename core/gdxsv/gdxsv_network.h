@@ -77,20 +77,17 @@ class MessageFilter {
 class UdpRemote {
    public:
 	bool Open(const char *host, int port);
-
 	bool Open(const std::string &addr);
-
 	void Close();
-
-	bool is_open() const;
-
-	const std::string &str_addr() const;
-
-	const sockaddr_in &net_addr() const;
+	bool is_open() const { return is_open_; }
+	const std::string &str_addr() const { return str_addr_; }
+	const std::string &masked_addr() const { return masked_addr_; }
+	const sockaddr_in &net_addr() const { return net_addr_; }
 
    private:
 	bool is_open_;
 	std::string str_addr_;
+	std::string masked_addr_;
 	sockaddr_in net_addr_;
 };
 
@@ -126,15 +123,17 @@ class UdpPingPong {
 
 	void Reset();
 
-	bool Running();
+	bool Running() const;
 
-	int ElapsedMs();
+	int ElapsedMs() const;
 
 	void AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port);
 
 	bool GetAvailableAddress(uint8_t peer_id, sockaddr_in *dst, float *rtt);
 
 	void GetRttMatrix(uint8_t matrix[N][N]);
+
+	void DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id);
 
    private:
 	static const uint32_t MAGIC = 1434750950;
@@ -165,8 +164,9 @@ class UdpPingPong {
 	std::atomic<bool> running_;
 	std::chrono::high_resolution_clock::time_point start_time_;
 	UdpClient client_ = UdpClient{};
+
 	std::recursive_mutex mutex_;
-	uint8_t rtt_matrix_[N][N];
+	uint8_t rtt_matrix_[N][N] = {};
 	std::vector<Candidate> candidates_;
 	std::map<std::string, int> user_to_peer_;
 	std::map<int, std::string> peer_to_user_;

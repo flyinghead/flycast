@@ -89,6 +89,7 @@ typedef struct GGPOPlayer {
       struct {
          char           ip_address[32];
          unsigned short port;
+         bool relay;
       } remote;
    } u;
 } GGPOPlayer;
@@ -307,6 +308,7 @@ typedef struct GGPONetworkStats {
       int   recv_queue_len;
       int   ping;
       int   kbps_sent;
+      int   recv_packet_loss;
    } network;
    struct {
       int   local_frames_behind;
