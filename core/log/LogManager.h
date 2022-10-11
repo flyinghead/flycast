@@ -6,7 +6,6 @@
 
 #include <array>
 #include <cstdarg>
-#include <deque>
 
 #include "BitSet.h"
 #include "Log.h"
@@ -23,7 +22,6 @@ public:
     FILE_LISTENER = 0,
     CONSOLE_LISTENER,
     LOG_WINDOW_LISTENER,
-    TAIL_LISTENER,
 
     NUMBER_OF_LISTENERS  // Must be last
   };
@@ -49,7 +47,6 @@ public:
 
   const char* GetShortName(LogTypes::LOG_TYPE type) const;
   const char* GetFullName(LogTypes::LOG_TYPE type) const;
-  const std::deque<std::string> GetTailLogs();
 
   void RegisterListener(LogListener::LISTENER id, LogListener* listener);
   void EnableListener(LogListener::LISTENER id, bool enable);
