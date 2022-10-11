@@ -170,6 +170,7 @@ jobs:
         run: |
           VERSION=$(git describe --tags --always --match "gdxsv-*" | sed -E "s/-([0-9]+)-g(.+)$/-dev.\\1+\\2/g")
           sentry-cli releases new "$VERSION"
+          sentry-cli releases set-commits "$VERSION" --auto
           sentry-cli upload-dif ${{ matrix.config.debugFile }}
         shell: bash
         env:
