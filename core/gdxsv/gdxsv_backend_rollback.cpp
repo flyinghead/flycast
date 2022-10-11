@@ -82,8 +82,8 @@ void GdxsvBackendRollback::Reset() {
 	recv_buf_.clear();
 	lbs_tx_reader_.Clear();
 	matching_.Clear();
-	ping_pong_.Reset();
 	report_.Clear();
+	ping_pong_.Reset();
 	start_network_ = std::future<bool>();
 }
 
@@ -261,10 +261,7 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	DummyRuleData[7] = 0;
 	DummyRuleData[8] = 1;
 	DummyRuleData[9] = 0;
-	state_ = State::StartLocalTest;
-	is_local_test_ = true;
-	maxlag_ = 0;
-	maxrebattle_ = 1;
+
 	proto::P2PMatching matching;
 	matching.set_battle_code("0123456");
 	matching.set_peer_id(me);
@@ -282,6 +279,10 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 		matching.mutable_candidates()->Add(std::move(player));
 	}
 	Prepare(matching, 20010 + me);
+	state_ = State::StartLocalTest;
+	is_local_test_ = true;
+	maxlag_ = 0;
+	maxrebattle_ = 1;
 	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
 	return true;
 }

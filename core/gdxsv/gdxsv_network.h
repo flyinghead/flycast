@@ -77,20 +77,17 @@ class MessageFilter {
 class UdpRemote {
    public:
 	bool Open(const char *host, int port);
-
 	bool Open(const std::string &addr);
-
 	void Close();
-
-	bool is_open() const;
-
-	const std::string &str_addr() const;
-
-	const sockaddr_in &net_addr() const;
+	bool is_open() const { return is_open_; }
+	const std::string &str_addr() const { return str_addr_; }
+	const std::string &masked_addr() const { return masked_addr_; }
+	const sockaddr_in &net_addr() const { return net_addr_; }
 
    private:
 	bool is_open_;
 	std::string str_addr_;
+	std::string masked_addr_;
 	sockaddr_in net_addr_;
 };
 

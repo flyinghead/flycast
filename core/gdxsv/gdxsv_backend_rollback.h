@@ -59,5 +59,4 @@ class GdxsvBackendRollback {
 	proto::P2PMatchingReport report_;
 	UdpPingPong ping_pong_;
 	std::future<bool> start_network_;
-	std::string close_reason_;
 };

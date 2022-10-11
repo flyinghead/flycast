@@ -166,6 +166,12 @@ bool UdpRemote::Open(const char *host, int port) {
 
 	is_open_ = true;
 	str_addr_ = std::string(host) + ":" + std::to_string(port);
+	masked_addr_ = str_addr_;
+	for (int i = masked_addr_.find_first_of('.'); i < masked_addr_.size(); i++) {
+		if ('0' <= masked_addr_[i] && masked_addr_[i] <= '9') masked_addr_[i] = 'x';
+		if (masked_addr_[i] == ':') break;
+	}
+
 	net_addr_.sin_family = AF_INET;
 	memcpy(&(net_addr_.sin_addr.s_addr), host_entry->h_addr, host_entry->h_length);
 	net_addr_.sin_port = htons(port);
@@ -187,12 +193,6 @@ void UdpRemote::Close() {
 	str_addr_.clear();
 	memset(&net_addr_, 0, sizeof(net_addr_));
 }
-
-bool UdpRemote::is_open() const { return is_open_; }
-
-const std::string &UdpRemote::str_addr() const { return str_addr_; }
-
-const sockaddr_in &UdpRemote::net_addr() const { return net_addr_; }
 
 bool UdpClient::Bind(int port) {
 	sock_t new_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -433,7 +433,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				}
 
 				if (recv.type == PONG) {
-					NOTICE_LOG(COMMON, "Recv PONG from %d", recv.from_peer_id);
+					NOTICE_LOG(COMMON, "Recv PONG from Peer%d", recv.from_peer_id);
 					const auto now =
 						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
 							.count();
@@ -463,7 +463,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
 
 				for (auto &c : candidates_) {
-					NOTICE_LOG(COMMON, "Send PING to %d %s", c.peer_id, c.remote.str_addr().c_str());
+					NOTICE_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
 					if (c.remote.is_open()) {
 						Packet p{};
 						p.magic = MAGIC;
