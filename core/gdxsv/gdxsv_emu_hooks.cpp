@@ -92,8 +92,8 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 	delete[] slog_path;
 	if (slog_fp == nullptr) return;
 
-	const std::deque<std::string> tails = LogManager::GetInstance()->GetTailLogs();
-	for (auto line : tails) {
+	auto lines = inMemoryListener.GetLines(0, nullptr);
+	for (auto line : lines) {
 		fprintf(slog_fp, "%s", line.c_str());
 	}
 	
