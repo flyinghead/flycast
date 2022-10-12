@@ -155,6 +155,7 @@ LogManager::LogManager()
 
 	RegisterListener(LogListener::IN_MEMORY_LISTENER, &inMemoryListener);
 	EnableListener(LogListener::IN_MEMORY_LISTENER, true);
+	inMemoryListener.SetMaxLines(100);
 
 	for (LogContainer& container : m_log)
 	{

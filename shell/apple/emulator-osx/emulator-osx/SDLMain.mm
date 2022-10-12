@@ -12,6 +12,7 @@
 
 #ifdef USE_BREAKPAD
 #include "client/mac/handler/exception_handler.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 #endif
 
 /* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
@@ -247,6 +248,7 @@ static void CustomApplicationMain (int argc, char **argv)
 static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *context, bool succeeded)
 {
     printf("Minidump saved to '%s/%s.dmp'\n", dump_dir, minidump_id);
+    gdxsv_prepare_crashlog(dump_dir, minidump_id);
     return succeeded;
 }
 #endif

@@ -474,6 +474,7 @@ extern Option<bool> SerialPTY;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
 extern Option<bool> DisplayDebuggerMenu;
+extern Option<bool> UploadCrashLogs;
 
 extern Option<bool> OpenGlChecks;
 

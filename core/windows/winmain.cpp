@@ -49,7 +49,11 @@
 #include "rawinput.h"
 #include "oslib/directory.h"
 #ifdef USE_BREAKPAD
+#ifdef _MSC_VER
+#include "client/windows/handler/exception_handler.h"
+#else
 #include "breakpad/client/windows/handler/exception_handler.h"
+#endif
 #include "version.h"
 #endif
 
@@ -60,6 +64,11 @@
 
 #include <windows.h>
 #include <windowsx.h>
+
+// Gdxsv
+#include <fstream>
+#include <sstream>
+#include "gdxsv/gdxsv_emu_hooks.h"
 
 static PCHAR*
 	commandLineToArgvA(
@@ -743,6 +752,12 @@ static bool dumpCallback(const wchar_t* dump_path,
 		wchar_t s[MAX_PATH + 32];
 		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
+		
+		char path_buffer[MAX_PATH];
+		char id_buffer[MAX_PATH];
+		wcstombs(path_buffer, dump_path, sizeof(path_buffer));
+		wcstombs(id_buffer, minidump_id, sizeof(id_buffer));
+		gdxsv_prepare_crashlog(path_buffer, id_buffer);
 	}
 	return succeeded;
 }
@@ -956,32 +971,152 @@ void os_LaunchFromURL(const std::string& url)
 {
     ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }
+	
+struct InetCloser
+{
+	typedef HINTERNET pointer;
 
+	void operator()(HINTERNET h)
+	{
+		if (h != NULL){
+			InternetCloseHandle(h);
+		}
+	}
+};
+	
 std::string os_FetchStringFromURL(const std::string& url)
 {
-    HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-    HINTERNET urlFile;
-    std::string result;
-    if (interwebs) {
-        const char* lpszUrl = url.c_str();
-        DeleteUrlCacheEntry(lpszUrl);
-        urlFile = InternetOpenUrlA(interwebs, lpszUrl, NULL, 0, 0, 0);
-        if (urlFile) {
-            char buffer[2000];
-            DWORD bytesRead;
-            do {
-                InternetReadFile(urlFile, buffer, 2000, &bytesRead);
-                result.append(buffer, bytesRead);
-                memset(buffer, 0, 2000);
-            } while (bytesRead);
-            InternetCloseHandle(interwebs);
-            InternetCloseHandle(urlFile);
-            return result;
+	std::string result;
+	
+	std::unique_ptr<HINTERNET, InetCloser> interwebs (InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
+	if (interwebs.get() == NULL)
+	{
+		ERROR_LOG(COMMON, "InternetOpen Error");
+		return "";
+	}
+	const char* lpszUrl = url.c_str();
+	DeleteUrlCacheEntry(lpszUrl);
+	
+	std::unique_ptr<HINTERNET, InetCloser> urlFile(InternetOpenUrlA(interwebs.get(), lpszUrl, NULL, 0, 0, 0));
+	if (urlFile.get() == NULL)
+	{
+		ERROR_LOG(COMMON, "InternetOpenUrl Error");
+		return "";
+	}
+	
+	char buffer[2000];
+	DWORD bytesRead;
+	do {
+		InternetReadFile(urlFile.get(), buffer, 2000, &bytesRead);
+		result.append(buffer, bytesRead);
+		memset(buffer, 0, 2000);
+	} while (bytesRead);
+	
+	return result;
+}
 
-        }
-    }
-    InternetCloseHandle(interwebs);
-    return result;
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
+{
+	char scheme[16], host[256], path[256];
+	URL_COMPONENTS components;
+	memset(&components, 0, sizeof(components));
+	components.dwStructSize = sizeof(components);
+	components.lpszScheme = scheme;
+	components.dwSchemeLength = sizeof(scheme) / sizeof(scheme[0]);
+	components.lpszHostName = host;
+	components.dwHostNameLength = sizeof(host) / sizeof(host[0]);
+	components.lpszUrlPath = path;
+	components.dwUrlPathLength = sizeof(path) / sizeof(path[0]);
+
+	if (!InternetCrackUrlA(url.c_str(), url.length(), 0, &components)) return 418;
+
+	std::unique_ptr<HINTERNET, InetCloser> interwebs (InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
+	if (interwebs.get() == NULL)
+	{
+		ERROR_LOG(COMMON, "InternetOpen Error: %d", GetLastError());
+		return 418;
+	}
+	
+	std::unique_ptr<HINTERNET, InetCloser> connect (InternetConnect(interwebs.get(), host, components.nPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0));
+	if (connect.get() == NULL)
+	{
+		ERROR_LOG(COMMON, "InternetConnect Error: %d", GetLastError());
+		return 418;
+	}
+
+	std::unique_ptr<HINTERNET, InetCloser> request (HttpOpenRequest(connect.get(), "POST", path, NULL, NULL, NULL, (components.nPort == 443 ? INTERNET_FLAG_SECURE : 0), 0));
+	if (request.get() == NULL)
+	{
+		ERROR_LOG(COMMON, "HttpOpenRequest Error: %d", GetLastError());
+		return 418;
+	}
+	
+	const char *szHeaders = "Content-Type: multipart/form-data; boundary=----BoundaryFlycastIsAwesome";
+	const std::string newline = "\r\n";
+	
+	std::vector<uint8_t> vec_buf;
+	
+	for (auto const &field : fields)
+	{
+		std::ostringstream sbuf;
+		
+		if (field.field_value.empty())
+		{
+			std::size_t found = field.file_path.find_last_of("\\");
+			if (found == std::string::npos) continue;
+			
+			std::ifstream input (field.file_path.c_str(), std::ios::binary);
+			if (input.good())
+			{
+				std::string filename = field.file_path.substr(found+1);
+				
+				sbuf << "------BoundaryFlycastIsAwesome"
+					<< newline
+					<< "Content-Disposition: form-data; name=\"" << field.field_name << "\"; filename=\"" << filename << "\""
+					<< newline
+					<< "Content-Type: " << field.content_type
+					<< newline
+					<< newline;
+				std::string header = sbuf.str();
+				vec_buf.insert(vec_buf.end(), header.begin(), header.end());
+				
+				std::vector<uint8_t> file_buf((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+				vec_buf.insert(vec_buf.end(), file_buf.begin(), file_buf.end());
+				
+				vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
+			}
+		}
+		else
+		{
+			sbuf << "------BoundaryFlycastIsAwesome"
+				<< newline
+				<< "Content-Disposition: form-data; name=\"" << field.field_name << "\""
+				<< newline
+				<< newline
+				<< field.field_value
+				<< newline;
+			std::string field_data = sbuf.str();
+			vec_buf.insert(vec_buf.end(), field_data.begin(), field_data.end());
+		}
+		
+	}
+	const std::string endline = "------BoundaryFlycastIsAwesome--";
+	vec_buf.insert(vec_buf.end(), endline.begin(), endline.end());
+	
+	if (!HttpSendRequest(request.get(), szHeaders, -1, static_cast<void*>(vec_buf.data()), vec_buf.size()))
+	{
+		ERROR_LOG(COMMON, "HttpSendRequest Error: %d", GetLastError());
+		return 418;
+	}
+	
+	DWORD statCodeLen = sizeof(DWORD);
+	DWORD statCode;
+	if (HttpQueryInfo(request.get(), HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &statCode, &statCodeLen, NULL))
+	{
+		return int(statCode);
+	}
+	
+	return 418;
 }
 
 std::string os_GetMachineID()
