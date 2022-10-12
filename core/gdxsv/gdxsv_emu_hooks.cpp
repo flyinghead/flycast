@@ -23,70 +23,72 @@ static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 
 void gdxsv_flycast_init() {
-	std::ifstream fs;
-	fs.open(get_writable_data_path("crash_dmp_list.txt"));
-	std::vector<std::string> unhandled_dmp = {};
-	if (fs.is_open()) {
-		std::string line;
-		
-		while (std::getline(fs, line)) {
-			std::size_t found = line.find_last_of(",");
-			if (found == std::string::npos) continue;
-			std::string file_path = line.substr(0, found);
-			std::string git_version = line.substr(found+1);
+	std::thread([]() {
+		std::ifstream fs;
+		fs.open(get_writable_data_path("crash_dmp_list.txt"));
+		std::vector<std::string> unhandled_dmp = {};
+		if (fs.is_open()) {
+			std::string line;
 			
-			// Check if the dmp still exists
-			if (!file_exists(file_path))
-				continue;
-			
-			std::vector<UploadField> fields = {};
-			
-			// Upload dmp
-			fields.push_back({"upload_file_minidump", file_path, "application/octet-stream"});
-			
-			// Upload tail log
-			std::string log = file_path;
-			if (log.find(".dmp") != std::string::npos) {
-				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
+			while (std::getline(fs, line)) {
+				std::size_t found = line.find_last_of(",");
+				if (found == std::string::npos) continue;
+				std::string file_path = line.substr(0, found);
+				std::string git_version = line.substr(found+1);
 				
-				if (file_exists(log))
-					fields.push_back({"flycast_log", log, "text/plain"});
+				// Check if the dmp still exists
+				if (!file_exists(file_path))
+					continue;
+				
+				std::vector<UploadField> fields = {};
+				
+				// Upload dmp
+				fields.push_back({"upload_file_minidump", file_path, "application/octet-stream"});
+				
+				// Upload tail log
+				std::string log = file_path;
+				if (log.find(".dmp") != std::string::npos) {
+					log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
+					
+					if (file_exists(log))
+						fields.push_back({"flycast_log", log, "text/plain"});
+				}
+				
+				// Upload emu.cfg
+				if (file_exists(get_writable_config_path("emu.cfg")))
+					fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
+				
+				fields.push_back({"sentry[release]", "", "", git_version});
+				
+				std::string minidump_upload_url;
+				if (git_version.find("dev") == std::string::npos)
+					minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968";
+				else
+					minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
+				
+				int result = os_UploadFilesToURL(minidump_upload_url, fields);
+				NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
+				if (result != 200) {
+					unhandled_dmp.push_back(line);
+				}
 			}
-			
-			// Upload emu.cfg
-			if (file_exists(get_writable_config_path("emu.cfg")))
-				fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
-			
-			fields.push_back({"sentry[release]", "", "", git_version});
-			
-			std::string minidump_upload_url;
-			if (git_version.find("dev") == std::string::npos)
-				minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968";
-			else
-				minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
-			
-			int result = os_UploadFilesToURL(minidump_upload_url, fields);
-			NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
-			if (result != 200) {
-				unhandled_dmp.push_back(line);
-			}
+		} else {
+			return;
 		}
-	} else {
-		return;
-	}
-	
-	//Clear contents of crash_dmp_list.txt
-	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
-	if (fp == nullptr) {
-		NOTICE_LOG(COMMON, "fopen failed");
-	} else {
-		if (unhandled_dmp.size()) {
-			for (auto dmp : unhandled_dmp) {
-				fprintf(fp, "%s\n", dmp.c_str());
+		
+		//Clear contents of crash_dmp_list.txt
+		FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
+		if (fp == nullptr) {
+			NOTICE_LOG(COMMON, "fopen failed");
+		} else {
+			if (unhandled_dmp.size()) {
+				for (auto dmp : unhandled_dmp) {
+					fprintf(fp, "%s\n", dmp.c_str());
+				}
 			}
+			fclose(fp);
 		}
-		fclose(fp);
-	}
+	}).detach();
 }
 
 void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
