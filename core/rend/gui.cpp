@@ -2231,7 +2231,7 @@ static void gui_display_settings()
 
 	            OptionCheckbox("Debugger Menu", config::DisplayDebuggerMenu, "Debugger button on the option menu");
 				
-				OptionCheckbox("Upload Crash Logs", config::UploadCrashLogs, "Upload Crash Logs, App Logs & emu.cfg to developer for troubleshooting");
+	            OptionCheckbox("Upload Crash Logs", config::UploadCrashLogs, "Upload Crash Logs, App Logs & emu.cfg to developer for troubleshooting");
 
 	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;
