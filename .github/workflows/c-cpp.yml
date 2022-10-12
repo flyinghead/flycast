@@ -22,6 +22,11 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
+    # For google could SDK needs permissions
+    permissions:
+      contents: read
+      id-token: write
+
     strategy:
       matrix:
         config:
