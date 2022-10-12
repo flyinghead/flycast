@@ -156,6 +156,7 @@ jobs:
 
       - name: Upload to GCS
         run: gcloud --quiet alpha storage cp artifact/bin/* gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA/${{ matrix.config.packageName }}/
+        shell: bash
         if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Configure AWS Credentials
