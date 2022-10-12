@@ -95,6 +95,8 @@ const static GdxsvTranslation translations_disk2[] = {
     TRANSLATE(0x1BEC80, 36, R"(ハンドルネームが入力されていません)", R"(          未輸入網絡名稱)", R"(    Handle Name cannot be blank)"),
     TRANSLATE(0x1BECA4, 36, R"(このハンドルネームで登録しますか？)", R"(        確認使用此網絡名稱？)", R"(  Confirm using this Handle Name?)"),
     CUSTOMIZE(0x1BED64, 28, R"(マルチマッチングサーバーに)", R"(     GDXSV 免費SERVER)", R"(GDXSV FREE OF CHARGE SERVER)", R"(  無料のGDXSVサーバーに)"),
+    TRANSLATE(0x1BED8C, 36, R"(スタートボタンを１秒間以上押すと)", R"(如要取消，請按實START掣一秒)", R"(Press and hold START button)"),
+    TRANSLATE(0x1BEDB0, 20, R"(キャンセルします)", R"( )", R"(to cancel)"),
     CUSTOMIZE(0x1BEE2C, 32, R"(接続中は通信料金がかかります)", R"( )", R"( )", R"( )"),
     CUSTOMIZE(0x1BEE4C, 36, R"(マルチマッチングサーバーに接続中は)", R"( )", R"( )", R"( )"),
     CUSTOMIZE(0x1BEE70, 32, R"(３分１０円の接続料がかかります)", R"( )", R"( )", R"( )"),
@@ -131,6 +133,7 @@ const static GdxsvTranslation translations_disk2[] = {
     TRANSLATE(0x1BF4C8, 24, R"(通信ゲームファイルに)", R"( 正在保存相關設定到)", R"(Saving the settings)"),
     TRANSLATE(0x1BF4E0, 24, R"(設定を保存しています)", R"(    連線遊戲存档)", R"(to online game save)"),
     TRANSLATE(0x1BF4F8, 16, R"(セーブしました)", R"(   儲存成功)", R"(    Saved)"),
+    TRANSLATE(0x1BF538, 20, R"(接続を中断しました)", R"(    連線已中斷)", R"(Disconnected)"),
     TRANSLATE(0x1BF54C, 36, R"(通信ゲームファイルをロードします)", R"(載入連線遊戲存档)", R"(Load the online game save)"),
     TRANSLATE(0x1BF570, 32, R"(ファイルをロードしない場合は)", R"(如不載入，連線相關的資料)", R"(If you do not load the file)"),
     TRANSLATE(0x1BF590, 36, R"(モデム設定や他プレイヤーのＩＤ等が)", R"(例如modem設定、其他玩家的ID等)", R"(modem settings, other players' IDs)"),
@@ -344,7 +347,7 @@ if (disk == 2) {
     
     // To manage lang-path version, overwrite "UNUSED" text area
     symbols["lang_patch_id"] = 0x0c1d37dc;
-    symbols[":lang_patch_id"] = 63377809;
+    symbols[":lang_patch_id"] = 65595574;
     symbols[":lang_patch_lang"] = (u32)GdxsvLanguage::Language();
     gdxsv_WriteMem32(symbols["lang_patch_id"], symbols[":lang_patch_id"]);
 }
