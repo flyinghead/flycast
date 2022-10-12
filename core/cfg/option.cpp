@@ -112,6 +112,7 @@ Option<bool> SerialPTY("Debug.SerialPTY");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 Option<bool> DisplayDebuggerMenu("DisplayDebuggerMenu", false);
+Option<bool> UploadCrashLogs("UploadCrashLogs", true);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 

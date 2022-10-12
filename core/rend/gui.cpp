@@ -2229,7 +2229,9 @@ static void gui_display_settings()
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
 
-	            OptionCheckbox("DebuggerMenu", config::DisplayDebuggerMenu, "Debugger button on the option menu");
+	            OptionCheckbox("Debugger Menu", config::DisplayDebuggerMenu, "Debugger button on the option menu");
+				
+				OptionCheckbox("Upload Crash Logs", config::UploadCrashLogs, "Upload Crash Logs, App Logs & emu.cfg to developer for troubleshooting");
 
 	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;
