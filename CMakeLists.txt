@@ -20,7 +20,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
-option(MSVC_BREAKPAD "Windows MSVC: Link breakpad client" OFF)
+option(MSVC_BREAKPAD "Windows MSVC: Build breakpad client" OFF)
 option(GDB_SERVER "Build with GDB Server support" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
