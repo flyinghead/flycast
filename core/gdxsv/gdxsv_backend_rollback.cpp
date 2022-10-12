@@ -35,8 +35,10 @@ u16 convertInput(MapleInputState input) {
 	u16 r = 0;
 	if (~input.kcode & 0x0004) r |= 0x4000;		 // A
 	if (~input.kcode & 0x0002) r |= 0x2000;		 // B
+	if (~input.kcode & 0x0001) r |= 0x8000;		 // C
 	if (~input.kcode & 0x0400) r |= 0x0002;		 // X
 	if (~input.kcode & 0x0200) r |= 0x0001;		 // Y
+	if (~input.kcode & 0x0100) r |= 0x1000;		 // Z
 	if (~input.kcode & 0x0010) r |= 0x0020;		 // up
 	if (~input.kcode & 0x0020) r |= 0x0010;		 // down
 	if (~input.kcode & 0x0080) r |= 0x0004;		 // right
@@ -44,7 +46,6 @@ u16 convertInput(MapleInputState input) {
 	if (~input.kcode & 0x0008) r |= 0x0080;		 // Start
 	if (~input.kcode & 0x00020000) r |= 0x8000;	 // LT
 	if (~input.kcode & 0x00040000) r |= 0x1000;	 // RT
-
 	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
 	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
 	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
