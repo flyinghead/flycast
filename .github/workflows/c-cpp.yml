@@ -75,6 +75,14 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Setup - gcloud / gsutil
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCS_SA_KEY }}
+          project_id: ${{ secrets.GCS_PROJECT }}
+          export_default_credentials: true
+        if: github.repository == 'inada-s/flycast' && matrix.config.destDir != ''
+
       - name: Compile a universal OpenMP (macOS)
         run: export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1; brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: runner.os == 'macOS'
@@ -143,6 +151,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
           aws-region: us-east-2
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Upload to GCS
+        run: gsutil -m rsync -R artifact/bin gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
 
       - name: Upload to S3
         run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
