@@ -35,16 +35,28 @@ void gdxsv_flycast_init() {
 			std::string file_path = line.substr(0, found);
 			std::string git_version = line.substr(found+1);
 			
+			// Check if the dmp still exists
+			if (!file_exists(file_path))
+				continue;
+			
 			std::vector<UploadField> fields = {};
 			
+			// Upload dmp
 			fields.push_back({"upload_file_minidump", file_path, "application/octet-stream"});
 			
+			// Upload tail log
 			std::string log = file_path;
 			if (log.find(".dmp") != std::string::npos) {
 				log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
-				fields.push_back({"flycast_log", log, "text/plain"});
+				
+				if (file_exists(log))
+					fields.push_back({"flycast_log", log, "text/plain"});
 			}
-			fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
+			
+			// Upload emu.cfg
+			if (file_exists(get_writable_config_path("emu.cfg")))
+				fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
+			
 			fields.push_back({"sentry[release]", "", "", git_version});
 			
 			std::string minidump_upload_url;
@@ -63,6 +75,7 @@ void gdxsv_flycast_init() {
 		return;
 	}
 	
+	//Clear contents of crash_dmp_list.txt
 	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
 	if (fp == nullptr) {
 		NOTICE_LOG(COMMON, "fopen failed");
