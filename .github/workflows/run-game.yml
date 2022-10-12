@@ -20,6 +20,10 @@ jobs:
   run-game:
     name: RunGame
     runs-on: [win-mini]
+    env:
+      N: 1
+      ROM: "C:\\rom\\gdx-disc2\\gdx-disc2.gdi"
+      FLYCAST: "C:\\rom\\flycast-gdxsv.exe"
     steps:
     - uses: actions/checkout@v3
-    - run: python -v
+    - run: python run.py rbk_test
