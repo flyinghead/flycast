@@ -266,7 +266,7 @@ NSString* runCommand(NSString* commandToRun) {
 std::string os_GetConnectionMedium() {
     NSString* bestInterface = runCommand(@"route get 8.8.8.8 | grep interface | awk '{split($0,a,\": \"); printf \"%s\", a[2]}'");
 
-	if ( bestInterface == nil || [bestInterface isKindOfClass:[NSNull null]] || ([bestInterface respondsToSelector:@selector(length)] && [bestInterface length] == 0)) {
+	if ( bestInterface == nil || [bestInterface isEqual:[NSNull null]] || ([bestInterface respondsToSelector:@selector(length)] && [bestInterface length] == 0)) {
 		return "Unknown";
 	}
 	
