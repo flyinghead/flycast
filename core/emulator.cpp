@@ -524,9 +524,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
-		if (settings.platform.isNaomi())
+		if (settings.platform.isNaomi()) {
 			// Must be done after the maple devices are created and EEPROM is accessible
 			naomi_cart_ConfigureEEPROM();
+			// and reload settings so that eeprom-based settings can be overridden
+			loadGameSpecificSettings();
+		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
