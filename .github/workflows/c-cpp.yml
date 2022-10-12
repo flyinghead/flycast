@@ -75,13 +75,17 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - id: 'gcloud auth'
-        uses: 'google-github-actions/auth@v0'
+      - name: Setup google cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.3.0
+ 
+      - id: auth
+        name: Authenticate to google cloud platform
+        uses: google-github-actions/auth@v0
         with:
-          credentials_json: '${{ secrets.GCS_SA_KEY }}'
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v0'
-        if: github.repository == 'inada-s/flycast' && matrix.config.destDir != ''
+          workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: 'true'
+          access_token_lifetime: 1200s
 
       - name: Compile a universal OpenMP (macOS)
         run: export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1; brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
@@ -153,7 +157,7 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to GCS
-        run: gsutil -m rsync -R artifact/bin gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
+        run: gcloud --quiet alpha storage cp -r artifact/bin/* gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
 
       - name: Upload to S3
         run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
