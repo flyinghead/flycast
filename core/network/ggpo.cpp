@@ -215,39 +215,39 @@ static bool on_event(GGPOEvent *info)
 {
 	switch (info->code) {
 	case GGPO_EVENTCODE_CONNECTED_TO_PEER:
-		INFO_LOG(NETWORK, "Connected to peer %d", info->u.connected.player);
+		NOTICE_LOG(NETWORK, "Connected to peer %d", info->u.connected.player);
 		gui_display_notification("Connected to peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
-		INFO_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
+		NOTICE_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
 		gui_display_notification("Synchronizing with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
-		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
+		NOTICE_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
 		connected[info->u.synchronized.player] = true;
 		gui_display_notification("Synchronized with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_RUNNING:
-		INFO_LOG(NETWORK, "Running");
+		NOTICE_LOG(NETWORK, "Running");
 		gui_display_notification("Running", 2000);
 		synchronized = true;
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
-		INFO_LOG(NETWORK, "Disconnected from peer %d", info->u.disconnected.player);
+		NOTICE_LOG(NETWORK, "Disconnected from peer %d", info->u.disconnected.player);
 		connected[info->u.connected.player] = false;
 		// throw FlycastException("Disconnected from peer");
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
-		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
+		NOTICE_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / (msPerFrameAvg >= 25 ? 30 : 60)));
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
-		INFO_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
+		NOTICE_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
 		gui_display_notification("Connection interrupted", 2000);
 		break;
 	case GGPO_EVENTCODE_CONNECTION_RESUMED:
-		INFO_LOG(NETWORK, "Connection resumed with player %d", info->u.connection_resumed.player);
+		NOTICE_LOG(NETWORK, "Connection resumed with player %d", info->u.connection_resumed.player);
 		gui_display_notification("Connection resumed", 2000);
 		break;
 	}
