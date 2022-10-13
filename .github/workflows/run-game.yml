@@ -19,6 +19,10 @@ on:
         description: 'Timeout seconds for single iteration'
         default: '120'
         required: true
+      maxrebattle:
+        description: 'Max rebattle'
+        default: '1'
+        required: true
 
 jobs:
   run-game:
@@ -30,6 +34,7 @@ jobs:
       FLYCAST: ${{ github.event.inputs.flycast-url }}
       ITERATION: ${{ github.event.inputs.iteration }}
       TIMEOUT: ${{ github.event.inputs.timeout }}
+      MAXREBATTLE: ${{ github.event.inputs.maxrebattle }}
     steps:
     - uses: actions/checkout@v3
     - run: python run.py ${{ github.event.inputs.run-function }}
