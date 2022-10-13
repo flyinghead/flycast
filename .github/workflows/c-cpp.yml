@@ -22,14 +22,19 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
+    # For google could SDK needs permissions
+    permissions:
+      contents: read
+      id-token: write
+
     strategy:
       matrix:
         config:
           # - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode, destDir: osx, buildType: Release, packageName: flycast-gdxsv-macos-x86_64.zip}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, debugFile: build/RelWithDebInfo/Flycast.app.dSYM/Contents/Resources/DWARF/Flycast, buildType: RelWithDebInfo, packageName: flycast-gdxsv-macos-x86_64.zip}
           # - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -G Ninja, buildType: Release, packageName: flycast-gdxsv-linux-x86_64.zip}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, buildType: Release, packageName: flycast-gdxsv-windows-msvc.zip}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DMSVC_BREAKPAD=ON, debugFile: build/flycast.pdb build/flycast.exe, destDir: win, buildType: Release, packageName: flycast-gdxsv-windows-msvc.zip}
           # - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
           # - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
           # - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -G Ninja, buildType: Release}
@@ -135,6 +140,25 @@ jobs:
           rm flycast-gdxsv
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
+      - name: Setup google cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.3.0
+        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Authenticate to google cloud platform
+        id: auth
+        uses: google-github-actions/auth@v0
+        with:
+          workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: 'true'
+          access_token_lifetime: 1200s
+        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Upload to GCS
+        run: gcloud --quiet alpha storage cp artifact/bin/* gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA/${{ matrix.config.packageName }}
+        shell: bash
+        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
       - name: Configure AWS Credentials
         id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -153,6 +177,29 @@ jobs:
         run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
+
+      - name: Setup Sentry CLI
+        uses: mathieu-bour/setup-sentry-cli@1.2.0
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+          SENTRY_PROJECT: "${{ startsWith(github.ref, 'refs/tags/gdxsv-') && 'public' || 'dev' }}"
+        with:
+          url: https://sentry.io
+          token: ${{ env.SENTRY_TOKEN }}
+          organization: gdxsv-project
+          project: ${{ env.SENTRY_PROJECT }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
+      
+      - name: Upload symbols to Sentry (Windows-MSVC, macOS)
+        run: |
+          VERSION=$(git describe --tags --always --match "gdxsv-*" | sed -E "s/-([0-9]+)-g(.+)$/-dev.\\1+\\2/g")
+          sentry-cli releases new "$VERSION"
+          sentry-cli releases set-commits "$VERSION" --auto
+          sentry-cli upload-dif ${{ matrix.config.debugFile }}
+        shell: bash
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
 
       - name: Release flycast-gdxsv
         uses: softprops/action-gh-release@v1

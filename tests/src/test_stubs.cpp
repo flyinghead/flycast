@@ -48,6 +48,17 @@ std::string os_FetchStringFromURL(const std::string& url)
     std::string empty;
     return empty;
 }
+struct UploadField {
+	std::string field_name;
+	std::string file_path;
+	std::string content_type;
+	std::string field_value;
+};
+int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
+{
+	//Not implemented
+	return 501;
+}
 
 std::string os_GetMachineID()
 {

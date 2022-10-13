@@ -20,6 +20,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(MSVC_BREAKPAD "Windows MSVC: Build breakpad client" OFF)
 option(GDB_SERVER "Build with GDB Server support" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
@@ -164,6 +165,10 @@ if(MSVC)
 	if(WINDOWS_STORE)
 		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
 	endif()
+	target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/Zi>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/DEBUG>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:REF>")
+	target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
@@ -207,6 +212,31 @@ if(NOT LIBRETRO)
 		endif()
 		target_link_libraries(${PROJECT_NAME} PUBLIC breakpad_client)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+	elseif(MSVC AND MSVC_BREAKPAD)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/breakpad/src/client/windows/common/ipc_protocol.h
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.h
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.cc
+			core/deps/breakpad/src/client/windows/crash_generation/client_info.h
+			core/deps/breakpad/src/client/windows/crash_generation/client_info.cc
+			core/deps/breakpad/src/client/windows/common/auto_critical_section.h
+			core/deps/breakpad/src/client/windows/handler/exception_handler.h
+			core/deps/breakpad/src/client/windows/handler/exception_handler.cc
+			core/deps/breakpad/src/common/scoped_ptr.h
+			core/deps/breakpad/src/common/windows/string_utils-inl.h
+			core/deps/breakpad/src/common/windows/string_utils.cc
+			core/deps/breakpad/src/common/windows/guid_string.h
+			core/deps/breakpad/src/common/windows/guid_string.cc
+			core/deps/breakpad/src/google_breakpad/common/minidump_format.h
+			core/deps/breakpad/src/google_breakpad/common/breakpad_types.h
+		)
+		set_source_files_properties(
+			core/deps/breakpad/src/client/windows/handler/exception_handler.cc
+			core/deps/breakpad/src/client/windows/crash_generation/crash_generation_client.cc
+			PROPERTIES COMPILE_OPTIONS -DUNICODE -D_UNICODE -g
+		)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
 	elseif(APPLE AND NOT IOS AND APPLE_BREAKPAD)
 		target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/breakpad/src/client/minidump_file_writer-inl.h
@@ -249,23 +279,23 @@ if(NOT LIBRETRO)
 		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
-		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
-		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-			COMMAND sleep 20
-			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-				-a x86_64
-				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-				-a arm64
-				-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-				${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-			COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-			COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-		)
+		# add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		# ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+		# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		# 	COMMAND sleep 20
+		# 	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+		# 		-a x86_64
+		# 		-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+		# 		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+		# 	COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+		# 		-a arm64
+		# 		-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+		# 		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
+		# 	COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# 	COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+		# )
 	endif()
 endif()
 
@@ -1375,7 +1405,7 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
-		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
+		string(REGEX MATCH "gdxsv-[^-]+" TAG_VERSION ${GIT_VERSION})
 		if(IOS)
 			set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 			add_subdirectory(shell/apple/emulator-ios/AltKit)

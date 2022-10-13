@@ -193,6 +193,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
 	ss << "disk=" << (int)disk << "\n";
 	ss << "wireless=" << (int)(os_GetConnectionMedium() == "Wireless") << "\n";
 	ss << "patch_id=" << symbols[":patch_id"] << "\n";
+	ss << "language=" << GdxsvLanguage::TextureDirectoryName() << "\n";
 	ss << "local_ip=" << lbs_net.LocalIP() << "\n";
 	ss << "udp_port=" << udp_port << "\n";
 	std::string machine_id = os_GetMachineID();
