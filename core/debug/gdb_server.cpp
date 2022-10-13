@@ -834,8 +834,11 @@ static GdbServer gdbServer;
 
 void init()
 {
-	NOTICE_LOG(COMMON, "GDB Server initting...");
-	gdbServer.init();
+	if (config::DisplayDebuggerMenu)
+	{
+		NOTICE_LOG(COMMON, "GDB Server initting...");
+		gdbServer.init();
+	}
 }
 
 void term()
