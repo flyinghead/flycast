@@ -1,7 +1,8 @@
 name: Update GCS Index
 on:
   workflow_run:
-    workflows: ["C/C++ CI"]
+    workflows:
+      - C/C++ CI
     types:
       - completed
 
