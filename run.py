@@ -173,7 +173,7 @@ def exec_func(func_name: str):
         while popens[-1].poll() == None:
             time.sleep(1)
             if TIMEOUT < time.time() - start_time:
-                print("tiemout")
+                print("timeout")
                 break
     finally:
         for p in popens:
