@@ -18,7 +18,8 @@ print = functools.partial(print, flush=True)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 N = int(os.getenv("N", 4))
-TIMES = int(os.getenv("TIMES", 1))
+TIMEOUT = int(os.getenv("TIMEOUT", 120))
+ITERATION = int(os.getenv("ITERATION", 1))
 ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
 FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
 FLYCAST_NAME = Path(FLYCAST).name
@@ -145,6 +146,7 @@ def tail(parent: subprocess.Popen, path: str):
 
 
 def exec_func(func_name: str):
+    start_time = time.time()
     cwd = os.getcwd()
     print(cwd)
 
@@ -170,6 +172,9 @@ def exec_func(func_name: str):
 
         while popens[-1].poll() == None:
             time.sleep(1)
+            if TIMEOUT < time.time() - start_time:
+                print("tiemout")
+                break
     finally:
         for p in popens:
             if os.name == 'nt':
@@ -186,10 +191,10 @@ def main():
     
     download_state()
 
-    for t in range(TIMES):
-        print(f"===== ITERATION {t + 1}/{TIMES} START =====")
+    for t in range(ITERATION):
+        print(f"===== ITERATION {t + 1}/{ITERATION} START =====")
         exec_func(sys.argv[1])
-        print(f"===== ITERATION {t + 1}/{TIMES} END   =====")
+        print(f"===== ITERATION {t + 1}/{ITERATION} END   =====")
 
 
 if __name__ == "__main__":
