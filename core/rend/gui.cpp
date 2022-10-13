@@ -2148,8 +2148,8 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
-		    			"Enable networking using GGPO");
+//		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
+//		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 		    			"Enable networking for supported Naomi games");
 		    	if (config::GGPOEnable)

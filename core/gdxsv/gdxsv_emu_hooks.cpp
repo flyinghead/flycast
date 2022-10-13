@@ -11,6 +11,7 @@
 #include "version.h"
 #include <fstream>
 #include "log/LogManager.h"
+#include "cfg/cfg.h"
 
 #ifdef _WIN32
 #define CHAR_PATH_SEPARATOR '\\'
@@ -23,6 +24,10 @@ static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 
 void gdxsv_flycast_init() {
+	
+	config::GGPOEnable.override(false);
+	cfgSetVirtual("network", "GGPO", "no");
+	
 	if (config::UploadCrashLogs) {
 		std::thread([]() {
 			std::ifstream fs;
