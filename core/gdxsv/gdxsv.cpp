@@ -41,8 +41,6 @@ void Gdxsv::Reset() {
 	}
 	enabled = true;
 
-	inMemoryListener.SetMaxLines(100);
-	NOTICE_LOG(COMMON, "IN_MEMORY_LISTENER Enabled");
 	RestoreOnlinePatch();
 
 	server = cfgLoadStr("gdxsv", "server", "zdxsv.net");

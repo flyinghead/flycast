@@ -252,6 +252,7 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	if (2 < args.size() && args[1] == '/' && '1' <= args[2] && args[2] <= '4') {
 		n = args[2] - '0';
 	}
+
 	u64 seed = cfgLoadInt64("gdxsv", "rand_input", 0);
 	if (seed) {
 		NOTICE_LOG(COMMON, "RandomInput Seed=%d", seed + me);
@@ -283,6 +284,12 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	is_local_test_ = true;
 	maxlag_ = 0;
 	maxrebattle_ = 1;
+
+	if (getenv("MAXREBATTLE"))
+	{
+		maxrebattle_ = atoi(getenv("MAXREBATTLE"));
+	}
+
 	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
 	return true;
 }
