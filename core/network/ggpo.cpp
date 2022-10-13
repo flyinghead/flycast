@@ -467,6 +467,17 @@ static void on_message(u8 *msg, int len)
 	}
 }
 
+static void ggpoIdleLoop() {
+	while (active()) {
+		{
+			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+			if (ggpoSession == nullptr) return;
+			ggpo_idle(ggpoSession, -1); // only pump
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+}
+
 void startSession(int localPort, int localPlayerNum)
 {
 	GGPOSessionCallbacks cb{};
@@ -1158,6 +1169,10 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me,
 		}
 #endif
 		emu.setNetworkState(active());
+
+		if (synchronized && active()) {
+			std::thread(ggpoIdleLoop).detach();
+		}
 		return active();
 	});
 }
