@@ -7,13 +7,17 @@ on:
         description: 'Flycast download url'
         default: ''
         required: true
+      run-function:
+        description: 'First argument of run.py'
+        default: 'rbk_test_random'
+        required: true
       iteration:
         description: 'Number of iteration'
         default: '3'
         required: true
-      run-function:
-        description: 'First argument of run.py'
-        default: 'rbk_test_random'
+      timeout:
+        description: 'Timeout seconds for single iteration'
+        default: '120'
         required: true
 
 jobs:
@@ -24,7 +28,8 @@ jobs:
       N: 4
       ROM: "C:\\rom\\gdx-disc2\\gdx-disc2.gdi"
       FLYCAST: ${{ github.event.inputs.flycast-url }}
-      TIMES: ${{ github.event.inputs.iteration }}
+      ITERATION: ${{ github.event.inputs.iteration }}
+      TIMEOUT: ${{ github.event.inputs.timeout }}
     steps:
     - uses: actions/checkout@v3
     - run: python run.py ${{ github.event.inputs.run-function }}
