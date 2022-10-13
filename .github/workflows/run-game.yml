@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       flycast-url:
-        description: 'Public accessable url'
+        description: 'Flycast download url'
         default: ''
         required: true
       iteration:
-        description: 'Number of run'
+        description: 'Number of iteration'
         default: '3'
         required: true
       run-function:
