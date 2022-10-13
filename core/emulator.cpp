@@ -355,7 +355,10 @@ void dc_reset(bool hard)
 {
 	NetworkHandshake::term();
 	if (hard)
+	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
+		memwatch::elanWatcher.unprotectMem(0, 0xffffffff);
+	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	libAICA_Reset(hard);
