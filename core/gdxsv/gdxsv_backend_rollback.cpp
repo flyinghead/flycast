@@ -227,11 +227,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		SetCloseReason("game_end");
 		ggpo::stopSession();
 		state_ = State::End;
-
-		if (is_local_test_) {
-			dc_exit();
-			return;
-		}
 	}
 
 	// Fast return to lobby on error
@@ -240,6 +235,10 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		ggpo::stopSession();
 		state_ = State::End;
 		gdxsv_WriteMem16(NetCountDown, 1);
+	}
+
+	if (is_local_test_ && state_ == State::End) {
+		exit(0);
 	}
 }
 
@@ -319,6 +318,9 @@ void GdxsvBackendRollback::Open() {
 }
 
 void GdxsvBackendRollback::Close() {
+	if (state_ < State::McsWaitJoin) return;
+
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
 	RestorePatch();
