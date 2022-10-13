@@ -111,6 +111,7 @@ Peer2PeerBackend::DoPoll(int timeout)
 {
    if (!_sync.InRollback()) {
       _poll.Pump(0);
+      if (timeout < 0) return GGPO_OK;
 
       PollUdpProtocolEvents();
 
