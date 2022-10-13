@@ -728,7 +728,7 @@ bool nextFrame()
 
 	// may call save_game_state
 	do {
-		if (!config::ThreadedRendering)
+		if (!config::ThreadedRendering && !useRandInput)
 			UpdateInputState();
 		Inputs inputs;
 		inputs.kcode = ~kcode[0];

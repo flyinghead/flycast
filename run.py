@@ -18,7 +18,7 @@ print = functools.partial(print, flush=True)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 N = int(os.getenv("N", 4))
-TIMEOUT = int(os.getenv("TIMEOUT", 120))
+TIMEOUT = int(os.getenv("TIMEOUT", 3600))
 ITERATION = int(os.getenv("ITERATION", 1))
 ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
 FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
