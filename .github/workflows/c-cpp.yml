@@ -157,7 +157,7 @@ jobs:
       - name: Upload to GCS
         run: |
           gcloud storage cp artifact/bin/* gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA/${{ matrix.config.packageName }}
-          gcloud storage ls --json -r gs://gdxsv/flycast-builds | jq 'def c(str): str | (split(".")[0] + "Z") | fromdate; [.[] | select(.metadata != null)] | sort_by(c(.metadata.timeCreated))' > index.json
+          gcloud storage ls --json -r gs://gdxsv/flycast-builds > index.json
           gcloud storage cp index.json gs://gdxsv/flycast-builds/index.json
         shell: bash
         if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
