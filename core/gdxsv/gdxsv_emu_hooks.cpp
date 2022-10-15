@@ -12,6 +12,7 @@
 #include <fstream>
 #include "log/LogManager.h"
 #include "cfg/cfg.h"
+#include "nowide/fstream.hpp"
 
 #ifdef _WIN32
 #define CHAR_PATH_SEPARATOR '\\'
@@ -30,7 +31,7 @@ void gdxsv_flycast_init() {
 	
 	if (config::UploadCrashLogs) {
 		std::thread([]() {
-			std::ifstream fs;
+			nowide::ifstream fs;
 			fs.open(get_writable_data_path("crash_dmp_list.txt"));
 			std::vector<std::string> unhandled_dmp = {};
 			if (fs.is_open()) {
