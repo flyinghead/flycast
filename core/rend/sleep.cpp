@@ -15,11 +15,20 @@ static NTSTATUS(__stdcall* NtDelayExecution)(BOOL Alertable, PLARGE_INTEGER Dela
 static NTSTATUS(__stdcall* ZwSetTimerResolution)(IN ULONG RequestedResolution, IN BOOLEAN Set, OUT PULONG ActualResolution) = (NTSTATUS(__stdcall*)(ULONG, BOOLEAN, PULONG)) GetProcAddress(GetModuleHandle("ntdll.dll"), "ZwSetTimerResolution");
 #endif
 
-void init_timer_resolution()
+void set_timer_resolution()
 {
 #if _WIN32
 	ULONG actual_resolution;
 	ZwSetTimerResolution(1, true, &actual_resolution);
+#endif
+	// FIXME: Optimize for other platforms
+}
+
+void reset_timer_resolution()
+{
+#if _WIN32
+	ULONG actual_resolution;
+	ZwSetTimerResolution(1, false, &actual_resolution);
 #endif
 	// FIXME: Optimize for other platforms
 }

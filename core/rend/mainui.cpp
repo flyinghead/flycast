@@ -107,7 +107,7 @@ void mainui_loop()
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
 
-	init_timer_resolution();
+	set_timer_resolution();
 	std::chrono::time_point<std::chrono::steady_clock> start;
 
 	while (mainui_enabled)
@@ -143,6 +143,7 @@ void mainui_loop()
 		gdxsv_mainui_loop();
 	}
 
+	reset_timer_resolution();
 	mainui_term();
 }
 
