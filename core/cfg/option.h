@@ -379,7 +379,7 @@ extern Option<bool> BoxartDisplayMode;
 
 // Sound
 
-constexpr bool LimitFPS = true;
+extern Option<bool> LimitFPS;
 extern Option<bool> DSPEnabled;
 extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
 extern Option<bool> AutoLatency;
@@ -466,6 +466,7 @@ extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force l
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
+extern Option<int> FixedFrequency;
 
 // Misc
 

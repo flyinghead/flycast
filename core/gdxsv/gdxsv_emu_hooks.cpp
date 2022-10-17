@@ -232,13 +232,21 @@ void gdxsv_emu_settings() {
 	ImGui::Columns(1, nullptr, false);
 
 	if (ImGui::Button("Apply Recommended Settings", ImVec2(0, 40))) {
+		config::LimitFPS = true;
+		if ((int)settings.display.refreshRate % 60 == 0) {
+			config::VSync = true;
+			config::FixedFrequency = 0;
+		} else {
+			config::VSync = false;
+			config::FixedFrequency = 3;
+		}
+
 		// Controls
 		config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
 		config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
 		// Video
 		config::PerStripSorting = false;
 		config::AutoSkipFrame = 2;
-		config::VSync = true;
 		config::DelayFrameSwapping = false;
 #if defined(_WIN32)
 		config::RendererType.set(RenderType::DirectX11);
@@ -266,13 +274,16 @@ void gdxsv_emu_settings() {
 	}
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use gdxsv recommended settings:
+    Frame Limit Method:
+      - AudioSync + VSync (60Hz or 120Hz monitor)
+      - AudioSync + CPU Sleep 60Hz (otherwise)
+
     Control:
       Device A: Sega Controller / Sega VMU
     
     Video:
       Transparent Sorting: Per Triangle
       Automatic Frame Skipping: Maximum
-      VSync: Yes
       Delay Frame Swapping: No
       Renderer: DirectX 11 (Windows) / OpenGL (OtherOS)
       Internal Resolution: 1280x960 (x2)
@@ -292,6 +303,42 @@ void gdxsv_emu_settings() {
       Enable UPnP
       Gdx Local UDP Port: 0
       Gdx Minimum Delay: 2)");
+
+
+	ImGui::Text("Frame Limit Method:");
+	ImGui::SameLine();
+	ShowHelpMarker("You must select one or more methods to limit game frame rate");
+
+	OptionCheckbox("AudioSync", config::LimitFPS, "Limit frame rate by audio");
+	OptionCheckbox("VSync", config::VSync, "Limit frame rate by VSync");
+
+	bool fixedFrequency = config::FixedFrequency != 0;
+	ImGui::Checkbox("CPU Sleep", &fixedFrequency);
+	ImGui::SameLine();
+	ShowHelpMarker("Limit frame rate by CPU Sleep and Spinlock");
+	if (fixedFrequency) {
+		if (config::FixedFrequency == 0) config::FixedFrequency = 3;
+
+		ImGui::Columns(3, "fixed_frequency", false);
+
+		OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
+		ImGui::NextColumn();
+		OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC/VGA frequency");
+		ImGui::NextColumn();
+		OptionRadioButton("60 Hz", config::FixedFrequency, 3, "Approximate NTSC/VGA frequency");
+		ImGui::NextColumn();
+		OptionRadioButton("50 Hz", config::FixedFrequency, 4, "Native PAL frequency");
+		ImGui::NextColumn();
+		OptionRadioButton("30 Hz", config::FixedFrequency, 5, "Half NTSC/VGA frequency");
+		ImGui::Columns(1, nullptr, false);
+	}
+	else {
+		config::FixedFrequency = 0;
+	}
+
+	if (!config::LimitFPS && !config::VSync && !config::FixedFrequency) {
+		config::LimitFPS = true;
+	}
 
 	gui_header("Network Settings (P2P Lobby Only)");
 	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
