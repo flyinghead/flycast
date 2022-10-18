@@ -24,6 +24,7 @@ const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
 bool RZipFile::Open(const std::string& path, bool write)
 {
 	verify(file == nullptr);
+	this->write = write;
 
 	file = nowide::fopen(path.c_str(), write ? "wb" : "rb");
 	if (file == nullptr)
@@ -49,6 +50,17 @@ bool RZipFile::Open(const std::string& path, bool write)
 		chunkIndex = 0;
 		chunkSize = 0;
 	}
+	else
+	{
+		maxChunkSize = 1024 * 1024;
+		if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
+			|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
+			|| std::fwrite(&size, sizeof(size), 1, file) != 1)
+		{
+			Close();
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -57,6 +69,11 @@ void RZipFile::Close()
 {
 	if (file != nullptr)
 	{
+		if (write)
+		{
+			std::fseek(file, sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET);
+			std::fwrite(&size, sizeof(size), 1, file);
+		}
 		std::fclose(file);
 		file = nullptr;
 		if (chunk != nullptr)
@@ -70,6 +87,7 @@ void RZipFile::Close()
 size_t RZipFile::Read(void *data, size_t length)
 {
 	verify(file != nullptr);
+	verify(!write);
 
 	u8 *p = (u8 *)data;
 	size_t rv = 0;
@@ -99,7 +117,7 @@ size_t RZipFile::Read(void *data, size_t length)
 			delete [] zipped;
 			chunkSize = (u32)tl;
 		}
-		u32 l = std::min(chunkSize - chunkIndex, (u32)length);
+		u32 l = std::min(chunkSize - chunkIndex, (u32)(length - rv));
 		memcpy(p, chunk + chunkIndex, l);
 		p += l;
 		chunkIndex += l;
@@ -112,14 +130,9 @@ size_t RZipFile::Read(void *data, size_t length)
 size_t RZipFile::Write(const void *data, size_t length)
 {
 	verify(file != nullptr);
-	verify(std::ftell(file) == 0);
+	verify(write);
 
-	maxChunkSize = 1024 * 1024;
-	size = length;
-	if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
-		|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-		|| std::fwrite(&size, sizeof(size), 1, file) != 1)
-		return 0;
+	size += length;
 	const u8 *p = (const u8 *)data;
 	// compression output buffer must be 0.1% larger + 12 bytes
 	uLongf maxZippedSize = maxChunkSize + maxChunkSize / 1000 + 12;
