@@ -222,9 +222,6 @@
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #define TARGET_UWP
 #endif
-#if !defined(LIBRETRO) && !defined(TARGET_UWP)
-#define USE_DX9
-#endif
 #endif
 
 

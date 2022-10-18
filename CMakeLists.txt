@@ -1171,6 +1171,7 @@ if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	endif()
 
 	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DX9)
 endif()
 
 if(WIN32)
