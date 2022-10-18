@@ -1,3 +1,5 @@
+#include "sleep.h"
+
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -6,13 +8,12 @@
 #elif __APPLE__
 #include <mach/mach_time.h>
 #include <mach/thread_act.h>
-#include "log/Log.h"
 #else
 #include <sched.h>
 #include <time.h>
 #endif
 
-#include "sleep.h"
+#include "log/Log.h"
 
 #if _WIN32
 static NTSTATUS(__stdcall* NtDelayExecution)(BOOL Alertable, PLARGE_INTEGER DelayInterval) = (NTSTATUS(__stdcall*)(BOOL, PLARGE_INTEGER)) GetProcAddress(GetModuleHandle("ntdll.dll"), "NtDelayExecution");
@@ -73,7 +74,6 @@ void set_timer_resolution()
 		ERROR_LOG(COMMON, "Could not set thread policy: %d", kr);
 	}
 #endif
-	// FIXME: Optimize for other platforms
 }
 
 void reset_timer_resolution()
@@ -82,7 +82,6 @@ void reset_timer_resolution()
 	ULONG actual_resolution;
 	ZwSetTimerResolution(1, false, &actual_resolution);
 #endif
-	// FIXME: Optimize for other platforms
 }
 
 void sleep_us(int64_t us)
@@ -99,12 +98,13 @@ void sleep_us(int64_t us)
 #endif
 }
 
-int64_t sleep_and_spinlock(int64_t us)
+int64_t sleep_and_busy_wait(int64_t us)
 {
 	const auto t1 = std::chrono::steady_clock::now();
 #if defined(_WIN32) || defined(__APPLE__)
 	if (1200 < us) sleep_us(us - 1200);
 #else
+	// FIXME: Optimize for other platforms
 	if (4000 < us) sleep_us(us - 4000);
 #endif
 

@@ -119,7 +119,7 @@ void mainui_loop()
 				const auto deltaUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
 				int64_t overSlept = 0;
 				if (deltaUs < period)
-					overSlept = sleep_and_spinlock(period - deltaUs);
+					overSlept = sleep_and_busy_wait(period - deltaUs);
 				start = std::chrono::steady_clock::now();
 				if (1000 <= overSlept)
 					WARN_LOG(RENDERER, "FixedFrequency: Over slept %d [us]", overSlept);

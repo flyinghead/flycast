@@ -315,12 +315,12 @@ void gdxsv_emu_settings() {
 	bool fixedFrequency = config::FixedFrequency != 0;
 	ImGui::Checkbox("CPU Sleep", &fixedFrequency);
 	ImGui::SameLine();
-	ShowHelpMarker("Limit frame rate by CPU Sleep and Spinlock");
+	ShowHelpMarker("Limit frame rate by CPU Sleep and Busy-Wait");
 	if (fixedFrequency) {
-		if (config::FixedFrequency == 0) config::FixedFrequency = 3;
+		if (!config::FixedFrequency)
+			config::FixedFrequency = 3;
 
 		ImGui::Columns(3, "fixed_frequency", false);
-
 		OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
 		ImGui::NextColumn();
 		OptionRadioButton("59.94 Hz", config::FixedFrequency, 2, "Native NTSC/VGA frequency");
