@@ -31,9 +31,11 @@ void set_timer_resolution()
 	// Make thread fixed priority
 	thread_extended_policy_data_t extended_policy;
 	extended_policy.timeshare = 0;
-	kern_return_t kr = thread_policy_set(mach_thread_id, THREAD_EXTENDED_POLICY,
-						   (thread_policy_t)&extended_policy,
-						   THREAD_EXTENDED_POLICY_COUNT);
+	kern_return_t kr = thread_policy_set(
+		mach_thread_id,
+		THREAD_EXTENDED_POLICY,
+		(thread_policy_t)&extended_policy,
+		THREAD_EXTENDED_POLICY_COUNT);
 	if (kr != KERN_SUCCESS) {
 		ERROR_LOG(COMMON, "Cannot make thread fixed priority: %d", kr);
 		return;
@@ -42,9 +44,10 @@ void set_timer_resolution()
 	// Set to relatively high priority.
 	thread_precedence_policy_data_t precedence_policy;
 	precedence_policy.importance = 63;
-	kr = thread_policy_set(mach_thread_id, THREAD_PRECEDENCE_POLICY,
-						   (thread_policy_t)&precedence_policy,
-							 THREAD_PRECEDENCE_POLICY_COUNT);
+	kr = thread_policy_set(
+		mach_thread_id, THREAD_PRECEDENCE_POLICY,
+		(thread_policy_t)&precedence_policy,
+		THREAD_PRECEDENCE_POLICY_COUNT);
 	if (kr != KERN_SUCCESS) {
 		ERROR_LOG(COMMON, "Cannot set high priority: %d", kr);
 		return;
@@ -52,12 +55,11 @@ void set_timer_resolution()
 
 	mach_timebase_info_data_t timebase;
 	kr = mach_timebase_info(&timebase);
-	if (kr != KERN_SUCCESS)
-	{
+	if (kr != KERN_SUCCESS) {
 		ERROR_LOG(COMMON, "Couldn't get timebase: %d", kr);
 		return;
 	}
-	static double clock2abs = ((double)timebase.denom / (double)timebase.numer) * USEC_PER_SEC;
+	double clock2abs = ((double)timebase.denom / (double)timebase.numer) * USEC_PER_SEC;
 
 	// Set the thread priority.
 	thread_time_constraint_policy tc_policy;
@@ -66,11 +68,12 @@ void set_timer_resolution()
 	tc_policy.constraint = 100 * clock2abs;
 	tc_policy.preemptible = FALSE;
 
-	kr = thread_policy_set(mach_thread_id, THREAD_TIME_CONSTRAINT_POLICY,
-						   (thread_policy_t)&tc_policy,
-						   THREAD_TIME_CONSTRAINT_POLICY_COUNT);
-	if (kr != KERN_SUCCESS)
-	{
+	kr = thread_policy_set(
+		mach_thread_id,
+		THREAD_TIME_CONSTRAINT_POLICY,
+		(thread_policy_t)&tc_policy,
+		THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+	if (kr != KERN_SUCCESS) {
 		ERROR_LOG(COMMON, "Could not set thread policy: %d", kr);
 	}
 #endif
@@ -111,8 +114,8 @@ int64_t sleep_and_busy_wait(int64_t us)
 	if (0 < us) {
 		for (;;) {
 			const auto t2 = std::chrono::steady_clock::now();
-			const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-			if (us <= duration) return duration - us;
+			const auto dt = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+			if (us <= dt) return dt - us;
 		}
 	}
 
