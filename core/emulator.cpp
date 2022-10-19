@@ -793,6 +793,8 @@ void Emulator::run()
 
 void Emulator::start()
 {
+	if (state == Running)
+		return;
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
