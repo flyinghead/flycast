@@ -175,7 +175,7 @@ bool gdxsv_emu_enabled() { return gdxsv.Enabled(); }
 
 bool gdxsv_emu_ingame() { return gdxsv.InGame(); }
 
-bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && gdxsv.Disk() == 2 && config::WidescreenGameHacks.get(); }
+bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
 void gdxsv_update_popup() {
 	gdxsv_latest_version_check();
