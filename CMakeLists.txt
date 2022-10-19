@@ -1099,6 +1099,8 @@ if(NOT LIBRETRO)
 			core/rend/gui_debugger.h
 			core/rend/mainui.cpp
 			core/rend/mainui.h
+			core/rend/sleep.cpp
+			core/rend/sleep.h
 			core/rend/boxart/boxart.cpp
 			core/rend/boxart/boxart.h
 			core/rend/boxart/gamesdb.cpp

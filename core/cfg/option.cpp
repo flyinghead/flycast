@@ -43,6 +43,7 @@ Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
 
 // Sound
 
+Option<bool> LimitFPS("aica.LimitFPS", true);
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
@@ -104,6 +105,7 @@ Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
+Option<int> FixedFrequency("rend.FixedFrequency", 0);
 
 // Misc
 
