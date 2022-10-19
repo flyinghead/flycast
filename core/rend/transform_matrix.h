@@ -140,6 +140,10 @@ public:
 			starty *= 1.1;
 			// TODO need to adjust lightgun coordinates
 #endif
+			// GDXSV: Push the extra region offscreen for widescreen hack
+			if (gdxsv_widescreen_hack_enabled() && config::ScreenStretching == 175)
+				startx = -1 * dcViewport.x * (1 - 1.f / 1.75f) / 2.f;
+
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
@@ -158,6 +162,10 @@ public:
 				sidebarWidth = 0;
 			float x_coef = 2.0f / dcViewport.x;
 			float y_coef = 2.0f / dcViewport.y * screenFlipY;
+
+			// GDXSV: Stretch the screen to make it wider than Framebuffer's size
+			if (gdxsv_widescreen_hack_enabled())
+				x_coef *= (config::ScreenStretching / 100.f);
 
 			glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -screenFlipY, 0));
 
@@ -248,6 +256,9 @@ inline static float getOutputFramebufferAspectRatio()
 		else
 			renderAR = 4.f / 3.f;
 	}
-	
+
+	if (gdxsv_widescreen_hack_enabled())
+		return renderAR;
+
 	return renderAR * config::ScreenStretching / 100.f;
 }

@@ -738,6 +738,21 @@ void Gdxsv::WritePatchDisk2() {
 	// Disable soft reset
 	gdxsv_WriteMem8(0x0c391d97, InGame() ? 1 : 0);
 
+	// Dirty widescreen cheat
+	if (config::WidescreenGameHacks.get()) {
+		u32 ratio = 0x3faaaaab;  // default 4/3
+		int stretching = 100;
+		if (gdxsv_ReadMem8(0x0c3d16d4) == 2 && (gdxsv_ReadMem8(0x0c3d16d5) == 5 || gdxsv_ReadMem8(0x0c3d16d5) == 7)) {
+			ratio = 0x40155555;
+			stretching = 175;
+		}
+		config::ScreenStretching.override(stretching);
+		gdxsv_WriteMem32(0x0c1e7948, ratio);
+		gdxsv_WriteMem32(0x0c1e7958, ratio);
+		gdxsv_WriteMem32(0x0c1e7968, ratio);
+		gdxsv_WriteMem32(0x0c1e7978, ratio);
+	}
+
 	// Online patch
 	ApplyOnlinePatch(false);
 }

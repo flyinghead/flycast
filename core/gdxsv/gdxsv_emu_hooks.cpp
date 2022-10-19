@@ -175,6 +175,8 @@ bool gdxsv_emu_enabled() { return gdxsv.Enabled(); }
 
 bool gdxsv_emu_ingame() { return gdxsv.InGame(); }
 
+bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && gdxsv.Disk() == 2 && config::WidescreenGameHacks.get(); }
+
 void gdxsv_update_popup() {
 	gdxsv_latest_version_check();
 	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
@@ -304,6 +306,16 @@ void gdxsv_emu_settings() {
       Gdx Local UDP Port: 0
       Gdx Minimum Delay: 2)");
 
+	bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
+	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
+	if (pressed) {
+		config::Widescreen.set(widescreen);
+		config::WidescreenGameHacks.set(widescreen);
+	}
+	ImGui::SameLine();
+	ShowHelpMarker(R"(Use the following rendering options:
+    rend.WideScreen=true
+    rend.WidescreenGameHacks=true)");
 
 	ImGui::Text("Frame Limit Method:");
 	ImGui::SameLine();
