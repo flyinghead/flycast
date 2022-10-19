@@ -651,17 +651,16 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	// TODO test: if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
-	if (InGame()) {
+	if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c2f6652);
-		if (player_index) {
+		if (1 <= player_index && player_index <= 4) {
 			player_index--;
 			// depend on 4 player battle
 			u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
 			u16 ally_hp = gdxsv_ReadMem16(0x0c3369d6 + ally_index * 0x2000);
 			gdxsv_WriteMem16(0x0c3369d2 + player_index * 0x2000, ally_hp);
+			hp_offset -= 2;
 		}
-		hp_offset -= 2;
 	}
 	gdxsv_WriteMem16(0x0c01d336, hp_offset);
 	gdxsv_WriteMem16(0x0c01d56e, hp_offset);
