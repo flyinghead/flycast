@@ -20,6 +20,8 @@ bool gdxsv_emu_enabled();
 
 bool gdxsv_emu_ingame();
 
+bool gdxsv_widescreen_hack_enabled();
+
 void gdxsv_update_popup();
 
 void gdxsv_emu_settings();

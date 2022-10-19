@@ -20,12 +20,13 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 N = int(os.getenv("N", 4))
 TIMEOUT = int(os.getenv("TIMEOUT", 3600))
 ITERATION = int(os.getenv("ITERATION", 1))
+WIDE = int(os.getenv("WIDE", 0))
 ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
 FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
-W = 640
+W = 854 if WIDE else 640
 H = 480
 
 def download_state():
@@ -85,7 +86,8 @@ def conf_gdxsv(idx: int):
 def conf_window_layout(idx: int):
     x = X_OFFSET + W * (idx % 2)
     y = Y_OFFSET + H * (idx // 2)
-    return f"--config window:top={y} --config window:left={x} --config window:width={W} --config window:height={H}"
+    wide = "yes" if WIDE else "no"
+    return f"--config window:top={y} --config window:left={x} --config window:width={W} --config window:height={H} --config config:rend.WideScreen={wide} --config config:rend.WidescreenGameHacks={wide}"
 
 
 def run(idx, *arg_list) -> subprocess.Popen:
