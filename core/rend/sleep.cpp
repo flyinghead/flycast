@@ -104,11 +104,12 @@ void sleep_us(int64_t us)
 int64_t sleep_and_busy_wait(int64_t us)
 {
 	const auto t1 = std::chrono::steady_clock::now();
+	const auto us2 = (us / 1000) * 1000;
 #if defined(_WIN32) || defined(__APPLE__)
-	if (1200 < us) sleep_us(us - 1000);
+	if (2000 <= us2) sleep_us(us2 - 1000);
 #else
 	// FIXME: Optimize for other platforms
-	if (4000 < us) sleep_us(us - 3000);
+	if (4000 <= us2) sleep_us(us2 - 2000);
 #endif
 
 	if (0 < us) {

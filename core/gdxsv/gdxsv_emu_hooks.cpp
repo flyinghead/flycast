@@ -234,21 +234,16 @@ void gdxsv_emu_settings() {
 	ImGui::Columns(1, nullptr, false);
 
 	if (ImGui::Button("Apply Recommended Settings", ImVec2(0, 40))) {
+		// Frame Limit
 		config::LimitFPS = true;
-		if ((int)settings.display.refreshRate % 60 == 0) {
-			config::VSync = true;
-			config::FixedFrequency = 0;
-		} else {
-			config::VSync = false;
-			config::FixedFrequency = 3;
-		}
+		config::VSync = true;
+		config::FixedFrequency = 0;
 
 		// Controls
 		config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
 		config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
 		// Video
 		config::PerStripSorting = false;
-		config::AutoSkipFrame = 2;
 		config::DelayFrameSwapping = false;
 #if defined(_WIN32)
 		config::RendererType.set(RenderType::DirectX11);
@@ -257,11 +252,12 @@ void gdxsv_emu_settings() {
 #endif
 		config::RenderResolution = 960;
 		config::SkipFrame = 0;
+		config::AutoSkipFrame = 2;
 		// Audio
 		config::DSPEnabled = false;
 		config::AudioVolume.set(50);
 		config::AudioVolume.calcDbPower();
-		config::AudioBufferSize = 706;
+		config::AudioBufferSize = 706 * 4;
 		// Others
 		config::DynarecEnabled = true;
 		config::DynarecIdleSkip = true;
@@ -277,8 +273,7 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use gdxsv recommended settings:
     Frame Limit Method:
-      - AudioSync + VSync (60Hz or 120Hz monitor)
-      - AudioSync + CPU Sleep 60Hz (otherwise)
+      AudioSync + VSync
 
     Control:
       Device A: Sega Controller / Sega VMU
@@ -294,7 +289,7 @@ void gdxsv_emu_settings() {
     Audio:
       Enable DSP: No
       Volume Level: 50%
-      Latency: 16ms
+      Buffer: 64ms
     
     Advanced:
       CPU Mode: Dynarec
@@ -321,13 +316,13 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker("You must select one or more methods to limit game frame rate");
 
-	OptionCheckbox("AudioSync", config::LimitFPS, "Limit frame rate by audio");
-	OptionCheckbox("VSync", config::VSync, "Limit frame rate by VSync");
+	OptionCheckbox("AudioSync", config::LimitFPS, "Limit frame rate by audio. Minimize audio glitch");
+	OptionCheckbox("VSync", config::VSync, "Limit frame rate by VSync. Minimize video glitch");
 
 	bool fixedFrequency = config::FixedFrequency != 0;
 	ImGui::Checkbox("CPU Sleep", &fixedFrequency);
 	ImGui::SameLine();
-	ShowHelpMarker("Limit frame rate by CPU Sleep and Busy-Wait");
+	ShowHelpMarker("Limit frame rate by CPU Sleep and Busy-Wait. Minimize input glitch (Experimental)");
 	if (fixedFrequency) {
 		if (!config::FixedFrequency)
 			config::FixedFrequency = 3;
