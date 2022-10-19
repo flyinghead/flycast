@@ -74,6 +74,10 @@ def conf_log(idx: int):
     return f"--config log:Verbosity={1} --config log:LogToFile=1"
 
 
+def conf_volume(idx: int):
+    return f"--config config:aica.Volume=20"
+
+
 def conf_gdxsv(idx: int):
     return f"--config gdxsv:server=127.0.0.1"
 
@@ -98,6 +102,7 @@ def run_rom(idx: int) -> subprocess.Popen:
     return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
+        conf_volume(idx),
         conf_log(idx),
         conf_window_layout(idx),
     )
@@ -107,6 +112,7 @@ def run_replay(idx: int) -> subprocess.Popen:
     return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
+        conf_volume(idx),
         conf_window_layout(idx),
         conf_log(idx),
     )
@@ -116,6 +122,7 @@ def run_rbk_test(idx: int) -> subprocess.Popen:
     return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
+        conf_volume(idx),
         conf_window_layout(idx),
         conf_log(idx),
         f"--config gdxsv:rbk_test={idx+1}/{N}"
@@ -127,6 +134,7 @@ def run_rbk_test_random(idx: int) -> subprocess.Popen:
     return run(idx,
         FLYCAST_NAME, ROM,
         conf_gdxsv(idx),
+        conf_volume(idx),
         conf_window_layout(idx),
         conf_log(idx),
         f"--config gdxsv:rbk_test={idx+1}/{N} --config gdxsv:rand_input={seed}"
