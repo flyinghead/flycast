@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "compiler.h"
-#include <glslang/SPIRV/GlslangToSpv.h>
+#include "SPIRV/GlslangToSpv.h"
 #include "vulkan_context.h"
 
 static const TBuiltInResource DefaultTBuiltInResource = {
