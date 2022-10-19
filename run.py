@@ -31,6 +31,8 @@ H = 480
 
 def download_state():
     os.makedirs(f"work/state", exist_ok=True)
+    if not os.path.isfile(f"work/state/gdx-disc1_99.state"):
+        urllib.request.urlretrieve("https://storage.googleapis.com/gdxsv/misc/gdx-disc1_99.state", f"work/state/gdx-disc1_99.state")
     if not os.path.isfile(f"work/state/gdx-disc2_99.state"):
         urllib.request.urlretrieve("https://storage.googleapis.com/gdxsv/misc/gdx-disc2_99.state", f"work/state/gdx-disc2_99.state")
 

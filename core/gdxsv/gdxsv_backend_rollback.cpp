@@ -89,9 +89,10 @@ void GdxsvBackendRollback::Reset() {
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
-	const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
-	const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
-	const int NetCountDown = 0x0c3ab942;	  // TODO: disk2
+	const int disk = gdxsv.Disk();
+	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
+	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
+	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
 
 	if (state_ == State::StartLocalTest) {
 		kcode[0] = ~0x0004;
@@ -354,9 +355,11 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	} else {
 		int frame = 0;
 		ggpo::getCurrentFrame(&frame);
-		const int COM_R_No0 = 0x0c391d79;		  // TODO:disk2
-		const int InetBuf = 0x0c3ab984;			  // TODO: disk2
-		const int ConnectionStatus = 0x0c3abb84;  // TODO: disk2
+
+		const int disk = gdxsv.Disk();
+		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
+		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
+		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -599,14 +602,22 @@ void GdxsvBackendRollback::ApplyPatch(bool first_time) {
 
 	gdxsv.WritePatch();
 
+	// Skip Key MsgPush
+	if (gdxsv.Disk() == 1) {
+		gdxsv_WriteMem16(0x8c058b7c, 9);
+		gdxsv_WriteMem8(0x0c310450, 1);
+	}
 	if (gdxsv.Disk() == 2) {
-		// Skip Key MsgPush
 		gdxsv_WriteMem16(0x8c045f64, 9);
 		gdxsv_WriteMem8(0x0c3abb90, 1);
 	}
 }
 
 void GdxsvBackendRollback::RestorePatch() {
+	if (gdxsv.Disk() == 1) {
+		gdxsv_WriteMem16(0x8c058b7c, 0x410b);
+		gdxsv_WriteMem8(0x0c310450, 2);
+	}
 	if (gdxsv.Disk() == 2) {
 		gdxsv_WriteMem16(0x8c045f64, 0x410b);
 		gdxsv_WriteMem8(0x0c3abb90, 2);

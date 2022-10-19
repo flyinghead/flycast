@@ -651,17 +651,16 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	// TODO test: if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
-	if (InGame()) {
+	if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c2f6652);
-		if (player_index) {
+		if (1 <= player_index && player_index <= 4) {
 			player_index--;
 			// depend on 4 player battle
 			u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
 			u16 ally_hp = gdxsv_ReadMem16(0x0c3369d6 + ally_index * 0x2000);
 			gdxsv_WriteMem16(0x0c3369d2 + player_index * 0x2000, ally_hp);
+			hp_offset -= 2;
 		}
-		hp_offset -= 2;
 	}
 	gdxsv_WriteMem16(0x0c01d336, hp_offset);
 	gdxsv_WriteMem16(0x0c01d56e, hp_offset);
@@ -670,6 +669,21 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Disable soft reset
 	gdxsv_WriteMem8(0x0c2f6657, InGame() ? 1 : 0);
+
+	// Dirty widescreen cheat
+	if (config::WidescreenGameHacks.get()) {
+		u32 ratio = 0x3faaaaab;  // default 4/3
+		int stretching = 100;
+		if (gdxsv_ReadMem8(0x0c336254) == 2 && (gdxsv_ReadMem8(0x0c336255) == 5 || gdxsv_ReadMem8(0x0c336255) == 7)) {
+			ratio = 0x40155555;
+			stretching = 175;
+		}
+		config::ScreenStretching.override(stretching);
+		gdxsv_WriteMem32(0x0c189198, ratio);
+		gdxsv_WriteMem32(0x0c1891a8, ratio);
+		gdxsv_WriteMem32(0x0c1891b8, ratio);
+		gdxsv_WriteMem32(0x0c1891c8, ratio);
+	}
 
 	// Online patch
 	ApplyOnlinePatch(false);
