@@ -50,8 +50,8 @@ OpenGLDriver::OpenGLDriver()
 	for (auto& tex : vmu_lcd_tex_ids)
 		tex = ImTextureID();
 	ImGui_ImplOpenGL3_Init();
-	EventManager::listen(Event::Resume, emuEventCallback, this);
-	EventManager::listen(Event::Pause, emuEventCallback, this);
+	EventManager::listen(Event::Start, emuEventCallback, this);
+	EventManager::listen(Event::Terminate, emuEventCallback, this);
 }
 
 OpenGLDriver::~OpenGLDriver()
