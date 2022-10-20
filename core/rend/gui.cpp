@@ -1676,7 +1676,7 @@ static void gui_display_settings()
 		    			"Enable modifier volumes, usually used for shadows");
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		    	if (!config::Widescreen)
 		    	{
 			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -1684,7 +1684,7 @@ static void gui_display_settings()
 		    	}
 		    	ImGui::Indent();
 		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 		    	ImGui::Unindent();
 		    	if (!config::Widescreen)
 		    	{
