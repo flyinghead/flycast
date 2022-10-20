@@ -306,11 +306,13 @@ void gdxsv_emu_settings() {
 	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
 	if (pressed) {
 		config::Widescreen.set(widescreen);
+		config::SuperWidescreen.set(widescreen);
 		config::WidescreenGameHacks.set(widescreen);
 	}
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use the following rendering options:
     rend.WideScreen=true
+    rend.SuperWideScreen=true
     rend.WidescreenGameHacks=true)");
 
 	ImGui::Text("Frame Limit Method:");
