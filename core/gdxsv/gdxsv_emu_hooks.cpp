@@ -256,7 +256,7 @@ void gdxsv_emu_settings() {
 #endif
 		config::RenderResolution = 960;
 		config::SkipFrame = 0;
-		config::AutoSkipFrame = 2;
+		config::AutoSkipFrame = 0;
 		// Audio
 		config::DSPEnabled = false;
 		config::AudioVolume.set(50);
@@ -284,7 +284,7 @@ void gdxsv_emu_settings() {
     
     Video:
       Transparent Sorting: Per Triangle
-      Automatic Frame Skipping: Maximum
+      Automatic Frame Skipping: Disabled
       Delay Frame Swapping: No
       Renderer: DirectX 11 (Windows) / OpenGL (OtherOS)
       Internal Resolution: 1280x960 (x2)
