@@ -18,10 +18,10 @@ void retro_rend_present()
 }
 #endif
 
-u32 VertexCount=0;
-u32 FrameCount=1;
-u32 width = 0;
-u32 height = 0;
+u32 VertexCount;
+u32 FrameCount = 1;
+static int displayWidth;
+static int displayHeight;
 
 Renderer* renderer;
 
@@ -392,8 +392,8 @@ void rend_resize_renderer()
 	if (renderer != nullptr)
 		renderer->Resize((int)hres, (int)vres);
 	rend_needs_resize = false;
-	width = settings.display.width;
-	height = settings.display.height;
+	displayWidth = settings.display.width;
+	displayHeight = settings.display.height;
 #ifdef LIBRETRO
 	void retro_resize_renderer(int w, int h);
 
@@ -403,7 +403,7 @@ void rend_resize_renderer()
 
 void rend_resize_renderer_if_needed()
 {
-	if (!rend_needs_resize && width == settings.display.width && height == settings.display.height)
+	if (!rend_needs_resize && displayWidth == settings.display.width && displayHeight == settings.display.height)
 		return;
 	rend_resize_renderer();
 }
