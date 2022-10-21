@@ -86,6 +86,7 @@ void GdxsvBackendRollback::Reset() {
 	report_.Clear();
 	ping_pong_.Reset();
 	start_network_ = std::future<bool>();
+	ggpo::stopSession();
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
@@ -111,16 +112,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	static auto session_start_time = std::chrono::high_resolution_clock::now();
 	if (state_ == State::StartGGPOSession) {
 		NOTICE_LOG(COMMON, "StartGGPOSession");
-		/*
-		if (matching_.peer_id() == 0) {
-			ping_pong_.DebugUnreachable(0, 1);
-			ping_pong_.DebugUnreachable(0, 2);
-		}
-		if (matching_.peer_id() == 3) {
-			ping_pong_.DebugUnreachable(3, 1);
-			ping_pong_.DebugUnreachable(3, 2);
-		}
-		*/
 		bool ok = true;
 		uint8_t rtt_matrix[4][4] = {};
 		ping_pong_.GetRttMatrix(rtt_matrix);

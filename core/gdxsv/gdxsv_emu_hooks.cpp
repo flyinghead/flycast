@@ -25,102 +25,105 @@ static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 
 void gdxsv_flycast_init() {
-	
-	config::GGPOEnable.override(false);
-	cfgSetVirtual("network", "GGPO", "no");
-	
+	config::GGPOEnable = false;
+
 	if (config::UploadCrashLogs) {
 		std::thread([]() {
-			nowide::ifstream fs;
-			fs.open(get_writable_data_path("crash_dmp_list.txt"));
-			std::vector<std::string> unhandled_dmp = {};
-			if (fs.is_open()) {
+			try {
+				nowide::ifstream ifs(get_writable_data_path("crash_dmp_list.txt"));
+				if (!ifs.is_open())
+					return;
+
+				std::vector<std::string> unhandled_dmp = {};
 				std::string line;
-				
-				while (std::getline(fs, line)) {
-					std::size_t found = line.find_last_of(",");
-					if (found == std::string::npos) continue;
-					std::string file_path = line.substr(0, found);
-					std::string git_version = line.substr(found+1);
-					
+
+				while (std::getline(ifs, line)) {
+					const auto found = line.find_last_of(",");
+					if (found == std::string::npos)
+						continue;
+
+					const auto file_path = line.substr(0, found);
+					const auto git_version = line.substr(found + 1);
+
 					// Check if the dmp still exists
 					if (!file_exists(file_path))
 						continue;
-					
+
 					std::vector<UploadField> fields = {};
-					
+
 					// Upload dmp
-					fields.push_back({"upload_file_minidump", file_path, "application/octet-stream"});
-					
+					fields.push_back({ "upload_file_minidump", file_path, "application/octet-stream" });
+
 					// Upload tail log
-					std::string log = file_path;
-					if (log.find(".dmp") != std::string::npos) {
-						log.replace(log.find(".dmp"), sizeof(".dmp") - 1, ".log");
-						
-						if (file_exists(log))
-							fields.push_back({"flycast_log", log, "text/plain"});
+					if (file_path.find(".dmp") != std::string::npos) {
+						auto log_file = file_path;
+						log_file.replace(log_file.find(".dmp"), 4, ".log");
+
+						if (file_exists(log_file))
+							fields.push_back({ "flycast_log", log_file, "text/plain" });
 					}
-					
+
 					// Upload emu.cfg
 					if (file_exists(get_writable_config_path("emu.cfg")))
-						fields.push_back({"emu_cfg", get_writable_config_path("emu.cfg"), "text/plain"});
-					
-					fields.push_back({"sentry[release]", "", "", git_version});
-					
-					std::string minidump_upload_url;
-					if (git_version.find("dev") == std::string::npos)
-						minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968";
-					else
-						minidump_upload_url = "https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
-					
-					int result = os_UploadFilesToURL(minidump_upload_url, fields);
+						fields.push_back({ "emu_cfg", get_writable_config_path("emu.cfg"), "text/plain" });
+
+					fields.push_back({ "sentry[release]", "", "", git_version });
+
+					const std::string minidump_upload_url = git_version.find("dev") == std::string::npos ?
+						"https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968" :
+						"https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
+
+					const int result = os_UploadFilesToURL(minidump_upload_url, fields);
 					NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
 					if (result != 200) {
 						unhandled_dmp.push_back(line);
 					}
 				}
-			} else {
-				return;
-			}
-			
-			//Clear contents of crash_dmp_list.txt
-			FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "w");
-			if (fp == nullptr) {
-				NOTICE_LOG(COMMON, "fopen failed");
-			} else {
-				if (unhandled_dmp.size()) {
-					for (auto dmp : unhandled_dmp) {
-						fprintf(fp, "%s\n", dmp.c_str());
-					}
+				ifs.close();
+
+				//Clear contents of crash_dmp_list.txt
+				nowide::ofstream ofs(get_writable_data_path("crash_dmp_list.txt"), std::ios::trunc);
+				if (!ofs.is_open()) {
+					ERROR_LOG(COMMON, "crash_dmp_list.txt trunc open failed");
+					return;
 				}
-				fclose(fp);
+
+				for (const auto& dmp : unhandled_dmp) {
+					ofs << dmp << std::endl;
+				}
+			}
+			catch (...) {
+				ERROR_LOG(COMMON, "Error while uploading crash logs");
 			}
 		}).detach();
 	}
 }
 
 void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
-	FILE* fp = nowide::fopen(get_writable_data_path("crash_dmp_list.txt").c_str(), "at");
-	if (fp == nullptr) {
-		NOTICE_LOG(COMMON, "fopen failed");
-	} else {
-		fprintf(fp, "%s%c%s.dmp,%s\n", dump_dir, CHAR_PATH_SEPARATOR, minidump_id, GIT_VERSION);
-		fclose(fp);
+	NOTICE_LOG(COMMON, "gdxsv_prepare_crashlog");
+	nowide::ofstream ofs(get_writable_data_path("crash_dmp_list.txt"), std::ios::app);
+	if (!ofs.is_open()) {
+		ERROR_LOG(COMMON, "crash_dmp_list.txt open failed");
+		return;
 	}
-	
-	size_t size = strlen(dump_dir) + strlen(minidump_id) + 6;
-	char* slog_path = new char[size];
-	std::snprintf(slog_path, size, "%s%c%s.log", dump_dir, CHAR_PATH_SEPARATOR, minidump_id);
-	FILE* slog_fp = nowide::fopen(slog_path, "w");
-	delete[] slog_path;
-	if (slog_fp == nullptr) return;
 
-	auto lines = inMemoryListener.GetLines(0, nullptr);
-	for (auto line : lines) {
-		fprintf(slog_fp, "%s", line.c_str());
+	auto dump_dir_str = std::string(dump_dir);
+	if (!dump_dir_str.empty() && dump_dir_str.back() != CHAR_PATH_SEPARATOR) {
+		dump_dir_str += CHAR_PATH_SEPARATOR;
 	}
-	
-	fclose(slog_fp);
+
+	ofs << dump_dir << minidump_id << ".dmp" << "," << GIT_VERSION << std::endl;
+	ofs.close();
+
+	ofs.open(dump_dir_str + minidump_id + ".log");
+	if (!ofs.is_open()) {
+		return;
+	}
+
+	const auto lines = inMemoryListener.GetLines(0, nullptr);
+	for (const auto& line : lines) {
+		ofs << line << std::endl;
+	}
 }
 
 void gdxsv_emu_start() {
@@ -253,7 +256,7 @@ void gdxsv_emu_settings() {
 #endif
 		config::RenderResolution = 960;
 		config::SkipFrame = 0;
-		config::AutoSkipFrame = 2;
+		config::AutoSkipFrame = 0;
 		// Audio
 		config::DSPEnabled = false;
 		config::AudioVolume.set(50);
@@ -281,7 +284,7 @@ void gdxsv_emu_settings() {
     
     Video:
       Transparent Sorting: Per Triangle
-      Automatic Frame Skipping: Maximum
+      Automatic Frame Skipping: Disabled
       Delay Frame Swapping: No
       Renderer: DirectX 11 (Windows) / OpenGL (OtherOS)
       Internal Resolution: 1280x960 (x2)
@@ -306,11 +309,13 @@ void gdxsv_emu_settings() {
 	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
 	if (pressed) {
 		config::Widescreen.set(widescreen);
+		config::SuperWidescreen.set(widescreen);
 		config::WidescreenGameHacks.set(widescreen);
 	}
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use the following rendering options:
     rend.WideScreen=true
+    rend.SuperWideScreen=true
     rend.WidescreenGameHacks=true)");
 
 	ImGui::Text("Frame Limit Method:");

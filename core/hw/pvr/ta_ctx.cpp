@@ -51,7 +51,7 @@ bool QueueRender(TA_context* ctx)
 	if (!skipFrame)
 	{
 		RenderCount++;
-		if (RenderCount % (1 + config::SkipFrame + (int)(config::AutoSkipFrame && settings.input.fastForwardMode)) != 0)
+		if (RenderCount % (1 + config::SkipFrame + settings.input.fastForwardMode) != 0)
 			skipFrame = true;
 		else if (config::ThreadedRendering && rqueue != nullptr
 				&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
