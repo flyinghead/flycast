@@ -1984,25 +1984,25 @@ static void gui_display_settings()
 				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
             }
 
-			audiobackend_t* backend = nullptr;
+			AudioBackend *backend = nullptr;
 			std::string backend_name = config::AudioBackend;
 			if (backend_name != "auto")
 			{
-				backend = GetAudioBackend(config::AudioBackend);
-				if (backend != NULL)
+				backend = AudioBackend::getBackend(config::AudioBackend);
+				if (backend != nullptr)
 					backend_name = backend->slug;
 			}
 
-			audiobackend_t* current_backend = backend;
+			AudioBackend *current_backend = backend;
 			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
 			{
 				bool is_selected = (config::AudioBackend.get() == "auto");
 				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
 					config::AudioBackend.set("auto");
 
-				for (u32 i = 0; i < GetAudioBackendCount(); i++)
+				for (u32 i = 0; i < AudioBackend::getCount(); i++)
 				{
-					backend = GetAudioBackend(i);
+					backend = AudioBackend::getBackend(i);
 					is_selected = (config::AudioBackend.get() == backend->slug);
 
 					if (is_selected)
@@ -2018,42 +2018,42 @@ static void gui_display_settings()
 			ImGui::SameLine();
 			ShowHelpMarker("The audio driver to use");
 
-			if (current_backend != NULL && current_backend->get_options != NULL)
+			if (current_backend != nullptr)
 			{
 				// get backend specific options
 				int option_count;
-				audio_option_t* options = current_backend->get_options(&option_count);
+				const AudioBackend::Option *options = current_backend->getOptions(&option_count);
 
 				for (int o = 0; o < option_count; o++)
 				{
-					std::string value = cfgLoadStr(current_backend->slug, options->cfg_name, "");
+					std::string value = cfgLoadStr(current_backend->slug, options->name, "");
 
-					if (options->type == integer)
+					if (options->type == AudioBackend::Option::integer)
 					{
 						int val = stoi(value);
-						if (ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value))
+						if (ImGui::SliderInt(options->caption.c_str(), &val, options->minValue, options->maxValue))
 						{
 							std::string s = std::to_string(val);
-							cfgSaveStr(current_backend->slug, options->cfg_name, s);
+							cfgSaveStr(current_backend->slug, options->name, s);
 						}
 					}
-					else if (options->type == checkbox)
+					else if (options->type == AudioBackend::Option::checkbox)
 					{
 						bool check = value == "1";
 						if (ImGui::Checkbox(options->caption.c_str(), &check))
-							cfgSaveStr(current_backend->slug, options->cfg_name,
+							cfgSaveStr(current_backend->slug, options->name,
 									check ? "1" : "0");
 					}
-					else if (options->type == ::list)
+					else if (options->type == AudioBackend::Option::list)
 					{
 						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 						{
 							bool is_selected = false;
-							for (const auto& cur : options->list_callback())
+							for (const auto& cur : options->values)
 							{
 								is_selected = value == cur;
 								if (ImGui::Selectable(cur.c_str(), &is_selected))
-									cfgSaveStr(current_backend->slug, options->cfg_name, cur);
+									cfgSaveStr(current_backend->slug, options->name, cur);
 
 								if (is_selected)
 									ImGui::SetItemDefaultFocus();

@@ -3,47 +3,59 @@
 #include <chrono>
 #include <thread>
 
-using the_clock = std::chrono::high_resolution_clock;
-
-static the_clock::time_point last_time;
-
-static void null_init()
+class NullAudioBackend : public AudioBackend
 {
-	last_time = the_clock::time_point();
-}
+	using the_clock = std::chrono::high_resolution_clock;
 
-static void null_term()
-{
-}
+public:
+	NullAudioBackend()
+		: AudioBackend("null", "No Audio") {}
 
-static u32 null_push(const void* frame, u32 samples, bool wait)
-{
-	if (wait)
+	bool init() override
 	{
-		if (last_time.time_since_epoch() != the_clock::duration::zero())
-		{
-			auto fduration = std::chrono::nanoseconds(1000000000L * samples / 44100);
-			auto duration = fduration - (the_clock::now() - last_time);
-			std::this_thread::sleep_for(duration);
-			last_time += fduration;
-		}
-		else
-			last_time = the_clock::now();
+		last_time = the_clock::time_point();
+		return true;
 	}
-	return 1;
-}
 
-static bool null_init_record(u32 sampling_freq)
-{
-	return true;
-}
+	void term() override
+	{
+	}
 
-static u32 null_record(void *buffer, u32 samples)
-{
-	memset(buffer, 0, samples * 2);
-	return samples;
-}
+	u32 push(const void* frame, u32 samples, bool wait) override
+	{
+		if (wait)
+		{
+			if (last_time.time_since_epoch() != the_clock::duration::zero())
+			{
+				auto fduration = std::chrono::nanoseconds(1000000000L * samples / 44100);
+				auto duration = fduration - (the_clock::now() - last_time);
+				std::this_thread::sleep_for(duration);
+				last_time += fduration;
+			}
+			else
+				last_time = the_clock::now();
+		}
+		return 1;
+	}
 
+	bool initRecord(u32 sampling_freq) override
+	{
+		return true;
+	}
+
+	u32 record(void *buffer, u32 samples) override
+	{
+		memset(buffer, 0, samples * 2);
+		return samples;
+	}
+
+private:
+	the_clock::time_point last_time;
+};
+
+static NullAudioBackend nullBackend;
+
+/*
 static audiobackend_t audiobackend_null = {
     "null", // Slug
     "No Audio", // Name
@@ -57,3 +69,4 @@ static audiobackend_t audiobackend_null = {
 };
 
 static bool null = RegisterAudioBackend(&audiobackend_null);
+*/

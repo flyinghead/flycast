@@ -5,44 +5,58 @@
 #include <algorithm>
 #include <atomic>
 
-typedef std::vector<std::string> (*audio_option_callback_t)();
-enum audio_option_type
+class AudioBackend
 {
-	integer = 0
-,	checkbox = 1
-,	list = 2
+public:
+	virtual ~AudioBackend() = default;
+
+	virtual bool init() = 0;
+	virtual u32 push(const void *data, u32 frames, bool wait) = 0;
+	virtual void term() {}
+
+	struct Option {
+		std::string name;
+		std::string caption;
+		enum { integer, checkbox, list } type;
+
+		int minValue;
+		int maxValue;
+		std::vector<std::string> values;
+	};
+	virtual const Option *getOptions(int *count) {
+		*count = 0;
+		return nullptr;
+	}
+
+	virtual bool initRecord(u32 sampling_freq) { return false; }
+	virtual u32 record(void *, u32) { return 0; }
+	virtual void termRecord() {}
+
+	std::string slug;
+	std::string name;
+
+	static size_t getCount() { return backends == nullptr ? 0 : backends->size(); }
+	static AudioBackend *getBackend(size_t index) { return backends == nullptr ? nullptr : (*backends)[index]; }
+	static AudioBackend *getBackend(const std::string& slug);
+
+protected:
+	AudioBackend(const std::string& slug, const std::string& name)
+		: slug(slug), name(name) {
+		registerAudioBackend(this);
+	}
+
+private:
+	static void registerAudioBackend(AudioBackend *backend)
+	{
+		if (backends == nullptr)
+			backends = new std::vector<AudioBackend *>();
+		backends->push_back(backend);
+		std::sort(backends->begin(), backends->end(), [](AudioBackend *b1, AudioBackend *b2) { return b1->slug < b2->slug; });
+	}
+
+	static std::vector<AudioBackend *> *backends;
 };
 
-typedef struct {
-	std::string cfg_name;
-	std::string caption;
-	audio_option_type type;
-
-	// type int_value (spin edit)
-	int min_value;
-	int max_value;
-
-	// type list edit (string/char*)
-	audio_option_callback_t list_callback;
-} audio_option_t;
-
-typedef audio_option_t* (*audio_options_func_t)(int* option_count);
-
-typedef void (*audio_backend_init_func_t)();
-typedef u32 (*audio_backend_push_func_t)(const void *data, u32 frames, bool wait);
-typedef void (*audio_backend_term_func_t)();
-typedef struct {
-    std::string slug;
-    std::string name;
-    audio_backend_init_func_t init;
-    audio_backend_push_func_t push;
-    audio_backend_term_func_t term;
-	audio_options_func_t get_options;
-    bool (*init_record)(u32 sampling_freq);
-    u32 (*record)(void *, u32);
-    audio_backend_term_func_t term_record;
-} audiobackend_t;
-bool RegisterAudioBackend(audiobackend_t* backend);
 void InitAudio();
 void TermAudio();
 void WriteSample(s16 right, s16 left);
@@ -51,11 +65,7 @@ void StartAudioRecording(bool eight_khz);
 u32 RecordAudio(void *buffer, u32 samples);
 void StopAudioRecording();
 
-u32 GetAudioBackendCount();
-audiobackend_t* GetAudioBackend(int num);
-audiobackend_t* GetAudioBackend(const std::string& slug);
-
-constexpr u32 SAMPLE_COUNT = 512;	// push() is always called with that many frames
+constexpr u32 SAMPLE_COUNT = 512;	// AudioBackend::push() is always called with that many frames
 
 class RingBuffer
 {

@@ -24,7 +24,7 @@ public final class AudioBackend {
     }
 
     // Called by native code
-    private void init(int bufferSize)
+    private boolean init(int bufferSize)
     {
         if (bufferSize == 0)
             bufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
@@ -42,16 +42,16 @@ public final class AudioBackend {
         if (audioTrack.getState() != STATE_INITIALIZED) {
             audioTrack = null;
             release();
-            Log.e("reicast", "Error initializing AudioTrack. Disabling sound");
+            Log.e("audio", "Error initializing AudioTrack. Disabling sound");
+            return false;
         }
-        else {
-            size = bufferSize / 4;
-            writePosition = 0;
+        size = bufferSize / 4;
+        writePosition = 0;
 
-            Log.i("audcfg", "Audio streaming: buffer size " + size + " samples / " + size * 1000.0 / 44100.0 + " ms");
-            audioTrack.play();
-        }
+        Log.i("audio", "Audio streaming: buffer size " + size + " samples / " + size * 1000.0 / 44100.0 + " ms");
+        audioTrack.play();
 
+        return true;
     }
 
     // Called by native code

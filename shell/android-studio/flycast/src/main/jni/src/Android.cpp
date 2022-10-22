@@ -416,63 +416,56 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiSetInse
 }
 
 // Audio Stuff
-static u32 androidaudio_push(const void* frame, u32 amt, bool wait)
+class AndroidAudioBackend : AudioBackend
 {
-    jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
-    return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
-}
+public:
+	AndroidAudioBackend()
+		: AudioBackend("android", "Android Audio") {}
 
-static void androidaudio_init()
-{
-	jint bufferSize = config::AutoLatency ? 0 : config::AudioBufferSize;
-	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid, bufferSize);
-}
+	u32 push(const void* frame, u32 amt, bool wait) override
+	{
+		jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
+		return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
+	}
 
-static void androidaudio_term()
-{
-	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
-}
+	bool init() override
+	{
+		jint bufferSize = config::AutoLatency ? 0 : config::AudioBufferSize;
+		return jvm_attacher.getEnv()->CallBooleanMethod(g_audioBackend, audioInitMid, bufferSize);
+	}
 
-static bool androidaudio_init_record(u32 sampling_freq)
-{
-	if (sipemu == nullptr)
-		return false;
-	jvm_attacher.getEnv()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
-	return true;
-}
+	void term() override
+	{
+		jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
+	}
 
-static void androidaudio_term_record()
-{
-	jvm_attacher.getEnv()->CallVoidMethod(sipemu, stopRecordingMid);
-}
+	bool initRecord(u32 sampling_freq) override
+	{
+		if (sipemu == nullptr)
+			return false;
+		jvm_attacher.getEnv()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
+		return true;
+	}
 
-static u32 androidaudio_record(void *buffer, u32 samples)
-{
-    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu, getmicdata, samples);
-    if (jdata == NULL)
-        return 0;
-    jsize size = jvm_attacher.getEnv()->GetArrayLength(jdata);
-    samples = std::min(samples, (u32)size * 2);
-    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
-    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
+	void termRecord() override
+	{
+		jvm_attacher.getEnv()->CallVoidMethod(sipemu, stopRecordingMid);
+	}
 
-    return samples;
-}
+	u32 record(void *buffer, u32 samples) override
+	{
+		jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu, getmicdata, samples);
+		if (jdata == NULL)
+			return 0;
+		jsize size = jvm_attacher.getEnv()->GetArrayLength(jdata);
+		samples = std::min(samples, (u32)size * 2);
+		jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
+		jvm_attacher.getEnv()->DeleteLocalRef(jdata);
 
-audiobackend_t audiobackend_android = {
-        "android", // Slug
-        "Android Audio", // Name
-        &androidaudio_init,
-        &androidaudio_push,
-        &androidaudio_term,
-        NULL,
-		&androidaudio_init_record,
-		&androidaudio_record,
-		&androidaudio_term_record
+		return samples;
+	}
 };
-
-static bool android = RegisterAudioBackend(&audiobackend_android);
-
+static AndroidAudioBackend androidAudioBackend;
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JNIEnv *env, jobject obj, jobject instance)
 {
@@ -488,7 +481,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_set
     else {
         g_audioBackend = env->NewGlobalRef(instance);
         writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
-        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "(I)V");
+        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "(I)Z");
         audioTermMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "term", "()V");
         if (jsamples == NULL) {
             jsamples = env->NewShortArray(SAMPLE_COUNT * 2);

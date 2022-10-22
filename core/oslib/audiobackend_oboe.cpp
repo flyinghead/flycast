@@ -25,161 +25,163 @@
 #include <memory>
 #include "stdclass.h"
 
-static RingBuffer ringBuffer;
-static cResetEvent pushWait;
-
-static std::shared_ptr<oboe::AudioStream> stream;
-static std::shared_ptr<oboe::AudioStream> recordStream;
-
-static void audio_init();
-static void audio_term();
-
-class AudioCallback : public oboe::AudioStreamDataCallback
+class OboeBackend : AudioBackend
 {
-public:
-    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override
-    {
-    	if (!ringBuffer.read((u8 *)audioData, numFrames * 4))
-    		// underrun
-    		memset(audioData, 0, numFrames * 4);
-   		pushWait.Set();
+	RingBuffer ringBuffer;
+	cResetEvent pushWait;
 
-        return oboe::DataCallbackResult::Continue;
-    }
-};
-static AudioCallback audioCallback;
+	std::shared_ptr<oboe::AudioStream> stream;
+	std::shared_ptr<oboe::AudioStream> recordStream;
 
-class AudioErrorCallback : public oboe::AudioStreamErrorCallback
-{
-public:
-	void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override {
-		WARN_LOG(AUDIO, "Audio device lost. Attempting to reopen the audio stream");
-		audio_term();
-		audio_init();
-	}
-};
-static AudioErrorCallback errorCallback;
-
-static void audio_init()
-{
-	// Actual capacity is size-1 to avoid overrun so add one buffer
-	ringBuffer.setCapacity((config::AudioBufferSize + SAMPLE_COUNT) * 4);
-
-	oboe::AudioStreamBuilder builder;
-	oboe::Result result = builder.setDirection(oboe::Direction::Output)
-			->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-			->setSharingMode(oboe::SharingMode::Exclusive)
-			->setFormat(oboe::AudioFormat::I16)
-			->setChannelCount(oboe::ChannelCount::Stereo)
-			->setSampleRate(44100)
-			->setFramesPerCallback(SAMPLE_COUNT)
-			->setDataCallback(&audioCallback)
-			->setErrorCallback(&errorCallback)
-			->setUsage(oboe::Usage::Game)
-			->openStream(stream);
-	if (result != oboe::Result::OK)
+	class AudioCallback : public oboe::AudioStreamDataCallback
 	{
-		ERROR_LOG(AUDIO, "Oboe open stream failed: %s", oboe::convertToText(result));
-		return;
-	}
+	public:
+		AudioCallback(OboeBackend *backend) : backend(backend) {}
 
-	if (stream->getAudioApi() == oboe::AudioApi::AAudio && config::AudioBufferSize < 1764)
-	{
-		// Reduce internal buffer for low latency (< 40 ms)
-		int bufSize = stream->getBufferSizeInFrames();
-		int burst = stream->getFramesPerBurst();
-		if (bufSize - burst > SAMPLE_COUNT)
+		oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override
 		{
-			while (bufSize - burst > SAMPLE_COUNT)
-				bufSize -= burst;
-			stream->setBufferSizeInFrames(bufSize);
+			if (!backend->ringBuffer.read((u8 *)audioData, numFrames * 4))
+				// underrun
+				memset(audioData, 0, numFrames * 4);
+			backend->pushWait.Set();
+
+			return oboe::DataCallbackResult::Continue;
+		}
+
+		OboeBackend *backend;
+	};
+	AudioCallback audioCallback;
+
+	class AudioErrorCallback : public oboe::AudioStreamErrorCallback
+	{
+	public:
+		AudioErrorCallback(OboeBackend *backend) : backend(backend) {}
+
+		void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override {
+			WARN_LOG(AUDIO, "Audio device lost. Attempting to reopen the audio stream");
+			backend->term();
+			backend->init();
+		}
+
+		OboeBackend *backend;
+	};
+	AudioErrorCallback errorCallback;
+
+public:
+	OboeBackend()
+		: AudioBackend("Oboe", "Automatic AAudio / OpenSL selection"), audioCallback(this), errorCallback(this) {}
+
+	bool init() override
+	{
+		// Actual capacity is size-1 to avoid overrun so add one buffer
+		ringBuffer.setCapacity((config::AudioBufferSize + SAMPLE_COUNT) * 4);
+
+		oboe::AudioStreamBuilder builder;
+		oboe::Result result = builder.setDirection(oboe::Direction::Output)
+				->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+				->setSharingMode(oboe::SharingMode::Exclusive)
+				->setFormat(oboe::AudioFormat::I16)
+				->setChannelCount(oboe::ChannelCount::Stereo)
+				->setSampleRate(44100)
+				->setFramesPerCallback(SAMPLE_COUNT)
+				->setDataCallback(&audioCallback)
+				->setErrorCallback(&errorCallback)
+				->setUsage(oboe::Usage::Game)
+				->openStream(stream);
+		if (result != oboe::Result::OK)
+		{
+			ERROR_LOG(AUDIO, "Oboe open stream failed: %s", oboe::convertToText(result));
+			return false;
+		}
+
+		if (stream->getAudioApi() == oboe::AudioApi::AAudio && config::AudioBufferSize < 1764)
+		{
+			// Reduce internal buffer for low latency (< 40 ms)
+			int bufSize = stream->getBufferSizeInFrames();
+			int burst = stream->getFramesPerBurst();
+			if (bufSize - burst > SAMPLE_COUNT)
+			{
+				while (bufSize - burst > SAMPLE_COUNT)
+					bufSize -= burst;
+				stream->setBufferSizeInFrames(bufSize);
+			}
+		}
+
+		stream->requestStart();
+		NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, size: %d frames, frames/callback: %d, frames/burst: %d",
+				stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
+				stream->getFramesPerCallback(), stream->getFramesPerBurst());
+
+		return true;
+	}
+
+	void term() override
+	{
+		NOTICE_LOG(AUDIO, "Oboe driver stopping");
+		if (stream != nullptr)
+		{
+			stream->stop();
+			stream->close();
+			stream.reset();
 		}
 	}
 
-	stream->requestStart();
-	NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, size: %d frames, frames/callback: %d, frames/burst: %d",
-			stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
-			stream->getFramesPerCallback(), stream->getFramesPerBurst());
-}
-
-static void audio_term()
-{
-	NOTICE_LOG(AUDIO, "Oboe driver stopping");
-	if (stream != nullptr)
+	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		stream->stop();
-		stream->close();
-		stream.reset();
+		while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
+			pushWait.Wait();
+
+		return 1;
 	}
-}
 
-static u32 audio_push(const void* frame, u32 samples, bool wait) {
-	while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
-		pushWait.Wait();
-
-	return 1;
-}
-
-static void term_record()
-{
-	if (recordStream != nullptr)
+	void termRecord() override
 	{
-		recordStream->stop();
-		recordStream->close();
-		recordStream.reset();
+		if (recordStream != nullptr)
+		{
+			recordStream->stop();
+			recordStream->close();
+			recordStream.reset();
+		}
+		NOTICE_LOG(AUDIO, "Oboe recorder stopped");
 	}
-	NOTICE_LOG(AUDIO, "Oboe recorder stopped");
-}
 
-static bool init_record(u32 sampling_freq)
-{
-	oboe::AudioStreamBuilder builder;
-	oboe::Result result = builder.setDirection(oboe::Direction::Input)
-		->setPerformanceMode(oboe::PerformanceMode::None)
-		->setSharingMode(oboe::SharingMode::Exclusive)
-		->setFormat(oboe::AudioFormat::I16)
-		->setChannelCount(oboe::ChannelCount::Mono)
-		->setSampleRate(sampling_freq)
-		->openStream(recordStream);
-	if (result != oboe::Result::OK)
+	bool initRecord(u32 sampling_freq) override
 	{
-		ERROR_LOG(AUDIO, "Oboe open record stream failed: %s", oboe::convertToText(result));
-		return false;
+		oboe::AudioStreamBuilder builder;
+		oboe::Result result = builder.setDirection(oboe::Direction::Input)
+			->setPerformanceMode(oboe::PerformanceMode::None)
+			->setSharingMode(oboe::SharingMode::Exclusive)
+			->setFormat(oboe::AudioFormat::I16)
+			->setChannelCount(oboe::ChannelCount::Mono)
+			->setSampleRate(sampling_freq)
+			->openStream(recordStream);
+		if (result != oboe::Result::OK)
+		{
+			ERROR_LOG(AUDIO, "Oboe open record stream failed: %s", oboe::convertToText(result));
+			return false;
+		}
+		recordStream->requestStart();
+		NOTICE_LOG(AUDIO, "Oboe recorder started. stream capacity: %d frames",
+				stream->getBufferCapacityInFrames());
+
+		return true;
 	}
-	recordStream->requestStart();
-	NOTICE_LOG(AUDIO, "Oboe recorder started. stream capacity: %d frames",
-			stream->getBufferCapacityInFrames());
 
-	return true;
-}
-
-static u32 record(void *data, u32 samples)
-{
-	if (recordStream == nullptr)
-		return 0;
-	oboe::ResultWithValue<int32_t> result = recordStream->read(data, samples, 0);
-	if (result == oboe::Result::ErrorDisconnected)
+	u32 record(void *data, u32 samples) override
 	{
-		WARN_LOG(AUDIO, "Recording device lost. Attempting to reopen the audio stream");
-		u32 sampleRate = recordStream->getSampleRate();
-		term_record();
-		init_record(sampleRate);
+		if (recordStream == nullptr)
+			return 0;
+		oboe::ResultWithValue<int32_t> result = recordStream->read(data, samples, 0);
+		if (result == oboe::Result::ErrorDisconnected)
+		{
+			WARN_LOG(AUDIO, "Recording device lost. Attempting to reopen the audio stream");
+			u32 sampleRate = recordStream->getSampleRate();
+			termRecord();
+			initRecord(sampleRate);
+		}
+		return std::max(0, result.value());
 	}
-	return std::max(0, result.value());
-}
-
-static audiobackend_t audiobackend_oboe = {
-		"Oboe",		// Slug
-		"Automatic AAudio / OpenSL selection",	// Name
-		&audio_init,
-		&audio_push,
-		&audio_term,
-		NULL,
-		&init_record,
-		&record,
-		&term_record
 };
-
-static bool oboebe = RegisterAudioBackend(&audiobackend_oboe);
+static OboeBackend oboeBackend;
 
 #endif
