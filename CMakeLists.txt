@@ -481,7 +481,7 @@ if(NINTENDO_SWITCH AND USE_GLES)
 endif()
 
 if(VITA)
-	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon curl ssl crypto)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
