@@ -18,8 +18,10 @@ void retro_rend_present()
 }
 #endif
 
-u32 VertexCount=0;
-u32 FrameCount=1;
+u32 VertexCount;
+u32 FrameCount = 1;
+static int displayWidth;
+static int displayHeight;
 
 Renderer* renderer;
 
@@ -38,6 +40,7 @@ bool fb_dirty;
 static bool pend_rend;
 
 TA_context* _pvrrc;
+extern bool rend_needs_resize;
 
 static bool rend_frame(TA_context* ctx)
 {
@@ -363,32 +366,44 @@ void rend_deserialize(Deserializer& deser)
 		deser >> fb_watch_addr_end;
 	}
 	pend_rend = false;
+	rend_needs_resize = true;
 }
 
 void rend_resize_renderer()
 {
-	if (renderer == nullptr)
-		return;
-	float hres;
-	int vres = config::RenderResolution;
+	int fbwidth = 640 / (1 + VO_CONTROL.pixel_double) * (1 + SCALER_CTL.hscale);
+	int fbheight = FB_R_CTRL.vclk_div == 1 || SPG_CONTROL.interlace == 1 ? 480 : 240;
+	if (SPG_CONTROL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
+		fbheight *= std::roundf((float)SCALER_CTL.vscalefactor / 0x400);
+
+	float upscaling = config::RenderResolution / 480.f;
+	float hres = fbwidth * upscaling;
+	float vres = fbheight * upscaling;
 	if (config::Widescreen && !config::Rotate90)
 	{
 		if (config::SuperWidescreen)
-			hres = (float)config::RenderResolution * settings.display.width / settings.display.height;
+			hres *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
 		else
-			hres = config::RenderResolution * 16.f / 9.f;
-	}
-	else if (config::Rotate90)
-	{
-		vres = vres * config::ScreenStretching / 100;
-		hres = config::RenderResolution * 4.f / 3.f;
-	}
-	else
-	{
-		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+			hres *= 4.f / 3.f;
 	}
 	if (!config::Rotate90)
 		hres = std::roundf(hres / 2.f) * 2.f;
-	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, vres);
-	renderer->Resize((int)hres, vres);
+	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, (int)vres);
+	if (renderer != nullptr)
+		renderer->Resize((int)hres, (int)vres);
+	rend_needs_resize = false;
+	displayWidth = settings.display.width;
+	displayHeight = settings.display.height;
+#ifdef LIBRETRO
+	void retro_resize_renderer(int w, int h);
+
+	retro_resize_renderer((int)hres, (int)vres);
+#endif
+}
+
+void rend_resize_renderer_if_needed()
+{
+	if (!rend_needs_resize && displayWidth == settings.display.width && displayHeight == settings.display.height)
+		return;
+	rend_resize_renderer();
 }

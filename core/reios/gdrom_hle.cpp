@@ -358,7 +358,9 @@ static void GD_HLE_Command(gd_command cc)
 			DEBUG_LOG(REIOS, "GDROM: CMD PLAY first_track %x last_track %x repeats %x start_fad %x end_fad %x", first_track, last_track, cdda.repeats,
 					cdda.StartAddr.FAD, cdda.EndAddr.FAD);
 			cdda.status = cdda_t::Playing;
-			if (SecNumber.Status != GD_PAUSE || cdda.CurrAddr.FAD < cdda.StartAddr.FAD || cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+			if ((SecNumber.Status != GD_PLAY && SecNumber.Status != GD_PAUSE)
+					|| cdda.CurrAddr.FAD < cdda.StartAddr.FAD
+					|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
 				cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 			SecNumber.Status = GD_PLAY;
 		}

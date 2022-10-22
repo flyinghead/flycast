@@ -128,6 +128,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
+		// South Park Rally
+		else if (prod_id == "T-8116N" || prod_id == "T-8112D-50")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(1000.f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
@@ -186,7 +192,8 @@ static void loadSpecialSettings()
 				|| prod_id == "T13003N"	 // Toy Story 2 (US)
 				|| prod_id == "T1209N"	 // Gigawing (US)
 				|| prod_id == "T1208M"	 // Gigawing (JP)
-				|| prod_id == "T1235M")) // Vampire Chronicle for Matching Service
+				|| prod_id == "T1235M"   // Vampire Chronicle for Matching Service
+				|| prod_id == "T22901N"))// Roadsters (US)
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
@@ -340,7 +347,10 @@ void dc_reset(bool hard)
 {
 	NetworkHandshake::term();
 	if (hard)
+	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
+		memwatch::elanWatcher.unprotectMem(0, 0xffffffff);
+	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	libAICA_Reset(hard);
@@ -428,7 +438,7 @@ void Emulator::init()
 	state = Init;
 }
 
-static int getGamePlatform(const char *path)
+int getGamePlatform(const char *path)
 {
 	if (path == NULL)
 		// Dreamcast BIOS
@@ -523,9 +533,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
-		if (settings.platform.isNaomi())
+		if (settings.platform.isNaomi()) {
 			// Must be done after the maple devices are created and EEPROM is accessible
 			naomi_cart_ConfigureEEPROM();
+			// and reload settings so that eeprom-based settings can be overridden
+			loadGameSpecificSettings();
+		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
@@ -763,6 +776,8 @@ void Emulator::run()
 
 void Emulator::start()
 {
+	if (state == Running)
+		return;
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
@@ -828,6 +843,7 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
+	rend_resize_renderer_if_needed();
 	if (!config::ThreadedRendering)
 	{
 		if (state != Running)

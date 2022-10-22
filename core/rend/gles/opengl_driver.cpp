@@ -21,6 +21,15 @@
 #include "wsi/gl_context.h"
 #include "rend/osd.h"
 #include "rend/gui.h"
+#include "glcache.h"
+#include "gles.h"
+
+#ifndef GL_CLAMP_TO_BORDER
+#define GL_CLAMP_TO_BORDER 0x812D
+#endif
+#ifndef GL_TEXTURE_BORDER_COLOR
+#define GL_TEXTURE_BORDER_COLOR 0x1004
+#endif
 
 static constexpr int vmu_coords[8][2] = {
 		{ 0 , 0 },
@@ -50,19 +59,17 @@ OpenGLDriver::~OpenGLDriver()
 	EventManager::unlisten(Event::Start, emuEventCallback, this);
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
-	{
-		if (vmu_lcd_tex_ids[i] != ImTextureID())
-		{
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-			vmu_lcd_tex_ids[i] = ImTextureID();
-		}
-	}
+	std::vector<GLuint> texIds;
+	texIds.reserve(ARRAY_SIZE(vmu_lcd_tex_ids) + 1 + textures.size());
+	for (ImTextureID texId : vmu_lcd_tex_ids)
+		if (texId != ImTextureID())
+			texIds.push_back((GLuint)(uintptr_t)texId);
 	if (crosshairTexId != ImTextureID())
-	{
-		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
-		crosshairTexId = ImTextureID();
-	}
+		texIds.push_back((GLuint)(uintptr_t)crosshairTexId);
+	for (const auto& it : textures)
+		texIds.push_back((GLuint)(uintptr_t)it.second);
+	if (!texIds.empty())
+		glcache.DeleteTextures(texIds.size(), &texIds[0]);
 	ImGui_ImplOpenGL3_Shutdown();
 }
 
@@ -84,9 +91,8 @@ void OpenGLDriver::displayVmus()
 		if (!vmu_lcd_status[i])
 			continue;
 
-		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
+		if (vmu_lcd_changed[i] || vmu_lcd_tex_ids[i] == ImTextureID())
+			vmu_lcd_tex_ids[i] = updateTexture("__vmu" + std::to_string(i), (const u8 *)vmu_lcd_data[i], 48, 32);
 
 		int x = vmu_coords[i][0];
 		int y = vmu_coords[i][1];
@@ -121,7 +127,8 @@ void OpenGLDriver::displayCrosshairs()
 		return;
 
 	if (crosshairTexId == ImTextureID())
-		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
+		crosshairTexId = updateTexture("__crosshair", (const u8 *)getCrosshairTextureData(), 16, 16);
+
 	ImGui::SetNextWindowBgAlpha(0);
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -163,4 +170,30 @@ void OpenGLDriver::present()
 	if (frameRendered)
 		theGLContext.swap();
 	frameRendered = false;
+}
+
+ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data, int width, int height)
+{
+	ImTextureID oldId = getTexture(name);
+	if (oldId != ImTextureID())
+		glcache.DeleteTextures(1, (GLuint *)&oldId);
+	GLuint texId = glcache.GenTexture();
+    glcache.BindTexture(GL_TEXTURE_2D, texId);
+    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (gl.border_clamp_supported)
+	{
+		float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	}
+	else
+	{
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    return textures[name] = (ImTextureID)(u64)texId;
 }

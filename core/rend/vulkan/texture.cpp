@@ -145,7 +145,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, nullptr, nullptr, imageMemoryBarrier);
 }
 
-void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded)
+void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
 	vk::Format format = vk::Format::eUndefined;
 	u32 dataSize = width * height * 2;
@@ -234,7 +234,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usa
 {
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mipmapLevels, 1,
 										vk::SampleCountFlagBits::e1, tiling, usage,
-										vk::SharingMode::eExclusive, 0, nullptr, initialLayout);
+										vk::SharingMode::eExclusive, nullptr, initialLayout);
 	image = device.createImageUnique(imageCreateInfo);
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), needsStaging ? VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY : VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU };
@@ -249,7 +249,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usa
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }
 
-void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
+void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMipmaps)
 {
 	verify((bool)commandBuffer);
 
@@ -283,7 +283,7 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 	}
 	else if (!needsStaging)
 	{
-		vk::SubresourceLayout layout = device.getImageSubresourceLayout(*image, vk::ImageSubresource(vk::ImageAspectFlagBits::eColor, 0, 0));
+		vk::SubresourceLayout layout = device.getImageSubresourceLayout(*image, vk::ImageSubresource(vk::ImageAspectFlagBits::eColor));
 		if (layout.size != srcSize)
 		{
 			u8 *src = (u8 *)srcData;
@@ -376,7 +376,7 @@ void Texture::GenerateMipmaps()
 				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1) } },
 				 vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, 1),
 				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u), 1) } });
-		commandBuffer.blitImage(*image, vk::ImageLayout::eTransferSrcOptimal, *image, vk::ImageLayout::eTransferDstOptimal, 1, &blit, vk::Filter::eLinear);
+		commandBuffer.blitImage(*image, vk::ImageLayout::eTransferSrcOptimal, *image, vk::ImageLayout::eTransferDstOptimal, blit, vk::Filter::eLinear);
 
 		// Transition previous mipmap level from src optimal to shader read-only optimal
 		barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
@@ -410,7 +410,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 	}
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
 			vk::ImageTiling::eOptimal, usage,
-			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
+			vk::SharingMode::eExclusive, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };

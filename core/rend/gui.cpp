@@ -44,6 +44,10 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "boxart/boxart.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 #ifdef __vita__
 #include <vitasdk.h>
@@ -79,6 +83,7 @@ void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
+static Boxart boxart;
 static Chat chat;
 
 static void emuEventCallback(Event event, void *)
@@ -382,6 +387,17 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
+
+#if defined(USE_SDL)
+	if (io.WantTextInput && !SDL_IsTextInputActive())
+	{
+		SDL_StartTextInput();
+	}
+	else if (!io.WantTextInput && SDL_IsTextInputActive())
+	{
+		SDL_StopTextInput();
+	}
+#endif
 }
 
 static void delayedKeysUp()
@@ -1440,6 +1456,15 @@ static void gui_display_settings()
                 if (ImGui::Button("Change"))
                 	gui_state = GuiState::Onboarding;
 #endif
+#if defined(__APPLE__) && TARGET_OS_OSX
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
+                if (ImGui::Button("Reveal in Finder"))
+                {
+                    char temp[512];
+                    sprintf(temp, "open \"%s\"", get_writable_config_path("").c_str());
+                    system(temp);
+                }
+#endif
                 ImGui::ListBoxFooter();
             }
             ImGui::SameLine();
@@ -1447,6 +1472,10 @@ static void gui_display_settings()
 #endif // !linux
 #endif // !TARGET_IPHONE
 
+			OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
+					"Display game covert art in the game list.");
+			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
+					"Fetch cover images from TheGamesDB.net.");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -1730,7 +1759,7 @@ static void gui_display_settings()
 		    			"Enable modifier volumes, usually used for shadows");
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		    	if (!config::Widescreen)
 		    	{
 			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -1738,7 +1767,7 @@ static void gui_display_settings()
 		    	}
 		    	ImGui::Indent();
 		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 		    	ImGui::Unindent();
 		    	if (!config::Widescreen)
 		    	{
@@ -1849,11 +1878,17 @@ static void gui_display_settings()
 		    		ImGui::Text("Graphics API:");
 					ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_OPENGL
-					ImGui::RadioButton("Open GL", &renderApi, 0);
+					ImGui::RadioButton("OpenGL", &renderApi, 0);
 					ImGui::NextColumn();
 #endif
 #ifdef USE_VULKAN
+#ifdef __APPLE__
+					ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
+					ImGui::SameLine(0, style.ItemInnerSpacing.x);
+					ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
+#else
 					ImGui::RadioButton("Vulkan", &renderApi, 1);
+#endif // __APPLE__
 					ImGui::NextColumn();
 #endif
 #ifdef USE_DX9
@@ -2225,9 +2260,9 @@ static void gui_display_settings()
 					ShowHelpMarker("The local UDP port to use");
 					config::LocalPort.set(atoi(localPort));
 		    	}
-				OptionCheckbox("Enable UPnP", config::EnableUPnP);
-				ImGui::SameLine();
-				ShowHelpMarker("Automatically configure your network router for netplay");
+				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
+				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
+						"Compatible with the \"-output network\" MAME option. Arcade games only.");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2332,7 +2367,7 @@ static void gui_display_settings()
 		    }
 	    	ImGui::Spacing();
 	    	if (isOpenGL(config::RendererType))
-				header("Open GL");
+				header("OpenGL");
 	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
 	    	else if (isDirectX(config::RendererType))
@@ -2380,6 +2415,66 @@ inline static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 }
 
+static void gameTooltip(const std::string& tip)
+{
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+        ImGui::TextUnformatted(tip.c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+{
+	textureId = ImTextureID{};
+	if (art->boxartPath.empty())
+		return false;
+
+	// Get the boxart texture. Load it if needed.
+	textureId = imguiDriver->getTexture(art->boxartPath);
+	if (textureId == ImTextureID() && allowLoad)
+	{
+		int width, height;
+		u8 *imgData = loadImage(art->boxartPath, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+		return true;
+	}
+	return false;
+}
+
+static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, ImVec2 size)
+{
+	float ar = imguiDriver->getAspectRatio(textureId);
+	ImVec2 uv0 { 0.f, 0.f };
+	ImVec2 uv1 { 1.f, 1.f };
+	if (ar > 1)
+	{
+		uv0.y = -(ar - 1) / 2;
+		uv1.y = 1 + (ar - 1) / 2;
+	}
+	else if (ar != 0)
+	{
+		ar = 1 / ar;
+		uv0.x = -(ar - 1) / 2;
+		uv1.x = 1 + (ar - 1) / 2;
+	}
+	bool pressed = ImGui::ImageButton(textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	gameTooltip(tooltip);
+
+    return pressed;
+}
+
 static void gui_display_content()
 {
 	fullScreenWindow(false);
@@ -2420,13 +2515,45 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
+		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
+		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
+		
+		if (config::BoxartDisplayMode)
+			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
+		else
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
-		ImGui::PushID("bios");
-		if (ImGui::Selectable("Dreamcast BIOS"))
-			gui_start_game("");
-		ImGui::PopID();
-
+		int counter = 0;
+		int loadedImages = 0;
+		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
+		{
+			ImGui::PushID("bios");
+			bool pressed;
+			if (config::BoxartDisplayMode)
+			{
+				ImTextureID textureId{};
+				GameMedia game;
+				const GameBoxart *art = boxart.getBoxart(game);
+				if (art != nullptr)
+				{
+					if (getGameImage(art, textureId, loadedImages < 10))
+						loadedImages++;
+				}
+				if (textureId != ImTextureID())
+					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
+				else
+					pressed = ImGui::Button("Dreamcast BIOS", responsiveBoxVec2);
+			}
+			else
+			{
+				pressed = ImGui::Selectable("Dreamcast BIOS");
+			}
+			if (pressed)
+				gui_start_game("");
+			ImGui::PopID();
+			counter++;
+		}
 		{
 			scanner.get_mutex().lock();
 			for (const auto& game : scanner.get_game_list())
@@ -2439,10 +2566,43 @@ static void gui_display_content()
 						// Only dreamcast disks
 						continue;
 				}
-				if (filter.PassFilter(game.name.c_str()))
+				std::string gameName = game.name;
+				const GameBoxart *art = nullptr;
+				if (config::BoxartDisplayMode)
+				{
+					art = boxart.getBoxart(game);
+					if (art != nullptr)
+						gameName = art->name;
+				}
+				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
-					if (ImGui::Selectable(game.name.c_str()))
+					bool pressed;
+					if (config::BoxartDisplayMode)
+					{
+						if (counter % itemsPerLine != 0)
+							ImGui::SameLine();
+						counter++;
+						ImTextureID textureId{};
+						if (art != nullptr)
+						{
+							// Get the boxart texture. Load it if needed (max 10 per frame).
+							if (getGameImage(art, textureId, loadedImages < 10))
+								loadedImages++;
+						}
+						if (textureId != ImTextureID())
+							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
+						else
+						{
+							pressed = ImGui::Button(gameName.c_str(), responsiveBoxVec2);
+							gameTooltip(game.name);
+						}
+					}
+					else
+					{
+						pressed = ImGui::Selectable(gameName.c_str());
+					}
+					if (pressed)
 					{
 						if (gui_state == GuiState::SelectDisk)
 						{
@@ -2471,6 +2631,7 @@ static void gui_display_content()
 		}
         ImGui::PopStyleVar();
     }
+    scrollWhenDraggingOnVoid();
     windowDragScroll();
 	ImGui::EndChild();
 	ImGui::End();
@@ -2807,6 +2968,7 @@ void gui_term()
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
 	    EventManager::unlisten(Event::Terminate, emuEventCallback);
+		gui_save();
 	}
 }
 
@@ -2840,6 +3002,11 @@ static void reset_vmus()
 void gui_error(const std::string& what)
 {
 	error_msg = what;
+}
+
+void gui_save()
+{
+	boxart.saveDatabase();
 }
 
 #ifdef TARGET_UWP

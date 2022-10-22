@@ -48,9 +48,9 @@ public:
 	int GetCurrentImageIndex() const { return retro_render_if->get_sync_index(retro_render_if->handle); }
 
 	void WaitIdle() const { queue.waitIdle(); }
-	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
+	void SubmitCommandBuffers(const std::vector<vk::CommandBuffer> &buffers, vk::Fence fence) {
 		retro_render_if->lock_queue(retro_render_if->handle);
-		queue.submit(vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers, 0, nullptr), fence);
+		queue.submit(vk::SubmitInfo(nullptr, nullptr, buffers, nullptr), fence);
 		retro_render_if->unlock_queue(retro_render_if->handle);
 	}
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
@@ -74,9 +74,9 @@ public:
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
 
-		return std::to_string(VK_VERSION_MAJOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_MINOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_PATCH(props.driverVersion));
+		return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion))
+			+ "." + std::to_string(VK_API_VERSION_MINOR(props.driverVersion))
+			+ "." + std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
 	}
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }

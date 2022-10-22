@@ -82,7 +82,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 #ifdef LIBRETRO
 			if (i & 1)
 				continue;
-			w *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			w *= (float)vmu_screen_params[i / 2].vmu_screen_size_mult / config::ScreenStretching * 100.f;
 			h *= vmu_screen_params[i / 2].vmu_screen_size_mult;
 			switch (vmu_screen_params[i / 2].vmu_screen_position)
 			{
@@ -170,15 +170,18 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
 #ifdef LIBRETRO
-			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
+			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f / config::ScreenStretching * 100.f;
+			float halfHeight = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
+			x /= config::ScreenStretching / 100.f;
 #else
 			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfHeight = halfWidth;
 #endif
 			D3D11_VIEWPORT vp{};
 			vp.TopLeftX = x - halfWidth;
-			vp.TopLeftY = y - halfWidth;
+			vp.TopLeftY = y - halfHeight;
 			vp.Width = halfWidth * 2;
-			vp.Height = halfWidth * 2;
+			vp.Height = halfHeight * 2;
 			vp.MinDepth = 0.f;
 			vp.MaxDepth = 1.f;
 			deviceContext->RSSetViewports(1, &vp);

@@ -155,10 +155,10 @@ class ElanRamWatcher : public Watcher<ElanRamWatcher>
 
 protected:
 	void protectMem(u32 addr, u32 size);
-	void unprotectMem(u32 addr, u32 size);
 	u32 getMemOffset(void *p);
 
 public:
+	void unprotectMem(u32 addr, u32 size);
 	void *getMemPage(u32 addr)
 	{
 		return &elan::RAM[addr];

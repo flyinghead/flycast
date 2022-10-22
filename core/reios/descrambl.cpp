@@ -7,25 +7,24 @@
 */
 
 #include "descrambl.h"
-#include "imgread/common.h"
 #include <algorithm>
 
 #define MAXCHUNK (2048*1024)
 
-static unsigned int seed;
+static u32 seed;
 
-static void my_srand(unsigned int n)
+static void my_srand(u32 n)
 {
 	seed = n & 0xffff;
 }
 
-static unsigned int my_rand()
+static u32 my_rand()
 {
 	seed = (seed * 2109 + 9273) & 0x7fff;
 	return (seed + 0xc000) & 0xffff;
 }
 
-static void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
+static void load_chunk(const u8* &src, u8 *ptr, u32 sz)
 {
 	verify(sz <= MAXCHUNK);
 
@@ -53,32 +52,23 @@ static void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 	}
 }
 
-static void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
+void descrambl_buffer(const u8 *src, u8 *dst, u32 size)
 {
-	unsigned long chunksz;
+	u32 chunksz;
 
-	my_srand(filesz);
+	my_srand(size);
 
 	/* Descramble 2 meg blocks for as long as possible, then
 	gradually reduce the window down to 32 bytes (1 slice) */
 	for (chunksz = MAXCHUNK; chunksz >= 32; chunksz >>= 1)
-		while (filesz >= chunksz)
+		while (size >= chunksz)
 		{
 			load_chunk(src, dst, chunksz);
-			filesz -= chunksz;
+			size -= chunksz;
 			dst += chunksz;
 		}
 
 	/* Load final incomplete slice */
-	if (filesz)
-		memcpy(dst, src, filesz);
-}
-
-void descrambl_file(u32 FAD, u32 file_size, u8* dst) {
-	u8* temp_file = new u8[file_size + 2048];
-	libGDR_ReadSector(temp_file, FAD, (file_size+2047) / 2048, 2048);
-
-	descrambl_buffer(temp_file, dst, file_size);
-
-	delete[] temp_file;
+	if (size)
+		memcpy(dst, src, size);
 }

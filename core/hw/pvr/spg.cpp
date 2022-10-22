@@ -36,30 +36,6 @@ static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
 static bool maple_int_pending;
 
-static void setFramebufferScaling()
-{
-	float scale_x = 1.f;
-	float scale_y = 1.f;
-
-	if (SPG_CONTROL.interlace)
-	{
-		//u32 interl_mode=VO_CONTROL.field_mode;
-		//if (interl_mode==2)//3 will be funny =P
-		//  scale_y=0.5f;//single interlace
-		//else
-			scale_y = 1.f;
-	}
-	else
-	{
-		if (FB_R_CTRL.vclk_div)
-			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
-		else
-			scale_y = 0.5f;//non interlaced modes have half resolution
-	}
-
-	rend_set_fb_scale(scale_x, scale_y);
-}
-
 void CalculateSync()
 {
 	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
@@ -72,8 +48,6 @@ void CalculateSync()
 	if (SPG_CONTROL.interlace)
 		Line_Cycles /= 2;
 
-	setFramebufferScaling();
-	
 	Frame_Cycles = pvr_numscanlines * Line_Cycles;
 	prv_cur_scanline = 0;
 	clc_pvr_scanline = 0;
@@ -377,6 +351,4 @@ void spg_Deserialize(Deserializer& deser)
 	}
 	if (deser.version() < Deserializer::V14)
 		CalculateSync();
-	else
-		setFramebufferScaling();
 }

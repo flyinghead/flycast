@@ -106,26 +106,27 @@ static const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxCullDistances = */ 8,
     /* .MaxCombinedClipAndCullDistances = */ 8,
     /* .MaxSamples = */ 4,
-	/* .maxMeshOutputVerticesNV = */ 256,
-	/* .maxMeshOutputPrimitivesNV = */ 512,
-	/* .maxMeshWorkGroupSizeX_NV = */ 32,
-	/* .maxMeshWorkGroupSizeY_NV = */ 1,
-	/* .maxMeshWorkGroupSizeZ_NV = */ 1,
-	/* .maxTaskWorkGroupSizeX_NV = */ 32,
-	/* .maxTaskWorkGroupSizeY_NV = */ 1,
-	/* .maxTaskWorkGroupSizeZ_NV = */ 1,
-	/* .maxMeshViewCountNV = */ 4,
+    /* .maxMeshOutputVerticesNV = */ 256,
+    /* .maxMeshOutputPrimitivesNV = */ 512,
+    /* .maxMeshWorkGroupSizeX_NV = */ 32,
+    /* .maxMeshWorkGroupSizeY_NV = */ 1,
+    /* .maxMeshWorkGroupSizeZ_NV = */ 1,
+    /* .maxTaskWorkGroupSizeX_NV = */ 32,
+    /* .maxTaskWorkGroupSizeY_NV = */ 1,
+    /* .maxTaskWorkGroupSizeZ_NV = */ 1,
+    /* .maxMeshViewCountNV = */ 4,
+    /* .maxDualSourceDrawBuffersEXT = */ 1,
 
     /* .limits = */ {
-        /* .nonInductiveForLoops = */ true,
-        /* .whileLoops = */ true,
-        /* .doWhileLoops = */ true,
-        /* .generalUniformIndexing = */ true,
-        /* .generalAttributeMatrixVectorIndexing = */ true,
-        /* .generalVaryingIndexing = */ true,
-        /* .generalSamplerIndexing = */ true,
-        /* .generalVariableIndexing = */ true,
-        /* .generalConstantMatrixVectorIndexing = */ true,
+        /* .nonInductiveForLoops = */ 1,
+        /* .whileLoops = */ 1,
+        /* .doWhileLoops = */ 1,
+        /* .generalUniformIndexing = */ 1,
+        /* .generalAttributeMatrixVectorIndexing = */ 1,
+        /* .generalVaryingIndexing = */ 1,
+        /* .generalSamplerIndexing = */ 1,
+        /* .generalVariableIndexing = */ 1,
+        /* .generalConstantMatrixVectorIndexing = */ 1,
 }};
 
 int ShaderCompiler::initCount;
@@ -212,5 +213,5 @@ vk::UniqueShaderModule ShaderCompiler::Compile(vk::ShaderStageFlagBits shaderSta
 	verify(ok);
 
 	return VulkanContext::Instance()->GetDevice().createShaderModuleUnique
-			(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV.size() * sizeof(unsigned int), shaderSPV.data()));
+			(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV));
 }

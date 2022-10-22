@@ -153,8 +153,6 @@ public:
 
 	void Resize(int w, int h) override
 	{
-		if ((u32)w == viewport.width && (u32)h == viewport.height)
-			return;
 		viewport.width = w;
 		viewport.height = h;
 	}
@@ -199,12 +197,11 @@ public:
 
 			osdPipeline.BindDescriptorSets(cmdBuffer);
 			const vk::Viewport viewport(0, 0, (float)settings.display.width, (float)settings.display.height, 0, 1.f);
-			cmdBuffer.setViewport(0, 1, &viewport);
+			cmdBuffer.setViewport(0, viewport);
 			const vk::Rect2D scissor({ 0, 0 }, { (u32)settings.display.width, (u32)settings.display.height });
-			cmdBuffer.setScissor(0, 1, &scissor);
+			cmdBuffer.setScissor(0, scissor);
 			osdBuffer->upload((u32)(osdVertices.size() * sizeof(OSDVertex)), osdVertices.data());
-			const vk::DeviceSize zero = 0;
-			cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
+			cmdBuffer.bindVertexBuffers(0, osdBuffer->buffer.get(), {0});
 			for (u32 i = 0; i < (u32)osdVertices.size(); i += 4)
 				cmdBuffer.draw(4, 1, i, 0);
 			if (clear_screen)

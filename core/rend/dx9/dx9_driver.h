@@ -20,6 +20,7 @@
 #include "rend/imgui_driver.h"
 #include "imgui_impl_dx9.h"
 #include "dxcontext.h"
+#include <unordered_map>
 
 class DX9Driver final : public ImGuiDriver
 {
@@ -52,6 +53,45 @@ public:
 		frameRendered = true;
 	}
 
+	ImTextureID getTexture(const std::string& name) override {
+		auto it = textures.find(name);
+		if (it != textures.end())
+			return (ImTextureID)it->second.get();
+		else
+			return ImTextureID{};
+	}
+
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
+	{
+		ComPtr<IDirect3DTexture9>& texture = textures[name];
+		texture.reset();
+		theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.get(), 0);
+
+		width *= 4;
+
+		D3DLOCKED_RECT rect;
+		texture->LockRect(0, &rect, nullptr, 0);
+		u8 *dst = (u8 *)rect.pBits;
+		const u8 *src = data;
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x += 4)
+			{
+				// BGRA <- RGBA
+				dst[x + 0] = src[x + 2];
+				dst[x + 1] = src[x + 1];
+				dst[x + 2] = src[x + 0];
+				dst[x + 3] = src[x + 3];
+			}
+			dst += rect.Pitch;
+			src += width;
+		}
+		texture->UnlockRect(0);
+
+	    return (ImTextureID)texture.get();
+	}
+
 private:
 	bool frameRendered = false;
+	std::unordered_map<std::string, ComPtr<IDirect3DTexture9>> textures;
 };

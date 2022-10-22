@@ -52,7 +52,7 @@ void VulkanOverlay::Term()
 	xhairTexture.reset();
 }
 
-std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
+std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, const u8 *data)
 {
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;
@@ -132,6 +132,8 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 		vmu_width *= 2.f;
 		float blendConstants[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		color = blendConstants;
+#else
+		vmu_width /= config::ScreenStretching / 100.f;
 #endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -186,7 +188,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			}
 #endif
 			vk::Viewport viewport(x, y, w, h);
-			commandBuffer.setViewport(0, 1, &viewport);
+			commandBuffer.setViewport(0, viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(w, h)));
 
 			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true, color);
@@ -207,8 +209,9 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			std::tie(x, y) = getCrosshairPosition(i);
 
 #ifdef LIBRETRO
-			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling / config::ScreenStretching * 100.f;
 			float h = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			x /= config::ScreenStretching / 100.f;
 #else
 			float w = XHAIR_WIDTH * scaling;
 			float h = XHAIR_HEIGHT * scaling;
@@ -216,7 +219,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			x -= w / 2;
 			y -= h / 2;
 			vk::Viewport viewport(x, y, w, h);
-			commandBuffer.setViewport(0, 1, &viewport);
+			commandBuffer.setViewport(0, viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, x), std::max(0.f, y)),
 					vk::Extent2D(w, h)));
 			u32 color = config::CrosshairColor[i];
