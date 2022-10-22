@@ -140,7 +140,7 @@ public:
 		ringBuffer.setCapacity(config::AudioBufferSize * 4);
 
 		// Start the thread
-		audioThread = std::thread(&audioThreadMain, this);
+		audioThread = std::thread(&DirectSoundBackend::audioThreadMain, this);
 
 		// Play the buffer !
 		if (FAILED(buffer->Play(0, 0, DSBPLAY_LOOPING)))
