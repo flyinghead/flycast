@@ -40,7 +40,7 @@ union DoubleReg
 	f32 sgl[2];
 };
 
-static INLINE f64 GetDR(u32 n)
+static inline f64 GetDR(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
@@ -54,7 +54,7 @@ static INLINE f64 GetDR(u32 n)
 	return t.dbl;
 }
 
-static INLINE f64 GetXD(u32 n)
+static inline f64 GetXD(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
@@ -68,7 +68,7 @@ static INLINE f64 GetXD(u32 n)
 	return t.dbl;
 }
 
-static INLINE void SetDR(u32 n,f64 val)
+static inline void SetDR(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
@@ -82,7 +82,7 @@ static INLINE void SetDR(u32 n,f64 val)
 	fr[(n<<1) | 0]=t.sgl[1];
 }
 
-static INLINE void SetXD(u32 n,f64 val)
+static inline void SetXD(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
@@ -104,7 +104,7 @@ struct SH4ThrownException {
 	u32 callVect;
 };
 
-static INLINE void RaiseFPUDisableException()
+static inline void RaiseFPUDisableException()
 {
 	if (config::FullMMU)
 	{
@@ -113,7 +113,7 @@ static INLINE void RaiseFPUDisableException()
 	}
 }
 
-static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
+static inline void AdjustDelaySlotException(SH4ThrownException& ex)
 {
 	ex.epc -= 2;
 	if (ex.expEvn == 0x800)	// FPU disable exception
@@ -123,7 +123,7 @@ static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
 }
 
 // The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games rely on this.
-static INLINE f32 fixNaN(f32 f)
+static inline f32 fixNaN(f32 f)
 {
 #ifdef STRICT_MODE
 	u32& hex = *(u32 *)&f;
@@ -140,7 +140,7 @@ static INLINE f32 fixNaN(f32 f)
 	return f;
 }
 
-static INLINE f64 fixNaN64(f64 f)
+static inline f64 fixNaN64(f64 f)
 {
 #ifdef STRICT_MODE
 	u64& hex = *(u64 *)&f;

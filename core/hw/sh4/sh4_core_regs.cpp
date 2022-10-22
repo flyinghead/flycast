@@ -10,12 +10,12 @@
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 
-static INLINE void ChangeGPR()
+static void ChangeGPR()
 {
 	std::swap((u32 (&)[8])r, r_bank);
 }
 
-static INLINE void ChangeFP()
+static void ChangeFP()
 {
 	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
 }

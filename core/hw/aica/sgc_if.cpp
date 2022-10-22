@@ -398,7 +398,7 @@ struct ChannelEx
 	struct
 	{
 		s32 val;
-		__forceinline s32 GetValue() { return val >> EG_STEP_BITS;}
+		s32 GetValue() { return val >> EG_STEP_BITS;}
 		void SetValue(u32 aegb) { val = aegb << EG_STEP_BITS; }
 
 		_EG_state state=EG_Attack;
@@ -413,7 +413,7 @@ struct ChannelEx
 	struct
 	{
 		u32 value;
-		__forceinline u32 GetValue() { return value >> EG_STEP_BITS;}
+		u32 GetValue() { return value >> EG_STEP_BITS;}
 		void SetValue(u32 fegb) { value = fegb << EG_STEP_BITS; }
 
 		_EG_state state = EG_Attack;
@@ -439,7 +439,7 @@ struct ChannelEx
 		int *plfo_scale;
 		void (* alfo_calc)(ChannelEx* ch);
 		void (* plfo_calc)(ChannelEx* ch);
-		__forceinline void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
+		void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
 		void Reset(ChannelEx* ch) { state=0; counter=start_value; alfo_calc(ch); plfo_calc(ch); }
 		void SetStartValue(u32 nv) { start_value = nv;}
 	} lfo;
@@ -458,17 +458,20 @@ struct ChannelEx
 		quiet = false;
 		disable();
 	}
+
 	void disable()
 	{
 		enabled=false;
 		SetAegState(EG_Release);
 		AEG.SetValue(0x3FF);
 	}
+
 	void enable()
 	{
 		enabled=true;
 	}
-	__forceinline SampleType InterpolateSample()
+
+	SampleType InterpolateSample()
 	{
 		SampleType rv;
 		u32 fp=step.fp;
@@ -477,7 +480,8 @@ struct ChannelEx
 
 		return rv;
 	}
-	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
+
+	bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
 	{
 		if (!enabled)
 		{
@@ -545,7 +549,7 @@ struct ChannelEx
 		}
 	}
 
-	__forceinline void Step(SampleType& mixl, SampleType& mixr)
+	void Step(SampleType& mixl, SampleType& mixr)
 	{
 		SampleType oLeft,oRight,oDsp;
 
@@ -559,7 +563,7 @@ struct ChannelEx
 		mixr+=oRight;
 	}
 
-	__forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
+	static void StepAll(SampleType& mixl, SampleType& mixr)
 	{
 		for (ChannelEx& channel : Chans)
 			channel.Step(mixl, mixr);
@@ -875,7 +879,7 @@ struct ChannelEx
 	} 
 };
 
-static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
 	s32 sign=1-2*(sample/8);
 
@@ -895,7 +899,7 @@ static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 }
 
 template<s32 PCMS,bool last>
-__forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
+void StepDecodeSample(ChannelEx* ch,u32 CA)
 {
 	if (!last && PCMS<2)
 		return ;

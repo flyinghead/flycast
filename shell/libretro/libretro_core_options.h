@@ -1529,7 +1529,7 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
  *   be as painless as possible for core devs)
  */
 
-static INLINE void libretro_set_core_options(retro_environment_t environ_cb,
+static inline void libretro_set_core_options(retro_environment_t environ_cb,
       bool *categories_supported)
 {
    unsigned version  = 0;

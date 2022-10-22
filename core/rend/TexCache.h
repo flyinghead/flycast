@@ -91,31 +91,33 @@ public:
 		pixels_per_line = 1 << level;
 	}
 
-	__forceinline pixel_type *data(u32 x = 0, u32 y = 0)
+	pixel_type *data(u32 x = 0, u32 y = 0)
 	{
 		return p_current_mipmap + pixels_per_line * y + x;
 	}
 
-	__forceinline void prel(u32 x, pixel_type value)
+	void prel(u32 x, pixel_type value)
 	{
 		p_current_pixel[x] = value;
 	}
 
-	__forceinline void prel(u32 x, u32 y, pixel_type value)
+	void prel(u32 x, u32 y, pixel_type value)
 	{
 		p_current_pixel[y * pixels_per_line + x] = value;
 	}
 
-	__forceinline void rmovex(u32 value)
+	void rmovex(u32 value)
 	{
 		p_current_pixel += value;
 	}
-	__forceinline void rmovey(u32 value)
+
+	void rmovey(u32 value)
 	{
 		p_current_line += pixels_per_line * value;
 		p_current_pixel = p_current_line;
 	}
-	__forceinline void amove(u32 x_m, u32 y_m)
+
+	void amove(u32 x_m, u32 y_m)
 	{
 		//p_current_pixel=p_buffer_start;
 		p_current_line = p_current_mipmap + pixels_per_line * y_m;

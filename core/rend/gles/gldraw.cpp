@@ -102,8 +102,7 @@ static void SetBaseClipping()
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline
-	void SetGPState(const PolyParam* gp,u32 cflip=0)
+void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{

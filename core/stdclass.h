@@ -85,7 +85,7 @@ public:
 		std::memset(data, 0, size);
 	}
 
-	INLINE u8& operator [](unsigned i) {
+	u8& operator [](unsigned i) {
 #ifdef MEM_BOUND_CHECK
         if (i >= size)
 		{

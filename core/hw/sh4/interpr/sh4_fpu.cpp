@@ -44,33 +44,8 @@ static void iNimp(const char *str);
 #define WriteMemBOU16(addr,offset,data)     WriteMemU16(addr+offset,data)
 #define WriteMemBOU8(addr,offset,data)      WriteMemU8(addr+offset,data)
 
-INLINE void Denorm32(float &value)
-{
-	if (fpscr.DN)
-	{
-		u32* v=(u32*)&value;
-		if (IS_DENORMAL(v) && (*v&0x7fFFFFFF)!=0)
-		{
-			*v&=0x80000000;
-			//printf("Denormal ..\n");
-		}
-		if ((*v<=0x007FFFFF) && *v>0)
-		{
-			*v=0;
-			INFO_LOG(INTERPRETER, "Fixed +denorm");
-		}
-		else if ((*v<=0x807FFFFF) && *v>0x80000000)
-		{
-			*v=0x80000000;
-			INFO_LOG(INTERPRETER, "Fixed -denorm");
-		}
-	}
-}
-
-
 #define CHECK_FPU_32(v) v = fixNaN(v)
 #define CHECK_FPU_64(v) v = fixNaN64(v)
-
 
 //fadd <FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_0000)

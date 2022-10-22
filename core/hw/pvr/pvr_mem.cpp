@@ -88,7 +88,7 @@ static void YUV_Block8x8(const u8* inuv, const u8* iny, u8* out)
 	}
 }
 
-static INLINE void YUV_Block384(const u8 *in, u8 *out)
+static void YUV_Block384(const u8 *in, u8 *out)
 {
 	const u8 *inuv = in;
 	const u8 *iny = in + 128;
@@ -100,7 +100,7 @@ static INLINE void YUV_Block384(const u8 *in, u8 *out)
 	YUV_Block8x8(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); //(8,8)
 }
 
-static INLINE void YUV_ConvertMacroBlock(const u8 *datap)
+static void YUV_ConvertMacroBlock(const u8 *datap)
 {
 	//do shit
 	TA_YUV_TEX_CNT++;

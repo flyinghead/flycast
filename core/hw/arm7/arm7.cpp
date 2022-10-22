@@ -305,7 +305,6 @@ void aicaarm::reset()
 	reg[15].I += 4;
 }
 
-NOINLINE
 void CPUFiq()
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;

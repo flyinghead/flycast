@@ -1157,7 +1157,7 @@ sh4op(i0000_nnnn_1011_0011)
 
 //pref @<REG_N>
 template<bool mmu_on>
-INLINE void DYNACALL do_sqw(u32 Dest)
+void DYNACALL do_sqw(u32 Dest)
 {
 	//TODO : Check for enabled store queues ?
 	u32 Address;

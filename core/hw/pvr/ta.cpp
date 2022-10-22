@@ -204,7 +204,7 @@ static const HollyInterruptID ListEndInterrupt[5]=
 };
 
 
-static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+static void DYNACALL ta_handle_cmd(u32 trans)
 {
 	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
 
@@ -511,8 +511,7 @@ void ta_vtx_SoftReset()
 	ta_cur_state = TAS_NS;
 }
 
-static INLINE
-void DYNACALL ta_thd_data32_i(const simd256_t *data)
+static void DYNACALL ta_thd_data32_i(const simd256_t *data)
 {
 	if (ta_ctx == NULL)
 	{
