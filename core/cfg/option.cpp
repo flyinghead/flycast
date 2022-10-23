@@ -104,6 +104,7 @@ Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
+Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 
 // Misc
 

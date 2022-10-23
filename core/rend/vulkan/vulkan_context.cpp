@@ -392,17 +392,17 @@ bool VulkanContext::InitDevice()
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 			}
 			else if(!strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 			}
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			}
 #endif

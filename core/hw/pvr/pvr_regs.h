@@ -122,14 +122,14 @@ struct RGBAColorTemplate
 	float blue() const { return ((T *)this)->_blue / 255.f; }
 	float alpha() const { return ((T *)this)->_alpha / 255.f; }
 
-	void getRGBColor(float rgb[3])
+	void getRGBColor(float rgb[3]) const
 	{
 		rgb[0] = red();
 		rgb[1] = green();
 		rgb[2] = blue();
 	}
 
-	void getRGBAColor(float rgba[4])
+	void getRGBAColor(float rgba[4]) const
 	{
 		getRGBColor(rgba);
 		rgba[3] = alpha();

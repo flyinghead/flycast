@@ -6,8 +6,6 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 
-#include <mutex>
-
 class BaseTextureCacheData;
 struct N2LightModel;
 
@@ -228,13 +226,14 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isRenderFramebuffer;
 	
 	FB_X_CLIP_type fb_X_CLIP;
 	FB_Y_CLIP_type fb_Y_CLIP;
 	u32 fb_W_LINESTRIDE;
 	u32 fb_W_SOF1;
 	FB_W_CTRL_type fb_W_CTRL;
+	u32 framebufferWidth;
+	u32 framebufferHeight;
 	
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;
@@ -272,13 +271,13 @@ struct rend_context
 		Overrun = false;
 		fZ_min = 1000000.0f;
 		fZ_max = 1.0f;
-		isRenderFramebuffer = false;
 		matrices.Clear();
 		lightModels.Clear();
 	}
 
 	void newRenderPass();
 
+	// For RTT TODO merge with framebufferWidth/Height
 	u32 getFramebufferWidth() const {
 		u32 w = fb_X_CLIP.max + 1;
 		if (fb_W_LINESTRIDE != 0)
@@ -297,8 +296,6 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
-
-	std::mutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
@@ -352,10 +349,8 @@ struct TA_context
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		tad.Clear();
 		nextContext = nullptr;
-		rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-		rend_inuse.unlock();
 	}
 
 	~TA_context()
@@ -398,7 +393,6 @@ void FinishRender(TA_context* ctx);
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool rend_framePending();
 void SerializeTAContext(Serializer& ser);
 void DeserializeTAContext(Deserializer& deser);
 

@@ -466,6 +466,7 @@ extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force l
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
+extern Option<bool> EmulateFramebuffer;
 
 // Misc
 

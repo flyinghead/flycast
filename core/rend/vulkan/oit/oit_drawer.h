@@ -70,6 +70,8 @@ protected:
 		depthAttachments[1].reset();
 		mainBuffers.clear();
 		descriptorSets.term();
+		maxWidth = 0;
+		maxHeight = 0;
 	}
 
 	int GetCurrentImage() const { return imageIndex; }
@@ -104,7 +106,6 @@ protected:
 	};
 
 	void MakeBuffers(int width, int height);
-	virtual vk::Format GetColorFormat() const = 0;
 	virtual vk::Framebuffer GetFinalFramebuffer() const = 0;
 
 	vk::Rect2D viewport;
@@ -177,12 +178,20 @@ public:
 	}
 
 	vk::CommandBuffer NewFrame() override;
+
 	void EndFrame() override
 	{
 		currentCommandBuffer.endRenderPass();
-		currentCommandBuffer.end();
+		if (config::EmulateFramebuffer)
+		{
+			scaleAndWriteFramebuffer(currentCommandBuffer, finalColorAttachments[GetCurrentImage()].get());
+		}
+		else
+		{
+			currentCommandBuffer.end();
+			commandPool->EndFrame();
+		}
 		currentCommandBuffer = nullptr;
-		commandPool->EndFrame();
 		OITDrawer::EndFrame();
 		frameRendered = true;
 	}
@@ -194,7 +203,6 @@ public:
 		frameRendered = false;
 		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImage(),
 				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
-		NewImage();
 
 		return true;
 	}
@@ -203,7 +211,6 @@ public:
 
 protected:
 	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
 	void MakeFramebuffers(const vk::Extent2D& viewport);
@@ -241,7 +248,6 @@ public:
 protected:
 	vk::CommandBuffer NewFrame() override;
 	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
 	u32 textureAddr = 0;

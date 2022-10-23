@@ -124,6 +124,20 @@ public:
 		return *clearShader;
 	}
 
+	void term()
+	{
+		vertexShaders.clear();
+		fragmentShaders.clear();
+		modVolVertexShaders.clear();
+		modVolShaders[0].reset();
+		modVolShaders[1].reset();
+		trModVolShaders.clear();
+
+		finalVertexShader.reset();
+		finalFragmentShader.reset();
+		clearShader.reset();
+	}
+
 private:
 	template<typename T>
 	vk::ShaderModule getShader(std::map<u32, vk::UniqueShaderModule>& map, T params)

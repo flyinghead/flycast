@@ -36,6 +36,7 @@ protected:
 	bool BaseInit(vk::RenderPass renderPass, int subpass = 0)
 	{
 		texCommandPool.Init();
+		fbCommandPool.Init();
 
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 		if (!vjoyTexture)
@@ -61,9 +62,11 @@ protected:
 									vk::BufferUsageFlagBits::eVertexBuffer));
 		}
 #endif
-#ifdef LIBRETRO
 		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
 		quadPipeline->Init(&shaderManager, renderPass, subpass);
+		framebufferDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		framebufferDrawer->Init(quadPipeline.get());
+#ifdef LIBRETRO
 		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 		overlay->Init(quadPipeline.get());
 #endif
@@ -78,15 +81,19 @@ public:
 #ifdef LIBRETRO
 		overlay->Term();
 		overlay.reset();
-		quadPipeline.reset();
 #endif
+		framebufferDrawer.reset();
+		quadPipeline.reset();
 		osdBuffer.reset();
+		osdPipeline.Term();
 		vjoyTexture.reset();
 		textureCache.Clear();
 		fogTexture = nullptr;
 		paletteTexture = nullptr;
 		texCommandPool.Term();
+		fbCommandPool.Term();
 		framebufferTextures.clear();
+		shaderManager.term();
 	}
 
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
@@ -126,11 +133,7 @@ public:
 		texCommandBuffer = texCommandPool.Allocate();
 		texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-		bool result;
-		if (ctx->rend.isRenderFramebuffer)
-			result = RenderFramebuffer(ctx);
-		else
-			result = ta_parse(ctx);
+		bool result = ta_parse(ctx);
 
 		if (result)
 		{
@@ -151,15 +154,10 @@ public:
 		return result;
 	}
 
-	void Resize(int w, int h) override
-	{
-		viewport.width = w;
-		viewport.height = h;
-	}
-
 	void ReInitOSD()
 	{
 		texCommandPool.Init();
+		fbCommandPool.Init();
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
@@ -212,21 +210,8 @@ public:
 #endif
 	}
 
-protected:
-	BaseVulkanRenderer() : viewport(640, 480) {}
-
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-
-	bool RenderFramebuffer(TA_context* ctx)
+	void RenderFramebuffer(const FramebufferInfo& info) override
 	{
-		if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
-			return false;
-
-		PixelBuffer<u32> pb;
-		int width;
-		int height;
-		ReadFramebuffer(pb, width, height);
-
 		if (framebufferTextures.size() != GetContext()->GetSwapChainSize())
 			framebufferTextures.resize(GetContext()->GetSwapChainSize());
 		std::unique_ptr<Texture>& curTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()];
@@ -235,72 +220,42 @@ protected:
 			curTexture = std::unique_ptr<Texture>(new Texture());
 			curTexture->tex_type = TextureType::_8888;
 		}
-		curTexture->SetCommandBuffer(texCommandBuffer);
-		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
+
+		fbCommandPool.BeginFrame();
+		vk::CommandBuffer commandBuffer = fbCommandPool.Allocate();
+		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+		curTexture->SetCommandBuffer(commandBuffer);
+
+		if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
+		{
+			// Video output disabled
+			u8 rgba[] { (u8)info.vo_border_col._red, (u8)info.vo_border_col._green, (u8)info.vo_border_col._blue, 255 };
+			curTexture->UploadToGPU(1, 1, rgba, false);
+		}
+		else
+		{
+			PixelBuffer<u32> pb;
+			int width;
+			int height;
+			ReadFramebuffer(info, pb, width, height);
+
+			curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
+		}
+
 		curTexture->SetCommandBuffer(nullptr);
+		commandBuffer.end();
+		fbCommandPool.EndFrame();
+	}
 
-		// Use background poly vtx and param
-		Vertex *vtx = ctx->rend.verts.head();
-		vtx[0].x = 0.f;
-		vtx[0].y = 0.f;
-		vtx[0].z = 0.1f;
-		vtx[0].u = 0.f;
-		vtx[0].v = 0.f;
+protected:
+	BaseVulkanRenderer() : viewport(640, 480) {}
 
-		vtx[1] = vtx[0];
-		vtx[1].x = 640.f;
-		vtx[1].u = 1.f;
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
-		vtx[2] = vtx[0];
-		vtx[2].y = 480.f;
-		vtx[2].v = 1.f;
-
-		vtx[3] = vtx[0];
-		vtx[3].x = 640.f;
-		vtx[3].y = 480.f;
-		vtx[3].u = 1.f;
-		vtx[3].v = 1.f;
-
-		u32 *idx = ctx->rend.idx.Append(4);
-		idx[0] = 0;
-		idx[1] = 1;
-		idx[2] = 2;
-		idx[3] = 3;
-
-		PolyParam *pp = ctx->rend.global_param_op.head();
-		pp->first = 0;
-		pp->count = 4;
-
-		pp->isp.full = 0;
-		pp->isp.DepthMode = 7;
-
-		pp->pcw.full = 0;
-		pp->pcw.Gouraud = 1;
-		pp->pcw.Texture = 1;
-
-		pp->tcw.full = 0;
-		pp->tcw.TexAddr = 0x1fffff;
-		pp->tcw1.full = (u32)-1;
-
-		pp->tsp.full = 0;
-		pp->tsp.FilterMode = 1;
-		pp->tsp.FogCtrl = 2;
-		pp->tsp.SrcInstr = 1;
-		pp->tsp1.full = (u32)-1;
-
-		pp->texture = curTexture.get();
-		pp->texture1 = nullptr;
-		pp->tileclip = 0;
-
-		RenderPass *pass = ctx->rend.render_passes.Append(1);
-		pass->autosort = false;
-		pass->mvo_count = 0;
-		pass->mvo_tr_count = 0;
-		pass->op_count = 1;
-		pass->pt_count = 0;
-		pass->tr_count = 0;
-
-		return true;
+	virtual void resize(int w, int h)
+	{
+		viewport.width = w;
+		viewport.height = h;
 	}
 
 	void CheckFogTexture()
@@ -342,6 +297,17 @@ protected:
 		paletteTexture->SetCommandBuffer(nullptr);
 	}
 
+	bool presentFramebuffer()
+	{
+		if (GetContext()->GetCurrentImageIndex() >= (int)framebufferTextures.size())
+			return false;
+		Texture *fbTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()].get();
+		if (fbTexture == nullptr)
+			return false;
+		GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize());
+		return true;
+	}
+
 	ShaderManager shaderManager;
 	std::unique_ptr<Texture> fogTexture;
 	std::unique_ptr<Texture> paletteTexture;
@@ -353,8 +319,10 @@ protected:
 	TextureCache textureCache;
 	vk::Extent2D viewport;
 	vk::CommandBuffer texCommandBuffer;
+	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadDrawer> framebufferDrawer;
+	CommandPool fbCommandPool;
 #ifdef LIBRETRO
 	std::unique_ptr<VulkanOverlay> overlay;
-	std::unique_ptr<QuadPipeline> quadPipeline;
 #endif
 };

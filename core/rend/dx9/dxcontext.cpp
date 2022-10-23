@@ -120,7 +120,6 @@ void DXContext::Present()
 			{
 				renderer = new D3DRenderer();
 				renderer->Init();
-				rend_resize_renderer();
 			}
 		}
 	}

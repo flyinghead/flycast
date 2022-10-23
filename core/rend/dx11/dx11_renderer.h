@@ -35,10 +35,10 @@
 struct DX11Renderer : public Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override;
 	void Term() override;
 	bool Process(TA_context* ctx) override;
 	bool Render() override;
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
 	bool Present() override
 	{
@@ -83,6 +83,7 @@ protected:
 		float trilinearAlpha;
 	};
 
+	virtual void resize(int w, int h);
 	bool ensureBufferSize(ComPtr<ID3D11Buffer>& buffer, D3D11_BIND_FLAG bind, u32& currentSize, u32 minSize);
 	void createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT, UINT bindFlags = 0);
 	void createTexAndRenderTarget(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11RenderTargetView>& renderTarget, int width, int height);
@@ -91,11 +92,11 @@ protected:
 	void setupPixelShaderConstants();
 	void updateFogTexture();
 	void updatePaletteTexture();
-	void renderDCFramebuffer();
 	void readRttRenderTarget(u32 texAddress);
 	void renderFramebuffer();
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
+	void writeFramebufferToVRAM();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -153,6 +154,9 @@ private:
 	ComPtr<ID3D11DepthStencilView> rttDepthTexView;
 	ComPtr<ID3D11Texture2D> whiteTexture;
 	ComPtr<ID3D11ShaderResourceView> whiteTextureView;
+	ComPtr<ID3D11Texture2D> fbScaledTexture;
+	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
+	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 

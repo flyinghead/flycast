@@ -13,6 +13,7 @@
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
+#include "rend/gles/postprocess.h"
 
 #include <cmath>
 
@@ -356,6 +357,8 @@ void main()
 }
 )";
 
+static void gl_free_osd_resources();
+
 GLCache glcache;
 gl_ctx gl;
 
@@ -428,18 +431,15 @@ void termGLCommon()
 	glDeleteBuffers(1, &gl.rtt.pbo);
 	gl.rtt.pbo = 0;
 	gl.rtt.pboSize = 0;
-	glDeleteFramebuffers(1, &gl.rtt.fbo);
-	gl.rtt.fbo = 0;
-	glcache.DeleteTextures(1, &gl.rtt.tex);
-	gl.rtt.tex = 0;
-	glDeleteRenderbuffers(1, &gl.rtt.depthb);
-	gl.rtt.depthb = 0;
+	gl.rtt.framebuffer.reset();
 	gl.rtt.texAddress = ~0;
 
 	gl_free_osd_resources();
-	free_output_framebuffer();
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
+	gl.ofbo.framebuffer.reset();
+	glcache.DeleteTextures(1, &gl.dcfb.tex);
+	gl.dcfb.tex = 0;
+	gl.ofbo2.framebuffer.reset();
+	gl.fbscaling.framebuffer.reset();
 #ifdef LIBRETRO
 	termVmuLightgun();
 #endif
@@ -799,6 +799,7 @@ bool CompilePipelineShader(PipelineShader* s)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
+#ifdef __ANDROID__
 static void SetupOSDVBO()
 {
 #ifndef GLES2
@@ -828,7 +829,7 @@ static void SetupOSDVBO()
 	bindVertexArray(0);
 }
 
-void gl_load_osd_resources()
+static void gl_load_osd_resources()
 {
 	OpenGlSource vertexSource;
 	vertexSource.addSource(VertexCompatShader)
@@ -841,7 +842,6 @@ void gl_load_osd_resources()
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
-#ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
 	{
 		int width, height;
@@ -854,11 +854,11 @@ void gl_load_osd_resources()
 
 		delete[] image_data;
 	}
-#endif
 	SetupOSDVBO();
 }
+#endif
 
-void gl_free_osd_resources()
+static void gl_free_osd_resources()
 {
 	if (gl.OSD_SHADER.program != 0)
 	{
@@ -1001,7 +1001,7 @@ bool gles_init()
 }
 
 
-void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
+static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
 {
 	glActiveTexture(texture_slot);
 	if (fogTextureId == 0)
@@ -1026,7 +1026,7 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void UpdatePaletteTexture(GLenum texture_slot)
+static void updatePaletteTexture(GLenum texture_slot)
 {
 	glActiveTexture(texture_slot);
 	if (paletteTextureId == 0)
@@ -1139,25 +1139,17 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		TexCache.Clear();
 	TexCache.Cleanup();
 
-	if (ctx->rend.isRenderFramebuffer)
+	if (fog_needs_update && config::Fog)
 	{
-		RenderFramebuffer();
-		return true;
+		fog_needs_update = false;
+		updateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
 	}
-	else
+	if (palette_updated)
 	{
-		if (fog_needs_update && config::Fog)
-		{
-			fog_needs_update = false;
-			UpdateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
-		}
-		if (palette_updated)
-		{
-			UpdatePaletteTexture(getPaletteTextureSlot());
-			palette_updated = false;
-		}
-		return ta_parse(ctx);
+		updatePaletteTexture(getPaletteTextureSlot());
+		palette_updated = false;
 	}
+	return ta_parse(ctx);
 }
 
 static void upload_vertex_indices()
@@ -1199,7 +1191,7 @@ bool RenderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-	if (!is_rtt)
+	if (!is_rtt && !config::EmulateFramebuffer)
 		gcflip = 0;
 	else
 		gcflip = 1;
@@ -1245,12 +1237,6 @@ bool RenderFrame(int width, int height)
 	}
 
 	//setup render target first
-#ifdef LIBRETRO
-	gl.ofbo.origFbo = glsm_get_current_framebuffer();
-#else
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
-#endif
 	if (is_rtt)
 	{
 		if (BindRTT() == 0)
@@ -1259,12 +1245,17 @@ bool RenderFrame(int width, int height)
 	else
 	{
 #ifdef LIBRETRO
-		gl.ofbo.width = width;
-		gl.ofbo.height = height;
-		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+		if (config::PowerVR2Filter)
 			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
+		else if (config::EmulateFramebuffer)
+		{
+			if (init_output_framebuffer(width, height) == 0)
+				return false;
+		}
 		else
+		{
 			glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
+		}
 		glViewport(0, 0, width, height);
 #else
 		if (init_output_framebuffer(width, height) == 0)
@@ -1272,7 +1263,8 @@ bool RenderFrame(int width, int height)
 #endif
 	}
 
-	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
+	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped()
+			&& !config::Rotate90 && !config::EmulateFramebuffer;
 
 	//Color is cleared by the background plane
 
@@ -1291,7 +1283,7 @@ bool RenderFrame(int width, int height)
 		// Video output disabled
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	else if (!pvrrc.isRenderFramebuffer)
+	else
 	{
 		//move vertex to gpu
 		//Main VBO
@@ -1373,20 +1365,24 @@ bool RenderFrame(int width, int height)
 		DrawStrips();
 #ifdef LIBRETRO
 		if (config::PowerVR2Filter && !is_rtt)
-			postProcessor.render(glsm_get_current_framebuffer());
+		{
+			if (config::EmulateFramebuffer)
+				postProcessor.render(init_output_framebuffer(width, height));
+			else
+				postProcessor.render(glsm_get_current_framebuffer());
+		}
 #endif
-	}
-	else
-	{
-		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (config::EmulateFramebuffer)
+		writeFramebufferToVRAM();
 #ifndef LIBRETRO
-	else
+	else {
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
 		render_output_framebuffer();
+	}
 #endif
 	bindVertexArray(0);
 
@@ -1406,12 +1402,20 @@ void OpenGLRenderer::Term()
 
 bool OpenGLRenderer::Render()
 {
-	RenderFrame(width, height);
-	if (pvrrc.isRTT)
+	saveCurrentFramebuffer();
+	RenderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+	if (pvrrc.isRTT) {
+		restoreCurrentFramebuffer();
 		return false;
+	}
 
-	DrawOSD(false);
-	frameRendered = true;
+	if (!config::EmulateFramebuffer)
+	{
+		DrawOSD(false);
+		frameRendered = true;
+		gl.ofbo2.ready = false;
+	}
+	restoreCurrentFramebuffer();
 
 	return true;
 }

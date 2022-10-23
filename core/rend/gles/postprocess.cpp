@@ -217,32 +217,9 @@ private:
 
 std::array<PostProcessShader, 8> PostProcessShader::shaders;
 
-void PostProcessor::init()
+void PostProcessor::init(int width, int height)
 {
-	glGenFramebuffers(1, &framebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-	texture = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, texture);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-
-	glGenRenderbuffers(1, &depthBuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
-
-#ifdef GLES2
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-#else
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-#endif
-	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
-	glcache.BindTexture(GL_TEXTURE_2D, 0);
+	framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(width, height));
 
 	float vertices[] = {
 			-1,  1, 1,
@@ -271,12 +248,7 @@ void PostProcessor::init()
 
 void PostProcessor::term()
 {
-	glcache.DeleteTextures(1, &texture);
-	texture = 0;
-	glDeleteFramebuffers(1, &framebuffer);
-	framebuffer = 0;
-	glDeleteRenderbuffers(1, &depthBuffer);
-	depthBuffer = 0;
+	framebuffer.reset();
 	glDeleteBuffers(1, &vertexBuffer);
 	vertexBuffer = 0;
 	deleteVertexArray(vertexArray);
@@ -288,15 +260,14 @@ void PostProcessor::term()
 
 GLuint PostProcessor::getFramebuffer(int width, int height)
 {
-	if (width != this->width || height != this->height)
+	if (framebuffer != nullptr
+			&& (width != framebuffer->getWidth() || height != framebuffer->getHeight()))
 		term();
 
-	if (framebuffer == 0) {
-		this->width = width;
-		this->height = height;
-		init();
-	}
-	return framebuffer;
+	if (framebuffer == nullptr)
+		init(width, height);
+
+	return framebuffer->getFramebuffer();
 }
 
 void PostProcessor::render(GLuint output_fbo)
@@ -322,7 +293,7 @@ void PostProcessor::render(GLuint output_fbo)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, texture);
+	glcache.BindTexture(GL_TEXTURE_2D, framebuffer->getTexture());
 
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);

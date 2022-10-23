@@ -64,14 +64,20 @@ public:
 			return allocInfo.pMappedData;
 		void *p;
 		vmaMapMemory(allocator, allocation, &p);
+		VkMemoryPropertyFlags flags;
+		vmaGetMemoryTypeProperties(allocator, allocInfo.memoryType, &flags);
+		if ((flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) && (flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+			vmaInvalidateAllocation(allocator, allocation, allocInfo.offset, allocInfo.size);
 		return p;
 	}
 	void UnmapMemory() const
 	{
 		if (allocInfo.pMappedData != nullptr)
 			return;
-		// Only needed (and useful) for non-host coherent memory
-		vmaFlushAllocation(allocator, allocation, allocInfo.offset, allocInfo.size);
+		VkMemoryPropertyFlags flags;
+		vmaGetMemoryTypeProperties(allocator, allocInfo.memoryType, &flags);
+		if ((flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) && (flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+			vmaFlushAllocation(allocator, allocation, allocInfo.offset, allocInfo.size);
 		vmaUnmapMemory(allocator, allocation);
 	}
 

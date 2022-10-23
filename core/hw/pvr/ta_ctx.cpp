@@ -5,7 +5,6 @@
 #include "serialize.h"
 
 extern u32 fskip;
-extern u32 FrameCount;
 static int RenderCount;
 
 TA_context* ta_ctx;
@@ -40,8 +39,8 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-TA_context* rqueue;
-cResetEvent frame_finished;
+static TA_context* rqueue;
+static cResetEvent frame_finished;
 
 bool QueueRender(TA_context* ctx)
 {
@@ -84,10 +83,6 @@ TA_context* DequeueRender()
 		FrameCount++;
 
 	return rqueue;
-}
-
-bool rend_framePending() {
-	return rqueue != nullptr;
 }
 
 void FinishRender(TA_context* ctx)

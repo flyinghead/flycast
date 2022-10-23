@@ -100,7 +100,6 @@ public:
 struct D3DRenderer : public Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override;
 	void Term() override;
 	bool Process(TA_context* ctx) override;
 	bool Render() override;
@@ -117,10 +116,12 @@ struct D3DRenderer : public Renderer
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void preReset();
 	void postReset();
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
+	void resize(int w, int h);
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
 	void drawList(const List<PolyParam>& gply, int first, int count);
@@ -130,9 +131,7 @@ private:
 	bool ensureIndexBufferSize(ComPtr<IDirect3DIndexBuffer9>& buffer, u32& currentSize, u32 minSize);
 	void updatePaletteTexture();
 	void updateFogTexture();
-	void renderFramebuffer();
-	void readDCFramebuffer();
-	void renderDCFramebuffer();
+	void displayFramebuffer();
 	void sortTriangles(int first, int count);
 	void drawSorted(bool multipass);
 	void setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -140,8 +139,8 @@ private:
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
 	void setBaseScissor();
 	void prepareRttRenderTarget(u32 texAddress);
-
 	void readRttRenderTarget(u32 texAddress);
+	void writeFramebufferToVRAM();
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;
@@ -166,6 +165,8 @@ private:
 	ComPtr<IDirect3DTexture9> rttTexture;
 	ComPtr<IDirect3DSurface9> rttSurface;
 	ComPtr<IDirect3DSurface9> depthSurface;
+	ComPtr<IDirect3DTexture9> fbScaledTexture;
+	ComPtr<IDirect3DSurface9> fbScaledSurface;
 
 	u32 width = 0;
 	u32 height = 0;

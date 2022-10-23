@@ -812,14 +812,14 @@ void BaseTextureCacheData::SetDirectXColorOrder(bool enabled) {
 }
 
 template<typename Packer>
-void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
+void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height)
 {
-	width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
-	height = FB_R_SIZE.fb_y_size + 1;
-	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
+	width = (info.fb_r_size.fb_x_size + 1) * 2;     // in 16-bit words
+	height = info.fb_r_size.fb_y_size + 1;
+	int modulus = (info.fb_r_size.fb_modulus - 1) * 2;
 
 	int bpp;
-	switch (FB_R_CTRL.fb_depth)
+	switch (info.fb_r_ctrl.fb_depth)
 	{
 		case fbde_0555:
 		case fbde_565:
@@ -841,10 +841,10 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 
-	u32 addr = FB_R_SOF1;
-	if (SPG_CONTROL.interlace)
+	u32 addr = info.fb_r_sof1;
+	if (info.spg_control.interlace)
 	{
-		if (width == modulus && FB_R_SOF2 == FB_R_SOF1 + width * bpp)
+		if (width == modulus && info.fb_r_sof2 == info.fb_r_sof1 + width * bpp)
 		{
 			// Typical case alternating even and odd lines -> take the whole buffer at once
 			modulus = 0;
@@ -852,14 +852,15 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 		}
 		else
 		{
-			addr = SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+			addr = info.spg_status.fieldnum ? info.fb_r_sof2 : info.fb_r_sof1;
 		}
 	}
 
 	pb.init(width, height);
 	u32 *dst = (u32 *)pb.data();
+	const u32 fb_concat = info.fb_r_ctrl.fb_concat;
 
-	switch (FB_R_CTRL.fb_depth)
+	switch (info.fb_r_ctrl.fb_depth)
 	{
 		case fbde_0555:    // 555 RGB
 			for (int y = 0; y < height; y++)
@@ -868,9 +869,9 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				{
 					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = Packer::pack(
-							(((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
-							(((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
-							(((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							(((src >> 10) & 0x1F) << 3) | fb_concat,
+							(((src >> 5) & 0x1F) << 3) | fb_concat,
+							(((src >> 0) & 0x1F) << 3) | fb_concat,
 							0xff);
 					addr += bpp;
 				}
@@ -885,9 +886,9 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				{
 					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = Packer::pack(
-							(((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
-							(((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3),
-							(((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							(((src >> 11) & 0x1F) << 3) | fb_concat,
+							(((src >> 5) & 0x3F) << 2) | (fb_concat & 3),
+							(((src >> 0) & 0x1F) << 3) | fb_concat,
 							0xFF);
 					addr += bpp;
 				}
@@ -933,11 +934,11 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 }
-template void ReadFramebuffer<RGBAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
-template void ReadFramebuffer<BGRAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
+template void ReadFramebuffer<RGBAPacker>(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
+template void ReadFramebuffer<BGRAPacker>(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
 
 template<int Red, int Green, int Blue, int Alpha>
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
+void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
 {
 	u32 padding = linestride;
 	if (padding / 2 > width)
@@ -948,7 +949,7 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_typ
 	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
 	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
 
-	u8 *p = data;
+	const u8 *p = data;
 
 	for (u32 l = 0; l < height; l++) {
 		switch(fb_w_ctrl.fb_packmode)
@@ -981,8 +982,139 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_typ
 		dst += padding;
 	}
 }
-template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
-template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+
+template<int bits>
+static inline u8 roundColor(u8 in)
+{
+	u8 out = in >> (8 - bits);
+	if (out != 0xffu >> (8 - bits))
+		out += (in >> (8 - bits - 1)) & 1;
+	return out;
+}
+
+template<int Red, int Green, int Blue, int Alpha>
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+{
+	int bpp;
+	switch (fb_w_ctrl.fb_packmode)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			bpp = 2;
+			break;
+		case 4:
+			bpp = 3;
+			break;
+		case 5:
+		case 6:
+			bpp = 4;
+			break;
+		default:
+			die("Invalid framebuffer format");
+			bpp = 4;
+			break;
+	}
+
+	u32 padding = linestride;
+	if (padding > width * bpp)
+		padding = padding - width * bpp;
+	else
+		padding = 0;
+
+	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
+	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
+
+	const u8 *p = data + 4 * yclip.min * width;
+	dstAddr += bpp * yclip.min * (width + padding / bpp);
+
+	for (u32 l = yclip.min; l < height && l <= yclip.max; l++)
+	{
+		p += 4 * xclip.min;
+		dstAddr += bpp * xclip.min;
+
+		switch(fb_w_ctrl.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
+						| (roundColor<5>(p[Green]) << 5)
+						| roundColor<5>(p[Blue])
+						| kval_bit));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		case 1: // 565 RGB 16 bit
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 11)
+						| (roundColor<6>(p[Green]) << 5)
+						| roundColor<5>(p[Blue])));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		case 2: // 4444 ARGB 16 bit
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u16)((roundColor<4>(p[Red]) << 8)
+						| (roundColor<4>(p[Green]) << 4)
+						| roundColor<4>(p[Blue])
+						| (roundColor<4>(p[Alpha]) << 12)));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		case 3: // 1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
+						| (roundColor<5>(p[Green]) << 5)
+						| roundColor<5>(p[Blue])
+						| (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0)));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		case 4: // 888 RGB 24 bit packed
+			for (u32 c = xclip.min; c < width - 3u && c <= xclip.max - 3u; c += 4) {
+				pvr_write32p(dstAddr, (u32)((p[Blue + 4] << 24) | (p[Red] << 16) | (p[Green] << 8) | p[Blue]));
+				p += 4;
+				dstAddr += 4;
+				pvr_write32p(dstAddr, (u32)((p[Green + 4] << 24) | (p[Blue + 4] << 16) | (p[Red] << 8) | p[Green]));
+				p += 4;
+				dstAddr += 4;
+				pvr_write32p(dstAddr, (u32)((p[Red + 4] << 24) | (p[Green + 4] << 16) | (p[Blue + 4] << 8) | p[Red]));
+				p += 8;
+				dstAddr += 4;
+			}
+			break;
+		case 5: // 0888 KRGB 32 bit (K is the value of fk_kval.)
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u32)((p[Red] << 16) | (p[Green] << 8) | p[Blue] | (fb_w_ctrl.fb_kval << 24)));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		case 6: // 8888 ARGB 32 bit
+			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
+				pvr_write32p(dstAddr, (u32)((p[Red] << 16) | (p[Green] << 8) | p[Blue] | (p[Alpha] << 24)));
+				p += 4;
+				dstAddr += bpp;
+			}
+			break;
+		default:
+			break;
+		}
+		dstAddr += padding + (width - xclip.max - 1) * bpp;
+		p += (width - xclip.max - 1) * 4;
+	}
+}
+template void WriteFramebuffer<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl,
+		u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+template void WriteFramebuffer<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl,
+		u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
 
 void BaseTextureCacheData::invalidate()
 {

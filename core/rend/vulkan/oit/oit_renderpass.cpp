@@ -26,7 +26,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     		// Swap chain image
     		GetAttachment0Description(initial, last),
 			// OP+PT color attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetColorFormat(), vk::SampleCountFlagBits::e1,
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,

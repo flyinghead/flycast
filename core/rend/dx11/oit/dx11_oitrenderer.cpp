@@ -131,8 +131,8 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 	}
 
-	void Resize(int w, int h) override {
-		DX11Renderer::Resize(w, h);
+	void resize(int w, int h) override {
+		DX11Renderer::resize(w, h);
 		checkMaxSize(w, h);
 	}
 
@@ -634,6 +634,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
+		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		if (pixelBufferSize != config::PixelBufferSize)
 		{
 			buffers.init(device, deviceContext);
@@ -651,26 +652,23 @@ struct DX11OITRenderer : public DX11Renderer
 
 		deviceContext->IASetInputLayout(mainInputLayout);
 
-		if (!pvrrc.isRenderFramebuffer)
-		{
-			n2Helper.resetCache();
-			uploadGeometryBuffers();
+		n2Helper.resetCache();
+		uploadGeometryBuffers();
 
-			updateFogTexture();
-			updatePaletteTexture();
+		updateFogTexture();
+		updatePaletteTexture();
 
-			setupPixelShaderConstants();
+		setupPixelShaderConstants();
 
-			drawStrips();
-		}
-		else
-		{
-			renderDCFramebuffer();
-		}
+		drawStrips();
 
 		if (is_rtt)
 		{
 			readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
+		}
+		else if (config::EmulateFramebuffer)
+		{
+			writeFramebufferToVRAM();
 		}
 		else
 		{

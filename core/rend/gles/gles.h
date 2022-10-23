@@ -5,7 +5,6 @@
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
-#include "postprocess.h"
 #include "rend/shader_util.h"
 #ifndef LIBRETRO
 #include "rend/imgui_driver.h"
@@ -154,6 +153,36 @@ private:
 	GLuint name;
 };
 
+class GlFramebuffer
+{
+public:
+	GlFramebuffer(int width, int height, bool withDepth = false, GLuint texture = 0);
+	~GlFramebuffer();
+
+	void bind(GLenum type = GL_FRAMEBUFFER) const {
+		glBindFramebuffer(type, framebuffer);
+	}
+
+	int getWidth() const { return width; }
+	int getHeight() const { return height; }
+
+	GLuint getTexture() const { return texture; }
+	GLuint detachTexture() {
+		GLuint t = texture;
+		texture = 0;
+		return t;
+	}
+	GLuint getFramebuffer() const { return framebuffer; }
+
+private:
+	int width;
+	int height;
+	GLuint texture;
+	GLuint framebuffer = 0;
+	GLuint colorBuffer = 0;
+	GLuint depthBuffer = 0;
+};
+
 struct gl_ctx
 {
 	struct
@@ -201,9 +230,6 @@ struct gl_ctx
 	struct
 	{
 		u32 texAddress = ~0;
-		GLuint depthb;
-		GLuint tex;
-		GLuint fbo;
 		GLuint pbo;
 		u32 pboSize;
 		bool directXfer;
@@ -211,18 +237,33 @@ struct gl_ctx
 		u32 height;
 		FB_W_CTRL_type fb_w_ctrl;
 		u32 linestride;
+		std::unique_ptr<GlFramebuffer> framebuffer;
 	} rtt;
 
 	struct
 	{
-		GLuint depthb;
-		GLuint colorb;
-		GLuint tex;
-		GLuint fbo;
-		int width;
-		int height;
+		std::unique_ptr<GlFramebuffer> framebuffer;
+		float aspectRatio;
 		GLuint origFbo;
 	} ofbo;
+
+	struct
+	{
+		GLuint tex;
+		int width;
+		int height;
+	} dcfb;
+
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+	} fbscaling;
+
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+		bool ready = false;
+	} ofbo2;
 
 	const char *gl_version;
 	const char *glsl_version_header;
@@ -242,36 +283,23 @@ struct gl_ctx
 };
 
 extern gl_ctx gl;
-extern GLuint fbTextureId;
 
 BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw);
 
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-void gl_load_osd_resources();
-void gl_free_osd_resources();
-bool ProcessFrame(TA_context* ctx);
-void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
-void UpdatePaletteTexture(GLenum texture_slot);
 void termGLCommon();
 void findGLVersion();
-void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
-void GetFramebufferSize(float& dc_width, float& dc_height);
-void SetupMatrices(float dc_width, float dc_height,
-				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
-				   float &ds2s_offs_x, glm::mat4& ndcMat, glm::mat4& scissor_mat);
 
 void SetCull(u32 CullMode);
-s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
-void RenderFramebuffer();
-void DrawFramebuffer();
+void glReadFramebuffer(const FramebufferInfo& info);
 GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
-void free_output_framebuffer();
+void writeFramebufferToVRAM();
 
 void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
@@ -375,12 +403,13 @@ extern const u32 SrcBlendGL[], DstBlendGL[];
 struct OpenGLRenderer : Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override { width = w; height = h; }
 	void Term() override;
 
 	bool Process(TA_context* ctx) override;
 
 	bool Render() override;
+
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
 	bool RenderLastFrame() override;
 
@@ -409,9 +438,19 @@ struct OpenGLRenderer : Renderer
 		return GL_TEXTURE2;
 	}
 
+	void saveCurrentFramebuffer() {
+#ifdef LIBRETRO
+		gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+		gl.ofbo.origFbo = 0;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
+	}
+	void restoreCurrentFramebuffer() {
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	}
+
 	bool frameRendered = false;
-	int width;
-	int height;
 };
 
 void initQuad();

@@ -42,8 +42,9 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
+	void scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB);
 
-	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
+	void SetScissor(vk::CommandBuffer cmdBuffer, const vk::Rect2D& scissor)
 	{
 		if (scissor != currentScissor)
 		{
@@ -170,6 +171,13 @@ class Drawer : public BaseDrawer
 {
 public:
 	virtual ~Drawer() = default;
+
+	void Term()
+	{
+		descriptorSets.term();
+		mainBuffers.clear();
+	}
+
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() { renderPass++; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
@@ -259,6 +267,18 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
+
+	void Term()
+	{
+		screenPipelineManager.reset();
+		renderPassLoad.reset();
+		renderPassClear.reset();
+		framebuffers.clear();
+		colorAttachments.clear();
+		depthAttachment.reset();
+		Drawer::Term();
+	}
+
 	vk::RenderPass GetRenderPass() const { return *renderPassClear; }
 	void EndRenderPass() override;
 	bool PresentFrame()
@@ -268,7 +288,6 @@ public:
 		frameRendered = false;
 		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
 				colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
-		NewImage();
 
 		return true;
 	}
@@ -296,6 +315,16 @@ class TextureDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
+
+	void Term()
+	{
+		rttPipelineManager.reset();
+		framebuffers.clear();
+		colorAttachment.reset();
+		depthAttachment.reset();
+		Drawer::Term();
+	}
+
 	void EndRenderPass() override;
 
 protected:

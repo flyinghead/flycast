@@ -171,6 +171,9 @@ void DX11Renderer::Term()
 	fbTex.reset();
 	fbTextureView.reset();
 	fbRenderTarget.reset();
+	fbScaledRenderTarget.reset();
+	fbScaledTextureView.reset();
+	fbScaledTexture.reset();
 	quad.reset();
 	deviceContext.reset();
 	device.reset();
@@ -233,7 +236,7 @@ void DX11Renderer::createTexAndRenderTarget(ComPtr<ID3D11Texture2D>& texture, Co
 	deviceContext->ClearRenderTargetView(renderTarget, black);
 }
 
-void DX11Renderer::Resize(int w, int h)
+void DX11Renderer::resize(int w, int h)
 {
 	if (width == (u32)w && height == (u32)h)
 		return;
@@ -304,15 +307,7 @@ bool DX11Renderer::Process(TA_context* ctx)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	if (ctx->rend.isRenderFramebuffer)
-	{
-		readDCFramebuffer();
-		return true;
-	}
-	else
-	{
-		return ta_parse(ctx);
-	}
+	return ta_parse(ctx);
 }
 
 void DX11Renderer::configVertexShader()
@@ -413,6 +408,8 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
+	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+
 	// make sure to unbind the framebuffer view before setting it as render target
 	ID3D11ShaderResourceView *nullView = nullptr;
     deviceContext->PSSetShaderResources(0, 1, &nullView);
@@ -426,26 +423,23 @@ bool DX11Renderer::Render()
 
 	deviceContext->IASetInputLayout(mainInputLayout);
 
-	if (!pvrrc.isRenderFramebuffer)
-	{
-		n2Helper.resetCache();
-		uploadGeometryBuffers();
+	n2Helper.resetCache();
+	uploadGeometryBuffers();
 
-		updateFogTexture();
-		updatePaletteTexture();
+	updateFogTexture();
+	updatePaletteTexture();
 
-		setupPixelShaderConstants();
+	setupPixelShaderConstants();
 
-		drawStrips();
-	}
-	else
-	{
-		renderDCFramebuffer();
-	}
+	drawStrips();
 
 	if (is_rtt)
 	{
 		readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
+	}
+	else if (config::EmulateFramebuffer)
+	{
+		writeFramebufferToVRAM();
 	}
 	else
 	{
@@ -465,24 +459,6 @@ bool DX11Renderer::Render()
 	}
 
 	return !is_rtt;
-}
-
-void DX11Renderer::renderDCFramebuffer()
-{
-	float colors[4];
-	VO_BORDER_COL.getRGBColor(colors);
-	colors[3] = 1.f;
-	deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
-	D3D11_VIEWPORT vp{};
-	vp.Width = (FLOAT)width;
-	vp.Height = (FLOAT)height;
-	vp.MinDepth = 0.f;
-	vp.MaxDepth = 1.f;
-	deviceContext->RSSetViewports(1, &vp);
-	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
-
-	float bar = (width - height * 640.f / 480.f) / 2.f;
-	quad->draw(dcfbTextureView, samplers->getSampler(true), nullptr, bar / width * 2.f - 1.f, -1.f, (width - bar * 2.f) / width * 2.f, 2.f);
 }
 
 void DX11Renderer::renderFramebuffer()
@@ -899,18 +875,30 @@ bool DX11Renderer::RenderLastFrame()
 	if (!frameRenderedOnce)
 		return false;
 	renderFramebuffer();
-	return false;
+	return true;
 }
 
-void DX11Renderer::readDCFramebuffer()
+void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 {
-	if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
-		return;
-
 	PixelBuffer<u32> pb;
 	int width;
 	int height;
-	ReadFramebuffer<BGRAPacker>(pb, width, height);
+
+	if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
+	{
+		// Video output disabled
+		width = height = 1;
+		pb.init(width, height, false);
+		u8 *p = (u8 *)pb.data(0, 0);
+		p[0] = info.vo_border_col._blue;
+		p[1] = info.vo_border_col._green;
+		p[2] = info.vo_border_col._red;
+		p[3] = 255;
+	}
+	else
+	{
+		ReadFramebuffer<BGRAPacker>(info, pb, width, height);
+	}
 
 	if (dcfbTexture)
 	{
@@ -947,12 +935,43 @@ void DX11Renderer::readDCFramebuffer()
 	}
 
 	deviceContext->UpdateSubresource(dcfbTexture, 0, nullptr, pb.data(), width * sizeof(u32), width * sizeof(u32) * height);
+
+	deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
+	float colors[4];
+	info.vo_border_col.getRGBColor(colors);
+	colors[3] = 1.f;
+	deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
+	D3D11_VIEWPORT vp{};
+	vp.Width = (FLOAT)this->width;
+	vp.Height = (FLOAT)this->height;
+	vp.MinDepth = 0.f;
+	vp.MaxDepth = 1.f;
+	deviceContext->RSSetViewports(1, &vp);
+	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+
+	float bar = (this->width - this->height * 640.f / 480.f) / 2.f;
+	quad->draw(dcfbTextureView, samplers->getSampler(true), nullptr, bar / this->width * 2.f - 1.f, -1.f, (this->width - bar * 2.f) / this->width * 2.f, 2.f);
+
+#ifndef LIBRETRO
+	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+	renderFramebuffer();
+	DrawOSD(false);
+	theDX11Context.setFrameRendered();
+#else
+	theDX11Context.drawOverlay(this->width, this->height);
+	ID3D11RenderTargetView *nullView = nullptr;
+	deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+	deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+#endif
+	frameRendered = true;
+	frameRenderedOnce = true;
 }
 
 void DX11Renderer::setBaseScissor()
 {
-	bool wide_screen_on = !pvrrc.isRTT && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
-	if (!wide_screen_on && !pvrrc.isRenderFramebuffer)
+	bool wide_screen_on = !pvrrc.isRTT && config::Widescreen && !matrices.IsClipped()
+			&& !config::Rotate90 && !config::EmulateFramebuffer;
+	if (!wide_screen_on)
 	{
 		float fWidth;
 		float fHeight;
@@ -1161,6 +1180,104 @@ void DX11Renderer::DrawOSD(bool clear_screen)
 	gui_display_osd();
 	theDX11Context.setOverlay(false);
 #endif
+}
+
+void DX11Renderer::writeFramebufferToVRAM()
+{
+	u32 width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+
+	float xscale = SCALER_CTL.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / SCALER_CTL.vscalefactor;
+	if (std::abs(yscale - 1.f) < 0.01)
+		yscale = 1.f;
+
+	ComPtr<ID3D11Texture2D> fbTexture = fbTex;
+
+	if (xscale != 1.f || yscale != 1.f)
+	{
+		u32 scaledW = width * xscale;
+		u32 scaledH = height * yscale;
+
+		if (fbScaledTexture)
+		{
+			D3D11_TEXTURE2D_DESC desc;
+			fbScaledTexture->GetDesc(&desc);
+			if (desc.Width != scaledW || desc.Height != scaledH)
+			{
+				fbScaledTexture.reset();
+				fbScaledTextureView.reset();
+				fbScaledRenderTarget.reset();
+			}
+		}
+		if (!fbScaledTexture)
+		{
+			createTexAndRenderTarget(fbScaledTexture, fbScaledRenderTarget, scaledW, scaledH);
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+			viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			viewDesc.Texture2D.MipLevels = 1;
+			device->CreateShaderResourceView(fbScaledTexture, &viewDesc, &fbScaledTextureView.get());
+		}
+		D3D11_VIEWPORT vp{};
+		vp.Width = (FLOAT)width;
+		vp.Height = (FLOAT)height;
+		vp.MinDepth = 0.f;
+		vp.MaxDepth = 1.f;
+		deviceContext->RSSetViewports(1, &vp);
+		deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+		quad->draw(fbTextureView, samplers->getSampler(true));
+
+		width = scaledW;
+		height = scaledH;
+		fbTexture = fbScaledTexture;
+	}
+	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
+	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+
+	D3D11_TEXTURE2D_DESC desc;
+	fbTexture->GetDesc(&desc);
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.BindFlags = 0;
+	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+	ComPtr<ID3D11Texture2D> stagingTex;
+	HRESULT hr = device->CreateTexture2D(&desc, nullptr, &stagingTex.get());
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Staging RTT texture creation failed");
+		return;
+	}
+	deviceContext->CopyResource(stagingTex, fbTexture);
+
+	PixelBuffer<u32> tmp_buf;
+	tmp_buf.init(width, height);
+	u8 *p = (u8 *)tmp_buf.data();
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubres;
+	hr = deviceContext->Map(stagingTex, 0, D3D11_MAP_READ, 0, &mappedSubres);
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Failed to map staging RTT texture");
+		return;
+	}
+	if (width * sizeof(u32) == mappedSubres.RowPitch)
+		memcpy(p, mappedSubres.pData, width * height * sizeof(u32));
+	else
+	{
+		u8 *src = (u8 *)mappedSubres.pData;
+		for (u32 y = 0; y < height; y++)
+		{
+			memcpy(p, src, width * sizeof(u32));
+			p += width * sizeof(u32);
+			src += mappedSubres.RowPitch;
+		}
+	}
+	deviceContext->Unmap(stagingTex, 0);
+
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
 }
 
 Renderer *rend_DirectX11()

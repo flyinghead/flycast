@@ -26,6 +26,29 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
+inline static void getTAViewport(int& width, int& height)
+{
+	width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+}
+
+inline static void getPvrFramebufferSize(int& width, int& height)
+{
+	getTAViewport(width, height);
+	if (!config::EmulateFramebuffer)
+	{
+		int maxHeight = FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0 ? 240 : 480;
+		if (SCALER_CTL.vscalefactor != 0
+				&& (SCALER_CTL.vscalefactor > 1025 || SCALER_CTL.vscalefactor < 1024)
+				&& SPG_CONTROL.interlace == 0)
+			maxHeight /= 1024.f / SCALER_CTL.vscalefactor;
+		if (FB_R_CTRL.fb_line_double)
+			maxHeight /= 2;
+		height = std::min(maxHeight, height);
+		// TODO Use FB_R_SIZE too?
+	}
+}
+
 // Dreamcast:
 // +Y is down
 // OpenGL:
@@ -48,10 +71,12 @@ public:
 
 	bool IsClipped() const
 	{
+		int width, height;
+		getTAViewport(width, height);
+		float sx, sy;
+		GetScissorScaling(sx,  sy);
 		return renderingContext->fb_X_CLIP.min != 0
-				|| lroundf((renderingContext->fb_X_CLIP.max + 1) / scale_x) != 640L
-				|| renderingContext->fb_Y_CLIP.min != 0
-				|| lroundf((renderingContext->fb_Y_CLIP.max + 1) / scale_y) != 480L;
+				|| lroundf((renderingContext->fb_X_CLIP.max + 1) / sx) != width;
 	}
 
 	const glm::mat4& GetNormalMatrix() const {
@@ -76,14 +101,12 @@ public:
 
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
-		constexpr int screenFlipY = System == COORD_OPENGL || System == COORD_DIRECTX ? -1 : 1;
+		const int screenFlipY = (System == COORD_OPENGL  && !config::EmulateFramebuffer) || System == COORD_DIRECTX ? -1 : 1;
 		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
 		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
 
 		renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
 		this->renderingContext = renderingContext;
-
-		GetFramebufferScaling(false, scale_x, scale_y);
 
 		if (renderingContext->isRTT)
 		{
@@ -96,8 +119,10 @@ public:
 		}
 		else
 		{
-			dcViewport.x = 640.f * scale_x;
-			dcViewport.y = 480.f * scale_y;
+			int w, h;
+			getPvrFramebufferSize(w, h);
+			dcViewport.x = w;
+			dcViewport.y = h;
 
 			float startx = 0;
 			float starty = 0;
@@ -142,9 +167,9 @@ public:
 			scissorMatrix = normalMatrix;
 
 			float scissoring_scale_x, scissoring_scale_y;
-			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
+			GetScissorScaling(scissoring_scale_x, scissoring_scale_y);
 
-			if (config::Widescreen && !config::Rotate90)
+			if (config::Widescreen && !config::Rotate90 && !config::EmulateFramebuffer)
 			{
 				sidebarWidth = (1 - dcViewport.x / dcViewport.y * renderViewport.y / renderViewport.x) / 2;
 				if (config::SuperWidescreen)
@@ -185,33 +210,24 @@ public:
 	}
 
 private:
-	void GetFramebufferScaling(bool scissor, float& scale_x, float& scale_y)
+	void GetScissorScaling(float& scale_x, float& scale_y) const
 	{
 		scale_x = 1.f;
 		scale_y = 1.f;
 
-		if (!renderingContext->isRTT && !renderingContext->isRenderFramebuffer)
+		if (!renderingContext->isRTT && !config::EmulateFramebuffer)
 		{
-			if (!scissor && (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0))
-				scale_y /= 2.f;
 			if (SCALER_CTL.vscalefactor > 0x400)
-			{
-				// Interlace mode A (single framebuffer)
-				if (SCALER_CTL.interlace == 0)
-					scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
-				else if (SCALER_CTL.interlace == 1 && scissor)
-					// Interlace mode B (alternating framebuffers)
-					scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
-			}
-
-			// VO pixel doubling is done after fb rendering/clipping
-			if (VO_CONTROL.pixel_double && !scissor)
-				scale_x /= 2.f;
-
-			// the X Scaler halves the horizontal resolution but
-			// before clipping/scissoring
+				scale_y *= std::round(SCALER_CTL.vscalefactor / 1024.f);
 			if (SCALER_CTL.hscale)
 				scale_x *= 2.f;
+		}
+		else if (config::EmulateFramebuffer)
+		{
+			if (SCALER_CTL.hscale)
+				scale_x *= 2.f;
+			if (SCALER_CTL.vscalefactor > 0x401 || SCALER_CTL.vscalefactor < 0x400)
+				scale_y *= SCALER_CTL.vscalefactor / 1024.f;
 		}
 	}
 
@@ -222,29 +238,96 @@ private:
 	glm::mat4 viewportMatrix;
 	glm::vec2 dcViewport;
 	glm::vec2 renderViewport;
-	float scale_x = 0;
-	float scale_y = 0;
 	float sidebarWidth = 0;
 };
 
+inline static void getScaledFramebufferSize(int& width, int& height)
+{
+	getPvrFramebufferSize(width, height);
+	if (!config::EmulateFramebuffer)
+	{
+		float upscaling = config::RenderResolution / 480.f;
+		float w = width * upscaling;
+		float h = height * upscaling;
+		if (config::Widescreen && !config::Rotate90)
+		{
+			if (config::SuperWidescreen)
+				w *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
+			else
+				w *= 4.f / 3.f;
+		}
+		if (!config::Rotate90)
+			w = std::round(w / 2.f) * 2.f;
+		h = std::round(h);
+		width = w;
+		height = h;
+	}
+}
+
 inline static float getOutputFramebufferAspectRatio()
 {
-	float renderAR;
+	int w,h;
+	getPvrFramebufferSize(w, h);
+
+	float width = w;
+	float height = h;
+	width *= 1 + VO_CONTROL.pixel_double;
+	width /= 1 + SCALER_CTL.hscale;
+	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
+	height *= 1 + (FB_R_CTRL.fb_line_double);
+	if (SCALER_CTL.vscalefactor != 0
+			&& (SCALER_CTL.vscalefactor > 1025 || SCALER_CTL.vscalefactor < 1024)
+			&& SPG_CONTROL.interlace == 0)
+	{
+		if (config::EmulateFramebuffer)
+			height *= 1024.f / SCALER_CTL.vscalefactor;
+		else if (SCALER_CTL.vscalefactor > 1025)
+			height *= std::round(1024.f / SCALER_CTL.vscalefactor);
+
+	}
+
+	float renderAR = width / height;
 	if (config::Rotate90)
 	{
-		renderAR = 3.f / 4.f;
+		renderAR = 1 / renderAR;
 	}
 	else
 	{
-		if (config::Widescreen)
+		if (config::Widescreen && !config::EmulateFramebuffer)
 		{
 			if (config::SuperWidescreen)
 				renderAR = (float)settings.display.width / settings.display.height;
 			else
-				renderAR = 16.f / 9.f;
+				renderAR *= 4 / 3.f;
 		}
-		else
-			renderAR = 4.f / 3.f;
 	}
 	return renderAR * config::ScreenStretching / 100.f;
+}
+
+inline static float getDCFramebufferAspectRatio()
+{
+	int width = FB_R_SIZE.fb_x_size + 1;     // in 32-bit words
+	int height = FB_R_SIZE.fb_y_size + 1;
+
+	switch (FB_R_CTRL.fb_depth)
+	{
+		case fbde_0555:
+		case fbde_565:
+			width *= 2;
+			break;
+		case fbde_888:
+			width = width * 4 / 3;
+			break;
+		case fbde_C888:
+		default:
+			break;
+	}
+	width *= 1 + VO_CONTROL.pixel_double;
+	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
+	height *= 1 + (FB_R_CTRL.fb_line_double);
+	height *= 1 + SPG_CONTROL.interlace;
+	float aspectRatio = (float)width / height;
+	if (config::Rotate90)
+		aspectRatio = 1 / aspectRatio;
+	return aspectRatio * config::ScreenStretching / 100.f;
 }

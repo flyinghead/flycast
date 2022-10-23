@@ -22,6 +22,7 @@
 #include "rend/osd.h"
 #include "glsl.h"
 #include "gl4naomi2.h"
+#include "rend/gles/postprocess.h"
 
 //Fragment and vertex shaders code
 
@@ -733,7 +734,6 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 }
 
@@ -746,13 +746,7 @@ static bool RenderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-#ifdef LIBRETRO
-	gl.ofbo.origFbo = glsm_get_current_framebuffer();
-#else
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
-#endif
-	if (!is_rtt)
+	if (!is_rtt && !config::EmulateFramebuffer)
 		gcflip = 0;
 	else
 		gcflip = 1;
@@ -807,10 +801,10 @@ static bool RenderFrame(int width, int height)
 	else
 	{
 #ifdef LIBRETRO
-		gl.ofbo.width = width;
-		gl.ofbo.height = height;
-		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+		if (config::PowerVR2Filter)
 			output_fbo = postProcessor.getFramebuffer(width, height);
+		else if (config::EmulateFramebuffer)
+			output_fbo = init_output_framebuffer(width, height);
 		else
 			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
@@ -833,7 +827,7 @@ static bool RenderFrame(int width, int height)
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	else if (!pvrrc.isRenderFramebuffer)
+	else
 	{
 		//Main VBO
 		//move vertex to gpu
@@ -861,7 +855,7 @@ static bool RenderFrame(int width, int height)
 		}
 		glCheck();
 
-		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
+		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
 		{
 			float fWidth;
 			float fHeight;
@@ -932,24 +926,24 @@ static bool RenderFrame(int width, int height)
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
 		if (config::PowerVR2Filter && !is_rtt)
-			postProcessor.render(glsm_get_current_framebuffer());
+		{
+			if (config::EmulateFramebuffer)
+				postProcessor.render(init_output_framebuffer(width, height));
+			else
+				postProcessor.render(glsm_get_current_framebuffer());
+		}
 #endif
-	}
-	else
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (config::EmulateFramebuffer)
+		writeFramebufferToVRAM();
 #ifndef LIBRETRO
-	else
+	else {
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
 		render_output_framebuffer();
+	}
 #endif
 	glBindVertexArray(0);
 
@@ -961,13 +955,6 @@ struct OpenGL4Renderer : OpenGLRenderer
 	bool Init() override
 	{
 		return gl4_init();
-	}
-
-	void Resize(int w, int h) override
-	{
-		width = w;
-		height = h;
-		resize(w, h);
 	}
 
 	void Term() override
@@ -995,19 +982,22 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	bool Render() override
 	{
-		RenderFrame(width, height);
-		if (pvrrc.isRTT)
+		saveCurrentFramebuffer();
+		RenderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.isRTT) {
+			restoreCurrentFramebuffer();
 			return false;
+		}
 
-		DrawOSD(false);
-		frameRendered = true;
+		if (!config::EmulateFramebuffer)
+		{
+			DrawOSD(false);
+			gl.ofbo2.ready = false;
+			frameRendered = true;
+		}
+		restoreCurrentFramebuffer();
 
 		return true;
-	}
-
-	bool RenderLastFrame() override
-	{
-		return render_output_framebuffer();
 	}
 
 	GLenum getFogTextureSlot() const override {

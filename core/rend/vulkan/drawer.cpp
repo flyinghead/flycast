@@ -62,8 +62,8 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 
 void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 {
-	bool wide_screen_on = config::Widescreen && !pvrrc.isRenderFramebuffer
-			&& !matrices.IsClipped() && !config::Rotate90;
+	bool wide_screen_on = config::Widescreen
+			&& !matrices.IsClipped() && !config::Rotate90 && !config::EmulateFramebuffer;
 	if (!wide_screen_on)
 	{
 		float width;
@@ -101,6 +101,76 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 	{
 		baseScissor = { 0, 0, (u32)viewport.width, (u32)viewport.height };
 	}
+}
+
+void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB)
+{
+	u32 width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+
+	float xscale = SCALER_CTL.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / SCALER_CTL.vscalefactor;
+	if (std::abs(yscale - 1.f) < 0.01f)
+		yscale = 1.f;
+
+	FramebufferAttachment *scaledFB = nullptr;
+
+	if (xscale != 1.f || yscale != 1.f)
+	{
+		u32 scaledW = width * xscale;
+		u32 scaledH = height * yscale;
+
+		scaledFB = new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
+		scaledFB->Init(scaledW, scaledH, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst);
+
+		setImageLayout(commandBuffer, scaledFB->GetImage(), vk::Format::eR8G8B8A8Unorm, 1, vk::ImageLayout::eUndefined,
+				vk::ImageLayout::eTransferDstOptimal);
+
+		vk::ImageBlit imageBlit;
+		imageBlit.setSrcOffsets({ vk::Offset3D(0, 0, 0), vk::Offset3D(width, height, 1) });
+		imageBlit.setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1));
+		imageBlit.setDstOffsets({ vk::Offset3D(0, 0, 0), vk::Offset3D(scaledW, scaledH, 1) });
+		imageBlit.setDstSubresource(imageBlit.srcSubresource);
+		commandBuffer.blitImage(finalFB->GetImage(), vk::ImageLayout::eTransferSrcOptimal, scaledFB->GetImage(), vk::ImageLayout::eTransferDstOptimal,
+				1, &imageBlit, vk::Filter::eLinear);
+
+		setImageLayout(commandBuffer, scaledFB->GetImage(), vk::Format::eR8G8B8A8Unorm, 1, vk::ImageLayout::eTransferDstOptimal,
+				vk::ImageLayout::eTransferSrcOptimal);
+
+		finalFB = scaledFB;
+		width = scaledW;
+		height = scaledH;
+	}
+
+	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
+			vk::Extent3D(width, height, 1));
+	commandBuffer.copyImageToBuffer(finalFB->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
+			*finalFB->GetBufferData()->buffer, copyRegion);
+
+	vk::BufferMemoryBarrier bufferMemoryBarrier(
+			vk::AccessFlagBits::eTransferWrite,
+			vk::AccessFlagBits::eHostRead,
+			VK_QUEUE_FAMILY_IGNORED,
+			VK_QUEUE_FAMILY_IGNORED,
+			*finalFB->GetBufferData()->buffer,
+			0,
+			VK_WHOLE_SIZE);
+	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
+
+	commandBuffer.end();
+	commandPool->EndFrame();
+
+	vk::Fence fence = commandPool->GetCurrentFence();
+	GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
+	PixelBuffer<u32> tmpBuf;
+	tmpBuf.init(width, height);
+	finalFB->GetBufferData()->download(width * height * 4, tmpBuf.data());
+
+	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), pvrrc.fb_W_SOF1 & VRAM_MASK,
+			pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+
+	delete scaledFB;
 }
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
@@ -557,10 +627,11 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	{
 		vk::AttachmentDescription attachmentDescriptions[] = {
 				// Color attachment
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
 				// Depth attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
@@ -610,8 +681,12 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		{
 			colorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 					new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
-			colorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
-					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+			if (config::EmulateFramebuffer)
+				usage |= vk::ImageUsageFlagBits::eTransferSrc;
+			else
+				usage |= vk::ImageUsageFlagBits::eSampled;
+			colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage);
 			attachments[0] = colorAttachments.back()->GetImageView();
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
 					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
@@ -630,13 +705,15 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
+	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (transitionNeeded[GetCurrentImage()])
 	{
-		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), GetContext()->GetColorFormat(),
-				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
+				1, vk::ImageLayout::eUndefined,
+				config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 		transitionNeeded[GetCurrentImage()] = false;
 	}
 
@@ -659,9 +736,16 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 void ScreenDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
-	currentCommandBuffer.end();
+	if (config::EmulateFramebuffer)
+	{
+		scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[GetCurrentImage()].get());
+	}
+	else
+	{
+		currentCommandBuffer.end();
+		commandPool->EndFrame();
+	}
 	currentCommandBuffer = nullptr;
-	commandPool->EndFrame();
 	Drawer::EndRenderPass();
 	frameRendered = true;
 }

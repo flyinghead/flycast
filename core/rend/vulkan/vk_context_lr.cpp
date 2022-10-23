@@ -274,7 +274,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	retro_image.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	retro_image.create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	retro_image.create_info.pNext = nullptr;
-	retro_image.create_info.format = (VkFormat)colorFormat;
+	retro_image.create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
 	retro_image.create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	retro_image.create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 	retro_image.create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;

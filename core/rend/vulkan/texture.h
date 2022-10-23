@@ -59,9 +59,11 @@ public:
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	vk::ImageView GetImageView() const { return *imageView; }
+	vk::Image GetImage() const { return *image; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
+	vk::Extent2D getSize() const { return extent; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -93,6 +95,10 @@ private:
 class SamplerManager
 {
 public:
+	void term() {
+		samplers.clear();
+	}
+
 	vk::Sampler GetSampler(TSP tsp)
 	{
 		u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV

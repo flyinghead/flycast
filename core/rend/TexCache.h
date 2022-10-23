@@ -798,9 +798,15 @@ protected:
 };
 
 template<typename Packer = RGBAPacker>
-void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
+
+// width and height in pixels. linestride in bytes
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+
+// width and height in pixels. linestride in bytes
+template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
+void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
 void getRenderToTextureDimensions(u32& width, u32& height, u32& pow2Width, u32& pow2Height);
 
 static inline void MakeFogTexture(u8 *tex_data)

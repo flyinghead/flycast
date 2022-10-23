@@ -444,7 +444,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 		attachment.reset();
 		attachment = std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-		attachment->Init(maxWidth, maxHeight, GetColorFormat(),
+		attachment->Init(maxWidth, maxHeight, vk::Format::eR8G8B8A8Unorm,
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
 
@@ -483,12 +483,18 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 	finalColorAttachments.clear();
 	transitionNeeded.clear();
 	clearNeeded.clear();
+
+	vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+	if (config::EmulateFramebuffer)
+		usage |= vk::ImageUsageFlagBits::eTransferSrc;
+	else
+		usage |= vk::ImageUsageFlagBits::eSampled;
 	while (finalColorAttachments.size() < GetSwapChainSize())
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
-		finalColorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
-				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+		finalColorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm,
+				usage);
 		vk::ImageView attachments[] = {
 				finalColorAttachments.back()->GetImageView(),
 				colorAttachments[0]->GetImageView(),
@@ -659,18 +665,16 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
-	if (frameRendered)
-	{
-		// in case the previous image was never presented
-		frameRendered = false;
-		NewImage();
-	}
+	frameRendered = false;
+	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (transitionNeeded[GetCurrentImage()])
 	{
-		setImageLayout(commandBuffer, finalColorAttachments[GetCurrentImage()]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		setImageLayout(commandBuffer, finalColorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
+				vk::ImageLayout::eUndefined,
+				config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 		transitionNeeded[GetCurrentImage()] = false;
 	}
 	matrices.CalcMatrices(&pvrrc, viewport.extent.width, viewport.extent.height);

@@ -371,11 +371,25 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      "Full framebuffer emulation",
+      NULL,
+      "Enable full framebuffer emulation in VRAM. This is useful for games that directly read or write the framebuffer in VRAM. When enabled, Internal Resolution is forced to 640x480 and performance may be severely impacted.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       "Enable RTT (Render To Texture) Buffer",
       NULL,
-      "",
+      "Copy rendered textures back from the GPU to VRAM. This option is normally enabled for games that require it. When enabled, texture rendering upscaling is disabled and performance may be impacted.",
       NULL,
       "video",
       {

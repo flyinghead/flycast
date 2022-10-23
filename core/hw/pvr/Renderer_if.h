@@ -2,14 +2,13 @@
 #include "types.h"
 #include "ta_ctx.h"
 
-extern u32 VertexCount;
 extern u32 FrameCount;
 
 void rend_init_renderer();
 void rend_term_renderer();
 void rend_vblank();
-void rend_start_render(TA_context *ctx = nullptr);
-void rend_end_render();
+void rend_start_render();
+int rend_end_render(int tag, int cycles, int jitter);
 void rend_cancel_emu_wait();
 bool rend_single_frame(const bool& enabled);
 void rend_swap_frame(u32 fb_r_sof1);
@@ -20,25 +19,46 @@ void rend_start_rollback();
 void rend_allow_rollback();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
-void rend_resize_renderer();
-void rend_resize_renderer_if_needed();
 
 ///////
 extern TA_context* _pvrrc;
 
 #define pvrrc (_pvrrc->rend)
 
+struct FramebufferInfo
+{
+	void update()
+	{
+		fb_r_size.full = FB_R_SIZE.full;
+		fb_r_ctrl.full = FB_R_CTRL.full;
+		spg_control.full = SPG_CONTROL.full;
+		spg_status.full = SPG_STATUS.full;
+		fb_r_sof1 = FB_R_SOF1;
+		fb_r_sof2 = FB_R_SOF2;
+		vo_control.full = VO_CONTROL.full;
+		vo_border_col.full = VO_BORDER_COL.full;
+	}
+
+	FB_R_SIZE_type fb_r_size;
+	FB_R_CTRL_type fb_r_ctrl;
+	SPG_CONTROL_type spg_control;
+	SPG_STATUS_type spg_status;
+	u32 fb_r_sof1;
+	u32 fb_r_sof2;
+	VO_CONTROL_type vo_control;
+	VO_BORDER_COL_type vo_border_col;
+};
+
 struct Renderer
 {
-	virtual bool Init()=0;
 	virtual ~Renderer() = default;
-	
-	virtual void Resize(int w, int h)=0;
 
-	virtual void Term()=0;
+	virtual bool Init() = 0;
+	virtual void Term() = 0;
 
-	virtual bool Process(TA_context* ctx)=0;
-	virtual bool Render()=0;
+	virtual bool Process(TA_context *ctx) = 0;
+	virtual bool Render() = 0;
+	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
 	virtual bool RenderLastFrame() { return false; }
 
 	virtual bool Present() { return true; }

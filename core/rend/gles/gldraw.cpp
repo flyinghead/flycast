@@ -698,20 +698,103 @@ void DrawStrips()
 	}
 }
 
-void DrawFramebuffer()
+void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
-	int sx = (int)roundf((gl.ofbo.width - 4.f / 3.f * gl.ofbo.height) / 2.f);
-	glViewport(sx, 0, gl.ofbo.width - sx * 2, gl.ofbo.height);
-	drawQuad(fbTextureId, false, true);
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
+	glReadFramebuffer(info);
+	saveCurrentFramebuffer();
+#ifndef LIBRETRO
+	if (gl.ofbo2.framebuffer != nullptr
+			&& (gl.dcfb.width != gl.ofbo2.framebuffer->getWidth() || gl.dcfb.height != gl.ofbo2.framebuffer->getHeight()))
+		gl.ofbo2.framebuffer.reset();
+
+	if (gl.ofbo2.framebuffer == nullptr)
+		gl.ofbo2.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(gl.dcfb.width, gl.dcfb.height));
+	else
+		gl.ofbo2.framebuffer->bind();
+	glCheck();
+	gl.ofbo2.ready = true;
+#endif
+	gl.ofbo.aspectRatio = getDCFramebufferAspectRatio();
+
+	glViewport(0, 0, gl.dcfb.width, gl.dcfb.height);
+	glcache.Disable(GL_SCISSOR_TEST);
+
+	if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
+	{
+		// Video output disabled
+		glcache.ClearColor(info.vo_border_col.red(), info.vo_border_col.green(), info.vo_border_col.blue(), 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	else
+	{
+		drawQuad(gl.dcfb.tex, false, true);
+	}
+#ifndef LIBRETRO
+	render_output_framebuffer();
+#endif
+
+	DrawOSD(false);
+	frameRendered = true;
+	restoreCurrentFramebuffer();
+}
+
+void writeFramebufferToVRAM()
+{
+	u32 width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+
+	float xscale = SCALER_CTL.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / SCALER_CTL.vscalefactor;
+	if (std::abs(yscale - 1.f) < 0.01)
+		yscale = 1.f;
+
+	if (xscale != 1.f || yscale != 1.f)
+	{
+		u32 scaledW = width * xscale;
+		u32 scaledH = height * yscale;
+
+		if (gl.fbscaling.framebuffer != nullptr
+				&& (gl.fbscaling.framebuffer->getWidth() != (int)scaledW || gl.fbscaling.framebuffer->getHeight() != (int)scaledH))
+			gl.fbscaling.framebuffer.reset();
+		if (gl.fbscaling.framebuffer == nullptr)
+			gl.fbscaling.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(scaledW, scaledH));
+
+		gl.ofbo.framebuffer->bind(GL_READ_FRAMEBUFFER);
+		gl.fbscaling.framebuffer->bind(GL_DRAW_FRAMEBUFFER);
+		glBlitFramebuffer(0, 0, width, height,
+				0, 0, scaledW, scaledH,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		gl.fbscaling.framebuffer->bind();
+
+		width = scaledW;
+		height = scaledH;
+	}
+	u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+
+	PixelBuffer<u32> tmp_buf;
+	tmp_buf.init(width, height);
+
+	u8 *p = (u8 *)tmp_buf.data();
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, p);
+
+	WriteFramebuffer(width, height, p, tex_addr, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	glCheck();
 }
 
 bool render_output_framebuffer()
 {
+	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
+	if (framebuffer == nullptr)
+		return false;
+
 	glcache.Disable(GL_SCISSOR_TEST);
 	float screenAR = (float)settings.display.width / settings.display.height;
-	float renderAR = getOutputFramebufferAspectRatio();
+	float renderAR = gl.ofbo.aspectRatio;
 
 	int dx = 0;
 	int dy = 0;
@@ -722,26 +805,22 @@ bool render_output_framebuffer()
 
 	if (gl.gl_major < 3 || config::Rotate90)
 	{
-		if (gl.ofbo.tex == 0)
-			return false;
 		glViewport(dx, dy, settings.display.width - dx * 2, settings.display.height - dy * 2);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
-		drawQuad(gl.ofbo.tex, config::Rotate90);
+		drawQuad(framebuffer->getTexture(), config::Rotate90);
 	}
 	else
 	{
 #ifndef GLES2
-		if (gl.ofbo.fbo == 0)
-			return false;
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		framebuffer->bind(GL_READ_FRAMEBUFFER);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+		glBlitFramebuffer(0, 0, framebuffer->getWidth(), framebuffer->getHeight(),
 				dx, dy, settings.display.width - dx, settings.display.height - dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
@@ -822,8 +901,8 @@ void DrawVmuTexture(u8 vmu_screen_number)
 
 	const float vmu_padding = 8.f;
 	const float x_scale = 100.f / config::ScreenStretching;
-	const float y_scale = (float)gl.ofbo.width / gl.ofbo.height >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 ? -1 / ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
+	const float y_scale = gl.ofbo.framebuffer && (float)gl.ofbo.framebuffer->getWidth() / gl.ofbo.framebuffer->getHeight() >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer ? -1 / ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
 	float y = vmu_padding;
 	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
 	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;

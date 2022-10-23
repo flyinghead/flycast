@@ -223,6 +223,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
 		}
+		if (prod_id == "T1102M"				// Densha de Go! 2
+				|| prod_id == "T00000A")	// The Ring of the Nibelungen (demo, hack)
+		{
+			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
+			config::EmulateFramebuffer.override(true);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
@@ -764,11 +770,12 @@ void Emulator::run()
 
 void Emulator::start()
 {
+	if (state == Running)
+		return;
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
 	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled || config::GGPOEnable;
-	rend_resize_renderer();
 #if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{
@@ -829,11 +836,10 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
-	rend_resize_renderer_if_needed();
+	if (state != Running)
+		return false;
 	if (!config::ThreadedRendering)
 	{
-		if (state != Running)
-			return false;
 		run();
 		// TODO if stopping due to a user request, no frame has been rendered
 		return !renderTimeout;

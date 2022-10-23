@@ -56,7 +56,7 @@ void CalculateSync()
 }
 
 //called from sh4 context , should update pvr/ta state and everything else
-int spg_line_sched(int tag, int cycl, int jit)
+static int spg_line_sched(int tag, int cycl, int jit)
 {
 	clc_pvr_scanline += cycl;
 
@@ -146,22 +146,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 				double spd_cpu=spd_vbs*Frame_Cycles;
 				spd_cpu/=1000000;	//mrhz kthx
 				double fullvbs=(spd_vbs/spd_cpu)*200;
-				double mv=VertexCount/ts/(spd_cpu/200);
-				char mv_c=' ';
 
 				Last_FC=FrameCount;
 
-				if (mv>750)
-				{
-					mv/=1000;	//KV
-					mv_c='K';
-				}
-				if (mv>750)
-				{
-					mv/=1000;	//
-					mv_c='M';
-				}
-				VertexCount=0;
 				vblk_cnt=0;
 
 				const char* mode=0;
@@ -184,11 +171,10 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 				double full_rps = spd_fps + fskip / ts;
 
-				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c",
+				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
-					spd_fps,fskip/ts
-					, mv, mv_c);
+					spd_fps,fskip/ts);
 				
 				fskip=0;
 				last_fps=os_GetSeconds();
@@ -255,28 +241,10 @@ void read_lightgun_position(int x, int y)
 	}
 }
 
-int rend_end_sch(int tag, int cycl, int jitt)
-{
-	if (settings.platform.isNaomi2())
-	{
-		asic_RaiseInterruptBothCLX(holly_RENDER_DONE);
-		asic_RaiseInterruptBothCLX(holly_RENDER_DONE_isp);
-		asic_RaiseInterruptBothCLX(holly_RENDER_DONE_vd);
-	}
-	else
-	{
-		asic_RaiseInterrupt(holly_RENDER_DONE);
-		asic_RaiseInterrupt(holly_RENDER_DONE_isp);
-		asic_RaiseInterrupt(holly_RENDER_DONE_vd);
-	}
-	rend_end_render();
-	return 0;
-}
-
 bool spg_Init()
 {
-	render_end_schid=sh4_sched_register(0,&rend_end_sch);
-	vblank_schid=sh4_sched_register(0,&spg_line_sched);
+	render_end_schid = sh4_sched_register(0, &rend_end_render);
+	vblank_schid = sh4_sched_register(0, &spg_line_sched);
 
 	return true;
 }
@@ -299,7 +267,7 @@ void spg_Reset(bool hard)
 	real_times.fill(0.0);
 }
 
-void SetREP(TA_context* cntx)
+void scheduleRenderDone(TA_context *cntx)
 {
 	if (cntx)
 		sh4_sched_request(render_end_schid, 500000 * 3);

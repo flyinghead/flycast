@@ -25,14 +25,9 @@
 
 struct BufferData
 {
-	BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage,
-			const vk::MemoryPropertyFlags& propertyFlags =
-				vk::MemoryPropertyFlagBits::eHostVisible
-#ifndef __APPLE__
-				// host coherent memory not supported on apple platforms
-				| vk::MemoryPropertyFlagBits::eHostCoherent
-#endif
-				);
+	BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage,
+			vk::MemoryPropertyFlags propertyFlags =
+				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 	~BufferData()
 	{
 		buffer.reset();
@@ -40,7 +35,6 @@ struct BufferData
 
 	void upload(u32 size, const void *data, u32 bufOffset = 0) const
 	{
-		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
@@ -50,8 +44,6 @@ struct BufferData
 
 	void upload(size_t count, const u32 *sizes, const void * const *data, u32 bufOffset = 0) const
 	{
-		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-
 		u32 totalSize = 0;
 		for (size_t i = 0; i < count; i++)
 			totalSize += sizes[i];
@@ -68,7 +60,6 @@ struct BufferData
 
 	void download(u32 size, void *data, u32 bufOffset = 0) const
 	{
-		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
@@ -91,7 +82,6 @@ struct BufferData
 
 private:
 	vk::BufferUsageFlags    m_usage;
-	vk::MemoryPropertyFlags m_propertyFlags;
 };
 
 class BufferPacker

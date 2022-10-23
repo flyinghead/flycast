@@ -1771,6 +1771,9 @@ static void gui_display_settings()
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
 		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
 		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+		    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
+		    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
+		    			"Very slow and incompatible with upscaling and wide screen.");
 		    	constexpr int apiCount = 0
 					#ifdef USE_VULKAN
 		    			+ 1

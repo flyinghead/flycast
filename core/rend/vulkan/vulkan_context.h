@@ -91,7 +91,6 @@ public:
 	}
 	std::string getDriverName() override;
 	std::string getDriverVersion() override;
-	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }

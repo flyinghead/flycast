@@ -164,6 +164,8 @@ void D3DRenderer::preReset()
 	rttTexture.reset();
 	dcfbSurface.reset();
 	dcfbTexture.reset();
+	fbScaledTexture.reset();
+	fbScaledSurface.reset();
 	fogTexture.reset();
 	paletteTexture.reset();
 	modVolVtxDecl.reset();
@@ -191,7 +193,7 @@ void D3DRenderer::postReset()
 	u32 h = height;
 	width = 0;
 	height = 0;
-	Resize(w, h);
+	resize(w, h);
 	verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024));
 	verify(ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4));
 	verifyWin(device->CreateVertexDeclaration(MainVtxElement, &mainVtxDecl.get()));
@@ -233,19 +235,37 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 	return tf;
 }
 
-void D3DRenderer::readDCFramebuffer()
+void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
-	if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
-		return;
-
 	PixelBuffer<u32> pb;
 	int width;
 	int height;
-	ReadFramebuffer<BGRAPacker>(pb, width, height);
 
+	if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
+	{
+		// Video output disabled
+		width = height = 1;
+		pb.init(width, height, false);
+		u8 *p = (u8 *)pb.data(0, 0);
+		p[0] = info.vo_border_col._blue;
+		p[1] = info.vo_border_col._green;
+		p[2] = info.vo_border_col._red;
+		p[3] = 255;
+	}
+	else
+	{
+		ReadFramebuffer<BGRAPacker>(info, pb, width, height);
+	}
+
+	if (dcfbTexture)
+	{
+		D3DSURFACE_DESC desc;
+		dcfbTexture->GetLevelDesc(0, &desc);
+		if ((int)desc.Width != width || (int)desc.Height != height)
+			dcfbTexture.reset();
+	}
 	if (!dcfbTexture)
 	{
-		// FIXME dimension can change
 		device->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &dcfbTexture.get(), 0);
 		dcfbTexture->GetSurfaceLevel(0, &dcfbSurface.get());
 	}
@@ -261,14 +281,17 @@ void D3DRenderer::readDCFramebuffer()
 			memcpy(dst + y * rect.Pitch, pb.data() + y * width, width * sizeof(u32));
 	}
 	dcfbTexture->UnlockRect(0);
-}
 
-void D3DRenderer::renderDCFramebuffer()
-{
-	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
-	u32 bar = (width - height * 640 / 480) / 2;
-	RECT rd{ (LONG)bar, 0, (LONG)(width - bar), (LONG)height };
+	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, info.vo_border_col._red, info.vo_border_col._green, info.vo_border_col._blue));
+	u32 bar = (this->width - this->height * 640 / 480) / 2;
+	RECT rd{ (LONG)bar, 0, (LONG)(this->width - bar), (LONG)this->height };
 	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
+
+	displayFramebuffer();
+	DrawOSD(false);
+	frameRendered = true;
+	frameRenderedOnce = true;
+	theDXContext.setFrameRendered();
 }
 
 bool D3DRenderer::Process(TA_context* ctx)
@@ -280,15 +303,7 @@ bool D3DRenderer::Process(TA_context* ctx)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	if (ctx->rend.isRenderFramebuffer)
-	{
-		readDCFramebuffer();
-		return true;
-	}
-	else
-	{
-		return ta_parse(ctx);
-	}
+	return ta_parse(ctx);
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)
@@ -789,7 +804,8 @@ void D3DRenderer::drawStrips()
 
 void D3DRenderer::setBaseScissor()
 {
-	bool wide_screen_on = !pvrrc.isRTT && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
+	bool wide_screen_on = !pvrrc.isRTT && config::Widescreen && !matrices.IsClipped()
+			&& !config::Rotate90 && !config::EmulateFramebuffer;
 	if (!wide_screen_on)
 	{
 		float fWidth;
@@ -939,6 +955,8 @@ bool D3DRenderer::Render()
 {
 	if (resetting)
 		return false;
+	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+
 	bool is_rtt = pvrrc.isRTT;
 
 	backbuffer.reset();
@@ -970,100 +988,93 @@ bool D3DRenderer::Render()
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->Clear(0, NULL, D3DCLEAR_STENCIL | D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
 
-	if (!pvrrc.isRenderFramebuffer)
+	setFirstProvokingVertex(pvrrc);
+	// Set clip planes at (-1,0) (1,0) (0,-1) and (0,1).
+	// Helps avoiding interpolation errors on large triangles.
+	devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 15);
+	float v[4] {};
+	v[3] = 1.f;
+	// left
+	v[0] = 1.f;
+	device->SetClipPlane(0, v);
+	// right
+	v[0] = -1.f;
+	device->SetClipPlane(1, v);
+	// top
+	v[0] = 0.f;
+	v[1] = 1.f;
+	device->SetClipPlane(2, v);
+	// bottom
+	v[1] = -1.f;
+	device->SetClipPlane(3, v);
+
+	verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
+	void *ptr;
+	verifyWin(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
+	memcpy(ptr, pvrrc.verts.head(), pvrrc.verts.bytes());
+	vertexBuffer->Unlock();
+	verify(ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes()));
+	verifyWin(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
+	memcpy(ptr, pvrrc.idx.head(), pvrrc.idx.bytes());
+	indexBuffer->Unlock();
+
+	if (config::ModifierVolumes && pvrrc.modtrig.used())
 	{
-		setFirstProvokingVertex(pvrrc);
-		// Set clip planes at (-1,0) (1,0) (0,-1) and (0,1).
-		// Helps avoiding interpolation errors on large triangles.
-		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 15);
-		float v[4] {};
-		v[3] = 1.f;
-		// left
-		v[0] = 1.f;
-		device->SetClipPlane(0, v);
-		// right
-		v[0] = -1.f;
-		device->SetClipPlane(1, v);
-		// top
-		v[0] = 0.f;
-		v[1] = 1.f;
-		device->SetClipPlane(2, v);
-		// bottom
-		v[1] = -1.f;
-		device->SetClipPlane(3, v);
-
-		verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
-		void *ptr;
-		verifyWin(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
-		memcpy(ptr, pvrrc.verts.head(), pvrrc.verts.bytes());
-		vertexBuffer->Unlock();
-		verify(ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes()));
-		verifyWin(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
-		memcpy(ptr, pvrrc.idx.head(), pvrrc.idx.bytes());
-		indexBuffer->Unlock();
-
-		if (config::ModifierVolumes && pvrrc.modtrig.used())
-		{
-			verify(ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes()));
-			verifyWin(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
-			memcpy(ptr, pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
-			modvolBuffer->Unlock();
-		}
-
-		updateFogTexture();
-		updatePaletteTexture();
-
-		devCache.SetVertexShader(shaders.getVertexShader(true));
-
-		// VERT and RAM fog color constants
-		float ps_FOG_COL_VERT[4];
-		float ps_FOG_COL_RAM[4];
-		FOG_COL_VERT.getRGBColor(ps_FOG_COL_VERT);
-		FOG_COL_RAM.getRGBColor(ps_FOG_COL_RAM);
-		device->SetPixelShaderConstantF(1, ps_FOG_COL_VERT, 1);
-		device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
-
-		// Fog density and scale constants
-		float fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
-		float fogDensityAndScale[4]= { fog_den_float, 1.f - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 1 };
-		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
-
-		// Color clamping
-		float color_clamp[4];
-		pvrrc.fog_clamp_min.getRGBAColor(color_clamp);
-		device->SetPixelShaderConstantF(6, color_clamp, 1);
-		pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
-		device->SetPixelShaderConstantF(7, color_clamp, 1);
-
-		devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-
-		device->SetVertexDeclaration(mainVtxDecl);
-		device->SetStreamSource(0, vertexBuffer, 0, sizeof(Vertex));
-		device->SetIndices(indexBuffer);
-
-		devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-		devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-
-		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
-
-		setBaseScissor();
-
-		if (!SUCCEEDED(device->BeginScene()))
-		{
-			WARN_LOG(RENDERER, "Render: BeginScene failed!");
-			return false;
-		}
-		drawStrips();
-		device->EndScene();
-		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
+		verify(ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes()));
+		verifyWin(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
+		memcpy(ptr, pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		modvolBuffer->Unlock();
 	}
-	else
+
+	updateFogTexture();
+	updatePaletteTexture();
+
+	devCache.SetVertexShader(shaders.getVertexShader(true));
+
+	// VERT and RAM fog color constants
+	float ps_FOG_COL_VERT[4];
+	float ps_FOG_COL_RAM[4];
+	FOG_COL_VERT.getRGBColor(ps_FOG_COL_VERT);
+	FOG_COL_RAM.getRGBColor(ps_FOG_COL_RAM);
+	device->SetPixelShaderConstantF(1, ps_FOG_COL_VERT, 1);
+	device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
+
+	// Fog density and scale constants
+	float fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
+	float fogDensityAndScale[4]= { fog_den_float, 1.f - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 1 };
+	device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
+
+	// Color clamping
+	float color_clamp[4];
+	pvrrc.fog_clamp_min.getRGBAColor(color_clamp);
+	device->SetPixelShaderConstantF(6, color_clamp, 1);
+	pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
+	device->SetPixelShaderConstantF(7, color_clamp, 1);
+
+	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+
+	device->SetVertexDeclaration(mainVtxDecl);
+	device->SetStreamSource(0, vertexBuffer, 0, sizeof(Vertex));
+	device->SetIndices(indexBuffer);
+
+	devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+	devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+
+	devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+	devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
+
+	setBaseScissor();
+
+	if (!SUCCEEDED(device->BeginScene()))
 	{
-		renderDCFramebuffer();
+		WARN_LOG(RENDERER, "Render: BeginScene failed!");
+		return false;
 	}
+	drawStrips();
+	device->EndScene();
+	devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 
 	verifyWin(device->SetRenderTarget(0, backbuffer));
 
@@ -1071,9 +1082,13 @@ bool D3DRenderer::Render()
 	{
 		readRttRenderTarget(texAddress);
 	}
+	else if (config::EmulateFramebuffer)
+	{
+		writeFramebufferToVRAM();
+	}
 	else
 	{
-		renderFramebuffer();
+		displayFramebuffer();
 		DrawOSD(false);
 		frameRendered = true;
 		frameRenderedOnce = true;
@@ -1083,7 +1098,7 @@ bool D3DRenderer::Render()
 	return !is_rtt;
 }
 
-void D3DRenderer::Resize(int w, int h)
+void D3DRenderer::resize(int w, int h)
 {
 	if (width == (u32)w && height == (u32)h)
 		return;
@@ -1099,7 +1114,7 @@ void D3DRenderer::Resize(int w, int h)
 	frameRenderedOnce = false;
 }
 
-void D3DRenderer::renderFramebuffer()
+void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
@@ -1164,7 +1179,7 @@ bool D3DRenderer::RenderLastFrame()
 		return false;
 	backbuffer.reset();
 	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
-	renderFramebuffer();
+	displayFramebuffer();
 
 	return true;
 }
@@ -1221,6 +1236,75 @@ void D3DRenderer::DrawOSD(bool clear_screen)
 	theDXContext.setOverlay(!clear_screen);
 	gui_display_osd();
 	theDXContext.setOverlay(false);
+}
+
+void D3DRenderer::writeFramebufferToVRAM()
+{
+	u32 width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+
+	float xscale = SCALER_CTL.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / SCALER_CTL.vscalefactor;
+	if (std::abs(yscale - 1.f) < 0.01)
+		yscale = 1.f;
+
+	ComPtr<IDirect3DSurface9> fbSurface = framebufferSurface;
+
+	if (xscale != 1.f || yscale != 1.f)
+	{
+		u32 scaledW = width * xscale;
+		u32 scaledH = height * yscale;
+
+		if (fbScaledTexture)
+		{
+			D3DSURFACE_DESC desc;
+			fbScaledTexture->GetLevelDesc(0, &desc);
+			if (desc.Width != scaledW || desc.Height != scaledH)
+			{
+				fbScaledTexture.reset();
+				fbScaledSurface.reset();
+			}
+		}
+		if (!fbScaledTexture)
+		{
+			device->CreateTexture(scaledW, scaledH, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &fbScaledTexture.get(), NULL);
+			fbScaledTexture->GetSurfaceLevel(0, &fbScaledSurface.get());
+		}
+		device->StretchRect(framebufferSurface, nullptr, fbScaledSurface, nullptr, D3DTEXF_LINEAR);
+
+		width = scaledW;
+		height = scaledH;
+		fbSurface = fbScaledSurface;
+	}
+	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
+	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+
+	ComPtr<IDirect3DSurface9> offscreenSurface;
+	verifyWin(device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
+	verifyWin(device->GetRenderTargetData(fbSurface, offscreenSurface));
+
+	PixelBuffer<u32> tmp_buf;
+	tmp_buf.init(width, height);
+
+	u8 *p = (u8 *)tmp_buf.data();
+	D3DLOCKED_RECT rect;
+	RECT lockRect { 0, 0, (long)width, (long)height };
+	verifyWin(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+	if ((u32)rect.Pitch == width * sizeof(u32))
+		memcpy(p, rect.pBits, width * height * sizeof(u32));
+	else
+	{
+		u8 *src = (u8 *)rect.pBits;
+		for (u32 y = 0; y < height; y++)
+		{
+			memcpy(p, src, width * sizeof(u32));
+			src += rect.Pitch;
+			p += width * sizeof(u32);
+		}
+	}
+	verifyWin(offscreenSurface->UnlockRect());
+
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
 }
 
 Renderer* rend_DirectX9()

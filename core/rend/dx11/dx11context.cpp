@@ -302,7 +302,6 @@ void DX11Context::handleDeviceLost()
 	term();
 	init(true);
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 #endif // !LIBRETRO
 

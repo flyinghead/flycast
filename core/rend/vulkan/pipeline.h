@@ -420,6 +420,15 @@ public:
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
+	void Term()
+	{
+		descriptorSet.reset();
+		pipeline.reset();
+		sampler.reset();
+		pipelineLayout.reset();
+		descSetLayout.reset();
+	}
+
 	vk::Pipeline GetPipeline()
 	{
 		if (!pipeline)

@@ -1276,7 +1276,6 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 
 static bool ta_parse_vdrc(TA_context* ctx)
 {
-	ctx->rend_inuse.lock();
 	bool rv=false;
 	verify(vd_ctx == nullptr);
 	vd_ctx = ctx;
@@ -1352,7 +1351,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 	bool overrun = vd_ctx->rend.Overrun;
 	if (overrun)
 		WARN_LOG(PVR, "ERROR: TA context overrun");
-	else if (config::RenderResolution > 480)
+	else if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
 	{
 		fix_texture_bleeding(&vd_rc.global_param_op);
 		fix_texture_bleeding(&vd_rc.global_param_pt);
@@ -1369,7 +1368,6 @@ static bool ta_parse_vdrc(TA_context* ctx)
 	}
 
 	vd_ctx = nullptr;
-	ctx->rend_inuse.unlock();
 
 	ctx->rend.Overrun = overrun;
 
@@ -1378,8 +1376,6 @@ static bool ta_parse_vdrc(TA_context* ctx)
 
 static bool ta_parse_naomi2(TA_context* ctx)
 {
-	ctx->rend_inuse.lock();
-
 	for (PolyParam& pp : ctx->rend.global_param_op)
 	{
 		if (pp.pcw.Texture)
@@ -1434,7 +1430,6 @@ static bool ta_parse_naomi2(TA_context* ctx)
 		ctx->rend.fb_Y_CLIP.min = std::max(ctx->rend.fb_Y_CLIP.min, ymin);
 		ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
 	}
-	ctx->rend_inuse.unlock();
 
 	return !overrun;
 }
