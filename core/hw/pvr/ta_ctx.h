@@ -415,6 +415,7 @@ void ta_set_tileclip(u32 tileclip);
 u32 ta_get_list_type();
 void ta_set_list_type(u32 listType);
 void ta_parse_reset();
+void getRegionTileAddrAndSize(u32& address, u32& size);
 
 class TAParserException : public FlycastException
 {

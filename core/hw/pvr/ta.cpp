@@ -467,10 +467,20 @@ static u32 opbSize(int n)
 
 static void markObjectListBlocks()
 {
-	u32 addr = TA_OL_BASE;
+	u32 addr;
+	u32 tile_size;
+	getRegionTileAddrAndSize(addr, tile_size);
+
+	// Read the opaque pointer of the first tile and check that it's non-null (Naomi doom)
+	u32 opbAddr = pvr_read32p<u32>(addr + 4);
+	bool emptyOpaqueList = (opbAddr & 0x80000000) != 0;
+
+	addr = TA_OL_BASE;
 	// opaque
 	u32 opBlockSize = opbSize(TA_ALLOC_CTRL & 3);
-	if (opBlockSize == 0)
+	if (emptyOpaqueList)
+		addr += opBlockSize * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
+	if (opBlockSize == 0 || emptyOpaqueList)
 	{
 		// skip modvols OPBs
 		addr += opbSize((TA_ALLOC_CTRL >> 4) & 3) * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);

@@ -1767,7 +1767,7 @@ void FillBGP(TA_context* ctx)
 	cv[3].v = max_v;
 }
 
-static void getRegionTileAddrAndSize(u32& address, u32& size)
+void getRegionTileAddrAndSize(u32& address, u32& size)
 {
 	address = REGION_BASE;
 	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
