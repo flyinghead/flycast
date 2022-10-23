@@ -118,6 +118,11 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 
+#ifdef __vita__
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+#endif
 	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
