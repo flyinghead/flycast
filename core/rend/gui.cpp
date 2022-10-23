@@ -481,6 +481,10 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
+#ifdef __vita__
+	// FIXME: Workaround to get the json database be generated at all
+	gui_save();
+#endif
 	gui_state = GuiState::Loading;
 	gameLoader.load(path);
 }

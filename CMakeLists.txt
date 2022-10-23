@@ -1599,10 +1599,10 @@ if(NOT LIBRETRO)
 			endif()
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH OR VITA)
-	    if(NOT BUILD_TESTING)
-	        target_sources(${PROJECT_NAME} PRIVATE
-	                core/linux-dist/main.cpp)
-	    endif()
+		if(NOT BUILD_TESTING)
+			target_sources(${PROJECT_NAME} PRIVATE
+				core/linux-dist/main.cpp)
+		endif()
 	elseif(WIN32)
 		if(NOT BUILD_TESTING)
 			target_sources(${PROJECT_NAME} PRIVATE

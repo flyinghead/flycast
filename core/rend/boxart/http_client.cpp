@@ -80,13 +80,29 @@ void term()
 #endif	// !TARGET_UWP
 
 #else
+#ifdef __vita__
+#include <vitasdk.h>
+void *net_mem;
+#endif
 #include <curl/curl.h>
 
 namespace http {
 
 void init()
 {
+#ifdef __vita__
+	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+	int ret = sceNetShowNetstat();
+	SceNetInitParam initparam;
+	if (ret == SCE_NET_ERROR_ENOTINIT) {
+		initparam.memory = net_mem = malloc(141 * 1024);
+		initparam.size = 141 * 1024;
+		initparam.flags = 0;
+		sceNetInit(&initparam);
+	}
+#else
 	curl_global_init(CURL_GLOBAL_ALL);
+#endif
 }
 
 static size_t receiveData(void *buffer, size_t size, size_t nmemb, std::vector<u8> *recvBuffer)
@@ -129,7 +145,12 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 
 void term()
 {
+#ifdef __vita__
+	sceNetTerm();
+	free(net_mem);
+#else
 	curl_global_cleanup();
+#endif
 }
 
 }
