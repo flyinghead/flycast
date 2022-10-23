@@ -52,7 +52,7 @@ public:
 
 	// recording untested
 
-	bool initRecord(u32 sampling_freq)
+	bool initRecord(u32 sampling_freq) override
 	{
 		recordFD = open("/dev/dsp", O_RDONLY);
 		if (recordFD < 0)

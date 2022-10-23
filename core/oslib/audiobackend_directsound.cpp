@@ -225,7 +225,7 @@ public:
 		return (p1bytes + p2bytes) / 2;
 	}
 
-	void termRecord()
+	void termRecord() override
 	{
 		if (!dcapture)
 			return;

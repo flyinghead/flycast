@@ -17,10 +17,6 @@ public:
 		return true;
 	}
 
-	void term() override
-	{
-	}
-
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
 		if (wait)
@@ -52,21 +48,4 @@ public:
 private:
 	the_clock::time_point last_time;
 };
-
 static NullAudioBackend nullBackend;
-
-/*
-static audiobackend_t audiobackend_null = {
-    "null", // Slug
-    "No Audio", // Name
-    &null_init,
-    &null_push,
-    &null_term,
-	nullptr,
-	&null_init_record,
-	&null_record,
-	&null_term
-};
-
-static bool null = RegisterAudioBackend(&audiobackend_null);
-*/
