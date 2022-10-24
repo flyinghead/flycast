@@ -44,8 +44,13 @@ Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
+#ifdef __vita__
+Option<bool> FetchBoxart("FetchBoxart", false);
+Option<bool> BoxartDisplayMode("BoxartDisplayMode", false);
+#else
 Option<bool> FetchBoxart("FetchBoxart", true);
 Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
+#endif
 
 // Sound
 
