@@ -672,9 +672,10 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 		else
 		{
+			aspectRatio = getOutputFramebufferAspectRatio(pvrrc);
 #ifndef LIBRETRO
 			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
-			renderFramebuffer();
+			displayFramebuffer();
 			DrawOSD(false);
 			theDX11Context.setFrameRendered();
 #else

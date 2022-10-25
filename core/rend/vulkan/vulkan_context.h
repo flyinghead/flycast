@@ -59,7 +59,7 @@ public:
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -136,7 +136,7 @@ private:
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	void InitImgui();
 	void DoSwapAutomation();
-	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
+	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
 	vk::SurfaceKHR GetSurface() const { return *surface; }
 
 	bool HasSurfaceDimensionChanged() const;
@@ -206,6 +206,7 @@ private:
 
 	vk::ImageView lastFrameView;
 	vk::Extent2D lastFrameExtent;
+	float lastFrameAR = 0.f;
 
 	std::unique_ptr<VulkanOverlay> overlay;
 	// only used to delay the destruction of overlay textures

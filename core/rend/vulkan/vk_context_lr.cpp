@@ -290,7 +290,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	return true;
 }
 
-void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent)
+void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
 	retro_image.image_view = (VkImageView)imageView;
 	retro_image.create_info.image = (VkImage)image;

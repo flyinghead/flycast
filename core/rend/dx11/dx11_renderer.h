@@ -93,7 +93,7 @@ protected:
 	void updateFogTexture();
 	void updatePaletteTexture();
 	void readRttRenderTarget(u32 texAddress);
-	void renderFramebuffer();
+	void displayFramebuffer();
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
@@ -122,6 +122,7 @@ protected:
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;
+	float aspectRatio = 4.f / 3.f;
 
 private:
 	void readDCFramebuffer();

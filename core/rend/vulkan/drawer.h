@@ -287,7 +287,7 @@ public:
 			return false;
 		frameRendered = false;
 		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
-				colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
+				colorAttachments[GetCurrentImage()]->GetImageView(), viewport, aspectRatio);
 
 		return true;
 	}
@@ -309,6 +309,7 @@ private:
 	std::vector<bool> transitionNeeded;
 	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
+	float aspectRatio = 0.f;
 };
 
 class TextureDrawer : public Drawer

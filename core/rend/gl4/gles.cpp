@@ -941,7 +941,7 @@ static bool RenderFrame(int width, int height)
 		writeFramebufferToVRAM();
 #ifndef LIBRETRO
 	else {
-		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
 		render_output_framebuffer();
 	}
 #endif

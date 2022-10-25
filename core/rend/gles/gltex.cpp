@@ -440,7 +440,11 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, GLuint textu
 #endif
 		}
 	}
+	makeFramebuffer(withDepth);
+}
 
+void GlFramebuffer::makeFramebuffer(bool withDepth)
+{
 	// Create the framebuffer
 	glGenFramebuffers(1, &framebuffer);
 	bind();
@@ -489,6 +493,33 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, GLuint textu
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 	else
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
+}
+
+GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, bool withTexture)
+{
+	if (gl.gl_major < 3 || withTexture)
+	{
+		// Create a texture for rendering to
+		texture = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, texture);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	else
+	{
+		// Use a renderbuffer and glBlitFramebuffer
+		glGenRenderbuffers(1, &colorBuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+#ifdef GL_RGBA8
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+#endif
+	}
+
+	makeFramebuffer(withDepth);
 }
 
 GlFramebuffer::~GlFramebuffer()

@@ -443,9 +443,10 @@ bool DX11Renderer::Render()
 	}
 	else
 	{
+		aspectRatio = getOutputFramebufferAspectRatio(pvrrc);
 #ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
-		renderFramebuffer();
+		displayFramebuffer();
 		DrawOSD(false);
 		theDX11Context.setFrameRendered();
 #else
@@ -461,7 +462,7 @@ bool DX11Renderer::Render()
 	return !is_rtt;
 }
 
-void DX11Renderer::renderFramebuffer()
+void DX11Renderer::displayFramebuffer()
 {
 #ifndef LIBRETRO
 	D3D11_VIEWPORT vp{};
@@ -479,10 +480,12 @@ void DX11Renderer::renderFramebuffer()
 	deviceContext->ClearRenderTargetView(theDX11Context.getRenderTarget(), colors);
 	int outwidth = settings.display.width;
 	int outheight = settings.display.height;
-	float renderAR = getOutputFramebufferAspectRatio();
-	float screenAR = (float)outwidth / outheight;
-	if (config::Rotate90)
+	float renderAR = aspectRatio;
+	if (config::Rotate90) {
 		std::swap(outwidth, outheight);
+		renderAR = 1 / renderAR;
+	}
+	float screenAR = (float)outwidth / outheight;
 	int dy = 0;
 	int dx = 0;
 	if (renderAR > screenAR)
@@ -874,7 +877,7 @@ bool DX11Renderer::RenderLastFrame()
 {
 	if (!frameRenderedOnce)
 		return false;
-	renderFramebuffer();
+	displayFramebuffer();
 	return true;
 }
 
@@ -952,9 +955,10 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	float bar = (this->width - this->height * 640.f / 480.f) / 2.f;
 	quad->draw(dcfbTextureView, samplers->getSampler(true), nullptr, bar / this->width * 2.f - 1.f, -1.f, (this->width - bar * 2.f) / this->width * 2.f, 2.f);
 
+	aspectRatio = getDCFramebufferAspectRatio();
 #ifndef LIBRETRO
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
-	renderFramebuffer();
+	displayFramebuffer();
 	DrawOSD(false);
 	theDX11Context.setFrameRendered();
 #else

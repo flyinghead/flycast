@@ -227,6 +227,8 @@ struct rend_context
 	bool Overrun;
 	bool isRTT;
 	
+	TA_GLOB_TILE_CLIP_type ta_GLOB_TILE_CLIP;
+	SCALER_CTL_type scaler_ctl;
 	FB_X_CLIP_type fb_X_CLIP;
 	FB_Y_CLIP_type fb_Y_CLIP;
 	u32 fb_W_LINESTRIDE;

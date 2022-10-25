@@ -20,7 +20,7 @@ void retro_rend_present()
 		sh4_cpu.Stop();
 }
 #endif
-void retro_resize_renderer(int w, int h);
+void retro_resize_renderer(int w, int h, float aspectRatio);
 
 u32 FrameCount=1;
 
@@ -175,7 +175,8 @@ private:
 		bool renderToScreen = !_pvrrc->rend.isRTT && !config::EmulateFramebuffer;
 #ifdef LIBRETRO
 		if (renderToScreen)
-			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight);
+			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
+					getOutputFramebufferAspectRatio(_pvrrc->rend));
 #endif
 		bool proc = renderer->Process(_pvrrc);
 		if (!proc || renderToScreen)
@@ -198,8 +199,8 @@ private:
 	{
 #ifdef LIBRETRO
 		int w, h;
-		getTAViewport(w, h); 		// FIXME ?
-		retro_resize_renderer(w, h);
+		getDCFramebufferReadSize(w, h);
+		retro_resize_renderer(w, h, getDCFramebufferAspectRatio());
 #endif
 		renderer->RenderFramebuffer(config);
 	}
@@ -344,6 +345,8 @@ void rend_start_render()
 	ctx->rend.fb_W_SOF1 = FB_W_SOF1;
 	ctx->rend.fb_W_CTRL.full = FB_W_CTRL.full;
 
+	ctx->rend.ta_GLOB_TILE_CLIP = TA_GLOB_TILE_CLIP;
+	ctx->rend.scaler_ctl = SCALER_CTL;
 	ctx->rend.fb_X_CLIP = FB_X_CLIP;
 	ctx->rend.fb_Y_CLIP = FB_Y_CLIP;
 	ctx->rend.fb_W_LINESTRIDE = FB_W_LINESTRIDE.stride;
@@ -354,7 +357,7 @@ void rend_start_render()
 	if (!ctx->rend.isRTT)
 	{
 		int width, height;
-		getScaledFramebufferSize(width, height);
+		getScaledFramebufferSize(ctx->rend, width, height);
 		ctx->rend.framebufferWidth = width;
 		ctx->rend.framebufferHeight = height;
 	}

@@ -165,6 +165,7 @@ static int framebufferWidth;
 static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
+static float framebufferAspectRatio = 4.f / 3.f;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -600,7 +601,7 @@ static bool set_variable_visibility(void)
 
 static void setGameGeometry(retro_game_geometry& geometry)
 {
-	geometry.aspect_ratio = getOutputFramebufferAspectRatio();
+	geometry.aspect_ratio = framebufferAspectRatio;
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
 	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
@@ -622,12 +623,13 @@ void setAVInfo(retro_system_av_info& avinfo)
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
 }
 
-void retro_resize_renderer(int w, int h)
+void retro_resize_renderer(int w, int h, float aspectRatio)
 {
 	if (w == framebufferWidth && h == framebufferHeight)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
+	framebufferAspectRatio = aspectRatio;
 	bool avinfoNeeded = framebufferHeight > maxFramebufferHeight || framebufferWidth > maxFramebufferWidth;
 	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
 	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);

@@ -744,6 +744,7 @@ void ScreenDrawer::EndRenderPass()
 	{
 		currentCommandBuffer.end();
 		commandPool->EndFrame();
+		aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
 	}
 	currentCommandBuffer = nullptr;
 	Drawer::EndRenderPass();

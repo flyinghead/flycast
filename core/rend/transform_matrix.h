@@ -26,22 +26,22 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-inline static void getTAViewport(int& width, int& height)
+inline static void getTAViewport(const rend_context& rendCtx, int& width, int& height)
 {
-	width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	width = (rendCtx.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	height = (rendCtx.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 }
 
-inline static void getPvrFramebufferSize(int& width, int& height)
+inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width, int& height)
 {
-	getTAViewport(width, height);
+	getTAViewport(rendCtx, width, height);
 	if (!config::EmulateFramebuffer)
 	{
 		int maxHeight = FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0 ? 240 : 480;
-		if (SCALER_CTL.vscalefactor != 0
-				&& (SCALER_CTL.vscalefactor > 1025 || SCALER_CTL.vscalefactor < 1024)
+		if (rendCtx.scaler_ctl.vscalefactor != 0
+				&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
 				&& SPG_CONTROL.interlace == 0)
-			maxHeight /= 1024.f / SCALER_CTL.vscalefactor;
+			maxHeight /= 1024.f / rendCtx.scaler_ctl.vscalefactor;
 		if (FB_R_CTRL.fb_line_double)
 			maxHeight /= 2;
 		height = std::min(maxHeight, height);
@@ -72,7 +72,7 @@ public:
 	bool IsClipped() const
 	{
 		int width, height;
-		getTAViewport(width, height);
+		getTAViewport(*renderingContext, width, height);
 		float sx, sy;
 		GetScissorScaling(sx,  sy);
 		return renderingContext->fb_X_CLIP.min != 0
@@ -120,7 +120,7 @@ public:
 		else
 		{
 			int w, h;
-			getPvrFramebufferSize(w, h);
+			getPvrFramebufferSize(*renderingContext, w, h);
 			dcViewport.x = w;
 			dcViewport.y = h;
 
@@ -217,17 +217,17 @@ private:
 
 		if (!renderingContext->isRTT && !config::EmulateFramebuffer)
 		{
-			if (SCALER_CTL.vscalefactor > 0x400)
-				scale_y *= std::round(SCALER_CTL.vscalefactor / 1024.f);
-			if (SCALER_CTL.hscale)
+			if (renderingContext->scaler_ctl.vscalefactor > 0x400)
+				scale_y *= std::round(renderingContext->scaler_ctl.vscalefactor / 1024.f);
+			if (renderingContext->scaler_ctl.hscale)
 				scale_x *= 2.f;
 		}
 		else if (config::EmulateFramebuffer)
 		{
-			if (SCALER_CTL.hscale)
+			if (renderingContext->scaler_ctl.hscale)
 				scale_x *= 2.f;
-			if (SCALER_CTL.vscalefactor > 0x401 || SCALER_CTL.vscalefactor < 0x400)
-				scale_y *= SCALER_CTL.vscalefactor / 1024.f;
+			if (renderingContext->scaler_ctl.vscalefactor > 0x401 || renderingContext->scaler_ctl.vscalefactor < 0x400)
+				scale_y *= renderingContext->scaler_ctl.vscalefactor / 1024.f;
 		}
 	}
 
@@ -241,9 +241,9 @@ private:
 	float sidebarWidth = 0;
 };
 
-inline static void getScaledFramebufferSize(int& width, int& height)
+inline static void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height)
 {
-	getPvrFramebufferSize(width, height);
+	getPvrFramebufferSize(rendCtx, width, height);
 	if (!config::EmulateFramebuffer)
 	{
 		float upscaling = config::RenderResolution / 480.f;
@@ -264,25 +264,25 @@ inline static void getScaledFramebufferSize(int& width, int& height)
 	}
 }
 
-inline static float getOutputFramebufferAspectRatio()
+inline static float getOutputFramebufferAspectRatio(const rend_context& rendCtx)
 {
 	int w,h;
-	getPvrFramebufferSize(w, h);
+	getPvrFramebufferSize(rendCtx, w, h);
 
 	float width = w;
 	float height = h;
 	width *= 1 + VO_CONTROL.pixel_double;
-	width /= 1 + SCALER_CTL.hscale;
+	width /= 1 + rendCtx.scaler_ctl.hscale;
 	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
 	height *= 1 + (FB_R_CTRL.fb_line_double);
-	if (SCALER_CTL.vscalefactor != 0
-			&& (SCALER_CTL.vscalefactor > 1025 || SCALER_CTL.vscalefactor < 1024)
+	if (rendCtx.scaler_ctl.vscalefactor != 0
+			&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
 			&& SPG_CONTROL.interlace == 0)
 	{
 		if (config::EmulateFramebuffer)
-			height *= 1024.f / SCALER_CTL.vscalefactor;
-		else if (SCALER_CTL.vscalefactor > 1025)
-			height *= std::round(1024.f / SCALER_CTL.vscalefactor);
+			height *= 1024.f / rendCtx.scaler_ctl.vscalefactor;
+		else if (rendCtx.scaler_ctl.vscalefactor > 1025)
+			height *= std::round(1024.f / rendCtx.scaler_ctl.vscalefactor);
 
 	}
 
@@ -304,10 +304,10 @@ inline static float getOutputFramebufferAspectRatio()
 	return renderAR * config::ScreenStretching / 100.f;
 }
 
-inline static float getDCFramebufferAspectRatio()
+inline static void getDCFramebufferReadSize(int& width, int& height)
 {
-	int width = FB_R_SIZE.fb_x_size + 1;     // in 32-bit words
-	int height = FB_R_SIZE.fb_y_size + 1;
+	width = FB_R_SIZE.fb_x_size + 1;     // in 32-bit words
+	height = FB_R_SIZE.fb_y_size + 1;
 
 	switch (FB_R_CTRL.fb_depth)
 	{
@@ -322,6 +322,14 @@ inline static float getDCFramebufferAspectRatio()
 		default:
 			break;
 	}
+}
+
+inline static float getDCFramebufferAspectRatio()
+{
+	int width;
+	int height;
+	getDCFramebufferReadSize(width, height);
+
 	width *= 1 + VO_CONTROL.pixel_double;
 	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
 	height *= 1 + (FB_R_CTRL.fb_line_double);

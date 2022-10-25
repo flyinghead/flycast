@@ -157,6 +157,7 @@ class GlFramebuffer
 {
 public:
 	GlFramebuffer(int width, int height, bool withDepth = false, GLuint texture = 0);
+	GlFramebuffer(int width, int height, bool withDepth, bool withTexture);
 	~GlFramebuffer();
 
 	void bind(GLenum type = GL_FRAMEBUFFER) const {
@@ -175,6 +176,8 @@ public:
 	GLuint getFramebuffer() const { return framebuffer; }
 
 private:
+	void makeFramebuffer(bool withDepth);
+
 	int width;
 	int height;
 	GLuint texture;

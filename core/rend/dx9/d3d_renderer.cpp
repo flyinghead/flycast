@@ -287,6 +287,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	RECT rd{ (LONG)bar, 0, (LONG)(this->width - bar), (LONG)this->height };
 	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
 
+	aspectRatio = getDCFramebufferAspectRatio();
 	displayFramebuffer();
 	DrawOSD(false);
 	frameRendered = true;
@@ -1088,6 +1089,7 @@ bool D3DRenderer::Render()
 	}
 	else
 	{
+		aspectRatio = getOutputFramebufferAspectRatio(pvrrc);
 		displayFramebuffer();
 		DrawOSD(false);
 		frameRendered = true;
@@ -1118,14 +1120,13 @@ void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
-	float renderAR = getOutputFramebufferAspectRatio();
 	float screenAR = (float)settings.display.width / settings.display.height;
 	int dx = 0;
 	int dy = 0;
-	if (renderAR > screenAR)
-		dy = (int)roundf(settings.display.height * (1 - screenAR / renderAR) / 2.f);
+	if (aspectRatio > screenAR)
+		dy = (int)roundf(settings.display.height * (1 - screenAR / aspectRatio) / 2.f);
 	else
-		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);
+		dx = (int)roundf(settings.display.width * (1 - aspectRatio / screenAR) / 2.f);
 
 	if (!config::Rotate90)
 	{

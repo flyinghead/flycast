@@ -823,7 +823,7 @@ void VulkanContext::Present() noexcept
 			if (lastFrameView && IsValid() && !gui_is_open())
 				for (int i = 1; i < swapInterval; i++)
 				{
-					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent);
+					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 					currentSemaphore = (currentSemaphore + 1) % imageViews.size();
 				}
@@ -847,7 +847,7 @@ void VulkanContext::Present() noexcept
 		}
 }
 
-void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
 	QuadVertex vtx[] = {
 		{ { -1, -1, 0 }, { 0, 0 } },
@@ -862,14 +862,13 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float renderAR = getOutputFramebufferAspectRatio();
 	float screenAR = (float)width / height;
 	float dx = 0;
 	float dy = 0;
-	if (renderAR > screenAR)
-		dy = height * (1 - screenAR / renderAR) / 2;
+	if (aspectRatio > screenAR)
+		dy = height * (1 - screenAR / aspectRatio) / 2;
 	else
-		dx = width * (1 - renderAR / screenAR) / 2;
+		dx = width * (1 - aspectRatio / screenAR) / 2;
 
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, 1, &viewport);
@@ -928,10 +927,11 @@ vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 
 extern Renderer *renderer;
 
-void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept
+void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept
 {
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
+	lastFrameAR = aspectRatio;
 
 	if (imageView && IsValid())
 	{
@@ -942,7 +942,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
-				DrawFrame(imageView, extent);
+				DrawFrame(imageView, extent, aspectRatio);
 
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
@@ -955,7 +955,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 void VulkanContext::PresentLastFrame()
 {
 	if (lastFrameView && IsValid())
-		DrawFrame(lastFrameView, lastFrameExtent);
+		DrawFrame(lastFrameView, lastFrameExtent, lastFrameAR);
 }
 
 void VulkanContext::term()

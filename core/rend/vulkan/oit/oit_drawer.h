@@ -167,7 +167,7 @@ public:
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
 		MakeFramebuffers(viewport);
-		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport);
+		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport, 0);
 	}
 	void Term()
 	{
@@ -190,6 +190,7 @@ public:
 		{
 			currentCommandBuffer.end();
 			commandPool->EndFrame();
+			aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
 		}
 		currentCommandBuffer = nullptr;
 		OITDrawer::EndFrame();
@@ -202,7 +203,7 @@ public:
 			return false;
 		frameRendered = false;
 		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImage(),
-				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
+				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent, aspectRatio);
 
 		return true;
 	}
@@ -220,6 +221,7 @@ private:
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
+	float aspectRatio = 0.f;
 };
 
 class OITTextureDrawer : public OITDrawer

@@ -373,13 +373,16 @@ void do_swap_automation()
 	static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
 	extern bool do_screenshot;
 
+	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
+	if (framebuffer == nullptr)
+		return;
+	int bytesz = framebuffer->getWidth() * framebuffer->getHeight() * 3;
 	if (video_file)
 	{
-		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		framebuffer->bind(GL_READ_FRAMEBUFFER);
+		glReadPixels(0, 0, framebuffer->getWidth(), framebuffer->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, img);
 		fwrite(img, 1, bytesz, video_file);
 		delete[] img;
 		fflush(video_file);
@@ -387,13 +390,12 @@ void do_swap_automation()
 
 	if (do_screenshot)
 	{
-		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		framebuffer->bind(GL_READ_FRAMEBUFFER);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
-		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
+		glReadPixels(0, 0, framebuffer->getWidth(), framebuffer->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, img);
+		dump_screenshot(img, framebuffer->getWidth(), framebuffer->getHeight());
 		delete[] img;
 		dc_exit();
 		flycast_term();
@@ -1380,7 +1382,7 @@ bool RenderFrame(int width, int height)
 		writeFramebufferToVRAM();
 #ifndef LIBRETRO
 	else {
-		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
 		render_output_framebuffer();
 	}
 #endif

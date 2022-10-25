@@ -23,6 +23,7 @@
 #include "pipeline.h"
 #include "rend/osd.h"
 #include "overlay.h"
+#include "rend/transform_matrix.h"
 #ifndef LIBRETRO
 #include "rend/gui.h"
 #endif
@@ -77,7 +78,7 @@ public:
 	void Term() override
 	{
 		GetContext()->WaitIdle();
-		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D());
+		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D(), 0);
 #ifdef LIBRETRO
 		overlay->Term();
 		overlay.reset();
@@ -304,7 +305,8 @@ protected:
 		Texture *fbTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()].get();
 		if (fbTexture == nullptr)
 			return false;
-		GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize());
+		GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize(),
+				getDCFramebufferAspectRatio());
 		return true;
 	}
 

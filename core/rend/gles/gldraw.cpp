@@ -708,7 +708,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 		gl.ofbo2.framebuffer.reset();
 
 	if (gl.ofbo2.framebuffer == nullptr)
-		gl.ofbo2.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(gl.dcfb.width, gl.dcfb.height));
+		gl.ofbo2.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(gl.dcfb.width, gl.dcfb.height, false, true));
 	else
 		gl.ofbo2.framebuffer->bind();
 	glCheck();
