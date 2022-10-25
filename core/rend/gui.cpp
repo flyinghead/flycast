@@ -483,7 +483,8 @@ void gui_start_game(const std::string& path)
 	scanner.stop();
 #ifdef __vita__
 	// FIXME: Workaround to get the json database be generated at all
-	gui_save();
+	if (config::BoxartDisplayMode)
+		gui_save();
 #endif
 	gui_state = GuiState::Loading;
 	gameLoader.load(path);
@@ -2276,6 +2277,9 @@ static void gui_display_settings()
 	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
 	            		"Run the emulated CPU and GPU on different threads");
+#ifdef __vita__
+				OptionCheckbox("Fast GDRom Load", config::FastGDRomLoad, "Enables fast GDRom loading for smaller loading times.");
+#endif
 #ifndef __ANDROID
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
