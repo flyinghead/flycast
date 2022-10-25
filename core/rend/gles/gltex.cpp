@@ -496,6 +496,7 @@ void GlFramebuffer::makeFramebuffer(bool withDepth)
 }
 
 GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, bool withTexture)
+	: width(width), height(height), texture(0)
 {
 	if (gl.gl_major < 3 || withTexture)
 	{

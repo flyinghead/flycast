@@ -105,11 +105,11 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 
 void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB)
 {
-	u32 width = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = (pvrrc.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (pvrrc.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 
-	float xscale = SCALER_CTL.hscale == 1 ? 0.5f : 1.f;
-	float yscale = 1024.f / SCALER_CTL.vscalefactor;
+	float xscale = pvrrc.scaler_ctl.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / pvrrc.scaler_ctl.vscalefactor;
 	if (std::abs(yscale - 1.f) < 0.01f)
 		yscale = 1.f;
 
