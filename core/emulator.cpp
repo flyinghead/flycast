@@ -93,7 +93,9 @@ static void loadSpecialSettings()
 				// JSR (JP)
 				|| prod_id == "HDR-0078"
 				// JSR (EU)
-				|| prod_id == "MK-5105850")
+				|| prod_id == "MK-5105850"
+				// Worms World Party
+				|| prod_id == "T7016D  50")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);

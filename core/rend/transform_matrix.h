@@ -226,8 +226,13 @@ private:
 		{
 			if (renderingContext->scaler_ctl.hscale)
 				scale_x *= 2.f;
+			// vscalefactor is applied after scissoring if > 1
 			if (renderingContext->scaler_ctl.vscalefactor > 0x401 || renderingContext->scaler_ctl.vscalefactor < 0x400)
-				scale_y *= renderingContext->scaler_ctl.vscalefactor / 1024.f;
+			{
+				float vscalefactor = 1024.f / renderingContext->scaler_ctl.vscalefactor;
+				if (vscalefactor < 1)
+					scale_y /= vscalefactor;
+			}
 		}
 	}
 
@@ -264,44 +269,28 @@ inline static void getScaledFramebufferSize(const rend_context& rendCtx, int& wi
 	}
 }
 
-inline static float getOutputFramebufferAspectRatio(const rend_context& rendCtx)
+inline static float getOutputFramebufferAspectRatio()
 {
-	int w,h;
-	getPvrFramebufferSize(rendCtx, w, h);
-
-	float width = w;
-	float height = h;
-	width *= 1 + VO_CONTROL.pixel_double;
-	width /= 1 + rendCtx.scaler_ctl.hscale;
-	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
-	height *= 1 + (FB_R_CTRL.fb_line_double);
-	if (rendCtx.scaler_ctl.vscalefactor != 0
-			&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
-			&& SPG_CONTROL.interlace == 0)
-	{
-		if (config::EmulateFramebuffer)
-			height *= 1024.f / rendCtx.scaler_ctl.vscalefactor;
-		else if (rendCtx.scaler_ctl.vscalefactor > 1025)
-			height *= std::round(1024.f / rendCtx.scaler_ctl.vscalefactor);
-
-	}
-
-	float renderAR = width / height;
+	float aspectRatio;
 	if (config::Rotate90)
 	{
-		renderAR = 1 / renderAR;
+		aspectRatio = 3.f / 4.f;
 	}
 	else
 	{
 		if (config::Widescreen && !config::EmulateFramebuffer)
 		{
 			if (config::SuperWidescreen)
-				renderAR = (float)settings.display.width / settings.display.height;
+				aspectRatio = (float)settings.display.width / settings.display.height;
 			else
-				renderAR *= 4 / 3.f;
+				aspectRatio = 16.f / 9.f;
+		}
+		else
+		{
+			aspectRatio = 4.f / 3.f;
 		}
 	}
-	return renderAR * config::ScreenStretching / 100.f;
+	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
 inline static void getDCFramebufferReadSize(int& width, int& height)
@@ -326,16 +315,6 @@ inline static void getDCFramebufferReadSize(int& width, int& height)
 
 inline static float getDCFramebufferAspectRatio()
 {
-	int width;
-	int height;
-	getDCFramebufferReadSize(width, height);
-
-	width *= 1 + VO_CONTROL.pixel_double;
-	height *= 1 + (FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0);
-	height *= 1 + (FB_R_CTRL.fb_line_double);
-	height *= 1 + SPG_CONTROL.interlace;
-	float aspectRatio = (float)width / height;
-	if (config::Rotate90)
-		aspectRatio = 1 / aspectRatio;
+	float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;
 	return aspectRatio * config::ScreenStretching / 100.f;
 }

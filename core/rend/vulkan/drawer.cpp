@@ -114,6 +114,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 		yscale = 1.f;
 
 	FramebufferAttachment *scaledFB = nullptr;
+	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
+	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -140,6 +142,11 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 		finalFB = scaledFB;
 		width = scaledW;
 		height = scaledH;
+		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
+		if (yscale > 1) {
+			yClip.min = std::round(yClip.min * yscale);
+			yClip.max = std::round(yClip.max * yscale);
+		}
 	}
 
 	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
@@ -167,8 +174,12 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	tmpBuf.init(width, height);
 	finalFB->GetBufferData()->download(width * height * 4, tmpBuf.data());
 
+	xClip.min = std::min(xClip.min, width - 1);
+	xClip.max = std::min(xClip.max, width - 1);
+	yClip.min = std::min(yClip.min, height - 1);
+	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), pvrrc.fb_W_SOF1 & VRAM_MASK,
-			pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+			pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8, xClip, yClip);
 
 	delete scaledFB;
 }
@@ -744,7 +755,7 @@ void ScreenDrawer::EndRenderPass()
 	{
 		currentCommandBuffer.end();
 		commandPool->EndFrame();
-		aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
+		aspectRatio = getOutputFramebufferAspectRatio();
 	}
 	currentCommandBuffer = nullptr;
 	Drawer::EndRenderPass();

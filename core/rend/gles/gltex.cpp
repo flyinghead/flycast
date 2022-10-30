@@ -199,6 +199,8 @@ GLuint BindRTT(bool withDepthBuffer)
 	return gl.rtt.framebuffer->getFramebuffer();
 }
 
+constexpr u32 MAGIC_NUMBER = 0xbaadf00d;
+
 void ReadRTTBuffer()
 {
 	u32 w = pvrrc.getFramebufferWidth();
@@ -242,6 +244,8 @@ void ReadRTTBuffer()
 		{
 			gl.rtt.directXfer = true;
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+			if (dst == nullptr)
+				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
 		}
 		else
 		{
@@ -250,6 +254,7 @@ void ReadRTTBuffer()
 			{
 				gl.rtt.fb_w_ctrl = pvrrc.fb_W_CTRL;
 				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
 			}
 			else
 			{
@@ -303,13 +308,16 @@ static void readAsyncPixelBuffer(u32 addr)
 		return;
 	}
 	u16 *dst = (u16 *)&vram[tex_addr];
-
-	if (gl.rtt.directXfer)
-		// Can be read directly into vram
-		memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
-	else
-		WriteTextureToVRam(gl.rtt.width, gl.rtt.height, ptr, dst, gl.rtt.fb_w_ctrl, gl.rtt.linestride);
-
+	// Make sure the vram region hasn't been overwritten already, otherwise we skip the copy
+	// (Worms World Party intro)
+	if (*(u32 *)dst == MAGIC_NUMBER)
+	{
+		if (gl.rtt.directXfer)
+			// Can be read directly into vram
+			memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
+		else
+			WriteTextureToVRam(gl.rtt.width, gl.rtt.height, ptr, dst, gl.rtt.fb_w_ctrl, gl.rtt.linestride);
+	}
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 #endif

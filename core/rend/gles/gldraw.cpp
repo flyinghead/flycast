@@ -747,6 +747,8 @@ void writeFramebufferToVRAM()
 	float yscale = 1024.f / pvrrc.scaler_ctl.vscalefactor;
 	if (std::abs(yscale - 1.f) < 0.01)
 		yscale = 1.f;
+	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
+	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -761,6 +763,7 @@ void writeFramebufferToVRAM()
 
 		gl.ofbo.framebuffer->bind(GL_READ_FRAMEBUFFER);
 		gl.fbscaling.framebuffer->bind(GL_DRAW_FRAMEBUFFER);
+		glcache.Disable(GL_SCISSOR_TEST);
 		glBlitFramebuffer(0, 0, width, height,
 				0, 0, scaledW, scaledH,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -768,6 +771,11 @@ void writeFramebufferToVRAM()
 
 		width = scaledW;
 		height = scaledH;
+		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
+		if (yscale > 1) {
+			yClip.min = std::round(yClip.min * yscale);
+			yClip.max = std::round(yClip.max * yscale);
+		}
 	}
 	u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 
@@ -780,7 +788,11 @@ void writeFramebufferToVRAM()
 	u8 *p = (u8 *)tmp_buf.data();
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-	WriteFramebuffer(width, height, p, tex_addr, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+	xClip.min = std::min(xClip.min, width - 1);
+	xClip.max = std::min(xClip.max, width - 1);
+	yClip.min = std::min(yClip.min, height - 1);
+	yClip.max = std::min(yClip.max, height - 1);
+	WriteFramebuffer(width, height, p, tex_addr, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	glCheck();

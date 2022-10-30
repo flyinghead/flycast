@@ -443,7 +443,7 @@ bool DX11Renderer::Render()
 	}
 	else
 	{
-		aspectRatio = getOutputFramebufferAspectRatio(pvrrc);
+		aspectRatio = getOutputFramebufferAspectRatio();
 #ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
@@ -1197,6 +1197,8 @@ void DX11Renderer::writeFramebufferToVRAM()
 		yscale = 1.f;
 
 	ComPtr<ID3D11Texture2D> fbTexture = fbTex;
+	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
+	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -1236,6 +1238,11 @@ void DX11Renderer::writeFramebufferToVRAM()
 		width = scaledW;
 		height = scaledH;
 		fbTexture = fbScaledTexture;
+		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
+		if (yscale > 1) {
+			yClip.min = std::round(yClip.min * yscale);
+			yClip.max = std::round(yClip.max * yscale);
+		}
 	}
 	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
@@ -1281,7 +1288,11 @@ void DX11Renderer::writeFramebufferToVRAM()
 	}
 	deviceContext->Unmap(stagingTex, 0);
 
-	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+	xClip.min = std::min(xClip.min, width - 1);
+	xClip.max = std::min(xClip.max, width - 1);
+	yClip.min = std::min(yClip.min, height - 1);
+	yClip.max = std::min(yClip.max, height - 1);
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
 }
 
 Renderer *rend_DirectX11()

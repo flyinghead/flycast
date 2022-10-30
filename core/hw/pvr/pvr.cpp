@@ -29,6 +29,7 @@
 // ta.cpp
 extern u8 ta_fsm[2049];	//[2048] stores the current state
 extern u32 ta_fsm_cl;
+extern u32 taRenderPass;
 // pvr_regs.cpp
 extern bool fog_needs_update;
 extern bool pal_needs_update;
@@ -72,6 +73,7 @@ void serialize(Serializer& ser)
 
 	ser << ta_fsm[2048];
 	ser << ta_fsm_cl;
+	ser << taRenderPass;
 
 	SerializeTAContext(ser);
 
@@ -106,6 +108,10 @@ void deserialize(Deserializer& deser)
 
 	deser >> ta_fsm[2048];
 	deser >> ta_fsm_cl;
+	if (deser.version() >= Deserializer::V29)
+		deser >> taRenderPass;
+	else
+		taRenderPass = 0;
 	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() < Deserializer::V9_LIBRETRO)
 	{
 		deser.skip<bool>();		// pal_needs_update

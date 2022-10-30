@@ -100,7 +100,7 @@ public:
 
 	bool Present() override
 	{
-		if (config::EmulateFramebuffer)
+		if (config::EmulateFramebuffer || framebufferRendered)
 			return presentFramebuffer();
 		else
 			return screenDrawer.PresentFrame();

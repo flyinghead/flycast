@@ -190,7 +190,7 @@ public:
 		{
 			currentCommandBuffer.end();
 			commandPool->EndFrame();
-			aspectRatio = getOutputFramebufferAspectRatio(_pvrrc->rend);
+			aspectRatio = getOutputFramebufferAspectRatio();
 		}
 		currentCommandBuffer = nullptr;
 		OITDrawer::EndFrame();

@@ -1089,7 +1089,7 @@ bool D3DRenderer::Render()
 	}
 	else
 	{
-		aspectRatio = getOutputFramebufferAspectRatio(pvrrc);
+		aspectRatio = getOutputFramebufferAspectRatio();
 		displayFramebuffer();
 		DrawOSD(false);
 		frameRendered = true;
@@ -1250,6 +1250,8 @@ void D3DRenderer::writeFramebufferToVRAM()
 		yscale = 1.f;
 
 	ComPtr<IDirect3DSurface9> fbSurface = framebufferSurface;
+	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
+	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -1276,6 +1278,11 @@ void D3DRenderer::writeFramebufferToVRAM()
 		width = scaledW;
 		height = scaledH;
 		fbSurface = fbScaledSurface;
+		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
+		if (yscale > 1) {
+			yClip.min = std::round(yClip.min * yscale);
+			yClip.max = std::round(yClip.max * yscale);
+		}
 	}
 	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
@@ -1305,7 +1312,11 @@ void D3DRenderer::writeFramebufferToVRAM()
 	}
 	verifyWin(offscreenSurface->UnlockRect());
 
-	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, pvrrc.fb_X_CLIP, pvrrc.fb_Y_CLIP);
+	xClip.min = std::min(xClip.min, width - 1);
+	xClip.max = std::min(xClip.max, width - 1);
+	yClip.min = std::min(yClip.min, height - 1);
+	yClip.max = std::min(yClip.max, height - 1);
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
 }
 
 Renderer* rend_DirectX9()

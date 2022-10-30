@@ -137,7 +137,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	case TA_LIST_INIT_addr:
 		if (data >> 31)
 		{
-			ta_vtx_ListInit();
+			ta_vtx_ListInit(false);
 			TA_NEXT_OPB = TA_NEXT_OPB_INIT;
 			TA_ITP_CURRENT = TA_ISP_BASE;
 		}
@@ -150,7 +150,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case TA_LIST_CONT_addr:
 		//a write of anything works ?
-		ta_vtx_ListInit();
+		ta_vtx_ListInit(true);
 		break;
 	
 	case SPG_CONTROL_addr:

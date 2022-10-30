@@ -176,7 +176,7 @@ private:
 #ifdef LIBRETRO
 		if (renderToScreen)
 			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
-					getOutputFramebufferAspectRatio(_pvrrc->rend));
+					getOutputFramebufferAspectRatio());
 #endif
 		bool proc = renderer->Process(_pvrrc);
 		if (!proc || renderToScreen)
@@ -330,8 +330,12 @@ void rend_start_render()
 				linkedCtx->nextContext = tactx_Pop(addresses[i]);
 				if (linkedCtx->nextContext != nullptr)
 					linkedCtx = linkedCtx->nextContext;
+				else
+					INFO_LOG(PVR, "rend_start_render: Context%d @ %x not found", i, addresses[i]);
 			}
 		}
+		else
+			INFO_LOG(PVR, "rend_start_render: Context0 @ %x not found", addresses[0]);
 	}
 
 	scheduleRenderDone(ctx);

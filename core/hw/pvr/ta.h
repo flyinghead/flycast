@@ -8,7 +8,7 @@ constexpr u32 SZ64 = 2;
 
 struct TA_context;
 
-void ta_vtx_ListInit();
+void ta_vtx_ListInit(bool continuation);
 void ta_vtx_SoftReset();
 
 void DYNACALL ta_vtx_data32(const SQBuffer *data);

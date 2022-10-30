@@ -145,6 +145,8 @@ public:
 			CheckFogTexture();
 			CheckPaletteTexture();
 			texCommandBuffer.end();
+			if (!ctx->rend.isRTT)
+				framebufferRendered = false;
 		}
 		else
 		{
@@ -246,6 +248,7 @@ public:
 		curTexture->SetCommandBuffer(nullptr);
 		commandBuffer.end();
 		fbCommandPool.EndFrame();
+		framebufferRendered = true;
 	}
 
 protected:
@@ -324,6 +327,7 @@ protected:
 	std::unique_ptr<QuadPipeline> quadPipeline;
 	std::unique_ptr<QuadDrawer> framebufferDrawer;
 	CommandPool fbCommandPool;
+	bool framebufferRendered = false;
 #ifdef LIBRETRO
 	std::unique_ptr<VulkanOverlay> overlay;
 #endif
