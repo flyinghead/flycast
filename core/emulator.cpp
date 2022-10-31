@@ -202,10 +202,7 @@ static void loadSpecialSettings()
 			|| prod_id == "T9503D"		// The Grinch (EU)
 			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
-			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
-			|| prod_id == "T40506D 50"	// KISS (EU)
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
