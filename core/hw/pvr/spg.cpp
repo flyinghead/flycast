@@ -270,7 +270,20 @@ void spg_Reset(bool hard)
 void scheduleRenderDone(TA_context *cntx)
 {
 	if (cntx)
-		sh4_sched_request(render_end_schid, 500000 * 3);
+	{
+		int cycles;
+		if (settings.platform.isNaomi2()) {
+			cycles = 1500000;
+		}
+		else
+		{
+			int size = 0;
+			for (TA_context *c = cntx; c != nullptr; c = c->nextContext)
+				size += c->tad.thd_data - c->tad.thd_root;
+			cycles = std::min(100000 + size * 2, 1500000);
+		}
+		sh4_sched_request(render_end_schid, cycles);
+	}
 	else
 		sh4_sched_request(render_end_schid, 4096);
 }
