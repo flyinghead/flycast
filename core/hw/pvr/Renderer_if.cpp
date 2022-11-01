@@ -12,15 +12,10 @@
 #include <mutex>
 #include <deque>
 
+#ifdef LIBRETRO
 void retro_rend_present();
-#ifndef LIBRETRO
-void retro_rend_present()
-{
-	if (!config::ThreadedRendering)
-		sh4_cpu.Stop();
-}
-#endif
 void retro_resize_renderer(int w, int h, float aspectRatio);
+#endif
 
 u32 FrameCount=1;
 
@@ -151,19 +146,18 @@ private:
 		{
 		case Render:
 			render();
-			break;
+			return true;
 		case RenderFramebuffer:
 			renderFramebuffer(msg.config);
-			break;
+			return true;
 		case Present:
 			present();
-			break;
+			return true;
 		case Stop:
-			return false;
+		case NoMessage:
 		default:
-			break;
+			return false;
 		}
-		return true;
 	}
 
 	void render()
@@ -188,6 +182,8 @@ private:
 			renderer->Render();
 			if (!renderToScreen)
 				renderEnd.Set();
+			else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
+				present();
 		}
 
 		//clear up & free data ..
@@ -210,7 +206,11 @@ private:
 		if (renderer->Present())
 		{
 			presented = true;
+			if (!config::ThreadedRendering)
+				sh4_cpu.Stop();
+#ifdef LIBRETRO
 			retro_rend_present();
+#endif
 		}
 	}
 
@@ -337,6 +337,8 @@ void rend_start_render()
 		else
 			INFO_LOG(PVR, "rend_start_render: Context0 @ %x not found", addresses[0]);
 	}
+	else
+		INFO_LOG(PVR, "rend_start_render: No context not found");
 
 	scheduleRenderDone(ctx);
 

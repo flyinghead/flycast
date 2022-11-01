@@ -2231,10 +2231,7 @@ unsigned retro_api_version()
 void retro_rend_present()
 {
 	if (!config::ThreadedRendering)
-	{
 		is_dupe = false;
-		sh4_cpu.Stop();
-	}
 }
 
 static uint32_t get_time_ms()
