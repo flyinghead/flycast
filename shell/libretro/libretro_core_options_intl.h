@@ -513,7 +513,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_AR },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_AR },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_AR },
 #endif
          { NULL, NULL },
@@ -524,7 +524,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_AR,
@@ -2048,7 +2048,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_AST },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_AST },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_AST },
 #endif
          { NULL, NULL },
@@ -2059,7 +2059,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_AST,
@@ -3583,7 +3583,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CA },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_CA },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_CA },
 #endif
          { NULL, NULL },
@@ -3594,7 +3594,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CA,
@@ -5118,7 +5118,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CHS },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_CHS },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_CHS },
 #endif
          { NULL, NULL },
@@ -5129,7 +5129,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CHS,
@@ -6653,7 +6653,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CHT },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_CHT },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_CHT },
 #endif
          { NULL, NULL },
@@ -6664,7 +6664,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CHT,
@@ -8188,7 +8188,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CS },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_CS },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_CS },
 #endif
          { NULL, NULL },
@@ -8199,7 +8199,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CS,
@@ -9723,7 +9723,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CY },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_CY },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_CY },
 #endif
          { NULL, NULL },
@@ -9734,7 +9734,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CY,
@@ -11258,7 +11258,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_DA },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_DA },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_DA },
 #endif
          { NULL, NULL },
@@ -11269,7 +11269,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_DA,
@@ -12793,7 +12793,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_DE },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_DE },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_DE },
 #endif
          { NULL, NULL },
@@ -12804,7 +12804,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_DE,
@@ -14328,7 +14328,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_EL },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_EL },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_EL },
 #endif
          { NULL, NULL },
@@ -14339,7 +14339,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_EL,
@@ -15863,7 +15863,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_EO },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_EO },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_EO },
 #endif
          { NULL, NULL },
@@ -15874,7 +15874,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_EO,
@@ -17398,7 +17398,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_ES },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_ES },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_ES },
 #endif
          { NULL, NULL },
@@ -17409,7 +17409,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_ES,
@@ -18933,7 +18933,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_FA },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_FA },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_FA },
 #endif
          { NULL, NULL },
@@ -18944,7 +18944,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_FA,
@@ -20468,7 +20468,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_FI },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_FI },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_FI },
 #endif
          { NULL, NULL },
@@ -20479,7 +20479,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_FI,
@@ -22003,7 +22003,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_FR },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_FR },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_FR },
 #endif
          { NULL, NULL },
@@ -22014,7 +22014,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_FR,
@@ -23538,7 +23538,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GL },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_GL },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_GL },
 #endif
          { NULL, NULL },
@@ -23549,7 +23549,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL,
@@ -25073,7 +25073,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HE },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_HE },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_HE },
 #endif
          { NULL, NULL },
@@ -25084,7 +25084,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HE,
@@ -26608,7 +26608,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_HU },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_HU },
 #endif
          { NULL, NULL },
@@ -26619,7 +26619,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HU,
@@ -28143,7 +28143,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_ID },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_ID },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_ID },
 #endif
          { NULL, NULL },
@@ -28154,7 +28154,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_ID,
@@ -29678,7 +29678,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_IT },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_IT },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_IT },
 #endif
          { NULL, NULL },
@@ -29689,7 +29689,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_IT,
@@ -31213,7 +31213,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_JA },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_JA },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_JA },
 #endif
          { NULL, NULL },
@@ -31224,7 +31224,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_JA,
@@ -32748,7 +32748,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_KO },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_KO },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_KO },
 #endif
          { NULL, NULL },
@@ -32759,7 +32759,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_KO,
@@ -34283,7 +34283,7 @@ struct retro_core_option_v2_definition option_defs_mt[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_MT },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_MT },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_MT },
 #endif
          { NULL, NULL },
@@ -34294,7 +34294,7 @@ struct retro_core_option_v2_definition option_defs_mt[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_MT,
@@ -35818,7 +35818,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_NL },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_NL },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_NL },
 #endif
          { NULL, NULL },
@@ -35829,7 +35829,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_NL,
@@ -37353,7 +37353,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_NO },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_NO },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_NO },
 #endif
          { NULL, NULL },
@@ -37364,7 +37364,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_NO,
@@ -38888,7 +38888,7 @@ struct retro_core_option_v2_definition option_defs_oc[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_OC },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_OC },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_OC },
 #endif
          { NULL, NULL },
@@ -38899,7 +38899,7 @@ struct retro_core_option_v2_definition option_defs_oc[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_OC,
@@ -40423,7 +40423,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PL },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_PL },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_PL },
 #endif
          { NULL, NULL },
@@ -40434,7 +40434,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PL,
@@ -41958,7 +41958,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PT_BR },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_PT_BR },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_PT_BR },
 #endif
          { NULL, NULL },
@@ -41969,7 +41969,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_BR,
@@ -43493,7 +43493,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PT_PT },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_PT_PT },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_PT_PT },
 #endif
          { NULL, NULL },
@@ -43504,7 +43504,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_PT,
@@ -45028,7 +45028,7 @@ struct retro_core_option_v2_definition option_defs_ro[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RO },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_RO },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_RO },
 #endif
          { NULL, NULL },
@@ -45039,7 +45039,7 @@ struct retro_core_option_v2_definition option_defs_ro[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RO,
@@ -46563,7 +46563,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RU },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_RU },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_RU },
 #endif
          { NULL, NULL },
@@ -46574,7 +46574,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RU,
@@ -48098,7 +48098,7 @@ struct retro_core_option_v2_definition option_defs_si[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SI },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_SI },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_SI },
 #endif
          { NULL, NULL },
@@ -48109,7 +48109,7 @@ struct retro_core_option_v2_definition option_defs_si[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SI,
@@ -49633,7 +49633,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SK },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_SK },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_SK },
 #endif
          { NULL, NULL },
@@ -49644,7 +49644,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SK,
@@ -51168,7 +51168,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SR },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_SR },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_SR },
 #endif
          { NULL, NULL },
@@ -51179,7 +51179,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SR,
@@ -52703,7 +52703,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_SV },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_SV },
 #endif
          { NULL, NULL },
@@ -52714,7 +52714,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SV,
@@ -54238,7 +54238,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TR },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_TR },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_TR },
 #endif
          { NULL, NULL },
@@ -54249,7 +54249,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TR,
@@ -55773,7 +55773,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_UK },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_UK },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_UK },
 #endif
          { NULL, NULL },
@@ -55784,7 +55784,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_UK,
@@ -57308,7 +57308,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_VAL },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_VAL },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_VAL },
 #endif
          { NULL, NULL },
@@ -57319,7 +57319,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_VAL,
@@ -58843,7 +58843,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       {
          { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_VN },
          { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_VN },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
          { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_VN },
 #endif
          { NULL, NULL },
@@ -58854,7 +58854,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "per-triangle (normal)",
 #endif
    },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_VN,

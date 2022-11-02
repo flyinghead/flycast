@@ -103,9 +103,9 @@ public:
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
 	void DrawOverlay(float scaling, bool vmu, bool crosshair);
-	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
+	void SubmitCommandBuffers(const std::vector<vk::CommandBuffer> &buffers, vk::Fence fence) {
 		graphicsQueue.submit(
-				vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers), fence);
+				vk::SubmitInfo(nullptr, nullptr, buffers), fence);
 	}
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool recreateSwapChainIfNeeded();

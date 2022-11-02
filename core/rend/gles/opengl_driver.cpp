@@ -68,7 +68,8 @@ OpenGLDriver::~OpenGLDriver()
 		texIds.push_back((GLuint)(uintptr_t)crosshairTexId);
 	for (const auto& it : textures)
 		texIds.push_back((GLuint)(uintptr_t)it.second);
-	glcache.DeleteTextures(texIds.size(), &texIds[0]);
+	if (!texIds.empty())
+		glcache.DeleteTextures(texIds.size(), &texIds[0]);
 	ImGui_ImplOpenGL3_Shutdown();
 }
 

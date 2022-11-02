@@ -22,7 +22,7 @@
 
 vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 {
-    vk::AttachmentDescription attachmentDescriptions[] = {
+    std::array<vk::AttachmentDescription, 4> attachmentDescriptions = {
     		// Swap chain image
     		GetAttachment0Description(initial, last),
 			// OP+PT color attachment
@@ -52,23 +52,23 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     vk::AttachmentReference depthReference2(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
     vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-    vk::SubpassDescription subpasses[] = {
+    std::array<vk::SubpassDescription, 3> subpasses = {
     	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-    			0, nullptr,
-				1, &colorReference,
+    			nullptr,
+				colorReference,
 				nullptr,
 				&depthReference),
     	// Color pass
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-    			1, &depthReadOnlyRef,
-				1, &colorReference,
+    			depthReadOnlyRef,
+				colorReference,
 				nullptr,
 				&depthReference2),
     	// Final pass
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-    			1, &colorInput,
-				1, &swapChainReference,
+    			colorInput,
+				swapChainReference,
 				nullptr,
 				&depthReference2),	// depth-only Tr pass when continuation
     };
@@ -99,8 +99,8 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 			vk::DependencyFlagBits::eByRegion);
 
     return GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-    		ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-    		ARRAY_SIZE(subpasses), subpasses,
-			dependencies.size(), dependencies.data()));
+    		attachmentDescriptions,
+    		subpasses,
+			dependencies));
 }
 

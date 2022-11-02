@@ -62,13 +62,13 @@ public:
 	{
 		static vk::DescriptorBufferInfo pixelBufferInfo({}, 0, VK_WHOLE_SIZE);
 		pixelBufferInfo.buffer = *pixelBuffer->buffer;
-		writeDescSets.emplace_back(descSet, 7, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
+		writeDescSets.emplace_back(descSet, 7, 0, vk::DescriptorType::eStorageBuffer, nullptr, pixelBufferInfo);
 		static vk::DescriptorBufferInfo pixelCounterBufferInfo({}, 0, 4);
 		pixelCounterBufferInfo.buffer = *pixelCounter->buffer;
-		writeDescSets.emplace_back(descSet, 8, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
+		writeDescSets.emplace_back(descSet, 8, 0, vk::DescriptorType::eStorageBuffer, nullptr, pixelCounterBufferInfo);
 		static vk::DescriptorBufferInfo abufferPointerInfo({}, 0, VK_WHOLE_SIZE);
 		abufferPointerInfo.buffer = *abufferPointer->buffer;
-		writeDescSets.emplace_back(descSet, 9, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &abufferPointerInfo, nullptr);
+		writeDescSets.emplace_back(descSet, 9, 0, vk::DescriptorType::eStorageBuffer, nullptr, abufferPointerInfo);
 	}
 
 	void OnNewFrame(vk::CommandBuffer commandBuffer)
@@ -85,7 +85,7 @@ public:
 	void ResetPixelCounter(vk::CommandBuffer commandBuffer)
 	{
     	vk::BufferCopy copy(0, 0, sizeof(int));
-    	commandBuffer.copyBuffer(*pixelCounterReset->buffer, *pixelCounter->buffer, 1, &copy);
+    	commandBuffer.copyBuffer(*pixelCounterReset->buffer, *pixelCounter->buffer, copy);
 	}
 
 	void Term()

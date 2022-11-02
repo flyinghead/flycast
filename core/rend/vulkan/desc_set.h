@@ -58,7 +58,7 @@ public:
 		{
 			std::vector<vk::DescriptorSetLayout> layouts(allocChunk, layout);
 			descSets = VulkanContext::Instance()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(VulkanContext::Instance()->GetDescriptorPool(), (u32)layouts.size(), &layouts[0]));
+					vk::DescriptorSetAllocateInfo(VulkanContext::Instance()->GetDescriptorPool(), layouts));
 		}
 		descSetsInFlight[index].emplace_back(std::move(descSets.back()));
 		descSets.pop_back();

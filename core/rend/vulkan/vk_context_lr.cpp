@@ -185,9 +185,9 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	physicalDevice.getProperties(&props);
 
 	NOTICE_LOG(RENDERER, "GPU Supports Vulkan API: %u.%u.%u",
-			VK_VERSION_MAJOR(props.apiVersion),
-			VK_VERSION_MINOR(props.apiVersion),
-			VK_VERSION_PATCH(props.apiVersion));
+			VK_API_VERSION_MAJOR(props.apiVersion),
+			VK_API_VERSION_MINOR(props.apiVersion),
+			VK_API_VERSION_PATCH(props.apiVersion));
 	if (VK_VERSION_MINOR(props.apiVersion) >= 1 && ::vkGetPhysicalDeviceFormatProperties2 != nullptr)
 	{
 		NOTICE_LOG(RENDERER, "GPU Supports vkGetPhysicalDeviceProperties2");
@@ -234,22 +234,22 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	ShaderCompiler::Init();
 
 	// Descriptor pool
-	vk::DescriptorPoolSize pool_sizes[] =
+	std::array<vk::DescriptorPoolSize, 11> pool_sizes =
 	{
-			{ vk::DescriptorType::eSampler, 2 },
-			{ vk::DescriptorType::eCombinedImageSampler, 40000 },
-			{ vk::DescriptorType::eSampledImage, 2 },
-			{ vk::DescriptorType::eStorageImage, 12 },
-			{ vk::DescriptorType::eUniformTexelBuffer, 2 },
-			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-			{ vk::DescriptorType::eUniformBuffer, 80000 },
-			{ vk::DescriptorType::eStorageBuffer, 50 },
-			{ vk::DescriptorType::eUniformBufferDynamic, 2 },
-			{ vk::DescriptorType::eStorageBufferDynamic, 2 },
-			{ vk::DescriptorType::eInputAttachment, 50 }
+			vk::DescriptorPoolSize(vk::DescriptorType::eSampler, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 40000),
+			vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageImage, 12),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageTexelBuffer, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 80000),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 50),
+			vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, 2),
+			vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, 50)
 	};
 	descriptorPool = device.createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-			40000, ARRAY_SIZE(pool_sizes), pool_sizes));
+			40000, pool_sizes));
 
 	std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
 	FILE *f = fopen(cachePath.c_str(), "rb");

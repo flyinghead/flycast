@@ -1676,7 +1676,7 @@ static void gui_display_settings()
 		    			"Enable modifier volumes, usually used for shadows");
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		    	if (!config::Widescreen)
 		    	{
 			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -1684,7 +1684,7 @@ static void gui_display_settings()
 		    	}
 		    	ImGui::Indent();
 		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 		    	ImGui::Unindent();
 		    	if (!config::Widescreen)
 		    	{
@@ -2352,7 +2352,7 @@ static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool all
 	return false;
 }
 
-static bool gameImageButton(ImTextureID textureId, const std::string& tooltip)
+static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, ImVec2 size)
 {
 	float ar = imguiDriver->getAspectRatio(textureId);
 	ImVec2 uv0 { 0.f, 0.f };
@@ -2368,7 +2368,7 @@ static bool gameImageButton(ImTextureID textureId, const std::string& tooltip)
 		uv0.x = -(ar - 1) / 2;
 		uv1.x = 1 + (ar - 1) / 2;
 	}
-	bool pressed = ImGui::ImageButton(textureId, ScaledVec2(200, 200) - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	bool pressed = ImGui::ImageButton(textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
 	gameTooltip(tooltip);
 
     return pressed;
@@ -2414,7 +2414,10 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		const int itemsPerLine = ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x);
+		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
+		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
+		
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -2437,9 +2440,9 @@ static void gui_display_content()
 						loadedImages++;
 				}
 				if (textureId != ImTextureID())
-					pressed = gameImageButton(textureId, "Dreamcast BIOS");
+					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
 				else
-					pressed = ImGui::Button("Dreamcast BIOS", ScaledVec2(200, 200));
+					pressed = ImGui::Button("Dreamcast BIOS", responsiveBoxVec2);
 			}
 			else
 			{
@@ -2487,10 +2490,10 @@ static void gui_display_content()
 								loadedImages++;
 						}
 						if (textureId != ImTextureID())
-							pressed = gameImageButton(textureId, game.name);
+							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
 						else
 						{
-							pressed = ImGui::Button(gameName.c_str(), ScaledVec2(200, 200));
+							pressed = ImGui::Button(gameName.c_str(), responsiveBoxVec2);
 							gameTooltip(game.name);
 						}
 					}

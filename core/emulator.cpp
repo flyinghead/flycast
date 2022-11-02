@@ -194,7 +194,8 @@ static void loadSpecialSettings()
 				|| prod_id == "T13003N"	 // Toy Story 2 (US)
 				|| prod_id == "T1209N"	 // Gigawing (US)
 				|| prod_id == "T1208M"	 // Gigawing (JP)
-				|| prod_id == "T1235M")) // Vampire Chronicle for Matching Service
+				|| prod_id == "T1235M"   // Vampire Chronicle for Matching Service
+				|| prod_id == "T22901N"))// Roadsters (US)
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
@@ -203,10 +204,7 @@ static void loadSpecialSettings()
 			|| prod_id == "T9503D"		// The Grinch (EU)
 			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
-			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
-			|| prod_id == "T40506D 50"	// KISS (EU)
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
@@ -354,7 +352,10 @@ void dc_reset(bool hard)
 {
 	NetworkHandshake::term();
 	if (hard)
+	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
+		memwatch::elanWatcher.unprotectMem(0, 0xffffffff);
+	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	libAICA_Reset(hard);
@@ -532,9 +533,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
-		if (settings.platform.isNaomi())
+		if (settings.platform.isNaomi()) {
 			// Must be done after the maple devices are created and EEPROM is accessible
 			naomi_cart_ConfigureEEPROM();
+			// and reload settings so that eeprom-based settings can be overridden
+			loadGameSpecificSettings();
+		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{

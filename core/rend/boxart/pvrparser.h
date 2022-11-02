@@ -120,7 +120,7 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 		WARN_LOG(COMMON, "Unsupported PVR pixel type: %d", pixelFormat);
 		return false;
 	}
-	DEBUG_LOG(COMMON, "PVR file: size %d pixelFmt %d imgType %d w %d h %d\n", size, pixelFormat, imgType, width, height);
+	DEBUG_LOG(COMMON, "PVR file: size %d pixelFmt %d imgType %d w %d h %d", size, pixelFormat, imgType, width, height);
 	u32 texU = 3;
 	while (1u << texU < width)
 		texU++;

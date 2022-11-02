@@ -134,7 +134,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
+	cmdBuffer.bindVertexBuffers(0, buffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
 	const ModifierVolumeParam *params = &modVolParams[first];
@@ -203,8 +203,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 			}
 		}
 	}
-	const vk::DeviceSize offset = 0;
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offset);
+	cmdBuffer.bindVertexBuffers(0, buffer, {0});
 }
 
 void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
@@ -294,8 +293,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	descriptorSets.updateColorInputDescSet(1, colorAttachments[1]->GetImageView());
 
 	// Bind vertex and index buffers
-	const vk::DeviceSize zeroOffset[] = { 0 };
-	cmdBuffer.bindVertexBuffers(0, 1, &mainBuffer, zeroOffset);
+	cmdBuffer.bindVertexBuffers(0, mainBuffer, {0});
 	cmdBuffer.bindIndexBuffer(mainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 	// Make sure to push constants even if not used
@@ -338,7 +336,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     		targetFramebuffer = GetFinalFramebuffer();
     	cmdBuffer.beginRenderPass(
     			vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(initialPass, finalPass),
-    					targetFramebuffer, viewport, clear_colors.size(), clear_colors.data()),
+    					targetFramebuffer, viewport, clear_colors),
     			vk::SubpassContents::eInline);
 
     	if (!pvrrc.isRTT && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
@@ -394,7 +392,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+					vk::DependencyFlagBits::eByRegion, memoryBarrier, nullptr, nullptr);
 			firstFrameAfterInit = false;
 		}
 		// Tr modifier volumes
@@ -414,7 +412,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (!finalPass)
 		{
 	    	// Re-bind vertex and index buffers
-	    	cmdBuffer.bindVertexBuffers(0, 1, &mainBuffer, zeroOffset);
+	    	cmdBuffer.bindVertexBuffers(0, mainBuffer, {0});
 	    	cmdBuffer.bindIndexBuffer(mainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 			// Tr depth-only pass
@@ -458,14 +456,14 @@ void OITDrawer::MakeBuffers(int width, int height)
 	}
 	needDepthTransition = true;
 
-	vk::ImageView attachments[] = {
+	std::array<vk::ImageView, 4> attachments = {
 			colorAttachments[1]->GetImageView(),
 			colorAttachments[0]->GetImageView(),
 			depthAttachments[0]->GetImageView(),
 			depthAttachments[1]->GetImageView(),
 	};
 	vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
-			ARRAY_SIZE(attachments), attachments, maxWidth, maxHeight, 1);
+			attachments, maxWidth, maxHeight, 1);
 	tempFramebuffers[0] = GetContext()->GetDevice().createFramebufferUnique(createInfo);
 	attachments[0] = attachments[1];
 	attachments[1] = colorAttachments[1]->GetImageView();
@@ -495,14 +493,14 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
 		finalColorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm,
 				usage);
-		vk::ImageView attachments[] = {
+		std::array<vk::ImageView, 4> attachments = {
 				finalColorAttachments.back()->GetImageView(),
 				colorAttachments[0]->GetImageView(),
 				depthAttachments[0]->GetImageView(),
 				depthAttachments[1]->GetImageView(),
 		};
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
-				ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
+				attachments, viewport.width, viewport.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 		transitionNeeded.push_back(true);
 		clearNeeded.push_back(true);
@@ -588,7 +586,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 
 	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
-	vk::ImageView imageViews[] = {
+	std::array<vk::ImageView, 4> imageViews = {
 		colorImageView,
 		colorAttachments[0]->GetImageView(),
 		depthAttachments[0]->GetImageView(),
@@ -596,7 +594,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	};
 	framebuffers.resize(GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+			rttPipelineManager->GetRenderPass(true, true), imageViews, widthPow2, heightPow2, 1));
 
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	u32 minX = pvrrc.fb_X_CLIP.min;
@@ -644,7 +642,7 @@ void OITTextureDrawer::EndFrame()
 	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
-		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
+		GetContext()->GetDevice().waitForFences(fence, true, UINT64_MAX);
 
 		u16 *dst = (u16 *)&vram[textureAddr];
 

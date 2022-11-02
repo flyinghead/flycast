@@ -474,7 +474,7 @@ static bool set_variable_visibility(void)
 		updated = true;
 	}
 
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
 	// Only for per-pixel renderers
 	bool oitWasEnabled = oitEnabled;
 	oitEnabled = false;

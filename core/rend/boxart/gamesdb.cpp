@@ -88,7 +88,7 @@ json TheGamesDb::httpGet(const std::string& url)
 		blackoutPeriod = os_GetSeconds() + 60.0;
 	else if (!success)
 		blackoutPeriod = os_GetSeconds() + 1.0;
-	if (!success)
+	if (!success || receivedData.empty())
 		throw std::runtime_error("http error");
 
 	std::string content((const char *)&receivedData[0], receivedData.size());
