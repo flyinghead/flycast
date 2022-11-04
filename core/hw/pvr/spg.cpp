@@ -55,6 +55,39 @@ void CalculateSync()
 	sh4_sched_request(vblank_schid, Line_Cycles);
 }
 
+static int getNextSpgInterrupt()
+{
+	u32 min_scanline = prv_cur_scanline + 1;
+	u32 min_active = pvr_numscanlines;
+
+	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
+		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_in_interrupt_line_number);
+
+	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
+		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_out_interrupt_line_number);
+
+	if (min_scanline < SPG_VBLANK.vstart)
+		min_active = std::min(min_active, SPG_VBLANK.vstart);
+
+	if (min_scanline < SPG_VBLANK.vbend)
+		min_active = std::min(min_active, SPG_VBLANK.vbend);
+
+	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
+		min_active = std::min(min_active, lightgun_line);
+
+	if (SPG_HBLANK_INT.hblank_int_mode == 0 && min_scanline < SPG_HBLANK_INT.line_comp_val)
+		min_active = std::min(min_active, SPG_HBLANK_INT.line_comp_val);
+
+	min_active = std::max(min_active, min_scanline);
+
+	return (min_active - prv_cur_scanline) * Line_Cycles;
+}
+
+void rescheduleSPG()
+{
+	sh4_sched_request(vblank_schid, getNextSpgInterrupt());
+}
+
 //called from sh4 context , should update pvr/ta state and everything else
 static int spg_line_sched(int tag, int cycl, int jit)
 {
@@ -190,37 +223,7 @@ static int spg_line_sched(int tag, int cycl, int jit)
 		}
 	}
 
-	//interrupts
-	//0
-	//vblank_in_interrupt_line_number
-	//vblank_out_interrupt_line_number
-	//vstart
-	//vbend
-	//pvr_numscanlines
-	u32 min_scanline=prv_cur_scanline+1;
-	u32 min_active=pvr_numscanlines;
-
-	if (min_scanline<SPG_VBLANK_INT.vblank_in_interrupt_line_number)
-		min_active = std::min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
-
-	if (min_scanline<SPG_VBLANK_INT.vblank_out_interrupt_line_number)
-		min_active = std::min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
-
-	if (min_scanline<SPG_VBLANK.vstart)
-		min_active = std::min(min_active,SPG_VBLANK.vstart);
-
-	if (min_scanline<SPG_VBLANK.vbend)
-		min_active = std::min(min_active,SPG_VBLANK.vbend);
-
-	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
-		min_active = std::min(min_active, lightgun_line);
-
-	if (SPG_HBLANK_INT.hblank_int_mode == 0 && min_scanline < SPG_HBLANK_INT.line_comp_val)
-		min_active = std::min(min_active, SPG_HBLANK_INT.line_comp_val);
-
-	min_active = std::max(min_active,min_scanline);
-
-	return (min_active - prv_cur_scanline) * Line_Cycles;
+	return getNextSpgInterrupt();
 }
 
 void read_lightgun_position(int x, int y)

@@ -205,6 +205,14 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		data &= 0x01fffffc;
 		break;
 
+	case SPG_HBLANK_INT_addr:
+		data &= 0x03FF33FF;
+		if (data != SPG_HBLANK_INT.full) {
+			SPG_HBLANK_INT.full = data;
+			rescheduleSPG();
+		}
+		return;
+
 	case PAL_RAM_CTRL_addr:
 		pal_needs_update = pal_needs_update || ((data ^ PAL_RAM_CTRL) & 3) != 0;
 		break;
