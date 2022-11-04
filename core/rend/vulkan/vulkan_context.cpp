@@ -736,7 +736,7 @@ bool VulkanContext::init()
 		int displayIndex = SDL_GetWindowDisplayIndex(sdlWin);
 		SDL_DisplayMode mode;
 		SDL_GetDisplayMode(displayIndex, 0, &mode);
-		if ( displayIndex == 0 && strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0 && mode.w == 1280 && mode.h == 800 )
+		if ( displayIndex == 0 && (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0 || strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0) && mode.w == 1280 && mode.h == 800 )
 			settings.display.dpi = 206;
 	}
 #endif
