@@ -388,6 +388,11 @@ static void reios_setup_state(u32 boot_addr)
 	aicaWriteReg(SCILV1_addr, (u8)0x50);
 	aicaWriteReg(SCILV2_addr, (u8)0x08);
 
+	// WinCE needs this to detect PAL
+	if (config::Broadcast == 1)
+		BSC_PDTRA.full = 4;
+	BSC_PCTRA.full = 0x000A03F0;
+
 	/*
 	Post Boot registers from actual bios boot
 	r
