@@ -72,17 +72,17 @@ void maple_vblank()
 
 static void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
-	if (data&1)
-		maple_ddt_pending_reset=false;
+	if (data & 1)
+		maple_ddt_pending_reset = false;
 }
 
 static void maple_SB_MDST_Write(u32 addr, u32 data)
 {
-	if (data & 0x1)
+	if (data & 1)
 	{
-		if (SB_MDEN &1)
+		if (SB_MDEN & 1)
 		{
-			SB_MDST=1;
+			SB_MDST = 1;
 			maple_DoDma();
 		}
 	}
@@ -90,12 +90,10 @@ static void maple_SB_MDST_Write(u32 addr, u32 data)
 
 static void maple_SB_MDEN_Write(u32 addr, u32 data)
 {
-	SB_MDEN=data&1;
+	SB_MDEN = data & 1;
 
-	if ((data & 0x1)==0  && SB_MDST)
-	{
+	if ((data & 1) == 0 && SB_MDST)
 		INFO_LOG(MAPLE, "Maple DMA abort ?");
-	}
 }
 
 #ifdef STRICT_MODE
@@ -121,23 +119,10 @@ static void maple_SB_MDSTAR_Write(u32 addr, u32 data)
 }
 #endif
 
-bool IsOnSh4Ram(u32 addr)
-{
-	if (((addr>>26)&0x7)==3)
-	{
-		if ((((addr>>29) &0x7)!=7))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 static void maple_DoDma()
 {
-	verify(SB_MDEN &1);
-	verify(SB_MDST &1);
+	verify(SB_MDEN & 1);
+	verify(SB_MDST & 1);
 
 	DEBUG_LOG(MAPLE, "Maple: DoMapleDma SB_MDSTAR=%x", SB_MDSTAR);
 	u32 addr = SB_MDSTAR;
@@ -153,18 +138,17 @@ static void maple_DoDma()
 	ggpo::getInput(mapleInputState);
 
 	const bool swap_msb = (SB_MMSEL == 0);
-	u32 xfer_count=0;
+	u32 xfer_count = 0;
 	bool last = false;
 	bool occupy = false;
-	while (last != true)
+	while (!last)
 	{
 		u32 header_1 = ReadMem32_nommu(addr);
-		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
+		u32 header_2 = ReadMem32_nommu(addr + 4) & 0x1FFFFFE0;
 
-		last = (header_1 >> 31) == 1;//is last transfer ?
-		u32 plen = (header_1 & 0xFF )+1;//transfer length (32-bit unit)
-		u32 maple_op=(header_1>>8)&7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
-		xfer_count+=plen*4;
+		last = (header_1 >> 31) == 1;		// is last transfer ?
+		u32 plen = (header_1 & 0xFF) + 1;	// transfer length (32-bit unit)
+		u32 maple_op = (header_1 >> 8) & 7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
 
 		//this is kinda wrong .. but meh
 		//really need to properly process the commands at some point
@@ -181,17 +165,17 @@ static void maple_DoDma()
 				return;
 			}
 #else
-			if (!IsOnSh4Ram(header_2))
+			if (GetMemPtr(header_2, 1) == nullptr)
 			{
-				INFO_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X", header_2);
-				header_2&=0xFFFFFF;
-				header_2|=(3<<26);
+				WARN_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM %x", header_2);
+				header_2 &= RAM_MASK;
+				header_2 |= 3 << 26;
 			}
 #endif
 			u32* p_data = (u32 *)GetMemPtr(addr + 8, plen * sizeof(u32));
 			if (p_data == nullptr)
 			{
-				INFO_LOG(MAPLE, "MAPLE ERROR : INVALID SB_MDSTAR value 0x%X", addr);
+				WARN_LOG(MAPLE, "MAPLE ERROR : INVALID SB_MDSTAR value 0x%X", addr);
 				SB_MDST = 0;
 				mapleDmaOut.clear();
 				return;
@@ -207,8 +191,8 @@ static void maple_DoDma()
 			//Number of additional words in frame 
 			u32 inlen = (frame_header >> 24) & 0xFF;
 
-			u32 port=maple_GetPort(reci);
-			u32 bus=maple_GetBusId(reci);
+			u32 port = maple_GetPort(reci);
+			u32 bus = maple_GetBusId(reci);
 
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{
@@ -220,9 +204,10 @@ static void maple_DoDma()
 						maple_in_buf[i] = SWAP32(p_data[i]);
 					p_data = maple_in_buf;
 				}
+				inlen = (inlen + 1) * 4;
 				u32 outbuf[1024 / 4];
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen * 4 + 4, outbuf);
-				xfer_count += outlen;
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen, outbuf);
+				xfer_count += inlen + 3 + outlen + 3; // start, parity and stop bytes
 #ifdef STRICT_MODE
 				if (!check_mdapro(header_2 + outlen - 1))
 				{
@@ -252,8 +237,10 @@ static void maple_DoDma()
 		case MP_SDCKBOccupy:
 		{
 			u32 bus = (header_1 >> 16) & 3;
-			if (MapleDevices[bus][5])
+			if (MapleDevices[bus][5]) {
 				occupy = MapleDevices[bus][5]->get_lightgun_pos();
+				xfer_count++;
+			}
 			addr += 1 * 4;
 		}
 		break;
@@ -264,6 +251,7 @@ static void maple_DoDma()
 
 		case MP_Reset:
 			addr += 1 * 4;
+			xfer_count++;
 			break;
 
 		case MP_NOP:
@@ -276,9 +264,10 @@ static void maple_DoDma()
 		}
 	}
 
-	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (2 * 1024 * 1024 / 8));
+	// Maple bus max speed: 2 Mb/s, actual speed: 1 Mb/s
+	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (128 * 1024));
 	if (!occupy)
-		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
+		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (128 * 1024)), (u64)SH4_MAIN_CLOCK));
 }
 
 static int maple_schd(int tag, int c, int j)
@@ -304,7 +293,7 @@ static int maple_schd(int tag, int c, int j)
 	return 0;
 }
 
-void maple_SB_MDAPRO_Write(u32 addr, u32 data)
+static void maple_SB_MDAPRO_Write(u32 addr, u32 data)
 {
 	if ((data >> 16) == 0x6155)
 		SB_MDAPRO = data & 0x00007f7f;
@@ -313,20 +302,20 @@ void maple_SB_MDAPRO_Write(u32 addr, u32 data)
 //Init registers :)
 void maple_Init()
 {
-	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
-	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
-	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
-	sb_rio_register(SB_MDAPRO_addr, RIO_WO_FUNC, nullptr, &maple_SB_MDAPRO_Write);
+	sb_rio_register(SB_MDST_addr, RIO_WF, nullptr, maple_SB_MDST_Write);
+	sb_rio_register(SB_MDEN_addr, RIO_WF, nullptr, maple_SB_MDEN_Write);
+	sb_rio_register(SB_MSHTCL_addr, RIO_WF, nullptr, maple_SB_MSHTCL_Write);
+	sb_rio_register(SB_MDAPRO_addr, RIO_WO_FUNC, nullptr, maple_SB_MDAPRO_Write);
 #ifdef STRICT_MODE
-	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, &maple_SB_MDSTAR_Write);
+	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, maple_SB_MDSTAR_Write);
 #endif
 
-	maple_schid=sh4_sched_register(0,&maple_schd);
+	maple_schid = sh4_sched_register(0, maple_schd);
 }
 
 void maple_Reset(bool hard)
 {
-	maple_ddt_pending_reset=false;
+	maple_ddt_pending_reset = false;
 	SB_MDTSEL = 0;
 	SB_MDEN   = 0;
 	SB_MDST   = 0;
