@@ -734,17 +734,7 @@ bool VulkanContext::init()
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWin), nullptr, &hdpi, &vdpi))
 		settings.display.dpi = roundf(std::max(hdpi, vdpi));
 
-#ifdef __linux__
-	// Fixing Steam Deck's incorrect 60mm * 60mm EDID 
-	if (settings.display.dpi > 500)
-	{
-		int displayIndex = SDL_GetWindowDisplayIndex(sdlWin);
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(displayIndex, 0, &mode);
-		if ( displayIndex == 0 && (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0 || strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0) && mode.w == 1280 && mode.h == 800 )
-			settings.display.dpi = 206;
-	}
-#endif
+	sdl_fix_steamdeck_dpi(sdlWin);
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);

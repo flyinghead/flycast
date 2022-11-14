@@ -85,17 +85,7 @@ bool SDLGLGraphicsContext::init()
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWindow), nullptr, &hdpi, &vdpi))
 		settings.display.dpi = roundf(std::max(hdpi, vdpi));
 	
-#ifdef __linux__
-	// Fixing Steam Deck's incorrect 60mm * 60mm EDID
-	if (settings.display.dpi > 500)
-	{
-		int displayIndex = SDL_GetWindowDisplayIndex(sdlWindow);
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(displayIndex, 0, &mode);
-		if ( displayIndex == 0 && (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0 || strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0) && mode.w == 1280 && mode.h == 800 )
-			settings.display.dpi = 206;
-	}
-#endif
+	sdl_fix_steamdeck_dpi(sdlWindow);
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
