@@ -281,9 +281,9 @@ void UpdateInputState()
 #endif
 }
 
+#ifndef USE_SDL
 static HWND hWnd;
 
-#ifndef USE_SDL
 // Windows class name to register
 #define WINDOW_CLASS "nilDC"
 static int window_x, window_y;

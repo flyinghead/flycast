@@ -23,6 +23,7 @@
 #include "vmallocator.h"
 #include "vulkan_context.h"
 
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
@@ -44,6 +45,7 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
 }
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };
+#endif
 
 void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance)
 {

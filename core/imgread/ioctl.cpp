@@ -260,7 +260,6 @@ struct PhysicalDrive:Disc
 
 bool PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 {
-	u32 fmt=0;
 	static u8 temp[2500];
 
 	u32 LBA=FAD-150;
