@@ -17,7 +17,9 @@ static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
 static u32 vblk_cnt;
 
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 static float last_fps;
+#endif
 
 //54 mhz pixel clock
 #define PIXEL_CLOCK (54*1000*1000/2)

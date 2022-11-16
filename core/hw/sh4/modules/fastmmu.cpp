@@ -49,7 +49,6 @@ struct TLB_LinkedEntry {
 static TLB_LinkedEntry full_table[65536];
 static u32 full_table_size;
 static TLB_LinkedEntry *entry_buckets[NBUCKETS];
-u32 mmuAddressLUT[0x100000];
 
 static u16 bucket_index(u32 address, int size, u32 asid)
 {

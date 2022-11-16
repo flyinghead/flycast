@@ -54,7 +54,6 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-static u32 cycle_counter;
 static u64 jmp_stack;
 static Arm64UnwindInfo unwinder;
 

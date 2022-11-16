@@ -486,8 +486,8 @@ static void markObjectListBlocks()
 				return;
 		}
 	}
-	for (int y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
-		for (int x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
+	for (u32 y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
+		for (u32 x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
 		{
 			pvr_write32p(addr, TA_OL_BASE);
 			addr += opBlockSize;

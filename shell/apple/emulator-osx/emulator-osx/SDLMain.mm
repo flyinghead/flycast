@@ -184,7 +184,6 @@ static void setupWindowMenu(void)
 static void setupHelpMenu(void)
 {
     NSMenu      *helpMenu;
-    NSString    *title;
     NSMenuItem  *helpMenuItem;
     NSMenuItem  *menuItem;
     

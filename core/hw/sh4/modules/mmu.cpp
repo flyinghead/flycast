@@ -512,6 +512,8 @@ void mmu_set_state()
 	SetMemoryHandlers();
 }
 
+u32 mmuAddressLUT[0x100000];
+
 void MMU_init()
 {
 	memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
