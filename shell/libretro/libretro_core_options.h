@@ -1512,6 +1512,11 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
    &options_id,      /* RETRO_LANGUAGE_INDONESIAN */
    &options_sv,      /* RETRO_LANGUAGE_SWEDISH */
    &options_uk,      /* RETRO_LANGUAGE_UKRAINIAN */
+   &options_cs,      /* RETRO_LANGUAGE_CZECH */
+   &options_val,     /* RETRO_LANGUAGE_CATALAN_VALENCIA */
+   &options_ca,      /* RETRO_LANGUAGE_CATALAN */
+   &options_en,      /* RETRO_LANGUAGE_BRITISH_ENGLISH */
+   &options_hu,      /* RETRO_LANGUAGE_HUNGARIAN */
 };
 #endif
 
