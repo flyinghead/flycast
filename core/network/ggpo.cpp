@@ -697,6 +697,8 @@ bool nextFrame()
 			inputs.kcode |= BTN_TRIGGER_LEFT;
 		else
 			inputs.kcode &= ~BTN_TRIGGER_LEFT;
+		inputs.mouseButtons = 0;
+		inputs.kbModifiers = 0;
 		if (analogAxes > 0)
 		{
 			inputs.u.analog.x = joyx[0];
