@@ -304,6 +304,7 @@ struct settings_t
 	struct
 	{
 		bool NoBatch;
+		bool forceNoBatch;
 		bool muteAudio;
 	} aica;
 
