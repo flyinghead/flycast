@@ -688,7 +688,6 @@ void DrawStrips()
 				}
 				else
 				{
-					SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				}
             }

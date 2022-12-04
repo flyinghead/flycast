@@ -303,17 +303,6 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	setFirstProvokingVertex(pvrrc);
 
-	// Do per-poly sorting
-	RenderPass previous_pass = {};
-	if (config::PerStripSorting)
-		for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-		{
-			const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
-			if (current_pass.autosort)
-				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-			previous_pass = current_pass;
-		}
-
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;
 	vtxUniforms.ndcMat = matrices.GetNormalMatrix();
@@ -334,7 +323,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	previous_pass = {};
+	RenderPass previous_pass{};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];

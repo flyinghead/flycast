@@ -12,6 +12,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define TACALL DYNACALL
 #ifdef NDEBUG
@@ -1274,6 +1276,78 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 	}
 }
 
+static bool operator<(const PolyParam& left, const PolyParam& right)
+{
+	return left.zvZ < right.zvZ;
+}
+
+static void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context* ctx)
+{
+	if (end - first <= 1)
+		return;
+
+	Vertex *vtx_base = ctx->verts.head();
+
+	PolyParam *pp = &polys->head()[first];
+	PolyParam *pp_end = &polys->head()[end];
+
+	while (pp != pp_end)
+	{
+		if (pp->count < 3)
+		{
+			pp->zvZ = 0;
+		}
+		else
+		{
+			Vertex *vtx = &vtx_base[pp->first];
+			Vertex *vtx_end = &vtx_base[pp->first + pp->count];
+
+			if (pp->isNaomi2())
+			{
+				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
+				glm::vec3 min{ 1e38f, 1e38f, 1e38f };
+				glm::vec3 max{ -1e38f, -1e38f, -1e38f };
+				while (vtx != vtx_end)
+				{
+					glm::vec3 pos{ vtx->x, vtx->y, vtx->z };
+					min = glm::min(min, pos);
+					max = glm::max(max, pos);
+					vtx++;
+				}
+				glm::vec4 center((min + max) / 2.f, 1);
+				glm::vec4 extents(max - glm::vec3(center), 0);
+				// transform
+				center = mvMat * center;
+				glm::vec3 extentX = mvMat * glm::vec4(extents.x, 0, 0, 0);
+				glm::vec3 extentY = mvMat * glm::vec4(0, extents.y, 0, 0);
+				glm::vec3 extentZ = mvMat * glm::vec4(0, 0, extents.z, 0);
+				// new AA extents
+				glm::vec3 newExtent = glm::abs(extentX) + glm::abs(extentY) + glm::abs(extentZ);
+
+				min = glm::vec3(center) - newExtent;
+				max = glm::vec3(center) + newExtent;
+
+				// project
+				pp->zvZ = -1 / std::min(min.z, max.z);
+			}
+			else
+			{
+				u32 zv = 0xFFFFFFFF;
+				while (vtx != vtx_end)
+				{
+					zv = std::min(zv, (u32&)vtx->z);
+					vtx++;
+				}
+
+				pp->zvZ = (f32&)zv;
+			}
+		}
+		pp++;
+	}
+
+	std::stable_sort(&polys->head()[first], pp_end);
+}
+
 static bool ta_parse_vdrc(TA_context* ctx)
 {
 	ctx->rend_inuse.lock();
@@ -1295,10 +1369,11 @@ static bool ta_parse_vdrc(TA_context* ctx)
 		empty_context = false;
 	}
 
-	const bool mergeTranslucent = !config::PerStripSorting
-			|| config::RendererType == RenderType::OpenGL_OIT
+	const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
 			|| config::RendererType == RenderType::DirectX11_OIT
 			|| config::RendererType == RenderType::Vulkan_OIT;
+	const bool mergeTranslucent = config::PerStripSorting || perPixel;
+
 	TA_context *childCtx = ctx;
 	int pass = 0;
 	while (childCtx != nullptr)
@@ -1328,6 +1403,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 		if (pass == 0 || !empty_pass)
 		{
 			RenderPass *render_pass = vd_rc.render_passes.Append();
+			getRegionSettings(pass, *render_pass);
 			render_pass->op_count = vd_rc.global_param_op.used();
 			make_index(&vd_rc.global_param_op, op_poly_count,
 					render_pass->op_count, true, &vd_rc);
@@ -1338,11 +1414,13 @@ static bool ta_parse_vdrc(TA_context* ctx)
 					render_pass->pt_count, true, &vd_rc);
 			pt_poly_count = render_pass->pt_count;
 			render_pass->tr_count = vd_rc.global_param_tr.used();
+			if (render_pass->autosort && config::PerStripSorting && !perPixel)
+				sortPolyParams(&vd_rc.global_param_tr, tr_poly_count,
+					render_pass->tr_count, &vd_rc);
 			make_index(&vd_rc.global_param_tr, tr_poly_count,
 					render_pass->tr_count, mergeTranslucent, &vd_rc);
 			tr_poly_count = render_pass->tr_count;
 			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-			getRegionSettings(pass, *render_pass);
 		}
 		childCtx = childCtx->nextContext;
 		pass++;
@@ -1413,14 +1491,16 @@ static bool ta_parse_naomi2(TA_context* ctx)
 		int op_count = 0;
 		int pt_count = 0;
 		int tr_count = 0;
-		const bool mergeTranslucent = !config::PerStripSorting
-				|| config::RendererType == RenderType::OpenGL_OIT
+		const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
 				|| config::RendererType == RenderType::DirectX11_OIT
 				|| config::RendererType == RenderType::Vulkan_OIT;
+		const bool mergeTranslucent = config::PerStripSorting || perPixel;
 		for (const RenderPass& pass : ctx->rend.render_passes)
 		{
 			make_index(&ctx->rend.global_param_op, op_count, pass.op_count, true, &ctx->rend);
 			make_index(&ctx->rend.global_param_pt, pt_count, pass.pt_count, true, &ctx->rend);
+			if (pass.autosort && config::PerStripSorting && !perPixel)
+				sortPolyParams(&ctx->rend.global_param_tr, tr_count, pass.tr_count, &ctx->rend);
 			make_index(&ctx->rend.global_param_tr, tr_count, pass.tr_count, mergeTranslucent, &ctx->rend);
 			op_count = pass.op_count;
 			pt_count = pass.pt_count;

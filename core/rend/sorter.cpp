@@ -17,8 +17,6 @@
 #include "sorter.h"
 #include "hw/pvr/Renderer_if.h"
 #include <algorithm>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 struct IndexTrig
 {
@@ -37,85 +35,10 @@ static bool operator<(const IndexTrig& left, const IndexTrig& right)
 	return left.z < right.z;
 }
 
-static bool operator<(const PolyParam& left, const PolyParam& right)
-{
-	return left.zvZ < right.zvZ;
-}
-
 static float getProjectedZ(const Vertex *v, const float *mat)
 {
 	// -1 / z
 	return -1 / (mat[2] * v->x + mat[1 * 4 + 2] * v->y + mat[2 * 4 + 2] * v->z + mat[3 * 4 + 2]);
-}
-
-void SortPParams(int first, int count)
-{
-	if (pvrrc.verts.used() == 0 || count <= 1)
-		return;
-
-	Vertex* vtx_base=pvrrc.verts.head();
-	u32* idx_base = pvrrc.idx.head();
-
-	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
-	PolyParam* pp_end = pp + count;
-
-	while(pp!=pp_end)
-	{
-		if (pp->count<2)
-		{
-			pp->zvZ=0;
-		}
-		else
-		{
-			u32* idx = idx_base + pp->first;
-
-			Vertex* vtx=vtx_base+idx[0];
-			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
-
-			if (pp->isNaomi2())
-			{
-				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
-				glm::vec3 min{ 1e38f, 1e38f, 1e38f };
-				glm::vec3 max{ -1e38f, -1e38f, -1e38f };
-				while (vtx != vtx_end)
-				{
-					glm::vec3 pos{ vtx->x, vtx->y, vtx->z };
-					min = glm::min(min, pos);
-					max = glm::max(max, pos);
-					vtx++;
-				}
-				glm::vec4 center((min + max) / 2.f, 1);
-				glm::vec4 extents(max - glm::vec3(center), 0);
-				// transform
-				center = mvMat * center;
-				glm::vec3 extentX = mvMat * glm::vec4(extents.x, 0, 0, 0);
-				glm::vec3 extentY = mvMat * glm::vec4(0, extents.y, 0, 0);
-				glm::vec3 extentZ = mvMat * glm::vec4(0, 0, extents.z, 0);
-				// new AA extents
-				glm::vec3 newExtent = glm::abs(extentX) + glm::abs(extentY) + glm::abs(extentZ);
-
-				min = glm::vec3(center) - newExtent;
-				max = glm::vec3(center) + newExtent;
-
-				// project
-				pp->zvZ = -1 / std::min(min.z, max.z);
-			}
-			else
-			{
-				u32 zv=0xFFFFFFFF;
-				while(vtx!=vtx_end)
-				{
-					zv = std::min(zv, (u32&)vtx->z);
-					vtx++;
-				}
-
-				pp->zvZ=(f32&)zv;
-			}
-		}
-		pp++;
-	}
-
-	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
 }
 
 const static Vertex *vtx_sort_base;

@@ -20,9 +20,6 @@
 
 #include <vector>
 
-//Sort based on min-z of each strip
-void SortPParams(int first, int count);
-
 struct SortTrigDrawParam
 {
 	const PolyParam* ppid;

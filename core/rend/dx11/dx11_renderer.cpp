@@ -882,7 +882,6 @@ void DX11Renderer::drawStrips()
 			}
 			else
 			{
-				SortPParams(previous_pass.tr_count, tr_count);
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 			}
 		}
