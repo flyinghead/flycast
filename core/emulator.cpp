@@ -135,14 +135,6 @@ static void loadSpecialSettings()
 			config::ExtraDepthScale.override(1000.f);
 		}
 
-		// Tony Hawk's Pro Skater 2
-		if (prod_id == "T13008D" || prod_id == "T13006N"
-				// Tony Hawk's Pro Skater 1
-				|| prod_id == "T40205N"
-				// Tony Hawk's Skateboarding
-				|| prod_id == "T40204D")
-			settings.aica.forceNoBatch = true;
-
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
 		bool region_eu = areas.find('E') != std::string::npos;
@@ -483,7 +475,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		config::Settings::instance().load(false);
 		dc_reset(true);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
-		settings.aica.forceNoBatch = false;
 
 		if (settings.platform.isNaomi2() && config::RendererType == RenderType::DirectX9)
 			throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
@@ -693,7 +684,6 @@ void loadGameSpecificSettings()
 	{
 		config::ExtraDepthScale.override(0.1f);
 		config::FullMMU.override(true);
-		settings.aica.forceNoBatch = true;
 	}
 }
 
@@ -788,7 +778,6 @@ void Emulator::start()
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
-	settings.aica.NoBatch = settings.aica.forceNoBatch || config::DSPEnabled || config::GGPOEnable;
 	rend_resize_renderer();
 #if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
