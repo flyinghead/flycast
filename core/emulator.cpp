@@ -842,15 +842,17 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
-	if (state != Running)
-		return false;
 	if (!config::ThreadedRendering)
 	{
+		if (state != Running)
+			return false;
 		run();
 		// TODO if stopping due to a user request, no frame has been rendered
 		return !renderTimeout;
 	}
 	if (!checkStatus())
+		return false;
+	if (state != Running)
 		return false;
 	return rend_single_frame(true); // FIXME stop flag?
 }
