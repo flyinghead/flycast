@@ -248,6 +248,11 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", naomi_game_id);
 			config::RenderToTextureBuffer.override(true);
 		}
+		if (!strcmp(naomi_game_id, "RADIRGY NOA"))
+		{
+			INFO_LOG(BOOT, "Disabling Free Play for game %s", naomi_game_id);
+			config::ForceFreePlay.override(false);
+		}
 		// Input configuration
 		settings.input.JammaSetup = JVS::Default;
 		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
@@ -781,7 +786,6 @@ void Emulator::start()
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
-	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled || config::GGPOEnable;
 #if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{

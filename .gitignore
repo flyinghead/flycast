@@ -2,6 +2,7 @@ build/
 
 # macOS
 .DS_Store
+shell/apple/emulator-ios/OpenMP/OpenMP.xcframework
 
 # Visual Studio
 .vs/

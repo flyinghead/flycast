@@ -75,17 +75,17 @@ static const double AEG_DSR_Time[64] =
 };
 // These times come from the documentation but don't sound correct.
 // HT uses the AEG decay times instead and it sounds better.
-static const double FEG_Time[] =
-{
-	-1, -1, 472800.0, 405200.0, 354400.0, 283600.0, 236400.0, 202800.0,
-	177200.0, 142000.0, 118400.0, 101200.0, 88800.0, 70800.0, 59200.0, 50800.0,
-	44400.0, 35600.0, 29600.0, 25200.0, 22000.0, 17600.0, 14800.0, 12800.0,
-	11200.0, 8800.0, 7200.0, 6400.0, 5600.0, 4400.0, 3680.0, 3160.0,
-	2760.0, 2220.0, 1840.0, 1560.0, 1360.0, 1080.0, 920.0, 800.0,
-	680.0, 560.0, 440.0, 392.0, 340.0, 272.0, 228.0, 196.0,
-	172.0, 158.0, 136.0, 100.0, 88.0, 72.0, 56.0, 48.0,
-	44.0, 34.0, 28.0, 24.0, 22.0, 17.0, 14.0, 12.0
-};
+//static const double FEG_Time[] =
+//{
+//	-1, -1, 472800.0, 405200.0, 354400.0, 283600.0, 236400.0, 202800.0,
+//	177200.0, 142000.0, 118400.0, 101200.0, 88800.0, 70800.0, 59200.0, 50800.0,
+//	44400.0, 35600.0, 29600.0, 25200.0, 22000.0, 17600.0, 14800.0, 12800.0,
+//	11200.0, 8800.0, 7200.0, 6400.0, 5600.0, 4400.0, 3680.0, 3160.0,
+//	2760.0, 2220.0, 1840.0, 1560.0, 1360.0, 1080.0, 920.0, 800.0,
+//	680.0, 560.0, 440.0, 392.0, 340.0, 272.0, 228.0, 196.0,
+//	172.0, 158.0, 136.0, 100.0, 88.0, 72.0, 56.0, 48.0,
+//	44.0, 34.0, 28.0, 24.0, 22.0, 17.0, 14.0, 12.0
+//};
 static const float PLFOS_Scale[8] = { 0.f, 3.61f, 7.22f, 14.44f, 28.88f, 57.75f, 115.5f, 231.f };
 static int PLFO_Scales[8][256];
 
@@ -1425,109 +1425,6 @@ static SampleType vmuBeepSample()
 constexpr int CDDA_SIZE = 2352 / 2;
 static s16 cdda_sector[CDDA_SIZE];
 static u32 cdda_index = CDDA_SIZE;
-
-//no DSP for now in this version
-void AICA_Sample32()
-{
-	SampleType mxlr[64];
-	memset(mxlr,0,sizeof(mxlr));
-
-	//Generate 32 samples for each channel, before moving to next channel
-	//much more cache efficient !
-	for (int ch = 0; ch < 64; ch++)
-	{
-		for (int i=0;i<32;i++)
-		{
-			SampleType oLeft,oRight,oDsp;
-			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp))
-				break;
-
-			if (oLeft + oRight == 0)
-				oLeft = oRight = oDsp >> 4;
-
-			mxlr[i*2+0] += oLeft;
-			mxlr[i*2+1] += oRight;
-		}
-	}
-	//OK , generated all Channels  , now DSP/ect + final mix ;p
-	//CDDA EXTS input
-	
-	for (int i=0;i<32;i++)
-	{
-		SampleType mixl,mixr;
-
-		mixl=mxlr[i*2+0];
-		mixr=mxlr[i*2+1];
-
-		if (cdda_index>=CDDA_SIZE)
-		{
-			cdda_index=0;
-			libCore_CDDA_Sector(cdda_sector);
-		}
-		s32 EXTS0L=cdda_sector[cdda_index];
-		s32 EXTS0R=cdda_sector[cdda_index+1];
-		cdda_index+=2;
-
-		//Final MIX ..
-		//Add CDDA / DSP effect(s)
-
-		//CDDA
-		VolumePan(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
-		VolumePan(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
-
-		/*
-		no dsp for now -- needs special handling of oDSP for ch paraller version ...
-		if (config::DSPEnabled)
-		{
-			dsp::step();
-
-			for (int i=0;i<16;i++)
-			{
-				VolumePan( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
-			}
-		}
-		*/
-
-		//Mono !
-		if (CommonData->Mono)
-		{
-			//Yay for mono =P
-			mixl+=mixr;
-			mixr=mixl;
-		}
-
-		//MVOL !
-		//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
-		u32 mvol=CommonData->MVOL;
-		s32 val=volume_lut[mvol];
-		mixl = (s32)FPMul<s64>(mixl, val, 15);
-		mixr = (s32)FPMul<s64>(mixr, val, 15);
-
-
-		if (CommonData->DAC18B)
-		{
-			//If 18 bit output , make it 16b :p
-			mixl=FPs(mixl,2);
-			mixr=FPs(mixr,2);
-		}
-
-		//Sample is ready ! clip/saturate and store :}
-
-#ifdef CLIP_WARN
-		if (((s16)mixl) != mixl)
-			printf("Clipped mixl %d\n",mixl);
-		if (((s16)mixr) != mixr)
-			printf("Clipped mixr %d\n",mixr);
-#endif
-
-		clip16(mixl);
-		clip16(mixr);
-
-		if (!settings.input.fastForwardMode && !settings.aica.muteAudio)
-			WriteSample(mixr,mixl);
-	}
-}
 
 void AICA_Sample()
 {

@@ -51,11 +51,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 		NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
 		settings.display.width = displayMode->ResolutionWidthInRawPixels;
 		settings.display.height = displayMode->ResolutionHeightInRawPixels;
-		if (settings.display.width == 3840)
-			// 4K
-			settings.display.uiScale = 2.8f;
-		else
-			settings.display.uiScale = 1.4f;
+		settings.display.uiScale = settings.display.width / 1920.0f * 1.4f;
 	}
 #endif
 

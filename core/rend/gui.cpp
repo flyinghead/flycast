@@ -1694,7 +1694,7 @@ static void gui_display_settings()
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 
-				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
+				const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
 	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
 	            u32 afSelected = 0;
 	            for (u32 i = 0; i < aniso.size(); i++)
@@ -2829,7 +2829,7 @@ void gui_display_osd()
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
 			ImGui::SetWindowFontScale(1.5);
-			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
 			ImGui::End();
 		}
 		imguiDriver->displayCrosshairs();

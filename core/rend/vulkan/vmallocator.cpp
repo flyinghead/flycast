@@ -23,6 +23,7 @@
 #include "vmallocator.h"
 #include "vulkan_context.h"
 
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
@@ -44,6 +45,7 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
 }
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };
+#endif
 
 void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance)
 {
@@ -58,6 +60,14 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk:
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 	allocatorInfo.pDeviceMemoryCallbacks = &memoryCallbacks;
 #endif
+
+#if VMA_DYNAMIC_VULKAN_FUNCTIONS
+	VmaVulkanFunctions vulkanFunctions = {};
+	vulkanFunctions.vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr;
+	vulkanFunctions.vkGetDeviceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr;
+	allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+#endif
+
 	VkResult rc = vmaCreateAllocator(&allocatorInfo, &allocator);
 	if (rc != VK_SUCCESS)
 		vk::throwResultException((vk::Result)rc, "vmaCreateAllocator failed");

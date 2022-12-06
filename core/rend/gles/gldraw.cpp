@@ -316,7 +316,7 @@ void DrawSorted(bool multipass)
 	//if any drawing commands, draw them
 	if (!pidx_sort.empty())
 	{
-		u32 count=pidx_sort.size();
+		std::size_t count = pidx_sort.size();
 
 		{
 			//set some 'global' modes for all primitives
@@ -325,7 +325,7 @@ void DrawSorted(bool multipass)
 			glcache.StencilFunc(GL_ALWAYS,0,0);
 			glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
-			for (u32 p=0; p<count; p++)
+			for (std::size_t p = 0; p < count; p++)
 			{
 				const PolyParam* params = pidx_sort[p].ppid;
 				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
@@ -367,7 +367,7 @@ void DrawSorted(bool multipass)
 				glcache.DepthFunc(GL_GEQUAL);
 				glcache.DepthMask(GL_TRUE);
 
-				for (u32 p = 0; p < count; p++)
+				for (std::size_t p = 0; p < count; p++)
 				{
 					const PolyParam* params = pidx_sort[p].ppid;
 					if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
@@ -687,7 +687,6 @@ void DrawStrips()
 				}
 				else
 				{
-					SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				}
             }

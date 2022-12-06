@@ -738,8 +738,8 @@ static pico_device *pico_eth_create()
         return nullptr;
 
     const u8 mac_addr[6] = { 0xc, 0xa, 0xf, 0xe, 0, 1 };
-    if (0 != pico_device_init(eth, "ETHPEER", mac_addr))
-        return nullptr;
+	if (0 != pico_device_init(eth, "ETHPEER", mac_addr))
+		return nullptr;
 
 	DEBUG_LOG(NETWORK, "Device %s created", eth->name);
 
@@ -1045,8 +1045,8 @@ static void *pico_thread_func(void *)
 		PICO_IDLE();
     }
 
-    for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-    	closesocket(it->second);
+	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
+		closesocket(it->second);
 	close_native_sockets();
 	pico_socket_close(pico_tcp_socket);
 	pico_socket_close(pico_udp_socket);

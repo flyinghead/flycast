@@ -90,8 +90,6 @@ const int AICA_TICK = 145125;	// 44.1 KHz / 32
 static int AicaUpdate(int tag, int c, int j)
 {
 	aicaarm::run(32);
-	if (!settings.aica.NoBatch)
-		AICA_Sample32();
 
 	return AICA_TICK;
 }
@@ -106,8 +104,7 @@ void libAICA_TimeStep()
 	SCIPD->SAMPLE_DONE = 1;
 	MCIPD->SAMPLE_DONE = 1;
 
-	if (settings.aica.NoBatch)
-		AICA_Sample();
+	AICA_Sample();
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();

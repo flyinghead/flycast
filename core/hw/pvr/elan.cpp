@@ -563,12 +563,6 @@ static glm::vec3 getNormal(const T& vtx)
 	return { (int8_t)vtx.header.nx / 127.f, (int8_t)vtx.header.ny / 127.f, (int8_t)vtx.header.nz / 127.f };
 }
 
-template<>
-glm::vec3 getNormal(const N2_VERTEX_VNU& vtx)
-{
-	return { vtx.normal.nx, vtx.normal.ny, vtx.normal.nz };
-}
-
 template<typename T>
 static void setNormal(Vertex& vd, const T& vs)
 {

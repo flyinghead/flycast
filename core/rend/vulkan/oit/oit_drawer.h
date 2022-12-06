@@ -103,7 +103,7 @@ protected:
 					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
 		return mainBuffers[bufferIndex].get();
-	};
+	}
 
 	void MakeBuffers(int width, int height);
 	virtual vk::Framebuffer GetFinalFramebuffer() const = 0;

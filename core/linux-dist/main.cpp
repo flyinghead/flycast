@@ -176,6 +176,7 @@ std::string find_user_data_dir()
 #endif
 }
 
+#ifndef __SWITCH__
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
 {
 	std::string::size_type pos = 0;
@@ -191,6 +192,7 @@ static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::st
 	if (pos < path.length())
 		dirs.push_back(path.substr(pos) + suffix);
 }
+#endif
 
 // Find a file in the user and system config directories.
 // The following folders are checked in this order:

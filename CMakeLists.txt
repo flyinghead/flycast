@@ -301,6 +301,22 @@ if(USE_OPENMP)
 			target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
 		endif()
 	endif()
+	if(IOS)
+		message("-- Finding OpenMP.xcframework for iOS")
+		set(OPENMP_XCFRAMEWORK "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/OpenMP/OpenMP.xcframework")
+		if(IS_DIRECTORY ${OPENMP_XCFRAMEWORK})
+			# CMake does not support linking xcframework directly atm. (see https://gitlab.kitware.com/cmake/cmake/-/issues/21752)
+			set(OPENMP_FRAMEWORK ${OPENMP_XCFRAMEWORK}/ios-arm64_arm64e/OpenMP.framework/Versions/A/libomp.a)
+			if(EXISTS ${OPENMP_FRAMEWORK})
+				message("-- Found OpenMP.xcframework: ${OPENMP_FRAMEWORK} (Linking static library before CMake support linking xcframework)")
+				target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENMP_FRAMEWORK})
+				target_include_directories(${PROJECT_NAME} PRIVATE ${OPENMP_XCFRAMEWORK}/ios-arm64_arm64e/OpenMP.framework/Versions/A/Headers)
+				set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -fopenmp")
+			endif()
+		else()
+			message("-- Could NOT find OpenMP.xcframework, compile it using shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh")
+		endif()
+	endif()
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
@@ -1094,29 +1110,23 @@ if(NOT LIBRETRO)
 endif()
 
 if(USE_VULKAN)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_NO_PROTOTYPES)
+	if(ANDROID)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_ANDROID_KHR)
+	elseif(X11_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_XLIB_KHR)
+	elseif(WIN32)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+	elseif(APPLE)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_MACOS_MVK)
+	endif()
+
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
 	add_library(VulkanMemoryAllocator INTERFACE)
 	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
-
-	if(NOT LIBRETRO)
-		if(ANDROID)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
-		elseif(X11_FOUND)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-		elseif(WIN32)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
-		elseif(APPLE)
-			set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_MACOS_MVK)
-		endif()
-
-		set(VOLK_PULL_IN_VULKAN OFF)
-		add_subdirectory(core/deps/volk)
-		target_include_directories(volk PRIVATE core/deps/Vulkan-Headers/include)
-		target_link_libraries(${PROJECT_NAME} PRIVATE volk)
-	endif()
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1156,9 +1166,9 @@ if(USE_VULKAN)
 	if(LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vk_context_lr.cpp
-				core/rend/vulkan/vk_context_lr.h
-				core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
+				core/rend/vulkan/vk_context_lr.h)
 	else()
+		target_compile_definitions(${PROJECT_NAME} PUBLIC IMGUI_IMPL_VULKAN_NO_PROTOTYPES)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vulkan_driver.h
 				core/rend/vulkan/vulkan_context.cpp
@@ -1596,8 +1606,8 @@ if(NINTENDO_SWITCH)
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
-			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.o
-			COMMAND rm *.o
+			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
+			COMMAND rm *.obj
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
 			DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
 	else()

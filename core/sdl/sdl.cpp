@@ -663,3 +663,21 @@ void sdl_window_destroy()
 	SDL_DestroyWindow(window);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
+
+void sdl_fix_steamdeck_dpi(SDL_Window *window)
+{
+#ifdef __linux__
+	// Fixing Steam Deck's incorrect 60mm * 60mm EDID
+	if (settings.display.dpi > 500)
+	{
+		int displayIndex = SDL_GetWindowDisplayIndex(window);
+		SDL_DisplayMode mode;
+		SDL_GetDisplayMode(displayIndex, 0, &mode);
+		if (displayIndex == 0
+				&& (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0
+						|| strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0)
+				&& mode.w == 1280 && mode.h == 800)
+			settings.display.dpi = 206;
+	}
+#endif
+}

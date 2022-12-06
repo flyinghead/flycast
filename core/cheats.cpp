@@ -275,6 +275,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T-8110D-50", nullptr,    { 0x0C6B90, 0x0C6B94 }, { 0x43F00000, 0x43870000 } },	// Vanishing Point (PAL)
 //		{ "MK-5109450", nullptr,    { 0x244134, 0x7A73B8, 0x7830D8, 0x7A74B8, 0x783138, 0x7A85A0, 0x6C7928, 0x6C7930, 0x6C7948, 0x6C7950 },
 //crash				{ 0x43F00000, 0x3F9C932E, 0x3F9C932E, 0x3F9C932E, 0x3F9C932E, 0x3F400000, 0, 0, 0, 0 } },	// Virtua Athlete 2K (PAL)
+		{ "MK-51001",	nullptr,	{ 0x19D518 }, { 0x43700000 } },		// Virtua Fighter 3 TB (NTSC)
 		{ "MK-5100150", nullptr,    { 0x19D718 }, { 0x43700000 } },		// Virtua Fighter 3 TB (PAL)
 		{ "HDR-0002",   nullptr,    { 0x199FB0 }, { 0x43700000 } },		// Virtua Fighter 3 TB (JP)
 		{ "MK-5105450", nullptr,    { 0x456378 }, { 0x43700000 } },		// Virtua Tennis (v1.001) (PAL)

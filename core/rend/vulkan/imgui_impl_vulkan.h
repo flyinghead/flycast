@@ -39,12 +39,10 @@
 //#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 
 // Vulkan includes
-#if !defined(TARGET_IPHONE)
-#include <volk.h>
-#undef VK_NO_PROTOTYPES
-#else
-#include <vulkan/vulkan.hpp>
+#if defined(IMGUI_IMPL_VULKAN_NO_PROTOTYPES) && !defined(VK_NO_PROTOTYPES)
+#define VK_NO_PROTOTYPES
 #endif
+#include <vulkan/vulkan.h>
 
 // Initialization data, for ImGui_ImplVulkan_Init()
 // [Please zero-clear before use!]
