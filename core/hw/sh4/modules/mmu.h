@@ -152,8 +152,10 @@ static inline u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 		// not reached
 		return 0;
 	}
+#ifdef FAST_MMU
 	if (vaddr >> 31 == 0)
 		mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
+#endif
 
 	return paddr;
 }

@@ -3,37 +3,37 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 
-
 //Init term res
 void ubc_init()
 {
 	//UBC BARA 0xFF200000 0x1F200000 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BARA_addr,RIO_DATA,32);
+	sh4_rio_reg(UBC, UBC_BARA_addr, RIO_DATA);
 
 	//UBC BAMRA 0xFF200004 0x1F200004 8 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BAMRA_addr,RIO_DATA,8);
+	sh4_rio_reg_wmask<UBC, UBC_BAMRA_addr, 0x0f>();
 
 	//UBC BBRA 0xFF200008 0x1F200008 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BBRA_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<UBC, UBC_BBRA_addr, 0x007f>();
 
 	//UBC BARB 0xFF20000C 0x1F20000C 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BARB_addr,RIO_DATA,32);
+	sh4_rio_reg(UBC, UBC_BARB_addr, RIO_DATA);
 
 	//UBC BAMRB 0xFF200010 0x1F200010 8 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BAMRB_addr,RIO_DATA,8);
+	sh4_rio_reg_wmask<UBC, UBC_BAMRB_addr, 0x0f>();
 
 	//UBC BBRB 0xFF200014 0x1F200014 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BBRB_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<UBC, UBC_BBRB_addr, 0x007f>();
 
 	//UBC BDRB 0xFF200018 0x1F200018 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BDRB_addr,RIO_DATA,32);
+	sh4_rio_reg(UBC, UBC_BDRB_addr, RIO_DATA);
 
 	//UBC BDMRB 0xFF20001C 0x1F20001C 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BDMRB_addr,RIO_DATA,32);
+	sh4_rio_reg(UBC, UBC_BDMRB_addr, RIO_DATA);
 
 	//UBC BRCR 0xFF200020 0x1F200020 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg(UBC,UBC_BRCR_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<UBC, UBC_BRCR_addr, 0xc4c9>();
 }
+
 void ubc_reset()
 {
 	/*

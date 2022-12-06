@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "types.h"
 #include "sh4_if.h"
 #include "hw/hwreg.h"
@@ -14,23 +13,22 @@ void map_p4();
 
 #define sq_both (sh4rcb.sq_buffer)
 
-extern std::array<RegisterStruct, 18> CCN;
-extern std::array<RegisterStruct, 9> UBC;
-extern std::array<RegisterStruct, 19> BSC;
-extern std::array<RegisterStruct, 17> DMAC;
-extern std::array<RegisterStruct, 5> CPG;
-extern std::array<RegisterStruct, 16> RTC;
-extern std::array<RegisterStruct, 5> INTC;
-extern std::array<RegisterStruct, 12> TMU;
-extern std::array<RegisterStruct, 8> SCI;
-extern std::array<RegisterStruct, 10> SCIF;
+extern RegisterStruct CCN[18];
+extern RegisterStruct UBC[9];
+extern RegisterStruct BSC[19];
+extern RegisterStruct DMAC[17];
+extern RegisterStruct CPG[5];
+extern RegisterStruct RTC[16];
+extern RegisterStruct INTC[5];
+extern RegisterStruct TMU[12];
+extern RegisterStruct SCI[8];
+extern RegisterStruct SCIF[10];
 
 void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
-template<typename T>
-void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf=0, RegWriteAddrFP* wf=0);
+void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP *rf = nullptr, RegWriteAddrFP *wf = nullptr);
 
 #define SH4IO_REGN(mod, addr, size) ((mod)[((addr) & 255) / 4].data##size)
 #define SH4IO_REG(mod, name, size) SH4IO_REGN(mod, mod##_##name##_addr, size)
@@ -38,6 +36,30 @@ void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf=0, Reg
 
 #define SH4IO_REG_OFS(mod, name, o, s, size) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s), size)
 #define SH4IO_REG_T_OFS(mod, name, o, s, size) ((mod##_##name##_type&)SH4IO_REG_OFS(mod, name, o, s, size))
+
+template <RegisterStruct *Module, u32 Addr, u32 Mask = 0xffffffff, u32 OrMask = 0>
+void sh4_write_reg(u32 addr, u32 data)
+{
+	SH4IO_REGN(Module, Addr, 32) = (data & Mask) | OrMask;
+}
+
+template<RegisterStruct *Module, u32 Addr, u32 Mask>
+void sh4_rio_reg_wmask()
+{
+	sh4_rio_reg(Module, Addr, RIO_WF, nullptr, sh4_write_reg<Module, Addr, Mask>);
+};
+
+template<RegisterStruct *Module, u32 Addr>
+void sh4_rio_reg16()
+{
+	sh4_rio_reg_wmask<Module, Addr, 0xffff>();
+};
+
+template<RegisterStruct *Module, u32 Addr>
+void sh4_rio_reg8()
+{
+	sh4_rio_reg_wmask<Module, Addr, 0xff>();
+};
 
 //CCN module registers base
 #define CCN_BASE_addr 0x1F000000

@@ -17,149 +17,239 @@ std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //All registers are 4 byte aligned
 
-std::array<RegisterStruct, 18> CCN;
-std::array<RegisterStruct, 9> UBC;
-std::array<RegisterStruct, 19> BSC;
-std::array<RegisterStruct, 17> DMAC;
-std::array<RegisterStruct, 5> CPG;
-std::array<RegisterStruct, 16> RTC;
-std::array<RegisterStruct, 5> INTC;
-std::array<RegisterStruct, 12> TMU;
-std::array<RegisterStruct, 8> SCI;
-std::array<RegisterStruct, 10> SCIF;
+RegisterStruct CCN[18];
+RegisterStruct UBC[9];
+RegisterStruct BSC[19];
+RegisterStruct DMAC[17];
+RegisterStruct CPG[5];
+RegisterStruct RTC[16];
+RegisterStruct INTC[5];
+RegisterStruct TMU[12];
+RegisterStruct SCI[8];
+RegisterStruct SCIF[10];
 
 static u32 sh4io_read_noacc(u32 addr)
 { 
-	INFO_LOG(SH4, "sh4io: Invalid read access @@ %08X", addr);
+	INFO_LOG(SH4, "sh4io: Invalid read access @ %08X", addr);
 	return 0; 
 } 
+
 static void sh4io_write_noacc(u32 addr, u32 data)
 { 
-	INFO_LOG(SH4, "sh4io: Invalid write access @@ %08X %08X", addr, data);
+	INFO_LOG(SH4, "sh4io: Invalid write access @ %08X %08X", addr, data);
 }
+
 static void sh4io_write_const(u32 addr, u32 data)
 { 
-	INFO_LOG(SH4, "sh4io: Const write ignored @@ %08X <- %08X", addr, data);
+	INFO_LOG(SH4, "sh4io: Const write ignored @ %08X <- %08X", addr, data);
 }
 
-template<class T>
-void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
+void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
 {
-	u32 idx=(addr&255)/4;
-
-	verify(idx < arr.size());
+	u32 idx = (addr & 255) / 4;
 
 	arr[idx].flags = flags;
 
 	if (flags == RIO_NO_ACCESS)
 	{
-		arr[idx].readFunctionAddr=&sh4io_read_noacc;
-		arr[idx].writeFunctionAddr=&sh4io_write_noacc;
+		arr[idx].readFunctionAddr = sh4io_read_noacc;
+		arr[idx].writeFunctionAddr = sh4io_write_noacc;
 	}
-	else if (flags == RIO_CONST)
+	else if (flags == RIO_RO)
 	{
-		arr[idx].writeFunctionAddr=&sh4io_write_const;
+		arr[idx].writeFunctionAddr = sh4io_write_const;
+		arr[idx].data32 = 0;
 	}
 	else
 	{
-		arr[idx].data32=0;
-
 		if (flags & REG_RF)
-			arr[idx].readFunctionAddr=rf;
+			arr[idx].readFunctionAddr = rf;
+		else
+			arr[idx].data32 = 0;
 
 		if (flags & REG_WF)
-			arr[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
+			arr[idx].writeFunctionAddr = wf == nullptr ? &sh4io_write_noacc : wf;
 	}
 }
-template void sh4_rio_reg(std::array<RegisterStruct, 5>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 8>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 9>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 10>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 12>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 16>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 17>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 18>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
-template void sh4_rio_reg(std::array<RegisterStruct, 19>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
 
-template<u32 sz, class T>
-u32 sh4_rio_read(T& regs, u32 addr)
+template<typename T>
+T sh4_rio_read(RegisterStruct *regs, u32 addr)
 {	
-	u32 offset = addr&255;
+	u32 offset = addr & 255;
 #ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
+	if (offset & 3) //4 is min align size
 	{
-		INFO_LOG(SH4, "Unaligned System Bus register read");
+		WARN_LOG(SH4, "Unaligned System Bus register read @ %x", addr);
 	}
 #endif
 
-	offset>>=2;
+	offset >>= 2;
 
-#ifdef TRACE
-	if (regs[offset].flags & sz)
-	{
-#endif
-		if (!(regs[offset].flags & REG_RF) )
-		{
-			if (sz==4)
-				return  regs[offset].data32;
-			else if (sz==2)
-				return  regs[offset].data16;
-			else 
-				return  regs[offset].data8;
-		}
-		else
-		{
-			return regs[offset].readFunctionAddr(addr);
-		}
-#ifdef TRACE
-	}
+	if (!(regs[offset].flags & REG_RF))
+		return (T)regs[offset].data32;
 	else
-	{
-		INFO_LOG(SH4, "ERROR [wrong size read on register]");
-	}
-#endif
-	return 0;
+		return (T)regs[offset].readFunctionAddr(addr);
 }
 
-template<u32 sz, class T>
-void sh4_rio_write(T& regs, u32 addr, u32 data)
+template<typename T>
+void sh4_rio_write(RegisterStruct *regs, u32 addr, T data)
 {
-	u32 offset = addr&255;
+	u32 offset = addr & 255;
 #ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
+	if (offset & 3) //4 is min align size
 	{
-		INFO_LOG(SH4, "Unaligned System bus register write");
+		WARN_LOG(SH4, "Unaligned System bus register write @ %x", addr);
 	}
 #endif
-offset>>=2;
-#ifdef TRACE
-	if (regs[offset].flags & sz)
-	{
-#endif
-		if (!(regs[offset].flags & REG_WF) )
-		{
-			if (sz==4)
-				regs[offset].data32=data;
-			else if (sz==2)
-				regs[offset].data16=(u16)data;
-			else
-				regs[offset].data8=(u8)data;
-			return;
-		}
-		else
-		{
-			//printf("RSW: %08X\n",addr);
-			regs[offset].writeFunctionAddr(addr,data);
-			return;
-		}
-#ifdef TRACE
+	offset >>= 2;
+
+	if (!(regs[offset].flags & REG_WF))
+		regs[offset].data32 = data;
+	else
+		regs[offset].writeFunctionAddr(addr, data);
+}
+
+#define SH4_REG_NAME(r) { r##_addr, #r },
+const std::map<u32, const char *> sh4_reg_names = {
+		SH4_REG_NAME(CCN_PTEH)
+		SH4_REG_NAME(CCN_PTEL)
+		SH4_REG_NAME(CCN_TTB)
+		SH4_REG_NAME(CCN_TEA)
+		SH4_REG_NAME(CCN_CCR)
+		SH4_REG_NAME(CCN_TRA)
+		SH4_REG_NAME(CCN_EXPEVT)
+		SH4_REG_NAME(CCN_INTEVT)
+		SH4_REG_NAME(CPU_VERSION)
+		SH4_REG_NAME(CCN_PTEA)
+		SH4_REG_NAME(CCN_QACR0)
+		SH4_REG_NAME(CCN_QACR1)
+		SH4_REG_NAME(CCN_PRR)
+
+		SH4_REG_NAME(UBC_BARA)
+		SH4_REG_NAME(UBC_BAMRA)
+		SH4_REG_NAME(UBC_BBRA)
+		SH4_REG_NAME(UBC_BARB)
+		SH4_REG_NAME(UBC_BAMRB)
+		SH4_REG_NAME(UBC_BBRB)
+		SH4_REG_NAME(UBC_BDRB)
+		SH4_REG_NAME(UBC_BDMRB)
+		SH4_REG_NAME(UBC_BRCR)
+
+		SH4_REG_NAME(BSC_BCR1)
+		SH4_REG_NAME(BSC_BCR2)
+		SH4_REG_NAME(BSC_WCR1)
+		SH4_REG_NAME(BSC_WCR2)
+		SH4_REG_NAME(BSC_WCR3)
+		SH4_REG_NAME(BSC_MCR)
+		SH4_REG_NAME(BSC_PCR)
+		SH4_REG_NAME(BSC_RTCSR)
+		SH4_REG_NAME(BSC_RTCNT)
+		SH4_REG_NAME(BSC_RTCOR)
+		SH4_REG_NAME(BSC_RFCR)
+		SH4_REG_NAME(BSC_PCTRA)
+		SH4_REG_NAME(BSC_PDTRA)
+		SH4_REG_NAME(BSC_PCTRB)
+		SH4_REG_NAME(BSC_PDTRB)
+		SH4_REG_NAME(BSC_GPIOIC)
+		SH4_REG_NAME(BSC_SDMR2)
+		SH4_REG_NAME(BSC_SDMR3)
+
+		SH4_REG_NAME(DMAC_SAR0)
+		SH4_REG_NAME(DMAC_DAR0)
+		SH4_REG_NAME(DMAC_DMATCR0)
+		SH4_REG_NAME(DMAC_CHCR0)
+		SH4_REG_NAME(DMAC_SAR1)
+		SH4_REG_NAME(DMAC_DAR1)
+		SH4_REG_NAME(DMAC_DMATCR1)
+		SH4_REG_NAME(DMAC_CHCR1)
+		SH4_REG_NAME(DMAC_SAR2)
+		SH4_REG_NAME(DMAC_DAR2)
+		SH4_REG_NAME(DMAC_DMATCR2)
+		SH4_REG_NAME(DMAC_CHCR2)
+		SH4_REG_NAME(DMAC_SAR3)
+		SH4_REG_NAME(DMAC_DAR3)
+		SH4_REG_NAME(DMAC_DMATCR3)
+		SH4_REG_NAME(DMAC_CHCR3)
+		SH4_REG_NAME(DMAC_DMAOR)
+
+		SH4_REG_NAME(CPG_FRQCR)
+		SH4_REG_NAME(CPG_STBCR)
+		SH4_REG_NAME(CPG_WTCNT)
+		SH4_REG_NAME(CPG_WTCSR)
+		SH4_REG_NAME(CPG_STBCR2)
+
+		SH4_REG_NAME(RTC_R64CNT)
+		SH4_REG_NAME(RTC_RSECCNT)
+		SH4_REG_NAME(RTC_RMINCNT)
+		SH4_REG_NAME(RTC_RHRCNT)
+		SH4_REG_NAME(RTC_RWKCNT)
+		SH4_REG_NAME(RTC_RDAYCNT)
+		SH4_REG_NAME(RTC_RMONCNT)
+		SH4_REG_NAME(RTC_RYRCNT)
+		SH4_REG_NAME(RTC_RSECAR)
+		SH4_REG_NAME(RTC_RMINAR)
+		SH4_REG_NAME(RTC_RHRAR)
+		SH4_REG_NAME(RTC_RWKAR)
+		SH4_REG_NAME(RTC_RDAYAR)
+		SH4_REG_NAME(RTC_RMONAR)
+		SH4_REG_NAME(RTC_RCR1)
+		SH4_REG_NAME(RTC_RCR2)
+
+		SH4_REG_NAME(INTC_ICR)
+		SH4_REG_NAME(INTC_IPRA)
+		SH4_REG_NAME(INTC_IPRB)
+		SH4_REG_NAME(INTC_IPRC)
+		SH4_REG_NAME(INTC_IPRD)
+
+		SH4_REG_NAME(TMU_TOCR)
+		SH4_REG_NAME(TMU_TSTR)
+		SH4_REG_NAME(TMU_TCOR0)
+		SH4_REG_NAME(TMU_TCNT0)
+		SH4_REG_NAME(TMU_TCR0)
+		SH4_REG_NAME(TMU_TCOR1)
+		SH4_REG_NAME(TMU_TCNT1)
+		SH4_REG_NAME(TMU_TCR1)
+		SH4_REG_NAME(TMU_TCOR2)
+		SH4_REG_NAME(TMU_TCNT2)
+		SH4_REG_NAME(TMU_TCR2)
+		SH4_REG_NAME(TMU_TCPR2)
+
+		SH4_REG_NAME(SCI_SCSMR1)
+		SH4_REG_NAME(SCI_SCBRR1)
+		SH4_REG_NAME(SCI_SCSCR1)
+		SH4_REG_NAME(SCI_SCTDR1)
+		SH4_REG_NAME(SCI_SCSSR1)
+		SH4_REG_NAME(SCI_SCRDR1)
+		SH4_REG_NAME(SCI_SCSCMR1)
+		SH4_REG_NAME(SCI_SCSPTR1)
+
+		SH4_REG_NAME(SCIF_SCSMR2)
+		SH4_REG_NAME(SCIF_SCBRR2)
+		SH4_REG_NAME(SCIF_SCSCR2)
+		SH4_REG_NAME(SCIF_SCFTDR2)
+		SH4_REG_NAME(SCIF_SCFSR2)
+		SH4_REG_NAME(SCIF_SCFRDR2)
+		SH4_REG_NAME(SCIF_SCFCR2)
+		SH4_REG_NAME(SCIF_SCFDR2)
+		SH4_REG_NAME(SCIF_SCSPTR2)
+		SH4_REG_NAME(SCIF_SCLSR2)
+
+		SH4_REG_NAME(UDI_SDIR)
+		SH4_REG_NAME(UDI_SDDR)
+};
+#undef SH4_REG_NAME
+
+static const char *regName(u32 paddr)
+{
+	u32 addr = paddr & 0x1fffffff;
+	static char regName[32];
+	auto it = sh4_reg_names.find(addr);
+	if (it == sh4_reg_names.end()) {
+		sprintf(regName, "?%08x", paddr);
+		return regName;
 	}
 	else
-	{
-		INFO_LOG(SH4, "ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
-	}
-#endif
-	
+		return it->second;
 }
 
 //Region P4
@@ -168,7 +258,7 @@ template <class T>
 T DYNACALL ReadMem_P4(u32 addr)
 {
 	constexpr size_t sz = sizeof(T);
-	switch((addr>>24)&0xFF)
+	switch ((addr >> 24) & 0xFF)
 	{
 
 	case 0xE0:
@@ -194,13 +284,13 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF2:
 		{
-			u32 entry=(addr>>8)&3;
-			return ITLB[entry].Address.reg_data | (ITLB[entry].Data.V<<8);
+			u32 entry = (addr >> 8) & 3;
+			return ITLB[entry].Address.reg_data | (ITLB[entry].Data.V << 8);
 		}
 
 	case 0xF3:
 		{
-			u32 entry=(addr>>8)&3;
+			u32 entry = (addr >> 8) & 3;
 			return ITLB[entry].Data.reg_data;
 		}
 
@@ -220,16 +310,16 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF6:
 		{
-			u32 entry=(addr>>8)&63;
-			u32 rv=UTLB[entry].Address.reg_data;
-			rv|=UTLB[entry].Data.D<<9;
-			rv|=UTLB[entry].Data.V<<8;
+			u32 entry = (addr >> 8) & 63;
+			u32 rv = UTLB[entry].Address.reg_data;
+			rv |= UTLB[entry].Data.D << 9;
+			rv |= UTLB[entry].Data.V << 8;
 			return rv;
 		}
 
 	case 0xF7:
 		{
-			u32 entry=(addr>>8)&63;
+			u32 entry = (addr >> 8) & 63;
 			return UTLB[entry].Data.reg_data;
 		}
 
@@ -251,9 +341,8 @@ template <class T>
 void DYNACALL WriteMem_P4(u32 addr,T data)
 {
 	constexpr size_t sz = sizeof(T);
-	switch((addr>>24)&0xFF)
+	switch ((addr >> 24) & 0xFF)
 	{
-
 	case 0xE0:
 	case 0xE1:
 	case 0xE2:
@@ -275,28 +364,23 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF2:
 		{
-			u32 entry=(addr>>8)&3;
-			ITLB[entry].Address.reg_data=data & 0xFFFFFCFF;
-			ITLB[entry].Data.V=(data>>8) & 1;
+			u32 entry = (addr >> 8) & 3;
+			ITLB[entry].Address.reg_data = data & 0xFFFFFCFF;
+			ITLB[entry].Data.V = (data >> 8) & 1;
 			ITLB_Sync(entry);
-			return;
 		}
+		return;
 
 	case 0xF3:
 		{
-			u32 entry=(addr>>8)&3;
-			if (addr&0x800000)
-			{
+			u32 entry = (addr >> 8) & 3;
+			if (addr & 0x800000)
 				ITLB[entry].Assistance.reg_data = data & 0xf;
-			}
 			else
-			{
 				ITLB[entry].Data.reg_data=data;
-			}
 			ITLB_Sync(entry);
-
-			return;
 		}
+		return;
 
 	case 0xF4:
 //		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
@@ -311,61 +395,53 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		return;
 
 	case 0xF6:
+		if (addr & 0x80)
 		{
-			if (addr&0x80)
+			CCN_PTEH_type t;
+			t.reg_data = data;
+
+			u32 va = t.VPN << 10;
+
+			for (int i = 0; i < 64; i++)
 			{
-				CCN_PTEH_type t;
-				t.reg_data=data;
-
-				u32 va=t.VPN<<10;
-
-				for (int i=0;i<64;i++)
+				if (mmu_match(va, UTLB[i].Address, UTLB[i].Data))
 				{
-					if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
-					{
-						UTLB[i].Data.V=((u32)data>>8)&1;
-						UTLB[i].Data.D=((u32)data>>9)&1;
-						UTLB_Sync(i);
-					}
-				}
-
-				for (int i=0;i<4;i++)
-				{
-					if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
-					{
-						ITLB[i].Data.V=((u32)data>>8)&1;
-						ITLB[i].Data.D=((u32)data>>9)&1;
-						ITLB_Sync(i);
-					}
+					UTLB[i].Data.V = ((u32)data >> 8) & 1;
+					UTLB[i].Data.D = ((u32)data >> 9) & 1;
+					UTLB_Sync(i);
 				}
 			}
-			else
+
+			for (int i = 0; i < 4; i++)
 			{
-				u32 entry=(addr>>8)&63;
-				UTLB[entry].Address.reg_data=data & 0xFFFFFCFF;
-				UTLB[entry].Data.D=(data>>9)&1;
-				UTLB[entry].Data.V=(data>>8)&1;
-				UTLB_Sync(entry);
+				if (mmu_match(va, ITLB[i].Address, ITLB[i].Data))
+				{
+					ITLB[i].Data.V = ((u32)data >> 8) & 1;
+					ITLB[i].Data.D = ((u32)data >> 9) & 1;
+					ITLB_Sync(i);
+				}
 			}
-			return;
 		}
-		break;
+		else
+		{
+			u32 entry = (addr >> 8) & 63;
+			UTLB[entry].Address.reg_data = data & 0xFFFFFCFF;
+			UTLB[entry].Data.D = (data >> 9) & 1;
+			UTLB[entry].Data.V = (data >> 8) & 1;
+			UTLB_Sync(entry);
+		}
+		return;
 
 	case 0xF7:
 		{
-			u32 entry=(addr>>8)&63;
-			if (addr&0x800000)
-			{
+			u32 entry = (addr >> 8) & 63;
+			if (addr & 0x800000)
 				UTLB[entry].Assistance.reg_data = data & 0xf;
-			}
 			else
-			{
-				UTLB[entry].Data.reg_data=data;
-			}
+				UTLB[entry].Data.reg_data = data;
 			UTLB_Sync(entry);
-
-			return;
 		}
+		return;
 
 	case 0xFF:
 		INFO_LOG(SH4, "Unhandled p4 Write [area7] 0x%x = %x", addr, data);
@@ -388,33 +464,27 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 template <class T>
 T DYNACALL ReadMem_p4mmr(u32 addr)
 {
-	constexpr size_t sz = sizeof(T);
-	/*
-	if (likely(addr==0xffd80024))
-	{
-		return TMU_TCNT(2);
-	}
-	else if (likely(addr==0xFFD8000C))
-	{
-		return TMU_TCNT(0);
-	}
-	else */if (likely(addr==0xFF000028))
-	{
-		return CCN_INTEVT;
-	}
-	else if (likely(addr==0xFFA0002C))
-	{
-		return DMAC_CHCR(2).full;
-	}
+	DEBUG_LOG(SH4, "read %s", regName(addr));
 
-	addr&=0x1FFFFFFF;
-	u32 map_base=addr>>16;
+	/*
+	if (likely(addr == 0xffd80024))
+		return TMU_TCNT(2);
+	if (likely(addr == 0xFFD8000C))
+		return TMU_TCNT(0);
+	*/
+	if (likely(addr == 0xFF000028))
+		return (T)CCN_INTEVT;
+	if (likely(addr == 0xFFA0002C))
+		return (T)DMAC_CHCR(2).full;
+
+	addr &= 0x1FFFFFFF;
+	u32 map_base = addr >> 16;
 	switch (expected(map_base, A7_REG_HASH(TMU_BASE_addr)))
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr<=0x1F000044)
+		if (addr <= 0x1F000044)
 		{
-			return (T)sh4_rio_read<sz>(CCN, addr);
+			return sh4_rio_read<T>(CCN, addr);
 		}
 		else
 		{
@@ -424,9 +494,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(UBC_BASE_addr):
-		if (addr<=0x1F200020)
+		if (addr <= 0x1F200020)
 		{
-			return (T)sh4_rio_read<sz>(UBC, addr);
+			return sh4_rio_read<T>(UBC, addr);
 		}
 		else
 		{
@@ -436,9 +506,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(BSC_BASE_addr):
-		if (addr<=0x1F800048)
+		if (addr <= 0x1F800048)
 		{
-			return (T)sh4_rio_read<sz>(BSC, addr);
+			return sh4_rio_read<T>(BSC, addr);
 		}
 		else
 		{
@@ -457,9 +527,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		return 0;
 
 	case A7_REG_HASH(DMAC_BASE_addr):
-		if (addr<=0x1FA00040)
+		if (addr <= 0x1FA00040)
 		{
-			return (T)sh4_rio_read<sz>(DMAC, addr);
+			return sh4_rio_read<T>(DMAC, addr);
 		}
 		else
 		{
@@ -469,9 +539,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(CPG_BASE_addr):
-		if (addr<=0x1FC00010)
+		if (addr <= 0x1FC00010)
 		{
-			return (T)sh4_rio_read<sz>(CPG, addr);
+			return sh4_rio_read<T>(CPG, addr);
 		}
 		else
 		{
@@ -481,9 +551,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(RTC_BASE_addr):
-		if (addr<=0x1FC8003C)
+		if (addr <= 0x1FC8003C)
 		{
-			return (T)sh4_rio_read<sz>(RTC, addr);
+			return sh4_rio_read<T>(RTC, addr);
 		}
 		else
 		{
@@ -493,9 +563,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr<=0x1FD00010)
+		if (addr <= 0x1FD00010)
 		{
-			return (T)sh4_rio_read<sz>(INTC, addr);
+			return sh4_rio_read<T>(INTC, addr);
 		}
 		else
 		{
@@ -505,9 +575,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(TMU_BASE_addr):
-		if (addr<=0x1FD8002C)
+		if (addr <= 0x1FD8002C)
 		{
-			return (T)sh4_rio_read<sz>(TMU, addr);
+			return sh4_rio_read<T>(TMU, addr);
 		}
 		else
 		{
@@ -517,9 +587,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(SCI_BASE_addr):
-		if (addr<=0x1FE0001C)
+		if (addr <= 0x1FE0001C)
 		{
-			return (T)sh4_rio_read<sz>(SCI, addr);
+			return sh4_rio_read<T>(SCI, addr);
 		}
 		else
 		{
@@ -529,9 +599,9 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		break;
 
 	case A7_REG_HASH(SCIF_BASE_addr):
-		if (addr<=0x1FE80024)
+		if (addr <= 0x1FE80024)
 		{
-			return (T)sh4_rio_read<sz>(SCIF, addr);
+			return sh4_rio_read<T>(SCIF, addr);
 		}
 		else
 		{
@@ -562,56 +632,45 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 
 //Write P4 memory-mapped registers
 template <class T>
-void DYNACALL WriteMem_p4mmr(u32 addr,T data)
+void DYNACALL WriteMem_p4mmr(u32 addr, T data)
 {
-	constexpr size_t sz = sizeof(T);
-	if (likely(addr==0xFF000038))
+	DEBUG_LOG(SH4, "write %s = %x", regName(addr), (int)data);
+
+	if (likely(addr == 0xFF000038))
 	{
-		CCN_QACR_write<0>(addr,data);
+		CCN_QACR_write<0>(addr, data);
 		return;
 	}
-	else if (likely(addr==0xFF00003C))
+	if (likely(addr == 0xFF00003C))
 	{
-		CCN_QACR_write<1>(addr,data);
+		CCN_QACR_write<1>(addr, data);
 		return;
 	}	
 
-	addr&=0x1FFFFFFF;
-	u32 map_base=addr>>16;
+	addr &= 0x1FFFFFFF;
+	u32 map_base = addr >> 16;
 	switch (map_base)
 	{
 
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr<=0x1F00003C)
-		{
-			sh4_rio_write<sz>(CCN, addr, data);
-		}
+		if (addr <= 0x1F00003C)
+			sh4_rio_write(CCN, addr, data);
 		else
-		{
 			OUT_OF_RANGE("CCN");
-		}
 		return;
 
 	case A7_REG_HASH(UBC_BASE_addr):
-		if (addr<=0x1F200020)
-		{
-			sh4_rio_write<sz>(UBC, addr, data);
-		}
+		if (addr <= 0x1F200020)
+			sh4_rio_write(UBC, addr, data);
 		else
-		{
 			OUT_OF_RANGE("UBC");
-		}
 		return;
 
 	case A7_REG_HASH(BSC_BASE_addr):
-		if (addr<=0x1F800048)
-		{
-			sh4_rio_write<sz>(BSC, addr, data);
-		}
+		if (addr <= 0x1F800048)
+			sh4_rio_write(BSC, addr, data);
 		else
-		{
 			OUT_OF_RANGE("BSC");
-		}
 		return;
 	case A7_REG_HASH(BSC_SDMR2_addr):
 		//dram settings 2 / write only
@@ -622,80 +681,52 @@ void DYNACALL WriteMem_p4mmr(u32 addr,T data)
 		return;
 
 	case A7_REG_HASH(DMAC_BASE_addr):
-		if (addr<=0x1FA00040)
-		{
-			sh4_rio_write<sz>(DMAC, addr, data);
-		}
+		if (addr <= 0x1FA00040)
+			sh4_rio_write(DMAC, addr, data);
 		else
-		{
 			OUT_OF_RANGE("DMAC");
-		}
 		return;
 
 	case A7_REG_HASH(CPG_BASE_addr):
-		if (addr<=0x1FC00010)
-		{
-			sh4_rio_write<sz>(CPG, addr, data);
-		}
+		if (addr <= 0x1FC00010)
+			sh4_rio_write(CPG, addr, data);
 		else
-		{
 			OUT_OF_RANGE("CPG");
-		}
 		return;
 
 	case A7_REG_HASH(RTC_BASE_addr):
-		if (addr<=0x1FC8003C)
-		{
-			sh4_rio_write<sz>(RTC, addr, data);
-		}
+		if (addr <= 0x1FC8003C)
+			sh4_rio_write(RTC, addr, data);
 		else
-		{
 			OUT_OF_RANGE("RTC");
-		}
 		return;
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr<=0x1FD0000C)
-		{
-			sh4_rio_write<sz>(INTC, addr, data);
-		}
+		if (addr <= 0x1FD00010)
+			sh4_rio_write(INTC, addr, data);
 		else
-		{
 			OUT_OF_RANGE("INTC");
-		}
 		return;
 
 	case A7_REG_HASH(TMU_BASE_addr):
-		if (addr<=0x1FD8002C)
-		{
-			sh4_rio_write<sz>(TMU, addr, data);
-		}
+		if (addr <= 0x1FD8002C)
+			sh4_rio_write(TMU, addr, data);
 		else
-		{
 			OUT_OF_RANGE("TMU");
-		}
 		return;
 
 	case A7_REG_HASH(SCI_BASE_addr):
-		if (addr<=0x1FE0001C)
-		{
-			sh4_rio_write<sz>(SCI, addr, data);
-		}
+		if (addr <= 0x1FE0001C)
+			sh4_rio_write(SCI, addr, data);
 		else
-		{
 			OUT_OF_RANGE("SCI");
-		}
 		return;
 
 	case A7_REG_HASH(SCIF_BASE_addr):
-		if (addr<=0x1FE80024)
-		{
-			sh4_rio_write<sz>(SCIF, addr, data);
-		}
+		if (addr <= 0x1FE80024)
+			sh4_rio_write(SCIF, addr, data);
 		else
-		{
 			OUT_OF_RANGE("SCIF");
-		}
 		return;
 
 		//who really cares about ht-udi ? it's not existent on dc iirc ..
@@ -858,13 +889,13 @@ void map_p4()
 	//register this before mmr and SQ so they overwrite it and handle em
 	//default P4 handler
 	//0xE0000000-0xFFFFFFFF
-	_vmem_map_handler(p4_handler,0xE0,0xFF);
+	_vmem_map_handler(p4_handler, 0xE0, 0xFF);
 
 	//Store Queues -- Write only 32bit
-	_vmem_map_block(sq_both,0xE0,0xE0,63);
-	_vmem_map_block(sq_both,0xE1,0xE1,63);
-	_vmem_map_block(sq_both,0xE2,0xE2,63);
-	_vmem_map_block(sq_both,0xE3,0xE3,63);
+	_vmem_map_block(sq_both, 0xE0, 0xE0, 63);
+	_vmem_map_block(sq_both, 0xE1, 0xE1, 63);
+	_vmem_map_block(sq_both, 0xE2, 0xE2, 63);
+	_vmem_map_block(sq_both, 0xE3, 0xE3, 63);
 
 	_vmem_map_handler(p4mmr_handler, 0xFF, 0xFF);
 }

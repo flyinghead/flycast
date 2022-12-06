@@ -164,7 +164,6 @@ void sh4_sched_tick(int cycles)
 		for (sched_list& sched : sch_list)
 		{
 			int remaining = sh4_sched_remaining(sched, fztime);
-			verify(remaining >= 0 || remaining == -1);
 			if (remaining >= 0 && remaining <= (int)cycles)
 				handle_cb(sched);
 		}
