@@ -393,7 +393,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 			SB_ADSUSP &= ~0x10;
 
 			// Schedule the end of DMA transfer interrupt
-			int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
+			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK);       // 16 bits @ 25 MHz
 			if (cycles < 4096)
 				dma_end_sched(0, 0, 0);
 			else
@@ -492,8 +492,10 @@ void aica_sb_Init()
 
 void aica_sb_Reset(bool hard)
 {
-	if (hard)
+	if (hard) {
 		SB_ADST = 0;
+		SB_G2APRO = 0x7f00;
+	}
 }
 
 void aica_sb_Term()

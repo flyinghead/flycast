@@ -88,7 +88,7 @@ static u32 DYNACALL read_elanreg(u32 paddr)
 	{
 	case 0x5F:
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-			return sb_ReadMem(paddr, sizeof(u32));
+			return sb_ReadMem(paddr);
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 			return pvr_ReadReg(paddr);
 
@@ -154,7 +154,7 @@ static void DYNACALL write_elanreg(u32 paddr, u32 data)
 	{
 	case 0x5F:
 		if (addr>= 0x005F6800 && addr <= 0x005F7CFF)
-			sb_WriteMem(paddr, data, sizeof(u32));
+			sb_WriteMem(paddr, data);
 		else if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 			pvr_WriteReg(paddr, data);
 		else

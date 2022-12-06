@@ -422,19 +422,16 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 }
 
 //Dma Start
-void Naomi_DmaStart(u32 addr, u32 data)
+static void Naomi_DmaStart(u32 addr, u32 data)
 {
-	if (SB_GDEN==0)
+	if ((data & 1) == 0)
+		return;
+	if (SB_GDEN == 0)
 	{
 		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
-	SB_GDST |= data & 1;
-
-	if (SB_GDST == 0)
-		return;
-
 	if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
@@ -464,20 +461,20 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
 		SB_GDLEND = SB_GDLEN;
 	}
-	SB_GDST = 0;
 	asic_RaiseInterrupt(holly_GDROM_DMA);
 }
 
 
-void Naomi_DmaEnable(u32 addr, u32 data)
+static void Naomi_DmaEnable(u32 addr, u32 data)
 {
-	SB_GDEN=data&1;
-	if (SB_GDEN==0 && SB_GDST==1)
+	SB_GDEN = data & 1;
+	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
 		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
-		SB_GDST=0;
+		SB_GDST = 0;
 	}
 }
+
 void naomi_reg_Init()
 {
 	#ifdef NAOMI_COMM
