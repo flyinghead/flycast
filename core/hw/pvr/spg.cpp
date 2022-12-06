@@ -11,7 +11,6 @@
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 
-static u32 in_vblank;
 static u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
@@ -21,8 +20,8 @@ static u32 vblk_cnt;
 static float last_fps;
 #endif
 
-//54 mhz pixel clock
-#define PIXEL_CLOCK (54*1000*1000/2)
+// 27 mhz pixel clock
+constexpr int PIXEL_CLOCK = 27 * 1000 * 1000;
 static u32 Line_Cycles;
 static u32 Frame_Cycles;
 int render_end_schid;
@@ -59,25 +58,28 @@ void CalculateSync()
 
 static int getNextSpgInterrupt()
 {
+	if (SPG_HBLANK_INT.hblank_int_mode == 2)
+		return Line_Cycles;
+
 	u32 min_scanline = prv_cur_scanline + 1;
 	u32 min_active = pvr_numscanlines;
 
-	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
+	if (min_scanline <= SPG_VBLANK_INT.vblank_in_interrupt_line_number)
 		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_in_interrupt_line_number);
 
-	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
+	if (min_scanline <= SPG_VBLANK_INT.vblank_out_interrupt_line_number)
 		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_out_interrupt_line_number);
 
-	if (min_scanline < SPG_VBLANK.vstart)
+	if (min_scanline <= SPG_VBLANK.vstart)
 		min_active = std::min(min_active, SPG_VBLANK.vstart);
 
-	if (min_scanline < SPG_VBLANK.vbend)
+	if (min_scanline <= SPG_VBLANK.vbend)
 		min_active = std::min(min_active, SPG_VBLANK.vbend);
 
-	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
+	if (lightgun_line != 0xffff && min_scanline <= lightgun_line)
 		min_active = std::min(min_active, lightgun_line);
 
-	if (SPG_HBLANK_INT.hblank_int_mode == 0 && min_scanline < SPG_HBLANK_INT.line_comp_val)
+	if (SPG_HBLANK_INT.hblank_int_mode == 0 && min_scanline <= SPG_HBLANK_INT.line_comp_val)
 		min_active = std::min(min_active, SPG_HBLANK_INT.line_comp_val);
 
 	min_active = std::max(min_active, min_scanline);
@@ -90,18 +92,14 @@ void rescheduleSPG()
 	sh4_sched_request(vblank_schid, getNextSpgInterrupt());
 }
 
-//called from sh4 context , should update pvr/ta state and everything else
-static int spg_line_sched(int tag, int cycl, int jit)
+static int spg_line_sched(int tag, int cycles, int jitter)
 {
-	clc_pvr_scanline += cycl;
+	clc_pvr_scanline += cycles + jitter;
 
-	while (clc_pvr_scanline >=  Line_Cycles)//60 ~hertz = 200 mhz / 60=3333333.333 cycles per screen refresh
+	while (clc_pvr_scanline >= Line_Cycles)
 	{
-		//ok .. here , after much effort , we did one line
-		//now , we must check for raster beam interrupts and vblank
-		prv_cur_scanline=(prv_cur_scanline+1)%pvr_numscanlines;
+		prv_cur_scanline = (prv_cur_scanline + 1) % pvr_numscanlines;
 		clc_pvr_scanline -= Line_Cycles;
-		//Check for scanline interrupts -- really need to test the scanline values
 		
 		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
 		{
@@ -120,21 +118,20 @@ static int spg_line_sched(int tag, int cycl, int jit)
 		}
 
 		if (SPG_VBLANK.vstart == prv_cur_scanline)
-			in_vblank=1;
+			SPG_STATUS.vsync = 1;
 
 		if (SPG_VBLANK.vbend == prv_cur_scanline)
-			in_vblank=0;
+			SPG_STATUS.vsync = 0;
 
-		SPG_STATUS.vsync=in_vblank;
-		SPG_STATUS.scanline=prv_cur_scanline;
+		SPG_STATUS.scanline = prv_cur_scanline;
 		
 		switch (SPG_HBLANK_INT.hblank_int_mode)
 		{
-		case 0x0:
+		case 0:
 			if (prv_cur_scanline == SPG_HBLANK_INT.line_comp_val)
 				asic_RaiseInterrupt(holly_HBLank);
 			break;
-		case 0x2:
+		case 2:
 			asic_RaiseInterrupt(holly_HBLank);
 			break;
 		default:
@@ -142,13 +139,13 @@ static int spg_line_sched(int tag, int cycl, int jit)
 			break;
 		}
 
-		//Vblank start
-		if (prv_cur_scanline==0)
+		// Vblank
+		if (prv_cur_scanline == 0)
 		{
 			if (SPG_CONTROL.interlace)
-				SPG_STATUS.fieldnum=~SPG_STATUS.fieldnum;
+				SPG_STATUS.fieldnum = ~SPG_STATUS.fieldnum;
 			else
-				SPG_STATUS.fieldnum=0;
+				SPG_STATUS.fieldnum = 0;
 
 			rend_vblank();
 
@@ -295,7 +292,6 @@ void scheduleRenderDone(TA_context *cntx)
 
 void spg_Serialize(Serializer& ser)
 {
-	ser << in_vblank;
 	ser << clc_pvr_scanline;
 	ser << maple_int_pending;
 	ser << pvr_numscanlines;
@@ -307,7 +303,8 @@ void spg_Serialize(Serializer& ser)
 }
 void spg_Deserialize(Deserializer& deser)
 {
-	deser >> in_vblank;
+	if (deser.version() < Deserializer::V30)
+		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
 	if (deser.version() < Deserializer::V9_LIBRETRO)
 	{
