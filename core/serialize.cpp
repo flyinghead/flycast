@@ -52,10 +52,6 @@ extern u32 SB_ADST;
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
 
-//./core/hw/holly/sb.o
-extern u32 SB_FFST_rc;
-extern u32 SB_FFST;
-
 //./core/hw/holly/sb_mem.o
 extern MemChip *sys_rom;
 extern WritableChip *sys_nvmem;
@@ -190,8 +186,6 @@ void dc_serialize(Serializer& ser)
 	register_serialize(sb_regs, ser);
 	ser << SB_ISTNRM;
 	ser << SB_ISTNRM1;
-	ser << SB_FFST_rc;
-	ser << SB_FFST;
 	ser << SB_ADST;
 
 	sys_rom->Serialize(ser);
@@ -339,6 +333,8 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	}
 
 	deser.deserialize(aica_ram.data, aica_ram.size);
+	if (settings.platform.isAtomiswave())
+		deser.skip(6 * 1024 * 1024);
 	deser >> VREG;
 	deser >> ARMRST;
 	deser >> rtc_EN;
@@ -349,8 +345,8 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	register_deserialize(sb_regs, deser);
 	deser >> SB_ISTNRM;
-	deser >> SB_FFST_rc;
-	deser >> SB_FFST;
+	deser.skip<u32>(); // SB_FFST_rc;
+	deser.skip<u32>(); // SB_FFST;
 	SB_ADST = 0;
 
 	deser.skip<u32>(); // sys_nvmem->size
@@ -624,7 +620,11 @@ void dc_deserialize(Deserializer& deser)
 	}
 
 	if (!deser.rollback())
+	{
 		deser.deserialize(aica_ram.data, aica_ram.size);
+		if (settings.platform.isAtomiswave())
+			deser.skip(6 * 1024 * 1024, Deserializer::V30);
+	}
 	deser >> VREG;
 	deser >> ARMRST;
 	deser >> rtc_EN;
@@ -641,8 +641,11 @@ void dc_deserialize(Deserializer& deser)
 		deser >> SB_ISTNRM1;
 	else
 		SB_ISTNRM1 = 0;
-	deser >> SB_FFST_rc;
-	deser >> SB_FFST;
+	if (deser.version() < Deserializer::V30)
+	{
+		deser.skip<u32>(); // SB_FFST_rc;
+		deser.skip<u32>(); // SB_FFST;
+	}
 	if (deser.version() >= Deserializer::V15)
 		deser >> SB_ADST;
 	else

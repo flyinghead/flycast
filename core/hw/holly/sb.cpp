@@ -264,8 +264,6 @@ void sb_write_reg(u32 addr, u32 data)
 	SB_REGN_32(reg_addr) = (data & mask) | or_mask;
 }
 
-u32 SB_FFST_rc;
-u32 SB_FFST;
 static u32 read_SB_FFST(u32 addr)
 {
 	return 0;

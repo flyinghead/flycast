@@ -394,7 +394,7 @@ static void setPlatform(int platform)
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
-		settings.platform.aram_size = 8 * 1024 * 1024;
+		settings.platform.aram_size = 2 * 1024 * 1024;
 		settings.platform.bios_size = 128 * 1024;
 		settings.platform.flash_size = 128 * 1024;	// sram
 		break;

@@ -65,7 +65,8 @@ public:
 		V27,
 		V28,
 		V29,
-		Current = V29,
+		V30,
+		Current = V30,
 
 		Next = Current + 1,
 	};
