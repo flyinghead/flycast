@@ -25,7 +25,7 @@ void Drawer::SortTriangles()
 {
 	sortedPolys.resize(pvrrc.render_passes.used());
 	sortedIndexes.resize(pvrrc.render_passes.used());
-	sortedIndexCount = 0;
+	u32 sortedIndexCount = 0;
 	RenderPass previousPass = {};
 
 	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
@@ -291,7 +291,8 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
-	SortTriangles();
+	if (!config::PerStripSorting)
+		SortTriangles();
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();

@@ -251,7 +251,6 @@ private:
 	// Per-triangle sort results
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
 	std::vector<std::vector<u32>> sortedIndexes;
-	u32 sortedIndexCount = 0;
 	bool perStripSorting = false;
 };
 
