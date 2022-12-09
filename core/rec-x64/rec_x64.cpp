@@ -741,13 +741,7 @@ public:
 
 				//found !
 				const u8 *start = getCurr();
-				u32 memAddress = _nvmem_4gb_space() ?
-#ifdef _WIN32
-						context.rcx
-#else
-						context.rdi
-#endif
-						: context.r9;
+				u32 memAddress = context.r9;
 				if (op == MemOp::W && size >= MemSize::S32 && (memAddress >> 26) == 0x38)
 					call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
 				else
@@ -759,12 +753,11 @@ public:
 				context.pc = (uintptr_t)(retAddr - 5);
 				// remove the call from the stack
 				context.rsp += 8;
-				if (!_nvmem_4gb_space())
-					//restore the addr from r9 to arg0 (rcx or rdi) so it's valid again
+				//restore the addr from r9 to arg0 (rcx or rdi) so it's valid again
 #ifdef _WIN32
-					context.rcx = memAddress;
+				context.rcx = memAddress;
 #else
-					context.rdi = memAddress;
+				context.rdi = memAddress;
 #endif
 
 				return true;
@@ -781,6 +774,7 @@ private:
 	{
 		if (mmu_enabled())
 		{
+#ifdef FAST_MMU
 			Xbyak::Label inCache;
 			Xbyak::Label done;
 
@@ -797,15 +791,18 @@ private:
 			}
 			test(eax, eax);
 			jne(inCache);
+#endif
 			mov(call_regs[1], write);
 			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 			GenCall(mmuDynarecLookup);
 			mov(call_regs[0], eax);
+#ifdef FAST_MMU
 			jmp(done);
 			L(inCache);
 			and_(call_regs[0], 0xFFF);
 			or_(call_regs[0], eax);
 			L(done);
+#endif
 		}
 	}
 	bool GenReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -1125,11 +1122,9 @@ private:
 					if (type == MemType::Fast && _nvmem_enabled())
 					{
 						mov(rax, (uintptr_t)virt_ram_base);
-						if (!_nvmem_4gb_space())
-						{
-							mov(r9, call_regs64[0]);
-							and_(call_regs[0], 0x1FFFFFFF);
-						}
+						mov(r9, call_regs64[0]);
+						and_(call_regs[0], 0x1FFFFFFF);
+
 						switch (size)
 						{
 						case MemSize::S8:

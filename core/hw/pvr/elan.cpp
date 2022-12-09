@@ -69,11 +69,14 @@
 
 namespace elan {
 
+constexpr u32 ELAN_RAM_MASK = ERAM_SIZE_MAX - 1;
+
 static _vmem_handler elanRegHandler;
 static _vmem_handler elanCmdHandler;
 static _vmem_handler elanRamHandler;
 
 u8 *RAM;
+u32 ERAM_SIZE;
 
 static u32 reg10;
 static u32 reg74;
@@ -478,7 +481,7 @@ struct State
 
 	static u32 elanRamAddress(void *p)
 	{
-		if ((u8 *)p < RAM || (u8 *)p >= RAM + ELAN_RAM_SIZE)
+		if ((u8 *)p < RAM || (u8 *)p >= RAM + ERAM_SIZE)
 			return Null;
 		else
 			return (u32)((u8 *)p - RAM);
@@ -1441,7 +1444,7 @@ template<bool Active = true>
 static void executeCommand(u8 *data, int size)
 {
 //	verify(size >= 0);
-//	verify(size < (int)ELAN_RAM_SIZE);
+//	verify(size < (int)ERAM_SIZE);
 //	if (0x2b00 == (u32)(data - RAM))
 //		for (int i = 0; i < size; i += 4)
 //			DEBUG_LOG(PVR, "Elan Parse %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
@@ -1748,7 +1751,7 @@ void reset(bool hard)
 {
 	if (hard)
 	{
-		memset(RAM, 0, ELAN_RAM_SIZE);
+		memset(RAM, 0, ERAM_SIZE);
 		state.reset();
 	}
 }
@@ -1780,7 +1783,7 @@ void serialize(Serializer& ser)
 	ser << reg74;
 	ser << elanCmd;
 	if (!ser.rollback())
-		ser.serialize(RAM, ELAN_RAM_SIZE);
+		ser.serialize(RAM, ERAM_SIZE);
 	state.serialize(ser);
 }
 
@@ -1792,7 +1795,7 @@ void deserialize(Deserializer& deser)
 	deser >> reg74;
 	deser >> elanCmd;
 	if (!deser.rollback())
-		deser.deserialize(RAM, ELAN_RAM_SIZE);
+		deser.deserialize(RAM, ERAM_SIZE);
 	state.deserialize(deser);
 }
 

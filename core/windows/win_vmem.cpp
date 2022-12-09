@@ -45,14 +45,13 @@ static std::vector<void *> unmapped_regions;
 static std::vector<void *> mapped_regions;
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
-// The function supports allocating 512MB or 4GB addr spaces.
 
 // Please read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
+bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 #ifdef TARGET_UWP
-	return MemTypeError;
+	return false;
 #endif
 	unmapped_regions.reserve(32);
 	mapped_regions.reserve(32);
@@ -81,7 +80,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ra
 	verify(ptr == *vmem_base_addr);
 	unmapped_regions.push_back(ptr);
 
-	return MemType512MB;
+	return true;
 }
 
 // Just tries to wipe as much as possible in the relevant area.

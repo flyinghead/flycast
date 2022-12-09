@@ -385,16 +385,7 @@ static void recSh4_Init()
 
 	
 	if (_nvmem_enabled())
-	{
-		if (!_nvmem_4gb_space())
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-		}
-		else
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x8C000000));
-		}
-	}
+		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
 	// Prepare some pointer to the pre-allocated code cache:
 	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);

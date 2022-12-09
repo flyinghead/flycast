@@ -148,39 +148,28 @@ static int allocate_shared_filemem(unsigned size) {
 }
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
-// The function supports allocating 512MB or 4GB addr spaces.
 
 int vmem_fd = -1;
 static int shmem_fd2 = -1;
 static void *reserved_base;
 static size_t reserved_size;
 
-// vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
+// vmem_base_addr points to an address space of 512MB that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize) {
+bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize) {
 	// Firt let's try to allocate the shm-backed memory
 	vmem_fd = allocate_shared_filemem(ramSize);
 	if (vmem_fd < 0)
-		return MemTypeError;
+		return false;
 
 	// Now try to allocate a contiguous piece of memory.
-	VMemType rv;
-#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
-	reserved_size = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
+	reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 	reserved_base = mem_region_reserve(NULL, reserved_size);
-	rv = MemType4GB;
-#endif
-	if (reserved_base == NULL)
-	{
-		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-		reserved_base = mem_region_reserve(NULL, reserved_size);
-		if (!reserved_base) {
-			close(vmem_fd);
-			return MemTypeError;
-		}
-		rv = MemType512MB;
+	if (!reserved_base) {
+		close(vmem_fd);
+		return false;
 	}
 
 	// Align pointer to 64KB too, some Linaro bug (no idea but let's just be safe I guess).
@@ -194,7 +183,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ra
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
 	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
-	return rv;
+	return true;
 }
 
 // Just tries to wipe as much as possible in the relevant area.

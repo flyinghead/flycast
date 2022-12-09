@@ -373,6 +373,7 @@ static void setPlatform(int platform)
 {
 	if (VRAM_SIZE != 0)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
+	elan::ERAM_SIZE = 0;
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
@@ -395,6 +396,7 @@ static void setPlatform(int platform)
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
 		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
+		elan::ERAM_SIZE = 32 * 1024 * 1024;
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16 * 1024 * 1024;

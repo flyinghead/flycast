@@ -1825,17 +1825,10 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
+		// WARNING: the rewrite code relies on having 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
-		if (!_nvmem_4gb_space())
-		{
-			Ubfx(x1, x0, 0, 29);
-			Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
-		}
-		else
-		{
-			Add(x1, x0, sizeof(Sh4Context), LeaveFlags);
-		}
+		Ubfx(x1, x0, 0, 29);
+		Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 
 		u32 size = op.flags & 0x7f;
 		switch(size)
@@ -1998,17 +1991,10 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
+		// WARNING: the rewrite code relies on having 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
-		if (!_nvmem_4gb_space())
-		{
-			Ubfx(x7, x0, 0, 29);
-			Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
-		}
-		else
-		{
-			Add(x7, x0, sizeof(Sh4Context), LeaveFlags);
-		}
+		Ubfx(x7, x0, 0, 29);
+		Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 
 		u32 size = op.flags & 0x7f;
 		switch(size)
@@ -2279,7 +2265,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	verify(found);
 
 	// Skip the preceding ops (add, ubfx)
-	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0);
+	u32 *code_rewrite = code_ptr - 2;
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
 		assembler->GenReadMemorySlow(size);
