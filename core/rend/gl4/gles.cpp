@@ -663,11 +663,86 @@ static bool gl_create_resources()
 	return true;
 }
 
+struct OpenGL4Renderer : OpenGLRenderer
+{
+	bool Init() override;
+
+	void Term() override
+	{
+		termABuffer();
+		glcache.DeleteTextures(1, &stencilTexId);
+		stencilTexId = 0;
+		glcache.DeleteTextures(1, &depthTexId);
+		depthTexId = 0;
+		glcache.DeleteTextures(1, &opaqueTexId);
+		opaqueTexId = 0;
+		glcache.DeleteTextures(1, &depthSaveTexId);
+		depthSaveTexId = 0;
+		glDeleteFramebuffers(1, &geom_fbo);
+		geom_fbo = 0;
+		glDeleteSamplers(2, texSamplers);
+		texSamplers[0] = texSamplers[1] = 0;
+		glDeleteFramebuffers(1, &depth_fbo);
+		depth_fbo = 0;
+
+		TexCache.Clear();
+		termGLCommon();
+		gl4_term();
+	}
+
+	bool Render() override
+	{
+		saveCurrentFramebuffer();
+		renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.isRTT) {
+			restoreCurrentFramebuffer();
+			return false;
+		}
+
+		if (!config::EmulateFramebuffer)
+		{
+			DrawOSD(false);
+			gl.ofbo2.ready = false;
+			frameRendered = true;
+		}
+		restoreCurrentFramebuffer();
+
+		return true;
+	}
+
+	GLenum getFogTextureSlot() const override {
+		return GL_TEXTURE5;
+	}
+	GLenum getPaletteTextureSlot() const override {
+		return GL_TEXTURE6;
+	}
+
+	bool renderFrame(int width, int height);
+
+#ifdef LIBRETRO
+	void DrawOSD(bool clearScreen) override
+	{
+		void gl4DrawVmuTexture(u8 vmu_screen_number);
+		void gl4DrawGunCrosshair(u8 port);
+
+		if (settings.platform.isConsole())
+		{
+			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if (vmu_lcd_status[vmu_screen_number * 2])
+					gl4DrawVmuTexture(vmu_screen_number);
+		}
+
+		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+			gl4DrawGunCrosshair(lightgun_port);
+	}
+#endif
+};
+
 //setup
 void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
 		const GLchar *message, const void *userParam);
 
-static bool gl4_init()
+bool OpenGL4Renderer::Init()
 {
 	findGLVersion();
 	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
@@ -737,7 +812,7 @@ static void resize(int w, int h)
 	}
 }
 
-static bool RenderFrame(int width, int height)
+bool OpenGL4Renderer::renderFrame(int width, int height)
 {
 	const bool is_rtt = pvrrc.isRTT;
 
@@ -942,89 +1017,13 @@ static bool RenderFrame(int width, int height)
 #ifndef LIBRETRO
 	else {
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
-		render_output_framebuffer();
+		RenderLastFrame();
 	}
 #endif
 	glBindVertexArray(0);
 
 	return !is_rtt;
 }
-
-struct OpenGL4Renderer : OpenGLRenderer
-{
-	bool Init() override
-	{
-		return gl4_init();
-	}
-
-	void Term() override
-	{
-		termABuffer();
-		glcache.DeleteTextures(1, &stencilTexId);
-		stencilTexId = 0;
-		glcache.DeleteTextures(1, &depthTexId);
-		depthTexId = 0;
-		glcache.DeleteTextures(1, &opaqueTexId);
-		opaqueTexId = 0;
-		glcache.DeleteTextures(1, &depthSaveTexId);
-		depthSaveTexId = 0;
-		glDeleteFramebuffers(1, &geom_fbo);
-		geom_fbo = 0;
-		glDeleteSamplers(2, texSamplers);
-		texSamplers[0] = texSamplers[1] = 0;
-		glDeleteFramebuffers(1, &depth_fbo);
-		depth_fbo = 0;
-
-		TexCache.Clear();
-		termGLCommon();
-		gl4_term();
-	}
-
-	bool Render() override
-	{
-		saveCurrentFramebuffer();
-		RenderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
-		if (pvrrc.isRTT) {
-			restoreCurrentFramebuffer();
-			return false;
-		}
-
-		if (!config::EmulateFramebuffer)
-		{
-			DrawOSD(false);
-			gl.ofbo2.ready = false;
-			frameRendered = true;
-		}
-		restoreCurrentFramebuffer();
-
-		return true;
-	}
-
-	GLenum getFogTextureSlot() const override {
-		return GL_TEXTURE5;
-	}
-	GLenum getPaletteTextureSlot() const override {
-		return GL_TEXTURE6;
-	}
-
-#ifdef LIBRETRO
-	void DrawOSD(bool clearScreen) override
-	{
-		void gl4DrawVmuTexture(u8 vmu_screen_number);
-		void gl4DrawGunCrosshair(u8 port);
-
-		if (settings.platform.isConsole())
-		{
-			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-				if (vmu_lcd_status[vmu_screen_number * 2])
-					gl4DrawVmuTexture(vmu_screen_number);
-		}
-
-		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			gl4DrawGunCrosshair(lightgun_port);
-	}
-#endif
-};
 
 Renderer* rend_GL4()
 {

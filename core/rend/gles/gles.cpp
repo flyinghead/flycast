@@ -964,7 +964,7 @@ void gl_DebugOutput(GLenum source,
 }
 #endif
 
-bool gles_init()
+bool OpenGLRenderer::Init()
 {
 	glcache.EnableCache();
 
@@ -1050,7 +1050,7 @@ static void updatePaletteTexture(GLenum texture_slot)
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void OSD_DRAW(bool clear_screen)
+void OpenGLRenderer::DrawOSD(bool clear_screen)
 {
 #ifdef LIBRETRO
 	void DrawVmuTexture(u8 vmu_screen_number);
@@ -1080,7 +1080,7 @@ void OSD_DRAW(bool clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			render_output_framebuffer();
+			RenderLastFrame();
 			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
@@ -1172,7 +1172,7 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame(int width, int height)
+bool OpenGLRenderer::renderFrame(int width, int height)
 {
 	bool is_rtt = pvrrc.isRTT;
 
@@ -1383,17 +1383,12 @@ bool RenderFrame(int width, int height)
 #ifndef LIBRETRO
 	else {
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
-		render_output_framebuffer();
+		RenderLastFrame();
 	}
 #endif
 	bindVertexArray(0);
 
 	return !is_rtt;
-}
-
-bool OpenGLRenderer::Init()
-{
-	return gles_init();
 }
 
 void OpenGLRenderer::Term()
@@ -1405,7 +1400,7 @@ void OpenGLRenderer::Term()
 bool OpenGLRenderer::Render()
 {
 	saveCurrentFramebuffer();
-	RenderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+	renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 	if (pvrrc.isRTT) {
 		restoreCurrentFramebuffer();
 		return false;
@@ -1420,11 +1415,6 @@ bool OpenGLRenderer::Render()
 	restoreCurrentFramebuffer();
 
 	return true;
-}
-
-bool OpenGLRenderer::RenderLastFrame()
-{
-	return render_output_framebuffer();
 }
 
 Renderer* rend_GLES2()

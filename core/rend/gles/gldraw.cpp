@@ -729,7 +729,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 		drawQuad(gl.dcfb.tex, false, true);
 	}
 #ifndef LIBRETRO
-	render_output_framebuffer();
+	RenderLastFrame();
 #endif
 
 	DrawOSD(false);
@@ -797,7 +797,7 @@ void writeFramebufferToVRAM()
 	glCheck();
 }
 
-bool render_output_framebuffer()
+bool OpenGLRenderer::RenderLastFrame()
 {
 	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
 	if (framebuffer == nullptr)

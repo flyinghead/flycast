@@ -327,7 +327,7 @@ static int TexCacheLookups;
 static int TexCacheHits;
 //static float LastTexCacheStats;
 
-BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 {
 	TexCacheLookups++;
 

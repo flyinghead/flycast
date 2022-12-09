@@ -287,8 +287,6 @@ struct gl_ctx
 
 extern gl_ctx gl;
 
-BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw);
-
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 void termGLCommon();
@@ -301,10 +299,8 @@ GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
 void glReadFramebuffer(const FramebufferInfo& info);
 GLuint init_output_framebuffer(int width, int height);
-bool render_output_framebuffer();
 void writeFramebufferToVRAM();
 
-void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
@@ -416,12 +412,9 @@ struct OpenGLRenderer : Renderer
 
 	bool RenderLastFrame() override;
 
-	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
+	void DrawOSD(bool clear_screen) override;
 
-	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
-	{
-		return gl_GetTexture(tsp, tcw);
-	}
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 
 	bool Present() override
 	{
@@ -434,6 +427,7 @@ struct OpenGLRenderer : Renderer
 		return true;
 	}
 
+protected:
 	virtual GLenum getFogTextureSlot() const {
 		return GL_TEXTURE1;
 	}
@@ -453,6 +447,10 @@ struct OpenGLRenderer : Renderer
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 
+private:
+	bool renderFrame(int width, int height);
+
+protected:
 	bool frameRendered = false;
 };
 

@@ -175,7 +175,7 @@ static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 
 //List functions
 //
-void vramlock_list_remove(vram_block* block)
+static void vramlock_list_remove(vram_block* block)
 {
 	u32 base = block->start / PAGE_SIZE;
 	u32 end = block->end / PAGE_SIZE;
@@ -191,7 +191,7 @@ void vramlock_list_remove(vram_block* block)
 	}
 }
  
-void vramlock_list_add(vram_block* block)
+static void vramlock_list_add(vram_block* block)
 {
 	u32 base = block->start / PAGE_SIZE;
 	u32 end = block->end / PAGE_SIZE;
@@ -210,7 +210,7 @@ void vramlock_list_add(vram_block* block)
 	}
 }
  
-std::mutex vramlist_lock;
+static std::mutex vramlist_lock;
 
 bool VramLockedWriteOffset(size_t offset)
 {
@@ -379,9 +379,9 @@ void BaseTextureCacheData::PrintTextureName()
 
 	if (tcw.VQ_Comp)
 		strcat(str, " VQ");
-	else if (tcw.ScanOrder == 0)
+	else if (tcw.ScanOrder == 0 || IsPaletted())
 		strcat(str, " TW");
-	else if (tcw.StrideSel)
+	else if (tcw.StrideSel == 1 && !IsPaletted())
 		strcat(str, " Stride");
 
 	if (tcw.ScanOrder == 0 && tcw.MipMapped)

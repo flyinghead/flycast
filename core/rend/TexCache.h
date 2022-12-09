@@ -705,13 +705,18 @@ public:
 	Texture *getTextureCacheData(TSP tsp, TCW tcw)
 	{
 		u64 key = tsp.full & TSPTextureCacheMask.full;
-		if ((tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-				&& !BaseTextureCacheData::IsGpuHandledPaletted(tsp, tcw))
-			// Paletted textures have a palette selection that must be part of the key
-			// We also add the palette type to the key to avoid thrashing the cache
-			// when the palette type is changed. If the palette type is changed back in the future,
-			// this texture will stil be available.
-			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6) | ((tsp.FilterMode != 0) << 8);
+		if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+		{
+			if (BaseTextureCacheData::IsGpuHandledPaletted(tsp, tcw))
+				// texaddr, pixelfmt, VQ, MipMap
+				key |= (u64)(tcw.full & TCWPalTextureCacheMask.full) << 32;
+			else
+				// Paletted textures have a palette selection that must be part of the key
+				// We also add the palette type to the key to avoid thrashing the cache
+				// when the palette type is changed. If the palette type is changed back in the future,
+				// this texture will stil be available.
+				key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6) | ((tsp.FilterMode != 0) << 8);
+		}
 		else
 			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
@@ -795,6 +800,8 @@ protected:
 	const TSP TSPTextureCacheMask = { { 7, 7 } };
 	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
 	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+	//     TexAddr : 0x1FFFFF, PalSelect : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 0, 7, 1, 1 } };
 };
 
 template<typename Packer = RGBAPacker>
