@@ -6715,9 +6715,9 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O24_CHT NULL
-#define OPTION_VAL_4_CHT NULL
-#define OPTION_VAL_6_CHT NULL
+#define OPTION_VAL_2_O24_CHT "2倍"
+#define OPTION_VAL_4_CHT "4倍"
+#define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CHT NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CHT NULL
@@ -6744,7 +6744,7 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_15_CHT NULL
 #define OPTION_VAL_20_CHT NULL
 #define OPTION_VAL_25_CHT NULL
-#define OPTION_VAL_30_CHT "30 %"
+#define OPTION_VAL_30_CHT NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CHT NULL
@@ -6776,9 +6776,9 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_LOWER_LEFT_CHT NULL
 #define OPTION_VAL_LOWER_RIGHT_CHT NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_CHT NULL
-#define OPTION_VAL_1X_CHT NULL
-#define OPTION_VAL_3X_CHT NULL
-#define OPTION_VAL_5X_CHT NULL
+#define OPTION_VAL_1X_CHT "1倍"
+#define OPTION_VAL_3X_CHT "3倍"
+#define OPTION_VAL_5X_CHT "5倍"
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_CHT NULL
 #define OPTION_VAL_DEFAULT_ON_00_CHT NULL
 #define OPTION_VAL_DEFAULT_OFF_01_CHT NULL
@@ -6801,7 +6801,7 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_MAGENTA_21_CHT "洋紅色"
 #define OPTION_VAL_LIGHT_PURPLE_3_22_CHT "淺紫色 (3)"
 #define OPTION_VAL_LIGHT_ORANGE_23_CHT "淺橘色"
-#define OPTION_VAL_ORANGE_24_CHT "橘色"
+#define OPTION_VAL_ORANGE_24_CHT "橙色"
 #define OPTION_VAL_LIGHT_PURPLE_4_25_CHT "淺紫色 (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_CHT "淡黃色"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_CHT "淡黃色 (2)"
@@ -13161,7 +13161,7 @@ struct retro_core_options_v2 options_da = {
 #define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für Mehrgängiges Rendern und Frameskip ändern."
 #define CATEGORY_HACKS_LABEL_DE "Emulations-Hacks"
 #define CATEGORY_HACKS_INFO_0_DE "Breitbild-Überschreibungen, GD-ROM Ladegeschwindigkeit und Textur-Austausch-Einstellungen konfigurieren."
-#define CATEGORY_INPUT_LABEL_DE NULL
+#define CATEGORY_INPUT_LABEL_DE "Eingabe"
 #define CATEGORY_INPUT_INFO_0_DE "Gamepad- und Pistoleneinstellungen konfigurieren."
 #define CATEGORY_VMU_LABEL_DE NULL
 #define CATEGORY_VMU_INFO_0_DE "VMU Dateien pro Spiel und VMU Anzeigeeinstellungen konfigurieren."
@@ -31161,44 +31161,44 @@ struct retro_core_options_v2 options_hr = {
 /* RETRO_LANGUAGE_HU */
 
 #define CATEGORY_SYSTEM_LABEL_HU "Rendszer"
-#define CATEGORY_SYSTEM_INFO_0_HU NULL
-#define CATEGORY_VIDEO_LABEL_HU "Videó"
-#define CATEGORY_VIDEO_INFO_0_HU NULL
+#define CATEGORY_SYSTEM_INFO_0_HU "A régió, nyelv, BIOS, és a hardveralap beállításai."
+#define CATEGORY_VIDEO_LABEL_HU "Kép"
+#define CATEGORY_VIDEO_INFO_0_HU "A felbontás, sorrendfüggetlen átlátszóság, és vizuális effektek beállításai."
 #define CATEGORY_PERFORMANCE_LABEL_HU "Teljesítmény"
-#define CATEGORY_PERFORMANCE_INFO_0_HU NULL
+#define CATEGORY_PERFORMANCE_INFO_0_HU "A többszálas megjelenítés és képkockakihagyás beállításai."
 #define CATEGORY_HACKS_LABEL_HU "Emulációs trükkök"
-#define CATEGORY_HACKS_INFO_0_HU NULL
-#define CATEGORY_INPUT_LABEL_HU "Bevitel"
-#define CATEGORY_INPUT_INFO_0_HU NULL
+#define CATEGORY_HACKS_INFO_0_HU "A szélesvásznú módosítások, GD-ROM betöltés sebessége, és a textúracserék beállításai."
+#define CATEGORY_INPUT_LABEL_HU "Bemenet"
+#define CATEGORY_INPUT_INFO_0_HU "A kontroller és fénypisztoly beállításai."
 #define CATEGORY_VMU_LABEL_HU NULL
-#define CATEGORY_VMU_INFO_0_HU NULL
-#define CORE_OPTION_NAME_REGION_LABEL_HU "Terület"
-#define OPTION_VAL_JAPAN_HU NULL
+#define CATEGORY_VMU_INFO_0_HU "A játékonkénti VMU mentések és a képernyőn látható VMU beállításai."
+#define CORE_OPTION_NAME_REGION_LABEL_HU "Régió"
+#define OPTION_VAL_JAPAN_HU "Japán"
 #define OPTION_VAL_USA_HU NULL
-#define OPTION_VAL_EUROPE_HU NULL
+#define OPTION_VAL_EUROPE_HU "Európa"
 #define OPTION_VAL_DEFAULT_HU "Alapértelmezett"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_HU "Nyelv"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_HU NULL
-#define OPTION_VAL_JAPANESE_HU NULL
-#define OPTION_VAL_ENGLISH_HU NULL
-#define OPTION_VAL_GERMAN_HU NULL
-#define OPTION_VAL_FRENCH_HU NULL
-#define OPTION_VAL_SPANISH_HU NULL
-#define OPTION_VAL_ITALIAN_HU NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_HU "A nyelv, amelyet a BIOS és a több nyelvet tartalmazó játékok használnak."
+#define OPTION_VAL_JAPANESE_HU "japán"
+#define OPTION_VAL_ENGLISH_HU "angol"
+#define OPTION_VAL_GERMAN_HU "német"
+#define OPTION_VAL_FRENCH_HU "francia"
+#define OPTION_VAL_SPANISH_HU "spanyol"
+#define OPTION_VAL_ITALIAN_HU "olasz"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_HU NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HU NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_HU NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HU "Mindenképp a magas szinten emulált BIOS használata."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HU "Indítás BIOS-ban (újraindítás szükséges)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU "Belépés a Dreamcast BIOS menüjébe rögtön Indításkor."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU "DSP engedélyezése"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU "A Dreamcast DSP (digitális jelfeldolgozó) emulálásának engedélyezése. Javítja a generált hang pontosságát, de megnöveli a teljesítményigényt."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_HU "Mindenképp Windows CE mód"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HU "A teljes MMU (Memory Management Unit) emulálása és egyéb beállítások Windows CE játékokhoz."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU "NAOMI szervizgombok engedélyezése"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A NAOMI szervizgombjának engedélyezése, a kabinet beállításaihoz."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU NULL
 #define OPTION_VAL_640X480_HU NULL
 #define OPTION_VAL_800X600_HU NULL
@@ -31226,50 +31226,50 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_11520X8640_HU NULL
 #define OPTION_VAL_12160X9120_HU NULL
 #define OPTION_VAL_12800X9600_HU NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_HU NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_HU "Kábel típusa"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HU "A kimenő jel típusa. A \"TV (kompozit)\" támogatása a legelterjedtebb."
 #define OPTION_VAL_VGA_HU NULL
 #define OPTION_VAL_TV_RGB_HU NULL
-#define OPTION_VAL_TV_COMPOSITE_HU NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_HU NULL
+#define OPTION_VAL_TV_COMPOSITE_HU "TV (kompozit)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_HU "Műsorszórási szabvány"
 #define OPTION_VAL_NTSC_HU NULL
-#define OPTION_VAL_PAL_HU NULL
+#define OPTION_VAL_PAL_HU "PAL (Világszerte)"
 #define OPTION_VAL_PAL_N_HU NULL
 #define OPTION_VAL_PAL_M_HU NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_HU "Képernyő tájolása"
-#define OPTION_VAL_HORIZONTAL_HU NULL
-#define OPTION_VAL_VERTICAL_HU NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_HU NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_HU NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HU NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HU NULL
+#define OPTION_VAL_HORIZONTAL_HU "Vízszintes"
+#define OPTION_VAL_VERTICAL_HU "Függőleges"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU "Alfa rendezés"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU "Per-strip (gyors, legkevésbé pontos)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_HU "Per-triangle (normál)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_HU "Per-pixel (pontos, de a leglassabb)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HU "Pixel gyűjtőbuffer mérete"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HU "Magasabb felbontások helyes visszaadásához nagyobb értékek kellhetnek."
 #define OPTION_VAL_512MB_HU NULL
 #define OPTION_VAL_1GB_HU NULL
 #define OPTION_VAL_2GB_HU NULL
 #define OPTION_VAL_4GB_HU NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU "Átlátszó rétegek maximális száma"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU "Összetett jelenetekhez nagyobb értékekre lehet szükség."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_FOG_LABEL_HU NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HU NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HU NULL
+#define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU "A Dreamcast GPU-jának egy szolgáltatása, amit a játékok rendszerint tárgyak árnyékának megrajzolásához használnak. Normál esetben legyen bekapcsolva, hatása a teljesítményre rendszerint minimális vagy elhanyagolható."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HU "Anizotróp szûrés"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HU "Minőségjavítás azokon a felületi textúrákon, amik a kamerához képest rézsútosan helyezkednek el. Nagyobb érték jobban terheli a GPU-t. A változtatás csak újraindítás után lép életbe."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HU "Textúraszűrés"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HU NULL
-#define OPTION_VAL_1_HU NULL
-#define OPTION_VAL_2_HU NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HU NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HU "A textúraszűrés módja. Ezzel lehet egy bizonyos textúraszűrési módot rákényszeríteni minden textúrára, hogy az alapértelmezésnél élesebb (vagy simább) megjelenésük legyen. Az alapértelmezettől eltérő értékek különféle megjelenítési hibákat okozhatnak. A változások csak újraindítás után lépnek életbe."
+#define OPTION_VAL_1_HU "Mindenképp Nearest-Neighbor"
+#define OPTION_VAL_2_HU "Mindenképp lineáris"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HU "Képkockacsere késleltetése"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HU "A villódzó képernyőt vagy hibás mozgóképet segít elkerülni. Lassú platformokon nem ajánlott."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HU "Képkockasebesség változásainak érzékelése"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HU "A frontend értesítése, amikor a belső képsebesség megváltozik (pl. 60 fps-ről 30 fps-re). Javítja a megjelenítés ütemét olyan játékoknál, amelyek fix 20 vagy 30 fps-sel futnak, de legyen kikapcsolva nem rögzített (instabil) képsebességű játékoknál (pl. Ecco the Dolphin, Unreal Tournament). Figyelem: nem elérhető, ha az automatikus képkocka kihagyás be van kapcsolva."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HU "PowerVR2 utófeldolgozó szűrő"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU "Az előállított kép utófeldolgozása a PowerVR2 GPU és az analóg videojelek egyedi effektjeinek szimulálásához."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU "Textúra felméretezés (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU "A kézzel rajzolt 2D pixel art grafikák feljavítása. Csak a 2D pixelgrafikus játékokhoz ajánlott."
 #define OPTION_VAL_2_O24_HU NULL
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
