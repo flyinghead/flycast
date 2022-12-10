@@ -4,7 +4,6 @@
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
-#include "network/ggpo.h"
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
@@ -368,15 +367,12 @@ void rend_start_render()
 		ctx->rend.framebufferHeight = height;
 	}
 
-	bool present = !config::DelayFrameSwapping && !ctx->rend.isRTT && !config::EmulateFramebuffer;
-	if (present)
-		ggpo::endOfFrame();
 	if (QueueRender(ctx))
 	{
 		palette_update();
 		pend_rend = true;
 		pvrQueue.enqueue(PvrMessageQueue::Render);
-		if (present)
+		if (!config::DelayFrameSwapping && !ctx->rend.isRTT && !config::EmulateFramebuffer)
 			pvrQueue.enqueue(PvrMessageQueue::Present);
 	}
 }
@@ -410,7 +406,6 @@ void rend_vblank()
 		fbInfo.update();
 		pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
 		pvrQueue.enqueue(PvrMessageQueue::Present);
-		ggpo::endOfFrame();
 		if (!config::EmulateFramebuffer)
 			DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		fb_dirty = false;
@@ -452,11 +447,7 @@ void rend_set_fb_write_addr(u32 fb_w_sof1)
 void rend_swap_frame(u32 fb_r_sof)
 {
 	if (!config::EmulateFramebuffer && fb_r_sof == fb_w_cur)
-	{
 		pvrQueue.enqueue(PvrMessageQueue::Present);
-		if (config::DelayFrameSwapping)
-        	ggpo::endOfFrame();
-	}
 }
 
 void rend_disable_rollback()

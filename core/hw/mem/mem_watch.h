@@ -30,7 +30,14 @@
 namespace memwatch
 {
 
-using PageMap = std::unordered_map<u32, std::array<u8, PAGE_SIZE>>;
+struct Page
+{
+	Page() {
+		// don't initialize data
+	}
+	u8 data[PAGE_SIZE];
+};
+using PageMap = std::unordered_map<u32, Page>;
 
 template<typename T>
 class Watcher
@@ -51,7 +58,11 @@ public:
 			for (const auto& pair : pages)
 				static_cast<T&>(*this).protectMem(pair.first, PAGE_SIZE);
 		}
-		pages.clear();
+	}
+
+	void unprotect()
+	{
+		static_cast<T&>(*this).unprotectMem(0, 0xffffffff);
 	}
 
 	void reset()
@@ -69,13 +80,16 @@ public:
 		if (pages.count(offset) > 0)
 			// already saved
 			return true;
-		memcpy(&pages[offset][0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
+        Page& page = pages.emplace(offset, Page()).first->second;
+        memcpy(&page.data[0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
 		static_cast<T&>(*this).unprotectMem(offset, PAGE_SIZE);
 		return true;
 	}
 
-	const PageMap& getPages() {
-		return pages;
+	void getPages(PageMap& other)
+	{
+		std::swap(pages, other);
+		pages = PageMap();
 	}
 };
 
@@ -197,6 +211,16 @@ inline static void protect()
 	ramWatcher.protect();
 	aramWatcher.protect();
 	elanWatcher.protect();
+}
+
+inline static void unprotect()
+{
+	if (!config::GGPOEnable)
+		return;
+	vramWatcher.unprotect();
+	ramWatcher.unprotect();
+	aramWatcher.unprotect();
+	elanWatcher.unprotect();
 }
 
 inline static void reset()

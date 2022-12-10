@@ -51,7 +51,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 		u32 rs2 = op->rs2.is_imm() ? op->rs2.imm_value() : 0;
 		u32 rs3 = op->rs3.is_imm() ? op->rs3.imm_value() : 0;
 		u32 rd;
-		u32 rd2;
+		u32 rd2 = 0;
 
 		switch (op->op)
 		{

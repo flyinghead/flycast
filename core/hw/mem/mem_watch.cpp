@@ -29,15 +29,13 @@ ElanRamWatcher elanWatcher;
 void AicaRamWatcher::protectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	mem_region_lock(aica_ram.data + addr,
-			std::min(aica_ram.size - addr, size));
+	mem_region_lock(aica_ram.data + addr, size);
 }
 
 void AicaRamWatcher::unprotectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	mem_region_unlock(aica_ram.data + addr,
-			std::min(aica_ram.size - addr, size));
+	mem_region_unlock(aica_ram.data + addr, size);
 }
 
 u32 AicaRamWatcher::getMemOffset(void *p)

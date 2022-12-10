@@ -127,10 +127,10 @@ struct MemPages
 {
 	void load()
 	{
-		ram = memwatch::ramWatcher.getPages();
-		vram = memwatch::vramWatcher.getPages();
-		aram = memwatch::aramWatcher.getPages();
-		elanram = memwatch::elanWatcher.getPages();
+		memwatch::ramWatcher.getPages(ram);
+		memwatch::vramWatcher.getPages(vram);
+		memwatch::aramWatcher.getPages(aram);
+		memwatch::elanWatcher.getPages(elanram);
 	}
 	memwatch::PageMap ram;
 	memwatch::PageMap vram;
@@ -226,7 +226,7 @@ static bool on_event(GGPOEvent *info)
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / (msPerFrameAvg >= 25 ? 30 : 60)));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / (msPerFrameAvg >= 25 ? 30 : 60)));
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		INFO_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
@@ -283,17 +283,18 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
+	memwatch::unprotect();
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
 		const MemPages& pages = deltaStates[f];
 		for (const auto& pair : pages.ram)
-			memcpy(memwatch::ramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+			memcpy(memwatch::ramWatcher.getMemPage(pair.first), &pair.second.data[0], PAGE_SIZE);
 		for (const auto& pair : pages.vram)
-			memcpy(memwatch::vramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+			memcpy(memwatch::vramWatcher.getMemPage(pair.first), &pair.second.data[0], PAGE_SIZE);
 		for (const auto& pair : pages.aram)
-			memcpy(memwatch::aramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+			memcpy(memwatch::aramWatcher.getMemPage(pair.first), &pair.second.data[0], PAGE_SIZE);
 		for (const auto& pair : pages.elanram)
-			memcpy(memwatch::elanWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+			memcpy(memwatch::elanWatcher.getMemPage(pair.first), &pair.second.data[0], PAGE_SIZE);
 		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d eram, %d aica ram", f, (u32)pages.ram.size(),
 					(u32)pages.vram.size(), (u32)pages.elanram.size(), (u32)pages.aram.size());
 	}
@@ -319,6 +320,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 {
 	verify(!sh4_cpu.IsCpuRunning());
 	lastSavedFrame = frame;
+	// TODO this is way too much memory
 	size_t allocSize = (settings.platform.isNaomi() ? 20 : 10) * 1024 * 1024;
 	*buffer = (unsigned char *)malloc(allocSize);
 	if (*buffer == nullptr)
@@ -335,6 +337,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 #ifdef SYNC_TEST
 	*checksum = XXH32(*buffer, usedSize, 7);
 #endif
+	memwatch::protect();
 	if (frame > 0)
 	{
 #ifdef SYNC_TEST
@@ -386,7 +389,6 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d eram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
 				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].elanram.size(), (u32)deltaStates[frame - 1].aram.size());
 	}
-	memwatch::protect();
 
 	return true;
 }
@@ -679,7 +681,7 @@ bool nextFrame()
 		stopSession();
 		if (error == GGPO_ERRORCODE_INPUT_SIZE_DIFF)
 			throw FlycastException("GGPO analog settings are different from peer");
-		else if (error != GGPO_OK)
+		else
 			throw FlycastException("GGPO error");
 	}
 
@@ -726,18 +728,23 @@ bool nextFrame()
 			mo_y_delta[0] -= inputs.u.relPos.y;
 			mo_wheel_delta[0] -= inputs.u.relPos.wheel;
 		}
-		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
-		if (result == GGPO_OK)
+		error = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
+		if (error == GGPO_OK)
 			break;
-		if (result != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
+		if (error != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
 		{
-			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
+			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", error);
 			stopSession();
 			throw FlycastException("GGPO error");
 		}
 		DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		ggpo_idle(ggpoSession, 0);
+		error = ggpo_idle(ggpoSession, 0);
+		if (error != GGPO_OK)
+		{
+			stopSession();
+			throw FlycastException("GGPO error");
+		}
 	} while (active());
 #ifdef SYNC_TEST
 	u32 input = ~kcode[1 - localPlayerNum];
