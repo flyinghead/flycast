@@ -580,26 +580,6 @@ GGPO_API GGPOErrorCode __cdecl ggpo_set_disconnect_notify_start(GGPOSession *,
                                                                 int timeout);
 
 /*
- * ggpo_log --
- *
- * Used to write to the ggpo.net log.  In the current versions of the
- * SDK, a log file is only generated if the "quark.log" environment
- * variable is set to 1.  This will change in future versions of the
- * SDK.
- */
-GGPO_API void __cdecl ggpo_log(GGPOSession *,
-                               const char *fmt, ...);
-/*
- * ggpo_logv --
- *
- * A varargs compatible version of ggpo_log.  See ggpo_log for
- * more details.
- */
-GGPO_API void __cdecl ggpo_logv(GGPOSession *,
-                                const char *fmt,
-                                va_list args);
-
-/*
  * ggpo_send_message --
  *
  * Sends application-specific data to other peers. The message is

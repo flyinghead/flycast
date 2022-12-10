@@ -34,7 +34,7 @@ CreateSocket(uint16 bind_port, int retries)
    for (port = bind_port; port <= bind_port + retries; port++) {
       sin.sin_port = htons(port);
       if (bind(s, (sockaddr *)&sin, sizeof sin) == 0) {
-         Log("Udp bound to port: %d.\n", port);
+         Log("Udp bound to port: %d.", port);
          return s;
       }
    }
@@ -62,7 +62,7 @@ Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
    _callbacks = callbacks;
    poll->RegisterLoop(this);
 
-   Log("binding udp socket to port %d.\n", port);
+   Log("binding udp socket to port %d.", port);
    _socket = CreateSocket(port, 0);
    if (_socket == INVALID_SOCKET)
 	   throw GGPOException("Socket creation or bind failed", GGPO_ERRORCODE_NETWORK_ERROR);
@@ -76,11 +76,11 @@ Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
    int res = sendto(_socket, buffer, len, flags, dst, destlen);
    if (res == SOCKET_ERROR) {
 	  int err = WSAGetLastError();
-      Log("unknown error in sendto (erro: %d  wsaerr: %d).\n", res, err);
+      Log("unknown error in sendto (erro: %d  wsaerr: %d).", res, err);
       ASSERT(false && "Unknown error in sendto");
    }
    char dst_ip[1024];
-   Log("sent packet length %d to %s:%d (ret:%d).\n", len, inet_ntop(AF_INET, (void *)&to->sin_addr, dst_ip, ARRAY_SIZE(dst_ip)), ntohs(to->sin_port), res);
+   Log("sent packet length %d to %s:%d (ret:%d).", len, inet_ntop(AF_INET, (void *)&to->sin_addr, dst_ip, ARRAY_SIZE(dst_ip)), ntohs(to->sin_port), res);
 }
 
 bool
@@ -99,32 +99,15 @@ Udp::OnLoopPoll(void *cookie)
       if (len == -1) {
          int error = WSAGetLastError();
          if (error != WSAEWOULDBLOCK) {
-            Log("recvfrom WSAGetLastError returned %d (%x).\n", error, error);
+            Log("recvfrom WSAGetLastError returned %d (%x).", error, error);
          }
          break;
       } else if (len > 0) {
          char src_ip[1024];
-         Log("recvfrom returned (len:%d  from:%s:%d).\n", len, inet_ntop(AF_INET, (void*)&recv_addr.sin_addr, src_ip, ARRAY_SIZE(src_ip)), ntohs(recv_addr.sin_port) );
+         Log("recvfrom returned (len:%d  from:%s:%d).", len, inet_ntop(AF_INET, (void*)&recv_addr.sin_addr, src_ip, ARRAY_SIZE(src_ip)), ntohs(recv_addr.sin_port) );
          UdpMsg *msg = (UdpMsg *)recv_buf;
          _callbacks->OnMsg(recv_addr, msg, len);
       } 
    }
    return true;
-}
-
-
-void
-Udp::Log(const char *fmt, ...)
-{
-   char buf[1024];
-   size_t offset;
-   va_list args;
-
-   strcpy(buf, "udp | ");
-   offset = strlen(buf);
-   va_start(args, fmt);
-   vsnprintf(buf + offset, ARRAY_SIZE(buf) - offset - 1, fmt, args);
-   buf[ARRAY_SIZE(buf)-1] = '\0';
-   ::Log(buf);
-   va_end(args);
 }

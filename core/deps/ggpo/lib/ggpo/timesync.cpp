@@ -59,7 +59,7 @@ TimeSync::recommend_frame_wait_duration(bool require_idle_input)
    // sleep for.
    int sleep_frames = (int)(((radvantage - advantage) / 2) + 0.5);
 
-   Log("iteration %d:  sleep frames is %d\n", count, sleep_frames);
+   Log("iteration %d:  sleep frames is %d", count, sleep_frames);
 
    // Some things just aren't worth correcting for.  Make sure
    // the difference is relevant before proceeding.
@@ -74,7 +74,7 @@ TimeSync::recommend_frame_wait_duration(bool require_idle_input)
    if (require_idle_input) {
       for (size_t i = 1; i < ARRAY_SIZE(_last_inputs); i++) {
          if (!_last_inputs[i].equal(_last_inputs[0], true)) {
-            Log("iteration %d:  rejecting due to input stuff at position %d...!!!\n", count, i);
+            Log("iteration %d:  rejecting due to input stuff at position %d...!!!", count, (int)i);
             return 0;
          }
       }

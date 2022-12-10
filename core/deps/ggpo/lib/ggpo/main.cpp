@@ -23,22 +23,6 @@ struct Init
 };
 static Init init;
 
-void
-ggpo_log(GGPOSession *ggpo, const char *fmt, ...)
-{
-   va_list args;
-   va_start(args, fmt);
-   ggpo_logv(ggpo, fmt, args);
-   va_end(args);
-}
-
-void
-ggpo_logv(GGPOSession *ggpo, const char *fmt, va_list args)
-{
-   if (ggpo)
-      ggpo->Logv(fmt, args);
-}
-
 GGPOErrorCode
 ggpo_start_session(GGPOSession **session,
                    GGPOSessionCallbacks *cb,
@@ -59,7 +43,7 @@ ggpo_start_session(GGPOSession **session,
 													 verification_size);
 	   return GGPO_OK;
 	} catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_start_session: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_start_session: %s", e.what());
 	   return e.ggpoError;
 	}
 }
@@ -74,7 +58,7 @@ ggpo_add_player(GGPOSession *ggpo,
    try {
 	   return ggpo->AddPlayer(player, handle);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_add_player: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_add_player: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -93,7 +77,7 @@ ggpo_start_synctest(GGPOSession **ggpo,
 	   *ggpo = (GGPOSession *)new SyncTestBackend(cb, game, frames, num_players);
 	   return GGPO_OK;
 	} catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_start_synctest: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_start_synctest: %s", e.what());
 	   return e.ggpoError;
 	}
 }
@@ -108,7 +92,7 @@ ggpo_set_frame_delay(GGPOSession *ggpo,
    try {
 	   return ggpo->SetFrameDelay(player, frame_delay);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_set_frame_delay: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_set_frame_delay: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -121,7 +105,7 @@ ggpo_idle(GGPOSession *ggpo, int timeout)
    try {
 	   return ggpo->DoPoll(timeout);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_idle: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_idle: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -137,7 +121,7 @@ ggpo_add_local_input(GGPOSession *ggpo,
    try {
       return ggpo->AddLocalInput(player, values, size);
    } catch (const GGPOException& e) {
-      Log("GGPOException in ggpo_add_local_input: %s", e.what());
+	  ERROR_LOG(NETWORK, "GGPOException in ggpo_add_local_input: %s", e.what());
       return e.ggpoError;
    }
 }
@@ -153,7 +137,7 @@ ggpo_synchronize_input(GGPOSession *ggpo,
    try {
       return ggpo->SyncInput(values, size, disconnect_flags);
    } catch (const GGPOException& e) {
-      Log("GGPOException in ggpo_synchronize_input: %s", e.what());
+	  ERROR_LOG(NETWORK, "GGPOException in ggpo_synchronize_input: %s", e.what());
       return e.ggpoError;
    }
 }
@@ -166,7 +150,7 @@ GGPOErrorCode ggpo_disconnect_player(GGPOSession *ggpo,
    try {
 	   return ggpo->DisconnectPlayer(player);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_disconnect_player: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_disconnect_player: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -179,7 +163,7 @@ ggpo_advance_frame(GGPOSession *ggpo)
    try {
 	   return ggpo->IncrementFrame();
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_advance_frame: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_advance_frame: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -194,7 +178,7 @@ ggpo_get_network_stats(GGPOSession *ggpo,
    try {
 	   return ggpo->GetNetworkStats(stats, player);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_get_network_stats: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_get_network_stats: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -218,7 +202,7 @@ ggpo_set_disconnect_timeout(GGPOSession *ggpo, int timeout)
    try {
 	   return ggpo->SetDisconnectTimeout(timeout);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_set_disconnect_timeout: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_set_disconnect_timeout: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -231,7 +215,7 @@ ggpo_set_disconnect_notify_start(GGPOSession *ggpo, int timeout)
    try {
 	   return ggpo->SetDisconnectNotifyStart(timeout);
    } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_set_disconnect_notify_start: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_set_disconnect_notify_start: %s", e.what());
 	   return e.ggpoError;
    }
 }
@@ -259,7 +243,7 @@ GGPOErrorCode ggpo_start_spectating(GGPOSession **session,
 													 verification_size);
 	   return GGPO_OK;
 	} catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_start_spectating: %s", e.what());
+	   ERROR_LOG(NETWORK, "GGPOException in ggpo_start_spectating: %s", e.what());
 	   return e.ggpoError;
 	}
 }

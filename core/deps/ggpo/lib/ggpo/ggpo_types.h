@@ -40,6 +40,7 @@ typedef short int16;
 typedef int int32;
 
 #include "ggponet.h"
+#include "log/Log.h"
 #include <stdexcept>
 
 class GGPOException : public std::runtime_error {
@@ -61,8 +62,6 @@ public:
 #  error Unsupported platform
 #endif
 
-#include "log.h"
-
 /*
  * Macros
  */
@@ -70,15 +69,13 @@ public:
    do {                                                     \
       if (!(x)) {                                           \
          char assert_buf[1024];                             \
-         snprintf(assert_buf, sizeof(assert_buf) - 1, "Assertion: %s @ %s:%d (pid:%ld)", #x, __FILE__, __LINE__, (long)GGPOPlatform::GetProcessID()); \
-         Log("%s\n", assert_buf);                           \
-         Log("\n");                                         \
-         Log("\n");                                         \
-         Log("\n");                                         \
-         GGPOPlatform::AssertFailed(assert_buf);                \
-         exit(0);                                           \
+         snprintf(assert_buf, sizeof(assert_buf) - 1, "Assertion: %s @ %s:%d", #x, __FILE__, __LINE__); \
+         GGPOPlatform::AssertFailed(assert_buf);            \
+         throw GGPOException(assert_buf, GGPO_ERRORCODE_GENERAL_FAILURE); \
       }                                                     \
    } while (false)
+
+#define Log(...) DEBUG_LOG(NETWORK, __VA_ARGS__)
 
 #ifndef ARRAY_SIZE
 #  define ARRAY_SIZE(a)    (sizeof(a) / sizeof((a)[0]))

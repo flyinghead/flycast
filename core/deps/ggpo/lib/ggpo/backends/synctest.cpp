@@ -83,7 +83,6 @@ SyncTestBackend::SyncInput(void *values,
                            int size,
                            int *disconnect_flags)
 {
-   BeginLog(false);
    if (_rollingback) {
       _last_input = _saved_frames.front().input;
    } else {
@@ -105,8 +104,7 @@ SyncTestBackend::IncrementFrame(void)
    _sync.IncrementFrame();
    _current_input.erase();
    
-   Log("End of frame(%d)...\n", _sync.GetFrameCount());
-   EndLog();
+   DEBUG_LOG(NETWORK, "End of frame(%d)...", _sync.GetFrameCount());
 
    if (_rollingback) {
       return GGPO_OK;
@@ -171,47 +169,9 @@ SyncTestBackend::RaiseSyncError(const char *fmt, ...)
 #ifdef _WIN32
    OutputDebugStringA(buf);
 #endif
-   EndLog();
 //   DebugBreak();
 }
 
-GGPOErrorCode
-SyncTestBackend::Logv(char *fmt, va_list list)
-{
-   if (_logfp) {
-      vfprintf(_logfp, fmt, list);
-   }
-   return GGPO_OK;
-}
-
-void
-SyncTestBackend::BeginLog(int saving)
-{
-   EndLog();
-
-   char filename[MAX_PATH];
-#ifdef _WIN32
-   CreateDirectoryA("synclogs", NULL);
-#else
-   mkdir("synclogs", 0755);
-#endif
-   snprintf(filename, ARRAY_SIZE(filename), "synclogs/%s-%04d-%s.log",
-           saving ? "state" : "log",
-           _sync.GetFrameCount(),
-           _rollingback ? "replay" : "original");
-
-    _logfp = fopen(filename, "w");
-}
-
-void
-SyncTestBackend::EndLog()
-{
-   if (_logfp) {
-      fprintf(_logfp, "Closing log file.\n");
-      fclose(_logfp);
-      _logfp = NULL;
-   }
-}
 void
 SyncTestBackend::LogSaveStates(SavedInfo &info)
 {

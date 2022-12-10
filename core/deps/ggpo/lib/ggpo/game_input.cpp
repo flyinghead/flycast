@@ -8,7 +8,6 @@
 #include "game_input.h"
 
 #include "ggpo_types.h"
-#include "log.h"
 
 void
 GameInput::init(int iframe, char *ibits, int isize, int offset)
@@ -65,25 +64,23 @@ GameInput::log(char *prefix, bool show_frame) const
 	size_t c = strlen(prefix);
 	strcpy(buf, prefix);
 	desc(buf + c, ARRAY_SIZE(buf) - c, show_frame);
-	strcat(buf, "\n");
-	Log(buf);
+	Log("%s", buf);
 }
 
 bool
 GameInput::equal(GameInput &other, bool bitsonly)
 {
    if (!bitsonly && frame != other.frame) {
-      Log("frames don't match: %d, %d\n", frame, other.frame);
+      Log("frames don't match: %d, %d", frame, other.frame);
    }
    if (size != other.size) {
-      Log("sizes don't match: %d, %d\n", size, other.size);
+      Log("sizes don't match: %d, %d", size, other.size);
    }
-   if (memcmp(bits, other.bits, size)) {
-      Log("bits don't match\n");
-   }
+   bool match = memcmp(bits, other.bits, size) == 0;
+   if (!match)
+      Log("bits don't match");
    ASSERT(size && other.size);
    return (bitsonly || frame == other.frame) &&
-          size == other.size &&
-          memcmp(bits, other.bits, size) == 0;
+          size == other.size && match;
 }
 

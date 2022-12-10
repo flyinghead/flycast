@@ -1358,8 +1358,6 @@ if(NOT LIBRETRO)
 		core/deps/ggpo/lib/ggpo/game_input.h
 		core/deps/ggpo/lib/ggpo/input_queue.cpp
 		core/deps/ggpo/lib/ggpo/input_queue.h
-		core/deps/ggpo/lib/ggpo/log.cpp
-		core/deps/ggpo/lib/ggpo/log.h
 		core/deps/ggpo/lib/ggpo/main.cpp
 		core/deps/ggpo/lib/ggpo/platform_linux.cpp
 		core/deps/ggpo/lib/ggpo/platform_linux.h

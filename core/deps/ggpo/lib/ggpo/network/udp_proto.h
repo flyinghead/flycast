@@ -119,7 +119,6 @@ protected:
    void UpdateNetworkStats(void);
    void QueueEvent(const UdpProtocol::Event &evt);
    void ClearSendQueue(void);
-   void Log(const char *fmt, ...);
    void LogMsg(const char *prefix, UdpMsg *msg);
    void LogEvent(const char *prefix, const UdpProtocol::Event &evt);
    void SendSyncRequest();
