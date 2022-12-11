@@ -120,8 +120,9 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 //		{ "T11001N",    nullptr,    { 0xC3D6BC, 0xD204A8, 0xD32FC8, 0xC7CF84, 0xD20548 },
 //				{ 0x00363031, 0x00000356, 0x00000280, 0x00000280, 0x00000280 } },		// Half-Life. Not working
 		{ "MK-5104150", nullptr,    { 0x23FCC4 }, { 0x44558000 } },		// Headhunter (PAL)
-		{ "MK-5100250", nullptr,    { 0x4C6708 }, { 0x43700000 } },		// House of the Dead 2, The (PAL)
-		{ "MK-51002",   nullptr,    { 0x4C6088 }, { 0x43700000 } },		// House of the Dead 2, The (USA)
+		// gun coords issue
+		//{ "MK-5100250", nullptr,    { 0x4C6708 }, { 0x43700000 } },		// House of the Dead 2, The (PAL)
+		//{ "MK-51002",   nullptr,    { 0x4C6088 }, { 0x43700000 } },		// House of the Dead 2, The (USA)
 		{ "T38706M",    nullptr,    { 0xC0CFA0 }, { 0x3F400000 } },		// Ikaruga (JP)
 		{ "T46001N",    nullptr,    { 0x1C8A98 }, { 0x3F400000 } },		// Illbleed (USA)
 		{ "T44904D 50", nullptr,    { 0x18C15C, 0x18C18C }, { 0x43F00000, 0x3F400000 } },	// Iron Aces (PAL)
@@ -311,11 +312,29 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "  18WHEELER", "18wheelr", { 0x5C64A8 }, { 0x43700000 } },
 		{ "BEACH SPIKERS JAPAN", nullptr, { 0x065A7C }, { 0x44558000 } },
 		{ "GUN SPIKE", nullptr, { 0x21A94 }, { 0x3FE38E39 } },
+		{ "INITIAL D", "initd", { 0x155434 }, { 0x3FE38E39 } },
+		{ "INITIAL D", "initdexp", { 0x159674 }, { 0x3FE38E39 } },
+		{ "INITIAL D", "initdexpo", { 0x159634 }, { 0x3FE38E39 } },
+		{ "INITIAL D", "initdo", { 0x14F5F4 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.2", "initdv2e", { 0x1B4F74 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.2", "initdv2j", { 0x1B4F34 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.2", "initdv2jo", { 0x1AD1F4 }, { 0x3FE38E39 } },
 		{ "INITIAL D Ver.3", "initdv3e", { 0x1D0B34 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.3", "initdv3j", { 0x1D7C74 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.3", "initdv3jb", { 0x1D7774 }, { 0x3FE38E39 } },
 		{ "AIRLINE PILOTS IN JAPAN", "alpilotj", { 0x1D62550 }, { 0x43700000 } },
 		{ "MONKEY BALL JAPAN VERSION", nullptr, { 0x345B4, 0x45244, 0x454CC }, { 0x3FE38E39, 0x3FE38E39, 0x3FE38E39 } },
 		{ "ZOMBIE REVENGE IN JAPAN", "zombrvn", { 0x7A4808 }, { 0x43700000 } },
 		{ "ZOMBIE REVENGE IN JAPAN", "zombrvno", { 0x7A2E50 }, { 0x43700000 } },
+		{ " BIOHAZARD  GUN SURVIVOR2", "gunsur2", { 0x42EE80 }, { 0x3F400000 } },
+		{ " BIOHAZARD  GUN SURVIVOR2", "gunsur2j", { 0x42EBE0 }, { 0x3F400000 } },
+		{ "SPAWN JAPAN", nullptr, { 0x02DEF8, 0x02E1C0 }, { 0x3A99999A, 0x3A99999A } },
+		// gun coords problem with these 2 cheats
+		// { " CONFIDENTIAL MISSION ---------", nullptr, { 0x24F798 }, { 0x43700000 } },
+		// { "hotd2", nullptr, { 0x9C2AD8 }, { 0x43700000 } },
+		{ "GUN SPIKE", nullptr, { 0xBACD7C }, { 0x440A7C9A } },
+		{ " JAMBO SAFARI ------------", nullptr, { 0x2B1DE0 }, { 0x3FE38E39 } },
+		{ "SOUL SURFER IN JAPAN", nullptr, { 0x8962C8 }, { 0x3FE38E39 } },
 
 		{ nullptr },
 };
