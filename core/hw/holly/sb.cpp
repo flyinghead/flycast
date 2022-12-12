@@ -180,6 +180,10 @@ u32 sb_ReadMem(u32 addr)
 
 	if (!(sb_regs[offset].flags & REG_RF))
 		rv = sb_regs[offset].data32;
+	else if (sb_regs[offset].flags & REG_WO) {
+		INFO_LOG(HOLLY, "sb_ReadMem write-only reg %s", regName(addr));
+		rv = 0;
+	}
 	else
 		rv = sb_regs[offset].readFunctionAddr(addr);
 
@@ -248,7 +252,7 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 	}
 	else
 	{
-		if (flags & REG_RF)
+		if ((flags & REG_RF) && !(flags & REG_WO))
 			sb_regs[idx].readFunctionAddr = rf;
 		else
 			sb_regs[idx].data32 = 0;
