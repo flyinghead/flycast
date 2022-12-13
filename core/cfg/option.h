@@ -417,7 +417,7 @@ public:
 	RendererOption()
 #ifdef USE_DX9
 		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
-#elif defined(TARGET_UWP)
+#elif defined(USE_DX11)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
 #else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}

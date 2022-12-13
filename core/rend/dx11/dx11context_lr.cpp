@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#ifdef HAVE_D3D11
+#ifdef LIBRETRO
 #include "dx11context_lr.h"
 #include <dxgi1_2.h>
 #include "rend/osd.h"

@@ -16,6 +16,8 @@ option(USE_GLES2 "Use GLES2 API" OFF)
 option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+option(USE_DX9 "Build with Direct3D 9 support" ON)
+option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
@@ -1181,7 +1183,7 @@ if(USE_VULKAN)
 	endif()
 endif()
 
-if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	set(REND_DX9_FILES
 		core/rend/dx9/d3d_overlay.h
 		core/rend/dx9/d3d_overlay.cpp
@@ -1207,14 +1209,13 @@ if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 		endif()
 	endif()
 
+	target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D9)
 	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DX9)
 endif()
 
-if(WIN32)
-	if(LIBRETRO)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
-	else()
+if(WIN32 AND USE_DX11)
+	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/dx11/imgui_impl_dx11.cpp
 			core/rend/dx11/imgui_impl_dx11.h)
@@ -1242,6 +1243,8 @@ if(WIN32)
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
 		core/rend/dx11/oit/dx11_oitshaders.cpp
 		core/rend/dx11/oit/dx11_oitshaders.h)
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 
