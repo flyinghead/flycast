@@ -1247,10 +1247,12 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 #ifndef GLES2
 	if (gl.prim_restart_fixed_supported)
 		glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+#ifndef GLES
 	else if (gl.prim_restart_supported) {
 		glEnable(GL_PRIMITIVE_RESTART);
 		glPrimitiveRestartIndex(-1);
 	}
+#endif
 #endif
 	//setup render target first
 	if (is_rtt)
