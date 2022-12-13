@@ -270,7 +270,7 @@ static void rend_create_renderer()
 		renderer = rend_DirectX9();
 		break;
 #endif
-#if (defined(_WIN32) && !defined(LIBRETRO)) || defined(HAVE_D3D11)
+#ifdef USE_DX11
 	case RenderType::DirectX11:
 		renderer = rend_DirectX11();
 		break;

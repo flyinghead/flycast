@@ -1784,7 +1784,7 @@ static void gui_display_settings()
 					#ifdef USE_OPENGL
 						+ 1
 					#endif
-					#ifdef _WIN32
+					#ifdef USE_DX11
 						+ 1
 					#endif
 						;
@@ -1811,7 +1811,7 @@ static void gui_display_settings()
 					ImGui::RadioButton("DirectX 9", &renderApi, 2);
 					ImGui::NextColumn();
 #endif
-#ifdef _WIN32
+#ifdef USE_DX11
 					ImGui::RadioButton("DirectX 11", &renderApi, 3);
 					ImGui::NextColumn();
 #endif
