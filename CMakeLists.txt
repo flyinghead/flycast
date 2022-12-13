@@ -22,6 +22,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(BUILD_MULTIPROCESSOR "win: Compile with multiple cores" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -51,6 +52,10 @@ endif()
 if(IOS AND NOT LIBRETRO)
 	set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
 	enable_language(Swift)
+endif()
+
+if(BUILD_MULTIPROCESSOR AND MSVC)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 find_package(Git)
