@@ -222,11 +222,13 @@
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #define TARGET_UWP
 #endif
-#if !defined(LIBRETRO) && !defined(TARGET_UWP)
+#ifdef HAVE_D3D9
 #define USE_DX9
 #endif
+#ifdef HAVE_D3D11
+#define USE_DX11
 #endif
-
+#endif
 
 #if !defined(LIBRETRO) && !defined(TARGET_NO_EXCEPTIONS)
 #define USE_GGPO

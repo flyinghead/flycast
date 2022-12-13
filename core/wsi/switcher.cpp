@@ -46,7 +46,7 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
-#ifdef _WIN32
+#ifdef USE_DX11
 	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
 		theDX11Context.setWindow(window, display);
