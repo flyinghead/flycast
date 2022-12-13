@@ -12,8 +12,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #define TACALL DYNACALL
 #ifdef NDEBUG
@@ -1127,228 +1125,39 @@ private:
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 static void getRegionSettings(int passNumber, RenderPass& pass);
 
-//
-// Check if a vertex has huge x,y,z values or negative z
-//
-static bool is_vertex_inf(const Vertex& vtx)
+static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, rend_context& ctx, bool primRestart)
 {
-	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
-			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
-			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
-}
+	const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
+			|| config::RendererType == RenderType::DirectX11_OIT
+			|| config::RendererType == RenderType::Vulkan_OIT;
+	const bool mergeTranslucent = config::PerStripSorting || perPixel;
 
-//
-// Create the vertex index, eliminating invalid vertices and merging strips when possible.
-//
-static void make_index(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx)
-{
-	const u32 *indices = ctx->idx.head();
-	const Vertex *vertices = ctx->verts.head();
-
-	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys->head()[end];
-	bool cullingReversed = false;
-	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
+	if (primRestart)
+		makePrimRestartIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, &ctx);
+	else
+		makeIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, &ctx);
+	if (primRestart)
+		makePrimRestartIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, &ctx);
+	else
+		makeIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, &ctx);
+	if (pass.autosort && !perPixel)
 	{
-		int first_index;
-		bool dupe_next_vtx = false;
-		if (merge
-				&& last_poly != nullptr
-				&& last_poly->count != 0
-				&& poly->equivalentIgnoreCullingDirection(*last_poly))
-		{
-			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-			*ctx->idx.Append() = last_vtx;
-			if (poly->isp.CullMode < 2 || poly->isp.CullMode == last_poly->isp.CullMode)
-			{
-				if (cullingReversed)
-					*ctx->idx.Append() = last_vtx;
-				cullingReversed = false;
-			}
-			else
-			{
-				if (!cullingReversed)
-					*ctx->idx.Append() = last_vtx;
-				cullingReversed = true;
-			}
-			dupe_next_vtx = true;
-			first_index = last_poly->first;
-		}
+		if (config::PerStripSorting)
+			sortPolyParams(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, &ctx);
 		else
-		{
-			last_poly = poly;
-			first_index = ctx->idx.used();
-			cullingReversed = false;
-		}
-		int last_good_vtx = -1;
-		for (u32 i = 0; i < poly->count; i++)
-		{
-			const Vertex& vtx = vertices[poly->first + i];
-			if (!poly->isNaomi2() && is_vertex_inf(vtx))
-			{
-				while (i < poly->count - 1)
-				{
-					const Vertex& next_vtx = vertices[poly->first + i + 1];
-					if (!is_vertex_inf(next_vtx))
-					{
-						// repeat last and next vertices to link strips
-						if (last_good_vtx >= 0)
-						{
-							verify(!dupe_next_vtx);
-							*ctx->idx.Append() = last_good_vtx;
-							dupe_next_vtx = true;
-						}
-						break;
-					}
-					i++;
-				}
-			}
-			else
-			{
-				last_good_vtx = poly->first + i;
-				if (dupe_next_vtx)
-				{
-					*ctx->idx.Append() = last_good_vtx;
-					dupe_next_vtx = false;
-				}
-				const u32 count = ctx->idx.used() - first_index;
-				if (((i ^ count) & 1) ^ cullingReversed)
-					*ctx->idx.Append() = last_good_vtx;
-				*ctx->idx.Append() = last_good_vtx;
-			}
-		}
-		if (last_poly == poly)
-		{
-			poly->first = first_index;
-			poly->count = ctx->idx.used() - first_index;
-		}
+			sortTriangles(ctx, pass, previousPass);
+	}
+	// sortTriangles already created the index
+	if (!pass.autosort || perPixel || config::PerStripSorting)
+	{
+		if (primRestart)
+			makePrimRestartIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, &ctx);
 		else
-		{
-			last_poly->count = ctx->idx.used() - last_poly->first;
-			poly->count = 0;
-		}
+			makeIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, &ctx);
 	}
 }
 
-static void fix_texture_bleeding(const List<PolyParam> *list)
-{
-	const PolyParam *pp_end = list->LastPtr(0);
-	const u32 *idx_base = vd_rc.idx.head();
-	Vertex *vtx_base = vd_rc.verts.head();
-	for (const PolyParam *pp = list->head(); pp != pp_end; pp++)
-	{
-		if (!pp->pcw.Texture || pp->count < 3)
-			continue;
-		// Find polygons that are facing the camera (constant z)
-		// and only use 0 and 1 for U and V (some tolerance around 1 for SA2)
-		// then apply a half-pixel correction on U and V.
-		const u32 first = idx_base[pp->first];
-		const u32 last = idx_base[pp->first + pp->count - 1];
-		bool need_fixing = true;
-		float z = 0.f;
-		for (u32 idx = first; idx <= last && need_fixing; idx++)
-		{
-			Vertex& vtx = vtx_base[idx];
-
-			if (vtx.u != 0.f && (vtx.u <= 0.995f || vtx.u > 1.f))
-				need_fixing = false;
-			else if (vtx.v != 0.f && (vtx.v <= 0.995f || vtx.v > 1.f))
-				need_fixing = false;
-			else if (idx == first)
-				z = vtx.z;
-			else if (z != vtx.z)
-				need_fixing = false;
-		}
-		if (!need_fixing)
-			continue;
-		u32 tex_width = 8 << pp->tsp.TexU;
-		u32 tex_height = 8 << pp->tsp.TexV;
-		for (u32 idx = first; idx <= last; idx++)
-		{
-			Vertex& vtx = vtx_base[idx];
-			if (vtx.u > 0.995f)
-				vtx.u = 1.f;
-			vtx.u = (0.5f + vtx.u * (tex_width - 1)) / tex_width;
-			if (vtx.v > 0.995f)
-				vtx.v = 1.f;
-			vtx.v = (0.5f + vtx.v * (tex_height - 1)) / tex_height;
-		}
-	}
-}
-
-static bool operator<(const PolyParam& left, const PolyParam& right)
-{
-	return left.zvZ < right.zvZ;
-}
-
-static void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context* ctx)
-{
-	if (end - first <= 1)
-		return;
-
-	Vertex *vtx_base = ctx->verts.head();
-
-	PolyParam *pp = &polys->head()[first];
-	PolyParam *pp_end = &polys->head()[end];
-
-	while (pp != pp_end)
-	{
-		if (pp->count < 3)
-		{
-			pp->zvZ = 0;
-		}
-		else
-		{
-			Vertex *vtx = &vtx_base[pp->first];
-			Vertex *vtx_end = &vtx_base[pp->first + pp->count];
-
-			if (pp->isNaomi2())
-			{
-				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
-				glm::vec3 min{ 1e38f, 1e38f, 1e38f };
-				glm::vec3 max{ -1e38f, -1e38f, -1e38f };
-				while (vtx != vtx_end)
-				{
-					glm::vec3 pos{ vtx->x, vtx->y, vtx->z };
-					min = glm::min(min, pos);
-					max = glm::max(max, pos);
-					vtx++;
-				}
-				glm::vec4 center((min + max) / 2.f, 1);
-				glm::vec4 extents(max - glm::vec3(center), 0);
-				// transform
-				center = mvMat * center;
-				glm::vec3 extentX = mvMat * glm::vec4(extents.x, 0, 0, 0);
-				glm::vec3 extentY = mvMat * glm::vec4(0, extents.y, 0, 0);
-				glm::vec3 extentZ = mvMat * glm::vec4(0, 0, extents.z, 0);
-				// new AA extents
-				glm::vec3 newExtent = glm::abs(extentX) + glm::abs(extentY) + glm::abs(extentZ);
-
-				min = glm::vec3(center) - newExtent;
-				max = glm::vec3(center) + newExtent;
-
-				// project
-				pp->zvZ = -1 / std::min(min.z, max.z);
-			}
-			else
-			{
-				u32 zv = 0xFFFFFFFF;
-				while (vtx != vtx_end)
-				{
-					zv = std::min(zv, (u32&)vtx->z);
-					vtx++;
-				}
-
-				pp->zvZ = (f32&)zv;
-			}
-		}
-		pp++;
-	}
-
-	std::stable_sort(&polys->head()[first], pp_end);
-}
-
-static bool ta_parse_vdrc(TA_context* ctx)
+static bool ta_parse_vdrc(TA_context* ctx, bool primRestart)
 {
 	bool rv=false;
 	verify(vd_ctx == nullptr);
@@ -1357,9 +1166,6 @@ static bool ta_parse_vdrc(TA_context* ctx)
 	ta_parse_reset();
 
 	bool empty_context = true;
-	int op_poly_count = 0;
-	int pt_poly_count = 0;
-	int tr_poly_count = 0;
 
 	PolyParam *bgpp = vd_rc.global_param_op.head();
 	if (bgpp->pcw.Texture)
@@ -1368,13 +1174,10 @@ static bool ta_parse_vdrc(TA_context* ctx)
 		empty_context = false;
 	}
 
-	const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
-			|| config::RendererType == RenderType::DirectX11_OIT
-			|| config::RendererType == RenderType::Vulkan_OIT;
-	const bool mergeTranslucent = config::PerStripSorting || perPixel;
-
 	TA_context *childCtx = ctx;
 	int pass = 0;
+	RenderPass previousPass{};
+
 	while (childCtx != nullptr)
 	{
 		childCtx->MarkRend();
@@ -1401,25 +1204,17 @@ static bool ta_parse_vdrc(TA_context* ctx)
 
 		if (pass == 0 || !empty_pass)
 		{
-			RenderPass *render_pass = vd_rc.render_passes.Append();
-			getRegionSettings(pass, *render_pass);
-			render_pass->op_count = vd_rc.global_param_op.used();
-			make_index(&vd_rc.global_param_op, op_poly_count,
-					render_pass->op_count, true, &vd_rc);
-			op_poly_count = render_pass->op_count;
-			render_pass->mvo_count = vd_rc.global_param_mvo.used();
-			render_pass->pt_count = vd_rc.global_param_pt.used();
-			make_index(&vd_rc.global_param_pt, pt_poly_count,
-					render_pass->pt_count, true, &vd_rc);
-			pt_poly_count = render_pass->pt_count;
-			render_pass->tr_count = vd_rc.global_param_tr.used();
-			if (render_pass->autosort && config::PerStripSorting && !perPixel)
-				sortPolyParams(&vd_rc.global_param_tr, tr_poly_count,
-					render_pass->tr_count, &vd_rc);
-			make_index(&vd_rc.global_param_tr, tr_poly_count,
-					render_pass->tr_count, mergeTranslucent, &vd_rc);
-			tr_poly_count = render_pass->tr_count;
-			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+			RenderPass& render_pass = *vd_rc.render_passes.Append();
+			getRegionSettings(pass, render_pass);
+			render_pass.op_count = vd_rc.global_param_op.used();
+			render_pass.pt_count = vd_rc.global_param_pt.used();
+			render_pass.tr_count = vd_rc.global_param_tr.used();
+			render_pass.sorted_tr_count = 0;
+			render_pass.mvo_count = vd_rc.global_param_mvo.used();
+			render_pass.mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+
+			parseRenderPass(render_pass, previousPass, vd_rc, primRestart);
+			previousPass = render_pass;
 		}
 		childCtx = childCtx->nextContext;
 		pass++;
@@ -1431,9 +1226,9 @@ static bool ta_parse_vdrc(TA_context* ctx)
 		WARN_LOG(PVR, "ERROR: TA context overrun");
 	else if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
 	{
-		fix_texture_bleeding(&vd_rc.global_param_op);
-		fix_texture_bleeding(&vd_rc.global_param_pt);
-		fix_texture_bleeding(&vd_rc.global_param_tr);
+		fix_texture_bleeding(&vd_rc.global_param_op, vd_rc);
+		fix_texture_bleeding(&vd_rc.global_param_pt, vd_rc);
+		fix_texture_bleeding(&vd_rc.global_param_tr, vd_rc);
 	}
 	if (rv && !overrun)
 	{
@@ -1452,7 +1247,7 @@ static bool ta_parse_vdrc(TA_context* ctx)
 	return rv && !overrun;
 }
 
-static bool ta_parse_naomi2(TA_context* ctx)
+static bool ta_parse_naomi2(TA_context* ctx, bool primRestart)
 {
 	for (PolyParam& pp : ctx->rend.global_param_op)
 	{
@@ -1484,23 +1279,12 @@ static bool ta_parse_naomi2(TA_context* ctx)
 	else
 	{
 		ctx->rend.newRenderPass();
-		int op_count = 0;
-		int pt_count = 0;
-		int tr_count = 0;
-		const bool perPixel = config::RendererType == RenderType::OpenGL_OIT
-				|| config::RendererType == RenderType::DirectX11_OIT
-				|| config::RendererType == RenderType::Vulkan_OIT;
-		const bool mergeTranslucent = config::PerStripSorting || perPixel;
-		for (const RenderPass& pass : ctx->rend.render_passes)
+		RenderPass previousPass{};
+
+		for (RenderPass& pass : ctx->rend.render_passes)
 		{
-			make_index(&ctx->rend.global_param_op, op_count, pass.op_count, true, &ctx->rend);
-			make_index(&ctx->rend.global_param_pt, pt_count, pass.pt_count, true, &ctx->rend);
-			if (pass.autosort && config::PerStripSorting && !perPixel)
-				sortPolyParams(&ctx->rend.global_param_tr, tr_count, pass.tr_count, &ctx->rend);
-			make_index(&ctx->rend.global_param_tr, tr_count, pass.tr_count, mergeTranslucent, &ctx->rend);
-			op_count = pass.op_count;
-			pt_count = pass.pt_count;
-			tr_count = pass.tr_count;
+			parseRenderPass(pass, previousPass, ctx->rend, primRestart);
+			previousPass = pass;
 		}
 
 		u32 xmin, xmax, ymin, ymax;
@@ -1514,14 +1298,17 @@ static bool ta_parse_naomi2(TA_context* ctx)
 	return !overrun;
 }
 
-bool ta_parse(TA_context *ctx)
+bool ta_parse(TA_context *ctx, bool primRestart)
 {
 	if (settings.platform.isNaomi2())
-		return ta_parse_naomi2(ctx);
+		return ta_parse_naomi2(ctx, primRestart);
 	else
-		return ta_parse_vdrc(ctx);
+		return ta_parse_vdrc(ctx, primRestart);
 }
 
+//
+// Naomi 2 stuff
+//
 static PolyParam *n2CurrentPP;
 static ModifierVolumeParam *n2CurrentMVP;
 
@@ -1658,6 +1445,10 @@ void ta_set_list_type(u32 listType)
 		BaseTAParser::startList(listType);
 	vd_ctx = nullptr;
 }
+
+//
+// end Naomi 2
+//
 
 void ta_parse_reset()
 {
@@ -1842,27 +1633,6 @@ void FillBGP(TA_context* ctx)
 	cv[3].v = max_v;
 }
 
-void getRegionTileAddrAndSize(u32& address, u32& size)
-{
-	address = REGION_BASE;
-	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
-	size = (type1_tile ? 5 : 6) * 4;
-	bool empty_first_region = true;
-	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((pvr_read32p<u32>(address + i * 4) & 0x80000000) == 0)
-		{
-			empty_first_region = false;
-			break;
-		}
-	if (empty_first_region)
-		address += size;
-	RegionArrayTile tile;
-	tile.full = pvr_read32p<u32>(address);
-	if (tile.PreSort)
-		// Windows CE weirdness
-		size = 6 * 4;
-}
-
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 {
 	xmin = 20;
@@ -1888,46 +1658,6 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 	xmax *= 32;
 	ymin *= 32;
 	ymax *= 32;
-}
-
-int getTAContextAddresses(u32 *addresses)
-{
-	u32 addr;
-	u32 tile_size;
-	getRegionTileAddrAndSize(addr, tile_size);
-
-	RegionArrayTile tile;
-	tile.full = pvr_read32p<u32>(addr);
-	u32 x = tile.X;
-	u32 y = tile.Y;
-	u32 count = 0;
-	do {
-		tile.full = pvr_read32p<u32>(addr);
-		if (tile.X != x || tile.Y != y)
-			break;
-		// Try the opaque pointer
-		u32 opbAddr = pvr_read32p<u32>(addr + 4);
-		if (opbAddr & 0x80000000)
-		{
-			// Try the translucent pointer
-			opbAddr = pvr_read32p<u32>(addr + 12);
-			if (opbAddr & 0x80000000)
-			{
-				// Try the punch-through pointer
-				if (tile_size >= 24)
-					opbAddr = pvr_read32p<u32>(addr + 20);
-				if (opbAddr & 0x80000000)
-				{
-					INFO_LOG(PVR, "Can't find any non-null OPB for pass %d", count);
-					break;
-				}
-			}
-		}
-		addresses[count++] = pvr_read32p<u32>(opbAddr);
-		addr += tile_size;
-	} while (!tile.LastRegion && count < MAX_PASSES);
-
-	return count;
 }
 
 static void getRegionSettings(int passNumber, RenderPass& pass)
@@ -1957,6 +1687,7 @@ void rend_context::newRenderPass()
 	pass.pt_count = global_param_pt.used();
 	pass.mvo_count = global_param_mvo.used();
 	pass.mvo_tr_count = global_param_mvo_tr.used();
+	pass.sorted_tr_count = 0;
 	getRegionSettings(render_passes.used(), pass);
 	*render_passes.Append() = pass;
 }

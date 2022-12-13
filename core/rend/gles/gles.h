@@ -227,7 +227,6 @@ struct gl_ctx
 		std::unique_ptr<GlBuffer> geometry;
 		std::unique_ptr<GlBuffer> modvols;
 		std::unique_ptr<GlBuffer> idxs;
-		std::unique_ptr<GlBuffer> idxs2;
 	} vbo;
 
 	struct
@@ -281,6 +280,8 @@ struct gl_ctx
 	float max_anisotropy;
 	bool mesa_nouveau;
 	bool border_clamp_supported;
+	bool prim_restart_supported;
+	bool prim_restart_fixed_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

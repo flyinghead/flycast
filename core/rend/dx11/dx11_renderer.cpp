@@ -307,7 +307,7 @@ bool DX11Renderer::Process(TA_context* ctx)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	return ta_parse(ctx);
+	return ta_parse(ctx, true);
 }
 
 void DX11Renderer::configVertexShader()
@@ -674,41 +674,15 @@ void DX11Renderer::drawList(const List<PolyParam>& gply, int first, int count)
 	}
 }
 
-void DX11Renderer::sortTriangles(int first, int count)
+void DX11Renderer::drawSorted(int first, int count, bool multipass)
 {
-	std::vector<u32> vidx_sort;
-	GenSorted(first, count, pidx_sort, vidx_sort);
-
-	//Upload to GPU if needed
-	if (pidx_sort.empty())
-		return;
-
-	const size_t bufSize = vidx_sort.size() * sizeof(u32);
-	// Upload sorted index buffer
-	ensureBufferSize(sortedTriIndexBuffer, D3D11_BIND_INDEX_BUFFER, sortedTriIndexBufferSize, (u32)bufSize);
-	D3D11_MAPPED_SUBRESOURCE mappedSubres;
-	deviceContext->Map(sortedTriIndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &vidx_sort[0], bufSize);
-	deviceContext->Unmap(sortedTriIndexBuffer, 0);
-	deviceContext->IASetIndexBuffer(sortedTriIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-}
-
-void DX11Renderer::drawSorted(bool multipass)
-{
-	if (pidx_sort.empty())
-		return;
-
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	size_t count = pidx_sort.size();
-
-	for (u32 p = 0; p < count; p++)
+	int end = first + count;
+	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pidx_sort[p].ppid;
-		if (pidx_sort[p].count > 2)
-		{
-			setRenderState<ListType_Translucent, true>(params);
-			deviceContext->DrawIndexed(pidx_sort[p].count, pidx_sort[p].first, 0);
-		}
+		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		setRenderState<ListType_Translucent, true>(params);
+		deviceContext->DrawIndexed(pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, 0);
 	}
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
@@ -738,17 +712,16 @@ void DX11Renderer::drawSorted(bool multipass)
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, true, 6, false), 0);
 		deviceContext->RSSetScissorRects(1, &scissorRect);
 
-		for (u32 p = 0; p < count; p++)
+		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pidx_sort[p].ppid;
-			if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis)
+			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			if (!params->isp.ZWriteDis)
 			{
 				setCullMode(params->isp.CullMode);
-				deviceContext->DrawIndexed(pidx_sort[p].count, pidx_sort[p].first, 0);
+				deviceContext->DrawIndexed(pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, 0);
 			}
 		}
 	}
-	deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
 void DX11Renderer::drawModVols(int first, int count)
@@ -855,14 +828,9 @@ void DX11Renderer::drawStrips()
 		if (current_pass.autosort)
 		{
 			if (!config::PerStripSorting)
-			{
-				sortTriangles(previous_pass.tr_count, tr_count);
-				drawSorted(render_pass < pvrrc.render_passes.used() - 1);
-			}
+				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < pvrrc.render_passes.used() - 1);
 			else
-			{
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
-			}
 		}
 		else
 		{

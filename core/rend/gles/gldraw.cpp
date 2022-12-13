@@ -283,109 +283,52 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 	}
 }
 
-static std::vector<SortTrigDrawParam> pidx_sort;
-
-static void SortTriangles(int first, int count)
+static void drawSorted(int first, int count, bool multipass)
 {
-	std::vector<u32> vidx_sort;
-	GenSorted(first, count, pidx_sort, vidx_sort);
+	glcache.Enable(GL_STENCIL_TEST);
+	glcache.StencilFunc(GL_ALWAYS,0,0);
+	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
-	//Upload to GPU if needed
-	if (!pidx_sort.empty())
+	int end = first + count;
+	for (int p = first; p < end; p++)
 	{
-		//Bind and upload sorted index buffer
-		if (gl.index_type == GL_UNSIGNED_SHORT)
-		{
-			static bool overrun;
-			static List<u16> short_vidx;
-			if (short_vidx.daty != NULL)
-				short_vidx.Free();
-			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
-			for (size_t i = 0; i < vidx_sort.size(); i++)
-				*(short_vidx.Append()) = vidx_sort[i];
-			gl.vbo.idxs2->update(short_vidx.head(), short_vidx.bytes());
-		}
-		else
-			gl.vbo.idxs2->update(&vidx_sort[0], vidx_sort.size() * sizeof(u32));
-		glCheck();
+		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		SetGPState<ListType_Translucent,true>(params);
+		glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
+				(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
 	}
-}
 
-void DrawSorted(bool multipass)
-{
-	//if any drawing commands, draw them
-	if (!pidx_sort.empty())
+	if (multipass && config::TranslucentPolygonDepthMask)
 	{
-		std::size_t count = pidx_sort.size();
+		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glcache.Disable(GL_BLEND);
 
+		glcache.StencilMask(0);
+
+		// We use the modifier volumes shader because it's fast. We don't need textures, etc.
+		glcache.UseProgram(gl.modvol_shader.program);
+		glUniform1f(gl.modvol_shader.sp_ShaderColor, 1.f);
+
+		glcache.DepthFunc(GL_GEQUAL);
+		glcache.DepthMask(GL_TRUE);
+
+		for (int p = first; p < end; p++)
 		{
-			//set some 'global' modes for all primitives
-
-			glcache.Enable(GL_STENCIL_TEST);
-			glcache.StencilFunc(GL_ALWAYS,0,0);
-			glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-
-			for (std::size_t p = 0; p < count; p++)
+			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			if (!params->isp.ZWriteDis)
 			{
-				const PolyParam* params = pidx_sort[p].ppid;
-				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
-				{
-					SetGPState<ListType_Translucent,true>(params);
-					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
-							(GLvoid*)(gl.get_index_size() * pidx_sort[p].first)); glCheck();
+				// FIXME no clipping in modvol shader
+				//SetTileClip(gp->tileclip,true);
 
-#if 0
-					//Verify restriping -- only valid if no sort
-					int fs=pidx_sort[p].first;
+				SetCull(params->isp.CullMode ^ gcflip);
 
-					for (u32 j=0; j<(params->count-2); j++)
-					{
-						for (u32 k=0; k<3; k++)
-						{
-							verify(idx_base[params->first+j+k]==vidx_sort[fs++]);
-						}
-					}
-
-					verify(fs==(pidx_sort[p].first+pidx_sort[p].count));
-#endif
-				}
-				params++;
-			}
-
-			if (multipass && config::TranslucentPolygonDepthMask)
-			{
-				// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
-				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-				glcache.Disable(GL_BLEND);
-
-				glcache.StencilMask(0);
-
-				// We use the modifier volumes shader because it's fast. We don't need textures, etc.
-				glcache.UseProgram(gl.modvol_shader.program);
-				glUniform1f(gl.modvol_shader.sp_ShaderColor, 1.f);
-
-				glcache.DepthFunc(GL_GEQUAL);
-				glcache.DepthMask(GL_TRUE);
-
-				for (std::size_t p = 0; p < count; p++)
-				{
-					const PolyParam* params = pidx_sort[p].ppid;
-					if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
-						// FIXME no clipping in modvol shader
-						//SetTileClip(gp->tileclip,true);
-
-						SetCull(params->isp.CullMode ^ gcflip);
-
-						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
-								(GLvoid*)(gl.get_index_size() * pidx_sort[p].first));
-					}
-				}
-				glcache.StencilMask(0xFF);
-				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
+						(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
 			}
 		}
-		// Re-bind the previous index buffer for subsequent render passes
-		gl.vbo.idxs->bind();
+		glcache.StencilMask(0xFF);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 }
 
@@ -681,14 +624,9 @@ void DrawStrips()
 			if (current_pass.autosort)
             {
 				if (!config::PerStripSorting)
-				{
-					SortTriangles(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-					DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-				}
+					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < pvrrc.render_passes.used() - 1);
 				else
-				{
 					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-				}
             }
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);

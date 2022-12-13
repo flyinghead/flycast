@@ -865,11 +865,11 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	}
 	for (auto& it : gl4.shaders)
 		resetN2UniformCache(&it.second);
-
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	GLuint output_fbo;
+	glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
+	GLuint output_fbo;
 	//setup render target first
 	if (is_rtt)
 		output_fbo = BindRTT(false);

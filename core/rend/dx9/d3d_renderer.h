@@ -25,7 +25,6 @@
 #include "rend/transform_matrix.h"
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
-#include "rend/sorter.h"
 #include "rend/imgui_driver.h"
 
 class RenderStateCache
@@ -132,8 +131,7 @@ private:
 	void updatePaletteTexture();
 	void updateFogTexture();
 	void displayFramebuffer();
-	void sortTriangles(int first, int count);
-	void drawSorted(bool multipass);
+	void drawSorted(int first, int count, bool multipass);
 	void setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 	void drawModVols(int first, int count);
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
@@ -150,8 +148,6 @@ private:
 	u32 modvolBufferSize = 0;
 	ComPtr<IDirect3DIndexBuffer9> indexBuffer;
 	u32 indexBufferSize = 0;
-	ComPtr<IDirect3DIndexBuffer9> sortedTriIndexBuffer;
-	u32 sortedTriIndexBufferSize = 0;
 	ComPtr<IDirect3DVertexDeclaration9> mainVtxDecl;
 	ComPtr<IDirect3DVertexDeclaration9> modVolVtxDecl;
 
@@ -172,7 +168,6 @@ private:
 	u32 height = 0;
 	TransformMatrix<COORD_DIRECTX> matrices;
 	D3DTextureCache texCache;
-	std::vector<SortTrigDrawParam> pidx_sort;
 	D3DShaders shaders;
 	RECT scissorRect{};
 	bool scissorEnable = false;

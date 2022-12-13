@@ -21,30 +21,6 @@
 #include "drawer.h"
 #include "hw/pvr/pvr_mem.h"
 
-void Drawer::SortTriangles()
-{
-	sortedPolys.resize(pvrrc.render_passes.used());
-	sortedIndexes.resize(pvrrc.render_passes.used());
-	sortedIndexCount = 0;
-	RenderPass previousPass = {};
-
-	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-	{
-		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
-		sortedIndexes[render_pass].clear();
-		if (current_pass.autosort)
-		{
-			GenSorted(previousPass.tr_count, current_pass.tr_count - previousPass.tr_count, sortedPolys[render_pass], sortedIndexes[render_pass]);
-			for (auto& poly : sortedPolys[render_pass])
-				poly.first += sortedIndexCount;
-			sortedIndexCount += sortedIndexes[render_pass].size();
-		}
-		else
-			sortedPolys[render_pass].clear();
-		previousPass = current_pass;
-	}
-}
-
 TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
 	int rect[4] = {};
@@ -253,15 +229,16 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
 
-void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass)
+void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass)
 {
-	for (const SortTrigDrawParam& param : polys)
-		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.used() + param.first, param.count);
+	for (u32 idx = first; idx < last; idx++)
+		DrawPoly(cmdBuffer, ListType_Translucent, true, *polys[idx].ppid, polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
-		for (const SortTrigDrawParam& param : polys)
+		for (u32 idx = first; idx < last; idx++)
 		{
+			const SortedTriangle& param = polys[idx];
 			if (param.ppid->isp.ZWriteDis)
 				continue;
 			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode, param.ppid->isNaomi2());
@@ -350,9 +327,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 	// Index
 	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
-	for (const std::vector<u32>& idx : sortedIndexes)
-		if (!idx.empty())
-			packer.add(&idx[0], idx.size() * sizeof(u32));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -372,7 +346,6 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
-	SortTriangles();
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
@@ -420,7 +393,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-				DrawSorted(cmdBuffer, sortedPolys[render_pass], render_pass + 1 < pvrrc.render_passes.used());
+				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < pvrrc.render_passes.used());
 			else
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }

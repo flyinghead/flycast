@@ -233,7 +233,7 @@ protected:
 private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
-	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass);
+	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
@@ -255,11 +255,6 @@ private:
 	DescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	PipelineManager *pipelineManager = nullptr;
-
-	// Per-triangle sort results
-	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
-	std::vector<std::vector<u32>> sortedIndexes;
-	u32 sortedIndexCount = 0;
 	bool perStripSorting = false;
 };
 

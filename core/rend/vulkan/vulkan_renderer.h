@@ -134,7 +134,7 @@ public:
 		texCommandBuffer = texCommandPool.Allocate();
 		texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-		bool result = ta_parse(ctx);
+		bool result = ta_parse(ctx, true);
 
 		if (result)
 		{

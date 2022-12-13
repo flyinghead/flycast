@@ -266,8 +266,15 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
 	// Input assembly state
-	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
-			sortTriangles && !config::PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
+	if (sortTriangles && !config::PerStripSorting) {
+		pipelineInputAssemblyStateCreateInfo.topology = vk::PrimitiveTopology::eTriangleList;
+	}
+	else
+	{
+		pipelineInputAssemblyStateCreateInfo.topology = vk::PrimitiveTopology::eTriangleStrip;
+		pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = true;
+	}
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);

@@ -21,6 +21,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/tileclip.h"
 #include "rend/gui.h"
+#include "rend/sorter.h"
 
 #define verifyWin(x) verify(SUCCEEDED(x))
 
@@ -172,8 +173,6 @@ void D3DRenderer::preReset()
 	mainVtxDecl.reset();
 	modvolBuffer.reset();
 	modvolBufferSize = 0;
-	sortedTriIndexBuffer.reset();
-	sortedTriIndexBufferSize = 0;
 	indexBuffer.reset();
 	indexBufferSize = 0;
 	vertexBuffer.reset();
@@ -304,7 +303,7 @@ bool D3DRenderer::Process(TA_context* ctx)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	return ta_parse(ctx);
+	return ta_parse(ctx, false);
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)
@@ -483,40 +482,14 @@ void D3DRenderer::drawList(const List<PolyParam>& gply, int first, int count)
 	}
 }
 
-void D3DRenderer::sortTriangles(int first, int count)
+void D3DRenderer::drawSorted(int first, int count, bool multipass)
 {
-	std::vector<u32> vidx_sort;
-	GenSorted(first, count, pidx_sort, vidx_sort);
-
-	//Upload to GPU if needed
-	if (pidx_sort.empty())
-		return;
-
-	const size_t bufSize = vidx_sort.size() * sizeof(u32);
-	// Upload sorted index buffer
-	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, (u32)bufSize);
-	void *ptr;
-	sortedTriIndexBuffer->Lock(0, (UINT)bufSize, &ptr, D3DLOCK_DISCARD);
-	memcpy(ptr, &vidx_sort[0], bufSize);
-	sortedTriIndexBuffer->Unlock();
-	device->SetIndices(sortedTriIndexBuffer);
-}
-
-void D3DRenderer::drawSorted(bool multipass)
-{
-	if (pidx_sort.empty())
-		return;
-
-	u32 count = (u32)pidx_sort.size();
-
-	for (u32 p = 0; p < count; p++)
+	int end = first + count;
+	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pidx_sort[p].ppid;
-		if (pidx_sort[p].count > 2)
-		{
-			setGPState<ListType_Translucent, true>(params);
-			device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pidx_sort[p].count, pidx_sort[p].first, pidx_sort[p].count / 3);
-		}
+		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		setGPState<ListType_Translucent, true>(params);
+		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, pvrrc.sortedTriangles[p].count / 3);
 	}
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
@@ -533,20 +506,20 @@ void D3DRenderer::drawSorted(bool multipass)
 		if (scissorEnable)
 			device->SetScissorRect(&scissorRect);
 
-		for (u32 p = 0; p < count; p++)
+		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pidx_sort[p].ppid;
-			if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
+			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			if (!params->isp.ZWriteDis)
+			{
 				// FIXME no clipping in modvol shader
 				//SetTileClip(gp->tileclip,true);
 
 				devCache.SetRenderState(D3DRS_CULLMODE, CullMode[params->isp.CullMode]);
-				device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pidx_sort[p].count, pidx_sort[p].first, pidx_sort[p].count / 3);
+				device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, pvrrc.sortedTriangles[p].count / 3);
 			}
 		}
 		devCache.SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
 	}
-	device->SetIndices(indexBuffer);
 }
 
 //All pixels are in area 0 by default.
@@ -785,14 +758,10 @@ void D3DRenderer::drawStrips()
 		if (current_pass.autosort)
 		{
 			if (!config::PerStripSorting)
-			{
-				sortTriangles(previous_pass.tr_count, tr_count);
-				drawSorted(render_pass < pvrrc.render_passes.used() - 1);
-			}
+				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count,
+						render_pass < pvrrc.render_passes.used() - 1);
 			else
-			{
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
-			}
 		}
 		else
 		{

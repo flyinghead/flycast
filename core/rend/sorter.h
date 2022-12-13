@@ -18,16 +18,5 @@
 #include "types.h"
 #include "hw/pvr/ta_ctx.h"
 
-#include <vector>
-
-struct SortTrigDrawParam
-{
-	const PolyParam* ppid;
-	u32 first;
-	u32 count;
-};
-
-// Sort based on min-z of each triangle
-void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, std::vector<u32>& vidx_sort);
 // Use the first vertex as provoking vertex for flat-shaded triangles
 void setFirstProvokingVertex(rend_context& rendContext);

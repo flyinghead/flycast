@@ -456,7 +456,6 @@ static void gles_term()
 	gl.vbo.geometry.reset();
 	gl.vbo.modvols.reset();
 	gl.vbo.idxs.reset();
-	gl.vbo.idxs2.reset();
 	termGLCommon();
 
 	gl_delete_shaders();
@@ -477,12 +476,16 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 300 es";
 			if (gl.gl_major > 3 || gl.gl_minor >= 2)
 		    	gl.border_clamp_supported = true;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = true;
 		}
 		else
 		{
 			gl.gl_version = "GLES2";
 			gl.glsl_version_header = "";
 			gl.index_type = GL_UNSIGNED_SHORT;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = false;
 		}
 		gl.single_channel_format = GL_ALPHA;
 		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
@@ -510,12 +513,17 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 130";
 #endif
 			gl.single_channel_format = GL_RED;
+			gl.prim_restart_supported = gl.gl_major > 3 || gl.gl_minor >= 1; // 3.1 min
+			gl.prim_restart_fixed_supported = gl.gl_major > 4
+					|| (gl.gl_major == 4 && gl.gl_minor >= 3);				// 4.3 min
 		}
 		else
 		{
 			gl.gl_version = "GL2";
 			gl.glsl_version_header = "#version 120";
 			gl.single_channel_format = GL_ALPHA;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = false;
 		}
     	gl.highp_float_supported = true;
     	gl.border_clamp_supported = true;
@@ -925,7 +933,6 @@ static bool gl_create_resources()
 	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
 	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
 	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
-	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
 	initQuad();
 
@@ -1151,7 +1158,7 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		updatePaletteTexture(getPaletteTextureSlot());
 		palette_updated = false;
 	}
-	return ta_parse(ctx);
+	return ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 
 static void upload_vertex_indices()
@@ -1237,7 +1244,14 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		ShaderUniforms.Set(&it.second);
 		resetN2UniformCache(&it.second);
 	}
-
+#ifndef GLES2
+	if (gl.prim_restart_fixed_supported)
+		glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+	else if (gl.prim_restart_supported) {
+		glEnable(GL_PRIMITIVE_RESTART);
+		glPrimitiveRestartIndex(-1);
+	}
+#endif
 	//setup render target first
 	if (is_rtt)
 	{

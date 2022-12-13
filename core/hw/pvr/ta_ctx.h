@@ -172,6 +172,7 @@ struct RenderPass {
 	u32 pt_count;
 	u32 tr_count;
 	u32 mvo_tr_count;
+	u32 sorted_tr_count;
 };
 
 struct N2Matrix
@@ -216,6 +217,13 @@ struct N2LightModel
 	int bumpId2;				// Light index for vol1 bump mapping
 };
 
+struct SortedTriangle
+{
+	const PolyParam* ppid;
+	u32 first;
+	u32 count;
+};
+
 struct rend_context
 {
 	u8* proc_start;
@@ -250,6 +258,7 @@ struct rend_context
 	List<PolyParam>   global_param_pt;
 	List<PolyParam>   global_param_tr;
 	List<RenderPass>  render_passes;
+	std::vector<SortedTriangle> sortedTriangles;
 
 	List<N2Matrix> matrices;
 	List<N2LightModel> lightModels;
@@ -265,6 +274,7 @@ struct rend_context
 		global_param_mvo.Clear();
 		global_param_mvo_tr.Clear();
 		render_passes.Clear();
+		sortedTriangles.clear();
 
 		// Reserve space for background poly
 		global_param_op.Append()->init();
@@ -412,6 +422,12 @@ u32 ta_get_list_type();
 void ta_set_list_type(u32 listType);
 void ta_parse_reset();
 void getRegionTileAddrAndSize(u32& address, u32& size);
+//void sortTriangles(rend_context& ctx, int pass);
+void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previousPass);
+void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context* ctx);
+void fix_texture_bleeding(const List<PolyParam> *list, rend_context& ctx);
+void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx);
+void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx);
 
 class TAParserException : public FlycastException
 {

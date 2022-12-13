@@ -133,15 +133,12 @@ private:
 	void drawList(const List<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setRenderState(const PolyParam *gp);
-	void sortTriangles(int first, int count);
-	void drawSorted(bool multipass);
+	void drawSorted(int first, int count, bool multipass);
 	void drawModVols(int first, int count);
 
 	u32 vertexBufferSize = 0;
 	u32 modvolBufferSize = 0;
 	u32 indexBufferSize = 0;
-	ComPtr<ID3D11Buffer> sortedTriIndexBuffer;
-	u32 sortedTriIndexBufferSize = 0;
 
 	ComPtr<ID3D11Texture2D> fbTex;
 	ComPtr<ID3D11Texture2D> dcfbTexture;
@@ -163,7 +160,6 @@ private:
 
 	DX11TextureCache texCache;
 	DX11Shaders *shaders;
-	std::vector<SortTrigDrawParam> pidx_sort;
 	std::unique_ptr<Quad> quad;
 	ComPtr<ID3D11Buffer> vtxConstants;
 	ComPtr<ID3D11Buffer> pxlConstants;

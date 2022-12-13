@@ -27,7 +27,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
-			vk::PrimitiveTopology::eTriangleStrip);
+			vk::PrimitiveTopology::eTriangleStrip, true);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);

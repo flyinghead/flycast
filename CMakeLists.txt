@@ -813,6 +813,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/pvr/ta_ctx.h
 		core/hw/pvr/ta.h
 		core/hw/pvr/ta_structs.h
+		core/hw/pvr/ta_util.cpp
 		core/hw/pvr/ta_vtx.cpp
 		core/hw/sh4/dyna/blockmanager.cpp
 		core/hw/sh4/dyna/blockmanager.h
