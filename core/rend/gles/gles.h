@@ -19,6 +19,9 @@
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY     0x84FF
 #endif
+#ifndef GL_PRIMITIVE_RESTART_FIXED_INDEX
+#define GL_PRIMITIVE_RESTART_FIXED_INDEX  0x8D69
+#endif
 
 #define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
