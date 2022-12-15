@@ -183,7 +183,7 @@ struct PTYPipe : public SerialPipe
 #elif defined(_WIN32)
 			if (AllocConsole())
 			{
-				SetConsoleTitle("Flycast Serial Output");
+				SetConsoleTitle(TEXT("Flycast Serial Output"));
 
 				// Pipe stdout
 				HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
