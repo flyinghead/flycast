@@ -668,10 +668,11 @@ void flush()
 void init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
+	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
 #else
-	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
+	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
 #endif
+	verify(rc);
 
 	icPtr = ICache;
 

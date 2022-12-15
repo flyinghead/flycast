@@ -23,8 +23,6 @@
 #include "rend/gui.h"
 #include "rend/sorter.h"
 
-#define verifyWin(x) verify(SUCCEEDED(x))
-
 const u32 DstBlendGL[]
 {
 	D3DBLEND_ZERO,
@@ -193,12 +191,18 @@ void D3DRenderer::postReset()
 	width = 0;
 	height = 0;
 	resize(w, h);
-	verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024));
-	verify(ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4));
-	verifyWin(device->CreateVertexDeclaration(MainVtxElement, &mainVtxDecl.get()));
-	verifyWin(device->CreateVertexDeclaration(ModVolVtxElement, &modVolVtxDecl.get()));
-	verifyWin(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
-	verifyWin(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
+	bool rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024);
+	verify(rc);
+	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
+	verify(rc);
+	rc = SUCCEEDED(device->CreateVertexDeclaration(MainVtxElement, &mainVtxDecl.get()));
+	verify(rc);
+	rc = SUCCEEDED(device->CreateVertexDeclaration(ModVolVtxElement, &modVolVtxDecl.get()));
+	verify(rc);
+	rc = SUCCEEDED(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
+	verify(rc);
+	rc = SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
+	verify(rc);
 	fog_needs_update = true;
 	forcePaletteUpdate();
 }
@@ -880,8 +884,10 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		D3DSURFACE_DESC rttDesc;
 		rttSurface->GetDesc(&rttDesc);
 		ComPtr<IDirect3DSurface9> offscreenSurface;
-		verifyWin(device->CreateOffscreenPlainSurface(rttDesc.Width, rttDesc.Height, rttDesc.Format, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
-		verifyWin(device->GetRenderTargetData(rttSurface, offscreenSurface));
+		bool rc = SUCCEEDED(device->CreateOffscreenPlainSurface(rttDesc.Width, rttDesc.Height, rttDesc.Format, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
+		verify(rc);
+		rc = SUCCEEDED(device->GetRenderTargetData(rttSurface, offscreenSurface));
+		verify(rc);
 
 		PixelBuffer<u32> tmp_buf;
 		tmp_buf.init(w, h);
@@ -889,7 +895,8 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		u8 *p = (u8 *)tmp_buf.data();
 		D3DLOCKED_RECT rect;
 		RECT lockRect { 0, 0, (long)w, (long)h };
-		verifyWin(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+		rc = SUCCEEDED(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+		verify(rc);
 		if ((u32)rect.Pitch == w * sizeof(u32))
 			memcpy(p, rect.pBits, w * h * sizeof(u32));
 		else
@@ -902,7 +909,8 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 				p += w * sizeof(u32);
 			}
 		}
-		verifyWin(offscreenSurface->UnlockRect());
+		rc = SUCCEEDED(offscreenSurface->UnlockRect());
+		verify(rc);
 
 		u16 *dst = (u16 *)&vram[texAddress];
 		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
@@ -929,7 +937,8 @@ bool D3DRenderer::Render()
 	bool is_rtt = pvrrc.isRTT;
 
 	backbuffer.reset();
-	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
+	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
+	verify(rc);
 	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
 	if (is_rtt)
 	{
@@ -937,21 +946,25 @@ bool D3DRenderer::Render()
 	}
 	else
 	{
-		verifyWin(device->SetRenderTarget(0, framebufferSurface));
+		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
+		verify(rc);
 		D3DVIEWPORT9 viewport;
 		viewport.X = viewport.Y = 0;
 		viewport.Width = width;
 		viewport.Height = height;
 		viewport.MinZ = 0;
 		viewport.MaxZ = 1;
-		verifyWin(device->SetViewport(&viewport));
+		rc = SUCCEEDED(device->SetViewport(&viewport));
+		verify(rc);
 	}
-	verifyWin(device->SetDepthStencilSurface(depthSurface));
+	rc = SUCCEEDED(device->SetDepthStencilSurface(depthSurface));
+	verify(rc);
 	matrices.CalcMatrices(&pvrrc, width, height);
 	// infamous DX9 half-pixel viewport shift
 	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
 	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / width, 1.f / height, 0)) * matrices.GetNormalMatrix();
-	verifyWin(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
+	rc = SUCCEEDED(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
+	verify(rc);
 
 	devCache.reset();
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
@@ -977,20 +990,26 @@ bool D3DRenderer::Render()
 	v[1] = -1.f;
 	device->SetClipPlane(3, v);
 
-	verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
+	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes());
+	verify(rc);
 	void *ptr;
-	verifyWin(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = SUCCEEDED(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
+	verify(rc);
 	memcpy(ptr, pvrrc.verts.head(), pvrrc.verts.bytes());
 	vertexBuffer->Unlock();
-	verify(ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes()));
-	verifyWin(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes());
+	verify(rc);
+	rc = SUCCEEDED(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
+	verify(rc);
 	memcpy(ptr, pvrrc.idx.head(), pvrrc.idx.bytes());
 	indexBuffer->Unlock();
 
 	if (config::ModifierVolumes && pvrrc.modtrig.used())
 	{
-		verify(ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes()));
-		verifyWin(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
+		rc = ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes());
+		verify(rc);
+		rc = SUCCEEDED(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
+		verify(rc);
 		memcpy(ptr, pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 		modvolBuffer->Unlock();
 	}
@@ -1045,7 +1064,8 @@ bool D3DRenderer::Render()
 	device->EndScene();
 	devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 
-	verifyWin(device->SetRenderTarget(0, backbuffer));
+	rc = SUCCEEDED(device->SetRenderTarget(0, backbuffer));
+	verify(rc);
 
 	if (is_rtt)
 	{
@@ -1076,10 +1096,13 @@ void D3DRenderer::resize(int w, int h)
 	height = h;
 	framebufferTexture.reset();
 	framebufferSurface.reset();
-	verifyWin(device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &framebufferTexture.get(), NULL));
-	verifyWin(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
+	bool rc = SUCCEEDED(device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &framebufferTexture.get(), NULL));
+	verify(rc);
+	rc = SUCCEEDED(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
+	verify(rc);
 	depthSurface.reset();
-	verifyWin(device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+	rc = SUCCEEDED(device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+	verify(rc);
 	frameRendered = false;
 	frameRenderedOnce = false;
 }
@@ -1130,7 +1153,8 @@ void D3DRenderer::displayFramebuffer()
 		viewport.Height = settings.display.height - dy * 2;
 		viewport.MinZ = 0;
 		viewport.MaxZ = 1;
-		verifyWin(device->SetViewport(&viewport));
+		bool rc = SUCCEEDED(device->SetViewport(&viewport));
+		verify(rc);
 		float coords[] {
 			-1,  1, 0.5f,  0, 0,
 			-1, -1, 0.5f,  0, 1,
@@ -1147,7 +1171,8 @@ bool D3DRenderer::RenderLastFrame()
 	if (!frameRenderedOnce)
 		return false;
 	backbuffer.reset();
-	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
+	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
+	verify(rc);
 	displayFramebuffer();
 
 	return true;
@@ -1160,7 +1185,8 @@ void D3DRenderer::updatePaletteTexture()
 	palette_updated = false;
 
 	D3DLOCKED_RECT rect;
-	verifyWin(paletteTexture->LockRect(0, &rect, nullptr, 0));
+	bool rc = SUCCEEDED(paletteTexture->LockRect(0, &rect, nullptr, 0));
+	verify(rc);
 	if (rect.Pitch == 32 * sizeof(u32))
 		memcpy(rect.pBits, palette32_ram, 32 * 32 * sizeof(u32));
 	else
@@ -1185,7 +1211,8 @@ void D3DRenderer::updateFogTexture()
 	MakeFogTexture(temp_tex_buffer);
 
 	D3DLOCKED_RECT rect;
-	verifyWin(fogTexture->LockRect(0, &rect, nullptr, 0));
+	bool rc = SUCCEEDED(fogTexture->LockRect(0, &rect, nullptr, 0));
+	verify(rc);
 	if (rect.Pitch == 128)
 		memcpy(rect.pBits, temp_tex_buffer, 128 * 2 * 1);
 	else
@@ -1256,8 +1283,10 @@ void D3DRenderer::writeFramebufferToVRAM()
 	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
 
 	ComPtr<IDirect3DSurface9> offscreenSurface;
-	verifyWin(device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
-	verifyWin(device->GetRenderTargetData(fbSurface, offscreenSurface));
+	bool rc = SUCCEEDED(device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
+	verify(rc);
+	rc = SUCCEEDED(device->GetRenderTargetData(fbSurface, offscreenSurface));
+	verify(rc);
 
 	PixelBuffer<u32> tmp_buf;
 	tmp_buf.init(width, height);
@@ -1265,7 +1294,8 @@ void D3DRenderer::writeFramebufferToVRAM()
 	u8 *p = (u8 *)tmp_buf.data();
 	D3DLOCKED_RECT rect;
 	RECT lockRect { 0, 0, (long)width, (long)height };
-	verifyWin(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+	rc = SUCCEEDED(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+	verify(rc);
 	if ((u32)rect.Pitch == width * sizeof(u32))
 		memcpy(p, rect.pBits, width * height * sizeof(u32));
 	else
@@ -1278,7 +1308,8 @@ void D3DRenderer::writeFramebufferToVRAM()
 			p += width * sizeof(u32);
 		}
 	}
-	verifyWin(offscreenSurface->UnlockRect());
+	rc = SUCCEEDED(offscreenSurface->UnlockRect());
+	verify(rc);
 
 	xClip.min = std::min(xClip.min, width - 1);
 	xClip.max = std::min(xClip.max, width - 1);

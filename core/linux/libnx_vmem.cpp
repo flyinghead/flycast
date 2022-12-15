@@ -175,7 +175,8 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
-	verify(mem_region_unlock(address, size_bytes));
+	bool rc = mem_region_unlock(address, size_bytes);
+	verify(rc);
 }
 
 // Creates mappings to the underlying file including mirroring sections
@@ -193,9 +194,11 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
-			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
-					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
+			bool rc = mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize);
+			verify(rc);
+			void *p = mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
+					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes);
+			verify(p != nullptr);
 		}
 	}
 }

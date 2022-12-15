@@ -96,7 +96,8 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
-	verify(VirtualAlloc(address, size_bytes, MEM_COMMIT, PAGE_READWRITE) != NULL);
+	void *p = VirtualAlloc(address, size_bytes, MEM_COMMIT, PAGE_READWRITE);
+	verify(p != nullptr);
 }
 
 /// Creates mappings to the underlying file including mirroring sections

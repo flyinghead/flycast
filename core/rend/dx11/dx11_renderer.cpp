@@ -353,13 +353,15 @@ void DX11Renderer::uploadGeometryBuffers()
 {
 	setFirstProvokingVertex(pvrrc);
 
-	verify(ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, pvrrc.verts.bytes()));
+	bool rc = ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, pvrrc.verts.bytes());
+	verify(rc);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, pvrrc.verts.head(), pvrrc.verts.bytes());
 	deviceContext->Unmap(vertexBuffer, 0);
 
-	verify(ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, pvrrc.idx.bytes()));
+	rc = ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, pvrrc.idx.bytes());
+	verify(rc);
 	deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, pvrrc.idx.head(), pvrrc.idx.bytes());
 	deviceContext->Unmap(indexBuffer, 0);
@@ -368,7 +370,8 @@ void DX11Renderer::uploadGeometryBuffers()
 	{
 		const ModTriangle *data = pvrrc.modtrig.head();
 		u32 size = pvrrc.modtrig.bytes();
-		verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
+		rc = ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size);
+		verify(rc);
 		deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 		memcpy(mappedSubres.pData, data, size);
 		deviceContext->Unmap(modvolBuffer, 0);

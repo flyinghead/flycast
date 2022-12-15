@@ -353,7 +353,8 @@ void _vmem_init()
 	_vmem_lrp=0;
 
 	//register default functions (0) for slot 0
-	verify(_vmem_register_handler(0,0,0,0,0,0)==0);
+	_vmem_handler defaultHandler = _vmem_register_handler(0,0,0,0,0,0);
+	verify(defaultHandler == 0);
 }
 
 void _vmem_term()

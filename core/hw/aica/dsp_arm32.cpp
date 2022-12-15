@@ -407,7 +407,8 @@ void recompile()
 void recInit()
 {
 	u8 *pCodeBuffer;
-	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
+	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
+	verify(rc);
 }
 
 void runStep()
