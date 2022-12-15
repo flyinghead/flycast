@@ -20,6 +20,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(ENABLE_GDB_SERVER "Build with GDB debugging support" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -80,6 +81,10 @@ endif()
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
+
+if(LIBRETRO OR WINDOWS_STORE OR ANDROID OR IOS)
+	set(ENABLE_GDB_SERVER OFF)
+endif()
 
 if(NINTENDO_SWITCH)
 	set(USE_VULKAN OFF)
@@ -1243,6 +1248,14 @@ if(WIN32)
 		core/rend/dx11/oit/dx11_oitshaders.cpp
 		core/rend/dx11/oit/dx11_oitshaders.h)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
+endif()
+
+if(ENABLE_GDB_SERVER)
+
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/debug/gdb_server.cpp)
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GDB_SERVER)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)

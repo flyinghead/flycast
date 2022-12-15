@@ -18,6 +18,7 @@
 */
 #include "option.h"
 #include "network/naomi_network.h"
+#include "debug/gdb_server.h"
 
 namespace config {
 
@@ -110,6 +111,8 @@ Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 
 Option<bool> SerialConsole("Debug.SerialConsoleEnabled");
 Option<bool> SerialPTY("Debug.SerialPTY");
+Option<bool> GDB("Debug.GDBEnabled");
+Option<int> GDBPort("Debug.GDBPort", debugger::DEFAULT_PORT);
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 

@@ -48,7 +48,8 @@ int flycast_init(int argc, char* argv[])
 	os_CreateWindow();
 	os_SetupInput();
 
-	debugger::init();
+	if(config::GDB)
+		debugger::init(config::GDBPort);
 	lua::init();
 
 	return 0;

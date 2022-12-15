@@ -23,9 +23,11 @@ namespace debugger {
 // exception thrown in response to trap
 struct Stop { };
 
+	static const int DEFAULT_PORT = 3263;
+
 #ifdef GDB_SERVER
 
-	void init();
+	void init(int port);
 	void term();
 	void run();
 	void debugTrap(u32 event);
@@ -33,7 +35,7 @@ struct Stop { };
 	void subroutineReturn();
 
 #else
-	static inline void init() {}
+	static inline void init(int port) {}
 	static inline void term() {}
 	static inline void run() {}
 	static inline void debugTrap(u32 event) {}
