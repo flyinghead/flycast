@@ -613,11 +613,11 @@ private:
 			sendPacket("OK");
 			agent.kill();
 		}
-		else if (pkt.rfind("vMustReplyEmpty", 0) == 0)
-			// Reply empty packet
-			sendPacket("");
 		else
+		{
 			WARN_LOG(COMMON, "unknown v packet: %s", pkt.c_str());
+			sendPacket("");
+		}
 	}
 
 	void restart()
