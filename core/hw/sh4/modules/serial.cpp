@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #else
+#include <Windows.h>
 #include <io.h>
 #endif
 #include "types.h"
@@ -164,9 +165,9 @@ struct PTYPipe : public SerialPipe
 
 	void init()
 	{
-#if defined(__unix__) || defined(__APPLE__)
 		if (config::SerialConsole && config::SerialPTY && tty == 1)
 		{
+#if defined(__unix__) || defined(__APPLE__)
 			tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
 			if (tty < 0)
 			{
@@ -179,8 +180,23 @@ struct PTYPipe : public SerialPipe
 				unlockpt(tty);
 				NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
 			}
-		}
+#elif defined(_WIN32)
+			if (AllocConsole())
+			{
+				SetConsoleTitle(TEXT("Flycast Serial Output"));
+
+				// Pipe stdout
+				HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+				tty = _open_osfhandle((intptr_t)hStd, _O_TEXT);
+				_dup2(tty, fileno(stdout));
+				SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(fileno(stdout)));
+			}
+			else
+			{
+				ERROR_LOG(BOOT, "Cannot AllocConsole(): errno %d", GetLastError());
+			}
 #endif
+		}
 		serial_setPipe(this);
 	}
 
