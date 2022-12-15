@@ -2172,8 +2172,8 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr
-	const int write_memory_rewrite_size = 5; // ubfx, add, str
+	const int read_memory_rewrite_size = 3;	// ubfx, add, ldr
+	const int write_memory_rewrite_size = 3; // ubfx, add, str
 };
 
 static Arm64Assembler* compiler;
@@ -2269,7 +2269,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
 		assembler->GenReadMemorySlow(size);
-	else if (!is_read && size >= 4 && (((u8 *)faultAddress - virt_ram_base) >> 26) == 0x38)
+	else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
 		assembler->GenWriteStoreQueue(size);
 	else
 		assembler->GenWriteMemorySlow(size);
