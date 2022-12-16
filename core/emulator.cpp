@@ -529,6 +529,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					LoadHle();
 				}
 			}
+
+			if (progress)
+				progress->progress = 1.0f;
 		}
 		else if (settings.platform.isArcade())
 		{
@@ -562,6 +565,15 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				dc_loadstate(config::SavestateSlot);
 		}
 		EventManager::event(Event::Start);
+
+		if (progress)
+		{
+			if(config::GDBWaitForConnection)
+				progress->label = "Waiting for debugger...";
+			else
+				progress->label = "Starting...";
+		}
+
 		state = Loaded;
 	} catch (...) {
 		state = Error;

@@ -37,9 +37,9 @@ public:
     	ImGui_ImplDX9_NewFrame();
 	}
 
-	void renderDrawData(ImDrawData *drawData) override {
+	void renderDrawData(ImDrawData *drawData, bool gui_open) override {
 		theDXContext.EndImGuiFrame();
-		if (gui_is_open())
+		if (gui_open)
 			frameRendered = true;
 	}
 
