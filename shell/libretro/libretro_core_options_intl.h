@@ -8247,7 +8247,7 @@ struct retro_core_options_v2 options_cht = {
 #define CATEGORY_VIDEO_LABEL_CS NULL
 #define CATEGORY_VIDEO_INFO_0_CS "Konfigurace rozlišení, nastavení průhlednosti a vizuálních efektů nezávislých na pořadí."
 #define CATEGORY_PERFORMANCE_LABEL_CS "Výkon"
-#define CATEGORY_PERFORMANCE_INFO_0_CS NULL
+#define CATEGORY_PERFORMANCE_INFO_0_CS "Konfigurace nastavení vykreslování ve vláknech a přeskakování snímků."
 #define CATEGORY_HACKS_LABEL_CS NULL
 #define CATEGORY_HACKS_INFO_0_CS "Konfigurace přepisu širokoúhlého zobrazení, rychlosti načítání GD-ROM a nastavení výměny textur."
 #define CATEGORY_INPUT_LABEL_CS "Vstup"
@@ -8277,8 +8277,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CS "Povolte úplnou emulaci jednotky MMU (Memory Management Unit) a další nastavení pro hry pro Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CS "Povolení servisních tlačítek NAOMI"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS "Povolí tlačítko SERVIS pro NAOMI, abyste mohli vstoupit do nastavení skříně."
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní Rozlišení"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava Rozlišení Vykreslování."
 #define OPTION_VAL_320X240_CS NULL
@@ -8325,29 +8325,29 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CS "Per-Strip (rychlé, nejméně přesné)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_CS "Per-Triangle (normální)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_CS "Per-Pixel (přesné, ale nejpomalejší)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CS NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CS "Velikost akumulační vyrovnávací paměti pixelů"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CS "Pro správný výstup ve vyšších rozlišeních mohou být nutné vyšší hodnoty."
 #define OPTION_VAL_512MB_CS NULL
 #define OPTION_VAL_1GB_CS NULL
 #define OPTION_VAL_2GB_CS NULL
 #define OPTION_VAL_4GB_CS NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS "Maximální počet průhledných vrstev"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS "U složitých scén mohou být nutné vyšší hodnoty."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS "Povolení Vyrovnávací Paměti RTT (Render To Texture)"
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS "Mipmapování"
 #define CORE_OPTION_NAME_FOG_LABEL_CS "Efekty Mlhy"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS "Modifikátor Hlasitosti"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CS "Funkce grafického procesoru Dreamcast, která se obvykle používá ve hrách ke kreslení stínů objektů. Tato funkce by měla být normálně povolena - dopad na výkon je obvykle minimální až zanedbatelný."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CS "Anizotropní Filtrování"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CS NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CS "Vylepšete kvalitu textur na površích, které jsou vůči kameře pod šikmým úhlem pohledu. Vyšší hodnoty jsou náročnější na grafický procesor. Změny tohoto nastavení se uplatní až po restartu."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CS "Filtrování Textur"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CS NULL
-#define OPTION_VAL_1_CS NULL
-#define OPTION_VAL_2_CS NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CS "Režim filtrování textur, který se má použít. Tento parametr lze použít k vynucení určitého režimu filtrování textur na všech texturách, abyste dosáhli ostřejšího (nebo hladšího) vzhledu než ve výchozím nastavení. Jiné hodnoty než výchozí mohou způsobit různé problémy s vykreslováním. Změny tohoto nastavení se uplatní až po restartu."
+#define OPTION_VAL_1_CS "Vynucený Nearest-Neighbor"
+#define OPTION_VAL_2_CS "Vynucený lineární"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CS "Výměna Zpožděných Snímků"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CS "Je užitečné vyhnout se blikajícím obrazovkám nebo poruchovým videím. Nedoporučuje se na pomalých platformách."
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CS NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CS "Detekce změn snímkové frekvence"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CS "Upozornit frontend při změně interní snímkové frekvence (např. z 60 fps na 30 fps). Zlepšuje snímkovou frekvenci ve hrách, které běží s uzamčenou snímkovou frekvencí 30 fps nebo 20 fps, ale měl by být vypnut pro hry s odemčenou (nestabilní) snímkovou frekvencí (např. Ecco the Dolphin, Unreal Tournament). Poznámka: Není k dispozici, pokud je povoleno 'Automatické přeskakování snímků'."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CS "Postprocesní Filtr PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CS "Následné zpracování vykresleného obrazu pro simulaci efektů specifických pro grafický procesor PowerVR2 a analogové video signály."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS "Vylepšení Textur (xBRZ)"
@@ -8356,8 +8356,8 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_4_CS NULL
 #define OPTION_VAL_6_CS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS "Zvýšení Rozlišení Textur Max. Filtrovaná Velikost"
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CS NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CS NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CS "Nativní interpolace hloubky"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CS "Pomáhá řešit problémy s poškozením textur a hloubkou na grafických procesorech AMD. V některých případech může pomoci i GPU Intel."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CS "Vykreslování Vláken"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CS "Spouští GPU a CPU v různých vláknech. Důrazně doporučujeme."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CS "Automatické Přeskočení Snímků"
@@ -8386,8 +8386,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CS "Digitální Spouštěče"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CS "Purupuru Pack/Vibrační Balíček"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CS "Povoluje silovou zpětnou vazbu regulátoru."
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CS NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CS "Digitální výstupy pro vysílání"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS "Vysílání digitálních výstupů a stavu vynucene zpětné vazby na portu TCP 8000. Kompatibilní s volbou MAME \"-výstupní síť\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS "Zobrazit Nastavení Světelné Pistole"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CS "Povolení konfigurace možností zobrazení zaměřovacího kříže světelné pistole. POZNÁMKA: Aby se toto nastavení projevilo, může být nutné přepnout rychlou nabídku."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 1"
@@ -16527,12 +16527,12 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_EN NULL
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EN NULL
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EN NULL
-#define OPTION_VAL_1_EN NULL
+#define OPTION_VAL_1_EN "Force Nearest-Neighbour"
 #define OPTION_VAL_2_EN NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EN NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EN NULL
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EN NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EN "Notify front-end when internal frame rate changes (e.g. from 60 fps to 30 fps). Improves frame pacing in games that run at a locked 30 fps or 20 fps, but should be disabled for games with unlocked (unstable) frame rates (e.g. Ecco the Dolphin, Unreal Tournament). Note: Unavailable when 'Auto Skip Frame' is enabled."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_EN NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EN "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analogue video signals."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EN NULL
@@ -36075,7 +36075,7 @@ struct retro_core_options_v2 options_it = {
 #define CATEGORY_SYSTEM_INFO_0_JA NULL
 #define CATEGORY_VIDEO_LABEL_JA "ビデオのドライバ"
 #define CATEGORY_VIDEO_INFO_0_JA NULL
-#define CATEGORY_PERFORMANCE_LABEL_JA NULL
+#define CATEGORY_PERFORMANCE_LABEL_JA "パフォーマンス"
 #define CATEGORY_PERFORMANCE_INFO_0_JA NULL
 #define CATEGORY_HACKS_LABEL_JA "エミュレーションハック"
 #define CATEGORY_HACKS_INFO_0_JA NULL
@@ -54090,12 +54090,12 @@ struct retro_core_options_v2 options_si = {
 #define CATEGORY_INPUT_INFO_0_SK NULL
 #define CATEGORY_VMU_LABEL_SK NULL
 #define CATEGORY_VMU_INFO_0_SK NULL
-#define CORE_OPTION_NAME_REGION_LABEL_SK NULL
-#define OPTION_VAL_JAPAN_SK NULL
+#define CORE_OPTION_NAME_REGION_LABEL_SK "Región"
+#define OPTION_VAL_JAPAN_SK "Japonsko"
 #define OPTION_VAL_USA_SK NULL
 #define OPTION_VAL_EUROPE_SK NULL
 #define OPTION_VAL_DEFAULT_SK NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_SK NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_SK "Jazyk"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_SK NULL
 #define OPTION_VAL_JAPANESE_SK "Japončina"
 #define OPTION_VAL_ENGLISH_SK NULL
@@ -54163,7 +54163,7 @@ struct retro_core_options_v2 options_si = {
 #define OPTION_VAL_PER_PIXEL_ACCURATE_SK NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SK NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SK NULL
-#define OPTION_VAL_512MB_SK NULL
+#define OPTION_VAL_512MB_SK "512 MB"
 #define OPTION_VAL_1GB_SK NULL
 #define OPTION_VAL_2GB_SK NULL
 #define OPTION_VAL_4GB_SK NULL
@@ -54227,7 +54227,7 @@ struct retro_core_options_v2 options_si = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK NULL
-#define OPTION_VAL_WHITE_SK NULL
+#define OPTION_VAL_WHITE_SK "Biela"
 #define OPTION_VAL_RED_SK "Červená"
 #define OPTION_VAL_GREEN_SK "Zelená"
 #define OPTION_VAL_BLUE_SK "Modrá"
@@ -54255,9 +54255,9 @@ struct retro_core_options_v2 options_si = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SK NULL
 #define OPTION_VAL_DEFAULT_ON_00_SK NULL
 #define OPTION_VAL_DEFAULT_OFF_01_SK NULL
-#define OPTION_VAL_BLACK_02_SK NULL
+#define OPTION_VAL_BLACK_02_SK "Čierna"
 #define OPTION_VAL_LIGHT_BLUE_04_SK NULL
-#define OPTION_VAL_CYAN_06_SK NULL
+#define OPTION_VAL_CYAN_06_SK "Azúrová"
 #define OPTION_VAL_CYAN_BLUE_07_SK NULL
 #define OPTION_VAL_LIGHT_GREEN_08_SK NULL
 #define OPTION_VAL_CYAN_GREEN_09_SK NULL
@@ -54265,7 +54265,7 @@ struct retro_core_options_v2 options_si = {
 #define OPTION_VAL_PURPLE_12_SK NULL
 #define OPTION_VAL_LIGHT_PURPLE_13_SK NULL
 #define OPTION_VAL_YELLOW_14_SK NULL
-#define OPTION_VAL_GRAY_15_SK NULL
+#define OPTION_VAL_GRAY_15_SK "Šedá"
 #define OPTION_VAL_LIGHT_PURPLE_2_16_SK NULL
 #define OPTION_VAL_LIGHT_GREEN_2_17_SK NULL
 #define OPTION_VAL_LIGHT_GREEN_3_18_SK NULL
