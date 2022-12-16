@@ -800,7 +800,7 @@ void Emulator::start()
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
-	EventManager::event(Event::Resume);
+
 	memwatch::protect();
 
 	if (config::ThreadedRendering)
@@ -831,6 +831,8 @@ void Emulator::start()
 	{
 		InitAudio();
 	}
+
+	EventManager::event(Event::Resume);
 }
 
 bool Emulator::checkStatus()

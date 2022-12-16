@@ -22,6 +22,7 @@
 #include "gdb_server.h"
 #include "debug_agent.h"
 #include "network/net_platform.h"
+#include "cfg/option.h"
 #include <stdexcept>
 #include <thread>
 #include <chrono>
@@ -95,10 +96,15 @@ public:
 
 	void run()
 	{
-		if (!initialised)
+		if (!initialised || thread.joinable())
 			return;
 		DEBUG_LOG(COMMON, "GdbServer starting");
 		thread = std::thread(&GdbServer::serverThread, this);
+		if (config::GDBWaitForConnection)
+		{
+			DEBUG_LOG(COMMON, "Waiting for GDB connection...");
+			agent.interrupt();
+		}
 	}
 
 	void stop()

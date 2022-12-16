@@ -474,6 +474,7 @@ extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
 extern Option<bool> GDB;
 extern Option<int> GDBPort;
+extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
 
