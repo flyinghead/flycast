@@ -31,7 +31,7 @@ public:
 	void displayCrosshairs() override;
 
 	void newFrame() override;
-	void renderDrawData(ImDrawData* drawData) override;
+	void renderDrawData(ImDrawData* drawData, bool gui_open) override;
 	void present() override;
 
 	void setFrameRendered() override {

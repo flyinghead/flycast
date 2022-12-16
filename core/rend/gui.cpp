@@ -400,10 +400,10 @@ static void delayedKeysUp()
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
 }
 
-static void gui_endFrame()
+static void gui_endFrame(bool gui_open)
 {
     ImGui::Render();
-    imguiDriver->renderDrawData(ImGui::GetDrawData());
+    imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
     delayedKeysUp();
 }
 
@@ -2673,6 +2673,15 @@ static void gui_display_loadscreen()
     ImGui::AlignTextToFramePadding();
     ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 	try {
+		const char *label = gameLoader.getProgress().label;
+		if (label == nullptr)
+		{
+			if (gameLoader.ready())
+				label = "Starting...";
+			else
+				label = "Loading...";
+		}
+
 		if (gameLoader.ready())
 		{
 			if (NetworkHandshake::instance != nullptr)
@@ -2683,14 +2692,11 @@ static void gui_display_loadscreen()
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("Starting...");
+				ImGui::Text("%s", label);
 			}
 		}
 		else
 		{
-			const char *label = gameLoader.getProgress().label;
-			if (label == nullptr)
-				label = "Loading...";
 			ImGui::Text("%s", label);
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
@@ -2735,6 +2741,7 @@ void gui_display_ui()
 	gui_newFrame();
 	ImGui::NewFrame();
 	error_msg_shown = false;
+	bool gui_open = gui_is_open();
 
 	switch (gui_state)
 	{
@@ -2777,7 +2784,7 @@ void gui_display_ui()
 		break;
 	}
 	error_popup();
-	gui_endFrame();
+	gui_endFrame(gui_open);
 
 	if (gui_state == GuiState::Closed)
 		emu.start();
@@ -2844,7 +2851,7 @@ void gui_display_osd()
 		}
 		lua::overlay();
 
-		gui_endFrame();
+		gui_endFrame(gui_is_open());
 	}
 }
 

@@ -529,6 +529,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					LoadHle();
 				}
 			}
+
+			if (progress)
+				progress->progress = 1.0f;
 		}
 		else if (settings.platform.isArcade())
 		{
@@ -562,6 +565,17 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				dc_loadstate(config::SavestateSlot);
 		}
 		EventManager::event(Event::Start);
+
+		if (progress)
+		{
+#ifdef GDB_SERVER
+			if(config::GDBWaitForConnection)
+				progress->label = "Waiting for debugger...";
+			else
+#endif
+				progress->label = "Starting...";
+		}
+
 		state = Loaded;
 	} catch (...) {
 		state = Error;
@@ -800,7 +814,7 @@ void Emulator::start()
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
-	EventManager::event(Event::Resume);
+
 	memwatch::protect();
 
 	if (config::ThreadedRendering)
@@ -831,6 +845,8 @@ void Emulator::start()
 	{
 		InitAudio();
 	}
+
+	EventManager::event(Event::Resume);
 }
 
 bool Emulator::checkStatus()

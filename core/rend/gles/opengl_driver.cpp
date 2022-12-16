@@ -158,10 +158,10 @@ void OpenGLDriver::newFrame()
 	ImGui_ImplOpenGL3_NewFrame();
 }
 
-void OpenGLDriver::renderDrawData(ImDrawData* drawData)
+void OpenGLDriver::renderDrawData(ImDrawData* drawData, bool gui_open)
 {
 	ImGui_ImplOpenGL3_RenderDrawData(drawData);
-	if (gui_is_open())
+	if (gui_open)
 		frameRendered = true;
 }
 

@@ -22,6 +22,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
+option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -1249,6 +1250,14 @@ if(WIN32 AND USE_DX11)
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
+endif()
+
+if(ENABLE_GDB_SERVER)
+
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/debug/gdb_server.cpp)
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GDB_SERVER)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)

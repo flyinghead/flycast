@@ -22,12 +22,14 @@
 #include "gdb_server.h"
 #include "debug_agent.h"
 #include "network/net_platform.h"
+#include "cfg/option.h"
 #include <stdexcept>
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <cassert>
 
-#define SERVER_PORT 3263
+#define MAX_PACKET_LEN 4096
 
 namespace debugger {
 
@@ -40,7 +42,7 @@ public:
 		Error(const char *reason) : std::runtime_error(reason) {}
 	};
 
-	void init()
+	void init(int port)
 	{
 		if (VALID(serverSocket))
 			return;
@@ -55,7 +57,7 @@ public:
 		struct sockaddr_in serveraddr;
 		memset(&serveraddr, 0, sizeof(serveraddr));
 		serveraddr.sin_family = AF_INET;
-		serveraddr.sin_port = htons(SERVER_PORT);
+		serveraddr.sin_port = htons(port);
 
 		if (::bind(serverSocket, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 		{
@@ -69,10 +71,14 @@ public:
 		}
 		EventManager::listen(Event::Resume, emuEventCallback);
 		EventManager::listen(Event::Terminate, emuEventCallback);
+
+		initialised = true;
 	}
 
 	void term()
 	{
+		if (!initialised)
+			return;
 		EventManager::unlisten(Event::Resume, emuEventCallback);
 		EventManager::unlisten(Event::Terminate, emuEventCallback);
 		stop();
@@ -90,12 +96,21 @@ public:
 
 	void run()
 	{
+		if (!initialised || thread.joinable())
+			return;
 		DEBUG_LOG(COMMON, "GdbServer starting");
 		thread = std::thread(&GdbServer::serverThread, this);
+		if (config::GDBWaitForConnection)
+		{
+			DEBUG_LOG(COMMON, "Waiting for GDB connection...");
+			agent.interrupt();
+		}
 	}
 
 	void stop()
 	{
+		if (!initialised)
+			return;
 		if (thread.joinable())
 		{
 			DEBUG_LOG(COMMON, "GdbServer stopping");
@@ -106,7 +121,7 @@ public:
 	}
 
 	bool isRunning() const {
-		return thread.joinable();
+		return initialised && thread.joinable();
 	}
 
 	// called on the emu thread
@@ -496,7 +511,12 @@ private:
 				const u32 *data = agent.getStack(len);
 				len /= 4;
 
+#if _MSC_VER // Non-const array size is a GCC extension
+				assert((len * 9 * 2 + 1) < MAX_PACKET_LEN);
+				char reply[MAX_PACKET_LEN];
+#else
 				char reply[len * 9 * 2 + 1];
+#endif
 				char *r = reply;
 				for (u32 i = 0; i < len; i++)
 				{
@@ -599,11 +619,11 @@ private:
 			sendPacket("OK");
 			agent.kill();
 		}
-		else if (pkt.rfind("vMustReplyEmpty", 0) == 0)
-			// Reply empty packet
-			sendPacket("");
 		else
+		{
 			WARN_LOG(COMMON, "unknown v packet: %s", pkt.c_str());
+			sendPacket("");
+		}
 	}
 
 	void restart()
@@ -827,6 +847,7 @@ private:
 			throw Error("I/O error");
 	}
 
+	bool initialised = false;
 	bool stopRequested = false;
 	bool attached = false;
 	bool postDebugTrapNeeded = false;
@@ -840,9 +861,9 @@ public:
 
 static GdbServer gdbServer;
 
-void init()
+void init(int port)
 {
-	gdbServer.init();
+	gdbServer.init(port);
 }
 
 void term()
