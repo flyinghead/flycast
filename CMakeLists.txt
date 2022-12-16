@@ -20,7 +20,7 @@ option(LIBRETRO "Build libretro core" OFF)
 option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
-option(ENABLE_GDB_SERVER "Build with GDB debugging support" ON)
+option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -81,10 +81,6 @@ endif()
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
-
-if(LIBRETRO OR WINDOWS_STORE OR ANDROID OR IOS)
-	set(ENABLE_GDB_SERVER OFF)
-endif()
 
 if(NINTENDO_SWITCH)
 	set(USE_VULKAN OFF)
