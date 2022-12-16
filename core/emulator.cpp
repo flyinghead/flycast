@@ -568,9 +568,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 
 		if (progress)
 		{
+#ifdef GDB_SERVER
 			if(config::GDBWaitForConnection)
 				progress->label = "Waiting for debugger...";
 			else
+#endif
 				progress->label = "Starting...";
 		}
 
