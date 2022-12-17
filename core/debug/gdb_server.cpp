@@ -535,9 +535,13 @@ private:
 				sendPacket("");
 		}
 		else if (pkt.rfind("qSupported", 0) == 0)
+		{
 			// Tell the remote stub about features supported by GDB,
 			// and query the stub for features it supports
-			sendPacket("PacketSize=10000");
+			char qsupported[128];
+			sprintf_s(qsupported, 128, "PacketSize=%i;vContSupported+", MAX_PACKET_LEN);
+			sendPacket(qsupported);
+		}
 		else if (pkt.rfind("qSymbol:", 0) == 0)
 			// Notify the target that GDB is prepared to serve symbol lookup requests
 			sendPacket("OK");
@@ -590,11 +594,41 @@ private:
 		if (pkt.rfind("vAttach;", 0) == 0)
 			sendPacket("S05");
 		else if (pkt.rfind("vCont?", 0) == 0)
-			// not supported
-			sendPacket("vCont;s;c");
+			// supported vCont actions - (c)ontinue, (C)ontinue with signal, (s)tep, (S)tep with signal, (r)ange-step
+			sendPacket("vCont;c;C;s;S;t;r");
 		else if (pkt.rfind("vCont", 0) == 0)
-			// not supported
-			WARN_LOG(COMMON, "vCont not supported %s", pkt.c_str());
+		{
+			std::string vContCmd = pkt.substr(strlen("vCont;"));
+			switch (vContCmd[0])
+			{
+			case 'c':
+			case 'C':
+				sendContinue(vContCmd);
+				break;
+			case 's':
+				step(EXCEPT_NONE);
+				break;
+			case 'S':
+				step();
+			case 'r':
+			{
+				u32 from, to;
+				if (sscanf(vContCmd.c_str(), "r%x,%x", &from, &to) == 2)
+				{
+					stepRange(from, to);
+				}
+				else
+				{
+					WARN_LOG(COMMON, "Unsupported vCont:r format %s", pkt.c_str());
+					sendContinue("c");
+				}
+
+				break;
+			}
+			default:
+				WARN_LOG(COMMON, "vCont action not supported %s", pkt[6], pkt.c_str());
+			}
+		}
 		else if (pkt.rfind("vFile:", 0) == 0)
 			// not supported
 			sendPacket("");
@@ -637,6 +671,13 @@ private:
 		sendPacket("S05");
 	}
 
+	void stepRange(u32 from, u32 to)
+	{
+		sendPacket("OK");
+		agent.stepRange(from, to);
+		sendPacket("S05");
+	}
+
 	void insertMatchpoint(const std::string& pkt)
 	{
 		u32 type;
@@ -647,22 +688,22 @@ private:
 			sendPacket("E01");
 		}
 		switch (type) {
-		    case 0:		// soft bp
+			case DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK:		// soft bp
 		    	if (agent.insertMatchpoint(0, addr, len))
 		    		sendPacket("OK");
 		    	else
 		    		sendPacket("E01");
 		    	break;
-		    case 1:		// hardware bp
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_HARDWARE_BREAK:		// hardware bp
 		    	sendPacket("");
 		    	break;
-		    case 2:		// write watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_WRITE_WATCHPOINT:	// write watchpoint
 		    	sendPacket("");
 		    	break;
-		    case 3:		// read watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_READ_WATCHPOINT:		// read watchpoint
 		    	sendPacket("");
 		    	break;
-		    case 4:		// access watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_ACCESS_WATCHPOINT:	// access watchpoint
 		    	sendPacket("");
 		    	break;
 		    default:

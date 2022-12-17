@@ -587,8 +587,16 @@ void Emulator::runInternal()
 {
 	if (singleStep)
 	{
-		singleStep = false;
 		sh4_cpu.Step();
+		singleStep = false;
+	}
+	else if(stepRangeTo != 0)
+	{
+		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc <= stepRangeTo)
+			sh4_cpu.Step();
+
+		stepRangeFrom = 0;
+		stepRangeTo = 0;
 	}
 	else
 	{
@@ -652,7 +660,8 @@ void Emulator::stop() {
 		rend_cancel_emu_wait();
 		try {
 			auto future = threadResult;
-			future.get();
+			if(future.valid())
+				future.get();
 		} catch (const FlycastException& e) {
 			WARN_LOG(COMMON, "%s", e.what());
 		}
@@ -715,6 +724,14 @@ void Emulator::step()
 {
 	// FIXME single thread is better
 	singleStep = true;
+	start();
+	stop();
+}
+
+void Emulator::stepRange(u32 from, u32 to)
+{
+	stepRangeFrom = from;
+	stepRangeTo = to;
 	start();
 	stop();
 }
@@ -826,7 +843,7 @@ void Emulator::start()
 				InitAudio();
 
 				try {
-					while (state == Running)
+					while (state == Running || singleStep || stepRangeTo != 0)
 					{
 						startTime = sh4_sched_now64();
 						renderTimeout = false;
@@ -855,9 +872,13 @@ void Emulator::start()
 bool Emulator::checkStatus()
 {
 	try {
-		if (threadResult.wait_for(std::chrono::seconds(0)) == std::future_status::timeout)
-			return true;
-		threadResult.get();
+		if (threadResult.valid())
+		{
+			auto result = threadResult.wait_for(std::chrono::seconds(0));
+			if (result == std::future_status::timeout)
+				return true;
+			threadResult.get();
+		}
 		return false;
 	} catch (...) {
 		EventManager::event(Event::Pause);
