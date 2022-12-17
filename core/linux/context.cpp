@@ -55,7 +55,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 #elif HOST_CPU == CPU_ARM64
 	#if defined(__APPLE__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(->__ss.__pc));
-		bicopy<ToSegfault>(hostctx->x0, MCTX(->__ss.__r[0]));
+		bicopy<ToSegfault>(hostctx->x0, MCTX(->__ss.__x[0]));
  	#else
  		bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));
  		bicopy<ToSegfault>(hostctx->x0, MCTX(.regs[0]));
