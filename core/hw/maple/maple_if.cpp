@@ -159,19 +159,17 @@ static void maple_DoDma()
 #ifdef STRICT_MODE
 			if (!check_mdapro(header_2) || !check_mdapro(addr + 8 + plen * sizeof(u32) - 1))
 			{
+#else
+			if (GetMemPtr(header_2, 1) == nullptr)
+			{
+				WARN_LOG(MAPLE, "DMA Error: destination not in system ram: %x", header_2);
+#endif
 				asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
 				SB_MDST = 0;
 				mapleDmaOut.clear();
 				return;
 			}
-#else
-			if (GetMemPtr(header_2, 1) == nullptr)
-			{
-				WARN_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM %x", header_2);
-				header_2 &= RAM_MASK;
-				header_2 |= 3 << 26;
-			}
-#endif
+
 			u32* p_data = (u32 *)GetMemPtr(addr + 8, plen * sizeof(u32));
 			if (p_data == nullptr)
 			{
