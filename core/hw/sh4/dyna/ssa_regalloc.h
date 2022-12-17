@@ -65,7 +65,6 @@ public:
 		{
 			//FlushReg(reg_sr_T, true);
 			FlushReg(reg_sr_status, true);
-			FlushReg(reg_old_sr_status, true);
 			for (int i = reg_r0; i <= reg_r7; i++)
 				FlushReg((Sh4RegType)i, true);
 			for (int i = reg_r0_Bank; i <= reg_r7_Bank; i++)
@@ -403,10 +402,12 @@ private:
 			// TODO we could look at the ifb op to optimize what to flush
 			if (op->op == shop_ifb || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref)))
 				return true;
-			if (op->op == shop_sync_sr && (/*reg == reg_sr_T ||*/ reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
+			if (op->op == shop_sync_sr && (/*reg == reg_sr_T ||*/ reg == reg_sr_status || (reg >= reg_r0 && reg <= reg_r7)
 					|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank)))
 				return true;
 			if (op->op == shop_sync_fpscr && (reg == reg_fpscr || reg == reg_old_fpscr || (reg >= reg_fr_0 && reg <= reg_xf_15)))
+				return true;
+			if (op->op == shop_div1 && reg == reg_sr_status)
 				return true;
 			// if reg is used by a subsequent vector op that doesn't use reg allocation
 			if (UsesReg(op, reg, version, true))

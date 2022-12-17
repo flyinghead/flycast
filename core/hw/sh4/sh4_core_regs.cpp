@@ -206,10 +206,6 @@ static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			return &next_pc;
 			break;
 
-		case reg_old_sr_status :
-			return &old_sr.status;
-			break;
-
 		case reg_sr_status :
 			return &sr.status;
 			break;

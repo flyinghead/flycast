@@ -115,7 +115,7 @@ static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 		verify(state.JumpAddr != NullAddress);
 }
 
-#define SR_STATUS_MASK 0x700083F2
+#define SR_STATUS_MASK STATUS_MASK
 #define SR_T_MASK 1
 
 static u32 dec_jump_simm8(u32 op)
@@ -237,33 +237,70 @@ sh4dec(i0000_0000_0001_1011)
 	dec_End(NullAddress, BET_DynamicJump, false);
 }
 
-//ldc.l @<REG_N>+,SR
-/*
-sh4dec(i0100_nnnn_0000_0111)
-{
-	u32 sr_t;
-	ReadMemU32(sr_t,r[n]);
-	if (sh4_exept_raised)
-		return;
-	sr.SetFull(sr_t);
-	r[n] += 4;
-	if (UpdateSR())
-	{
-		//FIXME only if interrupts got on .. :P
-		UpdateINTC();
-	}
-	dec_End(NullAddress,BET_StaticIntr,false);
-}
-*/
-
 //ldc <REG_N>,SR
 sh4dec(i0100_nnnn_0000_1110)
 {
-	u32 n = GetN(op);
-
-	dec_write_sr((Sh4RegType)(reg_r0+n));
+	dec_write_sr((Sh4RegType)(reg_r0 + GetN(op)));
 	Emit(shop_sync_sr);
-	dec_End(NullAddress, BET_StaticIntr, false);
+	if (!state.cpu.is_delayslot)
+		dec_End(state.cpu.rpc + 2, BET_StaticIntr, false);
+}
+
+//ldc.l @<REG_N>+,SR
+sh4dec(i0100_nnnn_0000_0111)
+{
+	shil_param rn = mk_regi(reg_r0 + GetN(op));
+	state.info.has_readm = true;
+	Emit(shop_readm, reg_temp, rn, shil_param(), 4);
+	Emit(shop_add, rn, rn, mk_imm(4));
+	dec_write_sr(reg_temp);
+	Emit(shop_sync_sr);
+	if (!state.cpu.is_delayslot)
+		dec_End(state.cpu.rpc + 2, BET_StaticIntr, false);
+}
+
+//ldc.l <REG_N>,FPSCR
+sh4dec(i0100_nnnn_0110_1010)
+{
+	Emit(shop_mov32, reg_fpscr, mk_regi(reg_r0 + GetN(op)));
+	Emit(shop_sync_fpscr);
+	if (!state.cpu.is_delayslot)
+		dec_End(state.cpu.rpc + 2, BET_StaticJump, false);
+}
+
+//ldc.l @<REG_N>+,FPSCR
+sh4dec(i0100_nnnn_0110_0110)
+{
+	shil_param rn = mk_regi(reg_r0 + GetN(op));
+	state.info.has_readm = true;
+	Emit(shop_readm, reg_fpscr, rn, shil_param(), 4);
+	Emit(shop_add, rn, rn, mk_imm(4));
+	Emit(shop_sync_fpscr);
+	if (!state.cpu.is_delayslot)
+		dec_End(state.cpu.rpc + 2, BET_StaticJump, false);
+}
+
+//stc.l SR,@-<REG_N>
+sh4dec(i0100_nnnn_0000_0011)
+{
+	Emit(shop_mov32, reg_temp, reg_sr_status);
+	Emit(shop_or, reg_temp, reg_temp, reg_sr_T);
+	shil_param rn = mk_regi(reg_r0 + GetN(op));
+	state.info.has_writem = true;
+	Emit(shop_writem, shil_param(), rn, reg_temp, 4, mk_imm(-4));
+	Emit(shop_add, rn, rn, mk_imm(-4));
+}
+
+// tas.b <REG_N>
+sh4dec(i0100_nnnn_0001_1011)
+{
+	shil_param rn = mk_regi(reg_r0 + GetN(op));
+	state.info.has_readm = true;
+	state.info.has_writem = true;
+	Emit(shop_readm, reg_temp, rn, shil_param(), 1);
+	Emit(shop_seteq, reg_sr_T, reg_temp, mk_imm(0));
+	Emit(shop_or, reg_temp, reg_temp, mk_imm(0x80));
+	Emit(shop_writem, shil_param(), rn, reg_temp, 1);
 }
 
 //nop !
@@ -329,7 +366,7 @@ static const Sh4RegType SREGS[] =
 
 static const Sh4RegType CREGS[] =
 {
-	reg_sr,
+	reg_sr_status,
 	reg_gbr,
 	reg_vbr,
 	reg_ssr,
@@ -616,21 +653,6 @@ static bool MatchDiv32s(u32 op,u32 pc)
 	return match == 65;
 }
 
-/*
-//This ended up too rare (and too hard to match)
-bool MatchDiv0S_0(u32 pc)
-{
-	if (IReadMem16(pc+0)==0x233A && //XOR   r3,r3
-		IReadMem16(pc+2)==0x2137 && //DIV0S r3,r1
-		IReadMem16(pc+4)==0x322A && //SUBC  r2,r2
-		IReadMem16(pc+6)==0x313A && //SUBC  r3,r1
-		(IReadMem16(pc+8)&0xF00F)==0x2007) //DIV0S x,x
-		return true;
-	else
-		return false;
-}
-*/
-
 static bool dec_generic(u32 op)
 {
 	DecMode mode;DecParam d;DecParam s;shilop natop;u32 e;
@@ -649,8 +671,8 @@ static bool dec_generic(u32 op)
 	if (op>=0xF000)
 	{
 		state.info.has_fpu=true;
-		//return false;//FPU off for now
-		if (state.cpu.FPR64 /*|| state.cpu.FSZ64*/)
+		if (state.cpu.FPR64)
+			// fallback to interpreter for double float ops
 			return false;
 
 		if (state.cpu.FSZ64 && (d==PRM_FRN_SZ || d==PRM_FRM_SZ || s==PRM_FRN_SZ || s==PRM_FRM_SZ))

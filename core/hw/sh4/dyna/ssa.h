@@ -182,8 +182,19 @@ private:
 				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
 				{
 					Sh4RegType reg = it->first.get_reg();
-					if (reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
+					if (reg == reg_sr_status || (reg >= reg_r0 && reg <= reg_r7)
 							|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank))
+						it = constprop_values.erase(it);
+					else
+						it++;
+				}
+			}
+			else if (op.op == shop_div1)
+			{
+				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
+				{
+					Sh4RegType reg = it->first.get_reg();
+					if (reg == reg_sr_status)
 						it = constprop_values.erase(it);
 					else
 						it++;
@@ -355,13 +366,15 @@ private:
 			{
 				last_versions[reg_sr_T] = -1;
 				last_versions[reg_sr_status] = -1;
-				last_versions[reg_old_sr_status] = -1;
 				for (int i = reg_r0; i <= reg_r7; i++)
 					last_versions[i] = -1;
 				for (int i = reg_r0_Bank; i <= reg_r7_Bank; i++)
 					last_versions[i] = -1;
 				continue;
 			}
+			if (op.op == shop_div1)
+				last_versions[reg_sr_status] = -1;
+
 			if (op.op == shop_sync_fpscr)
 			{
 				last_versions[reg_fpscr] = -1;

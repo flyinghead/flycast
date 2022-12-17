@@ -75,11 +75,11 @@ std::string name_reg(Sh4RegType reg)
 		case reg_old_fpscr:
 			ss << "old_fpscr";
 			break;
-		case reg_old_sr_status:
-			ss << "old_sr_status";
-			break;
 		case reg_ssr:
 			ss << "ssr";
+			break;
+		case reg_temp:
+			ss << "temp";
 			break;
 		default:
 			ss << "s" << reg;
