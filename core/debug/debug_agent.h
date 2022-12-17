@@ -85,11 +85,20 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = removeMatchpoint(0, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		u32 savedPc = Sh4cntx.pc;
 		emu.step();
 		if (restoreBreakpoint)
-			insertMatchpoint(0, savedPc, 2);
+			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+	}
+
+	void stepRange(u32 from, u32 to)
+	{
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		u32 savedPc = Sh4cntx.pc;
+		emu.stepRange(from, to);
+		if (restoreBreakpoint)
+			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
 	}
 
 	int readAllRegs(u32 **regs)
@@ -200,10 +209,10 @@ public:
 			return false;
 		}
 		// TODO other matchpoint types
-		if (breakpoints.find(addr) != breakpoints.end())
+		if (breakpoints[type].find(addr) != breakpoints[type].end())
 			return true;
-		breakpoints[addr] = Breakpoint(type, addr);
-		breakpoints[addr].savedOp = ReadMem16_nommu(addr);
+		breakpoints[type][addr] = Breakpoint(type, addr);
+		breakpoints[type][addr].savedOp = ReadMem16_nommu(addr);
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
 		return true;
 	}
@@ -213,11 +222,11 @@ public:
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;
 		}
-		auto it = breakpoints.find(addr);
-		if (it == breakpoints.end())
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
 			return false;
 		WriteMem16_nommu(addr, it->second.savedOp);
-		breakpoints.erase(it);
+		breakpoints[type].erase(it);
 		return true;
 	}
 
@@ -319,12 +328,22 @@ public:
 	u32 exception = 0;
 
 	struct Breakpoint {
+		enum Type
+		{
+			BP_TYPE_SOFTWARE_BREAK,
+			BP_TYPE_HARDWARE_BREAK,
+			BP_TYPE_WRITE_WATCHPOINT,
+			BP_TYPE_READ_WATCHPOINT,
+			BP_TYPE_ACCESS_WATCHPOINT,
+			BP_TYPE_COUNT
+		};
+
 		Breakpoint() = default;
 		Breakpoint(u16 type, u32 addr) : addr(addr), type(type) { }
 		u32 addr = 0;
 		u16 type = 0;
 		u16 savedOp = 0;
 	};
-	std::map<u32, Breakpoint> breakpoints;
+	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
 };
