@@ -802,6 +802,9 @@ void Emulator::start()
 	verify(state == Loaded);
 	state = Running;
 	SetMemoryHandlers();
+	if (config::GGPOEnable && config::ThreadedRendering)
+		// Not supported with GGPO
+		config::EmulateFramebuffer.override(false);
 #if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{

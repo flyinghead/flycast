@@ -77,11 +77,12 @@ public:
 		if (offset == (u32)-1)
 			return false;
 		offset &= ~PAGE_MASK;
-		if (pages.count(offset) > 0)
-			// already saved
-			return true;
-        Page& page = pages.emplace(offset, Page()).first->second;
-        memcpy(&page.data[0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
+	    auto rv = pages.emplace(offset, Page());
+	    if (!rv.second)
+	      // already saved
+	      return true;
+	    Page& page = rv.first->second;
+	    memcpy(&page.data[0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
 		static_cast<T&>(*this).unprotectMem(offset, PAGE_SIZE);
 		return true;
 	}
