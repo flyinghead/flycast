@@ -450,7 +450,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		devCache.SetRenderState(D3DRS_ZFUNC, Zfunction[gp->isp.DepthMode]);
 	}
 
-	if (SortingEnabled && !config::PerStripSorting)
+	if (SortingEnabled /* && !config::PerStripSorting */)
 		devCache.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 	else
 	{

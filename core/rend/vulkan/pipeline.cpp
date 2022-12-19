@@ -305,7 +305,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
-	if (sortTriangles && !config::PerStripSorting)
+	if (sortTriangles /* && !config::PerStripSorting */)
 		// FIXME temporary work-around for intel driver bug
 		depthWriteEnable = GetContext()->GetVendorID() == VulkanContext::VENDOR_INTEL;
 	else

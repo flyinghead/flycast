@@ -21,8 +21,8 @@
 void setFirstProvokingVertex(rend_context& rendContext)
 {
 	auto setProvokingVertex = [&rendContext](const List<PolyParam>& list) {
-        u32 *idx_base = rendContext.idx.head();
-        Vertex *vtx_base = rendContext.verts.head();
+        u32 * const idx_base = rendContext.idx.head();
+        Vertex * const vtx_base = rendContext.verts.head();
 		for (const PolyParam& pp : list)
 		{
 			if (pp.pcw.Gouraud)
@@ -56,5 +56,27 @@ void setFirstProvokingVertex(rend_context& rendContext)
 	};
 	setProvokingVertex(rendContext.global_param_op);
 	setProvokingVertex(rendContext.global_param_pt);
-	setProvokingVertex(rendContext.global_param_tr);
+	if (rendContext.sortedTriangles.empty())
+	{
+		setProvokingVertex(rendContext.global_param_tr);
+	}
+	else
+	{
+		Vertex * const vtx_base = rendContext.verts.head();
+		u32 * const idx_base = rendContext.idx.head();
+		for (const SortedTriangle& tri : rendContext.sortedTriangles)
+		{
+			if (tri.ppid->pcw.Gouraud)
+				continue;
+			for (u32 i = 0; i + 2 < tri.count; i += 3)
+			{
+				Vertex& vertex = vtx_base[idx_base[tri.first + i]];
+				Vertex& lastVertex = vtx_base[idx_base[tri.first + i + 2]];
+				memcpy(vertex.col, lastVertex.col, sizeof(vertex.col));
+				memcpy(vertex.spc, lastVertex.spc, sizeof(vertex.spc));
+				memcpy(vertex.col1, lastVertex.col1, sizeof(vertex.col1));
+				memcpy(vertex.spc1, lastVertex.spc1, sizeof(vertex.spc1));
+			}
+		}
+	}
 }
