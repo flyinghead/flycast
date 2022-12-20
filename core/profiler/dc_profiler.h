@@ -2,8 +2,13 @@
 #include "types.h"
 #include "hw/sh4/dyna/shil.h"
 
+#if DC_PROFILER
 void dc_prof_init();
 void dc_prof_periodical();
+#else
+static void dc_prof_init() {}
+static void dc_prof_periodical() {}
+#endif
 
 inline void print_array(const char* name, u32* arr,u32 size)
 {
