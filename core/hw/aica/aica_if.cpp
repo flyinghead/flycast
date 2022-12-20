@@ -10,7 +10,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
-#include "profiler/profiler.h"
+#include "profiler/dc_profiler.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/arm7/arm7.h"
 
@@ -176,7 +176,7 @@ static int DreamcastSecond(int tag, int c, int j)
 {
 	RealTimeClock++;
 
-	prof_periodical();
+	dc_prof_periodical();
 
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Periodical_1s();

@@ -41,6 +41,7 @@
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
+#include "profiler/fc_profiler.h"
 #include <chrono>
 
 settings_t settings;
@@ -888,6 +889,8 @@ bool Emulator::checkStatus()
 
 bool Emulator::render()
 {
+	FC_PROFILE_SCOPE;
+
 	if (!config::ThreadedRendering)
 	{
 		if (state != Running)

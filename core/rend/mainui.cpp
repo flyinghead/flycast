@@ -26,6 +26,8 @@
 #include "cfg/option.h"
 #include "emulator.h"
 #include "imgui_driver.h"
+#include "profiler/fc_profiler.h"
+#include <chrono>
 
 static bool mainui_enabled;
 u32 MainFrameCount;
@@ -35,6 +37,8 @@ void UpdateInputState();
 
 bool mainui_rend_frame()
 {
+	FC_PROFILE_SCOPE;
+
 	os_DoEvents();
 	UpdateInputState();
 
@@ -53,6 +57,8 @@ bool mainui_rend_frame()
 		try {
 			if (!emu.render())
 				return false;
+			if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
+				gui_display_profiler();
 		} catch (const FlycastException& e) {
 			emu.unloadGame();
 			gui_stop_game(e.what());
@@ -82,6 +88,8 @@ void mainui_loop()
 
 	while (mainui_enabled)
 	{
+		fc_profiler::startThread("main");
+
 		mainui_rend_frame();
 		imguiDriver->present();
 
@@ -96,6 +104,8 @@ void mainui_loop()
 			forceReinit = false;
 			currentRenderer = config::RendererType;
 		}
+
+		fc_profiler::endThread(1.0 / 55.0);
 	}
 
 	mainui_term();

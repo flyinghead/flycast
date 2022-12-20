@@ -45,6 +45,7 @@
 #include "gui_chat.h"
 #include "imgui_driver.h"
 #include "boxart/boxart.h"
+#include "profiler/fc_profiler.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -2724,6 +2725,8 @@ static void gui_display_loadscreen()
 
 void gui_display_ui()
 {
+	FC_PROFILE_SCOPE;
+
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;
 	if (gui_state == GuiState::Main)
@@ -2853,6 +2856,37 @@ void gui_display_osd()
 
 		gui_endFrame(gui_is_open());
 	}
+}
+
+void gui_display_profiler()
+{
+#if FC_PROFILER
+	gui_newFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
+
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+
+	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
+	
+	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		char text[256];
+		std::snprintf(text, 256, "%.3f : Thread %s", (float)profileThread->cachedTime, profileThread->threadName.c_str());
+		ImGui::TreeNode(text);
+
+		ImGui::Indent();
+		fc_profiler::drawGUI(profileThread->cachedResultTree);
+		ImGui::Unindent();
+	}
+
+	ImGui::PopStyleColor();
+
+	ImGui::End();
+
+	gui_endFrame(true);
+#endif
 }
 
 void gui_open_onboarding()

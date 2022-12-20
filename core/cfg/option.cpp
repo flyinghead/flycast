@@ -122,6 +122,11 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 
+// Profiler
+Option<bool> ProfilerEnabled("Profiler.Enabled");
+Option<bool> ProfilerDrawToGUI("Profiler.DrawGUI");
+Option<bool> ProfilerOutputTTY("Profiler.OutputTTY");
+
 // Network
 
 Option<bool> NetworkEnable("Enable", false, "network");

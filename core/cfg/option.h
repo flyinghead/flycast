@@ -483,6 +483,11 @@ extern Option<bool> OpenGlChecks;
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 
+// Profiling
+extern Option<bool> ProfilerEnabled;
+extern Option<bool> ProfilerDrawToGUI;
+extern Option<bool> ProfilerOutputTTY;
+
 // Network
 
 extern Option<bool> NetworkEnable;

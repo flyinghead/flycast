@@ -7,6 +7,7 @@
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
+#include "profiler/fc_profiler.h"
 
 #include <mutex>
 #include <deque>
@@ -116,6 +117,8 @@ public:
 private:
 	Message dequeue(int timeoutMs = -1)
 	{
+		FC_PROFILE_SCOPE;
+
 		Message msg;
 		while (true)
 		{
@@ -161,6 +164,8 @@ private:
 
 	void render()
 	{
+		FC_PROFILE_SCOPE;
+
 		_pvrrc = DequeueRender();
 		if (_pvrrc == nullptr)
 			return;
@@ -171,14 +176,23 @@ private:
 			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
 					getOutputFramebufferAspectRatio());
 #endif
-		bool proc = renderer->Process(_pvrrc);
+		bool proc;
+		{
+			FC_PROFILE_SCOPE_NAMED("Renderer::Process");
+			proc = renderer->Process(_pvrrc);
+		}
+
 		if (!proc || renderToScreen)
 			// If rendering to texture or in full framebuffer emulation, continue locking until the frame is rendered
 			renderEnd.Set();
 		rend_allow_rollback();
 		if (proc)
 		{
-			renderer->Render();
+			{
+				FC_PROFILE_SCOPE_NAMED("Renderer::Render");
+				renderer->Render();
+			}
+
 			if (!renderToScreen)
 				renderEnd.Set();
 			else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
@@ -192,6 +206,8 @@ private:
 
 	void renderFramebuffer(const FramebufferInfo& config)
 	{
+		FC_PROFILE_SCOPE;
+
 #ifdef LIBRETRO
 		int w, h;
 		getDCFramebufferReadSize(w, h);
@@ -202,6 +218,8 @@ private:
 
 	void present()
 	{
+		FC_PROFILE_SCOPE;
+
 		if (renderer->Present())
 		{
 			presented = true;
@@ -223,6 +241,8 @@ static PvrMessageQueue pvrQueue;
 
 bool rend_single_frame(const bool& enabled)
 {
+	FC_PROFILE_SCOPE;
+
 	presented = false;
 	while (enabled && !presented)
 		if (!pvrQueue.waitAndExecute(50))
