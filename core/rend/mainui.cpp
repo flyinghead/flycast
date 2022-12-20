@@ -105,7 +105,7 @@ void mainui_loop()
 			currentRenderer = config::RendererType;
 		}
 
-		fc_profiler::endThread(1.0 / 55.0);
+		fc_profiler::endThread(config::ProfilerFrameWarningTime);
 	}
 
 	mainui_term();

@@ -487,6 +487,7 @@ extern Option<bool, false> HideLegacyNaomiRoms;
 extern Option<bool> ProfilerEnabled;
 extern Option<bool> ProfilerDrawToGUI;
 extern Option<bool> ProfilerOutputTTY;
+extern Option<float> ProfilerFrameWarningTime;
 
 // Network
 
