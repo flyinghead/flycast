@@ -22,6 +22,7 @@ namespace http {
 
     static jobject HttpClient;
     static jmethodID openUrlMid;
+    static jmethodID postMid;
 
     void init() {
     }
@@ -58,6 +59,37 @@ namespace http {
         return httpStatus;
     }
 
+    int post(const std::string &url, const std::vector<PostField>& fields)
+    {
+        JNIEnv *env = jvm_attacher.getEnv();
+        jstring jurl = env->NewStringUTF(url.c_str());
+        jclass stringClass = env->FindClass("java/lang/String");
+        jobjectArray names = env->NewObjectArray(fields.size(), stringClass, NULL);
+        jobjectArray values = env->NewObjectArray(fields.size(), stringClass, NULL);
+        jobjectArray contentTypes = env->NewObjectArray(fields.size(), stringClass, NULL);
+
+        for (size_t i = 0; i < fields.size(); i++)
+        {
+        	jstring js = env->NewStringUTF(fields[i].name.c_str());
+        	env->SetObjectArrayElement(names, i, js);
+        	env->DeleteLocalRef(js);
+        	js = env->NewStringUTF(fields[i].value.c_str());
+        	env->SetObjectArrayElement(values, i, js);
+        	env->DeleteLocalRef(js);
+        	js = env->NewStringUTF(fields[i].contentType.c_str());
+        	env->SetObjectArrayElement(contentTypes, i, js);
+        	env->DeleteLocalRef(js);
+        }
+
+        int httpStatus = env->CallIntMethod(HttpClient, postMid, jurl, names, values, contentTypes);
+        env->DeleteLocalRef(jurl);
+        env->DeleteLocalRef(names);
+        env->DeleteLocalRef(values);
+        env->DeleteLocalRef(contentTypes);
+
+        return httpStatus;
+    }
+
     void term() {
     }
 
@@ -67,4 +99,5 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_HttpClient_nativ
 {
     http::HttpClient = env->NewGlobalRef(obj);
     http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
+    http::postMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)I");
 }

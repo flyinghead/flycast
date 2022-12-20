@@ -482,6 +482,7 @@ extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
+extern Option<bool> UploadCrashLogs;
 
 // Network
 

@@ -297,7 +297,9 @@ std::vector<std::string> find_system_data_dirs()
 #if defined(USE_BREAKPAD)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
-	printf("Minidump saved to '%s'\n", descriptor.path());
+	if (succeeded)
+		registerCrash(descriptor.directory(), descriptor.path());
+
 	return succeeded;
 }
 #endif
@@ -310,6 +312,8 @@ int main(int argc, char* argv[])
 	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
 #endif
 #if defined(USE_BREAKPAD)
+	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
+
 	google_breakpad::MinidumpDescriptor descriptor("/tmp");
 	google_breakpad::ExceptionHandler eh(descriptor, nullptr, dumpCallback, nullptr, true, -1);
 #endif

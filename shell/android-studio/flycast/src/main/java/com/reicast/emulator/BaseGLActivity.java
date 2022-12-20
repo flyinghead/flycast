@@ -91,6 +91,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         Emulator.setCurrentActivity(this);
 
         OuyaController.init(this);
+        new HttpClient().nativeInit();
 
         String home_directory = prefs.getString(Config.pref_home, "");
         String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), home_directory,
@@ -115,7 +116,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         }
         Log.i("flycast", "Environment initialized");
         installButtons();
-        new HttpClient().nativeInit();
         setStorageDirectories();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !storagePermissionGranted) {

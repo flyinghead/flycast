@@ -20,7 +20,16 @@ package com.reicast.emulator.emu;
 
 import android.util.Log;
 
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -28,6 +37,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class HttpClient {
+    private CloseableHttpClient httpClient;
+
     // Called from native code
     public int openUrl(String url_string, byte[][] content, String[] contentType)
     {
@@ -59,6 +70,40 @@ public class HttpClient {
             Log.e("flycast", "I/O error", e);
         } catch (SecurityException e) {
             Log.e("flycast", "Security error", e);
+        } catch (Throwable t) {
+            Log.e("flycast", "Unknown error", t);
+        }
+        return 500;
+    }
+
+    public int post(String urlString, String[] fieldNames, String[] fieldValues, String[] contentTypes)
+    {
+        try {
+            if (httpClient == null)
+                httpClient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(urlString);
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            for (int i = 0; i < fieldNames.length; i++) {
+                if (contentTypes[i].isEmpty())
+                    builder.addTextBody(fieldNames[i], fieldValues[i], ContentType.TEXT_PLAIN);
+                else {
+                    File file = new File(fieldValues[i]);
+                    builder.addBinaryBody(fieldNames[i], file, ContentType.create(contentTypes[i]), file.getName());
+                }
+            }
+            HttpEntity multipart = builder.build();
+            httpPost.setEntity(multipart);
+            CloseableHttpResponse response = httpClient.execute(httpPost);
+
+            return response.getCode();
+        } catch (MalformedURLException e) {
+            Log.e("flycast", "Malformed URL", e);
+        } catch (IOException e) {
+            Log.e("flycast", "I/O error", e);
+        } catch (SecurityException e) {
+            Log.e("flycast", "Security error", e);
+        } catch (Throwable t) {
+            Log.e("flycast", "Unknown error", t);
         }
         return 500;
     }

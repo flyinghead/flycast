@@ -29,6 +29,17 @@ u32 static inline bitscanrev(u32 v)
 #endif
 }
 
+u32 static inline bitscanrev64(u64 v)
+{
+#ifdef __GNUC__
+	return 63 - __builtin_clzll(v);
+#else
+	unsigned long rv;
+	_BitScanReverse64(&rv, (__int64)v);
+	return rv;
+#endif
+}
+
 namespace hostfs
 {
 	std::string getVmuPath(const std::string& port);
@@ -135,3 +146,5 @@ static inline void freeAligned(void *p)
 #endif
 }
 
+void registerCrash(const std::string& directory, const char *path);
+void uploadCrashes(const std::string& directory);

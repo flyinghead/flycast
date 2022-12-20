@@ -731,6 +731,17 @@ static bool dumpCallback(const wchar_t* dump_path,
 		wchar_t s[MAX_PATH + 32];
 		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
+
+		nowide::stackstring path;
+		if (path.convert(dump_path))
+		{
+			std::string directory = path.c_str();
+			if (path.convert(minidump_id))
+			{
+				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
+				registerCrash(directory, fullPath.c_str());
+			}
+		}
 	}
 	return succeeded;
 }
@@ -858,6 +869,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef USE_BREAKPAD
 	wchar_t tempDir[MAX_PATH + 1];
 	GetTempPathW(MAX_PATH + 1, tempDir);
+
+	nowide::stackstring nws;
+	static std::string tempDir8;
+	if (nws.convert(tempDir))
+		tempDir8 = nws.c_str();
+	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
 
 	static google_breakpad::CustomInfoEntry custom_entries[] = {
 			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),

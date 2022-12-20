@@ -89,4 +89,9 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	}
 }
 
+int post(const std::string& url, const std::vector<PostField>& fields) {
+	// not implemented
+	return 500;
+}
+
 }

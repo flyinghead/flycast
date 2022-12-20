@@ -15,6 +15,7 @@
 #include "rend/mainui.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "oslib/oslib.h"
 #ifdef USE_BREAKPAD
 #include "client/linux/handler/exception_handler.h"
 #endif
@@ -145,29 +146,26 @@ void os_SetWindowText(char const *Text)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
     if (succeeded)
+    {
     	__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
+    	registerCrash(descriptor.directory(), descriptor.path());
+    }
 	return succeeded;
 }
 
+static void *uploadCrashThread(void *p)
+{
+	uploadCrashes(*(std::string *)p);
+
+	return nullptr;
+}
+
 static google_breakpad::ExceptionHandler *exceptionHandler;
+
 #endif
 
 extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring filesDirectory, jstring homeDirectory, jstring locale)
 {
-#if defined(USE_BREAKPAD)
-    if (exceptionHandler == nullptr)
-    {
-        jstring directory = homeDirectory != NULL && env->GetStringLength(homeDirectory) > 0 ? homeDirectory : filesDirectory;
-    	const char *jchar = env->GetStringUTFChars(directory, 0);
-    	std::string path(jchar);
-        env->ReleaseStringUTFChars(directory, jchar);
-        google_breakpad::MinidumpDescriptor descriptor(path);
-        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
-    }
-#endif
-    // Initialize platform-specific stuff
-    common_linux_setup();
-
     bool first_init = false;
 
     // Keep reference to global JVM and Emulator objects
@@ -180,6 +178,27 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         g_emulator = env->NewGlobalRef(emulator);
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
     }
+
+#if defined(USE_BREAKPAD)
+    if (exceptionHandler == nullptr)
+    {
+        jstring directory = homeDirectory != NULL && env->GetStringLength(homeDirectory) > 0 ? homeDirectory : filesDirectory;
+    	const char *jchar = env->GetStringUTFChars(directory, 0);
+    	std::string path(jchar);
+        env->ReleaseStringUTFChars(directory, jchar);
+
+        static std::string crashPath;
+        crashPath = path;
+        cThread uploadThread(uploadCrashThread, &crashPath);
+        uploadThread.Start();
+
+        google_breakpad::MinidumpDescriptor descriptor(path);
+        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
+    }
+#endif
+    // Initialize platform-specific stuff
+    common_linux_setup();
+
     // Set home directory based on User config
     if (homeDirectory != NULL)
     {

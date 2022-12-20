@@ -35,6 +35,21 @@ static inline int get(const std::string& url, std::vector<u8>& content) {
 	 return get(url, content, contentType);
 }
 
+struct PostField
+{
+	PostField() = default;
+	PostField(const std::string& name, const std::string& value)
+		: name(name), value(value) { }
+	PostField(const std::string& name, const std::string& filePath, const std::string& contentType)
+		: name(name), value(filePath), contentType(contentType) { }
+
+	std::string name;
+	std::string value;		// contains file path if contentType isn't empty
+	std::string contentType;
+};
+
+int post(const std::string& url, const std::vector<PostField>& fields);
+
 static inline bool success(int status) {
 	return status >= 200 && status < 300;
 }

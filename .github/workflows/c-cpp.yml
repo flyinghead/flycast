@@ -84,8 +84,10 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }} -DSENTRY_UPLOAD_URL=${{ env.SENTRY_UPLOAD_URL }}
           cmake --build build --config ${{ matrix.config.buildType }} --target install
+        env:
+          SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
       - name: Unit Tests
         run: |
@@ -96,10 +98,8 @@ jobs:
 
       - name: Dump symbols
         run: |
-          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
-          BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
-          mkdir -p symbols/flycast.exe/$BUILD_ID
-          mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
+          mkdir -p symbols
+          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > symbols/flycast.sym 2>/dev/null
           strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
@@ -134,7 +134,25 @@ jobs:
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
-      - name: Upload symbols to S3 (Windows-MinGW, macOS)
-        run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
+      - name: Setup Sentry CLI
+        uses: mathieu-bour/setup-sentry-cli@1.2.0
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        with:
+          url: https://sentry.io
+          token: ${{ env.SENTRY_TOKEN }}
+          organization: flycast
+          project: minidump
+        if: ${{ env.SENTRY_TOKEN != '' }}
+      
+      - name: Upload symbols to Sentry (Windows, macOS)
+        run: |
+          VERSION=$(git describe --tags --always)
+          sentry-cli releases new "$VERSION"
+          sentry-cli releases set-commits "$VERSION" --auto
+          sentry-cli upload-dif symbols 
         shell: bash
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
+        

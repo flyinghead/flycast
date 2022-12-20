@@ -23,6 +23,7 @@ option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
+option(SENTRY_UPLOAD_URL "Sentry upload URL" "")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -194,6 +195,10 @@ if(IOS)
 		GLES_SILENCE_DEPRECATION)
 endif()
 
+if(NOT ${SENTRY_UPLOAD_URL} STREQUAL "")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD=${SENTRY_UPLOAD_URL})
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
@@ -258,36 +263,30 @@ if(NOT LIBRETRO)
 		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a x86_64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-				COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a arm64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-				COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
 			)
 		else()
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
 				COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast
 					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a x86_64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-				COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
 				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
 					-a arm64
 					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > Flycast.sym
-				COMMAND mkdir -p ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
-				COMMAND mv Flycast.sym ../symbols/Flycast/`head -1 Flycast.sym | awk '{ print $4 }'`
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
 			)
 		endif()
 	endif()

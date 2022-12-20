@@ -20,6 +20,9 @@
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "cfg/option.h"
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 namespace hostfs
 {
@@ -145,3 +148,71 @@ std::string getBiosFontPath()
 }
 
 }
+
+#ifdef USE_BREAKPAD
+
+#include "rend/boxart/http_client.h"
+#include "version.h"
+
+#define FLYCAST_CRASH_LIST "flycast-crashes.txt"
+
+void registerCrash(const std::string& directory, const char *path)
+{
+	FILE *f = nowide::fopen((directory + "/" FLYCAST_CRASH_LIST).c_str(), "at");
+	if (f != nullptr)
+	{
+		fprintf(f, "%s", path);
+		fclose(f);
+	}
+}
+
+void uploadCrashes(const std::string& directory)
+{
+	FILE *f = nowide::fopen((directory + "/" FLYCAST_CRASH_LIST).c_str(), "rt");
+	if (f == nullptr)
+		return;
+	http::init();
+	char line[256];
+	bool uploadFailure = false;
+	while (fgets(line, sizeof(line), f) != nullptr)
+	{
+		char *p = line + strlen(line) - 1;
+		if (*p == '\n')
+			*p = '\0';
+		if (file_exists(line))
+		{
+#ifdef SENTRY_UPLOAD
+#define STRINGIZE(x) #x
+			if (config::UploadCrashLogs)
+			{
+				NOTICE_LOG(COMMON, "Uploading minidump %s", line);
+				std::vector<http::PostField> fields;
+				fields.emplace_back("upload_file_minidump", std::string(line), "application/octet-stream");
+				fields.emplace_back("flycast_version", std::string(GIT_VERSION));
+				// TODO log, config, gpu/driver
+				int rc = http::post(STRINGIZE(SENTRY_UPLOAD), fields);
+				if (rc >= 200 && rc < 300)
+					nowide::remove(line);
+				else
+					uploadFailure = true;
+			}
+			else
+#undef STRINGIZE
+#endif
+			{
+				nowide::remove(line);
+			}
+		}
+	}
+	http::term();
+	fclose(f);
+	if (!uploadFailure)
+		nowide::remove((directory + "/" FLYCAST_CRASH_LIST).c_str());
+}
+
+#else
+
+void registerCrash(const std::string& directory, const char *path) {}
+void uploadCrashes(const std::string& directory) {}
+
+#endif

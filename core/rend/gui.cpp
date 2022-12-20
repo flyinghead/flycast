@@ -2191,6 +2191,10 @@ static void gui_display_settings()
 				}
 	            ImGui::SameLine();
 	            ShowHelpMarker("Log debug information to flycast.log");
+#ifdef SENTRY_UPLOAD
+	            OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
+	            		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+#endif
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
