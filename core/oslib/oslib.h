@@ -135,5 +135,5 @@ static inline void freeAligned(void *p)
 #endif
 }
 
-void registerCrash(const std::string& directory, const char *path);
+void registerCrash(const char *directory, const char *path);
 void uploadCrashes(const std::string& directory);

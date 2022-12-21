@@ -739,7 +739,7 @@ static bool dumpCallback(const wchar_t* dump_path,
 			if (path.convert(minidump_id))
 			{
 				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
-				registerCrash(directory, fullPath.c_str());
+				registerCrash(directory.c_str(), fullPath.c_str());
 			}
 		}
 	}

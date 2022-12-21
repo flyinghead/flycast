@@ -153,16 +153,40 @@ std::string getBiosFontPath()
 
 #include "rend/boxart/http_client.h"
 #include "version.h"
+#include "log/InMemoryListener.h"
 
 #define FLYCAST_CRASH_LIST "flycast-crashes.txt"
 
-void registerCrash(const std::string& directory, const char *path)
+void registerCrash(const char *directory, const char *path)
 {
-	FILE *f = nowide::fopen((directory + "/" FLYCAST_CRASH_LIST).c_str(), "at");
+	char list[256];
+	// Register .dmp in crash list
+	snprintf(list, sizeof(list), "%s/%s", directory, FLYCAST_CRASH_LIST);
+	FILE *f = nowide::fopen(list, "at");
 	if (f != nullptr)
 	{
-		fprintf(f, "%s", path);
+		fprintf(f, "%s\n", path);
 		fclose(f);
+	}
+	// Save last log lines
+	InMemoryListener *listener = InMemoryListener::getInstance();
+	if (listener != nullptr)
+	{
+		strncpy(list, path, sizeof(list) - 1);
+		list[sizeof(list) - 1] = '\0';
+		char *p = strrchr(list, '.');
+		if (p != nullptr && (p - list) < (int)sizeof(list) - 4)
+		{
+			strcpy(p + 1, "log");
+			FILE *f = nowide::fopen(list, "wt");
+			if (f != nullptr)
+			{
+				std::vector<std::string> log = listener->getLog();
+				for (const auto& line : log)
+					fprintf(f, "%s", line.c_str());
+				fclose(f);
+			}
+		}
 	}
 }
 
@@ -181,26 +205,34 @@ void uploadCrashes(const std::string& directory)
 			*p = '\0';
 		if (file_exists(line))
 		{
+			std::string dmpfile(line);
+			std::string logfile = get_file_basename(dmpfile) + ".log";
 #ifdef SENTRY_UPLOAD
-#define STRINGIZE(x) #x
 			if (config::UploadCrashLogs)
 			{
 				NOTICE_LOG(COMMON, "Uploading minidump %s", line);
 				std::vector<http::PostField> fields;
-				fields.emplace_back("upload_file_minidump", std::string(line), "application/octet-stream");
+				fields.emplace_back("upload_file_minidump", dmpfile, "application/octet-stream");
 				fields.emplace_back("flycast_version", std::string(GIT_VERSION));
-				// TODO log, config, gpu/driver
-				int rc = http::post(STRINGIZE(SENTRY_UPLOAD), fields);
-				if (rc >= 200 && rc < 300)
-					nowide::remove(line);
+				if (file_exists(logfile))
+					fields.emplace_back("flycast_log", logfile, "text/plain");
+				// TODO config, gpu/driver, ...
+				int rc = http::post(SENTRY_UPLOAD, fields);
+				if (rc >= 200 && rc < 300) {
+					nowide::remove(dmpfile.c_str());
+					nowide::remove(logfile.c_str());
+				}
 				else
+				{
+					NOTICE_LOG(COMMON, "Upload failed: HTTP error %d", rc);
 					uploadFailure = true;
+				}
 			}
 			else
-#undef STRINGIZE
 #endif
 			{
-				nowide::remove(line);
+				nowide::remove(dmpfile.c_str());
+				nowide::remove(logfile.c_str());
 			}
 		}
 	}
@@ -212,7 +244,7 @@ void uploadCrashes(const std::string& directory)
 
 #else
 
-void registerCrash(const std::string& directory, const char *path) {}
+void registerCrash(const char *directory, const char *path) {}
 void uploadCrashes(const std::string& directory) {}
 
 #endif

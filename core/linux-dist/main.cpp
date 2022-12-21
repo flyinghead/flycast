@@ -298,7 +298,7 @@ std::vector<std::string> find_system_data_dirs()
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
 	if (succeeded)
-		registerCrash(descriptor.directory(), descriptor.path());
+		registerCrash(descriptor.directory().c_str(), descriptor.path());
 
 	return succeeded;
 }

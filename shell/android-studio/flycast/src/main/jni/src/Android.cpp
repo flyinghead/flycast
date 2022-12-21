@@ -148,7 +148,7 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
     if (succeeded)
     {
     	__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
-    	registerCrash(descriptor.directory(), descriptor.path());
+    	registerCrash(descriptor.directory().c_str(), descriptor.path());
     }
 	return succeeded;
 }

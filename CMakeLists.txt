@@ -23,7 +23,8 @@ option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
-option(SENTRY_UPLOAD_URL "Sentry upload URL" "")
+
+set(SENTRY_UPLOAD_URL "" CACHE STRING "Sentry upload URL")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -195,8 +196,8 @@ if(IOS)
 		GLES_SILENCE_DEPRECATION)
 endif()
 
-if(NOT ${SENTRY_UPLOAD_URL} STREQUAL "")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD=${SENTRY_UPLOAD_URL})
+if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
