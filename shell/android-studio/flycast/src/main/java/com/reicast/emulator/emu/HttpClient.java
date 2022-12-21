@@ -81,13 +81,17 @@ public class HttpClient {
         try {
             if (httpClient == null)
                 httpClient = HttpClients.createDefault();
+            Log.i("flycast", "POST to '" + urlString + "'");
             HttpPost httpPost = new HttpPost(urlString);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             for (int i = 0; i < fieldNames.length; i++) {
-                if (contentTypes[i].isEmpty())
+                if (contentTypes[i].isEmpty()) {
+                    Log.i("flycast", "POST field: " + fieldNames[i] + "=" + fieldValues[i]);
                     builder.addTextBody(fieldNames[i], fieldValues[i], ContentType.TEXT_PLAIN);
+                }
                 else {
                     File file = new File(fieldValues[i]);
+                    Log.i("flycast", "POST file: " + fieldNames[i] + "=" + file.getAbsolutePath() + " (" + ContentType.create(contentTypes[i]) + ") " + (file.exists() ? " exists" : "not found"));
                     builder.addBinaryBody(fieldNames[i], file, ContentType.create(contentTypes[i]), file.getName());
                 }
             }
