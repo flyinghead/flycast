@@ -23,6 +23,8 @@ option(USE_OPENGL "Use OpenGL API" ON)
 option(USE_VIDEOCORE "RPI: use the legacy Broadcom GLES libraries" OFF)
 option(APPLE_BREAKPAD "macOS: Build breakpad client and dump symbols" OFF)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
+option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
+option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
 
 set(SENTRY_UPLOAD_URL "" CACHE STRING "Sentry upload URL")
 
@@ -989,9 +991,21 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/lua/lua.cpp
 		core/lua/lua.h)
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/profiler.cpp
-		core/profiler/profiler.h)
+if (ENABLE_DC_PROFILER)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/profiler/dc_profiler.cpp
+		core/profiler/dc_profiler.h)
+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE DC_PROFILER)
+endif()
+
+if (ENABLE_FC_PROFILER)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/profiler/fc_profiler.cpp
+		core/profiler/fc_profiler.h)
+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-cpp/rec_cpp.cpp)

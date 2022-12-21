@@ -484,6 +484,12 @@ extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 extern Option<bool> UploadCrashLogs;
 
+// Profiling
+extern Option<bool> ProfilerEnabled;
+extern Option<bool> ProfilerDrawToGUI;
+extern Option<bool> ProfilerOutputTTY;
+extern Option<float> ProfilerFrameWarningTime;
+
 // Network
 
 extern Option<bool> NetworkEnable;

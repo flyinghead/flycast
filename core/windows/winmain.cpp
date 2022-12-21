@@ -51,6 +51,7 @@
 #include "breakpad/client/windows/handler/exception_handler.h"
 #include "version.h"
 #endif
+#include "profiler/fc_profiler.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -269,6 +270,8 @@ static void setupPath()
 
 void UpdateInputState()
 {
+	FC_PROFILE_SCOPE;
+
 #if defined(USE_SDL)
 	input_sdl_handle();
 #else
@@ -940,6 +943,8 @@ void os_DebugBreak()
 
 void os_DoEvents()
 {
+	FC_PROFILE_SCOPE;
+
 #ifndef TARGET_UWP
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))

@@ -2,8 +2,13 @@
 #include "types.h"
 #include "hw/sh4/dyna/shil.h"
 
-void prof_init();
-void prof_periodical();
+#if DC_PROFILER
+void dc_prof_init();
+void dc_prof_periodical();
+#else
+static void dc_prof_init() {}
+static void dc_prof_periodical() {}
+#endif
 
 inline void print_array(const char* name, u32* arr,u32 size)
 {
@@ -24,7 +29,7 @@ inline void print_elem(const char* name, u32 val)
 
 inline void print_head(const char* name) { printf("//<%s>\n",name); }
 
-struct profiler_cfg
+struct dc_profiler_cfg
 {
 	bool enable;
 
@@ -143,4 +148,4 @@ struct profiler_cfg
 	} counters;
 };
 
-extern profiler_cfg prof;
+extern dc_profiler_cfg dc_prof;
