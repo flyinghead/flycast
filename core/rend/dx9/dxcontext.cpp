@@ -77,6 +77,12 @@ bool DXContext::init(bool keepCurrentWindow)
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver(pDevice));
 	overlay.init(pDevice);
 
+	D3DADAPTER_IDENTIFIER9 id;
+	pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
+	driverName = std::string(id.Description);
+	driverVersion = std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
+		+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+
 	return true;
 }
 

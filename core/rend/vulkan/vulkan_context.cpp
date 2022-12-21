@@ -485,6 +485,23 @@ bool VulkanContext::InitDevice()
 	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
 	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 
+		vk::PhysicalDeviceProperties props;
+		physicalDevice.getProperties(&props);
+		driverName = (const char *)props.deviceName;
+#ifdef __APPLE__
+		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
+				+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
+				+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
+				// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
+				+ std::to_string(props.driverVersion / 10000) + "."
+				+ std::to_string((props.driverVersion % 10000) / 100) + "."
+				+ std::to_string(props.driverVersion % 100);
+#else
+		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
+				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
+				+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
+#endif
+
 		CreateSwapChain();
 
 		return true;
@@ -891,32 +908,6 @@ void VulkanContext::WaitIdle() const
 	} catch (const vk::Error &err) {
 		WARN_LOG(RENDERER, "WaitIdle: %s", err.what());
 	}
-}
-
-std::string VulkanContext::getDriverName()
-{
-	vk::PhysicalDeviceProperties props;
-	physicalDevice.getProperties(&props);
-	return props.deviceName;
-}
-
-std::string VulkanContext::getDriverVersion()
-{
-	vk::PhysicalDeviceProperties props;
-	physicalDevice.getProperties(&props);
-#ifdef __APPLE__
-	return std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
-			+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
-			+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
-			// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
-			+ std::to_string(props.driverVersion / 10000) + "."
-			+ std::to_string((props.driverVersion % 10000) / 100) + "."
-			+ std::to_string(props.driverVersion % 100);
-#else
-	return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
-			+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
-			+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
-#endif
 }
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)

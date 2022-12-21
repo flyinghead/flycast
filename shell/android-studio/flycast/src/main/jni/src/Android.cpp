@@ -155,6 +155,7 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 
 static void *uploadCrashThread(void *p)
 {
+	sleep(5);
 	uploadCrashes(*(std::string *)p);
 
 	return nullptr;
@@ -178,6 +179,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         g_emulator = env->NewGlobalRef(emulator);
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
     }
+    if (first_init)
+    	LogManager::Init();
 
 #if defined(USE_BREAKPAD)
     if (exceptionHandler == nullptr)
@@ -188,8 +191,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         env->ReleaseStringUTFChars(directory, jchar);
 
         static std::string crashPath;
+        static cThread uploadThread(uploadCrashThread, &crashPath);
         crashPath = path;
-        cThread uploadThread(uploadCrashThread, &crashPath);
         uploadThread.Start();
 
         google_breakpad::MinidumpDescriptor descriptor(path);
@@ -235,7 +238,6 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
     if (first_init)
     {
         // Do one-time initialization
-    	LogManager::Init();
     	EventManager::listen(Event::Pause, emuEventCallback);
     	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;

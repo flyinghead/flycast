@@ -38,15 +38,10 @@ public:
 	void resize() override;
 	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
 	std::string getDriverName() override {
-		D3DADAPTER_IDENTIFIER9 id;
-		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
-		return std::string(id.Description);
+		return driverName;
 	}
 	std::string getDriverVersion() override {
-		D3DADAPTER_IDENTIFIER9 id;
-		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
-		return std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
-			+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+		return driverVersion;
 	}
 	void setFrameRendered() {
 		frameRendered = true;
@@ -62,6 +57,8 @@ private:
 	D3DOverlay overlay;
 	bool swapOnVSync = false;
 	bool frameRendered = false;
+	std::string driverName;
+	std::string driverVersion;
 };
 extern DXContext theDXContext;
 #endif

@@ -89,8 +89,12 @@ public:
 			return true;
 		}
 	}
-	std::string getDriverName() override;
-	std::string getDriverVersion() override;
+	std::string getDriverName() override {
+		return driverName;
+	}
+	std::string getDriverVersion() override {
+		return driverVersion;
+	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
@@ -211,6 +215,9 @@ private:
 	std::unique_ptr<VulkanOverlay> overlay;
 	// only used to delay the destruction of overlay textures
 	std::unique_ptr<TextureCache> textureCache;
+
+	std::string driverName;
+	std::string driverVersion;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

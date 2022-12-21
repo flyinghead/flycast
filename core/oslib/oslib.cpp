@@ -154,6 +154,7 @@ std::string getBiosFontPath()
 #include "rend/boxart/http_client.h"
 #include "version.h"
 #include "log/InMemoryListener.h"
+#include "wsi/context.h"
 
 #define FLYCAST_CRASH_LIST "flycast-crashes.txt"
 
@@ -184,6 +185,12 @@ void registerCrash(const char *directory, const char *path)
 				std::vector<std::string> log = listener->getLog();
 				for (const auto& line : log)
 					fprintf(f, "%s", line.c_str());
+				fprintf(f, "Version: %s\n", GIT_VERSION);
+				fprintf(f, "Renderer: %d\n", (int)config::RendererType.get());
+				GraphicsContext *gctx = GraphicsContext::Instance();
+				if (gctx != nullptr)
+					fprintf(f, "GPU: %s %s\n", gctx->getDriverName().c_str(), gctx->getDriverVersion().c_str());
+				fprintf(f, "Game: %s\n", settings.content.gameId.c_str());
 				fclose(f);
 			}
 		}
@@ -224,7 +231,7 @@ void uploadCrashes(const std::string& directory)
 				}
 				else
 				{
-					NOTICE_LOG(COMMON, "Upload failed: HTTP error %d", rc);
+					WARN_LOG(COMMON, "Upload failed: HTTP error %d", rc);
 					uploadFailure = true;
 				}
 			}

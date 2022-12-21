@@ -40,8 +40,12 @@ public:
 	bool isGLES() const {
 		return _isGLES;
 	}
-	std::string getDriverName() override;
-	std::string getDriverVersion() override;
+	std::string getDriverName() override {
+		return driverName;
+	}
+	std::string getDriverVersion() override {
+		return driverVersion;
+	}
 	void resetUIDriver();
 
 	bool hasPerPixel() override
@@ -60,6 +64,8 @@ private:
 	int majorVersion = 0;
 	int minorVersion = 0;
 	bool _isGLES = false;
+	std::string driverName;
+	std::string driverVersion;
 };
 
 #if defined(LIBRETRO)
