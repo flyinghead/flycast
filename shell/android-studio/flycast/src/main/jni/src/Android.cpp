@@ -155,7 +155,6 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 
 static void *uploadCrashThread(void *p)
 {
-	sleep(5);
 	uploadCrashes(*(std::string *)p);
 
 	return nullptr;

@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 
 public class HttpClient {
     private CloseableHttpClient httpClient;
@@ -81,17 +82,15 @@ public class HttpClient {
         try {
             if (httpClient == null)
                 httpClient = HttpClients.createDefault();
-            Log.i("flycast", "POST to '" + urlString + "'");
             HttpPost httpPost = new HttpPost(urlString);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.setCharset(Charset.forName("UTF-8"));
             for (int i = 0; i < fieldNames.length; i++) {
                 if (contentTypes[i].isEmpty()) {
-                    Log.i("flycast", "POST field: " + fieldNames[i] + "=" + fieldValues[i]);
-                    builder.addTextBody(fieldNames[i], fieldValues[i], ContentType.TEXT_PLAIN);
+                    builder.addTextBody(fieldNames[i], fieldValues[i]);
                 }
                 else {
                     File file = new File(fieldValues[i]);
-                    Log.i("flycast", "POST file: " + fieldNames[i] + "=" + file.getAbsolutePath() + " (" + ContentType.create(contentTypes[i]) + ") " + (file.exists() ? " exists" : "not found"));
                     builder.addBinaryBody(fieldNames[i], file, ContentType.create(contentTypes[i]), file.getName());
                 }
             }

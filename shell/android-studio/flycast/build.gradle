@@ -46,7 +46,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
@@ -76,5 +76,6 @@ dependencies {
     implementation 'com.google.oboe:oboe:1.6.1'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.3'
+    implementation 'org.slf4j:slf4j-android:1.7.35'
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }
