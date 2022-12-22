@@ -2172,8 +2172,8 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 3;	// ubfx, add, ldr
-	const int write_memory_rewrite_size = 3; // ubfx, add, str
+	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr for fast access. calling a handler can use more than 3 depending on offset
+	const int write_memory_rewrite_size = 5; // ubfx, add, str
 };
 
 static Arm64Assembler* compiler;
