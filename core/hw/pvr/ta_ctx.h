@@ -424,10 +424,10 @@ void ta_parse_reset();
 void getRegionTileAddrAndSize(u32& address, u32& size);
 //void sortTriangles(rend_context& ctx, int pass);
 void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previousPass);
-void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context* ctx);
-void fix_texture_bleeding(const List<PolyParam> *list, rend_context& ctx);
-void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx);
-void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx);
+void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ctx);
+void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend_context& ctx);
+void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
+void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
 
 class TAParserException : public FlycastException
 {

@@ -1132,18 +1132,26 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 			|| config::RendererType == RenderType::Vulkan_OIT;
 	const bool mergeTranslucent = config::PerStripSorting || perPixel;
 
+	if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
+	{
+		fix_texture_bleeding(&ctx.global_param_op, previousPass.op_count, pass.op_count, ctx);
+		fix_texture_bleeding(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, ctx);
+		fix_texture_bleeding(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
+	}
 	if (primRestart)
-		makePrimRestartIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, &ctx);
+	{
+		makePrimRestartIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
+		makePrimRestartIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
+	}
 	else
-		makeIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, &ctx);
-	if (primRestart)
-		makePrimRestartIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, &ctx);
-	else
-		makeIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, &ctx);
+	{
+		makeIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
+		makeIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
+	}
 	if (pass.autosort && !perPixel)
 	{
 		if (config::PerStripSorting)
-			sortPolyParams(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, &ctx);
+			sortPolyParams(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
 		else
 			sortTriangles(ctx, pass, previousPass);
 	}
@@ -1151,9 +1159,9 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 	if (!pass.autosort || perPixel || config::PerStripSorting)
 	{
 		if (primRestart)
-			makePrimRestartIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, &ctx);
+			makePrimRestartIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
 		else
-			makeIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, &ctx);
+			makeIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
 	}
 }
 
@@ -1224,12 +1232,6 @@ static bool ta_parse_vdrc(TA_context* ctx, bool primRestart)
 	bool overrun = vd_ctx->rend.Overrun;
 	if (overrun)
 		WARN_LOG(PVR, "ERROR: TA context overrun");
-	else if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
-	{
-		fix_texture_bleeding(&vd_rc.global_param_op, vd_rc);
-		fix_texture_bleeding(&vd_rc.global_param_pt, vd_rc);
-		fix_texture_bleeding(&vd_rc.global_param_tr, vd_rc);
-	}
 	if (rv && !overrun)
 	{
 		u32 xmin, xmax, ymin, ymax;

@@ -185,12 +185,12 @@ static bool operator<(const PolyParam& left, const PolyParam& right)
 	return left.zvZ < right.zvZ;
 }
 
-void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context* ctx)
+void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ctx)
 {
 	if (end - first <= 1)
 		return;
 
-	Vertex *vtx_base = ctx->verts.head();
+	Vertex *vtx_base = ctx.verts.head();
 
 	PolyParam * const pp_end = &polys->head()[end];
 
@@ -311,23 +311,21 @@ int getTAContextAddresses(u32 *addresses)
 	return count;
 }
 
-void fix_texture_bleeding(const List<PolyParam> *list, rend_context& ctx)
+void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend_context& ctx)
 {
-	const PolyParam *pp_end = list->LastPtr(0);
-	const u32 *idx_base = ctx.idx.head();
-	Vertex *vtx_base = ctx.verts.head();
-	for (const PolyParam *pp = list->head(); pp != pp_end; pp++)
+	const PolyParam *pp_end = &polys->head()[end];
+	Vertex * const vtx_base = ctx.verts.head();
+	for (const PolyParam *pp = &polys->head()[first]; pp != pp_end; pp++)
 	{
-		if (!pp->pcw.Texture || pp->count < 3)
+		if (!pp->pcw.Texture || pp->count < 3 || pp->isNaomi2())
 			continue;
 		// Find polygons that are facing the camera (constant z)
 		// and only use 0 and 1 for U and V (some tolerance around 1 for SA2)
 		// then apply a half-pixel correction on U and V.
-		const u32 first = idx_base[pp->first];
-		const u32 last = idx_base[pp->first + pp->count - 1];
+		const u32 last = pp->first + pp->count;
 		bool need_fixing = true;
 		float z = 0.f;
-		for (u32 idx = first; idx <= last && need_fixing; idx++)
+		for (u32 idx = pp->first; idx < last && need_fixing; idx++)
 		{
 			Vertex& vtx = vtx_base[idx];
 
@@ -335,7 +333,7 @@ void fix_texture_bleeding(const List<PolyParam> *list, rend_context& ctx)
 				need_fixing = false;
 			else if (vtx.v != 0.f && (vtx.v <= 0.995f || vtx.v > 1.f))
 				need_fixing = false;
-			else if (idx == first)
+			else if (idx == pp->first)
 				z = vtx.z;
 			else if (z != vtx.z)
 				need_fixing = false;
@@ -344,7 +342,7 @@ void fix_texture_bleeding(const List<PolyParam> *list, rend_context& ctx)
 			continue;
 		u32 tex_width = 8 << pp->tsp.TexU;
 		u32 tex_height = 8 << pp->tsp.TexV;
-		for (u32 idx = first; idx <= last; idx++)
+		for (u32 idx = pp->first; idx < last; idx++)
 		{
 			Vertex& vtx = vtx_base[idx];
 			if (vtx.u > 0.995f)
@@ -371,9 +369,9 @@ static bool is_vertex_inf(const Vertex& vtx)
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 // Use primitive restart when merging strips.
 //
-void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx)
+void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx)
 {
-	const Vertex *vertices = ctx->verts.head();
+	const Vertex *vertices = ctx.verts.head();
 
 	PolyParam *last_poly = nullptr;
 	const PolyParam *end_poly = &polys->head()[end];
@@ -386,14 +384,14 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 				&& last_poly->count != 0
 				&& poly->equivalentIgnoreCullingDirection(*last_poly))
 		{
-			*ctx->idx.Append() = ~0;
+			*ctx.idx.Append() = ~0;
 			dupe_next_vtx = poly->isp.CullMode >= 2 && poly->isp.CullMode != last_poly->isp.CullMode;
 			first_index = last_poly->first;
 		}
 		else
 		{
 			last_poly = poly;
-			first_index = ctx->idx.used();
+			first_index = ctx.idx.used();
 		}
 		int last_good_vtx = -1;
 		for (u32 i = 0; i < poly->count; i++)
@@ -412,7 +410,7 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 						{
 							if (last_good_vtx >= 0)
 								// reset the strip
-								*ctx->idx.Append() = ~0;
+								*ctx.idx.Append() = ~0;
 							if (odd && poly->isp.CullMode >= 2)
 								// repeat next vertex to get culling right
 								dupe_next_vtx = true;
@@ -427,20 +425,20 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 				last_good_vtx = poly->first + i;
 				if (dupe_next_vtx)
 				{
-					*ctx->idx.Append() = last_good_vtx;
+					*ctx.idx.Append() = last_good_vtx;
 					dupe_next_vtx = false;
 				}
-				*ctx->idx.Append() = last_good_vtx;
+				*ctx.idx.Append() = last_good_vtx;
 			}
 		}
 		if (last_poly == poly)
 		{
 			poly->first = first_index;
-			poly->count = ctx->idx.used() - first_index;
+			poly->count = ctx.idx.used() - first_index;
 		}
 		else
 		{
-			last_poly->count = ctx->idx.used() - last_poly->first;
+			last_poly->count = ctx.idx.used() - last_poly->first;
 			poly->count = 0;
 		}
 	}
@@ -450,10 +448,10 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 // Use degenerate triangles to link strips.
 //
-void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context* ctx)
+void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx)
 {
-	const u32 *indices = ctx->idx.head();
-	const Vertex *vertices = ctx->verts.head();
+	const u32 *indices = ctx.idx.head();
+	const Vertex *vertices = ctx.verts.head();
 
 	PolyParam *last_poly = nullptr;
 	const PolyParam *end_poly = &polys->head()[end];
@@ -468,17 +466,17 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 				&& poly->equivalentIgnoreCullingDirection(*last_poly))
 		{
 			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-			*ctx->idx.Append() = last_vtx;
+			*ctx.idx.Append() = last_vtx;
 			if (poly->isp.CullMode < 2 || poly->isp.CullMode == last_poly->isp.CullMode)
 			{
 				if (cullingReversed)
-					*ctx->idx.Append() = last_vtx;
+					*ctx.idx.Append() = last_vtx;
 				cullingReversed = false;
 			}
 			else
 			{
 				if (!cullingReversed)
-					*ctx->idx.Append() = last_vtx;
+					*ctx.idx.Append() = last_vtx;
 				cullingReversed = true;
 			}
 			dupe_next_vtx = true;
@@ -487,7 +485,7 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 		else
 		{
 			last_poly = poly;
-			first_index = ctx->idx.used();
+			first_index = ctx.idx.used();
 			cullingReversed = false;
 		}
 		int last_good_vtx = -1;
@@ -505,7 +503,7 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 						if (last_good_vtx >= 0)
 						{
 							verify(!dupe_next_vtx);
-							*ctx->idx.Append() = last_good_vtx;
+							*ctx.idx.Append() = last_good_vtx;
 							dupe_next_vtx = true;
 						}
 						break;
@@ -518,23 +516,23 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 				last_good_vtx = poly->first + i;
 				if (dupe_next_vtx)
 				{
-					*ctx->idx.Append() = last_good_vtx;
+					*ctx.idx.Append() = last_good_vtx;
 					dupe_next_vtx = false;
 				}
-				const u32 count = ctx->idx.used() - first_index;
+				const u32 count = ctx.idx.used() - first_index;
 				if (((i ^ count) & 1) ^ cullingReversed)
-					*ctx->idx.Append() = last_good_vtx;
-				*ctx->idx.Append() = last_good_vtx;
+					*ctx.idx.Append() = last_good_vtx;
+				*ctx.idx.Append() = last_good_vtx;
 			}
 		}
 		if (last_poly == poly)
 		{
 			poly->first = first_index;
-			poly->count = ctx->idx.used() - first_index;
+			poly->count = ctx.idx.used() - first_index;
 		}
 		else
 		{
-			last_poly->count = ctx->idx.used() - last_poly->first;
+			last_poly->count = ctx.idx.used() - last_poly->first;
 			poly->count = 0;
 		}
 	}
