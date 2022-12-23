@@ -110,6 +110,7 @@ namespace fc_profiler
 	void startThread(const std::string& threadName);
 	void endThread(double warningTime = 0.0);
 	void drawGUI(const std::vector<ProfileThread::ResultNode>& results);
+	void drawGraph(const ProfileThread& profileThread);
 	void outputTTY(const std::vector<ProfileThread::ResultNode>& results);
 }
 

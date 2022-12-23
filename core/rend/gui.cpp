@@ -44,6 +44,7 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "implot/implot.h"
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
 #if defined(USE_SDL)
@@ -103,6 +104,7 @@ void gui_init()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.IniFilename = NULL;
@@ -2886,6 +2888,11 @@ void gui_display_profiler()
 	}
 
 	ImGui::PopStyleColor();
+	
+	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		fc_profiler::drawGraph(*profileThread);
+	}
 
 	ImGui::End();
 

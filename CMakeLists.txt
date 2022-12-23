@@ -651,7 +651,15 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7zBuf.c core/deps/lzma/7zCrc.c core/deps/lzma/7zCrcOpt.c core/deps/lzma/7zDec.c core/deps/lzma/7zFile.c core/deps/lzma/7zStream.c core/deps/lzma/Alloc.c core/deps/lzma/Bcj2.c core/deps/lzma/Bra86.c core/deps/lzma/Bra.c core/deps/lzma/BraIA64.c core/deps/lzma/CpuArch.c core/deps/lzma/Delta.c core/deps/lzma/LzFind.c core/deps/lzma/Lzma2Dec.c core/deps/lzma/Lzma86Dec.c core/deps/lzma/Lzma86Enc.c core/deps/lzma/LzmaDec.c core/deps/lzma/LzmaEnc.c core/deps/lzma/LzmaLib.c core/deps/lzma/Sort.c)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/libelf/elf32.cpp core/deps/libelf/elf64.cpp core/deps/libelf/elf.cpp)
 if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE core/deps/imgui/imgui.cpp core/deps/imgui/imgui_demo.cpp core/deps/imgui/imgui_draw.cpp core/deps/imgui/imgui_widgets.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/deps/imgui/imgui.cpp
+		core/deps/imgui/imgui_demo.cpp
+		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_widgets.cpp
+		core/deps/implot/implot.h
+		core/deps/implot/implot.cpp
+		core/deps/implot/implot_internal.h
+		core/deps/implot/implot_items.cpp)
 endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
