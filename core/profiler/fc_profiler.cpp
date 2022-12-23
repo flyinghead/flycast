@@ -2,6 +2,7 @@
 #include "log/LogManager.h"
 #include "cfg/option.h"
 #include "imgui/imgui.h"
+#include "implot/implot.h"
 #include <cassert>
 
 namespace fc_profiler
@@ -129,6 +130,30 @@ namespace fc_profiler
 			double scopeTimeS = (double)scopeTimeMicro.count() / 1000000;
 			WARN_LOG(PROFILER, "%.4f %*s%s (%s, %i)", scopeTimeS, node.section.scope, "", node.section.function, node.section.file, node.section.line);
 			outputTTY(node.children);
+		}
+	}
+
+	void drawGraph(const ProfileThread& profileThread)
+	{
+		char threadName[256];
+		std::snprintf(threadName, 256, "Thread %s", profileThread.threadName.c_str());
+
+		if (ImPlot::BeginPlot(threadName, ImVec2(-1, 0), ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMouseText))
+		{
+			float values[FC_PROFILE_HISTORY_MAX_SIZE];
+			float max = FLT_MIN;
+			for (int i = 0; i < FC_PROFILE_HISTORY_MAX_SIZE; i++)
+			{
+				values[i] = profileThread.history[i] * 1000.0f;
+				if (values[i] > max)
+					max = values[i];
+			}
+
+			ImPlot::SetupAxis(ImAxis_X1, "Frame");
+			ImPlot::SetupAxis(ImAxis_Y1, "Time (ms)");
+			ImPlot::SetupAxesLimits(0, FC_PROFILE_HISTORY_MAX_SIZE, 0.0f, max, ImGuiCond_Always);
+			ImPlot::PlotLine(threadName, values, FC_PROFILE_HISTORY_MAX_SIZE, 1.0f, 0.0f, ImPlotLineFlags_Shaded, profileThread.historyIdx);
+			ImPlot::EndPlot();
 		}
 	}
 }
