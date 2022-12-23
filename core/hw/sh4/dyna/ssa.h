@@ -21,7 +21,6 @@
 #include <cstdio>
 #include <set>
 #include <map>
-#include <deque>
 #include <cmath>
 #include "types.h"
 #include "decoder.h"
@@ -124,7 +123,7 @@ private:
 	{
 		verify(op.rd2.is_null());
 		op.op = shop_mov32;
-		op.rs1 = shil_param(FMT_IMM, v);
+		op.rs1 = shil_param(v);
 		op.rs2.type = FMT_NULL;
 		op.rs3.type = FMT_NULL;
 		stats.constant_ops_replaced++;
@@ -235,7 +234,7 @@ private:
 					if (op.rs1.is_imm() && op.op == shop_readm  && block->read_only
 							&& (op.rs1._imm >> 12) >= (block->vaddr >> 12)
 							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
-							&& (op.flags & 0x7f) <= 4)
+							&& op.size <= 4)
 					{
 						bool doit = false;
 						if (mmu_enabled())
@@ -262,7 +261,7 @@ private:
 						if (doit)
 						{
 							u32 v;
-							switch (op.flags & 0x7f)
+							switch (op.size)
 							{
 							case 1:
 								v = (s32)(::s8)ReadMem8(op.rs1._imm);
@@ -513,7 +512,7 @@ private:
 					// There's quite a few of these
 					//printf("%08x +t<< %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					op.op = shop_shl;
-					op.rs2 = shil_param(FMT_IMM, 1);
+					op.rs2 = shil_param(1);
 				}
 				// a ^ a == 0
 				// a - a == 0
@@ -526,8 +525,8 @@ private:
 				else if (op.op == shop_sbc)
 				{
 					//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
-					op.rs1 = shil_param(FMT_IMM, 0);
-					op.rs2 = shil_param(FMT_IMM, 0);
+					op.rs1 = shil_param(0);
+					op.rs2 = shil_param(0);
 					stats.prop_constants += 2;
 				}
 				// a & a == a

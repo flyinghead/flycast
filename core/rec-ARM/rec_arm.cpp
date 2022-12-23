@@ -120,7 +120,7 @@ const int alloc_regs[] = { 5, 6, 7, 10, 11, -1 };
 const int alloc_fpu[] = { 16, 17, 18, 19, 20, 21, 22, 23,
 				24, 25, 26, 27, 28, 29, 30, 31, -1 };
 
-struct arm_reg_alloc: RegAlloc<int, int>
+struct arm_reg_alloc: RegAlloc<int, int, true>
 {
 	void Preload(u32 reg, int nreg) override
 	{
@@ -149,9 +149,9 @@ struct arm_reg_alloc: RegAlloc<int, int>
 		ass.Vstr(SRegister(nreg), MemOperand(r8, shRegOffs));
 	}
 
-	SRegister mapFReg(const shil_param& prm)
+	SRegister mapFReg(const shil_param& prm, int index = 0)
 	{
-		return SRegister(mapf(prm));
+		return SRegister(mapf(prm, index));
 	}
 	Register mapReg(const shil_param& prm)
 	{
@@ -561,16 +561,15 @@ enum mem_op_type
 
 static mem_op_type memop_type(shil_opcode* op)
 {
-	int sz = op->flags & 0x7f;
 	bool fp32 = op->rs2.is_r32f() || op->rd.is_r32f();
 
-	if (sz == 1)
+	if (op->size == 1)
 		return SZ_8;
-	else if (sz == 2)
+	else if (op->size == 2)
 		return SZ_16;
-	else if (sz == 4)
+	else if (op->size == 4)
 		return fp32 ? SZ_32F : SZ_32I;
-	else if (sz == 8)
+	else if (op->size == 8)
 		return SZ_64F;
 
 	die("Unknown op");
@@ -855,16 +854,15 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 	if (!op->rs1.is_imm())
 		return false;
 
-	u32 size = op->flags & 0x7f;
 	u32 addr = op->rs1._imm;
-	if (mmu_enabled() && mmu_is_translated(addr, size))
+	if (mmu_enabled() && mmu_is_translated(addr, op->size))
 	{
 		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 			// When full mmu is on, only consider addresses in the same 4k page
 			return false;
 		u32 paddr;
 		u32 rv;
-		switch (size)
+		switch (op->size)
 		{
 		case 1:
 			rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
@@ -914,8 +912,16 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 			break;
 
 		case SZ_64F:
-			ass.Vldr(d0, MemOperand(r0));
-			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			if (reg.IsAllocf(op->rd))
+			{
+				ass.Vldr(reg.mapFReg(op->rd, 0), MemOperand(r0));
+				ass.Vldr(reg.mapFReg(op->rd, 1), MemOperand(r0, 4));
+			}
+			else
+			{
+				ass.Vldr(d0, MemOperand(r0));
+				ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			}
 			break;
 		}
 	}
@@ -928,11 +934,17 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 			// Need to call the handler twice
 			ass.Mov(r0, op->rs1._imm);
 			call(ptr);
-			ass.Str(r0, MemOperand(r8, op->rd.reg_nofs()));
+			if (reg.IsAllocf(op->rd))
+				ass.Vmov(reg.mapFReg(op->rd, 0), r0);
+			else
+				ass.Str(r0, MemOperand(r8, op->rd.reg_nofs()));
 
 			ass.Mov(r0, op->rs1._imm + 4);
 			call(ptr);
-			ass.Str(r0, MemOperand(r8, op->rd.reg_nofs() + 4));
+			if (reg.IsAllocf(op->rd))
+				ass.Vmov(reg.mapFReg(op->rd, 1), r0);
+			else
+				ass.Str(r0, MemOperand(r8, op->rd.reg_nofs() + 4));
 		}
 		else
 		{
@@ -975,16 +987,15 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 	if (!op->rs1.is_imm())
 		return false;
 
-	u32 size = op->flags & 0x7f;
 	u32 addr = op->rs1._imm;
-	if (mmu_enabled() && mmu_is_translated(addr, size))
+	if (mmu_enabled() && mmu_is_translated(addr, op->size))
 	{
 		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 			// When full mmu is on, only consider addresses in the same 4k page
 			return false;
 		u32 paddr;
 		u32 rv;
-		switch (size)
+		switch (op->size)
 		{
 		case 1:
 			rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
@@ -1041,8 +1052,16 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 			break;
 
 		case SZ_64F:
-			ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
-			ass.Vstr(d0, MemOperand(r0));
+			if (reg.IsAllocf(op->rs2))
+			{
+				ass.Vstr(reg.mapFReg(op->rs2, 0), MemOperand(r0));
+				ass.Vstr(reg.mapFReg(op->rs2, 1), MemOperand(r0, 4));
+			}
+			else
+			{
+				ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
+				ass.Vstr(d0, MemOperand(r0));
+			}
 			break;
 
 		default:
@@ -1157,9 +1176,20 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 
 					case SZ_64F:
 						ass.Add(r1, r1, r8);	//3 opcodes, there's no [REG+REG] VLDR
-						ass.Vldr(d0, MemOperand(r1));	//TODO: use reg alloc
-
-						ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+						ass.Vldr(d0, MemOperand(r1));
+						if (reg.IsAllocf(op->rd))
+						{
+							ass.Vmov(r0, r1, d0);
+							ass.Vmov(reg.mapFReg(op->rd, 0), r0);
+							ass.Vmov(reg.mapFReg(op->rd, 1), r1);
+							// easier to do just this but we need to use a different op than 32f to distinguish during rewrite
+							//ass.Vldr(reg.mapFReg(op->rd, 0), MemOperand(r1));
+							//ass.Vldr(reg.mapFReg(op->rd, 1), MemOperand(r1, 4));
+						}
+						else
+						{
+							ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+						}
 						break;
 					}
 				} else {
@@ -1183,7 +1213,16 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 
 					case SZ_64F:
 						vmem_slowpath(raddr, r0, s0, d0, optp, true);
-						ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+						if (reg.IsAllocf(op->rd))
+						{
+							ass.Vmov(r0, r1, d0);
+							ass.Vmov(reg.mapFReg(op->rd, 0), r0);
+							ass.Vmov(reg.mapFReg(op->rd, 1), r1);
+						}
+						else
+						{
+							ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+						}
 						break;
 					}
 				}
@@ -1201,9 +1240,19 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				Register rs2 = r2;
 				SRegister rs2f = s2;
 
-				//TODO: use reg alloc
 				if (optp == SZ_64F)
-					ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
+				{
+					if (reg.IsAllocf(op->rs2))
+					{
+						ass.Vmov(r2, reg.mapFReg(op->rs2, 0));
+						ass.Vmov(r3, reg.mapFReg(op->rs2, 1));
+						ass.Vmov(d0, r2, r3);
+					}
+					else
+					{
+						ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
+					}
+				}
 				else if (op->rs2.is_imm())
 				{
 					ass.Mov(rs2, op->rs2._imm);
@@ -1242,7 +1291,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 
 					case SZ_64F:
 						ass.Add(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-						ass.Vstr(d0, MemOperand(r1));	//TODO: use reg alloc
+						ass.Vstr(d0, MemOperand(r1));
 						break;
 					}
 				} else {
@@ -1358,9 +1407,18 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 			break;
 			
 		case shop_mov64:
-			verify(op->rs1.is_r64() && op->rd.is_r64());
-			ass.Vldr(d0, MemOperand(r8, op->rs1.reg_nofs()));
-			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			verify(op->rs1.is_r64f() && op->rd.is_r64f());
+			if (reg.IsAllocf(op->rd))
+			{
+				verify(reg.IsAllocf(op->rs1));
+				ass.Vmov(reg.mapFReg(op->rd, 0), reg.mapFReg(op->rs1, 0));
+				ass.Vmov(reg.mapFReg(op->rd, 1), reg.mapFReg(op->rs1, 1));
+			}
+			else
+			{
+				ass.Vldr(d0, MemOperand(r8, op->rs1.reg_nofs()));
+				ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			}
 			break;
 
 		case shop_jcond:
@@ -1821,8 +1879,16 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 
 			ass.Add(r0, r1, Operand(r0, LSL, 3));
 
-			ass.Vldr(d0, MemOperand(r0));
-			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			if (reg.IsAllocf(op->rd))
+			{
+				ass.Vldr(reg.mapFReg(op->rd, 0), MemOperand(r0));
+				ass.Vldr(reg.mapFReg(op->rd, 1), MemOperand(r0, 4));
+			}
+			else
+			{
+				ass.Vldr(d0, MemOperand(r0));
+				ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
+			}
 			break;
 
 		case shop_fipr:

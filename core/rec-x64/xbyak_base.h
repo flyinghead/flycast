@@ -587,13 +587,19 @@ protected:
 #ifndef XBYAK32
 				mov(rcx, (uintptr_t)&sin_table);
 				mov(rcx, qword[rcx + rax * 8]);
+#if ALLOC_F64 == false
 				mov(rdx, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rdx], rcx);
+#else
+				movd(mapXRegister(op.rd, 0), ecx);
+				shr(rcx, 32);
+				movd(mapXRegister(op.rd, 1), ecx);
+#endif
 #endif
 			}
 			else
 			{
-#ifdef EXPLODE_SPANS
+#if ALLOC_F64 == true
 				movss(mapXRegister(op.rd, 0), dword[(size_t)&sin_table + eax * 8]);
 				movss(mapXRegister(op.rd, 1), dword[(size_t)&sin_table[0].u[1] + eax * 8]);
 #else
@@ -653,15 +659,25 @@ protected:
 		}
 		else if (param.is_reg())
 		{
-			if (param.is_r32f())
+			if (isAllocf(param))
 			{
-				if (isAllocf(param))
+				if (param.is_r32f() || param.is_r64f())
 				{
-					Xbyak::Xmm sreg = mapXRegister(param);
+					Xbyak::Xmm sreg = mapXRegister(param, 0);
 					if (!reg.isXMM())
-						movd((const Xbyak::Reg32 &)reg, sreg);
+						movd(reg.cvt32(), sreg);
 					else if (reg != sreg)
 						movss((const Xbyak::Xmm &)reg, sreg);
+#ifndef XBYAK32
+					if (param.is_r64f())
+					{
+						sreg = mapXRegister(param, 1);
+						verify(reg != rax);
+						movd(eax, sreg);
+						shl(rax, 32);
+						or_(reg, rax);
+					}
+#endif
 				}
 				else
 				{
@@ -670,44 +686,41 @@ protected:
 					{
 #ifndef XBYAK32
 						mov(rax, (size_t)param.reg_ptr());
-						mov((const Xbyak::Reg32 &)reg, dword[rax]);
+						mov(reg.cvt32(), dword[rax]);
 #endif
 					}
 					else
 					{
-						mov((const Xbyak::Reg32 &)reg, dword[param.reg_ptr()]);
+						mov(reg.cvt32(), dword[param.reg_ptr()]);
 					}
 				}
 			}
+			else if (isAllocg(param))
+			{
+				Xbyak::Reg32 sreg = mapRegister(param);
+				if (reg.isXMM())
+					movd((const Xbyak::Xmm &)reg, sreg);
+				else if (reg != sreg)
+					mov(reg.cvt32(), sreg);
+			}
 			else
 			{
-				if (isAllocg(param))
+				if (ArchX64)
 				{
-					Xbyak::Reg32 sreg = mapRegister(param);
-					if (reg.isXMM())
-						movd((const Xbyak::Xmm &)reg, sreg);
-					else if (reg != sreg)
-						mov((const Xbyak::Reg32 &)reg, sreg);
+#ifndef XBYAK32
+					mov(rax, (size_t)param.reg_ptr());
+					if (!reg.isXMM())
+						mov(reg.cvt32(), dword[rax]);
+					else
+						movss((const Xbyak::Xmm &)reg, dword[rax]);
+#endif
 				}
 				else
 				{
-					if (ArchX64)
-					{
-#ifndef XBYAK32
-						mov(rax, (size_t)param.reg_ptr());
-						if (!reg.isXMM())
-							mov((const Xbyak::Reg32 &)reg, dword[rax]);
-						else
-							movss((const Xbyak::Xmm &)reg, dword[rax]);
-#endif
-					}
+					if (!reg.isXMM())
+						mov(reg.cvt32(), dword[param.reg_ptr()]);
 					else
-					{
-						if (!reg.isXMM())
-							mov((const Xbyak::Reg32 &)reg, dword[param.reg_ptr()]);
-						else
-							movss((const Xbyak::Xmm &)reg, dword[param.reg_ptr()]);
-					}
+						movss((const Xbyak::Xmm &)reg, dword[param.reg_ptr()]);
 				}
 			}
 		}
@@ -724,17 +737,25 @@ protected:
 		{
 			Xbyak::Reg32 sreg = mapRegister(param);
 			if (!reg.isXMM())
-				mov(sreg, (const Xbyak::Reg32 &)reg);
+				mov(sreg, reg.cvt32());
 			else if (reg != sreg)
 				movd(sreg, (const Xbyak::Xmm &)reg);
 		}
 		else if (isAllocf(param))
 		{
-			Xbyak::Xmm sreg = mapXRegister(param);
+			Xbyak::Xmm sreg = mapXRegister(param, 0);
 			if (!reg.isXMM())
-				movd(sreg, (const Xbyak::Reg32 &)reg);
+				movd(sreg, reg.cvt32());
 			else if (reg != sreg)
 				movss(sreg, (const Xbyak::Xmm &)reg);
+#ifndef XBYAK32
+			if (param.is_r64f())
+			{
+				sreg = mapXRegister(param, 1);
+				shr(reg, 32);
+				movd(sreg, reg.cvt32());
+			}
+#endif
 		}
 		else
 		{
@@ -743,7 +764,7 @@ protected:
 #ifndef XBYAK32
 				mov(rax, (size_t)param.reg_ptr());
 				if (!reg.isXMM())
-					mov(dword[rax], (const Xbyak::Reg32 &)reg);
+					mov(dword[rax], reg.cvt32());
 				else
 					movss(dword[rax], (const Xbyak::Xmm &)reg);
 #endif
@@ -751,7 +772,7 @@ protected:
 			else
 			{
 				if (!reg.isXMM())
-					mov(dword[param.reg_ptr()], (const Xbyak::Reg32 &)reg);
+					mov(dword[param.reg_ptr()], reg.cvt32());
 				else
 					movss(dword[param.reg_ptr()], (const Xbyak::Xmm &)reg);
 			}
@@ -763,16 +784,16 @@ private:
 		return static_cast<T*>(this)->regalloc.MapRegister(param);
 	}
 
-	Xbyak::Xmm mapXRegister(const shil_param& param) {
-		return static_cast<T*>(this)->regalloc.MapXRegister(param);
+	Xbyak::Xmm mapXRegister(const shil_param& param, int index = 0) {
+		return static_cast<T*>(this)->regalloc.MapXRegister(param, index);
 	}
 
 	int mapg(const shil_param& param) {
 		return (int)static_cast<T*>(this)->regalloc.mapg(param);
 	}
 
-	int mapf(const shil_param& param) {
-		return (int)static_cast<T*>(this)->regalloc.mapf(param);
+	int mapf(const shil_param& param, int index = 0) {
+		return (int)static_cast<T*>(this)->regalloc.mapf(param, index);
 	}
 
 	bool isAllocg(const shil_param& param) {

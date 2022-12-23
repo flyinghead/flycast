@@ -48,7 +48,7 @@ static const char idle_hash[] =
 
 static inline shil_param mk_imm(u32 immv)
 {
-	return shil_param(FMT_IMM,immv);
+	return shil_param(immv);
 }
 
 static inline shil_param mk_reg(Sh4RegType reg)
@@ -63,17 +63,18 @@ static inline shil_param mk_regi(int reg)
 
 static state_t state;
 
-static void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
+static void Emit(shilop op, shil_param rd = shil_param(), shil_param rs1 = shil_param(), shil_param rs2 = shil_param(),
+		u32 size = 0, shil_param rs3 = shil_param(), shil_param rd2 = shil_param())
 {
 	shil_opcode sp;
-		
-	sp.flags=flags;
-	sp.op=op;
-	sp.rd=(rd);
-	sp.rd2=(rd2);
-	sp.rs1=(rs1);
-	sp.rs2=(rs2);
-	sp.rs3=(rs3);
+
+	sp.size = size;
+	sp.op = op;
+	sp.rd = rd;
+	sp.rd2 = rd2;
+	sp.rs1 = rs1;
+	sp.rs2 = rs2;
+	sp.rs3 = rs3;
 	sp.guest_offs = state.cpu.rpc - blk->vaddr;
 	sp.delay_slot = state.cpu.is_delayslot;
 
@@ -83,12 +84,12 @@ static void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(
 static void dec_fallback(u32 op)
 {
 	shil_opcode opcd;
-	opcd.op=shop_ifb;
+	opcd.op = shop_ifb;
 
-	opcd.rs1=shil_param(FMT_IMM,OpDesc[op]->NeedPC());
+	opcd.rs1 = shil_param(OpDesc[op]->NeedPC());
 
-	opcd.rs2=shil_param(FMT_IMM,state.cpu.rpc+2);
-	opcd.rs3=shil_param(FMT_IMM,op);
+	opcd.rs2 = shil_param(state.cpu.rpc + 2);
+	opcd.rs3 = shil_param(op);
 
 	opcd.guest_offs = state.cpu.rpc - blk->vaddr;
 	opcd.delay_slot = state.cpu.is_delayslot;
@@ -671,9 +672,13 @@ static bool dec_generic(u32 op)
 	if (op>=0xF000)
 	{
 		state.info.has_fpu=true;
-		if (state.cpu.FPR64)
+		if (state.cpu.FPR64) {
 			// fallback to interpreter for double float ops
-			return false;
+			// except fmov, flds and fsts that don't depend on PR
+			if (((op & 0xf) < 6 || (op & 0xf) > 0xc)	// fmov
+					&& (op & 0xef) != 0x0d)				// flds, flts
+				return false;
+		}
 
 		if (state.cpu.FSZ64 && (d==PRM_FRN_SZ || d==PRM_FRM_SZ || s==PRM_FRN_SZ || s==PRM_FRM_SZ))
 			transfer_64 = true;

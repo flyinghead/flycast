@@ -86,7 +86,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 
 				shil_param op2_rd = shil_param(op->rd2._reg);
 				op2_rd.version[0] = op->rd2.version[0];
-				InsertMov32Op(op2_rd, shil_param(FMT_IMM, rd2));
+				InsertMov32Op(op2_rd, shil_param(rd2));
 
 				// the previous insert might have invalidated our reference
 				op = &block->oplist[opnum - 1];
@@ -151,7 +151,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 
 				shil_param op2_rd =  shil_param(op->rd2._reg);
 				op2_rd.version[0] = op->rd2.version[0];
-				InsertMov32Op(op2_rd, shil_param(FMT_IMM, rd2));
+				InsertMov32Op(op2_rd, shil_param(rd2));
 
 				// the previous insert might have invalidated our reference
 				op = &block->oplist[opnum - 1];
@@ -201,7 +201,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 
 				shil_param op2_rd =  shil_param((Sh4RegType)(op->rd._reg + 1));
 				op2_rd.version[0] = op->rd.version[1];
-				InsertMov32Op(op2_rd, shil_param(FMT_IMM, res >> 32));
+				InsertMov32Op(op2_rd, shil_param(res >> 32));
 
 				// the previous insert might have invalidated our reference
 				op = &block->oplist[opnum - 1];
@@ -328,7 +328,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 
 				shil_param op2_rd =  shil_param((Sh4RegType)(op->rd._reg + 1));
 				op2_rd.version[0] = op->rd.version[1];
-				InsertMov32Op(op2_rd, shil_param(FMT_IMM, rd_1));
+				InsertMov32Op(op2_rd, shil_param(rd_1));
 
 				// the previous insert might have invalidated our reference
 				op = &block->oplist[opnum - 1];

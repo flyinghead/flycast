@@ -62,6 +62,7 @@ void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP* rf, 
 	}
 	else
 	{
+		verify(!(flags & REG_WO)); // not supported here
 		if (flags & REG_RF)
 			arr[idx].readFunctionAddr = rf;
 		else

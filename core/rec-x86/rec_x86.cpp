@@ -526,15 +526,14 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 {
 	if (!op.rs1.is_imm())
 		return false;
-	u32 size = op.flags & 0x7f;
 	u32 addr = op.rs1.imm_value();
 	bool isram = false;
-	void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
+	void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
 
 	if (isram)
 	{
 		// Immediate pointer to RAM: super-duper fast access
-		switch (size)
+		switch (op.size)
 		{
 		case 1:
 			if (regalloc.IsAllocg(op.rd))
@@ -569,14 +568,12 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			break;
 
 		case 8:
-#ifdef EXPLODE_SPANS
-			if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
+			if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd))
 			{
 				movd(regalloc.MapXRegister(op.rd, 0), dword[ptr]);
 				movd(regalloc.MapXRegister(op.rd, 1), dword[(u32 *)ptr + 1]);
 			}
 			else
-#endif
 			{
 				movq(xmm0, qword[ptr]);
 				movq(qword[op.rd.reg_ptr()], xmm0);
@@ -591,7 +588,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 	else
 	{
 		// Not RAM: the returned pointer is a memory handler
-		if (size == 8)
+		if (op.size == 8)
 		{
 			verify(!regalloc.IsAllocAny(op.rd));
 
@@ -608,7 +605,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 		{
 			mov(ecx, addr);
 
-			switch(size)
+			switch(op.size)
 			{
 			case 1:
 				genCall((void (DYNACALL *)())ptr);
@@ -639,15 +636,14 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 {
 	if (!op.rs1.is_imm())
 		return false;
-	u32 size = op.flags & 0x7f;
 	u32 addr = op.rs1.imm_value();
 	bool isram = false;
-	void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
+	void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
 
 	if (isram)
 	{
 		// Immediate pointer to RAM: super-duper fast access
-		switch (size)
+		switch (op.size)
 		{
 		case 1:
 			if (regalloc.IsAllocg(op.rs2))
@@ -697,14 +693,12 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 			break;
 
 		case 8:
-#ifdef EXPLODE_SPANS
-			if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
+			if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2))
 			{
 				movd(dword[ptr], regalloc.MapXRegister(op.rs2, 0));
 				movd(dword[(u32 *)ptr + 1], regalloc.MapXRegister(op.rs2, 1));
 			}
 			else
-#endif
 			{
 				movq(xmm0, qword[op.rs2.reg_ptr()]);
 				movq(qword[ptr], xmm0);

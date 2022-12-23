@@ -215,13 +215,24 @@ public:
 
 			case shop_mov64:
 			{
-				verify(op.rd.is_r64());
-				verify(op.rs1.is_r64());
+				verify(op.rd.is_r64f());
+				verify(op.rs1.is_r64f());
 
+#if ALLOC_F64 == false
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
 				mov(rax, qword[rax]);
 				mov(rcx, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rcx], rax);
+#else
+				Xbyak::Xmm rd = regalloc.MapXRegister(op.rd, 0);
+				Xbyak::Xmm rs = regalloc.MapXRegister(op.rs1, 0);
+				if (rd != rs)
+					movss(rd, rs);
+				rd = regalloc.MapXRegister(op.rd, 1);
+				rs = regalloc.MapXRegister(op.rs1, 1);
+				if (rd != rs)
+					movss(rd, rs);
+#endif
 			}
 			break;
 
@@ -244,16 +255,18 @@ public:
 					}
 					genMmuLookup(block, op, 0);
 
-					int size = op.flags & 0x7f;
-					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
+					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
 
-					if (size != MemSize::S64)
-						host_reg_to_shil_param(op.rd, eax);
-					else {
+#if ALLOC_F64 == false
+					if (size == MemSize::S64)
+					{
 						mov(rcx, (uintptr_t)op.rd.reg_ptr());
 						mov(qword[rcx], rax);
 					}
+					else
+#endif
+						host_reg_to_shil_param(op.rd, rax);
 				}
 				break;
 
@@ -276,15 +289,17 @@ public:
 					}
 					genMmuLookup(block, op, 1);
 
-					u32 size = op.flags & 0x7f;
-					if (size != 8)
-						shil_param_to_host_reg(op.rs2, call_regs[1]);
-					else {
+#if ALLOC_F64 == false
+					if (op.size == 8)
+					{
 						mov(rax, (uintptr_t)op.rs2.reg_ptr());
 						mov(call_regs64[1], qword[rax]);
 					}
+					else
+#endif
+						shil_param_to_host_reg(op.rs2, call_regs64[1]);
 
-					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
+					int size = op.size == 1 ? MemSize::S8 : op.size == 2 ? MemSize::S16 : op.size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
 				}
 			}
@@ -809,9 +824,8 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, op.size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -819,7 +833,7 @@ private:
 
 			u32 paddr;
 			u32 rv;
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
@@ -841,13 +855,13 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
 
 		if (isram)
 		{
 			// Immediate pointer to RAM: super-duper fast access
 			mov(rax, reinterpret_cast<uintptr_t>(ptr));
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				if (regalloc.IsAllocg(op.rd))
@@ -885,9 +899,14 @@ private:
 				break;
 
 			case 8:
+#if ALLOC_F64 == false
 				mov(rcx, qword[rax]);
 				mov(rax, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rax], rcx);
+#else
+				movd(regalloc.MapXRegister(op.rd, 0), dword[rax]);
+				movd(regalloc.MapXRegister(op.rd, 1), dword[rax + 4]);
+#endif
 				break;
 
 			default:
@@ -898,26 +917,32 @@ private:
 		else
 		{
 			// Not RAM: the returned pointer is a memory handler
-			if (size == 8)
+			if (op.size == 8)
 			{
-				verify(!regalloc.IsAllocAny(op.rd));
-
 				// Need to call the handler twice
 				mov(call_regs[0], addr);
 				GenCall((void (*)())ptr);
+#if ALLOC_F64 == false
 				mov(rcx, (size_t)op.rd.reg_ptr());
 				mov(dword[rcx], eax);
+#else
+				mov(regalloc.MapXRegister(op.rd, 0), eax);
+#endif
 
 				mov(call_regs[0], addr + 4);
 				GenCall((void (*)())ptr);
+#if ALLOC_F64 == false
 				mov(rcx, (size_t)op.rd.reg_ptr() + 4);
 				mov(dword[rcx], eax);
+#else
+				mov(regalloc.MapXRegister(op.rd, 1), eax);
+#endif
 			}
 			else
 			{
 				mov(call_regs[0], addr);
 
-				switch(size)
+				switch(op.size)
 				{
 				case 1:
 					GenCall((void (*)())ptr);
@@ -948,9 +973,8 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, op.size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -958,7 +982,7 @@ private:
 
 			u32 paddr;
 			u32 rv;
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
@@ -980,13 +1004,13 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
 
 		if (isram)
 		{
 			// Immediate pointer to RAM: super-duper fast access
 			mov(rax, reinterpret_cast<uintptr_t>(ptr));
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				if (regalloc.IsAllocg(op.rs2))
@@ -1030,9 +1054,14 @@ private:
 				break;
 
 			case 8:
+#if ALLOC_F64 == false
 				mov(rcx, (uintptr_t)op.rs2.reg_ptr());
 				mov(rcx, qword[rcx]);
 				mov(qword[rax], rcx);
+#else
+				movd(dword[rax], regalloc.MapXRegister(op.rs2, 0));
+				movd(dword[rax + 4], regalloc.MapXRegister(op.rs2, 1));
+#endif
 				break;
 
 			default:

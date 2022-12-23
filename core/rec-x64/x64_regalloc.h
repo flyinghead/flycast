@@ -25,15 +25,18 @@
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::RDI, Xbyak::Operand::RSI,
 		Xbyak::Operand::R12, Xbyak::Operand::R13, Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1 };          // XMM6 to XMM15 are callee-saved in Windows
+#define ALLOC_F64 true
 #else
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::R12, Xbyak::Operand::R13,
 		Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
+// all xmm registers are caller-saved on linux
+#define ALLOC_F64 false
 #endif
 
 class BlockCompiler;
 
-struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
+struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8, ALLOC_F64>
 {
 	X64RegAlloc(BlockCompiler *compiler) : compiler(compiler) {}
 
@@ -55,9 +58,9 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 		return Xbyak::Reg32(ereg);
 	}
 
-	Xbyak::Xmm MapXRegister(const shil_param& param)
+	Xbyak::Xmm MapXRegister(const shil_param& param, int index = 0)
 	{
-		s8 ereg = mapf(param);
+		s8 ereg = mapf(param, index);
 		if (ereg == -1)
 			die("VRegister not allocated");
 		return Xbyak::Xmm(ereg);
