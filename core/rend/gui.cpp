@@ -104,7 +104,9 @@ void gui_init()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+#if FC_PROFILER
 	ImPlot::CreateContext();
+#endif
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.IniFilename = NULL;
