@@ -27,7 +27,6 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.AudioBackend;
 import com.reicast.emulator.emu.HttpClient;
 import com.reicast.emulator.emu.JNIdc;
@@ -405,28 +404,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-    }
-
-    // Called from native code
-    protected void generateErrorLog() {
-        try {
-            new GenerateLogs(this).execute(getFilesDir().getAbsolutePath());
-		} catch (RuntimeException e) {
-            AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("An error occurred retrieving the log file:\n\n"
-                    + e.getMessage());
-            dlgAlert.setTitle("Flycast Error");
-            dlgAlert.setPositiveButton("Ok",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog,int id) {
-                            dialog.cancel();
-                        }
-                    });
-            dlgAlert.setIcon(android.R.drawable.ic_dialog_info);
-            dlgAlert.setCancelable(false);
-            dlgAlert.create().show();
-		}
     }
 
     private static native void register(BaseGLActivity activity);

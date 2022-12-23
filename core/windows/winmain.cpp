@@ -873,12 +873,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	wchar_t tempDir[MAX_PATH + 1];
 	GetTempPathW(MAX_PATH + 1, tempDir);
 
-	nowide::stackstring nws;
-	static std::string tempDir8;
-	if (nws.convert(tempDir))
-		tempDir8 = nws.c_str();
-	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
-
 	static google_breakpad::CustomInfoEntry custom_entries[] = {
 			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
 			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
@@ -908,6 +902,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
+
+#ifdef USE_BREAKPAD
+	nowide::stackstring nws;
+	static std::string tempDir8;
+	if (nws.convert(tempDir))
+		tempDir8 = nws.c_str();
+	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
+#endif
 
 #ifdef TARGET_UWP
 	if (config::ContentPath.get().empty())

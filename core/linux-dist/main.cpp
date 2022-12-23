@@ -312,8 +312,6 @@ int main(int argc, char* argv[])
 	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
 #endif
 #if defined(USE_BREAKPAD)
-	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
-
 	google_breakpad::MinidumpDescriptor descriptor("/tmp");
 	google_breakpad::ExceptionHandler eh(descriptor, nullptr, dumpCallback, nullptr, true, -1);
 #endif
@@ -344,6 +342,10 @@ int main(int argc, char* argv[])
 
 	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
+
+#if defined(USE_BREAKPAD)
+	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
+#endif
 
 	mainui_loop();
 

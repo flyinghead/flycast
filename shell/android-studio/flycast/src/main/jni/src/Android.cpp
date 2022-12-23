@@ -189,10 +189,6 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
     	std::string path(jchar);
         env->ReleaseStringUTFChars(directory, jchar);
 
-        static std::string crashPath;
-        static cThread uploadThread(uploadCrashThread, &crashPath);
-        crashPath = path;
-        uploadThread.Start();
 
         google_breakpad::MinidumpDescriptor descriptor(path);
         exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
@@ -243,6 +239,16 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         int rc = flycast_init(0, NULL);
         if (rc == -1)
             msg = env->NewStringUTF("Memory initialization failed");
+#ifdef USE_BREAKPAD
+        else
+        {
+			static std::string crashPath;
+			static cThread uploadThread(uploadCrashThread, &crashPath);
+			crashPath = get_writable_config_path("");
+			uploadThread.Start();
+        }
+#endif
+
         return msg;
     }
     else
@@ -660,13 +666,6 @@ void vjoy_reset_editing()
 void vjoy_stop_editing(bool canceled)
 {
     jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
-}
-
-void android_send_logs()
-{
-    JNIEnv *env = jvm_attacher.getEnv();
-    jmethodID generateErrorLogMID = env->GetMethodID(env->GetObjectClass(g_activity), "generateErrorLog", "()V");
-    env->CallVoidMethod(g_activity, generateErrorLogMID);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data)

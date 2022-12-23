@@ -2279,13 +2279,6 @@ static void gui_display_settings()
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
-#ifdef __ANDROID__
-		    ImGui::Separator();
-		    if (ImGui::Button("Send Logs")) {
-		    	void android_send_logs();
-		    	android_send_logs();
-		    }
-#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}

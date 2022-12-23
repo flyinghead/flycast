@@ -8,7 +8,6 @@
 #include "SDLMain.h"
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
-#include <future>
 #include "rend/gui.h"
 #include "oslib/oslib.h"
 
@@ -310,8 +309,6 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
 #ifdef USE_BREAKPAD
-	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
-
     google_breakpad::ExceptionHandler eh("/tmp", NULL, dumpCallback, NULL, true, NULL);
     task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
 #endif
