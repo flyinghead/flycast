@@ -655,11 +655,15 @@ if(NOT LIBRETRO)
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
-		core/deps/imgui/imgui_widgets.cpp
-		core/deps/implot/implot.h
-		core/deps/implot/implot.cpp
-		core/deps/implot/implot_internal.h
-		core/deps/implot/implot_items.cpp)
+		core/deps/imgui/imgui_widgets.cpp)
+
+	if(ENABLE_FC_PROFILER)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/implot/implot.h
+			core/deps/implot/implot.cpp
+			core/deps/implot/implot_internal.h
+			core/deps/implot/implot_items.cpp)
+	endif()
 endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
