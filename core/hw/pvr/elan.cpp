@@ -1769,6 +1769,8 @@ void vmem_init()
 
 void vmem_map(u32 base)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
 	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
 	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
