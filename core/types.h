@@ -196,6 +196,7 @@ enum class JVS {
 	OutTrigger,
 	LightGunAsAnalog,
 	WaveRunnerGP,
+	_18Wheeler,
 };
 
 enum class RenderType {

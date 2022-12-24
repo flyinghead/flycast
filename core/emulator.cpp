@@ -340,6 +340,11 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::WaveRunnerGP;
 		}
+		else if (!strcmp("  18WHEELER", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::_18Wheeler;
+		}
 		else if (!strcmp("INU NO OSANPO", naomi_game_id))	// Dog Walking
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
