@@ -45,6 +45,7 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 	if (len < 16)
 		return false;
 	const u8 *p = data;
+	const u8 *end = data + len;
 	if (!memcmp("GBIX", p, 4))
 	{
 		p += 4;
@@ -54,6 +55,10 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 	if (memcmp("PVRT", p, 4))
 	{
 		WARN_LOG(COMMON, "Invalid PVR file: header not found");
+		return false;
+	}
+	if (end - p < 16) {
+		WARN_LOG(COMMON, "Invalid PVR file: too small");
 		return false;
 	}
 	p += 4;
@@ -66,6 +71,10 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 	p += 2;
 	height = *(u16 *)p;
 	p += 2;
+	if (width > 1024 || height > 1024) {
+		WARN_LOG(COMMON, "Invalid PVR file: wrong texture dimensions: %d x %d", width, height);
+		return false;
+	}
 
 	::vq_codebook = p;
 	TexConvFP32 texConv;
@@ -132,6 +141,19 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 		p += (OtherMipPoint[texU] - 2) * 2;
 	else if (imgType == PvrVQMipmaps)
 		p += VQMipPoint[texU];
+
+	u32 expectedSize = width * height;
+	if (imgType == PvrVQ || imgType == PvrVQMipmaps) {
+		expectedSize /= 4;				// 4 pixels per byte
+		expectedSize += 256 * 4 * 2;	// VQ codebook size
+	}
+	else
+		expectedSize *= 2;	// 2 bytes per pixel
+	if (end - p < expectedSize)
+	{
+		WARN_LOG(COMMON, "Invalid texture: expected %d bytes, %d remaining", expectedSize, (int)(end - p));
+		return false;
+	}
 
 	PixelBuffer<u32> pb;
 	pb.init(width, height);

@@ -211,7 +211,13 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	}
 
 	if (session_number == 0)
+	{
+		if (disc->tracks.size() < 3) {
+			delete disc;
+			throw FlycastException("CUE parse error: less than 3 tracks");
+		}
 		disc->FillGDSession();
+	}
 	else
 	{
 		disc->type = CdRom_XA;
