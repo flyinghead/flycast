@@ -46,7 +46,7 @@ bool mainui_rend_frame()
 	{
 		gui_display_ui();
 		// TODO refactor android vjoy out of renderer
-		if (gui_state == GuiState::VJoyEdit && renderer != NULL)
+		if (gui_state == GuiState::VJoyEdit && renderer != nullptr)
 			renderer->DrawOSD(true);
 #ifndef TARGET_IPHONE
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -72,7 +72,10 @@ bool mainui_rend_frame()
 
 void mainui_init()
 {
-	rend_init_renderer();
+	if (!rend_init_renderer()) {
+		ERROR_LOG(RENDERER, "Renderer initialization failed");
+		gui_error("Renderer initialization failed.\nPlease select a different graphics API");
+	}
 }
 
 void mainui_term()

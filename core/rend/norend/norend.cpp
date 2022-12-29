@@ -1,29 +1,23 @@
-#include "hw/pvr/ta_ctx.h"
-#include "hw/pvr/ta_structs.h"
+#include "hw/pvr/ta.h"
 #include "hw/pvr/Renderer_if.h"
 
 struct norend : Renderer
 {
-	bool Init()
-	{
+	bool Init() override {
 		return true;
 	}
+	void Term() override { }
 
-	void Resize(int w, int h) { }
-	void Term() { }
+	bool Process(TA_context* ctx) override {
+		return ta_parse(ctx, true);
+	}
 
-
-        bool Process(TA_context* ctx) { return true; }
-
-        void DrawOSD() {  }
-
-	bool Render()
-	{
+	bool Render() override {
 		return !pvrrc.isRTT;
 	}
+	void RenderFramebuffer(const FramebufferInfo& info) override { }
 };
 
-
-Renderer* rend_norend() { return new norend(); }
-
-u32 GetTexture(TSP tsp,TCW tcw) { return 0; }
+Renderer *rend_norend() {
+	return new norend();
+}

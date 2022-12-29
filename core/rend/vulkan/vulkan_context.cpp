@@ -210,7 +210,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			}
 		}
 		if (!physicalDevice)
-			physicalDevice = instance->enumeratePhysicalDevices().front();
+			physicalDevice = devices.front();
 
 		const vk::PhysicalDeviceProperties *properties;
 		if (vulkan11)

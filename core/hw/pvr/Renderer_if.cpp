@@ -302,12 +302,17 @@ static void rend_create_renderer()
 #endif
 }
 
-void rend_init_renderer()
+bool rend_init_renderer()
 {
 	if (renderer == nullptr)
 		rend_create_renderer();
-	if (!renderer->Init())
-   		die("Renderer initialization failed\n");
+	bool success = renderer->Init();
+	if (!success) {
+		delete renderer;
+		renderer = rend_norend();
+		renderer->Init();
+	}
+	return success;
 }
 
 void rend_term_renderer()

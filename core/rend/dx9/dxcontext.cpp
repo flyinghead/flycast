@@ -176,8 +176,11 @@ void DXContext::resize()
 
 void DXContext::resetDevice()
 {
+	D3DRenderer *dxrenderer{};
 	if (renderer != nullptr)
-		((D3DRenderer *)renderer)->preReset();
+		dxrenderer = dynamic_cast<D3DRenderer*>(renderer);
+	if (dxrenderer != nullptr)
+		dxrenderer->preReset();
 	overlay.term();
     ImGui_ImplDX9_InvalidateDeviceObjects();
     HRESULT hr = pDevice->Reset(&d3dpp);
@@ -188,6 +191,6 @@ void DXContext::resetDevice()
     }
     ImGui_ImplDX9_CreateDeviceObjects();
     overlay.init(pDevice);
-	if (renderer != nullptr)
-		((D3DRenderer *)renderer)->postReset();
+	if (dxrenderer != nullptr)
+		dxrenderer->postReset();
 }

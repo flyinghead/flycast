@@ -4,7 +4,7 @@
 
 extern u32 FrameCount;
 
-void rend_init_renderer();
+bool rend_init_renderer();
 void rend_term_renderer();
 void rend_vblank();
 void rend_start_render();

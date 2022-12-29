@@ -121,6 +121,9 @@ Renderer* rend_Vulkan()
 
 void ReInitOSD()
 {
-	if (renderer != nullptr)
-		((BaseVulkanRenderer *)renderer)->ReInitOSD();
+	if (renderer != nullptr) {
+		BaseVulkanRenderer *vkrenderer = dynamic_cast<BaseVulkanRenderer*>(renderer);
+		if (vkrenderer != nullptr)
+			vkrenderer->ReInitOSD();
+	}
 }

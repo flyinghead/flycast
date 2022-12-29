@@ -1117,7 +1117,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/sorter.h
 		core/rend/tileclip.h
 		core/rend/TexCache.cpp
-		core/rend/TexCache.h)
+		core/rend/TexCache.h
+		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/game_scanner.h
