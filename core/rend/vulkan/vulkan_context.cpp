@@ -190,9 +190,15 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 #endif
 
+		const auto devices = instance->enumeratePhysicalDevices();
+		if (devices.empty())
+		{
+			ERROR_LOG(RENDERER, "Vulkan error: no physical devices found");
+			return false;
+		}
+
 		// Choose a discrete gpu if there's one, otherwise just pick the first one
 		physicalDevice = nullptr;
-		const auto devices = instance->enumeratePhysicalDevices();
 		for (const auto& phyDev : devices)
 		{
 			vk::PhysicalDeviceProperties props;
