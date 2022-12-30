@@ -2269,8 +2269,8 @@ static void gui_display_settings()
 #endif
 						);
 #ifdef TARGET_IPHONE
-				extern std::string iosJitStatus;
-				ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
+				const char *getIosJitStatus();
+				ImGui::Text("JIT Status: %s", getIosJitStatus());
 #endif
 		    }
 	    	ImGui::Spacing();

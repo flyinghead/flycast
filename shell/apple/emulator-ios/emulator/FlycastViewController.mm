@@ -25,6 +25,8 @@
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/ES3/glext.h>
 #import <OpenGLES/EAGL.h>
+#import <sys/syscall.h>
+#import <dlfcn.h>
 
 #import "PadViewController.h"
 #import "EmulatorView.h"
@@ -39,11 +41,12 @@
 #include "ios_gamepad.h"
 #include "ios_keyboard.h"
 #include "ios_mouse.h"
+#include "oslib/oslib.h"
 
 //@import AltKit;
 #import "AltKit-Swift.h"
 
-std::string iosJitStatus;
+static std::string iosJitStatus;
 static bool iosJitAuthorized;
 static __unsafe_unretained FlycastViewController *flycastViewController;
 
@@ -349,8 +352,84 @@ static void updateAudioSession(Event event, void *)
     }
 }
 
+//
+// JIT detection code from ppsspp by Henrik Rydgård and contributors
+// https://github.com/hrydgard/ppsspp
+//
+#define CS_OPS_STATUS	0		/* return status */
+#define CS_DEBUGGED	0x10000000	/* process is currently or has previously been debugged and allowed to run with invalid pages */
+#define PT_ATTACHEXC	14		/* attach to running process with signal exception */
+#define PT_DETACH		11		/* stop tracing a process */
+#define ptrace(a, b, c, d) syscall(SYS_ptrace, a, b, c, d)
+
+bool checkTryDebug()
+{
+	int (*csops)(pid_t pid, unsigned int ops, void * useraddr, size_t usersize);
+	boolean_t (*exc_server)(mach_msg_header_t *, mach_msg_header_t *);
+	int (*ptrace)(int request, pid_t pid, caddr_t addr, int data);
+
+	// Hacky hacks to try to enable JIT by pretending to be a debugger.
+	csops = reinterpret_cast<decltype(csops)>(dlsym(dlopen(nullptr, RTLD_LAZY), "csops"));
+	exc_server = reinterpret_cast<decltype(exc_server)>(dlsym(dlopen(NULL, RTLD_LAZY), "exc_server"));
+	ptrace = reinterpret_cast<decltype(ptrace)>(dlsym(dlopen(NULL, RTLD_LAZY), "ptrace"));
+	// see https://github.com/hrydgard/ppsspp/issues/11905
+
+	int flags;
+	int rv = csops(getpid(), CS_OPS_STATUS, &flags, sizeof(flags));
+	if (rv == 0 && (flags & CS_DEBUGGED))
+		return true;
+
+	pid_t pid = fork();
+	if (pid > 0)
+	{
+		int st,rv,i=0;
+		do {
+			usleep(500);
+			rv = waitpid(pid, &st, 0);
+		} while (rv < 0 && i++ < 10);
+		if (rv < 0)
+			NSLog(@"Unable to wait for child?");
+	}
+	else if (pid == 0)
+	{
+		pid_t ppid = getppid();
+		int rv = ptrace(PT_ATTACHEXC, ppid, 0, 0);
+		if (rv) {
+			perror("Unable to attach to process");
+			exit(1);
+		}
+		for (int i=0; i<100; i++) {
+			usleep(1000);
+			errno = 0;
+			rv = ptrace(PT_DETACH, ppid, 0, 0);
+			if (rv == 0)
+				break;
+		}
+		if (rv) {
+			perror("Unable to detach from process");
+			exit(1);
+		}
+		exit(0);
+	}
+	else
+	{
+		perror("Unable to fork");
+	}
+
+	rv = csops(getpid(), CS_OPS_STATUS, &flags, sizeof(flags));
+
+	return rv == 0 && (flags & CS_DEBUGGED);
+}
+
 - (void)altKitStart
 {
+	if (checkTryDebug())
+	{
+		iosJitStatus = "OK";
+		iosJitAuthorized = true;
+
+		return;
+	}
 	NSLog(@"Starting AltKit discovery");
 
 	[[ALTServerManager sharedManager] autoconnectWithCompletionHandler:^(ALTServerConnection *connection, NSError *error) {
@@ -649,4 +728,15 @@ void pickIosFolder()
 void pickIosFile()
 {
 //	[flycastViewController pickIosFile];
+}
+
+const char *getIosJitStatus()
+{
+	static double lastCheckTime;
+	if (!iosJitAuthorized && os_GetSeconds() - lastCheckTime > 10.0)
+	{
+		[flycastViewController altKitStart];
+		lastCheckTime = os_GetSeconds();
+	}
+	return iosJitStatus.c_str();
 }
