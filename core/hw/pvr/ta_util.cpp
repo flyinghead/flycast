@@ -399,14 +399,17 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 			const Vertex& vtx = vertices[poly->first + i];
 			if (!poly->isNaomi2() && is_vertex_inf(vtx))
 			{
-				bool odd = false;
+				bool odd = i & 1;
 				while (i < poly->count - 1)
 				{
 					odd = !odd;
 					const Vertex& next_vtx = vertices[poly->first + i + 1];
 					if (!is_vertex_inf(next_vtx))
 					{
-						if (poly->count - i - 1 >= 3)
+						if (poly->count - (i + 1) < 3)
+							// skip remaining incomplete triangle
+							i = poly->count - 1;
+						else
 						{
 							if (last_good_vtx >= 0)
 								// reset the strip
