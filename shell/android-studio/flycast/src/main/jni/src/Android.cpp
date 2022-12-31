@@ -545,6 +545,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     keyboard = std::make_shared<AndroidKeyboard>();
     GamepadDevice::Register(keyboard);
     gui_setOnScreenKeyboardCallback([](bool show) {
+    	if (g_activity == nullptr)
+    		return;
         JNIEnv *env = jvm_attacher.getEnv();
         if (show != env->CallBooleanMethod(g_activity, isScreenKeyboardShownMid))
         {
