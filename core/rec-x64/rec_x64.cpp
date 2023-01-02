@@ -926,7 +926,7 @@ private:
 				mov(rcx, (size_t)op.rd.reg_ptr());
 				mov(dword[rcx], eax);
 #else
-				mov(regalloc.MapXRegister(op.rd, 0), eax);
+				movd(regalloc.MapXRegister(op.rd, 0), eax);
 #endif
 
 				mov(call_regs[0], addr + 4);
@@ -935,7 +935,7 @@ private:
 				mov(rcx, (size_t)op.rd.reg_ptr() + 4);
 				mov(dword[rcx], eax);
 #else
-				mov(regalloc.MapXRegister(op.rd, 1), eax);
+				movd(regalloc.MapXRegister(op.rd, 1), eax);
 #endif
 			}
 			else
