@@ -920,6 +920,8 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	vp.MinDepth = 0.f;
 	vp.MaxDepth = 1.f;
 	deviceContext->RSSetViewports(1, &vp);
+	const D3D11_RECT r = { 0, 0, (LONG)this->width, (LONG)this->height };
+	deviceContext->RSSetScissorRects(1, &r);
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 
 	float bar = (this->width - this->height * 640.f / 480.f) / 2.f;
