@@ -217,9 +217,6 @@
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #define TARGET_UWP
 #endif
-#ifdef HAVE_D3D9
-#define USE_DX9
-#endif
 #ifdef HAVE_D3D11
 #define USE_DX11
 #endif

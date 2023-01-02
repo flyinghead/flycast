@@ -124,8 +124,8 @@ namespace fc_profiler
 
 namespace fc_profiler
 {
-	static void startThread(const std::string& threadName) {}
-	static void endThread(float warningTime = 0.0) {}
+	inline static void startThread(const std::string& threadName) {}
+	inline static void endThread(float warningTime = 0.0) {}
 }
 
 #define FC_PROFILE_SCOPE

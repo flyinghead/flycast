@@ -6,8 +6,8 @@
 void dc_prof_init();
 void dc_prof_periodical();
 #else
-static void dc_prof_init() {}
-static void dc_prof_periodical() {}
+inline static void dc_prof_init() {}
+inline static void dc_prof_periodical() {}
 #endif
 
 inline void print_array(const char* name, u32* arr,u32 size)
