@@ -791,12 +791,12 @@ public:
 					{
 						reg2 = regalloc.MapRegister(op.rs2);
 					}
-					const Register& rd_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd).GetCode());
+					const Register& rd_xreg = regalloc.MapRegister(op.rd).X();
 					if (op.op == shop_mul_u64)
 						Umull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
 					else
 						Smull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
-					const Register& rd2_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd2).GetCode());
+					const Register& rd2_xreg = regalloc.MapRegister(op.rd2).X();
 					Lsr(rd2_xreg, rd_xreg, 32);
 				}
 				break;
@@ -855,11 +855,27 @@ public:
 			case shop_xtrct:
 				{
 					const Register rd = regalloc.MapRegister(op.rd);
-					const Register rs1 = regalloc.MapRegister(op.rs1);
-					const Register rs2 = regalloc.MapRegister(op.rs2);
-					if (op.rs1._reg == op.rd._reg)
+					Register rs1;
+					if (op.rs1.is_imm()) {
+						rs1 = w1;
+						Mov(rs1, op.rs1._imm);
+					}
+					else
 					{
-						verify(op.rs2._reg != op.rd._reg);
+						rs1 = regalloc.MapRegister(op.rs1);
+					}
+					Register rs2;
+					if (op.rs2.is_imm()) {
+						rs2 = w2;
+						Mov(rs2, op.rs2._imm);
+					}
+					else
+					{
+						rs2 = regalloc.MapRegister(op.rs2);
+					}
+					if (rd.Is(rs1))
+					{
+						verify(!rd.Is(rs2));
 						Lsr(rd, rs1, 16);
 						Lsl(w0, rs2, 16);
 					}

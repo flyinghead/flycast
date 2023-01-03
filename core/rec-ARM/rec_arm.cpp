@@ -1748,8 +1748,24 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 		case shop_xtrct:
 			{
 				Register rd = reg.mapReg(op->rd);
-				Register rs1 = reg.mapReg(op->rs1);
-				Register rs2 = reg.mapReg(op->rs2);
+				Register rs1;
+				if (op->rs1.is_imm()) {
+					rs1 = r1;
+					ass.Mov(rs1, op->rs1._imm);
+				}
+				else
+				{
+					rs1 = reg.mapReg(op->rs1);
+				}
+				Register rs2;
+				if (op->rs2.is_imm()) {
+					rs2 = r2;
+					ass.Mov(rs2, op->rs2._imm);
+				}
+				else
+				{
+					rs2 = reg.mapReg(op->rs2);
+				}
 				if (rd.Is(rs1))
 				{
 					verify(!rd.Is(rs2));
