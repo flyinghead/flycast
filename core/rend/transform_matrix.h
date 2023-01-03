@@ -293,24 +293,37 @@ inline static float getOutputFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-inline static void getDCFramebufferReadSize(int& width, int& height)
+inline static void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height)
 {
-	width = FB_R_SIZE.fb_x_size + 1;     // in 32-bit words
-	height = FB_R_SIZE.fb_y_size + 1;
+	width = (info.fb_r_size.fb_x_size + 1) * 2;     // in 16-bit words
+	height = info.fb_r_size.fb_y_size + 1;
+	int modulus = (info.fb_r_size.fb_modulus - 1) * 2;
 
-	switch (FB_R_CTRL.fb_depth)
+	int bpp;
+	switch (info.fb_r_ctrl.fb_depth)
 	{
 		case fbde_0555:
 		case fbde_565:
-			width *= 2;
+			bpp = 2;
 			break;
 		case fbde_888:
-			width = width * 4 / 3;
+			bpp = 3;
+			width = (width * 2) / 3;		// in pixels
+			modulus = (modulus * 2) / 3;	// in pixels
 			break;
 		case fbde_C888:
+			bpp = 4;
+			width /= 2;             // in pixels
+			modulus /= 2;           // in pixels
+			break;
 		default:
+			bpp = 2;
 			break;
 	}
+
+	if (info.spg_control.interlace && width == modulus && info.fb_r_sof2 == info.fb_r_sof1 + width * bpp)
+		// Typical case alternating even and odd lines -> take the whole buffer at once
+		height *= 2;
 }
 
 inline static float getDCFramebufferAspectRatio()
