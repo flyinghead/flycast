@@ -210,7 +210,7 @@ private:
 
 #ifdef LIBRETRO
 		int w, h;
-		getDCFramebufferReadSize(w, h);
+		getDCFramebufferReadSize(config, w, h);
 		retro_resize_renderer(w, h, getDCFramebufferAspectRatio());
 #endif
 		renderer->RenderFramebuffer(config);
