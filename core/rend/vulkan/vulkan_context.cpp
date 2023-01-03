@@ -134,14 +134,13 @@ static void CheckImGuiResult(VkResult err)
 
 bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
-#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-	static vk::DynamicLoader dl;
-	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
-#endif
-
 	try
 	{
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		static vk::DynamicLoader dl;
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+#endif
 		u32 apiVersion = vk::enumerateInstanceVersion();
 
 		bool vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
@@ -274,6 +273,10 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	catch (const vk::SystemError& err)
 	{
 		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
+	}
+	catch (const std::exception& err)
+	{
+		ERROR_LOG(RENDERER, "Vulkan instance init failed: %s", err.what());
 	}
 	catch (...)
 	{
