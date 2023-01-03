@@ -368,6 +368,12 @@ if(NOT LIBRETRO)
 			set(SDL2_FOUND 1)
 		endif()
 
+		# SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
+		if(TARGET SDL2::SDL2main)
+			# It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
+			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+		endif()
+
 		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
