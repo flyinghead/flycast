@@ -2328,22 +2328,22 @@ static void gameTooltip(const std::string& tip)
     }
 }
 
-static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+static bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
 {
 	textureId = ImTextureID{};
-	if (art->boxartPath.empty())
+	if (art.boxartPath.empty())
 		return false;
 
 	// Get the boxart texture. Load it if needed.
-	textureId = imguiDriver->getTexture(art->boxartPath);
+	textureId = imguiDriver->getTexture(art.boxartPath);
 	if (textureId == ImTextureID() && allowLoad)
 	{
 		int width, height;
-		u8 *imgData = loadImage(art->boxartPath, width, height);
+		u8 *imgData = loadImage(art.boxartPath, width, height);
 		if (imgData != nullptr)
 		{
 			try {
-				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
 			} catch (...) {
 				// vulkan can throw during resizing
 			}
@@ -2435,12 +2435,9 @@ static void gui_display_content()
 			{
 				ImTextureID textureId{};
 				GameMedia game;
-				const GameBoxart *art = boxart.getBoxart(game);
-				if (art != nullptr)
-				{
-					if (getGameImage(art, textureId, loadedImages < 10))
-						loadedImages++;
-				}
+				GameBoxart art = boxart.getBoxart(game);
+				if (getGameImage(art, textureId, loadedImages < 10))
+					loadedImages++;
 				if (textureId != ImTextureID())
 					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
 				else
@@ -2468,12 +2465,11 @@ static void gui_display_content()
 						continue;
 				}
 				std::string gameName = game.name;
-				const GameBoxart *art = nullptr;
+				GameBoxart art;
 				if (config::BoxartDisplayMode)
 				{
 					art = boxart.getBoxart(game);
-					if (art != nullptr)
-						gameName = art->name;
+					gameName = art.name;
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
@@ -2485,12 +2481,9 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						ImTextureID textureId{};
-						if (art != nullptr)
-						{
-							// Get the boxart texture. Load it if needed (max 10 per frame).
-							if (getGameImage(art, textureId, loadedImages < 10))
-								loadedImages++;
-						}
+						// Get the boxart texture. Load it if needed (max 10 per frame).
+						if (getGameImage(art, textureId, loadedImages < 10))
+							loadedImages++;
 						if (textureId != ImTextureID())
 							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
 						else

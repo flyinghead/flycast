@@ -29,7 +29,7 @@ struct GameMedia;
 class Boxart
 {
 public:
-	const GameBoxart *getBoxart(const GameMedia& media);
+	GameBoxart getBoxart(const GameMedia& media);
 	void saveDatabase();
 
 private:
