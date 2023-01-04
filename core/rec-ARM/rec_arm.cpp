@@ -1890,7 +1890,10 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 		case shop_fsca:
 			//r1: base ptr
 			ass.Mov(r1, (u32)sin_table & 0xFFFF);
-			ass.Uxth(r0, reg.mapReg(op->rs1));
+			if (op.rs1.is_imm())
+				ass.Mov(r0, op->rs1._imm & 0xFFFF);
+			else
+				ass.Uxth(r0, reg.mapReg(op->rs1));
 			ass.Movt(r1, (u32)sin_table >> 16);
 
 			ass.Add(r0, r1, Operand(r0, LSL, 3));
