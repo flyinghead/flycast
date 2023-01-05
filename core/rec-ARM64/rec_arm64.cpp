@@ -1173,11 +1173,19 @@ public:
 			// next_pc = block->BranchBlock;
 #ifndef NO_BLOCK_LINKING
 			if (block->pBranchBlock != NULL)
+			{
 				GenBranch((DynaCode *)block->pBranchBlock->code);
+				Nop();
+				Nop();
+			}
 			else
 			{
 				if (!mmu_enabled())
+				{
 					GenCall(linkBlockGenericStub);
+					Nop();
+					Nop();
+				}
 				else
 #else
 			{
@@ -1209,11 +1217,19 @@ public:
 				B(ne, &branch_not_taken);
 #ifndef NO_BLOCK_LINKING
 				if (block->pBranchBlock != NULL)
+				{
 					GenBranch((DynaCode *)block->pBranchBlock->code);
+					Nop();
+					Nop();
+				}
 				else
 				{
 					if (!mmu_enabled())
+					{
 						GenCall(linkBlockBranchStub);
+						Nop();
+						Nop();
+					}
 					else
 #else
 				{
@@ -1229,11 +1245,19 @@ public:
 
 #ifndef NO_BLOCK_LINKING
 				if (block->pNextBlock != NULL)
+				{
 					GenBranch((DynaCode *)block->pNextBlock->code);
+					Nop();
+					Nop();
+				}
 				else
 				{
 					if (!mmu_enabled())
+					{
 						GenCall(linkBlockNextStub);
+						Nop();
+						Nop();
+					}
 					else
 #else
 				{
@@ -1268,6 +1292,9 @@ public:
 			else
 			{
 				GenBranch(arm64_no_update);
+				Nop();
+				Nop();
+				Nop();
 			}
 
 			break;
