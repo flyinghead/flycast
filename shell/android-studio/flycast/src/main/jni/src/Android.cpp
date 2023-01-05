@@ -686,3 +686,17 @@ void enableNetworkBroadcast(bool enable)
     jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
     env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
 }
+
+// Useful for armv7 since exceptions cannot traverse dynarec blocks and terminate the process
+// The abort message will be stored in the minidump and logged to logcat
+extern "C" void abort_message(const char* format, ...)
+{
+	va_list list;
+	va_start(list, format);
+	char *buffer;
+	vasprintf(&buffer, format, list);
+	va_end(list);
+
+	ERROR_LOG(BOOT, "%s", buffer);
+	abort();
+}
