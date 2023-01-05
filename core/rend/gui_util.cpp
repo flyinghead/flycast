@@ -54,7 +54,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	if (select_current_directory.empty())
 	{
 #if defined(__ANDROID__)
-		const char *home = nowide::getenv("REICAST_HOME");
+		const char *home = nowide::getenv("FLYCAST_HOME");
 		if (home != NULL)
 		{
 			const char *pcolon = strchr(home, ':');
@@ -127,7 +127,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			if (select_current_directory == PSEUDO_ROOT)
 			{
 				error_message = "Storage Locations";
-				const char *home = nowide::getenv("REICAST_HOME");
+				const char *home = nowide::getenv("FLYCAST_HOME");
 				while (home != NULL)
 				{
 					const char *pcolon = strchr(home, ':');
