@@ -671,14 +671,15 @@ void Emulator::stop() {
 		} catch (const FlycastException& e) {
 			WARN_LOG(COMMON, "%s", e.what());
 		}
+		SaveRomFiles();
+		EventManager::event(Event::Pause);
 	}
 	else
 	{
-		// FIXME Android: need to terminate render thread before
-		TermAudio();
+		// defer stopping audio until after the current frame is finished
+		// normally only useful on android due to multithreading
+		stopRequested = true;
 	}
-	SaveRomFiles();
-	EventManager::event(Event::Pause);
 }
 
 // Called on the emulator thread for soft reset
@@ -869,6 +870,7 @@ void Emulator::start()
 	}
 	else
 	{
+		stopRequested = false;
 		InitAudio();
 	}
 
@@ -901,6 +903,13 @@ bool Emulator::render()
 		if (state != Running)
 			return false;
 		run();
+		if (stopRequested)
+		{
+			stopRequested = false;
+			TermAudio();
+			SaveRomFiles();
+			EventManager::event(Event::Pause);
+		}
 		// TODO if stopping due to a user request, no frame has been rendered
 		return !renderTimeout;
 	}

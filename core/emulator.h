@@ -177,6 +177,7 @@ private:
 	bool renderTimeout = false;
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
+	bool stopRequested = false;
 };
 extern Emulator emu;
 
