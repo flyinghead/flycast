@@ -664,7 +664,13 @@ void DYNACALL reios_trap(u32 op) {
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
-	hooks[mapd]();
+	auto it = hooks.find(mapd);
+	if (it == hooks.end()) {
+		ERROR_LOG(REIOS, "Unknown trap vector %08x pc %08x", mapd, pc);
+		return;
+	}
+
+	it->second();
 
 	// Return from syscall, except if pc was modified
 	if (pc == next_pc - 2)
