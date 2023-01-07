@@ -29,6 +29,8 @@
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
+		{ "T36803N",	nullptr,	{ 0xBC2CC }, { 0xC00 } },			// 102 Dalmatians (USA)
+		{ "T36813D 50",	nullptr,	{ 0xBDE8C }, { 0xC00 } },			// 102 Dalmatians (PAL)
 		{ "MK-51064",   nullptr,    { 0x39EFF4 }, { 0x43700000 } },		// 18 wheeler (USA)
 		{ "MK-5106450", nullptr,    { 0x39EFF4 }, { 0x43700000 } },		// 18 wheeler (PAL)
 		{ "HDR-0080",   nullptr,    { 0x6625C0 }, { 0x43700000 } },		// 18 wheeler (JP)
