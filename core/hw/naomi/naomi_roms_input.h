@@ -465,20 +465,7 @@ static InputDescriptors meltyb_inputs = INPUT_5_BUTTONS("LAttack", "MAttack", "H
 
 static InputDescriptors toukon4_inputs = INPUT_5_BUTTONS("X", "Y", "R", "A", "B");
 
-static InputDescriptors hmgeo_inputs = {
-	{
-		{ NAOMI_BTN0_KEY, "Fire" },
-		{ NAOMI_BTN1_KEY, "Attack" },
-		{ NAOMI_BTN3_KEY, "Jump" },
-		{ NAOMI_BTN4_KEY, "Target" },
-		{ NAOMI_UP_KEY, "" },
-		{ NAOMI_DOWN_KEY, "" },
-		{ NAOMI_LEFT_KEY, "" },
-		{ NAOMI_RIGHT_KEY, "" },
-		NAO_START_DESC
-		NAO_BASE_BTN_DESC
-	},
-};
+static InputDescriptors hmgeo_inputs = INPUT_4_BUTTONS("Fire", "Attack", "Jump", "Target");
 
 //
 // AtomisWave games
