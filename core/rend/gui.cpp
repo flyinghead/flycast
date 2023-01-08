@@ -78,6 +78,7 @@ static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Boxart boxart;
 static Chat chat;
+static std::mutex guiMutex;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -443,6 +444,7 @@ void gui_plot_render_time(int width, int height)
 
 void gui_open_settings()
 {
+	std::lock_guard<std::mutex> lock(guiMutex);
 	if (gui_state == GuiState::Closed)
 	{
 		if (!ggpo::active())
@@ -2720,6 +2722,7 @@ static void gui_display_loadscreen()
 void gui_display_ui()
 {
 	FC_PROFILE_SCOPE;
+	std::lock_guard<std::mutex> lock(guiMutex);
 
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;
