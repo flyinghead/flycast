@@ -139,6 +139,10 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 		static vk::DynamicLoader dl;
 		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		if (vkGetInstanceProcAddr == nullptr) {
+			ERROR_LOG(RENDERER, "Vulkan entry point vkGetInstanceProcAddr not found");
+			return false;
+		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 #endif
 		u32 apiVersion = vk::enumerateInstanceVersion();
