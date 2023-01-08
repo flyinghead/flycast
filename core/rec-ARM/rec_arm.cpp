@@ -736,8 +736,9 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 
 	ass = Arm32Assembler((u8 *)ptr, 12);
 
-	//fault offset must always be the addr from ubfx (sanity check)
-	verify(fault_offs == 0 || fault_offs == (sh4_addr & 0x1FFFFFFF));
+	// fault offset must always be the addr from ubfx (sanity check)
+	// ignore last 2 bits zeroed to avoid sigbus errors
+	verify(fault_offs == 0 || (fault_offs & ~3) == (sh4_addr & 0x1FFFFFFC));
 
 	if (is_sq && !read && optp >= SZ_32I)
 	{
@@ -892,6 +893,8 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 
 	if (isram)
 	{
+		if (optp == SZ_32F || optp == SZ_64F)
+			ptr = (void *)((uintptr_t)ptr & ~3);
 		ass.Mov(r0, (u32)ptr);
 		switch(optp)
 		{
@@ -1032,6 +1035,8 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 
 	if (isram)
 	{
+		if (optp == SZ_32F || optp == SZ_64F)
+			ptr = (void *)((uintptr_t)ptr & ~3);
 		ass.Mov(r0, (u32)ptr);
 		switch(optp)
 		{
@@ -1153,7 +1158,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				genMmuLookup(block, *op, 0, raddr);
 
 				if (_nvmem_enabled()) {
-					ass.Bic(r1, raddr, 0xE0000000);
+					ass.Bic(r1, raddr, optp == SZ_32F || optp == SZ_64F ? 0xE0000003 : 0xE0000000);
 
 					switch(optp)
 					{
@@ -1268,7 +1273,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				}
 				if (_nvmem_enabled())
 				{
-					ass.Bic(r1, raddr, 0xE0000000);
+					ass.Bic(r1, raddr, optp == SZ_32F || optp == SZ_64F ? 0xE0000003 : 0xE0000000);
 
 					switch(optp)
 					{
