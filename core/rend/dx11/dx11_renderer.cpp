@@ -909,6 +909,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	deviceContext->UpdateSubresource(dcfbTexture, 0, nullptr, pb.data(), width * sizeof(u32), width * sizeof(u32) * height);
 
+	resize(width, height);
 	deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 	float colors[4];
 	info.vo_border_col.getRGBColor(colors);

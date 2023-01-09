@@ -53,7 +53,10 @@ bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext,
 
 	shaders.init(pDevice, D3DCompile);
 	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
-	return true;
+	bool success = checkTextureSupport();
+	if (!success)
+		term();
+	return success;
 }
 
 void DX11Context::term()
