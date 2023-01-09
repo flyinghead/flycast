@@ -59,7 +59,6 @@ class GameScanner
 
 	void insert_arcade_game(const GameMedia& game)
 	{
-		std::lock_guard<std::mutex> guard(mutex);
 		arcade_game_list.insert(std::upper_bound(arcade_game_list.begin(), arcade_game_list.end(), game), game);
 	}
 
@@ -69,7 +68,7 @@ class GameScanner
         std::string emptyParentPath;
         for (const DirectoryTree::item& item : tree)
         {
-            if (running == false)
+            if (!running)
                 break;
             
             if (game_list.empty())
@@ -173,15 +172,18 @@ public:
 				{
 					std::lock_guard<std::mutex> guard(mutex);
 					game_list.clear();
-					arcade_game_list.clear();
 				}
+				arcade_game_list.clear();
 				for (const auto& path : config::ContentPath.get())
 				{
 					add_game_directory(path);
 					if (!running)
 						break;
 				}
-				game_list.insert(game_list.end(), arcade_game_list.begin(), arcade_game_list.end());
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					game_list.insert(game_list.end(), arcade_game_list.begin(), arcade_game_list.end());
+				}
 				if (running)
 					scan_done = true;
 				running = false;
