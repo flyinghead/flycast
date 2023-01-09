@@ -33,10 +33,17 @@ public:
 	void term() override;
 	void EndImGuiFrame();
 	void Present();
-	const ComPtr<IDirect3D9>& getD3D() const { return pD3D; }
-	const ComPtr<IDirect3DDevice9>& getDevice() const { return pDevice; }
 	void resize() override;
-	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
+
+	const ComPtr<IDirect3D9>& getD3D() const {
+		return pD3D;
+	}
+	const ComPtr<IDirect3DDevice9>& getDevice() const {
+		return pDevice;
+	}
+	void setOverlay(bool overlayOnly) {
+		this->overlayOnly = overlayOnly;
+	}
 	std::string getDriverName() override {
 		return driverName;
 	}
@@ -45,6 +52,9 @@ public:
 	}
 	void setFrameRendered() {
 		frameRendered = true;
+	}
+	bool isReady() const {
+		return deviceReady;
 	}
 
 private:
@@ -59,6 +69,7 @@ private:
 	bool frameRendered = false;
 	std::string driverName;
 	std::string driverVersion;
+	bool deviceReady = false;
 };
 extern DXContext theDXContext;
 #endif

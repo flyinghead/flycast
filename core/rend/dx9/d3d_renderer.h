@@ -171,7 +171,6 @@ private:
 	D3DShaders shaders;
 	RECT scissorRect{};
 	bool scissorEnable = false;
-	bool resetting = false;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	int maxAnisotropy = 1;

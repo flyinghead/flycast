@@ -82,6 +82,7 @@ bool DXContext::init(bool keepCurrentWindow)
 	driverName = std::string(id.Description);
 	driverVersion = std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 		+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+	deviceReady = true;
 
 	return true;
 }
@@ -93,17 +94,18 @@ void DXContext::term()
 	imguiDriver.reset();
 	pDevice.reset();
 	pD3D.reset();
+	deviceReady = false;
 }
 
 void DXContext::Present()
 {
 	if (!frameRendered)
 		return;
-	frameRendered = false;
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST)
 	{
+		deviceReady = false;
 		result = pDevice->TestCooperativeLevel();
 		if (result == D3DERR_DEVICENOTRESET)
 			resetDevice();
@@ -112,6 +114,7 @@ void DXContext::Present()
 		WARN_LOG(RENDERER, "Present failed %x", result);
 	else
 	{
+		frameRendered = false;
 		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync))
 		{
 			DEBUG_LOG(RENDERER, "Switch vsync %d", !swapOnVSync);
@@ -133,29 +136,32 @@ void DXContext::Present()
 
 void DXContext::EndImGuiFrame()
 {
-	verify((bool)pDevice);
-	pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	if (!overlayOnly)
+	if (deviceReady)
 	{
-		pDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
-		if (renderer != nullptr)
-			renderer->RenderLastFrame();
-	}
-	if (SUCCEEDED(pDevice->BeginScene()))
-	{
-		if (overlayOnly)
+		verify((bool)pDevice);
+		pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+		pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		if (!overlayOnly)
 		{
-			if (crosshairsNeeded() || config::FloatVMUs)
-				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+			pDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
+			if (renderer != nullptr)
+				renderer->RenderLastFrame();
 		}
-		else
+		if (SUCCEEDED(pDevice->BeginScene()))
 		{
-			overlay.draw(settings.display.width, settings.display.height, true, false);
+			if (overlayOnly)
+			{
+				if (crosshairsNeeded() || config::FloatVMUs)
+					overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+			}
+			else
+			{
+				overlay.draw(settings.display.width, settings.display.height, true, false);
+			}
+			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+			pDevice->EndScene();
 		}
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-		pDevice->EndScene();
 	}
 	frameRendered = true;
 }
@@ -187,8 +193,10 @@ void DXContext::resetDevice()
     if (hr == D3DERR_INVALIDCALL)
     {
         ERROR_LOG(RENDERER, "DX9 device reset failed");
+        deviceReady = false;
         return;
     }
+    deviceReady = true;
     ImGui_ImplDX9_CreateDeviceObjects();
     overlay.init(pDevice);
 	if (dxrenderer != nullptr)

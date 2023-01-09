@@ -177,14 +177,12 @@ void D3DRenderer::preReset()
 	vertexBufferSize = 0;
 	framebufferSurface.reset();
 	framebufferTexture.reset();
-	resetting = true;
 	frameRendered = false;
 	frameRenderedOnce = false;
 }
 
 void D3DRenderer::postReset()
 {
-	resetting = false;
 	devCache.reset();
 	u32 w = width;	// FIXME
 	u32 h = height;
@@ -210,7 +208,6 @@ void D3DRenderer::postReset()
 void D3DRenderer::Term()
 {
 	preReset();
-	resetting = false;
 	devCache.reset();
 	shaders.term();
 	device.reset();
@@ -218,7 +215,7 @@ void D3DRenderer::Term()
 
 BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 {
-	if (resetting)
+	if (!theDXContext.isReady())
 		return nullptr;
 	//lookup texture
 	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw);
@@ -240,6 +237,12 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 
 void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	if (!theDXContext.isReady())
+		return;
+
+	backbuffer.reset();
+	device->GetRenderTarget(0, &backbuffer.get());
+
 	PixelBuffer<u32> pb;
 	int width;
 	int height;
@@ -285,6 +288,9 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	}
 	dcfbTexture->UnlockRect(0);
 
+	resize(width, height);
+	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+
 	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, info.vo_border_col._red, info.vo_border_col._green, info.vo_border_col._blue));
 	u32 bar = (this->width - this->height * 640 / 480) / 2;
 	RECT rd{ (LONG)bar, 0, (LONG)(this->width - bar), (LONG)this->height };
@@ -300,7 +306,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 bool D3DRenderer::Process(TA_context* ctx)
 {
-	if (resetting)
+	if (!theDXContext.isReady())
 		return false;
 
 	if (KillTex)
@@ -930,7 +936,7 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 
 bool D3DRenderer::Render()
 {
-	if (resetting)
+	if (!theDXContext.isReady())
 		return false;
 	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 
@@ -1168,7 +1174,7 @@ void D3DRenderer::displayFramebuffer()
 
 bool D3DRenderer::RenderLastFrame()
 {
-	if (!frameRenderedOnce)
+	if (!frameRenderedOnce || !theDXContext.isReady())
 		return false;
 	backbuffer.reset();
 	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
