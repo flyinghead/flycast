@@ -938,6 +938,7 @@ static void *pico_thread_func(void *)
 			return nullptr;
 		pico_dev->send = &send_eth_frame;
 		pico_dev->proxied = 1;
+		pico_queue_protect(pico_dev->q_in);
 
 		pico_string_to_ipv4("192.168.169.1", &addr);
 		pico_ip4 ipaddr;
@@ -1090,4 +1091,25 @@ void stop_pico()
 	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.WaitToEnd();
+}
+
+// picotcp mutex implementation
+extern "C" {
+
+void *pico_mutex_init(void) {
+	return new std::mutex();
+}
+
+void pico_mutex_lock(void *mux) {
+	((std::mutex *)mux)->lock();
+}
+
+void pico_mutex_unlock(void *mux) {
+	((std::mutex *)mux)->unlock();
+}
+
+void pico_mutex_deinit(void *mux) {
+	delete (std::mutex *)mux;
+}
+
 }
