@@ -203,11 +203,14 @@ void CHDDisc::tryOpen(const char* file)
 		tracks.push_back(t);
 	}
 
-	if (isGdrom && (total_frames != 549300 || tracks.size() < 3))
-		WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
-
 	if (isGdrom)
+	{
+		if (total_frames != 549300)
+			WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
+		if (tracks.size() < 3)
+			throw FlycastException("Invalid CHD: less than 3 tracks");
 		FillGDSession();
+	}
 	else
 	{
 		type = CdRom_XA;
