@@ -145,10 +145,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		}
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 #endif
-		u32 apiVersion = vk::enumerateInstanceVersion();
+		bool vulkan11 = false;
+		if (VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateInstanceVersion != nullptr)
+		{
+			u32 apiVersion = vk::enumerateInstanceVersion();
 
-		bool vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
-				|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
+			vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
+					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
+		}
 
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
