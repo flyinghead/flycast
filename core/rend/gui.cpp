@@ -88,8 +88,11 @@ static void emuEventCallback(Event event, void *)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
+		break;
 	case Event::Terminate:
 		GamepadDevice::load_system_mappings();
+		game_started = false;
 		break;
 	default:
 		break;
@@ -490,7 +493,6 @@ void gui_stop_game(const std::string& message)
 		// Exit to main menu
 		emu.unloadGame();
 		gui_state = GuiState::Main;
-		game_started = false;
 		reset_vmus();
 		if (!message.empty())
 			gui_error("Flycast has stopped.\n\n" + message);

@@ -102,15 +102,29 @@ jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
 static ANativeWindow *g_window = 0;
 
+// Activity
+static jobject g_activity;
+static jmethodID VJoyStartEditingMID;
+static jmethodID VJoyStopEditingMID;
+static jmethodID VJoyResetEditingMID;
+static jmethodID showTextInputMid;
+static jmethodID hideTextInputMid;
+static jmethodID isScreenKeyboardShownMid;
+static jmethodID onGameStateChangeMid;
+
 static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
 	case Event::Pause:
 		game_started = false;
+		if (g_activity != nullptr)
+			jvm_attacher.getEnv()->CallVoidMethod(g_activity, onGameStateChangeMid, false);
 		break;
 	case Event::Resume:
 		game_started = true;
+		if (g_activity != nullptr)
+			jvm_attacher.getEnv()->CallVoidMethod(g_activity, onGameStateChangeMid, true);
 		break;
 	default:
 		break;
@@ -302,15 +316,6 @@ jmethodID audioInitMid;
 jmethodID audioTermMid;
 static jobject g_audioBackend;
 
-// Activity
-static jobject g_activity;
-static jmethodID VJoyStartEditingMID;
-static jmethodID VJoyStopEditingMID;
-static jmethodID VJoyResetEditingMID;
-static jmethodID showTextInputMid;
-static jmethodID hideTextInputMid;
-static jmethodID isScreenKeyboardShownMid;
-
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
     sipemu = env->NewGlobalRef(sip);
@@ -319,11 +324,22 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(J
     stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
 }
 
+static void stopEmu()
+{
+	if (!emu.running())
+		game_started = false;
+	else
+		emu.stop();
+	// in single-threaded mode, stopping is delayed
+	while (game_started)
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (emu.running())
     {
-        emu.stop();
+    	stopEmu();
         game_started = true; // restart when resumed
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
@@ -339,14 +355,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNI
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (emu.running()) {
-        emu.stop();
-        if (config::AutoSaveState)
-            dc_savestate(config::SavestateSlot);
-    }
+   	stopEmu();
     emu.unloadGame();
     gui_state = GuiState::Main;
-    settings.content.path.clear();
+    game_started = false;
 }
 
 static void *render_thread_func(void *)
@@ -652,6 +664,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_regis
         showTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "showTextInput", "(IIII)V");
         hideTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "hideTextInput", "()V");
         isScreenKeyboardShownMid = env->GetMethodID(env->GetObjectClass(activity), "isScreenKeyboardShown", "()Z");
+        onGameStateChangeMid = env->GetMethodID(env->GetObjectClass(activity), "onGameStateChange", "(Z)V");
     }
 }
 

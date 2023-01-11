@@ -79,7 +79,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();
         }
@@ -404,6 +403,18 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
+    }
+
+    // Called from native code
+    public void onGameStateChange(boolean started) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                if (started)
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                else
+                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+        });
     }
 
     private static native void register(BaseGLActivity activity);

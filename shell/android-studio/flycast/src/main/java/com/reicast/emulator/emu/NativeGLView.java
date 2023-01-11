@@ -35,7 +35,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public NativeGLView(final Context context, AttributeSet attrs) {
         super(context, attrs);
         getHolder().addCallback(this);
-        setKeepScreenOn(true);
         setFocusable(true);
         setFocusableInTouchMode(true);
         requestFocus();
@@ -53,11 +52,22 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
                 }
             });
         }
-        vjoyDelegate = new VirtualJoystickDelegate(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         this.setLayerType(LAYER_TYPE_HARDWARE, null);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        vjoyDelegate = new VirtualJoystickDelegate(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        vjoyDelegate.stop();
     }
 
     @Override
