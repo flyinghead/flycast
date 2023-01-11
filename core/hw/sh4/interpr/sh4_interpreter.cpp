@@ -53,7 +53,7 @@ static void Sh4_int_Run()
 				p_sh4rcb->cntx.cycle_counter += SH4_TIMESLICE;
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
-				Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+				Do_Exception(ex.epc, ex.expEvn);
 				p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 			}
 		} while (sh4_int_bCpuRun);
@@ -77,7 +77,7 @@ static void Sh4_int_Step()
 		u32 op = ReadNexOp();
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException& ex) {
-		Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+		Do_Exception(ex.epc, ex.expEvn);
 		p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 	} catch (const debugger::Stop&) {
 	}

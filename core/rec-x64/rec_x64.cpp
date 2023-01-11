@@ -76,8 +76,8 @@ void ngen_mainloop(void *)
 	verify(mainloop != nullptr);
 	try {
 		mainloop();
-	} catch (const SH4ThrownException&) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+	} catch (const SH4ThrownException& ex) {
+		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop code %x", ex.expEvn);
 		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
@@ -104,7 +104,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		AdjustDelaySlotException(ex);
 		pc--;
 	}
-	Do_Exception(pc, ex.expEvn, ex.callVect);
+	Do_Exception(pc, ex.expEvn);
 	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
 	handleException();
 }
@@ -172,9 +172,8 @@ public:
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
-			mov(call_regs[1], 0x800);			// event
-			mov(call_regs[2], 0x100);			// vector
-			GenCall(Do_Exception);
+			mov(call_regs[1], Sh4Ex_FpuDisabled);// exception code
+			GenCall((void (*)())Do_Exception);
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}

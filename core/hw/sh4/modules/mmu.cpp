@@ -100,12 +100,10 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 		//TLB miss
 	case MMU_ERROR_TLB_MISS:
 		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled", address);
-		if (am == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
-			raise(0x60, 0x400);
-		else if (am == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
-			raise(0x40, 0x400);
-		else							//ITLBMISS - Instruction TLB Miss Exception
-			raise(0x40, 0x400);
+		if (am == MMU_TT_DWRITE)
+			raise(Sh4Ex_TlbMissWrite);
+		else
+			raise(Sh4Ex_TlbMissRead);
 		return;
 
 		//TLB Multihit
@@ -116,12 +114,10 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 		//Mem is read/write protected (depends on translation type)
 	case MMU_ERROR_PROTECTED:
 		printf_mmu("MMU_ERROR_PROTECTED 0x%X, handled", address);
-		if (am == MMU_TT_DWRITE)			//WRITEPROT - Write Data TLB Protection Violation Exception
-			raise(0xC0, 0x100);
-		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
-			raise(0xA0, 0x100);
-		else								//READPROT - Instr TLB Protection Violation Exception
-			raise(0xA0, 0x100);
+		if (am == MMU_TT_DWRITE)
+			raise(Sh4Ex_TlbProtViolWrite);
+		else
+			raise(Sh4Ex_TlbProtViolRead);
 		return;
 
 		//Mem is write protected , firstwrite
@@ -129,7 +125,7 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 		printf_mmu("MMU_ERROR_FIRSTWRITE");
 		verify(am == MMU_TT_DWRITE);
 		//FIRSTWRITE - Initial Page Write Exception
-		raise(0x80, 0x100);
+		raise(Sh4Ex_TlbInitPageWrite);
 		return;
 
 		//data read/write missasligned
@@ -137,12 +133,12 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 		if (am == MMU_TT_DWRITE)			//WADDERR - Write Data Address Error
 		{
 			printf_mmu("MMU_ERROR_BADADDR(dw) 0x%X", address);
-			raise(0x100, 0x100);
+			raise(Sh4Ex_AddressErrorWrite);
 		}
 		else if (am == MMU_TT_DREAD)		//RADDERR - Read Data Address Error
 		{
 			printf_mmu("MMU_ERROR_BADADDR(dr) 0x%X", address);
-			raise(0xE0, 0x100);
+			raise(Sh4Ex_AddressErrorRead);
 		}
 		else							//IADDERR - Instruction Address Error
 		{
@@ -150,7 +146,7 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 			if (!print_wince_syscall(address))
 #endif
 				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X", address);
-			raise(0xE0, 0x100);
+			raise(Sh4Ex_AddressErrorRead);
 		}
 		return;
 
@@ -159,7 +155,7 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 		INFO_LOG(SH4, "MMU_ERROR_EXECPROT 0x%X", address);
 
 		//EXECPROT - Instruction TLB Protection Violation Exception
-		raise(0xA0, 0x100);
+		raise(Sh4Ex_TlbProtViolRead);
 		return;
 	}
 
@@ -168,18 +164,18 @@ static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 
 void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 {
-	mmuException(mmu_error, address, am, [](u32 event, u32 vector) {
+	mmuException(mmu_error, address, am, [](Sh4ExceptionCode event) {
 		debugger::debugTrap(event);	// FIXME CCN_TEA and CCN_PTEH have been updated already
-		SH4ThrownException ex { next_pc - 2, event, vector };
-		throw ex;
+
+		throw SH4ThrownException(next_pc - 2, event);
 	});
 }
 
 
 void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 {
-	mmuException(mmu_error, address, access_type, [](u32 event, u32 vector) {
-		Do_Exception(next_pc, event, vector);
+	mmuException(mmu_error, address, access_type, [](Sh4ExceptionCode event) {
+		Do_Exception(next_pc, event);
 	});
 }
 

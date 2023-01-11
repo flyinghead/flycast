@@ -15,6 +15,7 @@
 #include "sh4_mmr.h"
 #include "oslib/oslib.h"
 #include "debug/gdb_server.h"
+#include <cassert>
 
 //these are fixed
 const u16 IRLPriority = 0x0246;
@@ -30,71 +31,71 @@ struct InterptSourceList_Entry
 {
 	const u16* PrioReg;
 	u32 Shift;
-	u32 IntEvnCode;
+	Sh4ExceptionCode IntEvnCode;
 
-	u32 GetPrLvl() const { return ((*PrioReg)>>Shift)&0xF; }
+	int GetPrLvl() const { return (*PrioReg >> Shift) & 0xF; }
 };
 
-static const InterptSourceList_Entry InterruptSourceList[28] =
+static const InterptSourceList_Entry InterruptSourceList[sh4_INT_ID_COUNT] =
 {
 	//IRL
-	{IRLP9,0x320},//sh4_IRL_9           = KMIID(sh4_int,0x320,0),
-	{IRLP11,0x360},//sh4_IRL_11         = KMIID(sh4_int,0x360,1),
-	{IRLP13,0x3A0},//sh4_IRL_13         = KMIID(sh4_int,0x3A0,2),
+	{ IRLP9, Sh4Ex_ExtInterrupt9 },		//sh4_IRL_9
+	{ IRLP11, Sh4Ex_ExtInterruptB },	//sh4_IRL_11
+	{ IRLP13, Sh4Ex_ExtInterruptD },	//sh4_IRL_13
 
 	//HUDI
-	{GIPC(0),0x600},//sh4_HUDI_HUDI     = KMIID(sh4_int,0x600,3),  /* H-UDI underflow */
+	{ GIPC(0), Sh4Ex_HUDI },			//sh4_HUDI_HUDI
 
 	//GPIO (missing on dc ?)
-	{GIPC(3),0x620},//sh4_GPIO_GPIOI    = KMIID(sh4_int,0x620,4),
+	{ GIPC(3), Sh4Ex_GPIO },			//sh4_GPIO_GPIOI
 
 	//DMAC
-	{GIPC(2),0x640},//sh4_DMAC_DMTE0    = KMIID(sh4_int,0x640,5),
-	{GIPC(2),0x660},//sh4_DMAC_DMTE1    = KMIID(sh4_int,0x660,6),
-	{GIPC(2),0x680},//sh4_DMAC_DMTE2    = KMIID(sh4_int,0x680,7),
-	{GIPC(2),0x6A0},//sh4_DMAC_DMTE3    = KMIID(sh4_int,0x6A0,8),
-	{GIPC(2),0x6C0},//sh4_DMAC_DMAE     = KMIID(sh4_int,0x6C0,9),
+	{ GIPC(2), Sh4Ex_DMAC_DTME0 },		//sh4_DMAC_DMTE0
+	{ GIPC(2), Sh4Ex_DMAC_DTME1 },		//sh4_DMAC_DMTE1
+	{ GIPC(2), Sh4Ex_DMAC_DTME2 },		//sh4_DMAC_DMTE2
+	{ GIPC(2), Sh4Ex_DMAC_DTME3 },		//sh4_DMAC_DMTE3
+	{ GIPC(2), Sh4Ex_DMAC_DMAE },		//sh4_DMAC_DMAE
 
 	//TMU
-	{GIPA(3),0x400},//sh4_TMU0_TUNI0    =  KMIID(sh4_int,0x400,10), /* TMU0 underflow */
-	{GIPA(2),0x420},//sh4_TMU1_TUNI1    =  KMIID(sh4_int,0x420,11), /* TMU1 underflow */
-	{GIPA(1),0x440},//sh4_TMU2_TUNI2    =  KMIID(sh4_int,0x440,12), /* TMU2 underflow */
-	{GIPA(1),0x460},//sh4_TMU2_TICPI2   =  KMIID(sh4_int,0x460,13),
+	{ GIPA(3), Sh4Ex_TMU0 },			//sh4_TMU0_TUNI0
+	{ GIPA(2), Sh4Ex_TMU1 },			//sh4_TMU1_TUNI1
+	{ GIPA(1), Sh4Ex_TMU2 },			//sh4_TMU2_TUNI2
+	{ GIPA(1), Sh4Ex_TMU2_TICPI2 },		//sh4_TMU2_TICPI2
 
 	//RTC
-	{GIPA(0),0x480},//sh4_RTC_ATI       = KMIID(sh4_int,0x480,14),
-	{GIPA(0),0x4A0},//sh4_RTC_PRI       = KMIID(sh4_int,0x4A0,15),
-	{GIPA(0),0x4C0},//sh4_RTC_CUI       = KMIID(sh4_int,0x4C0,16),
+	{ GIPA(0), Sh4Ex_RTC_ATI },			//sh4_RTC_ATI
+	{ GIPA(0), Sh4Ex_RTC_PRI },			//sh4_RTC_PRI
+	{ GIPA(0), Sh4Ex_RTC_CUI },			//sh4_RTC_CUI
 
 	//SCI
-	{GIPB(1),0x4E0},//sh4_SCI1_ERI      = KMIID(sh4_int,0x4E0,17),
-	{GIPB(1),0x500},//sh4_SCI1_RXI      = KMIID(sh4_int,0x500,18),
-	{GIPB(1),0x520},//sh4_SCI1_TXI      = KMIID(sh4_int,0x520,19),
-	{GIPB(1),0x540},//sh4_SCI1_TEI      = KMIID(sh4_int,0x540,29),
+	{ GIPB(1), Sh4Ex_SCI_ERI },			//sh4_SCI1_ERI
+	{ GIPB(1), Sh4Ex_SCI_RXI },			//sh4_SCI1_RXI
+	{ GIPB(1), Sh4Ex_SCI_TXI },			//sh4_SCI1_TXI
+	{ GIPB(1), Sh4Ex_SCI_TEI },			//sh4_SCI1_TEI
 
 	//SCIF
-	{GIPC(1),0x700},//sh4_SCIF_ERI      = KMIID(sh4_int,0x700,21),
-	{GIPC(1),0x720},//sh4_SCIF_RXI      = KMIID(sh4_int,0x720,22),
-	{GIPC(1),0x740},//sh4_SCIF_BRI      = KMIID(sh4_int,0x740,23),
-	{GIPC(1),0x760},//sh4_SCIF_TXI      = KMIID(sh4_int,0x760,24),
+	{ GIPC(1), Sh4Ex_SCIF_ERI },		//sh4_SCIF_ERI
+	{ GIPC(1), Sh4Ex_SCIF_RXI },		//sh4_SCIF_RXI
+	{ GIPC(1), Sh4Ex_SCIF_BRI },		//sh4_SCIF_BRI
+	{ GIPC(1), Sh4Ex_SCIF_TXI },		//sh4_SCIF_TXI
 
 	//WDT
-	{GIPB(3),0x560},//sh4_WDT_ITI       = KMIID(sh4_int,0x560,25),
+	{ GIPB(3), Sh4Ex_WDT },				//sh4_WDT_ITI
 
 	//REF
-	{GIPB(2),0x580},//sh4_REF_RCMI      = KMIID(sh4_int,0x580,26),
-	{GIPA(2),0x5A0},//sh4_REF_ROVI      = KMIID(sh4_int,0x5A0,27),
+	{ GIPB(2), Sh4Ex_REF_RCMI },		//sh4_REF_RCMI
+	{ GIPA(2), Sh4Ex_REF_ROVI },		//sh4_REF_ROVI
 };
 
 
 //Maps siid -> EventID
-alignas(64) u16 InterruptEnvId[32] = { 0 };
+alignas(64) Sh4ExceptionCode InterruptEnvId[sh4_INT_ID_COUNT];
 //Maps piid -> 1<<siid
-alignas(64) u32 InterruptBit[32] = { 0 };
+alignas(64) u32 InterruptBit[sh4_INT_ID_COUNT];
 //Maps sh4 interrupt level to inclusive bitfield
-alignas(64) u32 InterruptLevelBit[16] = { 0 };
+alignas(64) u32 InterruptLevelBit[16];
 
-static bool Do_Interrupt(u32 intEvn);
+static bool Do_Interrupt(Sh4ExceptionCode intEvn);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
@@ -103,38 +104,37 @@ u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
 static void recalc_pending_itrs()
 {
-	Sh4cntx.interrupt_pend=interrupt_vpend&interrupt_vmask&decoded_srimask;
+	Sh4cntx.interrupt_pend = interrupt_vpend & interrupt_vmask & decoded_srimask;
 }
 
 //Rebuild sorted interrupt id table (priorities were updated)
 void SIIDRebuild()
 {
-	u32 cnt=0;
-	u32 vpend=interrupt_vpend;
-	u32 vmask=interrupt_vmask;
-	interrupt_vpend=0;
-	interrupt_vmask=0x00000000;
+	int cnt = 0;
+	u32 vpend = interrupt_vpend;
+	u32 vmask = interrupt_vmask;
+	interrupt_vpend = 0;
+	interrupt_vmask = 0;
 	//rebuild interrupt table
-	for (u32 ilevel=0;ilevel<16;ilevel++)
+	for (int ilevel = 0; ilevel < 16; ilevel++)
 	{
-		for (u32 isrc=0;isrc<28;isrc++)
+		for (int isrc = 0; isrc < sh4_INT_ID_COUNT; isrc++)
 		{
-			if (InterruptSourceList[isrc].GetPrLvl()==ilevel)
+			if (InterruptSourceList[isrc].GetPrLvl() == ilevel)
 			{
-				InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
-				u32 p=InterruptBit[isrc]&vpend;
-				u32 m=InterruptBit[isrc]&vmask;
-				InterruptBit[isrc]=1<<cnt;
+				InterruptEnvId[cnt] = InterruptSourceList[isrc].IntEvnCode;
+				u32 p = InterruptBit[isrc] & vpend;
+				u32 m = InterruptBit[isrc] & vmask;
+				InterruptBit[isrc] = 1 << cnt;
 				if (p)
-					interrupt_vpend|=InterruptBit[isrc];
+					interrupt_vpend |= InterruptBit[isrc];
 				if (m)
-					interrupt_vmask|=InterruptBit[isrc];
+					interrupt_vmask |= InterruptBit[isrc];
 				cnt++;
 			}
 		}
-		InterruptLevelBit[ilevel]=(1<<cnt)-1;
+		InterruptLevelBit[ilevel] = (1 << cnt) - 1;
 	}
-
 	SRdecode();
 }
 
@@ -162,32 +162,27 @@ int UpdateINTC()
 
 void SetInterruptPend(InterruptID intr)
 {
-	u32 piid= intr & InterruptPIIDMask;
-	interrupt_vpend|=InterruptBit[piid];
+	interrupt_vpend |= InterruptBit[intr];
 	recalc_pending_itrs();
 }
 void ResetInterruptPend(InterruptID intr)
 {
-	u32 piid= intr & InterruptPIIDMask;
-	interrupt_vpend&=~InterruptBit[piid];
+	interrupt_vpend &= ~InterruptBit[intr];
 	recalc_pending_itrs();
 }
 
 void SetInterruptMask(InterruptID intr)
 {
-	u32 piid= intr & InterruptPIIDMask;
-	interrupt_vmask|=InterruptBit[piid];
+	interrupt_vmask |= InterruptBit[intr];
 	recalc_pending_itrs();
 }
 void ResetInterruptMask(InterruptID intr)
 {
-	u32 piid= intr & InterruptPIIDMask;
-	interrupt_vmask&=~InterruptBit[piid];
+	interrupt_vmask &= ~InterruptBit[intr];
 	recalc_pending_itrs();
 }
 
-
-static bool Do_Interrupt(u32 intEvn)
+static bool Do_Interrupt(Sh4ExceptionCode intEvn)
 {
 	CCN_INTEVT = intEvn;
 
@@ -204,8 +199,10 @@ static bool Do_Interrupt(u32 intEvn)
 	return true;
 }
 
-bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
+bool Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 {
+	assert((expEvn >= Sh4Ex_TlbMissRead && expEvn <= Sh4Ex_SlotIllegalInstr)
+			|| expEvn == Sh4Ex_FpuDisabled || expEvn == Sh4Ex_SlotFpuDisabled || expEvn == Sh4Ex_UserBreak);
 	if (sr.BL != 0)
 		throw FlycastException("Fatal: SH4 exception when blocked");
 	CCN_EXPEVT = expEvn;
@@ -218,10 +215,10 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 	sr.RB = 1;
 	UpdateSR();
 
-	next_pc = vbr + CallVect;
+	next_pc = vbr + (expEvn == Sh4Ex_TlbMissRead || expEvn == Sh4Ex_TlbMissWrite ? 0x400 : 0x100);
 	debugger::subroutineCall();
 
-	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
+	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);
 	return true;
 }
 
@@ -234,12 +231,12 @@ void interrupts_init()
 void interrupts_reset()
 {
 	//reset interrupts cache
-	interrupt_vpend=0x00000000;
-	interrupt_vmask=0xFFFFFFFF;
-	decoded_srimask=0;
+	interrupt_vpend = 0;
+	interrupt_vmask = 0xFFFFFFFF;
+	decoded_srimask = 0;
 
-	for (u32 i=0;i<28;i++)
-		InterruptBit[i]=1<<i;
+	for (u32 i = 0; i < sh4_INT_ID_COUNT; i++)
+		InterruptBit[i] = 1 << i;
 
 	//rebuild the interrupts table
 	SIIDRebuild();

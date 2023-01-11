@@ -937,10 +937,10 @@ sh4op(i1011_iiii_iiii_iiii)
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
-	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
-	debugger::debugTrap(0x160);
+	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
+	debugger::debugTrap(Sh4Ex_Trap);
 	CCN_TRA = (GetImm8(op) << 2);
-	Do_Exception(next_pc,0x160,0x100);
+	Do_Exception(next_pc, Sh4Ex_Trap);
 }
 
 //jmp @<REG_N>
@@ -2009,8 +2009,8 @@ sh4op(i0100_nnnn_0000_1110)
 sh4op(iNotImplemented)
 {
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
-	debugger::debugTrap(0x180);
-	SH4ThrownException ex { next_pc - 2, 0x180, 0x100 };
-	throw ex;
+	debugger::debugTrap(Sh4Ex_IllegalInstr);
+
+	throw SH4ThrownException(next_pc - 2, Sh4Ex_IllegalInstr);
 }
 

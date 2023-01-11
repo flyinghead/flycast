@@ -131,7 +131,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -147,7 +147,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -2165,8 +2165,7 @@ private:
 			Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
 			Mov(w0, block->vaddr);	// pc
-			Mov(w1, 0x800);			// event
-			Mov(w2, 0x100);			// vector
+			Mov(w1, Sh4Ex_FpuDisabled);// exception code
 			CallRuntime(Do_Exception);
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
 			GenBranch(arm64_no_update);

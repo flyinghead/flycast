@@ -78,14 +78,14 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 				}
 				else
 				{
-					Do_Exception(addr, 0xE0, 0x100);
+					Do_Exception(addr, Sh4Ex_AddressErrorRead);
 				}
 			}
 			break;
 #endif
 
 		default:
-			Do_Exception(addr, 0xE0, 0x100);
+			Do_Exception(addr, Sh4Ex_AddressErrorRead);
 			break;
 		}
 		addr = next_pc;

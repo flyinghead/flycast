@@ -1125,7 +1125,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -1141,7 +1141,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -2116,8 +2116,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 			ass.B(eq, &fpu_enabled);
 
 			ass.Mov(r0, block->vaddr);	// pc
-			ass.Mov(r1, 0x800);			// event
-			ass.Mov(r2, 0x100);			// vector
+			ass.Mov(r1, Sh4Ex_FpuDisabled);// exception code
 			call((void *)Do_Exception);
 			loadSh4Reg(r4, reg_nextpc);
 			jump(no_update);

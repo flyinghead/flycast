@@ -158,7 +158,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 	}
 	catch (const SH4ThrownException& ex) {
-		Do_Exception(rpc, ex.expEvn, ex.callVect);
+		Do_Exception(rpc, ex.expEvn);
 		return false;
 	}
 	SetProtectedFlags();
