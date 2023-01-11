@@ -37,9 +37,11 @@ namespace fc_profiler
 		{
 			std::unique_lock<std::recursive_mutex> lock(ProfileThread::s_allThreadsLock);
 
+			if (!ProfileScope::s_thread)
+				return;
 			ProfileThread& profileThread = *ProfileScope::s_thread;
 
-			std::chrono::steady_clock::time_point endTicks = std::chrono::high_resolution_clock::now();
+			std::chrono::high_resolution_clock::time_point endTicks = std::chrono::high_resolution_clock::now();
 			std::chrono::microseconds durationMicro = std::chrono::duration_cast<std::chrono::microseconds>(endTicks - profileThread.startTicks);
 			profileThread.cachedTime = (double)durationMicro.count() / 1000000;
 

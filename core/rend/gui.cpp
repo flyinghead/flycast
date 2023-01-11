@@ -1226,6 +1226,68 @@ static void contentpath_warning_popup()
     }
 }
 
+static inline void gui_debug_tab()
+{
+	if (ImGui::BeginTabItem("Debug"))
+	{
+		ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	    header("Logging");
+	    {
+	    	LogManager *logManager = LogManager::GetInstance();
+	    	for (LogTypes::LOG_TYPE type = LogTypes::AICA; type < LogTypes::NUMBER_OF_LOGS; type = (LogTypes::LOG_TYPE)(type + 1))
+	    	{
+				bool enabled = logManager->IsEnabled(type, logManager->GetLogLevel());
+				std::string name = std::string(logManager->GetShortName(type)) + " - " + logManager->GetFullName(type);
+				if (ImGui::Checkbox(name.c_str(), &enabled) && logManager->GetLogLevel() > LogTypes::LWARNING) {
+					logManager->SetEnable(type, enabled);
+					cfgSaveBool("log", logManager->GetShortName(type), enabled);
+				}
+	    	}
+	    	ImGui::Spacing();
+
+	    	static const char *levels[] = { "Notice", "Error", "Warning", "Info", "Debug" };
+	    	if (ImGui::BeginCombo("Log Verbosity", levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
+	    	{
+	    		for (size_t i = 0; i < ARRAY_SIZE(levels); i++)
+	    		{
+	    			bool is_selected = logManager->GetLogLevel() - 1 == (int)i;
+	    			if (ImGui::Selectable(levels[i], &is_selected)) {
+	    				logManager->SetLogLevel((LogTypes::LOG_LEVELS)(i + 1));
+						cfgSaveInt("log", "Verbosity", i + 1);
+	    			}
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
+	    		}
+	    		ImGui::EndCombo();
+	    	}
+	    }
+#if FC_PROFILER
+    	ImGui::Spacing();
+	    header("Profiling");
+	    {
+
+			OptionCheckbox("Enable", config::ProfilerEnabled, "Enable the profiler.");
+			if (!config::ProfilerEnabled)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+			OptionCheckbox("Display", config::ProfilerDrawToGUI, "Draw the profiler output in an overlay.");
+			OptionCheckbox("Output to terminal", config::ProfilerOutputTTY, "Write the profiler output to the terminal");
+			// TODO frame warning time
+			if (!config::ProfilerEnabled)
+			{
+		        ImGui::PopItemFlag();
+		        ImGui::PopStyleVar();
+			}
+	    }
+#endif
+		ImGui::PopStyleVar();
+		ImGui::EndTabItem();
+	}
+}
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -2222,6 +2284,11 @@ static void gui_display_settings()
 			}
 			#endif
 		}
+
+#if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
+		gui_debug_tab();
+#endif
+
 		if (ImGui::BeginTabItem("About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
