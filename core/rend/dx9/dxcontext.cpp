@@ -190,9 +190,9 @@ void DXContext::resetDevice()
 	overlay.term();
     ImGui_ImplDX9_InvalidateDeviceObjects();
     HRESULT hr = pDevice->Reset(&d3dpp);
-    if (hr == D3DERR_INVALIDCALL)
+    if (FAILED(hr))
     {
-        ERROR_LOG(RENDERER, "DX9 device reset failed");
+        ERROR_LOG(RENDERER, "DX9 device reset failed: %x", hr);
         deviceReady = false;
         return;
     }

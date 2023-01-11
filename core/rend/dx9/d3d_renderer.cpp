@@ -1102,9 +1102,12 @@ void D3DRenderer::resize(int w, int h)
 	height = h;
 	framebufferTexture.reset();
 	framebufferSurface.reset();
-	bool rc = SUCCEEDED(device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &framebufferTexture.get(), NULL));
-	verify(rc);
-	rc = SUCCEEDED(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
+	HRESULT hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &framebufferTexture.get(), NULL);
+	if (FAILED(hr)) {
+		ERROR_LOG(RENDERER, "Framebuffer texture creation failed: %x", hr);
+		die("Framebuffer texture creation failed");
+	}
+	bool rc = SUCCEEDED(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
 	verify(rc);
 	depthSurface.reset();
 	rc = SUCCEEDED(device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
