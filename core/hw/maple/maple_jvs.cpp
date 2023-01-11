@@ -417,7 +417,7 @@ protected:
 
 	virtual u8 process(u8 in) = 0;
 
-private:
+protected:
 	u8 out = 0;	// output from motor board
 };
 
@@ -433,7 +433,7 @@ public:
 protected:
 	u8 process(u8 in) override
 	{
-		u8 out;
+		u8 out = ~this->out;
 		if (in == 0xff)
 			out = 0;
 		else if ((in & 0xf) == 0xf)
@@ -451,10 +451,6 @@ protected:
 				out = 1 << (in - 7);
 			else
 				out = 1 << (7 - in);
-		}
-		else
-		{
-			out = 0xff;
 		}
 
 		return ~out;
