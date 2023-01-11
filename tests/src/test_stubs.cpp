@@ -37,6 +37,10 @@ void os_DoEvents()
 void os_CreateWindow()
 {
 }
+
+void os_RunInstance(int argc, const char *argv[])
+{
+}
 #endif
 
 #ifdef _WIN32
