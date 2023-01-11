@@ -87,11 +87,10 @@ static const InterptSourceList_Entry InterruptSourceList[sh4_INT_ID_COUNT] =
 	{ GIPA(2), Sh4Ex_REF_ROVI },		//sh4_REF_ROVI
 };
 
-
 //Maps siid -> EventID
-alignas(64) Sh4ExceptionCode InterruptEnvId[sh4_INT_ID_COUNT];
+alignas(64) Sh4ExceptionCode InterruptEnvId[32];
 //Maps piid -> 1<<siid
-alignas(64) u32 InterruptBit[sh4_INT_ID_COUNT];
+alignas(64) u32 InterruptBit[32];
 //Maps sh4 interrupt level to inclusive bitfield
 alignas(64) u32 InterruptLevelBit[16];
 

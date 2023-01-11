@@ -327,7 +327,7 @@ void Get_Sh4Recompiler(sh4_if* cpu);
 
 u32* GetRegPtr(u32 reg);
 
-enum Sh4ExceptionCode
+enum Sh4ExceptionCode : u16
 {
 	Sh4Ex_PowerOnReset = 0,
 	Sh4Ex_ManualReset = 0x20,

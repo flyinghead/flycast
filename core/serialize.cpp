@@ -76,7 +76,7 @@ extern std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 extern VArray2 mem_b;
 
 //./core/hw/sh4/sh4_interrupts.o
-alignas(64) extern u16 InterruptEnvId[32];
+alignas(64) extern Sh4ExceptionCode InterruptEnvId[32];
 alignas(64) extern u32 InterruptBit[32];
 alignas(64) extern u32 InterruptLevelBit[16];
 extern u32 interrupt_vpend; // Vector of pending interrupts
