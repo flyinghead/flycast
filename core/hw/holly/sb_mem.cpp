@@ -187,10 +187,10 @@ static void fixUpDCFlash()
 
 static bool nvmem_load()
 {
-	bool rc;
+	bool rc = true;
 	if (settings.platform.isConsole())
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
-	else
+	else if (!settings.naomi.slave)
 		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
 	if (!rc)
 		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
@@ -228,6 +228,8 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
+	if (settings.naomi.slave)
+		return;
 	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
@@ -369,10 +371,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-		{
-			INFO_LOG(MEMORY, "Read<%d> from G2 Ext area not implemented @ %08x", sz, addr);
-			return (T)0;
-		}
+			return (T)g2ext_readMem(addr, sz);
 		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
 		else
@@ -485,7 +484,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-			INFO_LOG(MEMORY, "Write<%d> to G2 Ext area not implemented @ %08x: %x", sz, addr, (u32)data);
+			g2ext_writeMem(addr, data, sz);
 		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
 		return;

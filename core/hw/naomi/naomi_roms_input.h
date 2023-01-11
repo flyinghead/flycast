@@ -361,32 +361,28 @@ static InputDescriptors marine_fishing_inputs = {
 
 static InputDescriptors f355_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "ASSIST SC" },
-			{ NAOMI_BTN1_KEY, "ASSIST TC" },
-			{ NAOMI_BTN2_KEY, "ASSIST ABS" },
-			{ NAOMI_BTN3_KEY, "ASSIST IBS", 0, NAOMI_BTN1_KEY },
-			{ NAOMI_BTN4_KEY, "WING SHIFT L", 0, NAOMI_DOWN_KEY },
-			{ NAOMI_BTN5_KEY, "WING SHIFT R", 0, NAOMI_UP_KEY },
+			{ NAOMI_UP_KEY, "ASSIST SC" },
+			{ NAOMI_DOWN_KEY, "ASSIST TC" },
+			{ NAOMI_LEFT_KEY, "ASSIST ABS" },
+			{ NAOMI_RIGHT_KEY, "ASSIST IBS" },
 
-			// Manual gearshift (Deluxe only)
-			//    L   R
-			//  U 1 3 5
-			//
-			//  D 2 4 6
-			{ NAOMI_UP_KEY, "SPEED SHIFT UP" },
-			{ NAOMI_DOWN_KEY, "SPEED SHIFT DOWN" },
-			{ NAOMI_LEFT_KEY, "SPEED SHIFT LEFT" },
-			{ NAOMI_RIGHT_KEY, "SPEED SHIFT RIGHT" },
+			{ NAOMI_BTN0_KEY, "WING SHIFT L", 0, NAOMI_BTN1_KEY },
+			{ NAOMI_BTN1_KEY, "WING SHIFT R", 0, NAOMI_BTN0_KEY },
+
+			// manual gear shift on P2 DPad
+			//   L   R
+			// U 2   1
+			//   4   3
+			// D 6   5
 
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
 	  {
+			{ "HANDLE", Full, 0 },
 			{ "ACCEL", Half, 4 },
 			{ "BRAKE", Half, 5 },
 			{ "CLUTCH", Full, 2 },	// Deluxe only
-			{ "unused", Full, 4 },
-			{ "HANDLE", Full, 0 },
 	  },
 };
 

@@ -105,17 +105,17 @@ void NaomiM3Comm::sendNetwork()
 
 u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 {
-	switch (address & 255)
+	switch (address)
 	{
-	case NAOMI_COMM2_CTRL_addr & 255:
+	case NAOMI_COMM2_CTRL_addr:
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL read");
 		return comm_ctrl;
 
-	case NAOMI_COMM2_OFFSET_addr & 255:
+	case NAOMI_COMM2_OFFSET_addr:
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET read");
 		return comm_offset;
 
-	case NAOMI_COMM2_DATA_addr & 255:
+	case NAOMI_COMM2_DATA_addr:
 	{
 		u16 value;
 		if (comm_ctrl & COMM_CTRL_CPU_RAM)
@@ -129,11 +129,11 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 		return value;
 	}
 
-	case NAOMI_COMM2_STATUS0_addr & 255:
+	case NAOMI_COMM2_STATUS0_addr:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 read %x", comm_status0);
 		return comm_status0;
 
-	case NAOMI_COMM2_STATUS1_addr & 255:
+	case NAOMI_COMM2_STATUS1_addr:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 read %x", comm_status1);
 		return comm_status1;
 
@@ -170,9 +170,9 @@ void NaomiM3Comm::connectedState()
 
 void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 {
-	switch (address & 255)
+	switch (address)
 	{
-	case NAOMI_COMM2_CTRL_addr & 255:
+	case NAOMI_COMM2_CTRL_addr:
 		// bit 0: access RAM is 0 - communication RAM / 1 - M68K RAM
 		// bit 1: comm RAM bank (seems R/O for SH4)
 		// bit 5: M68K Reset
@@ -192,12 +192,12 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL = %x", comm_ctrl);
 		return;
 
-	case NAOMI_COMM2_OFFSET_addr & 255:
+	case NAOMI_COMM2_OFFSET_addr:
 		comm_offset = (u16)data;
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET set to %x", comm_offset);
 		return;
 
-	case NAOMI_COMM2_DATA_addr & 255:
+	case NAOMI_COMM2_DATA_addr:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA written @ %04x %04x", comm_offset, (u16)data);
 		data = swap16(data);
 		if (comm_ctrl & COMM_CTRL_CPU_RAM)
@@ -207,12 +207,12 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 		comm_offset += 2;
 		return;
 
-	case NAOMI_COMM2_STATUS0_addr & 255:
+	case NAOMI_COMM2_STATUS0_addr:
 		comm_status0 = (u16)data;
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 set to %x", comm_status0);
 		return;
 
-	case NAOMI_COMM2_STATUS1_addr & 255:
+	case NAOMI_COMM2_STATUS1_addr:
 		comm_status1 = (u16)data;
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 set to %x", comm_status1);
 		return;

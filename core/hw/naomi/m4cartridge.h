@@ -33,7 +33,7 @@ public:
 
 		u32 data = NaomiCartridge::ReadMem(address, size);
 
-		if ((address & 0xff) == (NAOMI_ROM_OFFSETH_addr & 0xff))
+		if (address == NAOMI_ROM_OFFSETH_addr)
 			// indicates that security PIC is present
 			data |= 0x2000;
 

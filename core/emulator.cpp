@@ -345,6 +345,11 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::_18Wheeler;
 		}
+		else if (!strcmp("F355 CHALLENGE JAPAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::F355;
+		}
 		else if (!strcmp("INU NO OSANPO", naomi_game_id))	// Dog Walking
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
@@ -458,6 +463,10 @@ void Emulator::init()
 
 int getGamePlatform(const char *path)
 {
+	if (settings.naomi.slave)
+		// Multiboard slave
+		return DC_PLATFORM_NAOMI;
+
 	if (path == NULL)
 		// Dreamcast BIOS
 		return DC_PLATFORM_DREAMCAST;
@@ -547,13 +556,16 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
 		}
-		mcfg_DestroyDevices();
-		mcfg_CreateDevices();
-		if (settings.platform.isNaomi()) {
-			// Must be done after the maple devices are created and EEPROM is accessible
-			naomi_cart_ConfigureEEPROM();
-			// and reload settings so that eeprom-based settings can be overridden
-			loadGameSpecificSettings();
+		if (!settings.naomi.slave)
+		{
+			mcfg_DestroyDevices();
+			mcfg_CreateDevices();
+			if (settings.platform.isNaomi()) {
+				// Must be done after the maple devices are created and EEPROM is accessible
+				naomi_cart_ConfigureEEPROM();
+				// and reload settings so that eeprom-based settings can be overridden
+				loadGameSpecificSettings();
+			}
 		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
@@ -567,7 +579,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
-			else if (config::AutoLoadState && !NaomiNetworkSupported())
+			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
 		}
 		EventManager::event(Event::Start);
@@ -625,9 +637,13 @@ void Emulator::unloadGame()
 	stop();
 	if (state == Loaded || state == Error)
 	{
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty() && !settings.naomi.multiboard)
 			dc_savestate(config::SavestateSlot);
-		dc_reset(true);
+		try {
+			dc_reset(true);
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+		}
 
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
@@ -656,7 +672,8 @@ void Emulator::term()
 	}
 }
 
-void Emulator::stop() {
+void Emulator::stop()
+{
 	if (state != Running)
 		return;
 	state = Loaded;
@@ -780,7 +797,8 @@ void EventManager::registerEvent(Event event, Callback callback, void *param)
 		callbacks.insert({ event, { std::make_pair(callback, param) } });
 }
 
-void EventManager::unregisterEvent(Event event, Callback callback, void *param) {
+void EventManager::unregisterEvent(Event event, Callback callback, void *param)
+{
 	auto it = callbacks.find(event);
 	if (it == callbacks.end())
 		return;
@@ -792,7 +810,8 @@ void EventManager::unregisterEvent(Event event, Callback callback, void *param) 
 	it->second.erase(it2);
 }
 
-void EventManager::broadcastEvent(Event event) {
+void EventManager::broadcastEvent(Event event)
+{
 	auto it = callbacks.find(event);
 	if (it == callbacks.end())
 		return;

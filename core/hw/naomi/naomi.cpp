@@ -18,9 +18,8 @@
 #include "serialize.h"
 #include "network/output.h"
 
-//#define NAOMI_COMM
-
 static NaomiM3Comm m3comm;
+Multiboard *multiboard;
 
 static const u32 BoardID = 0x980055AA;
 static u32 GSerialBuffer, BSerialBuffer;
@@ -31,12 +30,6 @@ static int BControl, BCmd, BLastCmd;
 static int GControl, GCmd, GLastCmd;
 static int SerStep, SerStep2;
 
-#ifdef NAOMI_COMM
-	u32 CommOffset;
-	u32* CommSharedMem;
-	HANDLE CommMapFile=INVALID_HANDLE_VALUE;
-#endif
-
 /*
 El numero de serie solo puede contener:
 0-9		(0x30-0x39)
@@ -45,6 +38,7 @@ J-N		(0x4A-0x4E)
 P-Z		(0x50-0x5A)
 */
 static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+//static u8 BSerial[]="\x09\xa1                              0000000000000000\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; // default from mame
 static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 
 static u8 midiTxBuf[4];
@@ -278,11 +272,11 @@ static void NaomiGameIDProcessCmd()
 
 void NaomiGameIDWrite(const u16 Data)
 {
-	int Dat=Data&0x01;
-	int Clk=Data&0x02;
-	int Rst=Data&0x04;
-	int Sta=Data&0x08;
-	int Cmd=Data&0x10;
+	int Dat=Data&0x01;	// mame: SDA
+	int Clk=Data&0x02;	// mame: SCL
+	int Rst=Data&0x04;	// mame: CS
+	int Sta=Data&0x08;	// mame: RST
+	int Cmd=Data&0x10;	// mame: unused...
 	
 	if(Rst)
 	{
@@ -395,7 +389,7 @@ void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 
 u32 ReadMem_naomi(u32 address, u32 size)
 {
-	verify(size != 1);
+//	verify(size != 1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
@@ -432,7 +426,10 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 		return;
 	}
 	
-	if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
+	if (multiboard != nullptr && multiboard->dmaStart())
+	{
+	}
+	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
@@ -477,67 +474,15 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 
 void naomi_reg_Init()
 {
-	#ifdef NAOMI_COMM
-	CommMapFile = CreateFileMapping(
-		INVALID_HANDLE_VALUE,    // use paging file
-		NULL,                    // default security 
-		PAGE_READWRITE,          // read/write access
-		0,                       // max. object size 
-		0x1000*4,                // buffer size  
-		L"Global\\nullDC_103_naomi_comm");                 // name of mapping object
-
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not create file mapping object (%d).\nTrying to open existing one\n"), 	GetLastError());
-		
-		CommMapFile=OpenFileMapping(
-                   FILE_MAP_ALL_ACCESS,   // read/write access
-                   FALSE,                 // do not inherit the name
-                   L"Global\\nullDC_103_naomi_comm");               // name of mapping object 
-	}
-	
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not open existing file either\n"), 	GetLastError());
-		CommMapFile=INVALID_HANDLE_VALUE;
-	}
-	else
-	{
-		printf("NAOMI: Created \"Global\\nullDC_103_naomi_comm\"\n");
-		CommSharedMem = (u32*) MapViewOfFile(CommMapFile,   // handle to map object
-			FILE_MAP_ALL_ACCESS, // read/write permission
-			0,                   
-			0,                   
-			0x1000*4);           
-
-		if (CommSharedMem == NULL) 
-		{ 
-			_tprintf(TEXT("Could not map view of file (%d).\n"), 
-				GetLastError()); 
-
-			CloseHandle(CommMapFile);
-			CommMapFile=INVALID_HANDLE_VALUE;
-		}
-		else
-			printf("NAOMI: Mapped CommSharedMem\n");
-	}
-	#endif
 	NaomiInit();
 	networkOutput.init();
 }
 
 void naomi_reg_Term()
 {
-#ifdef NAOMI_COMM
-	if (CommSharedMem)
-	{
-		UnmapViewOfFile(CommSharedMem);
-	}
-	if (CommMapFile!=INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(CommMapFile);
-	}
-#endif
+	if (multiboard != nullptr)
+		delete multiboard;
+	multiboard = nullptr;
 	m3comm.closeNetwork();
 	networkOutput.term();
 }
@@ -573,7 +518,18 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
 	if (hard)
+	{
 		naomi_cart_Close();
+		if (multiboard != nullptr)
+		{
+			delete multiboard;
+			multiboard = nullptr;
+		}
+		if (settings.naomi.multiboard)
+			multiboard = new Multiboard();
+	}
+	else if (multiboard != nullptr)
+		multiboard->reset();
 }
 
 static u8 aw_maple_devs;

@@ -457,19 +457,73 @@ protected:
 	}
 };
 
+class jvs_837_13844_racing : public jvs_837_13844_motor_board
+{
+public:
+	jvs_837_13844_racing(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844_motor_board(node_id, parent, first_player)
+	{
+	}
+
+protected:
+	u8 process(u8 in) override
+	{
+		in = ~in;
+		// E0: stop motor
+		// E3: roll right
+		// EB: roll left
+
+		// Dn: set wheel high-order?
+		// Cn: set wheel low-order?
+		// 18 wheeler: ff, fe, 3f, 49, 67
+		//    d8, c0, e0, d0
+		//    4b, 4a, 9f, 4b, 4d, 4e, 4f, 45, 45, 4f, a3, 4d, ..., 9f, 4c,
+		u8 out = 0;
+		switch (in)
+		{
+		case 0xf0:
+			testMode = true;
+			break;
+
+		case 0xff:
+			testMode = false;
+			break;
+
+		case 0xf1:
+			out = 0x10;
+			break;
+
+		default:
+			break;
+		}
+		if (testMode)
+			out = in;
+
+		// reverse
+		out = (out & 0xF0) >> 4 | (out & 0x0F) << 4;
+		out = (out & 0xCC) >> 2 | (out & 0x33) << 2;
+		out = (out & 0xAA) >> 1 | (out & 0x55) << 1;
+
+		return out;
+	}
+
+private:
+	bool testMode = false;	// TODO serialize
+};
+
 // 18 Wheeler: fake the drive board and limit the wheel analog value
-class jvs_837_13844_18wheeler : public jvs_837_13844_motor_board
+class jvs_837_13844_18wheeler : public jvs_837_13844_racing
 {
 public:
 	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
-		: jvs_837_13844_motor_board(node_id, parent, first_player)
+		: jvs_837_13844_racing(node_id, parent, first_player)
 	{
 	}
 
 protected:
 	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
-		jvs_837_13844_motor_board::read_digital_in(buttons, v);
+		jvs_837_13844_racing::read_digital_in(buttons, v);
 		if (buttons[0] & NAOMI_BTN2_KEY)
 		{
 			gear = -1;
@@ -507,43 +561,14 @@ protected:
 
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override
 	{
-		u16 v = jvs_837_13844_motor_board::read_analog_axis(player_num, player_axis, inverted);
+		u16 v = jvs_837_13844_racing::read_analog_axis(player_num, player_axis, inverted);
 		if (player_axis == 0)
 			return std::min<u16>(0xefff, std::max<u16>(0x1000, v));
 		else
 			return v;
 	}
 
-	u8 process(u8 in) override
-	{
-		in = ~in;
-		switch (in)
-		{
-		case 0xf0:
-			testMode = true;
-			break;
-
-		case 0xff:
-			testMode = false;
-			break;
-
-		default:
-			break;
-		}
-		u8 out = 0;
-		if (testMode)
-			out = in;
-
-		// reverse
-		out = (out & 0xF0) >> 4 | (out & 0x0F) << 4;
-		out = (out & 0xCC) >> 2 | (out & 0x33) << 2;
-		out = (out & 0xAA) >> 1 | (out & 0x55) << 1;
-
-		return out;
-	}
-
 private:
-	bool testMode = false;	// TODO serialize
 	int gear = 0;	// 0: low, 1: high, -1: reverse
 	bool transitionWait = false;
 };
@@ -757,72 +782,78 @@ private:
 
 maple_naomi_jamma::maple_naomi_jamma()
 {
-	switch (settings.input.JammaSetup)
+	if (!settings.naomi.slave)
 	{
-	case JVS::Default:
-	default:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		break;
-	case JVS::FourPlayers:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551_4P>(new jvs_837_13551_4P(1, this)));
-		break;
-	case JVS::RotaryEncoders:
-		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this)));
-		break;
-	case JVS::OutTrigger:
-		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551_noanalog>(new jvs_837_13551_noanalog(2, this)));
-		break;
-	case JVS::SegaMarineFishing:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
-		break;
-	case JVS::DualIOBoards4P:
-		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		switch (settings.input.JammaSetup)
 		{
-			// reverse the board order so that P1 is P1
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
-		}
-		else
-		{
+		case JVS::Default:
+		default:
 			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+			break;
+		case JVS::FourPlayers:
+			io_boards.push_back(std::unique_ptr<jvs_837_13551_4P>(new jvs_837_13551_4P(1, this)));
+			break;
+		case JVS::RotaryEncoders:
+			io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this)));
+			break;
+		case JVS::OutTrigger:
+			io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_837_13551_noanalog>(new jvs_837_13551_noanalog(2, this)));
+			break;
+		case JVS::SegaMarineFishing:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
+			break;
+		case JVS::DualIOBoards4P:
+			if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+			{
+				// reverse the board order so that P1 is P1
+				io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
+				io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
+			}
+			else
+			{
+				io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+				io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
+			}
+			break;
+		case JVS::LightGun:
+			io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
+			break;
+		case JVS::LightGunAsAnalog:
+			// Regular board sending lightgun coords as axis 0/1
+			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+			io_boards.back()->lightgun_as_analog = true;
+			break;
+		case JVS::Mazan:
+			io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(1, this)));
+			io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(2, this)));
+			break;
+		case JVS::GunSurvivor:
+			io_boards.push_back(std::unique_ptr<jvs_namco_fca>(new jvs_namco_fca(1, this)));
+			break;
+		case JVS::DogWalking:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844_encoders>(new jvs_837_13844_encoders(1, this)));
+			break;
+		case JVS::TouchDeUno:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844_touch>(new jvs_837_13844_touch(1, this)));
+			break;
+		case JVS::WorldKicks:
+			io_boards.push_back(std::unique_ptr<jvs_namco_v226>(new jvs_namco_v226(1, this)));
+			break;
+		case JVS::WorldKicksPCB:
+			io_boards.push_back(std::unique_ptr<jvs_namco_v226_pcb>(new jvs_namco_v226_pcb(1, this)));
+			break;
+		case JVS::WaveRunnerGP:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
+			break;
+		case JVS::_18Wheeler:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844_18wheeler>(new jvs_837_13844_18wheeler(1, this)));
+			break;
+		case JVS::F355:
+			io_boards.push_back(std::unique_ptr<jvs_837_13844_racing>(new jvs_837_13844_racing(1, this)));
+			break;
 		}
-		break;
-	case JVS::LightGun:
-		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
-		break;
-	case JVS::LightGunAsAnalog:
-		// Regular board sending lightgun coords as axis 0/1
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		io_boards.back()->lightgun_as_analog = true;
-		break;
-	case JVS::Mazan:
-		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(2, this)));
-		break;
-	case JVS::GunSurvivor:
-		io_boards.push_back(std::unique_ptr<jvs_namco_fca>(new jvs_namco_fca(1, this)));
-		break;
-	case JVS::DogWalking:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_encoders>(new jvs_837_13844_encoders(1, this)));
-		break;
-	case JVS::TouchDeUno:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_touch>(new jvs_837_13844_touch(1, this)));
-		break;
-	case JVS::WorldKicks:
-		io_boards.push_back(std::unique_ptr<jvs_namco_v226>(new jvs_namco_v226(1, this)));
-		break;
-	case JVS::WorldKicksPCB:
-		io_boards.push_back(std::unique_ptr<jvs_namco_v226_pcb>(new jvs_namco_v226_pcb(1, this)));
-		break;
-	case JVS::WaveRunnerGP:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
-		break;
-	case JVS::_18Wheeler:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_18wheeler>(new jvs_837_13844_18wheeler(1, this)));
-		break;
 	}
 
 	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";

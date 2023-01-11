@@ -43,6 +43,8 @@ struct RomBootID
 	// Note: this structure is copied to system RAM by the BIOS at location 0c01f400
 };
 
+struct Game;
+
 class Cartridge
 {
 public:
@@ -66,6 +68,8 @@ public:
 	virtual void SetKey(u32 key) { }
 	virtual void SetKeyData(u8 *key_data) { }
 	virtual bool GetBootId(RomBootID *bootId) = 0;
+
+	const Game *game;
 
 protected:
 	u8* RomPtr;

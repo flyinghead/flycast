@@ -3243,3 +3243,5 @@ void gui_display_notification(const char *msg, int duration)
 	retromsg.frames = duration / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }
+
+void os_RunInstance(int argc, const char *argv[]) { }

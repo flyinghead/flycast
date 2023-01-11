@@ -13,6 +13,7 @@ void os_SetupInput();
 void os_TermInput();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
+void os_RunInstance(int argc, const char *argv[]);
 
 #ifdef _MSC_VER
 #include <intrin.h>

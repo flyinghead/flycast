@@ -448,7 +448,7 @@ void gui_plot_render_time(int width, int height)
 void gui_open_settings()
 {
 	std::lock_guard<std::mutex> lock(guiMutex);
-	if (gui_state == GuiState::Closed)
+	if (gui_state == GuiState::Closed && !settings.naomi.slave)
 	{
 		if (!ggpo::active())
 		{
@@ -515,7 +515,7 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
+    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online || settings.naomi.multiboard;
 	if (loadSaveStateDisabled)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -2235,6 +2235,11 @@ static void gui_display_settings()
 				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
+				ImGui::Text("Multiboard Screens:");
+				//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
+				OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
+				ImGui::SameLine();
+				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2797,7 +2802,7 @@ void gui_display_ui()
 		return;
 	if (gui_state == GuiState::Main)
 	{
-		if (!settings.content.path.empty())
+		if (!settings.content.path.empty() || settings.naomi.slave)
 		{
 #ifndef __ANDROID__
 			commandLineStart = true;

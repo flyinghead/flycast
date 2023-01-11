@@ -24,7 +24,7 @@
 #include "naomi_roms_eeprom.h"
 #include "naomi_roms_input.h"
 
-BIOS_t BIOS[] =
+const BIOS_t BIOS[] =
 {
 	{
 		"airlbios",
@@ -175,7 +175,7 @@ BIOS_t BIOS[] =
 	}
 };
 
-Game Games[] =
+const Game Games[] =
 {
     // Naomi M1 Roms
     // Giant Gram 2000 (JPN, USA, EXP, KOR, AUS)
@@ -825,7 +825,7 @@ Game Games[] =
         "Airline Pilots (World, Rev B)",
         0x0b000000,
         0x28070e41,
-        "naomi",
+        "airlbios",
         M2,
         ROT0,
         {
@@ -859,7 +859,7 @@ Game Games[] =
         "Airline Pilots (Japan, Rev A)",
         0x0b000000,
         0x28070e41,
-        "naomi",
+        "airlbios",
         M2,
         ROT0,
         {
@@ -1676,8 +1676,10 @@ Game Games[] =
 
             { NULL, 0, 0 },
         },
-		NULL,
-		&f355_inputs
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge (twin)
     {
@@ -1713,7 +1715,11 @@ Game Games[] =
             { "mpr-22846.ic20s", 0xa000000, 0x800000, 0xd4148f39 },
             { "mpr-22847.ic21s", 0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge (twin/deluxe, preview)
     {
@@ -1749,7 +1755,11 @@ Game Games[] =
             { "rom20.ic20s",     0xa000000, 0x800000, 0xd4148f39 },
             { "rom21.ic21s",     0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge 2 (twin)
     {
@@ -1786,7 +1796,11 @@ Game Games[] =
             { "mpr-23397.ic20s", 0xa000000, 0x800000 },
             { "mpr-23398.ic21s", 0xa800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
     {

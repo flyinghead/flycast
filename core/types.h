@@ -197,6 +197,7 @@ enum class JVS {
 	LightGunAsAnalog,
 	WaveRunnerGP,
 	_18Wheeler,
+	F355
 };
 
 enum class RenderType {
@@ -304,6 +305,13 @@ struct settings_t
 			u8 vmu[16];
 		} md5;
 	} network;
+
+	struct
+	{
+		bool multiboard;
+		bool slave;
+	} naomi;
+
 	bool disableRenderer;
 };
 

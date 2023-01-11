@@ -63,7 +63,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 		return false;
 	}
 
-	struct BIOS_t *bios = &BIOS[biosid];
+	const BIOS_t *bios = &BIOS[biosid];
 
 	std::string arch_name(filename);
 	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
@@ -164,7 +164,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	return found_region;
 }
 
-static Game *FindGame(const char *filename)
+static const Game *FindGame(const char *filename)
 {
 	std::string gameName = get_file_basename(filename);
 	size_t folder_pos = get_last_slash_pos(gameName);
@@ -180,7 +180,14 @@ static Game *FindGame(const char *filename)
 
 void naomi_cart_LoadBios(const char *filename)
 {
-	Game *game = FindGame(filename);
+	if (settings.naomi.slave)
+	{
+		if (!loadBios(filename, nullptr, nullptr, config::Region))
+			throw NaomiCartException(std::string("Error: cannot load BIOS ") + filename);
+		bios_loaded = true;
+		return;
+	}
+	const Game *game = FindGame(filename);
 	if (game == nullptr)
 		return;
 
@@ -211,7 +218,7 @@ void naomi_cart_LoadBios(const char *filename)
 
 static void loadMameRom(const char *filename, LoadProgress *progress)
 {
-	Game *game = FindGame(filename);
+	const Game *game = FindGame(filename);
 	if (game == NULL)
 		throw NaomiCartException("Unknown game");
 
@@ -268,6 +275,7 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 		}
 		CurrentCartridge->SetKey(game->key);
 		NaomiGameInputs = game->inputs;
+		CurrentCartridge->game = game;
 
 		MD5Sum md5;
 
@@ -565,6 +573,11 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 {
 	naomi_cart_Close();
 
+	if (settings.naomi.slave)
+	{
+		CurrentCartridge = new NaomiCartridge(0);
+		return;
+	}
 	std::string extension = get_file_extension(file);
 
 	if (extension == "zip" || extension == "7z")
@@ -625,22 +638,30 @@ void naomi_cart_Close()
 
 int naomi_cart_GetPlatform(const char *path)
 {
-	Game *game = FindGame(path);
-	if (game == NULL)
+	settings.naomi.multiboard = false;
+	const Game *game = FindGame(path);
+	if (game == nullptr)
 		return DC_PLATFORM_NAOMI;
 	else if (game->cart_type == AW)
 		return DC_PLATFORM_ATOMISWAVE;
 	else if (game->bios != nullptr && !strcmp("naomi2", game->bios))
 		return DC_PLATFORM_NAOMI2;
 	else
+	{
+#ifdef NAOMI_MULTIBOARD
+		if (game->multiboard > 0)
+			settings.naomi.multiboard = true;
+#endif
 		return DC_PLATFORM_NAOMI;
+	}
 }
 
 Cartridge::Cartridge(u32 size)
 {
 	RomPtr = (u8 *)malloc(size);
 	RomSize = size;
-	memset(RomPtr, 0xFF, RomSize);
+	if (size != 0)
+		memset(RomPtr, 0xFF, RomSize);
 }
 
 Cartridge::~Cartridge()
@@ -719,33 +740,33 @@ void* NaomiCartridge::GetDmaPtr(u32& size)
 
 u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 {
-	verify(size!=1);
+//	verify(size != 1); not true anymore with multiboard
 
-	switch(address & 255)
+	switch (address)
 	{
-	case 0x3c:	// 5f703c: DIMM COMMAND
+	case NAOMI_DIMM_COMMAND:
 		//DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
 		return 0xffff; //reg_dimm_command
-	case 0x40:	// 5f7040: DIMM OFFSETL
+	case NAOMI_DIMM_OFFSETL:
 		DEBUG_LOG(NAOMI, "DIMM OFFSETL read<%d>", size);
 		return reg_dimm_offsetl;
-	case 0x44:	// 5f7044: DIMM PARAMETERL
+	case NAOMI_DIMM_PARAMETERL:
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read<%d>", size);
 		return reg_dimm_parameterl;
-	case 0x48:	// 5f7048: DIMM PARAMETERH
+	case NAOMI_DIMM_PARAMETERH:
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read<%d>", size);
 		return reg_dimm_parameterh;
-	case 0x4c:	// 5f704c: DIMM STATUS
+	case NAOMI_DIMM_STATUS:
 		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>: %x", size, reg_dimm_status);
 		return reg_dimm_status;
 
-	case NAOMI_ROM_OFFSETH_addr&255:
-		return RomPioOffset>>16 | (RomPioAutoIncrement << 15);
+	case NAOMI_ROM_OFFSETH_addr:
+		return RomPioOffset >> 16 | (RomPioAutoIncrement << 15);
 
-	case NAOMI_ROM_OFFSETL_addr&255:
-		return RomPioOffset&0xFFFF;
+	case NAOMI_ROM_OFFSETL_addr:
+		return RomPioOffset & 0xFFFF;
 
-	case NAOMI_ROM_DATA_addr & 255:
+	case NAOMI_ROM_DATA_addr:
 		{
 			u32 rv = 0;
 			Read(RomPioOffset, 2, &rv);
@@ -755,51 +776,40 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 			return rv;
 		}
 
-	case NAOMI_DMA_COUNT_addr&255:
-		return (u16) DmaCount;
+	case NAOMI_DMA_COUNT_addr:
+		return (u16)DmaCount;
 
-	case NAOMI_BOARDID_READ_addr&255:
-		return NaomiGameIDRead()?0x8000:0x0000;
+	case NAOMI_BOARDID_READ_addr:
+		return NaomiGameIDRead() ? 0x8000 : 0x0000;
 
-		//What should i do to emulate 'nothing' ?
-	case NAOMI_COMM_OFFSET_addr&255:
-		#ifdef NAOMI_COMM
-		DEBUG_LOG(NAOMI, "naomi COMM offs READ: %X, %d", address, size);
-		return CommOffset;
-		#endif
-	case NAOMI_COMM_DATA_addr&255:
-		#ifdef NAOMI_COMM
-		DEBUG_LOG(NAOMI, "naomi COMM data read: %X, %d", CommOffset, size);
-		if (CommSharedMem)
-		{
-			return CommSharedMem[CommOffset&0xF];
-		}
-		#endif
-		return 1;
+	case NAOMI_DMA_OFFSETH_addr:
+		return DmaOffset >> 16;
+	case NAOMI_DMA_OFFSETL_addr:
+		return DmaOffset & 0xFFFF;
 
-
-	case NAOMI_DMA_OFFSETH_addr&255:
-		return DmaOffset>>16;
-	case NAOMI_DMA_OFFSETL_addr&255:
-		return DmaOffset&0xFFFF;
-
-	case NAOMI_BOARDID_WRITE_addr&255:
+	case NAOMI_BOARDID_WRITE_addr:
 		DEBUG_LOG(NAOMI, "naomi ReadBoardId: %X, %d", address, size);
 		return 1;
 
 	default:
 		break;
 	}
-	DEBUG_LOG(NAOMI, "naomi?WTF? ReadMem: %X, %d", address, size);
+	if (multiboard != nullptr)
+		return multiboard->readG1(address, size);
 
-	return 0xFFFF;
+	if (address == NAOMI_MBOARD_DATA_addr || address == NAOMI_MBOARD_OFFSET_addr)
+		return 1;
+	else {
+		DEBUG_LOG(NAOMI, "naomiCart::ReadMem<%d> unknown: %08x", size, address);
+		return 0xFFFF;
+	}
 }
 
 void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 {
-	switch(address & 255)
+	switch (address)
 	{
-	case 0x3c:	// 5f703c: DIMM COMMAND
+	case NAOMI_DIMM_COMMAND:
 		 if (0x1E03 == data)
 		 {
 			 /*
@@ -811,20 +821,20 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		 DEBUG_LOG(NAOMI, "DIMM COMMAND Write<%d>: %x", size, data);
 		 return;
 
-	case 0x40:	// 5f7040: DIMM OFFSETL
+	case NAOMI_DIMM_OFFSETL:
 		reg_dimm_offsetl = data;
 		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write<%d>: %x", size, data);
 		return;
-	case 0x44:	// 5f7044: DIMM PARAMETERL
+	case NAOMI_DIMM_PARAMETERL:
 		reg_dimm_parameterl = data;
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write<%d>: %x", size, data);
 		return;
-	case 0x48:	// 5f7048: DIMM PARAMETERH
+	case NAOMI_DIMM_PARAMETERH:
 		reg_dimm_parameterh = data;
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write<%d>: %x", size, data);
 		return;
 
-	case 0x4C:	// 5f704c: DIMM STATUS
+	case NAOMI_DIMM_STATUS:
 		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
 		if (data&0x100)
 		{
@@ -841,76 +851,63 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		return;
 
 		//These are known to be valid on normal ROMs and DIMM board
-	case NAOMI_ROM_OFFSETH_addr&255:
+	case NAOMI_ROM_OFFSETH_addr:
 		RomPioAutoIncrement = (data & 0x8000) != 0;
-		RomPioOffset&=0x0000ffff;
-		RomPioOffset|=(data<<16)&0x7fff0000;
+		RomPioOffset &= 0x0000ffff;
+		RomPioOffset |= (data << 16) & 0x7fff0000;
 		PioOffsetChanged(RomPioOffset);
 		return;
 
-	case NAOMI_ROM_OFFSETL_addr&255:
-		RomPioOffset&=0xffff0000;
-		RomPioOffset|=data;
+	case NAOMI_ROM_OFFSETL_addr:
+		RomPioOffset &= 0xffff0000;
+		RomPioOffset |= data;
 		PioOffsetChanged(RomPioOffset);
 		return;
 
-	case NAOMI_ROM_DATA_addr&255:
+	case NAOMI_ROM_DATA_addr:
 		Write(RomPioOffset, size, data);
 		if (RomPioAutoIncrement)
 			RomPioOffset += 2;
 
 		return;
 
-	case NAOMI_DMA_OFFSETH_addr&255:
-		DmaOffset&=0x0000ffff;
-		DmaOffset|=(data&0x7fff)<<16;
+	case NAOMI_DMA_OFFSETH_addr:
+		DmaOffset &= 0x0000ffff;
+		DmaOffset |= (data & 0x7fff) << 16;
 		DmaOffsetChanged(DmaOffset);
 		return;
 
-	case NAOMI_DMA_OFFSETL_addr&255:
-		DmaOffset&=0xffff0000;
-		DmaOffset|=data;
+	case NAOMI_DMA_OFFSETL_addr:
+		DmaOffset &= 0xffff0000;
+		DmaOffset |= data;
 		DmaOffsetChanged(DmaOffset);
 		return;
 
-	case NAOMI_DMA_COUNT_addr&255:
-		{
-			DmaCount=data;
-		}
+	case NAOMI_DMA_COUNT_addr:
+		DmaCount = data;
 		return;
-	case NAOMI_BOARDID_WRITE_addr&255:
+
+	case NAOMI_BOARDID_WRITE_addr:
 		NaomiGameIDWrite((u16)data);
 		return;
 
-		//What should i do to emulate 'nothing' ?
-	case NAOMI_COMM_OFFSET_addr&255:
-#ifdef NAOMI_COMM
-		DEBUG_LOG(NAOMI, "naomi COMM ofset Write: %X <= %X, %d", address, data, size);
-		CommOffset=data&0xFFFF;
-#endif
-		return;
-
-	case NAOMI_COMM_DATA_addr&255:
-		#ifdef NAOMI_COMM
-		DEBUG_LOG(NAOMI, "naomi COMM data Write: %X <= %X, %d", CommOffset, data, size);
-		if (CommSharedMem)
-		{
-			CommSharedMem[CommOffset&0xF]=data;
-		}
-		#endif
-		return;
-
 		//This should be valid
-	case NAOMI_BOARDID_READ_addr&255:
+	case NAOMI_BOARDID_READ_addr:
 		DEBUG_LOG(NAOMI, "naomi WriteMem: %X <= %X, %d", address, data, size);
 		return;
 
-	case NAOMI_LED_addr & 0xff:
+	case NAOMI_LED_addr:
+		DEBUG_LOG(NAOMI, "LED %d %d %d %d %d %d %d %d", (data >> 7) & 1, (data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1,
+				(data >> 3) & 1, (data >> 2) & 1, (data >> 1) & 1, data & 1);
 		return;
 
-	default: break;
+	default:
+		break;
 	}
-	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
+	if (multiboard != nullptr)
+		multiboard->writeG1(address, size, data);
+	else
+		DEBUG_LOG(NAOMI, "naomiCart::WriteMem<%d>: unknown %08x <= %x", size, address, data);
 }
 
 void NaomiCartridge::Serialize(Serializer& ser) const

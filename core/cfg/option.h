@@ -507,6 +507,7 @@ extern Option<bool> GGPOChat;
 extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
+extern Option<int> MultiboardSlaves;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

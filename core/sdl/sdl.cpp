@@ -651,13 +651,16 @@ void sdl_window_create()
 void sdl_window_destroy()
 {
 #ifndef __SWITCH__
-	get_window_state();
-	cfgSaveInt("window", "left", windowPos.x);
-	cfgSaveInt("window", "top", windowPos.y);
-	cfgSaveInt("window", "width", windowPos.w);
-	cfgSaveInt("window", "height", windowPos.h);
-	cfgSaveBool("window", "maximized", window_maximized);
-	cfgSaveBool("window", "fullscreen", window_fullscreen);
+	if (!settings.naomi.slave)
+	{
+		get_window_state();
+		cfgSaveInt("window", "left", windowPos.x);
+		cfgSaveInt("window", "top", windowPos.y);
+		cfgSaveInt("window", "width", windowPos.w);
+		cfgSaveInt("window", "height", windowPos.h);
+		cfgSaveBool("window", "maximized", window_maximized);
+		cfgSaveBool("window", "fullscreen", window_fullscreen);
+	}
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);

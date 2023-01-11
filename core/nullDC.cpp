@@ -31,6 +31,12 @@ int flycast_init(int argc, char* argv[])
 	{
         return 69;
 	}
+	if (cfgLoadInt("naomi", "BoardId", 0) != 0)
+	{
+		settings.naomi.multiboard = true;
+		settings.naomi.slave = true;
+	}
+
 	config::Settings::instance().reset();
 	LogManager::Shutdown();
 	if (!cfgOpen())

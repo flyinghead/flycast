@@ -370,6 +370,16 @@ void SetNaomiNetworkConfig(int node)
 	{
 		configure_maxspeed_flash(node != -1, node == 0);
 	}
+	else if (!strcmp("F355 CHALLENGE JAPAN", naomi_game_id))
+	{
+		// FIXME need default flash
+		write_naomi_flash(0x230, node == -1 ? 0 : node == 0 ? 1 : 2);
+		if (node != -1)
+			// car number (0 to 7)
+			write_naomi_flash(0x231, node);
+		// 0x233: cabinet type (0 deluxe, 1 twin)
+		write_naomi_flash(0x233, config::MultiboardSlaves >= 2 ? 0 : 1);
+	}
 }
 
 bool NaomiNetworkSupported()
@@ -378,6 +388,7 @@ bool NaomiNetworkSupported()
 		"ALIEN FRONT", "MOBILE SUIT GUNDAM JAPAN", "MOBILE SUIT GUNDAM DELUXE JAPAN", " BIOHAZARD  GUN SURVIVOR2",
 		"HEAVY METAL JAPAN", "OUTTRIGGER     JAPAN", "SLASHOUT JAPAN VERSION", "SPAWN JAPAN",
 		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS",
+		"F355 CHALLENGE JAPAN",
 		// Naomi 2
 		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66"
 	};

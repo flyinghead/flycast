@@ -963,3 +963,31 @@ void os_DoEvents()
 	}
 #endif
 }
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	char exePath[MAX_PATH];
+	GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+	std::string cmdLine(exePath);
+	for (int i = 0; i < argc; i++)
+	{
+		cmdLine += ' ';
+		cmdLine += argv[i];
+	}
+
+	STARTUPINFO startupInfo{};
+	startupInfo.cb = sizeof(STARTUPINFO);
+
+	PROCESS_INFORMATION processInfo{};
+	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
+	if (rc)
+	{
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+	}
+	else
+	{
+		WARN_LOG(BOOT, "Cannot launch Flycast instance: error %d", GetLastError());
+	}
+}
