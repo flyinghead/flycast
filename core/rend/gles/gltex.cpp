@@ -424,13 +424,13 @@ GLuint init_output_framebuffer(int width, int height)
 GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, GLuint texture)
 	: width(width), height(height), texture(texture)
 {
-	if (texture == 0)
+	if (this->texture == 0)
 	{
 		if (gl.gl_major < 3)
 		{
 			// Create a texture for rendering to
-			texture = glcache.GenTexture();
-			glcache.BindTexture(GL_TEXTURE_2D, texture);
+			this->texture = glcache.GenTexture();
+			glcache.BindTexture(GL_TEXTURE_2D, this->texture);
 
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

@@ -698,13 +698,30 @@ void writeFramebufferToVRAM()
 		if (gl.fbscaling.framebuffer == nullptr)
 			gl.fbscaling.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(scaledW, scaledH));
 
-		gl.ofbo.framebuffer->bind(GL_READ_FRAMEBUFFER);
-		gl.fbscaling.framebuffer->bind(GL_DRAW_FRAMEBUFFER);
-		glcache.Disable(GL_SCISSOR_TEST);
-		glBlitFramebuffer(0, 0, width, height,
-				0, 0, scaledW, scaledH,
-				GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		gl.fbscaling.framebuffer->bind();
+		if (gl.gl_major < 3)
+		{
+			gl.fbscaling.framebuffer->bind();
+			glViewport(0, 0, scaledW, scaledH);
+			glcache.Disable(GL_SCISSOR_TEST);
+			glcache.ClearColor(1.f, 0.f, 0.f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.framebuffer->getTexture());
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			drawQuad(gl.ofbo.framebuffer->getTexture(), false);
+		}
+		else
+		{
+#ifndef GLES2
+			gl.ofbo.framebuffer->bind(GL_READ_FRAMEBUFFER);
+			gl.fbscaling.framebuffer->bind(GL_DRAW_FRAMEBUFFER);
+			glcache.Disable(GL_SCISSOR_TEST);
+			glBlitFramebuffer(0, 0, width, height,
+					0, 0, scaledW, scaledH,
+					GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			gl.fbscaling.framebuffer->bind();
+#endif
+		}
 
 		width = scaledW;
 		height = scaledH;
