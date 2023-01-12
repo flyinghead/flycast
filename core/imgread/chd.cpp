@@ -213,6 +213,8 @@ void CHDDisc::tryOpen(const char* file)
 	}
 	else
 	{
+		if (tracks.empty())
+			throw FlycastException("Invalid CHD: no track found");
 		type = CdRom_XA;
 
 		Session ses;
@@ -231,7 +233,7 @@ void CHDDisc::tryOpen(const char* file)
 		DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
 
 		EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
-}
+	}
 }
 
 
