@@ -57,6 +57,6 @@ private:
 	std::mutex mutex;
 	std::deque<std::string> lines;
 
-	static constexpr int MaxLines = 10;
+	static constexpr int MaxLines = 20;
 	static InMemoryListener *instance;
 };
