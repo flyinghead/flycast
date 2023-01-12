@@ -625,7 +625,7 @@ void setAVInfo(retro_system_av_info& avinfo)
 
 void retro_resize_renderer(int w, int h, float aspectRatio)
 {
-	if (w == framebufferWidth && h == framebufferHeight)
+	if (w == framebufferWidth && h == framebufferHeight && aspectRatio == framebufferAspectRatio)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
@@ -634,9 +634,7 @@ void retro_resize_renderer(int w, int h, float aspectRatio)
 	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
 	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
 
-	if (avinfoNeeded
-			// TODO crash with dx11
-			&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
+	if (avinfoNeeded)
 	{
 		retro_system_av_info avinfo;
 		setAVInfo(avinfo);
