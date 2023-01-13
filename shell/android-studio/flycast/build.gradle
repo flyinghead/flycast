@@ -17,11 +17,13 @@ def getSentryUrl = { ->
 }
 
 android {
+    namespace 'com.reicast.emulator'
     compileSdk 29
 
     defaultConfig {
         applicationId "com.flycast.emulator"
         minSdk 16
+        //noinspection ExpiredTargetSdkVersion
         targetSdk 29
         versionCode 8
         versionName getVersionName()
@@ -67,7 +69,9 @@ android {
     }
 
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES']
+        }
     }
 }
 
