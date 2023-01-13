@@ -499,12 +499,15 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 	}
 
 	INFO_LOG(NAOMI, "+%zd romfiles, %.2f MB set address space", files.size(), romSize / 1024.f / 1024.f);
+	if (romSize == 0)
+		throw FlycastException("Invalid empty ROM");
 
 	MD5Sum md5;
 
 	// Allocate space for the rom
 	u8 *romBase = (u8 *)malloc(romSize);
-	verify(romBase != nullptr);
+	if (romBase == nullptr)
+		throw FlycastException("Out of memory");
 
 	bool load_error = false;
 
