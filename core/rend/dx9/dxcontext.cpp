@@ -38,8 +38,10 @@ bool DXContext::init(bool keepCurrentWindow)
 #endif
 
 	pD3D.reset(Direct3DCreate9(D3D_SDK_VERSION));
-	if (!pD3D)
+	if (!pD3D) {
+		ERROR_LOG(RENDERER, "Direct3DCreate9 failed");
 		return false;
+	}
 	memset(&d3dpp, 0, sizeof(d3dpp));
 	d3dpp.hDeviceWindow = (HWND)window;
 	d3dpp.Windowed = true;
@@ -71,9 +73,13 @@ bool DXContext::init(bool keepCurrentWindow)
 		d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	// TODO should be 0 in windowed mode
 	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
-	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
-			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
+	HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
+			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get());
+	if (FAILED(hr))
+	{
+		ERROR_LOG(RENDERER, "DirectX9 device creation failed: %x", hr);
 	    return false;
+	}
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver(pDevice));
 	overlay.init(pDevice);
 
@@ -101,6 +107,15 @@ void DXContext::Present()
 {
 	if (!frameRendered)
 		return;
+	if (!pDevice)
+	{
+		if (init(true))
+		{
+			renderer = new D3DRenderer();
+			rend_init_renderer();
+		}
+		return;
+	}
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST)
@@ -122,13 +137,17 @@ void DXContext::Present()
 			{
 				renderer->Term();
 				delete renderer;
+				renderer = nullptr;
 			}
 			term();
-			init(true);
-			if (renderer != nullptr)
+			if (init(true))
 			{
 				renderer = new D3DRenderer();
-				renderer->Init();
+				rend_init_renderer();
+			}
+			else
+			{
+				deviceReady = false;
 			}
 		}
 	}
