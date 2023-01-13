@@ -148,7 +148,10 @@ extern "C" {
 #define OPTION_VAL_4GB_AR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_AR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_AR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_AR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_AR NULL
@@ -167,7 +170,7 @@ extern "C" {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AR NULL
-#define OPTION_VAL_2_O24_AR NULL
+#define OPTION_VAL_2_O25_AR NULL
 #define OPTION_VAL_4_AR NULL
 #define OPTION_VAL_6_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AR NULL
@@ -587,11 +590,25 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AR,
       NULL,
       "video",
       {
@@ -727,7 +744,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_AR },
+         { "2",  OPTION_VAL_2_O25_AR },
          { "4",  OPTION_VAL_4_AR },
          { "6",  OPTION_VAL_6_AR },
          { NULL, NULL },
@@ -1120,7 +1137,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O24_AR },
+         { "2x", OPTION_VAL_2_O25_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1271,7 +1288,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O24_AR },
+         { "2x", OPTION_VAL_2_O25_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1422,7 +1439,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O24_AR },
+         { "2x", OPTION_VAL_2_O25_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1573,7 +1590,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O24_AR },
+         { "2x", OPTION_VAL_2_O25_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1785,7 +1802,10 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_4GB_AST NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_AST NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AST NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AST NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AST NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AST NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_AST NULL
 #define CORE_OPTION_NAME_FOG_LABEL_AST "Efeutos de nublina"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_AST "Modificador del volume"
@@ -1804,7 +1824,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_O24_AST "x2"
+#define OPTION_VAL_2_O25_AST "x2"
 #define OPTION_VAL_4_AST "x4"
 #define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
@@ -2224,11 +2244,25 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AST,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AST,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AST,
       NULL,
       "video",
       {
@@ -2364,7 +2398,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_AST },
+         { "2",  OPTION_VAL_2_O25_AST },
          { "4",  OPTION_VAL_4_AST },
          { "6",  OPTION_VAL_6_AST },
          { NULL, NULL },
@@ -2757,7 +2791,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O24_AST },
+         { "2x", OPTION_VAL_2_O25_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -2908,7 +2942,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O24_AST },
+         { "2x", OPTION_VAL_2_O25_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3059,7 +3093,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O24_AST },
+         { "2x", OPTION_VAL_2_O25_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3210,7 +3244,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O24_AST },
+         { "2x", OPTION_VAL_2_O25_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3422,7 +3456,10 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_4GB_CA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CA NULL
@@ -3441,7 +3478,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CA NULL
-#define OPTION_VAL_2_O24_CA NULL
+#define OPTION_VAL_2_O25_CA NULL
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA NULL
@@ -3861,11 +3898,25 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA,
       NULL,
       "video",
       {
@@ -4001,7 +4052,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_CA },
+         { "2",  OPTION_VAL_2_O25_CA },
          { "4",  OPTION_VAL_4_CA },
          { "6",  OPTION_VAL_6_CA },
          { NULL, NULL },
@@ -4394,7 +4445,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O24_CA },
+         { "2x", OPTION_VAL_2_O25_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4545,7 +4596,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O24_CA },
+         { "2x", OPTION_VAL_2_O25_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4696,7 +4747,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O24_CA },
+         { "2x", OPTION_VAL_2_O25_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4847,7 +4898,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O24_CA },
+         { "2x", OPTION_VAL_2_O25_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -5059,7 +5110,10 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_4GB_CHS NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHS NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CHS NULL
@@ -5078,7 +5132,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHS NULL
-#define OPTION_VAL_2_O24_CHS "2 倍"
+#define OPTION_VAL_2_O25_CHS "2 倍"
 #define OPTION_VAL_4_CHS "4 倍"
 #define OPTION_VAL_6_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHS NULL
@@ -5498,11 +5552,25 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHS,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHS,
       NULL,
       "video",
       {
@@ -5638,7 +5706,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_CHS },
+         { "2",  OPTION_VAL_2_O25_CHS },
          { "4",  OPTION_VAL_4_CHS },
          { "6",  OPTION_VAL_6_CHS },
          { NULL, NULL },
@@ -6031,7 +6099,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O24_CHS },
+         { "2x", OPTION_VAL_2_O25_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6182,7 +6250,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O24_CHS },
+         { "2x", OPTION_VAL_2_O25_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6333,7 +6401,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O24_CHS },
+         { "2x", OPTION_VAL_2_O25_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6484,7 +6552,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O24_CHS },
+         { "2x", OPTION_VAL_2_O25_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6696,7 +6764,10 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_4GB_CHT NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHT NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CHT NULL
@@ -6715,7 +6786,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O24_CHT "2倍"
+#define OPTION_VAL_2_O25_CHT "2倍"
 #define OPTION_VAL_4_CHT "4倍"
 #define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
@@ -7135,11 +7206,25 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHT,
       NULL,
       "video",
       {
@@ -7275,7 +7360,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_CHT },
+         { "2",  OPTION_VAL_2_O25_CHT },
          { "4",  OPTION_VAL_4_CHT },
          { "6",  OPTION_VAL_6_CHT },
          { NULL, NULL },
@@ -7668,7 +7753,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O24_CHT },
+         { "2x", OPTION_VAL_2_O25_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7819,7 +7904,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O24_CHT },
+         { "2x", OPTION_VAL_2_O25_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7970,7 +8055,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O24_CHT },
+         { "2x", OPTION_VAL_2_O25_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -8121,7 +8206,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O24_CHT },
+         { "2x", OPTION_VAL_2_O25_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -8333,7 +8418,10 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_4GB_CS NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS "Maximální počet průhledných vrstev"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS "U složitých scén mohou být nutné vyšší hodnoty."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS "Povolení Vyrovnávací Paměti RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS "Mipmapování"
 #define CORE_OPTION_NAME_FOG_LABEL_CS "Efekty Mlhy"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS "Modifikátor Hlasitosti"
@@ -8352,7 +8440,7 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CS "Následné zpracování vykresleného obrazu pro simulaci efektů specifických pro grafický procesor PowerVR2 a analogové video signály."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS "Vylepšení Textur (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CS "Vylepšete ručně kreslenou 2D pixelovou grafiku. Mělo by se používat pouze ve 2D pixelových hrách."
-#define OPTION_VAL_2_O24_CS NULL
+#define OPTION_VAL_2_O25_CS NULL
 #define OPTION_VAL_4_CS NULL
 #define OPTION_VAL_6_CS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS "Zvýšení Rozlišení Textur Max. Filtrovaná Velikost"
@@ -8772,11 +8860,25 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS,
       NULL,
       "video",
       {
@@ -8912,7 +9014,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_CS },
+         { "2",  OPTION_VAL_2_O25_CS },
          { "4",  OPTION_VAL_4_CS },
          { "6",  OPTION_VAL_6_CS },
          { NULL, NULL },
@@ -9305,7 +9407,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O24_CS },
+         { "2x", OPTION_VAL_2_O25_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9456,7 +9558,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O24_CS },
+         { "2x", OPTION_VAL_2_O25_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9607,7 +9709,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O24_CS },
+         { "2x", OPTION_VAL_2_O25_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9758,7 +9860,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O24_CS },
+         { "2x", OPTION_VAL_2_O25_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9970,7 +10072,10 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_4GB_CY NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CY NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CY NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CY NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CY NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CY NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CY NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CY NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CY NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CY NULL
@@ -9989,7 +10094,7 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CY NULL
-#define OPTION_VAL_2_O24_CY NULL
+#define OPTION_VAL_2_O25_CY NULL
 #define OPTION_VAL_4_CY NULL
 #define OPTION_VAL_6_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CY NULL
@@ -10409,11 +10514,25 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CY,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CY,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CY,
       NULL,
       "video",
       {
@@ -10549,7 +10668,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_CY },
+         { "2",  OPTION_VAL_2_O25_CY },
          { "4",  OPTION_VAL_4_CY },
          { "6",  OPTION_VAL_6_CY },
          { NULL, NULL },
@@ -10942,7 +11061,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O24_CY },
+         { "2x", OPTION_VAL_2_O25_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11093,7 +11212,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O24_CY },
+         { "2x", OPTION_VAL_2_O25_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11244,7 +11363,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O24_CY },
+         { "2x", OPTION_VAL_2_O25_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11395,7 +11514,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O24_CY },
+         { "2x", OPTION_VAL_2_O25_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11607,7 +11726,10 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_4GB_DA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_DA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_DA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_DA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_DA NULL
@@ -11626,7 +11748,7 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DA NULL
-#define OPTION_VAL_2_O24_DA NULL
+#define OPTION_VAL_2_O25_DA NULL
 #define OPTION_VAL_4_DA NULL
 #define OPTION_VAL_6_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DA NULL
@@ -12046,11 +12168,25 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DA,
       NULL,
       "video",
       {
@@ -12186,7 +12322,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_DA },
+         { "2",  OPTION_VAL_2_O25_DA },
          { "4",  OPTION_VAL_4_DA },
          { "6",  OPTION_VAL_6_DA },
          { NULL, NULL },
@@ -12579,7 +12715,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O24_DA },
+         { "2x", OPTION_VAL_2_O25_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12730,7 +12866,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O24_DA },
+         { "2x", OPTION_VAL_2_O25_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12881,7 +13017,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O24_DA },
+         { "2x", OPTION_VAL_2_O25_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -13032,7 +13168,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O24_DA },
+         { "2x", OPTION_VAL_2_O25_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -13244,7 +13380,10 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_4GB_DE "4 GB"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_DE "Maximale transparente Ebenen"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DE "Höhere Werte könnten erforderlich sein für komplexe Szenen."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DE "Vollständige Bildspeicheremulation"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DE "Vollständige Bildspeicheremulation in VRAM aktivieren. Dies ist für Spiele nützlich, die den Bildspeicher direkt in VRAM lesen oder schreiben. Wenn aktiviert, wird die interne Auflösung auf 640×480 erzwungen und die Leistung kann stark beeinträchtigt werden."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DE "RTT-Puffer (Render-To-Texture) erlauben"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DE "Kopiert gerenderte Texturen von der GPU in VRAM zurück. Diese Option ist normalerweise für Spiele aktiviert, die dies erfordern. Wenn aktiviert, ist das Hochskalieren von Texturen deaktiviert und die Leistung kann beeinträchtigt werden."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_DE NULL
 #define CORE_OPTION_NAME_FOG_LABEL_DE "Nebeleffekte"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_DE "Volumen-Modifizierer"
@@ -13263,7 +13402,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DE "Nachbearbeitung des gerenderten Bildes zur Simulation von Effekten speziell für PowerVR2 GPU und analoge Videosignale."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE "Texturen hochskalieren (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DE "Erweitert handgezeichnete 2D Pixel Kunstgrafiken. Darf nur mit 2D verpixelten Spielen verwendet werden."
-#define OPTION_VAL_2_O24_DE NULL
+#define OPTION_VAL_2_O25_DE "2×"
 #define OPTION_VAL_4_DE NULL
 #define OPTION_VAL_6_DE "6 x"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DE "Textur-Hochskalierung Max. Gefilterte Größe"
@@ -13683,11 +13822,25 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DE,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DE,
       NULL,
       "video",
       {
@@ -13823,7 +13976,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_DE },
+         { "2",  OPTION_VAL_2_O25_DE },
          { "4",  OPTION_VAL_4_DE },
          { "6",  OPTION_VAL_6_DE },
          { NULL, NULL },
@@ -14216,7 +14369,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O24_DE },
+         { "2x", OPTION_VAL_2_O25_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14367,7 +14520,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O24_DE },
+         { "2x", OPTION_VAL_2_O25_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14518,7 +14671,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O24_DE },
+         { "2x", OPTION_VAL_2_O25_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14669,7 +14822,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O24_DE },
+         { "2x", OPTION_VAL_2_O25_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14881,7 +15034,10 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_4GB_EL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_EL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_EL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EL NULL
@@ -14900,7 +15056,7 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EL NULL
-#define OPTION_VAL_2_O24_EL NULL
+#define OPTION_VAL_2_O25_EL NULL
 #define OPTION_VAL_4_EL NULL
 #define OPTION_VAL_6_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EL NULL
@@ -15320,11 +15476,25 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EL,
       NULL,
       "video",
       {
@@ -15460,7 +15630,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_EL },
+         { "2",  OPTION_VAL_2_O25_EL },
          { "4",  OPTION_VAL_4_EL },
          { "6",  OPTION_VAL_6_EL },
          { NULL, NULL },
@@ -15853,7 +16023,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O24_EL },
+         { "2x", OPTION_VAL_2_O25_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16004,7 +16174,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O24_EL },
+         { "2x", OPTION_VAL_2_O25_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16155,7 +16325,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O24_EL },
+         { "2x", OPTION_VAL_2_O25_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16306,7 +16476,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O24_EL },
+         { "2x", OPTION_VAL_2_O25_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16518,7 +16688,10 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_4GB_EN NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EN NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EN "Full frame-buffer emulation"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EN "Enable full frame-buffer emulation in VRAM. This is useful for games that directly read or write the frame-buffer in VRAM. When enabled, Internal Resolution is forced to 640x480 and performance may be severely impacted."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EN NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EN NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_EN NULL
 #define CORE_OPTION_NAME_FOG_LABEL_EN NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EN NULL
@@ -16537,7 +16710,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EN "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analogue video signals."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EN NULL
-#define OPTION_VAL_2_O24_EN NULL
+#define OPTION_VAL_2_O25_EN NULL
 #define OPTION_VAL_4_EN NULL
 #define OPTION_VAL_6_EN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EN "Texture Upscaling Maximum Filtered Size"
@@ -16957,11 +17130,25 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EN,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EN,
       NULL,
       "video",
       {
@@ -17097,7 +17284,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_EN },
+         { "2",  OPTION_VAL_2_O25_EN },
          { "4",  OPTION_VAL_4_EN },
          { "6",  OPTION_VAL_6_EN },
          { NULL, NULL },
@@ -17490,7 +17677,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O24_EN },
+         { "2x", OPTION_VAL_2_O25_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -17641,7 +17828,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O24_EN },
+         { "2x", OPTION_VAL_2_O25_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -17792,7 +17979,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O24_EN },
+         { "2x", OPTION_VAL_2_O25_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -17943,7 +18130,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O24_EN },
+         { "2x", OPTION_VAL_2_O25_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -18155,7 +18342,10 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_4GB_EO NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EO NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EO NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EO NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EO NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_EO NULL
 #define CORE_OPTION_NAME_FOG_LABEL_EO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EO NULL
@@ -18174,7 +18364,7 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EO NULL
-#define OPTION_VAL_2_O24_EO NULL
+#define OPTION_VAL_2_O25_EO NULL
 #define OPTION_VAL_4_EO NULL
 #define OPTION_VAL_6_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EO NULL
@@ -18594,11 +18784,25 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EO,
       NULL,
       "video",
       {
@@ -18734,7 +18938,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_EO },
+         { "2",  OPTION_VAL_2_O25_EO },
          { "4",  OPTION_VAL_4_EO },
          { "6",  OPTION_VAL_6_EO },
          { NULL, NULL },
@@ -19127,7 +19331,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O24_EO },
+         { "2x", OPTION_VAL_2_O25_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19278,7 +19482,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O24_EO },
+         { "2x", OPTION_VAL_2_O25_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19429,7 +19633,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O24_EO },
+         { "2x", OPTION_VAL_2_O25_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19580,7 +19784,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O24_EO },
+         { "2x", OPTION_VAL_2_O25_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19792,7 +19996,10 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_4GB_ES "4 GB"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_ES "N.º máximo de capas transparentes"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ES "Las escenas más complejas podrían necesitar un valor más alto."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ES "Emulación completa del framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ES "Activa la emulación completa del framebuffer dentro de la VRAM. Ideal para aquellos juegos que lean o escriban directamente al framebuffer en la VRAM. Al activar esta opción, se forzará una resolución interna de 640 × 480 y el rendimiento podría verse gravemente afectado."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ES "Activar el búfer RTT (renderizado a texturas)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ES "Copia las texturas renderizadas en la GPU de vuelta a la VRAM. Esta opción suele dejarse activada para aquellos juegos que la requieran. Al activar esta opción, se desactivará el escalado de texturas y el rendimiento podría verse afectado."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_ES "«Mipmapping»"
 #define CORE_OPTION_NAME_FOG_LABEL_ES "Efectos de niebla"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ES "Modificador de volúmenes"
@@ -19811,7 +20018,7 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ES "Posprocesa la imagen renderizada para simular los efectos dedicados de la GPU PowerVR2 y las señales de vídeo analógico."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ES "Reescalado de texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ES "Mejora los gráficos 2D de corte «pixel art» dibujado a mano. Utilizar solo con juegos en 2D pixelado."
-#define OPTION_VAL_2_O24_ES NULL
+#define OPTION_VAL_2_O25_ES NULL
 #define OPTION_VAL_4_ES NULL
 #define OPTION_VAL_6_ES NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ES "Tamaño máximo del escalado de texturas"
@@ -20231,11 +20438,25 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ES,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ES,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ES,
       NULL,
       "video",
       {
@@ -20371,7 +20592,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_ES },
+         { "2",  OPTION_VAL_2_O25_ES },
          { "4",  OPTION_VAL_4_ES },
          { "6",  OPTION_VAL_6_ES },
          { NULL, NULL },
@@ -20764,7 +20985,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O24_ES },
+         { "2x", OPTION_VAL_2_O25_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -20915,7 +21136,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O24_ES },
+         { "2x", OPTION_VAL_2_O25_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21066,7 +21287,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O24_ES },
+         { "2x", OPTION_VAL_2_O25_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21217,7 +21438,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O24_ES },
+         { "2x", OPTION_VAL_2_O25_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21429,7 +21650,10 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_4GB_FA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FA NULL
@@ -21448,7 +21672,7 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FA NULL
-#define OPTION_VAL_2_O24_FA NULL
+#define OPTION_VAL_2_O25_FA NULL
 #define OPTION_VAL_4_FA NULL
 #define OPTION_VAL_6_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FA NULL
@@ -21868,11 +22092,25 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FA,
       NULL,
       "video",
       {
@@ -22008,7 +22246,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_FA },
+         { "2",  OPTION_VAL_2_O25_FA },
          { "4",  OPTION_VAL_4_FA },
          { "6",  OPTION_VAL_6_FA },
          { NULL, NULL },
@@ -22401,7 +22639,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O24_FA },
+         { "2x", OPTION_VAL_2_O25_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -22552,7 +22790,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O24_FA },
+         { "2x", OPTION_VAL_2_O25_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -22703,7 +22941,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O24_FA },
+         { "2x", OPTION_VAL_2_O25_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -22854,7 +23092,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O24_FA },
+         { "2x", OPTION_VAL_2_O25_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -23049,8 +23287,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_BROADCAST_LABEL_FI NULL
 #define OPTION_VAL_NTSC_FI NULL
 #define OPTION_VAL_PAL_FI NULL
-#define OPTION_VAL_PAL_N_FI NULL
-#define OPTION_VAL_PAL_M_FI NULL
+#define OPTION_VAL_PAL_N_FI "PAL-N (Argentiina, Paraguay, Uruguay)"
+#define OPTION_VAL_PAL_M_FI "PAL-M (Brasilia)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_FI "Näytön suunta"
 #define OPTION_VAL_HORIZONTAL_FI NULL
 #define OPTION_VAL_VERTICAL_FI NULL
@@ -23066,7 +23304,10 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_4GB_FI "4 Gt"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FI NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FI NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FI NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FI NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FI NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FI NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FI NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FI "Sumutehosteet"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FI NULL
@@ -23085,7 +23326,7 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FI "Tekstuurin yliskaalaus (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FI NULL
-#define OPTION_VAL_2_O24_FI NULL
+#define OPTION_VAL_2_O25_FI NULL
 #define OPTION_VAL_4_FI NULL
 #define OPTION_VAL_6_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FI NULL
@@ -23505,11 +23746,25 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FI,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FI,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FI,
       NULL,
       "video",
       {
@@ -23645,7 +23900,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_FI },
+         { "2",  OPTION_VAL_2_O25_FI },
          { "4",  OPTION_VAL_4_FI },
          { "6",  OPTION_VAL_6_FI },
          { NULL, NULL },
@@ -24038,7 +24293,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O24_FI },
+         { "2x", OPTION_VAL_2_O25_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24189,7 +24444,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O24_FI },
+         { "2x", OPTION_VAL_2_O25_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24340,7 +24595,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O24_FI },
+         { "2x", OPTION_VAL_2_O25_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24491,7 +24746,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O24_FI },
+         { "2x", OPTION_VAL_2_O25_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24703,7 +24958,10 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_4GB_FR "4 Go"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FR "Calques transparents maximum"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FR "Des valeurs plus élevées peuvent être requises pour les scènes complexes."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR "Émulation complète du framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du framebuffer dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640x480 et les performances peuvent être sévèrement affectées."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR "Activer la mémoire tampon du RTT (rendu vers texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR "Copier les textures rendues depuis le processeur graphique vers la VRAM. Cette option est normalement activée pour les jeux qui en ont besoin. Lorsque cette option est activée, la mise à l'échelle du rendu des textures est désactivée et les performances peuvent être impactées."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FR "Effets de brouillard"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FR "Modificateur du volume"
@@ -24722,7 +24980,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_O24_FR "x2"
+#define OPTION_VAL_2_O25_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
@@ -25142,11 +25400,25 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR,
       NULL,
       "video",
       {
@@ -25282,7 +25554,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_FR },
+         { "2",  OPTION_VAL_2_O25_FR },
          { "4",  OPTION_VAL_4_FR },
          { "6",  OPTION_VAL_6_FR },
          { NULL, NULL },
@@ -25675,7 +25947,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O24_FR },
+         { "2x", OPTION_VAL_2_O25_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -25826,7 +26098,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O24_FR },
+         { "2x", OPTION_VAL_2_O25_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -25977,7 +26249,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O24_FR },
+         { "2x", OPTION_VAL_2_O25_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26128,7 +26400,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O24_FR },
+         { "2x", OPTION_VAL_2_O25_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26340,7 +26612,10 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_4GB_GL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL "Activa o buffer RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_GL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL NULL
@@ -26359,7 +26634,7 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GL "Postproceso da imaxe renderizada para simular efectos específicos da PowerVR2 GPU e os sinais analóxicos de vídeo."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL "Aumento das texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_GL "Millora dos gráficos 2D pixel art debuxados a man. Só se debería usar con xogos pixelados en 2D."
-#define OPTION_VAL_2_O24_GL NULL
+#define OPTION_VAL_2_O25_GL NULL
 #define OPTION_VAL_4_GL NULL
 #define OPTION_VAL_6_GL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GL "Aumento da escala das texturas. Tamaño filtrado"
@@ -26779,11 +27054,25 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL,
       NULL,
       "video",
       {
@@ -26919,7 +27208,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_GL },
+         { "2",  OPTION_VAL_2_O25_GL },
          { "4",  OPTION_VAL_4_GL },
          { "6",  OPTION_VAL_6_GL },
          { NULL, NULL },
@@ -27312,7 +27601,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O24_GL },
+         { "2x", OPTION_VAL_2_O25_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27463,7 +27752,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O24_GL },
+         { "2x", OPTION_VAL_2_O25_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27614,7 +27903,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O24_GL },
+         { "2x", OPTION_VAL_2_O25_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27765,7 +28054,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O24_GL },
+         { "2x", OPTION_VAL_2_O25_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27977,7 +28266,10 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_4GB_HE NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HE NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HE NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HE NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HE NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HE NULL
 #define CORE_OPTION_NAME_FOG_LABEL_HE NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HE NULL
@@ -27996,7 +28288,7 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HE NULL
-#define OPTION_VAL_2_O24_HE NULL
+#define OPTION_VAL_2_O25_HE NULL
 #define OPTION_VAL_4_HE NULL
 #define OPTION_VAL_6_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HE NULL
@@ -28416,11 +28708,25 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HE,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HE,
       NULL,
       "video",
       {
@@ -28556,7 +28862,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_HE },
+         { "2",  OPTION_VAL_2_O25_HE },
          { "4",  OPTION_VAL_4_HE },
          { "6",  OPTION_VAL_6_HE },
          { NULL, NULL },
@@ -28949,7 +29255,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O24_HE },
+         { "2x", OPTION_VAL_2_O25_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29100,7 +29406,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O24_HE },
+         { "2x", OPTION_VAL_2_O25_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29251,7 +29557,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O24_HE },
+         { "2x", OPTION_VAL_2_O25_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29402,7 +29708,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O24_HE },
+         { "2x", OPTION_VAL_2_O25_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29614,7 +29920,10 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_4GB_HR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_HR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HR NULL
@@ -29633,7 +29942,7 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HR NULL
-#define OPTION_VAL_2_O24_HR NULL
+#define OPTION_VAL_2_O25_HR NULL
 #define OPTION_VAL_4_HR NULL
 #define OPTION_VAL_6_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HR NULL
@@ -30053,11 +30362,25 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HR,
       NULL,
       "video",
       {
@@ -30193,7 +30516,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_HR },
+         { "2",  OPTION_VAL_2_O25_HR },
          { "4",  OPTION_VAL_4_HR },
          { "6",  OPTION_VAL_6_HR },
          { NULL, NULL },
@@ -30586,7 +30909,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O24_HR },
+         { "2x", OPTION_VAL_2_O25_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -30737,7 +31060,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O24_HR },
+         { "2x", OPTION_VAL_2_O25_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -30888,7 +31211,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O24_HR },
+         { "2x", OPTION_VAL_2_O25_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31039,7 +31362,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O24_HR },
+         { "2x", OPTION_VAL_2_O25_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31251,7 +31574,10 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_4GB_HU NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU "Átlátszó rétegek maximális száma"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU "Összetett jelenetekhez nagyobb értékekre lehet szükség."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
 #define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
@@ -31270,7 +31596,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU "Az előállított kép utófeldolgozása a PowerVR2 GPU és az analóg videojelek egyedi effektjeinek szimulálásához."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU "Textúra felméretezés (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU "A kézzel rajzolt 2D pixel art grafikák feljavítása. Csak a 2D pixelgrafikus játékokhoz ajánlott."
-#define OPTION_VAL_2_O24_HU NULL
+#define OPTION_VAL_2_O25_HU NULL
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU "Textúra felméretezés maximális szűrt mérete"
@@ -31690,11 +32016,25 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU,
       NULL,
       "video",
       {
@@ -31830,7 +32170,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_HU },
+         { "2",  OPTION_VAL_2_O25_HU },
          { "4",  OPTION_VAL_4_HU },
          { "6",  OPTION_VAL_6_HU },
          { NULL, NULL },
@@ -32223,7 +32563,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O24_HU },
+         { "2x", OPTION_VAL_2_O25_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32374,7 +32714,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O24_HU },
+         { "2x", OPTION_VAL_2_O25_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32525,7 +32865,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O24_HU },
+         { "2x", OPTION_VAL_2_O25_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32676,7 +33016,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O24_HU },
+         { "2x", OPTION_VAL_2_O25_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32888,7 +33228,10 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_4GB_ID NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_ID NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ID NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ID "Mengaktifkan Penyangga RTT (Lukis Ke Tekstur)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ID NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_FOG_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ID NULL
@@ -32907,7 +33250,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Tingkatkan grafis seni piksel 2D tulisan tangan. Hanya bisa digunakan di pemainan terpikselisasi 2D."
-#define OPTION_VAL_2_O24_ID NULL
+#define OPTION_VAL_2_O25_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID "Ukuran Terfilter Maks. Penskalaan Naik"
@@ -33327,11 +33670,25 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ID,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ID,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ID,
       NULL,
       "video",
       {
@@ -33467,7 +33824,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_ID },
+         { "2",  OPTION_VAL_2_O25_ID },
          { "4",  OPTION_VAL_4_ID },
          { "6",  OPTION_VAL_6_ID },
          { NULL, NULL },
@@ -33860,7 +34217,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O24_ID },
+         { "2x", OPTION_VAL_2_O25_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34011,7 +34368,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O24_ID },
+         { "2x", OPTION_VAL_2_O25_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34162,7 +34519,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O24_ID },
+         { "2x", OPTION_VAL_2_O25_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34313,7 +34670,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O24_ID },
+         { "2x", OPTION_VAL_2_O25_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34525,7 +34882,10 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_4GB_IT NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_IT "Strati trasparenti massimi"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_IT "Potrebbero essere necessari valori più elevati per scene complesse."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_IT "Emulazione framebuffer completa"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_IT "Abilita l'emulazione completa del framebuffer in VRAM. Ciò è utile per i giochi che leggono o scrivono direttamente il framebuffer in VRAM. Se abilitata, la risoluzione interna è costretta a 640x480 e le prestazioni possono essere gravemente colpite."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_IT "Abilita Buffer RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_IT "Copia le texture renderizzate dalla GPU a VRAM. Questa opzione è normalmente abilitata per i giochi che lo richiedono. Se abilitata, il rendering delle texture è disabilitato e le prestazioni potrebbero essere influenzate."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_IT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_IT "Effetti Nebbia"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_IT "Modificatore del Volume"
@@ -34544,7 +34904,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_IT "Post-elaborare l'immagine renderizzata per simulare effetti specifici alla GPU PowerVR2 e segnali video analogici."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_IT "Miglioramento Della Texture (xbrz)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_IT "Migliora la grafica grafica grafica a pixel 2D disegnata a mano. Dovrebbe essere usata solo con giochi in pixel 2D."
-#define OPTION_VAL_2_O24_IT NULL
+#define OPTION_VAL_2_O25_IT NULL
 #define OPTION_VAL_4_IT NULL
 #define OPTION_VAL_6_IT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_IT "Miglioramento Texture Dimensione Massima Filtrata"
@@ -34964,11 +35324,25 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_IT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_IT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_IT,
       NULL,
       "video",
       {
@@ -35104,7 +35478,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_IT },
+         { "2",  OPTION_VAL_2_O25_IT },
          { "4",  OPTION_VAL_4_IT },
          { "6",  OPTION_VAL_6_IT },
          { NULL, NULL },
@@ -35497,7 +35871,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O24_IT },
+         { "2x", OPTION_VAL_2_O25_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -35648,7 +36022,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O24_IT },
+         { "2x", OPTION_VAL_2_O25_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -35799,7 +36173,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O24_IT },
+         { "2x", OPTION_VAL_2_O25_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -35950,7 +36324,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O24_IT },
+         { "2x", OPTION_VAL_2_O25_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -36162,7 +36536,10 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_4GB_JA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_JA NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_JA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_JA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_JA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_JA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_JA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_JA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_JA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_JA NULL
@@ -36181,7 +36558,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_JA NULL
-#define OPTION_VAL_2_O24_JA NULL
+#define OPTION_VAL_2_O25_JA NULL
 #define OPTION_VAL_4_JA NULL
 #define OPTION_VAL_6_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_JA NULL
@@ -36601,11 +36978,25 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_JA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_JA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_JA,
       NULL,
       "video",
       {
@@ -36741,7 +37132,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_JA },
+         { "2",  OPTION_VAL_2_O25_JA },
          { "4",  OPTION_VAL_4_JA },
          { "6",  OPTION_VAL_6_JA },
          { NULL, NULL },
@@ -37134,7 +37525,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O24_JA },
+         { "2x", OPTION_VAL_2_O25_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37285,7 +37676,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O24_JA },
+         { "2x", OPTION_VAL_2_O25_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37436,7 +37827,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O24_JA },
+         { "2x", OPTION_VAL_2_O25_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37587,7 +37978,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O24_JA },
+         { "2x", OPTION_VAL_2_O25_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37799,7 +38190,10 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_4GB_KO NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_KO "최대 투명 레이어"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_KO "복잡한 장면을 그릴 때 높은 값이 필요할 수 있습니다."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_KO "전체 프레임버퍼 에뮬레이션"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_KO "VRAM 상 전체 프레임버퍼 에뮬레이션을 활성화합니다. VRAM 상의 프레임버퍼에 직접 읽기 또는 쓰기를 수행하는 게임을 실행할 때 유용합니다. 활성화할 경우, 내부 해상도가 640x480으로 고정되며 성능에 큰 영향을 끼칠 수 있습니다."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO "RTT (Render To Texture) 버퍼 사용"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO "렌더된 텍스쳐를 GPU에서 VRAM으로 복사합니다. 이 옵션은 이 옵션을 필요로 하는 게임에서는 기본적으로 활성화됩니다. 활성화할 경우, 텍스쳐 업스케일링이 비활성화되며 성능에 큰 영향을 끼칠 수 있습니다."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_KO "밉맵"
 #define CORE_OPTION_NAME_FOG_LABEL_KO "안개 효과"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_KO "볼륨 모디파이어"
@@ -37818,7 +38212,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_KO "렌더된 이미지에 PowerVR2 GPU와 아날로그 비디오 신호에서 나타나는 효과를 후처리로 구현합니다."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_KO "텍스쳐 업스케일링 (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_KO "손으로 그려진 2D 픽셀아트 그래픽을 개선합니다. 2D 픽셀아트 게임에서만 사용되어야 합니다."
-#define OPTION_VAL_2_O24_KO NULL
+#define OPTION_VAL_2_O25_KO NULL
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_6_KO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO "텍스쳐 업스케일링 필터 최대 크기"
@@ -38238,11 +38632,25 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_KO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO,
       NULL,
       "video",
       {
@@ -38378,7 +38786,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_KO },
+         { "2",  OPTION_VAL_2_O25_KO },
          { "4",  OPTION_VAL_4_KO },
          { "6",  OPTION_VAL_6_KO },
          { NULL, NULL },
@@ -38771,7 +39179,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O24_KO },
+         { "2x", OPTION_VAL_2_O25_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -38922,7 +39330,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O24_KO },
+         { "2x", OPTION_VAL_2_O25_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39073,7 +39481,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O24_KO },
+         { "2x", OPTION_VAL_2_O25_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39224,7 +39632,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O24_KO },
+         { "2x", OPTION_VAL_2_O25_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39436,7 +39844,10 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_4GB_NL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_NL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_NL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_NL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_NL NULL
@@ -39455,7 +39866,7 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NL NULL
-#define OPTION_VAL_2_O24_NL NULL
+#define OPTION_VAL_2_O25_NL NULL
 #define OPTION_VAL_4_NL NULL
 #define OPTION_VAL_6_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NL NULL
@@ -39875,11 +40286,25 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NL,
       NULL,
       "video",
       {
@@ -40015,7 +40440,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_NL },
+         { "2",  OPTION_VAL_2_O25_NL },
          { "4",  OPTION_VAL_4_NL },
          { "6",  OPTION_VAL_6_NL },
          { NULL, NULL },
@@ -40408,7 +40833,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O24_NL },
+         { "2x", OPTION_VAL_2_O25_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -40559,7 +40984,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O24_NL },
+         { "2x", OPTION_VAL_2_O25_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -40710,7 +41135,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O24_NL },
+         { "2x", OPTION_VAL_2_O25_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -40861,7 +41286,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O24_NL },
+         { "2x", OPTION_VAL_2_O25_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -41073,7 +41498,10 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_4GB_NO NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_NO NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NO NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NO NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NO NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_NO NULL
 #define CORE_OPTION_NAME_FOG_LABEL_NO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_NO NULL
@@ -41092,7 +41520,7 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NO NULL
-#define OPTION_VAL_2_O24_NO NULL
+#define OPTION_VAL_2_O25_NO NULL
 #define OPTION_VAL_4_NO NULL
 #define OPTION_VAL_6_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NO NULL
@@ -41512,11 +41940,25 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NO,
       NULL,
       "video",
       {
@@ -41652,7 +42094,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_NO },
+         { "2",  OPTION_VAL_2_O25_NO },
          { "4",  OPTION_VAL_4_NO },
          { "6",  OPTION_VAL_6_NO },
          { NULL, NULL },
@@ -42045,7 +42487,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O24_NO },
+         { "2x", OPTION_VAL_2_O25_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42196,7 +42638,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O24_NO },
+         { "2x", OPTION_VAL_2_O25_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42347,7 +42789,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O24_NO },
+         { "2x", OPTION_VAL_2_O25_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42498,7 +42940,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O24_NO },
+         { "2x", OPTION_VAL_2_O25_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42710,7 +43152,10 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_4GB_PL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL "Emulacja pełnego bufora ramki"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PL NULL
@@ -42729,7 +43174,7 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PL NULL
-#define OPTION_VAL_2_O24_PL NULL
+#define OPTION_VAL_2_O25_PL NULL
 #define OPTION_VAL_4_PL NULL
 #define OPTION_VAL_6_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PL NULL
@@ -43149,11 +43594,25 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL,
       NULL,
       "video",
       {
@@ -43289,7 +43748,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_PL },
+         { "2",  OPTION_VAL_2_O25_PL },
          { "4",  OPTION_VAL_4_PL },
          { "6",  OPTION_VAL_6_PL },
          { NULL, NULL },
@@ -43682,7 +44141,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O24_PL },
+         { "2x", OPTION_VAL_2_O25_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -43833,7 +44292,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O24_PL },
+         { "2x", OPTION_VAL_2_O25_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -43984,7 +44443,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O24_PL },
+         { "2x", OPTION_VAL_2_O25_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44135,7 +44594,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O24_PL },
+         { "2x", OPTION_VAL_2_O25_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44347,7 +44806,10 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_4GB_PT_BR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR "Ativar o buffer RTT (renderização para texturas)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PT_BR "Efeitos de nevoeiro"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PT_BR "Modificador de volume"
@@ -44366,7 +44828,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Pós-processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e os sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Redimensionamento de textura (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_BR "Melhora os gráficos 2D de 'pixel arte' desenhados à mão. Usar somente com jogos em 2D pixelado."
-#define OPTION_VAL_2_O24_PT_BR NULL
+#define OPTION_VAL_2_O25_PT_BR NULL
 #define OPTION_VAL_4_PT_BR NULL
 #define OPTION_VAL_6_PT_BR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_BR "Tamanho máximo do redimensionamento de texturas"
@@ -44786,11 +45248,25 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_BR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_BR,
       NULL,
       "video",
       {
@@ -44926,7 +45402,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_PT_BR },
+         { "2",  OPTION_VAL_2_O25_PT_BR },
          { "4",  OPTION_VAL_4_PT_BR },
          { "6",  OPTION_VAL_6_PT_BR },
          { NULL, NULL },
@@ -45319,7 +45795,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O24_PT_BR },
+         { "2x", OPTION_VAL_2_O25_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -45470,7 +45946,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O24_PT_BR },
+         { "2x", OPTION_VAL_2_O25_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -45621,7 +46097,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O24_PT_BR },
+         { "2x", OPTION_VAL_2_O25_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -45772,7 +46248,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O24_PT_BR },
+         { "2x", OPTION_VAL_2_O25_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -45984,7 +46460,10 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_4GB_PT_PT NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PT_PT NULL
@@ -46003,7 +46482,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_PT NULL
-#define OPTION_VAL_2_O24_PT_PT NULL
+#define OPTION_VAL_2_O25_PT_PT NULL
 #define OPTION_VAL_4_PT_PT NULL
 #define OPTION_VAL_6_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_PT NULL
@@ -46423,11 +46902,25 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_PT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_PT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_PT,
       NULL,
       "video",
       {
@@ -46563,7 +47056,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_PT_PT },
+         { "2",  OPTION_VAL_2_O25_PT_PT },
          { "4",  OPTION_VAL_4_PT_PT },
          { "6",  OPTION_VAL_6_PT_PT },
          { NULL, NULL },
@@ -46956,7 +47449,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O24_PT_PT },
+         { "2x", OPTION_VAL_2_O25_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47107,7 +47600,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O24_PT_PT },
+         { "2x", OPTION_VAL_2_O25_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47258,7 +47751,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O24_PT_PT },
+         { "2x", OPTION_VAL_2_O25_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47409,7 +47902,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O24_PT_PT },
+         { "2x", OPTION_VAL_2_O25_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47621,7 +48114,10 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_4GB_RU "4 ГБ"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_RU "MIP-текстурирование"
 #define CORE_OPTION_NAME_FOG_LABEL_RU "Эффекты тумана"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RU "Модификатор объема"
@@ -47640,7 +48136,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU NULL
-#define OPTION_VAL_2_O24_RU NULL
+#define OPTION_VAL_2_O25_RU NULL
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU NULL
@@ -48060,11 +48556,25 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU,
       NULL,
       "video",
       {
@@ -48200,7 +48710,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_RU },
+         { "2",  OPTION_VAL_2_O25_RU },
          { "4",  OPTION_VAL_4_RU },
          { "6",  OPTION_VAL_6_RU },
          { NULL, NULL },
@@ -48593,7 +49103,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O24_RU },
+         { "2x", OPTION_VAL_2_O25_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -48744,7 +49254,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O24_RU },
+         { "2x", OPTION_VAL_2_O25_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -48895,7 +49405,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O24_RU },
+         { "2x", OPTION_VAL_2_O25_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49046,7 +49556,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O24_RU },
+         { "2x", OPTION_VAL_2_O25_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49258,7 +49768,10 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_4GB_SK NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SK NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SK NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SK NULL
@@ -49277,7 +49790,7 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SK NULL
-#define OPTION_VAL_2_O24_SK NULL
+#define OPTION_VAL_2_O25_SK NULL
 #define OPTION_VAL_4_SK NULL
 #define OPTION_VAL_6_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SK NULL
@@ -49697,11 +50210,25 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK,
       NULL,
       "video",
       {
@@ -49837,7 +50364,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_SK },
+         { "2",  OPTION_VAL_2_O25_SK },
          { "4",  OPTION_VAL_4_SK },
          { "6",  OPTION_VAL_6_SK },
          { NULL, NULL },
@@ -50230,7 +50757,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O24_SK },
+         { "2x", OPTION_VAL_2_O25_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50381,7 +50908,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O24_SK },
+         { "2x", OPTION_VAL_2_O25_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50532,7 +51059,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O24_SK },
+         { "2x", OPTION_VAL_2_O25_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50683,7 +51210,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O24_SK },
+         { "2x", OPTION_VAL_2_O25_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50895,7 +51422,10 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_4GB_SR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SR NULL
@@ -50914,7 +51444,7 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SR NULL
-#define OPTION_VAL_2_O24_SR NULL
+#define OPTION_VAL_2_O25_SR NULL
 #define OPTION_VAL_4_SR NULL
 #define OPTION_VAL_6_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SR NULL
@@ -51334,11 +51864,25 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SR,
       NULL,
       "video",
       {
@@ -51474,7 +52018,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_SR },
+         { "2",  OPTION_VAL_2_O25_SR },
          { "4",  OPTION_VAL_4_SR },
          { "6",  OPTION_VAL_6_SR },
          { NULL, NULL },
@@ -51867,7 +52411,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O24_SR },
+         { "2x", OPTION_VAL_2_O25_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52018,7 +52562,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O24_SR },
+         { "2x", OPTION_VAL_2_O25_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52169,7 +52713,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O24_SR },
+         { "2x", OPTION_VAL_2_O25_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52320,7 +52864,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O24_SR },
+         { "2x", OPTION_VAL_2_O25_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52532,7 +53076,10 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_4GB_SV NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SV NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SV NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SV "Dimeffekter"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV NULL
@@ -52551,7 +53098,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SV NULL
-#define OPTION_VAL_2_O24_SV NULL
+#define OPTION_VAL_2_O25_SV NULL
 #define OPTION_VAL_4_SV NULL
 #define OPTION_VAL_6_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV NULL
@@ -52971,11 +53518,25 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV,
       NULL,
       "video",
       {
@@ -53111,7 +53672,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_SV },
+         { "2",  OPTION_VAL_2_O25_SV },
          { "4",  OPTION_VAL_4_SV },
          { "6",  OPTION_VAL_6_SV },
          { NULL, NULL },
@@ -53504,7 +54065,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O24_SV },
+         { "2x", OPTION_VAL_2_O25_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53655,7 +54216,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O24_SV },
+         { "2x", OPTION_VAL_2_O25_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53806,7 +54367,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O24_SV },
+         { "2x", OPTION_VAL_2_O25_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53957,7 +54518,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O24_SV },
+         { "2x", OPTION_VAL_2_O25_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -54169,7 +54730,10 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_4GB_TR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TR "En Fazla Şeffaf Katman"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TR "Karmaşık sahneler için daha yüksek değerler gerekebilir."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR "Tam kare önbelleği taklidi"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR "VRAM'de tam kare arabelleği taklidini etkinleştirin. Bu, kare arabelleğini doğrudan VRAM'de okuyan veya yazan oyunlar için kullanışlıdır. Etkinleştirildiğinde, Dahili Çözünürlük 640x480'e zorlanır ve performans ciddi şekilde etkilenebilir."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR "RTT (Dokuya Dönüştür) Önbelleğini Etkinleştir"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR "Görüş Açısı"
 #define CORE_OPTION_NAME_FOG_LABEL_TR "Sis Efektleri"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TR "Hacim Değiştirici"
@@ -54188,7 +54752,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TR "PowerVR2 GPU'ya ve analog video sinyallerine özgü efektleri simüle etmek için işlenen görüntüyü son işlemden geçirin."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_TR "Doku Yükseltme (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TR "Elle çizilmiş 2B piksel sanatsal grafiklerini geliştirin. Yalnızca 2D piksel oyunlarla kullanılmalıdır."
-#define OPTION_VAL_2_O24_TR NULL
+#define OPTION_VAL_2_O25_TR NULL
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_6_TR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TR "Doku Yükseltme Azami Filtre Boyutu"
@@ -54608,11 +55172,25 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR,
       NULL,
       "video",
       {
@@ -54748,7 +55326,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_TR },
+         { "2",  OPTION_VAL_2_O25_TR },
          { "4",  OPTION_VAL_4_TR },
          { "6",  OPTION_VAL_6_TR },
          { NULL, NULL },
@@ -55141,7 +55719,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O24_TR },
+         { "2x", OPTION_VAL_2_O25_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55292,7 +55870,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O24_TR },
+         { "2x", OPTION_VAL_2_O25_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55443,7 +56021,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O24_TR },
+         { "2x", OPTION_VAL_2_O25_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55594,7 +56172,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O24_TR },
+         { "2x", OPTION_VAL_2_O25_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55806,7 +56384,10 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_4GB_UK "4 ГБ"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_UK NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_UK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_UK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_UK NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_UK NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_UK NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_UK NULL
 #define CORE_OPTION_NAME_FOG_LABEL_UK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_UK NULL
@@ -55825,7 +56406,7 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_UK "Постобробка зображення для імітації ефектів відеоданих на PowerVR2 та аналогових відео сигналів."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_UK "Вдосконалення текстур (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_UK "Покращення графіки 2D пікселів. Має використовуватися лише з 2D піксельними іграми."
-#define OPTION_VAL_2_O24_UK NULL
+#define OPTION_VAL_2_O25_UK NULL
 #define OPTION_VAL_4_UK NULL
 #define OPTION_VAL_6_UK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_UK "Збільшення масштабу текстур. Відфільтрований розмір"
@@ -56245,11 +56826,25 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_UK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_UK,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_UK,
       NULL,
       "video",
       {
@@ -56385,7 +56980,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_UK },
+         { "2",  OPTION_VAL_2_O25_UK },
          { "4",  OPTION_VAL_4_UK },
          { "6",  OPTION_VAL_6_UK },
          { NULL, NULL },
@@ -56778,7 +57373,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O24_UK },
+         { "2x", OPTION_VAL_2_O25_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -56929,7 +57524,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O24_UK },
+         { "2x", OPTION_VAL_2_O25_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57080,7 +57675,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O24_UK },
+         { "2x", OPTION_VAL_2_O25_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57231,7 +57826,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O24_UK },
+         { "2x", OPTION_VAL_2_O25_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57443,7 +58038,10 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_4GB_VAL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VAL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_VAL NULL
@@ -57462,7 +58060,7 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VAL NULL
-#define OPTION_VAL_2_O24_VAL NULL
+#define OPTION_VAL_2_O25_VAL NULL
 #define OPTION_VAL_4_VAL NULL
 #define OPTION_VAL_6_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VAL NULL
@@ -57882,11 +58480,25 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VAL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VAL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VAL,
       NULL,
       "video",
       {
@@ -58022,7 +58634,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_VAL },
+         { "2",  OPTION_VAL_2_O25_VAL },
          { "4",  OPTION_VAL_4_VAL },
          { "6",  OPTION_VAL_6_VAL },
          { NULL, NULL },
@@ -58415,7 +59027,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O24_VAL },
+         { "2x", OPTION_VAL_2_O25_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58566,7 +59178,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O24_VAL },
+         { "2x", OPTION_VAL_2_O25_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58717,7 +59329,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O24_VAL },
+         { "2x", OPTION_VAL_2_O25_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58868,7 +59480,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O24_VAL },
+         { "2x", OPTION_VAL_2_O25_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -59080,7 +59692,10 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_4GB_VN NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VN NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VN NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_VN NULL
 #define CORE_OPTION_NAME_FOG_LABEL_VN NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_VN NULL
@@ -59099,7 +59714,7 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VN NULL
-#define OPTION_VAL_2_O24_VN NULL
+#define OPTION_VAL_2_O25_VN NULL
 #define OPTION_VAL_4_VN NULL
 #define OPTION_VAL_6_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VN NULL
@@ -59519,11 +60134,25 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VN,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN,
       NULL,
       "video",
       {
@@ -59659,7 +60288,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O24_VN },
+         { "2",  OPTION_VAL_2_O25_VN },
          { "4",  OPTION_VAL_4_VN },
          { "6",  OPTION_VAL_6_VN },
          { NULL, NULL },
@@ -60052,7 +60681,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O24_VN },
+         { "2x", OPTION_VAL_2_O25_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -60203,7 +60832,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O24_VN },
+         { "2x", OPTION_VAL_2_O25_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -60354,7 +60983,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O24_VN },
+         { "2x", OPTION_VAL_2_O25_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -60505,7 +61134,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O24_VN },
+         { "2x", OPTION_VAL_2_O25_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
