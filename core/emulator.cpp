@@ -208,7 +208,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
-			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
+			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
+			|| prod_id == "T0020M")		// Force Five Atomiswave DC Conversion
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
