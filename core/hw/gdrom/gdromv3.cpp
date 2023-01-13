@@ -1121,8 +1121,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz == 1);
-		if ((DriveSel & 0x10) == 0)
+		if (sz != 1)
+			INFO_LOG(GDROM, "GDROM: Bad size on GD_COMMAND reg");
+		else if ((DriveSel & 0x10) == 0)
 		{
 			if (data != ATA_NOP && data != ATA_SOFT_RESET)
 				verify(gd_state == gds_waitcmd);
