@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId "com.flycast.emulator"
-        minSdk 16
+        minSdk 17
         targetSdk 29
         versionCode 8
         versionName getVersionName()
