@@ -19,3 +19,6 @@
 [submodule "core/deps/glslang"]
 	path = core/deps/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "core/deps/oboe"]
+	path = core/deps/oboe
+	url = https://github.com/google/oboe.git
