@@ -126,7 +126,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		// gun coords issue
 		//{ "MK-5100250", nullptr,    { 0x4C6708 }, { 0x43700000 } },		// House of the Dead 2, The (PAL)
 		//{ "MK-51002",   nullptr,    { 0x4C6088 }, { 0x43700000 } },		// House of the Dead 2, The (USA)
-		{ "T38706M",    nullptr,    { 0xC0CFA0 }, { 0x3F400000 } },		// Ikaruga (JP)
+		//not working { "T38706M",    nullptr,    { 0xC0CFA0 }, { 0x3F400000 } },		// Ikaruga (JP)
 		{ "T46001N",    nullptr,    { 0x1C8A98 }, { 0x3F400000 } },		// Illbleed (USA)
 		{ "T44904D 50", nullptr,    { 0x18C15C, 0x18C18C }, { 0x43F00000, 0x3F400000 } },	// Iron Aces (PAL)
 		{ "MK-51058",   nullptr,    { 0x32E0FC, 0x32E12C }, { 0x43F00000, 0x3F400000 } },	// Jet Grind Radio (USA)
