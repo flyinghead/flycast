@@ -2625,7 +2625,8 @@ static void gui_network_start()
 				gui_state = GuiState::Main;
 			}
 		} catch (const FlycastException& e) {
-			NetworkHandshake::instance->stop();
+			if (NetworkHandshake::instance != nullptr)
+				NetworkHandshake::instance->stop();
 			emu.unloadGame();
 			gui_error(e.what());
 			gui_state = GuiState::Main;
@@ -2642,7 +2643,7 @@ static void gui_network_start()
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
-	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -2657,7 +2658,7 @@ static void gui_network_start()
 
 	ImGui::End();
 
-	if ((kcode[0] & DC_BTN_START) == 0)
+	if ((kcode[0] & DC_BTN_START) == 0 && NetworkHandshake::instance != nullptr)
 		NetworkHandshake::instance->startNow();
 }
 
