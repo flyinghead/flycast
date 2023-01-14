@@ -24,13 +24,13 @@ public class Emulator extends Application {
 
     public static int vibrationDuration = 20;
 
-    public static int maple_devices[] = {
+    public static int[] maple_devices = {
             MDT_None,
             MDT_None,
             MDT_None,
             MDT_None
     };
-    public static int maple_expansion_devices[][] = {
+    public static int[][] maple_expansion_devices = {
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
