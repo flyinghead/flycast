@@ -816,7 +816,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 {
 	const bool is_rtt = pvrrc.isRTT;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
+			is_rtt ? pvrrc.getFramebufferHeight() : height);
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
