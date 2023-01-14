@@ -19,6 +19,8 @@ bool ta_parse(TA_context *ctx, bool primRestart);
 class TaTypeLut
 {
 public:
+	static constexpr u32 INVALID_TYPE = 0xFFFFFFFF;
+
 	static const TaTypeLut& instance() {
 		static TaTypeLut _instance;
 		return _instance;

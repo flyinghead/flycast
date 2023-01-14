@@ -416,31 +416,34 @@ strip_end:
 					}
 					else
 					{
-
 						u32 uid = ta_type_lut[data->pcw.obj_ctrl];
-						u32 psz=uid>>30;
-						u32 pdid=(u8)(uid);
-						u32 ppid=(u8)(uid>>8);
-
-						VertexDataFP = ta_poly_data_lut[pdid];
-							
-
-						if (data <= data_end - psz)
+						if (uid == TaTypeLut::INVALID_TYPE)
 						{
-
-							//poly , 32B/64B
-							ta_poly_param_lut[ppid](data);
-							data+=psz;
+							WARN_LOG(PVR, "Invalid TA type %08x", data->pcw.full);
+							data += SZ32;
 						}
 						else
 						{
+							u32 psz = uid >> 30;
+							u32 pdid = (u8)uid;
+							u32 ppid = (u8)(uid >> 8);
 
-							//AppendPolyParam64A((TA_PolyParamA*)data);
-							//64b , first part
-							ta_poly_param_a_lut[ppid](data);
-							//Handle next 32B ;)
-							TaCmd=ta_poly_param_b_lut[ppid];
-							data+=SZ32;
+							VertexDataFP = ta_poly_data_lut[pdid];
+
+							if (data <= data_end - psz)
+							{
+								// Full poly, 32B or 64B
+								ta_poly_param_lut[ppid](data);
+								data += psz;
+							}
+							else
+							{
+								// 64B, first part
+								ta_poly_param_a_lut[ppid](data);
+								// Handle next 32B
+								TaCmd = ta_poly_param_b_lut[ppid];
+								data += SZ32;
+							}
 						}
 					}
 				}
