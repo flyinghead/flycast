@@ -31,6 +31,7 @@ DXContext theDXContext;
 
 bool DXContext::init(bool keepCurrentWindow)
 {
+	NOTICE_LOG(RENDERER, "DX9 Context initializing");
 	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0))
@@ -95,6 +96,7 @@ bool DXContext::init(bool keepCurrentWindow)
 
 void DXContext::term()
 {
+	NOTICE_LOG(RENDERER, "DX9 Context terminating");
 	GraphicsContext::instance = nullptr;
 	overlay.term();
 	imguiDriver.reset();

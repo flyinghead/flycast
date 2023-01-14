@@ -945,7 +945,6 @@ bool D3DRenderer::Render()
 {
 	if (!theDXContext.isReady())
 		return false;
-	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 
 	bool is_rtt = pvrrc.isRTT;
 
@@ -959,6 +958,7 @@ bool D3DRenderer::Render()
 	}
 	else
 	{
+		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
 		verify(rc);
 		D3DVIEWPORT9 viewport;
@@ -1105,7 +1105,9 @@ void D3DRenderer::resize(int w, int h)
 {
 	if (width == (u32)w && height == (u32)h)
 		return;
-	NOTICE_LOG(RENDERER, "D3DRenderer::resize: %d x %d -> %d x %d", width, height, w, h);
+	if (!config::EmulateFramebuffer)
+		// TODO use different surfaces in full fb emulation to avoid resizing twice per frame
+		NOTICE_LOG(RENDERER, "D3DRenderer::resize: %d x %d -> %d x %d", width, height, w, h);
 	width = w;
 	height = h;
 	framebufferTexture.reset();

@@ -411,14 +411,13 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
-	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
-
 	// make sure to unbind the framebuffer view before setting it as render target
 	ID3D11ShaderResourceView *nullView = nullptr;
     deviceContext->PSSetShaderResources(0, 1, &nullView);
 	bool is_rtt = pvrrc.isRTT;
 	if (!is_rtt)
 	{
+		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 	}
