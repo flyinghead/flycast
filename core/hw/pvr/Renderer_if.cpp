@@ -170,6 +170,13 @@ private:
 		if (_pvrrc == nullptr)
 			return;
 
+		if (!_pvrrc->rend.isRTT)
+		{
+			int width, height;
+			getScaledFramebufferSize(_pvrrc->rend, width, height);
+			_pvrrc->rend.framebufferWidth = width;
+			_pvrrc->rend.framebufferHeight = height;
+		}
 		bool renderToScreen = !_pvrrc->rend.isRTT && !config::EmulateFramebuffer;
 #ifdef LIBRETRO
 		if (renderToScreen)
@@ -383,14 +390,6 @@ void rend_start_render()
 
 	ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 	ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
-
-	if (!ctx->rend.isRTT)
-	{
-		int width, height;
-		getScaledFramebufferSize(ctx->rend, width, height);
-		ctx->rend.framebufferWidth = width;
-		ctx->rend.framebufferHeight = height;
-	}
 
 	if (QueueRender(ctx))
 	{
