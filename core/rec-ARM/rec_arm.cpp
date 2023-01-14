@@ -933,7 +933,6 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 		// Not RAM
 		if (optp == SZ_64F)
 		{
-			verify(!reg.IsAllocAny(op->rd));
 			// Need to call the handler twice
 			ass.Mov(r0, op->rs1._imm);
 			call(ptr);
