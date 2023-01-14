@@ -244,6 +244,10 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
+	if (!rbi)
+		rbi = bm_GetStaleBlock(block_cpde);
+	verify(rbi != nullptr);
+
 	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
