@@ -847,6 +847,7 @@ void Emulator::start()
 
 	if (config::ThreadedRendering)
 	{
+		const std::lock_guard<std::mutex> lock(mutex);
 		threadResult = std::async(std::launch::async, [this] {
 				InitAudio();
 
@@ -881,6 +882,7 @@ void Emulator::start()
 bool Emulator::checkStatus()
 {
 	try {
+		const std::lock_guard<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
 			auto result = threadResult.wait_for(std::chrono::seconds(0));
