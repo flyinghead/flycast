@@ -42,6 +42,7 @@
         android:banner="@drawable/ic_banner"
         android:logo="@drawable/ic_banner"
         android:hardwareAccelerated="true"
+        android:appCategory="game"
         android:isGame="true"
 		android:requestLegacyExternalStorage="true">
 
