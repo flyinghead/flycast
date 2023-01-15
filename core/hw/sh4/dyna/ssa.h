@@ -734,7 +734,7 @@ private:
 		bool success = false;
 		const u32 start_page = block->vaddr >> 12;
 		const u32 end_page = (block->vaddr + (block->guest_opcodes - 1) * 2) >> 12;
-		while (true)
+		for (int i = 0; i < 5; i++)
 		{
 			if ((addr >> 12) < start_page || ((addr + 2) >> 12) > end_page)
 				break;
