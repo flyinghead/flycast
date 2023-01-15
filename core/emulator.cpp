@@ -550,18 +550,17 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		mcfg_DestroyDevices();
 		mcfg_CreateDevices();
-		if (settings.platform.isNaomi()) {
+		if (settings.platform.isNaomi())
 			// Must be done after the maple devices are created and EEPROM is accessible
 			naomi_cart_ConfigureEEPROM();
-			// and reload settings so that eeprom-based settings can be overridden
-			loadGameSpecificSettings();
-		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
 			gui_display_notification("Widescreen cheat activated", 1000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
+		// reload settings so that all settings can be overridden
+		loadGameSpecificSettings();
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())
