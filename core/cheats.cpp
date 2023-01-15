@@ -623,200 +623,206 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 	Cheat conditionCheat;
 	unsigned conditionLimit = 0;
 
-	for (unsigned i = 0; i < codes.size(); i++)
-	{
-		if (i < conditionLimit)
-			cheats.push_back(conditionCheat);
-		Cheat cheat{};
-		cheat.description = name;
-		u32 code = (codes[i] & 0xff000000) >> 24;
-		switch (code)
+	const size_t prevSize = cheats.size();
+	try {
+		for (unsigned i = 0; i < codes.size(); i++)
 		{
-		case 0:
-		case 1:
-		case 2:
+			if (i < conditionLimit)
+				cheats.push_back(conditionCheat);
+			Cheat cheat{};
+			cheat.description = name;
+			u32 code = (codes[i] & 0xff000000) >> 24;
+			switch (code)
 			{
-				// 8/16/32-bit write
-				if (i + 1 >= codes.size())
-					throw FlycastException("Missing value");
-				cheat.type = Cheat::Type::setValue;
-				cheat.size = code == 0 ? 8 : code == 1 ? 16 : 32;
-				cheat.address = codes[i] & 0x00ffffff;
-				cheat.value = codes[++i];
-				cheats.push_back(cheat);
-			}
-			break;
-		case 3:
-			{
-				u32 subcode = (codes[i] & 0x00ff0000) >> 16;
-				switch (subcode)
+			case 0:
+			case 1:
+			case 2:
 				{
-				case 0:
+					// 8/16/32-bit write
+					if (i + 1 >= codes.size())
+						throw FlycastException("Missing value");
+					cheat.type = Cheat::Type::setValue;
+					cheat.size = code == 0 ? 8 : code == 1 ? 16 : 32;
+					cheat.address = codes[i] & 0x00ffffff;
+					cheat.value = codes[++i];
+					cheats.push_back(cheat);
+				}
+				break;
+			case 3:
+				{
+					u32 subcode = (codes[i] & 0x00ff0000) >> 16;
+					switch (subcode)
 					{
-						// Group write
-						int count = codes[i] & 0xffff;
-						if (i + count + 1 >= codes.size())
-							throw FlycastException("Missing values");
-						cheat.type = Cheat::Type::setValue;
-						cheat.size = 32;
-						cheat.address = codes[++i] & 0x00ffffff;
-						for (int j = 0; j < count; j++)
+					case 0:
 						{
-							if (j == 1)
-								cheat.description += " (cont'd)";
+							// Group write
+							int count = codes[i] & 0xffff;
+							if (i + count + 1 >= codes.size())
+								throw FlycastException("Missing values");
+							cheat.type = Cheat::Type::setValue;
+							cheat.size = 32;
+							cheat.address = codes[++i] & 0x00ffffff;
+							for (int j = 0; j < count; j++)
+							{
+								if (j == 1)
+									cheat.description += " (cont'd)";
+								cheat.value = codes[++i];
+								cheats.push_back(cheat);
+								cheat.address += 4;
+								if (j < count - 1 && i < conditionLimit)
+									cheats.push_back(conditionCheat);
+							}
+						}
+						break;
+					case 1:
+					case 2:
+						{
+							// 8-bit inc/decrement
+							if (i + 1 >= codes.size())
+								throw FlycastException("Missing value");
+							cheat.type = subcode == 1 ? Cheat::Type::increase : Cheat::Type::decrease;
+							cheat.size = 8;
+							cheat.value = codes[i] & 0xff;
+							cheat.address = codes[++i] & 0x00ffffff;
+							cheats.push_back(cheat);
+						}
+						break;
+					case 3:
+					case 4:
+						{
+							// 16-bit inc/decrement
+							if (i + 1 >= codes.size())
+								throw FlycastException("Missing value");
+							cheat.type = subcode == 3 ? Cheat::Type::increase : Cheat::Type::decrease;
+							cheat.size = 16;
+							cheat.value = codes[i] & 0xffff;
+							cheat.address = codes[++i] & 0x00ffffff;
+							cheats.push_back(cheat);
+						}
+						break;
+					case 5:
+					case 6:
+						{
+							// 32-bit inc/decrement
+							if (i + 2 >= codes.size())
+								throw FlycastException("Missing address or value");
+							cheat.type = subcode == 5 ? Cheat::Type::increase : Cheat::Type::decrease;
+							cheat.size = 32;
+							cheat.address = codes[++i] & 0x00ffffff;
 							cheat.value = codes[++i];
 							cheats.push_back(cheat);
-							cheat.address += 4;
-							if (j < count - 1 && i < conditionLimit)
-								cheats.push_back(conditionCheat);
 						}
+						break;
+					default:
+						throw FlycastException("Unsupported cheat type");
 					}
-					break;
-				case 1:
-				case 2:
-					{
-						// 8-bit inc/decrement
-						if (i + 1 >= codes.size())
-							throw FlycastException("Missing value");
-						cheat.type = subcode == 1 ? Cheat::Type::increase : Cheat::Type::decrease;
-						cheat.size = 8;
-						cheat.value = codes[i] & 0xff;
-						cheat.address = codes[++i] & 0x00ffffff;
-						cheats.push_back(cheat);
-					}
-					break;
-				case 3:
-				case 4:
-					{
-						// 16-bit inc/decrement
-						if (i + 1 >= codes.size())
-							throw FlycastException("Missing value");
-						cheat.type = subcode == 3 ? Cheat::Type::increase : Cheat::Type::decrease;
-						cheat.size = 16;
-						cheat.value = codes[i] & 0xffff;
-						cheat.address = codes[++i] & 0x00ffffff;
-						cheats.push_back(cheat);
-					}
-					break;
-				case 5:
-				case 6:
-					{
-						// 32-bit inc/decrement
-						if (i + 2 >= codes.size())
-							throw FlycastException("Missing address or value");
-						cheat.type = subcode == 5 ? Cheat::Type::increase : Cheat::Type::decrease;
-						cheat.size = 32;
-						cheat.address = codes[++i] & 0x00ffffff;
-						cheat.value = codes[++i];
-						cheats.push_back(cheat);
-					}
-					break;
-				default:
-					throw FlycastException("Unsupported cheat type");
 				}
-			}
-			break;
-		case 4:
-			{
-				// 32-bit repeat write
-				if (i + 2 >= codes.size())
-					throw FlycastException("Missing count or value");
-				cheat.type = Cheat::Type::setValue;
-				cheat.size = 32;
-				cheat.address = codes[i] & 0x00ffffff;
-				cheat.repeatCount = codes[++i] >> 16;
-				cheat.repeatAddressIncrement = codes[i] & 0xffff;
-				cheat.value = codes[++i];
-				cheats.push_back(cheat);
-			}
-			break;
-		case 5:
-			{
-				// copy bytes
-				if (i + 2 >= codes.size())
-					throw FlycastException("Missing count or destination address");
-				cheat.type = Cheat::Type::copy;
-				cheat.size = 8;
-				cheat.address = codes[i] & 0x00ffffff;
-				cheat.destAddress = codes[++i] & 0x00ffffff;
-				cheat.repeatCount = codes[++i];
-				cheats.push_back(cheat);
-			}
-			break;
-		// TODO 7 change decryption type
-		// TODO 0xb delay applying codes
-		// TODO 0xc global enable test
-		case 0xd:
-			{
-				// enable next code if eq/neq/lt/gt
-				if (i + 1 >= codes.size())
-					throw FlycastException("Missing count or destination address");
-				cheat.size = 16;
-				cheat.address = codes[i] & 0x00ffffff;
-				switch (codes[++i] >> 16)
+				break;
+			case 4:
 				{
-				case 0:
-					cheat.type = Cheat::Type::runNextIfEq;
-					break;
-				case 1:
-					cheat.type = Cheat::Type::runNextIfNeq;
-					break;
-				case 2:
-					cheat.type = Cheat::Type::runNextIfLt;
-					break;
-				case 3:
-					cheat.type = Cheat::Type::runNextIfGt;
-					break;
-				default:
-					throw FlycastException("Unsupported conditional code");
+					// 32-bit repeat write
+					if (i + 2 >= codes.size())
+						throw FlycastException("Missing count or value");
+					cheat.type = Cheat::Type::setValue;
+					cheat.size = 32;
+					cheat.address = codes[i] & 0x00ffffff;
+					cheat.repeatCount = codes[++i] >> 16;
+					cheat.repeatAddressIncrement = codes[i] & 0xffff;
+					cheat.value = codes[++i];
+					cheats.push_back(cheat);
 				}
-				cheat.value = codes[i] & 0xffff;
-				cheats.push_back(cheat);
-			}
-			break;
-		case 0xe:
-			{
-				// multiline enable codes if eq/neq/lt/gt
-				if (i + 1 >= codes.size())
-					throw FlycastException("Missing test address");
-				cheat.size = 16;
-				cheat.value = codes[i] & 0xffff;
-				conditionLimit = i + 1 + ((codes[i] >> 16) & 0xff);
-				switch (codes[++i] >> 24)
+				break;
+			case 5:
 				{
-				case 0:
-					cheat.type = Cheat::Type::runNextIfEq;
-					break;
-				case 1:
-					cheat.type = Cheat::Type::runNextIfNeq;
-					break;
-				case 2:
-					cheat.type = Cheat::Type::runNextIfLt;
-					break;
-				case 3:
-					cheat.type = Cheat::Type::runNextIfGt;
-					break;
-				default:
-					throw FlycastException("Unsupported conditional code");
+					// copy bytes
+					if (i + 2 >= codes.size())
+						throw FlycastException("Missing count or destination address");
+					cheat.type = Cheat::Type::copy;
+					cheat.size = 8;
+					cheat.address = codes[i] & 0x00ffffff;
+					cheat.destAddress = codes[++i] & 0x00ffffff;
+					cheat.repeatCount = codes[++i];
+					cheats.push_back(cheat);
 				}
-				cheat.address = codes[i] & 0x00ffffff;
-				conditionCheat = cheat;
+				break;
+			// TODO 7 change decryption type
+			// TODO 0xb delay applying codes
+			// TODO 0xc global enable test
+			case 0xd:
+				{
+					// enable next code if eq/neq/lt/gt
+					if (i + 1 >= codes.size())
+						throw FlycastException("Missing count or destination address");
+					cheat.size = 16;
+					cheat.address = codes[i] & 0x00ffffff;
+					switch (codes[++i] >> 16)
+					{
+					case 0:
+						cheat.type = Cheat::Type::runNextIfEq;
+						break;
+					case 1:
+						cheat.type = Cheat::Type::runNextIfNeq;
+						break;
+					case 2:
+						cheat.type = Cheat::Type::runNextIfLt;
+						break;
+					case 3:
+						cheat.type = Cheat::Type::runNextIfGt;
+						break;
+					default:
+						throw FlycastException("Unsupported conditional code");
+					}
+					cheat.value = codes[i] & 0xffff;
+					cheats.push_back(cheat);
+				}
+				break;
+			case 0xe:
+				{
+					// multiline enable codes if eq/neq/lt/gt
+					if (i + 1 >= codes.size())
+						throw FlycastException("Missing test address");
+					cheat.size = 16;
+					cheat.value = codes[i] & 0xffff;
+					conditionLimit = i + 1 + ((codes[i] >> 16) & 0xff);
+					switch (codes[++i] >> 24)
+					{
+					case 0:
+						cheat.type = Cheat::Type::runNextIfEq;
+						break;
+					case 1:
+						cheat.type = Cheat::Type::runNextIfNeq;
+						break;
+					case 2:
+						cheat.type = Cheat::Type::runNextIfLt;
+						break;
+					case 3:
+						cheat.type = Cheat::Type::runNextIfGt;
+						break;
+					default:
+						throw FlycastException("Unsupported conditional code");
+					}
+					cheat.address = codes[i] & 0x00ffffff;
+					conditionCheat = cheat;
+				}
+				break;
+			default:
+				throw FlycastException("Unsupported cheat type");
 			}
-			break;
-		default:
-			throw FlycastException("Unsupported cheat type");
 		}
-	}
-	setActive(!cheats.empty());
 #ifndef LIBRETRO
-	std::string path = cfgLoadStr("cheats", gameId, "");
-	if (path == "")
-	{
-		path = get_game_save_prefix() + ".cht";
-		cfgSaveStr("cheats", gameId, path);
-	}
-	saveCheatFile(path);
+		std::string path = cfgLoadStr("cheats", gameId, "");
+		if (path == "")
+		{
+			path = get_game_save_prefix() + ".cht";
+			cfgSaveStr("cheats", gameId, path);
+		}
+		saveCheatFile(path);
 #endif
+		setActive(!cheats.empty());
+	} catch (...) {
+		cheats.erase(cheats.begin() + prevSize, cheats.end());
+		throw;
+	}
 }
 
 void CheatManager::saveCheatFile(const std::string& filename)
