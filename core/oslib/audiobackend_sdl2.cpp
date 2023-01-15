@@ -14,6 +14,7 @@ class SDLAudioBackend : AudioBackend
 	cResetEvent read_wait;
 	std::mutex stream_mutex;
 	uint32_t *sample_buffer;
+	unsigned sample_buffer_size = 0;
 	unsigned sample_count = 0;
 	SDL_AudioCVT audioCvt;
 
@@ -54,7 +55,7 @@ class SDLAudioBackend : AudioBackend
 		}
 
 		// Move samples in the buffer and consume them
-		memmove(&backend->sample_buffer[0], &backend->sample_buffer[islen], (backend->sample_count-islen)*sizeof(uint32_t));
+		memmove(&backend->sample_buffer[0], &backend->sample_buffer[islen], (backend->sample_count - islen) * sizeof(uint32_t));
 		backend->sample_count -= islen;
 
 		backend->stream_mutex.unlock();
@@ -75,7 +76,9 @@ public:
 			}
 		}
 	
-		sample_buffer = new uint32_t[config::AudioBufferSize]();
+		sample_buffer_size = std::max<u32>(SAMPLE_COUNT * 2, config::AudioBufferSize);
+		sample_buffer = new uint32_t[sample_buffer_size]();
+		sample_count = 0;
 
 		// Support 44.1KHz (native) but also upsampling to 48KHz
 		SDL_AudioSpec wav_spec, out_spec;
@@ -86,6 +89,7 @@ public:
 		wav_spec.samples = SAMPLE_COUNT * 2;  // Must be power of two
 		wav_spec.callback = audioCallback;
 		wav_spec.userdata = this;
+		needs_resampling = false;
 
 		// Try 44.1KHz which should be faster since it's native.
 		audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
@@ -126,7 +130,7 @@ public:
 		// If wait, then wait for the buffer to be smaller than a certain size.
 		stream_mutex.lock();
 		if (wait) {
-			while (sample_count + samples > (u32)config::AudioBufferSize) {
+			while (sample_count + samples > sample_buffer_size) {
 				stream_mutex.unlock();
 				read_wait.Wait();
 				stream_mutex.lock();
@@ -134,7 +138,7 @@ public:
 		}
 
 		// Copy as many samples as possible, drop any remaining (this should not happen usually)
-		unsigned free_samples = config::AudioBufferSize - sample_count;
+		unsigned free_samples = sample_buffer_size - sample_count;
 		unsigned tocopy = samples < free_samples ? samples : free_samples;
 		memcpy(&sample_buffer[sample_count], frame, tocopy * sizeof(uint32_t));
 		sample_count += tocopy;
