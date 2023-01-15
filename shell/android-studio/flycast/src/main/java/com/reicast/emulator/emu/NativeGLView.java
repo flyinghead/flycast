@@ -29,7 +29,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         vjoyDelegate.restoreCustomVjoyValues(vjoy_d_cached);
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public NativeGLView(Context context) {
         this(context, null);
     }
