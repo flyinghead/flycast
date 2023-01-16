@@ -147,8 +147,16 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 		}
 	}
+	else if (vaddr & 1)
+	{
+		// read address error
+		Do_Exception(vaddr, 0xE0, 0x100);
+		return false;
+	}
 	else
+	{
 		addr = vaddr;
+	}
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
