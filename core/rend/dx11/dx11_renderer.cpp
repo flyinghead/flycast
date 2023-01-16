@@ -905,11 +905,13 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 		if (FAILED(hr))
 			WARN_LOG(RENDERER, "DC Framebuffer texture view creation failed");
 	}
-
 	deviceContext->UpdateSubresource(dcfbTexture, 0, nullptr, pb.data(), width * sizeof(u32), width * sizeof(u32) * height);
 
+#ifndef LIBRETRO
+	ID3D11ShaderResourceView *nullResView = nullptr;
+    deviceContext->PSSetShaderResources(0, 1, &nullResView);
 	resize(width, height);
-	deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
+	deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), nullptr);
 	float colors[4];
 	info.vo_border_col.getRGBColor(colors);
 	colors[3] = 1.f;
@@ -923,21 +925,25 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	const D3D11_RECT r = { 0, 0, (LONG)this->width, (LONG)this->height };
 	deviceContext->RSSetScissorRects(1, &r);
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
 
-	float bar = (this->width - this->height * 640.f / 480.f) / 2.f;
-	quad->draw(dcfbTextureView, samplers->getSampler(true), nullptr, bar / this->width * 2.f - 1.f, -1.f, (this->width - bar * 2.f) / this->width * 2.f, 2.f);
+	quad->draw(dcfbTextureView, samplers->getSampler(true));
 
 	aspectRatio = getDCFramebufferAspectRatio();
-#ifndef LIBRETRO
+
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
 	theDX11Context.setFrameRendered();
 #else
+	// FIXME won't look great on a 1x1 texture in case video output is disabled
 	theDX11Context.drawOverlay(this->width, this->height);
 	ID3D11RenderTargetView *nullView = nullptr;
 	deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
-	deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+	deviceContext->PSSetShaderResources(0, 1, &dcfbTextureView.get());
 #endif
 	frameRendered = true;
 	frameRenderedOnce = true;
