@@ -1543,99 +1543,89 @@ static OnLoad ol_vtxdec(&vtxdec_init);
 
 void FillBGP(TA_context* ctx)
 {
-	//Render pre-code
-	//--BG poly
-	u32 param_base=PARAM_BASE & 0xF00000;
-
-
-	PolyParam* bgpp=ctx->rend.global_param_op.head();
-	Vertex* cv=ctx->rend.verts.head();
-
-	bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0; //double parameters for volumes
+	// Background polygon handling
+	PolyParam *bgpp = ctx->rend.global_param_op.head();
+	Vertex *cv = ctx->rend.verts.head();
 
 	//Get the strip base
-	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4) & 0x7FFFFF;	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games
-	//i have *no* idea why that happens, they manage to set the render target over there as well
-	//and that area is *not* written by the games (they instead write the params on 000000 instead of 800000)
-	//could be a h/w bug ? param_base is 400000 and tag is 100000*4
+	const u32 param_base = PARAM_BASE & 0xF00000;
+	const u32 strip_base = (param_base + ISP_BACKGND_T.tag_address * 4) & VRAM_MASK;
+
 	//Calculate the vertex size
-	//Update: Looks like I was handling the bank interleave wrong for 16 megs ram, could that be it?
+	u32 strip_vs = 3 + ISP_BACKGND_T.skip;
+	if (FPU_SHAD_SCALE.intensity_shadow == 1 && ISP_BACKGND_T.shadow == 1)
+		strip_vs += ISP_BACKGND_T.skip; // 2x the size needed
+	strip_vs *= 4;
 
-	u32 strip_vs=3 + ISP_BACKGND_T.skip;
-	u32 strip_vert_num=ISP_BACKGND_T.tag_offset;
-
-	if (PSVM && ISP_BACKGND_T.shadow)
-	{
-		strip_vs+=ISP_BACKGND_T.skip;//2x the size needed :p
-	}
-	strip_vs*=4;
 	//Get vertex ptr
-	u32 vertex_ptr=strip_vert_num*strip_vs+strip_base +3*4;
-	//now , all the info is ready :p
+	const u32 strip_vert_num = ISP_BACKGND_T.tag_offset;
+	u32 vertex_ptr = strip_vert_num * strip_vs + strip_base + 3 * 4;
 
 	bgpp->isp.full = pvr_read32p<u32>(strip_base);
 	bgpp->tsp.full = pvr_read32p<u32>(strip_base + 4);
 	bgpp->tcw.full = pvr_read32p<u32>(strip_base + 8);
 	bgpp->count = 4;
 	bgpp->first = 0;
-	bgpp->tileclip = 0;//disabled ! HA ~
+	bgpp->tileclip = 0; // disabled
 
-	bgpp->isp.DepthMode=7;// -> this makes things AWFULLY slow .. sometimes
-	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hidden !
-	//Set some pcw bits .. I should really get rid of pcw ..
-	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
-	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
-	bgpp->pcw.Offset=bgpp->isp.Offset;
+	bgpp->isp.DepthMode = 7;
+	bgpp->isp.CullMode = 0;// -> so that its not culled, or somehow else hidden !
+	bgpp->pcw.UV_16bit = bgpp->isp.UV_16b;
+	bgpp->pcw.Gouraud = bgpp->isp.Gouraud;
+	bgpp->pcw.Offset = bgpp->isp.Offset;
 	bgpp->pcw.Texture = bgpp->isp.Texture;
 	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
 
-	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
-	for (int i=0;i<3;i++)
+	for (int i = 0; i < 3; i++)
 	{
 		if (isDirectX(config::RendererType))
-			decode_pvr_vertex<2, 1, 0, 3>(strip_base,vertex_ptr,&cv[i]);
+			decode_pvr_vertex<2, 1, 0, 3>(strip_base, vertex_ptr, &cv[i]);
 		else
-			decode_pvr_vertex<0, 1, 2, 3>(strip_base,vertex_ptr,&cv[i]);
-		vertex_ptr+=strip_vs;
+			decode_pvr_vertex<0, 1, 2, 3>(strip_base, vertex_ptr, &cv[i]);
+		vertex_ptr += strip_vs;
 	}
 
 	f32 bg_depth = ISP_BACKGND_D.f;
 	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
-
-	f32 min_u = std::min(cv[0].u, std::min(cv[1].u, cv[2].u));
-	f32 max_u = std::max(cv[0].u, std::max(cv[1].u, cv[2].u));
-	if (max_u == 0.f)
-		max_u = 1.f;
-	const f32 diff_u = (max_u - min_u) * 0.4f;
-	max_u += diff_u;
-	min_u -= diff_u;
-	const f32 min_v = std::min(cv[0].v, std::min(cv[1].v, cv[2].v));
-	f32 max_v = std::max(cv[0].v, std::max(cv[1].v, cv[2].v));
-	if (max_v == 0.f)
-		max_v = 1.f;
-	cv[0].x = -256.f * scale_x;
-	cv[0].y = 0.f;
 	cv[0].z = bg_depth;
-	cv[0].u = min_u;
-	cv[0].v = min_v;
-
-	cv[1].x = 896.f * scale_x;
-	cv[1].y = 0.f;
 	cv[1].z = bg_depth;
-	cv[1].u = max_u;
-	cv[1].v = min_v;
-
-	cv[2].x = -256.f * scale_x;
-	cv[2].y = 480.f;
 	cv[2].z = bg_depth;
-	cv[2].u = min_u;
-	cv[2].v = max_v;
 
-	cv[3] = cv[2];
-	cv[3].x = 896.f * scale_x;
-	cv[3].y = 480.f;
-	cv[3].u = max_u;
-	cv[3].v = max_v;
+	float scale_x = SCALER_CTL.hscale == 1 ? 2.f : 1.f;
+	if (bgpp->pcw.Texture == 0)
+	{
+		cv[0].x = -256.f * scale_x;
+		cv[0].y = 0.f;
+
+		cv[1].x = 896.f * scale_x;
+		cv[1].y = 0.f;
+
+		cv[2].x = cv[0].x;
+		cv[2].y = 480.f;
+
+		cv[3] = cv[2];
+		cv[3].x = cv[1].x;
+	}
+	else
+	{
+		const float deltaU = (cv[1].u - cv[0].u) * 0.4f;
+		cv[0].x -= 256.f;
+		cv[0].u -= deltaU;
+		cv[1].x += 256.f;
+		cv[1].u += deltaU;
+		cv[2].x += 256.f;
+		cv[2].u += deltaU;
+
+		cv[0].x *= scale_x;
+		cv[1].x *= scale_x;
+		cv[2].x *= scale_x;
+
+		cv[3] = cv[2];
+		cv[3].x = cv[0].x;
+		cv[3].u = cv[0].u;
+
+		std::swap(cv[0], cv[1]);
+	}
 }
 
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
