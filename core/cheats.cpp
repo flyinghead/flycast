@@ -202,9 +202,11 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 				{ 0x3F400000, 0x43F00000, 0, 0x43F00000, 0 } },
 		// Resident Evil: Code Veronica (USA)
 		// Code 1-4 removes the black bars on top and bottom in FMV
-		{ "T1204N",     "RESIDENT EVIL CODE VERONICA                                                                                                     ",
+		{ "T1204N", "RESIDENT EVIL CODE VERONICA                                                                                                     ",
 				{ 0x329E40, 0x3838D8, 0x3838F8, 0x383918, 0x383938 },
 				{ 0x3F400000, 0x43F00000, 0, 0x43F00000, 0 } },
+		{ "T1204N", "RESIDENT EVIL CODE VERONICA X                                                                                                   ",
+				{ 0x344AE1 }, { 0x003F6000 } },
 		{ "T8107D  50", nullptr,    { 0x0464FC, 0x046210 }, { 0x3A888889, 0x44200000 } },	// Re-Volt (PAL) Code 1 is a render fix
 		{ "MK-5119250", nullptr,    { 0x0C5EB4 }, { 0x3A888889 } },		// Rez (PAL)
 		{ "T15122N",    nullptr,    { 0x8E7A80, 0x8E7AB4 }, { 0x43E10000, 0x3FAAAAAB } },	// Ring, The - Terror's Realm (USA)
