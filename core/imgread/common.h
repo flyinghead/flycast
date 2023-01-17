@@ -185,12 +185,17 @@ struct Disc
 			to[4] = EndFAD >> 8;
 			to[5] = EndFAD >> 0;
 		}
-		else
+		else if (session <= sessions.size())
 		{
 			to[2] = sessions[session - 1].FirstTrack;		//start track of this session
 			to[3] = sessions[session - 1].StartFAD >> 16;	//fad is session start
 			to[4] = sessions[session - 1].StartFAD >> 8;
 			to[5] = sessions[session - 1].StartFAD >> 0;
+		}
+		else
+		{
+			// invalid session number
+			to[2] = to[3] = to[4] = to[5] = 0;
 		}
 	}
 
