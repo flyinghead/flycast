@@ -63,6 +63,7 @@ typedef struct _IMAGE_RUNTIME_FUNCTION_ENTRY RUNTIME_FUNCTION;
 class UnwindInfo
 {
 public:
+	virtual ~UnwindInfo() = default;
 	void start(void *address);
 	void pushReg(u32 offset, int reg);
 	void saveReg(u32 offset, int reg, int stackOffset);
@@ -75,6 +76,10 @@ public:
 	void allocStackPtr(const void *address, int size) {
 		allocStack((u32)((const u8 *)address - startAddr), size);
 	}
+
+protected:
+	virtual void registerFrame(void *frame);
+	virtual void deregisterFrame(void *frame);
 
 private:
 	u8 *startAddr;
@@ -91,7 +96,9 @@ private:
 #endif
 };
 
-#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64 && (HOST_CPU != CPU_X86 || defined(_WIN32))
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64	\
+	&& (HOST_CPU != CPU_X86 || defined(_WIN32))		\
+	&& (HOST_CPU != CPU_ARM || !defined(__ANDROID__))
 inline void UnwindInfo::start(void *address) {
 }
 inline void UnwindInfo::pushReg(u32 offset, int reg) {
@@ -108,6 +115,10 @@ inline size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset) {
 	return 0;
 }
 inline void UnwindInfo::clear() {
+}
+inline void UnwindInfo::registerFrame(void *frame) {
+}
+inline void UnwindInfo::deregisterFrame(void *frame) {
 }
 #endif
 

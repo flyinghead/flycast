@@ -527,6 +527,13 @@ if(ASAN)
 	endif()
 endif()
 
+if(ANDROID AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+	enable_language(ASM)
+	option(LIBUNWIND_ENABLE_SHARED "Build libunwind as a shared library." OFF)
+	add_subdirectory(core/deps/libunwind/libunwind)
+	target_link_libraries(${PROJECT_NAME} PRIVATE unwind_static)
+endif()
+
 if(ANDROID AND NOT LIBRETRO)
 	set(BUILD_SHARED_LIBS OFF)
 	add_subdirectory(core/deps/oboe)
@@ -867,6 +874,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/modules/ubc.cpp
 		core/hw/sh4/modules/wince.h
 		core/hw/sh4/sh4_cache.h
+		core/hw/sh4/sh4_cycles.cpp
+		core/hw/sh4/sh4_cycles.h
 		core/hw/sh4/sh4_core.h
 		core/hw/sh4/sh4_core_regs.cpp
 		core/hw/sh4/sh4_if.h

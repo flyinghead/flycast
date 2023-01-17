@@ -117,20 +117,22 @@ extern char __exidx_end;
 
 #endif
 
+bool flycastFindDynarecFDE(uintptr_t targetAddr, uintptr_t &fde);
+
 namespace libunwind {
 
 /// Used by findUnwindSections() to return info about needed sections.
 struct UnwindInfoSections {
 #if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) ||                                \
     defined(_LIBUNWIND_SUPPORT_COMPACT_UNWIND) ||                              \
-    defined(_LIBUNWIND_USE_DL_ITERATE_PHDR)
+    defined(_LIBUNWIND_USE_DL_ITERATE_PHDR) || defined(_LIBUNWIND_ARM_EHABI)
   // No dso_base for SEH.
   uintptr_t       dso_base;
 #endif
 #if defined(_LIBUNWIND_USE_DL_ITERATE_PHDR)
   size_t          text_segment_length;
 #endif
-#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
+#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) || defined(_LIBUNWIND_ARM_EHABI)
   uintptr_t       dwarf_section;
   size_t          dwarf_section_length;
 #endif
@@ -639,9 +641,7 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
 
 inline bool LocalAddressSpace::findOtherFDE(pint_t targetAddr, pint_t &fde) {
   // TO DO: if OS has way to dynamically register FDEs, check that.
-  (void)targetAddr;
-  (void)fde;
-  return false;
+  return flycastFindDynarecFDE(targetAddr, fde);
 }
 
 inline bool LocalAddressSpace::findFunctionName(pint_t addr, char *buf,

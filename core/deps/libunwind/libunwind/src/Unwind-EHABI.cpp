@@ -12,6 +12,7 @@
 #include "Unwind-EHABI.h"
 
 #if defined(_LIBUNWIND_ARM_EHABI)
+#include "UnwindCursor.hpp"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -558,6 +559,14 @@ unwind_phase1(unw_context_t *uc, unw_cursor_t *cursor, _Unwind_Exception *except
         return _URC_FATAL_PHASE1_ERROR;
       }
     }
+    else if (frameInfo.unwind_info_size != 0)
+    {
+        int stepResult = __unw_step(cursor);
+        if (stepResult == 0)
+          return _URC_END_OF_STACK;
+        else if (stepResult < 0)
+          return _URC_FATAL_PHASE1_ERROR;
+    }
   }
   return _URC_NO_REASON;
 }
@@ -686,6 +695,16 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc, unw_cursor_t *cursor
                       personalityResult);
         return _URC_FATAL_PHASE2_ERROR;
       }
+    }
+    else if (frameInfo.unwind_info_size != 0)
+    {
+      // Ask libunwind to get next frame.
+      libunwind::AbstractUnwindCursor *co = (libunwind::AbstractUnwindCursor *)cursor;
+      int stepResult = co->step(true);
+      if (stepResult == 0)
+        return _URC_END_OF_STACK;
+      else if (stepResult < 0)
+        return _URC_FATAL_PHASE2_ERROR;
     }
     frame_count++;
   }

@@ -88,7 +88,7 @@ extern "C" _Unwind_Reason_Code __libunwind_seh_personality(
 
 namespace libunwind {
 
-#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
+#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) || defined(_LIBUNWIND_ARM_EHABI)
 /// Cache of recently found FDEs.
 template <typename A>
 class _LIBUNWIND_HIDDEN DwarfFDECache {
@@ -993,7 +993,7 @@ private:
   }
 #endif
 
-#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
+#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) || defined(_LIBUNWIND_ARM_EHABI)
   bool getInfoFromFdeCie(const typename CFI_Parser<A>::FDE_Info &fdeInfo,
                          const typename CFI_Parser<A>::CIE_Info &cieInfo,
                          pint_t pc, uintptr_t dso_base);
@@ -1168,7 +1168,7 @@ private:
 
 #endif // defined(_LIBUNWIND_SUPPORT_COMPACT_UNWIND)
 
-#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
+#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) || defined(_LIBUNWIND_ARM_EHABI)
   compact_unwind_encoding_t dwarfEncoding() const {
     R dummy;
     return dwarfEncoding(dummy);
@@ -1604,7 +1604,7 @@ bool UnwindCursor<A, R>::getInfoFromEHABISection(
 }
 #endif
 
-#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
+#if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND) || defined(_LIBUNWIND_ARM_EHABI)
 template <typename A, typename R>
 bool UnwindCursor<A, R>::getInfoFromFdeCie(
     const typename CFI_Parser<A>::FDE_Info &fdeInfo,
@@ -2585,8 +2585,23 @@ void UnwindCursor<A, R>::setInfoBasedOnIPRegister(bool isReturnAddress) {
 
 #if defined(_LIBUNWIND_ARM_EHABI)
     // If there is ARM EHABI unwind info, look there next.
-    if (sects.arm_section != 0 && this->getInfoFromEHABISection(pc, sects))
+    if (sects.arm_section != 0 && this->getInfoFromEHABISection(pc, sects)) {
+      _info.unwind_info_size = 0;
       return;
+    }
+    // Lastly, ask AddressSpace object about platform specific ways to locate
+    // other FDEs.
+    pint_t fde;
+    if (_addressSpace.findOtherFDE(pc, fde)) {
+      typename CFI_Parser<A>::FDE_Info fdeInfo;
+      typename CFI_Parser<A>::CIE_Info cieInfo;
+      if (!CFI_Parser<A>::decodeFDE(_addressSpace, fde, &fdeInfo, &cieInfo)) {
+        // Double check this FDE is for a function that includes the pc.
+        if ((fdeInfo.pcStart <= pc) && (pc < fdeInfo.pcEnd))
+          if (getInfoFromFdeCie(fdeInfo, cieInfo, pc, 0))
+            return;
+      }
+    }
 #endif
   }
 
@@ -2834,7 +2849,10 @@ template <typename A, typename R> int UnwindCursor<A, R>::step(bool stage2) {
 #elif defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
     result = this->stepWithDwarfFDE(stage2);
 #elif defined(_LIBUNWIND_ARM_EHABI)
-    result = this->stepWithEHABI();
+    if (_info.unwind_info_size == 0)
+      result = this->stepWithEHABI();
+    else
+      result = this->stepWithDwarfFDE(stage2);
 #else
   #error Need _LIBUNWIND_SUPPORT_COMPACT_UNWIND or \
               _LIBUNWIND_SUPPORT_SEH_UNWIND or \

@@ -22,9 +22,12 @@
 #if HOST_CPU == CPU_ARM && FEAT_AREC != DYNAREC_NONE
 #include "arm7_rec.h"
 #include "hw/mem/_vmem.h"
+#include "rec-ARM/arm_unwind.h"
 
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
+
+static ArmUnwindInfo unwinder;
 
 namespace aicaarm {
 
@@ -455,6 +458,10 @@ void arm7backend_flush()
 	Label arm_exit;
 	Label arm_dofiq;
 
+	// For stack unwinding purposes, we pretend that the entire code block is a single function
+	unwinder.clear();
+	unwinder.start(ass.GetCursorAddress<void *>());
+
 	// arm_mainloop:
 	arm_mainloop = ass.GetCursorAddress<arm_mainloop_t>();
 	RegisterList regList = RegisterList::Union(
@@ -463,6 +470,16 @@ void arm7backend_flush()
 			RegisterList(lr));
 	ass.Push(regList);
 	ass.Sub(sp, sp, 4);						// 8-byte stack alignment
+	unwinder.allocStack(0, 40);
+	unwinder.saveReg(0, r4, 36);
+	unwinder.saveReg(0, r5, 32);
+	unwinder.saveReg(0, r6, 28);
+	unwinder.saveReg(0, r7, 24);
+	unwinder.saveReg(0, r8, 20);
+	unwinder.saveReg(0, r9, 16);
+	unwinder.saveReg(0, r10, 12);
+	unwinder.saveReg(0, r11, 8);
+	unwinder.saveReg(0, lr, 4);
 
 	ass.Mov(r8, r0);						// load regs
 	ass.Mov(r4, r1);						// load entry points
@@ -497,6 +514,10 @@ void arm7backend_flush()
 	jump((void *)arm_dispatch);
 
 	ass.Finalize();
+
+	size_t unwindSize = unwinder.end(recompiler::spaceLeft() - 128);
+	verify(unwindSize <= 128);
+
 	recompiler::advance(ass.GetBuffer()->GetSizeInBytes());
 }
 

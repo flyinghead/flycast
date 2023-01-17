@@ -34,6 +34,7 @@ using namespace vixl::aarch32;
 #include "hw/sh4/dyna/ssa_regalloc.h"
 #include "hw/sh4/sh4_mem.h"
 #include "cfg/option.h"
+#include "arm_unwind.h"
 
 //#define CANONICALTEST
 
@@ -101,6 +102,8 @@ public:
 };
 
 static Arm32Assembler ass;
+static ArmUnwindInfo unwinder;
+std::map<u32, u32 *> ArmUnwindInfo::fdes;
 
 static void loadSh4Reg(Register Rt, u32 Sh4_Reg)
 {
@@ -2191,6 +2194,7 @@ void ngen_ResetBlocks()
 {
 	INFO_LOG(DYNAREC, "ngen_ResetBlocks()");
 	mainloop = nullptr;
+	unwinder.clear();
 
 	if (p_sh4rcb->cntx.CpuRunning)
 	{
@@ -2210,6 +2214,7 @@ static void generate_mainloop()
 	INFO_LOG(DYNAREC, "Generating main loop");
 	ass = Arm32Assembler((u8 *)emit_GetCCPtr(), emit_FreeSpace());
 
+	unwinder.start(ass.GetCursorAddress<void *>());
 	// Stubs
 	Label ngen_LinkBlock_Shared_stub;
 // ngen_LinkBlock_Generic_stub
@@ -2269,6 +2274,17 @@ static void generate_mainloop()
 		scope.ExcludeAll();
 		ass.Push(savedRegisters);
 	}
+	unwinder.allocStack(0, 40);
+	unwinder.saveReg(0, r4, 40);
+	unwinder.saveReg(0, r5, 36);
+	unwinder.saveReg(0, r6, 32);
+	unwinder.saveReg(0, r7, 28);
+	unwinder.saveReg(0, r8, 24);
+	unwinder.saveReg(0, r9, 20);
+	unwinder.saveReg(0, r10, 16);
+	unwinder.saveReg(0, r11, 12);
+	unwinder.saveReg(0, r12, 8);
+	unwinder.saveReg(0, lr, 4);
 	Label longjumpLabel;
 	if (!mmu_enabled())
 	{
@@ -2280,7 +2296,9 @@ static void generate_mainloop()
 	else
 	{
 		ass.Sub(sp, sp, 4);
+		unwinder.allocStack(0, 8);
 		ass.Push(r0);									// push context
+		unwinder.saveReg(0, r4, 4);
 
 		ass.Mov(r0, reinterpret_cast<uintptr_t>(&jmp_stack));
 		ass.Mov(r1, sp);
@@ -2435,6 +2453,9 @@ static void generate_mainloop()
 	}
 	ass.Finalize();
 	emit_Skip(ass.GetBuffer()->GetSizeInBytes());
+
+	size_t unwindSize = unwinder.end(CODE_SIZE - 128);
+	verify(unwindSize <= 128);
 
     ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
 
