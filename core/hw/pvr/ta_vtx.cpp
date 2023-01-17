@@ -45,19 +45,32 @@ class BaseTAParser
 	}
 
 public:
-	static void startList(u32 listType)
+	static bool startList(u32 listType)
 	{
 		if (CurrentList != ListType_None)
-			return;
-		CurrentList = listType;
-		if (listType == ListType_Opaque)
+			return true;
+		switch (listType)
+		{
+		case ListType_Opaque:
 			CurrentPPlist = &vd_rc.global_param_op;
-		else if (listType == ListType_Punch_Through)
+			break;
+		case ListType_Punch_Through:
 			CurrentPPlist = &vd_rc.global_param_pt;
-		else if (listType == ListType_Translucent)
+			break;
+		case ListType_Translucent:
 			CurrentPPlist = &vd_rc.global_param_tr;
-
+			break;
+		case ListType_Opaque_Modifier_Volume:
+		case ListType_Translucent_Modifier_Volume:
+			break;
+		default:
+			WARN_LOG(PVR, "Invalid list type %d", listType);
+			return false;
+		}
+		CurrentList = listType;
 		CurrentPP = nullptr;
+
+		return true;
 	}
 
 	static void endList()
@@ -404,15 +417,17 @@ strip_end:
 					TileClipMode(data->pcw.User_Clip);
 					//Yep , C++ IS lame & limited
 					#include "ta_const_df.h"
-					if (CurrentList==ListType_None)
-						startList(data->pcw.ListType);
-
-					if (IsModVolList(CurrentList))
+					if (CurrentList == ListType_None && !startList(data->pcw.ListType))
+					{
+						// Invalid list type
+						data += SZ32;
+					}
+					else if (IsModVolList(CurrentList))
 					{
 						//accept mod data
 						StartModVol((TA_ModVolParam*)data);
 						VertexDataFP = ta_mod_vol_data;
-						data+=SZ32;
+						data += SZ32;
 					}
 					else
 					{
@@ -451,16 +466,13 @@ strip_end:
 				//32B
 				//Sets Sprite info , and switches to ta_sprite_data function
 			case ParamType_Sprite:
+				TileClipMode(data->pcw.User_Clip);
+				if (CurrentList != ListType_None || startList(data->pcw.ListType))
 				{
-
-					TileClipMode(data->pcw.User_Clip);
-					if (CurrentList==ListType_None)
-						startList(data->pcw.ListType);
-
 					VertexDataFP = ta_sprite_data;
 					AppendSpriteParam((TA_SpriteParam*)data);
-					data+=SZ32;
 				}
+				data += SZ32;
 				break;
 
 				//Variable size
