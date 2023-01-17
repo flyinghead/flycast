@@ -13,23 +13,15 @@ class SDLAudioBackend : AudioBackend
 	bool needs_resampling = false;
 	cResetEvent read_wait;
 	std::mutex stream_mutex;
-	struct {
-		uint32_t prevs;
-		uint32_t *sample_buffer;
-	} audiobuf;
+	uint32_t *sample_buffer;
+	unsigned sample_buffer_size = 0;
 	unsigned sample_count = 0;
+	SDL_AudioCVT audioCvt;
 
 	SDL_AudioDeviceID recorddev {};
 	u8 recordbuf[480 * 4];
 	std::atomic<size_t> rec_read;
 	std::atomic<size_t> rec_write;
-
-	// To easily access samples.
-	union Sample { int16_t s[2]; uint32_t l; };
-
-	static float InterpolateCatmull4pt3oX(float x0, float x1, float x2, float x3, float t) {
-		return 0.45 * ((2 * x1) + t * ((-x0 + x2) + t * ((2 * x0 - 5 * x1 + 4 * x2 - x3) + t * (-x0 + 3 * x1 - 3 * x2 + x3))));
-	}
 
 	static void audioCallback(void* userdata, Uint8* stream, int len)
 	{
@@ -38,10 +30,10 @@ class SDLAudioBackend : AudioBackend
 		backend->stream_mutex.lock();
 		// Wait until there's enough samples to feed the kraken
 		unsigned oslen = len / sizeof(uint32_t);
-		unsigned islen = backend->needs_resampling ? oslen * 16 / 17 : oslen;
-		unsigned minlen = backend->needs_resampling ? islen + 2 : islen;  // Resampler looks ahead by 2 samples.
+		unsigned islen = backend->needs_resampling ? std::ceil(oslen / backend->audioCvt.len_ratio) : oslen;
 
-		if (backend->sample_count < minlen) {
+		if (backend->sample_count < islen)
+		{
 			// No data, just output a bit of silence for the underrun
 			memset(stream, 0, len);
 			backend->stream_mutex.unlock();
@@ -51,28 +43,19 @@ class SDLAudioBackend : AudioBackend
 
 		if (!backend->needs_resampling) {
 			// Just copy bytes for this case.
-			memcpy(stream, &backend->audiobuf.sample_buffer[0], len);
+			memcpy(stream, &backend->sample_buffer[0], len);
 		}
-		else {
-			// 44.1KHz to 48KHz (actually 46.86KHz) resampling
-			uint32_t *outbuf = (uint32_t*)stream;
-			const float ra = 1.0f / 17;
-			Sample *sbuf = (Sample*)&backend->audiobuf.sample_buffer[0];  // [-1] stores the previous iteration last sample output
-			for (u32 i = 0; i < islen/16; i++) {
-				*outbuf++ = sbuf[i*16+ 0].l;   // First sample stays at the same location.
-				for (int k = 1; k < 17; k++) {
-					Sample r;
-					// Note we access offset -1 on first iteration, as to access prevs
-					r.s[0] = InterpolateCatmull4pt3oX(sbuf[i*16+k-2].s[0], sbuf[i*16+k-1].s[0], sbuf[i*16+k].s[0], sbuf[i*16+k+1].s[0], 1 - ra*k);
-					r.s[1] = InterpolateCatmull4pt3oX(sbuf[i*16+k-2].s[1], sbuf[i*16+k-1].s[1], sbuf[i*16+k].s[1], sbuf[i*16+k+1].s[1], 1 - ra*k);
-					*outbuf++ = r.l;
-				}
-			}
-			backend->audiobuf.prevs = backend->audiobuf.sample_buffer[islen-1];
+		else
+		{
+			SDL_AudioCVT& cvt = backend->audioCvt;
+			cvt.len = islen * sizeof(uint32_t);
+			memcpy(cvt.buf, &backend->sample_buffer[0], cvt.len);
+			SDL_ConvertAudio(&cvt);
+			memcpy(stream, cvt.buf, cvt.len_cvt);
 		}
 
 		// Move samples in the buffer and consume them
-		memmove(&backend->audiobuf.sample_buffer[0], &backend->audiobuf.sample_buffer[islen], (backend->sample_count-islen)*sizeof(uint32_t));
+		memmove(&backend->sample_buffer[0], &backend->sample_buffer[islen], (backend->sample_count - islen) * sizeof(uint32_t));
 		backend->sample_count -= islen;
 
 		backend->stream_mutex.unlock();
@@ -93,7 +76,9 @@ public:
 			}
 		}
 	
-		audiobuf.sample_buffer = new uint32_t[config::AudioBufferSize]();
+		sample_buffer_size = std::max<u32>(SAMPLE_COUNT * 2, config::AudioBufferSize);
+		sample_buffer = new uint32_t[sample_buffer_size]();
+		sample_count = 0;
 
 		// Support 44.1KHz (native) but also upsampling to 48KHz
 		SDL_AudioSpec wav_spec, out_spec;
@@ -104,19 +89,33 @@ public:
 		wav_spec.samples = SAMPLE_COUNT * 2;  // Must be power of two
 		wav_spec.callback = audioCallback;
 		wav_spec.userdata = this;
+		needs_resampling = false;
 
 		// Try 44.1KHz which should be faster since it's native.
 		audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
 		if (audiodev == 0)
 		{
-			WARN_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed: %s", SDL_GetError());
+			INFO_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed: %s", SDL_GetError());
 			needs_resampling = true;
 			wav_spec.freq = 48000;
 			audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
 			if (audiodev == 0)
 				ERROR_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed: %s", SDL_GetError());
 			else
+			{
 				INFO_LOG(AUDIO, "SDL2: Using resampling to 48 KHz");
+				int ret = SDL_BuildAudioCVT(&audioCvt, AUDIO_S16, 2, 44100, AUDIO_S16, 2, 48000);
+				if (ret != 1 || audioCvt.needed == 0)
+				{
+					ERROR_LOG(AUDIO, "SDL2: can't build audio converter: %s", SDL_GetError());
+					SDL_CloseAudioDevice(audiodev);
+					audiodev = 0;
+				}
+				else
+				{
+					audioCvt.buf = new u8[SAMPLE_COUNT * 2 * sizeof(uint32_t) * audioCvt.len_mult];
+				}
+			}
 		}
 
 		return audiodev != 0;
@@ -131,7 +130,7 @@ public:
 		// If wait, then wait for the buffer to be smaller than a certain size.
 		stream_mutex.lock();
 		if (wait) {
-			while (sample_count + samples > (u32)config::AudioBufferSize) {
+			while (sample_count + samples > sample_buffer_size) {
 				stream_mutex.unlock();
 				read_wait.Wait();
 				stream_mutex.lock();
@@ -139,9 +138,9 @@ public:
 		}
 
 		// Copy as many samples as possible, drop any remaining (this should not happen usually)
-		unsigned free_samples = config::AudioBufferSize - sample_count;
+		unsigned free_samples = sample_buffer_size - sample_count;
 		unsigned tocopy = samples < free_samples ? samples : free_samples;
-		memcpy(&audiobuf.sample_buffer[sample_count], frame, tocopy * sizeof(uint32_t));
+		memcpy(&sample_buffer[sample_count], frame, tocopy * sizeof(uint32_t));
 		sample_count += tocopy;
 		stream_mutex.unlock();
 
@@ -158,8 +157,13 @@ public:
 			SDL_CloseAudioDevice(audiodev);
 			audiodev = SDL_AudioDeviceID();
 		}
-		delete [] audiobuf.sample_buffer;
-		audiobuf.sample_buffer = nullptr;
+		delete [] sample_buffer;
+		sample_buffer = nullptr;
+		if (needs_resampling)
+		{
+			delete [] audioCvt.buf;
+			audioCvt.buf = nullptr;
+		}
 	}
 
 	static void recordCallback(void *userdata, u8 *stream, int len)

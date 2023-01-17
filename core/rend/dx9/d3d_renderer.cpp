@@ -237,8 +237,11 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 
 void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
-	if (!theDXContext.isReady())
+	if (!theDXContext.isReady()) {
+		// force a Present
+		frameRendered = true;
 		return;
+	}
 
 	backbuffer.reset();
 	device->GetRenderTarget(0, &backbuffer.get());
@@ -289,6 +292,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	dcfbTexture->UnlockRect(0);
 
 	resize(width, height);
+	devCache.reset();
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 
 	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, info.vo_border_col._red, info.vo_border_col._green, info.vo_border_col._blue));
@@ -306,8 +310,11 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 bool D3DRenderer::Process(TA_context* ctx)
 {
-	if (!theDXContext.isReady())
+	if (!theDXContext.isReady()) {
+		// force a Present
+		frameRendered = true;
 		return false;
+	}
 
 	if (KillTex)
 		texCache.Clear();
@@ -938,7 +945,6 @@ bool D3DRenderer::Render()
 {
 	if (!theDXContext.isReady())
 		return false;
-	resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 
 	bool is_rtt = pvrrc.isRTT;
 
@@ -952,6 +958,7 @@ bool D3DRenderer::Render()
 	}
 	else
 	{
+		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
 		verify(rc);
 		D3DVIEWPORT9 viewport;
@@ -1098,13 +1105,16 @@ void D3DRenderer::resize(int w, int h)
 {
 	if (width == (u32)w && height == (u32)h)
 		return;
+	if (!config::EmulateFramebuffer)
+		// TODO use different surfaces in full fb emulation to avoid resizing twice per frame
+		NOTICE_LOG(RENDERER, "D3DRenderer::resize: %d x %d -> %d x %d", width, height, w, h);
 	width = w;
 	height = h;
 	framebufferTexture.reset();
 	framebufferSurface.reset();
 	HRESULT hr = device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &framebufferTexture.get(), NULL);
 	if (FAILED(hr)) {
-		ERROR_LOG(RENDERER, "Framebuffer texture creation failed: %x", hr);
+		ERROR_LOG(RENDERER, "Framebuffer texture (%d x %d) creation failed: %x", w, h, hr);
 		die("Framebuffer texture creation failed");
 	}
 	bool rc = SUCCEEDED(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
@@ -1182,6 +1192,7 @@ bool D3DRenderer::RenderLastFrame()
 	backbuffer.reset();
 	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
 	verify(rc);
+	devCache.reset();
 	displayFramebuffer();
 
 	return true;

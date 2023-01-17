@@ -346,8 +346,7 @@ u32 TaTypeLut::poly_data_type_id(PCW pcw)
 			}
 			else if (pcw.Col_Type==1)
 			{
-				//die ("invalid");
-				return 0xFFFFFFFF;
+				return TaTypeLut::INVALID_TYPE;
 			}
 			else
 			{
@@ -377,14 +376,9 @@ u32 TaTypeLut::poly_data_type_id(PCW pcw)
 			if (pcw.Col_Type==0)
 				return 9;               //(Non-Textured, Packed Color, with Two Volumes)
 			else if (pcw.Col_Type==1)
-			{
-				//die ("invalid");
-				return 0xFFFFFFFF;
-			}
+				return TaTypeLut::INVALID_TYPE;
 			else
-			{
 				return 10;              //(Non-Textured, Intensity, with Two Volumes)
-			}
 		}
 	}
 }
@@ -436,7 +430,7 @@ u32 TaTypeLut::poly_header_type_size(PCW pcw)
 		}
 		else
 		{
-			return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
+			return TaTypeLut::INVALID_TYPE;
 		}
 	}
 }

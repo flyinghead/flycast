@@ -440,9 +440,10 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
-			verify(sz == 4);
-			pvr_WriteReg(paddr, data);
-			return;
+			if (sz == 4) {
+				pvr_WriteReg(paddr, data);
+				return;
+			}
 		}
 		break;
 	case 3:

@@ -147,8 +147,16 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 		}
 	}
+	else if (vaddr & 1)
+	{
+		// read address error
+		Do_Exception(vaddr, Sh4Ex_AddressErrorRead);
+		return false;
+	}
 	else
+	{
 		addr = vaddr;
+	}
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
@@ -244,6 +252,10 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
+	if (!rbi)
+		rbi = bm_GetStaleBlock(block_cpde);
+	verify(rbi != nullptr);
+
 	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 

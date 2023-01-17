@@ -22,10 +22,27 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//
+// Check if a vertex has huge x,y,z values or negative z
+//
+static bool is_vertex_inf(const Vertex& vtx)
+{
+	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
+			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
+			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+}
+
 struct IndexTrig
 {
-	u32 id[3];
-	u16 pid;
+	IndexTrig() = default;
+	IndexTrig(u32 pid, u32 v0, u32 v1, u32 v2) : pid(pid), z(0) {
+		vid[0] = v0;
+		vid[1] = v1;
+		vid[2] = v2;
+	}
+
+	u32 vid[3];
+	u32 pid;
 	f32 z;
 };
 
@@ -45,13 +62,6 @@ static float getProjectedZ(const Vertex *v, const float *mat)
 	return -1 / (mat[2] * v->x + mat[1 * 4 + 2] * v->y + mat[2 * 4 + 2] * v->z + mat[3 * 4 + 2]);
 }
 
-static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2,  const Vertex *vb)
-{
-	d[0] = (u32)(v0 - vb);
-	d[1] = (u32)(v1 - vb);
-	d[2] = (u32)(v2 - vb);
-}
-
 void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previousPass)
 {
 	int first = previousPass.tr_count;
@@ -68,75 +78,72 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		return;
 
 	//make lists of all triangles, with their pid and vid
-	static std::vector<IndexTrig> lst;
+	static std::vector<IndexTrig> triangleList;
 
-	lst.resize(vtx_count * 4);
-
-	int aused = 0;
+	triangleList.reserve(vtx_count);
+	triangleList.clear();
 
 	for (const PolyParam *pp = pp_base; pp != pp_end; pp++)
 	{
-		u32 ppid = (u32)(pp - pp_base);
+		if (pp->count < 3)
+			continue;
 
-		if (pp->count > 2)
+		const Vertex *v0 = &vtx_base[pp->first];
+		const Vertex *v1 = &vtx_base[pp->first + 1];
+		float z0 = 0, z1 = 0;
+
+		if (pp->isNaomi2())
 		{
-			u32 idx = pp->first;
-			u32 flip = 0;
-			float z0 = 0, z1 = 0;
-
-			if (pp->isNaomi2())
+			z0 = getProjectedZ(v0, pp->mvMatrix);
+			z1 = getProjectedZ(v1, pp->mvMatrix);
+		}
+		else
+		{
+			if (is_vertex_inf(*v0))
+				v0 = nullptr;
+			if (is_vertex_inf(*v1))
+				v1 = nullptr;
+		}
+		for (u32 i = 2; i < pp->count; i++)
+		{
+			const Vertex *v2 = &vtx_base[pp->first + i];
+			if (!pp->isNaomi2() && is_vertex_inf(*v2))
+				v2 = nullptr;
+			if (v0 != nullptr && v1 != nullptr && v2 != nullptr)
 			{
-				z0 = getProjectedZ(&vtx_base[idx], pp->mvMatrix);
-				z1 = getProjectedZ(&vtx_base[idx + 1], pp->mvMatrix);
-			}
-			for (u32 i = 0; i < pp->count - 2; i++, idx++)
-			{
-				const Vertex *v0, *v1;
-				if (flip)
-				{
-					v0 = &vtx_base[idx + 1];
-					v1 = &vtx_base[idx];
-				}
-				else
-				{
-					v0 = &vtx_base[idx];
-					v1 = &vtx_base[idx + 1];
-				}
-				const Vertex *v2 = &vtx_base[idx + 2];
-				fill_id(lst[aused].id, v0, v1, v2, vtx_base);
-				lst[aused].pid = ppid;
+				triangleList.emplace_back((u32)(pp - pp_base),
+						(u32)(v0 - vtx_base), (u32)(v1 - vtx_base), (u32)(v2 - vtx_base));
 				if (pp->isNaomi2())
 				{
 					float z2 = getProjectedZ(v2, pp->mvMatrix);
-					lst[aused].z = std::min(z0, std::min(z1, z2));
+					triangleList.back().z = std::min(z0, std::min(z1, z2));
 					z0 = z1;
 					z1 = z2;
 				}
 				else
 				{
-					lst[aused].z = minZ(vtx_base, lst[aused].id);
+					triangleList.back().z = minZ(vtx_base, triangleList.back().vid);
 				}
-				aused++;
-
-				flip ^= 1;
 			}
+			if (i & 1)
+				v1 = v2;
+			else
+				v0 = v2;
 		}
 	}
 
-	lst.resize(aused);
-
 	//sort them
-	std::stable_sort(lst.begin(), lst.end());
+	std::stable_sort(triangleList.begin(), triangleList.end());
 
 	//Merge pids/draw cmds if two different pids are actually equal
-	for (int k = 1; k < aused; k++)
-		if (lst[k].pid != lst[k - 1].pid)
+	for (size_t k = 1; k < triangleList.size(); k++)
+		if (triangleList[k].pid != triangleList[k - 1].pid)
 		{
-			const PolyParam& curPoly = pp_base[lst[k].pid];
-			const PolyParam& prevPoly = pp_base[lst[k - 1].pid];
+			const PolyParam& curPoly = pp_base[triangleList[k].pid];
+			const PolyParam& prevPoly = pp_base[triangleList[k - 1].pid];
 			if (curPoly.equivalentIgnoreCullingDirection(prevPoly)
 					&& (curPoly.isp.CullMode < 2 || curPoly.isp.CullMode == prevPoly.isp.CullMode))
-				lst[k].pid = lst[k - 1].pid;
+				triangleList[k].pid = triangleList[k - 1].pid;
 		}
 
 	//re-assemble them into drawing commands
@@ -144,10 +151,10 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	int idx = -1;
 	int idxSize = ctx.idx.used();
 
-	for (int i = 0; i < aused; i++)
+	for (size_t i = 0; i < triangleList.size(); i++)
 	{
-		int pid = lst[i].pid;
-		u32* midx = lst[i].id;
+		int pid = triangleList[i].pid;
+		u32* midx = triangleList[i].vid;
 
 		*ctx.idx.Append() = midx[0];
 		*ctx.idx.Append() = midx[1];
@@ -168,10 +175,10 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		}
 	}
 
-	if (aused > 0)
+	if (!ctx.sortedTriangles.empty())
 	{
 		SortedTriangle& last = ctx.sortedTriangles.back();
-		last.count = idxSize + aused * 3 - last.first;
+		last.count = idxSize + triangleList.size() * 3 - last.first;
 	}
 	pass.sorted_tr_count = ctx.sortedTriangles.size();
 
@@ -353,16 +360,6 @@ void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend
 			vtx.v = (0.5f + vtx.v * (tex_height - 1)) / tex_height;
 		}
 	}
-}
-
-//
-// Check if a vertex has huge x,y,z values or negative z
-//
-static bool is_vertex_inf(const Vertex& vtx)
-{
-	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
-			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
-			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
 }
 
 //

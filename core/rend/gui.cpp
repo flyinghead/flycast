@@ -78,7 +78,8 @@ static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Boxart boxart;
 static Chat chat;
-static std::mutex guiMutex;
+static std::recursive_mutex guiMutex;
+using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -447,7 +448,7 @@ void gui_plot_render_time(int width, int height)
 
 void gui_open_settings()
 {
-	std::lock_guard<std::mutex> lock(guiMutex);
+	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && !settings.naomi.slave)
 	{
 		if (!ggpo::active())
@@ -477,6 +478,7 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	const LockGuard lock(guiMutex);
 	emu.unloadGame();
 	reset_vmus();
     chat.reset();
@@ -488,6 +490,7 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	const LockGuard lock(guiMutex);
 	if (!commandLineStart)
 	{
 		// Exit to main menu
@@ -2697,7 +2700,8 @@ static void gui_network_start()
 				gui_state = GuiState::Main;
 			}
 		} catch (const FlycastException& e) {
-			NetworkHandshake::instance->stop();
+			if (NetworkHandshake::instance != nullptr)
+				NetworkHandshake::instance->stop();
 			emu.unloadGame();
 			gui_error(e.what());
 			gui_state = GuiState::Main;
@@ -2714,7 +2718,7 @@ static void gui_network_start()
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
-	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -2729,7 +2733,7 @@ static void gui_network_start()
 
 	ImGui::End();
 
-	if ((kcode[0] & DC_BTN_START) == 0)
+	if ((kcode[0] & DC_BTN_START) == 0 && NetworkHandshake::instance != nullptr)
 		NetworkHandshake::instance->startNow();
 }
 
@@ -2796,7 +2800,7 @@ static void gui_display_loadscreen()
 void gui_display_ui()
 {
 	FC_PROFILE_SCOPE;
-	std::lock_guard<std::mutex> lock(guiMutex);
+	const LockGuard lock(guiMutex);
 
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;

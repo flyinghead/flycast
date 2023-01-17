@@ -24,13 +24,13 @@ public class Emulator extends Application {
 
     public static int vibrationDuration = 20;
 
-    public static int maple_devices[] = {
+    public static int[] maple_devices = {
             MDT_None,
             MDT_None,
             MDT_None,
             MDT_None
     };
-    public static int maple_expansion_devices[][] = {
+    public static int[][] maple_expansion_devices = {
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
@@ -67,9 +67,9 @@ public class Emulator extends Application {
 
     public static boolean micPluggedIn() {
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
-        for (int i = 0; i < maple_expansion_devices.length; i++)
-            if (maple_expansion_devices[i][0] == MDT_Microphone
-                    || maple_expansion_devices[i][1] == MDT_Microphone)
+        for (int[] maple_expansion_device : maple_expansion_devices)
+            if (maple_expansion_device[0] == MDT_Microphone
+                    || maple_expansion_device[1] == MDT_Microphone)
                 return true;
         return false;
     }

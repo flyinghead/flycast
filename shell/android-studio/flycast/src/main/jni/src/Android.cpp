@@ -286,21 +286,36 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExterna
     gui_refresh_files();
 }
 
+static void stopEmu()
+{
+	if (!emu.running())
+		game_started = false;
+	else
+		emu.stop();
+	// in single-threaded mode, stopping is delayed
+	while (game_started)
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)
 {
-    if (fileName != NULL)
-    {
-        // Get filename string from Java
-        const char* file_path = env->GetStringUTFChars(fileName, 0);
-        NOTICE_LOG(BOOT, "Game Disk URI: '%s'", file_path);
-        settings.content.path = strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path;
-        env->ReleaseStringUTFChars(fileName, file_path);
-        // TODO game paused/settings/...
-        if (game_started) {
-            emu.unloadGame();
-            gui_state = GuiState::Main;
-        }
-    }
+    if (fileName == nullptr)
+    	return;
+
+	// Get filename string from Java
+	const char* file_path = env->GetStringUTFChars(fileName, 0);
+	if (file_path[0] != '\0')
+	{
+		NOTICE_LOG(BOOT, "Game Disk URI: '%s'", file_path);
+		if (game_started)
+		{
+			stopEmu();
+			gui_stop_game();
+		}
+		std::string path = strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path;
+		gui_start_game(path);
+	}
+	env->ReleaseStringUTFChars(fileName, file_path);
 }
 
 //stuff for microphone
@@ -322,17 +337,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(J
     getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","(I)[B");
     startRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"startRecording","(I)V");
     stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
-}
-
-static void stopEmu()
-{
-	if (!emu.running())
-		game_started = false;
-	else
-		emu.stop();
-	// in single-threaded mode, stopping is delayed
-	while (game_started)
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)

@@ -66,11 +66,11 @@ static void loadSpecialSettings()
 		}
 
 		// Tony Hawk's Pro Skater 2
-		if (prod_id == "T13008D" || prod_id == "T13006N"
+		if (prod_id == "T13008D 05" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
 				|| prod_id == "T40205N"
 				// Tony Hawk's Skateboarding
-				|| prod_id == "T40204D"
+				|| prod_id == "T40204D 50"
 				// Skies of Arcadia
 				|| prod_id == "MK-51052"
 				// Eternal Arcadia (JP)
@@ -208,7 +208,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
-			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
+			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
+			|| prod_id == "T0020M")		// Force Five Atomiswave DC Conversion
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
@@ -560,12 +561,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			mcfg_DestroyDevices();
 			mcfg_CreateDevices();
-			if (settings.platform.isNaomi()) {
+			if (settings.platform.isNaomi())
 				// Must be done after the maple devices are created and EEPROM is accessible
 				naomi_cart_ConfigureEEPROM();
-				// and reload settings so that eeprom-based settings can be overridden
-				loadGameSpecificSettings();
-			}
 		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
@@ -573,6 +571,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			gui_display_notification("Widescreen cheat activated", 1000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
+		// reload settings so that all settings can be overridden
+		loadGameSpecificSettings();
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())
@@ -865,6 +865,7 @@ void Emulator::start()
 
 	if (config::ThreadedRendering)
 	{
+		const std::lock_guard<std::mutex> lock(mutex);
 		threadResult = std::async(std::launch::async, [this] {
 				InitAudio();
 
@@ -899,6 +900,7 @@ void Emulator::start()
 bool Emulator::checkStatus()
 {
 	try {
+		const std::lock_guard<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
 			auto result = threadResult.wait_for(std::chrono::seconds(0));

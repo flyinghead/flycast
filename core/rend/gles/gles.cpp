@@ -1195,7 +1195,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
+			is_rtt ? pvrrc.getFramebufferHeight() : height);
 	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();

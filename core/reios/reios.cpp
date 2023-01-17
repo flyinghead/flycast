@@ -63,6 +63,11 @@ static void reios_pre_init()
 
 static bool reios_locate_bootfile(const char* bootfile)
 {
+	if (disc == nullptr)
+	{
+		ERROR_LOG(REIOS, "No disk loaded");
+		return false;
+	}
 	reios_pre_init();
 	if (ip_meta.wince == '1' && descrambl)
 	{

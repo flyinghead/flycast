@@ -147,8 +147,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	void serialize(Serializer& ser) const;
-	void deserialize(Deserializer& deser);
+	virtual void serialize(Serializer& ser) const;
+	virtual void deserialize(Deserializer& deser);
 
 	bool lightgun_as_analog = false;
 
@@ -373,6 +373,20 @@ public:
 	{
 	}
 
+	void serialize(Serializer& ser) const override
+	{
+		ser << out;
+		jvs_837_13844::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31)
+			deser >> out;
+		else
+			out = 0xff;
+		jvs_837_13844::deserialize(deser);
+	}
+
 protected:
 	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
@@ -465,6 +479,18 @@ public:
 	{
 	}
 
+	void serialize(Serializer& ser) const override
+	{
+		ser << testMode;
+		jvs_837_13844_motor_board::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31)
+			deser >> testMode;
+		jvs_837_13844_motor_board::deserialize(deser);
+	}
+
 protected:
 	u8 process(u8 in) override
 	{
@@ -508,7 +534,7 @@ protected:
 	}
 
 private:
-	bool testMode = false;	// TODO serialize
+	bool testMode = false;
 };
 
 // 18 Wheeler: fake the drive board and limit the wheel analog value
@@ -518,6 +544,18 @@ public:
 	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
 		: jvs_837_13844_racing(node_id, parent, first_player)
 	{
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << gear;
+		jvs_837_13844_racing::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31)
+			deser >> gear;
+		jvs_837_13844_racing::deserialize(deser);
 	}
 
 protected:
@@ -569,7 +607,7 @@ protected:
 	}
 
 private:
-	int gear = 0;	// 0: low, 1: high, -1: reverse
+	int8_t gear = 0;	// 0: low, 1: high, -1: reverse
 	bool transitionWait = false;
 };
 

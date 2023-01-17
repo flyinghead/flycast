@@ -27,6 +27,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <mutex>
 
 void loadGameSpecificSettings();
 void SaveSettings();
@@ -178,6 +179,7 @@ private:
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
+	std::mutex mutex;
 };
 extern Emulator emu;
 

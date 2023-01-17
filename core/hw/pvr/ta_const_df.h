@@ -29,19 +29,19 @@ static TaPolyParamFP* ta_poly_param_lut[5]=
 //64b , first part
 static TaPolyParamFP* ta_poly_param_a_lut[5]=
 {
-	(TaPolyParamFP*)0,
-	(TaPolyParamFP*)0,
+	nullptr,
+	nullptr,
 	AppendPolyParam2A,
-	(TaPolyParamFP*)0,
+	nullptr,
 	AppendPolyParam4A
 };
 
 //64b , , second part
 static TaListFP* ta_poly_param_b_lut[5]=
 {
-	(TaListFP*)0,
-	(TaListFP*)0,
+	nullptr,
+	nullptr,
 	ta_poly_B_32<2>,
-	(TaListFP*)0,
+	nullptr,
 	ta_poly_B_32<4>
 };

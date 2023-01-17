@@ -26,6 +26,12 @@ void DMAC_Ch2St()
 		INFO_LOG(SH4, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
 		return;
 	}
+	if ((src >> 26) != 3)
+	{
+		// Source address must be in system RAM
+		INFO_LOG(SH4, "DMAC: invalid source address %x", DMAC_SAR(2));
+		return;
+	}
 
 	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, SB_C2DSTAT, SB_C2DLEN);
 

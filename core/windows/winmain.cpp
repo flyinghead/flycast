@@ -864,9 +864,12 @@ int main(int argc, char** argv)
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
 {
+	wchar_t *cmd_line = GetCommandLineW();
+	nowide::stackstring converter;
 	int argc = 0;
-	char* cmd_line = GetCommandLineA();
-	char** argv = commandLineToArgvA(cmd_line, &argc);
+	char **argv = nullptr;
+	if (converter.convert(cmd_line))
+		argv = commandLineToArgvA(converter.c_str(), &argc);
 #endif
 
 #ifdef USE_BREAKPAD
