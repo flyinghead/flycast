@@ -205,6 +205,10 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T1204N", "RESIDENT EVIL CODE VERONICA                                                                                                     ",
 				{ 0x329E40, 0x3838D8, 0x3838F8, 0x383918, 0x383938 },
 				{ 0x3F400000, 0x43F00000, 0, 0x43F00000, 0 } },
+		// Biohazard: Code Veronica: Kanzenban (JP)
+		{ "T1240M", "BIOHAZARD CODE VERONICA PLUS                                                                                                    ",
+				{ 0x344AE1 }, { 0x003F6000 } },
+		// Resident Evil: Code Veronica X Kanzenban (Eng. translation)
 		{ "T1204N", "RESIDENT EVIL CODE VERONICA X                                                                                                   ",
 				{ 0x344AE1 }, { 0x003F6000 } },
 		{ "T8107D  50", nullptr,    { 0x0464FC, 0x046210 }, { 0x3A888889, 0x44200000 } },	// Re-Volt (PAL) Code 1 is a render fix
