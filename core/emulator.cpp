@@ -66,11 +66,11 @@ static void loadSpecialSettings()
 		}
 
 		// Tony Hawk's Pro Skater 2
-		if (prod_id == "T13008D" || prod_id == "T13006N"
+		if (prod_id == "T13008D 05" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
 				|| prod_id == "T40205N"
 				// Tony Hawk's Skateboarding
-				|| prod_id == "T40204D"
+				|| prod_id == "T40204D 50"
 				// Skies of Arcadia
 				|| prod_id == "MK-51052"
 				// Eternal Arcadia (JP)
