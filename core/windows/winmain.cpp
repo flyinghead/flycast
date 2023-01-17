@@ -976,8 +976,8 @@ void os_RunInstance(int argc, const char *argv[])
 		cmdLine += argv[i];
 	}
 
-	STARTUPINFO startupInfo{};
-	startupInfo.cb = sizeof(STARTUPINFO);
+	STARTUPINFOA startupInfo{};
+	startupInfo.cb = sizeof(startupInfo);
 
 	PROCESS_INFORMATION processInfo{};
 	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
