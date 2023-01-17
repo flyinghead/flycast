@@ -31,24 +31,19 @@ static u32 YUV_index;
 
 void YUV_init()
 {
-	YUV_x_curr=0;
-	YUV_y_curr=0;
+	YUV_x_curr = 0;
+	YUV_y_curr = 0;
 
 	YUV_dest = TA_YUV_TEX_BASE & VRAM_MASK;
-	TA_YUV_TEX_CNT=0;
+	TA_YUV_TEX_CNT = 0;
 	YUV_blockcount = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * (TA_YUV_TEX_CTRL.yuv_v_size + 1);
 
-	if (TA_YUV_TEX_CTRL.yuv_tex != 0)
-	{
-		die ("YUV: Not supported configuration\n");
-		YUV_x_size=16;
-		YUV_y_size=16;
-	}
-	else
-	{
-		YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
-		YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
-	}
+	if (TA_YUV_TEX_CTRL.yuv_tex == 1)
+		// (yuv_u_size + 1) * (yuv_v_size + 1) textures of 16 x 16 texels
+		WARN_LOG(PVR, "YUV: Not supported configuration yuv_tex=1");
+
+	YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
+	YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
 	YUV_index = 0;
 }
 
@@ -131,18 +126,22 @@ static void YUV_ConvertMacroBlock(const u8 *datap)
 
 static void YUV_data(const SQBuffer *data, u32 count)
 {
-	if (YUV_blockcount==0)
+	if (YUV_blockcount == 0)
 	{
-		die("YUV_data : YUV decoder not inited , *WATCH*\n");
-		//wtf ? not inited
-		YUV_init();
+		WARN_LOG(PVR, "YUV_data: YUV decoder not inited");
+		return;
 	}
 
 	u32 block_size = TA_YUV_TEX_CTRL.yuv_form == 0 ? 384 : 512;
-	verify(block_size == 384); // no support for 512
+	if (block_size != 384)
+	{
+		// no support for 512
+		WARN_LOG(PVR, "YUV_data: block size 512 not supported");
+		return;
+	}
 	block_size /= sizeof(SQBuffer);
 
-	while (count > 0)
+	while (count != 0)
 	{
 		if (YUV_index + count >= block_size)
 		{
@@ -169,8 +168,6 @@ static void YUV_data(const SQBuffer *data, u32 count)
 			count = 0;
 		}
 	}
-
-	verify(count==0);
 }
 
 void YUV_serialize(Serializer& ser)
