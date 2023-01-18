@@ -69,11 +69,6 @@ static bool reios_locate_bootfile(const char* bootfile)
 		return false;
 	}
 	reios_pre_init();
-	if (ip_meta.wince == '1' && descrambl)
-	{
-		ERROR_LOG(REIOS, "Unsupported CDI: wince == '1'");
-		return false;
-	}
 
 	// Load IP.BIN bootstrap
 	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
@@ -95,7 +90,7 @@ static bool reios_locate_bootfile(const char* bootfile)
 
 	u32 offset = 0;
 	u32 size = bootFile->getSize();
-	if (ip_meta.wince == '1')
+	if (ip_meta.wince == '1' && !descrambl)
 	{
 		bootFile->read(GetMemPtr(0x8ce01000, 2048), 2048);
 		offset = 2048;
@@ -393,6 +388,9 @@ static void reios_setup_state(u32 boot_addr)
 	aicaWriteReg(SCILV0_addr, (u8)0x18);
 	aicaWriteReg(SCILV1_addr, (u8)0x50);
 	aicaWriteReg(SCILV2_addr, (u8)0x08);
+
+	// KOS seems to expect this
+	DMAC_DMAOR.full = 0x8201;
 
 	// WinCE needs this to detect PAL
 	if (config::Broadcast == 1)
