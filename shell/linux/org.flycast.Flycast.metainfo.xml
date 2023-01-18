@@ -9,10 +9,9 @@
     <p>Flycast is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from reicast.</p>
   </description>
   <content_rating type="oars-1.1" />
-  <launchable type="desktop-id">org.flycast.Flycast.desktop</launchable>
+  <launchable type="desktop-id">flycast.desktop</launchable>
   <provides>
     <binary>flycast</binary>
-    <id>flycast.desktop</id>
   </provides>
   <screenshots>
     <screenshot type="default"><image>https://raw.githubusercontent.com/flyinghead/flycast/master/shell/imgs/screenshot1.png</image></screenshot>
