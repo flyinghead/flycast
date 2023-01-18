@@ -102,17 +102,17 @@ void dc_savestate(int index)
 
 	std::string filename = hostfs::getSavestatePath(index, true);
 #if 0
-	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
+	FILE *f = nowide::fopen(filename.c_str(), "wb");
 
 	if ( f == NULL )
 	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str()) ;
+		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
 		gui_display_notification("Cannot open save file", 2000);
 		free(data);
     	return;
 	}
 
-	std::fwrite(data, 1, ser.size(), f) ;
+	std::fwrite(data, 1, ser.size(), f);
 	std::fclose(f);
 #else
 	RZipFile zipFile;
@@ -135,7 +135,7 @@ void dc_savestate(int index)
 #endif
 
 	free(data);
-	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size()) ;
+	NOTICE_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size());
 	gui_display_notification("State saved", 1000);
 }
 
@@ -163,11 +163,11 @@ void dc_loadstate(int index)
 	}
 	else
 	{
-		f = nowide::fopen(filename.c_str(), "rb") ;
+		f = nowide::fopen(filename.c_str(), "rb");
 
 		if ( f == NULL )
 		{
-			WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
+			WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
 			gui_display_notification("Save state not found", 2000);
 			return;
 		}
@@ -179,9 +179,9 @@ void dc_loadstate(int index)
 		std::fseek(f, 0, SEEK_SET);
 	}
 	void *data = malloc(total_size);
-	if ( data == NULL )
+	if (data == nullptr)
 	{
-		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size) ;
+		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
 		gui_display_notification("Failed to load state - memory full", 2000);
 		if (f != nullptr)
 			std::fclose(f);
@@ -198,7 +198,7 @@ void dc_loadstate(int index)
 	}
 	else
 	{
-		read_size = fread(data, 1, total_size, f) ;
+		read_size = fread(data, 1, total_size, f);
 		std::fclose(f);
 	}
 	if (read_size != total_size)
@@ -212,6 +212,7 @@ void dc_loadstate(int index)
 	try {
 		Deserializer deser(data, total_size);
 		dc_loadstate(deser);
+	    NOTICE_LOG(SAVESTATE, "Loaded state ver %d from %s size %d", deser.version(), filename.c_str(), total_size);
 		if (deser.size() != total_size)
 			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
 	} catch (const Deserializer::Exception& e) {
@@ -220,7 +221,6 @@ void dc_loadstate(int index)
 
 	free(data);
 	EventManager::event(Event::LoadState);
-    INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
 #endif
