@@ -227,8 +227,12 @@ void RawMouse::updateState(RAWMOUSE* state)
 		int height = GetSystemMetrics(isVirtualDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
 
 		POINT pt { long(state->lLastX / 65535.0f * width), long(state->lLastY / 65535.0f * height) };
-		ScreenToClient(getNativeHwnd(), &pt);
-		setAbsPos(pt.x, pt.y, settings.display.width, settings.display.height);
+		HWND hwnd = getNativeHwnd();
+		if (hwnd != NULL)
+		{
+			ScreenToClient(hwnd, &pt);
+			setAbsPos(pt.x, pt.y, settings.display.width, settings.display.height);
+		}
 	}
 	else if (state->lLastX != 0 || state->lLastY != 0)
 		setRelPos(state->lLastX, state->lLastY);
