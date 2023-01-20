@@ -518,48 +518,40 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	// Load State
-	if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_loadstate(config::SavestateSlot);
-	}
-	ImGui::SameLine();
-
-	// Slot #
-	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
-		ImGui::OpenPopup("slot_select_popup");
-    if (ImGui::BeginPopup("slot_select_popup"))
     {
-        for (int i = 0; i < 10; i++)
-            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-                config::SavestateSlot = i;
-                SaveSettings();
-            }
-        ImGui::EndPopup();
-    }
-	ImGui::SameLine();
+    	DisabledScope scope(settings.content.path.empty() || settings.network.online);
 
-	// Save State
-	if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_savestate(config::SavestateSlot);
-	}
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
+		// Load State
+		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate(config::SavestateSlot);
+		}
+		ImGui::SameLine();
+
+		// Slot #
+		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+			ImGui::OpenPopup("slot_select_popup");
+		if (ImGui::BeginPopup("slot_select_popup"))
+		{
+			for (int i = 0; i < 10; i++)
+				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					config::SavestateSlot = i;
+					SaveSettings();
+				}
+			ImGui::EndPopup();
+		}
+		ImGui::SameLine();
+
+		// Save State
+		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_savestate(config::SavestateSlot);
+		}
+    }
 
 	ImGui::Columns(2, "buttons", false);
 
@@ -594,19 +586,11 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 
 	// Cheats
-	if (settings.network.online)
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-	{
-		gui_state = GuiState::Cheats;
-	}
-	if (settings.network.online)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
+		DisabledScope scope(settings.network.online);
+
+		if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
+			gui_state = GuiState::Cheats;
 	}
 	ImGui::Columns(1, nullptr, false);
 
@@ -1298,27 +1282,21 @@ static void gui_display_settings()
 						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
-			if (config::Cable.isReadOnly())
 			{
-		        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			}
-			if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
-			{
-				for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+				DisabledScope scope(config::Cable.isReadOnly());
+
+				if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
 				{
-					bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
-					if (ImGui::Selectable(cable[i], &is_selected))
-						config::Cable = i == 0 ? 0 : i + 1;
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
+					for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+					{
+						bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
+						if (ImGui::Selectable(cable[i], &is_selected))
+							config::Cable = i == 0 ? 0 : i + 1;
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
 				}
-				ImGui::EndCombo();
-			}
-			if (config::Cable.isReadOnly())
-			{
-		        ImGui::PopItemFlag();
-		        ImGui::PopStyleVar();
 			}
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
@@ -1689,19 +1667,13 @@ static void gui_display_settings()
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
 		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		    	}
-		    	ImGui::Indent();
-		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
-		    	ImGui::Unindent();
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PopItemFlag();
-			        ImGui::PopStyleVar();
+				{
+					DisabledScope scope(!config::Widescreen);
+
+					ImGui::Indent();
+					OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+							"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					ImGui::Unindent();
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
@@ -1762,16 +1734,10 @@ static void gui_display_settings()
 		    	if (isVulkan(config::RendererType))
 		    	{
 			    	ImGui::Indent();
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			    	}
-		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PopItemFlag();
-				        ImGui::PopStyleVar();
+					{
+						DisabledScope scope(!config::VSync);
+
+						OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
 			    	}
 			    	ImGui::Unindent();
 		    	}
@@ -2109,8 +2075,12 @@ static void gui_display_settings()
 	    	ImGui::Spacing();
 		    header("Network");
 		    {
-		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+				{
+					DisabledScope scope(game_started);
+
+					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	}
 		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
 		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,

@@ -908,7 +908,8 @@ static void *pico_thread_func(void *)
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
 
 	// Create ppp/eth device
-	if (!config::EmulateBBA)
+	const bool usingPPP = !config::EmulateBBA;
+	if (usingPPP)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
@@ -1054,7 +1055,7 @@ static void *pico_thread_func(void *)
 
 	if (pico_dev)
 	{
-		if (!config::EmulateBBA)
+		if (usingPPP)
 		{
 			pico_ppp_destroy(pico_dev);
 		}

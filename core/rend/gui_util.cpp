@@ -636,20 +636,15 @@ void ShowHelpMarker(const char* desc)
 template<bool PerGameOption>
 bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help)
 {
-	bool b = option;
-	if (option.isReadOnly())
+	bool pressed;
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		DisabledScope scope(option.isReadOnly());
+
+		bool b = option;
+		pressed = ImGui::Checkbox(name, &b);
+		if (pressed)
+			option.set(b);
 	}
-	bool pressed = ImGui::Checkbox(name, &b);
-	if (option.isReadOnly())
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
-	if (pressed)
-		option.set(b);
 	if (help != nullptr)
 	{
 		ImGui::SameLine();
@@ -662,20 +657,15 @@ template bool OptionCheckbox(const char *name, config::Option<bool, false>& opti
 
 bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help)
 {
-	int v = option;
-	if (option.isReadOnly())
+	bool valueChanged;
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		DisabledScope scope(option.isReadOnly());
+
+		int v = option;
+		valueChanged = ImGui::SliderInt(name, &v, min, max);
+		if (valueChanged)
+			option.set(v);
 	}
-	bool valueChanged = ImGui::SliderInt(name, &v, min, max);
-	if (option.isReadOnly())
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
-	else if (valueChanged)
-		option.set(v);
 	if (help != nullptr)
 	{
 		ImGui::SameLine();
@@ -696,24 +686,18 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	ImGui::PopStyleVar();
 
 	ImGui::SameLine(0.0f, innerSpacing);
-    ImGui::PushButtonRepeat(true);
-    bool valueChanged = false;
-	if (option.isReadOnly())
+	ImGui::PushButtonRepeat(true);
+	bool valueChanged = false;
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		DisabledScope scope(option.isReadOnly());
+
+		if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
+		ImGui::SameLine(0.0f, innerSpacing);
+		if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }
 	}
-    if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
-    ImGui::SameLine(0.0f, innerSpacing);
-    if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }
-	if (option.isReadOnly())
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
-    ImGui::PopButtonRepeat();
-    ImGui::SameLine(0.0f, innerSpacing);
-    ImGui::Text("%s", name);
+	ImGui::PopButtonRepeat();
+	ImGui::SameLine(0.0f, innerSpacing);
+	ImGui::Text("%s", name);
 	if (help != nullptr)
 	{
 		ImGui::SameLine();
@@ -725,20 +709,15 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help)
 {
-	int v = (int)option;
-	if (option.isReadOnly())
+	bool pressed;
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		DisabledScope scope(option.isReadOnly());
+
+		int v = (int)option;
+		pressed = ImGui::RadioButton(name, &v, (int)value);
+		if (pressed)
+			option.set((T)v);
 	}
-	bool pressed = ImGui::RadioButton(name, &v, (int)value);
-	if (option.isReadOnly())
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
-	if (pressed)
-		option.set((T)v);
 	if (help != nullptr)
 	{
 		ImGui::SameLine();
@@ -752,27 +731,21 @@ template bool OptionRadioButton<int>(const char *name, config::Option<int>& opti
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
 			const char *help)
 {
-	if (option.isReadOnly())
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::BeginCombo(name, values[option], ImGuiComboFlags_None))
-	{
-		for (int i = 0; i < count; i++)
+		DisabledScope scope(option.isReadOnly());
+
+		if (ImGui::BeginCombo(name, values[option], ImGuiComboFlags_None))
 		{
-			bool is_selected = option == i;
-			if (ImGui::Selectable(values[i], &is_selected))
-				option = i;
-            if (is_selected)
-                ImGui::SetItemDefaultFocus();
+			for (int i = 0; i < count; i++)
+			{
+				bool is_selected = option == i;
+				if (ImGui::Selectable(values[i], &is_selected))
+					option = i;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
 		}
-		ImGui::EndCombo();
-	}
-	if (option.isReadOnly())
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
 	}
 	if (help != nullptr)
 	{
