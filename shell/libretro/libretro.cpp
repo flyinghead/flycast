@@ -328,6 +328,12 @@ void retro_init()
 	init_disk_control_interface();
 	retro_audio_init();
 
+#if defined(__APPLE__)
+    char *data_dir = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &data_dir) && data_dir)
+        set_user_data_dir(std::string(data_dir) + "/");
+#endif
+
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
