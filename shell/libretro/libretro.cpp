@@ -1113,6 +1113,7 @@ static bool loadGame()
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		gui_display_notification(e.what(), 5000);
+        retro_unload_game();
 		return false;
 	}
 
