@@ -328,13 +328,19 @@ void retro_init()
 	init_disk_control_interface();
 	retro_audio_init();
 
+#if defined(__APPLE__)
+    char *data_dir = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &data_dir) && data_dir)
+        set_user_data_dir(std::string(data_dir) + "/");
+#endif
+
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)
 #endif
 		emu.init();
@@ -353,7 +359,7 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	_vmem_release();
 #else
 	emu.term();
@@ -1107,6 +1113,7 @@ static bool loadGame()
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		gui_display_notification(e.what(), 5000);
+        retro_unload_game();
 		return false;
 	}
 

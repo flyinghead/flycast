@@ -22,6 +22,12 @@
     CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
     EXTRA_PATH: Release
 
+.core-defs-osx-arm64:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
+    EXTRA_PATH: Release
+
 .core-defs-android:
   extends: .core-defs
   script:
@@ -42,6 +48,10 @@ include:
   # MacOS
   - project: 'libretro-infrastructure/ci-templates'
     file: 'osx-cmake-x86.yml'
+
+  # MacOS arm64
+  - project: 'libretro-infrastructure/ci-templates'
+    file: 'osx-cmake-arm64.yml'
 
   # Linux
   - project: 'libretro-infrastructure/ci-templates'
@@ -97,6 +107,12 @@ libretro-build-osx-x64:
   extends:
     - .libretro-osx-cmake-x86
     - .core-defs-osx-x64
+
+# MacOS arm 64-bit
+libretro-build-osx-arm64:
+  extends:
+    - .libretro-osx-cmake-arm64
+    - .core-defs-osx-arm64
 
 ################################### CELLULAR #################################
 # Android ARMv7a
