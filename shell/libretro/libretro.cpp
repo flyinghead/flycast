@@ -340,7 +340,7 @@ void retro_init()
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)
 #endif
 		emu.init();
@@ -359,7 +359,7 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	_vmem_release();
 #else
 	emu.term();
