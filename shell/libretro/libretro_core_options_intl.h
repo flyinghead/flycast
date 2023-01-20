@@ -54730,10 +54730,10 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_4GB_TR NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TR "En Fazla Şeffaf Katman"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TR "Karmaşık sahneler için daha yüksek değerler gerekebilir."
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR "Tam kare önbelleği taklidi"
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR "VRAM'de tam kare arabelleği taklidini etkinleştirin. Bu, kare arabelleğini doğrudan VRAM'de okuyan veya yazan oyunlar için kullanışlıdır. Etkinleştirildiğinde, Dahili Çözünürlük 640x480'e zorlanır ve performans ciddi şekilde etkilenebilir."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR "Tam kare önbellek taklidi"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR "VRAM üstünde tam kare önbellek taklidini etkinleştirin. Kare önbelleğini doğrudan VRAM üstünden okuyan veya yazan oyunlar için kullanışlıdır. Etkinleştirildiğinde, Dahili Çözünürlük 640x480 olarak zorlanır ve performans ciddi şekilde etkilenebilir."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR "RTT (Dokuya Dönüştür) Önbelleğini Etkinleştir"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR "İşlenen dokuları GPU'dan VRAM'e geri kopyalayın. Bu seçenek normalde bunu gerektiren oyunlar için etkinleştirilir. Etkinleştirildiğinde, doku işleme yükseltme devre dışı bırakılır ve performans etkilenebilir."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR "Görüş Açısı"
 #define CORE_OPTION_NAME_FOG_LABEL_TR "Sis Efektleri"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TR "Hacim Değiştirici"
