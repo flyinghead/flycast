@@ -182,6 +182,11 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	u16 *src = (u16 *)src_buffer;
 	u8 *dst_buffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
+	if (dst_buffer == nullptr)
+	{
+		ERROR_LOG(RENDERER, "Dump texture: out of memory");
+		return;
+	}
 	u8 *dst = dst_buffer;
 
 	for (int y = 0; y < h; y++)
