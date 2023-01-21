@@ -1065,13 +1065,15 @@ union CCN_MMUCR_type
 	struct
 	{
 		u32 AT    : 1;
-		u32 res   : 1;
+		u32       : 1;
 		u32 TI    : 1;
-		u32 res_2 : 5;
+		u32       : 5;
 		u32 SV    : 1;
 		u32 SQMD  : 1;
 		u32 URC   : 6;
+		u32       : 2;
 		u32 URB   : 6;
+		u32       : 2;
 		u32 LRUI  : 6;
 	};
 	u32 reg_data;
