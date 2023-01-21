@@ -18,10 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "texture.h"
-#include "hw/maple/maple_devs.h"
 #include "overlay.h"
+#include "texture.h"
 #include "cfg/option.h"
+#include "hw/maple/maple_cfg.h"
 #include "rend/osd.h"
 #ifdef LIBRETRO
 #include "vmu_xhair.h"

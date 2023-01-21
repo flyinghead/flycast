@@ -1,5 +1,5 @@
 #include "audiostream.h"
-#include <memory>
+#include "cfg/option.h"
 
 struct SoundFrame { s16 l; s16 r; };
 

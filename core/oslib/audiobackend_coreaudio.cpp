@@ -13,6 +13,7 @@
  */
 #if defined(__APPLE__)
 #include "audiostream.h"
+#include "cfg/option.h"
 #include "stdclass.h"
 
 #include <atomic>

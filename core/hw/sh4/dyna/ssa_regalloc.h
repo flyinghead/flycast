@@ -19,12 +19,14 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <map>
-#include <deque>
 #include "types.h"
 #include "decoder.h"
 #include "hw/sh4/modules/mmu.h"
 #include "ssa.h"
+
+#include <deque>
+#include <map>
+#include <vector>
 
 #define ssa_printf(...) DEBUG_LOG(DYNAREC, __VA_ARGS__)
 

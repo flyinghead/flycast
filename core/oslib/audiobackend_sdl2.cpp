@@ -2,10 +2,12 @@
 
 #include <SDL.h>
 #include "audiostream.h"
+#include "cfg/option.h"
 #include "stdclass.h"
 
-#include <mutex>
+#include <algorithm>
 #include <atomic>
+#include <mutex>
 
 class SDLAudioBackend : AudioBackend
 {

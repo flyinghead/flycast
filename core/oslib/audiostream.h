@@ -1,9 +1,10 @@
 #pragma once
 #include "types.h"
-#include "cfg/option.h"
-#include <vector>
+
 #include <algorithm>
 #include <atomic>
+#include <string>
+#include <vector>
 
 class AudioBackend
 {

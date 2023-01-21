@@ -3,12 +3,15 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
-#include "input/gamepad_device.h"
 #include "oslib/oslib.h"
-#include "rend/TexCache.h"
 #include "hw/maple/maple_if.h"
 #include "serialize.h"
 #include "network/ggpo.h"
+#include "hw/pvr/Renderer_if.h"
+
+#ifdef TEST_AUTOMATION
+#include "input/gamepad_device.h"
+#endif
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 

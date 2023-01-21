@@ -19,11 +19,15 @@
 #include "rawinput.h"
 #ifndef TARGET_UWP
 #include <hidusage.h>
-#include <map>
 #include <cfgmgr32.h>
 #include <initguid.h>
 #include <devpkey.h>
 #include "hw/maple/maple_devs.h"
+
+#include <algorithm>
+#include <cstring>
+#include <map>
+#include <memory>
 
 #ifndef CALLBACK
 #define CALLBACK

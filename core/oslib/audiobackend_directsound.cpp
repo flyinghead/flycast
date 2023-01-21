@@ -1,6 +1,7 @@
 #include "build.h"
 #if defined(_WIN32) && !defined(TARGET_UWP)
 #include "audiostream.h"
+#include "cfg/option.h"
 #include <initguid.h>
 #include <dsound.h>
 #include <vector>

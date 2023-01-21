@@ -1,6 +1,6 @@
 //ubc is disabled on dreamcast and can't be used ... but kos-debug uses it !...
 
-#include "types.h"
+#include "hw/hwreg.h"
 #include "hw/sh4/sh4_mmr.h"
 
 //Init term res

@@ -18,7 +18,6 @@
 #include "hw/sh4/sh4_core.h"
 #undef r
 #include "hw/sh4/sh4_mem.h"
-#include "hw/holly/sb_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
 #include "font.h"
@@ -28,6 +27,7 @@
 #include "imgread/common.h"
 #include "imgread/isofs.h"
 #include "oslib/oslib.h"
+#include "hw/sh4/sh4_mmr.h"
 
 #include <map>
 

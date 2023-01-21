@@ -1,7 +1,9 @@
 #include "types.h"
-#include "sh4_interrupts.h"
-#include "sh4_core.h"
+#include "sh4_if.h"
 #include "sh4_sched.h"
+
+#include <algorithm>
+#include <vector>
 
 //sh4 scheduler
 

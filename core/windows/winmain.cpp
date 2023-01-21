@@ -29,7 +29,6 @@
 #include <nowide/stackstring.hpp>
 #endif
 #include "oslib/oslib.h"
-#include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -41,7 +40,6 @@
 #else
 #include "xinput_gamepad.h"
 #endif
-#include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "../shell/windows/resource.h"

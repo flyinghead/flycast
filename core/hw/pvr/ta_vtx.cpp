@@ -11,7 +11,7 @@
 #include "cfg/option.h"
 
 #include <algorithm>
-#include <cmath>
+#include <utility>
 
 #define TACALL DYNACALL
 #ifdef NDEBUG

@@ -5,11 +5,13 @@
 
 #include "gdromv3.h"
 #include "gdrom_if.h"
+#include "cfg/option.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_sched.h"
 #include "imgread/common.h"
 #include "serialize.h"

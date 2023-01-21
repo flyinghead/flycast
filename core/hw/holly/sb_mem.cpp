@@ -12,7 +12,7 @@
 #include "hw/modem/modem.h"
 #include "hw/naomi/naomi.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/sh4/sh4_mem.h"
+#include "hw/mem/_vmem.h"
 #include "reios/reios.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
