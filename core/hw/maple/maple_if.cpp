@@ -164,10 +164,7 @@ static void maple_DoDma()
 			{
 				WARN_LOG(MAPLE, "DMA Error: destination not in system ram: %x", header_2);
 #endif
-				asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
-				SB_MDST = 0;
-				mapleDmaOut.clear();
-				return;
+				header_2 = 0;
 			}
 
 			u32* p_data = (u32 *)GetMemPtr(addr + 8, plen * sizeof(u32));
@@ -274,6 +271,11 @@ static int maple_schd(int tag, int c, int j)
 	{
 		for (const auto& pair : mapleDmaOut)
 		{
+			if (pair.first == 0)
+			{
+				asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
+				continue;
+			}
 			size_t size = pair.second.size() * sizeof(u32);
 			u32 *p = (u32 *)GetMemPtr(pair.first, size);
 			memcpy(p, pair.second.data(), size);
