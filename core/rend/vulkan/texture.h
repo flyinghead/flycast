@@ -101,7 +101,7 @@ public:
 
 	vk::Sampler GetSampler(TSP tsp)
 	{
-		u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
+		const u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
@@ -113,23 +113,24 @@ public:
 		} else {
 			filter = vk::Filter::eLinear;
 		}
-		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
+		const vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
-		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
+		const vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
-		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
+		const bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
 				&& filter == vk::Filter::eLinear;
 #ifndef __APPLE__
-		float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
+		const float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
 #else
 		// not supported by metal
-		float mipLodBias = 0;
+		const float mipLodBias = 0;
 #endif
+		const vk::SamplerMipmapMode mipmapMode = filter == vk::Filter::eLinear ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest;
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							mipmapMode, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
 							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
