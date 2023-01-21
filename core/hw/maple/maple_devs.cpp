@@ -680,11 +680,11 @@ struct maple_sega_vmu: maple_base
 				{
 				case MFID_3_Clock:
 					{
-						u8 on = r8();
-						u8 period = r8();
+						u8 alw = r8();
+						u8 ald = r8();
 						r16(); // Alarm 2
-						INFO_LOG(MAPLE, "BEEP: %d/%d", on, period);
-						vmuBeep(on, period);
+						INFO_LOG(MAPLE, "BEEP: %d/%d", alw, ald);
+						vmuBeep(alw, ald);
 					}
 					return MDRS_DeviceReply;
 

@@ -2042,6 +2042,8 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+            OptionCheckbox("Enable VMU Sounds", config::VmuSound, "Play VMU beeps when enabled.");
+
 			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
 			{
 				config::AudioVolume.calcDbPower();

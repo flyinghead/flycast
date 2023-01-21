@@ -50,6 +50,7 @@ Option<int> AudioBufferSize("", 2822);	// 64 ms
 Option<bool> AutoLatency("");
 
 OptionString AudioBackend("", "auto");
+Option<bool> VmuSound(CORE_OPTION_NAME "_vmu_sound", false);
 
 // Rendering
 

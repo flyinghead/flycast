@@ -60,6 +60,7 @@ Option<bool> AutoLatency("aica.AutoLatency",
 
 OptionString AudioBackend("backend", "auto", "audio");
 AudioVolumeOption AudioVolume;
+Option<bool> VmuSound("VmuSound", false, "audio");
 
 // Rendering
 

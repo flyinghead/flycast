@@ -169,6 +169,7 @@ const DSP_OUT_VOL_REG *dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
 static int beepOn;
 static int beepPeriod;
 static int beepCounter;
+static SampleType beepValue;
 
 #pragma pack(push, 1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -786,13 +787,14 @@ struct ChannelEx
 	
 	void RegWrite(u32 offset, int size)
 	{
-		switch(offset)
+		switch (offset)
 		{
 		case 0x00:
 		case 0x01:
 			UpdateStreamStep();
-			UpdateSA();
-			if ((offset == 0x01 || size == 2) && ccd->KYONEX)
+			if (offset == 0 || size == 2)
+				UpdateSA();
+			if ((offset == 1 || size == 2) && ccd->KYONEX)
 			{
 				ccd->KYONEX=0;
 				for (ChannelEx& channel : Chans)
@@ -1322,6 +1324,7 @@ void sgc_Init()
 	beepOn = 0;
 	beepPeriod = 0;
 	beepCounter = 0;
+	beepValue = 0;
 
 	dsp::init();
 }
@@ -1401,8 +1404,8 @@ void vmuBeep(int on, int period)
 	{
 		// The maple doc may be wrong on this. It looks like the raw values of T1LR and T1LC are set.
 		// So the period is (256 - T1LR) / (32768 / 6)
-		// and the duty cycle is (T1LC - T1LR) / (32768 / 6)
-		beepOn = (on - period) * 8;
+		// and the duty cycle is (256 - T1LC) / (32768 / 6)
+		beepOn = (256 - on) * 8;
 		beepPeriod = (256 - period) * 8;
 		beepCounter = 0;
 	}
@@ -1410,16 +1413,24 @@ void vmuBeep(int on, int period)
 
 static SampleType vmuBeepSample()
 {
+	constexpr int Slope = 500;
 	if (beepPeriod == 0)
-		return 0;
-	SampleType s;
-	if (beepCounter <= beepOn)
-		s = 16383;
+	{
+		if (beepValue > 0)
+			beepValue = std::max(0, beepValue - Slope);
+		else if (beepValue < 0)
+			beepValue = std::min(0, beepValue + Slope);
+	}
 	else
-		s = -16384;
-	beepCounter = (beepCounter + 1) % beepPeriod;
+	{
+		if (beepCounter <= beepOn)
+			beepValue = std::min(16383, beepValue + Slope);
+		else
+			beepValue = std::max(-16384, beepValue - Slope);
+		beepCounter = (beepCounter + 1) % beepPeriod;
+	}
 
-	return s;
+	return beepValue;
 }
 
 constexpr int CDDA_SIZE = 2352 / 2;
@@ -1468,9 +1479,12 @@ void AICA_Sample()
 	if (settings.input.fastForwardMode || settings.aica.muteAudio)
 		return;
 
-	SampleType beep = vmuBeepSample();
-	mixl += beep;
-	mixr += beep;
+	if (config::VmuSound)
+	{
+		SampleType beep = vmuBeepSample();
+		mixl += beep;
+		mixr += beep;
+	}
 
 	//Mono !
 	if (CommonData->Mono)

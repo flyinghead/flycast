@@ -866,6 +866,19 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      "Visual Memory Units/Systems (VMU) Sounds",
+      "VMU Sounds",
+      "When enabled, VMU beeps are played.",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       "Show Visual Memory Unit/System (VMU) Display Settings",
       "Show VMU Display Settings",

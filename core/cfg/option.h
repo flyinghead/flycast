@@ -409,6 +409,7 @@ public:
 	}
 };
 extern AudioVolumeOption AudioVolume;
+extern Option<bool> VmuSound;
 
 // Rendering
 
