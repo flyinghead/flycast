@@ -634,11 +634,11 @@ static void create_modvol_shader()
 	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
 
-static bool gl_create_resources()
+static void gl_create_resources()
 {
 	if (gl4.vbo.geometry[0] != nullptr)
 		// Assume the resources have already been created
-		return true;
+		return;
 
 	//create vao
 	glGenVertexArrays(2, &gl4.vbo.main_vao[0]);
@@ -659,8 +659,6 @@ static bool gl_create_resources()
 
 	initQuad();
 	glCheck();
-
-	return true;
 }
 
 struct OpenGL4Renderer : OpenGLRenderer
@@ -759,8 +757,7 @@ bool OpenGL4Renderer::Init()
     //glDebugMessageCallback(gl_DebugOutput, NULL);
     //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-	if (!gl_create_resources())
-		return false;
+	gl_create_resources();
 
 	initABuffer();
 
