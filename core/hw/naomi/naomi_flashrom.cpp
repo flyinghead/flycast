@@ -195,19 +195,19 @@ void configure_naomi_eeprom(const RomBootID *bootId)
 {
 	initEeprom(bootId);
 	// Horizontal / vertical screen orientation
-	if (bootId->vertical & 2)
+	if (bootId->vertical == 2)
 	{
 		NOTICE_LOG(NAOMI, "EEPROM: vertical monitor orientation");
 		write_naomi_eeprom(2, readEeprom(2) | 1);
 		config::Rotate90.override(true);
 	}
-	else if (bootId->vertical & 1)
+	else if (bootId->vertical == 1)
 	{
 		NOTICE_LOG(NAOMI, "EEPROM: horizontal monitor orientation");
 		write_naomi_eeprom(2, readEeprom(2) & ~1);
 	}
 	// Number of players
-	if (bootId->cabinet != 0)
+	if (bootId->cabinet != 0 && bootId->cabinet < 0x10)
 	{
 		int nPlayers = readEeprom(8) >> 4;	// 0 to 3
 		if (!(bootId->cabinet & (1 << nPlayers)))
