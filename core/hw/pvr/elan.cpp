@@ -56,7 +56,6 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/pvr/Renderer_if.h"
-#include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mem.h"
 #include "emulator.h"
 #include "serialize.h"

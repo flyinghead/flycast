@@ -19,10 +19,13 @@
 #pragma once
 #include "scraper.h"
 #include "stdclass.h"
-#include <unordered_map>
-#include <memory>
+
 #include <future>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct GameMedia;
 

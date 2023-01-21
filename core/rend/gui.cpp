@@ -16,8 +16,6 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#include <mutex>
 #include "gui.h"
 #include "osd.h"
 #include "cfg/cfg.h"
@@ -32,7 +30,6 @@
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
 #include "gui_util.h"
-#include "gui_android.h"
 #include "game_scanner.h"
 #include "version.h"
 #include "oslib/oslib.h"
@@ -50,6 +47,12 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
+
+#ifdef __ANDROID__
+#include "gui_android.h"
+#endif
+
+#include <mutex>
 
 static bool game_started;
 
@@ -432,6 +435,7 @@ void gui_set_insets(int left, int right, int top, int bottom)
 
 #if 0
 #include "oslib/timeseries.h"
+#include <vector>
 TimeSeries renderTimes;
 TimeSeries vblankTimes;
 

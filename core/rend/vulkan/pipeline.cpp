@@ -21,7 +21,6 @@
 #include "pipeline.h"
 #include "hw/pvr/Renderer_if.h"
 #include "rend/osd.h"
-#include "quad.h"
 
 void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {

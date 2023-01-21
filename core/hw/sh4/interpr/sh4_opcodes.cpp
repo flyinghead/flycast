@@ -10,8 +10,11 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/sh4_interrupts.h"
-#include "hw/sh4/sh4_cache.h"
 #include "debug/gdb_server.h"
+
+#ifdef STRICT_MODE
+#include "hw/sh4/sh4_cache.h"
+#endif
 
 #define iNimp cpu_iNimp
 

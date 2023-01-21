@@ -16,9 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifdef TRACE_WINCE_SYSCALLS
 #include "hw/sh4/sh4_sched.h"
 
-#ifdef TRACE_WINCE_SYSCALLS
 #define	PUserKData 			0x00005800
 #define	SYSHANDLE_OFFSET	0x004
 #define	SYS_HANDLE_BASE		64

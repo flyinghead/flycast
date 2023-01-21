@@ -6,7 +6,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "network/ggpo.h"
-#include "input/gamepad_device.h"
 
 enum MaplePattern
 {

@@ -16,13 +16,15 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
 #include "reios/gdrom_hle.h"
-#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
+
+#include <array>
+#include <vector>
 
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;

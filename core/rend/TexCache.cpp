@@ -3,7 +3,6 @@
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-#include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
 #include <mutex>

@@ -4,16 +4,17 @@
 #include "types.h"
 
 #if defined(__unix__) || defined(__SWITCH__)
-#include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
+#include "stdclass.h"
 
-#include <cstdarg>
 #include <csignal>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 #if defined(__SWITCH__)
 #include "nswitch.h"

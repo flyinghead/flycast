@@ -21,7 +21,6 @@
 #include <cstdio>
 #include <set>
 #include <map>
-#include <cmath>
 #include "types.h"
 #include "decoder.h"
 #include "hw/sh4/modules/mmu.h"

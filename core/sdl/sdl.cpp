@@ -3,9 +3,11 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
+#ifdef WIN32
 #include <SDL_syswm.h>
+#endif
 #include <SDL_video.h>
-#ifdef USE_VULKAN
+#if defined(__APPLE__) && defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
 #endif

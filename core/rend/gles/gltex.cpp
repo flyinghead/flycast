@@ -3,8 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
-#include <cstdio>
-#include <cstdlib>
+#include <memory>
 
 GlTextureCache TexCache;
 
@@ -314,7 +313,7 @@ static void readAsyncPixelBuffer(u32 addr)
 	{
 		if (gl.rtt.directXfer)
 			// Can be read directly into vram
-			memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
+			std::memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
 		else
 			WriteTextureToVRam(gl.rtt.width, gl.rtt.height, ptr, dst, gl.rtt.fb_w_ctrl, gl.rtt.linestride);
 	}

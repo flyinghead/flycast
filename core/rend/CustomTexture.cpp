@@ -18,7 +18,6 @@
  */
 #include "TexCache.h"
 #include "CustomTexture.h"
-#include "cfg/cfg.h"
 #include "oslib/directory.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"

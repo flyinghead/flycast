@@ -18,9 +18,9 @@
 */
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "rend/gles/naomi2.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
-#include "gl4naomi2.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
