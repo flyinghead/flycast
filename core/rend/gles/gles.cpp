@@ -917,11 +917,11 @@ static void create_modvol_shader()
 	}
 }
 
-static bool gl_create_resources()
+static void gl_create_resources()
 {
 	if (gl.vbo.geometry != nullptr)
 		// Assume the resources have already been created
-		return true;
+		return;
 
 	findGLVersion();
 
@@ -935,8 +935,6 @@ static bool gl_create_resources()
 	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
 	initQuad();
-
-	return true;
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
@@ -975,8 +973,7 @@ bool OpenGLRenderer::Init()
 {
 	glcache.EnableCache();
 
-	if (!gl_create_resources())
-		return false;
+	gl_create_resources();
 
 #if 0
 	glEnable(GL_DEBUG_OUTPUT);
