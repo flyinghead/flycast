@@ -25,6 +25,7 @@
 #include "reios/reios.h"
 #include "cfg/cfg.h"
 #include "cfg/ini.h"
+#include "cfg/option.h"
 #include "emulator.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =

@@ -1,6 +1,5 @@
 #include "glcache.h"
 #include "gles.h"
-#include "cfg/cfg.h"
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
 #include "rend/gui.h"
@@ -14,6 +13,10 @@
 #include "emulator.h"
 #include "naomi2.h"
 #include "rend/gles/postprocess.h"
+
+#ifdef TEST_AUTOMATION
+#include "cfg/cfg.h"
+#endif
 
 #include <cmath>
 

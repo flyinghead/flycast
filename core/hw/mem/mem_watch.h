@@ -24,7 +24,6 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/elan.h"
 #include "rend/TexCache.h"
-#include <array>
 #include <unordered_map>
 
 namespace memwatch

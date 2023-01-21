@@ -16,8 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <chrono>
-#include <thread>
+
 #include "mainui.h"
 #include "hw/pvr/Renderer_if.h"
 #include "gui.h"
@@ -27,7 +26,9 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 #include "profiler/fc_profiler.h"
+
 #include <chrono>
+#include <thread>
 
 static bool mainui_enabled;
 u32 MainFrameCount;

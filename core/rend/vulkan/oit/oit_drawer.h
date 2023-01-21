@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/sorter.h"
 #include "rend/transform_matrix.h"
 #include "../vulkan.h"
 #include "../buffer.h"

@@ -15,7 +15,6 @@
 	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "types.h"
 #include "hw/pvr/ta_ctx.h"
 
 // Use the first vertex as provoking vertex for flat-shaded triangles

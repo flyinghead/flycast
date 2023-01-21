@@ -2,6 +2,7 @@
 #include "audiostream.h"
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 
 class AlsaAudioBackend : public AudioBackend
 {

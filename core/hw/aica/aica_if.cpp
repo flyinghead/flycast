@@ -13,6 +13,7 @@
 #include "profiler/dc_profiler.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/arm7/arm7.h"
+#include "cfg/option.h"
 
 #include <ctime>
 

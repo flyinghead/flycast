@@ -2,14 +2,13 @@
 	This file is a mix of my code, Zezu's, and duno wtf-else (most likely ElSemi's ?)
 */
 #include "types.h"
-#include "cfg/cfg.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/sh4/modules/dmac.h"
 #include "hw/aica/aica_if.h"
+#include "hw/hwreg.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -17,6 +16,8 @@
 #include "naomi_m3comm.h"
 #include "serialize.h"
 #include "network/output.h"
+
+#include <algorithm>
 
 //#define NAOMI_COMM
 

@@ -22,6 +22,7 @@
 //
 #import "PadViewController.h"
 #include "ios_gamepad.h"
+#include "cfg/cfg.h"
 
 @interface PadViewController () {
 	UITouch *joyTouch;

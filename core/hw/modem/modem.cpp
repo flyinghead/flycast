@@ -25,9 +25,12 @@
 #include "modem_regs.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
-#include "oslib/oslib.h"
 #include "network/picoppp.h"
 #include "serialize.h"
+
+#ifndef NDEBUG
+#include "oslib/oslib.h"
+#endif
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1

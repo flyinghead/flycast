@@ -24,7 +24,10 @@
 #endif
 
 #include "stdclass.h"
+
+#ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
+#endif
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -43,7 +46,6 @@ extern "C" {
 #include "net_platform.h"
 
 #include "types.h"
-#include "cfg/cfg.h"
 #include "picoppp.h"
 #include "miniupnp.h"
 #include "reios/reios.h"

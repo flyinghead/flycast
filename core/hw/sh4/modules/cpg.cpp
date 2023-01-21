@@ -1,4 +1,4 @@
-#include "types.h"
+#include "hw/hwreg.h"
 #include "hw/sh4/sh4_mmr.h"
 
 //Init term res

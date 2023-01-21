@@ -27,7 +27,6 @@
 #include "oslib/directory.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
-#include "hw/maple/maple_devs.h"
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>

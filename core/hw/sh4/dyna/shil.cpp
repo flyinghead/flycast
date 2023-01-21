@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_mmr.h"
 
 #include "ngen.h"
 #include "hw/sh4/sh4_core.h"

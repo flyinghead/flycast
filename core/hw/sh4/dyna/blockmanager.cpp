@@ -13,6 +13,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/modules/mmu.h"
 
 
 #if defined(__unix__) && defined(DYNA_OPROF)

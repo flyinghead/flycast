@@ -16,8 +16,6 @@
 	 You should have received a copy of the GNU General Public License
 	 along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <array>
-#include <memory>
 #include "maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
 #include <xxhash.h>
@@ -25,6 +23,10 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 

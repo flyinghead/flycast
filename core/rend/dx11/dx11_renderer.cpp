@@ -22,6 +22,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/gui.h"
 #include "rend/tileclip.h"
+#include "rend/sorter.h"
 
 const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 {

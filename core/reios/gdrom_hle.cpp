@@ -16,6 +16,7 @@
 #include "hw/holly/holly_intc.h"
 #include "reios.h"
 #include "imgread/common.h"
+#include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
 

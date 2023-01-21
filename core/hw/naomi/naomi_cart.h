@@ -1,9 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <string>
 #include "types.h"
 #include "emulator.h"
+
+#include <string>
+#include <vector>
 
 struct RomBootID
 {
