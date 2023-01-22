@@ -697,6 +697,9 @@ public:
 	static void SetDirectXColorOrder(bool enabled);
 };
 
+// TODO Split the texture cache in a separate header
+#include "CustomTexture.h"
+
 template<typename Texture>
 class BaseTextureCache
 {
@@ -785,6 +788,7 @@ public:
 
 	void Clear()
 	{
+		custom_texture.Terminate();
 		for (auto& pair : cache)
 			pair.second.Delete();
 

@@ -32,7 +32,7 @@
 #include "oslib/audiostream.h"
 #include "debug/gdb_server.h"
 #include "hw/pvr/Renderer_if.h"
-#include "rend/CustomTexture.h"
+#include "rend/TexCache.h"
 #include "hw/arm7/arm7_rec.h"
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
