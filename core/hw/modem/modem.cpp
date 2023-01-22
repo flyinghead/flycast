@@ -532,7 +532,6 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 	case 0x11:
 		LOG("PARSL = %d", modem_regs.reg11.PARSL);
-		die("PARSL");
 		break;
 
 	case 0x14:	// ABCODE
