@@ -209,7 +209,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
-			|| prod_id == "T0020M")		// Force Five Atomiswave DC Conversion
+			|| prod_id == "T0020M"		// Force Five Atomiswave DC Conversion
+			|| prod_id == "HDR-0187")	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
