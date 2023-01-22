@@ -60,7 +60,6 @@
 #include "imgread/common.h"
 #include "LogManager.h"
 #include "cheats.h"
-#include "rend/CustomTexture.h"
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "version.h"
