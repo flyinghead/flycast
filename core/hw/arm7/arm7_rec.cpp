@@ -340,7 +340,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 			{
 				// LDR/STR w pc-based offset and write-back
 				op.flags |= ArmOp::OP_SETS_PC;
-				// TODO not supported
+				// Invalid: Write-back must not be specified if R15 is used as the base register
 				op.op_type = ArmOp::FALLBACK;
 				op.arg[0] = ArmOp::Operand(opcode);
 				op.arg[1] = ArmOp::Operand();
@@ -368,8 +368,13 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				op.arg[1].shift_value = bits.shift_imm;
 				if (op.arg[1].getReg().armreg == RN_PC)
 				{
-					verify(op.arg[1].shift_value == 0 && op.arg[1].shift_type == ArmOp::LSL);
-					op.arg[1] = ArmOp::Operand(arm_pc + 8);
+					// Invalid: r15 cannot be used as the offset register
+					op.op_type = ArmOp::FALLBACK;
+					op.arg[0] = ArmOp::Operand(opcode);
+					op.arg[1] = ArmOp::Operand();
+					op.arg[2] = ArmOp::Operand();
+					op.cycles = 0;
+					return op;
 				}
 				if (op.arg[1].shift_type == ArmOp::RRX && op.arg[1].shift_value == 0)
 					op.flags |= ArmOp::OP_READS_FLAGS;
