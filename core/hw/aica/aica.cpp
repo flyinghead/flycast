@@ -67,20 +67,24 @@ static void update_arm_interrupts()
 }
 
 //sh4 side
-static void UpdateSh4Ints()
+static bool UpdateSh4Ints()
 {
 	u32 p_ints = MCIEB->full & MCIPD->full;
 	if (p_ints)
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
-			//if no interrupt is already pending then raise one :)
+		{
+			// if no interrupt is already pending then raise one
 			asic_RaiseInterrupt(holly_SPU_IRQ);
+			return true;
+		}
 	}
 	else
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT) != 0)
 			asic_CancelInterrupt(holly_SPU_IRQ);
 	}
+	return false;
 }
 
 AicaTimer timers[3];
@@ -169,6 +173,12 @@ void WriteAicaReg(u32 reg, T data)
 	constexpr size_t sz = sizeof(T);
 	switch (reg)
 	{
+	case SCIEB_addr:
+		verify(sz != 1);
+		SCIEB->full = data & 0x7ff;
+		update_arm_interrupts();
+		break;
+
 	case SCIPD_addr:
 		verify(sz!=1);
 		// other bits are read-only
@@ -185,14 +195,21 @@ void WriteAicaReg(u32 reg, T data)
 		update_arm_interrupts();
 		break;
 
+	case MCIEB_addr:
+		verify(sz != 1);
+		MCIEB->full = data & 0x7ff;
+		if (UpdateSh4Ints())
+			aicaarm::avoidRaceCondition();
+		break;
+
 	case MCIPD_addr:
 		verify(sz != 1);
 		// other bits are read-only
 		if (data & (1 << 5))
 		{
 			MCIPD->SCPU = 1;
-			UpdateSh4Ints();
-			aicaarm::avoidRaceCondition();
+			if (UpdateSh4Ints())
+				aicaarm::avoidRaceCondition();
 		}
 		break;
 
@@ -275,6 +292,7 @@ void libAICA_Reset(bool hard)
 	if (hard)
 	{
 		init_mem();
+		sgc_Term();
 		sgc_Init();
 		sh4_sched_request(aica_schid, AICA_TICK);
 	}
