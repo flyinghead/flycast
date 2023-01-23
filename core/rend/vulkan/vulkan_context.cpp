@@ -439,9 +439,8 @@ bool VulkanContext::InitDevice()
 			features.fragmentStoresAndAtomics = true;
 		if (samplerAnisotropy)
 			features.samplerAnisotropy = true;
-		const char *layers[] = { "VK_LAYER_ARM_AGA" };
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
-				layers, deviceExtensions, &features));
+				nullptr, deviceExtensions, &features));
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
@@ -1016,7 +1015,8 @@ void VulkanContext::term()
 #ifndef USE_SDL
 	surface.reset();
 #else
-	instance->destroySurfaceKHR(surface.release());
+	if (instance && surface)
+		instance->destroySurfaceKHR(surface.release());
 #endif
 	pipelineCache.reset();
 	device.reset();
