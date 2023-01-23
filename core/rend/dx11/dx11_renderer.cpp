@@ -41,6 +41,11 @@ bool DX11Renderer::Init()
 	NOTICE_LOG(RENDERER, "DX11 renderer initializing");
 	device = theDX11Context.getDevice();
 	deviceContext = theDX11Context.getDeviceContext();
+	if (!device || !deviceContext)
+	{
+		WARN_LOG(RENDERER, "Null device or device context. Aborting");
+		return false;
+	}
 
 	shaders = &theDX11Context.getShaders();
 	samplers = &theDX11Context.getSamplers();
