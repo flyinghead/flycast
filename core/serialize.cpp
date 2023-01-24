@@ -19,7 +19,7 @@
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
-#include "hw/sh4/sh4_if.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
