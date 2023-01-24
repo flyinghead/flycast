@@ -3002,7 +3002,7 @@ void fatal_error(const char* text, ...)
 	}
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	ERROR_LOG(COMMON, "DEBUGBREAK!");
 	//exit(-1);

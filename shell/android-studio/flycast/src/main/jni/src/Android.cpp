@@ -532,7 +532,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_set
     }
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
     // TODO: notify the parent thread about it ...
 

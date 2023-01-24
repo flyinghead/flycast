@@ -3,13 +3,9 @@
 #include "types.h"
 
 #ifndef __ANDROID__
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
-#ifdef __linux__
-	raise(SIGTRAP);
-#elif defined(_WIN32)
-	__debugbreak();
-#endif
+	std::abort();
 }
 
 #ifdef _WIN32

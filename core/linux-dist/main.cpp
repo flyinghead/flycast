@@ -383,9 +383,10 @@ int main(int argc, char* argv[])
 }
 
 #if defined(__unix__)
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	raise(SIGTRAP);
+	std::abort();
 }
 #endif
 

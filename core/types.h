@@ -167,17 +167,15 @@ inline static void JITWriteProtect(bool enabled) {
 #define VER_EMUNAME		"Flycast"
 #define VER_SHORTNAME	VER_EMUNAME
 
-void os_DebugBreak();
-#define dbgbreak os_DebugBreak()
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
 
+[[noreturn]] void os_DebugBreak();
 void fatal_error(const char* text, ...);
 
-#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
+#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();}} while (false)
+#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();} while (false)
 
 enum class JVS {
 	Default,

@@ -127,7 +127,7 @@ double os_GetSeconds()
 }
 
 #if !defined(__unix__) && !defined(LIBRETRO)
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	__builtin_trap();
 }

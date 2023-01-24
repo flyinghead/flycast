@@ -941,7 +941,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return 0;
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	__debugbreak();
 }
