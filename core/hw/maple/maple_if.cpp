@@ -162,7 +162,7 @@ static void maple_DoDma()
 #else
 			if (GetMemPtr(header_2, 1) == nullptr)
 			{
-				WARN_LOG(MAPLE, "DMA Error: destination not in system ram: %x", header_2);
+				INFO_LOG(MAPLE, "DMA Error: destination not in system ram: %x", header_2);
 #endif
 				header_2 = 0;
 			}
