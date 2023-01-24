@@ -26,8 +26,6 @@
 #define MMU_ERROR_FIRSTWRITE 4
 //data-Opcode read/write misaligned
 #define MMU_ERROR_BADADDR 5
-//Can't Execute
-#define MMU_ERROR_EXECPROT 6
 
 struct TLB_Entry
 {
@@ -63,7 +61,7 @@ void ITLB_Sync(u32 entry);
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
 void mmu_set_state();
 void mmu_flush_table();
-void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
+[[noreturn]] void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 
 static inline bool mmu_enabled()
 {
@@ -119,12 +117,13 @@ u16 DYNACALL mmu_IReadMem16(u32 addr);
 
 template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
 
-bool mmu_TranslateSQW(u32 adr, u32* out);
+void mmu_TranslateSQW(u32 adr, u32* out);
 
 // maps 4K virtual page number to physical address
 extern u32 mmuAddressLUT[0x100000];
 
-static inline void mmuAddressLUTFlush(bool full) {
+static inline void mmuAddressLUTFlush(bool full)
+{
 	if (full)
 		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT) / 2);	// flush user memory
 	else
@@ -138,10 +137,11 @@ static inline u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
 	u32 paddr;
 	u32 rv;
+	// TODO pass actual size instead of using u8 so that alignment errors are raised
 	if (write)
-		rv = mmu_data_translation<MMU_TT_DWRITE, u32>(vaddr, paddr);
+		rv = mmu_data_translation<MMU_TT_DWRITE, u8>(vaddr, paddr);
 	else
-		rv = mmu_data_translation<MMU_TT_DREAD, u32>(vaddr, paddr);
+		rv = mmu_data_translation<MMU_TT_DREAD, u8>(vaddr, paddr);
 	if (unlikely(rv != MMU_ERROR_NONE))
 	{
 		Sh4cntx.pc = pc;

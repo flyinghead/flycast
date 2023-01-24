@@ -139,9 +139,21 @@ void ExecuteDelayslot()
 void ExecuteDelayslot_RTE()
 {
 	try {
-		ExecuteDelayslot();
+		// In an RTE delay slot, status register (SR) bits are referenced as follows.
+		// In instruction access, the MD bit is used before modification, and in data access,
+		// the MD bit is accessed after modification.
+		// The other bits—S, T, M, Q, FD, BL, and RB—after modification are used for delay slot
+		// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
+		u32 op = ReadNexOp();
+		// Now restore all SR bits
+		sh4_sr_SetFull(ssr);
+		// And execute
+		ExecuteOpcode(op);
 	} catch (const SH4ThrownException&) {
 		throw FlycastException("Fatal: SH4 exception in RTE delay slot");
+	} catch (const debugger::Stop& e) {
+		next_pc -= 2;	// break on previous instruction
+		throw e;
 	}
 }
 

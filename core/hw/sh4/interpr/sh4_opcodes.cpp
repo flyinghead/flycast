@@ -833,18 +833,10 @@ sh4op(i0000_nnnn_0000_0011)
 sh4op(i0000_0000_0010_1011)
 {
 	u32 newpc = spc;
-	// FIXME In an RTE delay slot, status register (SR) bits are referenced as follows.
-	// In instruction access, the MD bit is used before modification, and in data access, 
-	// the MD bit is accessed after modification.
-	// The other bits—S, T, M, Q, FD, BL, and RB—after modification are used for delay slot
-	// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
-	sh4_sr_SetFull(ssr);
 	ExecuteDelayslot_RTE();
 	next_pc = newpc;
 	if (UpdateSR())
-	{
 		UpdateINTC();
-	}
 	debugger::subroutineReturn();
 }
 
@@ -1165,8 +1157,7 @@ void DYNACALL do_sqw(u32 Dest)
 	//Translate the SQ addresses as needed
 	if (mmu_on)
 	{
-		if (!mmu_TranslateSQW(Dest, &Address))
-			return;
+		mmu_TranslateSQW(Dest, &Address);
 	}
 	else
 	{
