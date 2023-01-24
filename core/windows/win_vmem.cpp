@@ -57,7 +57,7 @@ bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSiz
 	mapped_regions.reserve(32);
 
 	// First let's try to allocate the in-memory file
-	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, ramSize, 0);
+	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, (DWORD)ramSize, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
 	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
@@ -114,7 +114,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	unmapped_regions.clear();
 
 	for (unsigned i = 0; i < nummaps; i++) {
-		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
+		size_t address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
 		DWORD protection = vmem_maps[i].allow_writes ? (FILE_MAP_READ | FILE_MAP_WRITE) : FILE_MAP_READ;
 
 		if (!vmem_maps[i].memsize) {
@@ -125,14 +125,14 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 		}
 		else {
 			// Calculate the number of mirrors
-			unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;
+			unsigned num_mirrors = (unsigned)(address_range_size / vmem_maps[i].memsize);
 			verify((address_range_size % vmem_maps[i].memsize) == 0 && num_mirrors >= 1);
 
 			// Remap the views one by one
 			for (unsigned j = 0; j < num_mirrors; j++) {
-				unsigned offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
+				size_t offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
 
-				void *ptr = MapViewOfFileEx(mem_handle, protection, 0, vmem_maps[i].memoffset,
+				void *ptr = MapViewOfFileEx(mem_handle, protection, 0, (DWORD)vmem_maps[i].memoffset,
 				                    vmem_maps[i].memsize, &virt_ram_base[offset]);
 				verify(ptr == &virt_ram_base[offset]);
 				mapped_regions.push_back(ptr);
@@ -142,15 +142,14 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 #endif
 }
 
-typedef void* (*mapper_fn) (void *addr, unsigned size);
-
-// This is a templated function since it's used twice
-static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned size, mapper_fn mapper) {
+template<typename Mapper>
+static void *vmem_platform_prepare_jit_block_template(size_t size, Mapper mapper)
+{
 	// Several issues on Windows: can't protect arbitrary pages due to (I guess) the way
 	// kernel tracks mappings, so only stuff that has been allocated with VirtualAlloc can be
 	// protected (the entire allocation IIUC).
 
-	// Strategy: ignore code_area and allocate a new one. Protect it properly.
+	// Strategy: Allocate a new region. Protect it properly.
 	// More issues: the area should be "close" to the .text stuff so that code gen works.
 	// Remember that on x64 we have 4 byte jump/load offset immediates, no issues on x86 :D
 
@@ -177,7 +176,7 @@ static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned 
 	return NULL;
 }
 
-static void* mem_alloc(void *addr, unsigned size)
+static void* mem_alloc(void *addr, size_t size)
 {
 #ifdef TARGET_UWP
 	// rwx is not allowed. Need to switch between r-x and rw-
@@ -188,9 +187,10 @@ static void* mem_alloc(void *addr, unsigned size)
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+bool vmem_platform_prepare_jit_block(void *, size_t size, void **code_area_rwx)
+{
 	// Get the RWX page close to the code_area
-	void *ptr = vmem_platform_prepare_jit_block_template(code_area, size, &mem_alloc);
+	void *ptr = vmem_platform_prepare_jit_block_template(size, mem_alloc);
 	if (!ptr)
 		return false;
 
@@ -202,8 +202,12 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	return true;
 }
 
+void vmem_platform_release_jit_block(void *code_area, size_t)
+{
+	VirtualFree(code_area, 0, MEM_RELEASE);
+}
 
-static void* mem_file_map(void *addr, unsigned size)
+static void* mem_file_map(void *addr, size_t size)
 {
 	// Maps the entire file at the specified addr.
 	void *ptr = VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS);
@@ -221,12 +225,12 @@ static void* mem_file_map(void *addr, unsigned size)
 }
 
 // Use two addr spaces: need to remap something twice, therefore use CreateFileMapping()
-bool vmem_platform_prepare_jit_block(void* code_area, unsigned size, void** code_area_rw, ptrdiff_t* rx_offset)
+bool vmem_platform_prepare_jit_block(void *, size_t size, void** code_area_rw, ptrdiff_t* rx_offset)
 {
-	mem_handle2 = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_EXECUTE_READWRITE, 0, size, 0);
+	mem_handle2 = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_EXECUTE_READWRITE, 0, (DWORD)size, 0);
 
 	// Get the RX page close to the code_area
-	void* ptr_rx = vmem_platform_prepare_jit_block_template(code_area, size, &mem_file_map);
+	void* ptr_rx = vmem_platform_prepare_jit_block_template(size, mem_file_map);
 	if (!ptr_rx)
 		return false;
 
@@ -242,6 +246,17 @@ bool vmem_platform_prepare_jit_block(void* code_area, unsigned size, void** code
 	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
 	return (ptr_rw != NULL);
+}
+
+void vmem_platform_release_jit_block(void *code_area1, void *code_area2, size_t)
+{
+	UnmapViewOfFile(code_area1);
+	UnmapViewOfFile(code_area2);
+	// FIXME the same handle is used for all allocations, and thus leaks.
+	// And the last opened handle is closed multiple times.
+	// But windows doesn't need separate RW and RX areas except perhaps UWP
+	// instead of switching back and forth between RX and RW
+	CloseHandle(mem_handle2);
 }
 
 void vmem_platform_jit_set_exec(void* code, size_t size, bool enable)

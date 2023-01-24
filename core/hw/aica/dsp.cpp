@@ -100,6 +100,9 @@ void DecodeInst(const u32 *IPtr, Instruction *i)
 void recInit() {
 }
 
+void recTerm() {
+}
+
 void recompile() {
 }
 #endif
@@ -124,6 +127,7 @@ void writeProg(u32 addr)
 void term()
 {
 	state.stopped = true;
+	recTerm();
 }
 
 void step()

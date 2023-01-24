@@ -663,6 +663,7 @@ void Emulator::term()
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
+		aicaarm::term();
 		libAICA_Term();
 		pvr::term();
 		mem_Term();

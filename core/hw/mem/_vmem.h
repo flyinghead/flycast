@@ -20,14 +20,18 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 void vmem_platform_destroy();
 // Given a block of data in the .text section, prepares it for JIT action.
 // both code_area and size are page aligned. Returns success.
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx);
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rwx);
 // Same as above but uses two address spaces one with RX and RW protections.
 // Note: this function doesnt have to be implemented, it's a fallback for the above one.
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset);
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset);
 // This might not need an implementation (ie x86/64 cpus).
 void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 // Change a code buffer permissions from r-x to/from rw-
 void vmem_platform_jit_set_exec(void* code, size_t size, bool enable);
+// Release a jit block previously allocated by vmem_platform_prepare_jit_block
+void vmem_platform_release_jit_block(void *code_area, size_t size);
+// Release a jit block previously allocated by vmem_platform_prepare_jit_block (with dual RW and RX areas)
+void vmem_platform_release_jit_block(void *code_area1, void *code_area2, size_t size);
 
 // Note: if you want to disable vmem magic in any given platform, implement the
 // above functions as empty functions and make vmem_platform_init return false.

@@ -150,7 +150,6 @@ static int allocate_shared_filemem(unsigned size) {
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 
 int vmem_fd = -1;
-static int shmem_fd2 = -1;
 static void *reserved_base;
 static size_t reserved_size;
 
@@ -242,7 +241,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx)
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
 {
     // Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
 	if (code_area != nullptr && mem_region_set_exec(code_area, size))
@@ -278,10 +277,16 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
     return true;
 }
 
+void vmem_platform_release_jit_block(void *code_area, size_t size)
+{
+	munmap(code_area, size);
+}
+
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset) {
-	shmem_fd2 = allocate_shared_filemem(size);
-	if (shmem_fd2 < 0)
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
+{
+	int fd = allocate_shared_filemem(size);
+	if (fd < 0)
 		return false;
 
 	// Need to unmap the section we are about to use (it might be already unmapped but nevertheless...)
@@ -289,20 +294,31 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	// Map the RX bits on the code_area, for proximity, as usual.
 	void *ptr_rx = mmap(code_area, size, PROT_READ | PROT_EXEC,
-	                    MAP_SHARED | MAP_NOSYNC | MAP_FIXED, shmem_fd2, 0);
+	                    MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, 0);
 	if (ptr_rx != code_area)
+	{
+		close(fd);
 		return false;
+	}
 
 	// Now remap the same memory as RW in some location we don't really care at all.
 	void *ptr_rw = mmap(NULL, size, PROT_READ | PROT_WRITE,
-	                    MAP_SHARED | MAP_NOSYNC, shmem_fd2, 0);
+	                    MAP_SHARED | MAP_NOSYNC, fd, 0);
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
+	close(fd);
 	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld", ptr_rx, ptr_rw, (long)*rx_offset);
 
 	return (ptr_rw != MAP_FAILED);
 }
+
+void vmem_platform_release_jit_block(void *code_area1, void *code_area2, size_t size)
+{
+	// keep code_area1 (RX) mapped since it's statically allocated
+	munmap(code_area2, size);
+}
+
 #endif // !__SWITCH__
 
 void vmem_platform_jit_set_exec(void* code, size_t size, bool enable) {

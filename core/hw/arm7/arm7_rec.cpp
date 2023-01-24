@@ -674,8 +674,6 @@ void init()
 #endif
 	verify(rc);
 
-	icPtr = ICache;
-
 	for (int i = 0; i < 256; i++)
 	{
 		int count = 0;
@@ -685,6 +683,19 @@ void init()
 
 		cpuBitsSet[i] = count;
 	}
+	flush();
+}
+
+void term()
+{
+#ifdef FEAT_NO_RWX_PAGES
+	if (ICache != nullptr)
+		vmem_platform_release_jit_block(ARM7_TCB, ICache, ICacheSize);
+#else
+	if (ICache != nullptr && ICache != ARM7_TCB)
+		vmem_platform_release_jit_block(ICache, ICacheSize);
+#endif
+	ICache = nullptr;
 }
 
 template <bool Load, bool Byte>

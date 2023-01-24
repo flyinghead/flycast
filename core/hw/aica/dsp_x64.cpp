@@ -428,6 +428,18 @@ void recInit()
 		die("vmem_platform_prepare_jit_block failed in x64 dsp");
 }
 
+void recTerm()
+{
+#ifdef FEAT_NO_RWX_PAGES
+	if (pCodeBuffer != nullptr)
+		vmem_platform_release_jit_block(CodeBuffer, pCodeBuffer, CodeBufferSize);
+#else
+	if (pCodeBuffer != nullptr && pCodeBuffer != CodeBuffer)
+		vmem_platform_release_jit_block(pCodeBuffer, CodeBufferSize);
+#endif
+	pCodeBuffer = nullptr;
+}
+
 void runStep()
 {
 	((void (*)())&pCodeBuffer[0])();

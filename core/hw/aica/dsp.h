@@ -62,6 +62,7 @@ void step();
 void writeProg(u32 addr);
 
 void recInit();
+void recTerm();
 void runStep();
 void recompile();
 

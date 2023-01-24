@@ -411,6 +411,10 @@ void recInit()
 	verify(rc);
 }
 
+void recTerm()
+{
+}
+
 void runStep()
 {
 	((void (*)())DynCode)();

@@ -23,7 +23,7 @@
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *SH4_TCB;
 #else
-static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
+alignas(4096) static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE]
 #if defined(__unix__) || defined(__SWITCH__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
@@ -394,24 +394,20 @@ static void recSh4_Init()
 	Get_Sh4Interpreter(&sh4Interp);
 	sh4Interp.Init();
 	bm_Init();
-
 	
 	if (_nvmem_enabled())
 		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
-	// Prepare some pointer to the pre-allocated code cache:
-	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
-
 	// Call the platform-specific magic to make the pages RWX
-	CodeCache = NULL;
+	CodeCache = nullptr;
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+	bool rc = vmem_platform_prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+	bool rc = vmem_platform_prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
 #endif
 	verify(rc);
 	// Ensure the pointer returned is non-null
-	verify(CodeCache != NULL);
+	verify(CodeCache != nullptr);
 
 	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
@@ -421,6 +417,15 @@ static void recSh4_Init()
 static void recSh4_Term()
 {
 	INFO_LOG(DYNAREC, "recSh4 Term");
+#ifdef FEAT_NO_RWX_PAGES
+	if (CodeCache != nullptr)
+		vmem_platform_release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, CODE_SIZE + TEMP_CODE_SIZE);
+#else
+	if (CodeCache != nullptr && CodeCache != SH4_TCB)
+		vmem_platform_release_jit_block(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+#endif
+	CodeCache = nullptr;
+	TempCodeCache = nullptr;
 	bm_Term();
 	sh4Interp.Term();
 }

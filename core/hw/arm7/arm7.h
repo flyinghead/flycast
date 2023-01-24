@@ -4,6 +4,7 @@
 namespace aicaarm {
 
 void init();
+void term();
 void reset();
 void run(u32 samples);
 void enable(bool enabled);

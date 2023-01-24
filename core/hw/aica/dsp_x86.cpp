@@ -383,6 +383,11 @@ void recInit()
 		die("mprotect failed in x86 dsp");
 }
 
+void recTerm()
+{
+	pCodeBuffer = nullptr;
+}
+
 void runStep()
 {
 	((void (*)())&CodeBuffer[0])();

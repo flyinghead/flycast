@@ -104,6 +104,13 @@ void aicaarm::init()
 	}
 }
 
+void aicaarm::term()
+{
+#if FEAT_AREC != DYNAREC_NONE
+	recompiler::term();
+#endif
+}
+
 static void CPUSwitchMode(int mode, bool saveState)
 {
 	CPUUpdateCPSR();

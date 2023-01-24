@@ -461,6 +461,22 @@ void recInit()
 #endif
 }
 
+
+void recTerm()
+{
+#if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+	DynCode = nullptr;
+#endif
+#ifdef FEAT_NO_RWX_PAGES
+	if (pCodeBuffer != nullptr)
+		vmem_platform_release_jit_block(DynCode, pCodeBuffer, CodeSize);
+#else
+	if (pCodeBuffer != nullptr && pCodeBuffer != DynCode)
+		vmem_platform_release_jit_block(pCodeBuffer, CodeSize);
+#endif
+	pCodeBuffer = nullptr;
+}
+
 void runStep()
 {
 	((void (*)())DynCode)();

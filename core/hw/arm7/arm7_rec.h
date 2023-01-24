@@ -421,6 +421,7 @@ protected:
 namespace recompiler {
 
 void init();
+void term();
 void flush();
 void compile();
 void *getMemOp(bool load, bool byte);
