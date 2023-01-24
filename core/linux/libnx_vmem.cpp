@@ -204,17 +204,22 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx)
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
 {
 	die("Not supported in libnx");
 
 	return false;
 }
 
-// Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset)
+void vmem_platform_release_jit_block(void *code_area, size_t size)
 {
-	const unsigned size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
+	die("Not supported in libnx");
+}
+
+// Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
+bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
+{
+	const size_t size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
 
 	virtmemLock();
 	void* ptr_rw = virtmemFindAslr(size_aligned, 0);
@@ -232,6 +237,14 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld\n", code_area, ptr_rw, (long)*rx_offset);
 
 	return true;
+}
+
+void vmem_platform_release_jit_block(void *code_area1, void *code_area2, size_t size)
+{
+	const size_t size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
+	virtmemLock();
+	svcUnmapProcessMemory(code_area2, envGetOwnProcessHandle(), (u64)code_area1, size_aligned);
+	virtmemUnlock();
 }
 
 #ifndef TARGET_NO_EXCEPTIONS
