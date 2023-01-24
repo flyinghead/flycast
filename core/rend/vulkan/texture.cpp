@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "texture.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <memory>

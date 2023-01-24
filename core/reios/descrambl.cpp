@@ -7,8 +7,7 @@
 */
 
 #include "descrambl.h"
-
-#include <utility>
+#include <algorithm>
 
 #define MAXCHUNK (2048*1024)
 
@@ -48,7 +47,7 @@ static void load_chunk(const u8* &src, u8 *ptr, u32 sz)
 		std::swap(idx[i], idx[x]);
 
 		/* Load resulting slice */
-		std::memcpy(ptr + 32 * idx[i], src, 32);
+		memcpy(ptr + 32 * idx[i], src, 32);
 		src += 32;
 	}
 }
@@ -71,5 +70,5 @@ void descrambl_buffer(const u8 *src, u8 *dst, u32 size)
 
 	/* Load final incomplete slice */
 	if (size)
-		std::memcpy(dst, src, size);
+		memcpy(dst, src, size);
 }

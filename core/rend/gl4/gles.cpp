@@ -23,7 +23,6 @@
 #include "glsl.h"
 #include "gl4naomi2.h"
 #include "rend/gles/postprocess.h"
-#include "rend/gles/naomi2.h"
 
 //Fragment and vertex shaders code
 

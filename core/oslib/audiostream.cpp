@@ -1,4 +1,5 @@
 #include "audiostream.h"
+#include <memory>
 
 struct SoundFrame { s16 l; s16 r; };
 

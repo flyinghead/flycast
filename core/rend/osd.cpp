@@ -20,7 +20,6 @@
 #include "input/gamepad_device.h"
 #include "TexCache.h"
 #include "hw/maple/maple_devs.h"
-#include "stdclass.h"
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
 #endif

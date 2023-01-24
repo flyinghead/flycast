@@ -7,8 +7,10 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
+#include "cfg/option.h"
 
 #include <ctime>
+#include <cfloat>
 
 #include "blockmanager.h"
 #include "ngen.h"

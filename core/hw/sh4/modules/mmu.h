@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
+#include "hw/mem/_vmem.h"
 #include "cfg/option.h"
 #include "hw/sh4/dyna/ngen.h"
 

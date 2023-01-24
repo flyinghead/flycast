@@ -1,7 +1,7 @@
 /*
 	The rtc isn't working on dreamcast I'm told
 */
-#include "hw/hwreg.h"
+#include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 
 //Init term res

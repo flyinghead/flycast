@@ -22,10 +22,9 @@
 #include "commandpool.h"
 #include "pipeline.h"
 #include "rend/osd.h"
-#include "rend/transform_matrix.h"
-#ifdef LIBRETRO
 #include "overlay.h"
-#else
+#include "rend/transform_matrix.h"
+#ifndef LIBRETRO
 #include "rend/gui.h"
 #endif
 

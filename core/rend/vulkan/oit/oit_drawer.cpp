@@ -20,7 +20,6 @@
 */
 #include "oit_drawer.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/sorter.h"
 
 #include <algorithm>
 

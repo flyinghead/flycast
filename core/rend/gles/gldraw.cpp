@@ -1,5 +1,6 @@
 #include "glcache.h"
 #include "gles.h"
+#include "rend/sorter.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
 #include "naomi2.h"

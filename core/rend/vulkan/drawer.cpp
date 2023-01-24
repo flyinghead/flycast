@@ -20,7 +20,6 @@
 */
 #include "drawer.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/sorter.h"
 
 TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {

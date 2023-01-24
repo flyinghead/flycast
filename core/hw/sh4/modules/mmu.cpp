@@ -1,5 +1,4 @@
 #include "mmu.h"
-#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
@@ -21,8 +20,13 @@ This is mostly hacked-on as the core was never meant to have mmu support
 There are two modes, one with 'full' mmu emulation (for wince/bleem/wtfever)
 and a fast-hack mode for 1mb sqremaps (for katana)
 */
+#include "mmu.h"
+#include "hw/sh4/sh4_if.h"
 #include "ccn.h"
+#include "hw/sh4/sh4_interrupts.h"
+#include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
+
 #include "hw/mem/_vmem.h"
 
 //#define TRACE_WINCE_SYSCALLS

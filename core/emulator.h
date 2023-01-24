@@ -20,13 +20,14 @@
  */
 #pragma once
 #include "types.h"
-
 #include <atomic>
-#include <future>
 #include <map>
-#include <mutex>
-#include <utility>
 #include <vector>
+#include <future>
+#include <string>
+#include <memory>
+#include <utility>
+#include <mutex>
 
 void loadGameSpecificSettings();
 void SaveSettings();

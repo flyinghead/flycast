@@ -21,6 +21,7 @@
 #include "vulkan.h"
 #include "vulkan_renderer.h"
 #include "drawer.h"
+#include "shaders.h"
 
 class VulkanRenderer final : public BaseVulkanRenderer
 {

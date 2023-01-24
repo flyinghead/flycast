@@ -10,8 +10,6 @@
 #include <sys/time.h>
 #if defined(__linux__) && !defined(__ANDROID__)
   #include <sys/personality.h>
-#endif
-#if !defined(TARGET_BSD) && !defined(__ANDROID__) && defined(TARGET_VIDEOCORE)
   #include <dlfcn.h>
 #endif
 #include <unistd.h>

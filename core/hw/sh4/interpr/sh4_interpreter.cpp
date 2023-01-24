@@ -10,6 +10,7 @@
 #include "../sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "../sh4_sched.h"
+#include "hw/holly/sb.h"
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
 

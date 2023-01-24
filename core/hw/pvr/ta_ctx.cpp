@@ -3,10 +3,6 @@
 #include "cfg/option.h"
 #include "Renderer_if.h"
 #include "serialize.h"
-#include "stdclass.h"
-
-#include <mutex>
-#include <vector>
 
 extern u32 fskip;
 static int RenderCount;

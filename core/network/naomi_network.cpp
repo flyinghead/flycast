@@ -20,8 +20,6 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
-
 #include <chrono>
 #include <thread>
 

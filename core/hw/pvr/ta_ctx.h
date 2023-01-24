@@ -3,10 +3,8 @@
 #include "ta_structs.h"
 #include "pvr_regs.h"
 #include "helper_classes.h"
+#include "stdclass.h"
 #include "oslib/oslib.h"
-
-#include <algorithm>
-#include <vector>
 
 class BaseTextureCacheData;
 struct N2LightModel;

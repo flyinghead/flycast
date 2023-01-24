@@ -17,7 +17,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gl4naomi2.h"
-#include "rend/gl4/gl4.h"
 
 extern const char *N2VertexShader;
 extern const char *N2ColorShader;
