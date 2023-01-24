@@ -25,7 +25,7 @@
 #include "naomi.h"
 #include "decrypt.h"
 #include "naomi_roms.h"
-#include "hw/flashrom/flashrom.h"
+#include "hw/flashrom/nvmem.h"
 #include "hw/holly/holly_intc.h"
 #include "m1cartridge.h"
 #include "m4cartridge.h"
@@ -48,8 +48,6 @@ InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
 bool atomiswaveForceFeedback;
-
-extern MemChip *sys_rom;
 
 static bool loadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
@@ -75,6 +73,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	MD5Sum md5;
 
 	bool found_region = false;
+	u8 *biosData = nvmem::getBiosData();
 
 	for (int romid = 0; bios->blobs[romid].filename != NULL; romid++)
 	{
@@ -93,7 +92,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 		{
 			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
-			memcpy(sys_rom->data + bios->blobs[romid].offset, sys_rom->data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
+			memcpy(biosData + bios->blobs[romid].offset, biosData + bios->blobs[romid].src_offset, bios->blobs[romid].length);
 			DEBUG_LOG(NAOMI, "Copied: %x bytes from %07x to %07x", bios->blobs[romid].length, bios->blobs[romid].src_offset, bios->blobs[romid].offset);
 		}
 		else
@@ -122,9 +121,9 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 				case Normal:
 				{
 					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-					u32 read = file->Read(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
+					u32 read = file->Read(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
 					if (config::GGPOEnable)
-						md5.add(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
+						md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
 					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 				}
 				break;
@@ -137,13 +136,13 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 					u32 read = file->Read(buf, bios->blobs[romid].length);
-					u16 *to = (u16 *)(sys_rom->data + bios->blobs[romid].offset);
+					u16 *to = (u16 *)(biosData + bios->blobs[romid].offset);
 					u16 *from = (u16 *)buf;
 					for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
 						*to++ = *from++;
 					free(buf);
 					if (config::GGPOEnable)
-						md5.add(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
+						md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
 					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes (interleaved word) at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 				}
 				break;
@@ -157,9 +156,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	if (config::GGPOEnable)
 		md5.getDigest(settings.network.md5.bios);
 
-	if (settings.platform.isAtomiswave())
-		// Reload the writeable portion of the FlashROM
-		sys_rom->Reload();
+	// Reload the writeable portion of the FlashROM
+	nvmem::reloadAWBios();
 
 	return found_region;
 }

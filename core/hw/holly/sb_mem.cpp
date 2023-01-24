@@ -7,258 +7,14 @@
 #include "sb_mem.h"
 #include "sb.h"
 #include "hw/aica/aica_if.h"
-#include "hw/flashrom/flashrom.h"
+#include "hw/flashrom/nvmem.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/modem/modem.h"
 #include "hw/naomi/naomi.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/sh4/sh4_mem.h"
-#include "reios/reios.h"
+#include "hw/mem/_vmem.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
-#include "oslib/oslib.h"
-
-MemChip *sys_rom;
-WritableChip *sys_nvmem;
-
-extern bool bios_loaded;
-
-static std::string getRomPrefix()
-{
-	switch (settings.platform.system)
-	{
-	case DC_PLATFORM_DREAMCAST:
-		return "dc_";
-	case DC_PLATFORM_NAOMI:
-		return "naomi_";
-	case DC_PLATFORM_NAOMI2:
-		return "naomi2_";
-	case DC_PLATFORM_ATOMISWAVE:
-		return "aw_";
-	default:
-		die("Unsupported platform");
-		return "";
-	}
-}
-
-static void add_isp_to_nvmem(DCFlashChip *flash)
-{
-	u8 block[64];
-	if (!flash->ReadBlock(FLASH_PT_USER, FLASH_USER_INET, block))
-	{
-		memset(block, 0, sizeof(block));
-		strcpy((char *)block + 2, "PWBrowser");
-		block[12] = 0x1c;
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET, block);
-
-		memset(block, 0, sizeof(block));
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 1, block);
-		strcpy((char *)block + 32, "AT&F");
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 2, block);
-		memset(block, 0, sizeof(block));
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 3, block);
-		memset(block + 27, 0xFF, sizeof(block) - 27);
-		block[10] = 1;
-		block[14] = 1;
-		block[16] = 1;
-		block[19] = 6;
-		block[26] = 5;
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 4, block);
-		memset(block, 0xFF, sizeof(block));
-		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
-			flash->WriteBlock(FLASH_PT_USER, i, block);
-
-		flash_isp1_block isp1;
-		memset(&isp1, 0, sizeof(isp1));
-		isp1._unknown[3] = 1;
-		memcpy(isp1.sega, "SEGA", 4);
-		strcpy(isp1.username, "flycast1");
-		strcpy(isp1.password, "password");
-		strcpy(isp1.phone, "1234567");
-		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
-			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
-
-		memset(block, 0, sizeof(block));
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
-		block[60] = 1;
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
-
-		flash_isp2_block isp2;
-		memset(&isp2, 0, sizeof(isp2));
-		memcpy(isp2.sega, "SEGA", 4);
-		strcpy(isp2.username, "flycast2");
-		strcpy(isp2.password, "password");
-		strcpy(isp2.phone, "1234567");
-		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
-			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
-		u8 block[64];
-		memset(block, 0, sizeof(block));
-		for (u32 i = FLASH_USER_ISP2 + 1; i <= 0xEA; i++)
-		{
-			if (i == 0xcb)
-				block[56] = 1;
-			else
-				block[56] = 0;
-			flash->WriteBlock(FLASH_PT_USER, i, block);
-		}
-	}
-}
-
-static void fixUpDCFlash()
-{
-	if (settings.platform.isConsole())
-	{
-		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
-
-		// overwrite factory flash settings
-		if (config::Region <= 2)
-		{
-			sys_nvmem->data[0x1a002] = '0' + config::Region;
-			sys_nvmem->data[0x1a0a2] = '0' + config::Region;
-		}
-		if (config::Language <= 5)
-		{
-			sys_nvmem->data[0x1a003] = '0' + config::Language;
-			sys_nvmem->data[0x1a0a3] = '0' + config::Language;
-		}
-		if (config::Broadcast <= 3)
-		{
-			sys_nvmem->data[0x1a004] = '0' + config::Broadcast;
-			sys_nvmem->data[0x1a0a4] = '0' + config::Broadcast;
-		}
-
-		// overwrite user settings
-		struct flash_syscfg_block syscfg;
-		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-		if (!res)
-		{
-			// write out default settings
-			memset(&syscfg, 0xff, sizeof(syscfg));
-			syscfg.time_lo = 0;
-			syscfg.time_hi = 0;
-			syscfg.time_zone = 0;
-			syscfg.lang = 0;
-			syscfg.mono = 0;
-			syscfg.autostart = 1;
-		}
-		u32 now = GetRTC_now();
-		syscfg.time_lo = now & 0xffff;
-		syscfg.time_hi = now >> 16;
-		if (config::Language <= 5)
-			syscfg.lang = config::Language;
-
-		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
-
-		add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem));
-
-     	// Check the console ID used by some network games (chuchu rocket)
-     	u8 *console_id = &sys_nvmem->data[0x1A058];
-     	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
-     	{
-     		srand(now);
-     		u8 sum = 0;
-     		for (int i = 0; i < 6; i++)
-     		{
-     			console_id[i] = rand();
-     			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
-     			sum += console_id[i];
-     		}
-     		console_id[-1] = console_id[0xA0 - 1] = sum;
-     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
-     	}
-     	else
-     	{
-     		// Fix checksum
-     		u8 sum = 0;
-     		for (int i = 0; i < 6; i++)
-     			sum += console_id[i];
-     		console_id[-1] = console_id[0xA0 - 1] = sum;
-     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
-     	}
- 		// must be != 0xff
- 		console_id[7] = console_id[0xA0 + 7] = 0xfe;
-	}
-}
-
-static bool nvmem_load()
-{
-	bool rc = true;
-	if (settings.platform.isConsole())
-		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
-	else if (!settings.naomi.slave)
-		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
-	if (!rc)
-		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-	fixUpDCFlash();
-	if (config::GGPOEnable)
-		sys_nvmem->digest(settings.network.md5.nvmem);
-	
-	if (settings.platform.isAtomiswave())
-	{
-		sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
-		if (config::GGPOEnable)
-			sys_nvmem->digest(settings.network.md5.nvmem2);
-	}
-	
-	return true;
-}
-
-bool LoadRomFiles()
-{
-	nvmem_load();
-	if (!settings.platform.isAtomiswave())
-	{
-		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
-		{
-			if (config::GGPOEnable)
-				sys_rom->digest(settings.network.md5.bios);
-			bios_loaded = true;
-		}
-		else if (settings.platform.isConsole())
-			return false;
-	}
-
-	return true;
-}
-
-void SaveRomFiles()
-{
-	if (settings.naomi.slave)
-		return;
-	if (settings.platform.isConsole())
-		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
-	else
-		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
-	if (settings.platform.isAtomiswave())
-		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
-}
-
-bool LoadHle()
-{
-	if (!nvmem_load())
-		WARN_LOG(FLASHROM, "No nvmem loaded");
-
-	reios_reset(sys_rom->data);
-
-	return true;
-}
-
-static u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }
-static void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem->Write(addr,data,sz); }
-
-static u32 ReadBios(u32 addr, u32 sz)
-{
-	return sys_rom->Read(addr, sz);
-}
-static void WriteAWBios(u32 addr, u32 data, u32 sz)
-{
-	((WritableChip *)sys_rom)->Write(addr, data, sz);
-}
 
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
@@ -301,7 +57,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 				INFO_LOG(MEMORY, "Read from area0 BIOS mirror [Unassigned], addr=%x", addr);
 				return 0;
 			}
-			return ReadBios(addr, sz);
+			return nvmem::readBios(addr, sz);
 		}
 		break;
 	case 1:
@@ -313,7 +69,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 				INFO_LOG(MEMORY, "Read from area0 Flash mirror [Unassigned], addr=%x", addr);
 				return 0;
 			}
-			return ReadFlash(addr, sz);
+			return nvmem::readFlash(addr, sz);
 		}
 		break;
 	case 2:
@@ -399,7 +155,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 			{
 				if (addr < 0x20000)
 				{
-					WriteAWBios(addr, data, sz);
+					nvmem::writeAWBios(addr, data, sz);
 					return;
 				}
 			}
@@ -417,7 +173,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// Flash memory
 		if (!Mirror && addr < 0x00200000 + settings.platform.flash_size)
 		{
-			WriteFlash(addr, data, sz);
+			nvmem::writeFlash(addr, data, sz);
 			return;
 		}
 		break;
@@ -497,61 +253,26 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 void sh4_area0_Init()
 {
 	sb_Init();
+	nvmem::init();
 }
 
 void sh4_area0_Reset(bool hard)
 {
 	if (hard)
 	{
-		if (sys_rom != NULL)
-		{
-			delete sys_rom;
-			sys_rom = NULL;
-		}
-		if (sys_nvmem != NULL)
-		{
-			delete sys_nvmem;
-			sys_nvmem = NULL;
-		}
-
-		switch (settings.platform.system)
-		{
-		case DC_PLATFORM_DREAMCAST:
-			sys_rom = new RomChip(settings.platform.bios_size);
-			sys_nvmem = new DCFlashChip(settings.platform.flash_size);
-			reios_set_flash(sys_nvmem);
-			break;
-		case DC_PLATFORM_NAOMI:
-		case DC_PLATFORM_NAOMI2:
-			sys_rom = new RomChip(settings.platform.bios_size);
-			sys_nvmem = new SRamChip(settings.platform.flash_size);
-			break;
-		case DC_PLATFORM_ATOMISWAVE:
-			sys_rom = new DCFlashChip(settings.platform.bios_size, settings.platform.bios_size / 2);
-			sys_nvmem = new SRamChip(settings.platform.flash_size);
-			break;
-		}
+		nvmem::term();
+		nvmem::init();
 	}
 	else
 	{
-		sys_rom->Reset();
-		sys_nvmem->Reset();
+		nvmem::reset();
 	}
 	sb_Reset(hard);
 }
 
 void sh4_area0_Term()
 {
-	if (sys_rom != NULL)
-	{
-		delete sys_rom;
-		sys_rom = NULL;
-	}
-	if (sys_nvmem != NULL)
-	{
-		delete sys_nvmem;
-		sys_nvmem = NULL;
-	}
+	nvmem::term();
 	sb_Term();
 }
 

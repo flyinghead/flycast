@@ -762,6 +762,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/bba/rtl8139c.cpp
 		core/hw/flashrom/flashrom.cpp
 		core/hw/flashrom/flashrom.h
+		core/hw/flashrom/nvmem.cpp
+		core/hw/flashrom/nvmem.h
 		core/hw/gdrom/gdrom_if.h
 		core/hw/gdrom/gdrom_response.cpp
 		core/hw/gdrom/gdromv3.cpp

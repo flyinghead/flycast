@@ -19,12 +19,9 @@
     along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "naomi_flashrom.h"
-#include "hw/flashrom/flashrom.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/flashrom/nvmem.h"
 #include "hw/maple/maple_devs.h"
 #include "cfg/option.h"
-
-extern WritableChip *sys_nvmem;
 
 static u16 eeprom_crc(const u8 *buf, int size)
 {
@@ -70,19 +67,19 @@ static u16 eeprom_crc(const u8 *buf, int size)
 //
 void write_naomi_flash(u32 addr, u8 value)
 {
-	addr &= sys_nvmem->mask;
 	verify(addr >= 0x218);
-	u32 block_size = sys_nvmem->Read(0x200, 4);
-	if (addr >= 0x218 + block_size || 0x218 + block_size * 2 > sys_nvmem->size)
+	u32 block_size = nvmem::readFlash(0x200, 4);
+	if (addr >= 0x218 + block_size || 0x218 + block_size * 2 > settings.platform.flash_size)
 	{
 		WARN_LOG(NAOMI, "NVMEM record doesn't exist or is too short");
 		return;
 	}
-	sys_nvmem->data[addr] = value;
-	sys_nvmem->data[addr + block_size] = value;
-	u16 crc = eeprom_crc(&sys_nvmem->data[0x218], block_size);
-	*(u16 *)&sys_nvmem->data[0x1f8] = crc;
-	*(u16 *)&sys_nvmem->data[0x208] = crc;
+	u8 *flashData = nvmem::getFlashData();
+	flashData[addr] = value;
+	flashData[addr + block_size] = value;
+	u16 crc = eeprom_crc(&flashData[0x218], block_size);
+	*(u16 *)&flashData[0x1f8] = crc;
+	*(u16 *)&flashData[0x208] = crc;
 }
 
 //
@@ -287,24 +284,25 @@ static u32 aw_crc32(const void *data, size_t len)
 
 void configure_maxspeed_flash(bool enableNetwork, bool master)
 {
+	u8 *flashData = nvmem::getFlashData();
 	if (enableNetwork)
 	{
-		sys_nvmem->data[0x3358] = 0;
-		sys_nvmem->data[0x46ac] = 0;
-		sys_nvmem->data[0x335c] = !master;
-		sys_nvmem->data[0x46b0] = !master;
+		flashData[0x3358] = 0;
+		flashData[0x46ac] = 0;
+		flashData[0x335c] = !master;
+		flashData[0x46b0] = !master;
 	}
 	else
 	{
-		sys_nvmem->data[0x3358] = 1;
-		sys_nvmem->data[0x46ac] = 1;
+		flashData[0x3358] = 1;
+		flashData[0x46ac] = 1;
 	}
-	u32 crc = aw_crc32(&sys_nvmem->data[0x2200], 0x1354);
-	*(u32 *)&sys_nvmem->data[0x34] = crc;
-	*(u32 *)&sys_nvmem->data[0x38] = crc;
-	*(u32 *)&sys_nvmem->data[0x84] = crc;
-	*(u32 *)&sys_nvmem->data[0x88] = crc;
-	crc = aw_crc32(&sys_nvmem->data[0x20], 0x44);
-	*(u32 *)&sys_nvmem->data[0x64] = crc;
-	*(u32 *)&sys_nvmem->data[0xb4] = crc;
+	u32 crc = aw_crc32(&flashData[0x2200], 0x1354);
+	*(u32 *)&flashData[0x34] = crc;
+	*(u32 *)&flashData[0x38] = crc;
+	*(u32 *)&flashData[0x84] = crc;
+	*(u32 *)&flashData[0x88] = crc;
+	crc = aw_crc32(&flashData[0x20], 0x44);
+	*(u32 *)&flashData[0x64] = crc;
+	*(u32 *)&flashData[0xb4] = crc;
 }

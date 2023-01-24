@@ -6,7 +6,7 @@
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"
 #include "hw/holly/sb.h"
-#include "hw/flashrom/flashrom.h"
+#include "hw/flashrom/nvmem.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/modem/modem.h"
@@ -16,11 +16,10 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
 #include "reios/gdrom_hle.h"
-#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
-#include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/sh4_if.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
@@ -51,10 +50,6 @@ extern u32 SB_ADST;
 
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
-
-//./core/hw/holly/sb_mem.o
-extern MemChip *sys_rom;
-extern WritableChip *sys_nvmem;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;
@@ -188,8 +183,7 @@ void dc_serialize(Serializer& ser)
 	ser << SB_ISTNRM1;
 	ser << SB_ADST;
 
-	sys_rom->Serialize(ser);
-	sys_nvmem->Serialize(ser);
+	nvmem::serialize(ser);
 
 	gdrom::serialize(ser);
 
@@ -349,26 +343,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	deser.skip<u32>(); // SB_FFST;
 	SB_ADST = 0;
 
-	deser.skip<u32>(); // sys_nvmem->size
-	deser.skip<u32>(); // sys_nvmem->mask
-	if (settings.platform.isArcade())
-		sys_nvmem->Deserialize(deser);
-
-	deser.skip<u32>(); // sys_nvmem/sys_rom->size
-	deser.skip<u32>(); // sys_nvmem/sys_rom->mask
-	if (settings.platform.isConsole())
-	{
-		sys_nvmem->Deserialize(deser);
-	}
-	else if (settings.platform.isAtomiswave())
-	{
-		deser >> static_cast<DCFlashChip*>(sys_rom)->state;
-		deser.deserialize(sys_rom->data, sys_rom->size);
-	}
-	else
-	{
-		deser.skip<u32>();
-	}
+	nvmem::deserialize(deser);
 
 	gdrom::deserialize(deser);
 
@@ -651,13 +626,7 @@ void dc_deserialize(Deserializer& deser)
 	else
 		SB_ADST = 0;
 
-	if (deser.version() < Deserializer::V5)
-	{
-		deser.skip<u32>();	// size
-		deser.skip<u32>();	// mask
-	}
-	sys_rom->Deserialize(deser);
-	sys_nvmem->Deserialize(deser);
+	nvmem::deserialize(deser);
 
 	gdrom::deserialize(deser);
 

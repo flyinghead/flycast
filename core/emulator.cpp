@@ -27,7 +27,7 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/flashrom/nvmem.h"
 #include "cheats.h"
 #include "oslib/audiostream.h"
 #include "debug/gdb_server.h"
@@ -510,7 +510,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			if (settings.content.path.empty())
 			{
 				// Boot BIOS
-				if (!LoadRomFiles())
+				if (!nvmem::loadFiles())
 					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
 				InitDrive("");
 			}
@@ -522,9 +522,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					if (InitDrive(settings.content.path))
 					{
 						loadGameSpecificSettings();
-						if (config::UseReios || !LoadRomFiles())
+						if (config::UseReios || !nvmem::loadFiles())
 						{
-							LoadHle();
+							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
 								gui_display_notification("This game requires a real BIOS", 15000);
@@ -534,7 +534,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					{
 						// Content load failed. Boot the BIOS
 						settings.content.path.clear();
-						if (!LoadRomFiles())
+						if (!nvmem::loadFiles())
 							throw FlycastException("This media cannot be loaded");
 						InitDrive("");
 					}
@@ -542,7 +542,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				else
 				{
 					// Elf only supported with HLE BIOS
-					LoadHle();
+					nvmem::loadHle();
 				}
 			}
 
@@ -551,7 +551,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		else if (settings.platform.isArcade())
 		{
-			LoadRomFiles();
+			nvmem::loadFiles();
 			naomi_cart_LoadRom(path, progress);
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
@@ -625,7 +625,7 @@ void Emulator::runInternal()
 
 			if (resetRequested)
 			{
-				SaveRomFiles();
+				nvmem::saveFiles();
 				dc_reset(false);
 			}
 		} while (resetRequested);
@@ -689,7 +689,7 @@ void Emulator::stop()
 		} catch (const FlycastException& e) {
 			WARN_LOG(COMMON, "%s", e.what());
 		}
-		SaveRomFiles();
+		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
 	}
 	else
@@ -929,7 +929,7 @@ bool Emulator::render()
 		{
 			stopRequested = false;
 			TermAudio();
-			SaveRomFiles();
+			nvmem::saveFiles();
 			EventManager::event(Event::Pause);
 		}
 		// TODO if stopping due to a user request, no frame has been rendered
