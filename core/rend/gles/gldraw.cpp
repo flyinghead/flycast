@@ -257,13 +257,13 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 			glcache.DepthMask(!gp->isp.ZWriteDis);
 	}
 	if (CurrentShader->naomi2)
-		setN2Uniforms(gp, CurrentShader);
+		setN2Uniforms(gp, CurrentShader, pvrrc);
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply, int first, int count)
+void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params = &gply.head()[first];
+	const PolyParam* params = &gply[first];
 
 	glcache.Enable(GL_STENCIL_TEST);
 	glcache.StencilFunc(GL_ALWAYS,0,0);
@@ -496,7 +496,7 @@ static void SetupModvolVBO()
 
 void DrawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0)
+	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 
 	SetupModvolVBO();
@@ -510,11 +510,11 @@ void DrawModVols(int first, int count)
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
-	const float *curMVMat = nullptr;
-	const float *curProjMat = nullptr;
+	int curMVMat = -1;
+	int curProjMat = -1;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -528,12 +528,12 @@ void DrawModVols(int first, int count)
 			if (param.mvMatrix != curMVMat)
 			{
 				curMVMat = param.mvMatrix;
-				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, curMVMat);
+				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, pvrrc.matrices[curMVMat].mat);
 			}
 			if (param.projMatrix != curProjMat)
 			{
 				curProjMat = param.projMatrix;
-				glUniformMatrix4fv(gl.n2ModVolShader.projMat, 1, GL_FALSE, curProjMat);
+				glUniformMatrix4fv(gl.n2ModVolShader.projMat, 1, GL_FALSE, pvrrc.matrices[curProjMat].mat);
 			}
 		}
 		else
@@ -596,8 +596,9 @@ void DrawStrips()
 	glActiveTexture(GL_TEXTURE0);
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
+    {
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -624,7 +625,7 @@ void DrawStrips()
 			if (current_pass.autosort)
             {
 				if (!config::PerStripSorting)
-					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < pvrrc.render_passes.used() - 1);
+					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)pvrrc.render_passes.size() - 1);
 				else
 					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
             }

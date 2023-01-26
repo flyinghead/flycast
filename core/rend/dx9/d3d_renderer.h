@@ -123,7 +123,7 @@ private:
 	void resize(int w, int h);
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
-	void drawList(const List<PolyParam>& gply, int first, int count);
+	void drawList(const std::vector<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setGPState(const PolyParam *gp);
 	bool ensureVertexBufferSize(ComPtr<IDirect3DVertexBuffer9>& buffer, u32& currentSize, u32 minSize);

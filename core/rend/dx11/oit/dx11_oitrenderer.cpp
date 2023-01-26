@@ -334,17 +334,17 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, needStencil), stencil);
 
 		if (gp->isNaomi2())
-			n2Helper.setConstants(*gp, polyNumber);
+			n2Helper.setConstants(*gp, polyNumber, pvrrc);
 	}
 
 	template <u32 Type, bool SortingEnabled, DX11OITShaders::Pass pass>
-	void drawList(const List<PolyParam>& gply, int first, int count)
+	void drawList(const std::vector<PolyParam>& gply, int first, int count)
 	{
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		PolyParam* params = &gply.head()[first];
+		const PolyParam *params = &gply[first];
 
-		u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx.head()[gply.head()->first] : 0;
+		u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx[gply[0].first] : 0;
 		while (count-- > 0)
 		{
 			if (params->count > 2)
@@ -355,7 +355,7 @@ struct DX11OITRenderer : public DX11Renderer
 					params++;
 					continue;
 				}
-				setRenderState<Type, SortingEnabled, pass>(params, (int)((params - gply.head()) << 17) - firstVertexIdx);
+				setRenderState<Type, SortingEnabled, pass>(params, (int)((params - &gply[0]) << 17) - firstVertexIdx);
 				deviceContext->DrawIndexed(params->count, params->first, 0);
 			}
 
@@ -366,7 +366,7 @@ struct DX11OITRenderer : public DX11Renderer
 	template<bool Transparent>
 	void drawModVols(int first, int count, const ModifierVolumeParam *modVolParams)
 	{
-		if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+		if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 			return;
 
 		deviceContext->IASetInputLayout(modVolInputLayout);
@@ -380,8 +380,8 @@ struct DX11OITRenderer : public DX11Renderer
 
 		const ModifierVolumeParam *params = &modVolParams[first];
 		int mod_base = -1;
-		const float *curMVMat = nullptr;
-		const float *curProjMat = nullptr;
+		int curMVMat = -1;
+		int curProjMat = -1;
 
 		for (int cmv = 0; cmv < count; cmv++)
 		{
@@ -398,7 +398,7 @@ struct DX11OITRenderer : public DX11Renderer
 				{
 					curMVMat = param.mvMatrix;
 					curProjMat = param.projMatrix;
-					n2Helper.setConstants(param.mvMatrix, param.projMatrix);
+					n2Helper.setConstants(pvrrc.matrices[param.mvMatrix].mat, pvrrc.matrices[param.projMatrix].mat);
 				}
 				deviceContext->VSSetShader(shaders.getMVVertexShader(param.isNaomi2()), nullptr, 0);
 				if (Transparent)
@@ -471,13 +471,12 @@ struct DX11OITRenderer : public DX11Renderer
 	{
 		{
 			// tr_poly_params
-			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
-			const PolyParam *pp = pvrrc.global_param_tr.head();
-			for (int i = 0; pp != pp_end; i += 2, pp++)
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+			int i = 0;
+			for (const PolyParam& pp : pvrrc.global_param_tr)
 			{
-				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
-				trPolyParams[i + 1] = pp->tsp1.full;
+				trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+				trPolyParams[i++] = pp.tsp1.full;
 			}
 			u32 newSize = (u32)(trPolyParams.size() * sizeof(u32));
 			if (newSize > 0)
@@ -524,10 +523,10 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 
 		RenderPass previous_pass {};
-		int render_pass_count = pvrrc.render_passes.used();
+		int render_pass_count = (int)pvrrc.render_passes.size();
 		for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
 		{
-			const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+			const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 			u32 op_count = current_pass.op_count - previous_pass.op_count;
 			u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
 			u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
@@ -549,7 +548,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
-			drawModVols<false>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.head());
+			drawModVols<false>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
 
 			//
 			// PASS 2: Render OP and PT to opaque render target
@@ -585,9 +584,9 @@ struct DX11OITRenderer : public DX11Renderer
 			    {
 			    	// Intel Iris Plus 640 just crashes
 			    	if (current_pass.mv_op_tr_shared)
-			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.head());
+			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
 			    	else
-			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.head());
+			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, &pvrrc.global_param_mvo_tr[0]);
 			    }
 			}
 			else

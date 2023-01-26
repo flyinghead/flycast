@@ -458,7 +458,7 @@ static void abufferDrawQuad()
 
 void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0)
+	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 	compileFinalAndModVolShaders();
 	glBindVertexArray(gl4.vbo.getModVolVAO());
@@ -478,7 +478,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 
 	glCheck();
 
-	ModifierVolumeParam* params = useOpaqueGeom ? &pvrrc.global_param_mvo.head()[first] : &pvrrc.global_param_mvo_tr.head()[first];
+	ModifierVolumeParam* params = useOpaqueGeom ? &pvrrc.global_param_mvo[first] : &pvrrc.global_param_mvo_tr[first];
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
@@ -493,7 +493,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.size());
 
 		if (mod_base == -1)
 			mod_base = param.first;

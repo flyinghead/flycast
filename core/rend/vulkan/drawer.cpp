@@ -212,15 +212,15 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			{
 			case ListType_Opaque:
 				offset = offsets.naomi2OpaqueOffset;
-				index = &poly - pvrrc.global_param_op.head();
+				index = &poly - &pvrrc.global_param_op[0];
 				break;
 			case ListType_Punch_Through:
 				offset = offsets.naomi2PunchThroughOffset;
-				index = &poly - pvrrc.global_param_pt.head();
+				index = &poly - &pvrrc.global_param_pt[0];
 				break;
 			case ListType_Translucent:
 				offset = offsets.naomi2TranslucentOffset;
-				index = &poly - pvrrc.global_param_tr.head();
+				index = &poly - &pvrrc.global_param_tr[0];
 				break;
 			}
 		}
@@ -249,29 +249,29 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 				SetScissor(cmdBuffer, scissorRect);
 			else
 				SetScissor(cmdBuffer, baseScissor);
-			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.used() + param.first, 0, 0);
+			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.size() + param.first, 0, 0);
 		}
 	}
 }
 
-void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
+void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
-	const PolyParam *pp_end = polys.head() + last;
-	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+	const PolyParam *pp_end = &polys[last];
+	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, *pp, pp->first, pp->count);
 }
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, buffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
@@ -322,11 +322,11 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(pvrrc.verts.head(), pvrrc.verts.bytes());
+	packer.add(&pvrrc.verts[0], pvrrc.verts.size() + sizeof(decltype(pvrrc.verts[0])));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() + sizeof(decltype(pvrrc.modtrig[0])));
 	// Index
-	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
+	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() + sizeof(decltype(pvrrc.idx[0])));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -378,9 +378,9 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	RenderPass previous_pass{};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -393,7 +393,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < pvrrc.render_passes.used());
+				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
 			else
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }

@@ -477,9 +477,9 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 }
 
 template <u32 Type, bool SortingEnabled>
-void D3DRenderer::drawList(const List<PolyParam>& gply, int first, int count)
+void D3DRenderer::drawList(const std::vector<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params = &gply.head()[first];
+	const PolyParam *params = &gply[first];
 
 	while (count-- > 0)
 	{
@@ -646,7 +646,7 @@ void D3DRenderer::setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 
 void D3DRenderer::drawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	device->SetVertexDeclaration(modVolVtxDecl);
@@ -662,7 +662,7 @@ void D3DRenderer::drawModVols(int first, int count)
 
 	devCache.SetPixelShader(shaders.getModVolShader());
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	devCache.SetRenderState(D3DRS_COLORWRITEENABLE, 0);
 
@@ -732,9 +732,9 @@ void D3DRenderer::drawModVols(int first, int count)
 void D3DRenderer::drawStrips()
 {
 	RenderPass previous_pass {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
         u32 op_count = current_pass.op_count - previous_pass.op_count;
         u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
         u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
@@ -776,7 +776,7 @@ void D3DRenderer::drawStrips()
 		{
 			if (!config::PerStripSorting)
 				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count,
-						render_pass < pvrrc.render_passes.used() - 1);
+						render_pass < (int)pvrrc.render_passes.size() - 1);
 			else
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 		}
@@ -1003,27 +1003,30 @@ bool D3DRenderer::Render()
 	v[1] = -1.f;
 	device->SetClipPlane(3, v);
 
-	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes());
+	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, size);
 	verify(rc);
 	void *ptr;
-	rc = SUCCEEDED(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = SUCCEEDED(vertexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, pvrrc.verts.head(), pvrrc.verts.bytes());
+	memcpy(ptr, &pvrrc.verts[0], size);
 	vertexBuffer->Unlock();
-	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes());
+	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, size);
 	verify(rc);
-	rc = SUCCEEDED(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = SUCCEEDED(indexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, pvrrc.idx.head(), pvrrc.idx.bytes());
+	memcpy(ptr, &pvrrc.idx[0], size);
 	indexBuffer->Unlock();
 
-	if (config::ModifierVolumes && pvrrc.modtrig.used())
+	if (config::ModifierVolumes && !pvrrc.modtrig.empty())
 	{
-		rc = ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes());
+		size = pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0]));
+		rc = ensureVertexBufferSize(modvolBuffer, modvolBufferSize, size);
 		verify(rc);
-		rc = SUCCEEDED(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
+		rc = SUCCEEDED(modvolBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 		verify(rc);
-		memcpy(ptr, pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		memcpy(ptr, &pvrrc.modtrig[0], size);
 		modvolBuffer->Unlock();
 	}
 

@@ -288,15 +288,15 @@ static void SetGPState(const PolyParam* gp)
 	else
 		glcache.DepthMask(GL_FALSE);
 	if (gp->isNaomi2())
-		setN2Uniforms(gp, CurrentShader);
+		setN2Uniforms(gp, CurrentShader, pvrrc);
 }
 
 template <u32 Type, bool SortingEnabled, Pass pass>
-static void DrawList(const List<PolyParam>& gply, int first, int count)
+static void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params = &gply.head()[first];
+	const PolyParam* params = &gply[first];
 
-	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx.head()[gply.head()->first] : 0;
+	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx[gply[0].first] : 0;
 	while (count-- > 0)
 	{
 		if (params->count > 2)
@@ -313,7 +313,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
 				params++;
 				continue;
 			}
-			gl4ShaderUniforms.poly_number = ((params - gply.head()) << 17) - firstVertexIdx;
+			gl4ShaderUniforms.poly_number = ((params - &gply[0]) << 17) - firstVertexIdx;
 			SetGPState<Type, SortingEnabled, pass>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}
@@ -370,7 +370,7 @@ void gl4SetupModvolVBO()
 
 static void DrawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0)
+	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 
 	glBindVertexArray(gl4.vbo.getModVolVAO());
@@ -385,7 +385,7 @@ static void DrawModVols(int first, int count)
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 
@@ -398,8 +398,8 @@ static void DrawModVols(int first, int count)
 		if (param.isNaomi2())
 		{
 			glcache.UseProgram(gl4.n2ModVolShader.program);
-			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);
-			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, param.projMatrix);
+			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, pvrrc.matrices[param.mvMatrix].mat);
+			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, pvrrc.matrices[param.projMatrix].mat);
 		}
 		else
 			glcache.UseProgram(gl4.modvol_shader.program);
@@ -498,28 +498,28 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
 	RenderPass previous_pass = {};
-	int render_pass_count = pvrrc.render_passes.used();
+	int render_pass_count = pvrrc.render_passes.size();
 
 	for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
 		bool skip_op_pt = true;
 		bool skip_tr = true;
 		for (u32 j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
-			if (pvrrc.global_param_op.head()[j].count > 2)
+			if (pvrrc.global_param_op[j].count > 2)
 				skip_op_pt = false;
 		}
 		for (u32 j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
 		{
-			if (pvrrc.global_param_pt.head()[j].count > 2)
+			if (pvrrc.global_param_pt[j].count > 2)
 				skip_op_pt = false;
 		}
 		for (u32 j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
 		{
-			if (pvrrc.global_param_tr.head()[j].count > 2)
+			if (pvrrc.global_param_tr[j].count > 2)
 				skip_tr = false;
 		}
 		if (skip_op_pt && skip_tr)

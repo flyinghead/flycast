@@ -28,9 +28,9 @@ public:
 template<typename ShaderType>
 void resetN2UniformCache(ShaderType *shader)
 {
-	shader->lastMvMat = (float *)1;
-	shader->lastProjMat = (float *)1;
-	shader->lastLightModel = (N2LightModel *)1;
+	shader->lastMvMat = -1;
+	shader->lastProjMat = -1;
+	shader->lastLightModel = -1;
 }
 
 template<typename ShaderType>
@@ -100,22 +100,22 @@ void initN2Uniforms(ShaderType *shader)
 }
 
 template<typename ShaderType>
-void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
+void setN2Uniforms(const PolyParam *pp, ShaderType *shader, const rend_context& ctx)
 {
 	if (pp->mvMatrix != shader->lastMvMat)
 	{
 		shader->lastMvMat = pp->mvMatrix;
-		glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, pp->mvMatrix);
+		glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, ctx.matrices[pp->mvMatrix].mat);
 	}
 	if (pp->normalMatrix != shader->lastNormalMat)
 	{
 		shader->lastNormalMat = pp->normalMatrix;
-		glUniformMatrix4fv(shader->normalMat, 1, GL_FALSE, pp->normalMatrix);
+		glUniformMatrix4fv(shader->normalMat, 1, GL_FALSE, ctx.matrices[pp->normalMatrix].mat);
 	}
 	if (pp->projMatrix != shader->lastProjMat)
 	{
 		shader->lastProjMat = pp->projMatrix;
-		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, pp->projMatrix);
+		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, ctx.matrices[pp->projMatrix].mat);
 	}
 	for (int i = 0; i < 2; i++)
 	{
@@ -124,12 +124,12 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		glUniform1i(shader->constantColor[i], (int)pp->constantColor[i]);
 	}
 
-	const N2LightModel *const lightModel = pp->lightModel;
-	if (lightModel != shader->lastLightModel)
+	if (pp->lightModel != shader->lastLightModel)
 	{
-		shader->lastLightModel = lightModel;
-		if (lightModel != nullptr)
+		shader->lastLightModel = pp->lightModel;
+		if (pp->lightModel != -1)
 		{
+			const N2LightModel *const lightModel = &ctx.lightModels[pp->lightModel];
 			for (int vol = 0; vol < 2; vol++)
 			{
 				glUniform1i(shader->ambientMaterialBase[vol], lightModel->ambientMaterialBase[vol]);

@@ -353,23 +353,25 @@ void DX11Renderer::uploadGeometryBuffers()
 {
 	setFirstProvokingVertex(pvrrc);
 
-	bool rc = ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, pvrrc.verts.bytes());
+	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	bool rc = ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, size);
 	verify(rc);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, pvrrc.verts.head(), pvrrc.verts.bytes());
+	memcpy(mappedSubres.pData, &pvrrc.verts[0], size);
 	deviceContext->Unmap(vertexBuffer, 0);
 
-	rc = ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, pvrrc.idx.bytes());
+	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	rc = ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, size);
 	verify(rc);
 	deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, pvrrc.idx.head(), pvrrc.idx.bytes());
+	memcpy(mappedSubres.pData, &pvrrc.idx[0], size);
 	deviceContext->Unmap(indexBuffer, 0);
 
-	if (config::ModifierVolumes && pvrrc.modtrig.used())
+	if (config::ModifierVolumes && !pvrrc.modtrig.empty())
 	{
-		const ModTriangle *data = pvrrc.modtrig.head();
-		u32 size = pvrrc.modtrig.bytes();
+		const ModTriangle *data = &pvrrc.modtrig[0];
+		size = pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0]));
 		rc = ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size);
 		verify(rc);
 		deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
@@ -648,15 +650,15 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, config::ModifierVolumes), stencil);
 
 	if (gp->isNaomi2())
-		n2Helper.setConstants(*gp, 0); // poly number only used in OIT
+		n2Helper.setConstants(*gp, 0, pvrrc); // poly number only used in OIT
 }
 
 template <u32 Type, bool SortingEnabled>
-void DX11Renderer::drawList(const List<PolyParam>& gply, int first, int count)
+void DX11Renderer::drawList(const std::vector<PolyParam>& gply, int first, int count)
 {
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	PolyParam* params = &gply.head()[first];
+	const PolyParam* params = &gply[first];
 
 	while (count-- > 0)
 	{
@@ -728,7 +730,7 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 
 void DX11Renderer::drawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	deviceContext->IASetInputLayout(modVolInputLayout);
@@ -744,15 +746,15 @@ void DX11Renderer::drawModVols(int first, int count)
 	deviceContext->RSSetScissorRects(1, &scissorRect);
 	setCullMode(0);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	const ModifierVolumeParam *params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
-	const float *curMVMat = nullptr;
-	const float *curProjMat = nullptr;
+	int curMVMat = -1;
+	int curProjMat = -1;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
-		ModifierVolumeParam& param = params[cmv];
+		const ModifierVolumeParam& param = params[cmv];
 
 		u32 mv_mode = param.isp.DepthMode;
 
@@ -763,7 +765,7 @@ void DX11Renderer::drawModVols(int first, int count)
 		{
 			curMVMat = param.mvMatrix;
 			curProjMat = param.projMatrix;
-			n2Helper.setConstants(param.mvMatrix, param.projMatrix);
+			n2Helper.setConstants(pvrrc.matrices[param.mvMatrix].mat, pvrrc.matrices[param.projMatrix].mat);
 		}
 		deviceContext->VSSetShader(shaders->getMVVertexShader(param.isNaomi2()), nullptr, 0);
 		if (!param.isp.VolumeLast && mv_mode > 0)
@@ -811,9 +813,9 @@ void DX11Renderer::drawModVols(int first, int count)
 void DX11Renderer::drawStrips()
 {
 	RenderPass previous_pass {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
         u32 op_count = current_pass.op_count - previous_pass.op_count;
         u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
         u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
@@ -830,7 +832,7 @@ void DX11Renderer::drawStrips()
 		if (current_pass.autosort)
 		{
 			if (!config::PerStripSorting)
-				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < pvrrc.render_passes.used() - 1);
+				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)pvrrc.render_passes.size() - 1);
 			else
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 		}

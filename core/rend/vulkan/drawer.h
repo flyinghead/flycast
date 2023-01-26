@@ -77,18 +77,18 @@ protected:
 	void packNaomi2Uniforms(BufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
 	{
 		size_t n2UniformSize = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), GetContext()->GetUniformBufferAlignment());
-		int items = pvrrc.global_param_op.used() + pvrrc.global_param_pt.used() + pvrrc.global_param_tr.used() + pvrrc.global_param_mvo.used();
+		int items = pvrrc.global_param_op.size() + pvrrc.global_param_pt.size() + pvrrc.global_param_tr.size() + pvrrc.global_param_mvo.size();
 		if (trModVolIncluded)
-			items += pvrrc.global_param_mvo_tr.used();
+			items += pvrrc.global_param_mvo_tr.size();
 		n2uniforms.resize(items * n2UniformSize);
 		size_t bufIdx = 0;
 		auto addUniform = [&](const PolyParam& pp, int polyNumber) {
 			if (pp.isNaomi2())
 			{
 				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
-				memcpy(glm::value_ptr(uni.mvMat), pp.mvMatrix, sizeof(uni.mvMat));
-				memcpy(glm::value_ptr(uni.normalMat), pp.normalMatrix, sizeof(uni.normalMat));
-				memcpy(glm::value_ptr(uni.projMat), pp.projMatrix, sizeof(uni.projMat));
+				memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[pp.mvMatrix].mat, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.normalMat), pvrrc.matrices[pp.normalMatrix].mat, sizeof(uni.normalMat));
+				memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[pp.projMatrix].mat, sizeof(uni.projMat));
 				uni.bumpMapping = pp.pcw.Texture == 1 && pp.tcw.PixelFmt == PixelBumpMap;
 				uni.polyNumber = polyNumber;
 				for (size_t i = 0; i < 2; i++)
@@ -106,11 +106,11 @@ protected:
 		for (const PolyParam& pp : pvrrc.global_param_pt)
 			addUniform(pp, 0);
 		size_t trOffset = bufIdx;
-		if (pvrrc.global_param_tr.used() > 0)
+		if (!pvrrc.global_param_tr.empty())
 		{
-			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
+			u32 firstVertexIdx = pvrrc.idx[pvrrc.global_param_tr[0].first];
 			for (const PolyParam& pp : pvrrc.global_param_tr)
-				addUniform(pp, ((&pp - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx);
+				addUniform(pp, ((&pp - &pvrrc.global_param_tr[0]) << 17) - firstVertexIdx);
 		}
 		size_t mvOffset = bufIdx;
 		for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo)
@@ -118,8 +118,8 @@ protected:
 			if (mvp.isNaomi2())
 			{
 				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
-				memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
-				memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+				memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[mvp.mvMatrix].mat, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[mvp.projMatrix].mat, sizeof(uni.projMat));
 			}
 			bufIdx += n2UniformSize;
 		}
@@ -130,8 +130,8 @@ protected:
 				if (mvp.isNaomi2())
 				{
 					N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
-					memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
-					memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+					memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[mvp.mvMatrix].mat, sizeof(uni.mvMat));
+					memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[mvp.projMatrix].mat, sizeof(uni.projMat));
 				}
 				bufIdx += n2UniformSize;
 			}
@@ -150,7 +150,7 @@ protected:
 		size_t n2LightSize = sizeof(N2LightModel) + align(sizeof(N2LightModel), GetContext()->GetUniformBufferAlignment());
 		if (n2LightSize == sizeof(N2LightModel))
 		{
-			packer.addUniform(pvrrc.lightModels.head(), pvrrc.lightModels.bytes());
+			packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
 		}
 		else
 		{
@@ -234,7 +234,7 @@ private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass);
-	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
+	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
 

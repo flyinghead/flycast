@@ -251,10 +251,10 @@ static u32 (*packColor)(const glm::vec4& color) = packColorRGBA;
 
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
-static float *taMVMatrix;
-static float *taNormalMatrix;
+static int taMVMatrix = -1;
+static int taNormalMatrix = -1;
 static glm::mat4 projectionMatrix;
-static float *taProjMatrix;
+static int taProjMatrix = -1;
 static LightModel *curLightModel;
 static ElanBase *curLights[MAX_LIGHTS];
 static float nearPlane = 0.001f;
@@ -309,8 +309,8 @@ struct State
 	{
 		if (instance == Null)
 		{
-			taMVMatrix = nullptr;
-			taNormalMatrix = nullptr;
+			taMVMatrix = -1;
+			taNormalMatrix = -1;
 			envMapUOffset = 0.f;
 			envMapVOffset = 0.f;
 			return;
@@ -357,7 +357,7 @@ struct State
 	{
 		if (projMatrix == Null)
 		{
-			taProjMatrix = nullptr;
+			taProjMatrix = -1;
 			return;
 		}
 		ProjMatrix *pm = (ProjMatrix *)&RAM[projMatrix];
@@ -1139,7 +1139,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx, bool needClipping)
 	}
 }
 
-static N2LightModel *taLightModel;
+static int taLightModel = -1;
 
 static void sendLights()
 {
@@ -1159,7 +1159,7 @@ static void sendLights()
 			model.ambientBase[i][0] = model.ambientBase[i][1] = model.ambientBase[i][2] = model.ambientBase[i][3] = 1.f;
 		}
 		memset(model.ambientOffset, 0, sizeof(model.ambientOffset));
-		taLightModel = nullptr;
+		taLightModel = -1;
 		return;
 	}
 	model.ambientMaterialBase[0] = curLightModel->useAmbientBase0;
@@ -1281,7 +1281,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 	pp.tsp1.full ^= modelTSP.full;
 
 	// projFlip is for left-handed projection matrices (initd rear view mirror)
-	bool projFlip = taProjMatrix != nullptr && std::signbit(taProjMatrix[0]) == std::signbit(taProjMatrix[5]);
+	bool projFlip = taProjMatrix != -1 && std::signbit(projectionMatrix[0][0]) == std::signbit(projectionMatrix[1][1]);
 	pp.isp.CullMode ^= (u32)cullingReversed ^ (u32)projFlip;
 	pp.pcw.Shadow ^= shadowedVolume;
 	if (pp.pcw.Shadow == 0 || pp.pcw.Volume == 0)

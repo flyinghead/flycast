@@ -80,10 +80,10 @@ struct gl4PipelineShader
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
 
-	const float *lastMvMat;
-	const float *lastNormalMat;
-	const float *lastProjMat;
-	const N2LightModel *lastLightModel;
+	int lastMvMat;
+	int lastNormalMat;
+	int lastProjMat;
+	int lastLightModel;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;

@@ -105,8 +105,8 @@ public:
 
 				size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
 				// light at index 0 is no light
-				if (poly.lightModel != nullptr)
-					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head() + 1) * size, sizeof(N2LightModel) };
+				if (poly.lightModel != -1)
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel + 1) * size, sizeof(N2LightModel) };
 				else
 					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset, sizeof(N2LightModel) };
 				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, vk::DescriptorType::eUniformBuffer, nullptr, lightBufferInfo);

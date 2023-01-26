@@ -904,23 +904,22 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		//Main VBO
 		//move vertex to gpu
-		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.head(), pvrrc.verts.bytes());
-		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.head(), pvrrc.idx.bytes());
+		gl4.vbo.getVertexBuffer()->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
+		gl4.vbo.getIndexBuffer()->update(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
-			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		if (!pvrrc.modtrig.empty())
+			gl4.vbo.getModVolBuffer()->update(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
 
 		// TR PolyParam data
-		if (pvrrc.global_param_tr.used() != 0)
+		if (!pvrrc.global_param_tr.empty())
 		{
-			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
-			const PolyParam *pp = pvrrc.global_param_tr.head();
-			for (int i = 0; pp != pp_end; i += 2, pp++)
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+			int i = 0;
+			for (const PolyParam& pp : pvrrc.global_param_tr)
 			{
-				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
-				trPolyParams[i + 1] = pp->tsp1.full;
+				trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+				trPolyParams[i++] = pp.tsp1.full;
 			}
 			gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
 			// Declare storage

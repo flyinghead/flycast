@@ -130,7 +130,7 @@ private:
 	void setBaseScissor();
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
-	void drawList(const List<PolyParam>& gply, int first, int count);
+	void drawList(const std::vector<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setRenderState(const PolyParam *gp);
 	void drawSorted(int first, int count, bool multipass);

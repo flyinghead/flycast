@@ -1162,17 +1162,15 @@ static void upload_vertex_indices()
 {
 	if (gl.index_type == GL_UNSIGNED_SHORT)
 	{
-		static bool overrun;
-		static List<u16> short_idx;
-		if (short_idx.daty != NULL)
-			short_idx.Free();
-		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
-		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
-			*(short_idx.Append()) = *p;
-		gl.vbo.idxs->update(short_idx.head(), short_idx.bytes());
+		static std::vector<u16> short_idx;
+		short_idx.clear();
+		short_idx.reserve(pvrrc.idx.size());
+		for (u32 i : pvrrc.idx)
+			short_idx.push_back(i);
+		gl.vbo.idxs->update(&short_idx[0], short_idx.size() * sizeof(u16));
 	}
 	else
-		gl.vbo.idxs->update(pvrrc.idx.head(), pvrrc.idx.bytes());
+		gl.vbo.idxs->update(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
 	glCheck();
 }
 
@@ -1303,13 +1301,13 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	{
 		//move vertex to gpu
 		//Main VBO
-		gl.vbo.geometry->update(pvrrc.verts.head(), pvrrc.verts.bytes());
+		gl.vbo.geometry->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
 
 		upload_vertex_indices();
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
-			gl.vbo.modvols->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		if (!pvrrc.modtrig.empty())
+			gl.vbo.modvols->update(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
 
 		if (!wide_screen_on)
 		{
