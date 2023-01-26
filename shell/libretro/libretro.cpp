@@ -422,6 +422,11 @@ static bool set_variable_visibility(void)
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.key = CORE_OPTION_NAME "_per_content_vmus";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.visible = platformIsDreamcast || settings.platform.isAtomiswave();
+		option_display.key = CORE_OPTION_NAME "_emulate_bba";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_upnp";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 		vmuScreenSettingsShown = option_display.visible;
 		for (unsigned i = 0; i < 4; i++)
@@ -675,6 +680,7 @@ static void update_variables(bool first_startup)
 	bool wasThreadedRendering = config::ThreadedRendering;
 	bool prevRotateScreen = rotate_screen;
 	bool prevDetectVsyncSwapInterval = libretro_detect_vsync_swap_interval;
+	bool emulateBba = config::EmulateBBA;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -1044,6 +1050,8 @@ static void update_variables(bool first_startup)
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 		}
+		// must *not* be changed once a game is started
+		config::EmulateBBA.override(emulateBba);
 	}
 }
 
