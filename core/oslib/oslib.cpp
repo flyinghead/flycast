@@ -220,7 +220,7 @@ void uploadCrashes(const std::string& directory)
 				NOTICE_LOG(COMMON, "Uploading minidump %s", line);
 				std::vector<http::PostField> fields;
 				fields.emplace_back("upload_file_minidump", dmpfile, "application/octet-stream");
-				fields.emplace_back("flycast_version", std::string(GIT_VERSION));
+				fields.emplace_back("sentry[release]", std::string(GIT_VERSION));
 				if (file_exists(logfile))
 					fields.emplace_back("flycast_log", logfile, "text/plain");
 				// TODO config, gpu/driver, ...
