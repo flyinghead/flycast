@@ -36,7 +36,7 @@ struct DX11Renderer : public Renderer
 {
 	bool Init() override;
 	void Term() override;
-	bool Process(TA_context* ctx) override;
+	void Process(TA_context* ctx) override;
 	bool Render() override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 

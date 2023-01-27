@@ -183,28 +183,24 @@ private:
 			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
 					getOutputFramebufferAspectRatio());
 #endif
-		bool proc;
 		{
 			FC_PROFILE_SCOPE_NAMED("Renderer::Process");
-			proc = renderer->Process(_pvrrc);
+			renderer->Process(_pvrrc);
 		}
 
-		if (!proc || renderToScreen)
+		if (renderToScreen)
 			// If rendering to texture or in full framebuffer emulation, continue locking until the frame is rendered
 			renderEnd.Set();
 		rend_allow_rollback();
-		if (proc)
 		{
-			{
-				FC_PROFILE_SCOPE_NAMED("Renderer::Render");
-				renderer->Render();
-			}
-
-			if (!renderToScreen)
-				renderEnd.Set();
-			else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
-				present();
+			FC_PROFILE_SCOPE_NAMED("Renderer::Render");
+			renderer->Render();
 		}
+
+		if (!renderToScreen)
+			renderEnd.Set();
+		else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
+			present();
 
 		//clear up & free data ..
 		FinishRender(_pvrrc);

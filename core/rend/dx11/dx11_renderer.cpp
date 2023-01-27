@@ -301,13 +301,13 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 	return tf;
 }
 
-bool DX11Renderer::Process(TA_context* ctx)
+void DX11Renderer::Process(TA_context* ctx)
 {
 	if (KillTex)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	return ta_parse(ctx, true);
+	ta_parse(ctx, true);
 }
 
 void DX11Renderer::configVertexShader()

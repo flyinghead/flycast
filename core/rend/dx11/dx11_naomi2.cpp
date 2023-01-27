@@ -434,15 +434,7 @@ void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber, const rend_
 	if (pp.lightModel != lastModel)
 	{
 		lastModel = pp.lightModel;
-		if (pp.lightModel != -1)
-		{
-			setConstBuffer(lightConstantsBuffer, ctx.lightModels[pp.lightModel]);
-		}
-		else
-		{
-			N2LightModel lightModel{};
-			setConstBuffer(lightConstantsBuffer, lightModel);
-		}
+		setConstBuffer(lightConstantsBuffer, ctx.lightModels[pp.lightModel]);
 		deviceContext->VSSetConstantBuffers(2, 1, &lightConstantsBuffer.get());
 	}
 }

@@ -322,11 +322,11 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(&pvrrc.verts[0], pvrrc.verts.size() + sizeof(decltype(pvrrc.verts[0])));
+	packer.add(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() + sizeof(decltype(pvrrc.modtrig[0])));
+	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
 	// Index
-	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() + sizeof(decltype(pvrrc.idx[0])));
+	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));

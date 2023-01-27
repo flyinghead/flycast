@@ -56,7 +56,7 @@ struct Renderer
 	virtual bool Init() = 0;
 	virtual void Term() = 0;
 
-	virtual bool Process(TA_context *ctx) = 0;
+	virtual void Process(TA_context *ctx) = 0;
 	virtual bool Render() = 0;
 	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
 	virtual bool RenderLastFrame() { return false; }

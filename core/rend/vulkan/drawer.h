@@ -144,18 +144,21 @@ protected:
 
 	vk::DeviceSize packNaomi2Lights(BufferPacker& packer)
 	{
-		constexpr static N2LightModel noLight{};
-		vk::DeviceSize offset = packer.addUniform(&noLight, sizeof(noLight));
+		vk::DeviceSize offset = -1;
 
 		size_t n2LightSize = sizeof(N2LightModel) + align(sizeof(N2LightModel), GetContext()->GetUniformBufferAlignment());
 		if (n2LightSize == sizeof(N2LightModel))
 		{
-			packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
+			offset = packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
 		}
 		else
 		{
 			for (const N2LightModel& model : pvrrc.lightModels)
-				packer.addUniform(&model, sizeof(N2LightModel));
+			{
+				vk::DeviceSize ioffset = packer.addUniform(&model, sizeof(N2LightModel));
+				if (offset == (vk::DeviceSize)-1)
+					offset = ioffset;
+			}
 		}
 
 		return offset;

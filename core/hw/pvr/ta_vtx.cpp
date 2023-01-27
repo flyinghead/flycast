@@ -154,10 +154,10 @@ protected:
 	static ModTriangle* lmr;
 
 	static u32 CurrentList;
-	static PolyParam* CurrentPP;
 	static TaListFP *VertexDataFP;
 public:
 	static std::vector<PolyParam> *CurrentPPlist;
+	static PolyParam* CurrentPP;
 	static TaListFP* TaCmd;
 	static bool fetchTextures;
 };
@@ -633,12 +633,10 @@ private:
 
 		if (CurrentPP->count > 0)
 		{
-			CurrentPPlist->emplace_back();
-			PolyParam* d_pp = &CurrentPPlist->back();
-			*d_pp = *CurrentPP;
-			CurrentPP = d_pp;
-			d_pp->first = vd_rc.verts.size();
-			d_pp->count = 0;
+			CurrentPPlist->push_back(*CurrentPP);
+			CurrentPP = &CurrentPPlist->back();
+			CurrentPP->first = vd_rc.verts.size();
+			CurrentPP->count = 0;
 		}
 	}
 	
@@ -954,7 +952,6 @@ private:
 	//Sprites
 	static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
-		//printf("Sprite\n");
 		PolyParam* d_pp = CurrentPP;
 		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
@@ -1087,9 +1084,8 @@ private:
 
 		update_fz(cv[0].z);
 
-		CurrentPPlist->emplace_back();
+		CurrentPPlist->push_back(*CurrentPP);
 		PolyParam *d_pp = &CurrentPPlist->back();
-		*d_pp = *CurrentPP;
 		CurrentPP = d_pp;
 		d_pp->first = vd_rc.verts.size();
 		d_pp->count = 0;
@@ -1298,13 +1294,12 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 	ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
 }
 
-bool ta_parse(TA_context *ctx, bool primRestart)
+void ta_parse(TA_context *ctx, bool primRestart)
 {
 	if (settings.platform.isNaomi2())
 		ta_parse_naomi2(ctx, primRestart);
 	else
 		ta_parse_vdrc(ctx, primRestart);
-	return true;
 }
 
 //
@@ -1329,6 +1324,7 @@ const float defaultProjMat[] {
 
 constexpr int IdentityMatIndex = 0;
 constexpr int DefaultProjMatIndex = 1;
+constexpr int NoLightIndex = 0;
 
 static void setDefaultMatrices()
 {
@@ -1339,6 +1335,12 @@ static void setDefaultMatrices()
 	}
 }
 
+static void setDefaultLight()
+{
+	if (ta_ctx->rend.lightModels.empty())
+		ta_ctx->rend.lightModels.emplace_back();
+}
+
 void ta_add_poly(const PolyParam& pp)
 {
 	verify(ta_ctx != nullptr);
@@ -1347,6 +1349,7 @@ void ta_add_poly(const PolyParam& pp)
 	BaseTAParser::startList(pp.pcw.ListType);
 
 	BaseTAParser::CurrentPPlist->push_back(pp);
+	BaseTAParser::CurrentPP = nullptr; // might be invalidated
 	n2CurrentPP = &BaseTAParser::CurrentPPlist->back();
 	n2CurrentPP->first = ta_ctx->rend.verts.size();
 	n2CurrentPP->count = 0;
@@ -1358,6 +1361,9 @@ void ta_add_poly(const PolyParam& pp)
 		n2CurrentPP->normalMatrix = IdentityMatIndex;
 	if (n2CurrentPP->projMatrix == -1)
 		n2CurrentPP->projMatrix = DefaultProjMatIndex;
+	setDefaultLight();
+	if (n2CurrentPP->lightModel == -1)
+		n2CurrentPP->lightModel = NoLightIndex;
 	vd_ctx = nullptr;
 }
 
@@ -1413,6 +1419,7 @@ int ta_add_matrix(const float *matrix)
 
 int ta_add_light(const N2LightModel& light)
 {
+	setDefaultLight();
 	ta_ctx->rend.lightModels.push_back(light);
 	return ta_ctx->rend.lightModels.size() - 1;
 }

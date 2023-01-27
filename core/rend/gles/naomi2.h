@@ -127,62 +127,59 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader, const rend_context& 
 	if (pp->lightModel != shader->lastLightModel)
 	{
 		shader->lastLightModel = pp->lightModel;
-		if (pp->lightModel != -1)
+		const N2LightModel *const lightModel = &ctx.lightModels[pp->lightModel];
+		for (int vol = 0; vol < 2; vol++)
 		{
-			const N2LightModel *const lightModel = &ctx.lightModels[pp->lightModel];
+			glUniform1i(shader->ambientMaterialBase[vol], lightModel->ambientMaterialBase[vol]);
+			glUniform1i(shader->ambientMaterialOffset[vol], lightModel->ambientMaterialOffset[vol]);
+			glUniform4fv(shader->ambientBase[vol], 1, lightModel->ambientBase[vol]);
+			glUniform4fv(shader->ambientOffset[vol], 1, lightModel->ambientOffset[vol]);
+		}
+		glUniform1i(shader->useBaseOver, lightModel->useBaseOver);
+		glUniform1i(shader->bumpId0, lightModel->bumpId1);
+		glUniform1i(shader->bumpId1, lightModel->bumpId2);
+
+		glUniform1i(shader->lightCount, lightModel->lightCount);
+		for (int i = 0; i < lightModel->lightCount; i++)
+		{
+			const N2Light& light = lightModel->lights[i];
+			glUniform1i(shader->lights[i].parallel, light.parallel);
+
+			glUniform4fv(shader->lights[i].color, 1, light.color);
+			glUniform4fv(shader->lights[i].direction, 1, light.direction);
+			glUniform4fv(shader->lights[i].position, 1, light.position);
+
 			for (int vol = 0; vol < 2; vol++)
 			{
-				glUniform1i(shader->ambientMaterialBase[vol], lightModel->ambientMaterialBase[vol]);
-				glUniform1i(shader->ambientMaterialOffset[vol], lightModel->ambientMaterialOffset[vol]);
-				glUniform4fv(shader->ambientBase[vol], 1, lightModel->ambientBase[vol]);
-				glUniform4fv(shader->ambientOffset[vol], 1, lightModel->ambientOffset[vol]);
+				glUniform1i(shader->lights[i].diffuse[vol], light.diffuse[vol]);
+				glUniform1i(shader->lights[i].specular[vol], light.specular[vol]);
 			}
-			glUniform1i(shader->useBaseOver, lightModel->useBaseOver);
-			glUniform1i(shader->bumpId0, lightModel->bumpId1);
-			glUniform1i(shader->bumpId1, lightModel->bumpId2);
+			glUniform1i(shader->lights[i].routing, light.routing);
+			glUniform1i(shader->lights[i].dmode, light.dmode);
+			glUniform1i(shader->lights[i].smode, light.smode);
+			glUniform1i(shader->lights[i].distAttnMode, light.distAttnMode);
 
-			glUniform1i(shader->lightCount, lightModel->lightCount);
-			for (int i = 0; i < lightModel->lightCount; i++)
-			{
-				const N2Light& light = lightModel->lights[i];
-				glUniform1i(shader->lights[i].parallel, light.parallel);
-
-				glUniform4fv(shader->lights[i].color, 1, light.color);
-				glUniform4fv(shader->lights[i].direction, 1, light.direction);
-				glUniform4fv(shader->lights[i].position, 1, light.position);
-
-				for (int vol = 0; vol < 2; vol++)
-				{
-					glUniform1i(shader->lights[i].diffuse[vol], light.diffuse[vol]);
-					glUniform1i(shader->lights[i].specular[vol], light.specular[vol]);
-				}
-				glUniform1i(shader->lights[i].routing, light.routing);
-				glUniform1i(shader->lights[i].dmode, light.dmode);
-				glUniform1i(shader->lights[i].smode, light.smode);
-				glUniform1i(shader->lights[i].distAttnMode, light.distAttnMode);
-
-				glUniform1f(shader->lights[i].attnDistA, light.attnDistA);
-				glUniform1f(shader->lights[i].attnDistB, light.attnDistB);
-				glUniform1f(shader->lights[i].attnAngleA, light.attnAngleA);
-				glUniform1f(shader->lights[i].attnAngleB, light.attnAngleB);
-			}
+			glUniform1f(shader->lights[i].attnDistA, light.attnDistA);
+			glUniform1f(shader->lights[i].attnDistB, light.attnDistB);
+			glUniform1f(shader->lights[i].attnAngleA, light.attnAngleA);
+			glUniform1f(shader->lights[i].attnAngleB, light.attnAngleB);
 		}
-		else
+	}
+	else
+	{
+		float white[] { 1.f, 1.f, 1.f, 1.f };
+		float black[4]{};
+		for (int vol = 0; vol < 2; vol++)
 		{
-			float white[] { 1.f, 1.f, 1.f, 1.f };
-			float black[4]{};
-			for (int vol = 0; vol < 2; vol++)
-			{
-				glUniform1i(shader->ambientMaterialBase[vol], 0);
-				glUniform1i(shader->ambientMaterialOffset[vol], 0);
-				glUniform4fv(shader->ambientBase[vol], 1, white);
-				glUniform4fv(shader->ambientOffset[vol], 1, black);
-			}
-			glUniform1i(shader->useBaseOver, 0);
-			glUniform1i(shader->lightCount, 0);
-			glUniform1i(shader->bumpId0, -1);
-			glUniform1i(shader->bumpId1, -1);
+			glUniform1i(shader->ambientMaterialBase[vol], 0);
+			glUniform1i(shader->ambientMaterialOffset[vol], 0);
+			glUniform4fv(shader->ambientBase[vol], 1, white);
+			glUniform4fv(shader->ambientOffset[vol], 1, black);
 		}
+		glUniform1i(shader->useBaseOver, 0);
+		glUniform1i(shader->lightCount, 0);
+		glUniform1i(shader->bumpId0, -1);
+		glUniform1i(shader->bumpId1, -1);
 	}
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);
 }

@@ -100,7 +100,7 @@ struct D3DRenderer : public Renderer
 {
 	bool Init() override;
 	void Term() override;
-	bool Process(TA_context* ctx) override;
+	void Process(TA_context* ctx) override;
 	bool Render() override;
 	bool RenderLastFrame() override;
 	bool Present() override

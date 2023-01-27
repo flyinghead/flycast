@@ -8,8 +8,8 @@ struct norend : Renderer
 	}
 	void Term() override { }
 
-	bool Process(TA_context* ctx) override {
-		return ta_parse(ctx, true);
+	void Process(TA_context* ctx) override {
+		ta_parse(ctx, true);
 	}
 
 	bool Render() override {

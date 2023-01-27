@@ -308,19 +308,21 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	theDXContext.setFrameRendered();
 }
 
-bool D3DRenderer::Process(TA_context* ctx)
+void D3DRenderer::Process(TA_context* ctx)
 {
 	if (!theDXContext.isReady()) {
 		// force a Present
 		frameRendered = true;
-		return false;
+		return;
 	}
+	if (settings.platform.isNaomi2())
+		throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
 
 	if (KillTex)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	return ta_parse(ctx, false);
+	ta_parse(ctx, false);
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)

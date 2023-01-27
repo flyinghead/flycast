@@ -1139,8 +1139,11 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 	bindVertexArray(0);
 }
 
-bool OpenGLRenderer::Process(TA_context* ctx)
+void OpenGLRenderer::Process(TA_context* ctx)
 {
+	if (gl.gl_major < 3 && settings.platform.isNaomi2())
+		throw FlycastException("OpenGL ES 3.0+ required for Naomi 2");
+
 	if (KillTex)
 		TexCache.Clear();
 	TexCache.Cleanup();
@@ -1155,7 +1158,7 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		updatePaletteTexture(getPaletteTextureSlot());
 		palette_updated = false;
 	}
-	return ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
+	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 
 static void upload_vertex_indices()

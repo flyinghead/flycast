@@ -122,7 +122,7 @@ public:
 		return tf;
 	}
 
-	bool Process(TA_context* ctx) override
+	void Process(TA_context* ctx) override
 	{
 		if (KillTex)
 			textureCache.Clear();
@@ -134,27 +134,17 @@ public:
 		texCommandBuffer = texCommandPool.Allocate();
 		texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-		bool result = ta_parse(ctx, true);
+		ta_parse(ctx, true);
 
-		if (result)
-		{
 #ifdef LIBRETRO
-			if (!ctx->rend.isRTT)
-				overlay->Prepare(texCommandBuffer, true, true, textureCache);
+		if (!ctx->rend.isRTT)
+			overlay->Prepare(texCommandBuffer, true, true, textureCache);
 #endif
-			CheckFogTexture();
-			CheckPaletteTexture();
-			texCommandBuffer.end();
-			if (!ctx->rend.isRTT)
-				framebufferRendered = false;
-		}
-		else
-		{
-			texCommandBuffer.end();
-			texCommandPool.EndFrame();
-		}
-
-		return result;
+		CheckFogTexture();
+		CheckPaletteTexture();
+		texCommandBuffer.end();
+		if (!ctx->rend.isRTT)
+			framebufferRendered = false;
 	}
 
 	void ReInitOSD()
