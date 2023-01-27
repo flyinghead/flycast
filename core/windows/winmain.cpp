@@ -944,6 +944,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 [[noreturn]] void os_DebugBreak()
 {
 	__debugbreak();
+	std::abort();
 }
 
 void os_DoEvents()
