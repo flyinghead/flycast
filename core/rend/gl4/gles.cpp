@@ -22,7 +22,11 @@
 #include "rend/osd.h"
 #include "glsl.h"
 #include "gl4naomi2.h"
+#include "rend/gles/naomi2.h"
+
+#ifdef LIBRETRO
 #include "rend/gles/postprocess.h"
+#endif
 
 //Fragment and vertex shaders code
 

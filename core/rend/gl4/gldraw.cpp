@@ -18,9 +18,9 @@
 */
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "rend/gles/naomi2.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
-#include "gl4naomi2.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -236,7 +236,7 @@ static void SetGPState(const PolyParam* gp)
 				if (nearest_filter)
 				{
 					//nearest-neighbor filtering
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				}
 				else

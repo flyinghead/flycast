@@ -20,11 +20,13 @@
 #include "types.h"
 #include "net_platform.h"
 #include "miniupnp.h"
-#include "rend/gui.h"
 #include "cfg/option.h"
 #include "emulator.h"
+
+#include <algorithm>
 #include <atomic>
 #include <future>
+#include <vector>
 
 class NaomiNetwork
 {

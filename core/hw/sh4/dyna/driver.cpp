@@ -7,10 +7,8 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
-#include "cfg/option.h"
 
 #include <ctime>
-#include <cfloat>
 
 #include "blockmanager.h"
 #include "ngen.h"
@@ -267,14 +265,17 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	if (mmu_enabled())
 	{
 		RuntimeBlockInfoPtr block = bm_GetBlock(addr);
-		blockcheck_failures = block->blockcheck_failures + 1;
-		if (blockcheck_failures > 5)
+		if (block)
 		{
-			bool inserted = smc_hotspots.insert(addr).second;
-			if (inserted)
-				DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail SMC hotspot @ %08x fails %d", addr, blockcheck_failures);
+			blockcheck_failures = block->blockcheck_failures + 1;
+			if (blockcheck_failures > 5)
+			{
+				bool inserted = smc_hotspots.insert(addr).second;
+				if (inserted)
+					DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail SMC hotspot @ %08x fails %d", addr, blockcheck_failures);
+			}
+			bm_DiscardBlock(block.get());
 		}
-		bm_DiscardBlock(block.get());
 	}
 	else
 	{

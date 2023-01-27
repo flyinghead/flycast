@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include <utility>
 
 extern const u8 *vq_codebook;
 extern u32 palette_index;
@@ -697,6 +699,9 @@ public:
 	static void SetDirectXColorOrder(bool enabled);
 };
 
+// TODO Split the texture cache in a separate header
+#include "CustomTexture.h"
+
 template<typename Texture>
 class BaseTextureCache
 {
@@ -785,6 +790,7 @@ public:
 
 	void Clear()
 	{
+		custom_texture.Terminate();
 		for (auto& pair : cache)
 			pair.second.Delete();
 

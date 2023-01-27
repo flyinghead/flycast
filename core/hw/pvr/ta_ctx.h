@@ -2,8 +2,10 @@
 #include "types.h"
 #include "ta_structs.h"
 #include "pvr_regs.h"
-#include "stdclass.h"
 #include "oslib/oslib.h"
+
+#include <algorithm>
+#include <vector>
 
 class BaseTextureCacheData;
 struct N2LightModel;

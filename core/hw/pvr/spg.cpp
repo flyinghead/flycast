@@ -3,12 +3,15 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
-#include "input/gamepad_device.h"
 #include "oslib/oslib.h"
-#include "rend/TexCache.h"
 #include "hw/maple/maple_if.h"
 #include "serialize.h"
 #include "network/ggpo.h"
+#include "hw/pvr/Renderer_if.h"
+
+#ifdef TEST_AUTOMATION
+#include "input/gamepad_device.h"
+#endif
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 
@@ -273,9 +276,9 @@ void spg_Reset(bool hard)
 
 void scheduleRenderDone(TA_context *cntx)
 {
-	if (cntx)
+	int cycles = 4096;
+	if (cntx != nullptr)
 	{
-		int cycles;
 		if (settings.platform.isNaomi2()) {
 			cycles = 1500000;
 		}
@@ -284,12 +287,10 @@ void scheduleRenderDone(TA_context *cntx)
 			int size = 0;
 			for (TA_context *c = cntx; c != nullptr; c = c->nextContext)
 				size += c->tad.thd_data - c->tad.thd_root;
-			cycles = std::min(200000 + size * 3, 1500000);
+			cycles = std::min(550000 + size * 100, 1500000);
 		}
-		sh4_sched_request(render_end_schid, cycles);
 	}
-	else
-		sh4_sched_request(render_end_schid, 4096);
+	sh4_sched_request(render_end_schid, cycles);
 }
 
 void spg_Serialize(Serializer& ser)

@@ -141,8 +141,11 @@ bool DX11Context::init(bool keepCurrentWindow)
 
 		hr = dxgiFactory->CreateSwapChain(pDevice, &desc, &swapchain.get());
 	}
-	if (FAILED(hr))
+	if (FAILED(hr)) {
+		WARN_LOG(RENDERER, "D3D11 swap chain creation failed: %x", hr);
+		pDevice.reset();
 		return false;
+	}
 
 #ifndef TARGET_UWP
 	// Prevent DXGI from monitoring our message queue for ALT+Enter
@@ -193,7 +196,11 @@ void DX11Context::Present()
 	frameRendered = false;
 	bool swapOnVSync = !settings.input.fastForwardMode && config::VSync;
 	HRESULT hr;
-	if (swapOnVSync)
+	if (!swapchain)
+	{
+		hr = DXGI_ERROR_DEVICE_RESET;
+	}
+	else if (swapOnVSync)
 	{
 		int swapInterval = std::min(4, std::max(1, (int)(settings.display.refreshRate / 60)));
 		hr = swapchain->Present(swapInterval, 0);
@@ -213,25 +220,27 @@ void DX11Context::Present()
 
 void DX11Context::EndImGuiFrame()
 {
-	verify((bool)pDevice);
-	if (!overlayOnly)
+	if (pDevice && pDeviceContext && renderTargetView)
 	{
-		pDeviceContext->OMSetRenderTargets(1, &renderTargetView.get(), nullptr);
-		const FLOAT black[4] { 0.f, 0.f, 0.f, 1.f };
-		pDeviceContext->ClearRenderTargetView(renderTargetView, black);
-		if (renderer != nullptr)
-			renderer->RenderLastFrame();
+		if (!overlayOnly)
+		{
+			pDeviceContext->OMSetRenderTargets(1, &renderTargetView.get(), nullptr);
+			const FLOAT black[4] { 0.f, 0.f, 0.f, 1.f };
+			pDeviceContext->ClearRenderTargetView(renderTargetView, black);
+			if (renderer != nullptr)
+				renderer->RenderLastFrame();
+		}
+		if (overlayOnly)
+		{
+			if (crosshairsNeeded() || config::FloatVMUs)
+				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+		}
+		else
+		{
+			overlay.draw(settings.display.width, settings.display.height, true, false);
+		}
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
-	if (overlayOnly)
-	{
-		if (crosshairsNeeded() || config::FloatVMUs)
-			overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
-	}
-	else
-	{
-		overlay.draw(settings.display.width, settings.display.height, true, false);
-	}
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	frameRendered = true;
 }
 
@@ -293,6 +302,7 @@ void DX11Context::resize()
 			swapchain->GetDesc(&desc);
 			settings.display.width = desc.BufferDesc.Width;
 			settings.display.height = desc.BufferDesc.Height;
+			NOTICE_LOG(RENDERER, "Swapchain resized: %d x %d", desc.BufferDesc.Width, desc.BufferDesc.Height);
 		}
 	}
 	// TODO minimized window
@@ -300,10 +310,23 @@ void DX11Context::resize()
 
 void DX11Context::handleDeviceLost()
 {
+	if (pDevice)
+	{
+		HRESULT hr = pDevice->GetDeviceRemovedReason();
+		WARN_LOG(RENDERER, "Device removed reason: %x", hr);
+	}
 	rend_term_renderer();
 	term();
-	init(true);
-	rend_init_renderer();
+	if (init(true))
+	{
+		rend_init_renderer();
+	}
+	else
+	{
+		Renderer* rend_norend();
+		renderer = rend_norend();
+		renderer->Init();
+	}
 }
 #endif // !LIBRETRO
 

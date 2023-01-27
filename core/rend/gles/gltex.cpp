@@ -3,8 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
-#include <cstdio>
-#include <cstdlib>
+#include <memory>
 
 GlTextureCache TexCache;
 

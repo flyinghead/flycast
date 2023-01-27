@@ -18,6 +18,7 @@
 */
 #ifdef USE_OBOE
 #include "audiostream.h"
+#include "cfg/option.h"
 #include <oboe/Oboe.h>
 #include <vector>
 #include <algorithm>

@@ -1,12 +1,12 @@
 #include "Renderer_if.h"
 #include "spg.h"
-#include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/sh4/sh4_if.h"
 #include "profiler/fc_profiler.h"
 
 #include <mutex>

@@ -24,6 +24,7 @@
 #include "imgread/common.h"
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
+#include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
@@ -32,7 +33,6 @@
 #include "oslib/audiostream.h"
 #include "debug/gdb_server.h"
 #include "hw/pvr/Renderer_if.h"
-#include "rend/CustomTexture.h"
 #include "hw/arm7/arm7_rec.h"
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
@@ -209,7 +209,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
-			|| prod_id == "T0020M")		// Force Five Atomiswave DC Conversion
+			|| prod_id == "T0020M"		// Force Five Atomiswave DC Conversion
+			|| prod_id == "HDR-0187")	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);

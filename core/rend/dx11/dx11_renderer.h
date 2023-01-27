@@ -25,7 +25,6 @@
 #include "dx11_quad.h"
 #include "dx11_texture.h"
 #include "dx11_shaders.h"
-#include "rend/sorter.h"
 #include "dx11_renderstate.h"
 #include "dx11_naomi2.h"
 #ifndef LIBRETRO

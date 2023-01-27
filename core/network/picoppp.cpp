@@ -24,7 +24,10 @@
 #endif
 
 #include "stdclass.h"
+
+#ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
+#endif
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -43,7 +46,6 @@ extern "C" {
 #include "net_platform.h"
 
 #include "types.h"
-#include "cfg/cfg.h"
 #include "picoppp.h"
 #include "miniupnp.h"
 #include "reios/reios.h"
@@ -908,7 +910,8 @@ static void *pico_thread_func(void *)
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
 
 	// Create ppp/eth device
-	if (!config::EmulateBBA)
+	const bool usingPPP = !config::EmulateBBA;
+	if (usingPPP)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
@@ -1054,7 +1057,7 @@ static void *pico_thread_func(void *)
 
 	if (pico_dev)
 	{
-		if (!config::EmulateBBA)
+		if (usingPPP)
 		{
 			pico_ppp_destroy(pico_dev);
 		}

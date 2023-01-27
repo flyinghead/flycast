@@ -2,10 +2,11 @@
 #include "types.h"
 #include "md5/md5.h"
 
-#include <condition_variable>
-#include <mutex>
 #include <algorithm>
 #include <cctype>
+#include <condition_variable>
+#include <cstring>
+#include <mutex>
 #include <thread>
 
 #ifdef __ANDROID__

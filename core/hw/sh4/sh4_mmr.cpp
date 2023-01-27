@@ -1,7 +1,6 @@
 /*
 	Sh4 internal register routing (P4 & 'area 7')
 */
-#include <array>
 #include "types.h"
 #include "sh4_mmr.h"
 
@@ -10,6 +9,9 @@
 #include "modules/ccn.h"
 #include "modules/modules.h"
 #include "sh4_cache.h"
+
+#include <array>
+#include <map>
 
 //64bytes of sq // now on context ~
 

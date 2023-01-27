@@ -27,7 +27,6 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"
-#include "hw/hwreg.h"
 
 #include <algorithm>
 #include <cmath>

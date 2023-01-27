@@ -20,8 +20,10 @@
 #ifndef FEAT_NO_MINIUPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
-#include "types.h"
+#include "log/Log.h"
 #include "miniupnp.h"
+
+#include <string>
 
 #ifndef UPNP_LOCAL_PORT_ANY
 #define UPNP_LOCAL_PORT_ANY 0

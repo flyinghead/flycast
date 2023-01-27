@@ -25,8 +25,6 @@
 #ifdef FAST_MMU
 
 #include "hw/mem/_vmem.h"
-
-#include "ccn.h"
 #include "hw/sh4/sh4_mem.h"
 
 extern TLB_Entry UTLB[64];

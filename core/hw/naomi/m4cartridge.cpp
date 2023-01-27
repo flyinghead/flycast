@@ -50,12 +50,19 @@ void M4Cartridge::device_start()
 {
 	if (m4id == 0)
 	{
-		INFO_LOG(COMMON, "Warning: M4 ID not provided\n");
+		INFO_LOG(NAOMI, "Warning: M4 ID not provided\n");
 		m4id = 0x5504;
 	}
 
-	subkey1 = (m_key_data[0x5e2] << 8) | m_key_data[0x5e0];
-	subkey2 = (m_key_data[0x5e6] << 8) | m_key_data[0x5e4];
+	if (m_key_data != nullptr)
+	{
+		subkey1 = (m_key_data[0x5e2] << 8) | m_key_data[0x5e0];
+		subkey2 = (m_key_data[0x5e6] << 8) | m_key_data[0x5e4];
+	}
+	else
+	{
+		WARN_LOG(NAOMI, "Missing M4 key");
+	}
 
 	enc_init();
 }

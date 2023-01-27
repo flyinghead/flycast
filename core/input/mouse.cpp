@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "mouse.h"
+#include "cfg/option.h"
 #include "rend/gui.h"
 
 // Mouse buttons

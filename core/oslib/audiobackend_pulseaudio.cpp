@@ -1,5 +1,6 @@
 #ifdef USE_PULSEAUDIO
 #include "audiostream.h"
+#include "cfg/option.h"
 #include <pulse/pulseaudio.h>
 
 class PulseAudioBackend : public AudioBackend

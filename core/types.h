@@ -15,7 +15,6 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <cstring>
 
 //basic types
 typedef int8_t  s8;
@@ -147,9 +146,7 @@ inline static void JITWriteProtect(bool enabled) {
 #endif
 
 //includes from c++rt
-#include <vector>
 #include <string>
-#include <map>
 #include <stdexcept>
 
 #ifdef _MSC_VER

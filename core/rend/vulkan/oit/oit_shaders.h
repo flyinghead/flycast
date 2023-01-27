@@ -23,6 +23,8 @@
 #include "../utils.h"
 #include "cfg/option.h"
 
+#include <map>
+
 enum class Pass { Depth, Color, OIT };
 
 class OITShaderManager

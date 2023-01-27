@@ -17,9 +17,9 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <array>
 #include "postprocess.h"
-#include "cfg/option.h"
+
+#include <array>
 
 PostProcessor postProcessor;
 

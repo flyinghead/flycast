@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "types.h"
+#include "cfg/option.h"
 #include "gamepad_device.h"
 #include "rend/gui.h"
 #include <memory>

@@ -25,9 +25,12 @@
 #include "modem_regs.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
-#include "oslib/oslib.h"
 #include "network/picoppp.h"
 #include "serialize.h"
+
+#ifndef NDEBUG
+#include "oslib/oslib.h"
+#endif
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -532,7 +535,6 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 	case 0x11:
 		LOG("PARSL = %d", modem_regs.reg11.PARSL);
-		die("PARSL");
 		break;
 
 	case 0x14:	// ABCODE

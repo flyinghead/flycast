@@ -16,6 +16,7 @@
 #include "hw/holly/holly_intc.h"
 #include "reios.h"
 #include "imgread/common.h"
+#include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
 
@@ -716,7 +717,7 @@ void gdrom_hle_op()
 			//	r4 = request id
 			//
 			// Returns: GDC_OK, GDC_ERR
-			WARN_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND req id%x", r[4]);
+			INFO_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND req id%x", r[4]);
 			if (r[4] == gd_hle_state.last_request_id
 					&& (gd_hle_state.status == GDC_CONTINUE || gd_hle_state.status == GDC_BUSY || gd_hle_state.status == GDC_COMPLETE))
 			{

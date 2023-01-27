@@ -1,6 +1,5 @@
 #include "glcache.h"
 #include "gles.h"
-#include "rend/sorter.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
 #include "naomi2.h"
@@ -190,7 +189,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		if (nearest_filter)
 		{
 			//nearest-neighbor filtering
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 		else

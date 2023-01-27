@@ -168,7 +168,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
+	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS-)
 	if(WINDOWS_STORE)
 		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
 	endif()

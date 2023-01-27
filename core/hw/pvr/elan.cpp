@@ -55,16 +55,14 @@
 #include "ta_ctx.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
-#include "hw/pvr/Renderer_if.h"
-#include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mem.h"
-#include "emulator.h"
+#include "hw/sh4/sh4_mmr.h"
 #include "serialize.h"
 #include "elan_struct.h"
 #include "network/ggpo.h"
+#include "cfg/option.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace elan {

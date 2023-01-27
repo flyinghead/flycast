@@ -23,6 +23,9 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
+#include <array>
+#include <vector>
+
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
 extern u32 aica_reg_L;

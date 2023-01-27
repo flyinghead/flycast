@@ -71,19 +71,21 @@ static void getLocalInput(MapleInputState inputState[4])
 #include "emulator.h"
 #include "rend/gui.h"
 #include "hw/mem/mem_watch.h"
-#include "hw/sh4/sh4_sched.h"
 #include <string.h>
 #include <chrono>
 #include <thread>
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
-#include <xxhash.h>
 #include "imgui/imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
 //#define SYNC_TEST 1
+
+#ifdef SYNC_TEST
+#include <xxhash.h>
+#endif
 
 namespace ggpo
 {

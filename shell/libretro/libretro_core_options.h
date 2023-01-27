@@ -140,7 +140,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_hle_bios",
-      "HLE BIOS",
+      "HLE BIOS (Restart Required)",
       NULL,
       "Force use of high-level emulation BIOS.",
       NULL,
@@ -226,6 +226,35 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      "Broadband Adapter Emulation",
+      NULL,
+      "Emulate the ethernet broadband adapter instead of the modem. (Restart Required)",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      "Enable UPnP",
+      NULL,
+      "Use UPnP to automatically configure your Internet router for online games.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution",

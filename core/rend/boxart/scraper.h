@@ -17,12 +17,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <string>
-#include <memory>
-#include <vector>
 
 #include "types.h"
 #include "json.hpp"
+
+#include <string>
+#include <vector>
 
 using namespace nlohmann;
 

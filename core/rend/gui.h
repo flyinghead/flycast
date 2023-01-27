@@ -18,7 +18,8 @@
  */
 #pragma once
 #include "types.h"
-#include "cfg/option.h"
+
+#include <string>
 
 void gui_init();
 void gui_initFonts();

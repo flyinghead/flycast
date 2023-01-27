@@ -11,7 +11,6 @@ using namespace Xbyak::util;
 #include "types.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/dyna/ngen.h"
-#include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_interrupts.h"
 
