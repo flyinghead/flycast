@@ -94,6 +94,10 @@ extern "C" {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_AR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_AR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_AR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AR NULL
 #define OPTION_VAL_320X240_AR NULL
@@ -170,7 +174,7 @@ extern "C" {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AR NULL
-#define OPTION_VAL_2_O25_AR NULL
+#define OPTION_VAL_2_O27_AR NULL
 #define OPTION_VAL_4_AR NULL
 #define OPTION_VAL_6_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AR NULL
@@ -445,6 +449,35 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_AR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AR,
@@ -744,7 +777,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_AR },
+         { "2",  OPTION_VAL_2_O27_AR },
          { "4",  OPTION_VAL_4_AR },
          { "6",  OPTION_VAL_6_AR },
          { NULL, NULL },
@@ -1137,7 +1170,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O25_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1288,7 +1321,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O25_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1439,7 +1472,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O25_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1590,7 +1623,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_O25_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1736,7 +1769,7 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_FRENCH_AST "Francés"
 #define OPTION_VAL_SPANISH_AST "Castellán"
 #define OPTION_VAL_ITALIAN_AST "Italianu"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_AST "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_AST NULL
@@ -1748,6 +1781,10 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AST NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AST NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_AST NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AST NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_AST NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_AST NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AST "Modifica la resolución del renderizáu."
 #define OPTION_VAL_320X240_AST NULL
@@ -1824,7 +1861,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_O25_AST "x2"
+#define OPTION_VAL_2_O27_AST "x2"
 #define OPTION_VAL_4_AST "x4"
 #define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
@@ -2099,6 +2136,35 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AST,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_AST,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST,
@@ -2398,7 +2464,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_AST },
+         { "2",  OPTION_VAL_2_O27_AST },
          { "4",  OPTION_VAL_4_AST },
          { "6",  OPTION_VAL_6_AST },
          { NULL, NULL },
@@ -2791,7 +2857,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O25_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -2942,7 +3008,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O25_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3093,7 +3159,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O25_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3244,7 +3310,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_O25_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3402,6 +3468,10 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA "Resolució Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CA NULL
 #define OPTION_VAL_320X240_CA "320×240"
@@ -3478,7 +3548,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CA NULL
-#define OPTION_VAL_2_O25_CA NULL
+#define OPTION_VAL_2_O27_CA NULL
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA NULL
@@ -3753,6 +3823,35 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA,
@@ -4052,7 +4151,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_CA },
+         { "2",  OPTION_VAL_2_O27_CA },
          { "4",  OPTION_VAL_4_CA },
          { "6",  OPTION_VAL_6_CA },
          { NULL, NULL },
@@ -4445,7 +4544,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O25_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4596,7 +4695,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O25_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4747,7 +4846,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O25_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4898,7 +4997,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_O25_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -5056,6 +5155,10 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHS NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CHS NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS "内部分辨率"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHS NULL
 #define OPTION_VAL_320X240_CHS NULL
@@ -5132,7 +5235,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHS NULL
-#define OPTION_VAL_2_O25_CHS "2 倍"
+#define OPTION_VAL_2_O27_CHS "2 倍"
 #define OPTION_VAL_4_CHS "4 倍"
 #define OPTION_VAL_6_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHS NULL
@@ -5407,6 +5510,35 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CHS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS,
@@ -5706,7 +5838,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_CHS },
+         { "2",  OPTION_VAL_2_O27_CHS },
          { "4",  OPTION_VAL_4_CHS },
          { "6",  OPTION_VAL_6_CHS },
          { NULL, NULL },
@@ -6099,7 +6231,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O25_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6250,7 +6382,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O25_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6401,7 +6533,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O25_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6552,7 +6684,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_O25_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6710,6 +6842,10 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHT NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CHT NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHT NULL
 #define OPTION_VAL_320X240_CHT NULL
@@ -6786,7 +6922,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O25_CHT "2倍"
+#define OPTION_VAL_2_O27_CHT "2倍"
 #define OPTION_VAL_4_CHT "4倍"
 #define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
@@ -7061,6 +7197,35 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CHT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT,
@@ -7360,7 +7525,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_CHT },
+         { "2",  OPTION_VAL_2_O27_CHT },
          { "4",  OPTION_VAL_4_CHT },
          { "6",  OPTION_VAL_6_CHT },
          { NULL, NULL },
@@ -7753,7 +7918,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O25_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7904,7 +8069,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O25_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -8055,7 +8220,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O25_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -8206,7 +8371,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_O25_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -8364,6 +8529,10 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS "Povolí tlačítko SERVIS pro NAOMI, abyste mohli vstoupit do nastavení skříně."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CS NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CS NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní Rozlišení"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava Rozlišení Vykreslování."
 #define OPTION_VAL_320X240_CS NULL
@@ -8418,10 +8587,10 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_4GB_CS NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS "Maximální počet průhledných vrstev"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS "U složitých scén mohou být nutné vyšší hodnoty."
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS "Úplná emulace framebufferu"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS "Povolení úplné emulace framebufferu v paměti VRAM. To je užitečné pro hry, které přímo čtou nebo zapisují framebuffer do VRAM. Pokud je tato funkce povolena, interní rozlišení je vynuceno na 640x480 a může dojít k výraznému snížení výkonu."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS "Povolení Vyrovnávací Paměti RTT (Render To Texture)"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS "Kopírování vykreslených textur z GPU zpět do VRAM. Tato možnost je obvykle povolena u her, které ji vyžadují. Pokud je povolena, je vypnuto zvyšování rozlišení vykreslovaných textur a může dojít ke snížení výkonu."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS "Mipmapování"
 #define CORE_OPTION_NAME_FOG_LABEL_CS "Efekty Mlhy"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS "Modifikátor Hlasitosti"
@@ -8440,7 +8609,7 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CS "Následné zpracování vykresleného obrazu pro simulaci efektů specifických pro grafický procesor PowerVR2 a analogové video signály."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS "Vylepšení Textur (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CS "Vylepšete ručně kreslenou 2D pixelovou grafiku. Mělo by se používat pouze ve 2D pixelových hrách."
-#define OPTION_VAL_2_O25_CS NULL
+#define OPTION_VAL_2_O27_CS NULL
 #define OPTION_VAL_4_CS NULL
 #define OPTION_VAL_6_CS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS "Zvýšení Rozlišení Textur Max. Filtrovaná Velikost"
@@ -8715,6 +8884,35 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS,
@@ -9014,7 +9212,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_CS },
+         { "2",  OPTION_VAL_2_O27_CS },
          { "4",  OPTION_VAL_4_CS },
          { "6",  OPTION_VAL_6_CS },
          { NULL, NULL },
@@ -9407,7 +9605,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O25_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9558,7 +9756,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O25_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9709,7 +9907,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O25_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9860,7 +10058,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_O25_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -10018,6 +10216,10 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CY NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CY NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CY NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CY NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CY NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CY NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CY NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CY NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CY NULL
 #define OPTION_VAL_320X240_CY NULL
@@ -10094,7 +10296,7 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CY NULL
-#define OPTION_VAL_2_O25_CY NULL
+#define OPTION_VAL_2_O27_CY NULL
 #define OPTION_VAL_4_CY NULL
 #define OPTION_VAL_6_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CY NULL
@@ -10369,6 +10571,35 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CY,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CY,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CY,
@@ -10668,7 +10899,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_CY },
+         { "2",  OPTION_VAL_2_O27_CY },
          { "4",  OPTION_VAL_4_CY },
          { "6",  OPTION_VAL_6_CY },
          { NULL, NULL },
@@ -11061,7 +11292,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O25_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11212,7 +11443,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O25_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11363,7 +11594,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O25_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11514,7 +11745,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_O25_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -11672,6 +11903,10 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_DA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_DA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DA NULL
 #define OPTION_VAL_320X240_DA NULL
@@ -11748,7 +11983,7 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DA NULL
-#define OPTION_VAL_2_O25_DA NULL
+#define OPTION_VAL_2_O27_DA NULL
 #define OPTION_VAL_4_DA NULL
 #define OPTION_VAL_6_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DA NULL
@@ -12023,6 +12258,35 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_DA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DA,
@@ -12322,7 +12586,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_DA },
+         { "2",  OPTION_VAL_2_O27_DA },
          { "4",  OPTION_VAL_4_DA },
          { "6",  OPTION_VAL_6_DA },
          { NULL, NULL },
@@ -12715,7 +12979,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O25_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12866,7 +13130,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O25_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -13017,7 +13281,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O25_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -13168,7 +13432,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_O25_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -13314,7 +13578,7 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_FRENCH_DE "Französisch"
 #define OPTION_VAL_SPANISH_DE "Spanisch"
 #define OPTION_VAL_ITALIAN_DE "Italienisch"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_DE NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_DE "HLE BIOS (Neustart erforderlich)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_DE "Erzwingt Verwendung von High-Level-Emulation BIOS."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_DE "BIOS starten (Neustart erforderlich)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_DE "Direkt ins Dreamcast BIOS Menü starten."
@@ -13326,6 +13590,10 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DE "Aktiviert den SERVICE-Knopf für NAOMI, um die Automateneinstellungen aufzurufen."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DE "NAOMI Spiele auf kostenloses Spiel setzen"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DE "Ändert die Münzeinstellungen des Spiels zu kostenlos."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE "Breitband-Adapter Emulation"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet Breitband-Adapter anstelle des Modems emulieren. (Neustart erforderlich)"
+#define CORE_OPTION_NAME_UPNP_LABEL_DE "UPnP aktivieren"
+#define CORE_OPTION_NAME_UPNP_INFO_0_DE "Verwendet UPnP, um den Internet Router automatisch für Onlinespiele zu konfigurieren."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE "Interne Auflösung"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE "Rendering-Auflösung ändern."
 #define OPTION_VAL_320X240_DE "320 x 240"
@@ -13402,7 +13670,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DE "Nachbearbeitung des gerenderten Bildes zur Simulation von Effekten speziell für PowerVR2 GPU und analoge Videosignale."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE "Texturen hochskalieren (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DE "Erweitert handgezeichnete 2D Pixel Kunstgrafiken. Darf nur mit 2D verpixelten Spielen verwendet werden."
-#define OPTION_VAL_2_O25_DE "2×"
+#define OPTION_VAL_2_O27_DE NULL
 #define OPTION_VAL_4_DE NULL
 #define OPTION_VAL_6_DE "6 x"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DE "Textur-Hochskalierung Max. Gefilterte Größe"
@@ -13677,6 +13945,35 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_DE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE,
@@ -13976,7 +14273,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_DE },
+         { "2",  OPTION_VAL_2_O27_DE },
          { "4",  OPTION_VAL_4_DE },
          { "6",  OPTION_VAL_6_DE },
          { NULL, NULL },
@@ -14369,7 +14666,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O25_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14520,7 +14817,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O25_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14671,7 +14968,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O25_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14822,7 +15119,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_O25_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -14980,6 +15277,10 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EL NULL
 #define OPTION_VAL_320X240_EL NULL
@@ -15056,7 +15357,7 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EL NULL
-#define OPTION_VAL_2_O25_EL NULL
+#define OPTION_VAL_2_O27_EL NULL
 #define OPTION_VAL_4_EL NULL
 #define OPTION_VAL_6_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EL NULL
@@ -15331,6 +15632,35 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EL,
@@ -15630,7 +15960,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_EL },
+         { "2",  OPTION_VAL_2_O27_EL },
          { "4",  OPTION_VAL_4_EL },
          { "6",  OPTION_VAL_6_EL },
          { NULL, NULL },
@@ -16023,7 +16353,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O25_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16174,7 +16504,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O25_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16325,7 +16655,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O25_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16476,7 +16806,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_O25_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -16634,6 +16964,10 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EN NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EN NULL
 #define OPTION_VAL_320X240_EN NULL
@@ -16710,7 +17044,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EN "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analogue video signals."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EN NULL
-#define OPTION_VAL_2_O25_EN NULL
+#define OPTION_VAL_2_O27_EN NULL
 #define OPTION_VAL_4_EN NULL
 #define OPTION_VAL_6_EN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EN "Texture Upscaling Maximum Filtered Size"
@@ -16985,6 +17319,35 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EN,
@@ -17284,7 +17647,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_EN },
+         { "2",  OPTION_VAL_2_O27_EN },
          { "4",  OPTION_VAL_4_EN },
          { "6",  OPTION_VAL_6_EN },
          { NULL, NULL },
@@ -17677,7 +18040,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O25_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -17828,7 +18191,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O25_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -17979,7 +18342,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O25_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -18130,7 +18493,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EN },
-         { "2x", OPTION_VAL_2_O25_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
          { "3x", OPTION_VAL_3X_EN },
          { "4x", OPTION_VAL_4_EN },
          { "5x", OPTION_VAL_5X_EN },
@@ -18288,6 +18651,10 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EO NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EO NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EO NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EO NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EO NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EO "Interna Rezolucio"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EO NULL
 #define OPTION_VAL_320X240_EO NULL
@@ -18364,7 +18731,7 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EO NULL
-#define OPTION_VAL_2_O25_EO NULL
+#define OPTION_VAL_2_O27_EO NULL
 #define OPTION_VAL_4_EO NULL
 #define OPTION_VAL_6_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EO NULL
@@ -18639,6 +19006,35 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EO,
@@ -18938,7 +19334,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_EO },
+         { "2",  OPTION_VAL_2_O27_EO },
          { "4",  OPTION_VAL_4_EO },
          { "6",  OPTION_VAL_6_EO },
          { NULL, NULL },
@@ -19331,7 +19727,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O25_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19482,7 +19878,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O25_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19633,7 +20029,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O25_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19784,7 +20180,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_O25_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -19930,7 +20326,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_FRENCH_ES "Francés"
 #define OPTION_VAL_SPANISH_ES "Español"
 #define OPTION_VAL_ITALIAN_ES "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ES "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ES "BIOS HLE (es necesario reiniciar)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ES "Fuerza el uso de una BIOS creada con emulación de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ES "Arrancar desde la BIOS (es necesario reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ES "Arranca directamente el menú de la BIOS de Dreamcast."
@@ -19942,6 +20338,10 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_ES "Activa el botón SERVICE de la placa NAOMI para acceder a la configuración del mueble."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ES "Partidas gratuitas en NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ES "Modifica la configuración de monedas del juego a partidas gratuitas."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ES "Emulación del Broadband Adapter (BBA)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES "Emula el adaptador de banda ancha por Ethernet en lugar del módem (es necesario reiniciar)."
+#define CORE_OPTION_NAME_UPNP_LABEL_ES "Activar UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_ES "Utiliza UPnP para configurar automáticamente tu router/enrutador de Internet para poder conectarte a juegos online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ES "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ES "Modifica la resolución de renderizado."
 #define OPTION_VAL_320X240_ES "320 × 240"
@@ -20018,7 +20418,7 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ES "Posprocesa la imagen renderizada para simular los efectos dedicados de la GPU PowerVR2 y las señales de vídeo analógico."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ES "Reescalado de texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ES "Mejora los gráficos 2D de corte «pixel art» dibujado a mano. Utilizar solo con juegos en 2D pixelado."
-#define OPTION_VAL_2_O25_ES NULL
+#define OPTION_VAL_2_O27_ES NULL
 #define OPTION_VAL_4_ES NULL
 #define OPTION_VAL_6_ES NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ES "Tamaño máximo del escalado de texturas"
@@ -20293,6 +20693,35 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_ES,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ES,
@@ -20592,7 +21021,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_ES },
+         { "2",  OPTION_VAL_2_O27_ES },
          { "4",  OPTION_VAL_4_ES },
          { "6",  OPTION_VAL_6_ES },
          { NULL, NULL },
@@ -20985,7 +21414,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O25_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21136,7 +21565,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O25_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21287,7 +21716,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O25_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21438,7 +21867,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_O25_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -21596,6 +22025,10 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_FA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_FA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FA NULL
 #define OPTION_VAL_320X240_FA NULL
@@ -21672,7 +22105,7 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FA NULL
-#define OPTION_VAL_2_O25_FA NULL
+#define OPTION_VAL_2_O27_FA NULL
 #define OPTION_VAL_4_FA NULL
 #define OPTION_VAL_6_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FA NULL
@@ -21947,6 +22380,35 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FA,
@@ -22246,7 +22708,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_FA },
+         { "2",  OPTION_VAL_2_O27_FA },
          { "4",  OPTION_VAL_4_FA },
          { "6",  OPTION_VAL_6_FA },
          { NULL, NULL },
@@ -22639,7 +23101,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O25_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -22790,7 +23252,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O25_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -22941,7 +23403,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O25_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -23092,7 +23554,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_O25_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -23250,6 +23712,10 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FI NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FI NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FI NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FI "Laajakaista-adapterin emulaatio"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FI NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_FI "Käytä UPnP:tä"
+#define CORE_OPTION_NAME_UPNP_INFO_0_FI "Käytä UPnP:tä Internet-reitittimen määrittämiseksi verkkopelejä varten."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI "Sisäinen resoluutio"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FI NULL
 #define OPTION_VAL_320X240_FI NULL
@@ -23326,7 +23792,7 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FI "Tekstuurin yliskaalaus (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FI NULL
-#define OPTION_VAL_2_O25_FI NULL
+#define OPTION_VAL_2_O27_FI NULL
 #define OPTION_VAL_4_FI NULL
 #define OPTION_VAL_6_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FI NULL
@@ -23601,6 +24067,35 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FI,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FI,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI,
@@ -23900,7 +24395,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_FI },
+         { "2",  OPTION_VAL_2_O27_FI },
          { "4",  OPTION_VAL_4_FI },
          { "6",  OPTION_VAL_6_FI },
          { NULL, NULL },
@@ -24293,7 +24788,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O25_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24444,7 +24939,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O25_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24595,7 +25090,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O25_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24746,7 +25241,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_O25_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -24892,7 +25387,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_FRENCH_FR "Français"
 #define OPTION_VAL_SPANISH_FR "Espagnol"
 #define OPTION_VAL_ITALIAN_FR "Italien"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_FR "Forcer l'utilisation d'un BIOS en émulation de haut niveau."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_FR "Démarrer sur le BIOS (Redémarrage requis)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_FR "Démarrer directement sur le menu BIOS Dreamcast."
@@ -24904,6 +25399,10 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FR "Active le bouton SERVICE pour NAOMI, pour entrer dans les paramètres de la borne."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FR "Définir les jeux NAOMI en Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FR "Modifier les réglages de pièces du jeu en mode gratuit."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_FR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_FR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR "Résolution interne"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FR "Modifier la résolution de rendu."
 #define OPTION_VAL_320X240_FR NULL
@@ -24980,7 +25479,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_O25_FR "x2"
+#define OPTION_VAL_2_O27_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
@@ -25255,6 +25754,35 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR,
@@ -25554,7 +26082,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_FR },
+         { "2",  OPTION_VAL_2_O27_FR },
          { "4",  OPTION_VAL_4_FR },
          { "6",  OPTION_VAL_6_FR },
          { NULL, NULL },
@@ -25947,7 +26475,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O25_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26098,7 +26626,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O25_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26249,7 +26777,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O25_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26400,7 +26928,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_O25_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -26546,7 +27074,7 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_FRENCH_GL NULL
 #define OPTION_VAL_SPANISH_GL NULL
 #define OPTION_VAL_ITALIAN_GL NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GL "Forza o uso de emulación BIOS de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GL "Arranca na BIOS (requírese reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GL "Arranca directamente no menú da BIOS de Dreamcast."
@@ -26558,6 +27086,10 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL "Activa o botón SERVIZO para NAOMI, para entrar nas opcións da recreativa."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_GL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_GL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL NULL
@@ -26634,7 +27166,7 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GL "Postproceso da imaxe renderizada para simular efectos específicos da PowerVR2 GPU e os sinais analóxicos de vídeo."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL "Aumento das texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_GL "Millora dos gráficos 2D pixel art debuxados a man. Só se debería usar con xogos pixelados en 2D."
-#define OPTION_VAL_2_O25_GL NULL
+#define OPTION_VAL_2_O27_GL NULL
 #define OPTION_VAL_4_GL NULL
 #define OPTION_VAL_6_GL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GL "Aumento da escala das texturas. Tamaño filtrado"
@@ -26909,6 +27441,35 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_GL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL,
@@ -27208,7 +27769,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_GL },
+         { "2",  OPTION_VAL_2_O27_GL },
          { "4",  OPTION_VAL_4_GL },
          { "6",  OPTION_VAL_6_GL },
          { NULL, NULL },
@@ -27601,7 +28162,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O25_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27752,7 +28313,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O25_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -27903,7 +28464,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O25_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -28054,7 +28615,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_O25_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -28212,6 +28773,10 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HE NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HE NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HE NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_HE NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_HE NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HE NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HE NULL
 #define OPTION_VAL_320X240_HE NULL
@@ -28288,7 +28853,7 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HE NULL
-#define OPTION_VAL_2_O25_HE NULL
+#define OPTION_VAL_2_O27_HE NULL
 #define OPTION_VAL_4_HE NULL
 #define OPTION_VAL_6_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HE NULL
@@ -28563,6 +29128,35 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HE,
@@ -28862,7 +29456,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_HE },
+         { "2",  OPTION_VAL_2_O27_HE },
          { "4",  OPTION_VAL_4_HE },
          { "6",  OPTION_VAL_6_HE },
          { NULL, NULL },
@@ -29255,7 +29849,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O25_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29406,7 +30000,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O25_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29557,7 +30151,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O25_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29708,7 +30302,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_O25_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -29866,6 +30460,10 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_HR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_HR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HR NULL
 #define OPTION_VAL_320X240_HR NULL
@@ -29942,7 +30540,7 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HR NULL
-#define OPTION_VAL_2_O25_HR NULL
+#define OPTION_VAL_2_O27_HR NULL
 #define OPTION_VAL_4_HR NULL
 #define OPTION_VAL_6_HR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HR NULL
@@ -30217,6 +30815,35 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HR,
@@ -30516,7 +31143,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_HR },
+         { "2",  OPTION_VAL_2_O27_HR },
          { "4",  OPTION_VAL_4_HR },
          { "6",  OPTION_VAL_6_HR },
          { NULL, NULL },
@@ -30909,7 +31536,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O25_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31060,7 +31687,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O25_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31211,7 +31838,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O25_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31362,7 +31989,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HR },
-         { "2x", OPTION_VAL_2_O25_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
          { "3x", OPTION_VAL_3X_HR },
          { "4x", OPTION_VAL_4_HR },
          { "5x", OPTION_VAL_5X_HR },
@@ -31520,6 +32147,10 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A NAOMI szervizgombjának engedélyezése, a kabinet beállításaihoz."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_HU NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_HU NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU NULL
@@ -31574,8 +32205,8 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_4GB_HU NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU "Átlátszó rétegek maximális száma"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU "Összetett jelenetekhez nagyobb értékekre lehet szükség."
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU "Teljes framebuffer emuláció"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU "A VRAM framebuffer teljes emulálásának engedélyezése. Olyan játékokhoz hasznos, amelyek közvetlenül a VRAM-ban írják vagy olvassák a framebuffert. Bekapcsolva a belső felbontás mindenképpen 640x480 lesz és a teljesítmény erősen visszaeshet."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
@@ -31596,7 +32227,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU "Az előállított kép utófeldolgozása a PowerVR2 GPU és az analóg videojelek egyedi effektjeinek szimulálásához."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU "Textúra felméretezés (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU "A kézzel rajzolt 2D pixel art grafikák feljavítása. Csak a 2D pixelgrafikus játékokhoz ajánlott."
-#define OPTION_VAL_2_O25_HU NULL
+#define OPTION_VAL_2_O27_HU NULL
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU "Textúra felméretezés maximális szűrt mérete"
@@ -31664,28 +32295,28 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_DEFAULT_ON_00_HU NULL
 #define OPTION_VAL_DEFAULT_OFF_01_HU NULL
 #define OPTION_VAL_BLACK_02_HU "Fekete"
-#define OPTION_VAL_LIGHT_BLUE_04_HU NULL
+#define OPTION_VAL_LIGHT_BLUE_04_HU "Világoskék"
 #define OPTION_VAL_CYAN_06_HU "Ciánkék"
-#define OPTION_VAL_CYAN_BLUE_07_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_08_HU NULL
-#define OPTION_VAL_CYAN_GREEN_09_HU NULL
-#define OPTION_VAL_LIGHT_CYAN_10_HU NULL
+#define OPTION_VAL_CYAN_BLUE_07_HU "Ciánkék"
+#define OPTION_VAL_LIGHT_GREEN_08_HU "Világoszöld"
+#define OPTION_VAL_CYAN_GREEN_09_HU "Ciánzöld"
+#define OPTION_VAL_LIGHT_CYAN_10_HU "Világos ciánkék"
 #define OPTION_VAL_PURPLE_12_HU "Lila"
-#define OPTION_VAL_LIGHT_PURPLE_13_HU NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_HU "Világoslila"
 #define OPTION_VAL_YELLOW_14_HU "Sárga"
-#define OPTION_VAL_GRAY_15_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_HU NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_HU NULL
-#define OPTION_VAL_LIGHT_RED_2_20_HU NULL
-#define OPTION_VAL_MAGENTA_21_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_HU NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_HU NULL
+#define OPTION_VAL_GRAY_15_HU "Szürke"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_HU "Világoslila (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_HU "Világoszöld (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_HU "Világoszöld (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_HU "Világos ciánkék (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_HU "Világospiros (2)"
+#define OPTION_VAL_MAGENTA_21_HU "Bíbor"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_HU "Világoslila (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_HU "Világos narancs"
 #define OPTION_VAL_ORANGE_24_HU "Narancssárga"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_HU NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_HU NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_HU NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_HU "Világoslila (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_HU "Halványsárga"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_HU "Halványsárga (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU NULL
 #define OPTION_VAL_40_HU NULL
@@ -31871,6 +32502,35 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU,
@@ -32170,7 +32830,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_HU },
+         { "2",  OPTION_VAL_2_O27_HU },
          { "4",  OPTION_VAL_4_HU },
          { "6",  OPTION_VAL_6_HU },
          { NULL, NULL },
@@ -32563,7 +33223,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O25_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32714,7 +33374,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O25_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -32865,7 +33525,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O25_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -33016,7 +33676,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_O25_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -33174,6 +33834,10 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ID "Modifikasi resolusi pelukisan."
 #define OPTION_VAL_320X240_ID NULL
@@ -33250,7 +33914,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Tingkatkan grafis seni piksel 2D tulisan tangan. Hanya bisa digunakan di pemainan terpikselisasi 2D."
-#define OPTION_VAL_2_O25_ID NULL
+#define OPTION_VAL_2_O27_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID "Ukuran Terfilter Maks. Penskalaan Naik"
@@ -33525,6 +34189,35 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_ID,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID,
@@ -33824,7 +34517,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_ID },
+         { "2",  OPTION_VAL_2_O27_ID },
          { "4",  OPTION_VAL_4_ID },
          { "6",  OPTION_VAL_6_ID },
          { NULL, NULL },
@@ -34217,7 +34910,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O25_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34368,7 +35061,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O25_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34519,7 +35212,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O25_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34670,7 +35363,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_O25_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -34816,7 +35509,7 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_FRENCH_IT "Francese"
 #define OPTION_VAL_SPANISH_IT "Spagnolo"
 #define OPTION_VAL_ITALIAN_IT "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_IT NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_IT "HLE BIOS (Riavvio Richiesto)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_IT "Forza l'uso di BIOS di emulazione di alto livello."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_IT "Avvio in BIOS (Riavvio richiesto)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_IT "Avviare direttamente nel menu BIOS Dreamcast."
@@ -34828,6 +35521,10 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_IT "Abilita il pulsante SERVICE per NAOMI, per inserire le impostazioni del cabinato."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_IT "Imposta giochi NAOMI a Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_IT "Modificare le impostazioni del gioco per free play."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT "Emulazione Adattatore A banda larga"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT "Emulare l'adattatore a banda larga ethernet invece del modem. (Riavvio richiesto)"
+#define CORE_OPTION_NAME_UPNP_LABEL_IT "Abilita UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_IT "Usa UPnP per configurare automaticamente il router Internet per i giochi online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT "Risoluzione Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_IT "Modificare la risoluzione di rendering."
 #define OPTION_VAL_320X240_IT NULL
@@ -34904,7 +35601,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_IT "Post-elaborare l'immagine renderizzata per simulare effetti specifici alla GPU PowerVR2 e segnali video analogici."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_IT "Miglioramento Della Texture (xbrz)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_IT "Migliora la grafica grafica grafica a pixel 2D disegnata a mano. Dovrebbe essere usata solo con giochi in pixel 2D."
-#define OPTION_VAL_2_O25_IT NULL
+#define OPTION_VAL_2_O27_IT NULL
 #define OPTION_VAL_4_IT NULL
 #define OPTION_VAL_6_IT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_IT "Miglioramento Texture Dimensione Massima Filtrata"
@@ -35179,6 +35876,35 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_IT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT,
@@ -35478,7 +36204,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_IT },
+         { "2",  OPTION_VAL_2_O27_IT },
          { "4",  OPTION_VAL_4_IT },
          { "6",  OPTION_VAL_6_IT },
          { NULL, NULL },
@@ -35871,7 +36597,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O25_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -36022,7 +36748,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O25_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -36173,7 +36899,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O25_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -36324,7 +37050,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_O25_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -36482,6 +37208,10 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_JA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_JA NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_JA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_JA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_JA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_JA NULL
 #define OPTION_VAL_320X240_JA NULL
@@ -36558,7 +37288,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_JA NULL
-#define OPTION_VAL_2_O25_JA NULL
+#define OPTION_VAL_2_O27_JA NULL
 #define OPTION_VAL_4_JA NULL
 #define OPTION_VAL_6_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_JA NULL
@@ -36833,6 +37563,35 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_JA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA,
@@ -37132,7 +37891,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_JA },
+         { "2",  OPTION_VAL_2_O27_JA },
          { "4",  OPTION_VAL_4_JA },
          { "6",  OPTION_VAL_6_JA },
          { NULL, NULL },
@@ -37525,7 +38284,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O25_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37676,7 +38435,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O25_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37827,7 +38586,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O25_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -37978,7 +38737,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_O25_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -38136,6 +38895,10 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO "캐비넷 설정에 들어가기위한 NAOMI 서비스 버튼을 활성화합니다."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO "NAOMI 게임을 무료 플레이로 설정"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO "무료 플레이를 위해 게임의 코인 설정을 수정합니다."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_KO NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_KO NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO NULL
@@ -38212,7 +38975,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_KO "렌더된 이미지에 PowerVR2 GPU와 아날로그 비디오 신호에서 나타나는 효과를 후처리로 구현합니다."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_KO "텍스쳐 업스케일링 (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_KO "손으로 그려진 2D 픽셀아트 그래픽을 개선합니다. 2D 픽셀아트 게임에서만 사용되어야 합니다."
-#define OPTION_VAL_2_O25_KO NULL
+#define OPTION_VAL_2_O27_KO NULL
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_6_KO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO "텍스쳐 업스케일링 필터 최대 크기"
@@ -38487,6 +39250,35 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_KO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO,
@@ -38786,7 +39578,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_KO },
+         { "2",  OPTION_VAL_2_O27_KO },
          { "4",  OPTION_VAL_4_KO },
          { "6",  OPTION_VAL_6_KO },
          { NULL, NULL },
@@ -39179,7 +39971,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O25_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39330,7 +40122,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O25_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39481,7 +40273,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O25_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39632,7 +40424,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_O25_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -39790,6 +40582,10 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_NL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_NL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_NL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_NL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_NL NULL
 #define OPTION_VAL_320X240_NL NULL
@@ -39866,7 +40662,7 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NL NULL
-#define OPTION_VAL_2_O25_NL NULL
+#define OPTION_VAL_2_O27_NL NULL
 #define OPTION_VAL_4_NL NULL
 #define OPTION_VAL_6_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NL NULL
@@ -40141,6 +40937,35 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_NL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NL,
@@ -40440,7 +41265,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_NL },
+         { "2",  OPTION_VAL_2_O27_NL },
          { "4",  OPTION_VAL_4_NL },
          { "6",  OPTION_VAL_6_NL },
          { NULL, NULL },
@@ -40833,7 +41658,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O25_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -40984,7 +41809,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O25_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -41135,7 +41960,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O25_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -41286,7 +42111,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_O25_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -41444,6 +42269,10 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_NO NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NO NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_NO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NO NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_NO NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_NO NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NO "Intern oppløsning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_NO NULL
 #define OPTION_VAL_320X240_NO NULL
@@ -41520,7 +42349,7 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NO NULL
-#define OPTION_VAL_2_O25_NO NULL
+#define OPTION_VAL_2_O27_NO NULL
 #define OPTION_VAL_4_NO NULL
 #define OPTION_VAL_6_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NO NULL
@@ -41795,6 +42624,35 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_NO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NO,
@@ -42094,7 +42952,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_NO },
+         { "2",  OPTION_VAL_2_O27_NO },
          { "4",  OPTION_VAL_4_NO },
          { "6",  OPTION_VAL_6_NO },
          { NULL, NULL },
@@ -42487,7 +43345,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O25_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42638,7 +43496,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O25_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42789,7 +43647,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O25_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -42940,7 +43798,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_O25_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -43086,7 +43944,7 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_FRENCH_PL "francuski"
 #define OPTION_VAL_SPANISH_PL "hiszpański"
 #define OPTION_VAL_ITALIAN_PL "włoski"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL "HLE BIOS (wymagany restart)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PL NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_PL NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_PL NULL
@@ -43098,6 +43956,10 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PL "Ustaw gry NAOMI jako Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PL "Emulacja adaptera szerokopasmowego"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PL "Włącz UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_PL "Użyj UPnP, aby automatycznie skonfigurować router internetowy dla gier online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PL "Rozdzielczość wewnętrzna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PL NULL
 #define OPTION_VAL_320X240_PL NULL
@@ -43174,7 +44036,7 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PL NULL
-#define OPTION_VAL_2_O25_PL NULL
+#define OPTION_VAL_2_O27_PL NULL
 #define OPTION_VAL_4_PL NULL
 #define OPTION_VAL_6_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PL NULL
@@ -43449,6 +44311,35 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PL,
@@ -43748,7 +44639,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_PL },
+         { "2",  OPTION_VAL_2_O27_PL },
          { "4",  OPTION_VAL_4_PL },
          { "6",  OPTION_VAL_6_PL },
          { NULL, NULL },
@@ -44141,7 +45032,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O25_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44292,7 +45183,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O25_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44443,7 +45334,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O25_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44594,7 +45485,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_O25_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -44740,7 +45631,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_FRENCH_PT_BR "Francês"
 #define OPTION_VAL_SPANISH_PT_BR "Espanhol"
 #define OPTION_VAL_ITALIAN_PT_BR "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PT_BR "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PT_BR "Força o uso de uma BIOS criada com emulação de alto nível."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_PT_BR "Inicialização a partir da BIOS (requer reinício)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_PT_BR "Inicializa diretamente no menu da BIOS do Dreamcast."
@@ -44752,6 +45643,10 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PT_BR "Ativa o botão SERVICE da placa NAOMI para acessar a configuração do gabinete."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR "Resolução interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_BR "Modificar resolução de renderização."
 #define OPTION_VAL_320X240_PT_BR NULL
@@ -44828,7 +45723,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Pós-processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e os sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Redimensionamento de textura (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_BR "Melhora os gráficos 2D de 'pixel arte' desenhados à mão. Usar somente com jogos em 2D pixelado."
-#define OPTION_VAL_2_O25_PT_BR NULL
+#define OPTION_VAL_2_O27_PT_BR NULL
 #define OPTION_VAL_4_PT_BR NULL
 #define OPTION_VAL_6_PT_BR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_BR "Tamanho máximo do redimensionamento de texturas"
@@ -45103,6 +45998,35 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PT_BR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR,
@@ -45402,7 +46326,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_PT_BR },
+         { "2",  OPTION_VAL_2_O27_PT_BR },
          { "4",  OPTION_VAL_4_PT_BR },
          { "6",  OPTION_VAL_6_PT_BR },
          { NULL, NULL },
@@ -45795,7 +46719,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O25_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -45946,7 +46870,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O25_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -46097,7 +47021,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O25_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -46248,7 +47172,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_O25_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -46406,6 +47330,10 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_PT NULL
 #define OPTION_VAL_320X240_PT_PT NULL
@@ -46482,7 +47410,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_PT NULL
-#define OPTION_VAL_2_O25_PT_PT NULL
+#define OPTION_VAL_2_O27_PT_PT NULL
 #define OPTION_VAL_4_PT_PT NULL
 #define OPTION_VAL_6_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_PT NULL
@@ -46757,6 +47685,35 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_PT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PT_PT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_PT,
@@ -47056,7 +48013,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_PT_PT },
+         { "2",  OPTION_VAL_2_O27_PT_PT },
          { "4",  OPTION_VAL_4_PT_PT },
          { "6",  OPTION_VAL_6_PT_PT },
          { NULL, NULL },
@@ -47449,7 +48406,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O25_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47600,7 +48557,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O25_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47751,7 +48708,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O25_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -47902,7 +48859,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_O25_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -48048,7 +49005,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_FRENCH_RU "Французский"
 #define OPTION_VAL_SPANISH_RU "Испанский"
 #define OPTION_VAL_ITALIAN_RU "Итальянский"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_RU NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_RU "HLE BIOS (требуется перезапуск)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_RU "Принудительно использовать высокоуровневую эмуляцию BIOS."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_RU "Загрузка в BIOS (требуется перезапуск)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RU "Загружаться непосредственно в меню Dreamcast BIOS."
@@ -48060,6 +49017,10 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU "Эмулировать вместо модема широкополосный Ethernet-адаптер (требуется перезапуск)."
+#define CORE_OPTION_NAME_UPNP_LABEL_RU "Включить UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_RU "Использовать UPnP для автоматической настройки вашего Интернет-роутера для онлайн-игр."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU "Внутреннее разрешение"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RU "Настройка разрешения рендеринга."
 #define OPTION_VAL_320X240_RU NULL
@@ -48136,7 +49097,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU NULL
-#define OPTION_VAL_2_O25_RU NULL
+#define OPTION_VAL_2_O27_RU NULL
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU NULL
@@ -48411,6 +49372,35 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_RU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU,
@@ -48710,7 +49700,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_RU },
+         { "2",  OPTION_VAL_2_O27_RU },
          { "4",  OPTION_VAL_4_RU },
          { "6",  OPTION_VAL_6_RU },
          { NULL, NULL },
@@ -49103,7 +50093,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O25_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49254,7 +50244,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O25_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49405,7 +50395,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O25_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49556,7 +50546,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_O25_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -49714,6 +50704,10 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SK NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SK NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SK NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK "Vnútorné rozlíšenie"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SK NULL
 #define OPTION_VAL_320X240_SK NULL
@@ -49790,7 +50784,7 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SK NULL
-#define OPTION_VAL_2_O25_SK NULL
+#define OPTION_VAL_2_O27_SK NULL
 #define OPTION_VAL_4_SK NULL
 #define OPTION_VAL_6_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SK NULL
@@ -50065,6 +51059,35 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK,
@@ -50364,7 +51387,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_SK },
+         { "2",  OPTION_VAL_2_O27_SK },
          { "4",  OPTION_VAL_4_SK },
          { "6",  OPTION_VAL_6_SK },
          { NULL, NULL },
@@ -50757,7 +51780,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O25_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50908,7 +51931,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O25_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -51059,7 +52082,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O25_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -51210,7 +52233,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_O25_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -51368,6 +52391,10 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SR NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SR NULL
 #define OPTION_VAL_320X240_SR NULL
@@ -51444,7 +52471,7 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SR NULL
-#define OPTION_VAL_2_O25_SR NULL
+#define OPTION_VAL_2_O27_SR NULL
 #define OPTION_VAL_4_SR NULL
 #define OPTION_VAL_6_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SR NULL
@@ -51719,6 +52746,35 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SR,
@@ -52018,7 +53074,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_SR },
+         { "2",  OPTION_VAL_2_O27_SR },
          { "4",  OPTION_VAL_4_SR },
          { "6",  OPTION_VAL_6_SR },
          { NULL, NULL },
@@ -52411,7 +53467,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O25_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52562,7 +53618,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O25_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52713,7 +53769,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O25_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52864,7 +53920,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_O25_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -53022,6 +54078,10 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SV NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SV NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV NULL
 #define OPTION_VAL_320X240_SV NULL
@@ -53098,7 +54158,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SV NULL
-#define OPTION_VAL_2_O25_SV NULL
+#define OPTION_VAL_2_O27_SV NULL
 #define OPTION_VAL_4_SV NULL
 #define OPTION_VAL_6_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV NULL
@@ -53373,6 +54433,35 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SV,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV,
@@ -53672,7 +54761,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_SV },
+         { "2",  OPTION_VAL_2_O27_SV },
          { "4",  OPTION_VAL_4_SV },
          { "6",  OPTION_VAL_6_SV },
          { NULL, NULL },
@@ -54065,7 +55154,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O25_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -54216,7 +55305,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O25_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -54367,7 +55456,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O25_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -54518,7 +55607,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_O25_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -54676,6 +55765,10 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR "Kabin ayarlarına girmek için NAOMI için SERVICE düğmesini etkinleştirir."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_TR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_TR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR "Dahili Çözünürlük"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TR "İşleme çözünürlüğünü değiştirin."
 #define OPTION_VAL_320X240_TR NULL
@@ -54752,7 +55845,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TR "PowerVR2 GPU'ya ve analog video sinyallerine özgü efektleri simüle etmek için işlenen görüntüyü son işlemden geçirin."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_TR "Doku Yükseltme (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TR "Elle çizilmiş 2B piksel sanatsal grafiklerini geliştirin. Yalnızca 2D piksel oyunlarla kullanılmalıdır."
-#define OPTION_VAL_2_O25_TR NULL
+#define OPTION_VAL_2_O27_TR NULL
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_6_TR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TR "Doku Yükseltme Azami Filtre Boyutu"
@@ -55027,6 +56120,35 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_TR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR,
@@ -55326,7 +56448,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_TR },
+         { "2",  OPTION_VAL_2_O27_TR },
          { "4",  OPTION_VAL_4_TR },
          { "6",  OPTION_VAL_6_TR },
          { NULL, NULL },
@@ -55719,7 +56841,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O25_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55870,7 +56992,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O25_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -56021,7 +57143,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O25_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -56172,7 +57294,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_O25_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -56330,6 +57452,10 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_UK NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_UK "Встановити NAOMI ігри для безкоштовної гри"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_UK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_UK NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_UK NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK "Роздільна здатність"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_UK "Змінити роздільну здатність візуалізації."
 #define OPTION_VAL_320X240_UK NULL
@@ -56406,7 +57532,7 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_UK "Постобробка зображення для імітації ефектів відеоданих на PowerVR2 та аналогових відео сигналів."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_UK "Вдосконалення текстур (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_UK "Покращення графіки 2D пікселів. Має використовуватися лише з 2D піксельними іграми."
-#define OPTION_VAL_2_O25_UK NULL
+#define OPTION_VAL_2_O27_UK NULL
 #define OPTION_VAL_4_UK NULL
 #define OPTION_VAL_6_UK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_UK "Збільшення масштабу текстур. Відфільтрований розмір"
@@ -56681,6 +57807,35 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_UK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK,
@@ -56980,7 +58135,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_UK },
+         { "2",  OPTION_VAL_2_O27_UK },
          { "4",  OPTION_VAL_4_UK },
          { "6",  OPTION_VAL_6_UK },
          { NULL, NULL },
@@ -57373,7 +58528,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O25_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57524,7 +58679,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O25_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57675,7 +58830,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O25_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57826,7 +58981,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_O25_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -57984,6 +59139,10 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VAL NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_VAL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VAL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VAL NULL
 #define OPTION_VAL_320X240_VAL "320×240"
@@ -58060,7 +59219,7 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VAL NULL
-#define OPTION_VAL_2_O25_VAL NULL
+#define OPTION_VAL_2_O27_VAL NULL
 #define OPTION_VAL_4_VAL NULL
 #define OPTION_VAL_6_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VAL NULL
@@ -58335,6 +59494,35 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VAL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_VAL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VAL,
@@ -58634,7 +59822,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_VAL },
+         { "2",  OPTION_VAL_2_O27_VAL },
          { "4",  OPTION_VAL_4_VAL },
          { "6",  OPTION_VAL_6_VAL },
          { NULL, NULL },
@@ -59027,7 +60215,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O25_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -59178,7 +60366,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O25_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -59329,7 +60517,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O25_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -59480,7 +60668,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_O25_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -59638,6 +60826,10 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_VN NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_VN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VN NULL
 #define OPTION_VAL_320X240_VN NULL
@@ -59714,7 +60906,7 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VN NULL
-#define OPTION_VAL_2_O25_VN NULL
+#define OPTION_VAL_2_O27_VN NULL
 #define OPTION_VAL_4_VN NULL
 #define OPTION_VAL_6_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VN NULL
@@ -59989,6 +61181,35 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_VN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VN,
@@ -60288,7 +61509,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_O25_VN },
+         { "2",  OPTION_VAL_2_O27_VN },
          { "4",  OPTION_VAL_4_VN },
          { "6",  OPTION_VAL_6_VN },
          { NULL, NULL },
@@ -60681,7 +61902,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O25_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -60832,7 +62053,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O25_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -60983,7 +62204,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O25_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -61134,7 +62355,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_O25_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
