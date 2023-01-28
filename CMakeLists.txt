@@ -514,7 +514,12 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_X11)
 	endif()
 
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
+	find_library(LIBRT rt)
+	if(LIBRT)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBRT})
+	endif()
+
+	target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
 if(ASAN)
