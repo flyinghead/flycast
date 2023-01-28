@@ -415,10 +415,10 @@ extern AudioVolumeOption AudioVolume;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
-#ifdef USE_DX9
-		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
-#elif defined(USE_DX11)
+#if defined(USE_DX11)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
+#elif defined(USE_DX9)
+		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
 #else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
 #endif
