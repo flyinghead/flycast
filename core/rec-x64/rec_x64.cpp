@@ -25,10 +25,6 @@ struct DynaRBI : RuntimeBlockInfo
 	u32 Relink() override {
 		return 0;
 	}
-
-	void Relocate(void* dst) override {
-		verify(false);
-	}
 };
 
 static void (*mainloop)();

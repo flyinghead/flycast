@@ -80,7 +80,6 @@ extern "C" char *stpcpy(char *dst, char const *src)
 struct DynaRBI: RuntimeBlockInfo
 {
 	virtual u32 Relink();
-	virtual void Relocate(void* dst) { }
 	Register T_reg;
 };
 

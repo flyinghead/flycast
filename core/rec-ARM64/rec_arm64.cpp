@@ -48,10 +48,6 @@ static void generate_mainloop();
 struct DynaRBI : RuntimeBlockInfo
 {
 	u32 Relink() override;
-
-	void Relocate(void* dst) override {
-		verify(false);
-	}
 };
 
 static u64 jmp_stack;

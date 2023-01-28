@@ -18,12 +18,7 @@
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
-		//verify(false);
 		return 0;
-	}
-
-	virtual void Relocate(void* dst) {
-		verify(false);
 	}
 };
 

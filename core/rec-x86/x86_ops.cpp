@@ -25,6 +25,7 @@
 #include "rec_x86.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_interrupts.h"
 #include "hw/mem/_vmem.h"
 #include "oslib/oslib.h"
 
@@ -63,9 +64,6 @@ static const u8 *MemHandlerStart, *MemHandlerEnd;
 
 void X86Compiler::genMemHandlers()
 {
-	// make sure the memory handlers are set
-	verify(ReadMem8 != nullptr);
-
 	MemHandlerStart = getCurr();
 	for (int type = 0; type < MemType::Count; type++)
 	{
@@ -77,6 +75,7 @@ void X86Compiler::genMemHandlers()
 
 				if (type == MemType::Fast && _nvmem_enabled())
 				{
+					// save the original address in eax so it can be restored during rewriting
 					mov(eax, ecx);
 					and_(ecx, 0x1FFFFFFF);
 					Xbyak::Address address = dword[ecx];
@@ -134,8 +133,8 @@ void X86Compiler::genMemHandlers()
 					Xbyak::Label no_sqw;
 
 					mov(eax, ecx);
-					shr(eax, 26);
-					cmp(eax, 0x38);
+					shr(eax, 28);
+					cmp(eax, 0xE);
 					jne(no_sqw);
 					and_(ecx, 0x3F);
 
@@ -161,14 +160,14 @@ void X86Compiler::genMemHandlers()
 #endif
 						movss(dword[esp], xmm0);
 						movss(dword[esp + 4], xmm1);
-						call((const void *)WriteMem64);	// dynacall adds 8 to esp
+						call((const void *)_vmem_WriteMem64);	// dynacall adds 8 to esp
 						alignStack(4);
 					}
 					else
 					{
 						if (size == MemSize::F32)
 							movd(edx, xmm0);
-						jmp((const void *)WriteMem32);	// tail call
+						jmp((const void *)_vmem_WriteMem32);	// tail call
 						continue;
 					}
 				}
@@ -181,31 +180,31 @@ void X86Compiler::genMemHandlers()
 						case MemSize::S8:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)ReadMem8);
+							call((const void *)_vmem_ReadMem8);
 							movsx(eax, al);
 							alignStack(12);
 							break;
 						case MemSize::S16:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)ReadMem16);
+							call((const void *)_vmem_ReadMem16);
 							movsx(eax, ax);
 							alignStack(12);
 							break;
 						case MemSize::S32:
-							jmp((const void *)ReadMem32);	// tail call
+							jmp((const void *)_vmem_ReadMem32);	// tail call
 							continue;
 						case MemSize::F32:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)ReadMem32);
+							call((const void *)_vmem_ReadMem32);
 							movd(xmm0, eax);
 							alignStack(12);
 							break;
 						case MemSize::F64:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)ReadMem64);
+							call((const void *)_vmem_ReadMem64);
 							movd(xmm0, eax);
 							movd(xmm1, edx);
 							alignStack(12);
@@ -218,17 +217,17 @@ void X86Compiler::genMemHandlers()
 					{
 						switch (size) {
 						case MemSize::S8:
-							jmp((const void *)WriteMem8);	// tail call
+							jmp((const void *)_vmem_WriteMem8);	// tail call
 							continue;
 						case MemSize::S16:
-							jmp((const void *)WriteMem16);	// tail call
+							jmp((const void *)_vmem_WriteMem16);	// tail call
 							continue;
 						case MemSize::S32:
-							jmp((const void *)WriteMem32);	// tail call
+							jmp((const void *)_vmem_WriteMem32);	// tail call
 							continue;
 						case MemSize::F32:
 							movd(edx, xmm0);
-							jmp((const void *)WriteMem32);	// tail call
+							jmp((const void *)_vmem_WriteMem32);	// tail call
 							continue;
 						case MemSize::F64:
 #ifndef _WIN32
@@ -240,7 +239,7 @@ void X86Compiler::genMemHandlers()
 #endif
 							movss(dword[esp], xmm0);
 							movss(dword[esp + 4], xmm1);
-							call((const void *)WriteMem64);	// dynacall adds 8 to esp
+							call((const void *)_vmem_WriteMem64);	// dynacall adds 8 to esp
 							alignStack(4);
 							break;
 						default:
@@ -255,15 +254,85 @@ void X86Compiler::genMemHandlers()
 	MemHandlerEnd = getCurr();
 }
 
+void X86Compiler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write)
+{
+	if (mmu_enabled())
+	{
+#ifdef FAST_MMU
+		Xbyak::Label inCache;
+		Xbyak::Label done;
+
+		mov(eax, ecx);
+		shr(eax, 12);
+		mov(eax, dword[(uintptr_t)mmuAddressLUT + eax * 4]);
+		test(eax, eax);
+		jne(inCache);
+#endif
+		mov(edx, write);
+		push(block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		call((void*)mmuDynarecLookup);
+		mov(ecx, eax);
+#ifdef FAST_MMU
+		jmp(done);
+		L(inCache);
+		and_(ecx, 0xFFF);
+		or_(ecx, eax);
+		L(done);
+#endif
+	}
+}
+
+[[noreturn]]
+static DYNACALL void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+{
+	if (pc & 1)
+	{
+		// Delay slot
+		AdjustDelaySlotException(ex);
+		pc--;
+	}
+	Do_Exception(pc, ex.expEvn);
+	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
+	X86Compiler::handleException();
+	// not reached
+	std::abort();
+}
+
+static DYNACALL void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+{
+	try {
+		oph(op);
+	} catch (SH4ThrownException& ex) {
+		handle_sh4_exception(ex, pc);
+	}
+}
+
+static DYNACALL void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+{
+	try {
+		do_sqw_mmu(addr);
+	} catch (SH4ThrownException& ex) {
+		handle_sh4_exception(ex, pc);
+	}
+}
+
 void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode& op)
 {
 	switch (op.op)
 	{
 	case shop_ifb:
+		if (mmu_enabled())
+		{
+			mov(edx, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+			push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+		}
 		if (op.rs1.is_imm() && op.rs1.imm_value())
 			mov(dword[&next_pc], op.rs2.imm_value());
 		mov(ecx, op.rs3.imm_value());
-		genCall(OpDesc[op.rs3.imm_value()]->oph);
+		if (!mmu_enabled())
+			genCall(OpDesc[op.rs3.imm_value()]->oph);
+		else
+			genCall(interpreter_fallback);
 
 		break;
 
@@ -313,11 +382,14 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				break;
 			}
 
-			freezeXMM();
+			if (mmu_enabled())
+				freezeXMM();
+			genMmuLookup(block, op, 0);
 			const u8 *start = getCurr();
 			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::R]);
 			verify(getCurr() - start == 5);
-			thawXMM();
+			if (mmu_enabled())
+				thawXMM();
 
 			if (memOpSize <= MemSize::S32)
 			{
@@ -375,6 +447,10 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				break;
 			}
 
+			if (mmu_enabled())
+				freezeXMM();
+			genMmuLookup(block, op, 1);
+
 			if (memOpSize <= MemSize::S32)
 				shil_param_to_host_reg(op.rs2, edx);
 			else if (memOpSize == MemSize::F32)
@@ -391,11 +467,11 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 					movd(xmm1, dword[op.rs2.reg_ptr() + 1]);
 				}
 			}
-			freezeXMM();
 			const u8 *start = getCurr();
 			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::W]);
 			verify(getCurr() - start == 5);
-			thawXMM();
+			if (mmu_enabled())
+				thawXMM();
 		}
 		break;
 
@@ -420,7 +496,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			if (op.rs1.is_imm())
 			{
 				// this test shouldn't be necessary
-				if ((op.rs1.imm_value() & 0xFC000000) != 0xE0000000)
+				if ((op.rs1.imm_value() & 0xF0000000) != 0xE0000000)
 					break;
 				mov(ecx, op.rs1.imm_value());
 			}
@@ -437,20 +513,28 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 					rn = eax;
 				}
 				mov(ecx, rn);
-				shr(ecx, 26);
-				cmp(ecx, 0x38);
+				shr(ecx, 28);
+				cmp(ecx, 0xE);
 				jne(no_sqw);
 
 				mov(ecx, rn);
 			}
-			if (CCN_MMUCR.AT == 1)
-				genCall(do_sqw_mmu);
+			if (mmu_enabled())
+			{
+				mov(edx, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+				genCall(do_sqw_mmu_no_ex);
+			}
 			else
 			{
-				mov(edx, (size_t)sh4rcb.sq_buffer);
-				freezeXMM();
-				call(dword[&do_sqw_nommu]);
-				thawXMM();
+				if (CCN_MMUCR.AT == 1)
+					genCall(do_sqw_mmu);
+				else
+				{
+					mov(edx, (size_t)sh4rcb.sq_buffer);
+					freezeXMM();
+					call(dword[&do_sqw_nommu]);
+					thawXMM();
+				}
 			}
 			L(no_sqw);
 		}
@@ -507,7 +591,7 @@ bool X86Compiler::rewriteMemAccess(host_context_t &context)
 
 			//found !
 			const u8 *start = getCurr();
-			if (op == MemOp::W && size >= MemSize::S32 && (context.eax >> 26) == 0x38)
+			if (op == MemOp::W && size >= MemSize::S32 && (context.eax >> 28) == 0xE)
 				call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
 			else
 				call(MemHandlers[MemType::Slow][size][op]);

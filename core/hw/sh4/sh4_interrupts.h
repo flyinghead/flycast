@@ -88,7 +88,7 @@ inline static void InterruptMask(InterruptID intr, u32 v)
 
 int UpdateINTC();
 
-bool Do_Exception(u32 epc, Sh4ExceptionCode expEvn);
+void Do_Exception(u32 epc, Sh4ExceptionCode expEvn);
 
 bool SRdecode();
 void SIIDRebuild();

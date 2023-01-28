@@ -9,7 +9,8 @@
 #include "blockmanager.h"
 #include "ngen.h"
 
-#include "../sh4_core.h"
+#include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_sched.h"

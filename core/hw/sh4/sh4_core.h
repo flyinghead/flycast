@@ -96,8 +96,6 @@ static inline void SetXD(u32 n,f64 val)
 	xf[(n<<1) | 0]=t.sgl[1];
 }
 
-bool Do_Exception(u32 epc, Sh4ExceptionCode expEvn);
-
 struct SH4ThrownException
 {
 	SH4ThrownException(u32 epc, Sh4ExceptionCode expEvn) : epc(epc), expEvn(expEvn) { }

@@ -94,7 +94,7 @@ alignas(64) u32 InterruptBit[32];
 //Maps sh4 interrupt level to inclusive bitfield
 alignas(64) u32 InterruptLevelBit[16];
 
-static bool Do_Interrupt(Sh4ExceptionCode intEvn);
+static void Do_Interrupt(Sh4ExceptionCode intEvn);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
@@ -149,14 +149,13 @@ bool SRdecode()
 	return Sh4cntx.interrupt_pend;
 }
 
-
-
 int UpdateINTC()
 {
 	if (!Sh4cntx.interrupt_pend)
 		return 0;
 
-	return Do_Interrupt(InterruptEnvId[bitscanrev(Sh4cntx.interrupt_pend)]);
+	Do_Interrupt(InterruptEnvId[bitscanrev(Sh4cntx.interrupt_pend)]);
+	return 1;
 }
 
 void SetInterruptPend(InterruptID intr)
@@ -181,7 +180,7 @@ void ResetInterruptMask(InterruptID intr)
 	recalc_pending_itrs();
 }
 
-static bool Do_Interrupt(Sh4ExceptionCode intEvn)
+static void Do_Interrupt(Sh4ExceptionCode intEvn)
 {
 	CCN_INTEVT = intEvn;
 
@@ -194,11 +193,9 @@ static bool Do_Interrupt(Sh4ExceptionCode intEvn)
 	UpdateSR();
 	next_pc = vbr + 0x600;
 	debugger::subroutineCall();
-
-	return true;
 }
 
-bool Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
+void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 {
 	assert((expEvn >= Sh4Ex_TlbMissRead && expEvn <= Sh4Ex_SlotIllegalInstr)
 			|| expEvn == Sh4Ex_FpuDisabled || expEvn == Sh4Ex_SlotFpuDisabled || expEvn == Sh4Ex_UserBreak);
@@ -218,7 +215,6 @@ bool Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 	debugger::subroutineCall();
 
 	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);
-	return true;
 }
 
 

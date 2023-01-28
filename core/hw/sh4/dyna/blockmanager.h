@@ -61,7 +61,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual ~RuntimeBlockInfo();
 
 	virtual u32 Relink()=0;
-	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
 	std::vector<RuntimeBlockInfoPtr> pre_refs;

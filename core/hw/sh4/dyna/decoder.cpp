@@ -12,6 +12,7 @@
 #include "ngen.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
 #include "decoder_opcodes.h"

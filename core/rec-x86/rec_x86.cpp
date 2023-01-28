@@ -37,6 +37,7 @@ static void (*ngen_LinkBlock_cond_Next_stub)();
 static void (*ngen_LinkBlock_cond_Branch_stub)();
 static void (*ngen_LinkBlock_Generic_stub)();
 static void (*ngen_blockcheckfail)();
+void (*X86Compiler::handleException)();
 
 static X86Compiler* compiler;
 
@@ -44,6 +45,11 @@ static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand
 static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
 alignas(16) static f32 thaw_regs[4];
 UnwindInfo unwinder;
+
+static bool restarting;
+static u64 jmp_esp;
+
+static void generate_mainloop();
 
 void X86RegAlloc::doAlloc(RuntimeBlockInfo* block)
 {
@@ -69,14 +75,11 @@ void X86RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 struct DynaRBI : RuntimeBlockInfo
 {
 	u32 Relink() override;
-
-	void Relocate(void* dst) override {
-		verify(false);
-	}
 };
 
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
+	generate_mainloop();
 	return new DynaRBI();
 }
 
@@ -108,6 +111,20 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	unwinder.endProlog(0);
 
 	checkBlock(force_checks, block);
+	if (mmu_enabled() && block->has_fpu_op)
+	{
+		Xbyak::Label fpu_enabled;
+		mov(eax, dword[&sr]);
+		test(eax, 0x8000);			// test SR.FD bit
+		jz(fpu_enabled);
+		push(Sh4Ex_FpuDisabled);	// exception code
+		push(block->vaddr);			// pc
+		call((void (*)())Do_Exception);
+		add(esp, 8);
+		mov(ecx, dword[&next_pc]);
+		jmp((const void *)no_update);
+		L(fpu_enabled);
+	}
 
 	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
 	Xbyak::Label no_up;
@@ -211,9 +228,17 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	{
 	case BET_Cond_0:
 	case BET_Cond_1:
-		{
-			cmp(dword[GetRegPtr(block->has_jcond ? reg_pc_dyn : reg_sr_T)], (u32)block->BlockType & 1);
+		cmp(dword[GetRegPtr(block->has_jcond ? reg_pc_dyn : reg_sr_T)], (u32)block->BlockType & 1);
 
+		if (mmu_enabled())
+		{
+			mov(ecx, block->BranchBlock);
+			mov(eax, block->NextBlock);
+			cmovne(ecx, eax);
+			jmp((const void *)no_update);
+		}
+		else
+		{
 			Xbyak::Label noBranch;
 
 			jne(noBranch);
@@ -232,6 +257,12 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 				else
 					call(ngen_LinkBlock_cond_Next_stub);
 			}
+			nop();
+			nop();
+			nop();
+			nop();
+			nop();
+			nop();
 		}
 		break;
 
@@ -246,10 +277,23 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 
 	case BET_StaticCall:
 	case BET_StaticJump:
-		if (block->pBranchBlock)
-			jmp((const void *)block->pBranchBlock->code, T_NEAR);
+		if (!mmu_enabled())
+		{
+			if (block->pBranchBlock)
+				jmp((const void *)block->pBranchBlock->code, T_NEAR);
+			else
+				call(ngen_LinkBlock_Generic_stub);
+			nop();
+			nop();
+			nop();
+			nop();
+			nop();
+		}
 		else
-			call(ngen_LinkBlock_Generic_stub);
+		{
+			mov(ecx, block->BranchBlock);
+			jmp((const void *)no_update);
+		}
 		break;
 
 	case BET_StaticIntr:
@@ -393,21 +437,38 @@ void X86Compiler::genMainloop()
 #endif
 	unwinder.endProlog(getSize());
 
+	// homemade longjmp to handle mmu exceptions
+	mov(dword[&jmp_esp], esp);
+	Xbyak::Label longjmpLabel;
+	L(longjmpLabel);
+
 	mov(ecx, dword[&Sh4cntx.pc]);
 
-	mov(eax, 0);
 	//next_pc _MUST_ be on ecx
 	Xbyak::Label cleanup;
 //no_update:
 	Xbyak::Label no_updateLabel;
 	L(no_updateLabel);
-	mov(esi, ecx);	// save sh4 pc in ESI, used below if FPCB is still empty for this address
-	mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
-	and_(ecx, RAM_SIZE_MAX - 2);
-	jmp(dword[eax + ecx * 2]);
+	mov(edx, dword[&Sh4cntx.CpuRunning]);
+	cmp(edx, 0);
+	jz(cleanup);
+	if (!mmu_enabled())
+	{
+		mov(esi, ecx);	// save sh4 pc in ESI, used below if FPCB is still empty for this address
+		mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
+		and_(ecx, RAM_SIZE_MAX - 2);
+		jmp(dword[eax + ecx * 2]);
+	}
+	else
+	{
+		mov(dword[&next_pc], ecx);
+		call((void *)bm_GetCodeByVAddr);
+		jmp(eax);
+	}
 
 //cleanup:
 	L(cleanup);
+	mov(dword[&next_pc], ecx);
 #ifndef _WIN32
 	// 16-byte alignment
 	add(esp, 12);
@@ -425,9 +486,6 @@ void X86Compiler::genMainloop()
 	pop(ecx);
 	call((void *)rdv_DoInterrupts);
 	mov(ecx, eax);
-	mov(edx, dword[&Sh4cntx.CpuRunning]);
-	cmp(edx, 0);
-	jz(cleanup);
 	jmp(no_updateLabel);
 
 //ngen_LinkBlock_Shared_stub:
@@ -495,15 +553,35 @@ void X86Compiler::genMainloop()
 //ngen_FailedToFindBlock_:
 	Xbyak::Label failedToFindBlock;
 	L(failedToFindBlock);
-	mov(ecx, esi);	// get back the saved sh4 PC saved above
-	call((void *)rdv_FailedToFindBlock);
+	if (mmu_enabled())
+		call((void *)rdv_FailedToFindBlock_pc);
+	else
+	{
+		mov(ecx, esi);	// get back the saved sh4 PC saved above
+		call((void *)rdv_FailedToFindBlock);
+	}
 	jmp(eax);
 
 //ngen_blockcheckfail:
 	Xbyak::Label ngen_blockcheckfailLabel;
 	L(ngen_blockcheckfailLabel);
 	call((void *)rdv_BlockCheckFail);
+	if (mmu_enabled())
+	{
+		Xbyak::Label jumpblockLabel;
+		cmp(eax, 0);
+		jne(jumpblockLabel);
+		mov(ecx, dword[&next_pc]);
+		jmp(no_updateLabel);
+		L(jumpblockLabel);
+	}
 	jmp(eax);
+
+//handleException:
+	Xbyak::Label handleExceptionLabel;
+	L(handleExceptionLabel);
+	mov(esp, dword[&jmp_esp]);
+	jmp(longjmpLabel);
 
 	unwindSize = unwinder.end(getSize() - startOffset);
 	setSize(getSize() + unwindSize);
@@ -518,8 +596,14 @@ void X86Compiler::genMainloop()
 	ngen_LinkBlock_cond_Branch_stub = (void (*)())ngen_LinkBlock_cond_Branch_label.getAddress();
 	ngen_LinkBlock_Generic_stub = (void (*)())ngen_LinkBlock_Generic_label.getAddress();
 	ngen_blockcheckfail = (void (*)())ngen_blockcheckfailLabel.getAddress();
+	X86Compiler::handleException = (void (*)())handleExceptionLabel.getAddress();
 
 	emit_Skip(getSize());
+}
+
+void ngen_HandleException(host_context_t &context)
+{
+	context.pc = (uintptr_t)X86Compiler::handleException;
 }
 
 bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -527,6 +611,34 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 	if (!op.rs1.is_imm())
 		return false;
 	u32 addr = op.rs1.imm_value();
+	if (mmu_enabled() && mmu_is_translated(addr, op.size))
+	{
+		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+		u32 paddr;
+		u32 rv;
+		switch (op.size)
+		{
+		case 1:
+			rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
+			break;
+		case 2:
+			rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
+			break;
+		case 4:
+		case 8:
+			rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+			break;
+		default:
+			rv = 0;
+			die("Invalid immediate size");
+			break;
+		}
+		if (rv != MMU_ERROR_NONE)
+			return false;
+		addr = paddr;
+	}
 	bool isram = false;
 	void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
 
@@ -637,6 +749,34 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 	if (!op.rs1.is_imm())
 		return false;
 	u32 addr = op.rs1.imm_value();
+	if (mmu_enabled() && mmu_is_translated(addr, op.size))
+	{
+		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+		u32 paddr;
+		u32 rv;
+		switch (op.size)
+		{
+		case 1:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
+			break;
+		case 2:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
+			break;
+		case 4:
+		case 8:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+			break;
+		default:
+			rv = 0;
+			die("Invalid immediate size");
+			break;
+		}
+		if (rv != MMU_ERROR_NONE)
+			return false;
+		addr = paddr;
+	}
 	bool isram = false;
 	void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
 
@@ -724,10 +864,19 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 
 void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 {
+	if (mmu_enabled() || smc_checks)
+		mov(ecx, block->addr);
+
+	if (mmu_enabled())
+	{
+		mov(eax, dword[&next_pc]);
+		cmp(eax, block->vaddr);
+		jne(reinterpret_cast<const void*>(ngen_blockcheckfail));
+	}
+
 	if (!smc_checks)
 		return;
 
-	mov(ecx, block->addr);
 	s32 sz = block->sh4_code_size;
 	u32 sa = block->addr;
 	while (sz > 0)
@@ -750,9 +899,10 @@ void ngen_init()
 {
 }
 
-void ngen_ResetBlocks()
+static void generate_mainloop()
 {
-	unwinder.clear();
+	if (mainloop != nullptr)
+		return;
 
 	compiler = new X86Compiler();
 
@@ -768,12 +918,34 @@ void ngen_ResetBlocks()
 	ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
 }
 
+void ngen_ResetBlocks()
+{
+	mainloop = nullptr;
+	unwinder.clear();
+
+	if (p_sh4rcb->cntx.CpuRunning)
+	{
+		// Force the dynarec out of mainloop() to regenerate it
+		p_sh4rcb->cntx.CpuRunning = 0;
+		restarting = true;
+	}
+	else
+		generate_mainloop();
+}
+
 void ngen_mainloop(void* v_cntx)
 {
 	try {
-		mainloop();
-	} catch (const SH4ThrownException&) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+		do {
+			restarting = false;
+			generate_mainloop();
+
+			mainloop();
+			if (restarting)
+				p_sh4rcb->cntx.CpuRunning = 1;
+		} while (restarting);
+	} catch (const SH4ThrownException& e) {
+		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop %x pc %x", e.expEvn, e.epc);
 		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
