@@ -112,9 +112,9 @@ LogManager::LogManager()
 	m_log[LogTypes::VMEM] = {"VMEM", "Virtual Memory Management"};
 	m_log[LogTypes::MODEM] = {"MODEM", "Modem and Network"};
 	m_log[LogTypes::NAOMI] = {"NAOMI", "Naomi"};
-	m_log[LogTypes::PVR] = {"PVR", "PowerVR GPU"};
+	m_log[LogTypes::PVR] = {"PVR", "GPU Emulation"};
 	m_log[LogTypes::REIOS] = {"REIOS", "HLE BIOS"};
-	m_log[LogTypes::RENDERER] = {"RENDERER", "OpenGL Renderer"};
+	m_log[LogTypes::RENDERER] = {"RENDERER", "Graphics Renderer"};
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
@@ -185,6 +185,8 @@ static std::string GetTimeFormatted()
 void LogManager::Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
 		int line, const char* format, va_list args)
 {
+	if (settings.naomi.multiboard && !settings.naomi.slave)
+		return;
 	return LogWithFullPath(level, type, file + m_path_cutoff_point, line, format, args);
 }
 
