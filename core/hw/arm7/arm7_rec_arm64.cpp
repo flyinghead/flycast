@@ -23,12 +23,11 @@
 
 #include <sstream>
 #include "arm7_rec.h"
-#include "hw/mem/_vmem.h"
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 //#include <aarch32/disasm-aarch32.h>
 #include "rec-ARM64/arm64_unwind.h"
-#include "stdclass.h"
+#include "oslib/virtmem.h"
 
 namespace aicaarm {
 
@@ -624,7 +623,7 @@ public:
 
 		FinalizeCode();
 		verify((size_t)GetBuffer()->GetCursorOffset() <= GetBuffer()->GetCapacity());
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
@@ -728,7 +727,7 @@ public:
 		size_t unwindSize = unwinder.end(recompiler::spaceLeft() - 128, (ptrdiff_t)recompiler::writeToExec(nullptr));
 		verify(unwindSize <= 128);
 
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());

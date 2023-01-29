@@ -35,6 +35,7 @@ using namespace vixl::aarch32;
 #include "hw/sh4/sh4_mem.h"
 #include "cfg/option.h"
 #include "arm_unwind.h"
+#include "oslib/virtmem.h"
 
 //#define CANONICALTEST
 
@@ -95,7 +96,7 @@ public:
 
 	void Finalize() {
 		FinalizeCode();
-		vmem_platform_flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
+		virtmem::flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
 				GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1);
 	}
 };
@@ -583,8 +584,8 @@ static const void *_mem_hndl_SQ32[3][14];
 static const void *_mem_hndl[2][3][14];
 const void * const _mem_func[2][2] =
 {
-	{ (void *)_vmem_WriteMem32, (void *)_vmem_WriteMem64 },
-	{ (void *)_vmem_ReadMem32, (void *)_vmem_ReadMem64 },
+	{ (void *)addrspace::write32, (void *)addrspace::write64 },
+	{ (void *)addrspace::read32, (void *)addrspace::read64 },
 };
 
 const struct
@@ -889,7 +890,7 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_read_const(addr, isram, std::min(4u, memop_bytes[optp]));
+	void* ptr = addrspace::readConst(addr, isram, std::min(4u, memop_bytes[optp]));
 
 	Register rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapReg(op->rd) : r0;
 
@@ -1023,7 +1024,7 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(addr, isram, std::min(4u, memop_bytes[optp]));
+	void* ptr = addrspace::writeConst(addr, isram, std::min(4u, memop_bytes[optp]));
 
 	Register rs2 = r1;
 	SRegister rs2f = s0;
@@ -1158,7 +1159,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				Register raddr = GenMemAddr(op);
 				genMmuLookup(block, *op, 0, raddr);
 
-				if (_nvmem_enabled()) {
+				if (addrspace::virtmemEnabled()) {
 					ass.Bic(r1, raddr, optp == SZ_32F || optp == SZ_64F ? 0xE0000003 : 0xE0000000);
 
 					switch(optp)
@@ -1272,7 +1273,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 					else
 						rs2 = reg.mapReg(op->rs2);
 				}
-				if (_nvmem_enabled())
+				if (addrspace::virtmemEnabled())
 				{
 					ass.Bic(r1, raddr, optp == SZ_32F || optp == SZ_64F ? 0xE0000003 : 0xE0000000);
 
@@ -2385,12 +2386,12 @@ static void generate_mainloop()
     // Memory handlers
     for (int s=0;s<6;s++)
 	{
-		const void* fn=s==0?(void*)_vmem_ReadMem8SX32:
-				 s==1?(void*)_vmem_ReadMem16SX32:
-				 s==2?(void*)_vmem_ReadMem32:
-				 s==3?(void*)_vmem_WriteMem8:
-				 s==4?(void*)_vmem_WriteMem16:
-				 s==5?(void*)_vmem_WriteMem32:
+		const void* fn=s==0?(void*)addrspace::read8SX32:
+				 s==1?(void*)addrspace::read16SX32:
+				 s==2?(void*)addrspace::read32:
+				 s==3?(void*)addrspace::write8:
+				 s==4?(void*)addrspace::write16:
+				 s==5?(void*)addrspace::write32:
 				 0;
 
 		bool read=s<=2;
@@ -2433,7 +2434,7 @@ static void generate_mainloop()
 				ass.Cmp(r1, 0x38);
 				ass.And(r1, r0, 0x3F);
 				ass.Add(r1, r1, r8);
-				jump((void *)&_vmem_WriteMem64, ne);
+				jump((void *)&addrspace::write64, ne);
 				ass.Strd(r2, r3, MemOperand(r1, rcbOffset(sq_buffer)));
 			}
 			else
@@ -2444,7 +2445,7 @@ static void generate_mainloop()
 				ass.Cmp(r2, 0x38);
 				if (reg != 0)
 					ass.Mov(ne, r0, Register(reg));
-				jump((void *)&_vmem_WriteMem32, ne);
+				jump((void *)&addrspace::write32, ne);
 				ass.Str(r1, MemOperand(r3, rcbOffset(sq_buffer)));
 			}
 			ass.Bx(lr);

@@ -12,7 +12,7 @@
 #include "hw/modem/modem.h"
 #include "hw/naomi/naomi.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
@@ -278,12 +278,12 @@ void sh4_area0_Term()
 
 
 //AREA 0
-static _vmem_handler area0_handler;
-static _vmem_handler area0_mirror_handler;
+static addrspace::handler area0_handler;
+static addrspace::handler area0_mirror_handler;
 
 void map_area0_init()
 {
-#define registerHandler(system, mirror) _vmem_register_handler \
+#define registerHandler(system, mirror) addrspace::registerHandler \
 		(ReadMem_area0<u8, system, mirror>, ReadMem_area0<u16, system, mirror>, ReadMem_area0<u32, system, mirror>,	\
 		 WriteMem_area0<u8, system, mirror>, WriteMem_area0<u16, system, mirror>, WriteMem_area0<u32, system, mirror>)
 
@@ -313,8 +313,8 @@ void map_area0(u32 base)
 {
 	verify(base<0xE0);
 
-	_vmem_map_handler(area0_handler, 0x00 | base, 0x01 | base);
-	_vmem_map_handler(area0_mirror_handler, 0x02 | base, 0x03 | base);
+	addrspace::mapHandler(area0_handler, 0x00 | base, 0x01 | base);
+	addrspace::mapHandler(area0_mirror_handler, 0x02 | base, 0x03 | base);
 
 	//0x0240 to 0x03FF mirrors 0x0040 to 0x01FF (no flashrom or bios)
 	//0x0200 to 0x023F are unused

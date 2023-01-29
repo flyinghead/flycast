@@ -2,7 +2,7 @@
 #include "CustomTexture.h"
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 
 #include <algorithm>
 #include <mutex>
@@ -200,7 +200,7 @@ static void vramlock_list_add(vram_block* block)
 		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
 		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
-			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
+			addrspace::protectVram(i * PAGE_SIZE, PAGE_SIZE);
 		auto it = std::find(list.begin(), list.end(), nullptr);
 		if (it != list.end())
 			*it = block;
@@ -237,7 +237,7 @@ bool VramLockedWriteOffset(size_t offset)
 		}
 		list.clear();
 
-		_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
+		addrspace::unprotectVram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
 	}
 
 	return true;
@@ -245,7 +245,7 @@ bool VramLockedWriteOffset(size_t offset)
 
 bool VramLockedWrite(u8* address)
 {
-	u32 offset = _vmem_get_vram_offset(address);
+	u32 offset = addrspace::getVramOffset(address);
 	if (offset == (u32)-1)
 		return false;
 	return VramLockedWriteOffset(offset);

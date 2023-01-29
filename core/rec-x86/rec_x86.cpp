@@ -25,7 +25,7 @@
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "oslib/oslib.h"
 
 static void (*mainloop)();
@@ -640,7 +640,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 		addr = paddr;
 	}
 	bool isram = false;
-	void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
+	void* ptr = addrspace::readConst(addr, isram, op.size > 4 ? 4 : op.size);
 
 	if (isram)
 	{
@@ -778,7 +778,7 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 		addr = paddr;
 	}
 	bool isram = false;
-	void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
+	void* ptr = addrspace::writeConst(addr, isram, op.size > 4 ? 4 : op.size);
 
 	if (isram)
 	{

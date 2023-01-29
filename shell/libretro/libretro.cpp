@@ -333,7 +333,7 @@ void retro_init()
         set_user_data_dir(std::string(data_dir) + "/");
 #endif
 
-	if (!_vmem_reserve())
+	if (!addrspace::reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
 	os_InstallFaultHandler();
@@ -359,7 +359,7 @@ void retro_deinit()
 	os_UninstallFaultHandler();
 	
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
-	_vmem_release();
+	addrspace::release();
 #else
 	emu.term();
 #endif

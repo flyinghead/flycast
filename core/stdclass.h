@@ -73,10 +73,6 @@ std::string get_game_dir();
 // returns the position of the last path separator, or string::npos if none
 size_t get_last_slash_pos(const std::string& path);
 
-bool mem_region_lock(void *start, std::size_t len);
-bool mem_region_unlock(void *start, std::size_t len);
-bool mem_region_set_exec(void *start, std::size_t len);
-
 class VArray2 {
 public:
 	u8* data;

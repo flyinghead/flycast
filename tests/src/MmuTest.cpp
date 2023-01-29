@@ -18,15 +18,16 @@
  */
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "emulator.h"
 #include "hw/sh4/modules/mmu.h"
 
 class MmuTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
 		config::ForceWindowsCE = true;

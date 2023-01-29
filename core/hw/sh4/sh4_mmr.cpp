@@ -4,7 +4,7 @@
 #include "types.h"
 #include "sh4_mmr.h"
 
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "modules/mmu.h"
 #include "modules/ccn.h"
 #include "modules/modules.h"
@@ -868,38 +868,38 @@ void sh4_mmr_term()
 }
 
 // AREA 7--Sh4 Regs
-static _vmem_handler p4mmr_handler;
-static _vmem_handler area7_ocr_handler;
+static addrspace::handler p4mmr_handler;
+static addrspace::handler area7_ocr_handler;
 
 void map_area7_init()
 {
-	p4mmr_handler = _vmem_register_handler_Template(ReadMem_p4mmr, WriteMem_p4mmr);
-	area7_ocr_handler = _vmem_register_handler_Template(ReadMem_area7_OCR, WriteMem_area7_OCR);
+	p4mmr_handler = addrspaceRegisterHandlerTemplate(ReadMem_p4mmr, WriteMem_p4mmr);
+	area7_ocr_handler = addrspaceRegisterHandlerTemplate(ReadMem_area7_OCR, WriteMem_area7_OCR);
 }
 
 void map_area7(u32 base)
 {
 	// on-chip RAM: 7C000000-7FFFFFFF
 	if (base == 0x60)
-		_vmem_map_handler(area7_ocr_handler, 0x7C, 0x7F);
+		addrspace::mapHandler(area7_ocr_handler, 0x7C, 0x7F);
 }
 
 //P4
 void map_p4()
 {
 	//P4 Region :
-	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4, WriteMem_P4);
+	addrspace::handler p4_handler = addrspaceRegisterHandlerTemplate(ReadMem_P4, WriteMem_P4);
 
 	//register this before mmr and SQ so they overwrite it and handle em
 	//default P4 handler
 	//0xE0000000-0xFFFFFFFF
-	_vmem_map_handler(p4_handler, 0xE0, 0xFF);
+	addrspace::mapHandler(p4_handler, 0xE0, 0xFF);
 
 	//Store Queues -- Write only 32bit
-	_vmem_map_block(sq_both, 0xE0, 0xE0, 63);
-	_vmem_map_block(sq_both, 0xE1, 0xE1, 63);
-	_vmem_map_block(sq_both, 0xE2, 0xE2, 63);
-	_vmem_map_block(sq_both, 0xE3, 0xE3, 63);
+	addrspace::mapBlock(sq_both, 0xE0, 0xE0, 63);
+	addrspace::mapBlock(sq_both, 0xE1, 0xE1, 63);
+	addrspace::mapBlock(sq_both, 0xE2, 0xE2, 63);
+	addrspace::mapBlock(sq_both, 0xE3, 0xE3, 63);
 
-	_vmem_map_handler(p4mmr_handler, 0xFF, 0xFF);
+	addrspace::mapHandler(p4mmr_handler, 0xFF, 0xFF);
 }

@@ -21,8 +21,8 @@
 
 #if HOST_CPU == CPU_ARM && FEAT_AREC != DYNAREC_NONE
 #include "arm7_rec.h"
-#include "hw/mem/_vmem.h"
 #include "rec-ARM/arm_unwind.h"
+#include "oslib/virtmem.h"
 
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
@@ -39,7 +39,7 @@ public:
 
 	void Finalize() {
 		FinalizeCode();
-		vmem_platform_flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
+		virtmem::flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
 				GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1);
 	}
 };

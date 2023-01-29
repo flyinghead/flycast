@@ -1,10 +1,13 @@
 #if defined(__SWITCH__)
-#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
-#include "stdclass.h"
+#include "hw/mem/addrspace.h"
+#include "virtmem.h"
 
 #include <switch.h>
 #include <malloc.h>
+
+namespace virtmem
+{
 
 #define siginfo_t switch_siginfo_t
 
@@ -17,7 +20,7 @@ static void *reserved_base;
 static size_t reserved_size;
 static VirtmemReservation *virtmemReservation;
 
-bool mem_region_lock(void *start, size_t len)
+bool region_lock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	len += inpage;
@@ -37,7 +40,7 @@ bool mem_region_lock(void *start, size_t len)
 	return true;
 }
 
-bool mem_region_unlock(void *start, size_t len)
+bool region_unlock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	len += inpage;
@@ -123,7 +126,7 @@ static mem_handle_t allocate_shared_filemem(unsigned size)
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
-bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
+bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 	return false;
 #if 0
@@ -162,25 +165,25 @@ bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSiz
 }
 
 // Just tries to wipe as much as possible in the relevant area.
-void vmem_platform_destroy()
+void destroy()
 {
 	if (reserved_base != NULL)
 		mem_region_release(reserved_base, reserved_size);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
-void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
+void reset_mem(void *ptr, unsigned size_bytes) {
 	svcSetMemoryPermission(ptr, size_bytes, Perm_None);
 }
 
 // Allocates a bunch of memory (page aligned and page-sized)
-void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
+void ondemand_page(void *address, unsigned size_bytes) {
 	bool rc = mem_region_unlock(address, size_bytes);
 	verify(rc);
 }
 
 // Creates mappings to the underlying file including mirroring sections
-void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps)
+void create_mappings(const Mapping *vmem_maps, unsigned nummaps)
 {
 	for (unsigned i = 0; i < nummaps; i++) {
 		// Ignore unmapped stuff, it is already reserved as PROT_NONE
@@ -194,9 +197,9 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			bool rc = mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize);
+			bool rc = mem_region_unmap_file(&addrspace::ram_base[offset], vmem_maps[i].memsize);
 			verify(rc);
-			void *p = mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
+			void *p = mem_region_map_file((void*)(uintptr_t)vmem_fd, &addrspace::ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes);
 			verify(p != nullptr);
 		}
@@ -204,20 +207,20 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
+bool prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
 {
 	die("Not supported in libnx");
 
 	return false;
 }
 
-void vmem_platform_release_jit_block(void *code_area, size_t size)
+void release_jit_block(void *code_area, size_t size)
 {
 	die("Not supported in libnx");
 }
 
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
-bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
+bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset)
 {
 	const size_t size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
 
@@ -239,13 +242,15 @@ bool vmem_platform_prepare_jit_block(void *code_area, size_t size, void **code_a
 	return true;
 }
 
-void vmem_platform_release_jit_block(void *code_area1, void *code_area2, size_t size)
+void release_jit_block(void *code_area1, void *code_area2, size_t size)
 {
 	const size_t size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
 	virtmemLock();
 	svcUnmapProcessMemory(code_area2, envGetOwnProcessHandle(), (u64)code_area1, size_aligned);
 	virtmemUnlock();
 }
+
+} // namespace virtmem
 
 #ifndef TARGET_NO_EXCEPTIONS
 

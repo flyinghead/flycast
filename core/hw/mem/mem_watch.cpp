@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "mem_watch.h"
+#include "oslib/virtmem.h"
 
 namespace memwatch
 {
@@ -29,13 +30,13 @@ ElanRamWatcher elanWatcher;
 void AicaRamWatcher::protectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	mem_region_lock(aica_ram.data + addr, size);
+	virtmem::region_lock(aica_ram.data + addr, size);
 }
 
 void AicaRamWatcher::unprotectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	mem_region_unlock(aica_ram.data + addr, size);
+	virtmem::region_unlock(aica_ram.data + addr, size);
 }
 
 u32 AicaRamWatcher::getMemOffset(void *p)
@@ -51,7 +52,7 @@ void ElanRamWatcher::protectMem(u32 addr, u32 size)
 	if (ERAM_SIZE != 0)
 	{
 		size = std::min(ERAM_SIZE - addr, size) & ~PAGE_MASK;
-		mem_region_lock(RAM + addr, size);
+		virtmem::region_lock(RAM + addr, size);
 	}
 }
 
@@ -61,7 +62,7 @@ void ElanRamWatcher::unprotectMem(u32 addr, u32 size)
 	if (ERAM_SIZE != 0)
 	{
 		size = std::min(ERAM_SIZE - addr, size) & ~PAGE_MASK;
-		mem_region_unlock(RAM + addr, size);
+		virtmem::region_unlock(RAM + addr, size);
 	}
 }
 

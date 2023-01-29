@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/arm7/arm7.h"
 #include "hw/aica/aica_if.h"
 #include "hw/arm7/arm7_rec.h"
@@ -21,9 +21,10 @@ extern void (*EntryPoints[])();
 
 class AicaArmTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
 		Arm7Enabled = true;

@@ -371,7 +371,7 @@ void dc_reset(bool hard)
 	NetworkHandshake::term();
 	if (hard)
 	{
-		_vmem_unprotect_vram(0, VRAM_SIZE);
+		addrspace::unprotectVram(0, VRAM_SIZE);
 		memwatch::elanWatcher.unprotectMem(0, 0xffffffff);
 	}
 	sh4_sched_reset(hard);
@@ -385,7 +385,7 @@ void dc_reset(bool hard)
 static void setPlatform(int platform)
 {
 	if (VRAM_SIZE != 0)
-		_vmem_unprotect_vram(0, VRAM_SIZE);
+		addrspace::unprotectVram(0, VRAM_SIZE);
 	elan::ERAM_SIZE = 0;
 	switch (platform)
 	{
@@ -426,7 +426,7 @@ static void setPlatform(int platform)
 	settings.platform.ram_mask = settings.platform.ram_size - 1;
 	settings.platform.vram_mask = settings.platform.vram_size - 1;
 	settings.platform.aram_mask = settings.platform.aram_size - 1;
-	_vmem_init_mappings();
+	addrspace::initMappings();
 }
 
 void Emulator::init()
@@ -666,7 +666,7 @@ void Emulator::term()
 		pvr::term();
 		mem_Term();
 
-		_vmem_release();
+		addrspace::release();
 		state = Terminated;
 	}
 }

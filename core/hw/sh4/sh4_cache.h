@@ -63,7 +63,7 @@ public:
 			mmu_raise_exception(err, address, MMU_TT_IREAD);
 
 		if (!cacheOn)
-			return _vmem_readt<u16, u16>(physAddr);
+			return addrspace::readt<u16>(physAddr);
 
 		const u32 index = CCN_CCR.IIX ?
 				((address >> 5) & 0x7f) | ((address >> (25 - 7)) & 0x80)
@@ -83,7 +83,7 @@ public:
 			{
 				u32 *p = (u32 *)line.data;
 				for (int i = 0; i < 32; i += 4)
-					*p++ = _vmem_ReadMem32(line_addr + i);
+					*p++ = addrspace::read32(line_addr + i);
 			}
 		}
 
@@ -240,7 +240,7 @@ public:
 			mmu_raise_exception(err, address, MMU_TT_DREAD);
 
 		if (!cacheOn)
-			return _vmem_readt<T, T>(physAddr);
+			return addrspace::readt<T>(physAddr);
 
 		const u32 index = lineIndex(address);
 		cache_line& line = lines[index];
@@ -270,7 +270,7 @@ public:
 
 		if (!cacheOn)
 		{
-			_vmem_writet<T>(physAddr, data);
+			addrspace::writet<T>(physAddr, data);
 			return;
 		}
 
@@ -303,7 +303,7 @@ public:
 		else
 		{
 			// write-through => update main ram
-			_vmem_writet<T>(physAddr, data);
+			addrspace::writet<T>(physAddr, data);
 		}
 	}
 
@@ -470,7 +470,7 @@ private:
 		{
 			u32 *p = (u32 *)line.data;
 			for (int i = 0; i < 32; i += 4)
-				*p++ = _vmem_ReadMem32(line_addr + i);
+				*p++ = addrspace::read32(line_addr + i);
 		}
 	}
 
@@ -486,7 +486,7 @@ private:
 		{
 			u32 *p = (u32 *)line.data;
 			for (int i = 0; i < 32; i += 4)
-				_vmem_WriteMem32(line_addr + i, *p++);
+				addrspace::write32(line_addr + i, *p++);
 		}
 	}
 

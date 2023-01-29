@@ -22,7 +22,7 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include "rend/gui.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "cfg/option.h"
 #include "emulator.h"
 #include "input/gamepad_device.h"
@@ -105,7 +105,7 @@ static LuaRef readMemoryTable(u32 address, int count, lua_State* L)
 	t = newTable(L);
 	while (count > 0)
 	{
-		t[address] = _vmem_readt<T, T>(address);
+		t[address] = addrspace::readt<T>(address);
 		address += sizeof(T);
 		count--;
 	}
@@ -533,18 +533,18 @@ static void luaRegister(lua_State *L)
 			.endNamespace()
 
 	  		.beginNamespace("memory")
-				.addFunction("read8", _vmem_readt<u8, u8>)
-				.addFunction("read16", _vmem_readt<u16, u16>)
-				.addFunction("read32", _vmem_readt<u32, u32>)
-				.addFunction("read64", _vmem_readt<u64, u64>)
+				.addFunction("read8", addrspace::readt<u8>)
+				.addFunction("read16", addrspace::readt<u16>)
+				.addFunction("read32", addrspace::readt<u32>)
+				.addFunction("read64", addrspace::readt<u64>)
 				.addFunction("readTable8", readMemoryTable<u8>)
 				.addFunction("readTable16", readMemoryTable<u16>)
 				.addFunction("readTable32", readMemoryTable<u32>)
 				.addFunction("readTable64", readMemoryTable<u64>)
-				.addFunction("write8", _vmem_writet<u8>)
-				.addFunction("write16", _vmem_writet<u16>)
-				.addFunction("write32", _vmem_writet<u32>)
-				.addFunction("write64", _vmem_writet<u64>)
+				.addFunction("write8", addrspace::writet<u8>)
+				.addFunction("write16", addrspace::writet<u16>)
+				.addFunction("write32", addrspace::writet<u32>)
+				.addFunction("write64", addrspace::writet<u64>)
 			.endNamespace()
 
 			.beginNamespace("input")

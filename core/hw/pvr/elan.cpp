@@ -49,7 +49,7 @@
  * 0A000000 - 0bfffffff elan RAM
  */
 #include "elan.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "pvr_mem.h"
 #include "ta.h"
 #include "ta_ctx.h"
@@ -69,9 +69,9 @@ namespace elan {
 
 constexpr u32 ELAN_RAM_MASK = ERAM_SIZE_MAX - 1;
 
-static _vmem_handler elanRegHandler;
-static _vmem_handler elanCmdHandler;
-static _vmem_handler elanRamHandler;
+static addrspace::handler elanRegHandler;
+static addrspace::handler elanCmdHandler;
+static addrspace::handler elanRamHandler;
 
 u8 *RAM;
 u32 ERAM_SIZE;
@@ -1760,19 +1760,19 @@ void term()
 
 void vmem_init()
 {
-	elanRegHandler = _vmem_register_handler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
-	elanCmdHandler = _vmem_register_handler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
-	elanRamHandler = _vmem_register_handler_Template(read_elanram, write_elanram);
+	elanRegHandler = addrspace::registerHandler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
+	elanCmdHandler = addrspace::registerHandler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
+	elanRamHandler = addrspaceRegisterHandlerTemplate(read_elanram, write_elanram);
 }
 
 void vmem_map(u32 base)
 {
 	if (!settings.platform.isNaomi2())
 		return;
-	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
-	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
-	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
-	_vmem_map_block(RAM, base | 0xA, base | 0xB, ELAN_RAM_MASK);
+	addrspace::mapHandler(elanRegHandler, base | 8, base | 8);
+	addrspace::mapHandler(elanCmdHandler, base | 9, base | 9);
+	addrspace::mapHandler(elanRamHandler, base | 0xA, base | 0xB);
+	addrspace::mapBlock(RAM, base | 0xA, base | 0xB, ELAN_RAM_MASK);
 }
 
 void serialize(Serializer& ser)

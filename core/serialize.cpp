@@ -391,7 +391,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	{
 	case 0:
 	case 1:
-		if (_nvmem_enabled())
+		if (addrspace::virtmemEnabled())
 			do_sqw_nommu = &do_sqw_nommu_area_3;
 		else
 			do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
@@ -676,7 +676,7 @@ void dc_deserialize(Deserializer& deser)
 	{
 	case 0:
 	case 1:
-		if (_nvmem_enabled())
+		if (addrspace::virtmemEnabled())
 			do_sqw_nommu = &do_sqw_nommu_area_3;
 		else
 			do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;

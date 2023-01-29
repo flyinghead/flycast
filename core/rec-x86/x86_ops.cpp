@@ -26,7 +26,7 @@
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "oslib/oslib.h"
 
 extern UnwindInfo unwinder;
@@ -73,7 +73,7 @@ void X86Compiler::genMemHandlers()
 			{
 				MemHandlers[type][size][op] = getCurr();
 
-				if (type == MemType::Fast && _nvmem_enabled())
+				if (type == MemType::Fast && addrspace::virtmemEnabled())
 				{
 					// save the original address in eax so it can be restored during rewriting
 					mov(eax, ecx);
@@ -83,19 +83,19 @@ void X86Compiler::genMemHandlers()
 					switch (size)
 					{
 					case MemSize::S8:
-						address = byte[ecx + (size_t)virt_ram_base];
+						address = byte[ecx + (size_t)addrspace::ram_base];
 						reg = op == MemOp::R ? (Xbyak::Reg)eax : (Xbyak::Reg)dl;
 						break;
 					case MemSize::S16:
-						address = word[ecx + (size_t)virt_ram_base];
+						address = word[ecx + (size_t)addrspace::ram_base];
 						reg = op == MemOp::R ? (Xbyak::Reg)eax : (Xbyak::Reg)dx;
 						break;
 					case MemSize::S32:
-						address = dword[ecx + (size_t)virt_ram_base];
+						address = dword[ecx + (size_t)addrspace::ram_base];
 						reg = op == MemOp::R ? eax : edx;
 						break;
 					default:
-						address = dword[ecx + (size_t)virt_ram_base];
+						address = dword[ecx + (size_t)addrspace::ram_base];
 						break;
 					}
 					if (size >= MemSize::F32)
@@ -106,7 +106,7 @@ void X86Compiler::genMemHandlers()
 							movss(address, xmm0);
 						if (size == MemSize::F64)
 						{
-							address = dword[ecx + (size_t)virt_ram_base + 4];
+							address = dword[ecx + (size_t)addrspace::ram_base + 4];
 							if (op == MemOp::R)
 								movss(xmm1, address);
 							else
@@ -160,14 +160,14 @@ void X86Compiler::genMemHandlers()
 #endif
 						movss(dword[esp], xmm0);
 						movss(dword[esp + 4], xmm1);
-						call((const void *)_vmem_WriteMem64);	// dynacall adds 8 to esp
+						call((const void *)addrspace::write64);	// dynacall adds 8 to esp
 						alignStack(4);
 					}
 					else
 					{
 						if (size == MemSize::F32)
 							movd(edx, xmm0);
-						jmp((const void *)_vmem_WriteMem32);	// tail call
+						jmp((const void *)addrspace::write32);	// tail call
 						continue;
 					}
 				}
@@ -180,31 +180,31 @@ void X86Compiler::genMemHandlers()
 						case MemSize::S8:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)_vmem_ReadMem8);
+							call((const void *)addrspace::read8);
 							movsx(eax, al);
 							alignStack(12);
 							break;
 						case MemSize::S16:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)_vmem_ReadMem16);
+							call((const void *)addrspace::read16);
 							movsx(eax, ax);
 							alignStack(12);
 							break;
 						case MemSize::S32:
-							jmp((const void *)_vmem_ReadMem32);	// tail call
+							jmp((const void *)addrspace::read32);	// tail call
 							continue;
 						case MemSize::F32:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)_vmem_ReadMem32);
+							call((const void *)addrspace::read32);
 							movd(xmm0, eax);
 							alignStack(12);
 							break;
 						case MemSize::F64:
 							// 16-byte alignment
 							alignStack(-12);
-							call((const void *)_vmem_ReadMem64);
+							call((const void *)addrspace::read64);
 							movd(xmm0, eax);
 							movd(xmm1, edx);
 							alignStack(12);
@@ -217,17 +217,17 @@ void X86Compiler::genMemHandlers()
 					{
 						switch (size) {
 						case MemSize::S8:
-							jmp((const void *)_vmem_WriteMem8);	// tail call
+							jmp((const void *)addrspace::write8);	// tail call
 							continue;
 						case MemSize::S16:
-							jmp((const void *)_vmem_WriteMem16);	// tail call
+							jmp((const void *)addrspace::write16);	// tail call
 							continue;
 						case MemSize::S32:
-							jmp((const void *)_vmem_WriteMem32);	// tail call
+							jmp((const void *)addrspace::write32);	// tail call
 							continue;
 						case MemSize::F32:
 							movd(edx, xmm0);
-							jmp((const void *)_vmem_WriteMem32);	// tail call
+							jmp((const void *)addrspace::write32);	// tail call
 							continue;
 						case MemSize::F64:
 #ifndef _WIN32
@@ -239,7 +239,7 @@ void X86Compiler::genMemHandlers()
 #endif
 							movss(dword[esp], xmm0);
 							movss(dword[esp + 4], xmm1);
-							call((const void *)_vmem_WriteMem64);	// dynacall adds 8 to esp
+							call((const void *)addrspace::write64);	// dynacall adds 8 to esp
 							alignStack(4);
 							break;
 						default:

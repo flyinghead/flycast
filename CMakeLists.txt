@@ -783,8 +783,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/maple/maple_if.cpp
 		core/hw/maple/maple_if.h
 		core/hw/maple/maple_jvs.cpp
-		core/hw/mem/_vmem.cpp
-		core/hw/mem/_vmem.h
+		core/hw/mem/addrspace.cpp
+		core/hw/mem/addrspace.h
 		core/hw/mem/mem_watch.cpp
 		core/hw/mem/mem_watch.h
 		core/hw/modem/modem.cpp
@@ -1005,6 +1005,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/directory.h
 		core/oslib/host_context.h
 		core/oslib/oslib.h
+		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)
 

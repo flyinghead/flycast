@@ -3,7 +3,7 @@
 
 #include "ccn.h"
 #include "mmu.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -29,7 +29,7 @@ void CCN_QACR_write(u32 addr, u32 value)
 	switch (area)
 	{
 		case 3: 
-			if (_nvmem_enabled())
+			if (addrspace::virtmemEnabled())
 				do_sqw_nommu = &do_sqw_nommu_area_3;
 			else
 				do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;

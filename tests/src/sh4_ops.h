@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 #include "types.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 
 constexpr u32 REG_MAGIC = 0xbaadf00d;
 
@@ -159,7 +159,7 @@ protected:
 	{
 		ClearRegs();
 		r(14) = 0x8C001000;
-		_vmem_WriteMem32(r(14), 0xffccaa88u);
+		addrspace::write32(r(14), 0xffccaa88u);
 		PrepareOp(0x6002 | Rm(14) | Rn(11));	// mov.l @Rm,Rn
 		RunOp();
 		ASSERT_EQ(r(11), 0xffccaa88u);
@@ -181,7 +181,7 @@ protected:
 
 		ClearRegs();
 		r(8) = 0x8C001004;
-		_vmem_WriteMem32(r(8), 0x4433ff11);
+		addrspace::write32(r(8), 0x4433ff11);
 		PrepareOp(0x6006 | Rm(8) | Rn(7));		// mov.l @Rm+,Rn
 		RunOp();
 		ASSERT_EQ(r(7), 0x4433ff11u);
@@ -190,7 +190,7 @@ protected:
 
 		ClearRegs();
 		r(7) = 0x8C001004;
-		_vmem_WriteMem32(r(7), 0x4433ff11);
+		addrspace::write32(r(7), 0x4433ff11);
 		PrepareOp(0x6006 | Rm(7) | Rn(7));		// mov.l @Rm+,Rn
 		RunOp();
 		ASSERT_EQ(r(7), 0x4433ff11u);
@@ -213,7 +213,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x5000 | Rm(8) | Rn(7) | Imm4(3));// mov.l @(disp, Rm), Rn
 		RunOp();
@@ -221,7 +221,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x8500 | Rm(8) | Imm4(6));		// mov.w @(disp, Rm), R0
 		RunOp();
@@ -229,7 +229,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x8400 | Rm(8) | Imm4(12));		// mov.b @(disp, Rm), R0
 		RunOp();
@@ -241,7 +241,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000e | Rm(11) | Rn(12));	// mov.l @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0x88aaccffu);
@@ -250,7 +250,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000d | Rm(11) | Rn(12));	// mov.w @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0xffffccffu);
@@ -259,7 +259,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000c | Rm(11) | Rn(12));	// mov.b @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0xffffffffu);
@@ -267,7 +267,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x10 * 4, 0x11223344u);
+		addrspace::write32(gbr() + 0x10 * 4, 0x11223344u);
 		PrepareOp(0xc600 | Imm8(0x10));		// mov.l @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0x11223344u);
@@ -275,7 +275,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x18 * 2, 0x11223344u);
+		addrspace::write32(gbr() + 0x18 * 2, 0x11223344u);
 		PrepareOp(0xc500 | Imm8(0x18));		// mov.w @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0x3344u);
@@ -283,7 +283,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x17, 0x112233c4u);
+		addrspace::write32(gbr() + 0x17, 0x112233c4u);
 		PrepareOp(0xc400 | Imm8(0x17));		// mov.b @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0xffffffc4u);
@@ -291,7 +291,7 @@ protected:
 
 		ClearRegs();
 		u32 disp = 0x11;
-		_vmem_WriteMem32(START_PC + 4 + disp * 4, 0x01020304u);
+		addrspace::write32(START_PC + 4 + disp * 4, 0x01020304u);
 		PrepareOp(0x9,							// nop
 				0xd000 | Rn(6) | Imm8(disp));	// mov.l @(disp, PC), Rn
 		RunOp(2);
@@ -300,7 +300,7 @@ protected:
 
 		ClearRegs();
 		disp = 0x12;
-		_vmem_WriteMem32(START_PC + 4 + disp * 2, 0x01020304u);
+		addrspace::write32(START_PC + 4 + disp * 2, 0x01020304u);
 		PrepareOp(0x9000 | Rn(5) | Imm8(disp));	// mov.w @(disp, PC), Rn
 		RunOp();
 		ASSERT_EQ(r(5), 0x0304u);
@@ -314,7 +314,7 @@ protected:
 		r(11) = 0xbeeff00d;
 		PrepareOp(0x2002 | Rm(11) | Rn(14));	// mov.l Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbeeff00du);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbeeff00du);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xbeeff00du);
 		AssertState();
@@ -322,10 +322,10 @@ protected:
 		ClearRegs();
 		r(14) = 0x8C001000;
 		r(11) = 0xf00dbeef;
-		_vmem_WriteMem32(0x8C001000, 0xbaadbaad);
+		addrspace::write32(0x8C001000, 0xbaadbaad);
 		PrepareOp(0x2001 | Rm(11) | Rn(14));	// mov.w Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbaadbeefu);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbaadbeefu);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xf00dbeefu);
 		AssertState();
@@ -333,10 +333,10 @@ protected:
 		ClearRegs();
 		r(14) = 0x8C001000;
 		r(11) = 0xccccccf0;
-		_vmem_WriteMem32(0x8C001000, 0xbaadbaad);
+		addrspace::write32(0x8C001000, 0xbaadbaad);
 		PrepareOp(0x2000 | Rm(11) | Rn(14));	// mov.b Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbaadbaf0u);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbaadbaf0u);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xccccccf0u);
 		AssertState();
@@ -346,7 +346,7 @@ protected:
 		r(7) = 0xfeedf00d;
 		PrepareOp(0x2006 | Rm(7) | Rn(8));		// mov.l Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xfeedf00du);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xfeedf00du);
 		ASSERT_EQ(r(7), 0xfeedf00du);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -355,7 +355,7 @@ protected:
 		r(7) = 0x8C001004;
 		PrepareOp(0x2006 | Rm(7) | Rn(7));		// mov.l Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x8C001004); // value before decrement is stored
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x8C001004); // value before decrement is stored
 		ASSERT_EQ(r(7), 0x8C001000u);
 		AssertState();
 
@@ -364,7 +364,7 @@ protected:
 		r(7) = 0x1234cafe;
 		PrepareOp(0x2005 | Rm(7) | Rn(8));		// mov.w Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem16(0x8C001000), 0xcafeu);
+		ASSERT_EQ(addrspace::read16(0x8C001000), 0xcafeu);
 		ASSERT_EQ(r(7), 0x1234cafeu);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -374,7 +374,7 @@ protected:
 		r(7) = 0x12345642;
 		PrepareOp(0x2004 | Rm(7) | Rn(8));		// mov.b Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem8(0x8C001000), 0x42u);
+		ASSERT_EQ(addrspace::read8(0x8C001000), 0x42u);
 		ASSERT_EQ(r(7), 0x12345642u);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -384,7 +384,7 @@ protected:
 		r(7) = 0x50607080;
 		PrepareOp(0x1000 | Rm(7) | Rn(8) | Imm4(3));// mov.l Rm, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001010), 0x50607080u);
+		ASSERT_EQ(addrspace::read32(0x8C001010), 0x50607080u);
 		ASSERT_EQ(r(7), 0x50607080u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -394,7 +394,7 @@ protected:
 		r(0) = 0x10203040;
 		PrepareOp(0x8100 | Rm(8) | Imm4(3));		// mov.w R0, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem16(0x8C00100A), 0x3040u);
+		ASSERT_EQ(addrspace::read16(0x8C00100A), 0x3040u);
 		ASSERT_EQ(r(0), 0x10203040u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -404,7 +404,7 @@ protected:
 		r(0) = 0x66666672;
 		PrepareOp(0x8000 | Rm(8) | Imm4(3));		// mov.b R0, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem8(0x8C001007), 0x72u);
+		ASSERT_EQ(addrspace::read8(0x8C001007), 0x72u);
 		ASSERT_EQ(r(0), 0x66666672u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -417,7 +417,7 @@ protected:
 		r(12) = 0x87654321;
 		PrepareOp(0x0006 | Rm(12) | Rn(11));	// mov.l Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87654321u);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87654321u);
 		ASSERT_EQ(r(12), 0x87654321u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -429,7 +429,7 @@ protected:
 		r(12) = 0x12345678;
 		PrepareOp(0x0005 | Rm(12) | Rn(11));	// mov.w Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87655678u);	// relies on value set in previous test
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87655678u);	// relies on value set in previous test
 		ASSERT_EQ(r(12), 0x12345678u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -441,7 +441,7 @@ protected:
 		r(12) = 0x99999999;
 		PrepareOp(0x0004 | Rm(12) | Rn(11));	// mov.b Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87655699u);	// relies on value set in 2 previous tests
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87655699u);	// relies on value set in 2 previous tests
 		ASSERT_EQ(r(12), 0x99999999u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -452,7 +452,7 @@ protected:
 		r(0) = 0xabcdef01;
 		PrepareOp(0xc200 | Imm8(0x10));			// mov.l R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcdef01u);
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcdef01u);
 		ASSERT_EQ(gbr(), 0x8C000800u);
 		ASSERT_EQ(r(0), 0xabcdef01u);
 		AssertState();
@@ -462,7 +462,7 @@ protected:
 		r(0) = 0x11117777;
 		PrepareOp(0xc100 | Imm8(0x20));			// mov.w R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcd7777u);	// relies on value set in previous test
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcd7777u);	// relies on value set in previous test
 		AssertState();
 
 		ClearRegs();
@@ -470,7 +470,7 @@ protected:
 		r(0) = 0x22222266;
 		PrepareOp(0xc000 | Imm8(0x40));			// mov.b R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcd7766u);	// relies on value set in 2 previous tests
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcd7766u);	// relies on value set in 2 previous tests
 		AssertState();
 	}
 
@@ -865,17 +865,17 @@ protected:
 
 		ClearRegs();
 		r(7) = 0xAC001000;
-		_vmem_WriteMem32(r(7), 4);
+		addrspace::write32(r(7), 4);
 		r(8) = 0xAC002000;
-		_vmem_WriteMem32(r(8), 3);
+		addrspace::write32(r(8), 3);
 		PrepareOp(0x000f | Rn(7) | Rm(8));	// mac.l @Rm+, @Rn+
 		RunOp();
 		ASSERT_EQ(mac(), 12ull);
 		ASSERT_EQ(r(7), 0xAC001004u);
 		ASSERT_EQ(r(8), 0xAC002004u);
 
-		_vmem_WriteMem32(r(7), -5);
-		_vmem_WriteMem32(r(8), 7);
+		addrspace::write32(r(7), -5);
+		addrspace::write32(r(8), 7);
 		RunOp();
 		ASSERT_EQ(mac(), -23ull);
 		ASSERT_EQ(r(7), 0xAC001008u);
@@ -884,17 +884,17 @@ protected:
 
 		ClearRegs();
 		r(7) = 0xAC001000;
-		_vmem_WriteMem32(r(7), (u16)-7);
+		addrspace::write32(r(7), (u16)-7);
 		r(8) = 0xAC002000;
-		_vmem_WriteMem32(r(8), 3);
+		addrspace::write32(r(8), 3);
 		PrepareOp(0x400f | Rn(7) | Rm(8));	// mac.w @Rm+, @Rn+
 		RunOp();
 		ASSERT_EQ(mac(), -21ull);
 		ASSERT_EQ(r(7), 0xAC001002u);
 		ASSERT_EQ(r(8), 0xAC002002u);
 
-		_vmem_WriteMem16(r(7), 5);
-		_vmem_WriteMem16(r(8), 7);
+		addrspace::write16(r(7), 5);
+		addrspace::write16(r(8), 7);
 		RunOp();
 		ASSERT_EQ(mac(), 14ull);
 		ASSERT_EQ(r(7), 0xAC001004u);

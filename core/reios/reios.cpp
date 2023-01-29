@@ -112,11 +112,11 @@ static bool reios_locate_bootfile(const char* bootfile)
 	u8 data[24] = {0};
 	// system id
 	for (u32 j = 0; j < 8; j++)
-		data[j] = _vmem_ReadMem8(0x0021a056 + j);
+		data[j] = addrspace::read8(0x0021a056 + j);
 
 	// system properties
 	for (u32 j = 0; j < 5; j++)
-		data[8 + j] = _vmem_ReadMem8(0x0021a000 + j);
+		data[8 + j] = addrspace::read8(0x0021a000 + j);
 
 	// system settings
 	flash_syscfg_block syscfg{};

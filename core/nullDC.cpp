@@ -1,7 +1,7 @@
 #ifndef LIBRETRO
 #include "types.h"
 #include "emulator.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "cfg/cfg.h"
 #include "cfg/option.h"
 #include "log/LogManager.h"
@@ -22,7 +22,7 @@ int flycast_init(int argc, char* argv[])
 	setbuf(stderr, 0);
 	settings.aica.muteAudio = true;
 #endif
-	if (!_vmem_reserve())
+	if (!addrspace::reserve())
 	{
 		ERROR_LOG(VMEM, "Failed to alloc mem");
 		return -1;

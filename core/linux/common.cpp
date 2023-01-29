@@ -21,7 +21,7 @@
 
 #include "hw/sh4/dyna/ngen.h"
 #include "rend/TexCache.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/mem/mem_watch.h"
 
 #ifdef __SWITCH__
@@ -54,7 +54,7 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	if (VramLockedWrite((u8*)si->si_addr))
 		return;
 	// FPCB jump table protection
-	if (BM_LockedWrite((u8*)si->si_addr))
+	if (addrspace::bm_lockedWrite((u8*)si->si_addr))
 		return;
 
 #if FEAT_SHREC == DYNAREC_JIT

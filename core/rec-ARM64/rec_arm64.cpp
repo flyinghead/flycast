@@ -38,8 +38,9 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
 #include "arm64_regalloc.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "arm64_unwind.h"
+#include "oslib/virtmem.h"
 
 #undef do_sqw_nommu
 
@@ -1104,21 +1105,21 @@ public:
 		switch (size)
 		{
 		case 1:
-			GenCallRuntime(_vmem_ReadMem8);
+			GenCallRuntime(addrspace::read8);
 			Sxtb(w0, w0);
 			break;
 
 		case 2:
-			GenCallRuntime(_vmem_ReadMem16);
+			GenCallRuntime(addrspace::read16);
 			Sxth(w0, w0);
 			break;
 
 		case 4:
-			GenCallRuntime(_vmem_ReadMem32);
+			GenCallRuntime(addrspace::read32);
 			break;
 
 		case 8:
-			GenCallRuntime(_vmem_ReadMem64);
+			GenCallRuntime(addrspace::read64);
 			break;
 
 		default:
@@ -1135,19 +1136,19 @@ public:
 		switch (size)
 		{
 		case 1:
-			GenCallRuntime(_vmem_WriteMem8);
+			GenCallRuntime(addrspace::write8);
 			break;
 
 		case 2:
-			GenCallRuntime(_vmem_WriteMem16);
+			GenCallRuntime(addrspace::write16);
 			break;
 
 		case 4:
-			GenCallRuntime(_vmem_WriteMem32);
+			GenCallRuntime(addrspace::write32);
 			break;
 
 		case 8:
-			GenCallRuntime(_vmem_WriteMem64);
+			GenCallRuntime(addrspace::write64);
 			break;
 
 		default:
@@ -1335,7 +1336,7 @@ public:
 		}
 
 		// Flush and invalidate caches
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 #if 0
@@ -1570,7 +1571,7 @@ public:
 		Bind(&writeStoreQueue32Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		GenBranchRuntime(_vmem_WriteMem32, Condition::ne);
+		GenBranchRuntime(addrspace::write32, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(w1, MemOperand(x28, x7));
@@ -1580,7 +1581,7 @@ public:
 		Bind(&writeStoreQueue64Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		GenBranchRuntime(_vmem_WriteMem64, Condition::ne);
+		GenBranchRuntime(addrspace::write64, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(x1, MemOperand(x28, x7));
@@ -1598,7 +1599,7 @@ public:
 		writeStoreQueue64 = GetLabelAddress<DynaCode *>(&writeStoreQueue64Label);
 
 		// Flush and invalidate caches
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
@@ -1766,7 +1767,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
+		void* ptr = addrspace::readConst(addr, isram, op.size > 4 ? 4 : op.size);
 
 		if (isram)
 		{
@@ -1890,7 +1891,7 @@ private:
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled())
+		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
@@ -1976,7 +1977,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
+		void* ptr = addrspace::writeConst(addr, isram, op.size > 4 ? 4 : op.size);
 
 		if (isram)
 		{
@@ -2054,7 +2055,7 @@ private:
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled())
+		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();

@@ -24,7 +24,7 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
@@ -337,7 +337,7 @@ public:
 
 		FinalizeCode();
 
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			GetBuffer()->GetStartAddress<char*>() + rx_offset, GetBuffer()->GetEndAddress<char*>() + rx_offset,
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
@@ -451,9 +451,9 @@ void recompile()
 void recInit()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer, &rx_offset);
+	bool rc = virtmem::prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer, &rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
+	bool rc = virtmem::prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
 #endif
 	verify(rc);
 #if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
@@ -469,10 +469,10 @@ void recTerm()
 #endif
 #ifdef FEAT_NO_RWX_PAGES
 	if (pCodeBuffer != nullptr)
-		vmem_platform_release_jit_block(DynCode, pCodeBuffer, CodeSize);
+		virtmem::release_jit_block(DynCode, pCodeBuffer, CodeSize);
 #else
 	if (pCodeBuffer != nullptr && pCodeBuffer != DynCode)
-		vmem_platform_release_jit_block(pCodeBuffer, CodeSize);
+		virtmem::release_jit_block(pCodeBuffer, CodeSize);
 #endif
 	pCodeBuffer = nullptr;
 }

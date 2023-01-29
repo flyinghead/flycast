@@ -1,5 +1,5 @@
 #include "mmu.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
@@ -515,7 +515,7 @@ T DYNACALL mmu_ReadMem(u32 adr)
 	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, adr, MMU_TT_DREAD);
-	return _vmem_readt<T, T>(addr);
+	return addrspace::readt<T>(addr);
 }
 template u8 mmu_ReadMem(u32 adr);
 template u16 mmu_ReadMem(u32 adr);
@@ -528,7 +528,7 @@ u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 	u32 rv = mmu_instruction_translation(vaddr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, vaddr, MMU_TT_IREAD);
-	return _vmem_ReadMem16(addr);
+	return addrspace::read16(addr);
 }
 
 template<typename T>
@@ -538,7 +538,7 @@ void DYNACALL mmu_WriteMem(u32 adr, T data)
 	u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, adr, MMU_TT_DWRITE);
-	_vmem_writet<T>(addr, data);
+	addrspace::writet<T>(addr, data);
 }
 template void mmu_WriteMem(u32 adr, u8 data);
 template void mmu_WriteMem(u32 adr, u16 data);

@@ -13,6 +13,7 @@
 #include "blockmanager.h"
 #include "ngen.h"
 #include "decoder.h"
+#include "oslib/virtmem.h"
 
 #include <xxhash.h>
 
@@ -396,15 +397,15 @@ static void recSh4_Init()
 	sh4Interp.Init();
 	bm_Init();
 	
-	if (_nvmem_enabled())
+	if (addrspace::virtmemEnabled())
 		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = nullptr;
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
 #endif
 	verify(rc);
 	// Ensure the pointer returned is non-null
@@ -420,10 +421,10 @@ static void recSh4_Term()
 	INFO_LOG(DYNAREC, "recSh4 Term");
 #ifdef FEAT_NO_RWX_PAGES
 	if (CodeCache != nullptr)
-		vmem_platform_release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, CODE_SIZE + TEMP_CODE_SIZE);
+		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, CODE_SIZE + TEMP_CODE_SIZE);
 #else
 	if (CodeCache != nullptr && CodeCache != SH4_TCB)
-		vmem_platform_release_jit_block(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+		virtmem::release_jit_block(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
 #endif
 	CodeCache = nullptr;
 	TempCodeCache = nullptr;

@@ -24,7 +24,7 @@
 #include "arm7_rec.h"
 #include "arm7.h"
 #include "hw/aica/aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
 #include "arm_mem.h"
 
 #if 0
@@ -673,9 +673,9 @@ void flush()
 void init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
+	bool rc = virtmem::prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
+	bool rc = virtmem::prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
 #endif
 	verify(rc);
 
@@ -695,10 +695,10 @@ void term()
 {
 #ifdef FEAT_NO_RWX_PAGES
 	if (ICache != nullptr)
-		vmem_platform_release_jit_block(ARM7_TCB, ICache, ICacheSize);
+		virtmem::release_jit_block(ARM7_TCB, ICache, ICacheSize);
 #else
 	if (ICache != nullptr && ICache != ARM7_TCB)
-		vmem_platform_release_jit_block(ICache, ICacheSize);
+		virtmem::release_jit_block(ICache, ICacheSize);
 #endif
 	ICache = nullptr;
 }

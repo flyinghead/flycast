@@ -5,7 +5,7 @@
 //main system mem
 extern VArray2 mem_b;
 
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "sh4_if.h"
 
 #ifdef _MSC_VER
@@ -41,14 +41,13 @@ extern WriteMem16Func WriteMem16;
 extern WriteMem32Func WriteMem32;
 extern WriteMem64Func WriteMem64;
 
-#define ReadMem8_nommu _vmem_ReadMem8
-#define ReadMem16_nommu _vmem_ReadMem16
-#define IReadMem16_nommu _vmem_IReadMem16
-#define ReadMem32_nommu _vmem_ReadMem32
+#define ReadMem8_nommu addrspace::read8
+#define ReadMem16_nommu addrspace::read16
+#define ReadMem32_nommu addrspace::read32
 
-#define WriteMem8_nommu _vmem_WriteMem8
-#define WriteMem16_nommu _vmem_WriteMem16
-#define WriteMem32_nommu _vmem_WriteMem32
+#define WriteMem8_nommu addrspace::write8
+#define WriteMem16_nommu addrspace::write16
+#define WriteMem32_nommu addrspace::write32
 
 void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size);
 void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src);

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
@@ -8,9 +8,10 @@
 
 class SerializeTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
 	}
