@@ -283,7 +283,7 @@ void X86Compiler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u
 }
 
 [[noreturn]]
-static DYNACALL void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+static void DYNACALL handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 {
 	if (pc & 1)
 	{
@@ -298,7 +298,7 @@ static DYNACALL void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	std::abort();
 }
 
-static DYNACALL void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void DYNACALL interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
 		oph(op);
@@ -307,7 +307,7 @@ static DYNACALL void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static DYNACALL void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void DYNACALL do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
