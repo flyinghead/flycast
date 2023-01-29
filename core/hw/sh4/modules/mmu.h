@@ -132,7 +132,7 @@ static inline void mmuAddressLUTFlush(bool full)
 	}
 }
 
-static inline DYNACALL u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
+static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
 	u32 paddr;
 	u32 rv;
