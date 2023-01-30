@@ -1,7 +1,7 @@
 #if defined(__SWITCH__)
 #include "hw/sh4/sh4_if.h"
 #include "hw/mem/addrspace.h"
-#include "virtmem.h"
+#include "oslib/virtmem.h"
 
 #include <switch.h>
 #include <malloc.h>
