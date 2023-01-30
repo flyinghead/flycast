@@ -48,13 +48,11 @@ settings_t settings;
 
 static void loadSpecialSettings()
 {
+	std::string& prod_id = settings.content.gameId;
+	NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
+
 	if (settings.platform.isConsole())
 	{
-		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
-		prod_id = trim_trailing_ws(prod_id);
-
-		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
-
 		if (ip_meta.isWindowsCE() || config::ForceWindowsCE
 				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
@@ -235,127 +233,126 @@ static void loadSpecialSettings()
 	}
 	else if (settings.platform.isArcade())
 	{
-		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
-		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
+		if (prod_id == "SAMURAI SPIRITS 6")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e26f);
 		}
-		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
+		if (prod_id == "COSMIC SMASH IN JAPAN")
 		{
-			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			config::TranslucentPolygonDepthMask.override(true);
 		}
-		if (!strcmp(naomi_game_id, "BEACH SPIKERS JAPAN"))
+		if (prod_id == "BEACH SPIKERS JAPAN")
 		{
-			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
 		}
-		if (!strcmp(naomi_game_id, "RADIRGY NOA"))
+		if (prod_id == "RADIRGY NOA")
 		{
-			INFO_LOG(BOOT, "Disabling Free Play for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Disabling Free Play for game %s", prod_id.c_str());
 			config::ForceFreePlay.override(false);
 		}
 		// Input configuration
 		settings.input.JammaSetup = JVS::Default;
-		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
-				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
-				|| !strcmp("SHOOTOUT POOL MEDAL", naomi_game_id)
-				|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
-				|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
-				|| !strcmp("KICK '4' CASH", naomi_game_id)
-				|| !strcmp("DRIVE", naomi_game_id))			// Waiwai drive
+		if (prod_id == "DYNAMIC GOLF"
+				|| prod_id == "SHOOTOUT POOL"
+				|| prod_id == "SHOOTOUT POOL MEDAL"
+				|| prod_id == "CRACKIN'DJ  ver JAPAN"
+				|| prod_id == "CRACKIN'DJ PART2  ver JAPAN"
+				|| prod_id == "KICK '4' CASH"
+				|| prod_id == "DRIVE")			// Waiwai drive
 		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::RotaryEncoders;
 		}
-		else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
-				|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
+		else if (prod_id == "POWER STONE 2 JAPAN"		// Naomi
+				|| prod_id == "GUILTY GEAR isuka")		// AW
 		{
-			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::FourPlayers;
 		}
-		else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
-					|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
+		else if (prod_id == "SEGA MARINE FISHING JAPAN"
+					|| prod_id == "BASS FISHING SIMULATOR VER.A")	// AW
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
-		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id)
-				|| !strcmp("VIRTUA ATHLETE", naomi_game_id))
+		else if (prod_id == "RINGOUT 4X4 JAPAN"
+				|| prod_id == "VIRTUA ATHLETE")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DualIOBoards4P;
 		}
-		else if (!strcmp("NINJA ASSAULT", naomi_game_id)
-					|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
-					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE")	// AW
-					|| !strcmp(naomi_game_id, "RANGER MISSION")			// AW
-					|| !strcmp(naomi_game_id, "EXTREME HUNTING"))		// AW
+		else if (prod_id == "NINJA ASSAULT"
+					|| prod_id == "Sports Shooting USA"	// AW
+					|| prod_id == "SEGA CLAY CHALLENGE"	// AW
+					|| prod_id == "RANGER MISSION"			// AW
+					|| prod_id == "EXTREME HUNTING")		// AW
 		{
-			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGun;
 		}
-		else if (!strcmp("MAZAN", naomi_game_id))
+		else if (prod_id == "MAZAN")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::Mazan;
 		}
-		else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
+		else if (prod_id == " BIOHAZARD  GUN SURVIVOR2")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::GunSurvivor;
 		}
-		else if (!strcmp("WORLD KICKS", naomi_game_id))
+		else if (prod_id == "WORLD KICKS")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::WorldKicks;
 		}
-		else if (!strcmp("WORLD KICKS PCB", naomi_game_id))
+		else if (prod_id == "WORLD KICKS PCB")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::WorldKicksPCB;
 		}
-		else if (!strcmp("THE TYPING OF THE DEAD", naomi_game_id)
-				|| !strcmp(" LUPIN THE THIRD  -THE TYPING-", naomi_game_id)
-				|| !strcmp("------La Keyboardxyu------", naomi_game_id))
+		else if (prod_id == "THE TYPING OF THE DEAD"
+				|| prod_id == " LUPIN THE THIRD  -THE TYPING-"
+				|| prod_id == "------La Keyboardxyu------")
 		{
-			INFO_LOG(BOOT, "Enabling keyboard for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling keyboard for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::Keyboard;
 		}
-		else if (!strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
+		else if (prod_id == "OUTTRIGGER     JAPAN")
 		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::OutTrigger;
 		}
-		else if (!strcmp(naomi_game_id, "THE MAZE OF THE KINGS")
-				|| !strcmp(naomi_game_id, " CONFIDENTIAL MISSION ---------")
-				|| !strcmp(naomi_game_id, "DEATH CRIMSON OX")
-				|| !strncmp(naomi_game_id, "hotd2", 5)	// House of the Dead 2
-				|| !strcmp(naomi_game_id, "LUPIN THE THIRD  -THE SHOOTING-"))
+		else if (prod_id == "THE MAZE OF THE KINGS"
+				|| prod_id == " CONFIDENTIAL MISSION ---------"
+				|| prod_id == "DEATH CRIMSON OX"
+				|| prod_id.substr(0, 5) == "hotd2"	// House of the Dead 2
+				|| prod_id == "LUPIN THE THIRD  -THE SHOOTING-")
 		{
-			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGunAsAnalog;
 		}
-		else if (!strcmp("WAVE RUNNER GP", naomi_game_id))
+		else if (prod_id == "WAVE RUNNER GP")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::WaveRunnerGP;
 		}
-		else if (!strcmp("  18WHEELER", naomi_game_id))
+		else if (prod_id == "  18WHEELER")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::_18Wheeler;
 		}
-		else if (!strcmp("INU NO OSANPO", naomi_game_id))	// Dog Walking
+		else if (prod_id == "INU NO OSANPO")	// Dog Walking
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DogWalking;
 		}
-		else if (!strcmp(" TOUCH DE UNOH -------------", naomi_game_id)
-				|| !strcmp("POKASUKA GHOST (JAPANESE)", naomi_game_id))
+		else if (prod_id == " TOUCH DE UNOH -------------"
+				|| prod_id == "POKASUKA GHOST (JAPANESE)")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::TouchDeUno;
 		}
 	}
@@ -692,31 +689,24 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
-	char *reios_id;
 	if (settings.platform.isConsole())
 	{
-		static char _disk_id[sizeof(ip_meta.product_number) + 1];
-
 		reios_disk_id();
-		memcpy(_disk_id, ip_meta.product_number, sizeof(ip_meta.product_number));
-		reios_id = _disk_id;
+		settings.content.gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
+		trim_trailing_ws(settings.content.gameId);
 
-		char *p = reios_id + strlen(reios_id) - 1;
-		while (p >= reios_id && *p == ' ')
-			*p-- = '\0';
-		if (*p == '\0')
+		if (settings.content.gameId.empty())
 			return;
 	}
 	else
 	{
-		reios_id = naomi_game_id;
+		settings.content.gameId = naomi_game_id;
 	}
 
 	// Default per-game settings
 	loadSpecialSettings();
 
-	settings.content.gameId = reios_id;
-	config::Settings::instance().setGameId(reios_id);
+	config::Settings::instance().setGameId(settings.content.gameId);
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
