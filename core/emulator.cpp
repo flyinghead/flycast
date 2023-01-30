@@ -214,7 +214,9 @@ static void loadSpecialSettings()
 			config::UseReios.override(false);
 		}
 		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
-			|| prod_id == "MK-51146")	// Sega Smash Pack - Volume 1
+			|| prod_id == "MK-51146"	// Sega Smash Pack - Volume 1
+			|| prod_id == "T-9702D-50"	// Hydro Thunder (PAL)
+			|| prod_id == "T41601N")	// Elemental Gimmick Gear (US)
 		{
 			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
 			config::Broadcast.override(0);
