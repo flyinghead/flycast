@@ -111,10 +111,10 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
-			return aica::ReadMem_aica_reg<T>(addr);
+			return aica::readAicaReg<T>(addr);
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
-			return aica::ReadMem_aica_rtc<T>(addr);
+			return aica::readRtcReg<T>(addr);
 		break;
 
 	case 4:
@@ -220,13 +220,13 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
 		{
-			aica::WriteMem_aica_reg(addr, data);
+			aica::writeAicaReg(addr, data);
 			return;
 		}
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
 		{
-			aica::WriteMem_aica_rtc(addr, data);
+			aica::writeRtcReg(addr, data);
 			return;
 		}
 		break;

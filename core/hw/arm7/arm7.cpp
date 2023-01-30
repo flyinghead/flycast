@@ -9,14 +9,14 @@ namespace arm
 {
 
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[(addr) & ARAM_MASK])
-#define CPUReadByte arm_ReadMem8
-#define CPUReadMemory arm_ReadMem32
-#define CPUReadHalfWord arm_ReadMem16
-#define CPUReadHalfWordSigned(addr) ((s16)arm_ReadMem16(addr))
+#define CPUReadByte readMem<u8>
+#define CPUReadMemory readMem<u32>
+#define CPUReadHalfWord readMem<u16>
+#define CPUReadHalfWordSigned(addr) ((s16)readMem<u16>(addr))
 
-#define CPUWriteMemory arm_WriteMem32
-#define CPUWriteHalfWord arm_WriteMem16
-#define CPUWriteByte arm_WriteMem8
+#define CPUWriteMemory writeMem<u32>
+#define CPUWriteHalfWord writeMem<u16>
+#define CPUWriteByte writeMem<u8>
 
 #define reg arm_Reg
 #define armNextPC reg[R15_ARM_NEXT].I

@@ -713,16 +713,16 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 	if (Load)
 	{
 		if (Byte)
-			rv=arm_ReadMem8(addr);
+			rv = readMem<u8>(addr);
 		else
-			rv=arm_ReadMem32(addr);
+			rv = readMem<u32>(addr);
 	}
 	else
 	{
 		if (Byte)
-			arm_WriteMem8(addr,data);
+			writeMem<u8>(addr,data);
 		else
-			arm_WriteMem32(addr,data);
+			writeMem<u32>(addr,data);
 	}
 
 	return rv;

@@ -22,7 +22,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "font.h"
 #include "hw/aica/aica.h"
-#include "hw/aica/aica_mem.h"
+#include "hw/aica/aica_if.h"
 #include "hw/pvr/pvr_regs.h"
 #include "imgread/common.h"
 #include "imgread/isofs.h"
@@ -384,10 +384,10 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 static void reios_setup_state(u32 boot_addr)
 {
 	// Set up AICA interrupt masks
-	aica::aicaWriteReg(SCIEB_addr, (u16)0x48);
-	aica::aicaWriteReg(SCILV0_addr, (u8)0x18);
-	aica::aicaWriteReg(SCILV1_addr, (u8)0x50);
-	aica::aicaWriteReg(SCILV2_addr, (u8)0x08);
+	aica::writeAicaReg(SCIEB_addr, (u16)0x48);
+	aica::writeAicaReg(SCILV0_addr, (u8)0x18);
+	aica::writeAicaReg(SCILV1_addr, (u8)0x50);
+	aica::writeAicaReg(SCILV2_addr, (u8)0x08);
 
 	// KOS seems to expect this
 	DMAC_DMAOR.full = 0x8201;

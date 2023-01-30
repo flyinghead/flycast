@@ -309,7 +309,7 @@ extern CommonData_struct* CommonData;
 extern DSPData_struct*	  DSPData;
 
 template<typename T>
-void WriteAicaReg(u32 reg, T data);
+void writeTimerAndIntReg(u32 reg, T data);
 
 class AicaTimer
 {

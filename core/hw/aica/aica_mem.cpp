@@ -19,7 +19,7 @@ static void (*midiReceiver)(u8 data);
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 template<typename T>
-T aicaReadReg(u32 addr)
+T readRegInternal(u32 addr)
 {
 	addr &= 0x7FFF;
 
@@ -65,9 +65,9 @@ T aicaReadReg(u32 addr)
 	}
 	return ReadMemArr<T>(aica_reg, addr);
 }
-template u8 aicaReadReg<u8>(u32 addr);
-template u16 aicaReadReg<u16>(u32 addr);
-template u32 aicaReadReg<u32>(u32 addr);
+template u8 readRegInternal<u8>(u32 addr);
+template u16 readRegInternal<u16>(u32 addr);
+template u32 readRegInternal<u32>(u32 addr);
 
 static void writeCommonReg8(u32 reg, u8 data)
 {
@@ -86,7 +86,7 @@ static void writeCommonReg8(u32 reg, u8 data)
 }
 
 template<typename T>
-void aicaWriteReg(u32 addr, T data)
+void writeRegInternal(u32 addr, T data)
 {
 	constexpr size_t sz = sizeof(T);
 	addr &= 0x7FFF;
@@ -185,13 +185,13 @@ void aicaWriteReg(u32 addr, T data)
 			dsp::writeProg(addr + 1);
 		return;
 	}
-	WriteAicaReg(addr, data);
+	writeTimerAndIntReg(addr, data);
 }
-template void aicaWriteReg<>(u32 addr, u8 data);
-template void aicaWriteReg<>(u32 addr, u16 data);
-template void aicaWriteReg<>(u32 addr, u32 data);
+template void writeRegInternal<>(u32 addr, u8 data);
+template void writeRegInternal<>(u32 addr, u16 data);
+template void writeRegInternal<>(u32 addr, u32 data);
 
-void init_mem()
+void initMem()
 {
 	memset(aica_reg, 0, sizeof(aica_reg));
 	aica_ram[ARAM_SIZE - 1] = 1;
@@ -199,7 +199,7 @@ void init_mem()
 	midiReceiver = nullptr;
 }
 
-void term_mem()
+void termMem()
 {
 }
 

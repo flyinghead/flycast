@@ -30,11 +30,11 @@ namespace aica
 {
 
 RamRegion aica_ram;
-u32 VREG;
-u32 ARMRST;
-u32 rtc_EN;
+static u32 VREG;
+static u32 ARMRST;
+static u32 rtc_EN;
 int dma_sched_id = -1;
-u32 RealTimeClock;
+static u32 RealTimeClock;
 int rtc_schid = -1;
 
 u32 GetRTC_now()
@@ -58,7 +58,7 @@ u32 GetRTC_now()
 }
 
 template<typename T>
-T ReadMem_aica_rtc(u32 addr)
+T readRtcReg(u32 addr)
 {
 	switch (addr & 0xFF)
 	{
@@ -70,15 +70,15 @@ T ReadMem_aica_rtc(u32 addr)
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, (int)sizeof(T));
+	WARN_LOG(AICA, "readRtcReg: invalid address %x sz %d", addr, (int)sizeof(T));
 	return 0;
 }
-template u8 ReadMem_aica_rtc<>(u32 addr);
-template u16 ReadMem_aica_rtc<>(u32 addr);
-template u32 ReadMem_aica_rtc<>(u32 addr);
+template u8 readRtcReg<>(u32 addr);
+template u16 readRtcReg<>(u32 addr);
+template u32 readRtcReg<>(u32 addr);
 
 template<typename T>
-void WriteMem_aica_rtc(u32 addr, T data)
+void writeRtcReg(u32 addr, T data)
 {
 	switch (addr & 0xFF)
 	{
@@ -103,16 +103,16 @@ void WriteMem_aica_rtc(u32 addr, T data)
 		break;
 
 	default:
-		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
+		WARN_LOG(AICA, "writeRtcReg: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
 		break;
 	}
 }
-template void WriteMem_aica_rtc<>(u32 addr, u8 data);
-template void WriteMem_aica_rtc<>(u32 addr, u16 data);
-template void WriteMem_aica_rtc<>(u32 addr, u32 data);
+template void writeRtcReg<>(u32 addr, u8 data);
+template void writeRtcReg<>(u32 addr, u16 data);
+template void writeRtcReg<>(u32 addr, u32 data);
 
 template<typename T>
-T ReadMem_aica_reg(u32 addr)
+T readAicaReg(u32 addr)
 {
 	addr &= 0x7FFF;
 	if (sizeof(T) == 1)
@@ -131,13 +131,13 @@ T ReadMem_aica_reg(u32 addr)
 		return (T)((VREG << 8) | ARMRST);
 
 	if (sizeof(T) == 4)
-		return aicaReadReg<u16>(addr);
+		return readRegInternal<u16>(addr);
 	else
-		return aicaReadReg<T>(addr);
+		return readRegInternal<T>(addr);
 }
-template u8 ReadMem_aica_reg<>(u32 addr);
-template u16 ReadMem_aica_reg<>(u32 addr);
-template u32 ReadMem_aica_reg<>(u32 addr);
+template u8 readAicaReg<>(u32 addr);
+template u16 readAicaReg<>(u32 addr);
+template u32 readAicaReg<>(u32 addr);
 
 static void ArmSetRST()
 {
@@ -146,7 +146,7 @@ static void ArmSetRST()
 }
 
 template<typename T>
-void WriteMem_aica_reg(u32 addr, T data)
+void writeAicaReg(u32 addr, T data)
 {
 	addr &= 0x7FFF;
 
@@ -176,13 +176,13 @@ void WriteMem_aica_reg(u32 addr, T data)
 		return;
 	}
 	if (sizeof(T) == 4)
-		aicaWriteReg(addr, (u16)data);
+		writeRegInternal(addr, (u16)data);
 	else
-		aicaWriteReg(addr, data);
+		writeRegInternal(addr, data);
 }
-template void WriteMem_aica_reg<>(u32 addr, u8 data);
-template void WriteMem_aica_reg<>(u32 addr, u16 data);
-template void WriteMem_aica_reg<>(u32 addr, u32 data);
+template void writeAicaReg<>(u32 addr, u8 data);
+template void writeAicaReg<>(u32 addr, u16 data);
+template void writeAicaReg<>(u32 addr, u32 data);
 
 static int DreamcastSecond(int tag, int c, int j)
 {

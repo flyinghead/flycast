@@ -140,7 +140,7 @@ static void AicaInternalDMA()
 			// to regs
 			u32 addr = CommonData->DRGA << 2;
 			for (u32 i = 0; i < CommonData->DLG; i++, addr += 4)
-				WriteMem_aica_reg(addr, (u32)0);
+				writeAicaReg(addr, (u32)0);
 		}
 	}
 	else
@@ -153,13 +153,13 @@ static void AicaInternalDMA()
 		{
 			// reg to wave mem
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg<u32>(raddr);
+				*(u32*)&aica_ram[waddr] = readAicaReg<u32>(raddr);
 		}
 		else
 		{
 			// wave mem to regs
 			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
-				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr]);
+				writeAicaReg(raddr, *(u32*)&aica_ram[waddr]);
 		}
 	}
 	CommonData->DEXE = 0;
@@ -171,7 +171,7 @@ static void AicaInternalDMA()
 
 //Memory i/o
 template<typename T>
-void WriteAicaReg(u32 reg, T data)
+void writeTimerAndIntReg(u32 reg, T data)
 {
 	constexpr size_t sz = sizeof(T);
 	switch (reg)
@@ -249,9 +249,9 @@ void WriteAicaReg(u32 reg, T data)
 	}
 }
 
-template void WriteAicaReg<>(u32 reg, u8 data);
-template void WriteAicaReg<>(u32 reg, u16 data);
-template void WriteAicaReg<>(u32 reg, u32 data);
+template void writeTimerAndIntReg<>(u32 reg, u8 data);
+template void writeTimerAndIntReg<>(u32 reg, u16 data);
+template void writeTimerAndIntReg<>(u32 reg, u32 data);
 
 void midiSend(u8 data)
 {
@@ -264,7 +264,7 @@ void midiSend(u8 data)
 
 void init()
 {
-	init_mem();
+	initMem();
 	initRtc();
 
 	static_assert(sizeof(*CommonData) == 0x508, "Invalid CommonData size");
@@ -292,7 +292,7 @@ void reset(bool hard)
 {
 	if (hard)
 	{
-		init_mem();
+		initMem();
 		sgc::term();
 		sgc::init();
 		sh4_sched_request(aica_schid, AICA_TICK);
@@ -307,7 +307,7 @@ void term()
 {
 	arm::term();
 	sgc::term();
-	term_mem();
+	termMem();
 	sh4_sched_unregister(aica_schid);
 	aica_schid = -1;
 }
