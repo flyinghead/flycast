@@ -324,12 +324,17 @@ void release_jit_block(void *code_area1, void *code_area2, size_t size)
 	munmap(code_area2, size);
 }
 
+} // namespace virtmem
+
 #endif // !__SWITCH__
+
+namespace virtmem
+{
 
 void jit_set_exec(void* code, size_t size, bool enable) {
 }
 
-} // namespace virtmem
+}
 
 // Some OSes restrict cache flushing, cause why not right? :D
 

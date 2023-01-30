@@ -57,9 +57,9 @@ static ptrdiff_t rx_offset;
 static void JITWriteProtect(bool enable)
 {
     if (enable)
-        mem_region_set_exec(pCodeBuffer, CodeSize);
+    	virtmem::region_set_exec(pCodeBuffer, CodeSize);
     else
-        mem_region_unlock(pCodeBuffer, CodeSize);
+    	virtmem::region_unlock(pCodeBuffer, CodeSize);
 }
 #endif
 

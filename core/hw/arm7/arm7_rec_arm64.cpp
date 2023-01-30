@@ -47,9 +47,9 @@ static Arm64UnwindInfo unwinder;
 static void JITWriteProtect(bool enable)
 {
     if (enable)
-        mem_region_set_exec(recompiler::ICache, recompiler::ICacheSize);
+    	virtmem::region_set_exec(recompiler::ICache, recompiler::ICacheSize);
     else
-        mem_region_unlock(recompiler::ICache, recompiler::ICacheSize);
+    	virtmem::region_unlock(recompiler::ICache, recompiler::ICacheSize);
 }
 #endif
 

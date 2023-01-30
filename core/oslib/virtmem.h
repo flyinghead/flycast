@@ -35,7 +35,6 @@ void release_jit_block(void *code_area, size_t size);
 // Release a jit block previously allocated by prepare_jit_block (with dual RW and RX areas)
 void release_jit_block(void *code_area1, void *code_area2, size_t size);
 
-// from stdclass.h
 bool region_lock(void *start, std::size_t len);
 bool region_unlock(void *start, std::size_t len);
 bool region_set_exec(void *start, std::size_t len);

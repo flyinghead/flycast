@@ -91,9 +91,9 @@ void ngen_mainloop(void* v_cntx)
 static void JITWriteProtect(bool enable)
 {
     if (enable)
-        mem_region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    	virtmem::region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
     else
-        mem_region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    	virtmem::region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
 }
 #endif
 
