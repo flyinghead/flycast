@@ -809,7 +809,7 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		if (settings.content.gameId == "VIRTUA ATHLETE")
 		{
 			// reverse the board order so that P1 is P1
 			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
@@ -1712,6 +1712,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 											axis_value = 0;
 										if (axisDesc.inverted)
 											axis_value = 0xff00u - axis_value;
+										// this fixes kingrt66 immediate win
+										if (axis_value == 0x8000)
+											axis_value = 0x8100;
 									}
 									else
 									{
