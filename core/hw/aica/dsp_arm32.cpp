@@ -27,6 +27,9 @@
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
 
+namespace aica
+{
+
 namespace dsp
 {
 
@@ -420,5 +423,6 @@ void runStep()
 	((void (*)())DynCode)();
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

@@ -153,7 +153,7 @@ static void fixUpDCFlash()
 			syscfg.mono = 0;
 			syscfg.autostart = 1;
 		}
-		u32 now = GetRTC_now();
+		u32 now = aica::GetRTC_now();
 		syscfg.time_lo = now & 0xffff;
 		syscfg.time_hi = now >> 16;
 		if (config::Language <= 5)

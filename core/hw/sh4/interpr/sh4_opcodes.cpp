@@ -1197,7 +1197,7 @@ void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
 
 void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
 {
-	u8* pmem = mem_b.data;
+	u8* pmem = &mem_b[0];
 
 	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
 }

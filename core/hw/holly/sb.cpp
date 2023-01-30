@@ -710,7 +710,7 @@ void sb_Init()
 
 	pvr_sb_Init();
 	maple_Init();
-	aica_sb_Init();
+	aica::sbInit();
 
 	bba_Init();
 	ModemInit();
@@ -738,14 +738,14 @@ void sb_Reset(bool hard)
 		naomi_reg_Reset(hard);
 	pvr_sb_Reset(hard);
 	maple_Reset(hard);
-	aica_sb_Reset(hard);
+	aica::sbReset(hard);
 }
 
 void sb_Term()
 {
 	bba_Term();
 	ModemTerm();
-	aica_sb_Term();
+	aica::sbTerm();
 	maple_Term();
 	pvr_sb_Term();
 	gdrom_reg_Term();

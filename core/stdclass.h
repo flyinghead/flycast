@@ -17,7 +17,9 @@
 #else
 #define PAGE_SIZE 4096
 #endif
+#ifndef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
+#endif
 
 class cThread
 {
@@ -73,25 +75,33 @@ std::string get_game_dir();
 // returns the position of the last path separator, or string::npos if none
 size_t get_last_slash_pos(const std::string& path);
 
-class VArray2 {
-public:
-	u8* data;
-	unsigned size;
+class RamRegion
+{
+	u8 *data;
+	size_t size;
+	bool ownsMemory = false;
 
-	void Zero() {
+public:
+	void alloc(size_t size);
+	void free();
+
+	void setRegion(u8 *data, size_t size)
+	{
+		this->data = data;
+		this->size = size;
+		ownsMemory = false;
+	}
+
+	void zero() {
 		std::memset(data, 0, size);
 	}
 
-	u8& operator [](unsigned i) {
-#ifdef MEM_BOUND_CHECK
-        if (i >= size)
-		{
-        	ERROR_LOG(COMMON, "Error: VArray2 , index out of range (%d > %d)\n", i, size - 1);
-			MEM_DO_BREAK;
-		}
-#endif
+	u8& operator [](size_t i) {
 		return data[i];
     }
+
+	void serialize(Serializer &ser) const;
+	void deserialize(Deserializer &deser);
 };
 
 static inline void string_tolower(std::string& s)

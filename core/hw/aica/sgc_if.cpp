@@ -45,6 +45,11 @@
 #define clip_verify(x)
 #endif
 
+namespace aica
+{
+
+namespace sgc
+{
 //Sound generation, mixin, and channel regs emulation
 //x.15
 static s32 volume_lut[16];
@@ -648,7 +653,7 @@ struct ChannelEx
 		if (ccd->PCMS==0)
 			addr&=~1; //0: 16 bit
 		
-		SA=&aica_ram.data[addr];
+		SA = &aica_ram[addr];
 	}
 	//LSA,LEA
 	void UpdateLoop()
@@ -1286,7 +1291,7 @@ static u32 CalcAttackEgSteps(float t)
 	return (u32)lround(factor);
 }
 
-void sgc_Init()
+void init()
 {
 	staticinitialise();
 
@@ -1328,7 +1333,7 @@ void sgc_Init()
 	dsp::init();
 }
 
-void sgc_Term()
+void term()
 {
 	dsp::term();
 }
@@ -1520,7 +1525,7 @@ void AICA_Sample()
 	WriteSample(mixr,mixl);
 }
 
-void channel_serialize(Serializer& ser)
+void serialize(Serializer& ser)
 {
 	for (const ChannelEx& channel : Chans)
 	{
@@ -1559,7 +1564,7 @@ void channel_serialize(Serializer& ser)
 		ser << b;
 }
 
-void channel_deserialize(Deserializer& deser)
+void deserialize(Deserializer& deser)
 {
 	if (deser.version() < Deserializer::V7_LIBRETRO)
 	{
@@ -1704,3 +1709,6 @@ void channel_deserialize(Deserializer& deser)
 		}
 	}
 }
+
+} // namespace sgc
+} // namespace aica

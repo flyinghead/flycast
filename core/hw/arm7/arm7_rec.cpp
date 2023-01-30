@@ -34,9 +34,11 @@
 #include <sstream>
 #endif
 
-extern bool Arm7Enabled;
+namespace aica
+{
 
-namespace aicaarm {
+namespace arm
+{
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
@@ -744,7 +746,8 @@ void *getMemOp(bool Load, bool Byte)
 	}
 }
 
-} // recompiler ns
+} // namespace recompiler
+
 // Run a timeslice of arm7
 
 void run(u32 samples)
@@ -756,7 +759,7 @@ void run(u32 samples)
 			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
 			arm_mainloop(arm_Reg, recompiler::EntryPoints);
 		}
-		libAICA_TimeStep();
+		timeStep();
 	}
 }
 
@@ -765,5 +768,6 @@ void avoidRaceCondition()
 	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
-} // aicarm ns
+} // namespace arm
+} // namespace aica
 #endif // FEAT_AREC != DYNAREC_NONE

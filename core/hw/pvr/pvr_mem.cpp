@@ -13,7 +13,7 @@
 
 static u32 pvr_map32(u32 offset32);
 
-VArray2 vram;
+RamRegion vram;
 
 // YUV converter code
 static SQBuffer YUV_tempdata[512 / sizeof(SQBuffer)];	// 512 bytes
@@ -100,7 +100,7 @@ static void YUV_ConvertMacroBlock(const u8 *datap)
 	//do shit
 	TA_YUV_TEX_CNT++;
 
-	YUV_Block384(datap, vram.data + YUV_dest);
+	YUV_Block384(datap, &vram[YUV_dest]);
 
 	YUV_dest+=32;
 

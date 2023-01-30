@@ -29,7 +29,11 @@ using namespace vixl::aarch64;
 #include "rec-ARM64/arm64_unwind.h"
 #include "oslib/virtmem.h"
 
-namespace aicaarm {
+namespace aica
+{
+
+namespace arm
+{
 
 static void (*arm_dispatch)();	// Not an executable address
 
@@ -758,5 +762,6 @@ void arm7backend_flush()
 	assembler.generateMainLoop();
 }
 
-}
+} // namespace arm
+} // namespace aica
 #endif // ARM64

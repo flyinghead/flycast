@@ -29,7 +29,10 @@ using namespace Xbyak::util;
 #include "oslib/oslib.h"
 #include "oslib/virtmem.h"
 
-namespace aicaarm {
+namespace aica
+{
+namespace arm
+{
 
 static void (*arm_dispatch)();
 
@@ -1019,5 +1022,6 @@ void arm7backend_flush()
 	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
-}
+} // namespace arm
+} // namespace aica
 #endif // X64 && DYNAREC_JIT

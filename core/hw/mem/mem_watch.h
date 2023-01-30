@@ -159,7 +159,7 @@ protected:
 public:
 	void *getMemPage(u32 addr)
 	{
-		return &aica_ram[addr];
+		return &aica::aica_ram[addr];
 	}
 };
 

@@ -16,6 +16,8 @@
 	Initial code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
+namespace aica
+{
 
 namespace dsp
 {
@@ -150,4 +152,5 @@ void step()
 	runStep();
 }
 
-}
+} // namespace dsp
+} // namespace aica

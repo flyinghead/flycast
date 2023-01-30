@@ -18,7 +18,7 @@
 #endif
 
 //main system mem
-VArray2 mem_b;
+RamRegion mem_b;
 
 // Memory handlers
 ReadMem8Func ReadMem8;
@@ -46,7 +46,7 @@ static void map_area1(u32 base)
 	
 	//Lower 32 mb map
 	//64b interface
-	addrspace::mapBlock(vram.data, 0x04 | base, 0x04 | base, VRAM_MASK);
+	addrspace::mapBlock(&vram[0], 0x04 | base, 0x04 | base, VRAM_MASK);
 	//32b interface
 	addrspace::mapHandler(area1_32b, 0x05 | base, 0x05 | base);
 	
@@ -65,7 +65,7 @@ static void map_area3_init()
 static void map_area3(u32 base)
 {
 	// System RAM
-	addrspace::mapBlockMirror(mem_b.data, 0x0C | base,0x0F | base, RAM_SIZE);
+	addrspace::mapBlockMirror(&mem_b[0], 0x0C | base,0x0F | base, RAM_SIZE);
 }
 
 //AREA 4
@@ -187,10 +187,7 @@ void mem_Reset(bool hard)
 {
 	//mem is reset on hard restart (power on), not soft reset
 	if (hard)
-	{
-		//fill mem w/ 0's
-		mem_b.Zero();
-	}
+		mem_b.zero();
 
 	//Reset registers
 	sh4_area0_Reset(hard);

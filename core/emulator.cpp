@@ -376,8 +376,7 @@ void dc_reset(bool hard)
 	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
-	libAICA_Reset(hard);
-	aicaarm::reset();
+	aica::reset(hard);
 	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 }
@@ -440,8 +439,7 @@ void Emulator::init()
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
 	pvr::init();
-	libAICA_Init();
-	aicaarm::init();
+	aica::init();
 	mem_Init();
 	reios_init();
 
@@ -661,8 +659,7 @@ void Emulator::term()
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
-		aicaarm::term();
-		libAICA_Term();
+		aica::term();
 		pvr::term();
 		mem_Term();
 
@@ -763,7 +760,7 @@ void dc_loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
-	aicaarm::recompiler::flush();
+	aica::arm::recompiler::flush();
 #endif
 	mmu_flush_table();
 #if FEAT_SHREC != DYNAREC_NONE

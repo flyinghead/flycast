@@ -27,6 +27,9 @@
 #include "aica_if.h"
 #include "oslib/virtmem.h"
 
+namespace aica
+{
+
 namespace dsp
 {
 
@@ -445,5 +448,6 @@ void runStep()
 	((void (*)())&pCodeBuffer[0])();
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

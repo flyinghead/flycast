@@ -1,10 +1,7 @@
 // serialize.cpp : save states
 #include "serialize.h"
 #include "types.h"
-#include "hw/aica/dsp.h"
-#include "hw/aica/aica.h"
-#include "hw/aica/sgc_if.h"
-#include "hw/arm7/arm7.h"
+#include "hw/aica/aica_if.h"
 #include "hw/holly/sb.h"
 #include "hw/flashrom/nvmem.h"
 #include "hw/gdrom/gdrom_if.h"
@@ -26,33 +23,18 @@
 #include <array>
 #include <vector>
 
-//./core/hw/arm7/arm_mem.cpp
-extern bool aica_interr;
-extern u32 aica_reg_L;
-extern bool e68k_out;
-extern u32 e68k_reg_L;
-extern u32 e68k_reg_M;
-
-//./core/hw/arm7/arm7.cpp
-extern bool armIrqEnable;
-extern bool armFiqEnable;
-extern int armMode;
-extern bool Arm7Enabled;
+namespace aica
+{
 
 //./core/hw/aica/aica.o
-extern AicaTimer timers[3];
+extern int aica_schid;
+extern int rtc_schid;
 
 //./core/hw/aica/aica_if.o
-extern VArray2 aica_ram;
-extern u32 VREG;//video reg =P
-extern u32 ARMRST;//arm reset reg
-extern u32 rtc_EN;
 extern int dma_sched_id;
-extern u32 RealTimeClock;
-extern u32 SB_ADST;
 
-//./core/hw/aica/aica_mem.o
-extern u8 aica_reg[0x8000];
+}
+extern u32 SB_ADST;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;
@@ -71,7 +53,7 @@ extern int vblank_schid;
 extern std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //./core/hw/sh4/sh4_mem.o
-extern VArray2 mem_b;
+extern RamRegion mem_b;
 
 //./core/hw/sh4/sh4_interrupts.o
 alignas(64) extern Sh4ExceptionCode InterruptEnvId[32];
@@ -88,10 +70,6 @@ extern Sh4RCB* p_sh4rcb;
 extern u64 sh4_sched_ffb;
 extern std::vector<sched_list> sch_list;
 extern int sh4_sched_next_id;
-
-//./core/hw/sh4/interpr/sh4_interpreter.o
-extern int aica_schid;
-extern int rtc_schid;
 
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
@@ -142,44 +120,14 @@ void register_deserialize(T& regs, Deserializer& deser)
 }
 
 static const std::array<int, 11> getSchedulerIds() {
-	return { aica_schid, rtc_schid, gdrom_schid, maple_schid, dma_sched_id,
+	return { aica::aica_schid, aica::rtc_schid, gdrom_schid, maple_schid, aica::dma_sched_id,
 		tmu_sched[0], tmu_sched[1], tmu_sched[2], render_end_schid, vblank_schid,
 		modem_sched };
 }
 
 void dc_serialize(Serializer& ser)
 {
-	ser << aica_interr;
-	ser << aica_reg_L;
-	ser << e68k_out;
-	ser << e68k_reg_L;
-	ser << e68k_reg_M;
-
-	ser.serialize(arm_Reg, RN_ARM_REG_COUNT - 1);	// Too lazy to create a new version and the scratch register is not used between blocks anyway
-	ser << armIrqEnable;
-	ser << armFiqEnable;
-	ser << armMode;
-	ser << Arm7Enabled;
-	ser << arm7ClockTicks;
-
-	dsp::state.serialize(ser);
-
-	for (int i = 0 ; i < 3 ; i++)
-	{
-		ser << timers[i].c_step;
-		ser << timers[i].m_step;
-	}
-
-	if (!ser.rollback())
-		ser.serialize(aica_ram.data, aica_ram.size);
-	ser << VREG;
-	ser << ARMRST;
-	ser << rtc_EN;
-	ser << RealTimeClock;
-
-	ser << aica_reg;
-
-	channel_serialize(ser);
+	aica::serialize(ser);
 
 	register_serialize(sb_regs, ser);
 	ser << SB_ISTNRM;
@@ -210,7 +158,7 @@ void dc_serialize(Serializer& ser)
 	ocache.Serialize(ser);
 
 	if (!ser.rollback())
-		ser.serialize(mem_b.data, mem_b.size);
+		mem_b.serialize(ser);
 
 	ser << InterruptEnvId;
 	ser << InterruptBit;
@@ -301,44 +249,7 @@ void dc_serialize(Serializer& ser)
 
 static void dc_deserialize_libretro(Deserializer& deser)
 {
-	deser >> aica_interr;
-	deser >> aica_reg_L;
-	deser >> e68k_out;
-	deser >> e68k_reg_L;
-	deser >> e68k_reg_M;
-
-	deser.deserialize(arm_Reg, RN_ARM_REG_COUNT - 1);
-	deser >> armIrqEnable;
-	deser >> armFiqEnable;
-	deser >> armMode;
-	deser >> Arm7Enabled;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip(256);		// cpuBitsSet
-		deser.skip(1);			// intState
-		deser.skip(1);			// stopState
-		deser.skip(1);			// holdState
-	}
-	arm7ClockTicks = 0;
-
-	dsp::state.deserialize(deser);
-
-	for (int i = 0 ; i < 3 ; i++)
-	{
-		deser >> timers[i].c_step;
-		deser >> timers[i].m_step;
-	}
-
-	deser.deserialize(aica_ram.data, aica_ram.size);
-	if (settings.platform.isAtomiswave())
-		deser.skip(6 * 1024 * 1024);
-	deser >> VREG;
-	deser >> ARMRST;
-	deser >> rtc_EN;
-
-	deser >> aica_reg;
-
-	channel_deserialize(deser);
+	aica::deserialize(deser);
 
 	register_deserialize(sb_regs, deser);
 	deser >> SB_ISTNRM;
@@ -375,7 +286,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	else
 		ocache.Reset(true);
 
-	deser.deserialize(mem_b.data, mem_b.size);
+	mem_b.deserialize(deser);
 	if (deser.version() < Deserializer::V9_LIBRETRO)
 		deser.skip<u16>();
 	deser >> InterruptEnvId;
@@ -421,13 +332,13 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	if (deser.version() < Deserializer::V9_LIBRETRO)
 		deser.skip<u32>();		// sh4_sched_intr
 
-	deser >> sch_list[aica_schid].tag;
-	deser >> sch_list[aica_schid].start;
-	deser >> sch_list[aica_schid].end;
+	deser >> sch_list[aica::aica_schid].tag;
+	deser >> sch_list[aica::aica_schid].start;
+	deser >> sch_list[aica::aica_schid].end;
 
-	deser >> sch_list[rtc_schid].tag;
-	deser >> sch_list[rtc_schid].start;
-	deser >> sch_list[rtc_schid].end;
+	deser >> sch_list[aica::rtc_schid].tag;
+	deser >> sch_list[aica::rtc_schid].start;
+	deser >> sch_list[aica::rtc_schid].end;
 
 	deser >> sch_list[gdrom_schid].tag;
 	deser >> sch_list[gdrom_schid].start;
@@ -437,9 +348,9 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	deser >> sch_list[maple_schid].start;
 	deser >> sch_list[maple_schid].end;
 
-	deser >> sch_list[dma_sched_id].tag;
-	deser >> sch_list[dma_sched_id].start;
-	deser >> sch_list[dma_sched_id].end;
+	deser >> sch_list[aica::dma_sched_id].tag;
+	deser >> sch_list[aica::dma_sched_id].start;
+	deser >> sch_list[aica::dma_sched_id].end;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -571,47 +482,7 @@ void dc_deserialize(Deserializer& deser)
 	}
 	DEBUG_LOG(SAVESTATE, "Loading state version %d", deser.version());
 
-	deser >> aica_interr;
-	deser >> aica_reg_L;
-	deser >> e68k_out;
-	deser >> e68k_reg_L;
-	deser >> e68k_reg_M;
-
-	deser.deserialize(arm_Reg, RN_ARM_REG_COUNT - 1);
-	deser >> armIrqEnable;
-	deser >> armFiqEnable;
-	deser >> armMode;
-	deser >> Arm7Enabled;
-	if (deser.version() < Deserializer::V5)
-		deser.skip(256 + 3);
-	if (deser.version() >= Deserializer::V19)
-		deser >> arm7ClockTicks;
-	else
-		arm7ClockTicks = 0;
-
-	dsp::state.deserialize(deser);
-
-	for (int i = 0 ; i < 3 ; i++)
-	{
-		deser >> timers[i].c_step;
-		deser >> timers[i].m_step;
-	}
-
-	if (!deser.rollback())
-	{
-		deser.deserialize(aica_ram.data, aica_ram.size);
-		if (settings.platform.isAtomiswave())
-			deser.skip(6 * 1024 * 1024, Deserializer::V30);
-	}
-	deser >> VREG;
-	deser >> ARMRST;
-	deser >> rtc_EN;
-	if (deser.version() >= Deserializer::V9)
-		deser >> RealTimeClock;
-
-	deser >> aica_reg;
-
-	channel_deserialize(deser);
+	aica::deserialize(deser);
 
 	register_deserialize(sb_regs, deser);
 	deser >> SB_ISTNRM;
@@ -659,7 +530,7 @@ void dc_deserialize(Deserializer& deser)
 		ocache.Reset(true);
 
 	if (!deser.rollback())
-		deser.deserialize(mem_b.data, mem_b.size);
+		mem_b.deserialize(deser);
 
 	if (deser.version() < Deserializer::V5)
 		deser.skip(2);

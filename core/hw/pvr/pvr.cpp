@@ -78,7 +78,7 @@ void serialize(Serializer& ser)
 	SerializeTAContext(ser);
 
 	if (!ser.rollback())
-		ser.serialize(vram.data, vram.size);
+		vram.serialize(ser);
 	elan::serialize(ser);
 }
 
@@ -146,7 +146,7 @@ void deserialize(Deserializer& deser)
 		DeserializeTAContext(deser);
 
 	if (!deser.rollback())
-		deser.deserialize(vram.data, vram.size);
+		vram.deserialize(deser);
 	elan::deserialize(deser);
 	pal_needs_update = true;
 }

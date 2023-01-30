@@ -1,6 +1,12 @@
 #include "arm_mem.h"
 #include "hw/aica/aica_mem.h"
 
+namespace aica
+{
+
+namespace arm
+{
+
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
 
@@ -25,7 +31,7 @@ void update_e68k()
 	}
 }
 
-void libARM_InterruptChange(u32 bits,u32 L)
+void interruptChange(u32 bits,u32 L)
 {
 	aica_interr=bits!=0;
 	if (aica_interr)
@@ -90,3 +96,6 @@ template u32 arm_ReadReg<u32>(u32 adr);
 template void arm_WriteReg<>(u32 adr,u8 data);
 template void arm_WriteReg<>(u32 adr,u16 data);
 template void arm_WriteReg<>(u32 adr,u32 data);
+
+} // namespace arm
+} // namespace aica

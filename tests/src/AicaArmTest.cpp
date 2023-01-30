@@ -6,8 +6,6 @@
 #include "hw/arm7/arm7_rec.h"
 #include "emulator.h"
 
-extern bool Arm7Enabled;
-
 static const u32 N_FLAG = 1 << 31;
 static const u32 Z_FLAG = 1 << 30;
 static const u32 C_FLAG = 1 << 29;
@@ -15,7 +13,7 @@ static const u32 V_FLAG = 1 << 28;
 static const u32 NZCV_MASK = N_FLAG | Z_FLAG | C_FLAG | V_FLAG;
 
 
-namespace aicaarm::recompiler {
+namespace aica::arm::recompiler {
 
 extern void (*EntryPoints[])();
 

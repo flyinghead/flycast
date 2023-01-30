@@ -29,7 +29,11 @@ using namespace vixl::aarch32;
 
 static ArmUnwindInfo unwinder;
 
-namespace aicaarm {
+namespace aica
+{
+
+namespace arm
+{
 
 class Arm32Assembler : public MacroAssembler
 {
@@ -521,5 +525,6 @@ void arm7backend_flush()
 	recompiler::advance(ass.GetBuffer()->GetSizeInBytes());
 }
 
-}
+} // namespace arm
+} // namespace aica
 #endif // HOST_CPU == CPU_ARM && FEAT_AREC != DYNAREC_NONE

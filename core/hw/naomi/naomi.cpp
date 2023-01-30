@@ -723,10 +723,10 @@ void naomi_Deserialize(Deserializer& deser)
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
 {
-	aica_midiSend(b1);
-	aica_midiSend(b2);
-	aica_midiSend(b3);
-	aica_midiSend((b1 ^ b2 ^ b3) & 0x7f);
+	aica::midiSend(b1);
+	aica::midiSend(b2);
+	aica::midiSend(b3);
+	aica::midiSend((b1 ^ b2 ^ b3) & 0x7f);
 }
 
 static void forceFeedbackMidiReceiver(u8 data)
@@ -761,5 +761,5 @@ static void forceFeedbackMidiReceiver(u8 data)
 
 void initMidiForceFeedback()
 {
-	aica_setMidiReceiver(forceFeedbackMidiReceiver);
+	aica::setMidiReceiver(forceFeedbackMidiReceiver);
 }

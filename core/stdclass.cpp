@@ -1,6 +1,8 @@
 #include "types.h"
 #include "stdclass.h"
 #include "oslib/directory.h"
+#include "oslib/oslib.h"
+#include "serialize.h"
 
 #include <chrono>
 #include <cstring>
@@ -199,4 +201,28 @@ void cResetEvent::Wait()
     }
 
     state = false;
+}
+
+void RamRegion::serialize(Serializer &ser) const {
+	ser.serialize(data, size);
+}
+
+void RamRegion::deserialize(Deserializer &deser) {
+	deser.deserialize(data, size);
+}
+
+
+void RamRegion::alloc(size_t size)
+{
+	this->size = size;
+	data = (u8 *)allocAligned(PAGE_SIZE, size);
+	ownsMemory = true;
+}
+
+void RamRegion::free()
+{
+	this->size = 0;
+	if (ownsMemory)
+		freeAligned(data);
+	data = nullptr;
 }

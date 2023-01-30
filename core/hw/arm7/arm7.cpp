@@ -2,6 +2,12 @@
 #include "arm_mem.h"
 #include "arm7_rec.h"
 
+namespace aica
+{
+
+namespace arm
+{
+
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[(addr) & ARAM_MASK])
 #define CPUReadByte arm_ReadMem8
 #define CPUReadMemory arm_ReadMem32
@@ -71,27 +77,27 @@ static void runInterpreter(u32 CycleCount)
 	}
 }
 
-void aicaarm::avoidRaceCondition()
+void avoidRaceCondition()
 {
 	arm7ClockTicks = std::min(arm7ClockTicks, -50);
 }
 
-void aicaarm::run(u32 samples)
+void run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{
 		runInterpreter(ARM_CYCLES_PER_SAMPLE);
-		libAICA_TimeStep();
+		timeStep();
 	}
 }
 #endif
 
-void aicaarm::init()
+void init()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	recompiler::init();
 #endif
-	aicaarm::reset();
+	reset();
 
 	for (int i = 0; i < 256; i++)
 	{
@@ -104,7 +110,7 @@ void aicaarm::init()
 	}
 }
 
-void aicaarm::term()
+void term()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	recompiler::term();
@@ -274,7 +280,7 @@ static void CPUUndefinedException()
 	armNextPC = 0x04;
 }
 
-void aicaarm::reset()
+void reset()
 {
 	INFO_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
@@ -334,10 +340,10 @@ void CPUFiq()
 */
 
 
-void aicaarm::enable(bool enabled)
+void enable(bool enabled)
 {
 	if(!Arm7Enabled && enabled)
-		aicaarm::reset();
+		reset();
 	
 	Arm7Enabled=enabled;
 }
@@ -351,8 +357,6 @@ void update_armintc()
 //
 // Used by ARM7 Recompiler
 //
-namespace aicaarm {
-
 namespace recompiler {
 
 //Emulate a single arm op, passed in opcode
@@ -401,7 +405,8 @@ void DYNACALL MSR_do(u32 v)
 template void DYNACALL MSR_do<0>(u32 v);
 template void DYNACALL MSR_do<1>(u32 v);
 
-}
-}
+} // namespace recompiler
 #endif	// FEAT_AREC != DYNAREC_NONE
 
+} // namespace arm
+} // namespace aica

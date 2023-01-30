@@ -30,20 +30,20 @@ ElanRamWatcher elanWatcher;
 void AicaRamWatcher::protectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	virtmem::region_lock(aica_ram.data + addr, size);
+	virtmem::region_lock(&aica::aica_ram[addr], size);
 }
 
 void AicaRamWatcher::unprotectMem(u32 addr, u32 size)
 {
 	size = std::min(ARAM_SIZE - addr, size) & ~PAGE_MASK;
-	virtmem::region_unlock(aica_ram.data + addr, size);
+	virtmem::region_unlock(&aica::aica_ram[addr], size);
 }
 
 u32 AicaRamWatcher::getMemOffset(void *p)
 {
-	if ((u8 *)p < &aica_ram[0] || (u8 *)p >= &aica_ram[ARAM_SIZE])
+	if ((u8 *)p < &aica::aica_ram[0] || (u8 *)p >= &aica::aica_ram[ARAM_SIZE])
 		return -1;
-	return (u32)((u8 *)p - &aica_ram[0]);
+	return (u32)((u8 *)p - &aica::aica_ram[0]);
 }
 
 void ElanRamWatcher::protectMem(u32 addr, u32 size)

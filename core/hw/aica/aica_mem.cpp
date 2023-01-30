@@ -5,6 +5,9 @@
 #include "sgc_if.h"
 #include "hw/hwreg.h"
 
+namespace aica
+{
+
 alignas(4) u8 aica_reg[0x8000];
 
 static void (*midiReceiver)(u8 data);
@@ -22,7 +25,7 @@ T aicaReadReg(u32 addr)
 
 	if (addr >= 0x2800 && addr < 0x2818)
 	{
-		ReadCommonReg(addr, sizeof(T) == 1);
+		sgc::ReadCommonReg(addr, sizeof(T) == 1);
 	}
 	else if (addr >= 0x4000 && addr < 0x4580)
 	{
@@ -94,7 +97,7 @@ void aicaWriteReg(u32 addr, T data)
 		u32 chan = addr >> 7;
 		u32 reg = addr & 0x7F;
 		WriteMemArr(aica_reg, addr, data);
-		WriteChannelReg(chan, reg, sz);
+		sgc::WriteChannelReg(chan, reg, sz);
 		return;
 	}
 
@@ -191,8 +194,8 @@ template void aicaWriteReg<>(u32 addr, u32 data);
 void init_mem()
 {
 	memset(aica_reg, 0, sizeof(aica_reg));
-	aica_ram.data[ARAM_SIZE - 1] = 1;
-	aica_ram.Zero();
+	aica_ram[ARAM_SIZE - 1] = 1;
+	aica_ram.zero();
 	midiReceiver = nullptr;
 }
 
@@ -200,6 +203,8 @@ void term_mem()
 {
 }
 
-void aica_setMidiReceiver(void (*handler)(u8 data)) {
+void setMidiReceiver(void (*handler)(u8 data)) {
 	midiReceiver = handler;
 }
+
+} // namespace aica

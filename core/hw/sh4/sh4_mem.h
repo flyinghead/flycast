@@ -3,7 +3,7 @@
 #include "stdclass.h"
 
 //main system mem
-extern VArray2 mem_b;
+extern RamRegion mem_b;
 
 #include "hw/mem/addrspace.h"
 #include "sh4_if.h"

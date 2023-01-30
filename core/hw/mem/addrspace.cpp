@@ -399,12 +399,9 @@ static void termMappings()
 	{
 		free_pages(p_sh4rcb);
 		p_sh4rcb = nullptr;
-		free_pages(mem_b.data);
-		mem_b.data = nullptr;
-		free_pages(vram.data);
-		vram.data = nullptr;
-		free_pages(aica_ram.data);
-		aica_ram.data = nullptr;
+		mem_b.free();
+		vram.free();
+		aica::aica_ram.free();
 		free_pages(elan::RAM);
 		elan::RAM = nullptr;
 	}
@@ -425,15 +422,9 @@ void initMappings()
 #endif
 		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
-		mem_b.size = RAM_SIZE;
-		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
-
-		vram.size = VRAM_SIZE;
-		vram.data = (u8*)malloc_pages(VRAM_SIZE);
-
-		aica_ram.size = ARAM_SIZE;
-		aica_ram.data = (u8*)malloc_pages(ARAM_SIZE);
-
+		mem_b.alloc(RAM_SIZE);
+		vram.alloc(VRAM_SIZE);
+		aica::aica_ram.alloc(ARAM_SIZE);
 		elan::RAM = (u8*)malloc_pages(elan::ERAM_SIZE);
 	}
 	else {
@@ -458,25 +449,21 @@ void initMappings()
 		virtmem::create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
 
 		// Point buffers to actual data pointers
-		aica_ram.data = &ram_base[0x20000000];  // Points to the writable AICA addrspace
-		vram.data = &ram_base[0x04000000];   // Points to first vram mirror (writable and lockable)
-		mem_b.data = &ram_base[0x0C000000];   // Main memory, first mirror
+		aica::aica_ram.setRegion(&ram_base[0x20000000], ARAM_SIZE); // Points to the writable AICA addrspace
+		vram.setRegion(&ram_base[0x04000000], VRAM_SIZE); // Points to first vram mirror (writable and lockable)
+		mem_b.setRegion(&ram_base[0x0C000000], RAM_SIZE); // Main memory, first mirror
 		elan::RAM = &ram_base[0x0A000000];
-
-		aica_ram.size = ARAM_SIZE;
-		vram.size = VRAM_SIZE;
-		mem_b.size = RAM_SIZE;
 	}
 
 	// Clear out memory
-	aica_ram.Zero();
-	vram.Zero();
-	mem_b.Zero();
+	aica::aica_ram.zero();
+	vram.zero();
+	mem_b.zero();
 	NOTICE_LOG(VMEM, "BASE %p RAM(%d MB) %p VRAM64(%d MB) %p ARAM(%d MB) %p",
 			ram_base,
-			RAM_SIZE / 1024 / 1024, mem_b.data,
-			VRAM_SIZE / 1024 / 1024, vram.data,
-			ARAM_SIZE / 1024 / 1024, aica_ram.data);
+			RAM_SIZE / 1024 / 1024, &mem_b[0],
+			VRAM_SIZE / 1024 / 1024, &vram[0],
+			ARAM_SIZE / 1024 / 1024, &aica::aica_ram[0]);
 }
 
 void release()

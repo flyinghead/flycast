@@ -2026,14 +2026,14 @@ void retro_unload_game()
 void *retro_get_memory_data(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return mem_b.data;
+      return &mem_b[0];
    return nullptr;
 }
 
 size_t retro_get_memory_size(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return mem_b.size;
+      return RAM_SIZE;
    return 0;
 }
 

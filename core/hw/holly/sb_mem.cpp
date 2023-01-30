@@ -111,10 +111,10 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
-			return ReadMem_aica_reg<T>(addr);
+			return aica::ReadMem_aica_reg<T>(addr);
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
-			return ReadMem_aica_rtc<T>(addr);
+			return aica::ReadMem_aica_rtc<T>(addr);
 		break;
 
 	case 4:
@@ -122,7 +122,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 	case 6:
 	case 7:
 		// AICA ram
-		return ReadMemArr<T>(aica_ram.data, addr & ARAM_MASK);
+		return ReadMemArr<T>(&aica::aica_ram[0], addr & ARAM_MASK);
 
 	default:
 		// G2 Ext area
@@ -220,13 +220,13 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
 		{
-			WriteMem_aica_reg(addr, data);
+			aica::WriteMem_aica_reg(addr, data);
 			return;
 		}
 		// AICA RTC registers
 		if (addr >= 0x00710000 && addr <= 0x0071000B)
 		{
-			WriteMem_aica_rtc(addr, data);
+			aica::WriteMem_aica_rtc(addr, data);
 			return;
 		}
 		break;
@@ -235,7 +235,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 	case 6:
 	case 7:
 		// AICA ram
-		WriteMemArr(aica_ram.data, addr & ARAM_MASK, data);
+		WriteMemArr(&aica::aica_ram[0], addr & ARAM_MASK, data);
 		return;
 
 	default:
