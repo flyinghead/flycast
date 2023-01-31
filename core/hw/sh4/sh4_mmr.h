@@ -28,6 +28,16 @@ void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
+namespace sh4
+{
+
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+void serialize2(Serializer& ser);
+void deserialize2(Deserializer& deser);
+
+}
+
 void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP *rf = nullptr, RegWriteAddrFP *wf = nullptr);
 
 #define SH4IO_REGN(mod, addr) ((mod)[((addr) & 255) / 4].data32)

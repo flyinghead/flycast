@@ -12,6 +12,8 @@ void sb_WriteMem(u32 addr, u32 data);
 void sb_Init();
 void sb_Reset(bool hard);
 void sb_Term();
+void sb_serialize(Serializer& ser);
+void sb_deserialize(Deserializer& deser);
 
 extern std::array<RegisterStruct, 0x540> sb_regs;
 

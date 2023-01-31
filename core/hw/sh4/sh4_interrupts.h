@@ -97,3 +97,5 @@ void SIIDRebuild();
 void interrupts_init();
 void interrupts_reset();
 void interrupts_term();
+void interrupts_serialize(Serializer& ser);
+void interrupts_deserialize(Deserializer& deser);

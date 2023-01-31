@@ -15,6 +15,7 @@
 #include "sh4_mmr.h"
 #include "oslib/oslib.h"
 #include "debug/gdb_server.h"
+#include "serialize.h"
 #include <cassert>
 
 //these are fixed
@@ -241,3 +242,25 @@ void interrupts_term()
 {
 }
 
+void interrupts_serialize(Serializer& ser)
+{
+	ser << InterruptEnvId;
+	ser << InterruptBit;
+	ser << InterruptLevelBit;
+	ser << interrupt_vpend;
+	ser << interrupt_vmask;
+	ser << decoded_srimask;
+
+}
+
+void interrupts_deserialize(Deserializer& deser)
+{
+	if (deser.version() < Deserializer::V9_LIBRETRO)
+		deser.skip(2);
+	deser >> InterruptEnvId;
+	deser >> InterruptBit;
+	deser >> InterruptLevelBit;
+	deser >> interrupt_vpend;
+	deser >> interrupt_vmask;
+	deser >> decoded_srimask;
+}

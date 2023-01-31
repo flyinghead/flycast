@@ -9,13 +9,17 @@
 #include "modules/ccn.h"
 #include "modules/modules.h"
 #include "sh4_cache.h"
+#include "serialize.h"
+#include "sh4_interrupts.h"
+#include "sh4_sched.h"
+#include "sh4_interpreter.h"
 
 #include <array>
 #include <map>
 
 //64bytes of sq // now on context ~
 
-std::array<u8, OnChipRAM_SIZE> OnChipRAM;
+static std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //All registers are 4 byte aligned
 
@@ -903,3 +907,147 @@ void map_p4()
 
 	addrspace::mapHandler(p4mmr_handler, 0xFF, 0xFF);
 }
+
+namespace sh4
+{
+
+void serialize(Serializer& ser)
+{
+	ser << OnChipRAM;
+
+	register_serialize(CCN, ser);
+	register_serialize(UBC, ser);
+	register_serialize(BSC, ser);
+	register_serialize(DMAC, ser);
+	register_serialize(CPG, ser);
+	register_serialize(RTC, ser);
+	register_serialize(INTC, ser);
+	register_serialize(TMU, ser);
+	register_serialize(SCI, ser);
+	register_serialize(SCIF, ser);
+	icache.Serialize(ser);
+	ocache.Serialize(ser);
+
+	if (!ser.rollback())
+		mem_b.serialize(ser);
+
+	interrupts_serialize(ser);
+
+	ser << (*p_sh4rcb).sq_buffer;
+
+	ser << (*p_sh4rcb).cntx;
+
+	sh4_sched_serialize(ser);
+}
+
+void deserialize(Deserializer& deser)
+{
+	deser >> OnChipRAM;
+
+	register_deserialize(CCN, deser);
+	register_deserialize(UBC, deser);
+	register_deserialize(BSC, deser);
+	register_deserialize(DMAC, deser);
+	register_deserialize(CPG, deser);
+	register_deserialize(RTC, deser);
+	register_deserialize(INTC, deser);
+	register_deserialize(TMU, deser);
+	register_deserialize(SCI, deser);
+	register_deserialize(SCIF, deser);
+	if (deser.version() >= Deserializer::V9
+			// Note (lr): was added in V11 fa49de29 24/12/2020 but ver not updated until V12 (13/4/2021)
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		icache.Deserialize(deser);
+	else
+		icache.Reset(true);
+	if (deser.version() >= Deserializer::V10
+			// Note (lr): was added in V11 2eb66879 27/12/2020 but ver not updated until V12 (13/4/2021)
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		ocache.Deserialize(deser);
+	else
+		ocache.Reset(true);
+
+	if (!deser.rollback())
+		mem_b.deserialize(deser);
+
+	interrupts_deserialize(deser);
+
+	if (deser.version() <= Deserializer::V31)
+		deser.skip<int>();		// do_sqw index
+	CCN_QACR_write<0>(0, CCN_QACR0.reg_data);
+	CCN_QACR_write<1>(0, CCN_QACR1.reg_data);
+
+	deser >> (*p_sh4rcb).sq_buffer;
+
+	deser >> (*p_sh4rcb).cntx;
+	if (deser.version() < Deserializer::V9_LIBRETRO)
+	{
+		deser.skip<u32>();		// old_rm
+		deser.skip<u32>();		// old_dn
+	}
+	if (deser.version() >= Deserializer::V19 && deser.version() < Deserializer::V21)
+		deser.skip<u32>(); // sh4InterpCycles
+	if (deser.version() < Deserializer::V21)
+		p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
+
+	sh4_sched_deserialize(deser);
+}
+
+void serialize2(Serializer& ser)
+{
+	ser << SCIF_SCFSR2;
+	ser << SCIF_SCSCR2;
+	ser << BSC_PDTRA;
+
+	tmu_serialize(ser);
+
+	ser << CCN_QACR_TR; // FIXME this is set in CCN_QACR_write<>() above, so useless. And it's really a cached thing
+
+	ser << UTLB;
+	ser << ITLB;
+	ser << sq_remap;
+}
+
+void deserialize2(Deserializer& deser)
+{
+	deser >> SCIF_SCFSR2;
+	if (deser.version() < Deserializer::V9_LIBRETRO
+			|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
+	{
+		deser.skip<bool>();	// SCIF_SCFRDR2
+		deser.skip<u32>();	// SCIF_SCFDR2
+	}
+	else if ((deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+			|| deser.version() >= Deserializer::V11)
+		deser >> SCIF_SCSCR2;
+	deser >> BSC_PDTRA;
+
+	tmu_deserialize(deser);
+
+	deser >> CCN_QACR_TR;
+
+	if (deser.version() < Deserializer::V6_LIBRETRO)
+	{
+		for (int i = 0; i < 64; i++)
+		{
+			deser >> UTLB[i].Address;
+			deser >> UTLB[i].Data;
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			deser >> ITLB[i].Address;
+			deser >> ITLB[i].Data;
+		}
+	}
+	else
+	{
+		deser >> UTLB;
+		deser >> ITLB;
+	}
+	if (deser.version() >= Deserializer::V11
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		deser >> sq_remap;
+	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
+}
+
+} //namespace sh4

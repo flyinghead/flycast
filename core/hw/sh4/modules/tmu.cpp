@@ -6,16 +6,16 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mmr.h"
-
+#include "serialize.h"
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
 
-u32 tmu_shift[3];
-u32 tmu_mask[3];
-u64 tmu_mask64[3];
+static u32 tmu_shift[3];
+static u32 tmu_mask[3];
+static u64 tmu_mask64[3];
 
-u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
+static u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
 
 static const InterruptID tmu_intID[3] = { sh4_TMU0_TUNI0, sh4_TMU1_TUNI1, sh4_TMU2_TUNI2 };
 int tmu_sched[3];
@@ -73,8 +73,8 @@ void UpdateTMU_i(u32 Cycles)
 }
 #endif
 
-u32 tmu_ch_base[3];
-u64 tmu_ch_base64[3];
+static u32 tmu_ch_base[3];
+static u64 tmu_ch_base64[3];
 
 static u32 read_TMU_TCNTch(u32 ch)
 {
@@ -327,4 +327,24 @@ void tmu_term()
 		sh4_sched_unregister(sched_id);
 		sched_id = -1;
 	}
+}
+
+void tmu_serialize(Serializer& ser)
+{
+	ser << tmu_shift;
+	ser << tmu_mask;
+	ser << tmu_mask64;
+	ser << old_mode;
+	ser << tmu_ch_base;
+	ser << tmu_ch_base64;
+}
+
+void tmu_deserialize(Deserializer& deser)
+{
+	deser >> tmu_shift;
+	deser >> tmu_mask;
+	deser >> tmu_mask64;
+	deser >> old_mode;
+	deser >> tmu_ch_base;
+	deser >> tmu_ch_base64;
 }

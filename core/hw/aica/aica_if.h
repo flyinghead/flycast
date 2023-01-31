@@ -2,6 +2,8 @@
 #include "types.h"
 #include "stdclass.h"
 
+extern u32 SB_ADST;
+
 namespace aica
 {
 

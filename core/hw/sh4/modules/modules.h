@@ -43,6 +43,8 @@ void ubc_term();
 void tmu_init();
 void tmu_reset(bool hard);
 void tmu_term();
+void tmu_serialize(Serializer& ser);
+void tmu_deserialize(Deserializer& deser);
 
 void ccn_init();
 void ccn_reset(bool hard);

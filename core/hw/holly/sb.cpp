@@ -13,6 +13,7 @@
 #include "hw/pvr/pvr_sb_regs.h"
 #include "emulator.h"
 #include "hw/bba/bba.h"
+#include "serialize.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 
@@ -751,4 +752,31 @@ void sb_Term()
 	gdrom_reg_Term();
 	naomi_reg_Term();
 	asic_reg_Term();
+}
+
+void sb_serialize(Serializer& ser)
+{
+	register_serialize(sb_regs, ser);
+	ser << SB_ISTNRM;
+	ser << SB_ISTNRM1;
+	ser << SB_ADST;
+}
+
+void sb_deserialize(Deserializer& deser)
+{
+	register_deserialize(sb_regs, deser);
+	deser >> SB_ISTNRM;
+	if (deser.version() >= Deserializer::V24)
+		deser >> SB_ISTNRM1;
+	else
+		SB_ISTNRM1 = 0;
+	if (deser.version() < Deserializer::V30)
+	{
+		deser.skip<u32>(); // SB_FFST_rc;
+		deser.skip<u32>(); // SB_FFST;
+	}
+	if (deser.version() >= Deserializer::V15)
+		deser >> SB_ADST;
+	else
+		SB_ADST = 0;
 }
