@@ -61,7 +61,7 @@ bool region_unlock(void *start, size_t len)
 }
 
 /*
-static bool mem_region_set_exec(void *start, size_t len)
+static bool region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 
@@ -70,7 +70,7 @@ static bool mem_region_set_exec(void *start, size_t len)
 	return true;
 }
 
-static void *mem_region_reserve(void *start, size_t len)
+static void *region_reserve(void *start, size_t len)
 {
 	virtmemLock();
 	void *p = virtmemFindAslr(len, 0);
@@ -81,7 +81,7 @@ static void *mem_region_reserve(void *start, size_t len)
 }
 */
 
-static bool mem_region_release(void *start, size_t len)
+static bool region_release(void *start, size_t len)
 {
 	if (virtmemReservation != nullptr)
 	{
@@ -93,7 +93,7 @@ static bool mem_region_release(void *start, size_t len)
 	return true;
 }
 
-static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+static void *region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
 {
 	Result rc = svcMapProcessMemory(dest, envGetOwnProcessHandle(), (u64)(vmem_fd_codememory + offset), len);
 	if (R_FAILED(rc))
@@ -106,9 +106,9 @@ static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size
 	return dest;
 }
 
-static bool mem_region_unmap_file(void *start, size_t len)
+static bool region_unmap_file(void *start, size_t len)
 {
-	return mem_region_release(start, len);
+	return region_release(start, len);
 }
 
 /*
@@ -147,7 +147,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	if (reserved_base == NULL)
 	{
 		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-		reserved_base = mem_region_reserve(NULL, reserved_size);
+		reserved_base = region_reserve(NULL, reserved_size);
 		if (!reserved_base)
 			return false;
 	}
@@ -158,7 +158,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	void *sh4rcb_base_ptr  = (char *)reserved_base + fpcb_size;
 
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
-	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
+	region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
 	return true;
 #endif
@@ -168,7 +168,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 void destroy()
 {
 	if (reserved_base != NULL)
-		mem_region_release(reserved_base, reserved_size);
+		region_release(reserved_base, reserved_size);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -178,7 +178,7 @@ void reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void ondemand_page(void *address, unsigned size_bytes) {
-	bool rc = mem_region_unlock(address, size_bytes);
+	bool rc = region_unlock(address, size_bytes);
 	verify(rc);
 }
 
@@ -197,9 +197,9 @@ void create_mappings(const Mapping *vmem_maps, unsigned nummaps)
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			bool rc = mem_region_unmap_file(&addrspace::ram_base[offset], vmem_maps[i].memsize);
+			bool rc = region_unmap_file(&addrspace::ram_base[offset], vmem_maps[i].memsize);
 			verify(rc);
-			void *p = mem_region_map_file((void*)(uintptr_t)vmem_fd, &addrspace::ram_base[offset],
+			void *p = region_map_file((void*)(uintptr_t)vmem_fd, &addrspace::ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes);
 			verify(p != nullptr);
 		}
