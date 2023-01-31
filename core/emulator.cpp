@@ -694,8 +694,7 @@ void loadGameSpecificSettings()
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();
-		settings.content.gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
-		trim_trailing_ws(settings.content.gameId);
+		settings.content.gameId = trim_trailing_ws(std::string(ip_meta.product_number, sizeof(ip_meta.product_number)));
 
 		if (settings.content.gameId.empty())
 			return;
