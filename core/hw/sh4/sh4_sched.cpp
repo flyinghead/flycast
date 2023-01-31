@@ -247,9 +247,6 @@ void sh4_sched_deserialize(Deserializer& deser)
 
 	if (deser.version() >= Deserializer::V19 && deser.version() <= Deserializer::V31)
 		deser.skip<u32>();		// sh4_sched_next_id
-	else if ((deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8)
-			|| deser.version() < Deserializer::V9_LIBRETRO)
-		deser.skip<u32>();		// sh4_sched_intr
 
 	sh4_sched_deserialize(deser, aica::aica_schid);
 	sh4_sched_deserialize(deser, aica::rtc_schid);
@@ -260,12 +257,4 @@ void sh4_sched_deserialize(Deserializer& deser)
 		sh4_sched_deserialize(deser, id);
 	sh4_sched_deserialize(deser, render_end_schid);
 	sh4_sched_deserialize(deser, vblank_schid);
-
-	if ((deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8)
-			|| deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// sch_list[time_sync].tag
-		deser.skip<u32>();		// sch_list[time_sync].start
-		deser.skip<u32>();		// sch_list[time_sync].end
-	}
 }

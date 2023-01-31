@@ -255,8 +255,6 @@ void interrupts_serialize(Serializer& ser)
 
 void interrupts_deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-		deser.skip(2);
 	deser >> InterruptEnvId;
 	deser >> InterruptBit;
 	deser >> InterruptLevelBit;

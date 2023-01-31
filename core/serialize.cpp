@@ -99,44 +99,20 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	naomi_Deserialize(deser);
 
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// cycle_counter
-		deser.skip<u32>();		// idxnxx
-		deser.skip(44); 		// sizeof(state_t)
-		deser.skip<u32>();		// div_som_reg1
-		deser.skip<u32>();		// div_som_reg2
-		deser.skip<u32>();		// div_som_reg3
-
-		deser.skip<u32>();		// LastAddr
-		deser.skip<u32>();		// LastAddr_min
-		deser.skip(1024);		// block_hash
-
-		// RegisterRead, RegisterWrite
-		for (int i = 0; i < 74; i++)	// sh4_reg_count (changed to 75 on 9/6/2020 (V9), V10 on 22/6/2020)
-		{
-			deser.skip(4);
-			deser.skip(4);
-		}
-		deser.skip<u32>(); // fallback_blocks
-		deser.skip<u32>(); // total_blocks
-		deser.skip<u32>(); // REMOVED_OPS
-	}
 	deser >> config::Broadcast.get();
 	deser >> config::Cable.get();
 	deser >> config::Region.get();
 
 	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
 		CurrentCartridge->Deserialize(deser);
-	if (deser.version() >= Deserializer::V7_LIBRETRO)
-		gd_hle_state.Deserialize(deser);
+	gd_hle_state.Deserialize(deser);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", (u32)deser.size());
 }
 
 void dc_deserialize(Deserializer& deser)
 {
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+	if (deser.version() >= Deserializer::V9_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
 	{
 		dc_deserialize_libretro(deser);
 		sh4_sched_ffts();
@@ -173,29 +149,6 @@ void dc_deserialize(Deserializer& deser)
 
 	naomi_Deserialize(deser);
 
-	if (deser.version() < Deserializer::V5)
-	{
-		deser.skip<u32>();	// idxnxx
-		deser.skip(44);		// sizeof(state_t)
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(1024);
-
-		deser.skip(8 * 74);	// sh4_reg_count
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-
-		deser.skip(2 * 4);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4 * 4);
-		deser.skip(4);
-		deser.skip(4);
-	}
 	deser >> config::Broadcast.get();
 	verify(config::Broadcast <= 4);
 	deser >> config::Cable.get();
@@ -205,8 +158,7 @@ void dc_deserialize(Deserializer& deser)
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Deserialize(deser);
-	if (deser.version() >= Deserializer::V6)
-		gd_hle_state.Deserialize(deser);
+	gd_hle_state.Deserialize(deser);
 	sh4_sched_ffts();
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes", (u32)deser.size());

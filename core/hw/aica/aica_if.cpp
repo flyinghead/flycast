@@ -564,13 +564,6 @@ void deserialize(Deserializer& deser)
 	deser >> arm::armFiqEnable;
 	deser >> arm::armMode;
 	deser >> arm::Arm7Enabled;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip(256);		// cpuBitsSet
-		deser.skip(1);			// intState
-		deser.skip(1);			// stopState
-		deser.skip(1);			// holdState
-	}
 	if (deser.version() >= Deserializer::V19)
 		deser >> arm::arm7ClockTicks;
 	else

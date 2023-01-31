@@ -330,13 +330,11 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V5)
+	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
 	{
 		deser.skip<u32>();	// size
 		deser.skip<u32>();	// mask
-	}
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
+
 		// Legacy libretro savestate
 		if (settings.platform.isArcade())
 			sys_nvmem->Deserialize(deser);

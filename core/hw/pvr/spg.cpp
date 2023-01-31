@@ -309,20 +309,7 @@ void spg_Deserialize(Deserializer& deser)
 	if (deser.version() < Deserializer::V30)
 		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser >> pvr_numscanlines;
-		deser >> prv_cur_scanline;
-		deser >> vblk_cnt;
-		deser >> Line_Cycles;
-		deser >> Frame_Cycles;
-		deser.skip<double>();	// speed_load_mspdf
-		deser.skip<u32>();		// mips_counter
-		deser.skip<double>();	// full_rps
-		if (deser.version() <= Deserializer::V4)
-			deser.skip<u32>();	// fskip
-	}
-	else if (deser.version() >= Deserializer::V12)
+	if (deser.version() >= Deserializer::V12)
 	{
 		deser >> maple_int_pending;
 		if (deser.version() >= Deserializer::V14)

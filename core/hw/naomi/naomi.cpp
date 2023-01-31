@@ -673,11 +673,6 @@ void naomi_Serialize(Serializer& ser)
 }
 void naomi_Deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// naomi_updates
-		deser.skip<u32>();		// BoardID
-	}
 	deser >> GSerialBuffer;
 	deser >> BSerialBuffer;
 	deser >> GBufPos;

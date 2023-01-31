@@ -26,25 +26,14 @@ class SerializeBase
 {
 public:
 	enum Version : int32_t {
-		V1,
-		V2,
-		V3,
-		V4,
-		V5_LIBRETRO,
-		V6_LIBRETRO,
-		V7_LIBRETRO,
-		V8_LIBRETRO,
-		V9_LIBRETRO,
+		V9_LIBRETRO = 8,
 		V10_LIBRETRO,
 		V11_LIBRETRO,
 		V12_LIBRETRO,
 		V13_LIBRETRO,
 		VLAST_LIBRETRO = V13_LIBRETRO,
 
-		V5 = 800,
-		V6,
-		V7,
-		V8,
+		V8 = 803,
 		V9,
 		V10,
 		V11,
@@ -99,7 +88,7 @@ public:
 		: SerializeBase(limit, rollback), data((const u8 *)data)
 	{
 		deserialize(_version);
-		if (_version > V13_LIBRETRO && _version < V5)
+		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
 			throw Exception("Unsupported version");
 		if (_version > Current)
 			throw Exception("Version too recent");
@@ -230,7 +219,7 @@ void register_deserialize(T& regs, Deserializer& deser)
 {
 	for (auto& reg : regs)
 	{
-		if (deser.version() < Deserializer::V5)
+		if (deser.version() <= Deserializer::VLAST_LIBRETRO)
 			deser.skip<u32>(); // regs.data[i].flags
 		if (!(reg.flags & REG_RF))
 			deser >> reg.data32;

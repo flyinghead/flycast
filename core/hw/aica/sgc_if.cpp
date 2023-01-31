@@ -1566,18 +1566,6 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V7_LIBRETRO)
-	{
-		deser.skip(4 * 16); 		// volume_lut
-		deser.skip(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
-		deser.skip(4 * 64);			// AEG_ATT_SPS
-		deser.skip(4 * 64);			// AEG_DSR_SPS
-		deser.skip(2);				// pl
-		deser.skip(2);				// pr
-	}
-
-	bool old_format = (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V7) || deser.version() < Deserializer::V8_LIBRETRO;
-
 	for (ChannelEx& channel : Chans)
 	{
 		channel.quiet = true;
@@ -1587,94 +1575,35 @@ void deserialize(Deserializer& deser)
 
 		deser >> channel.CA;
 		deser >> channel.step;
-		if (old_format)
-			deser.skip<u32>(); // channel.update_rate
 		channel.UpdatePitch();
 		deser >> channel.s0;
 		deser >> channel.s1;
 		deser >> channel.loop.looped;
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.loop.LSA
-			deser.skip<u32>(); // channel.loop.LEA
-		}
 		channel.UpdateLoop();
 		deser >> channel.adpcm.last_quant;
-		if (!old_format)
-		{
-			deser >> channel.adpcm.loopstart_quant;
-			deser >> channel.adpcm.loopstart_prev_sample;
-			deser >> channel.adpcm.in_loop;
-		}
-		else
-		{
-			channel.adpcm.in_loop = true;
-			channel.adpcm.loopstart_quant = 0;
-			channel.adpcm.loopstart_prev_sample = 0;
-		}
+		deser >> channel.adpcm.loopstart_quant;
+		deser >> channel.adpcm.loopstart_prev_sample;
+		deser >> channel.adpcm.in_loop;
 		deser >> channel.noise_state;
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.VolMix.DLAtt
-			deser.skip<u32>(); // channel.VolMix.DRAtt
-			deser.skip<u32>(); // channel.VolMix.DSPAtt
-		}
 		channel.UpdateAtts();
-		if (old_format)
-			deser.skip<u32>(); // channel.VolMix.DSPOut
 		channel.UpdateDSPMIX();
 
 		deser >> channel.AEG.val;
 		deser >> channel.AEG.state;
 		channel.SetAegState(channel.AEG.state);
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.AEG.AttackRate
-			deser.skip<u32>(); // channel.AEG.Decay1Rate
-			deser.skip<u32>(); // channel.AEG.Decay2Rate
-			deser.skip<u32>(); // channel.AEG.Decay2Value
-			deser.skip<u32>(); // channel.AEG.ReleaseRate
-		}
 		channel.UpdateAEG();
 		deser >> channel.FEG.value;
 		deser >> channel.FEG.state;
-		if (!old_format)
-		{
-			deser >> channel.FEG.prev1;
-			deser >> channel.FEG.prev2;
-		}
-		else
-		{
-			channel.FEG.prev1 = 0;
-			channel.FEG.prev2 = 0;
-		}
+		deser >> channel.FEG.prev1;
+		deser >> channel.FEG.prev2;
 		channel.SetFegState(channel.FEG.state);
 		channel.UpdateFEG();
-		if (old_format)
-		{
-			deser.skip<u8>();   // channel.step_stream_lut1
-			deser.skip<u8>();   // channel.step_stream_lut2
-			deser.skip<u8>();   // channel.step_stream_lut3
-		}
 		channel.UpdateStreamStep();
 
 		deser >> channel.lfo.counter;
-		if (old_format)
-			deser.skip<u32>();     // channel.lfo.start_value
 		deser >> channel.lfo.state;
-		if (old_format)
-		{
-			deser.skip<u8>();   // channel.lfo.alfo
-			deser.skip<u8>();   // channel.lfo.alfo_shft
-			deser.skip<u8>();   // channel.lfo.plfo
-			deser.skip<u8>();   // channel.lfo.plfo_shft
-			deser.skip<u8>();   // channel.lfo.alfo_calc_lut
-			deser.skip<u8>();   // channel.lfo.plfo_calc_lut
-		}
 		channel.UpdateLFO(true);
 		deser >> channel.enabled;
-		if (old_format)
-			deser.skip<u32>(); // channel.ChannelNumber
 		channel.quiet = false;
 	}
 	if (deser.version() >= Deserializer::V22)
@@ -1691,11 +1620,6 @@ void deserialize(Deserializer& deser)
 	}
 	deser >> cdda_sector;
 	deser >> cdda_index;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip(4 * 64); 		// mxlr
-		deser.skip(4);			// samples_gen
-	}
 	midiSendBuffer.clear();
 	if (deser.version() >= Deserializer::V28)
 	{

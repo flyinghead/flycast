@@ -980,11 +980,6 @@ void deserialize(Deserializer& deser)
 	deser >> (*p_sh4rcb).sq_buffer;
 
 	deser >> (*p_sh4rcb).cntx;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// old_rm
-		deser.skip<u32>();		// old_dn
-	}
 	if (deser.version() >= Deserializer::V19 && deser.version() < Deserializer::V21)
 		deser.skip<u32>(); // sh4InterpCycles
 	if (deser.version() < Deserializer::V21)
@@ -1011,14 +1006,8 @@ void serialize2(Serializer& ser)
 void deserialize2(Deserializer& deser)
 {
 	deser >> SCIF_SCFSR2;
-	if (deser.version() < Deserializer::V9_LIBRETRO
-			|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
-	{
-		deser.skip<bool>();	// SCIF_SCFRDR2
-		deser.skip<u32>();	// SCIF_SCFDR2
-	}
-	else if ((deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
-			|| deser.version() >= Deserializer::V11)
+	if (deser.version() >= Deserializer::V11
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
 		deser >> SCIF_SCSCR2;
 	deser >> BSC_PDTRA;
 
@@ -1026,24 +1015,9 @@ void deserialize2(Deserializer& deser)
 
 	deser >> CCN_QACR_TR;
 
-	if (deser.version() < Deserializer::V6_LIBRETRO)
-	{
-		for (int i = 0; i < 64; i++)
-		{
-			deser >> UTLB[i].Address;
-			deser >> UTLB[i].Data;
-		}
-		for (int i = 0; i < 4; i++)
-		{
-			deser >> ITLB[i].Address;
-			deser >> ITLB[i].Data;
-		}
-	}
-	else
-	{
-		deser >> UTLB;
-		deser >> ITLB;
-	}
+	deser >> UTLB;
+	deser >> ITLB;
+
 	if (deser.version() >= Deserializer::V11
 			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
 		deser >> sq_remap;

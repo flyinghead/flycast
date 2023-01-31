@@ -1399,10 +1399,6 @@ void deserialize(Deserializer& deser)
 	{
 		deser >> packet_cmd;
 		read_buff.cache_size = 0;
-		// read_buff (old)
-		if (deser.version() < Deserializer::V9_LIBRETRO
-				|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
-			deser.skip(4 + 4 + 2352 * 8192);
 	}
 	deser >> pio_buff;
 	deser >> set_mode_offset;
@@ -1422,7 +1418,7 @@ void deserialize(Deserializer& deser)
 	deser >> SecNumber;
 	deser >> GDStatus;
 	deser >> ByteCount;
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
 		deser.skip<u32>(); 			// GDROM_TICK
 }
 
