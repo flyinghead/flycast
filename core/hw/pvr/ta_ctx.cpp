@@ -50,7 +50,7 @@ bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	bool skipFrame = settings.disableRenderer;
+	bool skipFrame = !rend_is_enabled();
 	if (!skipFrame)
 	{
 		RenderCount++;
@@ -67,7 +67,7 @@ bool QueueRender(TA_context* ctx)
 	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
-		if (!settings.disableRenderer)
+		if (rend_is_enabled())
 			fskip++;
 		return false;
 	}

@@ -215,8 +215,6 @@ inline static void protect()
 
 inline static void unprotect()
 {
-	if (!config::GGPOEnable)
-		return;
 	vramWatcher.unprotect();
 	ramWatcher.unprotect();
 	aramWatcher.unprotect();

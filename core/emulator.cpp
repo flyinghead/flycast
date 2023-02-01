@@ -365,8 +365,8 @@ void dc_reset(bool hard)
 	NetworkHandshake::term();
 	if (hard)
 	{
-		_vmem_unprotect_vram(0, VRAM_SIZE);
-		memwatch::elanWatcher.unprotectMem(0, 0xffffffff);
+		memwatch::unprotect();
+		memwatch::reset();
 	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
@@ -656,9 +656,14 @@ void Emulator::term()
 	}
 }
 
-void Emulator::stop() {
+void Emulator::stop()
+{
 	if (state != Running)
 		return;
+	// Avoid race condition with GGPO restarting the sh4 for a new frame
+	if (config::GGPOEnable)
+		NetworkHandshake::term();
+	// must be updated after GGPO is stopped since it may run some rollback frames
 	state = Loaded;
 	sh4_cpu.Stop();
 	if (config::ThreadedRendering)
@@ -686,6 +691,8 @@ void Emulator::stop() {
 void Emulator::requestReset()
 {
 	resetRequested = true;
+	if (config::GGPOEnable)
+		NetworkHandshake::term();
 	sh4_cpu.Stop();
 }
 

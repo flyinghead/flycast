@@ -301,7 +301,6 @@ struct settings_t
 			u8 vmu[16];
 		} md5;
 	} network;
-	bool disableRenderer;
 };
 
 extern settings_t settings;

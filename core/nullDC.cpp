@@ -86,6 +86,9 @@ void flycast_term()
 
 void dc_savestate(int index)
 {
+	if (settings.network.online)
+		return;
+
 	Serializer ser;
 	dc_serialize(ser);
 
