@@ -95,7 +95,10 @@ void mainui_loop()
 		fc_profiler::startThread("main");
 
 		mainui_rend_frame();
-		imguiDriver->present();
+		if (imguiDriver == nullptr)
+			forceReinit = true;
+		else
+			imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
