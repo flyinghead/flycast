@@ -221,7 +221,7 @@ void register_deserialize(T& regs, Deserializer& deser)
 	{
 		if (deser.version() <= Deserializer::VLAST_LIBRETRO)
 			deser.skip<u32>(); // regs.data[i].flags
-		if (!(reg.flags & REG_RF))
+		if (!(reg.flags & REG_RF) || (reg.flags & REG_WO))
 			deser >> reg.data32;
 		else
 			deser.skip<u32>();
