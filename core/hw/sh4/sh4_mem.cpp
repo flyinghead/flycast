@@ -288,11 +288,11 @@ u8* GetMemPtr(u32 Addr, u32 size)
 	return nullptr;
 }
 
-static bool interpreterRunning = false;
-
 void SetMemoryHandlers()
 {
 #ifdef STRICT_MODE
+	static bool interpreterRunning;
+
 	if (config::DynarecEnabled && interpreterRunning)
 	{
 		// Flush caches when interp -> dynarec
@@ -317,8 +317,6 @@ void SetMemoryHandlers()
 		return;
 	}
 	interpreterRunning = false;
-#else
-	(void)interpreterRunning;
 #endif
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{

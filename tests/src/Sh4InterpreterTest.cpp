@@ -93,3 +93,11 @@ TEST_F(Sh4InterpreterTest, StatusRegTest)
 {
 	Sh4OpTest::StatusRegTest();
 }
+TEST_F(Sh4InterpreterTest, FloatingPointTest)
+{
+	Sh4OpTest::FloatingPointTest();
+}
+TEST_F(Sh4InterpreterTest, DoubleFloatingPointTest)
+{
+	Sh4OpTest::DoubleFloatingPointTest();
+}
