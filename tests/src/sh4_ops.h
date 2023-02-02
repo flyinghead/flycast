@@ -1056,6 +1056,7 @@ protected:
 		ASSERT_EQ(fr(11), -64.f);
 		AssertState();
 
+		// FADD
 		ClearRegs();
 		fr(12) = 13.f;
 		fr(13) = 12.f;
@@ -1064,7 +1065,24 @@ protected:
 		ASSERT_EQ(fr(12), 25.f);
 		ASSERT_EQ(fr(13), 12.f);
 		AssertState();
+		// special cases
+		// +inf + norm = +inf
+		fr(12) = std::numeric_limits<float>::infinity();
+		fr(13) = -10.f;
+		RunOp();
+		ASSERT_EQ(fr(12), std::numeric_limits<float>::infinity());
+		// norm + -inf = -inf
+		fr(12) = 2.f;
+		fr(13) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(12), -std::numeric_limits<float>::infinity());
+		// NaN + norm = NaN
+		fr(12) = 2.f;
+		fr(13) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(12), fr(12));
 
+		// FSUB
 		ClearRegs();
 		fr(14) = 10.f;
 		fr(15) = 11.f;
@@ -1073,7 +1091,24 @@ protected:
 		ASSERT_EQ(fr(14), -1.f);
 		ASSERT_EQ(fr(15), 11.f);
 		AssertState();
+		// special cases
+		// +inf - norm = +inf
+		fr(14) = std::numeric_limits<float>::infinity();
+		fr(15) = 10.f;
+		RunOp();
+		ASSERT_EQ(fr(14), std::numeric_limits<float>::infinity());
+		// -inf - norm = -inf
+		fr(14) = -std::numeric_limits<float>::infinity();
+		fr(15) = -1.f;
+		RunOp();
+		ASSERT_EQ(fr(14), -std::numeric_limits<float>::infinity());
+		// norm - NaN = NaN
+		fr(14) = 2.f;
+		fr(15) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(14), fr(14));
 
+		// FMUL
 		ClearRegs();
 		fr(0) = 4.f;
 		fr(2) = 8.f;
@@ -1082,7 +1117,24 @@ protected:
 		ASSERT_EQ(fr(0), 32.f);
 		ASSERT_EQ(fr(2), 8.f);
 		AssertState();
+		// special cases
+		// +inf * norm = +inf
+		fr(0) = std::numeric_limits<float>::infinity();
+		fr(2) = 50.f;
+		RunOp();
+		ASSERT_EQ(fr(0), std::numeric_limits<float>::infinity());
+		// -inf * norm = -inf
+		fr(0) = -std::numeric_limits<float>::infinity();
+		fr(2) = 100.f;
+		RunOp();
+		ASSERT_EQ(fr(0), -std::numeric_limits<float>::infinity());
+		// norm * NaN = NaN
+		fr(0) = 2.f;
+		fr(2) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(0), fr(0));
 
+		// FDIV
 		ClearRegs();
 		fr(1) = 8.f;
 		fr(3) = -2.f;
@@ -1091,7 +1143,24 @@ protected:
 		ASSERT_EQ(fr(1), -4.f);
 		ASSERT_EQ(fr(3), -2.f);
 		AssertState();
+		// special cases
+		// +inf / -norm = -inf
+		fr(1) = std::numeric_limits<float>::infinity();
+		fr(3) = -50.f;
+		RunOp();
+		ASSERT_EQ(fr(1), -std::numeric_limits<float>::infinity());
+		// -inf / norm = -inf
+		fr(1) = -std::numeric_limits<float>::infinity();
+		fr(3) = 100.f;
+		RunOp();
+		ASSERT_EQ(fr(1), -std::numeric_limits<float>::infinity());
+		// norm / NaN = NaN
+		fr(1) = 2.f;
+		fr(3) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(1), fr(1));
 
+		// FMAC
 		ClearRegs();
 		fr(0) = 3.f;
 		fr(4) = 5.f;
@@ -1102,14 +1171,46 @@ protected:
 		ASSERT_EQ(fr(4), -16.f);
 		ASSERT_EQ(fr(5), -7.f);
 		AssertState();
+		// special cases
+		// +inf + norm * norm = +inf
+		fr(4) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(4), std::numeric_limits<float>::infinity());
+		// norm + +inf * -inf = -inf
+		fr(0) = std::numeric_limits<float>::infinity();
+		fr(4) = 1.f;
+		fr(5) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(4), -std::numeric_limits<float>::infinity());
+		// norm + norm * NaN = NaN
+		fr(0) = 2.f;
+		fr(4) = 1.f;
+		fr(5) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(4), fr(4));
 
+		// FSQRT
 		ClearRegs();
 		fr(11) = 64.f;
 		PrepareOp(0xFB6D);	// fsqrt fr11
 		RunOp();
 		ASSERT_EQ(fr(11), 8.f);
 		AssertState();
+		// special cases
+		// sqrt(+inf) = +inf
+		fr(11) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(11), std::numeric_limits<float>::infinity());
+		// sqrt(NaN) = NaN
+		fr(11) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(11), fr(11));
+		// sqrt(0) = 0
+		fr(11) = 0.f;
+		RunOp();
+		ASSERT_EQ(fr(11), 0.f);
 
+		// FCMP/EQ
 		ClearRegs();
 		fr(4) = 45.f;
 		fr(7) = 45.f;
@@ -1121,7 +1222,24 @@ protected:
 		RunOp();
 		ASSERT_EQ(sr().T, 0u);
 		AssertState();
+		// special cases
+		// +inf == +inf
+		fr(4) = std::numeric_limits<float>::infinity();
+		fr(7) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// -inf == -inf
+		fr(4) = -std::numeric_limits<float>::infinity();
+		fr(7) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// NaN != NaN
+		fr(4) = std::numeric_limits<float>::quiet_NaN();
+		fr(7) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
 
+		// FCMP/GT
 		ClearRegs();
 		fr(8) = 23.f;
 		fr(9) = 22.f;
@@ -1133,6 +1251,27 @@ protected:
 		RunOp();
 		ASSERT_EQ(sr().T, 0u);
 		AssertState();
+		// special cases
+		// +inf > norm
+		fr(8) = std::numeric_limits<float>::infinity();
+		fr(9) = 77.f;
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// -inf < +inf
+		fr(8) = -std::numeric_limits<float>::infinity();
+		fr(9) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		// norm > -inf
+		fr(8) = -27.f;
+		fr(9) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// !(Nan > NaN)
+		fr(8) = std::numeric_limits<float>::quiet_NaN();
+		fr(9) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
 
 		ClearRegs();
 		ctx->fpul = 222;
@@ -1141,26 +1280,67 @@ protected:
 		ASSERT_EQ(fr(6), 222.f);
 		AssertState();
 
+		// FTRC
 		ClearRegs();
 		fr(1) = 100.f;
 		PrepareOp(0xF13D);	// ftrc fr1, fpul
 		RunOp();
 		ASSERT_EQ(ctx->fpul, 100u);
 		AssertState();
+		// special cases
+		// 2147483520.f -> 2147483520
+		fr(1) = 2147483520.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 2147483520u);
+		// >2147483520.f -> 0x7fffffff;
+		fr(1) = 2147483648.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x7fffffffu);
+		// -2147483648 -> -2147483648
+		fr(1) = -2147483648.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, (u32)-2147483648);
+		// <-2147483648 -> 0x80000000
+		fr(1) = -2147483904.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
+		// +inf -> 0x7fffffff
+		fr(1) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x7fffffffu);
+		// -inf -> 0x80000000
+		fr(1) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
+		// NaN -> 0x80000000
+		fr(1) = -std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
 
+		// FSRRA
 		ClearRegs();
 		fr(5) = 16.f;
 		PrepareOp(0xF57D);	// fsrra fr5
 		RunOp();
 		ASSERT_EQ(fr(5), 0.25f);
 		AssertState();
+		// special cases
+		// 1/sqrt(+inf) -> 0
+		fr(5) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(5), 0);
+		// 1/sqrt(NaN) -> NaN
+		fr(5) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(5), fr(5));
 
+		// FSCA
 		ClearRegs();
 		ctx->fpul = 0x8000;	// pi
 		PrepareOp(0xF6FD);	// fsca fpul, dr3
 		RunOp();
-		ASSERT_EQ(fr(6), 0.f);
-		ASSERT_EQ(fr(7), -1.f);
+		ASSERT_EQ(fr(6), 0.f);	// sin
+		ASSERT_EQ(fr(7), -1.f);	// cos
 		AssertState();
 	}
 
