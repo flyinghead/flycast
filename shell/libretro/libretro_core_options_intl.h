@@ -8517,7 +8517,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_FRENCH_CS "Francouzština"
 #define OPTION_VAL_SPANISH_CS "Španělština"
 #define OPTION_VAL_ITALIAN_CS "Italský"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_CS NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_CS "HLE BIOS (nutný restart)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_CS "Vynucení použití vysokoúrovňové emulace systému BIOS."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_CS "Nabootovat Bios (Nutný Restart)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CS "Spustit přímo do menu Dreamcast BIOS."
@@ -8529,10 +8529,10 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS "Povolí tlačítko SERVIS pro NAOMI, abyste mohli vstoupit do nastavení skříně."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_CS NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_CS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS "Emulace širokopásmového adaptéru"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS "Místo modemu emulujte širokopásmový adaptér ethernetu. (nutný restart)"
+#define CORE_OPTION_NAME_UPNP_LABEL_CS "Povolit UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_CS "Pomocí UPnP můžete automaticky nakonfigurovat svůj internetový směrovač pro online hry."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní Rozlišení"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava Rozlišení Vykreslování."
 #define OPTION_VAL_320X240_CS NULL
@@ -13590,10 +13590,10 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DE "Aktiviert den SERVICE-Knopf für NAOMI, um die Automateneinstellungen aufzurufen."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DE "NAOMI Spiele auf kostenloses Spiel setzen"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DE "Ändert die Münzeinstellungen des Spiels zu kostenlos."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE "Breitband-Adapter Emulation"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet Breitband-Adapter anstelle des Modems emulieren. (Neustart erforderlich)"
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE "Breitbandadapter-Emulation"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet-Breitbandadapter anstelle des Modems emulieren. (Neustart erforderlich)"
 #define CORE_OPTION_NAME_UPNP_LABEL_DE "UPnP aktivieren"
-#define CORE_OPTION_NAME_UPNP_INFO_0_DE "Verwendet UPnP, um den Internet Router automatisch für Onlinespiele zu konfigurieren."
+#define CORE_OPTION_NAME_UPNP_INFO_0_DE "Verwendet UPnP, um den Internetrouter automatisch für Onlinespiele zu konfigurieren."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE "Interne Auflösung"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE "Rendering-Auflösung ändern."
 #define OPTION_VAL_320X240_DE "320 x 240"
@@ -25387,7 +25387,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_FRENCH_FR "Français"
 #define OPTION_VAL_SPANISH_FR "Espagnol"
 #define OPTION_VAL_ITALIAN_FR "Italien"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR "BIOS HLE (Redémarrage requis)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_FR "Forcer l'utilisation d'un BIOS en émulation de haut niveau."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_FR "Démarrer sur le BIOS (Redémarrage requis)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_FR "Démarrer directement sur le menu BIOS Dreamcast."
@@ -25399,10 +25399,10 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FR "Active le bouton SERVICE pour NAOMI, pour entrer dans les paramètres de la borne."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FR "Définir les jeux NAOMI en Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FR "Modifier les réglages de pièces du jeu en mode gratuit."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_FR NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_FR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR "Émulation de l'adaptateur haut débit"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR "Émuler l'adaptateur haut débit Ethernet au lieu du modem. (Redémarrage requis)"
+#define CORE_OPTION_NAME_UPNP_LABEL_FR "Activer l'UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_FR "Utilisez l'UPnP pour configurer automatiquement votre routeur Internet pour les jeux en ligne."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR "Résolution interne"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FR "Modifier la résolution de rendu."
 #define OPTION_VAL_320X240_FR NULL
@@ -55753,7 +55753,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_FRENCH_TR "Fransızca"
 #define OPTION_VAL_SPANISH_TR "İspanyolca"
 #define OPTION_VAL_ITALIAN_TR "İtalyanca"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TR "HLE BIOS (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_TR "Yüksek seviyeli taklit BIOS kullanımını zorunlu kılın."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_TR "BIOS Önyükleme (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_TR "Doğrudan Dreamcast BIOS menüsüne önyükleme yapın."
@@ -55765,10 +55765,10 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR "Kabin ayarlarına girmek için NAOMI için SERVICE düğmesini etkinleştirir."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_TR NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_TR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR "Geniş Bant Adaptör Taklidi"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR "Modem yerine ethernet geniş bant adaptörünü taklit edin. (Yeniden Başlatılmalı)"
+#define CORE_OPTION_NAME_UPNP_LABEL_TR "UPnP Etkinleştir"
+#define CORE_OPTION_NAME_UPNP_INFO_0_TR "İnternet yönlendiricinizi çevrimiçi oyunlar için otomatik olarak yapılandırmak üzere UPnP kullanın."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR "Dahili Çözünürlük"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TR "İşleme çözünürlüğünü değiştirin."
 #define OPTION_VAL_320X240_TR NULL
