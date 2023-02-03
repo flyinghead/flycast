@@ -30,11 +30,7 @@
 
 static SDL_Window* window = NULL;
 
-#ifdef TARGET_PANDORA
-	#define WINDOW_WIDTH  800
-#else
-	#define WINDOW_WIDTH  640
-#endif
+#define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
 static std::shared_ptr<SDLMouse> sdl_mouse;

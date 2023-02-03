@@ -202,7 +202,7 @@ if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()

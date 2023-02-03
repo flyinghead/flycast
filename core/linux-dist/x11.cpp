@@ -17,13 +17,8 @@
 
 #include "x11_keyboard.h"
 
-#if defined(TARGET_PANDORA)
-	#define DEFAULT_FULLSCREEN    true
-	#define DEFAULT_WINDOW_WIDTH  800
-#else
-	#define DEFAULT_FULLSCREEN    false
-	#define DEFAULT_WINDOW_WIDTH  640
-#endif
+#define DEFAULT_FULLSCREEN    false
+#define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
 
 static Window x11_win;
