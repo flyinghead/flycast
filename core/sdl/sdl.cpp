@@ -7,7 +7,7 @@
 #include <SDL_syswm.h>
 #endif
 #include <SDL_video.h>
-#if defined(__APPLE__) && defined(USE_VULKAN)
+#if defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
 #endif
@@ -29,6 +29,7 @@
 #endif
 
 static SDL_Window* window = NULL;
+static u32 windowFlags;
 
 #ifdef TARGET_PANDORA
 	#define WINDOW_WIDTH  800
@@ -291,6 +292,26 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
+					if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
+							&& event.window.data1 != 0 && event.window.data2 != 0)
+					{
+						settings.display.width = event.window.data1;
+						settings.display.height = event.window.data2;
+					}
+					else
+					{
+#ifdef USE_VULKAN
+						if (windowFlags & SDL_WINDOW_VULKAN)
+							SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+						else
+#endif
+#ifdef USE_OPENGL
+						if (windowFlags & SDL_WINDOW_OPENGL)
+							SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+						else
+#endif
+							SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
+					}
 					GraphicsContext::Instance()->resize();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
@@ -472,6 +493,7 @@ HWND getNativeHwnd()
 
 bool sdl_recreate_window(u32 flags)
 {
+	windowFlags = flags;
 #ifdef _WIN32
     //Enable HiDPI mode in Windows
     typedef enum PROCESS_DPI_AWARENESS {

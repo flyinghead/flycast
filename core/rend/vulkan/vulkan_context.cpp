@@ -578,9 +578,9 @@ void VulkanContext::CreateSwapChain()
 			vk::Extent2D swapchainExtent;
 			if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 			{
-				// If the surface size is undefined, the size is set to the size of the images requested.
-				swapchainExtent.width = std::min(std::max(640u, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
-				swapchainExtent.height = std::min(std::max(480u, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
+				// If the surface size is undefined, use the current display size
+				swapchainExtent.width = std::min(std::max((u32)settings.display.width, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
+				swapchainExtent.height = std::min(std::max((u32)settings.display.height, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
 			}
 			else
 			{
