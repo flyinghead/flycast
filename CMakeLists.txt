@@ -356,7 +356,7 @@ if(NOT LIBRETRO)
 	endif()
 
 	if(NOT ANDROID AND NOT IOS)
-		if(NOT APPLE AND NOT LINUX)
+		if(NOT APPLE AND NOT UNIX)
 			find_package(SDL2)
 		endif()
 		if(NOT SDL2_FOUND)
