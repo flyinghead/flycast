@@ -180,6 +180,11 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		SortedTriangle& last = ctx.sortedTriangles.back();
 		last.count = idxSize + triangleList.size() * 3 - last.first;
 	}
+	else
+	{
+		// Add a dummy one to signal we're using sorted triangles
+		ctx.sortedTriangles.push_back({ pp_base, 0, 0});
+	}
 	pass.sorted_tr_count = ctx.sortedTriangles.size();
 
 #if PRINT_SORT_STATS
