@@ -209,8 +209,9 @@ static void CPUSwitchMode(int mode, bool saveState)
 			reg[RN_SPSR].I = reg[SPSR_UND].I;
 		break;
 	default:
+		// An illegal mode causes the processor to enter an unrecoverable state
 		ERROR_LOG(AICA_ARM, "Unsupported ARM mode %02x", mode);
-		die("Arm error..");
+		Arm7Enabled = false;
 		break;
 	}
 	armMode = mode;
