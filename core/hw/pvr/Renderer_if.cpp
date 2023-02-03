@@ -395,6 +395,9 @@ void rend_start_render()
 	ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 	ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 
+	if (!ctx->rend.isRTT)
+		ggpo::endOfFrame();
+
 	if (QueueRender(ctx))
 	{
 		palette_update();
