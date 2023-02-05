@@ -212,6 +212,32 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 {
 	BufferPacker packer;
 
+	// Add a dummy transparent triangle to work around an AMD crash if nothing is drawn
+	PolyParam poly{};
+	poly.init();
+	poly.first = pvrrc.idx.size();
+	poly.count = 3;
+	poly.isp.DepthMode = 6;
+	poly.pcw.Gouraud = 1;
+	poly.tsp.SrcInstr = 4;
+	poly.tsp.DstInstr = 5;
+	poly.tsp.FogCtrl = 2;
+	poly.tsp.UseAlpha = 1;
+	dummyTrPolyIndex = pvrrc.global_param_tr.size();
+	pvrrc.global_param_tr.push_back(poly);
+	Vertex v{};
+	v.col[3] = 1; // non null alpha so it's not optimized out
+	v.z = 1.f;
+	pvrrc.idx.push_back(pvrrc.verts.size());
+	pvrrc.verts.push_back(v);
+	v.x = 1.f;
+	pvrrc.idx.push_back(pvrrc.verts.size());
+	pvrrc.verts.push_back(v);
+	v.x = 0.f;
+	v.y = 1.f;
+	pvrrc.idx.push_back(pvrrc.verts.size());
+	pvrrc.verts.push_back(v);
+
 	// Vertex
 	packer.add(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
 	// Modifier Volumes
@@ -364,7 +390,12 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			if (current_pass.autosort)
 			{
 				if (!firstFrameAfterInit)
-					DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+				{
+					if (previous_pass.tr_count == current_pass.tr_count)
+						DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, dummyTrPolyIndex, dummyTrPolyIndex + 1);
+					else
+						DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+				}
 			}
 			else
 				DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);

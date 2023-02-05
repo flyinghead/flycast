@@ -152,6 +152,7 @@ private:
 	int renderPass = 0;
 	OITDescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
+	int dummyTrPolyIndex = 0;
 };
 
 class OITScreenDrawer : public OITDrawer
