@@ -157,8 +157,8 @@ public:
 	T& get() { return value; }
 	void set(T v) { value = v; }
 
-	void override(T v) {
-		verify(PerGameOption);
+	void override(T v)
+	{
 		overriddenDefault = v;
 		overridden = true;
 		value = v;
@@ -372,10 +372,10 @@ extern Option<bool> FullMMU;
 extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
-extern Option<int> SavestateSlot;
+extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;
-extern Option<bool> FetchBoxart;
-extern Option<bool> BoxartDisplayMode;
+extern Option<bool, false> FetchBoxart;
+extern Option<bool, false> BoxartDisplayMode;
 
 // Sound
 
@@ -482,7 +482,7 @@ extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
-extern Option<bool> UploadCrashLogs;
+extern Option<bool, false> UploadCrashLogs;
 
 // Profiling
 extern Option<bool> ProfilerEnabled;
@@ -524,13 +524,13 @@ extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
 #ifdef _WIN32
-extern Option<bool> UseRawInput;
+extern Option<bool, false> UseRawInput;
 #else
 constexpr bool UseRawInput = false;
 #endif
 
 #ifdef USE_LUA
-extern OptionString LuaFileName;
+extern Option<std::string, false> LuaFileName;
 #endif
 
 } // namespace config

@@ -37,10 +37,10 @@ Option<bool> FullMMU("Dreamcast.FullMMU");
 Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
 Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
-Option<int> SavestateSlot("Dreamcast.SavestateSlot");
+Option<int, false> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
-Option<bool> FetchBoxart("FetchBoxart", true);
-Option<bool> BoxartDisplayMode("BoxartDisplayMode", true);
+Option<bool, false> FetchBoxart("FetchBoxart", true);
+Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
 
 // Sound
 
@@ -121,7 +121,7 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
-Option<bool> UploadCrashLogs("UploadCrashLogs", true);
+Option<bool, false> UploadCrashLogs("UploadCrashLogs", true);
 
 // Profiler
 Option<bool> ProfilerEnabled("Profiler.Enabled");
@@ -181,11 +181,11 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
 };
 #ifdef _WIN32
-Option<bool> UseRawInput("RawInput", false, "input");
+Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
 
 #ifdef USE_LUA
-OptionString LuaFileName("LuaFileName", "flycast.lua");
+Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
 #endif
 
 } // namespace config

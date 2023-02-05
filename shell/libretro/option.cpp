@@ -36,7 +36,7 @@ Option<bool> FullMMU("");
 Option<bool> ForceWindowsCE(CORE_OPTION_NAME "_force_wince");
 Option<bool> AutoLoadState("");
 Option<bool> AutoSaveState("");
-Option<int> SavestateSlot("");
+Option<int, false> SavestateSlot("");
 Option<bool> ForceFreePlay(CORE_OPTION_NAME "_force_freeplay", true);
 
 // Sound
