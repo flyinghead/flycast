@@ -73,13 +73,10 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	const PolyParam * const pp_base = &ctx.global_param_tr.head()[first];
 	const PolyParam * const pp_end = pp_base + count;
 
-	int vtx_count = ctx.verts.used() - pp_base->first;
-	if (vtx_count <= 0)
-		return;
-
 	//make lists of all triangles, with their pid and vid
 	static std::vector<IndexTrig> triangleList;
 
+	int vtx_count = ctx.verts.used() - pp_base->first;
 	triangleList.reserve(vtx_count);
 	triangleList.clear();
 
@@ -148,6 +145,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 
 	//re-assemble them into drawing commands
 
+	size_t initialSize = ctx.sortedTriangles.size();
 	int idx = -1;
 	int idxSize = ctx.idx.used();
 
@@ -175,7 +173,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		}
 	}
 
-	if (!ctx.sortedTriangles.empty())
+	if (!triangleList.empty())
 	{
 		SortedTriangle& last = ctx.sortedTriangles.back();
 		last.count = idxSize + triangleList.size() * 3 - last.first;
@@ -185,7 +183,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		// Add a dummy one to signal we're using sorted triangles
 		ctx.sortedTriangles.push_back({ pp_base, 0, 0});
 	}
-	pass.sorted_tr_count = ctx.sortedTriangles.size();
+	pass.sorted_tr_count = ctx.sortedTriangles.size() - initialSize;
 
 #if PRINT_SORT_STATS
 	printf("Reassembled into %d from %d\n", (int)ctx.sortedTriangles.size(), pp_end - pp_base);
