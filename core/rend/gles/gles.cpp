@@ -1090,7 +1090,7 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			RenderLastFrame();
+			renderLastFrame();
 			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
@@ -1101,7 +1101,6 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 #endif
 			SetupOSDVBO();
 
-		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		float scale_h = settings.display.height / 480.f;
@@ -1403,7 +1402,7 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 #ifndef LIBRETRO
 	else {
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
-		RenderLastFrame();
+		renderLastFrame();
 	}
 #endif
 	bindVertexArray(0);
