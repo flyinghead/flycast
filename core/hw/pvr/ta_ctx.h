@@ -307,6 +307,7 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
+	u32 lastFrameUsed;
 
 	tad_context tad;
 	rend_context rend;
