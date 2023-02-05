@@ -6,11 +6,10 @@ if [ "$#" -ne 3 ]; then
 fi
 
 SHLIBS=(
-	libcurl-gnutls.so.4
+	libcurl.so.4
 	libz.so.1
 	liblua5.3.so.0
 	libminiupnpc.so.17
-	libGL.so.1
 	libgomp.so.1
 	libao.so.4
 	libpulse.so.0
@@ -20,23 +19,20 @@ SHLIBS=(
 	librtmp.so.1
 	libssh.so.4
 	libpsl.so.5
-	libnettle.so.7
-	libgnutls.so.30
+	libssl.so.1.1
+	libcrypto.so.1.1
 	libgssapi_krb5.so.2
 	libldap_r-2.4.so.2
 	liblber-2.4.so.2
 	libbrotlidec.so.1
-	libGLdispatch.so.0
-	libGLX.so.0
 	pulseaudio/libpulsecommon-13.99.so
 	libdbus-1.so.3
 	libbz2.so.1.0
-	libcrypto.so.1.1
 	libunistring.so.2
+	libgnutls.so.30
 	libhogweed.so.5
+	libnettle.so.7
 	libgmp.so.10
-	libp11-kit.so.0
-	libtasn1.so.6
 	libkrb5.so.3
 	libk5crypto.so.3
 	libcom_err.so.2
@@ -45,14 +41,14 @@ SHLIBS=(
 	libsasl2.so.2
 	libgssapi.so.3
 	libbrotlicommon.so.1
-	libX11.so.6
 	libxcb.so.1
 	libsystemd.so.0
 	libwrap.so.0
 	libsndfile.so.1
 	libasyncns.so.0
 	libapparmor.so.1
-	libffi.so.7
+	libp11-kit.so.0
+	libtasn1.so.6
 	libkeyutils.so.1
 	libheimntlm.so.0
 	libkrb5.so.26
@@ -69,6 +65,7 @@ SHLIBS=(
 	libogg.so.0
 	libvorbis.so.0
 	libvorbisenc.so.2
+	libffi.so.7
 	libwind.so.0
 	libheimbase.so.1
 	libhx509.so.5
