@@ -292,26 +292,17 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
-					if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
-							&& event.window.data1 != 0 && event.window.data2 != 0)
-					{
-						settings.display.width = event.window.data1;
-						settings.display.height = event.window.data2;
-					}
-					else
-					{
 #ifdef USE_VULKAN
-						if (windowFlags & SDL_WINDOW_VULKAN)
-							SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
-						else
+					if (windowFlags & SDL_WINDOW_VULKAN)
+						SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
 #endif
 #ifdef USE_OPENGL
-						if (windowFlags & SDL_WINDOW_OPENGL)
-							SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
-						else
+					if (windowFlags & SDL_WINDOW_OPENGL)
+						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
 #endif
-							SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
-					}
+						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
 					GraphicsContext::Instance()->resize();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
