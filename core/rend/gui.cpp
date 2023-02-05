@@ -2665,20 +2665,11 @@ static void gui_network_start()
 		ImGui::Text("Starting...");
 		try {
 			if (networkStatus.get())
-			{
 				gui_state = GuiState::Closed;
-			}
 			else
-			{
-				emu.unloadGame();
-				gui_state = GuiState::Main;
-			}
+				gui_stop_game();
 		} catch (const FlycastException& e) {
-			if (NetworkHandshake::instance != nullptr)
-				NetworkHandshake::instance->stop();
-			emu.unloadGame();
-			gui_error(e.what());
-			gui_state = GuiState::Main;
+			gui_stop_game(e.what());
 		}
 	}
 	else
@@ -2700,8 +2691,7 @@ static void gui_network_start()
 		}
 		catch (const FlycastException& e) {
 		}
-		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_stop_game();
 	}
 	ImGui::PopStyleVar();
 
@@ -2759,12 +2749,10 @@ static void gui_display_loadscreen()
 		}
 	} catch (const FlycastException& ex) {
 		ERROR_LOG(BOOT, "%s", ex.what());
-		gui_error(ex.what());
 #ifdef TEST_AUTOMATION
 		die("Game load failed");
 #endif
-		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_stop_game(ex.what());
 	}
 	ImGui::PopStyleVar();
 

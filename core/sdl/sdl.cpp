@@ -7,7 +7,7 @@
 #include <SDL_syswm.h>
 #endif
 #include <SDL_video.h>
-#if defined(__APPLE__) && defined(USE_VULKAN)
+#if defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
 #endif
@@ -29,6 +29,7 @@
 #endif
 
 static SDL_Window* window = NULL;
+static u32 windowFlags;
 
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
@@ -287,6 +288,17 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
+#ifdef USE_VULKAN
+					if (windowFlags & SDL_WINDOW_VULKAN)
+						SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
+#endif
+#ifdef USE_OPENGL
+					if (windowFlags & SDL_WINDOW_OPENGL)
+						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
+#endif
+						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
 					GraphicsContext::Instance()->resize();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
@@ -468,6 +480,7 @@ HWND getNativeHwnd()
 
 bool sdl_recreate_window(u32 flags)
 {
+	windowFlags = flags;
 #ifdef _WIN32
     //Enable HiDPI mode in Windows
     typedef enum PROCESS_DPI_AWARENESS {

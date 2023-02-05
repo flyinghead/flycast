@@ -122,7 +122,7 @@ public:
 		nameInfo.objectType = objectType;
 		nameInfo.object = object;
 		nameInfo.pObjectName = name.c_str();
-		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
+		VULKAN_HPP_DEFAULT_DISPATCHER.vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
 	}
 #endif
 	constexpr static int VENDOR_AMD = 0x1022;

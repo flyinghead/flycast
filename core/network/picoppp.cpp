@@ -48,8 +48,6 @@ extern "C" {
 #include "types.h"
 #include "picoppp.h"
 #include "miniupnp.h"
-#include "reios/reios.h"
-#include "hw/naomi/naomi_cart.h"
 #include "cfg/option.h"
 #include "emulator.h"
 
@@ -843,24 +841,14 @@ static void *pico_thread_func(void *)
 
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
-	std::string gameId;
-	if (settings.platform.isConsole())
-	{
-		gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
-		gameId = trim_trailing_ws(gameId);
-	}
-	else
-	{
-		gameId = naomi_game_id;
-	}
 	for (u32 i = 0; i < ARRAY_SIZE(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
 		for (u32 j = 0; j < ARRAY_SIZE(game.gameId) && game.gameId[j] != nullptr; j++)
 		{
-			if (gameId == game.gameId[j])
+			if (settings.content.gameId == game.gameId[j])
 			{
-				NOTICE_LOG(MODEM, "Found network ports for game %s", gameId.c_str());
+				NOTICE_LOG(MODEM, "Found network ports for game %s", settings.content.gameId.c_str());
 				ports = &game;
 				break;
 			}
@@ -869,7 +857,8 @@ static void *pico_thread_func(void *)
 	// Web TV requires the VJ compression option, which picotcp doesn't support.
 	// This hack allows WebTV to connect although the correct fix would
 	// be to implement VJ compression.
-	dont_reject_opt_vj_hack = gameId == "6107117" || gameId == "610-7390" || gameId == "610-7391" ? 1 : 0;
+	dont_reject_opt_vj_hack = settings.content.gameId == "6107117"
+			|| settings.content.gameId == "610-7390" || settings.content.gameId == "610-7391" ? 1 : 0;
 
 	std::future<MiniUPnP> upnp =
 		std::async(std::launch::async, [ports]() {

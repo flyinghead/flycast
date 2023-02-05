@@ -17,6 +17,8 @@ void rend_reset();
 void rend_disable_rollback();
 void rend_start_rollback();
 void rend_allow_rollback();
+void rend_enable_renderer(bool enabled);
+bool rend_is_enabled();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
 

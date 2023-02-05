@@ -414,7 +414,14 @@ struct OpenGLRenderer : Renderer
 
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 
-	bool RenderLastFrame() override;
+	bool RenderLastFrame() override
+	{
+		saveCurrentFramebuffer();
+		bool ret = renderLastFrame();
+		restoreCurrentFramebuffer();
+
+		return ret;
+	}
 
 	void DrawOSD(bool clear_screen) override;
 
@@ -450,6 +457,8 @@ protected:
 	void restoreCurrentFramebuffer() {
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
+
+	bool renderLastFrame();
 
 private:
 	bool renderFrame(int width, int height);

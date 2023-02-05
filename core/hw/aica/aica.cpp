@@ -173,40 +173,34 @@ static void AicaInternalDMA()
 template<typename T>
 void writeTimerAndIntReg(u32 reg, T data)
 {
-	constexpr size_t sz = sizeof(T);
 	switch (reg)
 	{
 	case SCIEB_addr:
-		verify(sz != 1);
 		SCIEB->full = data & 0x7ff;
 		update_arm_interrupts();
 		break;
 
 	case SCIPD_addr:
-		verify(sz!=1);
 		// other bits are read-only
-		if (data & (1<<5))
+		if (data & (1 << 5))
 		{
-			SCIPD->SCPU=1;
+			SCIPD->SCPU = 1;
 			update_arm_interrupts();
 		}
 		break;
 
 	case SCIRE_addr:
-		verify(sz != 1);
-		SCIPD->full &= ~data /*& SCIEB->full)*/;	//is the & SCIEB->full needed ? doesn't seem like it
+		SCIPD->full &= ~data;
 		update_arm_interrupts();
 		break;
 
 	case MCIEB_addr:
-		verify(sz != 1);
 		MCIEB->full = data & 0x7ff;
 		if (UpdateSh4Ints())
 			arm::avoidRaceCondition();
 		break;
 
 	case MCIPD_addr:
-		verify(sz != 1);
 		// other bits are read-only
 		if (data & (1 << 5))
 		{
@@ -217,7 +211,6 @@ void writeTimerAndIntReg(u32 reg, T data)
 		break;
 
 	case MCIRE_addr:
-		verify(sz != 1);
 		MCIPD->full &= ~data;
 		UpdateSh4Ints();
 		break;

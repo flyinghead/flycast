@@ -1018,7 +1018,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 #ifndef LIBRETRO
 	else {
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
-		RenderLastFrame();
+		renderLastFrame();
 	}
 #endif
 	glBindVertexArray(0);

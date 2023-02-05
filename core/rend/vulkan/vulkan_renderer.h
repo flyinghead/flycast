@@ -95,6 +95,7 @@ public:
 		texCommandPool.Term();
 		fbCommandPool.Term();
 		framebufferTextures.clear();
+		framebufferTexIndex = 0;
 		shaderManager.term();
 	}
 
@@ -144,8 +145,6 @@ public:
 		CheckFogTexture();
 		CheckPaletteTexture();
 		texCommandBuffer.end();
-		if (!ctx->rend.isRTT)
-			framebufferRendered = false;
 	}
 
 	void ReInitOSD()
@@ -205,9 +204,11 @@ public:
 
 	void RenderFramebuffer(const FramebufferInfo& info) override
 	{
+		framebufferTexIndex = (framebufferTexIndex + 1) % GetContext()->GetSwapChainSize();
+
 		if (framebufferTextures.size() != GetContext()->GetSwapChainSize())
 			framebufferTextures.resize(GetContext()->GetSwapChainSize());
-		std::unique_ptr<Texture>& curTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()];
+		std::unique_ptr<Texture>& curTexture = framebufferTextures[framebufferTexIndex];
 		if (!curTexture)
 		{
 			curTexture = std::unique_ptr<Texture>(new Texture());
@@ -293,13 +294,14 @@ protected:
 
 	bool presentFramebuffer()
 	{
-		if (GetContext()->GetCurrentImageIndex() >= (int)framebufferTextures.size())
+		if (framebufferTexIndex >= (int)framebufferTextures.size())
 			return false;
-		Texture *fbTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()].get();
+		Texture *fbTexture = framebufferTextures[framebufferTexIndex].get();
 		if (fbTexture == nullptr)
 			return false;
 		GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize(),
 				getDCFramebufferAspectRatio());
+		framebufferRendered = false;
 		return true;
 	}
 
@@ -308,6 +310,7 @@ protected:
 	std::unique_ptr<Texture> paletteTexture;
 	CommandPool texCommandPool;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
+	int framebufferTexIndex = 0;
 	OSDPipeline osdPipeline;
 	std::unique_ptr<Texture> vjoyTexture;
 	std::unique_ptr<BufferData> osdBuffer;

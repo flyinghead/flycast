@@ -35,7 +35,6 @@ GraphicsContext *GraphicsContext::instance;
 
 void initRenderApi(void *window, void *display)
 {
-	bool dx11Failed = false;
 #ifdef USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
@@ -48,6 +47,7 @@ void initRenderApi(void *window, void *display)
 	}
 #endif
 #ifdef USE_DX11
+	bool dx11Failed = false;
 	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
 		theDX11Context.setWindow(window, display);

@@ -82,7 +82,7 @@ bool EGLGraphicsContext::init()
 		}
 		ANativeWindow_setBuffersGeometry((ANativeWindow *)window, 0, 0, format);
 #endif
-		surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)window, NULL);
+		surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)window, nullptr);
 
 		if (surface == EGL_NO_SURFACE)
 		{
@@ -102,7 +102,7 @@ bool EGLGraphicsContext::init()
 			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
 									  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR,
 									  EGL_NONE };
-			context = eglCreateContext(display, config, NULL, contextAttrs);
+			context = eglCreateContext(display, config,  EGL_NO_CONTEXT, contextAttrs);
 			if (context != EGL_NO_CONTEXT)
 			{
 				makeCurrent();
@@ -121,7 +121,7 @@ bool EGLGraphicsContext::init()
 
 			EGLint contextAttrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
 
-			context = eglCreateContext(display, config, NULL, contextAttrs);
+			context = eglCreateContext(display, config,  EGL_NO_CONTEXT, contextAttrs);
 
 			if (context == EGL_NO_CONTEXT)
 			{
@@ -171,7 +171,7 @@ bool EGLGraphicsContext::init()
 void EGLGraphicsContext::term()
 {
 	preTerm();
-	eglMakeCurrent(display, NULL, NULL, EGL_NO_CONTEXT);
+	eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 	if (context != EGL_NO_CONTEXT)
 		eglDestroyContext(display, context);
 	if (surface != EGL_NO_SURFACE)

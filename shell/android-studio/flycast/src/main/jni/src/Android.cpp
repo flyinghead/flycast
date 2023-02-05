@@ -341,14 +341,19 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(J
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-    if (emu.running())
-    {
-    	stopEmu();
-        game_started = true; // restart when resumed
-        if (config::AutoSaveState)
-            dc_savestate(config::SavestateSlot);
-    }
-    gui_save();
+	if (config::GGPOEnable)
+	{
+		stopEmu();
+		gui_stop_game();
+	}
+	else if (emu.running())
+	{
+		stopEmu();
+		game_started = true; // restart when resumed
+		if (config::AutoSaveState)
+			dc_savestate(config::SavestateSlot);
+	}
+	gui_save();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
@@ -359,10 +364,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNI
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-   	stopEmu();
-    emu.unloadGame();
-    gui_state = GuiState::Main;
-    game_started = false;
+	stopEmu();
+	gui_stop_game();
 }
 
 static void *render_thread_func(void *)

@@ -51,9 +51,14 @@
 #endif
 #include "profiler/fc_profiler.h"
 
+#if defined(USE_SDL) || defined(DEF_CONSOLE)
+#include <nowide/args.hpp>
+#endif
+
 #include <windows.h>
 #include <windowsx.h>
 
+#if !defined(USE_SDL) && !defined(DEF_CONSOLE)
 static PCHAR*
 	commandLineToArgvA(
 	PCHAR CmdLine,
@@ -147,6 +152,7 @@ static PCHAR*
 	(*_argc) = argc;
 	return argv;
 }
+#endif
 
 #ifndef USE_SDL
 
@@ -844,10 +850,12 @@ int remove(char const *name)
 }
 
 }
+#endif
 
-extern "C" int SDL_main(int argc, char* argv[])
+#ifdef USE_SDL
+int main(int argc, char* argv[])
 {
-
+	nowide::args _(argc, argv);
 
 #elif defined(DEF_CONSOLE)
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console
@@ -856,6 +864,7 @@ extern "C" int SDL_main(int argc, char* argv[])
 
 int main(int argc, char** argv)
 {
+	nowide::args _(argc, argv);
 
 #else
 #pragma comment(linker, "/subsystem:windows")
