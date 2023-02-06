@@ -21,8 +21,6 @@
 #pragma once
 #include <cinttypes>
 #include "vulkan.h"
-#define VMA_NOT_NULL
-#define VMA_NULLABLE
 #include "vk_mem_alloc.h"
 
 #if !defined(PRIu64) && defined(_WIN32)

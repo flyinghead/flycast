@@ -176,10 +176,6 @@ else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-		target_compile_options(${PROJECT_NAME} PRIVATE
-			$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>)
-	endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -1165,6 +1161,7 @@ if(USE_VULKAN)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
 	add_library(VulkanMemoryAllocator INTERFACE)
+	target_compile_options(VulkanMemoryAllocator INTERFACE $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wno-nullability-completeness>)
 	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
 
