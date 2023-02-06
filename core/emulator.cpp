@@ -199,11 +199,7 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
 		}
-		if (prod_id == "T9512N"			// The Grinch (US)
-			|| prod_id == "T9503D"		// The Grinch (EU)
-			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
-			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
+		if (prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion

@@ -373,7 +373,8 @@ static void reios_sys_misc()
 
 typedef void hook_fp();
 
-static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
+static void setup_syscall(u32 hook_addr, u32 syscall_addr)
+{
 	WriteMem32(syscall_addr, hook_addr);
 	WriteMem16(hook_addr, REIOS_OPCODE);
 
@@ -383,6 +384,25 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 
 static void reios_setup_state(u32 boot_addr)
 {
+	// San Francisco Rush checksum
+	short *p = (short *)GetMemPtr(0x8c0010f0, 2);
+	int chksum = (int)0xFFF937D1;
+	for (int i = 0; i < 10; i++)
+		chksum -= *p++;
+	p += 0xee - 1;
+	for (int i = 0; i < 3; i++)
+		chksum += *p++;
+	p += 0x347 - 1;
+	for (int i = 0; i < 11; i++)
+		chksum -= *p++;
+	p += 0xbf8 - 1;
+	for (int i = 0; i < 98; i++)
+	{
+		short v = chksum < 0 ? std::min(-chksum, 32767) : std::max(-chksum, -32768);
+		*p = v;
+		chksum += *p++;
+	}
+
 	// Set up AICA interrupt masks
 	aicaWriteReg(SCIEB_addr, (u16)0x48);
 	aicaWriteReg(SCILV0_addr, (u8)0x18);
@@ -710,6 +730,11 @@ void reios_reset(u8* rom)
 	u16* rom16 = (u16*)rom;
 
 	rom16[0] = REIOS_OPCODE;
+
+	// The Grinch game bug
+	*(u32 *)&rom[0x44c] = 0xe303d463;
+	// Jeremy McGrath game bug
+	*(u32 *)&rom[0x1c] = 0x71294118;
 
 	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
 
