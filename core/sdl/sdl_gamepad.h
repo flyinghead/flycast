@@ -166,7 +166,16 @@ public:
 	SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
 		: GamepadDevice(maple_port, "SDL"), sdl_joystick(sdl_joystick)
 	{
-		_name = SDL_JoystickName(sdl_joystick);
+		const char *joyName = SDL_JoystickName(sdl_joystick);
+		if (joyName == nullptr)
+		{
+			WARN_LOG(INPUT, "Can't get joystick %d name: %s", joystick_idx, SDL_GetError());
+			_name = "Joystick " + std::to_string(joystick_idx);
+		}
+		else
+		{
+			_name = joyName;
+		}
 		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
 		_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 		INFO_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
@@ -174,12 +183,19 @@ public:
 		if (SDL_IsGameController(joystick_idx))
 		{
 			sdl_controller = SDL_GameControllerOpen(joystick_idx);
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				leftTrigger = bind.value.axis;
-			bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				rightTrigger = bind.value.axis;
+			if (sdl_controller == nullptr)
+			{
+				WARN_LOG(INPUT, "Can't open game controller %d: %s", joystick_idx, SDL_GetError());
+			}
+			else
+			{
+				SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
+					leftTrigger = bind.value.axis;
+				bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
+					rightTrigger = bind.value.axis;
+			}
 		}
 
 		if (!find_mapping())
@@ -273,50 +289,51 @@ public:
 				{ "paddle4", "Paddle 4" },
 				{ "touchpad", "Touchpad" },
 		};
-		for (SDL_GameControllerButton button = SDL_CONTROLLER_BUTTON_A; button < SDL_CONTROLLER_BUTTON_MAX; button = (SDL_GameControllerButton)(button + 1))
-		{
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForButton(sdl_controller, button);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON && bind.value.button == (int)code)
+		if (sdl_controller != nullptr)
+			for (SDL_GameControllerButton button = SDL_CONTROLLER_BUTTON_A; button < SDL_CONTROLLER_BUTTON_MAX; button = (SDL_GameControllerButton)(button + 1))
 			{
-				const char *sdlButton = SDL_GameControllerGetStringForButton(button);
-				if (sdlButton == nullptr)
-					return nullptr;
-				for (const auto& button : buttonsTable)
-					if (!strcmp(button.sdlButton, sdlButton))
-						return button.label;
-				return sdlButton;
-			}
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT && (code >> 8) - 1 == (u32)bind.value.hat.hat)
-			{
-				int hat;
-				const char *name;
-				switch (code & 0xff)
+				SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForButton(sdl_controller, button);
+				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON && bind.value.button == (int)code)
 				{
-				case 0:
-					hat = SDL_HAT_UP;
-					name =  "DPad Up";
-					break;
-				case 1:
-					hat = SDL_HAT_DOWN;
-					name =  "DPad Down";
-					break;
-				case 2:
-					hat = SDL_HAT_LEFT;
-					name =  "DPad Left";
-					break;
-				case 3:
-					hat = SDL_HAT_RIGHT;
-					name =  "DPad Right";
-					break;
-				default:
-					hat = 0;
-					name = nullptr;
-					break;
+					const char *sdlButton = SDL_GameControllerGetStringForButton(button);
+					if (sdlButton == nullptr)
+						return nullptr;
+					for (const auto& button : buttonsTable)
+						if (!strcmp(button.sdlButton, sdlButton))
+							return button.label;
+					return sdlButton;
 				}
-				if (hat == bind.value.hat.hat_mask)
-					return name;
+				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT && (code >> 8) - 1 == (u32)bind.value.hat.hat)
+				{
+					int hat;
+					const char *name;
+					switch (code & 0xff)
+					{
+					case 0:
+						hat = SDL_HAT_UP;
+						name =  "DPad Up";
+						break;
+					case 1:
+						hat = SDL_HAT_DOWN;
+						name =  "DPad Down";
+						break;
+					case 2:
+						hat = SDL_HAT_LEFT;
+						name =  "DPad Left";
+						break;
+					case 3:
+						hat = SDL_HAT_RIGHT;
+						name =  "DPad Right";
+						break;
+					default:
+						hat = 0;
+						name = nullptr;
+						break;
+					}
+					if (hat == bind.value.hat.hat_mask)
+						return name;
+				}
 			}
-		}
 		return nullptr;
 	}
 
@@ -336,20 +353,21 @@ public:
 				{ "righttrigger", "R2" },
 		};
 
-		for (SDL_GameControllerAxis axis = SDL_CONTROLLER_AXIS_LEFTX; axis < SDL_CONTROLLER_AXIS_MAX; axis = (SDL_GameControllerAxis)(axis + 1))
-		{
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, axis);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS && bind.value.axis == (int)code)
+		if (sdl_controller != nullptr)
+			for (SDL_GameControllerAxis axis = SDL_CONTROLLER_AXIS_LEFTX; axis < SDL_CONTROLLER_AXIS_MAX; axis = (SDL_GameControllerAxis)(axis + 1))
 			{
-				const char *sdlAxis = SDL_GameControllerGetStringForAxis(axis);
-				if (sdlAxis == nullptr)
-					return nullptr;
-				for (const auto& axis : axesTable)
-					if (!strcmp(axis.sdlAxis, sdlAxis))
-						return axis.label;
-				return sdlAxis;
+				SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, axis);
+				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS && bind.value.axis == (int)code)
+				{
+					const char *sdlAxis = SDL_GameControllerGetStringForAxis(axis);
+					if (sdlAxis == nullptr)
+						return nullptr;
+					for (const auto& axis : axesTable)
+						if (!strcmp(axis.sdlAxis, sdlAxis))
+							return axis.label;
+					return sdlAxis;
+				}
 			}
-		}
 		return nullptr;
 	}
 
