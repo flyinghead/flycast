@@ -1163,6 +1163,7 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 		makeIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
 		makeIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
 	}
+	pass.sorted_tr_count = previousPass.sorted_tr_count;
 	if (pass.autosort && !perPixel)
 	{
 		if (config::PerStripSorting)

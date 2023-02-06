@@ -145,7 +145,6 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 
 	//re-assemble them into drawing commands
 
-	size_t initialSize = ctx.sortedTriangles.size();
 	int idx = -1;
 	int idxSize = ctx.idx.used();
 
@@ -183,7 +182,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		// Add a dummy one to signal we're using sorted triangles
 		ctx.sortedTriangles.push_back({ pp_base, 0, 0});
 	}
-	pass.sorted_tr_count = ctx.sortedTriangles.size() - initialSize;
+	pass.sorted_tr_count = ctx.sortedTriangles.size();
 
 #if PRINT_SORT_STATS
 	printf("Reassembled into %d from %d\n", (int)ctx.sortedTriangles.size(), pp_end - pp_base);
