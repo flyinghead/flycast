@@ -340,6 +340,12 @@ static void updateAudioSession(Event event, void *)
 	return UIRectEdgeAll;
 }
 
+- (void)viewDidDisappear:(BOOL)animated;
+{
+	[super viewDidDisappear:animated];
+	mainui_term();
+}
+
 - (void)dealloc
 {
 	[self deinitKeyboard];
