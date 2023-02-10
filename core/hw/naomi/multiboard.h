@@ -522,6 +522,8 @@ private:
 	SharedMemory *sharedMem;
 #ifdef _WIN32
 	HANDLE mapFile;
+#else
+	std::string sharedMemFileName;
 #endif
 	int boardCount = 0;
 	bool slaveStarted = false;

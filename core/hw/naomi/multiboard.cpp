@@ -86,11 +86,11 @@ Multiboard::Multiboard()
 		}
 	}
 #else
-#define SHARED_MEM_FILE "/naomi_multiboard_mem"
 
-	int fd = shm_open(SHARED_MEM_FILE, O_RDWR | (isMaster() ? O_CREAT : 0), 0644);
+	sharedMemFileName = "/naomi_multiboard_mem" + std::to_string(isMaster() ? getpid() : getppid());
+	int fd = shm_open(sharedMemFileName.c_str(), O_RDWR | (isMaster() ? O_CREAT : 0), 0644);
 	if (fd < 0)
-		ERROR_LOG(NAOMI, "Can't open mapped file. errno %d", errno);
+		ERROR_LOG(NAOMI, "Can't open mapped file %s: errno %d", sharedMemFileName.c_str(), errno);
 	else
 	{
 		if (isMaster() && ftruncate(fd, sizeof(SharedMemory)))
@@ -238,7 +238,7 @@ Multiboard::~Multiboard()
 #else
 	if (sharedMem != nullptr)
 		munmap(sharedMem, sizeof(SharedMemory));
-	shm_unlink(SHARED_MEM_FILE);
+	shm_unlink(sharedMemFileName.c_str());
 #endif
 }
 
