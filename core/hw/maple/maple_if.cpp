@@ -301,12 +301,12 @@ static void maple_SB_MDAPRO_Write(u32 addr, u32 data)
 //Init registers :)
 void maple_Init()
 {
-	sb_rio_register(SB_MDST_addr, RIO_WF, nullptr, maple_SB_MDST_Write);
-	sb_rio_register(SB_MDEN_addr, RIO_WF, nullptr, maple_SB_MDEN_Write);
-	sb_rio_register(SB_MSHTCL_addr, RIO_WF, nullptr, maple_SB_MSHTCL_Write);
-	sb_rio_register(SB_MDAPRO_addr, RIO_WO_FUNC, nullptr, maple_SB_MDAPRO_Write);
+	hollyRegs.setWriteHandler<SB_MDST_addr>(maple_SB_MDST_Write);
+	hollyRegs.setWriteHandler<SB_MDEN_addr>(maple_SB_MDEN_Write);
+	hollyRegs.setWriteHandler<SB_MSHTCL_addr>(maple_SB_MSHTCL_Write);
+	hollyRegs.setWriteOnly<SB_MDAPRO_addr>(maple_SB_MDAPRO_Write);
 #ifdef STRICT_MODE
-	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, maple_SB_MDSTAR_Write);
+	hollyRegs.setWriteHandler<SB_MDSTAR_addr>(maple_SB_MDSTAR_Write);
 #endif
 
 	maple_schid = sh4_sched_register(0, maple_schd);

@@ -490,8 +490,8 @@ void naomi_reg_Term()
 
 void naomi_reg_Reset(bool hard)
 {
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+	hollyRegs.setWriteHandler<SB_GDST_addr>(Naomi_DmaStart);
+	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
 

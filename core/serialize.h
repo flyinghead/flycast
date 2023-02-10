@@ -18,7 +18,6 @@
 */
 #pragma once
 #include "types.h"
-#include "hw/hwreg.h"
 
 #include <limits>
 
@@ -58,7 +57,8 @@ public:
 		V30,
 		V31,
 		V32,
-		Current = V32,
+		V33,
+		Current = V33,
 
 		Next = Current + 1,
 	};
@@ -207,23 +207,3 @@ Deserializer& operator>>(Deserializer& ctx, T& obj) {
 
 void dc_serialize(Serializer& ctx);
 void dc_deserialize(Deserializer& ctx);
-
-template<typename T>
-void register_serialize(const T& regs, Serializer& ser)
-{
-	for (const auto& reg : regs)
-		ser << reg.data32;
-}
-template<typename T>
-void register_deserialize(T& regs, Deserializer& deser)
-{
-	for (auto& reg : regs)
-	{
-		if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-			deser.skip<u32>(); // regs.data[i].flags
-		if (!(reg.flags & REG_RF) || (reg.flags & REG_WO))
-			deser >> reg.data32;
-		else
-			deser.skip<u32>();
-	}
-}

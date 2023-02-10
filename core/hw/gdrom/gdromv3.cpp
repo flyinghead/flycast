@@ -1306,8 +1306,8 @@ void gdrom_reg_Reset(bool hard)
 {
 	if (hard)
 	{
-		sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-		sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+		hollyRegs.setWriteHandler<SB_GDST_addr>(GDROM_DmaStart);
+		hollyRegs.setWriteHandler<SB_GDEN_addr>(GDROM_DmaEnable);
 
 		// set default hardware information
 		memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));

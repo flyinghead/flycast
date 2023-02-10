@@ -1,24 +1,97 @@
 #pragma once
+#include "hw/hwreg.h"
 
-void bsc_init();
-void bsc_reset(bool hard);
-void bsc_term();
+extern u32 UBC[9];
+extern u32 BSC[19];
+extern u32 CPG[5];
+extern u32 RTC[16];
+extern u32 INTC[5];
+extern u32 TMU[12];
+extern u32 SCI[8];
+extern u32 SCIF[10];
 
-void cpg_init();
-void cpg_reset();
-void cpg_term();
+class UBCRegisters : public RegisterBank<UBC, 9>
+{
+	using super = RegisterBank<UBC, 9>;
 
-void dmac_init();
-void dmac_reset();
-void dmac_term();
+public:
+	void init();
+};
+extern UBCRegisters ubc;
 
-void rtc_init();
-void rtc_reset();
-void rtc_term();
+class BSCRegisters : public RegisterBank<BSC, 19>
+{
+	using super = RegisterBank<BSC, 19>;
 
-void intc_init();
-void intc_reset();
-void intc_term();
+public:
+	void init();
+	void reset();
+};
+extern BSCRegisters bsc;
+
+class CPGRegisters : public RegisterBank<CPG, 5>
+{
+	using super = RegisterBank<CPG, 5>;
+
+public:
+	void init();
+};
+extern CPGRegisters cpg;
+
+class RTCRegisters : public RegisterBank<RTC, 16>
+{
+	using super = RegisterBank<RTC, 16>;
+
+public:
+	void init();
+	void reset();
+};
+extern RTCRegisters rtc;
+
+class INTCRegisters : public RegisterBank<INTC, 5>
+{
+	using super = RegisterBank<INTC, 5>;
+
+public:
+	void init();
+	void reset();
+	void term();
+};
+extern INTCRegisters intc;
+
+class TMURegisters : public RegisterBank<TMU, 12>
+{
+	using super = RegisterBank<TMU, 12>;
+
+public:
+	void init();
+	void reset();
+	void term();
+	void serialize(Serializer& ser);
+	void deserialize(Deserializer& deser);
+};
+extern TMURegisters tmu;
+
+class SCIRegisters : public RegisterBank<SCI, 8>
+{
+	using super = RegisterBank<SCI, 8>;
+
+public:
+	void init();
+	void reset();
+};
+extern SCIRegisters sci;
+
+class SCIFRegisters : public RegisterBank<SCIF, 10>
+{
+	using super = RegisterBank<SCIF, 10>;
+
+public:
+	void init();
+	void reset();
+	void term();
+};
+extern SCIFRegisters scif;
 
 struct SerialPipe
 {
@@ -31,21 +104,4 @@ struct SerialPipe
 
 	virtual ~SerialPipe() = default;
 };
-void serial_init();
-void serial_reset(bool hard);
-void serial_term();
 void serial_setPipe(SerialPipe *pipe);
-
-void ubc_init();
-void ubc_reset();
-void ubc_term();
-
-void tmu_init();
-void tmu_reset(bool hard);
-void tmu_term();
-void tmu_serialize(Serializer& ser);
-void tmu_deserialize(Deserializer& deser);
-
-void ccn_init();
-void ccn_reset(bool hard);
-void ccn_term();

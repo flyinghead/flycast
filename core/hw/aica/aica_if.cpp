@@ -24,8 +24,6 @@
 
 #include <ctime>
 
-u32 SB_ADST;
-
 namespace aica
 {
 
@@ -434,7 +432,7 @@ static u32 Read_SB_ADST(u32 addr)
 template<u32 STAG, HollyInterruptID iainterrupt, const char *LogTag>
 void Write_SB_STAG(u32 addr, u32 data)
 {
-	u32& stagReg = sb_regs[(STAG - SB_BASE) / 4].data32;
+	u32& stagReg = sb_regs[(STAG - SB_BASE) / 4];
 	stagReg = data & 0x1FFFFFE0;
 
 	if (!check_STAG(data))
@@ -447,7 +445,7 @@ void Write_SB_STAG(u32 addr, u32 data)
 template<u32 STAR, HollyInterruptID iainterrupt, const char *LogTag>
 void Write_SB_STAR(u32 addr, u32 data)
 {
-	u32& starReg = sb_regs[(STAR - SB_BASE) / 4].data32;
+	u32& starReg = sb_regs[(STAR - SB_BASE) / 4];
 	starReg = data & 0x1FFFFFE0;
 
 	if (!check_STAR(data))
@@ -473,31 +471,31 @@ void sbInit()
 	// G2-DMA registers
 
 	// AICA
-	sb_rio_register(SB_ADST_addr, RIO_FUNC, &Read_SB_ADST, &Write_SB_ADST);
+	hollyRegs.setHandlers<SB_ADST_addr>(Read_SB_ADST, Write_SB_ADST);
 #ifdef STRICT_MODE
-	sb_rio_register(SB_ADSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
-	sb_rio_register(SB_ADSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
+	hollyRegs.setWriteHandler<SB_ADSTAR_addr>(Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
+	hollyRegs.setWriteHandler<SB_ADSTAG_addr>(Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
 #endif
 
 	// G2 Ext device #1
-	sb_rio_register(SB_E1ST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,
+	hollyRegs.setWriteHandler<SB_E1ST_addr>(Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,
 			SB_E1DIR_addr, holly_EXT_DMA1, holly_EXT1_ILLADDR, holly_EXT1_OVERRUN, EXT1_TAG>);
-	sb_rio_register(SB_E1STAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_E1STAR_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
-	sb_rio_register(SB_E1STAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_E1STAG_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
+	hollyRegs.setWriteHandler<SB_E1STAR_addr>(Write_SB_STAR<SB_E1STAR_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
+	hollyRegs.setWriteHandler<SB_E1STAG_addr>(Write_SB_STAG<SB_E1STAG_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
 
 	// G2 Ext device #2
-	sb_rio_register(SB_E2ST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_E2EN_addr, SB_E2ST_addr, SB_E2STAR_addr, SB_E2STAG_addr, SB_E2LEN_addr,
+	hollyRegs.setWriteHandler<SB_E2ST_addr>(Write_DmaStart<SB_E2EN_addr, SB_E2ST_addr, SB_E2STAR_addr, SB_E2STAG_addr, SB_E2LEN_addr,
 			SB_E2DIR_addr, holly_EXT_DMA2, holly_EXT2_ILLADDR, holly_EXT2_OVERRUN, EXT2_TAG>);
-	sb_rio_register(SB_E2STAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_E2STAR_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
-	sb_rio_register(SB_E2STAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_E2STAG_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
+	hollyRegs.setWriteHandler<SB_E2STAR_addr>(Write_SB_STAR<SB_E2STAR_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
+	hollyRegs.setWriteHandler<SB_E2STAG_addr>(Write_SB_STAG<SB_E2STAG_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
 
 	// G2 Ext device #3
-	sb_rio_register(SB_DDST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_DDEN_addr, SB_DDST_addr, SB_DDSTAR_addr, SB_DDSTAG_addr, SB_DDLEN_addr,
+	hollyRegs.setWriteHandler<SB_DDST_addr>(Write_DmaStart<SB_DDEN_addr, SB_DDST_addr, SB_DDSTAR_addr, SB_DDSTAG_addr, SB_DDLEN_addr,
 			SB_DDDIR_addr, holly_DEV_DMA, holly_DEV_ILLADDR, holly_DEV_OVERRUN, DDEV_TAG>);
-	sb_rio_register(SB_DDSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_DDSTAR_addr, holly_DEV_ILLADDR, DDEV_TAG>);
-	sb_rio_register(SB_DDSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_DDSTAG_addr, holly_DEV_ILLADDR, DDEV_TAG>);
+	hollyRegs.setWriteHandler<SB_DDSTAR_addr>(Write_SB_STAR<SB_DDSTAR_addr, holly_DEV_ILLADDR, DDEV_TAG>);
+	hollyRegs.setWriteHandler<SB_DDSTAG_addr>(Write_SB_STAG<SB_DDSTAG_addr, holly_DEV_ILLADDR, DDEV_TAG>);
 
-	sb_rio_register(SB_G2APRO_addr, RIO_WO_FUNC, nullptr, &Write_SB_G2APRO);
+	hollyRegs.setWriteOnly<SB_G2APRO_addr>(Write_SB_G2APRO);
 
 	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
