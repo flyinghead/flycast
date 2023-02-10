@@ -31,6 +31,7 @@ void resetN2UniformCache(ShaderType *shader)
 	shader->lastMvMat = -1;
 	shader->lastProjMat = -1;
 	shader->lastLightModel = -1;
+	shader->lastNormalMat = -1;
 }
 
 template<typename ShaderType>
@@ -164,22 +165,6 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader, const rend_context& 
 			glUniform1f(shader->lights[i].attnAngleA, light.attnAngleA);
 			glUniform1f(shader->lights[i].attnAngleB, light.attnAngleB);
 		}
-	}
-	else
-	{
-		float white[] { 1.f, 1.f, 1.f, 1.f };
-		float black[4]{};
-		for (int vol = 0; vol < 2; vol++)
-		{
-			glUniform1i(shader->ambientMaterialBase[vol], 0);
-			glUniform1i(shader->ambientMaterialOffset[vol], 0);
-			glUniform4fv(shader->ambientBase[vol], 1, white);
-			glUniform4fv(shader->ambientOffset[vol], 1, black);
-		}
-		glUniform1i(shader->useBaseOver, 0);
-		glUniform1i(shader->lightCount, 0);
-		glUniform1i(shader->bumpId0, -1);
-		glUniform1i(shader->bumpId1, -1);
 	}
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);
 }
