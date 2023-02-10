@@ -185,8 +185,6 @@ static std::string GetTimeFormatted()
 void LogManager::Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
 		int line, const char* format, va_list args)
 {
-	if (settings.naomi.multiboard && !settings.naomi.slave)
-		return;
 	return LogWithFullPath(level, type, file + m_path_cutoff_point, line, format, args);
 }
 

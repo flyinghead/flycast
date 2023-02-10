@@ -346,9 +346,9 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::_18Wheeler;
 		}
-		else if (prod_id == "F355 CHALLENGE JAPAN", naomi_game_id)
+		else if (prod_id == "F355 CHALLENGE JAPAN")
 		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::F355;
 		}
 		else if (prod_id == "INU NO OSANPO")	// Dog Walking
