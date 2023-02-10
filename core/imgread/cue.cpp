@@ -85,6 +85,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	std::string track_type;
 	u32 session_number = 0;
 	std::string line;
+	std::string track_isrc;
 
 	while (std::getline(istream, line))
 	{
@@ -191,8 +192,9 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
 				current_fad = t.StartFAD + (u32)flycast::fsize(track_file) / sector_size;
 				t.EndFAD = current_fad - 1;
-				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
-				
+				t.isrc = track_isrc;
+				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d %s", disc->tracks.size() + 1, track_filename.c_str(),
+						session_number, track_type.c_str(), t.StartFAD, t.EndFAD, t.isrc.empty() ? "" : ("ISRC " + t.isrc).c_str());
 				if (digest != nullptr)
 					md5.add(track_file);
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
@@ -201,7 +203,16 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				track_number = -1;
 				track_type.clear();
 				track_filename.clear();
+				track_isrc.clear();
 			}
+		}
+		else if (token == "CATALOG")
+		{
+			cuesheet >> disc->catalog;
+		}
+		else if (token == "ISRC")
+		{
+			cuesheet >> track_isrc;
 		}
 	}
 	if (disc->tracks.empty())

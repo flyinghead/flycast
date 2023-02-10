@@ -4,7 +4,7 @@ extern Disc* disc;
 
 u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed)
 {
-	if (disc != NULL)
+	if (disc != nullptr)
 	{
 		for (size_t i = 0; i < disc->tracks.size(); i++)
 			if (disc->tracks[i].StartFAD <= sector && (sector <= disc->tracks[i].EndFAD || disc->tracks[i].EndFAD == 0))
@@ -19,7 +19,7 @@ u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed)
 
 bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad)
 {
-	if (track_num == 0 || track_num > disc->tracks.size())
+	if (track_num == 0 || disc == nullptr || track_num > disc->tracks.size())
 		return false;
 	start_fad = disc->tracks[track_num - 1].StartFAD;
 	end_fad = disc->tracks[track_num - 1].EndFAD;
@@ -32,4 +32,19 @@ bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad)
 	}
 
 	return true;
+}
+
+std::string libGDR_GetDiskCatalog()
+{
+	if (disc != nullptr)
+		return disc->catalog;
+	else
+		return "";
+}
+
+std::string libGDR_GetTrackIsrc(u32 trackNum)
+{
+	if (trackNum == 0 || disc == nullptr || trackNum > disc->tracks.size())
+		return "";
+	return disc->tracks[trackNum - 1].isrc;
 }
