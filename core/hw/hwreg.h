@@ -122,7 +122,7 @@ private:
 	void (*write32)(u32 addr, u32 value);
 };
 
-template <u32 *Module, u32 AddressMask = 0xff, u32 BaseAddress = 0>
+template<u32 *Module, u32 AddressMask = 0xff, u32 BaseAddress = 0>
 class MMRegister : public HwRegister
 {
 public:
@@ -196,7 +196,7 @@ public:
 	template<u32 Addr, typename T = u32, u32 Mask = 0xffffffff, u32 OrMask = 0>
 	void setRW()
 	{
-		getRegister<Addr>().template setReadWrite<(Addr & AddressMask), T, Mask, OrMask>();
+		getRegister<Addr>().template setReadWrite<Addr, T, Mask, OrMask>();
 	}
 
 	// Configure the register at the given address to use the given read and write handlers
@@ -216,7 +216,7 @@ public:
 	{
 		RegisterType& reg = getRegister<Addr>();
 		reg.template setReadOnly<Addr, T>();
-		reg.template setWriteHandler(writeHandler);
+		reg.setWriteHandler(writeHandler);
 	}
 
 	// Configure the register at the given address to be write only, with optional write handler or write masks.
@@ -226,7 +226,7 @@ public:
 	{
 		RegisterType& reg = getRegister<Addr>();
 		if (writeHandler != nullptr)
-			reg.template setWriteHandler(writeHandler);
+			reg.setWriteHandler(writeHandler);
 		else
 			reg.template setWriteOnly<Addr, T, Mask, OrMask>();
 	}
@@ -237,7 +237,7 @@ public:
 	{
 		RegisterType& reg = getRegister<Addr>();
 		if (readHandler != nullptr)
-			reg.template setReadHandler(readHandler);
+			reg.setReadHandler(readHandler);
 		else
 			reg.template setReadOnly<Addr, T>();
 	}
@@ -262,7 +262,7 @@ public:
 			INFO_LOG(MEMORY, "Unaligned register read @ %x", addr);
 			return 0;
 		}
-		return (T)registers[index].template read<T>(addr);
+		return registers[index].template read<T>(addr);
 	}
 
 	// Write handler for the bank
@@ -275,7 +275,7 @@ public:
 		else if (addr & 3)
 			INFO_LOG(MEMORY, "Unaligned register write @ %x = %x", addr, (int)data);
 		else
-			registers[index].template write(addr, data);
+			registers[index].write(addr, data);
 	}
 };
 
