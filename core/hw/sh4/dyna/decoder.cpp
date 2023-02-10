@@ -239,6 +239,15 @@ sh4dec(i0000_0000_0001_1011)
 	dec_End(NullAddress, BET_DynamicJump, false);
 }
 
+// illegal instruction
+void dec_illegalOp(u32 op)
+{
+	INFO_LOG(DYNAREC, "illegal instuction %04x at pc %x", op, state.cpu.rpc);
+	Emit(shop_illegal, shil_param(), mk_imm(state.cpu.rpc), mk_imm(state.cpu.is_delayslot));
+	dec_DynamicSet(reg_nextpc);
+	dec_End(NullAddress, BET_DynamicJump, false);
+}
+
 //ldc <REG_N>,SR
 sh4dec(i0100_nnnn_0000_1110)
 {

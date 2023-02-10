@@ -80,7 +80,7 @@ static u64 dec_MRd(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_ReadM,d,s,
 //d= reg to read from
 static u64 dec_MWt(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_WriteM,d,s,shop_writem,sz); }
 
-sh4_opcodelistentry missing_opcode = {0,iNotImplemented,0,0,ReadWritePC,"missing",0,0,CO,fix_none };
+sh4_opcodelistentry missing_opcode = {dec_illegalOp, iNotImplemented, 0, 0, ReadWritePC, "missing", 0, 0, CO, fix_none };
 
 sh4_opcodelistentry opcodes[]=
 {
