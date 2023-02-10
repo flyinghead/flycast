@@ -32135,7 +32135,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_FRENCH_HU "francia"
 #define OPTION_VAL_SPANISH_HU "spanyol"
 #define OPTION_VAL_ITALIAN_HU "olasz"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_HU NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_HU "HLE BIOS (újraindítás szükséges)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HU "Mindenképp a magas szinten emulált BIOS használata."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HU "Indítás BIOS-ban (újraindítás szükséges)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU "Belépés a Dreamcast BIOS menüjébe rögtön Indításkor."
@@ -32147,10 +32147,10 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A NAOMI szervizgombjának engedélyezése, a kabinet beállításaihoz."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_HU NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_HU NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU "Modem helyett a szélessávú Ethernet adapter emulálása. (Újraindítás szükséges.)"
+#define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
+#define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU NULL
@@ -32208,7 +32208,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU "Teljes framebuffer emuláció"
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU "A VRAM framebuffer teljes emulálásának engedélyezése. Olyan játékokhoz hasznos, amelyek közvetlenül a VRAM-ban írják vagy olvassák a framebuffert. Bekapcsolva a belső felbontás mindenképpen 640x480 lesz és a teljesítmény erősen visszaeshet."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU "Az előállított textúrák visszamásolása a GPU-ból a VRAM-ba. Ez a lehetőség rendszerint be van kapcsolva azoknál a játékoknál, amelyek igénylik. Bekapcsolt állapotban a textúra előállítás felméretezése kikapcsol, és hatással lehet a teljesítményre."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
 #define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
@@ -32263,16 +32263,16 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HU "A kontroller erővisszacsatolásának engedélyezése."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HU "Digitális kimenetek sugárzása"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU "A digitális kimenetek és az erővisszacsatolás állapotának közzététele a 8000-es TCP porton. Kompatibilis a MAME \"-output network\" opciójával."
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU "Fénypisztoly beállítások megjelenítése"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HU "A fénypisztoly célkereszt megjelenítés beállításai. Figyelem: a változtatás életbelépéséhez újra be kell lépni a gyorsmenübe."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU "1. fénypisztoly célkeresztjének megjelenítése"
 #define OPTION_VAL_WHITE_HU "Fehér"
 #define OPTION_VAL_RED_HU "Vörös"
 #define OPTION_VAL_GREEN_HU "Zöld"
 #define OPTION_VAL_BLUE_HU "Kék"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU "2. fénypisztoly célkeresztjének megjelenítése"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU "3. fénypisztoly célkeresztjének megjelenítése"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU "4. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
