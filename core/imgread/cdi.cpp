@@ -12,7 +12,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 	if (fsource == nullptr)
 	{
-		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
+		WARN_LOG(GDROM, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CDI file ") + file);
 	}
 
@@ -101,7 +101,15 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
 				t.EndFAD=t.StartFAD+track.length-1;
-				t.file = new RawTrackFile(nowide::fopen(file, "rb"), track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
+				FILE *trackFile = nowide::fopen(file, "rb");
+				if (trackFile == nullptr)
+				{
+					delete rv;
+					std::fclose(fsource);
+					WARN_LOG(GDROM, "Cannot re-open file '%s' errno %d", file, errno);
+					throw FlycastException("Cannot re-open CDI file");
+				}
+				t.file = new RawTrackFile(trackFile, track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
 
 				rv->tracks.push_back(t);
 
