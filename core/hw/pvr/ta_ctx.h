@@ -342,7 +342,7 @@ struct TA_context
 		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
 		rend.verts.Init(320 * 1024, &rend.Overrun, "verts");
-		rend.idx.Init(320 * 1024, &rend.Overrun, "idx");
+		rend.idx.Init(512 * 1024, &rend.Overrun, "idx");
 		rend.global_param_op.Init(16384, &rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(5120, &rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
