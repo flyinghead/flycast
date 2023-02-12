@@ -96,46 +96,39 @@ struct DX11OITRenderer : public DX11Renderer
 		return success;
 	}
 
-	void checkMaxSize(int width, int height)
+	void resize(int w, int h) override
 	{
-		if (!opaqueTex || width > maxWidth || height > maxHeight)
-		{
-			maxWidth = std::max(maxWidth, width);
-			maxHeight = std::max(maxHeight, height);
-
-			buffers.resize(maxWidth, maxHeight);
-			createTexAndRenderTarget(opaqueTex, opaqueRenderTarget, maxWidth, maxHeight);
-			multipassTex.reset();
-			multipassRenderTarget.reset();
-			multipassTextureView.reset();
-			opaqueTextureView.reset();
-			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
-			viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-			viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			viewDesc.Texture2D.MipLevels = 1;
-			device->CreateShaderResourceView(opaqueTex, &viewDesc, &opaqueTextureView.get());
-
-			// For depth pass. Use a 32-bit format for depth to avoid loss of precision
-			createDepthTexAndView(depthStencilTex2, depthStencilView2, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
-			stencilView.reset();
-			viewDesc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
-			device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &stencilView.get());
-
-			depthView.reset();
-			viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-			device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
-
-			createDepthTexAndView(depthTex, depthTexView, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS);
-		}
-	}
-
-	void resize(int w, int h) override {
+		if (w == (int)width && h == (int)height && opaqueTex != nullptr)
+			return;
 		DX11Renderer::resize(w, h);
-		checkMaxSize(w, h);
+		buffers.resize(w, h);
+
+		createTexAndRenderTarget(opaqueTex, opaqueRenderTarget, width, height);
+		multipassTex.reset();
+		multipassRenderTarget.reset();
+		multipassTextureView.reset();
+		opaqueTextureView.reset();
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+		viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		viewDesc.Texture2D.MipLevels = 1;
+		device->CreateShaderResourceView(opaqueTex, &viewDesc, &opaqueTextureView.get());
+
+		// For depth pass. Use a 32-bit format for depth to avoid loss of precision
+		createDepthTexAndView(depthStencilTex2, depthStencilView2, width, height, DXGI_FORMAT_R32G8X24_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
+		stencilView.reset();
+		viewDesc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &stencilView.get());
+
+		depthView.reset();
+		viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
+
+		createDepthTexAndView(depthTex, depthTexView, width, height, DXGI_FORMAT_R32G8X24_TYPELESS);
 	}
 
 	void setRTTSize(int width, int height) override {
-		checkMaxSize(width, height);
+		buffers.resize(width, height);
 	}
 
 	void Term() override
@@ -601,7 +594,7 @@ struct DX11OITRenderer : public DX11Renderer
 				//
 				if (!multipassTex)
 				{
-					createTexAndRenderTarget(multipassTex, multipassRenderTarget, maxWidth, maxHeight);
+					createTexAndRenderTarget(multipassTex, multipassRenderTarget, width, height);
 					multipassTextureView.reset();
 					D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
 					viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -692,8 +685,6 @@ struct DX11OITRenderer : public DX11Renderer
 private:
 	Buffers buffers;
 	DX11OITShaders shaders;
-	int maxWidth = 0;
-	int maxHeight = 0;
 	ComPtr<ID3D11Texture2D> opaqueTex;
 	ComPtr<ID3D11RenderTargetView> opaqueRenderTarget;
 	ComPtr<ID3D11ShaderResourceView> opaqueTextureView;
