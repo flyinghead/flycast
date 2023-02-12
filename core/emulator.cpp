@@ -204,7 +204,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
 			|| prod_id == "T0020M"		// Force Five Atomiswave DC Conversion
-			|| prod_id == "HDR-0187")	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
+			|| prod_id == "HDR-0187"	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
+			|| prod_id == "T15104D 50") // Slave Zero (PAL)
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
@@ -223,7 +224,8 @@ static void loadSpecialSettings()
 			config::Broadcast.override(1);
 		}
 		if (prod_id == "T1102M"				// Densha de Go! 2
-				|| prod_id == "T00000A")	// The Ring of the Nibelungen (demo, hack)
+				|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
+				|| prod_id == "T15124N 00")	// Worms Pinball (prototype)
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);

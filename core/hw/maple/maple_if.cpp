@@ -261,7 +261,7 @@ static void maple_DoDma()
 	// Maple bus max speed: 2 Mb/s, actual speed: 1 Mb/s
 	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (128 * 1024));
 	if (!occupy)
-		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (128 * 1024)), (u64)SH4_MAIN_CLOCK));
+		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (256 * 1024)), (u64)SH4_MAIN_CLOCK));
 }
 
 static int maple_schd(int tag, int c, int j)
