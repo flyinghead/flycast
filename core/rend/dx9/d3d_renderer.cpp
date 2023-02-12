@@ -481,6 +481,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 template <u32 Type, bool SortingEnabled>
 void D3DRenderer::drawList(const std::vector<PolyParam>& gply, int first, int count)
 {
+	if (count == 0)
+		return;
 	const PolyParam *params = &gply[first];
 
 	while (count-- > 0)
@@ -503,6 +505,8 @@ void D3DRenderer::drawList(const std::vector<PolyParam>& gply, int first, int co
 
 void D3DRenderer::drawSorted(int first, int count, bool multipass)
 {
+	if (count == 0)
+		return;
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{

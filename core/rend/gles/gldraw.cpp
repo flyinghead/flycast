@@ -264,6 +264,8 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 template <u32 Type, bool SortingEnabled>
 void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 {
+	if (count == 0)
+		return;
 	const PolyParam* params = &gply[first];
 
 	glcache.Enable(GL_STENCIL_TEST);
@@ -286,6 +288,8 @@ void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 
 static void drawSorted(int first, int count, bool multipass)
 {
+	if (count == 0)
+		return;
 	glcache.Enable(GL_STENCIL_TEST);
 	glcache.StencilFunc(GL_ALWAYS,0,0);
 	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);

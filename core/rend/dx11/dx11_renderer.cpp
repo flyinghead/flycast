@@ -664,6 +664,8 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 template <u32 Type, bool SortingEnabled>
 void DX11Renderer::drawList(const std::vector<PolyParam>& gply, int first, int count)
 {
+	if (count == 0)
+		return;
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	const PolyParam* params = &gply[first];
@@ -688,6 +690,8 @@ void DX11Renderer::drawList(const std::vector<PolyParam>& gply, int first, int c
 
 void DX11Renderer::drawSorted(int first, int count, bool multipass)
 {
+	if (count == 0)
+		return;
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	int end = first + count;
 	for (int p = first; p < end; p++)

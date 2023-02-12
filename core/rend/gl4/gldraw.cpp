@@ -296,6 +296,8 @@ static void SetGPState(const PolyParam* gp)
 template <u32 Type, bool SortingEnabled, Pass pass>
 static void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 {
+	if (count == 0)
+		return;
 	const PolyParam* params = &gply[first];
 
 	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx[gply[0].first] : 0;

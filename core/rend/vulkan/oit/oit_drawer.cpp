@@ -123,6 +123,8 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 		const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
+	if (first == last)
+		return;
 	const PolyParam *pp_end = &polys[last];
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)

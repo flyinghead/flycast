@@ -232,6 +232,8 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass)
 {
+	if (first == last)
+		return;
 	for (u32 idx = first; idx < last; idx++)
 		DrawPoly(cmdBuffer, ListType_Translucent, true, *polys[idx].ppid, polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
@@ -257,6 +259,8 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 
 void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
+	if (first == last)
+		return;
 	const PolyParam *pp_end = &polys[last];
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
