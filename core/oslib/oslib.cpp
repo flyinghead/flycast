@@ -20,6 +20,7 @@
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "cfg/option.h"
+#include "nowide/fstream.hpp"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -218,9 +219,24 @@ void uploadCrashes(const std::string& directory)
 			if (config::UploadCrashLogs)
 			{
 				NOTICE_LOG(COMMON, "Uploading minidump %s", line);
+				std::string version = std::string(GIT_VERSION);
+				if (file_exists(logfile))
+				{
+					nowide::ifstream ifs(logfile);
+					if (ifs.is_open())
+					{
+						std::string line;
+						while (std::getline(ifs, line))
+							if (line.substr(0, 9) == "Version: ")
+							{
+								version = line.substr(9);
+								break;
+							}
+					}
+				}
 				std::vector<http::PostField> fields;
 				fields.emplace_back("upload_file_minidump", dmpfile, "application/octet-stream");
-				fields.emplace_back("sentry[release]", std::string(GIT_VERSION));
+				fields.emplace_back("sentry[release]", version);
 				if (file_exists(logfile))
 					fields.emplace_back("flycast_log", logfile, "text/plain");
 				// TODO config, gpu/driver, ...
