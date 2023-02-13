@@ -71,10 +71,12 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 
 		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
 			{
+				bool isRam;
+				u64 *ptr;
 				u32 paddr;
-				if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
+				if (rdv_writeMemImmediate(r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
 				{
-					addrspace::write64(paddr, sh4_sched_now64() >> 4);
+					*ptr = sh4_sched_now64() >> 4;
 					r[0] = 1;
 					next_pc = pr;
 				}

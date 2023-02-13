@@ -826,16 +826,9 @@ public:
 					}
 					else
 					{
-						if (CCN_MMUCR.AT)
-						{
-							Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-						}
-						else
-						{
-							Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-							Ldr(x9, MemOperand(x9));
-							Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-						}
+						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+						Ldr(x9, MemOperand(x9));
+						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 						Blr(x9);
 					}
 					Bind(&not_sqw);
@@ -1736,38 +1729,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-				break;
-			default:
-				rv = 0;
-				die("Invalid immediate size");
-				break;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = addrspace::readConst(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_readMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{
@@ -1947,37 +1913,11 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
-				break;
-			default:
-				rv = 0;
-				die("Invalid immediate size");
-				break;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = addrspace::writeConst(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_writeMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{

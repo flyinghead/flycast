@@ -4,6 +4,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "debug/gdb_server.h"
+#include "serialize.h"
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
@@ -188,15 +189,11 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 
 #ifndef FAST_MMU
 //Do a full lookup on the UTLB entry's
-template<bool internal>
 u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
-	if (!internal)
-	{
-		CCN_MMUCR.URC++;
-		if (CCN_MMUCR.URB == CCN_MMUCR.URC)
-			CCN_MMUCR.URC = 0;
-	}
+	CCN_MMUCR.URC++;
+	if (CCN_MMUCR.URB == CCN_MMUCR.URC)
+		CCN_MMUCR.URC = 0;
 
 	*tlb_entry_ret = nullptr;
 	for (const TLB_Entry& tlb_entry : UTLB)
@@ -222,15 +219,11 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 //Simple QACR translation for mmu (when AT is off)
 static u32 mmu_QACR_SQ(u32 va)
 {
-	u32 QACR;
+	int sqi = (va >> 5) & 1;
+	u32 addr = (sqi ? CCN_QACR1.Area : CCN_QACR0.Area) << 26;
+	addr |= va & 0x03ffffe0;
 
-	//default to sq 0
-	QACR = CCN_QACR_TR[0];
-	//sq1 ? if so use QACR1
-	if (va & 0x20)
-		QACR = CCN_QACR_TR[1];
-	va &= ~0x1f;
-	return QACR + va;
+	return addr;
 }
 
 template<u32 translation_type>
@@ -277,17 +270,14 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
 template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
-template<u32 translation_type, typename T>
+template<u32 translation_type>
 u32 mmu_data_translation(u32 va, u32& rv)
 {
-	if (va & (sizeof(T) - 1))
-		return MMU_ERROR_BADADDR;
-
 	if (translation_type == MMU_TT_DWRITE)
 	{
 		if ((va & 0xFC000000) == 0xE0000000)
 		{
-			u32 lookup = mmu_full_SQ<translation_type>(va, rv);
+			u32 lookup = mmu_full_SQ<MMU_TT_DWRITE>(va, rv);
 			if (lookup != MMU_ERROR_NONE)
 				return lookup;
 
@@ -355,22 +345,11 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	return MMU_ERROR_NONE;
 }
-template u32 mmu_data_translation<MMU_TT_DREAD, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u64>(u32 va, u32& rv);
-
-template u32 mmu_data_translation<MMU_TT_DWRITE, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DREAD>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 u32 mmu_instruction_translation(u32 va, u32& rv)
 {
-	if (va & 1)
-		// Unaligned
-		return MMU_ERROR_BADADDR;
-
 	if (sr.MD == 0 && (va & 0x80000000) != 0)
 		// User mode on kernel address
 		return MMU_ERROR_BADADDR;
@@ -457,6 +436,7 @@ void mmu_set_state()
 		NOTICE_LOG(SH4, "Enabling Full MMU support");
 
 	SetMemoryHandlers();
+	setSqwHandler();
 }
 
 u32 mmuAddressLUT[0x100000];
@@ -511,8 +491,11 @@ void mmu_flush_table()
 template<typename T>
 T DYNACALL mmu_ReadMem(u32 adr)
 {
+	if (adr & (sizeof(T) - 1))
+		// Unaligned
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
 	u32 addr;
-	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
+	u32 rv = mmu_data_translation<MMU_TT_DREAD>(adr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, adr, MMU_TT_DREAD);
 	return addrspace::readt<T>(addr);
@@ -524,6 +507,9 @@ template u64 mmu_ReadMem(u32 adr);
 
 u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 {
+	if (vaddr & (sizeof(u16) - 1))
+		// Unaligned
+		mmu_raise_exception(MMU_ERROR_BADADDR, vaddr, MMU_TT_DREAD);
 	u32 addr;
 	u32 rv = mmu_instruction_translation(vaddr, addr);
 	if (rv != MMU_ERROR_NONE)
@@ -534,8 +520,11 @@ u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 template<typename T>
 void DYNACALL mmu_WriteMem(u32 adr, T data)
 {
+	if (adr & (sizeof(T) - 1))
+		// Unaligned
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
 	u32 addr;
-	u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
+	u32 rv = mmu_data_translation<MMU_TT_DWRITE>(adr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, adr, MMU_TT_DWRITE);
 	addrspace::writet<T>(addr, data);
@@ -563,4 +552,24 @@ void mmu_TranslateSQW(u32 adr, u32 *out)
 
 		*out = addr;
 	}
+}
+
+void mmu_serialize(Serializer& ser)
+{
+	ser << UTLB;
+	ser << ITLB;
+	ser << sq_remap;
+}
+
+void mmu_deserialize(Deserializer& deser)
+{
+	deser.skip(8, Deserializer::V33);	// CCN_QACR_TR
+
+	deser >> UTLB;
+	deser >> ITLB;
+
+	if (deser.version() >= Deserializer::V11
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		deser >> sq_remap;
+	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
 }

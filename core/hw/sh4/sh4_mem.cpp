@@ -318,7 +318,7 @@ void SetMemoryHandlers()
 	}
 	interpreterRunning = false;
 #endif
-	if (CCN_MMUCR.AT == 1 && config::FullMMU)
+	if (mmu_enabled())
 	{
 		IReadMem16 = &mmu_IReadMem16;
 		ReadMem8 = &mmu_ReadMem<u8>;

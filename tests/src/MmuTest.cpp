@@ -21,6 +21,7 @@
 #include "hw/mem/addrspace.h"
 #include "emulator.h"
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_core.h"
 
 class MmuTest : public ::testing::Test {
 protected:
@@ -40,7 +41,7 @@ TEST_F(MmuTest, TestUntranslated)
 {
 	u32 pa;
 	// P1
-	int err = mmu_data_translation<MMU_TT_DREAD, u32>(0x80000000, pa);
+	int err = mmu_data_translation<MMU_TT_DREAD>(0x80000000, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x80000000u, pa);
 	err = mmu_instruction_translation(0x80000002, pa);
@@ -48,17 +49,17 @@ TEST_F(MmuTest, TestUntranslated)
 	ASSERT_EQ(0x80000002u, pa);
 
 	// P2
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0xA0001234, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0xA0001234, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0xA0001234u, pa);
 
 	// P4
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0xFF0000CC, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0xFF0000CC, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0xFF0000CCu, pa);
 
 	// 7C000000 to 7FFFFFFF in P0/U0 not translated
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x7D000088, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x7D000088, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x7D000088u, pa);
 
@@ -69,7 +70,7 @@ TEST_F(MmuTest, TestUntranslated)
 	UTLB[0].Data.PR = 3;
 	UTLB[0].Data.D = 1;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0xE2000004, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0xE2000004, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0xE2000004, pa);
 }
@@ -85,11 +86,11 @@ TEST_F(MmuTest, TestTranslated)
 	UTLB[0].Data.D = 1;
 	UTLB[0].Data.PPN = 0x0C000000 >> 10;
 	UTLB_Sync(0);
-	int err = mmu_data_translation<MMU_TT_DREAD, u32>(0x02000044, pa);
+	int err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x0C000044u, pa);
 
-	err = mmu_data_translation<MMU_TT_DWRITE, u8>(0x02000045, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000045, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x0C000045u, pa);
 
@@ -101,7 +102,7 @@ TEST_F(MmuTest, TestTranslated)
 	UTLB[0].Address.ASID = 13;
 	CCN_PTEH.ASID = 13;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DWRITE, u16>(0x02000222, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x0C000222u, pa);
 	err = mmu_instruction_translation(0x02000232, pa);
@@ -112,14 +113,14 @@ TEST_F(MmuTest, TestTranslated)
 	UTLB[0].Data.SH = 1;
 	CCN_PTEH.ASID = 14;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DWRITE, u16>(0x02000222, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0x0C000222u, pa);
 
 	// 1C000000-1FFFFFF mapped to P4
 	UTLB[0].Data.PPN = 0x1C000000 >> 10;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DWRITE, u16>(0x02000222, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
 	ASSERT_EQ(0xFC000222u, pa);
 }
@@ -135,14 +136,14 @@ TEST_F(MmuTest, TestMiss)
 	UTLB[0].Data.PPN = 0x0C000000 >> 10;
 	UTLB_Sync(0);
 	// no match
-	int err = mmu_data_translation<MMU_TT_DREAD, u32>(0x02100044, pa);
+	int err = mmu_data_translation<MMU_TT_DREAD>(0x02100044, pa);
 	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
 
 #ifndef FAST_MMU
 	// entry not valid
 	UTLB[0].Data.V = 0;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x02000044, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
 	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
 #endif
 
@@ -151,16 +152,16 @@ TEST_F(MmuTest, TestMiss)
 	UTLB[0].Address.ASID = 13;
 	CCN_PTEH.ASID = 14;
 	UTLB_Sync(0);
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x02000044, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
 	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
 }
 
 TEST_F(MmuTest, TestErrors)
 {
+#ifndef FAST_MMU
 	u32 pa;
 	int err;
 
-#ifndef FAST_MMU
 	// P4 not executable
 	err = mmu_instruction_translation(0xFF00008A, pa);
 	ASSERT_EQ(MMU_ERROR_BADADDR, err);
@@ -169,15 +170,11 @@ TEST_F(MmuTest, TestErrors)
 #endif
 
 	// unaligned address
-	err = mmu_instruction_translation(0xFF00008B, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	EXPECT_THROW(mmu_IReadMem16(0xFF00008B), SH4ThrownException);
 #ifndef FAST_MMU
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x80000046, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
-	err = mmu_data_translation<MMU_TT_DREAD, u64>(0x80000044, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
-	err = mmu_data_translation<MMU_TT_DREAD, u16>(0x80000045, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	EXPECT_THROW(mmu_ReadMem<u32>(0x80000046), SH4ThrownException);
+	EXPECT_THROW(mmu_ReadMem<u64>(0x80000044), SH4ThrownException);
+	EXPECT_THROW(mmu_ReadMem<u16>(0x80000045), SH4ThrownException);
 
 	// Protection violation
 	p_sh4rcb->cntx.sr.MD = 0;
@@ -188,31 +185,31 @@ TEST_F(MmuTest, TestErrors)
 	UTLB[0].Data.D = 1;
 	UTLB[0].Data.PPN = 0x0A000000 >> 10;
 	// no access in user mode
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
 	err = mmu_instruction_translation(0x04000042, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
 	// read-only access in priv mode
 	p_sh4rcb->cntx.sr.MD = 1;
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_NONE, err);
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
 	// read-only access in user & priv mode
 	UTLB[0].Data.PR = 2;
 	p_sh4rcb->cntx.sr.MD = 0;
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
 	p_sh4rcb->cntx.sr.MD = 1;
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
 	UTLB[0].Data.PR = 3;
 
 	// kernel address in user mode
 	p_sh4rcb->cntx.sr.MD = 0;
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0xA4000004, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0xA4000004, pa);
 	ASSERT_EQ(MMU_ERROR_BADADDR, err);
 	err = mmu_instruction_translation(0xA4000006, pa);
 	ASSERT_EQ(MMU_ERROR_BADADDR, err);
@@ -225,7 +222,7 @@ TEST_F(MmuTest, TestErrors)
 	UTLB[1].Data.PR = 3;
 	UTLB[1].Data.D = 1;
 	UTLB[1].Data.PPN = 0x0C000000 >> 10;
-	err = mmu_data_translation<MMU_TT_DREAD, u32>(0x04000040, pa);
+	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
 	ASSERT_EQ(MMU_ERROR_TLB_MHIT, err);
 	err = mmu_instruction_translation(0x04000042, pa);
 	ASSERT_EQ(MMU_ERROR_TLB_MHIT, err);
@@ -233,7 +230,7 @@ TEST_F(MmuTest, TestErrors)
 
 	// first write
 	UTLB[0].Data.D = 0;
-	err = mmu_data_translation<MMU_TT_DWRITE, u32>(0x04000224, pa);
+	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000224, pa);
 	ASSERT_EQ(MMU_ERROR_FIRSTWRITE, err);
 #endif
 }

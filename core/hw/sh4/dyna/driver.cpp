@@ -137,7 +137,13 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	temp_block = false;
 	
 	vaddr = rpc;
-	if (mmu_enabled())
+	if (vaddr & 1)
+	{
+		// read address error
+		Do_Exception(vaddr, Sh4Ex_AddressErrorRead);
+		return false;
+	}
+	else if (mmu_enabled())
 	{
 		u32 rv = mmu_instruction_translation(vaddr, addr);
 		if (rv != MMU_ERROR_NONE)
@@ -145,12 +151,6 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			DoMMUException(vaddr, rv, MMU_TT_IREAD);
 			return false;
 		}
-	}
-	else if (vaddr & 1)
-	{
-		// read address error
-		Do_Exception(vaddr, Sh4Ex_AddressErrorRead);
-		return false;
 	}
 	else
 	{
@@ -447,6 +447,51 @@ void Get_Sh4Recompiler(sh4_if* cpu)
 	cpu->Term = recSh4_Term;
 	cpu->IsCpuRunning = recSh4_IsCpuRunning;
 	cpu->ResetCache = recSh4_ClearCache;
+}
+
+static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, RuntimeBlockInfo* block)
+{
+	if (mmu_enabled() && mmu_is_translated(addr, size))
+	{
+		if (addr & (size - 1))
+			// Unaligned
+			return false;
+		if (block != nullptr
+				&& (addr >> 12) != (block->vaddr >> 12)
+				&& (addr >> 12) != ((block->vaddr + block->sh4_code_size - 1) >> 12))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+
+		u32 paddr;
+		u32 rv = access == MMU_TT_DREAD ?
+				mmu_data_translation<MMU_TT_DREAD>(addr, paddr)
+				: mmu_data_translation<MMU_TT_DWRITE>(addr, paddr);
+		if (rv != MMU_ERROR_NONE)
+			return false;
+
+		addr = paddr;
+	}
+	outAddr = addr;
+
+	return true;
+}
+
+bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
+{
+	if (!translateAddress(addr, size, MMU_TT_DREAD, physAddr, block))
+		return false;
+	ptr = addrspace::readConst(physAddr, isRam, size > 4 ? 4 : size);
+
+	return true;
+}
+
+bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
+{
+	if (!translateAddress(addr, size, MMU_TT_DWRITE, physAddr, block))
+		return false;
+	ptr = addrspace::writeConst(physAddr, isRam, size > 4 ? 4 : size);
+
+	return true;
 }
 
 #endif  // FEAT_SHREC != DYNAREC_NONE

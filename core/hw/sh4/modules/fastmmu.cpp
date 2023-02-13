@@ -203,7 +203,6 @@ void ITLB_Sync(u32 entry)
 }
 
 //Do a full lookup on the UTLB entry's
-template<bool internal>
 u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	if (lru_entry != NULL)
@@ -263,7 +262,6 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 	return MMU_ERROR_TLB_MISS;
 }
-template u32 mmu_full_lookup<false>(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv);
 
 template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv)
@@ -280,7 +278,7 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
 template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
-template<u32 translation_type, typename T>
+template<u32 translation_type>
 u32 mmu_data_translation(u32 va, u32& rv)
 {
 	if (fast_reg_lut[va >> 29] != 0)
@@ -313,15 +311,8 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	return lookup;
 }
-template u32 mmu_data_translation<MMU_TT_DREAD, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u64>(u32 va, u32& rv);
-
-template u32 mmu_data_translation<MMU_TT_DWRITE, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DREAD>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 void mmu_flush_table()
 {

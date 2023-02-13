@@ -3,12 +3,10 @@
 */
 #include "types.h"
 
-#include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
-#include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
@@ -1153,68 +1151,17 @@ sh4op(i0000_nnnn_1011_0011)
 }
 
 //pref @<REG_N>
-template<bool mmu_on>
-void DYNACALL do_sqw(u32 Dest)
-{
-	//TODO : Check for enabled store queues ?
-	u32 Address;
-
-	//Translate the SQ addresses as needed
-	if (mmu_on)
-	{
-		mmu_TranslateSQW(Dest, &Address);
-	}
-	else
-	{
-		//sanity/optimisation check
-		//verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
-
-		u32 QACR = CCN_QACR_TR[0];
-		//QACR has already 0xE000_0000
-		Address= QACR+(Dest&~0x1f);
-	}
-
-	if (((Address >> 26) & 0x7) != 4)//Area 4
-	{
-		SQBuffer *sq = &sq_both[(Dest >> 5) & 1];
-		WriteMemBlock_nommu_sq(Address, sq);
-	}
-	else
-	{
-		TAWriteSQ(Address, sq_both);
-	}
-}
-
-void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
-
-//yes, this micro optimization makes a difference
-void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
-{
-	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000);
-	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
-	*pmem = sqb[(dst >> 5) & 1];
-}
-
-void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
-{
-	u8* pmem = &mem_b[0];
-
-	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
-}
-
-void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb) { do_sqw<false>(dst); }
-
 sh4op(i0000_nnnn_1000_0011)
 {
 	u32 n = GetN(op);
 	u32 Dest = r[n];
 
-	if ((Dest>>26) == 0x38) //Store Queue
+	if ((Dest >> 26) == 0x38) // Store Queue
 	{
 		if (CCN_MMUCR.AT)
-			do_sqw<true>(Dest);
+			do_sqw_mmu(Dest);
 		else
-			do_sqw<false>(Dest);
+			do_sqw_nommu(Dest, sq_both);
 	}
 	else
 	{

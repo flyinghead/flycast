@@ -3,15 +3,12 @@
 
 #include "ccn.h"
 #include "mmu.h"
-#include "hw/mem/addrspace.h"
-#include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_cache.h"
 
 CCNRegisters ccn;
-u32 CCN_QACR_TR[2];
 
 template<u32 idx>
 void CCN_QACR_write(u32 addr, u32 value)
@@ -21,27 +18,7 @@ void CCN_QACR_write(u32 addr, u32 value)
 	else
 		CCN_QACR1.reg_data = value & 0x1c;
 
-	u32 area = ((CCN_QACR_type&)value).Area;
-
-	CCN_QACR_TR[idx] = (area << 26) - 0xE0000000; //-0xE0000000 because 0xE0000000 is added on the translation again ...
-
-	switch (area)
-	{
-		case 3: 
-			if (addrspace::virtmemEnabled())
-				do_sqw_nommu = &do_sqw_nommu_area_3;
-			else
-				do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
-		break;
-
-		case 4:
-			do_sqw_nommu = &TAWriteSQ;
-			break;
-
-		default:
-			do_sqw_nommu = &do_sqw_nommu_full;
-			break;
-	}
+	setSqwHandler();
 }
 
 static void CCN_PTEH_write(u32 addr, u32 value)

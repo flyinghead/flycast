@@ -67,7 +67,6 @@ static inline bool mmu_enabled()
 	return config::FullMMU && CCN_MMUCR.AT == 1;
 }
 
-template<bool internal = false>
 u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
 u32 mmu_instruction_lookup(u32 va, const TLB_Entry **entry, u32& rv);
 template<u32 translation_type>
@@ -76,8 +75,6 @@ u32 mmu_full_SQ(u32 va, u32& rv);
 #ifdef FAST_MMU
 static inline u32 mmu_instruction_translation(u32 va, u32& rv)
 {
-	if (va & 1)
-		return MMU_ERROR_BADADDR;
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
@@ -90,7 +87,7 @@ static inline u32 mmu_instruction_translation(u32 va, u32& rv)
 u32 mmu_instruction_translation(u32 va, u32& rv);
 #endif
 
-template<u32 translation_type, typename T>
+template<u32 translation_type>
 u32 mmu_data_translation(u32 va, u32& rv);
 void DoMMUException(u32 addr, u32 mmu_error, u32 access_type);
 
@@ -136,11 +133,11 @@ static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
 	u32 paddr;
 	u32 rv;
-	// TODO pass actual size instead of using u8 so that alignment errors are raised
+	// TODO pass access size so that alignment errors are raised
 	if (write)
-		rv = mmu_data_translation<MMU_TT_DWRITE, u8>(vaddr, paddr);
+		rv = mmu_data_translation<MMU_TT_DWRITE>(vaddr, paddr);
 	else
-		rv = mmu_data_translation<MMU_TT_DREAD, u8>(vaddr, paddr);
+		rv = mmu_data_translation<MMU_TT_DREAD>(vaddr, paddr);
 	if (unlikely(rv != MMU_ERROR_NONE))
 	{
 		Sh4cntx.pc = pc;
@@ -162,3 +159,6 @@ static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 void MMU_init();
 void MMU_reset();
 void MMU_term();
+
+void mmu_serialize(Serializer& ser);
+void mmu_deserialize(Deserializer& deser);

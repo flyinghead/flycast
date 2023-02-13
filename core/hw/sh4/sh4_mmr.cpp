@@ -775,10 +775,7 @@ void deserialize(Deserializer& deser)
 void serialize2(Serializer& ser)
 {
 	tmu.serialize(ser);
-
-	ser << UTLB;
-	ser << ITLB;
-	ser << sq_remap;
+	mmu_serialize(ser);
 }
 
 void deserialize2(Deserializer& deser)
@@ -795,16 +792,7 @@ void deserialize2(Deserializer& deser)
 	}
 
 	tmu.deserialize(deser);
-
-	deser.skip(8, Deserializer::V33);	// CCN_QACR_TR
-
-	deser >> UTLB;
-	deser >> ITLB;
-
-	if (deser.version() >= Deserializer::V11
-			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		deser >> sq_remap;
-	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
+	mmu_deserialize(deser);
 }
 
 } //namespace sh4

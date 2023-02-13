@@ -901,7 +901,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/sh4_rom.cpp
 		core/hw/sh4/sh4_rom.h
 		core/hw/sh4/sh4_sched.cpp
-		core/hw/sh4/sh4_sched.h)
+		core/hw/sh4/sh4_sched.h
+		core/hw/sh4/storeq.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp

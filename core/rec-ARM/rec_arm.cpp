@@ -858,40 +858,13 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 	if (!op->rs1.is_imm())
 		return false;
 
-	u32 addr = op->rs1._imm;
-	if (mmu_enabled() && mmu_is_translated(addr, op->size))
-	{
-		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-			// When full mmu is on, only consider addresses in the same 4k page
-			return false;
-		u32 paddr;
-		u32 rv;
-		switch (op->size)
-		{
-		case 1:
-			rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
-			break;
-		case 2:
-			rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-			break;
-		case 4:
-		case 8:
-			rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-			break;
-		default:
-			rv = 0;
-			die("Invalid immediate size");
-			break;
-		}
-		if (rv != MMU_ERROR_NONE)
-			return false;
-		addr = paddr;
-	}
-
+	void *ptr;
+	bool isram;
+	u32 addr;
+	if (!rdv_readMemImmediate(op->rs1._imm, op->size, ptr, isram, addr, block))
+		return false;
+	
 	mem_op_type optp = memop_type(op);
-	bool isram = false;
-	void* ptr = addrspace::readConst(addr, isram, std::min(4u, memop_bytes[optp]));
-
 	Register rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapReg(op->rd) : r0;
 
 	if (isram)
@@ -992,40 +965,13 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 	if (!op->rs1.is_imm())
 		return false;
 
-	u32 addr = op->rs1._imm;
-	if (mmu_enabled() && mmu_is_translated(addr, op->size))
-	{
-		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-			// When full mmu is on, only consider addresses in the same 4k page
-			return false;
-		u32 paddr;
-		u32 rv;
-		switch (op->size)
-		{
-		case 1:
-			rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
-			break;
-		case 2:
-			rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
-			break;
-		case 4:
-		case 8:
-			rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
-			break;
-		default:
-			rv = 0;
-			die("Invalid immediate size");
-			break;
-		}
-		if (rv != MMU_ERROR_NONE)
-			return false;
-		addr = paddr;
-	}
+	void *ptr;
+	bool isram;
+	u32 addr;
+	if (!rdv_writeMemImmediate(op->rs1._imm, op->size, ptr, isram, addr, block))
+		return false;
 
 	mem_op_type optp = memop_type(op);
-	bool isram = false;
-	void* ptr = addrspace::writeConst(addr, isram, std::min(4u, memop_bytes[optp]));
-
 	Register rs2 = r1;
 	SRegister rs2f = s0;
 	if (op->rs2.is_imm())
@@ -1730,16 +1676,9 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				}
 				else
 				{
-					if (CCN_MMUCR.AT)
-					{
-						call((void *)do_sqw_mmu, cc);
-					}
-					else
-					{
-						ass.Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-						ass.Sub(r1, r8, -rcbOffset(sq_buffer));
-						ass.Blx(cc, r2);
-					}
+					ass.Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
+					ass.Sub(r1, r8, -rcbOffset(sq_buffer));
+					ass.Blx(cc, r2);
 				}
 			}
 			break;

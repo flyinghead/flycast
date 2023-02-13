@@ -277,10 +277,8 @@ struct alignas(32) SQBuffer {
 	u8 data[32];
 };
 
+void setSqwHandler();
 void DYNACALL do_sqw_mmu(u32 dst);
-void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb);
-void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb);
-void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb);
 
 typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 

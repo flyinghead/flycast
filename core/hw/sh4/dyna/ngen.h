@@ -121,3 +121,6 @@ void ngen_CC_Call(shil_opcode* op,void* function);
 void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
+
+bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);
+bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);

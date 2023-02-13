@@ -394,18 +394,11 @@ public:
 					}
 					else
 					{
-						if (CCN_MMUCR.AT == 1)
-						{
-							GenCall(do_sqw_mmu);
-						}
-						else
-						{
-							mov(call_regs64[1], (uintptr_t)sq_both);
-							mov(rax, (size_t)&do_sqw_nommu);
-							saveXmmRegisters();
-							call(qword[rax]);
-							restoreXmmRegisters();
-						}
+						mov(call_regs64[1], (uintptr_t)sq_both);
+						mov(rax, (size_t)&do_sqw_nommu);
+						saveXmmRegisters();
+						call(qword[rax]);
+						restoreXmmRegisters();
 					}
 					L(no_sqw);
 				}
@@ -819,38 +812,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-				break;
-			default:
-				die("Invalid immediate size");
-				return false;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = addrspace::readConst(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_readMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{
@@ -968,39 +934,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
-				break;
-			default:
-				die("Invalid immediate size");
-				return false;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = addrspace::writeConst(addr, isram, op.size > 4 ? 4 : op.size);
-
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_writeMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 		if (isram)
 		{
 			// Immediate pointer to RAM: super-duper fast access

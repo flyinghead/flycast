@@ -526,15 +526,10 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 			else
 			{
-				if (CCN_MMUCR.AT == 1)
-					genCall(do_sqw_mmu);
-				else
-				{
-					mov(edx, (size_t)sh4rcb.sq_buffer);
-					freezeXMM();
-					call(dword[&do_sqw_nommu]);
-					thawXMM();
-				}
+				mov(edx, (size_t)sh4rcb.sq_buffer);
+				freezeXMM();
+				call(dword[&do_sqw_nommu]);
+				thawXMM();
 			}
 			L(no_sqw);
 		}
