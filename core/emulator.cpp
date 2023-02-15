@@ -287,8 +287,9 @@ static void loadSpecialSettings()
 		else if (prod_id == "NINJA ASSAULT"
 					|| prod_id == "Sports Shooting USA"	// AW
 					|| prod_id == "SEGA CLAY CHALLENGE"	// AW
-					|| prod_id == "RANGER MISSION"			// AW
-					|| prod_id == "EXTREME HUNTING")		// AW
+					|| prod_id == "RANGER MISSION"		// AW
+					|| prod_id == "EXTREME HUNTING"		// AW
+					|| prod_id == "Fixed BOOT strapper")// Extreme hunting 2 (AW)
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGun;
