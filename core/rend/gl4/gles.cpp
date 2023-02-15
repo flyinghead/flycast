@@ -72,17 +72,21 @@ in vec4 in_pos;
 in vec4 in_base;
 in vec4 in_offs;
 in vec2 in_uv;
+#if pp_TwoVolumes == 1
 in vec4 in_base1;
 in vec4 in_offs1;
 in vec2 in_uv1;
+#endif
 
 // Output
 INTERPOLATION out vec4 vtx_base;
 INTERPOLATION out vec4 vtx_offs;
 out vec3 vtx_uv;
+#if pp_TwoVolumes == 1
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
 out vec2 vtx_uv1;
+#endif
 flat out uint vtx_index;
 
 void main()
@@ -95,20 +99,26 @@ void main()
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv, vpos.z);
-	vtx_base1 = in_base1;
-	vtx_offs1 = in_offs1;
-	vtx_uv1 = in_uv1;
+	#if pp_TwoVolumes == 1
+		vtx_base1 = in_base1;
+		vtx_offs1 = in_offs1;
+		vtx_uv1 = in_uv1;
+	#endif
 	vtx_index = uint(pp_Number) + uint(gl_VertexID);
 	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		vtx_base *= vpos.z;
 		vtx_offs *= vpos.z;
-		vtx_base1 *= vpos.z;
-		vtx_offs1 *= vpos.z;
+		#if pp_TwoVolumes == 1
+			vtx_base1 *= vpos.z;
+			vtx_offs1 *= vpos.z;
+		#endif
 	#endif
 	
 	#if DIV_POS_Z != 1
 		vtx_uv.xy *= vpos.z;
-		vtx_uv1 *= vpos.z;
+		#if pp_TwoVolumes == 1
+			vtx_uv1 *= vpos.z;
+		#endif
 		vpos.w = 1.0;
 		vpos.z = 0.0;
 	#endif
@@ -169,9 +179,11 @@ uniform int fog_control[2];
 INTERPOLATION in vec4 vtx_base;
 INTERPOLATION in vec4 vtx_offs;
 in vec3 vtx_uv;
+#if pp_TwoVolumes == 1
 INTERPOLATION in vec4 vtx_base1;
 INTERPOLATION in vec4 vtx_offs1;
 in vec2 vtx_uv1;
+#endif
 flat in uint vtx_index;
 
 float fog_mode2(float w)
@@ -275,21 +287,27 @@ void main()
 		vec4 texcol;
 		#if pp_Palette == 0
 			#if DIV_POS_Z == 1
-				if (area1)
-					texcol = texture(tex1, vtx_uv1);
-				else
-					texcol = texture(tex0, vtx_uv.xy);
+				#if pp_TwoVolumes == 1
+					if (area1)
+						texcol = texture(tex1, vtx_uv1);
+					else
+				#endif
+						texcol = texture(tex0, vtx_uv.xy);
 			#else
-				if (area1)
-					texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-				else
-					texcol = textureProj(tex0, vtx_uv);
+				#if pp_TwoVolumes == 1
+					if (area1)
+						texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+					else
+				#endif
+						texcol = textureProj(tex0, vtx_uv);
 			#endif
 		#else
-			if (area1)
-				texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-			else
-				texcol = palettePixel(tex0, vtx_uv);
+			#if pp_TwoVolumes == 1
+				if (area1)
+					texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+				else
+			#endif
+					texcol = palettePixel(tex0, vtx_uv);
 		#endif
 
 		#if pp_BumpMap == 1
@@ -457,7 +475,9 @@ void main()
 class Vertex4Source : public OpenGl4Source
 {
 public:
-	Vertex4Source(bool gouraud, bool divPosZ) : OpenGl4Source() {
+	Vertex4Source(bool gouraud, bool divPosZ, bool twoVolumes) : OpenGl4Source()
+	{
+		addConstant("pp_TwoVolumes", twoVolumes);
 		addConstant("pp_Gouraud", gouraud);
 		addConstant("DIV_POS_Z", divPosZ);
 
@@ -505,7 +525,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	if (s->naomi2)
 		vertexSource = N2Vertex4Source(s).generate();
 	else
-		vertexSource = Vertex4Source(s->pp_Gouraud, s->divPosZ).generate();
+		vertexSource = Vertex4Source(s->pp_Gouraud, s->divPosZ, s->pp_TwoVolumes).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
 	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
@@ -621,7 +641,7 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	Vertex4Source vertexShader(false, config::NativeDepthInterpolation);
+	Vertex4Source vertexShader(false, config::NativeDepthInterpolation, false);
 	OpenGl4Source fragmentShader;
 	fragmentShader.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
 		.addSource(ShaderHeader)
