@@ -727,6 +727,7 @@ void Emulator::step()
 	// FIXME single thread is better
 	singleStep = true;
 	start();
+	run(); // Required for stepping with breakpoints
 	stop();
 }
 
