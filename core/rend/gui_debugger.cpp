@@ -117,9 +117,9 @@ void gui_debugger_disasm()
 		return;
 	}
 
-	ImGui::PushItemWidth(80);
+	ImGui::PushItemWidth(80 * settings.display.uiScale);
 	static char bpBuffer[9] = "";
-	ImGui::InputText("##bpAddr", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::InputTextWithHint("##bpAddr", "BP Addr", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
@@ -130,12 +130,12 @@ void gui_debugger_disasm()
 		debugAgent.insertMatchpoint(0, (u32) bpaddr, 2);
 	}
 
-	ImGui::PushItemWidth(80);
+	ImGui::PushItemWidth(80 * settings.display.uiScale);
 	static char patchAddressBuffer[8 + 1] = "";
 	static char patchWordBuffer[4 + 1] = "";
-	ImGui::InputText("##patchAddr", patchAddressBuffer, 8 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::InputTextWithHint("##patchAddr", "Patch Addr", patchAddressBuffer, 8 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 	ImGui::SameLine();
-	ImGui::InputText("##patchWord", patchWordBuffer, 4 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::InputTextWithHint("##patchWord", "WORD", patchWordBuffer, 4 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
