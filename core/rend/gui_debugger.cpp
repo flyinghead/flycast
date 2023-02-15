@@ -197,11 +197,11 @@ void gui_debugger_disasm()
 		sh4asm_disas_inst(instr, disas_emit, addr);
 		//dasmbuf = decode(instr, pc);
 		sprintf(buf, "%08X:", (u32) addr);
-		ImGui::Text(buf);
+		ImGui::Text("%s", buf);
 		ImGui::SameLine();
 		ImGui::TextDisabled("%04X", instr);
 		ImGui::SameLine();
-		ImGui::Text(sh4_disas_line);
+		ImGui::Text("%s", sh4_disas_line);
 	}
 
 	ImGui::PopFont();
@@ -279,7 +279,7 @@ void gui_debugger_memdump()
 		memset(hexbuf, 0, sizeof(hexbuf));
 		size_t hexbuflen = 0;
 
-		hexbuflen += sprintf(hexbuf, "%08X: ", memoryDumpAddr + i * 16);
+		hexbuflen += sprintf(hexbuf, "%08lX: ", memoryDumpAddr + i * 16);
 
 		for (size_t j = 0; j < 16; j++) {
 			int byte = ReadMem8_nommu(memoryDumpAddr + i * 16 + j);
