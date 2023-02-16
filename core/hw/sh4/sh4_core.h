@@ -106,8 +106,7 @@ struct SH4ThrownException
 
 static inline void RaiseFPUDisableException()
 {
-	if (config::FullMMU)
-		throw SH4ThrownException(next_pc - 2, Sh4Ex_FpuDisabled);
+	throw SH4ThrownException(next_pc - 2, Sh4Ex_FpuDisabled);
 }
 
 static inline void AdjustDelaySlotException(SH4ThrownException& ex)

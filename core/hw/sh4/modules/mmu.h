@@ -36,6 +36,7 @@ struct TLB_Entry
 extern TLB_Entry UTLB[64];
 extern TLB_Entry ITLB[4];
 extern u32 sq_remap[64];
+extern bool mmuOn;
 
 constexpr u32 fast_reg_lut[8] =
 {
@@ -64,7 +65,7 @@ void mmu_flush_table();
 
 static inline bool mmu_enabled()
 {
-	return config::FullMMU && CCN_MMUCR.AT == 1;
+	return mmuOn;
 }
 
 u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);

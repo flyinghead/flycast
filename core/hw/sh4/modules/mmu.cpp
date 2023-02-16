@@ -9,6 +9,7 @@
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
 static u32 ITLB_LRU_USE[64];
+bool mmuOn;
 
 //SQ fast remap , mainly hackish , assumes 1MB pages
 //max 64MB can be remapped on SQ
@@ -432,8 +433,21 @@ retry_ITLB_Match:
 
 void mmu_set_state()
 {
-	if (CCN_MMUCR.AT == 1 && config::FullMMU)
-		NOTICE_LOG(SH4, "Enabling Full MMU support");
+	if (CCN_MMUCR.AT == 1)
+	{
+		// Detect if we're running Windows CE
+		static const char magic[] = { 'S', 0, 'H', 0, '-', 0, '4', 0, ' ', 0, 'K', 0, 'e', 0, 'r', 0, 'n', 0, 'e', 0, 'l', 0 };
+		if (memcmp(GetMemPtr(0x8c0110a8, 4), magic, sizeof(magic)) == 0
+				|| memcmp(GetMemPtr(0x8c011118, 4), magic, sizeof(magic)) == 0)
+		{
+			mmuOn = true;
+			NOTICE_LOG(SH4, "Enabling Full MMU support");
+		}
+	}
+	else
+	{
+		mmuOn = false;
+	}
 
 	SetMemoryHandlers();
 	setSqwHandler();
@@ -536,7 +550,7 @@ template void mmu_WriteMem(u32 adr, u64 data);
 
 void mmu_TranslateSQW(u32 adr, u32 *out)
 {
-	if (!config::FullMMU)
+	if (!mmuOn)
 	{
 		//This will only work for 1 mb pages .. hopefully nothing else is used
 		//*FIXME* to work for all page sizes ?

@@ -53,14 +53,11 @@ static void loadSpecialSettings()
 
 	if (settings.platform.isConsole())
 	{
-		if (ip_meta.isWindowsCE() || config::ForceWindowsCE
-				|| prod_id == "T26702N") // PBA Tour Bowling 2001
+		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
-			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for Windows CE game");
 			config::ExtraDepthScale.override(0.1f); // taxi 2 needs 0.01 for FMV (amd, per-tri)
-			config::FullMMU.override(true);
-			if (!config::ForceWindowsCE)
-				config::ForceWindowsCE.override(true);
+			config::ForceWindowsCE.override(true);
 		}
 
 		// Tony Hawk's Pro Skater 2
@@ -731,10 +728,7 @@ void loadGameSpecificSettings()
 	config::Settings::instance().load(true);
 
 	if (config::ForceWindowsCE)
-	{
 		config::ExtraDepthScale.override(0.1f);
-		config::FullMMU.override(true);
-	}
 }
 
 void Emulator::step()
