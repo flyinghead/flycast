@@ -58,8 +58,8 @@ public:
 	{
 		bool cacheOn = false;
 		u32 physAddr;
-		u32 err = translateAddress(address, physAddr, cacheOn);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress(address, physAddr, cacheOn);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_IREAD);
 
 		if (!cacheOn)
@@ -130,11 +130,11 @@ public:
 			const u32 vaddr = data & ~0x3ff;
 			bool cached;
 			u32 physAddr;
-			u32 err = translateAddress(vaddr, physAddr, cached);
-			if (err == MMU_ERROR_TLB_MISS)
+			MmuError err = translateAddress(vaddr, physAddr, cached);
+			if (err == MmuError::TLB_MISS)
 				// Ignore the write
 				return;
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				mmu_raise_exception(err, vaddr, MMU_TT_IREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
@@ -167,11 +167,11 @@ private:
 		u8 data[32];
 	};
 
-	u32 translateAddress(u32 address, u32& physAddr, bool& cached)
+	MmuError translateAddress(u32 address, u32& physAddr, bool& cached)
 	{
 		// Alignment errors
 		if (address & 1)
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 
 		const u32 area = address >> 29;
 		const bool userMode = sr.MD == 0;
@@ -181,13 +181,13 @@ private:
 			// kernel mem protected in user mode
 			// FIXME this makes WinCE fail
 			//if (address & 0x80000000)
-			//	return MMU_ERROR_BADADDR;
+			//	return MmuError::BADADDR;
 		}
 		else
 		{
 			// P4 not executable
 			if (area == 7)
-				return MMU_ERROR_BADADDR;
+				return MmuError::BADADDR;
 		}
 		cached = CCN_CCR.ICE == 1 && cachedArea(area);
 
@@ -200,9 +200,9 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			u32 err = mmu_instruction_lookup(address, &entry, physAddr);
+			MmuError err = mmu_instruction_lookup(address, &entry, physAddr);
 
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				return err;
 
 			//0X  & User mode-> protection violation
@@ -211,11 +211,11 @@ private:
 			{
 				u32 md = entry->Data.PR >> 1;
 				if (md == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 			}
 			cached = cached && entry->Data.C == 1;
 		}
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
 	std::array<cache_line, 256> lines;
@@ -235,8 +235,8 @@ public:
 		u32 physAddr;
 		bool cacheOn = false;
 		bool copyBack;
-		u32 err = translateAddress<T, MMU_TT_DREAD>(address, physAddr, cacheOn, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<T, MMU_TT_DREAD>(address, physAddr, cacheOn, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DREAD);
 
 		if (!cacheOn)
@@ -264,8 +264,8 @@ public:
 		u32 physAddr = 0;
 		bool cacheOn = false;
 		bool copyBack = false;
-		u32 err = translateAddress<T, MMU_TT_DWRITE>(address, physAddr, cacheOn, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<T, MMU_TT_DWRITE>(address, physAddr, cacheOn, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DWRITE);
 
 		if (!cacheOn)
@@ -312,8 +312,8 @@ public:
 		u32 physAddr;
 		bool cached = false;
 		bool copyBack;
-		u32 err = translateAddress<u8, MMU_TT_DWRITE>(address, physAddr, cached, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<u8, MMU_TT_DWRITE>(address, physAddr, cached, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DWRITE);
 
 		if (!cached)
@@ -336,8 +336,8 @@ public:
 		u32 physAddr;
 		bool cached;
 		bool copyBack;
-		u32 err = translateAddress<u8, MMU_TT_DREAD>(address, physAddr, cached, copyBack);
-		if (err != MMU_ERROR_NONE || !cached)
+		MmuError err = translateAddress<u8, MMU_TT_DREAD>(address, physAddr, cached, copyBack);
+		if (err != MmuError::NONE || !cached)
 			// ignore address translation errors
 			return;
 
@@ -396,11 +396,11 @@ public:
 			u32 physAddr;
 			bool cached = false;
 			bool copyBack;
-			u32 err = translateAddress<u8, MMU_TT_DREAD>(data & ~0x3ff, physAddr, cached, copyBack);
-			if (err == MMU_ERROR_TLB_MISS)
+			MmuError err = translateAddress<u8, MMU_TT_DREAD>(data & ~0x3ff, physAddr, cached, copyBack);
+			if (err == MmuError::TLB_MISS)
 				// Ignore the write
 				return;
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				mmu_raise_exception(err, data & ~0x3ff, MMU_TT_DREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
@@ -491,16 +491,16 @@ private:
 	}
 
 	template<class T, u32 ACCESS>
-	u32 translateAddress(u32 address, u32& physAddr, bool& cached, bool& copyBack)
+	MmuError translateAddress(u32 address, u32& physAddr, bool& cached, bool& copyBack)
 	{
 		// Alignment errors
 		if (address & (sizeof(T) - 1))
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 		if (ACCESS == MMU_TT_DWRITE && (address & 0xFC000000) == 0xE0000000)
 		{
 			// Store queues
 			u32 rv;
-			u32 lookup = mmu_full_SQ<MMU_TT_DWRITE>(address, rv);
+			MmuError lookup = mmu_full_SQ<MMU_TT_DWRITE>(address, rv);
 
 			physAddr = address;
 			return lookup;
@@ -510,7 +510,7 @@ private:
 
 		// kernel mem protected in user mode
 		if (userMode && (address & 0x80000000))
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 
 		cached = CCN_CCR.OCE == 1 && cachedArea(area);
 		if (ACCESS == MMU_TT_DWRITE)
@@ -526,9 +526,9 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			u32 lookup = mmu_full_lookup(address, &entry, physAddr);
+			MmuError lookup = mmu_full_lookup(address, &entry, physAddr);
 
-			if (lookup != MMU_ERROR_NONE)
+			if (lookup != MmuError::NONE)
 				return lookup;
 
 			//0X  & User mode-> protection violation
@@ -537,16 +537,16 @@ private:
 			{
 				u32 md = entry->Data.PR >> 1;
 				if (md == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 			}
 			//X0 -> read only
 			//X1 -> read/write , can be FW
 			if (ACCESS == MMU_TT_DWRITE)
 			{
 				if ((entry->Data.PR & 1) == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 				if (entry->Data.D == 0)
-					return MMU_ERROR_FIRSTWRITE;
+					return MmuError::FIRSTWRITE;
 				copyBack = copyBack && entry->Data.WT == 0;
 			}
 			cached = cached && entry->Data.C == 1;
@@ -555,7 +555,7 @@ private:
 				physAddr |= 0xF0000000;
 
 		}
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
 	std::array<cache_line, 512> lines;

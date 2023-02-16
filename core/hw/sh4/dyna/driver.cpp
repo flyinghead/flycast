@@ -145,8 +145,8 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	}
 	else if (mmu_enabled())
 	{
-		u32 rv = mmu_instruction_translation(vaddr, addr);
-		if (rv != MMU_ERROR_NONE)
+		MmuError rv = mmu_instruction_translation(vaddr, addr);
+		if (rv != MmuError::NONE)
 		{
 			DoMMUException(vaddr, rv, MMU_TT_IREAD);
 			return false;
@@ -463,10 +463,10 @@ static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, Runti
 			return false;
 
 		u32 paddr;
-		u32 rv = access == MMU_TT_DREAD ?
+		MmuError rv = access == MMU_TT_DREAD ?
 				mmu_data_translation<MMU_TT_DREAD>(addr, paddr)
 				: mmu_data_translation<MMU_TT_DWRITE>(addr, paddr);
-		if (rv != MMU_ERROR_NONE)
+		if (rv != MmuError::NONE)
 			return false;
 
 		addr = paddr;
@@ -478,18 +478,20 @@ static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, Runti
 
 bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
 {
+	size = std::min(size, 4);
 	if (!translateAddress(addr, size, MMU_TT_DREAD, physAddr, block))
 		return false;
-	ptr = addrspace::readConst(physAddr, isRam, size > 4 ? 4 : size);
+	ptr = addrspace::readConst(physAddr, isRam, size);
 
 	return true;
 }
 
 bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
 {
+	size = std::min(size, 4);
 	if (!translateAddress(addr, size, MMU_TT_DWRITE, physAddr, block))
 		return false;
-	ptr = addrspace::writeConst(physAddr, isRam, size > 4 ? 4 : size);
+	ptr = addrspace::writeConst(physAddr, isRam, size);
 
 	return true;
 }

@@ -41,26 +41,26 @@ TEST_F(MmuTest, TestUntranslated)
 {
 	u32 pa;
 	// P1
-	int err = mmu_data_translation<MMU_TT_DREAD>(0x80000000, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	MmuError err = mmu_data_translation<MMU_TT_DREAD>(0x80000000, pa);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x80000000u, pa);
 	err = mmu_instruction_translation(0x80000002, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x80000002u, pa);
 
 	// P2
 	err = mmu_data_translation<MMU_TT_DWRITE>(0xA0001234, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0xA0001234u, pa);
 
 	// P4
 	err = mmu_data_translation<MMU_TT_DREAD>(0xFF0000CC, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0xFF0000CCu, pa);
 
 	// 7C000000 to 7FFFFFFF in P0/U0 not translated
 	err = mmu_data_translation<MMU_TT_DREAD>(0x7D000088, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x7D000088u, pa);
 
 	// SQ write
@@ -71,7 +71,7 @@ TEST_F(MmuTest, TestUntranslated)
 	UTLB[0].Data.D = 1;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0xE2000004, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0xE2000004, pa);
 }
 
@@ -86,16 +86,16 @@ TEST_F(MmuTest, TestTranslated)
 	UTLB[0].Data.D = 1;
 	UTLB[0].Data.PPN = 0x0C000000 >> 10;
 	UTLB_Sync(0);
-	int err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	MmuError err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000044u, pa);
 
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000045, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000045u, pa);
 
 	err = mmu_instruction_translation(0x02000046, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000046u, pa);
 
 	// ASID match
@@ -103,10 +103,10 @@ TEST_F(MmuTest, TestTranslated)
 	CCN_PTEH.ASID = 13;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000222u, pa);
 	err = mmu_instruction_translation(0x02000232, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000232u, pa);
 
 	// Shared entry
@@ -114,14 +114,14 @@ TEST_F(MmuTest, TestTranslated)
 	CCN_PTEH.ASID = 14;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0x0C000222u, pa);
 
 	// 1C000000-1FFFFFF mapped to P4
 	UTLB[0].Data.PPN = 0x1C000000 >> 10;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x02000222, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	ASSERT_EQ(0xFC000222u, pa);
 }
 
@@ -136,15 +136,15 @@ TEST_F(MmuTest, TestMiss)
 	UTLB[0].Data.PPN = 0x0C000000 >> 10;
 	UTLB_Sync(0);
 	// no match
-	int err = mmu_data_translation<MMU_TT_DREAD>(0x02100044, pa);
-	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
+	MmuError err = mmu_data_translation<MMU_TT_DREAD>(0x02100044, pa);
+	ASSERT_EQ(MmuError::TLB_MISS, err);
 
 #ifndef FAST_MMU
 	// entry not valid
 	UTLB[0].Data.V = 0;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
-	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
+	ASSERT_EQ(MmuError::TLB_MISS, err);
 #endif
 
 	// asid mismatch
@@ -153,20 +153,20 @@ TEST_F(MmuTest, TestMiss)
 	CCN_PTEH.ASID = 14;
 	UTLB_Sync(0);
 	err = mmu_data_translation<MMU_TT_DREAD>(0x02000044, pa);
-	ASSERT_EQ(MMU_ERROR_TLB_MISS, err);
+	ASSERT_EQ(MmuError::TLB_MISS, err);
 }
 
 TEST_F(MmuTest, TestErrors)
 {
 #ifndef FAST_MMU
 	u32 pa;
-	int err;
+	MmuError err;
 
 	// P4 not executable
 	err = mmu_instruction_translation(0xFF00008A, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	ASSERT_EQ(MmuError::BADADDR, err);
 	err = mmu_instruction_translation(0xE0000004, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	ASSERT_EQ(MmuError::BADADDR, err);
 #endif
 
 	// unaligned address
@@ -186,33 +186,33 @@ TEST_F(MmuTest, TestErrors)
 	UTLB[0].Data.PPN = 0x0A000000 >> 10;
 	// no access in user mode
 	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	err = mmu_instruction_translation(0x04000042, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	// read-only access in priv mode
 	p_sh4rcb->cntx.sr.MD = 1;
 	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_NONE, err);
+	ASSERT_EQ(MmuError::NONE, err);
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	// read-only access in user & priv mode
 	UTLB[0].Data.PR = 2;
 	p_sh4rcb->cntx.sr.MD = 0;
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	p_sh4rcb->cntx.sr.MD = 1;
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_PROTECTED, err);
+	ASSERT_EQ(MmuError::PROTECTED, err);
 	UTLB[0].Data.PR = 3;
 
 	// kernel address in user mode
 	p_sh4rcb->cntx.sr.MD = 0;
 	err = mmu_data_translation<MMU_TT_DWRITE>(0xA4000004, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	ASSERT_EQ(MmuError::BADADDR, err);
 	err = mmu_instruction_translation(0xA4000006, pa);
-	ASSERT_EQ(MMU_ERROR_BADADDR, err);
+	ASSERT_EQ(MmuError::BADADDR, err);
 
 	// multiple hits
 	memset(ITLB, 0, sizeof(ITLB));
@@ -223,14 +223,14 @@ TEST_F(MmuTest, TestErrors)
 	UTLB[1].Data.D = 1;
 	UTLB[1].Data.PPN = 0x0C000000 >> 10;
 	err = mmu_data_translation<MMU_TT_DREAD>(0x04000040, pa);
-	ASSERT_EQ(MMU_ERROR_TLB_MHIT, err);
+	ASSERT_EQ(MmuError::TLB_MHIT, err);
 	err = mmu_instruction_translation(0x04000042, pa);
-	ASSERT_EQ(MMU_ERROR_TLB_MHIT, err);
+	ASSERT_EQ(MmuError::TLB_MHIT, err);
 	UTLB[1].Data.V = 0;
 
 	// first write
 	UTLB[0].Data.D = 0;
 	err = mmu_data_translation<MMU_TT_DWRITE>(0x04000224, pa);
-	ASSERT_EQ(MMU_ERROR_FIRSTWRITE, err);
+	ASSERT_EQ(MmuError::FIRSTWRITE, err);
 #endif
 }

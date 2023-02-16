@@ -96,8 +96,8 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 	}
 
 	u32 paddr;
-	u32 rv = mmu_instruction_translation(addr, paddr);
-	if (rv != MMU_ERROR_NONE)
+	MmuError rv = mmu_instruction_translation(addr, paddr);
+	if (rv != MmuError::NONE)
 	{
 		DoMMUException(addr, rv, MMU_TT_IREAD);
 		mmu_instruction_translation(next_pc, paddr);
