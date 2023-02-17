@@ -13558,7 +13558,7 @@ struct retro_core_options_v2 options_da = {
 #define CATEGORY_VIDEO_LABEL_DE NULL
 #define CATEGORY_VIDEO_INFO_0_DE "Auflösung, sortierungsunabhängige Transparenz und visuelle Effekt-Einstellungen konfigurieren."
 #define CATEGORY_PERFORMANCE_LABEL_DE "Leistung"
-#define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für Mehrgängiges Rendern und Frameskip ändern."
+#define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für Mehrgängiges Rendern und Bilder überspringen ändern."
 #define CATEGORY_HACKS_LABEL_DE "Emulations-Hacks"
 #define CATEGORY_HACKS_INFO_0_DE "Breitbild-Überschreibungen, GD-ROM Ladegeschwindigkeit und Textur-Austausch-Einstellungen konfigurieren."
 #define CATEGORY_INPUT_LABEL_DE "Eingabe"
@@ -32273,27 +32273,27 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU "2. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU "3. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU "4. fénypisztoly célkeresztjének megjelenítése"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a 4 VMU mentés fájlt (A1, B1, C1, D1) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak négy külön VMU fájlt (A1, B1, C1, D1) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
-#define OPTION_VAL_ALL_VMUS_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HU NULL
-#define OPTION_VAL_UPPER_LEFT_HU NULL
-#define OPTION_VAL_UPPER_RIGHT_HU NULL
-#define OPTION_VAL_LOWER_LEFT_HU NULL
-#define OPTION_VAL_LOWER_RIGHT_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HU NULL
+#define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU "Visual Memory Unit/System (VMU) megjelenítési beállítások jelenjenek meg"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU "VMU megjelenítési beállítások jelenjenek meg"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU "Az emulált VMU LCD képernyő láthatósági, méret, helyzet, és szín beállításainak engedélyezése. Figyelem: a gyorsmenüt ki-be kell kapcsolni, hogy ez a beállítás érvényre jusson."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HU "VMU 1 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HU "VMU 1 képernyő helyzete"
+#define OPTION_VAL_UPPER_LEFT_HU "Bal felső"
+#define OPTION_VAL_UPPER_RIGHT_HU "Jobb felső"
+#define OPTION_VAL_LOWER_LEFT_HU "Bal alsó"
+#define OPTION_VAL_LOWER_RIGHT_HU "Jobb alsó"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HU "VMU 1 képernyő mérete"
 #define OPTION_VAL_1X_HU NULL
 #define OPTION_VAL_3X_HU NULL
 #define OPTION_VAL_5X_HU NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HU NULL
-#define OPTION_VAL_DEFAULT_ON_00_HU NULL
-#define OPTION_VAL_DEFAULT_OFF_01_HU NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HU "VMU 1 képernyő bekapcsolt pixel színe"
+#define OPTION_VAL_DEFAULT_ON_00_HU "Alapértelmezésben bekapcsolva"
+#define OPTION_VAL_DEFAULT_OFF_01_HU "Alapértelmezésben kikapcsolva"
 #define OPTION_VAL_BLACK_02_HU "Fekete"
 #define OPTION_VAL_LIGHT_BLUE_04_HU "Világoskék"
 #define OPTION_VAL_CYAN_06_HU "Ciánkék"
@@ -32317,8 +32317,8 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_LIGHT_PURPLE_4_25_HU "Világoslila (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_HU "Halványsárga"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_HU "Halványsárga (2)"
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU "VMU 1 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU "VMU 1 képernyő átlátszatlansága"
 #define OPTION_VAL_40_HU NULL
 #define OPTION_VAL_50_HU NULL
 #define OPTION_VAL_60_HU NULL
@@ -32326,24 +32326,24 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_80_HU NULL
 #define OPTION_VAL_90_HU NULL
 #define OPTION_VAL_100_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HU NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU "VMU 2 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU "VMU 2 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU "VMU 2 képernyő mérete"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HU "VMU 2 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HU "VMU 2 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HU "VMU 2 képernyő átlátszatlansága"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HU "VMU 3 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HU "VMU 3 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HU "VMU 3 képernyő mérete"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HU "VMU 3 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HU "VMU 3 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HU "VMU 3 képernyő átlátszatlansága"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HU "VMU 4 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HU "VMU 4 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HU "VMU 4 képernyő mérete"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HU "VMU 4 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HU "VMU 4 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HU "VMU 4 képernyő átlátszatlansága"
 
 struct retro_core_option_v2_category option_cats_hu[] = {
    {
@@ -38883,7 +38883,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_FRENCH_KO "프랑스어"
 #define OPTION_VAL_SPANISH_KO "스페인어"
 #define OPTION_VAL_ITALIAN_KO "이탈리아어"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_KO NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_KO "HLE BIOS (재시작 필요)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_KO "HLE BIOS 사용을 강제합니다."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_KO "BIOS 로 부트 (재시작 필요)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_KO "드림캐스트 BIOS 메뉴로 부팅합니다."
@@ -38895,10 +38895,10 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO "캐비넷 설정에 들어가기위한 NAOMI 서비스 버튼을 활성화합니다."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO "NAOMI 게임을 무료 플레이로 설정"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO "무료 플레이를 위해 게임의 코인 설정을 수정합니다."
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_KO NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_KO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO "브로드밴드 어댑터 에뮬레이션"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO "모뎀 대신 이더넷 브로드밴드 어댑터를 에뮬레이트합니다. (재시작 필요)"
+#define CORE_OPTION_NAME_UPNP_LABEL_KO "UPnP 활성화"
+#define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO NULL
