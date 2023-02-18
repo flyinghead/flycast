@@ -446,7 +446,7 @@ void initMappings()
 			// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
 			{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 		};
-		virtmem::create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
+		virtmem::create_mappings(&mem_mappings[0], std::size(mem_mappings));
 
 		// Point buffers to actual data pointers
 		aica::aica_ram.setRegion(&ram_base[0x20000000], ARAM_SIZE); // Points to the writable AICA addrspace

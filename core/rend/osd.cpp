@@ -98,7 +98,7 @@ static void DrawButton2(const float xy[8], bool state)
 
 const std::vector<OSDVertex>& GetOSDVertices()
 {
-	osdVertices.reserve(ARRAY_SIZE(vjoy_pos) * 4);
+	osdVertices.reserve(std::size(vjoy_pos) * 4);
 	osdVertices.clear();
 	DrawButton2(vjoy_pos[0], kcode[0] & DC_DPAD_LEFT);
 	DrawButton2(vjoy_pos[1], kcode[0] & DC_DPAD_UP);
@@ -177,10 +177,10 @@ bool vmu_lcd_changed[8];
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
 	int vmu_id = bus_id * 2 + bus_port;
-	if (vmu_id < 0 || vmu_id >= (int)ARRAY_SIZE(vmu_lcd_data))
+	if (vmu_id < 0 || vmu_id >= (int)std::size(vmu_lcd_data))
 		return;
 	u32 *p = &vmu_lcd_data[vmu_id][0];
-	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+	for (int i = 0; i < (int)std::size(vmu_lcd_data[vmu_id]); i++, buffer++)
 #ifdef LIBRETRO
 		*p++ = (*buffer != 0
 				? vmu_screen_params[bus_id].vmu_pixel_on_R | (vmu_screen_params[bus_id].vmu_pixel_on_G << 8) | (vmu_screen_params[bus_id].vmu_pixel_on_B << 16)

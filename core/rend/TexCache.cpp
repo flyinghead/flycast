@@ -158,9 +158,9 @@ void palette_update()
 			break;
 		}
 	}
-	for (int i = 0; i < 64; i++)
+	for (std::size_t i = 0; i < std::size(pal_hash_16); i++)
 		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
-	for (int i = 0; i < 4; i++)
+	for (std::size_t i = 0; i < std::size(pal_hash_256); i++)
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 

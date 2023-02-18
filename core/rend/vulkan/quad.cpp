@@ -21,6 +21,8 @@
 #include "quad.h"
 #include "vulkan_context.h"
 
+#include <memory>
+
 static VulkanContext *GetContext()
 {
 	return VulkanContext::Instance();
@@ -40,9 +42,9 @@ vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv)
 	};
 	return vk::PipelineVertexInputStateCreateInfo(
 			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
+			std::size(vertexBindingDescriptions),
 			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
+			std::size(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
 			vertexInputAttributeDescriptions);
 }
 
@@ -161,7 +163,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 void QuadDrawer::Init(QuadPipeline *pipeline)
 {
 	this->pipeline = pipeline;
-	buffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+	buffer = std::make_unique<QuadBuffer>();
 	descriptorSets.resize(VulkanContext::Instance()->GetSwapChainSize());
 	for (auto& descSet : descriptorSets)
 		descSet.reset();

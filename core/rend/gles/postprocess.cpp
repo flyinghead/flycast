@@ -219,7 +219,7 @@ std::array<PostProcessShader, 8> PostProcessShader::shaders;
 
 void PostProcessor::init(int width, int height)
 {
-	framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(width, height));
+	framebuffer = std::make_unique<GlFramebuffer>(width, height);
 
 	float vertices[] = {
 			-1,  1, 1,

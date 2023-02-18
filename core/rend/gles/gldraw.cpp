@@ -5,6 +5,8 @@
 #include "naomi2.h"
 #include "rend/transform_matrix.h"
 
+#include <memory>
+
 /*
 
 Drawing and related state management
@@ -645,7 +647,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 		gl.ofbo2.framebuffer.reset();
 
 	if (gl.ofbo2.framebuffer == nullptr)
-		gl.ofbo2.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(gl.dcfb.width, gl.dcfb.height, false, true));
+		gl.ofbo2.framebuffer = std::make_unique<GlFramebuffer>(gl.dcfb.width, gl.dcfb.height, false, true);
 	else
 		gl.ofbo2.framebuffer->bind();
 	glCheck();
@@ -696,7 +698,7 @@ void writeFramebufferToVRAM()
 				&& (gl.fbscaling.framebuffer->getWidth() != (int)scaledW || gl.fbscaling.framebuffer->getHeight() != (int)scaledH))
 			gl.fbscaling.framebuffer.reset();
 		if (gl.fbscaling.framebuffer == nullptr)
-			gl.fbscaling.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(scaledW, scaledH));
+			gl.fbscaling.framebuffer = std::make_unique<GlFramebuffer>(scaledW, scaledH);
 
 		if (gl.gl_major < 3)
 		{
@@ -807,10 +809,10 @@ static std::unique_ptr<GlBuffer> osdIndex;
 static void setupOsdVao()
 {
 	if (osdVerts == nullptr)
-		osdVerts = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+		osdVerts = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 	if (osdIndex == nullptr)
 	{
-		osdIndex = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		osdIndex = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 		GLushort indices[] = { 0, 1, 2, 1, 3 };
 		osdIndex->update(indices, sizeof(indices));
 	}
@@ -1018,9 +1020,9 @@ void DrawGunCrosshair(u8 port)
 
 void termVmuLightgun()
 {
-	glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
+	glcache.DeleteTextures(std::size(vmuTextureId), vmuTextureId);
 	memset(vmuTextureId, 0, sizeof(vmuTextureId));
-	glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
+	glcache.DeleteTextures(std::size(lightgunTextureId), lightgunTextureId);
 	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
 	osdVerts.reset();
 	osdIndex.reset();

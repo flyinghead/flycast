@@ -46,7 +46,7 @@ protected:
 			int w, h;
 			u8 *image_data = loadOSDButtons(w, h);
 			texCommandPool.BeginFrame();
-			vjoyTexture = std::unique_ptr<Texture>(new Texture());
+			vjoyTexture = std::make_unique<Texture>();
 			vjoyTexture->tex_type = TextureType::_8888;
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -60,16 +60,16 @@ protected:
 		}
 		if (!osdBuffer)
 		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-									vk::BufferUsageFlagBits::eVertexBuffer));
+			osdBuffer = std::make_unique<BufferData>(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+									vk::BufferUsageFlagBits::eVertexBuffer);
 		}
 #endif
-		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
+		quadPipeline = std::make_unique<QuadPipeline>(false, false);
 		quadPipeline->Init(&shaderManager, renderPass, subpass);
-		framebufferDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		framebufferDrawer = std::make_unique<QuadDrawer>();
 		framebufferDrawer->Init(quadPipeline.get());
 #ifdef LIBRETRO
-		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
+		overlay = std::make_unique<VulkanOverlay>();
 		overlay->Init(quadPipeline.get());
 #endif
 		return true;
@@ -211,7 +211,7 @@ public:
 		std::unique_ptr<Texture>& curTexture = framebufferTextures[framebufferTexIndex];
 		if (!curTexture)
 		{
-			curTexture = std::unique_ptr<Texture>(new Texture());
+			curTexture = std::make_unique<Texture>();
 			curTexture->tex_type = TextureType::_8888;
 		}
 
@@ -257,7 +257,7 @@ protected:
 	{
 		if (!fogTexture)
 		{
-			fogTexture = std::unique_ptr<Texture>(new Texture());
+			fogTexture = std::make_unique<Texture>();
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -277,7 +277,7 @@ protected:
 	{
 		if (!paletteTexture)
 		{
-			paletteTexture = std::unique_ptr<Texture>(new Texture());
+			paletteTexture = std::make_unique<Texture>();
 			paletteTexture->tex_type = TextureType::_8888;
 			forcePaletteUpdate();
 		}

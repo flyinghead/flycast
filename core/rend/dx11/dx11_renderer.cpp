@@ -24,6 +24,8 @@
 #include "rend/tileclip.h"
 #include "rend/sorter.h"
 
+#include <memory>
+
 const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(Vertex, x), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -52,9 +54,9 @@ bool DX11Renderer::Init()
 	samplers = &theDX11Context.getSamplers();
 	bool success = (bool)shaders->getVertexShader(true, true);
 	ComPtr<ID3DBlob> blob = shaders->getVertexShaderBlob();
-	success = success && SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
+	success = success && SUCCEEDED(device->CreateInputLayout(MainLayout, std::size(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
 	blob = shaders->getMVVertexShaderBlob();
-	success = success && SUCCEEDED(device->CreateInputLayout(ModVolLayout, ARRAY_SIZE(ModVolLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &modVolInputLayout.get()));
+	success = success && SUCCEEDED(device->CreateInputLayout(ModVolLayout, std::size(ModVolLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &modVolInputLayout.get()));
 
 	// Constants buffers
 	{
@@ -151,7 +153,7 @@ bool DX11Renderer::Init()
 		deviceContext->UpdateSubresource(whiteTexture, 0, nullptr, texData, 8 * sizeof(u32), 8 * sizeof(u32) * 8);
 	}
 
-	quad = std::unique_ptr<Quad>(new Quad());
+	quad = std::make_unique<Quad>();
 	quad->init(device, deviceContext, shaders);
 	n2Helper.init(device, deviceContext);
 
@@ -414,7 +416,7 @@ void DX11Renderer::setupPixelShaderConstants()
 	memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
 	deviceContext->Unmap(pxlConstants, 0);
 	ID3D11Buffer *buffers[] { pxlConstants, pxlPolyConstants };
-	deviceContext->PSSetConstantBuffers(0, ARRAY_SIZE(buffers), buffers);
+	deviceContext->PSSetConstantBuffers(0, std::size(buffers), buffers);
 }
 
 bool DX11Renderer::Render()

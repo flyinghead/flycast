@@ -160,10 +160,10 @@ endif()
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
-	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
-else()
-	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 endif()
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
@@ -1175,6 +1175,11 @@ if(USE_VULKAN)
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
+	if (APPLE)
+		# Only available on macOS 10.12+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE VMA_USE_STL_SHARED_MUTEX=0)
+	endif()
+	
 	add_library(VulkanMemoryAllocator INTERFACE)
 	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)

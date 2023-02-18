@@ -751,7 +751,7 @@ static void forceFeedbackMidiReceiver(u8 data)
 		if (midiTxBuf[0] != 0xfd)
 			networkOutput.output("midiffb", (midiTxBuf[0] << 16) | (midiTxBuf[1]) << 8 | midiTxBuf[2]);
 	}
-	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
+	midiTxBufIndex = (midiTxBufIndex + 1) % std::size(midiTxBuf);
 }
 
 void initMidiForceFeedback()

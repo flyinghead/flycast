@@ -81,7 +81,7 @@ public:
 
 	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
 	{
-		VkTexture vkTex(std::unique_ptr<Texture>(new Texture()));
+		VkTexture vkTex(std::make_unique<Texture>());
 		vkTex.texture->tex_type = TextureType::_8888;
 		vkTex.texture->SetCommandBuffer(getCommandBuffer());
 		vkTex.texture->UploadToGPU(width, height, data, false);

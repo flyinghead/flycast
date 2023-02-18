@@ -81,7 +81,7 @@ struct DX11OITRenderer : public DX11Renderer
 		pixelBufferSize = config::PixelBufferSize;
 		ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
 		mainInputLayout.reset();
-		success = SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get())) && success;
+		success = SUCCEEDED(device->CreateInputLayout(MainLayout, std::size(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get())) && success;
 
 		blob = shaders.getFinalVertexShaderBlob();
 		success = SUCCEEDED(device->CreateInputLayout(MainLayout, 0, blob->GetBufferPointer(), blob->GetBufferSize(), &finalInputLayout.get())) && success;

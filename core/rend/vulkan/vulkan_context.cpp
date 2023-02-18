@@ -38,6 +38,8 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
+#include <memory>
+
 void ReInitOSD();
 
 VulkanContext *VulkanContext::contextInstance;
@@ -494,12 +496,12 @@ bool VulkanContext::InitDevice()
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
-	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
-	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, false));
-	    quadPipelineWithAlpha = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
-	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
-	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	    shaderManager = std::make_unique<ShaderManager>();
+	    quadPipeline = std::make_unique<QuadPipeline>(true, false);
+	    quadPipelineWithAlpha = std::make_unique<QuadPipeline>(false, false);
+	    quadDrawer = std::make_unique<QuadDrawer>();
+	    quadRotatePipeline = std::make_unique<QuadPipeline>(true, true);
+	    quadRotateDrawer = std::make_unique<QuadDrawer>();
 
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
@@ -786,8 +788,8 @@ bool VulkanContext::init()
 #else
 #error "Unknown Vulkan platform"
 #endif
-	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
-	textureCache = std::unique_ptr<TextureCache>(new TextureCache());
+	overlay = std::make_unique<VulkanOverlay>();
+	textureCache = std::make_unique<TextureCache>();
 
 	return InitDevice();
 }

@@ -159,7 +159,7 @@ public:
 	static std::vector<PolyParam> *CurrentPPlist;
 	static PolyParam* CurrentPP;
 	static TaListFP* TaCmd;
-	static bool fetchTextures;
+	inline static bool fetchTextures = true;
 };
 
 const u32 *BaseTAParser::ta_type_lut = TaTypeLut::instance().table;
@@ -176,7 +176,6 @@ PolyParam* BaseTAParser::CurrentPP;
 std::vector<PolyParam>* BaseTAParser::CurrentPPlist;
 BaseTAParser::TaListFP *BaseTAParser::TaCmd;
 BaseTAParser::TaListFP *BaseTAParser::VertexDataFP;
-bool BaseTAParser::fetchTextures = true;
 
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 class TAParserTempl : public BaseTAParser
@@ -189,7 +188,7 @@ class TAParserTempl : public BaseTAParser
 		TA_VertexParam* vp=(TA_VertexParam*)data;
 		u32 rv=0;
 
-		if (part==2)
+		if constexpr (part == 2)
 		{
 			TaCmd=ta_main;
 		}
@@ -218,18 +217,18 @@ break;
 #define ver_64B_def(num) \
 case num : {\
 /*process first half*/\
-	if (part!=2)\
+	if constexpr (part != 2)\
 	{\
 	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
 	}\
 	/*process second half*/\
-	if (part==0)\
+	if constexpr (part == 0)\
 	{\
 	AppendPolyVertex##num##B(&vp->vtx##num##B);\
 	rv+=SZ32;\
 	}\
-	else if (part==2)\
+	else if constexpr (part == 2)\
 	{\
 	AppendPolyVertex##num##B((TA_Vertex##num##B*)data);\
 	rv+=SZ32;\
@@ -369,7 +368,7 @@ strip_end:
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		if (t==2)
+		if constexpr (t == 2)
 			AppendPolyParam2B((TA_PolyParam2B*)data);
 		else
 			AppendPolyParam4B((TA_PolyParam4B*)data);
@@ -1549,7 +1548,7 @@ static void vtxdec_init()
 		0x3b80 ~ 0x3f80 -> actual useful range. Rest is clamping to 0 or 255 ~
 	*/
 
-	for (u32 i = 0; i < ARRAY_SIZE(f32_su8_tbl); i++)
+	for (u32 i = 0; i < std::size(f32_su8_tbl); i++)
 	{
 		u32 fr = i << 16;
 		

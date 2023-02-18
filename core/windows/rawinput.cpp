@@ -278,7 +278,7 @@ static LRESULT CALLBACK rawWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			u8 keycode = 0xff;
 			if ((ri.data.keyboard.Flags & RI_KEY_E0) != 0)
 			{
-				for (u32 i = 0; i < ARRAY_SIZE(Ps2toUsbE0); i++)
+				for (u32 i = 0; i < std::size(Ps2toUsbE0); i++)
 					if (Ps2toUsbE0[i][0] == scancode)
 					{
 						keycode = Ps2toUsbE0[i][1];

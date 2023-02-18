@@ -150,7 +150,7 @@ void Multiboard::startSlave()
 			"-config", top.c_str(),
 			CurrentCartridge->game->bios == nullptr ? "naomi" : CurrentCartridge->game->bios
 		};
-		os_RunInstance(ARRAY_SIZE(args), args);
+		os_RunInstance(std::size(args), args);
 	}
 	slaveStarted = true;
 }

@@ -14,7 +14,7 @@ static void (*midiReceiver)(u8 data);
 
 //Aica read/write (both sh4 & arm)
 
-//00000000~007FFFFF @DRAM_AREA* 
+//00000000~007FFFFF @DRAM_AREA*
 //00800000~008027FF @CHANNEL_DATA 
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
@@ -54,7 +54,7 @@ T readRegInternal(u32 addr)
 			else
 				v &= 0xf;
 		}
-		if (sizeof(T) == 1)
+		if constexpr (sizeof(T) == 1)
 		{
 			if (addr & 1)
 				v >>= 8;
@@ -110,7 +110,7 @@ void writeRegInternal(u32 addr, T data)
 	if (addr < 0x2818)
 	{
 		writeCommonReg8(addr, data & 0xFF);
-		if (sz == 2)
+		if constexpr (sz == 2)
 			writeCommonReg8(addr + 1, data >> 8);
 		return;
 	}
@@ -130,7 +130,7 @@ void writeRegInternal(u32 addr, T data)
 				s32 &v = addr < 0x4400 ? dsp::state.TEMP[(addr - 0x4000) / 8] : dsp::state.MEMS[(addr - 0x4400) / 8];
 				if (addr & 4)
 				{
-					if (sz == 1)
+					if constexpr (sz == 1)
 					{
 						if (addr & 1)
 							v = (v & 0x0000ffff) | (((s32)data << 24) >> 8);
@@ -181,7 +181,7 @@ void writeRegInternal(u32 addr, T data)
 
 		WriteMemArr(aica_reg, addr, data);
 		dsp::writeProg(addr);
-		if (sz == 2)
+		if constexpr (sz == 2)
 			dsp::writeProg(addr + 1);
 		return;
 	}

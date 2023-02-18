@@ -116,8 +116,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					&& config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
-			float x, y;
-			std::tie(x, y) = getCrosshairPosition(i);
+			auto [x, y] = getCrosshairPosition(i);
 			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)

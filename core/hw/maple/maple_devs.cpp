@@ -1104,7 +1104,7 @@ struct maple_keyboard : maple_base
 				//int8 led            ; leds currently lit			//1
 				w8(0);
 				//int8 key[6]         ; normal keys pressed			//6
-				for (int i = 0; i < 6; i++)
+				for (std::size_t i = 0; i < std::size(keys); i++)
 					w8(keys[i]);
 			}
 			return MDRS_DataTransfer;

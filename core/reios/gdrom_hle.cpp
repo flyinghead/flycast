@@ -28,11 +28,7 @@ gdrom_hle_state_t gd_hle_state;
 
 static void GDROM_HLE_ReadSES()
 {
-	u32 s = gd_hle_state.params[0];
-	u32 b = gd_hle_state.params[1];
-	u32 ba = gd_hle_state.params[2];
-	u32 bb = gd_hle_state.params[3];
-
+	auto [s, b, ba, bb] = gd_hle_state.params;
 	INFO_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
 }
 
@@ -53,7 +49,7 @@ static void GDROM_HLE_ReadTOC()
 	libGDR_GetToc(toc, (DiskArea)area);
 
 	// Swap results to LE
-	for (int i = 0; i < 102; i++) {
+	for (std::size_t i = 0; i < std::size(toc); i++) {
 		toc[i] = SWAP32(toc[i]);
 	}
 	if (!mmu_enabled())
@@ -65,7 +61,7 @@ static void GDROM_HLE_ReadTOC()
 			return;
 		}
 	}
-	for (int i = 0; i < 102; i++, dest += 4)
+	for (std::size_t i = 0; i < std::size(toc); i++, dest += 4)
 		WriteMem32(dest, toc[i]);
 }
 
@@ -97,7 +93,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 	{
 		libGDR_ReadSector((u8 *)temp, sector, 1, sizeof(temp));
 
-		for (std::size_t i = 0; i < ARRAY_SIZE(temp); i++)
+		for (std::size_t i = 0; i < std::size(temp); i++)
 		{
 			if (virtual_addr)
 				WriteMem32(addr, temp[i]);
@@ -203,7 +199,7 @@ static void multi_xfer()
 			int remaining = 2048 - gd_hle_state.multi_read_offset;
 			if (size >= 4 && remaining >= 4 && (dest & 3) == 0)
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem32_nommu(dest, *(u32*)&buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem32(dest, *(u32*)&buf[gd_hle_state.multi_read_offset]);
@@ -214,7 +210,7 @@ static void multi_xfer()
 			}
 			else if (size >= 2 && remaining >= 2 && (dest & 1) == 0)
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem16_nommu(dest, *(u16*)&buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem16(dest, *(u16*)&buf[gd_hle_state.multi_read_offset]);
@@ -225,7 +221,7 @@ static void multi_xfer()
 			}
 			else
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem8_nommu(dest, buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem8(dest, buf[gd_hle_state.multi_read_offset]);
@@ -410,10 +406,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_SET_MODE:
 		{
-			u32 speed = gd_hle_state.params[0];
-			u32 standby = gd_hle_state.params[1];
-			u32 read_flags = gd_hle_state.params[2];
-			u32 read_retry = gd_hle_state.params[3];
+			auto [speed, standby, read_flags, read_retry] = gd_hle_state.params;
 
 			debugf("GDROM: SET_MODE speed %x standby %x read_flags %x read_retry %x", speed, standby, read_flags, read_retry);
 
@@ -745,7 +738,7 @@ void gdrom_hle_op()
 			//
 			// Returns: GDC_OK, GDC_ERR
 			DEBUG_LOG(REIOS, "GDROM: HLE CHANGE_DATA_TYPE PTR_r4:%X",r[4]);
-			for(int i=0; i<4; i++) {
+			for(std::size_t i = 0; i < std::size(SecMode); i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
 				DEBUG_LOG(REIOS, "%08X", SecMode[i]);
 			}

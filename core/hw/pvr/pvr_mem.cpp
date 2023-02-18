@@ -213,7 +213,7 @@ template float pvr_read32p<float>(u32 addr);
 template<typename T>
 void DYNACALL pvr_write32p(u32 addr, T data)
 {
-	if (sizeof(T) == 1)
+	if constexpr (sizeof(T) == 1)
 	{
 		INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
 		return;
