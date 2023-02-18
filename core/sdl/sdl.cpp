@@ -3,7 +3,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include <SDL_syswm.h>
 #endif
 #include <SDL_video.h>
