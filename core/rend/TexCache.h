@@ -150,7 +150,7 @@ inline static u32 YUV422(s32 Y, s32 Yu, s32 Yv)
 	s32 G = Y - (Yu * 11 + Yv * 22) / 32;	// Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu * 110 / 64;				// Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return Packer::pack(std::clamp(0, 255, R), std::clamp(0, 255, G), std::clamp(0, 255, B), 0xFF);
+	return Packer::pack(std::clamp(R, 0, 255), std::clamp(G, 0, 255), std::clamp(B, 0, 255), 0xFF);
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
