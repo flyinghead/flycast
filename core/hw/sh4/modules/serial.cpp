@@ -65,6 +65,22 @@ static void Serial_UpdateInterrupts()
     InterruptMask(sh4_SCIF_RXI, SCIF_SCSCR2.RIE);
 }
 
+void serial_updateStatusRegister()
+{
+	if (serialPipe != nullptr)
+	{
+		constexpr int trigLevels[] { 1, 4, 8, 14 };
+		int avail = serialPipe->available();
+
+		if (avail >= trigLevels[SCIF_SCFCR2.RTRG1 * 2 + SCIF_SCFCR2.RTRG0])
+			SCIF_SCFSR2.RDF = 1;
+		if (avail >= 1)
+			SCIF_SCFSR2.DR = 1;
+		Serial_UpdateInterrupts();
+	}
+}
+
+// SCIF SCFTDR2
 static void SerialWrite(u32 addr, u8 data)
 {
 	//DEBUG_LOG(COMMON, "serial %02x", data);
@@ -80,16 +96,7 @@ static void SerialWrite(u32 addr, u8 data)
 //SCIF_SCFSR2 read
 static u16 ReadSerialStatus(u32 addr)
 {
-	if (serialPipe != nullptr)
-	{
-		constexpr int trigLevels[] { 1, 4, 8, 14 };
-		int avail = serialPipe->available();
-
-		if (avail >= trigLevels[SCIF_SCFCR2.RTRG1 * 2 + SCIF_SCFCR2.RTRG0])
-			return SCIF_SCFSR2.full | 3; // RDF | DR
-		else if (avail >= 1)
-			return SCIF_SCFSR2.full | 1; // DR
-	}
+	serial_updateStatusRegister();
 	return SCIF_SCFSR2.full;
 }
 
@@ -98,19 +105,19 @@ static void WriteSerialStatus(u32 addr, u16 data)
 	if (!SCIF_SCFSR2.BRK)
 		data &= ~0x10;
 
-	SCIF_SCFSR2.full = data & 0x00f0;
+	SCIF_SCFSR2.full = data & 0x00f3;
 
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
 
-	Serial_UpdateInterrupts();
+	serial_updateStatusRegister();
 }
 
 //SCIF_SCFDR2 - 16b
 static u16 Read_SCFDR2(u32 addr)
 {
-	if (serialPipe != nullptr && serialPipe->available() > 0)
-		return 1; // TODO more?
+	if (serialPipe != nullptr)
+		return std::min(16, serialPipe->available());
 	else
 		return 0;
 }
@@ -121,6 +128,7 @@ static u8 ReadSerialData(u32 addr)
 	u8 data = 0;
 	if (serialPipe != nullptr)
 		data = serialPipe->read();
+	serial_updateStatusRegister();
 
 	return data;
 }

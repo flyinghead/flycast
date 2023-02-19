@@ -353,8 +353,7 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DogWalking;
 		}
-		else if (prod_id == " TOUCH DE UNOH -------------"
-				|| prod_id == "POKASUKA GHOST (JAPANESE)")
+		else if (prod_id == " TOUCH DE UNOH -------------"|| prod_id == " TOUCH DE UNOH 2 -----------")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::TouchDeUno;

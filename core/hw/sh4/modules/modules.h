@@ -105,3 +105,4 @@ struct SerialPipe
 	virtual ~SerialPipe() = default;
 };
 void serial_setPipe(SerialPipe *pipe);
+void serial_updateStatusRegister();

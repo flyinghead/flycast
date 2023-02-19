@@ -137,6 +137,8 @@ void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);
 void naomi_cart_ConfigureEEPROM();
+void naomi_cart_serialize(Serializer& ser);
+void naomi_cart_deserialize(Deserializer& deser);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

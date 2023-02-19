@@ -828,6 +828,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/naomi_roms_input.h
 		core/hw/naomi/card_reader.h
 		core/hw/naomi/card_reader.cpp
+		core/hw/naomi/touchscreen.h
+		core/hw/naomi/touchscreen.cpp
 		core/hw/pvr/elan.cpp
 		core/hw/pvr/elan.h
 		core/hw/pvr/elan_struct.h

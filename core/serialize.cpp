@@ -52,9 +52,7 @@ void dc_serialize(Serializer& ser)
 	ser << config::Cable.get();
 	ser << config::Region.get();
 
-	if (CurrentCartridge != NULL)
-		CurrentCartridge->Serialize(ser);
-
+	naomi_cart_serialize(ser);
 	gd_hle_state.Serialize(ser);
 
 	DEBUG_LOG(SAVESTATE, "Saved %d bytes", (u32)ser.size());
@@ -103,8 +101,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	deser >> config::Cable.get();
 	deser >> config::Region.get();
 
-	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
-		CurrentCartridge->Deserialize(deser);
+	naomi_cart_deserialize(deser);
 	gd_hle_state.Deserialize(deser);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", (u32)deser.size());
@@ -156,8 +153,7 @@ void dc_deserialize(Deserializer& deser)
 	deser >> config::Region.get();
 	verify(config::Region <= 3);
 
-	if (CurrentCartridge != NULL)
-		CurrentCartridge->Deserialize(deser);
+	naomi_cart_deserialize(deser);
 	gd_hle_state.Deserialize(deser);
 	sh4_sched_ffts();
 

@@ -39,6 +39,7 @@
 #include "serialize.h"
 #include "card_reader.h"
 #include "naomi_flashrom.h"
+#include "touchscreen.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -611,6 +612,11 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			initMidiForceFeedback();
 		}
+		else if (gameId == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
+				|| gameId == "TOUCH DE ZUNO (JAPAN)")
+		{
+			touchscreen::init();
+		}
 	}
 	else
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
@@ -631,10 +637,25 @@ void naomi_cart_ConfigureEEPROM()
 
 void naomi_cart_Close()
 {
+	touchscreen::term();
 	delete CurrentCartridge;
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;
 	bios_loaded = false;
+}
+
+void naomi_cart_serialize(Serializer& ser)
+{
+	if (CurrentCartridge != nullptr)
+		CurrentCartridge->Serialize(ser);
+	touchscreen::serialize(ser);
+}
+
+void naomi_cart_deserialize(Deserializer& deser)
+{
+	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
+		CurrentCartridge->Deserialize(deser);
+	touchscreen::deserialize(deser);
 }
 
 int naomi_cart_GetPlatform(const char *path)
