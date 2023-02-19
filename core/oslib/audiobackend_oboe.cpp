@@ -58,12 +58,17 @@ class OboeBackend : AudioBackend
 	public:
 		AudioErrorCallback(OboeBackend *backend) : backend(backend) {}
 
-		void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override {
-			WARN_LOG(AUDIO, "Audio device lost. Attempting to reopen the audio stream");
-			// the oboe stream is already closed so make sure we don't close it twice
-			backend->stream.reset();
-			backend->term();
-			backend->init();
+		void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override
+		{
+			// Only attempt to recover if init was successful
+			if (backend->stream != nullptr)
+			{
+				WARN_LOG(AUDIO, "Audio device lost. Attempting to reopen the audio stream");
+				// the oboe stream is already closed so make sure we don't close it twice
+				backend->stream.reset();
+				backend->term();
+				backend->init();
+			}
 		}
 
 		OboeBackend *backend;

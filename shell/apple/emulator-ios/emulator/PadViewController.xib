@@ -51,13 +51,13 @@
                         <constraint firstAttribute="height" constant="140" id="fly-c3-Ajo"/>
                     </constraints>
                 </imageView>
-                <view opaque="NO" multipleTouchEnabled="YES" tag="10" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bc4-Lc-Ghm" userLabel="UR-Button">
+                <view opaque="NO" multipleTouchEnabled="YES" tag="24" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bc4-Lc-Ghm" userLabel="UR-Button">
                     <rect key="frame" x="134" y="85" width="50" height="50"/>
                 </view>
-                <view opaque="NO" multipleTouchEnabled="YES" tag="11" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7rQ-cq-4t8" userLabel="UL-Button">
+                <view opaque="NO" multipleTouchEnabled="YES" tag="25" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="7rQ-cq-4t8" userLabel="UL-Button">
                     <rect key="frame" x="44" y="85" width="50" height="50"/>
                 </view>
-                <view opaque="NO" multipleTouchEnabled="YES" tag="12" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="f6y-OJ-0oT" userLabel="DL-Button">
+                <view opaque="NO" multipleTouchEnabled="YES" tag="26" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="f6y-OJ-0oT" userLabel="DL-Button">
                     <rect key="frame" x="44" y="175" width="50" height="50"/>
                 </view>
                 <view opaque="NO" multipleTouchEnabled="YES" tag="7" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rp6-Nd-1qa" userLabel="L-Button">
@@ -144,7 +144,7 @@
                         <constraint firstAttribute="width" constant="80" id="Pj7-YU-3Ze"/>
                     </constraints>
                 </imageView>
-                <view opaque="NO" multipleTouchEnabled="YES" tag="13" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ccY-OZ-Jlp" userLabel="DR-Button">
+                <view opaque="NO" multipleTouchEnabled="YES" tag="27" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ccY-OZ-Jlp" userLabel="DR-Button">
                     <rect key="frame" x="134" y="175" width="50" height="50"/>
                 </view>
             </subviews>

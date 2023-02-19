@@ -196,16 +196,13 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
 		}
-		if (prod_id == "T9512N"			// The Grinch (US)
-			|| prod_id == "T9503D"		// The Grinch (EU)
-			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
-			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
+		if (prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
 			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
 			|| prod_id == "T18702M"		// Miss Moonlight
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
 			|| prod_id == "T0020M"		// Force Five Atomiswave DC Conversion
-			|| prod_id == "HDR-0187")	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
+			|| prod_id == "HDR-0187"	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
+			|| prod_id == "T15104D 50") // Slave Zero (PAL)
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
@@ -224,7 +221,8 @@ static void loadSpecialSettings()
 			config::Broadcast.override(1);
 		}
 		if (prod_id == "T1102M"				// Densha de Go! 2
-				|| prod_id == "T00000A")	// The Ring of the Nibelungen (demo, hack)
+				|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
+				|| prod_id == "T15124N 00")	// Worms Pinball (prototype)
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
@@ -286,8 +284,9 @@ static void loadSpecialSettings()
 		else if (prod_id == "NINJA ASSAULT"
 					|| prod_id == "Sports Shooting USA"	// AW
 					|| prod_id == "SEGA CLAY CHALLENGE"	// AW
-					|| prod_id == "RANGER MISSION"			// AW
-					|| prod_id == "EXTREME HUNTING")		// AW
+					|| prod_id == "RANGER MISSION"		// AW
+					|| prod_id == "EXTREME HUNTING"		// AW
+					|| prod_id == "Fixed BOOT strapper")// Extreme hunting 2 (AW)
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGun;

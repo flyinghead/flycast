@@ -150,7 +150,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-5102250", "V1.001",   { 0x107FDC, 0x11253C }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (v1.001) (PAL)
 		{ "MK-5102250", "V1.009",   { 0x106B5C, 0x1111F4 }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (v1.009) (PAL)
 		{ "MK-51012",   nullptr,    { 0x10A01C, 0x1146FC }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (USA)
-		{ "T0000M",     nullptr,    { 0x1CAEAC, 0x1CAEDC }, { 0x43F00000, 0x3F400000 } },	// Millenium Racer Y2K Fighters
+		{ "T0000M", "MILLENNIUM RACER - Y2K FIGHTERS                                                                                                 ",
+									{ 0x1CAEAC, 0x1CAEDC }, { 0x43F00000, 0x3F400000 } },	// Millenium Racer Y2K Fighters
 		{ "T1221M",     nullptr,    { 0x426B74 }, { 0x43F00000 } },		// Moero! Justice Gauken (JP)
 		{ "T9701D",     nullptr,    { 0x31290C }, { 0x3F400000 } },		// Mortal Kombat Gold (PAL)
 		{ "T-9701N",    nullptr,    { 0x337B8C }, { 0x3FA66666 } },		// Mortal Kombat Gold (USA)
@@ -432,6 +433,21 @@ void CheatManager::reset(const std::string& gameId)
 		{
 			setActive(true);
 			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x0007f486, 0xe001); // mov #1, r0
+			cheats.back().builtIn = true;
+		}
+		else if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0);
+			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check", true, 32, 0x00067b04, 1); // 1 skips initNetwork()
+			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check 2", true, 16, 0x0009acc8, 0x0009); // not acceptable by main board
+			cheats.back().builtIn = true;
+			// ac010000 should be d202 9302, but is changed to 78c0 8c93
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "fix boot ifeq", true, 32, 0x00010000, 0x8c9378c0);
+			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202);
 			cheats.back().builtIn = true;
 		}
 	}
