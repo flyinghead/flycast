@@ -146,18 +146,18 @@ void OfflineScraper::scrape(GameBoxart& item)
 		delete disc;
 
 		item.uniqueId = trim_trailing_ws(std::string(diskId.product_number, sizeof(diskId.product_number)));
-		for (char& c : item.uniqueId)
-			if (!std::isprint(c))
-				c = ' ';
+		std::replace_if(item.uniqueId.begin(), item.uniqueId.end(), [](u8 c) {
+			return !std::isprint(c);
+		}, ' ');
 
 		item.searchName = trim_trailing_ws(std::string(diskId.software_name, sizeof(diskId.software_name)));
 		if (item.searchName.empty())
 			item.searchName = item.name;
 		else
 		{
-			for (char& c : item.searchName)
-				if (!std::isprint(c))
-					c = ' ';
+			std::replace_if(item.searchName.begin(), item.searchName.end(), [](u8 c) {
+				return !std::isprint(c);
+			}, ' ');
 		}
 
 		if (diskId.area_symbols[0] != '\0')
