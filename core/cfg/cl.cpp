@@ -3,7 +3,6 @@
 */
 
 #include <cstdio>
-#include <cctype>
 #include <cstring>
 
 #include "cfg/cfg.h"

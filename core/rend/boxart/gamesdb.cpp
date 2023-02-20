@@ -21,7 +21,6 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
-#include <cctype>
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
 
