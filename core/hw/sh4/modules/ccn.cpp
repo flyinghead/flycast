@@ -52,8 +52,8 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 	if (mmu_changed_state)
 	{
 		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-		sh4_cpu.ResetCache();
 		mmu_set_state();
+		sh4_cpu.ResetCache();
 	}
 }
 
