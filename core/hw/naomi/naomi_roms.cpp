@@ -481,7 +481,10 @@ const Game Games[] =
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
 
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		tduno2_eeprom_dump,
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
@@ -3438,7 +3441,10 @@ const Game Games[] =
             //ROM_LOAD( "x76f100.ic37", 0x000000, 0x000084, CRC(c79251d5) SHA1(3e70bbbb6d28bade7eec7e27d716463045656f98) )
 
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		tduno_eeprom_dump,
     },
 	// Tokyo Bus (Rev A)
 	{

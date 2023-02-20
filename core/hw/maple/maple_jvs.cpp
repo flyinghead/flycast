@@ -220,6 +220,20 @@ protected:
 		digOutput = newOutput;
 	}
 
+	virtual void read_lightgun(int playerNum, u32 buttons, u16& x, u16& y)
+	{
+		if ((buttons & NAOMI_RELOAD_KEY) != 0)
+		{
+			x = 0;
+			y = 0;
+		}
+		else
+		{
+			x = mapleInputState[playerNum].absPos.x;
+			y = mapleInputState[playerNum].absPos.y;
+		}
+	}
+
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
 	u32 coin_input_count = 0;
@@ -364,6 +378,19 @@ public:
 		: jvs_837_13844(node_id, parent, first_player)
 	{
 		light_gun_count = 1;
+	}
+
+	void read_lightgun(int playerNum, u32 buttons, u16& x, u16& y) override
+	{
+		jvs_837_13844::read_lightgun(playerNum, buttons, x, y);
+
+		if ((buttons & NAOMI_BTN0_KEY) != 0)
+		{
+			// any >= 0x1000 value works after calibration (tduno, tduno2)
+			// no value seems to fully work before :(
+			x |= 0xf000;
+			y |= 0xf000;
+		}
 	}
 };
 
@@ -1821,18 +1848,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						// Channel number (1-based) is in jvs_request[cmdi + 1]
 						int playerNum = first_player + buffer_in[cmdi + 1] - 1;
-						s16 x;
-						s16 y;
-						if ((buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
-						{
-							x = 0;
-							y = 0;
-						}
-						else
-						{
-							x = mapleInputState[playerNum].absPos.x;
-							y = mapleInputState[playerNum].absPos.y;
-						}
+						u16 x;
+						u16 y;
+						read_lightgun(playerNum, buttons[playerNum], x, y);
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB
