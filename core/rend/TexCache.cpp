@@ -453,10 +453,10 @@ void BaseTextureCacheData::unprotectVRam()
 
 bool BaseTextureCacheData::Delete()
 {
+	unprotectVRam();
+
 	if (custom_load_in_progress > 0)
 		return false;
-
-	unprotectVRam();
 
 	free(custom_image_data);
 	custom_image_data = nullptr;
@@ -625,6 +625,7 @@ void BaseTextureCacheData::Update()
 		else
 		{
 			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
+			unprotectVRam();
 			return;
 		}
 	}
