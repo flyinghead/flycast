@@ -53,7 +53,7 @@ private:
 	{
 		switch (event)
 		{
-		case Event::Start:
+		case Event::Resume:
 			gameStarted = true;
 			break;
 		case Event::Terminate:
