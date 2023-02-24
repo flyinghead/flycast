@@ -643,11 +643,11 @@ struct ChannelEx
 	//SA,PCMS
 	void UpdateSA()
 	{
-		u32 addr = (ccd->SA_hi<<16) | ccd->SA_low;
-		if (ccd->PCMS==0)
-			addr&=~1; //0: 16 bit
+		u32 addr = (ccd->SA_hi << 16) | ccd->SA_low;
+		if (ccd->PCMS == 0)
+			addr &= ~1; //0: 16 bit
 		
-		SA=&aica_ram.data[addr];
+		SA = &aica_ram[addr & ARAM_MASK];
 	}
 	//LSA,LEA
 	void UpdateLoop()
@@ -903,6 +903,7 @@ void StepDecodeSample(ChannelEx* ch,u32 CA)
 	if (!last && PCMS<2)
 		return ;
 
+	// TODO bound checking of sample addresses
 	s16* sptr16=(s16*)ch->SA;
 	s8* sptr8=(s8*)sptr16;
 	u8* uptr8=(u8*)sptr16;
