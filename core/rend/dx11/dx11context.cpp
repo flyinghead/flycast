@@ -265,7 +265,7 @@ void DX11Context::resize()
 #endif
 		if (FAILED(hr))
 		{
-			WARN_LOG(RENDERER, "ResizeBuffers failed");
+			WARN_LOG(RENDERER, "ResizeBuffers failed: %x", hr);
 			return;
 		}
 
@@ -274,14 +274,14 @@ void DX11Context::resize()
 		hr = swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&backBuffer.get());
 		if (FAILED(hr))
 		{
-			WARN_LOG(RENDERER, "swapChain->GetBuffer() failed");
+			WARN_LOG(RENDERER, "swapChain->GetBuffer() failed: %x", hr);
 			return;
 		}
 
 		hr = pDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView.get());
 		if (FAILED(hr))
 		{
-			WARN_LOG(RENDERER, "CreateRenderTargetView failed");
+			WARN_LOG(RENDERER, "CreateRenderTargetView failed: %x", hr);
 			return;
 		}
 		pDeviceContext->OMSetRenderTargets(1, &renderTargetView.get(), nullptr);
