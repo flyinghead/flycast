@@ -286,15 +286,25 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExterna
     gui_refresh_files();
 }
 
-static void stopEmu()
+static bool stopEmu()
 {
 	if (!emu.running())
+	{
 		game_started = false;
+	}
 	else
-		emu.stop();
+	{
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			game_started = false;
+			return false;
+		}
+	}
 	// in single-threaded mode, stopping is delayed
 	while (game_started)
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	return true;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)
@@ -346,9 +356,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 		stopEmu();
 		gui_stop_game();
 	}
-	else if (emu.running())
+	else if (stopEmu())
 	{
-		stopEmu();
 		game_started = true; // restart when resumed
 		if (config::AutoSaveState)
 			dc_savestate(config::SavestateSlot);

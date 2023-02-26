@@ -629,13 +629,15 @@ static int suspendEventFilter(void *userdata, SDL_Event *event)
 	if (event->type == SDL_APP_WILLENTERBACKGROUND)
 	{
 		gui_save();
-	    if (gameRunning)
-	    {
-	        emu.stop();
-	        if (config::AutoSaveState)
-	            dc_savestate(config::SavestateSlot);
-	    }
-	    return 0;
+		if (gameRunning)
+		{
+			try {
+				emu.stop();
+				if (config::AutoSaveState)
+					dc_savestate(config::SavestateSlot);
+			} catch (const FlycastException& e) { }
+		}
+		return 0;
 	}
 	return 1;
 }

@@ -455,12 +455,18 @@ void gui_open_settings()
 	{
 		if (!ggpo::active())
 		{
-			gui_state = GuiState::Commands;
 			HideOSD();
-			emu.stop();
+			try {
+				emu.stop();
+				gui_state = GuiState::Commands;
+			} catch (const FlycastException& e) {
+				gui_stop_game(e.what());
+			}
 		}
 		else
+		{
 			chat.toggle();
+		}
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{

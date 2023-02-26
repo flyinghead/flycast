@@ -624,7 +624,9 @@ void Emulator::runInternal()
 
 void Emulator::unloadGame()
 {
-	stop();
+	try {
+		stop();
+	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty() && !settings.naomi.multiboard)
@@ -676,11 +678,10 @@ void Emulator::stop()
 	{
 		rend_cancel_emu_wait();
 		try {
-			auto future = threadResult;
-			if(future.valid())
-				future.get();
+			checkStatus(true);
 		} catch (const FlycastException& e) {
 			WARN_LOG(COMMON, "%s", e.what());
+			throw e;
 		}
 		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
@@ -866,12 +867,11 @@ void Emulator::start()
 					TermAudio();
 				} catch (...) {
 					setNetworkState(false);
-					state = Error;
 					sh4_cpu.Stop();
 					TermAudio();
 					throw;
 				}
-		}).share();
+		});
 	}
 	else
 	{
@@ -882,20 +882,24 @@ void Emulator::start()
 	EventManager::event(Event::Resume);
 }
 
-bool Emulator::checkStatus()
+bool Emulator::checkStatus(bool wait)
 {
 	try {
 		const std::lock_guard<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
-			auto result = threadResult.wait_for(std::chrono::seconds(0));
-			if (result == std::future_status::timeout)
-				return true;
+			if (!wait)
+			{
+				auto result = threadResult.wait_for(std::chrono::seconds(0));
+				if (result == std::future_status::timeout)
+					return true;
+			}
 			threadResult.get();
 		}
 		return false;
 	} catch (...) {
 		EventManager::event(Event::Pause);
+		state = Error;
 		throw;
 	}
 }

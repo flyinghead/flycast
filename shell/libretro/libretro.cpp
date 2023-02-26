@@ -1025,9 +1025,13 @@ static void update_variables(bool first_startup)
 		if (wasThreadedRendering != config::ThreadedRendering)
 		{
 			config::ThreadedRendering = wasThreadedRendering;
-			emu.stop();
-			config::ThreadedRendering = !wasThreadedRendering;
-			emu.start();
+			try {
+				emu.stop();
+				config::ThreadedRendering = !wasThreadedRendering;
+				emu.start();
+			} catch (const FlycastException& e) {
+				ERROR_LOG(COMMON, "%s", e.what());
+			}
 		}
 		if (rotate_screen != (prevRotateScreen ^ rotate_game))
 		{
@@ -2043,7 +2047,12 @@ size_t retro_serialize_size()
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return 0;
+		}
 
 	Serializer ser;
 	dc_serialize(ser);
@@ -2059,7 +2068,12 @@ bool retro_serialize(void *data, size_t size)
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return false;
+		}
 
 	Serializer ser(data, size);
 	dc_serialize(ser);
@@ -2075,7 +2089,12 @@ bool retro_unserialize(const void * data, size_t size)
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return false;
+		}
 
 	try {
 		Deserializer deser(data, size);

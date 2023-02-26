@@ -66,7 +66,9 @@ int flycast_init(int argc, char* argv[])
 
 void dc_exit()
 {
-	emu.stop();
+	try {
+		emu.stop();
+	} catch (...) { }
 	mainui_stop();
 }
 
@@ -152,8 +154,6 @@ void dc_loadstate(int index)
 {
 	u32 total_size = 0;
 	FILE *f = nullptr;
-
-	emu.stop();
 
 	std::string filename = hostfs::getSavestatePath(index, false);
 	RZipFile zipFile;

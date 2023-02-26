@@ -158,7 +158,7 @@ public:
 	void vblank();
 
 private:
-	bool checkStatus();
+	bool checkStatus(bool wait = false);
 	void runInternal();
 
 	enum State {
@@ -170,7 +170,7 @@ private:
 		Terminated,
 	};
 	State state = Uninitialized;
-	std::shared_future<void> threadResult;
+	std::future<void> threadResult;
 	bool resetRequested = false;
 	bool singleStep = false;
 	u64 startTime = 0;
