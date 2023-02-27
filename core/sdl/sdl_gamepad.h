@@ -170,12 +170,9 @@ public:
 		if (joyName == nullptr)
 		{
 			WARN_LOG(INPUT, "Can't get joystick %d name: %s", joystick_idx, SDL_GetError());
-			_name = "Joystick " + std::to_string(joystick_idx);
+			throw FlycastException("joystick failure");
 		}
-		else
-		{
-			_name = joyName;
-		}
+		_name = joyName;
 		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
 		_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 		INFO_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
