@@ -574,7 +574,10 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
 	if (hard)
+	{
 		naomi_cart_Close();
+		networkOutput.reset();
+	}
 }
 
 static u8 aw_maple_devs;

@@ -68,26 +68,24 @@ public:
 		}
 	}
 
+	void reset()
+	{
+		gameNameSent = false;
+	}
+
 	void output(const char *name, u32 value)
 	{
 		if (!config::NetworkOutput)
 			return;
+		if (!gameNameSent)
+		{
+			send("game = " + settings.content.gameId + "\n");
+			gameNameSent = true;
+		}
 		char s[9];
 		sprintf(s, "%x", value);
 		std::string msg = std::string(name) + " = " + std::string(s) + "\n";	// mame uses \r
-		std::vector<sock_t> errorSockets;
-		for (sock_t sock : clients)
-			if (::send(sock, msg.c_str(), msg.length(), 0) < 0)
-			{
-				int error = get_last_error();
-				if (error != L_EWOULDBLOCK && error != L_EAGAIN)
-					errorSockets.push_back(sock);
-			}
-		for (sock_t sock : errorSockets)
-		{
-			closesocket(sock);
-			clients.erase(std::find(clients.begin(), clients.end(), sock));
-		}
+		send(msg);
 	}
 
 private:
@@ -107,8 +105,26 @@ private:
 		}
 	}
 
+	void send(const std::string& msg)
+	{
+		std::vector<sock_t> errorSockets;
+		for (sock_t sock : clients)
+			if (::send(sock, msg.c_str(), msg.length(), 0) < 0)
+			{
+				int error = get_last_error();
+				if (error != L_EWOULDBLOCK && error != L_EAGAIN)
+					errorSockets.push_back(sock);
+			}
+		for (sock_t sock : errorSockets)
+		{
+			closesocket(sock);
+			clients.erase(std::find(clients.begin(), clients.end(), sock));
+		}
+	}
+
 	sock_t server = INVALID_SOCKET;
 	std::vector<sock_t> clients;
+	bool gameNameSent = false;
 };
 
 extern NetworkOutput networkOutput;
