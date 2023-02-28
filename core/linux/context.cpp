@@ -8,15 +8,24 @@
 		#define __USE_GNU 1
 	#endif
 
-  #if !defined(TARGET_NO_EXCEPTIONS)
-    #include <ucontext.h>
-  #endif
+	#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__OpenBSD__)
+		#include <ucontext.h>
+	#endif
+
+	#if defined(__OpenBSD__)
+		#include <signal.h>
+	#endif
+
 #endif
 
 
 //////
 
+#if defined(__OpenBSD__)
+#define MCTX(p) (((ucontext_t *)(segfault_ctx)) p)
+#else
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+#endif
 template <bool ToSegfault, typename Tctx, typename Tseg>
 static void bicopy(Tctx& ctx, Tseg& seg)
 {
@@ -82,6 +91,11 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 #elif HOST_CPU == CPU_X64
 	#if defined(__FreeBSD__) || defined(__DragonFly__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.mc_rip));
+	#elif defined(__OpenBSD__)
+		bicopy<ToSegfault>(hostctx->pc, MCTX(->sc_rip));
+		bicopy<ToSegfault>(hostctx->rsp, MCTX(->sc_rsp));
+		bicopy<ToSegfault>(hostctx->r9, MCTX(->sc_r9));
+		bicopy<ToSegfault>(hostctx->rdi, MCTX(->sc_rdi));
 	#elif defined(__NetBSD__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.__gregs[_REG_RIP]));
 		bicopy<ToSegfault>(hostctx->rsp, MCTX(.__gregs[REG_RSP]));
