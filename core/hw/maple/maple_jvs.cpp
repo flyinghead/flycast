@@ -500,6 +500,9 @@ protected:
 	}
 };
 
+// 837-13844 jvs board wired to force-feedback drive board
+// 838-13843: f355
+// 838-13992: 18 wheeler
 class jvs_837_13844_racing : public jvs_837_13844_motor_board
 {
 public:
@@ -524,6 +527,7 @@ protected:
 	u8 process(u8 in) override
 	{
 		in = ~in;
+		networkOutput.output("m3ffb", in);
 		// E0: stop motor
 		// E3: roll right
 		// EB: roll left
