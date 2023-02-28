@@ -23,7 +23,9 @@
 static u8 *SH4_TCB;
 #else
 alignas(4096) static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE]
-#if defined(__unix__) || defined(__SWITCH__)
+#if defined(__OpenBSD__)
+	__attribute__((section(".openbsd.mutable")));
+#elif defined(__unix__) || defined(__SWITCH__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));

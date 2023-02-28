@@ -50,13 +50,13 @@ OpenGLDriver::OpenGLDriver()
 	for (auto& tex : vmu_lcd_tex_ids)
 		tex = ImTextureID();
 	ImGui_ImplOpenGL3_Init();
-	EventManager::listen(Event::Start, emuEventCallback, this);
+	EventManager::listen(Event::Resume, emuEventCallback, this);
 	EventManager::listen(Event::Terminate, emuEventCallback, this);
 }
 
 OpenGLDriver::~OpenGLDriver()
 {
-	EventManager::unlisten(Event::Start, emuEventCallback, this);
+	EventManager::unlisten(Event::Resume, emuEventCallback, this);
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
 	std::vector<GLuint> texIds;

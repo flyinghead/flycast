@@ -62,8 +62,11 @@ static void sdl_open_joystick(int index)
 		INFO_LOG(INPUT, "SDL: Cannot open joystick %d", index + 1);
 		return;
 	}
-	std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
-	SDLGamepad::AddSDLGamepad(gamepad);
+	try {
+		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		SDLGamepad::AddSDLGamepad(gamepad);
+	} catch (const FlycastException& e) {
+	}
 }
 
 static void sdl_close_joystick(SDL_JoystickID instance)
@@ -195,7 +198,7 @@ void input_sdl_init()
 
 	checkRawInput();
 
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(__OpenBSD__)
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45

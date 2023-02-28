@@ -128,9 +128,14 @@ public:
 		NOTICE_LOG(AUDIO, "Oboe driver stopping");
 		if (stream != nullptr)
 		{
-			stream->stop();
-			stream->close();
+			// Don't let the AudioErrorCallback term/reinit while we are stopping
+			// This won't prevent shit to hit the fan if it's already in the process
+			// of doing so but this is a pretty rare event and happens on devices
+			// that have audio issues already.
+			auto localStream = stream;
 			stream.reset();
+			localStream->stop();
+			localStream->close();
 		}
 	}
 

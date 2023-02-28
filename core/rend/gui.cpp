@@ -2952,6 +2952,7 @@ void gui_term()
 	if (inited)
 	{
 		inited = false;
+		scanner.stop();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);

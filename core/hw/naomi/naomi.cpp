@@ -528,6 +528,7 @@ void naomi_reg_Reset(bool hard)
 		}
 		if (settings.naomi.multiboard)
 			multiboard = new Multiboard();
+		networkOutput.reset();
 	}
 	else if (multiboard != nullptr)
 		multiboard->reset();
