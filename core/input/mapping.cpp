@@ -56,6 +56,8 @@ button_list[] =
 	{ DC_AXIS_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
 	{ EMU_BTN_INSERT_CARD, "emulator", "insert_card" },
+	{ EMU_BTN_LOADSTATE, "emulator", "btn_jump_state" },
+	{ EMU_BTN_SAVESTATE, "emulator", "btn_quick_save" },
 };
 
 static struct

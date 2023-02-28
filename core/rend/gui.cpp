@@ -517,6 +517,11 @@ void gui_stop_game(const std::string& message)
 	}
 }
 
+static bool savestateAllowed()
+{
+	return !settings.content.path.empty() && !settings.network.online && !settings.naomi.multiboard;
+}
+
 static void gui_display_commands()
 {
    	imguiDriver->displayVmus();
@@ -527,10 +532,10 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
     {
-    	DisabledScope scope(settings.content.path.empty() || settings.network.online || settings.naomi.multiboard);
+    	DisabledScope scope(!savestateAllowed());
 
 		// Load State
-		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
 			gui_state = GuiState::Closed;
 			dc_loadstate(config::SavestateSlot);
@@ -554,7 +559,7 @@ static void gui_display_commands()
 		ImGui::SameLine();
 
 		// Save State
-		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
 			gui_state = GuiState::Closed;
 			dc_savestate(config::SavestateSlot);
@@ -727,6 +732,8 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_LOADSTATE, "Load State" },
+	{ EMU_BTN_SAVESTATE, "Save State" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -774,6 +781,8 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_LOADSTATE, "Load State" },
+	{ EMU_BTN_SAVESTATE, "Save State" },
 	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, nullptr }
@@ -1033,6 +1042,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::SameLine();
 
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
+
+		if (last_item_current_map_idx == 2 && game_started)
+			// Select the right mappings for the current game
+			item_current_map_idx = settings.platform.isArcade() ? 1 : 0;
 
 		// Here our selection data is an index.
 
@@ -2997,6 +3010,37 @@ void gui_save()
 {
 	boxart.saveDatabase();
 }
+
+void gui_loadState()
+{
+	const LockGuard lock(guiMutex);
+	if (gui_state == GuiState::Closed && savestateAllowed())
+	{
+		try {
+			emu.stop();
+			dc_loadstate(config::SavestateSlot);
+			emu.start();
+		} catch (const FlycastException& e) {
+			gui_stop_game(e.what());
+		}
+	}
+}
+
+void gui_saveState()
+{
+	const LockGuard lock(guiMutex);
+	if (gui_state == GuiState::Closed && savestateAllowed())
+	{
+		try {
+			emu.stop();
+			dc_savestate(config::SavestateSlot);
+			emu.start();
+		} catch (const FlycastException& e) {
+			gui_stop_game(e.what());
+		}
+	}
+}
+
 
 #ifdef TARGET_UWP
 // Ugly but a good workaround for MS stupidity
