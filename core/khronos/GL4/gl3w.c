@@ -117,7 +117,7 @@ static int open_libgl(void)
 {
 #if defined(__OpenBSD__)
 	libgl = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
-#elif
+#else
 	libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
 #endif
 	if (!libgl)
