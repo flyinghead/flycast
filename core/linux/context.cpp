@@ -21,7 +21,11 @@
 
 //////
 
+#if defined(__OpenBSD__)
 #define MCTX(p) (((ucontext_t *)(segfault_ctx)) p)
+#else
+#define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+#endif
 template <bool ToSegfault, typename Tctx, typename Tseg>
 static void bicopy(Tctx& ctx, Tseg& seg)
 {
