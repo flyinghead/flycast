@@ -202,7 +202,7 @@ void input_sdl_init()
 
 	checkRawInput();
 
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(__OpenBSD__)
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45
