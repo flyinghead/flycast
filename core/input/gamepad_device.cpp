@@ -24,6 +24,7 @@
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/naomi/card_reader.h"
+#include "mouse.h"
 
 #include <algorithm>
 #include <mutex>
@@ -235,6 +236,16 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			default:
 				return false;
+			}
+			// Lightgun with left analog stick
+			int& lastValue = lastAxisValue[port][key];
+			if (lastValue != v)
+			{
+				lastValue = v;
+				if (key == DC_AXIS_RIGHT || key == DC_AXIS_LEFT)
+					mo_x_abs[port] = (std::abs(v) * axisDirection + 32768) * 639 / 65535;
+				else if (key == DC_AXIS_UP || key == DC_AXIS_DOWN)
+					mo_y_abs[port] = (std::abs(v) * axisDirection + 32768) * 479 / 65535;
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
