@@ -33,12 +33,12 @@ static inline uintptr_t elf32_getEntryPoint(const elf_t *elf)
 
 static inline const Elf32_Phdr *elf32_getProgramHeaderTable(const elf_t *file)
 {
-    return file->elfFile + elf32_getHeader(file).e_phoff;
+    return (Elf32_Phdr*) (uintptr_t) ((uintptr_t)(file->elfFile) + elf32_getHeader(file).e_phoff);
 }
 
 static inline const Elf32_Shdr *elf32_getSectionTable(const elf_t *elf)
 {
-    return elf->elfFile + elf32_getHeader(elf).e_shoff;
+    return (Elf32_Shdr*) (uintptr_t) ((uintptr_t)(elf->elfFile) + elf32_getHeader(elf).e_shoff);
 }
 
 static inline size_t elf32_getNumProgramHeaders(const elf_t *elf)

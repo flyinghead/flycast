@@ -30,7 +30,14 @@ ELF file into memory.
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#if defined(_WIN32) || defined(__APPLE__)
+#include <elf/exec_elf.h>
+typedef Elf64_Ehdr Elf64_Header;
+typedef Elf32_Ehdr Elf32_Header;
+#else
 #include <elf.h>
+#endif
 
 struct elf {
     void const *elfFile;

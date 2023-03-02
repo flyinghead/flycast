@@ -33,8 +33,12 @@
 #ifndef _SYS_EXEC_ELF_H_
 #define _SYS_EXEC_ELF_H_
 
-#include <sys/types.h>
-#include <machine/exec.h>
+typedef uint64_t	__uint64_t;
+typedef int64_t		__int64_t;
+typedef uint32_t	__uint32_t;
+typedef int32_t		__int32_t;
+typedef uint16_t	__uint16_t;
+typedef int16_t		__int16_t;
 
 typedef __uint32_t	Elf32_Addr;	/* Unsigned program address */
 typedef __uint32_t	Elf32_Off;	/* Unsigned file offset */
@@ -802,10 +806,6 @@ struct elf_args {
 
 #define ELF_NO_ADDR	ELF64_NO_ADDR
 #define AuxInfo		Aux64Info
-#endif
-
-#ifndef _KERNEL
-extern Elf_Dyn		_DYNAMIC[];
 #endif
 
 #ifdef	_KERNEL

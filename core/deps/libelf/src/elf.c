@@ -176,7 +176,7 @@ const void *elf_getSection(const elf_t *elf, size_t i)
         return NULL;
     }
 
-    return elf->elfFile + section_offset;
+    return (char *)elf->elfFile + section_offset;
 }
 
 const void *elf_getSectionNamed(const elf_t *elfFile, const char *str, size_t *id)
@@ -309,7 +309,7 @@ const void *elf_getProgramSegment(const elf_t *elf, size_t ph)
         return NULL;
     }
 
-    return elf->elfFile + offset;
+    return (char *)elf->elfFile + offset;
 }
 
 uint32_t elf_getProgramHeaderType(const elf_t *elfFile, size_t ph)
