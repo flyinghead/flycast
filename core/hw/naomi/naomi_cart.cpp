@@ -614,7 +614,9 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			atomiswaveForceFeedback = true;
 		}
-		else if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
+		else if (gameId == "THE KING OF ROUTE66"
+				|| gameId == "CLUB KART IN JAPAN"
+				|| gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{
 			initMidiForceFeedback();
 		}

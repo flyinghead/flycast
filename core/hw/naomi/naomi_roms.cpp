@@ -6709,6 +6709,7 @@ const Game Games[] =
         },
 		nullptr,
 		&kingrt66_inputs,
+		kingrt66_eeprom_dump,
     },
     {
     	"kingrt66p",
@@ -6830,6 +6831,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
 	{
     	"clubkrta",
@@ -6856,6 +6858,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrtc",
@@ -6882,6 +6885,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrt",
@@ -6908,6 +6912,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkprz",
@@ -7006,6 +7011,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubk2k3_eeprom_dump,
     },
     {
     	"clubk2kp",

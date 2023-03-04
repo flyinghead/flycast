@@ -538,7 +538,8 @@ static u8 aw_maple_devs;
 static u64 coin_chute_time[4];
 static u8 awDigitalOuput;
 
-u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
+u32 libExtDevice_ReadMem_A0_006(u32 addr, u32 size)
+{
 	addr &= 0x7ff;
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
@@ -600,7 +601,8 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	return 0xFF;
 }
 
-void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
+void libExtDevice_WriteMem_A0_006(u32 addr, u32 data, u32 size)
+{
 	addr &= 0x7ff;
 	//printf("libExtDevice_WriteMem_A0_006 %d@%08x: %x\n", size, addr, data);
 	switch (addr)
@@ -640,6 +642,8 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }
 
+static bool ffbCalibrating;
+
 void naomi_Serialize(Serializer& ser)
 {
 	ser << GSerialBuffer;
@@ -671,6 +675,7 @@ void naomi_Serialize(Serializer& ser)
 	ser << midiTxBuf;
 	ser << midiTxBufIndex;
 	// TODO serialize m3comm?
+	ser << ffbCalibrating;
 }
 void naomi_Deserialize(Deserializer& deser)
 {
@@ -715,6 +720,10 @@ void naomi_Deserialize(Deserializer& deser)
 	{
 		midiTxBufIndex = 0;
 	}
+	if (deser.version() >= Deserializer::V34)
+		deser >> ffbCalibrating;
+	else
+		ffbCalibrating = false;
 }
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
@@ -738,16 +747,18 @@ static void forceFeedbackMidiReceiver(u8 data)
 		if (midiTxBuf[0] == 0x84)
 			torque = ((midiTxBuf[1] << 7) | midiTxBuf[2]) - 0x80;
 		else if (midiTxBuf[0] == 0xff)
-		{
-			torque = 0;
-			position = 8192;
-		}
+			ffbCalibrating = true;
+		else if (midiTxBuf[0] == 0xf0)
+			ffbCalibrating = false;
+
+		if (!ffbCalibrating)
+			position = std::clamp(-mapleInputState[0].fullAxes[0] * 64.f + 8192.f, 0.f, 16383.f);
 		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
 		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
 
 		// decoding from FFB Arcade Plugin (by Boomslangnz)
 		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
-		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
+		if (midiTxBuf[0] == 0x85)
 			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
 		if (midiTxBuf[0] != 0xfd)
 			networkOutput.output("midiffb", (midiTxBuf[0] << 16) | (midiTxBuf[1]) << 8 | midiTxBuf[2]);

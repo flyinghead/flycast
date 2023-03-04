@@ -450,6 +450,12 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202);
 			cheats.back().builtIn = true;
 		}
+		else if (gameId == "THE KING OF ROUTE66")
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B); // rts, nop
+			cheats.back().builtIn = true;
+		}
 	}
 	if (config::WidescreenGameHacks)
 	{
