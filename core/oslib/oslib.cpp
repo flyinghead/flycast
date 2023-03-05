@@ -30,6 +30,9 @@ namespace hostfs
 
 std::string getVmuPath(const std::string& port)
 {
+	if (port == "A1" && config::PerGameVmu && !settings.content.path.empty())
+		return get_game_save_prefix() + "_vmu_save_A1.bin";
+
 	char tempy[512];
 	sprintf(tempy, "vmu_save_%s.bin", port.c_str());
 	// VMU saves used to be stored in .reicast, not in .reicast/data

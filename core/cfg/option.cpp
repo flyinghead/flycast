@@ -181,6 +181,7 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
 };
+Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif

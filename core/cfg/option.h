@@ -521,6 +521,7 @@ extern Option<int> MouseSensitivity;
 extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
+extern Option<bool> PerGameVmu;
 #ifdef _WIN32
 extern Option<bool, false> UseRawInput;
 #else

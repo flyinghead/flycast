@@ -1652,6 +1652,7 @@ static void gui_display_settings()
 					}
 					ImGui::PopItemWidth();
 				}
+				OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
 		    }
 
 			ImGui::PopStyleVar();
