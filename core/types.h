@@ -284,6 +284,7 @@ struct settings_t
 		JVS JammaSetup;
 		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 		bool fastForwardMode;
+		bool lightgunGame; // or touchscreen
 	} input;
 
 	struct

@@ -494,7 +494,7 @@ void startSession(int localPort, int localPlayerNum)
 		absPointerPos = false;
 		keyboardGame = false;
 		mouseGame = false;
-		if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+		if (settings.input.lightgunGame)
 			absPointerPos = true;
 		else if (settings.input.JammaSetup == JVS::Keyboard)
 			keyboardGame = true;

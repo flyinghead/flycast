@@ -51,6 +51,8 @@ static void loadSpecialSettings()
 	std::string& prod_id = settings.content.gameId;
 	NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 
+	settings.input.lightgunGame = false;
+
 	if (settings.platform.isConsole())
 	{
 		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
@@ -290,11 +292,13 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGun;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == "MAZAN")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::Mazan;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == " BIOHAZARD  GUN SURVIVOR2")
 		{
@@ -331,6 +335,7 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGunAsAnalog;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == "WAVE RUNNER GP")
 		{
@@ -352,10 +357,16 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DogWalking;
 		}
-		else if (prod_id == " TOUCH DE UNOH -------------"|| prod_id == " TOUCH DE UNOH 2 -----------")
+		else if (prod_id == " TOUCH DE UNOH -------------" || prod_id == " TOUCH DE UNOH 2 -----------")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::TouchDeUno;
+			settings.input.lightgunGame = true;
+		}
+		else if (prod_id == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
+				|| prod_id == "TOUCH DE ZUNO (JAPAN)")
+		{
+			settings.input.lightgunGame = true;
 		}
 	}
 }
