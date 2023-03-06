@@ -356,7 +356,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 		stopEmu();
 		gui_stop_game();
 	}
-	else if (stopEmu())
+	else if (game_started && stopEmu())
 	{
 		game_started = true; // restart when resumed
 		if (config::AutoSaveState)
