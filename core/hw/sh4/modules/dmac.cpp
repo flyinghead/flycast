@@ -29,7 +29,9 @@ void DMAC_Ch2St()
 	if ((src >> 26) != 3)
 	{
 		// Source address must be in system RAM
-		INFO_LOG(SH4, "DMAC: invalid source address %x", DMAC_SAR(2));
+		WARN_LOG(SH4, "DMAC: invalid source address %x dest %x len %x", DMAC_SAR(2), SB_C2DSTAT, SB_C2DLEN);
+		DMAC_DMAOR.AE = 1;
+		asic_RaiseInterrupt(holly_CH2_DMA);
 		return;
 	}
 
