@@ -334,6 +334,27 @@ void DX11Context::handleDeviceLost()
 		renderer->Init();
 	}
 }
+
+const pD3DCompile DX11Context::getCompiler()
+{
+	if (d3dcompiler == nullptr)
+	{
+#ifndef TARGET_UWP
+		d3dcompilerHandle = LoadLibraryA("d3dcompiler_47.dll");
+		if (d3dcompilerHandle == NULL)
+			d3dcompilerHandle = LoadLibraryA("d3dcompiler_46.dll");
+		if (d3dcompilerHandle == NULL)
+		{
+			WARN_LOG(RENDERER, "Neither d3dcompiler_47.dll or d3dcompiler_46.dll can be loaded");
+			return D3DCompile;
+		}
+		d3dcompiler = (pD3DCompile)GetProcAddress(d3dcompilerHandle, "D3DCompile");
+#endif
+		if (d3dcompiler == nullptr)
+			d3dcompiler = D3DCompile;
+	}
+	return d3dcompiler;
+}
 #endif // !LIBRETRO
 
 bool DX11Context::checkTextureSupport()
@@ -368,25 +389,4 @@ bool DX11Context::checkTextureSupport()
 	}
 
 	return true;
-}
-
-const pD3DCompile DX11Context::getCompiler()
-{
-	if (d3dcompiler == nullptr)
-	{
-#ifndef TARGET_UWP
-		d3dcompilerHandle = LoadLibraryA("d3dcompiler_47.dll");
-		if (d3dcompilerHandle == NULL)
-			d3dcompilerHandle = LoadLibraryA("d3dcompiler_46.dll");
-		if (d3dcompilerHandle == NULL)
-		{
-			WARN_LOG(RENDERER, "Neither d3dcompiler_47.dll or d3dcompiler_46.dll can be loaded");
-			return D3DCompile;
-		}
-		d3dcompiler = (pD3DCompile)GetProcAddress(d3dcompilerHandle, "D3DCompile");
-#endif
-		if (d3dcompiler == nullptr)
-			d3dcompiler = D3DCompile;
-	}
-	return d3dcompiler;
 }
