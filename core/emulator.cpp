@@ -680,9 +680,15 @@ void Emulator::stop()
 	}
 	else
 	{
+#ifdef __ANDROID__
 		// defer stopping audio until after the current frame is finished
 		// normally only useful on android due to multithreading
 		stopRequested = true;
+#else
+		TermAudio();
+		SaveRomFiles();
+		EventManager::event(Event::Pause);
+#endif
 	}
 }
 
@@ -751,6 +757,8 @@ void dc_loadstate(Deserializer& deser)
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
 #endif
+	memwatch::unprotect();
+	memwatch::reset();
 
 	dc_deserialize(deser);
 
