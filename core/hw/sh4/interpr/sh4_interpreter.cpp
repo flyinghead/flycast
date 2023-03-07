@@ -12,22 +12,33 @@
 #include "../sh4_sched.h"
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
+#include "../sh4_cycles.h"
 
-#define CPU_RATIO      (8)
+// SH4 underclock factor when using the interpreter so that it's somewhat usable
+#ifdef STRICT_MODE
+constexpr int CPU_RATIO = 1;
+#else
+constexpr int CPU_RATIO = 8;
+#endif
 
-sh4_icache icache;
-sh4_ocache ocache;
+Sh4ICache icache;
+Sh4OCache ocache;
+Sh4Cycles sh4cycles(CPU_RATIO);
 
 static void ExecuteOpcode(u16 op)
 {
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
-	p_sh4rcb->cntx.cycle_counter -= CPU_RATIO;
+	sh4cycles.executeCycles(op);
 }
 
 static u16 ReadNexOp()
 {
+	if (!mmu_enabled() && (next_pc & 1))
+		// address error
+		throw SH4ThrownException(next_pc, Sh4Ex_AddressErrorRead);
+
 	u32 addr = next_pc;
 	next_pc += 2;
 
@@ -53,7 +64,8 @@ static void Sh4_int_Run()
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
 				Do_Exception(ex.epc, ex.expEvn);
-				p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+				// an exception requires the instruction pipeline to drain, so approx 5 cycles
+				sh4cycles.addCycles(5 * CPU_RATIO);
 			}
 		} while (sh4_int_bCpuRun);
 	} catch (const debugger::Stop&) {
@@ -77,7 +89,8 @@ static void Sh4_int_Step()
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException& ex) {
 		Do_Exception(ex.epc, ex.expEvn);
-		p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+		// an exception requires the instruction pipeline to drain, so approx 5 cycles
+		sh4cycles.addCycles(5 * CPU_RATIO);
 	} catch (const debugger::Stop&) {
 	}
 }
@@ -109,6 +122,7 @@ static void Sh4_int_Reset(bool hard)
 	UpdateFPSCR();
 	icache.Reset(hard);
 	ocache.Reset(hard);
+	sh4cycles.reset();
 	p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	INFO_LOG(INTERPRETER, "Sh4 Reset");

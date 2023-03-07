@@ -2152,12 +2152,6 @@ static void gui_display_settings()
 					"Use the interpreter. Very slow but may help in case of a dynarec problem");
 				ImGui::Columns(1, NULL, false);
 		    }
-		    if (config::DynarecEnabled)
-		    {
-		    	ImGui::Spacing();
-		    	header("Dynarec Options");
-		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
-		    }
 	    	ImGui::Spacing();
 		    header("Network");
 		    {

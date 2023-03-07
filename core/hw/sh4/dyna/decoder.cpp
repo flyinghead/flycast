@@ -14,6 +14,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_cycles.h"
 #include "hw/sh4/modules/mmu.h"
 #include "decoder_opcodes.h"
 #include "cfg/option.h"
@@ -22,30 +23,7 @@
 #define BLOCK_MAX_SH_OPS_HARD 511
 
 static RuntimeBlockInfo* blk;
-
-static const char idle_hash[] =
-       //BIOS
-       ">:1:05:13B23363"
-       ">:1:04:2E23A33B"
-       ">:1:04:FB498832"
-       ">:1:0A:50A249F9"
-
-       //SC
-       ">:1:0A:B4E90338"
-       ">:1:04:11578A16"
-       ">:1:04:C281CC52"
-
-       //HH
-       ">:1:07:0757DC10"
-       ">:1:04:1476CC5E"
-
-       //these look very suspicious, but I'm not sure about any of them
-       //cross testing w/ IKA makes them more suspects than not
-       ">:1:0D:8C2921FF"
-       ">:1:04:B806EEE4"
-
-       // Dead or Alive 2
-       ">:1:08:0A37187A";
+static Sh4Cycles cycleCounter;
 
 static inline shil_param mk_imm(u32 immv)
 {
@@ -635,9 +613,6 @@ static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &r
 
 static bool MatchDiv32u(u32 op,u32 pc)
 {
-	if (config::DynarecSafeMode)
-		return false;
-
 	div_som_reg1 = NoReg;
 	div_som_reg2 = NoReg;
 	div_som_reg3 = NoReg;
@@ -649,9 +624,6 @@ static bool MatchDiv32u(u32 op,u32 pc)
 
 static bool MatchDiv32s(u32 op,u32 pc)
 {
-	if (config::DynarecSafeMode)
-		return false;
-
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
@@ -866,9 +838,13 @@ static bool dec_generic(u32 op)
 
 					Emit(shop_div32p2, mk_reg(div_som_reg3), mk_reg(div_som_reg3), mk_reg(div_som_reg2), 0, mk_reg(reg_sr_T));
 					
+					for (int i = 1; i <= 64; i++)
+					{
+						u16 op = IReadMem16(state.cpu.rpc + i * 2);
+						blk->guest_cycles += cycleCounter.countCycles(op);
+					}
 					//skip the aggregated opcodes
 					state.cpu.rpc += 128;
-					blk->guest_cycles += 64;
 				}
 				else
 				{
@@ -898,9 +874,13 @@ static bool dec_generic(u32 op)
 					
 					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(1));					// clean up T
 
+					for (int i = 1; i <= 64; i++)
+					{
+						u16 op = IReadMem16(state.cpu.rpc + i * 2);
+						blk->guest_cycles += cycleCounter.countCycles(op);
+					}
 					//skip the aggregated opcodes
-					state.cpu.rpc+=128;
-					blk->guest_cycles += 64;
+					state.cpu.rpc += 128;
 				}
 				else
 				{
@@ -964,15 +944,7 @@ static void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 
 void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
 {
-	if (!mmu_enabled())
-	{
-		if (op < 0xF000)
-			block->guest_cycles++;
-	}
-	else
-	{
-		block->guest_cycles += std::max((int)OpDesc[op]->LatencyCycles, 1);
-	}
+	block->guest_cycles += cycleCounter.countCycles(op);
 }
 
 bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
@@ -980,7 +952,8 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 	blk=rbi;
 	state_Setup(blk->vaddr, blk->fpu_cfg);
 	
-	blk->guest_opcodes=0;
+	blk->guest_opcodes = 0;
+	cycleCounter.reset();
 	// If full MMU, don't allow the block to extend past the end of the current 4K page
 	u32 max_pc = mmu_enabled() ? ((state.cpu.rpc >> 12) + 1) << 12 : 0xFFFFFFFF;
 	
@@ -1084,75 +1057,11 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
-#if 0
-	switch(rbi->addr)
-	{
-	case 0x8C09ED16:
-	case 0x8C0BA50E:
-	case 0x8C0BA506:
-	case 0x8C0BA526:
-	case 0x8C224800:
-		INFO_LOG(DYNAREC, "HASH: %08X reloc %s", blk->addr, blk->hash());
-		break;
-	}
-#endif
-
-	//cycle tricks
-	if (config::DynarecIdleSkip)
-	{
-		//Experimental hash-id based idle skip
-		if (!mmu_enabled() && strstr(idle_hash, blk->hash()))
-		{
-			DEBUG_LOG(DYNAREC, "IDLESKIP: %08X reloc match %s", blk->addr, blk->hash());
-			blk->guest_cycles = max_cycles;
-		}
-		else
-		{
-			//Small-n-simple idle loop detector :p
-			if (state.info.has_readm && !state.info.has_writem && !state.info.has_fpu && blk->guest_opcodes<6)
-			{
-				if (blk->BlockType==BET_Cond_0 || (blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->vaddr))
-				{
-					blk->guest_cycles*=3;
-				}
-
-				if (blk->BranchBlock==blk->vaddr)
-				{
-					blk->guest_cycles*=10;
-				}
-			}
-
-			//if in syscalls area (ip.bin etc) skip fast :p
-			if ((blk->addr&0x1FFF0000)==0x0C000000)
-			{
-				if (blk->addr&0x8000)
-				{
-					//ip.bin (boot loader/img etc)
-					blk->guest_cycles*=15;
-				}
-				else
-				{
-					//syscalls
-					blk->guest_cycles*=5;
-				}
-			}
-
-			//blk->guest_cycles=5;
-		}
-	}
-	else
-	{
-		blk->guest_cycles*=1.5;
-	}
-	// Win CE boost
-	if (mmu_enabled())
-		blk->guest_cycles *= 1.5f;
-
 	//make sure we don't use wayy-too-many cycles
 	blk->guest_cycles = std::min(blk->guest_cycles, max_cycles);
 	//make sure we don't use wayy-too-few cycles
 	blk->guest_cycles = std::max(1U, blk->guest_cycles);
-	blk=0;
+	blk = nullptr;
 
 	return true;
 }

@@ -67,6 +67,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 			// This should make this syscall faster
 			r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
 			next_pc = pr;
+			Sh4cntx.cycle_counter -= 100;
 			break;
 
 		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
@@ -79,6 +80,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 					*ptr = sh4_sched_now64() >> 4;
 					r[0] = 1;
 					next_pc = pr;
+					Sh4cntx.cycle_counter -= 100;
 				}
 				else
 				{
@@ -570,11 +572,8 @@ void bm_RamWriteAccess(u32 addr)
 {
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
-	{
-		//ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
-		//die("Fatal error");
 		return;
-	}
+
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
 	std::set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
@@ -585,9 +584,7 @@ void bm_RamWriteAccess(u32 addr)
 		if (!list_copy.empty())
 			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
 		for (auto& block : list_copy)
-		{
 			bm_DiscardBlock(block);
-		}
 		verify(block_list.empty());
 	}
 }
@@ -665,8 +662,6 @@ void print_blocks()
 			fprintf(f,"block: %p\n",blk.get());
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
-			fprintf(f,"hash: %s\n",blk->hash());
-			fprintf(f,"hash_rloc: %s\n",blk->hash());
 			fprintf(f,"code: %p\n",blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);

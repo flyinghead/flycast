@@ -25,7 +25,6 @@ namespace config {
 // Dynarec
 
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
-Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 
 // General
 

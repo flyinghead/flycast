@@ -177,7 +177,6 @@ CONFIG_ACCESSORS(AudioVolume)
 
 // Advanced
 CONFIG_ACCESSORS(DynarecEnabled)
-CONFIG_ACCESSORS(DynarecIdleSkip)
 CONFIG_ACCESSORS(SerialConsole)
 CONFIG_ACCESSORS(SerialPTY)
 CONFIG_ACCESSORS(UseReios)
@@ -501,7 +500,6 @@ static void luaRegister(lua_State *L)
 
 				.beginNamespace("advanced")
 					CONFIG_PROPERTY(DynarecEnabled, bool)
-					CONFIG_PROPERTY(DynarecIdleSkip, bool)
 					CONFIG_PROPERTY(SerialConsole, bool)
 					CONFIG_PROPERTY(SerialPTY, bool)
 					CONFIG_PROPERTY(UseReios, bool)

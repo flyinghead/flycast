@@ -356,8 +356,6 @@ using OptionString = Option<std::string>;
 // Dynarec
 
 extern Option<bool> DynarecEnabled;
-extern Option<bool> DynarecIdleSkip;
-constexpr bool DynarecSafeMode = false;
 
 // General
 

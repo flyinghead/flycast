@@ -23,6 +23,7 @@
 #include "modules/mmu.h"
 #include "hw/sh4/sh4_core.h"
 #include "serialize.h"
+#include "sh4_cycles.h"
 
 static bool cachedArea(u32 area)
 {
@@ -51,7 +52,7 @@ static bool translatedArea(u32 area)
 //
 // SH4 instruction cache
 //
-class sh4_icache
+class Sh4ICache
 {
 public:
 	u16 ReadMem(u32 address)
@@ -61,9 +62,10 @@ public:
 		MmuError err = translateAddress(address, physAddr, cacheOn);
 		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_IREAD);
-
-		if (!cacheOn)
+		if (!cacheOn) {
+			sh4cycles.addReadAccessCycles(physAddr, 2);
 			return addrspace::readt<u16>(physAddr);
+		}
 
 		const u32 index = CCN_CCR.IIX ?
 				((address >> 5) & 0x7f) | ((address >> (25 - 7)) & 0x80)
@@ -85,6 +87,7 @@ public:
 				for (int i = 0; i < 32; i += 4)
 					*p++ = addrspace::read32(line_addr + i);
 			}
+			sh4cycles.addReadAccessCycles(physAddr, 32);
 		}
 
 		return *(u16*)&line.data[physAddr & 0x1f];
@@ -179,9 +182,8 @@ private:
 		if (userMode)
 		{
 			// kernel mem protected in user mode
-			// FIXME this makes WinCE fail
-			//if (address & 0x80000000)
-			//	return MmuError::BADADDR;
+			if (address & 0x80000000)
+				return MmuError::BADADDR;
 		}
 		else
 		{
@@ -221,12 +223,12 @@ private:
 	std::array<cache_line, 256> lines;
 };
 
-extern sh4_icache icache;
+extern Sh4ICache icache;
 
 //
 // SH4 operand cache
 //
-class sh4_ocache
+class Sh4OCache
 {
 public:
 	template<class T>
@@ -239,8 +241,10 @@ public:
 		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DREAD);
 
-		if (!cacheOn)
+		if (!cacheOn) {
+			sh4cycles.addReadAccessCycles(physAddr, sizeof(T));
 			return addrspace::readt<T>(physAddr);
+		}
 
 		const u32 index = lineIndex(address);
 		cache_line& line = lines[index];
@@ -270,6 +274,7 @@ public:
 
 		if (!cacheOn)
 		{
+			addWriteThroughCycles(physAddr, sizeof(T));
 			addrspace::writet<T>(physAddr, data);
 			return;
 		}
@@ -304,6 +309,7 @@ public:
 		{
 			// write-through => update main ram
 			addrspace::writet<T>(physAddr, data);
+			addWriteThroughCycles(physAddr, sizeof(T));
 		}
 	}
 
@@ -472,6 +478,7 @@ private:
 			for (int i = 0; i < 32; i += 4)
 				*p++ = addrspace::read32(line_addr + i);
 		}
+		sh4cycles.addReadAccessCycles(address, 32);
 	}
 
 	void doWriteBack(u32 index, cache_line& line)
@@ -488,6 +495,7 @@ private:
 			for (int i = 0; i < 32; i += 4)
 				addrspace::write32(line_addr + i, *p++);
 		}
+		addWriteBackCycles(line_addr);
 	}
 
 	template<class T, u32 ACCESS>
@@ -558,10 +566,32 @@ private:
 		return MmuError::NONE;
 	}
 
+	void addWriteBackCycles(u32 addr)
+	{
+		u64 now = sh4cycles.now();
+		if (writeBackBufferCycles > now)
+			sh4cycles.addCycles(writeBackBufferCycles - now);
+		writeBackBufferCycles = now + sh4cycles.writeAccessCycles(addr, 32);
+	}
+
+	void addWriteThroughCycles(u32 addr, int size)
+	{
+		u64 now = sh4cycles.now();
+		if (writeThroughBufferCycles > now)
+			sh4cycles.addCycles(writeThroughBufferCycles - now);
+		int cycles = sh4cycles.writeAccessCycles(addr, std::min(size, 8));
+		if (size == 32)
+			sh4cycles.addCycles(cycles * 3);
+		writeThroughBufferCycles = now + cycles;
+	}
+
 	std::array<cache_line, 512> lines;
+	// TODO serialize
+	u64 writeBackBufferCycles = 0;
+	u64 writeThroughBufferCycles = 0;
 };
 
-extern sh4_ocache ocache;
+extern Sh4OCache ocache;
 
 template<class T>
 T ReadCachedMem(u32 address)

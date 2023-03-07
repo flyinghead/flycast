@@ -256,6 +256,8 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 		cache_entry(entry);
 
+		p_sh4rcb->cntx.cycle_counter -= 164;
+
 		return MmuError::NONE;
 	}
 #endif

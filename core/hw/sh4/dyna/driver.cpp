@@ -15,8 +15,6 @@
 #include "decoder.h"
 #include "oslib/virtmem.h"
 
-#include <xxhash.h>
-
 #if FEAT_SHREC != DYNAREC_NONE
 
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
@@ -95,34 +93,6 @@ u32 emit_FreeSpace()
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
-
-const char* RuntimeBlockInfo::hash()
-{
-	XXH32_hash_t hash = 0;
-
-	u8* ptr = GetMemPtr(this->addr, this->sh4_code_size);
-
-	if (ptr)
-	{
-		XXH32_state_t *state = XXH32_createState();
-		XXH32_reset(state, 7);
-		for (u32 i = 0; i < this->guest_opcodes; i++)
-		{
-			u16 data = ptr[i];
-			//Do not count PC relative loads (relocated code)
-			if ((data >> 12) == 0xD)
-				data = 0xD000;
-
-			XXH32_update(state, &data, 2);
-		}
-		hash = XXH32_digest(state);
-		XXH32_freeState(state);
-	}
-	static char block_hash[20];
-	sprintf(block_hash, ">:1:%02X:%08X", this->guest_opcodes, hash);
-
-	return block_hash;
-}
 
 bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
