@@ -89,17 +89,17 @@ static const InterptSourceList_Entry InterruptSourceList[sh4_INT_ID_COUNT] =
 };
 
 //Maps siid -> EventID
-alignas(64) Sh4ExceptionCode InterruptEnvId[32];
+alignas(64) static Sh4ExceptionCode InterruptEnvId[32];
 //Maps piid -> 1<<siid
-alignas(64) u32 InterruptBit[32];
+alignas(64) static u32 InterruptBit[32];
 //Maps sh4 interrupt level to inclusive bitfield
-alignas(64) u32 InterruptLevelBit[16];
+alignas(64) static u32 InterruptLevelBit[16];
 
 static void Do_Interrupt(Sh4ExceptionCode intEvn);
 
-u32 interrupt_vpend; // Vector of pending interrupts
-u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
-u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
+static u32 interrupt_vpend; // Vector of pending interrupts
+static u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
+static u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
 
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
 static void recalc_pending_itrs()
