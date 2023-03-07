@@ -118,29 +118,97 @@ static void WriteCHCR(u32 addr, u32 data)
 		DMAC_CHCR(ch).full = data & 0xff0afff7;
 
 	if (DMAC_CHCR(ch).TE == 0 && DMAC_CHCR(ch).DE && DMAC_DMAOR.DME)
-    {
+	{
 		if (DMAC_CHCR(ch).RS == 4)
-        {
-			u32 len = DMAC_DMATCR(ch) * 32;
+		{
+			DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
+					DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+			u32 src = DMAC_SAR(ch);
+			u32 len = DMAC_DMATCR(ch);
+			u32 dst = DMAC_DAR(ch);
 
-            DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
-            		DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
-            verify(DMAC_CHCR(ch).TS == 4);
-            for (u32 ofs = 0; ofs < len; ofs += 4)
-            {
-                u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
-                WriteMem32_nommu(DMAC_DAR(ch) + ofs, data);
+			int srcIncr, dstIncr;
+			switch (DMAC_CHCR(ch).SM)
+			{
+			case 1:
+				srcIncr = 1;
+				break;
+			case 2:
+				srcIncr = -1;
+				break;
+			default:
+				srcIncr = 0;
+				break;
+			}
+			switch (DMAC_CHCR(ch).DM)
+			{
+			case 1:
+				dstIncr = 1;
+				break;
+			case 2:
+				dstIncr = -1;
+				break;
+			default:
+				dstIncr = 0;
+				break;
+			}
+
+			switch (DMAC_CHCR(ch).TS)
+			{
+			case 0:	// 64 bits
+				srcIncr *= sizeof(u64);
+				dstIncr *= sizeof(u64);
+				for (; len != 0; len--)
+				{
+					u64 data = addrspace::read64(src);
+					addrspace::write64(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
+
+			case 1: // 8 bits
+				for (; len != 0; len--)
+				{
+					u8 data = addrspace::read8(src);
+					addrspace::write8(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
+
+			case 2: // 16 bits
+				srcIncr *= sizeof(u16);
+				dstIncr *= sizeof(u16);
+				for (; len != 0; len--)
+				{
+					u16 data = addrspace::read16(src);
+					addrspace::write16(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+                break;
+
+			case 4: // 32-byte block
+				len *= 32 / sizeof(u32);
+				[[fallthrough]];
+
+            default: // 32 bits
+				srcIncr *= sizeof(u32);
+				dstIncr *= sizeof(u32);
+				for (; len != 0; len--)
+				{
+					u32 data = addrspace::read32(src);
+					addrspace::write32(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
             }
-
             DMAC_CHCR(ch).TE = 1;
-            if (DMAC_CHCR(ch).SM == 1)
-            	DMAC_SAR(ch) += len;
-            else if (DMAC_CHCR(ch).SM == 2)
-            	DMAC_SAR(ch) -= len;
-            if (DMAC_CHCR(ch).DM == 1)
-            	DMAC_DAR(ch) += len;
-            else if (DMAC_CHCR(ch).DM == 2)
-            	DMAC_DAR(ch) -= len;
+           	DMAC_SAR(ch) = src;
+           	DMAC_DAR(ch) = dst;
+           	DMAC_DMATCR(ch) = len;
         }
 
         InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
