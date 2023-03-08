@@ -1038,9 +1038,6 @@ if (ENABLE_FC_PROFILER)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-		core/rec-cpp/rec_cpp.cpp)
-
-target_sources(${PROJECT_NAME} PRIVATE
 		core/reios/descrambl.cpp
 		core/reios/descrambl.h
 		core/reios/font.h
