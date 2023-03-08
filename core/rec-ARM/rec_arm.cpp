@@ -58,9 +58,8 @@ using namespace vixl::aarch32;
 	Block linking
 	Reg alloc
 		r0~r4: scratch
-		r5,r6,r7,r10,r11: allocated
+		r5,r6,r7,r9,r10,r11: allocated
 		r8: sh4 cntx
-		r9: cycle counter
 
 	fpu reg alloc
 	d8:d15, single storage
@@ -119,7 +118,8 @@ static void storeSh4Reg(Register Rt, u32 Sh4_Reg)
 	ass.Str(Rt, MemOperand(r8, shRegOffs));
 }
 
-const int alloc_regs[] = { 5, 6, 7, 10, 11, -1 };
+const int alloc_regs[] = { 5, 6, 7, 9, 10, 11, -1 };
+const int alloc_regs_mmu[] = { 5, 6, 7, 10, 11, -1 };
 const int alloc_fpu[] = { 16, 17, 18, 19, 20, 21, 22, 23,
 				24, 25, 26, 27, 28, 29, 30, 31, -1 };
 
@@ -173,6 +173,8 @@ static const void *ngen_LinkBlock_cond_Next_stub;
 static void (*ngen_FailedToFindBlock_)();
 static void (*mainloop)(void *);
 static void (*handleException)();
+static void (*checkBlockFpu)();
+static void (*checkBlockNoFpu)();
 
 static void generate_mainloop();
 
@@ -1991,7 +1993,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	block->code = (DynarecCodeEntryPtr)emit_GetCCPtr();
 
 	//reg alloc
-	reg.DoAlloc(block, alloc_regs, alloc_fpu);
+	reg.DoAlloc(block, mmu_enabled() ? alloc_regs_mmu : alloc_regs, alloc_fpu);
 
 	u8* blk_start = ass.GetCursorAddress<u8 *>();
 
@@ -2000,90 +2002,76 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 		reg.OpBegin(&block->oplist[0], 0);
 
 	// block checks
-	if (force_checks || mmu_enabled())
+	if (mmu_enabled())
+	{
+		ass.Mov(r0, block->vaddr);
+		ass.Mov(r1, block->addr);
+		if (block->has_fpu_op)
+			call((void *)checkBlockFpu);
+		else
+			call((void *)checkBlockNoFpu);
+	}
+	if (force_checks)
 	{
 		u32 addr = block->addr;
 		ass.Mov(r0, addr);
-		if (mmu_enabled())
-		{
-			loadSh4Reg(r2, reg_nextpc);
-			ass.Mov(r1, block->vaddr);
-			ass.Cmp(r2, r1);
-			jump(ngen_blockcheckfail, ne);
-		}
 
-		if (force_checks)
+		s32 sz = block->sh4_code_size;
+		while (sz > 0)
 		{
-			s32 sz = block->sh4_code_size;
-			while (sz > 0)
+			if (sz > 2)
 			{
-				if (sz > 2)
+				u32* ptr = (u32*)GetMemPtr(addr, 4);
+				if (ptr != nullptr)
 				{
-					u32* ptr = (u32*)GetMemPtr(addr, 4);
-					if (ptr != nullptr)
-					{
-						ass.Mov(r2, (u32)ptr);
-						ass.Ldr(r2, MemOperand(r2));
-						ass.Mov(r1, *ptr);
-						ass.Cmp(r1, r2);
+					ass.Mov(r2, (u32)ptr);
+					ass.Ldr(r2, MemOperand(r2));
+					ass.Mov(r1, *ptr);
+					ass.Cmp(r1, r2);
 
-						jump(ngen_blockcheckfail, ne);
-					}
-					addr += 4;
-					sz -= 4;
+					jump(ngen_blockcheckfail, ne);
 				}
-				else
-				{
-					u16* ptr = (u16 *)GetMemPtr(addr, 2);
-					if (ptr != nullptr)
-					{
-						ass.Mov(r2, (u32)ptr);
-						ass.Ldrh(r2, MemOperand(r2));
-						ass.Mov(r1, *ptr);
-						ass.Cmp(r1, r2);
-
-						jump(ngen_blockcheckfail, ne);
-					}
-					addr += 2;
-					sz -= 2;
-				}
+				addr += 4;
+				sz -= 4;
 			}
-		}
-		if (mmu_enabled() && block->has_fpu_op)
-		{
-			Label fpu_enabled;
-			loadSh4Reg(r1, reg_sr_status);
-			ass.Tst(r1, 1 << 15);		// test SR.FD bit
-			ass.B(eq, &fpu_enabled);
+			else
+			{
+				u16* ptr = (u16 *)GetMemPtr(addr, 2);
+				if (ptr != nullptr)
+				{
+					ass.Mov(r2, (u32)ptr);
+					ass.Ldrh(r2, MemOperand(r2));
+					ass.Mov(r1, *ptr);
+					ass.Cmp(r1, r2);
 
-			ass.Mov(r0, block->vaddr);	// pc
-			ass.Mov(r1, Sh4Ex_FpuDisabled);// exception code
-			call((void *)Do_Exception);
-			loadSh4Reg(r4, reg_nextpc);
-			jump(no_update);
-
-			ass.Bind(&fpu_enabled);
+					jump(ngen_blockcheckfail, ne);
+				}
+				addr += 2;
+				sz -= 2;
+			}
 		}
 	}
 
 	//scheduler
-	u32 cyc = block->guest_cycles;
-	if (!ImmediateA32::IsImmediateA32(cyc))
-		cyc &= ~3;
-	if (!mmu_enabled())
+	ass.Ldr(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	ass.Cmp(r1, 0);
+	Label cyclesRemaining;
+	ass.B(pl, &cyclesRemaining);
+	ass.Mov(r0, block->vaddr);
+	call(intc_sched);
+	ass.Mov(r1, r0);
+	ass.Bind(&cyclesRemaining);
+	const u32 cycles = block->guest_cycles;
+	if (!ImmediateA32::IsImmediateA32(cycles))
 	{
-		ass.Sub(SetFlags, r9, r9, cyc);
+		ass.Sub(r1, r1, cycles & ~3);
+		ass.Sub(r1, r1, cycles & 3);
 	}
 	else
 	{
-		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-		ass.Sub(SetFlags, r0, r0, cyc);
-		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-		// FIXME condition?
-		ass.Mov(r4, block->vaddr);
-		storeSh4Reg(r4, reg_nextpc);
+		ass.Sub(r1, r1, cycles);
 	}
-	call(intc_sched, le);
+	ass.Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 
 	//compile the block's opcodes
 	shil_opcode* op;
@@ -2229,8 +2217,6 @@ static void generate_mainloop()
 	{
 		// r8: context
 		ass.Mov(r8, r0);
-		// r9: cycle counter
-		ass.Ldr(r9, MemOperand(r0, rcbOffset(cntx.cycle_counter)));
 	}
 	else
 	{
@@ -2253,29 +2239,24 @@ static void generate_mainloop()
 	// this code is here for fall-through behavior of do_iter
 	Label do_iter;
 	Label cleanup;
-// intc_sched:
+// intc_sched: r0 is pc, r1 is cycle_counter
 	intc_sched = ass.GetCursorAddress<const void *>();
-	if (!mmu_enabled())
-		ass.Add(r9, r9, SH4_TIMESLICE);
-	else
-	{
-		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-		ass.Add(r0, r0, SH4_TIMESLICE);
-		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-	}
-	ass.Mov(r4, lr);
-	call((void *)UpdateSystem);
-	ass.Mov(lr, r4);
-	ass.Cmp(r0, 0);
-	ass.B(ne, &do_iter);
+	ass.Add(r1, r1, SH4_TIMESLICE);
+	ass.Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	ass.Str(r0, MemOperand(r8, rcbOffset(cntx.pc)));
 	ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
 	ass.Cmp(r0, 0);
-	ass.Bx(ne, lr);
-	// do_iter:
+	ass.B(eq, &cleanup);
+	ass.Mov(r4, lr);
+	call((void *)UpdateSystem_INTC);
+	ass.Cmp(r0, 0);
+	ass.B(ne, &do_iter);
+	ass.Mov(lr, r4);
+	ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	ass.Bx(lr);
+// do_iter:
 	ass.Bind(&do_iter);
-	ass.Mov(r0, r4);
-	call((void *)rdv_DoInterrupts);
-	ass.Mov(r4, r0);
+	ass.Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));
 
 // no_update:
 	no_update = ass.GetCursorAddress<const void *>();
@@ -2303,8 +2284,6 @@ static void generate_mainloop()
 	ass.Bind(&cleanup);
 	if (mmu_enabled())
 		ass.Add(sp, sp, 8);	// pop context & alignment
-	else
-		ass.Str(r9, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 	{
 		UseScratchRegisterScope scope(&ass);
 		scope.ExcludeAll();
@@ -2321,6 +2300,29 @@ static void generate_mainloop()
 		ass.Mov(sp, r1);
 		ass.B(&longjumpLabel);
 	}
+
+	// MMU Check block (with fpu)
+	// r0: vaddr, r1: addr
+	checkBlockFpu = ass.GetCursorAddress<void (*)()>();
+	Label fpu_enabled;
+	loadSh4Reg(r2, reg_sr_status);
+	ass.Tst(r2, 1 << 15);		// test SR.FD bit
+	ass.B(eq, &fpu_enabled);
+	ass.Mov(r1, Sh4Ex_FpuDisabled);	// exception code
+	call((void *)Do_Exception);
+	loadSh4Reg(r4, reg_nextpc);
+	ass.B(&no_updateLabel);
+	ass.Bind(&fpu_enabled);
+	// fallthrough
+
+	// MMU Check block (no fpu)
+	// r0: vaddr, r1: addr
+	checkBlockNoFpu = ass.GetCursorAddress<void (*)()>();
+	loadSh4Reg(r2, reg_nextpc);
+	ass.Cmp(r2, r0);
+	ass.Mov(r0, r1);
+	jump(ngen_blockcheckfail, ne);
+	ass.Bx(lr);
 
     // Memory handlers
     for (int s=0;s<6;s++)

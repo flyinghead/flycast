@@ -126,11 +126,13 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 		L(fpu_enabled);
 	}
 
-	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
+	mov(eax, dword[&Sh4cntx.cycle_counter]);
+	test(eax, eax);
 	Xbyak::Label no_up;
-	jns(no_up);
+	jg(no_up);
 	call((const void *)intc_sched);
 	L(no_up);
+	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
 
 	regalloc.doAlloc(block);
 
