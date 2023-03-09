@@ -659,3 +659,41 @@ static InputDescriptors soulsurfer_inputs = {
 			{ "PITCH", Full, 1, true },
 	},
 };
+
+static InputDescriptors drvsim_inputs = {
+	{
+			{ NAOMI_BTN0_KEY, "Turn R" },
+			{ NAOMI_BTN1_KEY, "Turn L" },
+			{ NAOMI_BTN2_KEY, "Shift 2" },
+			{ NAOMI_BTN3_KEY, "Shift 3" },
+			{ NAOMI_BTN4_KEY, "O/D Switch" },
+			{ NAOMI_BTN5_KEY, "S-Brake" },
+			{ NAOMI_BTN6_KEY, "IG-ON", 0, NAOMI_DOWN_KEY },
+			{ NAOMI_BTN7_KEY, "IG-START", 0, NAOMI_LEFT_KEY },
+			{ NAOMI_BTN8_KEY, "Shift 0", 0, NAOMI_BTN0_KEY },
+			{ NAOMI_UP_KEY, "Horn" },
+			{ NAOMI_DOWN_KEY, "Light 0" },
+			{ NAOMI_LEFT_KEY, "Light 1" },
+			{ NAOMI_RIGHT_KEY, "Light 2" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			// P2 inputs:
+			// BTN0		Shift 0
+			// BTN1		Shift 1
+			// BTN2		BELT
+			// UP		Washer
+			// DOWN		IG-ON
+			// LEFT		IG_START
+			// RIGHT	HAZARD
+			// START	WIPER-LO
+			// Unknown:
+			// STOP
+			// WIPER-HI
+	},
+	{
+			{ "Master", Full, 0 },
+			{ "Accelerator", Half, 4 },
+			{ "Brake", Half, 5 },
+			{ "Clutch", Full, 1 },
+	},
+};

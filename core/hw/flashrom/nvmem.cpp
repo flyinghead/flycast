@@ -236,7 +236,7 @@ bool loadFiles()
 
 void saveFiles()
 {
-	if (settings.naomi.slave)
+	if (settings.naomi.slave || settings.naomi.drivingSimSlave)
 		return;
 	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");

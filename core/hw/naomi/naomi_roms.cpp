@@ -7084,6 +7084,31 @@ const Game Games[] =
 		nullptr,
 		&clubkart_inputs,
     },
+    {
+    	"sgdrvsim",
+		nullptr,
+		"Sega Driving Simulator",
+		0x20000000,
+		0x5508,
+		"naomi2",
+		M4,
+		ROT0,
+        {
+        	{ "ic8.bin",  0x00000000, 0x4000000, 0x3ef5e62f },
+        	{ "ic9.bin",  0x04000000, 0x4000000, 0x4edf67df },
+        	{ "ic10.bin", 0x08000000, 0x4000000, 0xa3b0f436 },
+        	{ "ic11.bin", 0x0c000000, 0x4000000, 0x200ad72c },
+        	{ "ic12.bin", 0x10000000, 0x4000000, 0x90d192a4 },
+        	{ "ic13.bin", 0x14000000, 0x4000000, 0xeed33acc },
+        	{ "ic14.bin", 0x18000000, 0x4000000, 0x349267e9 },
+        	{ "ic15.bin", 0x1c000000, 0x4000000, 0xacc0c039 },
+
+			{ "317-0502-jpn.ic3", 0, 0x800, 0x528ad9e7, Key },
+        },
+		nullptr,
+		&drvsim_inputs,
+		sgdrvsim_eeprom_dump,
+    },
 	//
 	// Naomi 2 GD-ROM
 	//

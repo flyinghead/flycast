@@ -86,7 +86,7 @@ static int showhelp()
 	return 0;
 }
 
-bool ParseCommandLine(int argc,char* argv[])
+void ParseCommandLine(int argc,char* argv[])
 {
 	settings.content.path.clear();
 	int cl=argc-2;
@@ -140,5 +140,4 @@ bool ParseCommandLine(int argc,char* argv[])
 		arg++;
 		cl--;
 	}
-	return false;
 }

@@ -391,7 +391,8 @@ bool NaomiNetworkSupported()
 		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS",
 		"F355 CHALLENGE JAPAN",
 		// Naomi 2
-		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66"
+		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66",
+		"SAMPLE GAME MAX LONG NAME-" // Driving Simulator
 	};
 	if (!config::NetworkEnable)
 		return false;

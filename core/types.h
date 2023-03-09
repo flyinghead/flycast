@@ -306,6 +306,7 @@ struct settings_t
 	{
 		bool multiboard;
 		bool slave;
+		int drivingSimSlave;
 	} naomi;
 
 	bool disableRenderer;

@@ -853,7 +853,7 @@ private:
 
 maple_naomi_jamma::maple_naomi_jamma()
 {
-	if (!settings.naomi.slave)
+	if (settings.naomi.drivingSimSlave == 0 && !settings.naomi.slave)
 	{
 		switch (settings.input.JammaSetup)
 		{
@@ -1278,7 +1278,12 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 			w8(0x00);
 			w8(0xff);		// in(4)
-			w8(0xff);		// in(5) bit0: 1=VGA, 0=NTSCi
+			u8 v = 0xf9;
+			if (settings.naomi.drivingSimSlave == 1)
+				v |= 2;
+			else if (settings.naomi.drivingSimSlave == 2)
+				v |= 4;
+			w8(v);          // in(5) bit0: 1=VGA, 0=NTSCi
 			w8(0xff);		// in(6)
 
 			w32(0x00);

@@ -27,15 +27,13 @@ int flycast_init(int argc, char* argv[])
 		ERROR_LOG(VMEM, "Failed to alloc mem");
 		return -1;
 	}
-	if (ParseCommandLine(argc, argv))
-	{
-        return 69;
-	}
+	ParseCommandLine(argc, argv);
 	if (cfgLoadInt("naomi", "BoardId", 0) != 0)
 	{
 		settings.naomi.multiboard = true;
 		settings.naomi.slave = true;
 	}
+	settings.naomi.drivingSimSlave = cfgLoadInt("naomi", "DrivingSimSlave", 0);
 
 	config::Settings::instance().reset();
 	LogManager::Shutdown();
