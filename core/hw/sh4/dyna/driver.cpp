@@ -213,23 +213,6 @@ static void ngen_FailedToFindBlock_internal() {
 
 void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
-u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
-	next_pc = pc;
-	UpdateINTC();
-
-	return next_pc;
-}
-
-u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
-{
-	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
-	if (!rbi)
-		rbi = bm_GetStaleBlock(block_cpde);
-	verify(rbi != nullptr);
-
-	return rdv_DoInterrupts_pc(rbi->vaddr);
-}
-
 // addr must be the physical address of the start of the block
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {

@@ -80,9 +80,6 @@ DynarecCodeEntryPtr rdv_FindOrCompile();
 //code -> pointer to code of block, dpc -> if dynamic block, pc. if cond, 0 for next, 1 for branch
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);
 
-u32 DYNACALL rdv_DoInterrupts(void* block_cpde);
-u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
-
 //Stuff to be implemented per dynarec core
 
 void ngen_init();

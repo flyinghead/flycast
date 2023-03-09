@@ -130,6 +130,7 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	test(eax, eax);
 	Xbyak::Label no_up;
 	jg(no_up);
+	mov(ecx, block->vaddr);
 	call((const void *)intc_sched);
 	L(no_up);
 	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
@@ -485,9 +486,8 @@ void X86Compiler::genMainloop()
 //do_iter:
 	Xbyak::Label do_iter;
 	L(do_iter);
-	pop(ecx);
-	call((void *)rdv_DoInterrupts);
-	mov(ecx, eax);
+	add(esp, 4);	// pop intc_sched() return address
+	mov(ecx, dword[&Sh4cntx.pc]);
 	jmp(no_updateLabel);
 
 //ngen_LinkBlock_Shared_stub:
@@ -503,14 +503,15 @@ void X86Compiler::genMainloop()
 
 	// Functions called by blocks
 
-//intc_sched:
+//intc_sched: ecx: vaddr
 	unwinder.start((void *)getCurr());
 	size_t startOffset = getSize();
 	unwinder.endProlog(0);
 	Xbyak::Label intc_schedLabel;
 	L(intc_schedLabel);
 	add(dword[&Sh4cntx.cycle_counter], SH4_TIMESLICE);
-	call((void *)UpdateSystem);
+	mov(dword[&Sh4cntx.pc], ecx);
+	call((void *)UpdateSystem_INTC);
 	cmp(eax, 0);
 	jnz(do_iter);
 	ret();
