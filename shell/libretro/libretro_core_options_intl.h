@@ -6846,7 +6846,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_CHT NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_CHT NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT "內部解析度"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHT NULL
 #define OPTION_VAL_320X240_CHT NULL
 #define OPTION_VAL_640X480_CHT NULL
@@ -48983,15 +48983,15 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CATEGORY_SYSTEM_LABEL_RU "Системные"
 #define CATEGORY_SYSTEM_INFO_0_RU "Настройка региона, языка, BIOS и основных параметров оборудования."
 #define CATEGORY_VIDEO_LABEL_RU "Видео"
-#define CATEGORY_VIDEO_INFO_0_RU NULL
+#define CATEGORY_VIDEO_INFO_0_RU "Настройки разрешения, порядко-независимой прозрачности и визуальных эффектов."
 #define CATEGORY_PERFORMANCE_LABEL_RU "Производительность"
-#define CATEGORY_PERFORMANCE_INFO_0_RU NULL
+#define CATEGORY_PERFORMANCE_INFO_0_RU "Настройки многопоточного рендеринга и пропуска кадров."
 #define CATEGORY_HACKS_LABEL_RU "Хаки эмуляции"
-#define CATEGORY_HACKS_INFO_0_RU NULL
+#define CATEGORY_HACKS_INFO_0_RU "Настройки широкоформатных чит-кодов, скорости загрузки GD-ROM и замены текстур."
 #define CATEGORY_INPUT_LABEL_RU "Ввод"
-#define CATEGORY_INPUT_INFO_0_RU NULL
+#define CATEGORY_INPUT_INFO_0_RU "Настройки геймпада и светового пистолета."
 #define CATEGORY_VMU_LABEL_RU NULL
-#define CATEGORY_VMU_INFO_0_RU NULL
+#define CATEGORY_VMU_INFO_0_RU "Настройки файлов сохранений VMU для каждой игры и отображения VMU на экране."
 #define CORE_OPTION_NAME_REGION_LABEL_RU "Регион"
 #define OPTION_VAL_JAPAN_RU "Япония"
 #define OPTION_VAL_USA_RU "США"
@@ -49013,10 +49013,10 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_RU "Включить эмуляцию звукового DSP (цифрового сигнального процессора) Dreamcast. Улучшает точность генерируемого звука, но повышает системные требования."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_RU "Принудительный режим Windows CE"
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_RU "Включает полную эмуляцию MMU (блока управления памятью) и другие настройки для игр Windows CE."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RU "Разрешить сервисные кнопки NAOMI"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU "Включает сервисную кнопку NAOMI для входа в настройки автомата."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU "Включать Free Play для игр NAOMI"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU "Изменять настройки оплаты для бесплатной игры."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU "Эмулировать вместо модема широкополосный Ethernet-адаптер (требуется перезапуск)."
 #define CORE_OPTION_NAME_UPNP_LABEL_RU "Включить UPnP"
@@ -49073,11 +49073,11 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_1GB_RU "1 ГБ"
 #define OPTION_VAL_2GB_RU "2 ГБ"
 #define OPTION_VAL_4GB_RU "4 ГБ"
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU "Максимум прозрачных слоёв"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU "Сложные сцены могут потребовать более высоких значений."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU "Полная эмуляция фреймбуфера"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU "Включает полную эмуляцию кадрового буфера в VRAM. Полезно для игр, которые напрямую производят чтение или запись фреймбуфера в VRAM. При включении внутреннее разрешение будет принудительно установлено в 640x480 и возможно сильное падение скорости."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU "Включить буфер рендера в текстуру"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_RU "MIP-текстурирование"
 #define CORE_OPTION_NAME_FOG_LABEL_RU "Эффекты тумана"
@@ -49096,7 +49096,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU "Фильтр постобработки PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU "Улучшает отрисованный вручную пиксель-арт. Рекомендуется применять только в 2D-играх с пиксельной графикой."
 #define OPTION_VAL_2_O27_RU NULL
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
@@ -49110,7 +49110,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_SOME_RU "Нормальный"
 #define OPTION_VAL_MORE_RU NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RU "Пропуск кадров"
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU "Устанавливает количество кадров пропуска между отображаемыми кадрами."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RU "Широкоэкранные чит-коды (требуется перезапуск)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RU "Активирует чит-коды, которые позволяют отображать некоторые игры в широкоэкранном формате."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RU "Широкоэкранный хак"
@@ -49129,25 +49129,25 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_30_RU NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_RU "Мёртвая зона триггеров"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_RU "Цифровые триггеры"
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RU NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RU "Модуль вибрации/Puru Puru"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU "Включает обратную связь контроллера."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU NULL
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показать настройки светового пистолета"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
 #define OPTION_VAL_RED_RU "Красный"
 #define OPTION_VAL_GREEN_RU "Зелёный"
 #define OPTION_VAL_BLUE_RU "Голубой"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RU NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 4"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RU "Отдельные блоки визуальной памяти (VMU) для игр"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RU "VMU для каждой игры"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если выключено, для всех игр используются 4 общие файла сохранений VMU (A1, B1, C1, D1), расположенные в системном каталоге RetroArch. В режиме 'VMU A1' для каждой загруженной игры в каталоге сохранений RetroArch создаётся уникальный файл VMU 'A1'. В режиме 'Все VMU' для каждой запускаемой игры создаётся по 4 уникальных файла VMU (A1, B1, C1, D1)."
 #define OPTION_VAL_VMU_A1_RU NULL
-#define OPTION_VAL_ALL_VMUS_RU NULL
+#define OPTION_VAL_ALL_VMUS_RU "Все VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения блока визуальной памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU NULL
@@ -49172,21 +49172,21 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_CYAN_GREEN_09_RU "Голубовато-зелёный"
 #define OPTION_VAL_LIGHT_CYAN_10_RU "Светло-голубой"
 #define OPTION_VAL_PURPLE_12_RU "Фиолетовый"
-#define OPTION_VAL_LIGHT_PURPLE_13_RU NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_RU "Светло-фиолетовый"
 #define OPTION_VAL_YELLOW_14_RU "Жёлтая"
 #define OPTION_VAL_GRAY_15_RU "Серый"
-#define OPTION_VAL_LIGHT_PURPLE_2_16_RU NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_RU NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_RU NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_RU NULL
-#define OPTION_VAL_LIGHT_RED_2_20_RU NULL
-#define OPTION_VAL_MAGENTA_21_RU NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_RU NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_RU NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_RU "Светло-фиолетовый (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_RU "Светло-зелёный (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_RU "Светло-зелёный (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_RU "Светло-циановый (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_RU "Светло-красный (2)"
+#define OPTION_VAL_MAGENTA_21_RU "Пурпурный"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_RU "Светло-фиолетовый (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_RU "Светло-оранжевый"
 #define OPTION_VAL_ORANGE_24_RU "Оранжевый"
 #define OPTION_VAL_LIGHT_PURPLE_4_25_RU NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_RU NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_RU NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_RU "Светло-жёлтый"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_RU "Светло-жёлтый (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RU "Цвет выкл. пикселей VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_RU "Видимость экрана VMU 1"
 #define OPTION_VAL_40_RU NULL
