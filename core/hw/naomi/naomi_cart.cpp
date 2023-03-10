@@ -618,12 +618,39 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 				|| gameId == "CLUB KART IN JAPAN"
 				|| gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{
-			initMidiForceFeedback();
+			if (settings.naomi.drivingSimSlave == 0)
+				initMidiForceFeedback();
 		}
 		else if (gameId == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
 				|| gameId == "TOUCH DE ZUNO (JAPAN)")
 		{
 			touchscreen::init();
+		}
+
+		if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
+		{
+			config::NetworkEnable.override(true);
+			config::ActAsServer.override(settings.naomi.drivingSimSlave == 0);
+			config::NetworkServer.override("localhost:" + std::to_string(config::LocalPort));
+			config::LocalPort.override(config::LocalPort + settings.naomi.drivingSimSlave);
+			if (settings.naomi.drivingSimSlave == 0)
+			{
+				int x = cfgLoadInt("window", "left", (1920 - 640) / 2);
+				int w = cfgLoadInt("window", "width", 640);
+				std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
+				for (int i = 0; i < 2; i++)
+				{
+					std::string slaveNum = "naomi:DrivingSimSlave=" + std::to_string(i + 1);
+					std::string left = "window:left=" + std::to_string(i == 1 ? x - w : x + w);
+					const char *args[] = {
+						"-config", slaveNum.c_str(),
+						"-config", region.c_str(),
+						"-config", left.c_str(),
+						settings.content.path.c_str()
+					};
+					os_RunInstance(std::size(args), args);
+				}
+			}
 		}
 	}
 	else

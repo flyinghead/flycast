@@ -752,7 +752,13 @@ static void forceFeedbackMidiReceiver(u8 data)
 			ffbCalibrating = false;
 
 		if (!ffbCalibrating)
-			position = std::clamp(-mapleInputState[0].fullAxes[0] * 64.f + 8192.f, 0.f, 16383.f);
+		{
+			int direction = -1;
+			if (NaomiGameInputs != nullptr)
+				direction = NaomiGameInputs->axes[0].inverted ? 1 : -1;
+
+			position = std::clamp(mapleInputState[0].fullAxes[0] * direction * 64.f + 8192.f, 0.f, 16383.f);
+		}
 		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
 		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
 

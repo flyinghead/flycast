@@ -668,13 +668,16 @@ static InputDescriptors drvsim_inputs = {
 			{ NAOMI_BTN3_KEY, "Shift 3" },
 			{ NAOMI_BTN4_KEY, "O/D Switch" },
 			{ NAOMI_BTN5_KEY, "S-Brake" },
-			{ NAOMI_BTN6_KEY, "IG-ON", 0, NAOMI_DOWN_KEY },
-			{ NAOMI_BTN7_KEY, "IG-START", 0, NAOMI_LEFT_KEY },
-			{ NAOMI_BTN8_KEY, "Shift 0", 0, NAOMI_BTN0_KEY },
+			{ NAOMI_BTN6_KEY, "IG-START", 0, NAOMI_LEFT_KEY },
+			{ NAOMI_BTN7_KEY, "Shift 0", 0, NAOMI_BTN0_KEY },
 			{ NAOMI_UP_KEY, "Horn" },
 			{ NAOMI_DOWN_KEY, "Light 0" },
 			{ NAOMI_LEFT_KEY, "Light 1" },
 			{ NAOMI_RIGHT_KEY, "Light 2" },
+			// always on unmappable buttons
+			{ NAOMI_BTN8_KEY, "BELT", 0xffffffff, NAOMI_BTN2_KEY },
+			{ NAOMI_RELOAD_KEY, "IG-ON", 0xffffffff, NAOMI_DOWN_KEY },
+
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			// P2 inputs:
@@ -691,7 +694,7 @@ static InputDescriptors drvsim_inputs = {
 			// WIPER-HI
 	},
 	{
-			{ "Master", Full, 0 },
+			{ "Master", Full, 0, true },
 			{ "Accelerator", Half, 4 },
 			{ "Brake", Half, 5 },
 			{ "Clutch", Full, 1 },

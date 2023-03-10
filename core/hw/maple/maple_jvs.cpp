@@ -166,7 +166,12 @@ protected:
 			// always-on mapping
 			for (u32 i = 0; i < cur_mapping.size(); i++)
 				if (cur_mapping[i] == 0xffffffff)
-					v[player - first_player] |= 1 << i;
+				{
+					if (p2_mapping[i] == 0)
+						v[player - first_player] |= 1 << i;
+					else if (player == 0)
+						v[1] |= p2_mapping[i];
+				}
 			u32 keycode = buttons[player];
 			if (keycode == 0)
 				continue;
@@ -254,7 +259,7 @@ private:
 			// Use default mapping
 			return;
 
-		for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
+		for (size_t i = 0; i < std::size(NaomiGameInputs->buttons) && NaomiGameInputs->buttons[i].source != 0; i++)
 		{
 			u32 source = NaomiGameInputs->buttons[i].source;
 			int keyIdx = 0;
