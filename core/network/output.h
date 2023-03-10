@@ -27,7 +27,7 @@ class NetworkOutput
 public:
 	void init()
 	{
-		if (!config::NetworkOutput)
+		if (!config::NetworkOutput || settings.naomi.slave || settings.naomi.drivingSimSlave != 0)
 			return;
 		server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -75,7 +75,7 @@ public:
 
 	void output(const char *name, u32 value)
 	{
-		if (!config::NetworkOutput)
+		if (!config::NetworkOutput || clients.empty())
 			return;
 		if (!gameNameSent)
 		{

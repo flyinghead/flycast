@@ -672,7 +672,7 @@ void sdl_window_create()
 void sdl_window_destroy()
 {
 #ifndef __SWITCH__
-	if (!settings.naomi.slave)
+	if (!settings.naomi.slave && settings.naomi.drivingSimSlave == 0)
 	{
 		get_window_state();
 		cfgSaveInt("window", "left", windowPos.x);
