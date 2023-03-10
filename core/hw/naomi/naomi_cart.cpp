@@ -627,6 +627,8 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 			touchscreen::init();
 		}
 
+#ifdef NAOMI_MULTIBOARD
+		// Not a multiboard game but needs the same desktop environment
 		if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{
 			config::NetworkEnable.override(true);
@@ -652,6 +654,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 				}
 			}
 		}
+#endif
 	}
 	else
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
