@@ -733,7 +733,8 @@ void OptionComboBox(const char *name, config::Option<int>& option, const char *v
 	{
 		DisabledScope scope(option.isReadOnly());
 
-		if (ImGui::BeginCombo(name, values[option], ImGuiComboFlags_None))
+		const char *value = option >= 0 && option < count ? values[option] : "?";
+		if (ImGui::BeginCombo(name, value, ImGuiComboFlags_None))
 		{
 			for (int i = 0; i < count; i++)
 			{
