@@ -293,16 +293,16 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 
 	//update if needed
 	if (tf->NeedsUpdate())
-		tf->Update();
-	else
 	{
-		if (tf->IsCustomTextureAvailable())
-		{
-			texCache.DeleteLater(tf->texture);
-			tf->texture.reset();
-			// FIXME textureView
-			tf->loadCustomTexture();
-		}
+		if (!tf->Update())
+			tf = nullptr;
+	}
+	else if (tf->IsCustomTextureAvailable())
+	{
+		texCache.DeleteLater(tf->texture);
+		tf->texture.reset();
+		// FIXME textureView
+		tf->loadCustomTexture();
 	}
 	return tf;
 }
