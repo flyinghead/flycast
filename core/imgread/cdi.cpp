@@ -59,6 +59,14 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 				CDI_read_track (fsource, &image, &track);
 
+				if (track.sector_size != 2048 && track.sector_size != 2336 && track.sector_size != 2352 && track.sector_size != 2448)
+				{
+					delete rv;
+					std::fclose(fsource);
+					WARN_LOG(GDROM, "Invalid sector size: %lu", track.sector_size);
+					throw FlycastException("Invalid CDI sector size");
+				}
+
 				image.header_position = std::ftell(fsource);
 
 				// Show info
