@@ -348,6 +348,7 @@ static void GD_HLE_Command(gd_command cc)
 		break;
 
 	case GDCC_PLAY:
+		if (libGDR_GetDiscType() != Open && libGDR_GetDiscType() != NoDisk)
 		{
 			u32 first_track = gd_hle_state.params[0];
 			u32 last_track = gd_hle_state.params[1];
@@ -364,6 +365,12 @@ static void GD_HLE_Command(gd_command cc)
 					|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
 				cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 			SecNumber.Status = GD_PLAY;
+		}
+		else
+		{
+			gd_hle_state.status = GDC_ERR;
+			cdda.status = cdda_t::NoInfo;
+			SecNumber.Status = GD_STANDBY;
 		}
 		break;
 
