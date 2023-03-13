@@ -16,6 +16,8 @@
 #include "naomi_m3comm.h"
 #include "serialize.h"
 #include "network/output.h"
+#include "hw/sh4/modules/modules.h"
+#include "rend/gui.h"
 
 #include <algorithm>
 
@@ -775,4 +777,72 @@ static void forceFeedbackMidiReceiver(u8 data)
 void initMidiForceFeedback()
 {
 	aica::setMidiReceiver(forceFeedbackMidiReceiver);
+}
+
+struct DriveSimPipe : public SerialPipe
+{
+	void write(u8 data) override
+	{
+		if (buffer.empty() && data != 2)
+			return;
+		if (buffer.size() == 7)
+		{
+			u8 checksum = 0;
+			for (u8 b : buffer)
+				checksum += b;
+			if (checksum == data)
+			{
+				int newTacho = (buffer[2] - 1) * 100;
+				if (newTacho != tacho)
+				{
+					tacho = newTacho;
+					networkOutput.output("tachometer", tacho);
+				}
+				int newSpeed = buffer[3] - 1;
+				if (newSpeed != speed)
+				{
+					speed = newSpeed;
+					networkOutput.output("speedometer", speed);
+				}
+				if (!config::NetworkOutput)
+				{
+					char message[16];
+					sprintf(message, "Speed: %3d", speed);
+					gui_display_notification(message, 1000);
+				}
+			}
+			buffer.clear();
+		}
+		else
+		{
+			buffer.push_back(data);
+		}
+	}
+
+	int available() override {
+		return 0;
+	}
+
+	u8 read() override {
+		return 0;
+	}
+
+	void reset()
+	{
+		buffer.clear();
+		tacho = -1;
+		speed = -1;
+	}
+private:
+	std::vector<u8> buffer;
+	int tacho = -1;
+	int speed = -1;
+};
+
+void initDriveSimSerialPipe()
+{
+	static DriveSimPipe pipe;
+
+	pipe.reset();
+	serial_setPipe(&pipe);
 }

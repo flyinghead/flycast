@@ -631,6 +631,8 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		// Not a multiboard game but needs the same desktop environment
 		if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
 		{
+			initDriveSimSerialPipe();
+
 			config::NetworkEnable.override(true);
 			config::ActAsServer.override(settings.naomi.drivingSimSlave == 0);
 			config::NetworkServer.override("localhost:" + std::to_string(config::LocalPort));
