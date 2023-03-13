@@ -563,7 +563,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 			gp->pcw.Texture,
 			gp->tsp.UseAlpha,
-			gp->tsp.IgnoreTexA,
+			gp->tsp.IgnoreTexA || gp->tcw.PixelFmt == Pixel565,
 			gp->tsp.ShadInstr,
 			gp->pcw.Offset,
 			fog_ctrl,

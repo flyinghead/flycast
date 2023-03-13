@@ -178,7 +178,7 @@ struct DX11OITRenderer : public DX11Renderer
 			pixelShader = shaders.getShader(
 					useTexture,
 					gp->tsp.UseAlpha,
-					gp->tsp.IgnoreTexA,
+					gp->tsp.IgnoreTexA || gp->tcw.PixelFmt == Pixel565,
 					0,
 					false,
 					2,
@@ -202,7 +202,7 @@ struct DX11OITRenderer : public DX11Renderer
 			pixelShader = shaders.getShader(
 					useTexture,
 					gp->tsp.UseAlpha,
-					gp->tsp.IgnoreTexA,
+					gp->tsp.IgnoreTexA || gp->tcw.PixelFmt == Pixel565,
 					gp->tsp.ShadInstr,
 					gp->pcw.Offset,
 					fog_ctrl,
