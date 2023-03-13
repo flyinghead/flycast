@@ -88,6 +88,7 @@ struct pico_protocol {
 
 int pico_protocols_loop(int loop_score);
 void pico_protocol_init(struct pico_protocol *p);
+void pico_protocol_deinit(void);
 
 int pico_protocol_datalink_loop(int loop_score, int direction);
 int pico_protocol_network_loop(int loop_score, int direction);

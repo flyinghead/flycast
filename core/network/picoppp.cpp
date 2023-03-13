@@ -240,7 +240,6 @@ static GamePortList GamesPorts[] = {
 // listening port -> socket fd
 static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
-static bool pico_stack_inited;
 static bool pico_thread_running = false;
 extern "C" int dont_reject_opt_vj_hack;
 
@@ -665,16 +664,26 @@ static void read_native_sockets()
 
 static void close_native_sockets()
 {
-	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
-		closesocket(it->second);
+	for (const auto& pair : udp_sockets)
+		closesocket(pair.second);
 	udp_sockets.clear();
-	tcp_sockets.clear();
-	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
+	for (auto& pair : tcp_sockets)
 	{
-		pico_socket_close(it->first);
-		closesocket(it->second);
+		pico_socket_del_imm(pair.second.pico_sock);
+		pair.second.pico_sock = nullptr;
+		closesocket(pair.second.native_sock);
+		pair.second.native_sock = INVALID_SOCKET;
+	}
+	tcp_sockets.clear();
+	for (const auto& pair : tcp_connecting_sockets)
+	{
+		pico_socket_del_imm(pair.first);
+		closesocket(pair.second);
 	}
 	tcp_connecting_sockets.clear();
+	for (const auto& pair : tcp_listening_sockets)
+		closesocket(pair.second);
+	tcp_listening_sockets.clear();
 }
 
 static int modem_set_speed(pico_device *dev, uint32_t speed)
@@ -821,16 +830,17 @@ static int send_eth_frame(pico_device *dev, void *data, int len)
 
 static void *pico_thread_func(void *)
 {
-    if (!pico_stack_inited)
-    {
-    	pico_stack_init();
-    	pico_stack_inited = true;
+	pico_stack_init();
 #ifdef _WIN32
+	{
 		static WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-			WARN_LOG(MODEM, "WSAStartup failed");
-#endif
+		if (wsaData.wVersion == 0)
+		{
+			if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+				WARN_LOG(MODEM, "WSAStartup failed");
+		}
     }
+#endif
 
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
@@ -1031,11 +1041,12 @@ static void *pico_thread_func(void *)
 		PICO_IDLE();
     }
 
-	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-		closesocket(it->second);
 	close_native_sockets();
-	pico_socket_close(pico_tcp_socket);
-	pico_socket_close(pico_udp_socket);
+	pico_socket_del_imm(pico_tcp_socket);
+	pico_socket_del_imm(pico_udp_socket);
+	pico_stack_tick();
+	pico_stack_tick();
+	pico_stack_tick();
 
 	if (pico_dev)
 	{
@@ -1051,7 +1062,8 @@ static void *pico_thread_func(void *)
 		}
 		pico_dev = nullptr;
 	}
-	pico_stack_tick();
+	pico_stack_deinit();
+
 	if (ports != nullptr)
 		upnp.get().Term();
 
