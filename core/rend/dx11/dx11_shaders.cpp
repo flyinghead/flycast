@@ -602,7 +602,7 @@ ComPtr<ID3D11PixelShader> DX11Shaders::compilePS(const char* source, const char*
 	ComPtr<ID3D11PixelShader> shader;
 	if (blob)
 	{
-		if (device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &shader.get()) != S_OK)
+		if (FAILED(device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &shader.get())))
 			ERROR_LOG(RENDERER, "Pixel shader creation failed");
 	}
 

@@ -222,15 +222,15 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 
 	//update if needed
 	if (tf->NeedsUpdate())
-		tf->Update();
-	else
 	{
-		if (tf->IsCustomTextureAvailable())
-		{
-			texCache.DeleteLater(tf->texture);
-			tf->texture.reset();
-			tf->loadCustomTexture();
-		}
+		if (!tf->Update())
+			tf = nullptr;
+	}
+	else if (tf->IsCustomTextureAvailable())
+	{
+		texCache.DeleteLater(tf->texture);
+		tf->texture.reset();
+		tf->loadCustomTexture();
 	}
 	return tf;
 }
@@ -363,7 +363,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	devCache.SetPixelShader(shaders.getShader(
 			gp->pcw.Texture,
 			gp->tsp.UseAlpha,
-			gp->tsp.IgnoreTexA,
+			gp->tsp.IgnoreTexA || gp->tcw.PixelFmt == Pixel565,
 			gp->tsp.ShadInstr,
 			gp->pcw.Offset,
 			fog_ctrl,

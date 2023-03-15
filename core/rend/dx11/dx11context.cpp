@@ -187,6 +187,12 @@ void DX11Context::term()
 	}
 	pDeviceContext.reset();
 	pDevice.reset();
+	d3dcompiler = nullptr;
+	if (d3dcompilerHandle != NULL)
+	{
+		FreeLibrary(d3dcompilerHandle);
+		d3dcompilerHandle = NULL;
+	}
 }
 
 void DX11Context::Present()
@@ -327,6 +333,27 @@ void DX11Context::handleDeviceLost()
 		renderer = rend_norend();
 		renderer->Init();
 	}
+}
+
+const pD3DCompile DX11Context::getCompiler()
+{
+	if (d3dcompiler == nullptr)
+	{
+#ifndef TARGET_UWP
+		d3dcompilerHandle = LoadLibraryA("d3dcompiler_47.dll");
+		if (d3dcompilerHandle == NULL)
+			d3dcompilerHandle = LoadLibraryA("d3dcompiler_46.dll");
+		if (d3dcompilerHandle == NULL)
+		{
+			WARN_LOG(RENDERER, "Neither d3dcompiler_47.dll or d3dcompiler_46.dll can be loaded");
+			return D3DCompile;
+		}
+		d3dcompiler = (pD3DCompile)GetProcAddress(d3dcompilerHandle, "D3DCompile");
+#endif
+		if (d3dcompiler == nullptr)
+			d3dcompiler = D3DCompile;
+	}
+	return d3dcompiler;
 }
 #endif // !LIBRETRO
 

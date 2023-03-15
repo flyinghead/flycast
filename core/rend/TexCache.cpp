@@ -505,7 +505,11 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 		int stride = width;
 		if (tcw.StrideSel)
+		{
 			stride = (TEXT_CONTROL & 31) * 32;
+			if (stride == 0)
+				stride = width;
+		}
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -566,7 +570,7 @@ void BaseTextureCacheData::ComputeHash()
 	texture_hash ^= tcw.full & tcwMask;
 }
 
-void BaseTextureCacheData::Update()
+bool BaseTextureCacheData::Update()
 {
 	//texture state tracking stuff
 	Updates++;
@@ -610,23 +614,30 @@ void BaseTextureCacheData::Update()
 	u32 stride = width;
 
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
-		stride = (TEXT_CONTROL & 31) * 32;
-
-	u32 original_h = height;
-	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
-		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder && stride > 0)
+		stride = (TEXT_CONTROL & 31) * 32;
+		if (stride == 0)
+			stride = width;
+	}
+
+	const u32 original_h = height;
+	if (sa_tex > VRAM_SIZE || sa + size > VRAM_SIZE)
+	{
+		height = 0;
+		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
 			height = (VRAM_SIZE - sa) * 8 / stride / tex->bpp;
 			size = stride * height * tex->bpp/8;
 		}
-		else
+		if (height == 0)
 		{
 			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
+			dirty = 1;
+			height = original_h;
 			unprotectVRam();
-			return;
+			return false;
 		}
 	}
 	if (config::CustomTextures)
@@ -793,6 +804,8 @@ void BaseTextureCacheData::Update()
 		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();
+
+	return true;
 }
 
 void BaseTextureCacheData::CheckCustomTexture()

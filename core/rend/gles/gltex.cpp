@@ -321,15 +321,8 @@ static void readAsyncPixelBuffer(u32 addr)
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 #endif
 }
-
-static int TexCacheLookups;
-static int TexCacheHits;
-//static float LastTexCacheStats;
-
 BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 {
-	TexCacheLookups++;
-
 	//lookup texture
 	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
 
@@ -337,27 +330,17 @@ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 
 	//update if needed
 	if (tf->NeedsUpdate())
-		tf->Update();
-	else
 	{
-		if (tf->IsCustomTextureAvailable())
-		{
-			TexCache.DeleteLater(tf->texID);
-			tf->texID = glcache.GenTexture();
-			tf->CheckCustomTexture();
-		}
-		TexCacheHits++;
+		if (!tf->Update())
+			tf = nullptr;
+	}
+	else if (tf->IsCustomTextureAvailable())
+	{
+		TexCache.DeleteLater(tf->texID);
+		tf->texID = glcache.GenTexture();
+		tf->CheckCustomTexture();
 	}
 
-//	if (os_GetSeconds() - LastTexCacheStats >= 2.0)
-//	{
-//		LastTexCacheStats = os_GetSeconds();
-//		printf("Texture cache efficiency: %.2f%% cache size %ld\n", (float)TexCacheHits / TexCacheLookups * 100, TexCache.size());
-//		TexCacheLookups = 0;
-//		TexCacheHits = 0;
-//	}
-
-	//return gl texture
 	return tf;
 }
 

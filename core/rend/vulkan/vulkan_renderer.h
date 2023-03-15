@@ -110,7 +110,11 @@ public:
 			//if (textureCache.IsInFlight(tf))
 			//	textureCache.DestroyLater(tf);
 			tf->SetCommandBuffer(texCommandBuffer);
-			tf->Update();
+			if (!tf->Update())
+			{
+				tf->SetCommandBuffer(nullptr);
+				return nullptr;
+			}
 		}
 		else if (tf->IsCustomTextureAvailable())
 		{

@@ -39,7 +39,7 @@ public:
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
 	ComPtr<ID3D11RenderTargetView>& getRenderTarget() { return renderTargetView; }
-	const pD3DCompile getCompiler() const { return D3DCompile; }
+	const pD3DCompile getCompiler();
 
 	void resize() override;
 	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
@@ -93,6 +93,8 @@ private:
 	Samplers samplers;
 	D3D_FEATURE_LEVEL featureLevel{};
 	bool supportedTexFormats[5] {}; // indexed by TextureType enum
+	HMODULE d3dcompilerHandle = NULL;
+	pD3DCompile d3dcompiler = nullptr;
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
 };

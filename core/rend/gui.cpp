@@ -1368,7 +1368,10 @@ static void gui_display_settings()
 			{
 				DisabledScope scope(config::Cable.isReadOnly());
 
-				if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
+				const char *value = config::Cable == 0 ? cable[0]
+						: config::Cable > 0 && config::Cable <= (int)std::size(cable) ? cable[config::Cable - 1]
+						: "?";
+				if (ImGui::BeginCombo("Cable", value, ImGuiComboFlags_None))
 				{
 					for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 					{
@@ -2483,8 +2486,8 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
-		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
+		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
 		
 		if (config::BoxartDisplayMode)

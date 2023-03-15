@@ -295,16 +295,16 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 
 	//update if needed
 	if (tf->NeedsUpdate())
-		tf->Update();
-	else
 	{
-		if (tf->IsCustomTextureAvailable())
-		{
-			texCache.DeleteLater(tf->texture);
-			tf->texture.reset();
-			// FIXME textureView
-			tf->loadCustomTexture();
-		}
+		if (!tf->Update())
+			tf = nullptr;
+	}
+	else if (tf->IsCustomTextureAvailable())
+	{
+		texCache.DeleteLater(tf->texture);
+		tf->texture.reset();
+		// FIXME textureView
+		tf->loadCustomTexture();
 	}
 	return tf;
 }
@@ -567,7 +567,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 			gp->pcw.Texture,
 			gp->tsp.UseAlpha,
-			gp->tsp.IgnoreTexA,
+			gp->tsp.IgnoreTexA || gp->tcw.PixelFmt == Pixel565,
 			gp->tsp.ShadInstr,
 			gp->pcw.Offset,
 			fog_ctrl,

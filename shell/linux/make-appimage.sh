@@ -137,9 +137,10 @@ echo "Creating AppRun..."
 cat > "$OUTDIR/AppRun" << EOF
 #!/bin/sh
 APPDIR=\$(dirname "\$0")
-if [ -x "\$APPDIR/usr/optional/checkrt" ]; then
+grep -qs SteamOS /etc/os-release || \
+  if [ -x "\$APPDIR/usr/optional/checkrt" ]; then
 	extra_libs="\$(\$APPDIR/usr/optional/checkrt)"
-fi
+  fi
 if [ -n "\$extra_libs" ]; then
 	export LD_LIBRARY_PATH="\${extra_libs}\${LD_LIBRARY_PATH}"
 	if [ -e "\$APPDIR/usr/optional/exec.so" ]; then

@@ -45,6 +45,7 @@
 #include <chrono>
 
 settings_t settings;
+constexpr float WINCE_DEPTH_SCALE = 0.01f;
 
 static void loadSpecialSettings()
 {
@@ -58,7 +59,7 @@ static void loadSpecialSettings()
 		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(0.1f); // taxi 2 needs 0.01 for FMV (amd, per-tri)
+			config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
 			config::ForceWindowsCE.override(true);
 		}
 
@@ -93,7 +94,13 @@ static void loadSpecialSettings()
 				// JSR (EU)
 				|| prod_id == "MK-5105850"
 				// Worms World Party
-				|| prod_id == "T7016D  50")
+				|| prod_id == "T7016D  50"
+				// Shenmue (US)
+				|| prod_id == "MK-51059"
+				// Shenmue (EU)
+				|| prod_id == "MK-5105950"
+				// Shenmue (JP)
+				|| prod_id == "HDR-0016")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -699,9 +706,15 @@ void Emulator::stop()
 	}
 	else
 	{
+#ifdef __ANDROID__
 		// defer stopping audio until after the current frame is finished
 		// normally only useful on android due to multithreading
 		stopRequested = true;
+#else
+		TermAudio();
+		nvmem::saveFiles();
+		EventManager::event(Event::Pause);
+#endif
 	}
 }
 
@@ -738,7 +751,7 @@ void loadGameSpecificSettings()
 	config::Settings::instance().load(true);
 
 	if (config::ForceWindowsCE)
-		config::ExtraDepthScale.override(0.1f);
+		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
 }
 
 void Emulator::step()
@@ -767,11 +780,14 @@ void dc_loadstate(Deserializer& deser)
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
 #endif
+	memwatch::unprotect();
+	memwatch::reset();
 
 	dc_deserialize(deser);
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();
+	KillTex = true;
 }
 
 void Emulator::setNetworkState(bool online)
