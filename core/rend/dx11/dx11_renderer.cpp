@@ -696,7 +696,7 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 		setRenderState<ListType_Translucent, true>(params);
 		deviceContext->DrawIndexed(pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, 0);
 	}
@@ -730,7 +730,7 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 
 		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 			if (!params->isp.ZWriteDis)
 			{
 				setCullMode(params->isp.CullMode);

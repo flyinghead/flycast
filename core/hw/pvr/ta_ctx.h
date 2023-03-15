@@ -220,7 +220,7 @@ struct N2LightModel
 
 struct SortedTriangle
 {
-	const PolyParam* ppid;
+	u32 polyIndex;
 	u32 first;
 	u32 count;
 };

@@ -159,7 +159,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 
 		if (idx != pid)
 		{
-			SortedTriangle cur = { pp_base + pid, (u32)(idxSize + i * 3), 0 };
+			SortedTriangle cur = { (u32)(&pp_base[pid] - &ctx.global_param_tr[0]), (u32)(idxSize + i * 3), 0 };
 
 			if (idx != -1)
 			{
@@ -180,7 +180,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	else
 	{
 		// Add a dummy one to signal we're using sorted triangles
-		ctx.sortedTriangles.push_back({ pp_base, 0, 0});
+		ctx.sortedTriangles.push_back({ (u32)(&pp_base[0] - &ctx.global_param_tr[0]), 0, 0});
 	}
 	pass.sorted_tr_count = ctx.sortedTriangles.size();
 

@@ -235,19 +235,20 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 	if (first == last)
 		return;
 	for (u32 idx = first; idx < last; idx++)
-		DrawPoly(cmdBuffer, ListType_Translucent, true, *polys[idx].ppid, polys[idx].first, polys[idx].count);
+		DrawPoly(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr[polys[idx].polyIndex], polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 		for (u32 idx = first; idx < last; idx++)
 		{
 			const SortedTriangle& param = polys[idx];
-			if (param.ppid->isp.ZWriteDis)
+			const PolyParam& polyParam = pvrrc.global_param_tr[param.polyIndex];
+			if (polyParam.isp.ZWriteDis)
 				continue;
-			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode, param.ppid->isNaomi2());
+			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
-			TileClipping tileClip = SetTileClip(param.ppid->tileclip, scissorRect);
+			TileClipping tileClip = SetTileClip(polyParam.tileclip, scissorRect);
 			if (tileClip == TileClipping::Outside)
 				SetScissor(cmdBuffer, scissorRect);
 			else

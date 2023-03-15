@@ -510,7 +510,7 @@ void D3DRenderer::drawSorted(int first, int count, bool multipass)
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		const PolyParam *params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 		setGPState<ListType_Translucent, true>(params);
 		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, pvrrc.sortedTriangles[p].count / 3);
 	}
@@ -531,7 +531,7 @@ void D3DRenderer::drawSorted(int first, int count, bool multipass)
 
 		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			const PolyParam *params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 			if (!params->isp.ZWriteDis)
 			{
 				// FIXME no clipping in modvol shader

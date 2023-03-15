@@ -297,7 +297,7 @@ static void drawSorted(int first, int count, bool multipass)
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 		SetGPState<ListType_Translucent,true>(params);
 		glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
 				(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
@@ -320,7 +320,7 @@ static void drawSorted(int first, int count, bool multipass)
 
 		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 			if (!params->isp.ZWriteDis)
 			{
 				// FIXME no clipping in modvol shader

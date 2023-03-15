@@ -62,7 +62,7 @@ void setFirstProvokingVertex(rend_context& rendContext)
 	{
 		for (const SortedTriangle& tri : rendContext.sortedTriangles)
 		{
-			if (tri.ppid->pcw.Gouraud)
+			if (rendContext.global_param_tr[tri.polyIndex].pcw.Gouraud)
 				continue;
 			for (u32 i = 0; i + 2 < tri.count; i += 3)
 			{
