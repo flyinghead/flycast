@@ -33810,18 +33810,18 @@ struct retro_core_options_v2 options_hu = {
 #define CATEGORY_VMU_LABEL_ID NULL
 #define CATEGORY_VMU_INFO_0_ID NULL
 #define CORE_OPTION_NAME_REGION_LABEL_ID "Daerah"
-#define OPTION_VAL_JAPAN_ID NULL
+#define OPTION_VAL_JAPAN_ID "Jepang"
 #define OPTION_VAL_USA_ID NULL
-#define OPTION_VAL_EUROPE_ID NULL
+#define OPTION_VAL_EUROPE_ID "Eropa"
 #define OPTION_VAL_DEFAULT_ID NULL
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_ID "Bahasa"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_ID NULL
-#define OPTION_VAL_JAPANESE_ID NULL
-#define OPTION_VAL_ENGLISH_ID NULL
-#define OPTION_VAL_GERMAN_ID NULL
-#define OPTION_VAL_FRENCH_ID NULL
-#define OPTION_VAL_SPANISH_ID NULL
-#define OPTION_VAL_ITALIAN_ID NULL
+#define OPTION_VAL_JAPANESE_ID "Bahasa Jepang"
+#define OPTION_VAL_ENGLISH_ID "Bahasa Inggris"
+#define OPTION_VAL_GERMAN_ID "Bahasa Jerman"
+#define OPTION_VAL_FRENCH_ID "Bahasa Perancis"
+#define OPTION_VAL_SPANISH_ID "Bahasa Spanyol"
+#define OPTION_VAL_ITALIAN_ID "Bahasa Itali"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ID "Paksa penggunaan BIOS emulasi tingkat tinggi."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Boot ke BIOS (Perlu Dimulai Ulang)"
@@ -33879,7 +33879,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_PAL_M_ID NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_ID "Orientasi Layar"
 #define OPTION_VAL_HORIZONTAL_ID NULL
-#define OPTION_VAL_VERTICAL_ID NULL
+#define OPTION_VAL_VERTICAL_ID "Vertikal"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_ID NULL
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_ID NULL
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_ID NULL
@@ -33970,10 +33970,10 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_ID NULL
-#define OPTION_VAL_UPPER_LEFT_ID NULL
-#define OPTION_VAL_UPPER_RIGHT_ID NULL
-#define OPTION_VAL_LOWER_LEFT_ID NULL
-#define OPTION_VAL_LOWER_RIGHT_ID NULL
+#define OPTION_VAL_UPPER_LEFT_ID "Kiri Atas"
+#define OPTION_VAL_UPPER_RIGHT_ID "Kanan Atas"
+#define OPTION_VAL_LOWER_LEFT_ID "Kiri Bawah"
+#define OPTION_VAL_LOWER_RIGHT_ID "Kanan Bawah"
 #define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_ID NULL
 #define OPTION_VAL_1X_ID NULL
 #define OPTION_VAL_3X_ID NULL
@@ -49051,10 +49051,10 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_12160X9120_RU NULL
 #define OPTION_VAL_12800X9600_RU NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_RU "Тип кабеля"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU "Тип выводимого сигнала. ТВ (Композитный) наиболее поддерживаемый."
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU "Тип выходного сигнала. Наиболее поддерживаемым является 'ТВ (композит)'."
 #define OPTION_VAL_VGA_RU NULL
 #define OPTION_VAL_TV_RGB_RU "ТВ (RGB)"
-#define OPTION_VAL_TV_COMPOSITE_RU "ТВ (композитный)"
+#define OPTION_VAL_TV_COMPOSITE_RU "ТВ (композит)"
 #define CORE_OPTION_NAME_BROADCAST_LABEL_RU "Стандарт вещания"
 #define OPTION_VAL_NTSC_RU NULL
 #define OPTION_VAL_PAL_RU "PAL (Мир)"
@@ -49064,10 +49064,10 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_HORIZONTAL_RU "Горизонтальная"
 #define OPTION_VAL_VERTICAL_RU "Вертикальная"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_RU "Альфа-сортировка"
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RU "По слоям (самый быстрый, но наименее точный)"
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_RU "По треугольникам (обычный)"
-#define OPTION_VAL_PER_PIXEL_ACCURATE_RU "По пикселям (самый точный, но наиболее медленный)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RU NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RU "По слоям (самая быстрая, наименее точная)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_RU "По треугольникам (стандартная)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_RU "По пикселям (точная, самая медленная)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RU "Размер накопительного буфера пикселей"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_RU "Большие значения могут требоваться для правильного отображения высоких разрешений."
 #define OPTION_VAL_512MB_RU "512 МБ"
 #define OPTION_VAL_1GB_RU "1 ГБ"
@@ -49078,21 +49078,21 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU "Полная эмуляция фреймбуфера"
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU "Включает полную эмуляцию кадрового буфера в VRAM. Полезно для игр, которые напрямую производят чтение или запись фреймбуфера в VRAM. При включении внутреннее разрешение будет принудительно установлено в 640x480 и возможно сильное падение скорости."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU "Включить буфер рендера в текстуру"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU "Копирует отрисованные текстуры из GPU обратно в VRAM. Данная настройка обычно включена для игр, которые этого требуют. При включении не используется масштабирование рендеринга текстур и возможно падение производительности."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_RU "MIP-текстурирование"
 #define CORE_OPTION_NAME_FOG_LABEL_RU "Эффекты тумана"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RU "Модификатор объема"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RU "Функция графического процессора Dreamcast, которая обычно используется играми для отрисовки теней объектов. По умолчанию она должна быть включена - влияние на производительность обычно минимально или незначительно."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_RU "Анизотропная фильтрация"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RU NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_RU "Сглаживание текстур"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_RU NULL
-#define OPTION_VAL_1_RU NULL
-#define OPTION_VAL_2_RU NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RU "Улучшает качество текстур на поверхностях под непрямыми углами обзора по отношению к камере. Более высокие значения повышают требования к GPU. Изменения настройки вступают в силу при перезапуске."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_RU "Фильтрация текстур"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_RU "Используемый режим фильтрации текстур. Применяется для принудительной фильтрации всех текстур, чтобы получить более чёткое (или сглаженное) изображение, отличное от стандартного. Любое значение не по умолчанию может приводить к ошибкам рендеринга. Для применения настройки требуется перезапуск."
+#define OPTION_VAL_1_RU "Форс. методом ближайшего соседа"
+#define OPTION_VAL_2_RU "Форс. линейное"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RU "Задержка замены кадров"
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU "Помогает избегать мерцания экрана или артефактов видео. Не рекомендуется на медленных платформах."
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU "Помогает избежать мерцания экрана или искажения заставок. Не рекомендуется на медленных платформах."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU "Определять изменение частоты кадров"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU "Уведомлять фронтенд об изменениях внутренней частоты кадров (напр. с 60 до 30 к/с). Улучшает распределение кадров в играх с постоянной частотой в 30 или 20 к/с, но должно быть выключено для игр с плавающим значением частоты кадров (напр. Ecco the Dolphin, Unreal Tournament). Недоступно при вкл. опции 'Автопропуск кадров'."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU "Фильтр постобработки PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
@@ -49101,14 +49101,14 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_RU NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_RU NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_RU "Нативная глубина интерполяции"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_RU "Помогает при проблемах с глубиной и искажением текстур на видеокартах AMD. В ряде случаев также устраняет проблемы на видеокартах Intel."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RU "Рендеринг в отдельном потоке"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RU "Запускает графический и центральный процессоры в разных потоках. Настоятельно рекомендуется."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RU "Автоматический пропуск кадров"
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RU NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RU "Автоматически пропускать кадры при замедлении эмулятора. Применяется только с вкл. опцией 'Рендеринг в отдельном потоке'."
 #define OPTION_VAL_SOME_RU "Нормальный"
-#define OPTION_VAL_MORE_RU NULL
+#define OPTION_VAL_MORE_RU "Максимум"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RU "Пропуск кадров"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU "Устанавливает количество кадров пропуска между отображаемыми кадрами."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RU "Широкоэкранные чит-коды (требуется перезапуск)"
@@ -49130,11 +49130,11 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_RU "Мёртвая зона триггеров"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_RU "Цифровые триггеры"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RU "Модуль вибрации/Puru Puru"
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU "Включает обратную связь контроллера."
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU "Включает отдачу контроллера."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU "Транслировать цифровые сигналы"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU "Транслировать события цифрового ввода и состояние вибрации в TCP-порт 8000. Совместимо с параметром MAME \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показать настройки светового пистолета"
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU "Включает конфигурацию параметров прицела светового пистолета. Для применения настройки требуется переключить быстрое меню."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
 #define OPTION_VAL_RED_RU "Красный"
@@ -49150,7 +49150,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_ALL_VMUS_RU "Все VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения блока визуальной памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_RU "Положение экрана VMU 1"
 #define OPTION_VAL_UPPER_LEFT_RU "Вверху слева"
@@ -49184,7 +49184,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_LIGHT_PURPLE_3_22_RU "Светло-фиолетовый (3)"
 #define OPTION_VAL_LIGHT_ORANGE_23_RU "Светло-оранжевый"
 #define OPTION_VAL_ORANGE_24_RU "Оранжевый"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_RU NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_RU "Светло-фиолетовый (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_RU "Светло-жёлтый"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_RU "Светло-жёлтый (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RU "Цвет выкл. пикселей VMU 1"
