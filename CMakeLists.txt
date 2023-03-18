@@ -57,6 +57,7 @@ if(IOS)
 endif()
 
 include(GNUInstallDirs)
+include(CMakeRC)
 
 if(ENABLE_CTEST)
 	include(CTest)
@@ -687,6 +688,9 @@ endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
 
+cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
+target_link_libraries(${PROJECT_NAME} PRIVATE flycast::res)
+
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1050,13 +1054,13 @@ endif()
 target_sources(${PROJECT_NAME} PRIVATE
 		core/reios/descrambl.cpp
 		core/reios/descrambl.h
-		core/reios/font.h
 		core/reios/gdrom_hle.cpp
 		core/reios/gdrom_hle.h
 		core/reios/reios.cpp
 		core/reios/reios.h
 		core/reios/reios_elf.cpp
 		core/reios/reios_elf.h)
+cmrc_add_resources(flycast-resources fonts/biosfont.bin)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h

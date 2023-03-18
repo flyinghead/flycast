@@ -124,11 +124,6 @@ std::string getTextureDumpPath()
 			+ "texdump" + std::string(path_default_slash());
 }
 
-std::string getBiosFontPath()
-{
-	return std::string(game_dir_no_slash) + std::string(path_default_slash()) + "font.bin";
-}
-
 }
 
 void dc_savestate(int index = 0)

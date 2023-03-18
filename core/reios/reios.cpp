@@ -20,16 +20,17 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
-#include "font.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/aica_if.h"
 #include "hw/pvr/pvr_regs.h"
 #include "imgread/common.h"
 #include "imgread/isofs.h"
-#include "oslib/oslib.h"
 #include "hw/sh4/sh4_mmr.h"
+#include <cmrc/cmrc.hpp>
 
 #include <map>
+
+CMRC_DECLARE(flycast);
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
@@ -744,24 +745,15 @@ void reios_reset(u8* rom)
 	// 7078 24 × 24 pixels (72 bytes) characters
 	// 129 32 × 32 pixels (128 bytes) characters
 	memset(pFont, 0, 536496);
-	FILE *font = nowide::fopen(hostfs::getBiosFontPath().c_str(), "rb");
-	if (font == NULL)
-	{
-		INFO_LOG(REIOS, "font.bin not found. Using built-in font");
-		memcpy(pFont, builtin_font, sizeof(builtin_font));
+	try {
+		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
+		cmrc::file fontFile = fs.open("fonts/biosfont.bin");
+		memcpy(pFont, fontFile.begin(), fontFile.end() - fontFile.begin());
+	} catch (const std::system_error& e) {
+		ERROR_LOG(REIOS, "Failed to load the bios font: %s", e.what());
+		throw;
 	}
-	else
-	{
-		std::fseek(font, 0, SEEK_END);
-		size_t size = std::ftell(font);
-		std::fseek(font, 0, SEEK_SET);
-		size_t nread = std::fread(pFont, 1, size, font);
-		std::fclose(font);
-		if (nread != size)
-			WARN_LOG(REIOS, "font.bin: read truncated");
-		else
-			INFO_LOG(REIOS, "font.bin: loaded %zd bytes", size);
-	}
+
 	gd_hle_state = {};
 }
 

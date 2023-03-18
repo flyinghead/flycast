@@ -46,8 +46,6 @@ namespace hostfs
 	std::string getTextureDumpPath();
 
 	std::string getShaderCachePath(const std::string& filename);
-
-	std::string getBiosFontPath();
 }
 
 #ifdef _WIN64

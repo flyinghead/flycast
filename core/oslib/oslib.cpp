@@ -146,11 +146,6 @@ std::string getTextureDumpPath()
 	return get_writable_data_path("texdump/");
 }
 
-std::string getBiosFontPath()
-{
-	return get_readonly_data_path("font.bin");
-}
-
 }
 
 #ifdef USE_BREAKPAD
