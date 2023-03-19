@@ -671,10 +671,12 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7
 add_subdirectory(core/deps/libelf)
 target_link_libraries(${PROJECT_NAME} PRIVATE elf)
 if(NOT LIBRETRO)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_DISABLE_DEMO_WINDOWS)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_tables.cpp
 		core/deps/imgui/imgui_widgets.cpp)
 
 	if(ENABLE_FC_PROFILER)
