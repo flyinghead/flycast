@@ -3664,6 +3664,7 @@ ImGuiWindow::ImGuiWindow(ImGuiContext* ctx, const char* name) : DrawListInst(NUL
     DrawList = &DrawListInst;
     DrawList->_Data = &Ctx->DrawListSharedData;
     DrawList->_OwnerName = Name;
+    DragScrolling = false;
 }
 
 ImGuiWindow::~ImGuiWindow()
