@@ -881,16 +881,16 @@ maple_naomi_jamma::maple_naomi_jamma()
 			io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
 			break;
 		case JVS::DualIOBoards4P:
-			if (settings.content.gameId == "VIRTUA ATHLETE")
+			if (settings.content.gameId == "RINGOUT 4X4 JAPAN")
+			{
+				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 2));
+			}
+			else
 			{
 				// reverse the board order so that P1 is P1
 				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this, 2));
 				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 0));
-			}
-			else
-			{
-				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
-				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 2));
 			}
 			break;
 		case JVS::LightGun:
@@ -918,7 +918,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 			io_boards.push_back(std::make_unique<jvs_namco_v226>(1, this));
 			break;
 		case JVS::WorldKicksPCB:
-			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(1, this));
+			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(1, this, 2));
+			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(2, this));
 			break;
 		case JVS::WaveRunnerGP:
 			io_boards.push_back(std::make_unique<jvs_837_13844_wrungp>(1, this));

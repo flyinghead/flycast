@@ -2647,7 +2647,6 @@ const Game Games[] =
         },
 		nullptr,
 		&pstone_inputs,
-		pstone_eeprom_dump,
     },
     // Power Stone 2
     {
@@ -2674,7 +2673,6 @@ const Game Games[] =
         },
 		nullptr,
 		&pstone2_inputs,
-        pstone2_eeprom_dump
     },
     // Power Stone 2 (bootleg)
     {
@@ -2701,7 +2699,6 @@ const Game Games[] =
         },
 		nullptr,
 		&pstone2_inputs,
-        pstone2_eeprom_dump
     },
     // Puyo Puyo Da! (Japan)
     {
@@ -2764,7 +2761,6 @@ const Game Games[] =
         },
         NULL,
 		&ringout_inputs,
-        ringout_eeprom_dump
     },
     // Ring Out 4x4
     {
@@ -2792,7 +2788,6 @@ const Game Games[] =
         },
         NULL,
 		&ringout_inputs,
-        ringout_eeprom_dump
     },
     // Samba De Amigo (Rev B)
     {

@@ -273,7 +273,8 @@ static void loadSpecialSettings()
 			settings.input.JammaSetup = JVS::RotaryEncoders;
 		}
 		else if (prod_id == "POWER STONE 2 JAPAN"		// Naomi
-				|| prod_id == "GUILTY GEAR isuka")		// AW
+				|| prod_id == "GUILTY GEAR isuka"		// AW
+				|| prod_id == "Dirty Pigskin Football") // AW
 		{
 			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::FourPlayers;
@@ -285,7 +286,9 @@ static void loadSpecialSettings()
 			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
 		else if (prod_id == "RINGOUT 4X4 JAPAN"
-				|| prod_id == "VIRTUA ATHLETE")
+					|| prod_id == "VIRTUA ATHLETE"
+					|| prod_id == "ROYAL RUMBLE"
+					|| prod_id == "BEACH SPIKERS JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DualIOBoards4P;

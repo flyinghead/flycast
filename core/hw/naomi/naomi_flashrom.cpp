@@ -149,22 +149,30 @@ static bool initEeprom(const RomBootID *bootId)
 	for (int i = 0; i < 4; i++)
 		write_naomi_eeprom(3 + i, bootId->gameID[i]);
 	write_naomi_eeprom(7, 9);	// FIXME 9 or 0x18?
-	if (bootId->cabinet & 8)
-		write_naomi_eeprom(8, 30);
+	if (bootId->cabinet == 0
+			&& (settings.input.JammaSetup == JVS::FourPlayers
+					|| settings.input.JammaSetup == JVS::DualIOBoards4P
+					|| settings.input.JammaSetup == JVS::WorldKicks
+					|| settings.input.JammaSetup == JVS::WorldKicksPCB))
+		write_naomi_eeprom(8, 0x30);
+	else if (bootId->cabinet & 8)
+		write_naomi_eeprom(8, 0x30);
 	else if (bootId->cabinet & 4)
-		write_naomi_eeprom(8, 20);
+		write_naomi_eeprom(8, 0x20);
 	else if (bootId->cabinet & 2)
-		write_naomi_eeprom(8, 10);
+		write_naomi_eeprom(8, 0x10);
 	else
 		write_naomi_eeprom(8, 0);
-	if (bootId->coinFlag[0][1] == 1)
+	if (bootId->coinFlag[0][0] == 1)
 	{
 		// ROM-specific defaults
-		write_naomi_eeprom(2, bootId->coinFlag[0][3] | (((bootId->coinFlag[0][3] & 2) ^ 2) << 3));
+		write_naomi_eeprom(2, bootId->coinFlag[0][1] | (((bootId->coinFlag[0][1] & 2) ^ 2) << 3));
+		if (bootId->coinFlag[0][2] == 1) // individual coin chute
+			write_naomi_eeprom(8, readEeprom(8) | 1);
 		write_naomi_eeprom(9, bootId->coinFlag[0][3] - 1);
-		write_naomi_eeprom(10, bootId->coinFlag[0][6]);
-		write_naomi_eeprom(11, bootId->coinFlag[0][4]);
-		write_naomi_eeprom(12, bootId->coinFlag[0][5]);
+		write_naomi_eeprom(10, std::max(bootId->coinFlag[0][6], (u8)1));
+		write_naomi_eeprom(11, std::max(bootId->coinFlag[0][4], (u8)1));
+		write_naomi_eeprom(12, std::max(bootId->coinFlag[0][5], (u8)1));
 		write_naomi_eeprom(13, bootId->coinFlag[0][7]);
 		write_naomi_eeprom(14, bootId->coinFlag[0][8] | (bootId->coinFlag[0][9] << 4));
 		write_naomi_eeprom(15, bootId->coinFlag[0][10] | (bootId->coinFlag[0][11] << 4));
