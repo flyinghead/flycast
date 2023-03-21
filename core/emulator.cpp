@@ -201,7 +201,8 @@ static void loadSpecialSettings()
 				|| prod_id == "T1209N"	 // Gigawing (US)
 				|| prod_id == "T1208M"	 // Gigawing (JP)
 				|| prod_id == "T1235M"   // Vampire Chronicle for Matching Service
-				|| prod_id == "T22901N"))// Roadsters (US)
+				|| prod_id == "T22901N"  // Roadsters (US)
+				|| prod_id == "T28202M"))// Shin Nihon Pro Wrestling 4
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
