@@ -12,6 +12,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "profiler/dc_profiler.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "hw/arm7/arm7.h"
 #include "cfg/option.h"
 
@@ -395,7 +396,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 
 			// Schedule the end of DMA transfer interrupt
 			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK);       // 16 bits @ 25 MHz
-			if (cycles < 4096)
+			if (cycles < SH4_TIMESLICE / 2)
 				dma_end_sched(0, 0, 0);
 			else
 				sh4_sched_request(dma_sched_id, cycles);
