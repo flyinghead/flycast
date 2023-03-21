@@ -388,60 +388,6 @@ void main()
 	#if PASS == PASS_COLOR 
 		FragColor = color;
 	#elif PASS == PASS_OIT
-		// Discard as many pixels as possible
-		switch (cur_blend_mode.y) // DST
-		{
-		case ONE:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-					discard;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (color == vec4(0.0))
-						discard;
-					break;
-				case SRC_ALPHA:
-					if (color.a == 0.0 || color.rgb == vec3(0.0))
-						discard;
-					break;
-				case INVERSE_SRC_ALPHA:
-					if (color.a == 1.0 || color.rgb == vec3(0.0))
-						discard;
-					break;
-			}
-			break;
-		case OTHER_COLOR:
-			if (cur_blend_mode.x == ZERO && color == vec4(1.0))
-				discard;
-			break;
-		case INVERSE_OTHER_COLOR:
-			if (cur_blend_mode.x <= SRC_ALPHA && color == vec4(0.0))
-				discard;
-			break;
-		case SRC_ALPHA:
-			if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0)
-				discard;
-			break;
-		case INVERSE_SRC_ALPHA:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-				case SRC_ALPHA:
-					if (color.a == 0.0)
-						discard;
-					break;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (color == vec4(0.0))
-						discard;
-					break;
-			}
-			break;
-		}
-		
 		ivec2 coords = ivec2(gl_FragCoord.xy);
 		uint idx =  getNextPixelIndex();
 		
