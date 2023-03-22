@@ -140,7 +140,6 @@ void naomi_cart_ConfigureEEPROM();
 void naomi_cart_serialize(Serializer& ser);
 void naomi_cart_deserialize(Deserializer& deser);
 
-extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
 
 extern Cartridge *CurrentCartridge;

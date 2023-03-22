@@ -371,7 +371,7 @@ void SetNaomiNetworkConfig(int node)
 	{
 		configure_maxspeed_flash(node != -1, node == 0);
 	}
-	else if (!strcmp("F355 CHALLENGE JAPAN", naomi_game_id))
+	else if (gameId == "F355 CHALLENGE JAPAN")
 	{
 		// FIXME need default flash
 		write_naomi_flash(0x230, node == -1 ? 0 : node == 0 ? 1 : 2);
@@ -392,7 +392,7 @@ bool NaomiNetworkSupported()
 		"F355 CHALLENGE JAPAN",
 		// Naomi 2
 		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66",
-		"SAMPLE GAME MAX LONG NAME-" // Driving Simulator
+		"SEGA DRIVING SIMULATOR"
 	};
 	if (!config::NetworkEnable)
 		return false;

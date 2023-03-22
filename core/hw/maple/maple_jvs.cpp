@@ -23,6 +23,7 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
+#include "hw/naomi/printer.h"
 
 #include <algorithm>
 #include <array>
@@ -1510,6 +1511,7 @@ void maple_naomi_jamma::serialize(Serializer& ser) const
 {
 	maple_base::serialize(ser);
 	ser << crazy_mode;
+	ser << hotd2p;
 	ser << jvs_repeat_request;
 	ser << jvs_receive_length;
 	ser << jvs_receive_buffer;
@@ -1523,6 +1525,10 @@ void maple_naomi_jamma::deserialize(Deserializer& deser)
 {
 	maple_base::deserialize(deser);
 	deser >> crazy_mode;
+	if (deser.version() >= Deserializer::V35)
+		deser >> hotd2p;
+	else
+		hotd2p = settings.content.gameId == "hotd2p";
 	deser >> jvs_repeat_request;
 	deser >> jvs_receive_length;
 	deser >> jvs_receive_buffer;
@@ -1674,7 +1680,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		break;
 
 	default:
-		if (jvs_cmd >= 0x20 && jvs_cmd <= 0x38) // Read inputs and more
+		if ((jvs_cmd >= 0x20 && jvs_cmd <= 0x38) || jvs_cmd == 0x74) // Read inputs and more
 		{
 			LOGJVS("JVS Node %d: ", node_id);
 			u32 buttons[4] {};
@@ -1908,6 +1914,25 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
+					break;
+
+				case 0x74:  // Custom: used to read and write the board serial port (touch de uno)
+					{
+						u32 len = buffer_in[cmdi + 1];
+						for (u32 i = 0; i < len; i++)
+							printer::print(buffer_in[cmdi + 2 + i]);
+
+						cmdi += len + 2;
+						JVS_STATUS1();	// report
+						// data
+						// 00 hardware error
+						// 01 head up error
+						// 02 Vp Volt error
+						// 03 auto cutter error
+						// 04 head temp error
+						// 3* paper end error
+						JVS_OUT(0xf); // printer ok
+					}
 					break;
 
 				default:

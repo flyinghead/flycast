@@ -18,6 +18,7 @@
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
 #include "rend/gui.h"
+#include "printer.h"
 
 #include <algorithm>
 
@@ -846,3 +847,42 @@ void initDriveSimSerialPipe()
 	pipe.reset();
 	serial_setPipe(&pipe);
 }
+
+G2PrinterConnection g2PrinterConnection;
+
+u32 G2PrinterConnection::read(u32 addr, u32 size)
+{
+	if (addr == STATUS_REG_ADDR)
+	{
+		u32 ret = printerStat;
+		printerStat |= 1;
+		DEBUG_LOG(NAOMI, "Printer status == %x", ret);
+		return ret;
+	}
+	else
+	{
+		INFO_LOG(NAOMI, "Unhandled G2 Ext read<%d> at %x", size, addr);
+		return 0;
+	}
+}
+
+void G2PrinterConnection::write(u32 addr, u32 size, u32 data)
+{
+	switch (addr)
+	{
+	case DATA_REG_ADDR:
+		for (u32 i = 0; i < size; i++)
+			printer::print((char)(data >> (i * 8)));
+		break;
+
+	case STATUS_REG_ADDR:
+		DEBUG_LOG(NAOMI, "Printer status = %x", data);
+		printerStat &= ~1;
+		break;
+
+	default:
+		INFO_LOG(NAOMI, "Unhandled G2 Ext write<%d> at %x: %x", size, addr, data);
+		break;
+	}
+}
+

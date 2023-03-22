@@ -40,11 +40,11 @@
 #include "card_reader.h"
 #include "naomi_flashrom.h"
 #include "touchscreen.h"
+#include "printer.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
 
-char naomi_game_id[33];
 InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
@@ -413,7 +413,7 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 			md5.getDigest(settings.network.md5.game);
 		}
 		// Default game name if ROM boot id isn't found
-		strcpy(naomi_game_id, game->name);
+		settings.content.gameId = game->name;
 
 	} catch (...) {
 		delete CurrentCartridge;
@@ -595,12 +595,21 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 
 	atomiswaveForceFeedback = false;
 	RomBootID bootId;
-	if (CurrentCartridge->GetBootId(&bootId))
+	if (CurrentCartridge->GetBootId(&bootId)
+			&& (!memcmp(bootId.boardName, "NAOMI", 5) || !memcmp(bootId.boardName, "Naomi2", 6)))
 	{
 		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[0], &bootId.gameTitle[0][32]));
-		if (strlen(gameId.c_str()) > 0)
-			strcpy(naomi_game_id, gameId.c_str());
-		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s] region %x players %x vertical %x", naomi_game_id, (u8)bootId.country, bootId.cabinet, bootId.vertical);
+		if (gameId == "SAMPLE GAME MAX LONG NAME-")
+		{
+			// Use better game names
+			if (!strcmp(CurrentCartridge->game->name, "sgdrvsim"))
+				gameId = "SEGA DRIVING SIMULATOR";
+			else if (!strcmp(CurrentCartridge->game->name, "dragntr3"))
+				gameId = "DRAGON TREASURE 3";
+		}
+		if (!gameId.empty())
+			settings.content.gameId = gameId;
+		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s] region %x players %x vertical %x", settings.content.gameId.c_str(), (u8)bootId.country, bootId.cabinet, bootId.vertical);
 
 		if (gameId == "INITIAL D"
 				|| gameId == "INITIAL D Ver.2"
@@ -616,7 +625,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		}
 		else if (gameId == "THE KING OF ROUTE66"
 				|| gameId == "CLUB KART IN JAPAN"
-				|| gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
+				|| gameId == "SEGA DRIVING SIMULATOR")
 		{
 			if (settings.naomi.drivingSimSlave == 0)
 				initMidiForceFeedback();
@@ -626,10 +635,17 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		{
 			touchscreen::init();
 		}
+		if (gameId == " TOUCH DE UNOH -------------"
+			|| gameId == " TOUCH DE UNOH 2 -----------"
+					// only for F355 Deluxe
+			|| (gameId == "F355 CHALLENGE JAPAN" && !strcmp(CurrentCartridge->game->name, "f355")))
+		{
+			printer::init();
+		}
 
 #ifdef NAOMI_MULTIBOARD
 		// Not a multiboard game but needs the same desktop environment
-		if (gameId == "SAMPLE GAME MAX LONG NAME-") // Driving Simulator
+		if (gameId == "SEGA DRIVING SIMULATOR")
 		{
 			initDriveSimSerialPipe();
 
@@ -659,7 +675,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 #endif
 	}
 	else
-		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
+		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", settings.content.gameId.c_str());
 }
 
 void naomi_cart_ConfigureEEPROM()
@@ -678,6 +694,7 @@ void naomi_cart_ConfigureEEPROM()
 void naomi_cart_Close()
 {
 	touchscreen::term();
+	printer::term();
 	delete CurrentCartridge;
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;
@@ -689,6 +706,7 @@ void naomi_cart_serialize(Serializer& ser)
 	if (CurrentCartridge != nullptr)
 		CurrentCartridge->Serialize(ser);
 	touchscreen::serialize(ser);
+	printer::serialize(ser);
 }
 
 void naomi_cart_deserialize(Deserializer& deser)
@@ -696,6 +714,7 @@ void naomi_cart_deserialize(Deserializer& deser)
 	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
 		CurrentCartridge->Deserialize(deser);
 	touchscreen::deserialize(deser);
+	printer::deserialize(deser);
 }
 
 int naomi_cart_GetPlatform(const char *path)

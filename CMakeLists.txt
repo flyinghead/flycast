@@ -842,6 +842,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/card_reader.cpp
 		core/hw/naomi/touchscreen.h
 		core/hw/naomi/touchscreen.cpp
+		core/hw/naomi/printer.h
+		core/hw/naomi/printer.cpp
 		core/hw/pvr/elan.cpp
 		core/hw/pvr/elan.h
 		core/hw/pvr/elan_struct.h
@@ -919,6 +921,12 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/sh4_sched.cpp
 		core/hw/sh4/sh4_sched.h
 		core/hw/sh4/storeq.cpp)
+
+cmrc_add_resources(flycast-resources
+		fonts/printer_ascii8x16.bin
+		fonts/printer_ascii12x24.bin
+		fonts/printer_kanji16x16.bin
+		fonts/printer_kanji24x24.bin)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp

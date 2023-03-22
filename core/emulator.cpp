@@ -741,10 +741,6 @@ void loadGameSpecificSettings()
 		if (settings.content.gameId.empty())
 			return;
 	}
-	else
-	{
-		settings.content.gameId = naomi_game_id;
-	}
 
 	// Default per-game settings
 	loadSpecialSettings();
