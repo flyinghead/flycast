@@ -117,9 +117,7 @@ void Multiboard::startSlave()
 	if (isSlave() || slaveStarted)
 		return;
 	int slaves;
-	if (!strcmp("f355", CurrentCartridge->game->name))
-		slaves = 3;
-	else if (config::MultiboardSlaves >= 2)
+	if (config::MultiboardSlaves >= 2)
 		slaves = CurrentCartridge->game->multiboard;
 	else
 		slaves = 1;
