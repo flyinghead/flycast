@@ -396,42 +396,41 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 	file_start = 0;
 	file_size = 0;
 	DEBUG_LOG(NAOMI, "Looking for file [%s]", name);
-	for(u32 pos = 0; pos < 2048; pos += dir_sector[pos]) {
-		int fnlen = 0;
-		if(!(dir_sector[pos+25] & 2)) {
-			int len = dir_sector[pos+32];
-			//printf("file: [%s]\n", &dir_sector[pos+33+fnlen]);
-			for(fnlen=0; fnlen < FILENAME_LENGTH; fnlen++) {
-				if((dir_sector[pos+33+fnlen] == ';') && (name[fnlen] == 0)) {
-					fnlen = FILENAME_LENGTH+1;
-					break;
-				}
-				if(dir_sector[pos+33+fnlen] != name[fnlen])
-					break;
-				if(fnlen == len) {
-					if(name[fnlen] == 0)
-						fnlen = FILENAME_LENGTH+1;
-					else
-						fnlen = FILENAME_LENGTH;
-				}
-			}
-		}
-		if(fnlen == FILENAME_LENGTH+1) {
-			// start sector and size of file
-			file_start = ((dir_sector[pos+2] << 0) |
-							(dir_sector[pos+3] << 8) |
-							(dir_sector[pos+4] << 16) |
-							(dir_sector[pos+5] << 24));
-			file_size =  ((dir_sector[pos+10] << 0) |
-							(dir_sector[pos+11] << 8) |
-							(dir_sector[pos+12] << 16) |
-							(dir_sector[pos+13] << 24));
+	for (u32 pos = 0; pos < 2048 && dir_sector[pos] != 0; pos += dir_sector[pos])
+	{
+		if (dir_sector[pos + 25] & 2)
+			continue;
 
-			DEBUG_LOG(NAOMI, "start %08x size %08x", file_start, file_size);
-			break;
+		char fname[FILENAME_LENGTH + 1] {};
+		const int len = std::min<int>(dir_sector[pos + 32], FILENAME_LENGTH);
+		for (int i = 0; i < len; i++)
+		{
+			u8 c = dir_sector[pos + 33 + i];
+			if (c == ';')
+				break;
+			fname[i] = c;
 		}
-		if (dir_sector[pos] == 0)
-			break;
+		//printf("file: [%s]\n", fname);
+		bool found = false;
+		if (name[0] == '*')
+		{
+			char *p = strchr(fname, name[1]);
+			if (p != nullptr && !strcmp(p, &name[1]))
+				found = true;
+		}
+		else
+		{
+			found = strcmp(fname, name) == 0;
+		}
+		if (found)
+		{
+			// start sector and size of file
+			file_start = *(u32 *)&dir_sector[pos + 2];
+			file_size = *(u32 *)&dir_sector[pos + 10];
+
+			DEBUG_LOG(NAOMI, "start %d size %d", file_start, file_size);
+			return;
+		}
 	}
 }
 
@@ -472,7 +471,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 
 			key |= picdata[0x7a0];
 
-			netpic = picdata[0x6ee];
+			netpic = picdata[0x6ee]; // TODO dragntr[2] seem to prefer a 0 here
 		} else {
 			// use extracted pic data
 			//printf("This PIC key hasn't been converted to a proper PIC binary yet!\n");
@@ -489,7 +488,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 					(u64(picdata[0x29]) << 0));
 		}
 
-		DEBUG_LOG(NAOMI, "key is %08x%08x", (u32)((key & 0xffffffff00000000ULL)>>32), (u32)(key & 0x00000000ffffffffULL));
+		DEBUG_LOG(NAOMI, "key is %08x%08x, name is %s", (u32)(key >> 32), (u32)key, name);
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
@@ -539,6 +538,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 				memcpy(name, buffer + 0xc0, FILENAME_LENGTH - 1);
 			}
 		} else {
+			bool found = false;
 			u32 i = 0;
 			while (i < 2048 && buffer[i] != 0)
 			{
@@ -550,16 +550,27 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 						(buffer[i + 5] << 24));
 					memcpy(name, "ROM.BIN", 7);
 					read_gdrom(gdrom.get(), dir, dir_sector);
+					found = true;
 					break;
 				}
 				i += buffer[i] + 8 + (buffer[i] & 1);
 			}
+			if (!found)
+			{
+				u32 dir = *(u32 *)&buffer[2];
+				read_gdrom(gdrom.get(), dir, dir_sector);
+			}
 		}
 
 		find_file(name, dir_sector, file_start, file_size);
+		if (file_start == 0)
+			// mj1: filename in the pic is incorrect, probably because the disk isn't supposed to be run like this?
+			// so grab the first .BIN and load it.
+			find_file("*.BIN", dir_sector, file_start, file_size);
 
-		if (file_start) {
-			u32 file_rounded_size = (file_size + 2047) & -2048;
+		if (file_start != 0)
+		{
+			u32 file_rounded_size = (file_size + 2047) & ~2048;
 			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1)
 				;
 			dimm_data = (u8 *)malloc(dimm_data_size);
@@ -577,7 +588,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 
 			for (u32 i = 0; i < file_rounded_size; i += 8)
 			{
-				if (progress != nullptr)
+				if ((i & 0xfff) == 0 && progress != nullptr)
 				{
 					if (progress->cancelled)
 						throw LoadCancelledException();

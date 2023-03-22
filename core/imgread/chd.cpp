@@ -215,7 +215,6 @@ void CHDDisc::tryOpen(const char* file)
 	{
 		if (tracks.empty())
 			throw FlycastException("Invalid CHD: no track found");
-		type = CdRom_XA;
 
 		Session ses;
 		ses.FirstTrack = 1;
@@ -223,16 +222,26 @@ void CHDDisc::tryOpen(const char* file)
 		sessions.push_back(ses);
 		DEBUG_LOG(GDROM, "session 1: FAD %d", ses.StartFAD);
 
-		ses.FirstTrack = tracks.size();
-		// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
-		tracks.back().StartFAD += SESSION_GAP;
-		tracks.back().EndFAD += SESSION_GAP;
-		((CHDTrack *)tracks.back().file)->Offset -= SESSION_GAP;
-		ses.StartFAD = tracks.back().StartFAD;
-		sessions.push_back(ses);
-		DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
+		if (tracks.size() > 1)
+		{
+			type = CdRom_XA;
+			ses.FirstTrack = tracks.size();
+			// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
+			tracks.back().StartFAD += SESSION_GAP;
+			tracks.back().EndFAD += SESSION_GAP;
+			((CHDTrack *)tracks.back().file)->Offset -= SESSION_GAP;
+			ses.StartFAD = tracks.back().StartFAD;
+			sessions.push_back(ses);
+			DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
 
-		EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
+			EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
+		}
+		else
+		{
+			// Single-track CD-ROMs aren't supported with the exception of naomi mj1/cdp-10002b.chd
+			type = CdRom;
+			EndFAD = LeadOut.StartFAD = total_frames - 1;
+		}
 	}
 }
 

@@ -288,7 +288,8 @@ static void loadSpecialSettings()
 		else if (prod_id == "RINGOUT 4X4 JAPAN"
 					|| prod_id == "VIRTUA ATHLETE"
 					|| prod_id == "ROYAL RUMBLE"
-					|| prod_id == "BEACH SPIKERS JAPAN")
+					|| prod_id == "BEACH SPIKERS JAPAN"
+					|| prod_id == "MJ JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DualIOBoards4P;
