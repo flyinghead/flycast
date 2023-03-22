@@ -1138,6 +1138,18 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x15:	// Receive JVS data
 			receive_jvs_messages(dma_buffer_in[1]);
+			if (hotd2p)
+			{
+				send_jvs_messages(node_id, channel, true, len, cmd, false);
+				w8(MDRS_JVSReply);
+				w8(0);
+				w8(0x20);
+				w8(0x01);
+				w8(0x18);	// always
+				w8(channel);
+				w8(sense_line(node_id));
+				w8(0);
+			}
 			break;
 
 		case 0x17:	// Transmit without repeat
@@ -1365,8 +1377,10 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 			{
 				u32 hash = XXH32(ram, 0x10000, 0);
 				LOGJVS("JVS Firmware hash %08x\n", hash);
+				hotd2p = hash == 0xa6784e26;
 				if (hash == 0xa7c50459	// CT
-						|| hash == 0xae841e36)	// HOTD2
+						|| hash == 0xae841e36	// HOTD2
+						|| hotd2p)
 					crazy_mode = true;
 				else
 					crazy_mode = false;
@@ -1897,7 +1911,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				default:
-					DEBUG_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
+					INFO_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
 					JVS_OUT(2);			// report byte: command error
 					cmdi = length_in;	// Ignore subsequent commands
 					break;
