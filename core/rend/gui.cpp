@@ -1396,7 +1396,7 @@ static void gui_display_settings()
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
             				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
 
-            if (ImGui::ListBoxHeader("Content Location", size))
+            if (ImGui::BeginListBox("Content Location", size))
             {
             	int to_delete = -1;
                 for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -1425,7 +1425,7 @@ static void gui_display_settings()
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
-        		ImGui::ListBoxFooter();
+        		ImGui::EndListBox();
             	if (to_delete >= 0)
             	{
             		scanner.stop();
@@ -1436,17 +1436,19 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
+            size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
+
 #if defined(__linux__) && !defined(__ANDROID__)
-            if (ImGui::ListBoxHeader("Data Directory", 1))
+            if (ImGui::BeginListBox("Data Directory", size))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_data_path("").c_str());
-                ImGui::ListBoxFooter();
+                ImGui::EndListBox();
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
 #else
-            if (ImGui::ListBoxHeader("Home Directory", 1))
+            if (ImGui::BeginListBox("Home Directory", size))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
@@ -1464,7 +1466,7 @@ static void gui_display_settings()
                     system(temp);
                 }
 #endif
-                ImGui::ListBoxFooter();
+                ImGui::EndListBox();
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
@@ -2443,7 +2445,7 @@ static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, I
 		uv0.x = -(ar - 1) / 2;
 		uv1.x = 1 + (ar - 1) / 2;
 	}
-	bool pressed = ImGui::ImageButton(textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	bool pressed = ImGui::ImageButton("", textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
 	gameTooltip(tooltip);
 
     return pressed;
