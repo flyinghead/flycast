@@ -114,6 +114,7 @@ void gui_init()
 	ImPlot::CreateContext();
 #endif
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
 	io.IniFilename = NULL;
 
