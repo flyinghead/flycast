@@ -596,7 +596,9 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	atomiswaveForceFeedback = false;
 	RomBootID bootId;
 	if (CurrentCartridge->GetBootId(&bootId)
-			&& (!memcmp(bootId.boardName, "NAOMI", 5) || !memcmp(bootId.boardName, "Naomi2", 6)))
+			&& (!memcmp(bootId.boardName, "NAOMI", 5)
+					|| !memcmp(bootId.boardName, "Naomi2", 6)
+					|| !memcmp(bootId.boardName, "SYSTEM_X_APP", 12))) // Atomiswave
 	{
 		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[0], &bootId.gameTitle[0][32]));
 		if (gameId == "SAMPLE GAME MAX LONG NAME-")
@@ -675,7 +677,9 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 #endif
 	}
 	else
+	{
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", settings.content.gameId.c_str());
+	}
 }
 
 void naomi_cart_ConfigureEEPROM()
