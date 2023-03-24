@@ -121,32 +121,39 @@ void gui_init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-	io.KeyMap[ImGuiKey_Tab] = 0x2B;
-	io.KeyMap[ImGuiKey_LeftArrow] = 0x50;
-	io.KeyMap[ImGuiKey_RightArrow] = 0x4F;
-	io.KeyMap[ImGuiKey_UpArrow] = 0x52;
-	io.KeyMap[ImGuiKey_DownArrow] = 0x51;
-	io.KeyMap[ImGuiKey_PageUp] = 0x4B;
-	io.KeyMap[ImGuiKey_PageDown] = 0x4E;
-	io.KeyMap[ImGuiKey_Home] = 0x4A;
-	io.KeyMap[ImGuiKey_End] = 0x4D;
-	io.KeyMap[ImGuiKey_Insert] = 0x49;
-	io.KeyMap[ImGuiKey_Delete] = 0x4C;
-	io.KeyMap[ImGuiKey_Backspace] = 0x2A;
-	io.KeyMap[ImGuiKey_Space] = 0x2C;
-	io.KeyMap[ImGuiKey_Enter] = 0x28;
-	io.KeyMap[ImGuiKey_Escape] = 0x29;
-	io.KeyMap[ImGuiKey_A] = 0x04;
-	io.KeyMap[ImGuiKey_C] = 0x06;
-	io.KeyMap[ImGuiKey_V] = 0x19;
-	io.KeyMap[ImGuiKey_X] = 0x1B;
-	io.KeyMap[ImGuiKey_Y] = 0x1C;
-	io.KeyMap[ImGuiKey_Z] = 0x1D;
-
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+}
+
+static ImGuiKey keycodeToImGuiKey(u8 keycode)
+{
+	switch (keycode)
+	{
+		case 0x2B: return ImGuiKey_Tab;
+		case 0x50: return ImGuiKey_LeftArrow;
+		case 0x4F: return ImGuiKey_RightArrow;
+		case 0x52: return ImGuiKey_UpArrow;
+		case 0x51: return ImGuiKey_DownArrow;
+		case 0x4B: return ImGuiKey_PageUp;
+		case 0x4E: return ImGuiKey_PageDown;
+		case 0x4A: return ImGuiKey_Home;
+		case 0x4D: return ImGuiKey_End;
+		case 0x49: return ImGuiKey_Insert;
+		case 0x4C: return ImGuiKey_Delete;
+		case 0x2A: return ImGuiKey_Backspace;
+		case 0x2C: return ImGuiKey_Space;
+		case 0x28: return ImGuiKey_Enter;
+		case 0x29: return ImGuiKey_Escape;
+		case 0x04: return ImGuiKey_A;
+		case 0x06: return ImGuiKey_C;
+		case 0x19: return ImGuiKey_V;
+		case 0x1B: return ImGuiKey_X;
+		case 0x1C: return ImGuiKey_Y;
+		case 0x1D: return ImGuiKey_Z;
+	}
+	return ImGuiKey_None;
 }
 
 void gui_initFonts()
@@ -293,14 +300,15 @@ void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
 	if (!inited)
 		return;
 	ImGuiIO& io = ImGui::GetIO();
-	if (!pressed && io.KeysDown[keyCode])
+	ImGuiKey key = keycodeToImGuiKey(keyCode);
+	if (!pressed && ImGui::IsKeyDown(key))
 	{
 		keysUpNextFrame[keyCode] = true;
 		return;
 	}
 	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
 	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
-	io.KeysDown[keyCode] = pressed;
+	io.AddKeyEvent(key, pressed);
 }
 
 bool gui_keyboard_captured()
@@ -366,25 +374,24 @@ static void gui_newFrame()
 	io.MouseDown[ImGuiMouseButton_Middle] = (mouseButtons & (1 << 2)) != 0;
 	io.MouseDown[3] = (mouseButtons & (1 << 3)) != 0;
 
-	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
-	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
-	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
-	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
-	io.NavInputs[ImGuiNavInput_DpadDown] = (kcode[0] & DC_DPAD_DOWN) == 0;
-	io.NavInputs[ImGuiNavInput_LStickLeft] = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickLeft] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickRight] = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickRight] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickRight] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickUp] = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickUp] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickUp] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
+	io.AddKeyEvent(ImGuiKey_GamepadFaceLeft, ((kcode[0] & DC_BTN_X) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceRight, ((kcode[0] & DC_BTN_B) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_Y) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceDown, ((kcode[0] & DC_BTN_A) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadLeft, ((kcode[0] & DC_DPAD_LEFT) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
+	
+	float analog;
+	analog = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
+	analog = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickRight, analog > 0.1f, analog);
+	analog = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickUp, analog > 0.1f, analog);
+	analog = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickDown, analog > 0.1f, analog);
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 
@@ -408,7 +415,7 @@ static void delayedKeysUp()
 	ImGuiIO& io = ImGui::GetIO();
 	for (u32 i = 0; i < std::size(keysUpNextFrame); i++)
 		if (keysUpNextFrame[i])
-			io.KeysDown[i] = false;
+			io.AddKeyEvent(keycodeToImGuiKey(i), false);
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
 }
 
