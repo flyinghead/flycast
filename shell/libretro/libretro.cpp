@@ -2429,6 +2429,18 @@ static void updateLightgunCoordinates(u32 port)
 	lightgun_params[port].y = mo_y_abs[port];
 }
 
+void updateLightgunCoordinatesFromAnalogStick(int port)
+{
+	int x = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+	mo_x_abs[port] = 320 + x * 320 / 32767;
+	int y = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+	mo_y_abs[port] = 240 + y * 240 / 32767;
+
+	lightgun_params[port].offscreen = false;
+	lightgun_params[port].x = mo_x_abs[port];
+	lightgun_params[port].y = mo_y_abs[port];
+}
+
 static void UpdateInputStateNaomi(u32 port)
 {
 	switch (config::MapleMainDevices[port])
@@ -2565,6 +2577,7 @@ static void UpdateInputStateNaomi(u32 port)
 
 			// -- mouse, for rotary encoders
 			updateMouseState(port);
+			updateLightgunCoordinatesFromAnalogStick(port);
 		}
 		break;
 	}
