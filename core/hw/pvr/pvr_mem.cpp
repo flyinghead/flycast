@@ -202,7 +202,7 @@ void YUV_deserialize(Deserializer& deser)
 template<typename T>
 T DYNACALL pvr_read32p(u32 addr)
 {
-	return *(T *)&vram[pvr_map32(addr)];
+	return *(T *)&vram[pvr_map32(addr) & ~(sizeof(T) - 1)];
 }
 template u8 pvr_read32p<u8>(u32 addr);
 template u16 pvr_read32p<u16>(u32 addr);
@@ -218,6 +218,7 @@ void DYNACALL pvr_write32p(u32 addr, T data)
 		INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
 		return;
 	}
+	addr &= ~(sizeof(T) - 1);
 	u32 vaddr = addr & VRAM_MASK;
 	if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
 		fb_dirty = true;
