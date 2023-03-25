@@ -57,7 +57,8 @@ static void cache_entry(const TLB_Entry &entry)
 {
 	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
 		return;
-	verify(full_table_size < ARRAY_SIZE(full_table));
+	if (full_table_size >= ARRAY_SIZE(full_table))
+		return;
 
 	full_table[full_table_size].entry = entry;
 
