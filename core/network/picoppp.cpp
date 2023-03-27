@@ -72,6 +72,7 @@ static pico_ip4 dcaddr;
 static pico_ip4 dnsaddr;
 static pico_socket *pico_tcp_socket, *pico_udp_socket;
 
+struct pico_ip4 public_ip;
 static pico_ip4 afo_ip;
 
 struct socket_pair
@@ -184,6 +185,10 @@ static GamePortList GamesPorts[] = {
 		{ "MK-51049", "HDR-0039", "MK-5104950" },
 		{ 9789 },
 		{ },
+	},
+	{ // Daytona USA
+		{ "MK-51037", "HDR-0106" },
+		{ 12079, 20675 },
 	},
 	{ // NBA 2K1,2K2 / NFL 2K1,2K2 / NCAA 2K2
 		{ "MK-51063", "HDR-0150",					// NBA 2K1
@@ -506,6 +511,26 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 			sock_t sockfd = find_udp_socket(src_port);
 			if (VALID(sockfd))
 			{
+				// Daytona USA
+				if (msginfo.local_port == 0x2F2F && buf[0] == 0x20 && buf[2] == 0x42)
+				{
+					if (buf[1] == 0x2b && r >= 37 + sizeof(public_ip.addr))
+					{
+						// Start session packet
+						char *p = &buf[37];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+					}
+					else if (buf[1] == 0x15 && r >= 14 + sizeof(public_ip.addr))
+					{
+						char *p = &buf[5];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+						p = &buf[14];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+					}
+				}
 				sockaddr_in dst_addr;
 				socklen_t addr_len = sizeof(dst_addr);
 				memset(&dst_addr, 0, sizeof(dst_addr));
@@ -696,7 +721,44 @@ static void check_dns_entries()
     static uint32_t dns_query_start = 0;
     static uint32_t dns_query_attempts = 0;
 
-	if (afo_ip.addr == 0)
+	if (public_ip.addr == 0)
+	{
+		if (!dns_query_start)
+		{
+			dns_query_start = PICO_TIME_MS();
+			struct pico_ip4 tmpdns;
+			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
+			get_host_by_name("myip.opendns.com", tmpdns);
+		}
+		else
+		{
+			struct pico_ip4 tmpdns;
+			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
+			if (get_dns_answer(&public_ip, tmpdns) == 0)
+			{
+				dns_query_attempts = 0;
+				dns_query_start = 0;
+				char myip[16];
+				pico_ipv4_to_string(myip, public_ip.addr);
+				INFO_LOG(MODEM, "My IP is %s", myip);
+			}
+			else
+			{
+				if (PICO_TIME_MS() - dns_query_start > 1000)
+				{
+					if (++dns_query_attempts >= 5)
+					{
+						public_ip.addr = 0xffffffff;	// Bogus but not null
+						dns_query_attempts = 0;
+					}
+					else
+						// Retry
+						dns_query_start = 0;
+				}
+			}
+		}
+	}
+	else if (afo_ip.addr == 0)
 	{
 		if (!dns_query_start)
 		{
