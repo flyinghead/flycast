@@ -27,6 +27,8 @@
 #include "dx11_shaders.h"
 #include "dx11_texture.h"
 #include "wsi/context.h"
+#include "dx11_renderstate.h"
+#include "dx11_quad.h"
 
 class DX11Context : public GraphicsContext
 {
@@ -37,6 +39,7 @@ public:
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
 	const pD3DCompile getCompiler() const { return this->D3DCompile; }
+	void presentFrame(ComPtr<ID3D11ShaderResourceView>& textureView, int width, int height);
 
 	std::string getDriverName() override { return ""; }
 	std::string getDriverVersion() override { return ""; }
@@ -65,6 +68,7 @@ public:
 
 private:
 	bool checkTextureSupport();
+	ComPtr<ID3D11RenderTargetView>& getRenderTarget(int width, int height);
 
 	ComPtr<ID3D11Device> pDevice;
 	ComPtr<ID3D11DeviceContext> pDeviceContext;
@@ -74,6 +78,14 @@ private:
 	DX11Shaders shaders;
 	Samplers samplers;
 	DX11Overlay overlay;
+	ComPtr<ID3D11Texture2D> texture;
+	ComPtr<ID3D11ShaderResourceView> textureView;
+	ComPtr<ID3D11RenderTargetView> renderTargetView;
+	int renderTargetWidth = 0;
+	int renderTargetHeight = 0;
+	BlendStates blendStates;
+	std::unique_ptr<Quad> quad;
+
 	D3D_FEATURE_LEVEL featureLevel{};
 	bool supportedTexFormats[5] {}; // indexed by TextureType enum
 

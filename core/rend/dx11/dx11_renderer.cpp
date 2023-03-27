@@ -462,10 +462,9 @@ bool DX11Renderer::Render()
 		DrawOSD(false);
 		theDX11Context.setFrameRendered();
 #else
-		theDX11Context.drawOverlay(width, height);
 		ID3D11RenderTargetView *nullView = nullptr;
 		deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
-		deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+		theDX11Context.presentFrame(fbTextureView, width, height);
 #endif
 		frameRendered = true;
 		frameRenderedOnce = true;
@@ -490,11 +489,18 @@ void DX11Renderer::displayFramebuffer()
 	VO_BORDER_COL.getRGBColor(colors);
 	colors[3] = 1.f;
 	deviceContext->ClearRenderTargetView(theDX11Context.getRenderTarget(), colors);
+
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	shiftX *=  2.f / width;
+	shiftY *=  -2.f / height;
+
 	int outwidth = settings.display.width;
 	int outheight = settings.display.height;
 	float renderAR = aspectRatio;
 	if (config::Rotate90) {
 		std::swap(outwidth, outheight);
+		std::swap(shiftX, shiftY);
 		renderAR = 1 / renderAR;
 	}
 	float screenAR = (float)outwidth / outheight;
@@ -515,6 +521,9 @@ void DX11Renderer::displayFramebuffer()
 	w *= 2.f / outwidth;
 	y = y * 2.f / outheight - 1.f;
 	h *= 2.f / outheight;
+	// Shift
+	x += shiftX;
+	y += shiftY;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 	quad->draw(fbTextureView, samplers->getSampler(config::TextureFiltering != 1), nullptr, x, y, w, h, config::Rotate90);
 #endif
@@ -953,11 +962,9 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	DrawOSD(false);
 	theDX11Context.setFrameRendered();
 #else
-	// FIXME won't look great on a 1x1 texture in case video output is disabled
-	theDX11Context.drawOverlay(this->width, this->height);
 	ID3D11RenderTargetView *nullView = nullptr;
 	deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
-	deviceContext->PSSetShaderResources(0, 1, &dcfbTextureView.get());
+	theDX11Context.presentFrame(dcfbTextureView, width, height);
 #endif
 	frameRendered = true;
 	frameRenderedOnce = true;

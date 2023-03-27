@@ -1147,7 +1147,9 @@ void D3DRenderer::displayFramebuffer()
 	else
 		dx = (int)roundf(settings.display.width * (1 - aspectRatio / screenAR) / 2.f);
 
-	if (!config::Rotate90)
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	if (!config::Rotate90 && shiftX == 0 && shiftY == 0)
 	{
 		RECT rs { 0, 0, (long)width, (long)height };
 		RECT rd { dx, dy, settings.display.width - dx, settings.display.height - dy };
@@ -1166,8 +1168,9 @@ void D3DRenderer::displayFramebuffer()
 		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
-		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))
-			* glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
+		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0));
+		if (config::Rotate90)
+			projection *= glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
 
 		device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
 		device->SetTransform(D3DTS_VIEW, (const D3DMATRIX *)&identity[0][0]);
@@ -1189,6 +1192,11 @@ void D3DRenderer::displayFramebuffer()
 			 1,  1, 0.5f,  1, 0,
 			 1, -1, 0.5f,  1, 1,
 		};
+		coords[0] = coords[5] = -1.f + shiftX * 2.f / width;
+		coords[10] = coords[15] = coords[0] + 2;
+		coords[1] = coords[11] = 1.f - shiftY * 2.f / height;
+		coords[6] = coords[16] = coords[1] - 2;
+
 		device->SetTexture(0, framebufferTexture);
 		device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, coords, sizeof(float) * 5);
 	}
