@@ -189,6 +189,40 @@ private:
 	GLuint depthBuffer = 0;
 };
 
+class GlVertexArray
+{
+public:
+	virtual ~GlVertexArray() = default;
+	void bind(GlBuffer *buffer, GlBuffer *indexBuffer = nullptr);
+	static void unbind();
+	void term();
+
+protected:
+	virtual void defineVtxAttribs() = 0;
+
+private:
+	static void bindVertexArray(GLuint vao);
+	GLuint vertexArray = 0;
+};
+
+class MainVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override;
+};
+
+class ModvolVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override;
+};
+
+class OSDVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override;
+};
+
 struct gl_ctx
 {
 	struct
@@ -218,15 +252,15 @@ struct gl_ctx
 	{
 		GLuint program;
 		GLint scale;
-		GLuint vao;
-		GLuint geometry;
+		OSDVertexArray vao;
+		std::unique_ptr<GlBuffer> geometry;
 		GLuint osd_tex;
 	} OSD_SHADER;
 
 	struct
 	{
-		GLuint mainVAO;
-		GLuint modvolVAO;
+		MainVertexArray mainVAO;
+		ModvolVertexArray modvolVAO;
 		std::unique_ptr<GlBuffer> geometry;
 		std::unique_ptr<GlBuffer> modvols;
 		std::unique_ptr<GlBuffer> idxs;
@@ -250,6 +284,7 @@ struct gl_ctx
 		std::unique_ptr<GlFramebuffer> framebuffer;
 		float aspectRatio;
 		GLuint origFbo;
+		float shiftX, shiftY;
 	} ofbo;
 
 	struct
@@ -290,6 +325,57 @@ struct gl_ctx
 };
 
 extern gl_ctx gl;
+
+inline void GlVertexArray::bindVertexArray(GLuint vao)
+{
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glBindVertexArray(vao);
+#endif
+}
+
+inline void GlVertexArray::bind(GlBuffer *buffer, GlBuffer *indexBuffer)
+{
+	if (vertexArray == 0)
+	{
+#ifndef GLES2
+		if (gl.gl_major >= 3)
+		{
+			glGenVertexArrays(1, &vertexArray);
+			glBindVertexArray(vertexArray);
+		}
+#endif
+		buffer->bind();
+		if (indexBuffer != nullptr)
+			indexBuffer->bind();
+		else
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		defineVtxAttribs();
+	}
+	else
+	{
+		bindVertexArray(vertexArray);
+		buffer->bind();
+		if (indexBuffer != nullptr)
+			indexBuffer->bind();
+		else
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+}
+
+inline void GlVertexArray::unbind()
+{
+	bindVertexArray(0);
+}
+
+inline void GlVertexArray::term()
+{
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glDeleteVertexArrays(1, &vertexArray);
+#endif
+	vertexArray = 0;
+}
 
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
@@ -465,11 +551,13 @@ private:
 
 protected:
 	bool frameRendered = false;
+	int width = 640;
+	int height = 480;
 };
 
 void initQuad();
 void termQuad();
-void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, float *coords = nullptr);
 
 extern const char* ShaderCompatSource;
 extern const char *VertexCompatShader;
@@ -488,19 +576,3 @@ public:
 extern "C" struct retro_hw_render_callback hw_render;
 void termVmuLightgun();
 #endif
-
-inline static void bindVertexArray(GLuint vao)
-{
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glBindVertexArray(vao);
-#endif
-}
-
-inline static void deleteVertexArray(GLuint vao)
-{
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glDeleteVertexArrays(1, &vao);
-#endif
-}

@@ -124,48 +124,6 @@ public:
 			dcViewport.x = w;
 			dcViewport.y = h;
 
-			float startx = 0;
-			float starty = 0;
-#if 0
-			const bool vga = FB_R_CTRL.vclk_div == 1;
-			switch (SPG_LOAD.hcount)
-			{
-				case 857: // NTSC, VGA
-					startx = VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
-					break;
-				case 863: // PAL
-					startx = VO_STARTX.HStart - 0xae;
-					break;
-				default:
-					INFO_LOG(PVR, "unknown video mode: hcount %d", SPG_LOAD.hcount);
-					break;
-			}
-			switch (SPG_LOAD.vcount)
-			{
-				case 524: // NTSC, VGA
-					starty = VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
-					break;
-				case 262: // NTSC 240p
-					starty = VO_STARTY.VStart_field1 - 0x11;
-					break;
-				case 624: // PAL
-					starty = VO_STARTY.VStart_field1 - 0x2d;
-					break;
-				case 312: // PAL 240p
-					starty = VO_STARTY.VStart_field1 - 0x2e;
-					break;
-				default:
-					INFO_LOG(PVR, "unknown video mode: vcount %d", SPG_LOAD.vcount);
-					break;
-			}
-			// some heuristic...
-			startx *= 0.8;
-			starty *= 1.1;
-			// TODO need to adjust lightgun coordinates
-#endif
-			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
-			scissorMatrix = normalMatrix;
-
 			float scissoring_scale_x, scissoring_scale_y;
 			GetScissorScaling(scissoring_scale_x, scissoring_scale_y);
 
@@ -185,11 +143,9 @@ public:
 			glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -screenFlipY, 0));
 
 			normalMatrix = trans
-				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-				* normalMatrix;
+				* glm::scale(glm::vec3(x_coef, y_coef, 1.f));
 			scissorMatrix = trans
-				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
-				* scissorMatrix;
+				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f));
 		}
 		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
@@ -330,4 +286,57 @@ inline static float getDCFramebufferAspectRatio()
 {
 	float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;
 	return aspectRatio * config::ScreenStretching / 100.f;
+}
+
+inline static void getVideoShift(float& x, float& y)
+{
+	const bool vga = FB_R_CTRL.vclk_div == 1;
+	switch (SPG_LOAD.hcount)
+	{
+		case 857: // NTSC, VGA
+			x = VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
+			break;
+		case 863: // PAL
+			x = VO_STARTX.HStart - 0xae;
+			break;
+		case 851: // Naomi
+			x = VO_STARTX.HStart - 0xa5; // a0 for 15 kHz
+			break;
+		default:
+			x = 0;
+			INFO_LOG(RENDERER, "unknown video mode: hcount %d", SPG_LOAD.hcount);
+			break;
+	}
+	switch (SPG_LOAD.vcount)
+	{
+		case 524: // NTSC, VGA
+			y = VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
+			break;
+		case 262: // NTSC 240p
+			y = VO_STARTY.VStart_field1 - 0x11;
+			break;
+		case 624: // PAL
+			y = VO_STARTY.VStart_field1 - 0x2d;
+			break;
+		case 312: // PAL 240p
+			y = VO_STARTY.VStart_field1 - 0x2e;
+			break;
+		case 529: // Naomi 31 kHz
+			y = VO_STARTY.VStart_field1 - 0x24;
+			break;
+		case 536: // Naomi 15 kHz 480i
+		case 268: // Naomi 15 kHz 240p
+			y = VO_STARTY.VStart_field1 - 0x17; // 16 for 240p
+			break;
+		default:
+			y = 0;
+			INFO_LOG(RENDERER, "unknown video mode: vcount %d", SPG_LOAD.vcount);
+			break;
+	}
+	if (!config::EmulateFramebuffer)
+	{
+		x *= config::RenderResolution / 480.f;
+		y *= config::RenderResolution / 480.f;
+	}
+	x *= config::ScreenStretching / 100.f;
 }

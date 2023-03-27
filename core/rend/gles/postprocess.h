@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "gles.h"
+#include <memory>
 
 class PostProcessor
 {
@@ -29,9 +30,17 @@ public:
 private:
 	void init(int width, int height);
 
-	GLuint vertexBuffer = 0;
-	GLuint vertexArray = 0;
+	class VertexArray final : public GlVertexArray
+	{
+	protected:
+		void defineVtxAttribs() override;
+	};
+
+	std::unique_ptr<GlBuffer> vertexBuffer;
+	VertexArray vertexArray;
 	std::unique_ptr<GlFramebuffer> framebuffer;
+	std::unique_ptr<GlBuffer> vertexBufferShifted;
+	VertexArray vertexArrayShifted;
 };
 
 extern PostProcessor postProcessor;

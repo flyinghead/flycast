@@ -632,11 +632,10 @@ static void gl4_term()
 	for (auto& buffer : gl4.vbo.tr_poly_params)
 		buffer.reset();
 	gl4_delete_shaders();
-	glDeleteVertexArrays(std::size(gl4.vbo.main_vao), gl4.vbo.main_vao);
-	glDeleteVertexArrays(std::size(gl4.vbo.modvol_vao), gl4.vbo.modvol_vao);
-#ifdef LIBRETRO
-	gl4TermVmuLightgun();
-#endif
+	for (auto& vao : gl4.vbo.main_vao)
+		vao.term();
+	for (auto& vao : gl4.vbo.modvol_vao)
+		vao.term();
 }
 
 static void create_modvol_shader()
@@ -666,10 +665,6 @@ static void gl_create_resources()
 		// Assume the resources have already been created
 		return;
 
-	//create vao
-	glGenVertexArrays(2, &gl4.vbo.main_vao[0]);
-	glGenVertexArrays(2, &gl4.vbo.modvol_vao[0]);
-
 	//create vbos
 	for (u32 i = 0; i < std::size(gl4.vbo.geometry); i++)
 	{
@@ -682,6 +677,7 @@ static void gl_create_resources()
 		gl4SetupMainVBO();
 		gl4SetupModvolVBO();
 	}
+	GlVertexArray::unbind();
 
 	initQuad();
 	glCheck();
@@ -746,18 +742,18 @@ struct OpenGL4Renderer : OpenGLRenderer
 #ifdef LIBRETRO
 	void DrawOSD(bool clearScreen) override
 	{
-		void gl4DrawVmuTexture(u8 vmu_screen_number);
-		void gl4DrawGunCrosshair(u8 port);
+		void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
+		void DrawGunCrosshair(u8 port, int width, int height);
 
 		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if (vmu_lcd_status[vmu_screen_number * 2])
-					gl4DrawVmuTexture(vmu_screen_number);
+					DrawVmuTexture(vmu_screen_number, width, height);
 		}
 
 		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			gl4DrawGunCrosshair(lightgun_port);
+			DrawGunCrosshair(lightgun_port, width, height);
 	}
 #endif
 };
@@ -865,6 +861,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		rendering_width = width;
 		rendering_height = height;
+		getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 	}
 	resize(rendering_width, rendering_height);
 	
@@ -899,11 +896,13 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		output_fbo = BindRTT(false);
 	else
 	{
+		this->width = width;
+		this->height = height;
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter)
-			output_fbo = postProcessor.getFramebuffer(width, height);
-		else if (config::EmulateFramebuffer)
+		if (config::EmulateFramebuffer)
 			output_fbo = init_output_framebuffer(width, height);
+		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+			output_fbo = postProcessor.getFramebuffer(width, height);
 		else
 			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
@@ -1023,13 +1022,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter && !is_rtt)
-		{
-			if (config::EmulateFramebuffer)
-				postProcessor.render(init_output_framebuffer(width, height));
-			else
-				postProcessor.render(glsm_get_current_framebuffer());
-		}
+		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}
 
@@ -1037,13 +1031,14 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		ReadRTTBuffer();
 	else if (config::EmulateFramebuffer)
 		writeFramebufferToVRAM();
-#ifndef LIBRETRO
-	else {
+	else
+	{
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+#ifndef LIBRETRO
 		renderLastFrame();
-	}
 #endif
-	glBindVertexArray(0);
+	}
+	GlVertexArray::unbind();
 
 	return !is_rtt;
 }

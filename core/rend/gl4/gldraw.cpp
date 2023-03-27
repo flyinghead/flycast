@@ -328,11 +328,11 @@ static void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 
 void gl4SetupMainVBO()
 {
-	glBindVertexArray(gl4.vbo.getMainVAO());
+	gl4.vbo.getMainVAO().bind(gl4.vbo.getVertexBuffer(), gl4.vbo.getIndexBuffer());
+}
 
-	gl4.vbo.getVertexBuffer()->bind();
-	gl4.vbo.getIndexBuffer()->bind();
-
+void Gl4MainVertexArray::defineVtxAttribs()
+{
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
@@ -357,17 +357,15 @@ void gl4SetupMainVBO()
 
 	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
 	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
-
-	glCheck();
 }
 
 void gl4SetupModvolVBO()
 {
-	glBindVertexArray(gl4.vbo.getModVolVAO());
+	gl4.vbo.getModVolVAO().bind(gl4.vbo.getModVolBuffer());
+}
 
-	gl4.vbo.getModVolBuffer()->bind();
-
-	//setup vertex buffers attrib pointers
+void Gl4ModvolVertexArray::defineVtxAttribs()
+{
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0); glCheck();
 }
@@ -377,8 +375,7 @@ static void DrawModVols(int first, int count)
 	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 
-	glBindVertexArray(gl4.vbo.getModVolVAO());
-	gl4.vbo.getModVolBuffer()->bind();
+	gl4SetupModvolVBO();
 
 	glcache.Disable(GL_BLEND);
 	SetBaseClipping();
@@ -430,8 +427,7 @@ static void DrawModVols(int first, int count)
 	}
 
 	//restore states
-	glBindVertexArray(gl4.vbo.getMainVAO());
-	gl4.vbo.getVertexBuffer()->bind();
+	gl4SetupMainVBO();
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_TRUE);
 }
@@ -539,9 +535,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				current_pass.mv_op_tr_shared ? current_pass.mvo_count - previous_pass.mvo_count : current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
 				current_pass.autosort);
 
-		glBindVertexArray(gl4.vbo.getMainVAO());
-		gl4.vbo.getVertexBuffer()->bind();
-		gl4.vbo.getIndexBuffer()->bind();
+        gl4SetupMainVBO();
 
 		if (!skip_op_pt)
 		{
@@ -724,197 +718,3 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer();
 }
-
-#ifdef LIBRETRO
-#include "vmu_xhair.h"
-
-extern GLuint vmuTextureId[4];
-extern GLuint lightgunTextureId[4];
-
-void UpdateVmuTexture(int vmu_screen_number);
-void UpdateLightGunTexture(int port);
-static GLuint osdVao;
-static std::unique_ptr<GlBuffer> osdVerts;
-static std::unique_ptr<GlBuffer> osdIndex;
-
-static void setupOsdVao()
-{
-	if (osdVerts == nullptr)
-		osdVerts = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
-	if (osdIndex == nullptr)
-	{
-		osdIndex = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-		osdIndex->update(indices, sizeof(indices));
-	}
-	if (osdVao != 0)
-	{
-		glBindVertexArray(osdVao);
-		osdVerts->bind();
-		osdIndex->bind();
-		return;
-	}
-	glGenVertexArrays(1, &osdVao);
-	glBindVertexArray(osdVao);
-
-	osdVerts->bind();
-	osdIndex->bind();
-
-	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
-
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
-
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
-}
-
-void gl4DrawVmuTexture(u8 vmu_screen_number)
-{
-	glActiveTexture(GL_TEXTURE0);
-
-	const float vmu_padding = 8.f;
-	const float x_scale = 100.f / config::ScreenStretching;
-	const float y_scale = gl.ofbo.framebuffer && (float)gl.ofbo.framebuffer->getWidth() / gl.ofbo.framebuffer->getHeight() >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer ? -1 / gl4ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
-	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
-	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;
-
-	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
-		UpdateVmuTexture(vmu_screen_number);
-
-	switch (vmu_screen_params[vmu_screen_number].vmu_screen_position)
-	{
-		case UPPER_LEFT:
-			break;
-		case UPPER_RIGHT:
-			x = 2 / gl4ShaderUniforms.ndcMat[0][0] - x - w;
-			break;
-		case LOWER_LEFT:
-			y = -2 / gl4ShaderUniforms.ndcMat[1][1] - y - h;
-			break;
-		case LOWER_RIGHT:
-			x = 2 / gl4ShaderUniforms.ndcMat[0][0] - x - w;
-			y = -2 / gl4ShaderUniforms.ndcMat[1][1] - y - h;
-			break;
-	}
-
-	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	setupOsdVao();
-	osdVerts->bind();
-	osdIndex->bind();
-
-	gl4ShaderUniforms.trilinear_alpha = 1.0;
-
-	CurrentShader = gl4GetProgram(false,
-				0,
-				true,
-				true,
-				false,
-				0,
-				false,
-				2,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				Pass::Color);
-	glcache.UseProgram(CurrentShader->program);
-	gl4ShaderUniforms.Set(CurrentShader);
-
-	{
-		struct Vertex vertices[] = {
-				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		};
-		osdVerts->update(vertices, sizeof(vertices));
-	}
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-}
-
-void gl4DrawGunCrosshair(u8 port)
-{
-	if ( lightgun_params[port].offscreen || (lightgun_params[port].colour==0) )
-		return;
-
-	glActiveTexture(GL_TEXTURE0);
-
-	float stretch = config::ScreenStretching / 100.f;
-	float w = (float)LIGHTGUN_CROSSHAIR_SIZE / stretch;
-	float h = (float)LIGHTGUN_CROSSHAIR_SIZE;
-	float x = lightgun_params[port].x / stretch - w / 2;
-	float y = lightgun_params[port].y - h / 2;
-
-	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
-		UpdateLightGunTexture(port);
-
-	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-	setupOsdVao();
-	osdVerts->bind();
-	osdIndex->bind();
-
-	gl4ShaderUniforms.trilinear_alpha = 1.0;
-	CurrentShader = gl4GetProgram(false,
-				0,
-				true,
-				true,
-				false,
-				0,
-				false,
-				2,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				Pass::Color);
-	glcache.UseProgram(CurrentShader->program);
-	gl4ShaderUniforms.Set(CurrentShader);
-
-	{
-		struct Vertex vertices[] = {
-				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-		};
-		osdVerts->update(vertices, sizeof(vertices));
-	}
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void gl4TermVmuLightgun()
-{
-	glDeleteVertexArrays(1, &osdVao);
-	osdVerts.reset();
-	osdIndex.reset();
-}
-#endif

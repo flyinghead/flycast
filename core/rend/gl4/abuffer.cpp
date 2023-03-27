@@ -31,7 +31,17 @@ static int maxLayers;
 static int64_t pixelBufferSize;
 static std::unique_ptr<GlBuffer> g_quadBuffer;
 static std::unique_ptr<GlBuffer> g_quadIndexBuffer;
-static GLuint g_quadVertexArray;
+
+class AQuadVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override
+	{
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+	}
+};
+static AQuadVertexArray g_quadVertexArray;
 
 static const char *final_shader_source = R"(
 layout(binding = 0) uniform sampler2D tex;
@@ -378,19 +388,8 @@ void initABuffer()
 		g_quadIndexBuffer->update(indices, sizeof(indices));
 	}
 
-	if (g_quadVertexArray == 0)
-	{
-		glGenVertexArrays(1, &g_quadVertexArray);
-		glBindVertexArray(g_quadVertexArray);
-		g_quadBuffer->bind();
-		g_quadIndexBuffer->bind();
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-	glCheck();
+	g_quadVertexArray.bind(g_quadBuffer.get(), g_quadIndexBuffer.get());
+	g_quadVertexArray.unbind();
 
 	// Clear A-buffer pointers
 	glcache.UseProgram(g_abuffer_clear_shader.program);
@@ -419,11 +418,7 @@ void termABuffer()
 		glDeleteBuffers(1, &atomic_buffer);
 		atomic_buffer = 0;
 	}
-	if (g_quadVertexArray != 0)
-	{
-		glDeleteVertexArrays(1, &g_quadVertexArray);
-		g_quadVertexArray = 0;
-	}
+	g_quadVertexArray.term();
 	g_quadBuffer.reset();
 	g_quadIndexBuffer.reset();
 	glcache.DeleteProgram(g_abuffer_final_shader.program);
@@ -450,11 +445,9 @@ void reshapeABuffer(int w, int h)
 
 static void abufferDrawQuad()
 {
-	glBindVertexArray(g_quadVertexArray);
-	g_quadBuffer->bind();
-	g_quadIndexBuffer->bind();
+	g_quadVertexArray.bind(g_quadBuffer.get(), g_quadIndexBuffer.get());
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
-	glBindVertexArray(0);
+	g_quadVertexArray.unbind();
 	glCheck();
 }
 
@@ -463,8 +456,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 	if (count == 0 || pvrrc.modtrig.empty())
 		return;
 	compileFinalAndModVolShaders();
-	glBindVertexArray(gl4.vbo.getModVolVAO());
-	gl4.vbo.getModVolBuffer()->bind();
+	gl4SetupModvolVBO();
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -526,7 +518,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 			mod_base = -1;
 		}
 	}
-	glBindVertexArray(gl4.vbo.getMainVAO());
+	gl4SetupMainVBO();
 }
 
 void checkOverflowAndReset()

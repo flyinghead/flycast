@@ -4,6 +4,7 @@
 #include "rend/osd.h"
 #include "naomi2.h"
 #include "rend/transform_matrix.h"
+#include "postprocess.h"
 
 #include <memory>
 
@@ -433,26 +434,8 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 	}
 }
 
-
-void SetupMainVBO()
+void MainVertexArray::defineVtxAttribs()
 {
-#ifndef GLES2
-	if (gl.vbo.mainVAO != 0)
-	{
-		glBindVertexArray(gl.vbo.mainVAO);
-		gl.vbo.geometry->bind();
-		gl.vbo.idxs->bind();
-		return;
-	}
-	if (gl.gl_major >= 3)
-	{
-		glGenVertexArrays(1, &gl.vbo.mainVAO);
-		glBindVertexArray(gl.vbo.mainVAO);
-	}
-#endif
-	gl.vbo.geometry->bind();
-	gl.vbo.idxs->bind();
-
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
@@ -468,35 +451,27 @@ void SetupMainVBO()
 
 	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
 	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
+}
 
+void SetupMainVBO()
+{
+	gl.vbo.mainVAO.bind(gl.vbo.geometry.get(), gl.vbo.idxs.get());
 	glCheck();
 }
 
-static void SetupModvolVBO()
+void ModvolVertexArray::defineVtxAttribs()
 {
-#ifndef GLES2
-	if (gl.vbo.modvolVAO != 0)
-	{
-		glBindVertexArray(gl.vbo.modvolVAO);
-		gl.vbo.modvols->bind();
-		return;
-	}
-	if (gl.gl_major >= 3)
-	{
-		glGenVertexArrays(1, &gl.vbo.modvolVAO);
-		glBindVertexArray(gl.vbo.modvolVAO);
-	}
-#endif
-	gl.vbo.modvols->bind();
-
-	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
 
 	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glCheck();
+}
+
+static void SetupModvolVBO()
+{
+	gl.vbo.modvolVAO.bind(gl.vbo.modvols.get());
 }
 
 void DrawModVols(int first, int count)
@@ -645,7 +620,14 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
-#ifndef LIBRETRO
+	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
+#ifdef LIBRETRO
+	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
+		glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
+	}
+#else
 	if (gl.ofbo2.framebuffer != nullptr
 			&& (gl.dcfb.width != gl.ofbo2.framebuffer->getWidth() || gl.dcfb.height != gl.ofbo2.framebuffer->getHeight()))
 		gl.ofbo2.framebuffer.reset();
@@ -657,6 +639,8 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	glCheck();
 	gl.ofbo2.ready = true;
 #endif
+	this->width = gl.dcfb.width;
+	this->height = gl.dcfb.height;
 	gl.ofbo.aspectRatio = getDCFramebufferAspectRatio();
 
 	glViewport(0, 0, gl.dcfb.width, gl.dcfb.height);
@@ -670,9 +654,13 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	}
 	else
 	{
+		glcache.Disable(GL_BLEND);
 		drawQuad(gl.dcfb.tex, false, true);
 	}
-#ifndef LIBRETRO
+#ifdef LIBRETRO
+	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+		postProcessor.render(glsm_get_current_framebuffer());
+#else
 	renderLastFrame();
 #endif
 
@@ -714,6 +702,7 @@ void writeFramebufferToVRAM()
 			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.framebuffer->getTexture());
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glcache.Disable(GL_BLEND);
 			drawQuad(gl.ofbo.framebuffer->getTexture(), false);
 		}
 		else
@@ -783,7 +772,23 @@ bool OpenGLRenderer::renderLastFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
-		drawQuad(framebuffer->getTexture(), config::Rotate90);
+		float *vertices = nullptr;
+		if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+		{
+			static float sverts[20] = {
+				-1.f,  1.f, 1.f, 0.f, 1.f,
+				-1.f, -1.f, 1.f, 0.f, 0.f,
+				 1.f,  1.f, 1.f, 1.f, 1.f,
+				 1.f, -1.f, 1.f, 1.f, 0.f,
+			};
+			sverts[0] = sverts[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
+			sverts[10] = sverts[15] = sverts[0] + 2;
+			sverts[1] = sverts[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			sverts[6] = sverts[16] = sverts[1] - 2;
+			vertices = sverts;
+		}
+		glcache.Disable(GL_BLEND);
+		drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
 	}
 	else
 	{
@@ -792,7 +797,7 @@ bool OpenGLRenderer::renderLastFrame()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBlitFramebuffer(0, 0, framebuffer->getWidth(), framebuffer->getHeight(),
+		glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
 				dx, dy, settings.display.width - dx, settings.display.height - dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
@@ -804,51 +809,10 @@ bool OpenGLRenderer::renderLastFrame()
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
 
-GLuint vmuTextureId[4]={0,0,0,0};
-GLuint lightgunTextureId[4]={0,0,0,0};
-static GLuint osdVao;
-static std::unique_ptr<GlBuffer> osdVerts;
-static std::unique_ptr<GlBuffer> osdIndex;
+static GLuint vmuTextureId[4] {};
+static GLuint lightgunTextureId[4] {};
 
-static void setupOsdVao()
-{
-	if (osdVerts == nullptr)
-		osdVerts = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
-	if (osdIndex == nullptr)
-	{
-		osdIndex = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-		osdIndex->update(indices, sizeof(indices));
-	}
-#ifndef GLES2
-	if (osdVao != 0)
-	{
-		glBindVertexArray(osdVao);
-		osdVerts->bind();
-		osdIndex->bind();
-		return;
-	}
-	if (gl.gl_major >= 3)
-	{
-		glGenVertexArrays(1, &osdVao);
-		glBindVertexArray(osdVao);
-	}
-#endif
-	osdVerts->bind();
-	osdIndex->bind();
-
-	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
-
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
-
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
-}
-
-void UpdateVmuTexture(int vmu_screen_number)
+static void updateVmuTexture(int vmu_screen_number)
 {
 	if (vmuTextureId[vmu_screen_number] == 0)
 	{
@@ -867,66 +831,48 @@ void UpdateVmuTexture(int vmu_screen_number)
 	vmu_lcd_changed[vmu_screen_number * 2] = false;
 }
 
-void DrawVmuTexture(u8 vmu_screen_number)
+void DrawVmuTexture(u8 vmu_screen_number, int width, int height)
 {
-	glActiveTexture(GL_TEXTURE0);
-
-	const float vmu_padding = 8.f;
-	const float x_scale = 100.f / config::ScreenStretching;
-	const float y_scale = gl.ofbo.framebuffer && (float)gl.ofbo.framebuffer->getWidth() / gl.ofbo.framebuffer->getHeight() >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer ? -1 / ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
+	constexpr float vmu_padding = 8.f;
+	float x = vmu_padding;
 	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
-	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;
+	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio;
+	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
 
 	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
-		UpdateVmuTexture(vmu_screen_number);
+		updateVmuTexture(vmu_screen_number);
 
 	switch (vmu_screen_params[vmu_screen_number].vmu_screen_position)
 	{
 		case UPPER_LEFT:
 			break;
 		case UPPER_RIGHT:
-			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
+			x = width - x - w;
 			break;
 		case LOWER_LEFT:
-			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
+			y = height - y - h;
 			break;
 		case LOWER_RIGHT:
-			x = 2 / ShaderUniforms.ndcMat[0][0] - x - w;
-			y = -2 / ShaderUniforms.ndcMat[1][1] - y - h;
+			x = width - x - w;
+			y = height - y - h;
 			break;
 	}
-
-	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
+	float x1 = (x + w) * 2 / width - 1;
+	float y1 = -(y + h) * 2 / height + 1;
+	x = x * 2 / width - 1;
+	y = -y * 2 / height + 1;
+	float vertices[20] = {
+		x,  y1, 1.f, 0.f, 0.f,
+		x,  y,  1.f, 0.f, 1.f,
+		x1, y1, 1.f, 1.f, 0.f,
+		x1, y,  1.f, 1.f, 1.f,
+	};
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	setupOsdVao();
-	osdVerts->bind();
-	osdIndex->bind();
-	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
-	glcache.UseProgram(shader->program);
-
-	{
-		struct Vertex vertices[] = {
-				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		};
-		osdVerts->update(vertices, sizeof(vertices));
-	}
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+	drawQuad(vmuTextureId[vmu_screen_number], false, false, vertices);
 }
 
-void UpdateLightGunTexture(int port)
+static void updateLightGunTexture(int port)
 {
 	s32 x,y ;
 	u8 temp_tex_buffer[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE*4];
@@ -973,51 +919,33 @@ void UpdateLightGunTexture(int port)
 	lightgun_params[port].dirty = false;
 }
 
-void DrawGunCrosshair(u8 port)
+void DrawGunCrosshair(u8 port, int width, int height)
 {
 	if (lightgun_params[port].offscreen || lightgun_params[port].colour == 0)
 		return;
 
-	glActiveTexture(GL_TEXTURE0);
-
-	float stretch = config::ScreenStretching / 100.f;
-	float x = lightgun_params[port].x / stretch;
-	float y = lightgun_params[port].y;
-
-	float w = (float)LIGHTGUN_CROSSHAIR_SIZE / stretch;
+	float w = (float)LIGHTGUN_CROSSHAIR_SIZE * 4.f / 3.f / gl.ofbo.aspectRatio;
 	float h = (float)LIGHTGUN_CROSSHAIR_SIZE;
+	auto [x, y] = getCrosshairPosition(port);
 	x -= w / 2;
 	y -= h / 2;
 
 	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
-		UpdateLightGunTexture(port);
+		updateLightGunTexture(port);
 
-	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
+	float x1 = (x + w) * 2 / width - 1;
+	float y1 = -(y + h) * 2 / height + 1;
+	x = x * 2 / width - 1;
+	y = -y * 2 / height + 1;
+	float vertices[20] = {
+		x,  y1, 1.f, 0.f, 0.f,
+		x,  y,  1.f, 0.f, 1.f,
+		x1, y1, 1.f, 1.f, 0.f,
+		x1, y,  1.f, 1.f, 1.f,
+	};
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-	setupOsdVao();
-	osdVerts->bind();
-	osdIndex->bind();
-	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
-	glcache.UseProgram(shader->program);
-
-	{
-		struct Vertex vertices[] = {
-				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-		};
-		osdVerts->update(vertices, sizeof(vertices));
-	}
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+	drawQuad(lightgunTextureId[port], false, false, vertices);
 
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -1028,14 +956,5 @@ void termVmuLightgun()
 	memset(vmuTextureId, 0, sizeof(vmuTextureId));
 	glcache.DeleteTextures(std::size(lightgunTextureId), lightgunTextureId);
 	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
-	osdVerts.reset();
-	osdIndex.reset();
-#ifndef GLES2
-	if (gl.gl_major >= 3 && osdVao != 0)
-	{
-		glDeleteVertexArrays(1, &osdVao);
-		osdVao = 0;
-	}
-#endif
 }
 #endif
