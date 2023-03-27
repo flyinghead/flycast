@@ -32,6 +32,9 @@ public:
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile* OpenFileByCrc(u32 crc) override;
 
+	bool Open(const void *data, size_t size);
+	ArchiveFile *OpenFirstFile();
+
 private:
 	bool Open(const char* path) override;
 

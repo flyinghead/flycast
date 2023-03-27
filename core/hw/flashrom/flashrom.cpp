@@ -33,6 +33,12 @@ bool MemChip::Load(const std::string& file)
 	return false;
 }
 
+void MemChip::Load(const u8 *data, size_t size)
+{
+	verify(size == this->size - write_protect_size);
+	memcpy(this->data + write_protect_size, data, this->size - write_protect_size);
+}
+
 void WritableChip::Save(const std::string& file)
 {
 	FILE *f = nowide::fopen(file.c_str(), "wb");

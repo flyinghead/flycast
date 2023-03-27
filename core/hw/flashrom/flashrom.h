@@ -64,6 +64,7 @@ public:
 	virtual bool Reload() { return true; }
 	bool Load(const std::string &prefix, const std::string &names_ro,
 			const std::string &title);
+	void Load(const u8 *data, size_t size);
 	void digest(u8 md5Digest[16]);
 
 	virtual void Reset() {}
@@ -82,6 +83,8 @@ public:
 
 	bool Reload() override
 	{
+		if (load_filename.empty())
+			return false;
 		return Load(this->load_filename);
 	}
 	void Save(const std::string& file);

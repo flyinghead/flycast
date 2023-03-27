@@ -923,6 +923,19 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/storeq.cpp)
 
 cmrc_add_resources(flycast-resources
+		WHENCE resources
+		resources/flash/gunsur2.nvmem.zip
+		resources/flash/otrigger.nvmem.zip
+		resources/flash/wldkicks.nvmem.zip	# free play
+		resources/flash/wldkicksj.nvmem.zip	# free play
+		resources/flash/wldkicksu.nvmem.zip	# free play
+		resources/flash/f355.nvmem.zip		# printer on
+		resources/flash/f355twin.nvmem.zip
+		resources/flash/f355twn2.nvmem.zip
+		resources/flash/dirtypig.nvmem.zip	# 4 players
+		resources/flash/dirtypig.nvmem2.zip)
+
+cmrc_add_resources(flycast-resources
 		fonts/printer_ascii8x16.bin
 		fonts/printer_ascii12x24.bin
 		fonts/printer_kanji16x16.bin

@@ -22,6 +22,9 @@
 #include "hw/aica/aica_if.h"
 #include "reios/reios.h"
 #include "oslib/oslib.h"
+#include "archive/ZipArchive.h"
+#include <cmrc/cmrc.hpp>
+CMRC_DECLARE(flycast);
 
 extern bool bios_loaded;
 
@@ -193,13 +196,81 @@ static void fixUpDCFlash()
 	}
 }
 
+static std::unique_ptr<u8[]> loadFlashResource(const std::string& name, size_t& size)
+{
+	try {
+		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
+		std::string fname = "flash/" + name + ".zip";
+		if (fs.exists(fname))
+		{
+			cmrc::file zipFile = fs.open(fname);
+			ZipArchive zip;
+			if (zip.Open(zipFile.cbegin(), zipFile.size()))
+			{
+				std::unique_ptr<ArchiveFile> flashFile;
+				flashFile.reset(zip.OpenFirstFile());
+				if (flashFile != nullptr)
+				{
+					std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
+					size = flashFile->Read(buffer.get(), size);
+
+					return buffer;
+				}
+			}
+		}
+		else
+		{
+			cmrc::file flashFile = fs.open("flash/" + name);
+			size = flashFile.size();
+			std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
+
+			return buffer;
+		}
+		DEBUG_LOG(FLASHROM, "Default flash not found");
+	} catch (const std::system_error& e) {
+		DEBUG_LOG(FLASHROM, "Default flash not found: %s", e.what());
+	}
+	size = 0;
+	return nullptr;
+}
+
+static void loadDefaultAWBiosFlash()
+{
+	std::string flashName = get_game_basename() + ".nvmem2";
+	size_t lastindex = get_last_slash_pos(flashName);
+	if (lastindex != std::string::npos)
+		flashName = flashName.substr(lastindex + 1);
+
+	size_t size = settings.platform.bios_size / 2;
+	std::unique_ptr<u8[]> buffer = loadFlashResource(flashName, size);
+	if (buffer)
+		sys_rom->Load(buffer.get(), size);
+}
+
 static bool loadFlash()
 {
 	bool rc = true;
 	if (settings.platform.isConsole())
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 	else if (!settings.naomi.slave)
+	{
 		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
+		if (!rc)
+		{
+			std::string flashName = get_game_basename() + ".nvmem";
+			size_t lastindex = get_last_slash_pos(flashName);
+			if (lastindex != std::string::npos)
+				flashName = flashName.substr(lastindex + 1);
+
+			size_t size = settings.platform.flash_size;
+			std::unique_ptr<u8[]> buffer = loadFlashResource(flashName, size);
+			if (buffer)
+			{
+				sys_nvmem->Load(buffer.get(), size);
+				rc = true;
+			}
+		}
+	}
 	if (!rc)
 		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 	fixUpDCFlash();
@@ -208,7 +279,10 @@ static bool loadFlash()
 
 	if (settings.platform.isAtomiswave())
 	{
-		sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
+		rc = sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
+		// TODO default AW .nvmem2
+		if (!rc)
+			loadDefaultAWBiosFlash();
 		if (config::GGPOEnable)
 			sys_nvmem->digest(settings.network.md5.nvmem2);
 	}
@@ -281,10 +355,14 @@ u8 *getBiosData()
 {
 	return sys_rom->data;
 }
+
 void reloadAWBios()
 {
-	if (settings.platform.isAtomiswave())
-		sys_rom->Reload();
+	if (!settings.platform.isAtomiswave())
+		return;
+	if (sys_rom->Reload())
+		return;
+	loadDefaultAWBiosFlash();
 }
 
 void init()

@@ -307,7 +307,6 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == " BIOHAZARD  GUN SURVIVOR2")
 	{
-		// FIXME need default flash
 		write_naomi_flash(0x21c, node == 0 ? 0 : 1);	// CPU ID - 1
 		write_naomi_flash(0x22a, node == -1 ? 0 : 1);	// comm link on
 	}
@@ -317,7 +316,6 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "OUTTRIGGER     JAPAN")
 	{
-		// FIXME need default flash
 		write_naomi_flash(0x21a, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x21b, node);					// node id
 	}
@@ -349,7 +347,6 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "WORLD KICKS")
 	{
-		// FIXME need default flash
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
