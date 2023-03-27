@@ -25,14 +25,19 @@
 #include "rend/TexCache.h"
 #include "libretro_vulkan.h"
 #include "wsi/context.h"
+#include "commandpool.h"
+#include "overlay.h"
 
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
+
+class FramebufferAttachment;
+class TextureCache;
 
 class VulkanContext : public GraphicsContext
 {
 public:
-	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
+	VulkanContext();
+	~VulkanContext();
 
 	bool init(retro_hw_render_interface_vulkan *render_if);
 	void term() override;
@@ -97,6 +102,9 @@ public:
 	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
+	void beginFrame(vk::Extent2D extent);
+	void endFrame();
+
 	VMAllocator allocator;
 
 	vk::DeviceSize uniformBufferAlignment = 0;
@@ -124,6 +132,18 @@ private:
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
 	vk::Queue queue;
+
+	CommandPool commandPool;
+	vk::CommandBuffer cmdBuffer;
+	vk::UniqueRenderPass renderPass;
+	std::unique_ptr<ShaderManager> shaderManager;
+	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadDrawer> quadDrawer;
+	std::vector<vk::UniqueFramebuffer> framebuffers;
+	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
+	std::unique_ptr<VulkanOverlay> overlay;
+	// only used to delay the destruction of overlay textures
+	std::unique_ptr<TextureCache> textureCache;
 
 	retro_vulkan_image retro_image;
 

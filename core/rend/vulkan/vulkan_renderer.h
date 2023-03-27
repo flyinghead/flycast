@@ -23,9 +23,7 @@
 #include "pipeline.h"
 #include "rend/osd.h"
 #include "rend/transform_matrix.h"
-#ifdef LIBRETRO
-#include "overlay.h"
-#else
+#ifndef LIBRETRO
 #include "rend/gui.h"
 #endif
 
@@ -68,10 +66,7 @@ protected:
 		quadPipeline->Init(&shaderManager, renderPass, subpass);
 		framebufferDrawer = std::make_unique<QuadDrawer>();
 		framebufferDrawer->Init(quadPipeline.get());
-#ifdef LIBRETRO
-		overlay = std::make_unique<VulkanOverlay>();
-		overlay->Init(quadPipeline.get());
-#endif
+
 		return true;
 	}
 
@@ -80,10 +75,6 @@ public:
 	{
 		GetContext()->WaitIdle();
 		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D(), 0);
-#ifdef LIBRETRO
-		overlay->Term();
-		overlay.reset();
-#endif
 		framebufferDrawer.reset();
 		quadPipeline.reset();
 		osdBuffer.reset();
@@ -142,10 +133,6 @@ public:
 
 		ta_parse(ctx, true);
 
-#ifdef LIBRETRO
-		if (!ctx->rend.isRTT)
-			overlay->Prepare(texCommandBuffer, true, true, textureCache);
-#endif
 		CheckFogTexture();
 		CheckPaletteTexture();
 		texCommandBuffer.end();
@@ -325,7 +312,4 @@ protected:
 	std::unique_ptr<QuadDrawer> framebufferDrawer;
 	CommandPool fbCommandPool;
 	bool framebufferRendered = false;
-#ifdef LIBRETRO
-	std::unique_ptr<VulkanOverlay> overlay;
-#endif
 };

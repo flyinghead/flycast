@@ -114,11 +114,11 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 
 void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
 {
-	QuadVertex vtx[] = {
-		{ { -1.f, -1.f, 0.f }, { 0.f, 1.f } },
-		{ {  1.f, -1.f, 0.f }, { 1.f, 1.f } },
-		{ { -1.f,  1.f, 0.f }, { 0.f, 0.f } },
-		{ {  1.f,  1.f, 0.f }, { 1.f, 0.f } },
+	QuadVertex vtx[] {
+		{ -1.f, -1.f, 0.f, 0.f, 1.f },
+		{  1.f, -1.f, 0.f, 1.f, 1.f },
+		{ -1.f,  1.f, 0.f, 0.f, 0.f },
+		{  1.f,  1.f, 0.f, 1.f, 0.f },
 	};
 
 	if (vmu)

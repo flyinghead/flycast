@@ -27,8 +27,8 @@
 
 struct QuadVertex
 {
-	f32 pos[3];
-	f32 uv[2];
+	float x, y, z;
+	float u, v;
 };
 
 vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv);
@@ -54,11 +54,11 @@ public:
 	{
 		if (vertices == nullptr)
 		{
-			static QuadVertex defaultVtx[] = {
-				{ { -1.f, -1.f, 0.f }, { 0.f, 0.f } },
-				{ {  1.f, -1.f, 0.f }, { 1.f, 0.f } },
-				{ { -1.f,  1.f, 0.f }, { 0.f, 1.f } },
-				{ {  1.f,  1.f, 0.f }, { 1.f, 1.f } },
+			static QuadVertex defaultVtx[] {
+				{ -1.f, -1.f, 0.f, 0.f, 0.f },
+				{  1.f, -1.f, 0.f, 1.f, 0.f },
+				{ -1.f,  1.f, 0.f, 0.f, 1.f },
+				{  1.f,  1.f, 0.f, 1.f, 1.f },
 			};
 			vertices = defaultVtx;
 		};

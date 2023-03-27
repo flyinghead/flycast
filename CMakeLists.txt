@@ -1221,6 +1221,7 @@ if(USE_VULKAN)
 			core/rend/vulkan/oit/oit_shaders.h
 			core/rend/vulkan/buffer.cpp
 			core/rend/vulkan/buffer.h
+			core/rend/vulkan/commandpool.cpp
 			core/rend/vulkan/commandpool.h
 			core/rend/vulkan/compiler.cpp
 			core/rend/vulkan/compiler.h

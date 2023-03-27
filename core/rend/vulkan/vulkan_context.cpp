@@ -889,12 +889,18 @@ void VulkanContext::Present() noexcept
 
 void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	QuadVertex vtx[] = {
-		{ { -1, -1, 0 }, { 0, 0 } },
-		{ {  1, -1, 0 }, { 1, 0 } },
-		{ { -1,  1, 0 }, { 0, 1 } },
-		{ {  1,  1, 0 }, { 1, 1 } },
+	QuadVertex vtx[] {
+		{ -1, -1, 0, 0, 0 },
+		{  1, -1, 0, 1, 0 },
+		{ -1,  1, 0, 0, 1 },
+		{  1,  1, 0, 1, 1 },
 	};
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	vtx[0].x = vtx[2].x = -1.f + shiftX * 2.f / extent.width;
+	vtx[1].x = vtx[3].x = vtx[0].x + 2;
+	vtx[0].y = vtx[1].y = -1.f + shiftY * 2.f / extent.height;
+	vtx[2].y = vtx[3].y = vtx[0].y + 2;
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
 	if (config::Rotate90)
