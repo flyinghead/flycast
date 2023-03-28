@@ -464,10 +464,8 @@ void aica_sb_Init()
 
 	// AICA
 	sb_rio_register(SB_ADST_addr, RIO_FUNC, &Read_SB_ADST, &Write_SB_ADST);
-#ifdef STRICT_MODE
 	sb_rio_register(SB_ADSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
 	sb_rio_register(SB_ADSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
-#endif
 
 	// G2 Ext device #1
 	sb_rio_register(SB_E1ST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,
