@@ -73,8 +73,10 @@ public:
 							dupe = true;
 							break;
 						}
-					if (!dupe)
+					if (!dupe || type == Present) {
 						queue.push_back(msg);
+						dupe = false;
+					}
 				}
 				if (dupe)
 				{
