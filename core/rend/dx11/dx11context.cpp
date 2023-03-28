@@ -365,9 +365,6 @@ bool DX11Context::checkTextureSupport()
 	UINT support;
 	for (size_t i = 0; i < ARRAY_SIZE(formats); i++)
 	{
-#if defined(LIBRETRO) && defined(TARGET_UWP)
-		supportedTexFormats[(int)dcTexTypes[i]] = true;
-#else
 		supportedTexFormats[(int)dcTexTypes[i]] = false;
 		pDevice->CheckFormatSupport(formats[i], &support);
 		if ((support & (D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE)) != (D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE))
@@ -389,7 +386,6 @@ bool DX11Context::checkTextureSupport()
 			else
 				supportedTexFormats[(int)dcTexTypes[i]] = true;
 		}
-#endif
 	}
 
 	return true;
