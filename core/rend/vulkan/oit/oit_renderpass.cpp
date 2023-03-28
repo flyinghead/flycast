@@ -36,13 +36,13 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
+					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eDepthStencilAttachmentOptimal),
 			// OP+PT depth attachment for subpass 1
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
+					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eDepthStencilAttachmentOptimal),
     };
     vk::AttachmentReference swapChainReference(0, vk::ImageLayout::eColorAttachmentOptimal);
     vk::AttachmentReference colorReference(1, vk::ImageLayout::eColorAttachmentOptimal);
@@ -70,17 +70,12 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     			colorInput,
 				swapChainReference,
 				nullptr,
-				&depthReference2),	// depth-only Tr pass when continuation
+				&depthReference),	// depth-only Tr pass when continuation
     };
 
     std::vector<vk::SubpassDependency> dependencies = GetSubpassDependencies();
-    dependencies.emplace_back(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader,
-    		vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-    		vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
-			vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-			vk::DependencyFlagBits::eByRegion);
     dependencies.emplace_back(VK_SUBPASS_EXTERNAL, 1, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    		vk::AccessFlagBits::eInputAttachmentRead, vk::AccessFlagBits::eColorAttachmentWrite, vk::DependencyFlagBits::eByRegion),
+    		vk::AccessFlagBits::eInputAttachmentRead, vk::AccessFlagBits::eColorAttachmentWrite, vk::DependencyFlagBits::eByRegion);
     dependencies.emplace_back(0, 1, vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader,
     		vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 			vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
