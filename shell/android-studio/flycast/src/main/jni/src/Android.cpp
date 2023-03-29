@@ -631,7 +631,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDevi
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_keyboardEvent(JNIEnv *env, jobject obj, jint key, jboolean pressed)
 {
-       keyboard->keyboard_input(key, pressed);
+       keyboard->input(key, pressed);
        return true;
 }
 

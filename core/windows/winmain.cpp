@@ -448,7 +448,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					keycode = VK_NUMPAD_RETURN;
 				else
 					keycode = wParam & 0xff;
-				keyboard->keyboard_input(keycode, message == WM_KEYDOWN);
+				keyboard->input(keycode, message == WM_KEYDOWN);
 			}
 		}
 		break;

@@ -276,7 +276,7 @@ void input_sdl_handle()
 					}
 					else if (!config::UseRawInput)
 					{
-						sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+						sdl_keyboard->input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 					}
 				}
 				break;

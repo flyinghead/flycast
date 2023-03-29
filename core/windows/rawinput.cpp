@@ -292,7 +292,7 @@ static LRESULT CALLBACK rawWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				DEBUG_LOG(INPUT, "[%d] key %x -> %x", it->second->maple_port(), scancode, keycode);
 			}
 			if (keycode != 0xff)
-				it->second->keyboard_input(keycode, pressed);
+				it->second->input(keycode, pressed);
 		}
 		break;
 

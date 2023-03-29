@@ -178,7 +178,7 @@ void input_x11_handle()
 							// Key wasn’t actually released: auto repeat
 							continue;
 					}
-					x11Keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
+					x11Keyboard->input(e.xkey.keycode, e.type == KeyPress);
 
 					// Start/stop mouse capture with Left Ctrl + Left Alt
 					if (e.type == KeyPress
