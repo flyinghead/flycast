@@ -356,7 +356,7 @@ if(USE_VULKAN)
 	option(ENABLE_HLSL "Enables HLSL input support" OFF)
 	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
-	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+	target_link_libraries(${PROJECT_NAME} PRIVATE glslang-default-resource-limits SPIRV)
 endif()
 
 if(NOT LIBRETRO)
