@@ -1057,8 +1057,8 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
-	//make sure we don't use wayy-too-many cycles
-	blk->guest_cycles = std::min(blk->guest_cycles, max_cycles);
+	blk->guest_cycles = std::round(blk->guest_cycles * 200.f / std::max(1.f, (float)config::Sh4Clock));
+
 	//make sure we don't use wayy-too-few cycles
 	blk->guest_cycles = std::max(1U, blk->guest_cycles);
 	blk = nullptr;

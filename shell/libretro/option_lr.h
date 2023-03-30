@@ -202,3 +202,4 @@ extern Option<bool> PowerVR2Filter;
 extern IntOption TextureUpscale;
 extern IntOption MaxFilteredTextureSize;
 extern IntOption PerPixelLayers;
+extern IntOption Sh4Clock;

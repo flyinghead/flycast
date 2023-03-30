@@ -25,6 +25,7 @@ namespace config {
 // Dynarec
 
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
+Option<int> Sh4Clock("Sh4Clock", 200);
 
 // General
 
