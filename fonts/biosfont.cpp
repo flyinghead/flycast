@@ -2,6 +2,8 @@
 // Build the dreamcast BIOS font table using the specified fonts with the help of FreeType2.
 // Fonts should be listed in increasing priority order since glyphs are replaced by later fonts if found.
 //
+// TODO: extended half-width katakana chars (rows 5 and 6) aren't found
+//
 // biosfont 12x24rk.pcf jiskan24.pcf neep-iso8859-1-12x24.pcf
 //
 // 12x24rk.pcf: Copyright 1989 by Sony Corp.
@@ -35,11 +37,34 @@ const unsigned charcodes12[] = {
 	0xa5, 0xa5,
 	// ISO-8859-1 (chars 160-255)
 	0xa0, 0xff,
-	// JIS X0201 (chars 160-255)
+	// JIS X 0201 (chars 160-255)
 	' ', ' ',
-	0xff61, 0xff9f,
-	// FIXME chars E0-FF are unknown???
-	0xff61, 0xff7f, // wrong
+	0xff61, 0xff9f, // regular JIS X 0201 range
+	0x30f0, 0x30f1,	// Wi We
+	0x30ee, 0x30ee, // small Wa
+	0x30ab, 0x30ab, // Ka
+	0x30b1, 0x30b1, // Ke
+	0x30f4, 0x30f4, // Vu
+	0x30ac, 0x30ac, // Ga
+	0x30ae, 0x30ae, // Gi
+	0x30b0, 0x30b0, // Gu
+	0x30b2, 0x30b2, // Ge
+	0x30b4, 0x30b4, // Go
+	0x30b6, 0x30b6, // Za
+	0x30b8, 0x30b8, // Zi
+	0x30ba, 0x30ba, // Zu
+	0x30bc, 0x30bc, // Ze
+	0x30be, 0x30be, // Zo
+	0x30c0, 0x30c0, // Da
+	0x30c2, 0x30c2, // Di
+	0x30c5, 0x30c5, // Du
+	0x30c7, 0x30c7, // De
+	0x30c9, 0x30c9, // Do
+	0x30d0, 0x30d1, // Ba Pa
+	0x30d3, 0x30d4, // Bi Pi
+	0x30d6, 0x30d7, // Bu Pu
+	0x30d9, 0x30da, // Be Pe
+	0x30dc, 0x30dd, // Bo Po
 	' ', ' ',
 };
 
