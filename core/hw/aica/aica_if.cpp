@@ -12,6 +12,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "profiler/dc_profiler.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "hw/arm7/arm7.h"
 #include "cfg/option.h"
 
@@ -404,7 +405,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 
 			// Schedule the end of DMA transfer interrupt
 			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK);       // 16 bits @ 25 MHz
-			if (cycles < 4096)
+			if (cycles < SH4_TIMESLICE / 2)
 				dma_end_sched(0, 0, 0);
 			else
 				sh4_sched_request(dma_sched_id, cycles);
@@ -472,10 +473,8 @@ void sbInit()
 
 	// AICA
 	hollyRegs.setHandlers<SB_ADST_addr>(Read_SB_ADST, Write_SB_ADST);
-#ifdef STRICT_MODE
 	hollyRegs.setWriteHandler<SB_ADSTAR_addr>(Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
 	hollyRegs.setWriteHandler<SB_ADSTAG_addr>(Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
-#endif
 
 	// G2 Ext device #1
 	hollyRegs.setWriteHandler<SB_E1ST_addr>(Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,

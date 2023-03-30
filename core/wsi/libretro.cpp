@@ -24,9 +24,7 @@
 LibretroGraphicsContext theGLContext;
 #endif
 
-#if defined(HAVE_D3D11) && !(defined(HAVE_OPENGL) || defined(HAVE_OPENGLES))
 #include "context.h"
-#endif
 
 GraphicsContext *GraphicsContext::instance;
 #endif

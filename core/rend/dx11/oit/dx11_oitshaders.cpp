@@ -527,61 +527,6 @@ PSO main(in VertexIn inpix)
 	#if PASS == PASS_COLOR 
 		pso.col = color;
 	#elif PASS == PASS_OIT
-		// Discard as many pixels as possible
-		switch (cur_blend_mode.y) // DST
-		{
-		case ONE:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-					discard;
-					break;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (all(color == 0.f))
-						discard;
-					break;
-				case SRC_ALPHA:
-					if (color.a == 0.f || all(color.rgb == 0.f))
-						discard;
-					break;
-				case INVERSE_SRC_ALPHA:
-					if (color.a == 1.0 || all(color.rgb == 0.f))
-						discard;
-					break;
-			}
-			break;
-		case OTHER_COLOR:
-			if (cur_blend_mode.x == ZERO && all(color == 1.f))
-				discard;
-			break;
-		case INVERSE_OTHER_COLOR:
-			if (cur_blend_mode.x <= SRC_ALPHA && all(color == 0.f))
-				discard;
-			break;
-		case SRC_ALPHA:
-			if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.f)
-				discard;
-			break;
-		case INVERSE_SRC_ALPHA:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-				case SRC_ALPHA:
-					if (color.a == 0.f)
-						discard;
-					break;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (all(color == 0.f))
-						discard;
-					break;
-			}
-			break;
-		}
-		
 		uint2 coords = uint2(inpix.pos.xy);
 		uint idx =  getNextPixelIndex();
 		
@@ -1126,7 +1071,7 @@ ComPtr<ID3D11PixelShader> DX11OITShaders::compilePS(const char* source, const ch
 	ComPtr<ID3D11PixelShader> shader;
 	if (blob)
 	{
-		if (device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &shader.get()) != S_OK)
+		if (FAILED(device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &shader.get())))
 			ERROR_LOG(RENDERER, "Pixel shader creation failed");
 	}
 

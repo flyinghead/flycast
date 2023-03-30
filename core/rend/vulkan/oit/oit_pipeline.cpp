@@ -57,16 +57,13 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
-	bool depthWriteEnable = false;
-	if (pass == Pass::Depth || pass == Pass::Color)
-	{
-		// Z Write Disable seems to be ignored for punch-through.
-		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-		if (listType == ListType_Punch_Through)
-			depthWriteEnable = true;
-		else
-			depthWriteEnable = !pp.isp.ZWriteDis;
-	}
+	bool depthWriteEnable;
+	// Z Write Disable seems to be ignored for punch-through.
+	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+	if (listType == ListType_Punch_Through)
+		depthWriteEnable = true;
+	else
+		depthWriteEnable = !pp.isp.ZWriteDis;
 
 	bool shadowed = pass == Pass::Depth && (listType == ListType_Opaque || listType == ListType_Punch_Through);
 	vk::StencilOpState stencilOpState;

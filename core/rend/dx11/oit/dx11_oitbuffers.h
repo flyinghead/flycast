@@ -45,7 +45,7 @@ public:
 			}
 			if (FAILED(hr))
 			{
-				WARN_LOG(RENDERER, "Pixels buffer creation failed");
+				WARN_LOG(RENDERER, "Pixels buffer creation failed: %x", hr);
 				return;
 			}
 		}
@@ -59,7 +59,7 @@ public:
 
 		hr = device->CreateUnorderedAccessView(pixelsBuffer, &uaView, &pixelsBufferView.get());
 		if (FAILED(hr))
-			WARN_LOG(RENDERER, "Pixels buffer UAV creation failed");
+			WARN_LOG(RENDERER, "Pixels buffer UAV creation failed: %x", hr);
 	}
 
 	void resize(int width, int height)
@@ -84,7 +84,7 @@ public:
 		HRESULT hr = device->CreateTexture2D(&desc, nullptr, &abufferPointersTex.get());
 		if (FAILED(hr))
 		{
-			WARN_LOG(RENDERER, "A-buffer texture creation failed");
+			WARN_LOG(RENDERER, "A-buffer texture creation failed: %x", hr);
 			return;
 		}
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uaView{};
@@ -93,7 +93,7 @@ public:
 
 		hr = device->CreateUnorderedAccessView(abufferPointersTex, &uaView, &abufferPointersView.get());
 		if (FAILED(hr))
-			WARN_LOG(RENDERER, "A-buffer texture UAV creation failed");
+			WARN_LOG(RENDERER, "A-buffer texture UAV creation failed: %x", hr);
 	}
 
 	void bind()
