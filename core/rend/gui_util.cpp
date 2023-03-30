@@ -359,8 +359,16 @@ void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
     bool held = false;
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
     		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
-    if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
-        ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
+    // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!) or item is disabled
+    if (g.HoveredId == 0 || g.HoveredIdDisabled)
+    {
+    	bool hoveredAllowOverlap = g.HoveredIdAllowOverlap;
+    	g.HoveredIdAllowOverlap = true;
+    	ImGuiID overlayId = window->GetID("##scrolldraggingoverlay");
+    	ImGui::ButtonBehavior(window->Rect(), overlayId, &hovered, &held, button_flags);
+    	ImGui::KeepAliveID(overlayId);
+    	g.HoveredIdAllowOverlap = hoveredAllowOverlap;
+    }
     const ImVec2& delta = ImGui::GetIO().MouseDelta;
     if (held && delta != ImVec2())
     {
@@ -654,14 +662,14 @@ bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& optio
 template bool OptionCheckbox(const char *name, config::Option<bool, true>& option, const char *help);
 template bool OptionCheckbox(const char *name, config::Option<bool, false>& option, const char *help);
 
-bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help)
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help, const char *format)
 {
 	bool valueChanged;
 	{
 		DisabledScope scope(option.isReadOnly());
 
 		int v = option;
-		valueChanged = ImGui::SliderInt(name, &v, min, max);
+		valueChanged = ImGui::SliderInt(name, &v, min, max, format);
 		if (valueChanged)
 			option.set(v);
 	}

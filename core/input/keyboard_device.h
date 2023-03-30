@@ -109,10 +109,10 @@ protected:
 		if (port >= 0 && port < (int)std::size(kb_shift))
 			kb_shift[port] = _modifier_keys;
 
-		if (keycode != 0 && keycode < 0xE0)
+		if (keycode != 0)
 		{
-			gui_keyboard_key(keycode, pressed, _modifier_keys);
-			if (port >= 0 && port < (int)std::size(kb_key))
+			gui_keyboard_key(keycode, pressed);
+			if (keycode < 0xE0 && port >= 0 && port < (int)std::size(kb_key))
 			{
 				if (pressed)
 				{

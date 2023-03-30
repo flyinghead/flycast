@@ -44,7 +44,7 @@ IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Defaul
 void ShowHelpMarker(const char* desc);
 template<bool PerGameOption>
 bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help = nullptr);
-bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr);
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr, const char *format = nullptr);
 template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,

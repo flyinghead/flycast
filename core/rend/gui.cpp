@@ -152,8 +152,14 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 		case 0x1B: return ImGuiKey_X;
 		case 0x1C: return ImGuiKey_Y;
 		case 0x1D: return ImGuiKey_Z;
+		case 0xE0:
+		case 0xE4:
+			return ImGuiMod_Ctrl;
+		case 0xE1:
+		case 0xE5:
+			return ImGuiMod_Shift;
+		default: return ImGuiKey_None;
 	}
-	return ImGuiKey_None;
 }
 
 void gui_initFonts()
@@ -295,19 +301,19 @@ void gui_keyboard_inputUTF8(const std::string& s)
 		io.AddInputCharactersUTF8(s.c_str());
 }
 
-void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
+void gui_keyboard_key(u8 keyCode, bool pressed)
 {
 	if (!inited)
 		return;
-	ImGuiIO& io = ImGui::GetIO();
 	ImGuiKey key = keycodeToImGuiKey(keyCode);
+	if (key == ImGuiKey_None)
+		return;
 	if (!pressed && ImGui::IsKeyDown(key))
 	{
 		keysUpNextFrame[keyCode] = true;
 		return;
 	}
-	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
-	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
+	ImGuiIO& io = ImGui::GetIO();
 	io.AddKeyEvent(key, pressed);
 }
 
@@ -351,9 +357,9 @@ static void gui_newFrame()
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
-		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+		io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mouseX, mouseY);
+		io.AddMousePosEvent(mouseX, mouseY);
 	static bool delayTouch;
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 	// Delay touch by one frame to allow widgets to be hovered before click
@@ -365,14 +371,14 @@ static void gui_newFrame()
 #endif
 	if (io.WantCaptureMouse)
 	{
-		io.MouseWheel = -mouseWheel / 16;
+		io.AddMouseWheelEvent(0, -mouseWheel / 16);
 		mouseWheel = 0;
 	}
 	if (!delayTouch)
-		io.MouseDown[ImGuiMouseButton_Left] = (mouseButtons & (1 << 0)) != 0;
-	io.MouseDown[ImGuiMouseButton_Right] = (mouseButtons & (1 << 1)) != 0;
-	io.MouseDown[ImGuiMouseButton_Middle] = (mouseButtons & (1 << 2)) != 0;
-	io.MouseDown[3] = (mouseButtons & (1 << 3)) != 0;
+		io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Right, (mouseButtons & (1 << 1)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Middle, (mouseButtons & (1 << 2)) != 0);
+	io.AddMouseButtonEvent(3, (mouseButtons & (1 << 3)) != 0);
 
 	io.AddKeyEvent(ImGuiKey_GamepadFaceLeft, ((kcode[0] & DC_BTN_X) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadFaceRight, ((kcode[0] & DC_BTN_B) == 0));
@@ -2496,7 +2502,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
