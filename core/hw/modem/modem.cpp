@@ -31,6 +31,7 @@
 #ifndef NDEBUG
 #include "oslib/oslib.h"
 #endif
+#include <cassert>
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -52,6 +53,8 @@ const static u32 MODEM_ID[2] =
 static modemreg_t modem_regs;
 
 static u8 dspram[0x1000];
+static_assert(sizeof(regs_write_mask) == sizeof(modem_regs));
+static_assert(sizeof(por_dspram) == sizeof(dspram));
 
 int modem_sched;
 
@@ -344,10 +347,7 @@ static void schedule_callback(int ms)
 
 static void NormalDefaultRegs()
 {
-	verify(state == MS_NORMAL);
-	verify(sizeof(regs_write_mask) == sizeof(modem_regs));
-	verify(sizeof(por_dspram) == sizeof(dspram));
-
+	assert(state == MS_NORMAL);
 	// Default values for normal state
 	memset(&modem_regs, 0, sizeof(modem_regs));
 	memcpy(dspram, por_dspram, sizeof(dspram));
@@ -368,16 +368,16 @@ static void NormalDefaultRegs()
 }
 static void DSPTestEnd()
 {
-	verify(state==MS_END_DSP);
-	state=MS_NORMAL;
+	assert(state == MS_END_DSP);
+	state = MS_NORMAL;
 
 	LOG("DSPTestEnd");
 	NormalDefaultRegs();
 }
 static void DSPTestStart()
 {
-	verify(state==MS_ST_DSP);
-	state=MS_END_DSP;
+	assert(state == MS_ST_DSP);
+	state = MS_END_DSP;
 	LOG("DSPTestStart");
 
 	modem_regs.reg1e.TDBE = 1;
@@ -392,8 +392,8 @@ static void DSPTestStart()
 }
 static void ControllerTestEnd()
 {
-	verify(state==MS_ST_CONTROLER);
-	state=MS_ST_DSP;
+	assert(state == MS_ST_CONTROLER);
+	state = MS_ST_DSP;
 
 	schedule_callback(50);
 }
@@ -401,13 +401,13 @@ static void ControllerTestEnd()
 //End the reset and start internal tests
 static void ControllerTestStart()
 {
-	verify(state==MS_RESETING);
+	assert(state == MS_RESETING);
 	//Set Self test values :)
-	state=MS_ST_CONTROLER;
+	state = MS_ST_CONTROLER;
 	//k, lets set values
 
 	//1E:3 -> set
-	modem_regs.reg1e.TDBE=1;
+	modem_regs.reg1e.TDBE = 1;
 
 /*
 	RAM1 Checksum  = 0xEA3C or 0x451
@@ -418,13 +418,13 @@ static void ControllerTestStart()
 	Part Number    = 0x3730 or 0x3731
 	Revision Level = 0x4241
 */
-	SetReg16(0x1D,0x1C,0xEA3C);
-	SetReg16(0x1B,0x1A,0x5536);
-	SetReg16(0x19,0x18,0x5F4C);
-	SetReg16(0x17,0x16,0x3835);
-	SetReg16(0x15,0x14,0x801);
-	SetReg16(0x13,0x12,0x3730);
-	SetReg16(0x11,0x0,0x4241);
+	SetReg16(0x1D, 0x1C, 0xEA3C);
+	SetReg16(0x1B, 0x1A, 0x5536);
+	SetReg16(0x19, 0x18, 0x5F4C);
+	SetReg16(0x17, 0x16, 0x3835);
+	SetReg16(0x15, 0x14, 0x801);
+	SetReg16(0x13, 0x12, 0x3730);
+	SetReg16(0x11, 0x0, 0x4241);
 
 	ControllerTestEnd();
 }
@@ -491,9 +491,9 @@ static void ModemNormalWrite(u32 reg, u32 data)
 	case 0x06:
 		LOG("PEN = %d", modem_regs.reg06.PEN);
 		if (modem_regs.reg06.PEN)
-			die("PEN = 1");
+			WARN_LOG(MODEM, "Parity not supported");
 		if (modem_regs.reg06.HDLC)
-			die("HDLC = 1");
+			WARN_LOG(MODEM, "HDLC mode not supported");
 		break;
 
 	case 0x08:
@@ -571,7 +571,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x1a:
-		verify(connect_state != CONNECTED || !modem_regs.reg1a.SCIBE);
+		if (connect_state == CONNECTED && modem_regs.reg1a.SCIBE)
+			WARN_LOG(MODEM, "Unexpected state: connected and SCIBE==1");
 		break;
 
 		//Address low
