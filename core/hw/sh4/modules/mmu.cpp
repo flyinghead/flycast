@@ -467,7 +467,13 @@ retry_ITLB_Match:
 
 	if (entry == 4)
 	{
-		verify(mmach == false);
+#ifndef FAST_MMU
+		verify(!mmach);
+#else
+		// the matching may be approximative
+		if (mmach)
+			return MMU_ERROR_TLB_MISS;
+#endif
 		const TLB_Entry *tlb_entry;
 		u32 lookup = mmu_full_lookup(va, &tlb_entry, rv);
 
