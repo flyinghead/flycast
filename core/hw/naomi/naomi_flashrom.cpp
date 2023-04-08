@@ -263,7 +263,7 @@ void configure_naomi_eeprom(const RomBootID *bootId)
 			NOTICE_LOG(NAOMI, "Forcing region Korea");
 			config::Region.override(3);
 		}
-		naomi_cart_LoadBios(settings.content.path.c_str());
+		naomi_cart_LoadBios(settings.content.fileName.c_str());
 	}
 	// Coin settings
 	if (config::ForceFreePlay)

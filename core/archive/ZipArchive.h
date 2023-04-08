@@ -35,9 +35,10 @@ public:
 	bool Open(const void *data, size_t size);
 	ArchiveFile *OpenFirstFile();
 
-private:
-	bool Open(const char* path) override;
+protected:
+	bool Open(FILE *file) override;
 
+private:
 	struct zip *zip;
 };
 

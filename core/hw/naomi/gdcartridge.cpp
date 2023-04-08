@@ -13,6 +13,7 @@
 #include "gdcartridge.h"
 #include "stdclass.h"
 #include "emulator.h"
+#include "oslib/storage.h"
 
 /*
 
@@ -491,13 +492,15 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		DEBUG_LOG(NAOMI, "key is %08x%08x, name is %s", (u32)(key >> 32), (u32)key, name);
 
 		u8 buffer[2048];
-		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
+		std::string parent = hostfs::storage().getParentPath(settings.content.path);
+		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + gdrom_name;
+		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
 		std::unique_ptr<Disc> gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
 		if (gdrom == nullptr)
 			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi", digest));
 		if (gdrom_parent_name != nullptr && gdrom == nullptr)
 		{
-			std::string gdrom_parent_path = get_game_dir() + "/" + gdrom_parent_name + "/" + gdrom_name;
+			std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(gdrom_parent_name) + "/" + gdrom_name);
 			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
 			if (gdrom == nullptr)
 				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi", digest));

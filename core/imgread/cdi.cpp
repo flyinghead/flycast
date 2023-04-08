@@ -1,5 +1,6 @@
 #include "common.h"
 #include "stdclass.h"
+#include "oslib/storage.h"
 
 #include "deps/chdpsr/cdipsr.h"
 
@@ -8,7 +9,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 	if (get_file_extension(file) != "cdi")
 		return nullptr;
 
-	FILE *fsource = nowide::fopen(file, "rb");
+	FILE *fsource = hostfs::storage().openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -109,7 +110,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
 				t.EndFAD=t.StartFAD+track.length-1;
-				FILE *trackFile = nowide::fopen(file, "rb");
+				FILE *trackFile = hostfs::storage().openFile(file, "rb");
 				if (trackFile == nullptr)
 				{
 					delete rv;

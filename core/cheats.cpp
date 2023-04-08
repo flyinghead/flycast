@@ -27,6 +27,7 @@
 #include "cfg/ini.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/storage.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -368,7 +369,7 @@ void CheatManager::setActive(bool active)
 void CheatManager::loadCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
-	FILE* cheatfile = nowide::fopen(filename.c_str(), "r");
+	FILE* cheatfile = hostfs::storage().openFile(filename, "r");
 	if (cheatfile == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
@@ -477,10 +478,7 @@ void CheatManager::reset(const std::string& gameId)
 		}
 		else
 		{
-			std::string romName = get_file_basename(settings.content.path);
-			size_t folder_pos = get_last_slash_pos(romName);
-			if (folder_pos != std::string::npos)
-				romName = romName.substr(folder_pos + 1);
+			std::string romName = get_file_basename(settings.content.fileName);
 
 			for (int i = 0; naomi_widescreen_cheats[i].game_id != nullptr; i++)
 			{
@@ -904,7 +902,7 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		i++;
 	}
 	cfg.set_int("", "cheats", i);
-	FILE *fp = nowide::fopen(filename.c_str(), "w");
+	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
 		throw FlycastException("Can't save cheat file");
 	cfg.save(fp);

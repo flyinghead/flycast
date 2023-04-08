@@ -1054,6 +1054,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/directory.h
 		core/oslib/host_context.h
 		core/oslib/oslib.h
+		core/oslib/storage.cpp
+		core/oslib/storage.h
 		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)

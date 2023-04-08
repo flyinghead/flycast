@@ -20,6 +20,7 @@
 #include "imgui/imgui.h"
 #include "gui_util.h"
 #include "cheats.h"
+#include "oslib/storage.h"
 
 static bool addingCheat;
 
@@ -67,6 +68,12 @@ static void addCheat()
 	ImGui::End();
 }
 
+static void cheatFileSelected(bool cancelled, std::string path)
+{
+	if (!cancelled)
+		cheatManager.loadCheatFile(path);
+}
+
 void gui_cheats()
 {
 	if (addingCheat)
@@ -90,14 +97,18 @@ void gui_cheats()
 	if (ImGui::Button("Add"))
 		addingCheat = true;
 	ImGui::SameLine();
+#ifdef __ANDROID__
+	if (ImGui::Button("Load"))
+		hostfs::addStorage(false, true, cheatFileSelected);
+#else
 	if (ImGui::Button("Load"))
     	ImGui::OpenPopup("Select cheat file");
 	select_file_popup("Select cheat file", [](bool cancelled, std::string selection)
 		{
-			if (!cancelled)
-				cheatManager.loadCheatFile(selection);
+			cheatFileSelected(cancelled, selection);
 			return true;
 		}, true, "cht");
+#endif
 
 	ImGui::SameLine();
 	if (ImGui::Button("Close"))

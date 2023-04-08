@@ -38,9 +38,10 @@ public:
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile *OpenFileByCrc(u32 crc) override;
 
-private:
-	bool Open(const char* path) override;
+protected:
+	bool Open(FILE *file) override;
 
+private:
 	CSzArEx szarchive;
 	UInt32 block_idx;				/* it can have any value before first call (if outBuffer = 0) */
 	Byte *out_buffer;				/* it must be 0 before first call for each new archive. */

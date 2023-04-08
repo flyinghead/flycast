@@ -1,75 +1,19 @@
 #include "common.h"
 #include "stdclass.h"
-#include <algorithm>
+#include "oslib/storage.h"
 #include <sstream>
-
-// On windows, transform slashes to backslashes
-
-std::string normalize_path_separator(std::string path)
-{
-#ifdef _WIN32
-	std::replace(path.begin(), path.end(), '/', '\\');
-#endif
-
-	return path;
-}
-
-// given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
-// given name.ext returns ./ or .\, depending on the platform
-std::string OS_dirname(std::string file)
-{
-	file = normalize_path_separator(file);
-	#ifdef _WIN32
-		const char sep = '\\';
-	#else
-		const char sep = '/';
-	#endif
-
-	size_t last_slash = file.find_last_of(sep);
-
-	if (last_slash == std::string::npos)
-	{
-		std::string local_dir = ".";
-		local_dir += sep;
-		return local_dir;
-	}
-
-	return file.substr(0, last_slash + 1);
-}
-
-#if 0 // TODO: Move this to some tests, make it platform agnostic
-namespace {
-	struct OS_dirname_Test {
-		OS_dirname_Test() {
-			verify(OS_dirname("local/path") == "local/");
-			verify(OS_dirname("local/path/two") == "local/path/");
-			verify(OS_dirname("local/path/three\\a.exe") == "local/path/");
-			verify(OS_dirname("local.ext") == "./");
-		}
-	} test1;
-
-	struct normalize_path_separator_Test {
-		normalize_path_separator_Test() {
-			verify(normalize_path_separator("local/path") == "local/path");
-			verify(normalize_path_separator("local\\path") == "local/path");
-			verify(normalize_path_separator("local\\path\\") == "local/path/");
-			verify(normalize_path_separator("\\local\\path\\") == "/local/path/");
-			verify(normalize_path_separator("loc\\al\\pa\\th") == "loc/al/pa/th");
-		}
-	} test2;
-}
-#endif
 
 Disc* load_gdi(const char* file, std::vector<u8> *digest)
 {
-	FILE *t = nowide::fopen(file, "rb");
+	FILE *t = hostfs::storage().openFile(file, "rb");
 	if (t == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open GDI file ") + file);
 	}
 
-	size_t gdi_len = flycast::fsize(t);
+	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
+	size_t gdi_len = fileInfo.size;
 
 	char gdi_data[8193] = { 0 };
 
@@ -92,7 +36,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
-	std::string basepath = OS_dirname(file);
+	std::string basepath = hostfs::storage().getParentPath(file);
 
 	MD5Sum md5;
 
@@ -142,8 +86,8 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 		if (SSIZE!=0)
 		{
-			std::string path = basepath + normalize_path_separator(track_filename);
-			FILE *file = nowide::fopen(path.c_str(), "rb");
+			std::string path = hostfs::storage().getSubPath(basepath, track_filename);
+			FILE *file = hostfs::storage().openFile(path, "rb");
 			if (file == nullptr)
 			{
 				delete disc;

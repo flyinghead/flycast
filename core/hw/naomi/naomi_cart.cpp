@@ -41,6 +41,7 @@
 #include "naomi_flashrom.h"
 #include "touchscreen.h"
 #include "printer.h"
+#include "oslib/storage.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -66,10 +67,10 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	std::string arch_name(filename);
 	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
-	if (!file_exists(path))
+	if (path.empty())
 		path = hostfs::findNaomiBios(arch_name + ".7z");
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
-	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
+	std::unique_ptr<Archive> bios_archive(OpenArchive(path));
 
 	MD5Sum md5;
 
@@ -166,7 +167,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 static const Game *FindGame(const char *filename)
 {
 	std::string gameName = get_file_basename(filename);
-	size_t folder_pos = get_last_slash_pos(gameName);
+	size_t folder_pos = get_last_slash_pos(gameName);	// Only for standard path
 	if (folder_pos != std::string::npos)
 		gameName = gameName.substr(folder_pos + 1);
 
@@ -194,8 +195,12 @@ void naomi_cart_LoadBios(const char *filename)
 	std::unique_ptr<Archive> archive(OpenArchive(filename));
 
 	std::unique_ptr<Archive> parent_archive;
-	if (game->parent_name != NULL)
-		parent_archive.reset(OpenArchive((get_game_dir() + game->parent_name).c_str()));
+	if (game->parent_name != nullptr)
+	{
+		std::string parentPath = hostfs::storage().getParentPath(filename);
+		parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
+		parent_archive.reset(OpenArchive(parentPath));
+	}
 
 	const char *bios = "naomi";
 	if (game->bios != nullptr)
@@ -215,35 +220,37 @@ void naomi_cart_LoadBios(const char *filename)
 	bios_loaded = true;
 }
 
-static void loadMameRom(const char *filename, LoadProgress *progress)
+static void loadMameRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
-	const Game *game = FindGame(filename);
+	const Game *game = FindGame(fileName.c_str());
 	if (game == NULL)
 		throw NaomiCartException("Unknown game");
 
 	// Open archive and parent archive if any
-	std::unique_ptr<Archive> archive(OpenArchive(filename));
+	std::unique_ptr<Archive> archive(OpenArchive(path));
 	if (archive != NULL)
-		INFO_LOG(NAOMI, "Opened %s", filename);
+		INFO_LOG(NAOMI, "Opened %s", path.c_str());
 
 	std::unique_ptr<Archive> parent_archive;
-	if (game->parent_name != NULL)
+	if (game->parent_name != nullptr)
 	{
-		parent_archive.reset(OpenArchive((get_game_dir() + game->parent_name).c_str()));
-		if (parent_archive != NULL)
+		std::string parentPath = hostfs::storage().getParentPath(path);
+		parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
+		parent_archive.reset(OpenArchive(parentPath));
+		if (parent_archive != nullptr)
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
 	}
 
 	if (archive == NULL && parent_archive == NULL)
 	{
 		if (game->parent_name != NULL)
-			throw NaomiCartException(std::string("Cannot open ") + filename + std::string(" or ") + game->parent_name);
+			throw NaomiCartException(std::string("Cannot open ") + fileName + std::string(" or ") + game->parent_name);
 		else
-			throw NaomiCartException(std::string("Cannot open ") + filename);
+			throw NaomiCartException(std::string("Cannot open ") + fileName);
 	}
 
 	// Load the BIOS
-	naomi_cart_LoadBios(filename);
+	naomi_cart_LoadBios(fileName.c_str());
 
 	// Now load the cartridge data
 	try {
@@ -321,7 +328,7 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 				if (!file && parent_archive != NULL)
 					file.reset(parent_archive->OpenFile(game->blobs[romid].filename));
 				if (!file) {
-					WARN_LOG(NAOMI, "%s: Cannot open %s", filename, game->blobs[romid].filename);
+					WARN_LOG(NAOMI, "%s: Cannot open %s", fileName.c_str(), game->blobs[romid].filename);
 					if (game->blobs[romid].blob_type != Eeprom)
 						// Default eeprom file is optional
 						throw NaomiCartException(std::string("Cannot find ") + game->blobs[romid].filename);
@@ -422,7 +429,7 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 	}
 }
 
-static void loadDecryptedRom(const char* file, LoadProgress *progress)
+static void loadDecryptedRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
 	// Try to load BIOS from naomi.zip
 	if (!loadBios("naomi", NULL, NULL, config::Region))
@@ -441,17 +448,14 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 	std::vector<u32> fsize;
 	u32 romSize = 0;
 
-	std::string extension = get_file_extension(file);
+	std::string extension = get_file_extension(fileName);
 	if (extension == "lst")
 	{
 		// LST file
-		size_t folder_pos = get_last_slash_pos(file);
-		if (folder_pos != std::string::npos)
-			folder = std::string(file).substr(0, folder_pos + 1);
-
-		FILE *fl = nowide::fopen(file, "r");
+		FILE *fl = hostfs::storage().openFile(path, "r");
 		if (!fl)
-			throw FlycastException("Error: can't open " + std::string(file));
+			throw FlycastException("Error: can't open " + path);
+		folder = hostfs::storage().getParentPath(path);
 
 		char t[512];
 		char* line = std::fgets(t, sizeof(t), fl);
@@ -498,14 +502,14 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 	else
 	{
 		// BIN loading
-		FILE* fp = nowide::fopen(file, "rb");
-		if (fp == NULL)
-			throw FlycastException("Error: can't open " + std::string(file));
+		FILE* fp = hostfs::storage().openFile(path, "rb");
+		if (fp == nullptr)
+			throw FlycastException("Error: can't open " + path);
 
 		std::fseek(fp, 0, SEEK_END);
 		u32 file_size = (u32)std::ftell(fp);
 		std::fclose(fp);
-		files.emplace_back(file);
+		files.emplace_back(path);
 		fstart.push_back(0);
 		fsize.push_back(file_size);
 		romSize = file_size;
@@ -530,12 +534,16 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 
 		if (files[i] != "null")
 		{
-			std::string file(folder + files[i]);
+			std::string filePath;
+			if (folder.empty())
+				filePath = files[i];
+			else
+				filePath = hostfs::storage().getSubPath(folder, files[i]);
 
-			fp = nowide::fopen(file.c_str(), "rb");
+			fp = hostfs::storage().openFile(filePath, "rb");
 			if (fp == nullptr)
 			{
-				ERROR_LOG(NAOMI, "Unable to open file %s: error %d", file.c_str(), errno);
+				ERROR_LOG(NAOMI, "Unable to open file %s: error %d", filePath.c_str(), errno);
 				load_error = true;
 				break;
 			}
@@ -577,7 +585,7 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 	CurrentCartridge = new DecryptedCartridge(romBase, romSize);
 }
 
-void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
+void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
 	naomi_cart_Close();
 
@@ -586,12 +594,12 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 		CurrentCartridge = new NaomiCartridge(0);
 		return;
 	}
-	std::string extension = get_file_extension(file);
+	std::string extension = get_file_extension(fileName);
 
 	if (extension == "zip" || extension == "7z")
-		loadMameRom(file, progress);
+		loadMameRom(path, fileName, progress);
 	else
-		loadDecryptedRom(file, progress);
+		loadDecryptedRom(path, fileName, progress);
 
 	atomiswaveForceFeedback = false;
 	RomBootID bootId;

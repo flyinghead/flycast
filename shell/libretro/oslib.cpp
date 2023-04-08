@@ -98,7 +98,11 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 std::string findNaomiBios(const std::string& name)
 {
 	std::string basepath(game_dir_no_slash);
-	return basepath + path_default_slash() + name;
+	basepath += path_default_slash() + name;
+	if (file_exists(basepath))
+		return basepath;
+	else
+		return "";
 }
 
 std::string getSavestatePath(int index, bool writable)

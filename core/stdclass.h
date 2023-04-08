@@ -68,10 +68,6 @@ bool make_directory(const std::string& path);
 
 // returns a prefix for a game save file, for example: ~/.local/share/flycast/mvsc2.zip
 std::string get_game_save_prefix();
-// returns the full path of the game, without the file extension
-std::string get_game_basename();
-// returns the game directory
-std::string get_game_dir();
 // returns the position of the last path separator, or string::npos if none
 size_t get_last_slash_pos(const std::string& path);
 

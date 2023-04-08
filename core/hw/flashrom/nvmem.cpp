@@ -236,10 +236,7 @@ static std::unique_ptr<u8[]> loadFlashResource(const std::string& name, size_t& 
 
 static void loadDefaultAWBiosFlash()
 {
-	std::string flashName = get_game_basename() + ".nvmem2";
-	size_t lastindex = get_last_slash_pos(flashName);
-	if (lastindex != std::string::npos)
-		flashName = flashName.substr(lastindex + 1);
+	std::string flashName = get_file_basename(settings.content.fileName) + ".nvmem2";
 
 	size_t size = settings.platform.bios_size / 2;
 	std::unique_ptr<u8[]> buffer = loadFlashResource(flashName, size);
@@ -257,10 +254,7 @@ static bool loadFlash()
 		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
 		if (!rc)
 		{
-			std::string flashName = get_game_basename() + ".nvmem";
-			size_t lastindex = get_last_slash_pos(flashName);
-			if (lastindex != std::string::npos)
-				flashName = flashName.substr(lastindex + 1);
+			std::string flashName = get_file_basename(settings.content.fileName) + ".nvmem";
 
 			size_t size = settings.platform.flash_size;
 			std::unique_ptr<u8[]> buffer = loadFlashResource(flashName, size);

@@ -19,6 +19,8 @@
 #ifdef USE_BREAKPAD
 #include "client/linux/handler/exception_handler.h"
 #endif
+#include "jni_util.h"
+#include "android_storage.h"
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -32,48 +34,10 @@
 #include <unistd.h>
 
 JavaVM* g_jvm;
-
-// Convenience class to get the java environment for the current thread.
-// Also attach the threads, and detach it on destruction, if needed.
-class JVMAttacher {
-public:
-    JVMAttacher() : _env(NULL), _detach_thread(false) {
-    }
-    JNIEnv *getEnv()
-    {
-        if (_env == NULL)
-        {
-            if (g_jvm == NULL) {
-                die("g_jvm == NULL");
-                return NULL;
-            }
-            int rc = g_jvm->GetEnv((void **)&_env, JNI_VERSION_1_6);
-            if (rc  == JNI_EDETACHED) {
-                if (g_jvm->AttachCurrentThread(&_env, NULL) != 0) {
-                    die("AttachCurrentThread failed");
-                    return NULL;
-                }
-                _detach_thread = true;
-            }
-            else if (rc == JNI_EVERSION) {
-                die("JNI version error");
-                return NULL;
-            }
-        }
-        return _env;
-    }
-
-    ~JVMAttacher()
-    {
-        if (_detach_thread)
-            g_jvm->DetachCurrentThread();
-    }
-
-private:
-    JNIEnv *_env;
-    bool _detach_thread;
-};
-static thread_local JVMAttacher jvm_attacher;
+namespace jni
+{
+	thread_local JVMAttacher jvm_attacher;
+}
 
 #include "android_gamepad.h"
 #include "android_keyboard.h"
@@ -119,12 +83,12 @@ static void emuEventCallback(Event event, void *)
 	case Event::Pause:
 		game_started = false;
 		if (g_activity != nullptr)
-			jvm_attacher.getEnv()->CallVoidMethod(g_activity, onGameStateChangeMid, false);
+			jni::env()->CallVoidMethod(g_activity, onGameStateChangeMid, false);
 		break;
 	case Event::Resume:
 		game_started = true;
 		if (g_activity != nullptr)
-			jvm_attacher.getEnv()->CallVoidMethod(g_activity, onGameStateChangeMid, true);
+			jni::env()->CallVoidMethod(g_activity, onGameStateChangeMid, true);
 		break;
 	default:
 		break;
@@ -478,43 +442,43 @@ public:
 
 	u32 push(const void* frame, u32 amt, bool wait) override
 	{
-		jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
-		return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
+		jni::env()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
+		return jni::env()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 	}
 
 	bool init() override
 	{
 		jint bufferSize = config::AutoLatency ? 0 : config::AudioBufferSize;
-		return jvm_attacher.getEnv()->CallBooleanMethod(g_audioBackend, audioInitMid, bufferSize);
+		return jni::env()->CallBooleanMethod(g_audioBackend, audioInitMid, bufferSize);
 	}
 
 	void term() override
 	{
-		jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
+		jni::env()->CallVoidMethod(g_audioBackend, audioTermMid);
 	}
 
 	bool initRecord(u32 sampling_freq) override
 	{
 		if (sipemu == nullptr)
 			return false;
-		jvm_attacher.getEnv()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
+		jni::env()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
 		return true;
 	}
 
 	void termRecord() override
 	{
-		jvm_attacher.getEnv()->CallVoidMethod(sipemu, stopRecordingMid);
+		jni::env()->CallVoidMethod(sipemu, stopRecordingMid);
 	}
 
 	u32 record(void *buffer, u32 samples) override
 	{
-		jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu, getmicdata, samples);
+		jbyteArray jdata = (jbyteArray)jni::env()->CallObjectMethod(sipemu, getmicdata, samples);
 		if (jdata == NULL)
 			return 0;
-		jsize size = jvm_attacher.getEnv()->GetArrayLength(jdata);
+		jsize size = jni::env()->GetArrayLength(jdata);
 		samples = std::min(samples, (u32)size * 2);
-		jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
-		jvm_attacher.getEnv()->DeleteLocalRef(jdata);
+		jni::env()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
+		jni::env()->DeleteLocalRef(jdata);
 
 		return samples;
 	}
@@ -557,10 +521,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_set
 
 void SaveAndroidSettings()
 {
-    jstring homeDirectory = jvm_attacher.getEnv()->NewStringUTF(get_writable_config_path("").c_str());
+    jstring homeDirectory = jni::env()->NewStringUTF(get_writable_config_path("").c_str());
 
-    jvm_attacher.getEnv()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, homeDirectory);
-    jvm_attacher.getEnv()->DeleteLocalRef(homeDirectory);
+    jni::env()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, homeDirectory);
+    jni::env()->DeleteLocalRef(homeDirectory);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
@@ -575,7 +539,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     gui_setOnScreenKeyboardCallback([](bool show) {
     	if (g_activity == nullptr)
     		return;
-        JNIEnv *env = jvm_attacher.getEnv();
+        JNIEnv *env = jni::env();
         if (show != env->CallBooleanMethod(g_activity, isScreenKeyboardShownMid))
         {
             INFO_LOG(INPUT, "show/hide keyboard %d", show);
@@ -593,12 +557,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     const char* joyname = env->GetStringUTFChars(name,0);
     const char* unique_id = env->GetStringUTFChars(junique_id, 0);
 
-    jsize size = jvm_attacher.getEnv()->GetArrayLength(fullAxes);
+    jsize size = jni::env()->GetArrayLength(fullAxes);
     std::vector<int> full(size);
-    jvm_attacher.getEnv()->GetIntArrayRegion(fullAxes, 0, size, (jint*)&full[0]);
-    size = jvm_attacher.getEnv()->GetArrayLength(halfAxes);
+    jni::env()->GetIntArrayRegion(fullAxes, 0, size, (jint*)&full[0]);
+    size = jni::env()->GetArrayLength(halfAxes);
     std::vector<int> half(size);
-    jvm_attacher.getEnv()->GetIntArrayRegion(halfAxes, 0, size, (jint*)&half[0]);
+    jni::env()->GetIntArrayRegion(halfAxes, 0, size, (jint*)&half[0]);
 
     std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname, unique_id, full, half);
     AndroidGamepadDevice::AddAndroidGamepad(gamepad);
@@ -686,17 +650,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_regis
 
 void vjoy_start_editing()
 {
-    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyStartEditingMID);
+	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
 }
 
 void vjoy_reset_editing()
 {
-    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyResetEditingMID);
+    jni::env()->CallVoidMethod(g_activity, VJoyResetEditingMID);
 }
 
 void vjoy_stop_editing(bool canceled)
 {
-    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
+    jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data)
@@ -711,7 +675,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons
 
 void enableNetworkBroadcast(bool enable)
 {
-    JNIEnv *env = jvm_attacher.getEnv();
+    JNIEnv *env = jni::env();
     jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
     env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
 }

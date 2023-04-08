@@ -132,7 +132,7 @@ public:
 	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
-void naomi_cart_LoadRom(const char* file, LoadProgress *progress);
+void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, LoadProgress *progress);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);

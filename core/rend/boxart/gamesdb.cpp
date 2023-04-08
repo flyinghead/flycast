@@ -338,7 +338,7 @@ void TheGamesDb::fetchByName(GameBoxart& item)
 {
 	if (item.searchName.empty())
 		return;
-	int platform = getGamePlatform(item.gamePath.c_str());
+	int platform = getGamePlatform(item.fileName);
 	std::string url = makeUrl("Games/ByGameName") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
 	if (platform == DC_PLATFORM_DREAMCAST)
 		url += std::to_string(dreamcastPlatformId);

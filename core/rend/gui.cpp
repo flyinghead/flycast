@@ -50,7 +50,13 @@
 #include "gui_android.h"
 #endif
 
+#ifdef _WIN32
+#include "winnls.h"
+#else
+#include <unistd.h>
+#endif
 #include <mutex>
+#include <algorithm>
 
 static bool game_started;
 
@@ -1312,6 +1318,17 @@ static inline void gui_debug_tab()
 	}
 }
 
+static void addContentPath(const std::string& path)
+{
+	auto& contentPath = config::ContentPath.get();
+	if (std::count(contentPath.begin(), contentPath.end(), path) == 0)
+	{
+		scanner.stop();
+		contentPath.push_back(path);
+		scanner.refresh();
+	}
+}
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -1423,18 +1440,23 @@ static void gui_display_settings()
                 	ImGui::PopID();
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+#ifdef __ANDROID__
+                if (ImGui::Button("Add"))
+                {
+                	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
+            			if (!cancelled)
+            				addContentPath(selection);
+                	});
+                }
+#else
                 if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
-                select_file_popup("Select Directory", [](bool cancelled, std::string selection)
-                		{
-                			if (!cancelled)
-                			{
-                				scanner.stop();
-                				config::ContentPath.get().push_back(selection);
-                				scanner.refresh();
-                			}
-                			return true;
-                		});
+                select_file_popup("Select Directory", [](bool cancelled, std::string selection) {
+					if (!cancelled)
+        				addContentPath(selection);
+					return true;
+                });
+#endif
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
@@ -2251,11 +2273,13 @@ static void gui_display_settings()
 				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
+#ifdef NAOMI_MULTIBOARD
 				ImGui::Text("Multiboard Screens:");
 				//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
 				OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
 				ImGui::SameLine();
 				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
+#endif
 		    }
 	    	ImGui::Spacing();
 		    header("Other");

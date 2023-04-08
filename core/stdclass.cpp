@@ -3,6 +3,7 @@
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
 #include "serialize.h"
+#include "oslib/storage.h"
 
 #include <chrono>
 #include <cstring>
@@ -90,9 +91,12 @@ std::string get_readonly_data_path(const std::string& filename)
 			return filepath;
 	}
 	// Try the game directory
-	std::string filepath = get_game_dir() + filename;
-	if (file_exists(filepath))
-		return filepath;
+	std::string parent = hostfs::storage().getParentPath(settings.content.path);
+	std::string filepath = hostfs::storage().getSubPath(parent, filename);
+	try {
+		hostfs::FileInfo info = hostfs::storage().getFileInfo(filepath);
+		return info.path;
+	} catch (const FlycastException&) { }
 
 	// Not found, so we return the user variant
 	return user_filepath;
@@ -113,31 +117,7 @@ size_t get_last_slash_pos(const std::string& path)
 
 std::string get_game_save_prefix()
 {
-	std::string save_file = settings.content.path;
-	size_t lastindex = get_last_slash_pos(save_file);
-	if (lastindex != std::string::npos)
-		save_file = save_file.substr(lastindex + 1);
-	return get_writable_data_path(save_file);
-}
-
-std::string get_game_basename()
-{
-	std::string game_dir = settings.content.path;
-	size_t lastindex = game_dir.find_last_of('.');
-	if (lastindex != std::string::npos)
-		game_dir = game_dir.substr(0, lastindex);
-	return game_dir;
-}
-
-std::string get_game_dir()
-{
-	std::string game_dir = settings.content.path;
-	size_t lastindex = get_last_slash_pos(game_dir);
-	if (lastindex != std::string::npos)
-		game_dir = game_dir.substr(0, lastindex + 1);
-	else
-		game_dir = "./";
-	return game_dir;
+	return get_writable_data_path(settings.content.fileName);
 }
 
 bool make_directory(const std::string& path)

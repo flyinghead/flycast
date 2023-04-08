@@ -42,6 +42,7 @@
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
+#include "oslib/storage.h"
 #include <chrono>
 
 settings_t settings;
@@ -478,21 +479,21 @@ void Emulator::init()
 	state = Init;
 }
 
-int getGamePlatform(const char *path)
+int getGamePlatform(const std::string& filename)
 {
 	if (settings.naomi.slave)
 		// Multiboard slave
 		return DC_PLATFORM_NAOMI;
 
-	if (path == NULL)
+	if (filename.empty())
 		// Dreamcast BIOS
 		return DC_PLATFORM_DREAMCAST;
 
-	std::string extension = get_file_extension(path);
+	std::string extension = get_file_extension(filename);
 	if (extension.empty())
 		return DC_PLATFORM_DREAMCAST;	// unknown
 	if (extension == "zip" || extension == "7z")
-		return naomi_cart_GetPlatform(path);
+		return naomi_cart_GetPlatform(filename.c_str());
 	if (extension == "bin" || extension == "dat" || extension == "lst")
 		return DC_PLATFORM_NAOMI;
 
@@ -505,12 +506,19 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 	try {
 		DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 
-		if (path != nullptr)
+		if (path != nullptr && strlen(path) > 0)
+		{
 			settings.content.path = path;
+			hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
+			settings.content.fileName = info.name;
+		}
 		else
+		{
 			settings.content.path.clear();
+			settings.content.fileName.clear();
+		}
 
-		setPlatform(getGamePlatform(path));
+		setPlatform(getGamePlatform(settings.content.fileName));
 		mem_map_default();
 
 		config::Settings::instance().reset();
@@ -565,7 +573,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		else if (settings.platform.isArcade())
 		{
 			nvmem::loadFiles();
-			naomi_cart_LoadRom(path, progress);
+			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
@@ -664,6 +672,7 @@ void Emulator::unloadGame()
 		config::Settings::instance().load(false);
 		settings.content.path.clear();
 		settings.content.gameId.clear();
+		settings.content.fileName.clear();
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}

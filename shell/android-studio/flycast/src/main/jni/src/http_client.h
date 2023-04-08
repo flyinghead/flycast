@@ -16,7 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "rend/boxart/http_client.h"
+#include "jni_util.h"
 
 namespace http {
 
@@ -28,7 +30,7 @@ namespace http {
     }
 
     int get(const std::string &url, std::vector<u8> &content, std::string &contentType) {
-        JNIEnv *env = jvm_attacher.getEnv();
+        JNIEnv *env = jni::env();
         jstring jurl = env->NewStringUTF(url.c_str());
         jclass byteArrayClass = env->FindClass("[B");
         jobjectArray contentOut = env->NewObjectArray(1, byteArrayClass, NULL);
@@ -61,7 +63,7 @@ namespace http {
 
     int post(const std::string &url, const std::vector<PostField>& fields)
     {
-        JNIEnv *env = jvm_attacher.getEnv();
+        JNIEnv *env = jni::env();
         jstring jurl = env->NewStringUTF(url.c_str());
         jclass stringClass = env->FindClass("java/lang/String");
         jobjectArray names = env->NewObjectArray(fields.size(), stringClass, NULL);

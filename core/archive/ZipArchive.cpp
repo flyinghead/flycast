@@ -25,11 +25,8 @@ ZipArchive::~ZipArchive()
 	zip_close(zip);
 }
 
-bool ZipArchive::Open(const char* path)
+bool ZipArchive::Open(FILE *file)
 {
-	FILE *file = nowide::fopen(path, "rb");
-	if (file == nullptr)
-		return false;
 	zip_error_t error;
 	zip_source_t *source = zip_source_filep_create(file, 0, -1, &error);
 	if (source == nullptr)

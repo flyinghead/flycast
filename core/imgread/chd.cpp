@@ -1,5 +1,6 @@
 #include "common.h"
 #include "stdclass.h"
+#include "oslib/storage.h"
 
 #include <libchdr/chd.h>
 
@@ -110,7 +111,7 @@ static u32 getSectorSize(const std::string& type)
 
 void CHDDisc::tryOpen(const char* file)
 {
-	fp = nowide::fopen(file, "rb");
+	fp = hostfs::storage().openFile(file, "rb");
 	if (fp == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);

@@ -21,6 +21,7 @@
 #include "cfg/cfg.h"
 #include "cfg/option.h"
 #include "nowide/fstream.hpp"
+#include "storage.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -91,29 +92,19 @@ std::string findNaomiBios(const std::string& name)
 		return fullpath;
 	for (const auto& path : config::ContentPath.get())
 	{
-		fullpath = path + "/" + name;
-		if (file_exists(fullpath))
+		fullpath = hostfs::storage().getSubPath(path, name);
+		try {
+			hostfs::storage().getFileInfo(fullpath);
 			return fullpath;
+		} catch (const hostfs::StorageException& e) {
+		}
 	}
 	return "";
 }
 
 std::string getSavestatePath(int index, bool writable)
 {
-	std::string state_file = settings.content.path;
-	size_t lastindex = state_file.find_last_of('/');
-#ifdef _WIN32
-	size_t lastindex2 = state_file.find_last_of('\\');
-	if (lastindex == std::string::npos)
-		lastindex = lastindex2;
-	else if (lastindex2 != std::string::npos)
-		lastindex = std::max(lastindex, lastindex2);
-#endif
-	if (lastindex != std::string::npos)
-		state_file = state_file.substr(lastindex + 1);
-	lastindex = state_file.find_last_of('.');
-	if (lastindex != std::string::npos)
-		state_file = state_file.substr(0, lastindex);
+	std::string state_file = get_file_basename(settings.content.fileName);
 
 	char index_str[4] = "";
 	if (index > 0) // When index is 0, use same name before multiple states is added

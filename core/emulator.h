@@ -182,4 +182,4 @@ private:
 };
 extern Emulator emu;
 
-int getGamePlatform(const char *path);
+int getGamePlatform(const std::string& filename);

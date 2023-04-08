@@ -278,6 +278,7 @@ struct settings_t
 	{
 		std::string path;
 		std::string gameId;
+		std::string fileName;
 	} content;
 
 	struct {

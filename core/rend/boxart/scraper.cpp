@@ -73,7 +73,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 	if (item.parsed)
 		return;
 	item.parsed = true;
-	int platform = getGamePlatform(item.gamePath.c_str());
+	int platform = getGamePlatform(item.fileName);
 	if (platform == DC_PLATFORM_DREAMCAST)
 	{
 		if (item.gamePath.empty())
