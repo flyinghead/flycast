@@ -51,7 +51,7 @@
 #endif
 
 #ifdef _WIN32
-#include "winnls.h"
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
