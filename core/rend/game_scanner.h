@@ -178,7 +178,11 @@ public:
 				arcade_game_list.clear();
 				for (const auto& path : config::ContentPath.get())
 				{
-					add_game_directory(path);
+					try {
+						add_game_directory(path);
+					} catch (const hostfs::StorageException& e) {
+						// ignore
+					}
 					if (!running)
 						break;
 				}
