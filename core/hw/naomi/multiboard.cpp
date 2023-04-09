@@ -127,20 +127,18 @@ void Multiboard::startSlave()
 
 	int x = cfgLoadInt("window", "left", (1920 - 640) / 2);
 	int y = cfgLoadInt("window", "top", (1080 - 480) / 2);
+	int width = cfgLoadInt("window", "width", 640);
 	for (int i = 0; i < slaves; i++)
 	{
 		std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
 		std::string board = "naomi:BoardId=" + std::to_string(i + 1);
 		int slaveX = x;
-		int slaveY = y + 480;
-		if (slaves == 2) {
-			slaveX = i == 0 ? x - 640 : x + 640;
-			slaveY = y;
-		}
+		if (slaves == 2)
+			slaveX = i == 0 ? x - width : x + width;
 		else if (slaves == 3)
-			slaveX = i == 1 ? x - 640 : i == 2 ? x + 640 : x;
+			slaveX = i == 1 ? x - width : i == 2 ? x + width : x;
 		std::string left = "window:left=" + std::to_string(slaveX);
-		std::string top = "window:top=" + std::to_string(slaveY);
+		std::string top = "window:top=" + std::to_string(y);
 		const char *args[] = {
 			"-config", board.c_str(),
 			"-config", region.c_str(),
