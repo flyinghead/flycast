@@ -46,16 +46,16 @@ void DMAC_Ch2St()
 	// 12000000 - 12FFFFE0
 	if ((dst & 0x01000000) == 0)
 	{
-		SQBuffer *sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		if ((src & RAM_MASK) + len > RAM_SIZE)
 		{
 			u32 newLen = RAM_SIZE - (src & RAM_MASK);
-			TAWrite(dst, sys_buf, newLen / sizeof(SQBuffer));
+			SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, newLen);
+			TAWrite(dst, psrc, newLen / sizeof(SQBuffer));
 			len -= newLen;
 			src += newLen;
-			sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		}
-		TAWrite(dst, sys_buf, len / sizeof(SQBuffer));
+		SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, len);
+		TAWrite(dst, psrc, len / sizeof(SQBuffer));
 		src += len;
 	}
 	// Direct Texture path and mirror

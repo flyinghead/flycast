@@ -261,12 +261,10 @@ void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size)
 void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 {
 	// destination address is 32-byte aligned
-	bool dst_ismem;
-	SQBuffer *dst_ptr = (SQBuffer *)addrspace::writeConst(dst, dst_ismem, 4);
-
-	if (dst_ismem)
+	SQBuffer *pdst = (SQBuffer *)GetMemPtr(dst, sizeof(SQBuffer));
+	if (pdst != nullptr)
 	{
-		*dst_ptr = *src;
+		*pdst = *src;
 	}
 	else
 	{
@@ -275,16 +273,21 @@ void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 	}
 }
 
-//Get pointer to ram area , 0 if error
+//Get pointer to ram area , nullptr if error
 //For debugger(gdb) - dynarec
-u8* GetMemPtr(u32 Addr, u32 size)
+u8* GetMemPtr(u32 addr, u32 size)
 {
-	if (((Addr >> 29) & 7) == 7)
+	if (((addr >> 29) & 7) == 7)
 		// P4
 		return nullptr;
-	if (((Addr >> 26) & 7) == 3)
+	if (((addr >> 26) & 7) == 3)
+	{
 		// Area 3
-		return &mem_b[Addr & RAM_MASK];
+		if ((addr & RAM_MASK) + size > RAM_SIZE)
+			return nullptr;
+		else
+			return &mem_b[addr & RAM_MASK];
+	}
 	return nullptr;
 }
 
