@@ -260,7 +260,7 @@ void SCIFRegisters::init()
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 	setRW<SCIF_SCLSR2_addr, u16, 1>();
 
-	reset();
+	reset(true);
 }
 
 void SCIRegisters::init()
@@ -279,7 +279,7 @@ void SCIRegisters::init()
 	reset();
 }
 
-void SCIFRegisters::reset()
+void SCIFRegisters::reset(bool hard)
 {
 	super::reset();
 
@@ -298,7 +298,8 @@ void SCIFRegisters::reset()
 	SCIF_SCBRR2 = 0xFF;
 	SCIF_SCFSR2.full = 0x060;
 
-	ptyPipe.init();
+	if (hard)
+		ptyPipe.init();
 }
 
 void SCIRegisters::reset()

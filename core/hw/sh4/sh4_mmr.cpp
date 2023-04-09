@@ -605,7 +605,7 @@ void sh4_mmr_reset(bool hard)
 	dmac.reset();
 	intc.reset();
 	rtc.reset();
-	scif.reset();
+	scif.reset(hard);
 	sci.reset();
 	tmu.reset();
 	ubc.reset();
