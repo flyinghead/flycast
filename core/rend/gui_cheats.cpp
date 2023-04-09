@@ -131,6 +131,9 @@ void gui_cheats()
 				ImGui::PopID();
 			}
     }
+    scrollWhenDraggingOnVoid();
+    windowDragScroll();
+
 	ImGui::EndChild();
 	ImGui::End();
 }
