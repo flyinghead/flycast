@@ -496,7 +496,8 @@ private:
 				const u32 *data = agent.getStack(len);
 				len /= 4;
 
-				char *r = new char[len * 9 * 2 + 1];
+				char reply[len * 9 * 2 + 1];
+				char *r = reply;
 				for (u32 i = 0; i < len; i++)
 				{
 					char n[10];
@@ -508,8 +509,7 @@ private:
 					}
 				}
 				*r = 0;
-				sendPacket(r);
-				delete [] r;
+				sendPacket(reply);
 			}
 			else
 				sendPacket("");
@@ -685,6 +685,14 @@ private:
 		}
 	}
 
+	void interrupt()
+	{
+		u32 signal = agent.interrupt();
+		char s[10];
+		sprintf(s, "S%02x", signal);
+		sendPacket(s);
+	}
+
 	char recvChar()
 	{
 		char c;
@@ -834,11 +842,7 @@ static GdbServer gdbServer;
 
 void init()
 {
-	if (config::DisplayDebuggerMenu)
-	{
-		NOTICE_LOG(COMMON, "GDB Server initting...");
-		gdbServer.init();
-	}
+	gdbServer.init();
 }
 
 void term()
@@ -876,22 +880,6 @@ static void emuEventCallback(Event event, void *)
 		break;
 	}
 }
-
-void interrupt()
-{
-	gdbServer.agent.interrupt();
-}
-
-void step()
-{
-	gdbServer.agent.step();
-}
-
-void doContinue()
-{
-	gdbServer.agent.doContinue();
-}
-
 
 }
 #endif

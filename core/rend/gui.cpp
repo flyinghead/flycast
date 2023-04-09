@@ -50,7 +50,6 @@
 #endif
 
 #include "gdxsv/gdxsv_emu_hooks.h"
-#include "gui_debugger.h"
 
 static bool game_started;
 
@@ -262,8 +261,6 @@ void gui_initFonts()
 
     // TODO Linux, iOS, ...
 #endif
-	io.Fonts->AddFontDefault();
-
 	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 
@@ -608,14 +605,6 @@ static void gui_display_commands()
 			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
 		gui_stop_game();
-	}
-
-	if (config::DisplayDebuggerMenu) {
-		if (ImGui::Button("Debugger", ScaledVec2(300, 50)
-				+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
-		{
-			gui_state = GuiState::Debugger;
-		}
 	}
 
 	ImGui::End();
@@ -2825,8 +2814,6 @@ void gui_display_ui()
 	case GuiState::Cheats:
 		gui_cheats();
 		break;
-	case GuiState::Debugger:
-		break;
 	default:
 		die("Unknown UI state");
 		break;
@@ -2868,21 +2855,6 @@ void gui_display_osd()
 {
 	if (gui_state == GuiState::VJoyEdit)
 		return;
-
-	if (gui_state == GuiState::Debugger)
-	{
-		gui_newFrame();
-		ImGui::NewFrame();
-
-		gui_debugger();
-
-		lua::overlay();
-
-		gui_endFrame();
-
-		return;
-	}	
-
 	std::string message = get_notification();
 	if (message.empty())
 		message = getFPSNotification();
@@ -2991,19 +2963,3 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 	return false;
 }
 #endif
-
-void gui_debugger()
-{
-	gui_debugger_control();
-
-	gui_debugger_disasm();
-
-	gui_debugger_memdump();
-
-	gui_debugger_breakpoints();
-
-	gui_debugger_sh4();
-
-	gui_debugger_tbg();
-}
-

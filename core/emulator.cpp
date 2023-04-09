@@ -48,12 +48,6 @@
 
 settings_t settings;
 
-std::map<u32, std::string> knownTasks {
-	{ 0x8c015ab8, "Title Screen" },
-	{ 0x8c022a54, "Fade In" },
-	{ 0x8c022ad0, "Fade Out  " },
-};
-
 static void loadSpecialSettings()
 {
 	if (settings.platform.isConsole())
@@ -708,7 +702,6 @@ void Emulator::step()
 	// FIXME single thread is better
 	singleStep = true;
 	start();
-	run();
 	stop();
 }
 

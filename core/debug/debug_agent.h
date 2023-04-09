@@ -21,7 +21,7 @@
 #include "emulator.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
-// #include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "cfg/option.h"
 #include <array>
 #include <signal.h>
@@ -202,8 +202,6 @@ public:
 		breakpoints[addr] = Breakpoint(type, addr);
 		breakpoints[addr].savedOp = ReadMem16_nommu(addr);
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
-
-		NOTICE_LOG(COMMON, "Adding breakpoint at 0x%08X", addr);
 		return true;
 	}
 	bool removeMatchpoint(char type, u32 addr, u32 len)
@@ -222,7 +220,7 @@ public:
 
 	u32 interrupt()
 	{
-		//config::DynarecEnabled = false;
+		config::DynarecEnabled = false;
 		exception = SIGINT;
 		emu.stop();
 		return exception;
@@ -303,9 +301,17 @@ public:
 			return nullptr;
 	}
 
-	void subroutineCall();
+	void subroutineCall()
+	{
+		subroutineReturn();
+		stack.push_back(std::make_pair(Sh4cntx.pc, Sh4cntx.r[15]));
+	}
 
-	void subroutineReturn();
+	void subroutineReturn()
+	{
+		while (!stack.empty() && Sh4cntx.r[15] >= stack.back().second)
+			stack.pop_back();
+	}
 
 	u32 exception = 0;
 
@@ -319,5 +325,3 @@ public:
 	std::map<u32, Breakpoint> breakpoints;
 	std::vector<std::pair<u32, u32>> stack;
 };
-
-extern DebugAgent debugAgent;
