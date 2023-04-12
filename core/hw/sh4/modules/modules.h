@@ -96,11 +96,11 @@ extern SCIFRegisters scif;
 struct SerialPipe
 {
 	// Serial TX
-	virtual void write(u8 data) = 0;
+	virtual void write(u8 data) { }
 	// RX buffer Size
-	virtual int available() = 0;
+	virtual int available() { return 0; }
 	// Serial RX
-	virtual u8 read() = 0;
+	virtual u8 read() { return 0; }
 
 	virtual ~SerialPipe() = default;
 };

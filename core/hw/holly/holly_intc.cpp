@@ -15,7 +15,7 @@ static void asic_RL6Pending()
 	bool t3 = (SB_ISTEXT & SB_IML6EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML6NRM) != 0;
 
-	InterruptPend(sh4_IRL_9,t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_9, t1 || t2 || t3 || t4);
 }
 
 static void asic_RL4Pending()
@@ -25,7 +25,7 @@ static void asic_RL4Pending()
 	bool t3 = (SB_ISTEXT & SB_IML4EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML4NRM) != 0;
 
-	InterruptPend(sh4_IRL_11, t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_11, t1 || t2 || t3 || t4);
 }
 
 static void asic_RL2Pending()
@@ -35,7 +35,7 @@ static void asic_RL2Pending()
 	bool t3 = (SB_ISTEXT & SB_IML2EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML2NRM) != 0;
 
-	InterruptPend(sh4_IRL_13, t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_13, t1 || t2 || t3 || t4);
 }
 
 void asic_RaiseInterrupt(HollyInterruptID inter)

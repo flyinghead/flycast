@@ -68,9 +68,9 @@ enum InterruptID
 
 void SetInterruptPend(InterruptID intr);
 void ResetInterruptPend(InterruptID intr);
-inline static void InterruptPend(InterruptID intr, u32 v)
+inline static void InterruptPend(InterruptID intr, bool v)
 {
-	if (v == 0)
+	if (!v)
 		ResetInterruptPend(intr);
 	else
 		SetInterruptPend(intr);
@@ -78,9 +78,9 @@ inline static void InterruptPend(InterruptID intr, u32 v)
 
 void SetInterruptMask(InterruptID intr);
 void ResetInterruptMask(InterruptID intr);
-inline static void InterruptMask(InterruptID intr, u32 v)
+inline static void InterruptMask(InterruptID intr, bool v)
 {
-	if (v == 0)
+	if (!v)
 		ResetInterruptMask(intr);
 	else
 		SetInterruptMask(intr);

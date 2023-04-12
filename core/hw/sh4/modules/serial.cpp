@@ -61,7 +61,7 @@ static void Serial_UpdateInterrupts()
     InterruptPend(sh4_SCIF_TXI, SCIF_SCFSR2.TDFE);
     InterruptMask(sh4_SCIF_TXI, SCIF_SCSCR2.TIE);
 
-    InterruptPend(sh4_SCIF_RXI, SCIF_SCFSR2.RDF);
+    InterruptPend(sh4_SCIF_RXI, SCIF_SCFSR2.RDF || SCIF_SCFSR2.DR);
     InterruptMask(sh4_SCIF_RXI, SCIF_SCSCR2.RIE);
 }
 

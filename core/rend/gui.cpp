@@ -42,6 +42,7 @@
 #include "implot/implot.h"
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
+#include "hw/naomi/card_reader.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -552,6 +553,14 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
     {
+    	if (card_reader::barcodeAvailable())
+    	{
+			char cardBuf[64] {};
+			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
+			if (ImGui::InputText("Card", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr))
+				card_reader::barcodeSetCard(cardBuf);
+    	}
+
     	DisabledScope scope(!savestateAllowed());
 
 		// Load State

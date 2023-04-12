@@ -857,6 +857,37 @@ private:
 	s8 axis_y = 0;
 };
 
+// Mushiking
+class jvs_837_13551_mushiking : public jvs_837_13551
+{
+public:
+	jvs_837_13551_mushiking(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13551(node_id, parent, first_player) { }
+
+protected:
+	void read_digital_in(const u32 *buttons, u16 *v) override
+	{
+		jvs_837_13551::read_digital_in(buttons, v);
+		if (!(v[0] & NAOMI_TEST_KEY))
+		{
+			v[0] |= NAOMI_START_KEY;	// Card dispenser OK
+			testDown = false;
+		}
+		else if (!testDown)
+		{
+			// Delay the TEST button being down until the next read,
+			// otherwise it can't be used in the BIOS menu
+			testDown = true;
+			v[0] &= ~NAOMI_TEST_KEY;
+		}
+		v[0] &= ~NAOMI_RIGHT_KEY;	// Cancel card dispenser empty signal
+		v[1] &= ~NAOMI_START_KEY;	// Cancel jammed card signal
+	}
+
+private:
+	bool testDown = false;
+};
+
 maple_naomi_jamma::maple_naomi_jamma()
 {
 	if (settings.naomi.drivingSimSlave == 0 && !settings.naomi.slave)
@@ -865,7 +896,10 @@ maple_naomi_jamma::maple_naomi_jamma()
 		{
 		case JVS::Default:
 		default:
-			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING")
+				io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
+			else
+				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 			break;
 		case JVS::FourPlayers:
 			io_boards.push_back(std::make_unique<jvs_837_13551_4P>(1, this));
@@ -1716,6 +1750,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
+							inputs[player] &= ~(NAOMI_TEST_KEY | NAOMI_COIN_KEY);
 							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);
 							JVS_OUT(inputs[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)

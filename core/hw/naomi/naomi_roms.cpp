@@ -4428,6 +4428,38 @@ const Game Games[] =
             { NULL, 0, 0 },
         }
     },
+	{
+		"mushi2k61",
+		nullptr,
+		"Mushiking The King Of Beetles 2006 First (Japan)",
+		0x8000000,
+		0x5502,
+		"naomi",
+		M4,
+		ROT0,
+		{
+			{ "fpr-24340.ic8", 0x0000000, 0x4000000, 0xd348a3a7 },
+			{ "fpr-24341.ic9", 0x4000000, 0x4000000, 0xbde9547c },
+
+            { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
+		},
+	},
+	{
+		"mushi2k62",
+		nullptr,
+		"Mushiking The King Of Beetles 2006 Second (Japan)",
+		0x8000000,
+		0x5502,
+		"naomi",
+		M4,
+		ROT0,
+		{
+			{ "fpr-24360.ic8", 0x0000000, 0x4000000, 0x6e6c6633 },
+			{ "fpr-24361.ic9", 0x4000000, 0x4000000, 0xce2a9720 },
+
+            { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
+		},
+	},
     // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka",

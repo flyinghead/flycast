@@ -50,7 +50,7 @@ void UpdateTMU_chan(u32 clc)
 			TMU_TCNT(ch) = TMU_TCOR(ch);
 			//raise the interrupt
 			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch],1);
+			InterruptPend(tmu_intID[ch], true);
 			
 			//remove the full underflows (possible because we only check every 448 cycles)
 			//this can be done with a div, but its very very very rare so this is probably faster
@@ -230,7 +230,7 @@ static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 		if (tcnt64 <= jitter) {
 			//raise interrupt, timer counted down
 			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch], 1);
+			InterruptPend(tmu_intID[ch], true);
 			
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 

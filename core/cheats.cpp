@@ -457,6 +457,30 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B); // rts, nop
 			cheats.back().builtIn = true;
 		}
+		else if (gameId.substr(0, 8) == "MKG TKOB")
+		{
+			const auto& setMushikingCheats = [this](u32 addr) {
+				setActive(true);
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0); // rfid[0].error = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0); // rfid[1].error = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0); // rfid[0].data18 = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0); // rfid[1].data18 = 0
+				cheats.back().builtIn = true;
+			};
+			if (gameId == "MKG TKOB 2 EXP VER1.001-")		// mushi2eo
+				setMushikingCheats(0x6fe1bc);
+			else if (gameId == "MKG TKOB 2 JPN VER2.001-")	// mushik2e
+				setMushikingCheats(0x6ffe54);
+			else if (gameId == "MKG TKOB 2K3 2ND VER1.003-")// mushike
+				setMushikingCheats(0x4ad7ec);
+			else if (gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
+				setMushikingCheats(0xb0e538);
+			else if (gameId == "MKG TKOB 2K3 2ND VER1.002-")// mushikeo
+				setMushikingCheats(0x4ad56c);
+		}
 	}
 	if (config::WidescreenGameHacks)
 	{

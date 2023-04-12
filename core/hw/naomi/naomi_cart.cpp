@@ -626,7 +626,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "INITIAL D Ver.3"
 				|| gameId == "INITIAL D CYCRAFT")
 		{
-			card_reader::initialDCardReader.init();
+			card_reader::initdInit();
 			initMidiForceFeedback();
 		}
 		else if (gameId == "MAXIMUM SPEED" || gameId == "FASTER THAN SPEED")
@@ -644,6 +644,11 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "TOUCH DE ZUNO (JAPAN)")
 		{
 			touchscreen::init();
+		}
+		else if (gameId.substr(0, 8) == "MKG TKOB"
+				|| gameId.substr(0, 9) == "MUSHIKING")
+		{
+			card_reader::barcodeInit();
 		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
@@ -707,6 +712,8 @@ void naomi_cart_Close()
 {
 	touchscreen::term();
 	printer::term();
+	card_reader::initdTerm();
+	card_reader::barcodeTerm();
 	delete CurrentCartridge;
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;

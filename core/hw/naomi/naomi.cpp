@@ -820,14 +820,6 @@ struct DriveSimPipe : public SerialPipe
 		}
 	}
 
-	int available() override {
-		return 0;
-	}
-
-	u8 read() override {
-		return 0;
-	}
-
 	void reset()
 	{
 		buffer.clear();

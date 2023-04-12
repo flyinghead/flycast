@@ -101,9 +101,6 @@ private:
 			return;
 		toSend.insert(toSend.end(), &msg[0], &msg[size]);
 		toSend.push_back(calcChecksum(msg, size));
-		// pad with 13 bytes to avoid partial reads and thus checksum errors
-		for (int i = 0; i < 13; i++)
-			toSend.push_back(0);
 		serial_updateStatusRegister();
 	}
 
