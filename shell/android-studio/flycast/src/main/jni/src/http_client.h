@@ -29,65 +29,36 @@ namespace http {
     void init() {
     }
 
-    int get(const std::string &url, std::vector<u8> &content, std::string &contentType) {
-        JNIEnv *env = jni::env();
-        jstring jurl = env->NewStringUTF(url.c_str());
-        jclass byteArrayClass = env->FindClass("[B");
-        jobjectArray contentOut = env->NewObjectArray(1, byteArrayClass, NULL);
-        jclass stringClass = env->FindClass("java/lang/String");
-        jobjectArray contentTypeOut = env->NewObjectArray(1, stringClass, NULL);
+    int get(const std::string &url, std::vector<u8> &content, std::string &contentType)
+    {
+        jni::String jurl(url);
+        jni::ObjectArray<jni::ByteArray> contentOut(1);
+        jni::ObjectArray<jni::String> contentTypeOut(1);
 
-        int httpStatus = env->CallIntMethod(HttpClient, openUrlMid, jurl, contentOut,
-                                           contentTypeOut);
+        int httpStatus = jni::env()->CallIntMethod(HttpClient, openUrlMid, (jstring)jurl, (jobjectArray)contentOut,
+                                           (jobjectArray)contentTypeOut);
 
-        jbyteArray jcontent = (jbyteArray)env->GetObjectArrayElement(contentOut, 0);
-        if (jcontent != nullptr) {
-            int len = env->GetArrayLength(jcontent);
-            content.resize(len);
-            env->GetByteArrayRegion(jcontent, 0, len, (jbyte *)content.data());
-            env->DeleteLocalRef(jcontent);
-        }
-        jstring jcontentType = (jstring)env->GetObjectArrayElement(contentTypeOut, 0);
-        if (jcontentType != nullptr) {
-            const char *data = env->GetStringUTFChars(jcontentType, 0);
-            contentType = data;
-            env->ReleaseStringUTFChars(jcontentType, data);
-            env->DeleteLocalRef(jcontentType);
-        }
-        env->DeleteLocalRef(contentTypeOut);
-        env->DeleteLocalRef(contentOut);
-        env->DeleteLocalRef(jurl);
+        content = contentOut[0];
+        contentType = contentTypeOut[0];
 
         return httpStatus;
     }
 
     int post(const std::string &url, const std::vector<PostField>& fields)
     {
-        JNIEnv *env = jni::env();
-        jstring jurl = env->NewStringUTF(url.c_str());
-        jclass stringClass = env->FindClass("java/lang/String");
-        jobjectArray names = env->NewObjectArray(fields.size(), stringClass, NULL);
-        jobjectArray values = env->NewObjectArray(fields.size(), stringClass, NULL);
-        jobjectArray contentTypes = env->NewObjectArray(fields.size(), stringClass, NULL);
+        jni::String jurl(url);
+        jni::ObjectArray<jni::String> names(fields.size());
+        jni::ObjectArray<jni::String> values(fields.size());
+        jni::ObjectArray<jni::String> contentTypes(fields.size());
 
         for (size_t i = 0; i < fields.size(); i++)
         {
-        	jstring js = env->NewStringUTF(fields[i].name.c_str());
-        	env->SetObjectArrayElement(names, i, js);
-        	env->DeleteLocalRef(js);
-        	js = env->NewStringUTF(fields[i].value.c_str());
-        	env->SetObjectArrayElement(values, i, js);
-        	env->DeleteLocalRef(js);
-        	js = env->NewStringUTF(fields[i].contentType.c_str());
-        	env->SetObjectArrayElement(contentTypes, i, js);
-        	env->DeleteLocalRef(js);
+        	names.setAt(i, fields[i].name);
+        	values.setAt(i, fields[i].value);
+        	contentTypes.setAt(i, fields[i].contentType);
         }
 
-        int httpStatus = env->CallIntMethod(HttpClient, postMid, jurl, names, values, contentTypes);
-        env->DeleteLocalRef(jurl);
-        env->DeleteLocalRef(names);
-        env->DeleteLocalRef(values);
-        env->DeleteLocalRef(contentTypes);
+        int httpStatus = jni::env()->CallIntMethod(HttpClient, postMid, (jstring)jurl, (jobjectArray)names, (jobjectArray)values, (jobjectArray)contentTypes);
 
         return httpStatus;
     }

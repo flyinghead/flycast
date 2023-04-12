@@ -78,22 +78,27 @@ class Object
 public:
 	using jtype = jobject;
 
-	Object(jobject o = nullptr, bool ownRef = true) : object(o), ownRef(ownRef) { }
-	Object(Object &&other) {
+	Object(jobject o = nullptr, bool ownRef = true, bool globalRef = false)
+		: object(o), ownRef(ownRef), globRef(globalRef) {}
+
+	Object(Object &&other)
+	{
 		std::swap(object, other.object);
 		std::swap(ownRef, other.ownRef);
-	}
-	~Object() {
-		if (ownRef && object != nullptr)
-			env()->DeleteLocalRef(object);
+		std::swap(globRef, other.globRef);
 	}
 
-	Object& operator=(const Object& other) {
+	~Object() {
+		deleteRef();
+	}
+
+	Object& operator=(const Object& other)
+	{
 		if (this != &other)
 		{
-			if (ownRef && object != nullptr)
-				env()->DeleteLocalRef(object);
-			object = env()->NewLocalRef(other.object);
+			deleteRef();
+			globRef = other.globRef;
+			object = globRef ? env()->NewGlobalRef(other.object) : env()->NewLocalRef(other.object);
 			ownRef = true;
 		}
 		return *this;
@@ -104,15 +109,35 @@ public:
 
 	Class getClass() const;
 
+	template<typename T>
+	T globalRef() {
+		return T(env()->NewGlobalRef(object), true, true);
+	}
+
 protected:
 	jobject object = nullptr;
+
+	void deleteRef()
+	{
+		if (ownRef && object != nullptr)
+		{
+			if (globRef)
+				env()->DeleteGlobalRef(object);
+			else
+				env()->DeleteLocalRef(object);
+		}
+	}
+
+private:
 	bool ownRef = true;
+	bool globRef = false;
 };
 
 class Class : public Object
 {
 public:
-	Class(jclass clazz = nullptr, bool ownRef = true) : Object(clazz, ownRef) {}
+	Class(jclass clazz = nullptr, bool ownRef = true, bool globalRef = false)
+		: Object(clazz, ownRef, globalRef) {}
 	Class(Class &&other) : Object(std::move(other)) {}
 
 	operator jclass() const { return (jclass)object; }
@@ -131,7 +156,7 @@ class String : public Object
 public:
 	using jtype = jstring;
 
-	String(jobject s = nullptr, bool ownRef = true) : Object(s, ownRef) { }
+	String(jobject s = nullptr, bool ownRef = true, bool globalRef = false) : Object(s, ownRef, globalRef) { }
 	String(const char *s) {
 		object = env()->NewStringUTF(s);
 	}
@@ -164,6 +189,10 @@ public:
 	bool empty() const {
 		return size() == 0;
 	}
+
+	static Class getClass() {
+		return Class(env()->FindClass("java/lang/String"));
+	}
 };
 
 class Array : public Object
@@ -171,13 +200,21 @@ class Array : public Object
 public:
 	using jtype = jarray;
 
-	Array(jobject array = nullptr, bool ownRef = true) : Object(array, ownRef) { }
+	Array(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Object(array, ownRef, globalRef) { }
 	Array(Array &&other) : Object(std::move(other)) {}
+
+	Array& operator=(const Array& other) {
+		return (Array&)Object::operator=(other);
+	}
 
 	operator jarray() const { return (jarray)object; }
 
-	size_t size() const {
-		return env()->GetArrayLength((jarray)object);
+	size_t size() const
+	{
+		if (object == nullptr)
+			return 0;
+		else
+			return env()->GetArrayLength((jarray)object);
 	}
 };
 
@@ -187,20 +224,153 @@ class ObjectArray : public Array
 public:
 	using jtype = jobjectArray;
 
-	ObjectArray(jobject array = nullptr, bool ownRef = true) : Array(array, ownRef) { }
+	ObjectArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
 	ObjectArray(ObjectArray &&other) : Array(std::move(other)) {}
+
+	explicit ObjectArray(size_t size) : ObjectArray() {
+		object = env()->NewObjectArray(size, T::getClass(), nullptr);
+	}
+	ObjectArray(size_t size, const Class& elemClass) : ObjectArray() {
+		object = env()->NewObjectArray(size, elemClass, nullptr);
+	}
+
+	ObjectArray& operator=(const ObjectArray& other) {
+		return (ObjectArray&)Object::operator=(other);
+	}
 
 	operator jobjectArray() const { return (jobjectArray)object; }
 
 	T operator[](int i) {
 		return T(env()->GetObjectArrayElement((jobjectArray)object, i));
 	}
+
+	void setAt(size_t index, const T& o) {
+		env()->SetObjectArrayElement((jobjectArray)object, index, (jobject)o);
+	}
+};
+
+class ByteArray : public Array
+{
+public:
+	using jtype = jbyteArray;
+
+	ByteArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
+	ByteArray(ByteArray &&other) : Array(std::move(other)) {}
+	explicit ByteArray(size_t size) : ByteArray() {
+		object = env()->NewByteArray(size);
+	}
+
+	ByteArray& operator=(const ByteArray& other) {
+		return (ByteArray&)Object::operator=(other);
+	}
+
+	operator jbyteArray() const { return (jbyteArray)object; }
+
+	void getData(u8 *dst, size_t first = 0, size_t len = 0) const {
+		if (len == 0)
+			len = size();
+		env()->GetByteArrayRegion((jbyteArray)object, first, len, (jbyte *)dst);
+	}
+
+	void setData(const u8 *src, size_t first = 0, size_t len = 0) {
+		if (len == 0)
+			len = size();
+		env()->SetByteArrayRegion((jbyteArray)object, first, len, (const jbyte *)src);
+	}
+
+	operator std::vector<u8>() const
+	{
+		std::vector<u8> v;
+		v.resize(size());
+		getData(v.data(), 0, v.size());
+		return v;
+	}
+
+	static Class getClass() {
+		return Class(env()->FindClass("[B"));
+	}
+};
+
+class IntArray : public Array
+{
+public:
+	using jtype = jintArray;
+
+	IntArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
+	IntArray(IntArray &&other) : Array(std::move(other)) {}
+	explicit IntArray(size_t size) : IntArray() {
+		object = env()->NewIntArray(size);
+	}
+
+	IntArray& operator=(const IntArray& other) {
+		return (IntArray&)Object::operator=(other);
+	}
+
+	operator jintArray() const { return (jintArray)object; }
+
+	void getData(int *dst, size_t first = 0, size_t len = 0) const {
+		if (len == 0)
+			len = size();
+		env()->GetIntArrayRegion((jintArray)object, first, len, (jint *)dst);
+	}
+
+	void setData(const int *src, size_t first = 0, size_t len = 0) {
+		if (len == 0)
+			len = size();
+		env()->SetIntArrayRegion((jintArray)object, first, len, (const jint *)src);
+	}
+
+	operator std::vector<int>() const
+	{
+		std::vector<int> v;
+		v.resize(size());
+		getData(v.data(), 0, v.size());
+		return v;
+	}
+
+	static Class getClass() {
+		return Class(env()->FindClass("[I"));
+	}
+};
+
+class ShortArray : public Array
+{
+public:
+	using jtype = jshortArray;
+
+	ShortArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
+	ShortArray(ShortArray &&other) : Array(std::move(other)) {}
+	explicit ShortArray(size_t size) : ShortArray() {
+		object = env()->NewShortArray(size);
+	}
+
+	ShortArray& operator=(const ShortArray& other) {
+		return (ShortArray&)Object::operator=(other);
+	}
+
+	operator jshortArray() const { return (jshortArray)object; }
+
+	void getData(short *dst, size_t first = 0, size_t len = 0) {
+		if (len == 0)
+			len = size();
+		env()->GetShortArrayRegion((jshortArray)object, first, len, (jshort *)dst);
+	}
+
+	void setData(const short *src, size_t first = 0, size_t len = 0) {
+		if (len == 0)
+			len = size();
+		env()->SetShortArrayRegion((jshortArray)object, first, len, (const jshort *)src);
+	}
+
+	static Class getClass() {
+		return Class(env()->FindClass("[S"));
+	}
 };
 
 class Throwable : public Object
 {
 public:
-	Throwable(jthrowable throwable = nullptr, bool ownRef = true) : Object(throwable, ownRef) { }
+	Throwable(jthrowable throwable = nullptr, bool ownRef = true, bool globalRef = false) : Object(throwable, ownRef, globalRef) { }
 	Throwable(Throwable &&other) : Object(std::move(other)) {}
 
 	operator jthrowable() const { return (jthrowable)object; }
