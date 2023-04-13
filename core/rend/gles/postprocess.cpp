@@ -80,7 +80,7 @@ void main()
 	vec2 texcoord4  = vTexCoord;
 	texcoord4.y -= tap * 2.f;
 	int bl;
-	vec4 ble;
+	vec4 ble = vec4(0.0);
 
 	for (bl=0;bl<taps;bl++)
 	{
@@ -140,12 +140,12 @@ void main()
 	texcoord4.y = texcoord4.y;
 	vec4 blur1 = texture(Source, texcoord4);
 	int bl;
-	vec4 ble;
+	vec4 ble = vec4(0.0);
 	for (bl=0;bl<taps;bl++)
 	{
 		float e = 1;
 		if (bl>=3)
-		e=0.35;
+			e=0.35;
 		texcoord4.x -= (tap  / 640);
 		ble.rgb += (texture(Source, texcoord4).rgb * e) / (taps/(bl+1));
 	}
