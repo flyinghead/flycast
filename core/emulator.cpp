@@ -509,8 +509,14 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		if (path != nullptr && strlen(path) > 0)
 		{
 			settings.content.path = path;
-			hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
-			settings.content.fileName = info.name;
+			if (settings.naomi.slave) {
+				settings.content.fileName = path;
+			}
+			else
+			{
+				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
+				settings.content.fileName = info.name;
+			}
 		}
 		else
 		{
