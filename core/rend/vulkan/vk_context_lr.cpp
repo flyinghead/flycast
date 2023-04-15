@@ -309,11 +309,13 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 
 	shaderManager = std::make_unique<ShaderManager>();
 	quadPipeline = std::make_unique<QuadPipeline>(true, false);
+	quadPipelineWithAlpha = std::make_unique<QuadPipeline>(false, false);
 	quadDrawer = std::make_unique<QuadDrawer>();
 	quadPipeline->Init(shaderManager.get(), *renderPass, 0);
+	quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass, 0);
 	quadDrawer->Init(quadPipeline.get());
 	overlay = std::make_unique<VulkanOverlay>();
-	overlay->Init(quadPipeline.get());
+	overlay->Init(quadPipelineWithAlpha.get());
 	textureCache = std::make_unique<TextureCache>();
 
 	return true;
@@ -428,6 +430,7 @@ void VulkanContext::term()
 	commandPool.Term();
 	quadDrawer.reset();
 	quadPipeline.reset();
+	quadPipelineWithAlpha.reset();
 	renderPass.reset();
 	shaderManager.reset();
 	ShaderCompiler::Term();

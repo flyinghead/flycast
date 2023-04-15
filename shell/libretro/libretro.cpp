@@ -2650,7 +2650,7 @@ static void UpdateInputStateNaomi(u32 port)
 			// -- mouse, for rotary encoders
 			updateMouseState(port);
 			// lightgun with analog stick
-			if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+			if (settings.input.lightgunGame)
 			{
 				updateLightgunCoordinatesFromAnalogStick(port);
 				if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))

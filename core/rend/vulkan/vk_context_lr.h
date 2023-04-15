@@ -138,6 +138,7 @@ private:
 	vk::UniqueRenderPass renderPass;
 	std::unique_ptr<ShaderManager> shaderManager;
 	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadPipeline> quadPipelineWithAlpha;
 	std::unique_ptr<QuadDrawer> quadDrawer;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
