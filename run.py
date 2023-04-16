@@ -23,6 +23,7 @@ ITERATION = int(os.getenv("ITERATION", 1))
 WIDE = int(os.getenv("WIDE", 0))
 ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
 FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
+GDXSV = os.getenv("GDXSV", r"127.0.0.1")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
@@ -82,7 +83,7 @@ def conf_volume(idx: int):
 
 
 def conf_gdxsv(idx: int):
-    return f"--config gdxsv:server=127.0.0.1"
+    return f"--config gdxsv:server={GDXSV}"
 
 
 def conf_window_layout(idx: int):
