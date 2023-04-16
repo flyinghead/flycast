@@ -924,6 +924,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 cmrc_add_resources(flycast-resources
 		WHENCE resources
+		resources/flash/alienfnt.nvmem.zip	# network settings
 		resources/flash/gunsur2.nvmem.zip
 		resources/flash/otrigger.nvmem.zip
 		resources/flash/wldkicks.nvmem.zip	# free play
@@ -1013,6 +1014,8 @@ if(NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
+		core/network/alienfnt_modem.cpp
+		core/network/alienfnt_modem.h
 		core/network/dns.cpp
 		core/network/ggpo.cpp
 		core/network/ggpo.h

@@ -42,6 +42,7 @@
 #include "touchscreen.h"
 #include "printer.h"
 #include "oslib/storage.h"
+#include "network/alienfnt_modem.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -650,6 +651,10 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		{
 			card_reader::barcodeInit();
 		}
+		else if (gameId == "ALIEN FRONT")
+		{
+			serialModemInit();
+		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
 					// only for F355 Deluxe
@@ -714,6 +719,7 @@ void naomi_cart_Close()
 	printer::term();
 	card_reader::initdTerm();
 	card_reader::barcodeTerm();
+	serialModemTerm();
 	delete CurrentCartridge;
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;

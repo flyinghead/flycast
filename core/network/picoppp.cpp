@@ -315,6 +315,15 @@ int read_pico()
 	}
 }
 
+int pico_available()
+{
+	in_buffer_lock.lock();
+	int len = in_buffer.size();
+	in_buffer_lock.unlock();
+
+	return len;
+}
+
 static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 {
 	char buf[1510];
@@ -514,14 +523,14 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 				// Daytona USA
 				if (msginfo.local_port == 0x2F2F && buf[0] == 0x20 && buf[2] == 0x42)
 				{
-					if (buf[1] == 0x2b && r >= 37 + sizeof(public_ip.addr))
+					if (buf[1] == 0x2b && r >= 37 + (int)sizeof(public_ip.addr))
 					{
 						// Start session packet
 						char *p = &buf[37];
 						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
 							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
 					}
-					else if (buf[1] == 0x15 && r >= 14 + sizeof(public_ip.addr))
+					else if (buf[1] == 0x15 && r >= 14 + (int)sizeof(public_ip.addr))
 					{
 						char *p = &buf[5];
 						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
@@ -657,7 +666,7 @@ static void read_native_sockets()
 		memset(&src_addr, 0, addr_len);
 		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (sockaddr *)&src_addr, &addr_len);
 		// filter out messages coming from ourselves (happens for broadcasts)
-		if (r > 0 && !is_local_address(src_addr.sin_addr.s_addr))
+		if (r > 0 && (it->first != src_addr.sin_port || !is_local_address(src_addr.sin_addr.s_addr)))
 		{
 			msginfo.dev = pico_dev;
 			msginfo.tos = 0;
