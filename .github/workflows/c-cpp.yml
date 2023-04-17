@@ -162,9 +162,9 @@ jobs:
       - name: Package app (linux)
         run: |
           cd artifact/bin
-          mv flycast flycast-gdxsv
-          zip ${{ matrix.config.packageName }} flycast-gdxsv
-          rm flycast-gdxsv
+          mv flycast-x86_64.AppImage flycast-gdxsv-x86_64.AppImage
+          zip ${{ matrix.config.packageName }} flycast-gdxsv-x86_64.AppImage
+          rm flycast-gdxsv-x86_64.AppImage
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Setup google cloud SDK
