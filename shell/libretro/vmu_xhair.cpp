@@ -117,7 +117,7 @@ std::pair<float, float> getCrosshairPosition(int playerNum)
 {
 	float fx = lightgun_params[playerNum].x * config::RenderResolution * config::ScreenStretching / 480.f / 100.f;
 	float fy = lightgun_params[playerNum].y * config::RenderResolution / 480.f;
-	if (config::Widescreen && config::ScreenStretching == 100)
+	if (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer)
 		fx += (480.f * 16.f / 9.f - 640.f) / 2.f * config::RenderResolution / 480.f;
 
 	return std::make_pair(fx, fy);

@@ -5,7 +5,6 @@
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
-#include "postprocess.h"
 #include "rend/shader_util.h"
 #ifndef LIBRETRO
 #include "rend/imgui_driver.h"
@@ -19,6 +18,9 @@
 #endif
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY     0x84FF
+#endif
+#ifndef GL_PRIMITIVE_RESTART_FIXED_INDEX
+#define GL_PRIMITIVE_RESTART_FIXED_INDEX  0x8D69
 #endif
 
 #define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
@@ -154,6 +156,39 @@ private:
 	GLuint name;
 };
 
+class GlFramebuffer
+{
+public:
+	GlFramebuffer(int width, int height, bool withDepth = false, GLuint texture = 0);
+	GlFramebuffer(int width, int height, bool withDepth, bool withTexture);
+	~GlFramebuffer();
+
+	void bind(GLenum type = GL_FRAMEBUFFER) const {
+		glBindFramebuffer(type, framebuffer);
+	}
+
+	int getWidth() const { return width; }
+	int getHeight() const { return height; }
+
+	GLuint getTexture() const { return texture; }
+	GLuint detachTexture() {
+		GLuint t = texture;
+		texture = 0;
+		return t;
+	}
+	GLuint getFramebuffer() const { return framebuffer; }
+
+private:
+	void makeFramebuffer(bool withDepth);
+
+	int width;
+	int height;
+	GLuint texture;
+	GLuint framebuffer = 0;
+	GLuint colorBuffer = 0;
+	GLuint depthBuffer = 0;
+};
+
 struct gl_ctx
 {
 	struct
@@ -195,15 +230,11 @@ struct gl_ctx
 		std::unique_ptr<GlBuffer> geometry;
 		std::unique_ptr<GlBuffer> modvols;
 		std::unique_ptr<GlBuffer> idxs;
-		std::unique_ptr<GlBuffer> idxs2;
 	} vbo;
 
 	struct
 	{
 		u32 texAddress = ~0;
-		GLuint depthb;
-		GLuint tex;
-		GLuint fbo;
 		GLuint pbo;
 		u32 pboSize;
 		bool directXfer;
@@ -211,18 +242,33 @@ struct gl_ctx
 		u32 height;
 		FB_W_CTRL_type fb_w_ctrl;
 		u32 linestride;
+		std::unique_ptr<GlFramebuffer> framebuffer;
 	} rtt;
 
 	struct
 	{
-		GLuint depthb;
-		GLuint colorb;
-		GLuint tex;
-		GLuint fbo;
-		int width;
-		int height;
+		std::unique_ptr<GlFramebuffer> framebuffer;
+		float aspectRatio;
 		GLuint origFbo;
 	} ofbo;
+
+	struct
+	{
+		GLuint tex;
+		int width;
+		int height;
+	} dcfb;
+
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+	} fbscaling;
+
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+		bool ready = false;
+	} ofbo2;
 
 	const char *gl_version;
 	const char *glsl_version_header;
@@ -237,43 +283,28 @@ struct gl_ctx
 	float max_anisotropy;
 	bool mesa_nouveau;
 	bool border_clamp_supported;
+	bool prim_restart_supported;
+	bool prim_restart_fixed_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
 
 extern gl_ctx gl;
-extern GLuint fbTextureId;
-
-BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw);
 
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-void gl_load_osd_resources();
-void gl_free_osd_resources();
-bool ProcessFrame(TA_context* ctx);
-void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
-void UpdatePaletteTexture(GLenum texture_slot);
 void termGLCommon();
 void findGLVersion();
-void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
-void GetFramebufferSize(float& dc_width, float& dc_height);
-void SetupMatrices(float dc_width, float dc_height,
-				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
-				   float &ds2s_offs_x, glm::mat4& ndcMat, glm::mat4& scissor_mat);
 
 void SetCull(u32 CullMode);
-s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
-void RenderFramebuffer();
-void DrawFramebuffer();
+void glReadFramebuffer(const FramebufferInfo& info);
 GLuint init_output_framebuffer(int width, int height);
-bool render_output_framebuffer();
-void free_output_framebuffer();
+void writeFramebufferToVRAM();
 
-void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
@@ -375,21 +406,26 @@ extern const u32 SrcBlendGL[], DstBlendGL[];
 struct OpenGLRenderer : Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override { width = w; height = h; }
 	void Term() override;
 
 	bool Process(TA_context* ctx) override;
 
 	bool Render() override;
 
-	bool RenderLastFrame() override;
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
-	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
-
-	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
+	bool RenderLastFrame() override
 	{
-		return gl_GetTexture(tsp, tcw);
+		saveCurrentFramebuffer();
+		bool ret = renderLastFrame();
+		restoreCurrentFramebuffer();
+
+		return ret;
 	}
+
+	void DrawOSD(bool clear_screen) override;
+
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 
 	bool Present() override
 	{
@@ -402,6 +438,7 @@ struct OpenGLRenderer : Renderer
 		return true;
 	}
 
+protected:
 	virtual GLenum getFogTextureSlot() const {
 		return GL_TEXTURE1;
 	}
@@ -409,9 +446,25 @@ struct OpenGLRenderer : Renderer
 		return GL_TEXTURE2;
 	}
 
+	void saveCurrentFramebuffer() {
+#ifdef LIBRETRO
+		gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+		gl.ofbo.origFbo = 0;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
+	}
+	void restoreCurrentFramebuffer() {
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	}
+
+	bool renderLastFrame();
+
+private:
+	bool renderFrame(int width, int height);
+
+protected:
 	bool frameRendered = false;
-	int width;
-	int height;
 };
 
 void initQuad();

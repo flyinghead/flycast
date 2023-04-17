@@ -18,9 +18,9 @@
 */
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "rend/gles/naomi2.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
-#include "gl4naomi2.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -236,7 +236,7 @@ static void SetGPState(const PolyParam* gp)
 				if (nearest_filter)
 				{
 					//nearest-neighbor filtering
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				}
 				else
@@ -773,8 +773,8 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 
 	const float vmu_padding = 8.f;
 	const float x_scale = 100.f / config::ScreenStretching;
-	const float y_scale = (float)gl.ofbo.width / gl.ofbo.height >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
-	float x = (config::Widescreen && config::ScreenStretching == 100 ? -1 / gl4ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
+	const float y_scale = gl.ofbo.framebuffer && (float)gl.ofbo.framebuffer->getWidth() / gl.ofbo.framebuffer->getHeight() >= 8.f / 3.f - 0.1f ? 0.5f : 1.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer ? -1 / gl4ShaderUniforms.ndcMat[0][0] / 4.f : 0) + vmu_padding;
 	float y = vmu_padding;
 	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * x_scale;
 	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * y_scale;

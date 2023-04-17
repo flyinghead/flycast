@@ -1,16 +1,5 @@
 #pragma once
-
 #include "build.h"
-
-#ifndef _MSC_VER
-#ifndef __forceinline
-#define __forceinline inline
-#endif
-#ifndef _WIN32
-#define __debugbreak
-#endif
-#endif
-
 
 #if HOST_CPU == CPU_X86
 	#ifdef _MSC_VER
@@ -26,7 +15,6 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <cstring>
 
 //basic types
 typedef int8_t  s8;
@@ -42,16 +30,7 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
-#ifdef _M_X64
-#undef X86
-#define X64
-#endif
-
 typedef size_t unat;
-
-#ifdef X64
-typedef u64 unat;
-#endif
 
 //intc function pointer and enums
 enum HollyInterruptType
@@ -167,19 +146,8 @@ inline static void JITWriteProtect(bool enabled) {
 #endif
 
 //includes from c++rt
-#include <vector>
 #include <string>
-#include <map>
 #include <stdexcept>
-
-#define INLINE __forceinline
-
-//no inline -- fixme
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__ ((noinline))
-#endif
 
 #ifdef _MSC_VER
 #define likely(x) x
@@ -225,6 +193,7 @@ enum class JVS {
 	OutTrigger,
 	LightGunAsAnalog,
 	WaveRunnerGP,
+	_18Wheeler,
 };
 
 enum class RenderType {
@@ -303,7 +272,6 @@ struct settings_t
 
 	struct
 	{
-		bool NoBatch;
 		bool muteAudio;
 	} aica;
 
@@ -333,7 +301,6 @@ struct settings_t
 			u8 vmu[16];
 		} md5;
 	} network;
-	bool disableRenderer;
 };
 
 extern settings_t settings;

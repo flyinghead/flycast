@@ -9,9 +9,13 @@
 #include "sh4_mmr.h"
 #include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/sh4/sh4_core.h"
+#include "cfg/option.h"
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/modules/mmu.h"
+
+#ifdef STRICT_MODE
 #include "sh4_cache.h"
+#endif
 
 //main system mem
 VArray2 mem_b;

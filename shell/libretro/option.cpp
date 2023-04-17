@@ -36,7 +36,7 @@ Option<bool> FullMMU("");
 Option<bool> ForceWindowsCE(CORE_OPTION_NAME "_force_wince");
 Option<bool> AutoLoadState("");
 Option<bool> AutoSaveState("");
-Option<int> SavestateSlot("");
+Option<int, false> SavestateSlot("");
 Option<bool> ForceFreePlay(CORE_OPTION_NAME "_force_freeplay", true);
 
 // Sound
@@ -91,6 +91,7 @@ Option<bool> PowerVR2Filter(CORE_OPTION_NAME "_pvr2_filtering");
 Option<int64_t> PixelBufferSize("", 512 * 1024 * 1024);
 IntOption PerPixelLayers(CORE_OPTION_NAME "_oit_layers");
 Option<bool> NativeDepthInterpolation(CORE_OPTION_NAME "_native_depth_interpolation");
+Option<bool> EmulateFramebuffer(CORE_OPTION_NAME "_emulate_framebuffer", false);
 
 // Misc
 
@@ -111,8 +112,8 @@ Option<bool> ActAsServer("", false);
 OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
 Option<int> LocalPort("", 0);
-Option<bool> EmulateBBA("", false); // TODO
-Option<bool> EnableUPnP("", true); // TODO
+Option<bool> EmulateBBA(CORE_OPTION_NAME "_emulate_bba", false);
+Option<bool> EnableUPnP(CORE_OPTION_NAME "_upnp", true);
 Option<bool> GGPOEnable("", false);
 Option<int> GGPODelay("", 0);
 Option<bool> NetworkStats("", false);

@@ -7,7 +7,6 @@
 
 bool pal_needs_update=true;
 bool fog_needs_update=true;
-bool rend_needs_resize = true;
 
 u8 pvr_regs[pvr_RegSize];
 
@@ -138,7 +137,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	case TA_LIST_INIT_addr:
 		if (data >> 31)
 		{
-			ta_vtx_ListInit();
+			ta_vtx_ListInit(false);
 			TA_NEXT_OPB = TA_NEXT_OPB_INIT;
 			TA_ITP_CURRENT = TA_ISP_BASE;
 		}
@@ -151,7 +150,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case TA_LIST_CONT_addr:
 		//a write of anything works ?
-		ta_vtx_ListInit();
+		ta_vtx_ListInit(true);
 		break;
 	
 	case SPG_CONTROL_addr:
@@ -160,16 +159,6 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		{
 			PvrReg(addr, u32) = data;
 			CalculateSync();
-			if (addr == SPG_CONTROL_addr)
-				rend_needs_resize = true;
-		}
-		return;
-
-	case VO_CONTROL_addr:
-		if (PvrReg(addr, u32) != data)
-		{
-			PvrReg(addr, u32) = data;
-			rend_needs_resize = true;
 		}
 		return;
 
@@ -178,10 +167,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 			bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
 			PvrReg(addr, u32) = data;
 			if (vclk_div_changed)
-			{
 				CalculateSync();
-				rend_needs_resize = true;
-			}
 		}
 		return;
 
@@ -218,6 +204,14 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	case FB_W_SOF2_addr:
 		data &= 0x01fffffc;
 		break;
+
+	case SPG_HBLANK_INT_addr:
+		data &= 0x03FF33FF;
+		if (data != SPG_HBLANK_INT.full) {
+			SPG_HBLANK_INT.full = data;
+			rescheduleSPG();
+		}
+		return;
 
 	case PAL_RAM_CTRL_addr:
 		pal_needs_update = pal_needs_update || ((data ^ PAL_RAM_CTRL) & 3) != 0;

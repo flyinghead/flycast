@@ -30,7 +30,6 @@
 #include <nowide/stackstring.hpp>
 #endif
 #include "oslib/oslib.h"
-#include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -42,7 +41,6 @@
 #else
 #include "xinput_gamepad.h"
 #endif
-#include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "../shell/windows/resource.h"
@@ -55,6 +53,11 @@
 #include "breakpad/client/windows/handler/exception_handler.h"
 #endif
 #include "version.h"
+#endif
+#include "profiler/fc_profiler.h"
+
+#if defined(USE_SDL) || defined(DEF_CONSOLE)
+#include <nowide/args.hpp>
 #endif
 
 #include <ws2ipdef.h>
@@ -70,6 +73,7 @@
 #include <sstream>
 #include "gdxsv/gdxsv_emu_hooks.h"
 
+#if !defined(USE_SDL) && !defined(DEF_CONSOLE)
 static PCHAR*
 	commandLineToArgvA(
 	PCHAR CmdLine,
@@ -163,6 +167,7 @@ static PCHAR*
 	(*_argc) = argc;
 	return argv;
 }
+#endif
 
 #ifndef USE_SDL
 
@@ -284,6 +289,8 @@ static void setupPath()
 
 void UpdateInputState()
 {
+	FC_PROFILE_SCOPE;
+
 #if defined(USE_SDL)
 	input_sdl_handle();
 #else
@@ -296,9 +303,9 @@ void UpdateInputState()
 #endif
 }
 
+#ifndef USE_SDL
 static HWND hWnd;
 
-#ifndef USE_SDL
 // Windows class name to register
 #define WINDOW_CLASS "nilDC"
 static int window_x, window_y;
@@ -752,12 +759,18 @@ static bool dumpCallback(const wchar_t* dump_path,
 		wchar_t s[MAX_PATH + 32];
 		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
-		
-		char path_buffer[MAX_PATH];
-		char id_buffer[MAX_PATH];
-		wcstombs(path_buffer, dump_path, sizeof(path_buffer));
-		wcstombs(id_buffer, minidump_id, sizeof(id_buffer));
-		gdxsv_prepare_crashlog(path_buffer, id_buffer);
+
+		nowide::stackstring path;
+		if (path.convert(dump_path))
+		{
+			std::string directory = path.c_str();
+			if (path.convert(minidump_id))
+			{
+				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
+				// registerCrash(directory.c_str(), fullPath.c_str());
+				gdxsv_prepare_crashlog(directory.c_str(), path.c_str());
+			}
+		}
 	}
 	return succeeded;
 }
@@ -859,10 +872,12 @@ int remove(char const *name)
 }
 
 }
+#endif
 
-extern "C" int SDL_main(int argc, char* argv[])
+#ifdef USE_SDL
+int main(int argc, char* argv[])
 {
-
+	nowide::args _(argc, argv);
 
 #elif defined(DEF_CONSOLE)
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console
@@ -871,15 +886,19 @@ extern "C" int SDL_main(int argc, char* argv[])
 
 int main(int argc, char** argv)
 {
+	nowide::args _(argc, argv);
 
 #else
 #pragma comment(linker, "/subsystem:windows")
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
 {
+	wchar_t *cmd_line = GetCommandLineW();
+	nowide::stackstring converter;
 	int argc = 0;
-	char* cmd_line = GetCommandLineA();
-	char** argv = commandLineToArgvA(cmd_line, &argc);
+	char **argv = nullptr;
+	if (converter.convert(cmd_line))
+		argv = commandLineToArgvA(converter.c_str(), &argc);
 #endif
 
 #ifdef USE_BREAKPAD
@@ -916,6 +935,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
+#ifdef USE_BREAKPAD
+	nowide::stackstring nws;
+	static std::string tempDir8;
+	if (nws.convert(tempDir))
+		tempDir8 = nws.c_str();
+	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
+#endif
+
 #ifdef TARGET_UWP
 	if (config::ContentPath.get().empty())
 		config::ContentPath.get().push_back(get_writable_config_path(""));
@@ -950,6 +977,8 @@ void os_DebugBreak()
 
 void os_DoEvents()
 {
+	FC_PROFILE_SCOPE;
+
 #ifndef TARGET_UWP
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -967,6 +996,7 @@ void os_DoEvents()
 #endif
 }
 
+static HWND hWnd;
 void os_LaunchFromURL(const std::string& url)
 {
     ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);

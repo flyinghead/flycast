@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include <utility>
 
 extern const u8 *vq_codebook;
 extern u32 palette_index;
@@ -91,31 +93,33 @@ public:
 		pixels_per_line = 1 << level;
 	}
 
-	__forceinline pixel_type *data(u32 x = 0, u32 y = 0)
+	pixel_type *data(u32 x = 0, u32 y = 0)
 	{
 		return p_current_mipmap + pixels_per_line * y + x;
 	}
 
-	__forceinline void prel(u32 x, pixel_type value)
+	void prel(u32 x, pixel_type value)
 	{
 		p_current_pixel[x] = value;
 	}
 
-	__forceinline void prel(u32 x, u32 y, pixel_type value)
+	void prel(u32 x, u32 y, pixel_type value)
 	{
 		p_current_pixel[y * pixels_per_line + x] = value;
 	}
 
-	__forceinline void rmovex(u32 value)
+	void rmovex(u32 value)
 	{
 		p_current_pixel += value;
 	}
-	__forceinline void rmovey(u32 value)
+
+	void rmovey(u32 value)
 	{
 		p_current_line += pixels_per_line * value;
 		p_current_pixel = p_current_line;
 	}
-	__forceinline void amove(u32 x_m, u32 y_m)
+
+	void amove(u32 x_m, u32 y_m)
 	{
 		//p_current_pixel=p_buffer_start;
 		p_current_line = p_current_mipmap + pixels_per_line * y_m;
@@ -668,7 +672,7 @@ public:
 	}
 
 	void ComputeHash();
-	void Update();
+	bool Update();
 	virtual void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
 	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	void CheckCustomTexture();
@@ -695,6 +699,9 @@ public:
 	static void SetDirectXColorOrder(bool enabled);
 };
 
+// TODO Split the texture cache in a separate header
+#include "CustomTexture.h"
+
 template<typename Texture>
 class BaseTextureCache
 {
@@ -703,13 +710,18 @@ public:
 	Texture *getTextureCacheData(TSP tsp, TCW tcw)
 	{
 		u64 key = tsp.full & TSPTextureCacheMask.full;
-		if ((tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-				&& !BaseTextureCacheData::IsGpuHandledPaletted(tsp, tcw))
-			// Paletted textures have a palette selection that must be part of the key
-			// We also add the palette type to the key to avoid thrashing the cache
-			// when the palette type is changed. If the palette type is changed back in the future,
-			// this texture will stil be available.
-			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6) | ((tsp.FilterMode != 0) << 8);
+		if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+		{
+			if (BaseTextureCacheData::IsGpuHandledPaletted(tsp, tcw))
+				// texaddr, pixelfmt, VQ, MipMap
+				key |= (u64)(tcw.full & TCWPalTextureCacheMask.full) << 32;
+			else
+				// Paletted textures have a palette selection that must be part of the key
+				// We also add the palette type to the key to avoid thrashing the cache
+				// when the palette type is changed. If the palette type is changed back in the future,
+				// this texture will stil be available.
+				key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6) | ((tsp.FilterMode != 0) << 8);
+		}
 		else
 			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
@@ -778,6 +790,7 @@ public:
 
 	void Clear()
 	{
+		custom_texture.Terminate();
 		for (auto& pair : cache)
 			pair.second.Delete();
 
@@ -793,12 +806,20 @@ protected:
 	const TSP TSPTextureCacheMask = { { 7, 7 } };
 	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
 	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+	//     TexAddr : 0x1FFFFF, PalSelect : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 0, 7, 1, 1 } };
 };
 
 template<typename Packer = RGBAPacker>
-void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
+
+// width and height in pixels. linestride in bytes
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+
+// width and height in pixels. linestride in bytes
+template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
+void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
 void getRenderToTextureDimensions(u32& width, u32& height, u32& pow2Width, u32& pow2Height);
 
 static inline void MakeFogTexture(u8 *tex_data)

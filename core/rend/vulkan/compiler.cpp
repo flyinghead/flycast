@@ -133,8 +133,10 @@ int ShaderCompiler::initCount;
 
 void ShaderCompiler::Init()
 {
-	if (initCount++ == 0)
-		verify(glslang::InitializeProcess());
+	if (initCount++ == 0) {
+		bool rc = glslang::InitializeProcess();
+		verify(rc);
+	}
 }
 void ShaderCompiler::Term()
 {

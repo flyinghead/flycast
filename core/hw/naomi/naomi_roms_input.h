@@ -93,10 +93,8 @@ static InputDescriptors _18wheelr_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "HORN" },
 			{ NAOMI_DOWN_KEY, "VIEW" },
-			{ NAOMI_BTN2_KEY, "SHIFT L", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
-			{ NAOMI_BTN1_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
-			{ NAOMI_BTN3_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
-																// This button uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "SHIFT L/H" },
+			{ NAOMI_BTN2_KEY, "SHIFT R" },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -467,20 +465,7 @@ static InputDescriptors meltyb_inputs = INPUT_5_BUTTONS("LAttack", "MAttack", "H
 
 static InputDescriptors toukon4_inputs = INPUT_5_BUTTONS("X", "Y", "R", "A", "B");
 
-static InputDescriptors hmgeo_inputs = {
-	{
-		{ NAOMI_BTN0_KEY, "Fire" },
-		{ NAOMI_BTN1_KEY, "Attack" },
-		{ NAOMI_BTN3_KEY, "Jump" },
-		{ NAOMI_BTN4_KEY, "Target" },
-		{ NAOMI_UP_KEY, "" },
-		{ NAOMI_DOWN_KEY, "" },
-		{ NAOMI_LEFT_KEY, "" },
-		{ NAOMI_RIGHT_KEY, "" },
-		NAO_START_DESC
-		NAO_BASE_BTN_DESC
-	},
-};
+static InputDescriptors hmgeo_inputs = INPUT_4_BUTTONS("Fire", "Attack", "Jump", "Target");
 
 //
 // AtomisWave games
@@ -660,7 +645,7 @@ static InputDescriptors wldrider_inputs = {
 			{ "Handlebar", Full, 0 },
 			{ "Accelerator", Half, 4 },
 			{ "Front Brake", Half, 5 },
-			{ "Rear Brake", Full, 2 },
+			{ "Rear Brake", Half, 6 },	// not mapped
 	},
 };
 
@@ -668,7 +653,7 @@ static InputDescriptors soulsurfer_inputs = {
 	{
 			{ NAOMI_LEFT_KEY, "LEFT", NAOMI_BTN0_KEY },
 			{ NAOMI_RIGHT_KEY, "RIGHT", NAOMI_BTN1_KEY },
-			{ NAOMI_BTN4_KEY, "FLOORMAT" }, // TODO this should always be on
+			{ NAOMI_BTN4_KEY, "FLOORMAT", 0xffffffff },		// always on
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	},

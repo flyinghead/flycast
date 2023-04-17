@@ -24,7 +24,10 @@
 #endif
 
 #include "stdclass.h"
+
+#ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
+#endif
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -43,11 +46,8 @@ extern "C" {
 #include "net_platform.h"
 
 #include "types.h"
-#include "cfg/cfg.h"
 #include "picoppp.h"
 #include "miniupnp.h"
-#include "reios/reios.h"
-#include "hw/naomi/naomi_cart.h"
 #include "cfg/option.h"
 #include "emulator.h"
 
@@ -738,8 +738,8 @@ static pico_device *pico_eth_create()
         return nullptr;
 
     const u8 mac_addr[6] = { 0xc, 0xa, 0xf, 0xe, 0, 1 };
-    if (0 != pico_device_init(eth, "ETHPEER", mac_addr))
-        return nullptr;
+	if (0 != pico_device_init(eth, "ETHPEER", mac_addr))
+		return nullptr;
 
 	DEBUG_LOG(NETWORK, "Device %s created", eth->name);
 
@@ -841,24 +841,14 @@ static void *pico_thread_func(void *)
 
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
-	std::string gameId;
-	if (settings.platform.isConsole())
-	{
-		gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
-		gameId = trim_trailing_ws(gameId);
-	}
-	else
-	{
-		gameId = naomi_game_id;
-	}
 	for (u32 i = 0; i < ARRAY_SIZE(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
 		for (u32 j = 0; j < ARRAY_SIZE(game.gameId) && game.gameId[j] != nullptr; j++)
 		{
-			if (gameId == game.gameId[j])
+			if (settings.content.gameId == game.gameId[j])
 			{
-				NOTICE_LOG(MODEM, "Found network ports for game %s", gameId.c_str());
+				NOTICE_LOG(MODEM, "Found network ports for game %s", settings.content.gameId.c_str());
 				ports = &game;
 				break;
 			}
@@ -867,7 +857,8 @@ static void *pico_thread_func(void *)
 	// Web TV requires the VJ compression option, which picotcp doesn't support.
 	// This hack allows WebTV to connect although the correct fix would
 	// be to implement VJ compression.
-	dont_reject_opt_vj_hack = gameId == "6107117" || gameId == "610-7390" || gameId == "610-7391" ? 1 : 0;
+	dont_reject_opt_vj_hack = settings.content.gameId == "6107117"
+			|| settings.content.gameId == "610-7390" || settings.content.gameId == "610-7391" ? 1 : 0;
 
 	std::future<MiniUPnP> upnp =
 		std::async(std::launch::async, [ports]() {
@@ -908,7 +899,8 @@ static void *pico_thread_func(void *)
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
 
 	// Create ppp/eth device
-	if (!config::EmulateBBA)
+	const bool usingPPP = !config::EmulateBBA;
+	if (usingPPP)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
@@ -938,6 +930,7 @@ static void *pico_thread_func(void *)
 			return nullptr;
 		pico_dev->send = &send_eth_frame;
 		pico_dev->proxied = 1;
+		pico_queue_protect(pico_dev->q_in);
 
 		pico_string_to_ipv4("192.168.169.1", &addr);
 		pico_ip4 ipaddr;
@@ -1045,15 +1038,15 @@ static void *pico_thread_func(void *)
 		PICO_IDLE();
     }
 
-    for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-    	closesocket(it->second);
+	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
+		closesocket(it->second);
 	close_native_sockets();
 	pico_socket_close(pico_tcp_socket);
 	pico_socket_close(pico_udp_socket);
 
 	if (pico_dev)
 	{
-		if (!config::EmulateBBA)
+		if (usingPPP)
 		{
 			pico_ppp_destroy(pico_dev);
 		}
@@ -1090,4 +1083,25 @@ void stop_pico()
 	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.WaitToEnd();
+}
+
+// picotcp mutex implementation
+extern "C" {
+
+void *pico_mutex_init(void) {
+	return new std::mutex();
+}
+
+void pico_mutex_lock(void *mux) {
+	((std::mutex *)mux)->lock();
+}
+
+void pico_mutex_unlock(void *mux) {
+	((std::mutex *)mux)->unlock();
+}
+
+void pico_mutex_deinit(void *mux) {
+	delete (std::mutex *)mux;
+}
+
 }

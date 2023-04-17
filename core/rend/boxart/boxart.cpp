@@ -24,41 +24,39 @@
 static std::string getGameFileName(const std::string& path)
 {
 	size_t slash = get_last_slash_pos(path);
-	std::string fileName;
 	if (slash != std::string::npos)
 		return path.substr(slash + 1);
 	else
 		return path;
 }
 
-const GameBoxart *Boxart::getBoxart(const GameMedia& media)
+GameBoxart Boxart::getBoxart(const GameMedia& media)
 {
 	loadDatabase();
 	std::string fileName = getGameFileName(media.path);
-	GameBoxart *boxart = nullptr;
+	GameBoxart boxart;
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		auto it = games.find(fileName);
 		if (it != games.end())
 		{
-			boxart = &it->second;
-			if (config::FetchBoxart && !boxart->busy && !boxart->scraped)
+			boxart = it->second;
+			if (config::FetchBoxart && !boxart.busy && !boxart.scraped)
 			{
-				boxart->busy = true;
-				boxart->gamePath = media.path;
-				toFetch.push_back(*boxart);
+				boxart.busy = it->second.busy = true;
+				boxart.gamePath = media.path;
+				toFetch.push_back(boxart);
 			}
 		}
 		else
 		{
-			GameBoxart box;
-			box.fileName = fileName;
-			box.gamePath = media.path;
-			box.name = media.name;
-			box.searchName = media.gameName;	// for arcade games
-			box.busy = true;
-			games[box.fileName] = box;
-			toFetch.push_back(box);
+			boxart.fileName = fileName;
+			boxart.gamePath = media.path;
+			boxart.name = media.name;
+			boxart.searchName = media.gameName;	// for arcade games
+			boxart.busy = true;
+			games[boxart.fileName] = boxart;
+			toFetch.push_back(boxart);
 		}
 	}
 	fetchBoxart();

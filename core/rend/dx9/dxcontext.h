@@ -33,23 +33,28 @@ public:
 	void term() override;
 	void EndImGuiFrame();
 	void Present();
-	const ComPtr<IDirect3D9>& getD3D() const { return pD3D; }
-	const ComPtr<IDirect3DDevice9>& getDevice() const { return pDevice; }
 	void resize() override;
-	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
+
+	const ComPtr<IDirect3D9>& getD3D() const {
+		return pD3D;
+	}
+	const ComPtr<IDirect3DDevice9>& getDevice() const {
+		return pDevice;
+	}
+	void setOverlay(bool overlayOnly) {
+		this->overlayOnly = overlayOnly;
+	}
 	std::string getDriverName() override {
-		D3DADAPTER_IDENTIFIER9 id;
-		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
-		return std::string(id.Description);
+		return driverName;
 	}
 	std::string getDriverVersion() override {
-		D3DADAPTER_IDENTIFIER9 id;
-		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
-		return std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
-			+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+		return driverVersion;
 	}
 	void setFrameRendered() {
 		frameRendered = true;
+	}
+	bool isReady() const {
+		return deviceReady;
 	}
 
 private:
@@ -62,6 +67,9 @@ private:
 	D3DOverlay overlay;
 	bool swapOnVSync = false;
 	bool frameRendered = false;
+	std::string driverName;
+	std::string driverVersion;
+	bool deviceReady = false;
 };
 extern DXContext theDXContext;
 #endif

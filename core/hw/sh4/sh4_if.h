@@ -80,8 +80,6 @@ enum Sh4RegType
 	reg_pr,
 	reg_fpul,
 	reg_nextpc,
-	reg_sr,            //Includes T (combined on read/separated on write)
-	reg_old_sr_status, //Only the status bits
 	reg_sr_status,     //Only the status bits
 	reg_sr_T,          //Only T
 	reg_old_fpscr,

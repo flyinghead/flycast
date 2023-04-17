@@ -10,12 +10,12 @@
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 
-static INLINE void ChangeGPR()
+static void ChangeGPR()
 {
 	std::swap((u32 (&)[8])r, r_bank);
 }
 
-static INLINE void ChangeFP()
+static void ChangeFP()
 {
 	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
 }
@@ -204,10 +204,6 @@ static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 
 		case reg_nextpc :
 			return &next_pc;
-			break;
-
-		case reg_old_sr_status :
-			return &old_sr.status;
 			break;
 
 		case reg_sr_status :

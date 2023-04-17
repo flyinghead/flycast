@@ -33,7 +33,7 @@ jobs:
           # - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
           - {name: apple-darwin, os: self-hosted-mac, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, debugFile: build/RelWithDebInfo/Flycast.app.dSYM/Contents/Resources/DWARF/Flycast, buildType: RelWithDebInfo, packageName: flycast-gdxsv-macos-x86_64.zip}
           # - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -G Ninja, buildType: Release, packageName: flycast-gdxsv-linux-x86_64.zip}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja, destDir: linux, buildType: RelWithDebInfo, packageName: flycast-gdxsv-linux-x86_64.zip}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DMSVC_BREAKPAD=ON, debugFile: build/flycast.pdb build/flycast.exe, destDir: win, buildType: Release, packageName: flycast-gdxsv-windows-msvc.zip}
           # - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
           # - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Set up build environment (macOS)
         run: |
+          # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
+          brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update
           brew install libao ldid ninja pulseaudio
           [ -f $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool ] && sudo $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool --confirm-command purge
@@ -54,8 +56,10 @@ jobs:
 
       - name: Set up build environment (Linux)
         run: |
+          sudo add-apt-repository ppa:christianrauch/libdecoration
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev
+          sudo apt-get -y install libwayland-dev libdecor-0-dev libaudio-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
         if: runner.os == 'Linux'
 
       - name: Set up build environment (Windows, MinGW)
@@ -82,8 +86,12 @@ jobs:
           submodules: true
 
       - name: Compile a universal OpenMP (macOS)
-        run: export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1; brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
-        if: runner.os == 'macOS'
+        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+        if: matrix.config.name == 'apple-darwin'
+
+      - name: Compile OpenMP.xcframework (iOS)
+        run: ./shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh --disableSimulator
+        if: matrix.config.name == 'apple-ios'
 
       - uses: actions/cache@v3
         with:
@@ -94,8 +102,10 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }} -DSENTRY_UPLOAD_URL=${{ env.SENTRY_UPLOAD_URL }}
           cmake --build build --config ${{ matrix.config.buildType }} --target install
+        env:
+          SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
       - name: Unit Tests
         run: |
@@ -106,12 +116,28 @@ jobs:
 
       - name: Dump symbols
         run: |
-          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
-          BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
-          mkdir -p symbols/flycast.exe/$BUILD_ID
-          mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
+          mkdir -p symbols
+          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > symbols/flycast.sym 2>/dev/null
           strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - name: Build breakpad (linux)
+        working-directory: core/deps/breakpad
+        run: |
+          ./configure
+          make
+          sudo make install
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - name: Dump symbols and make AppImage (linux)
+        run: |
+          mkdir -p symbols
+          dump_syms artifact/bin/flycast > symbols/flycast.sym 2>/dev/null
+          strip artifact/bin/flycast
+          shell/linux/make-appimage.sh . artifact/bin appimage
+          mv flycast-x86_64.AppImage artifact/bin
+          rm artifact/bin/flycast
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - uses: actions/upload-artifact@v3
         with:
@@ -177,13 +203,8 @@ jobs:
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
-      - name: Upload symbols to S3 (Windows-MinGW, macOS)
-        run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        shell: bash
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin') }}
-
       - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@1.2.0
+        uses: mathieu-bour/setup-sentry-cli@v1
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
           SENTRY_PROJECT: "${{ startsWith(github.ref, 'refs/tags/gdxsv-') && 'public' || 'dev' }}"
@@ -192,9 +213,9 @@ jobs:
           token: ${{ env.SENTRY_TOKEN }}
           organization: gdxsv-project
           project: ${{ env.SENTRY_PROJECT }}
-        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
+        if: ${{ env.SENTRY_TOKEN != '' }}
       
-      - name: Upload symbols to Sentry (Windows-MSVC, macOS)
+      - name: Upload symbols to Sentry (Windows-MSVC, macOS, Linux)
         run: |
           VERSION=$(git describe --tags --always --match "gdxsv-*" | sed -E "s/-([0-9]+)-g(.+)$/-dev.\\1+\\2/g")
           sentry-cli releases new "$VERSION"
@@ -203,7 +224,7 @@ jobs:
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin') }}
+        if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-pc-windows-msvc' || matrix.config.name == 'apple-darwin' || matrix.config.name == 'x86_64-pc-linux-gnu') }}
 
       - name: Release flycast-gdxsv
         uses: softprops/action-gh-release@v1
@@ -212,4 +233,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/gdxsv-') && matrix.config.packageName != ''
-

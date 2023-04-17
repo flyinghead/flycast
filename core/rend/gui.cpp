@@ -16,23 +16,18 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#include <mutex>
 #include "gui.h"
 #include "osd.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/naomi/naomi_cart.h"
 #include "imgui/imgui.h"
 #include "imgui/roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
-#include "input/mouse.h"
 #include "gui_util.h"
-#include "gui_android.h"
 #include "game_scanner.h"
 #include "version.h"
 #include "oslib/oslib.h"
@@ -44,12 +39,20 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
+#include "implot/implot.h"
 #include "boxart/boxart.h"
+#include "profiler/fc_profiler.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
 
 #include "gdxsv/gdxsv_emu_hooks.h"
+
+#ifdef __ANDROID__
+#include "gui_android.h"
+#endif
+
+#include <mutex>
 
 static bool game_started;
 
@@ -78,6 +81,8 @@ static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Boxart boxart;
 static Chat chat;
+static std::recursive_mutex guiMutex;
+using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -87,8 +92,11 @@ static void emuEventCallback(Event event, void *)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
+		break;
 	case Event::Terminate:
 		GamepadDevice::load_system_mappings();
+		game_started = false;
 		break;
 	default:
 		break;
@@ -104,6 +112,9 @@ void gui_init()
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+#if FC_PROFILER
+	ImPlot::CreateContext();
+#endif
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.IniFilename = NULL;
@@ -402,10 +413,10 @@ static void delayedKeysUp()
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
 }
 
-static void gui_endFrame()
+static void gui_endFrame(bool gui_open)
 {
     ImGui::Render();
-    imguiDriver->renderDrawData(ImGui::GetDrawData());
+    imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
     delayedKeysUp();
 }
 
@@ -424,6 +435,7 @@ void gui_set_insets(int left, int right, int top, int bottom)
 
 #if 0
 #include "oslib/timeseries.h"
+#include <vector>
 TimeSeries renderTimes;
 TimeSeries vblankTimes;
 
@@ -440,6 +452,7 @@ void gui_plot_render_time(int width, int height)
 
 void gui_open_settings()
 {
+	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed)
 	{
 		if (!ggpo::active())
@@ -469,6 +482,7 @@ void gui_open_settings()
 
 void gui_start_game(const std::string& path)
 {
+	const LockGuard lock(guiMutex);
 	emu.unloadGame();
 	reset_vmus();
     chat.reset();
@@ -480,12 +494,12 @@ void gui_start_game(const std::string& path)
 
 void gui_stop_game(const std::string& message)
 {
+	const LockGuard lock(guiMutex);
 	if (!commandLineStart)
 	{
 		// Exit to main menu
 		emu.unloadGame();
 		gui_state = GuiState::Main;
-		game_started = false;
 		reset_vmus();
 		if (!message.empty())
 			gui_error("Flycast has stopped.\n\n" + message);
@@ -508,48 +522,40 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	// Load State
-	if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_loadstate(config::SavestateSlot);
-	}
-	ImGui::SameLine();
-
-	// Slot #
-	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-	if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
-		ImGui::OpenPopup("slot_select_popup");
-    if (ImGui::BeginPopup("slot_select_popup"))
     {
-        for (int i = 0; i < 10; i++)
-            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-                config::SavestateSlot = i;
-                SaveSettings();
-            }
-        ImGui::EndPopup();
-    }
-	ImGui::SameLine();
+    	DisabledScope scope(settings.content.path.empty() || settings.network.online);
 
-	// Save State
-	if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !loadSaveStateDisabled)
-	{
-		gui_state = GuiState::Closed;
-		dc_savestate(config::SavestateSlot);
-	}
-	if (loadSaveStateDisabled)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-	}
+		// Load State
+		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_loadstate(config::SavestateSlot);
+		}
+		ImGui::SameLine();
+
+		// Slot #
+		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
+			ImGui::OpenPopup("slot_select_popup");
+		if (ImGui::BeginPopup("slot_select_popup"))
+		{
+			for (int i = 0; i < 10; i++)
+				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+					config::SavestateSlot = i;
+					SaveSettings();
+				}
+			ImGui::EndPopup();
+		}
+		ImGui::SameLine();
+
+		// Save State
+		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		{
+			gui_state = GuiState::Closed;
+			dc_savestate(config::SavestateSlot);
+		}
+    }
 
 	ImGui::Columns(2, "buttons", false);
 
@@ -584,19 +590,11 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 
 	// Cheats
-	if (settings.network.online)
 	{
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-	{
-		gui_state = GuiState::Cheats;
-	}
-	if (settings.network.online)
-	{
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
+		DisabledScope scope(settings.network.online);
+
+		if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
+			gui_state = GuiState::Cheats;
 	}
 	ImGui::Columns(1, nullptr, false);
 
@@ -1327,27 +1325,24 @@ static void gui_display_settings()
 						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
-			if (config::Cable.isReadOnly())
 			{
-		        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			}
-			if (ImGui::BeginCombo("Cable", cable[config::Cable == 0 ? 0 : config::Cable - 1], ImGuiComboFlags_None))
-			{
-				for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+				DisabledScope scope(config::Cable.isReadOnly());
+
+				const char *value = config::Cable == 0 ? cable[0]
+						: config::Cable > 0 && config::Cable <= ARRAY_SIZE(cable) ? cable[config::Cable - 1]
+						: "?";
+				if (ImGui::BeginCombo("Cable", value, ImGuiComboFlags_None))
 				{
-					bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
-					if (ImGui::Selectable(cable[i], &is_selected))
-						config::Cable = i == 0 ? 0 : i + 1;
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
+					for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
+					{
+						bool is_selected = i == 0 ? config::Cable <= 1 : config::Cable - 1 == i;
+						if (ImGui::Selectable(cable[i], &is_selected))
+							config::Cable = i == 0 ? 0 : i + 1;
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
 				}
-				ImGui::EndCombo();
-			}
-			if (config::Cable.isReadOnly())
-			{
-		        ImGui::PopItemFlag();
-		        ImGui::PopStyleVar();
 			}
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
@@ -1718,24 +1713,18 @@ static void gui_display_settings()
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
 		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		    	}
-		    	ImGui::Indent();
-		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
-		    	ImGui::Unindent();
-		    	if (!config::Widescreen)
-		    	{
-			        ImGui::PopItemFlag();
-			        ImGui::PopStyleVar();
+				{
+					DisabledScope scope(!config::Widescreen);
+
+					ImGui::Indent();
+					OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+							"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					ImGui::Unindent();
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 
-				const std::array<float, 5> aniso{ 1, 2, 4, 8, 16 };
+				const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
 	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
 	            u32 afSelected = 0;
 	            for (u32 i = 0; i < aniso.size(); i++)
@@ -1791,16 +1780,10 @@ static void gui_display_settings()
 		    	if (isVulkan(config::RendererType))
 		    	{
 			    	ImGui::Indent();
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-			    	}
-		    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	if (!config::VSync)
-			    	{
-				        ImGui::PopItemFlag();
-				        ImGui::PopStyleVar();
+					{
+						DisabledScope scope(!config::VSync);
+
+						OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
 			    	}
 			    	ImGui::Unindent();
 		    	}
@@ -1812,6 +1795,9 @@ static void gui_display_settings()
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
 		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
 		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+		    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
+		    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
+		    			"Very slow and incompatible with upscaling and wide screen.");
 		    	constexpr int apiCount = 0
 					#ifdef USE_VULKAN
 		    			+ 1
@@ -1822,7 +1808,7 @@ static void gui_display_settings()
 					#ifdef USE_OPENGL
 						+ 1
 					#endif
-					#ifdef _WIN32
+					#ifdef USE_DX11
 						+ 1
 					#endif
 						;
@@ -1849,7 +1835,7 @@ static void gui_display_settings()
 					ImGui::RadioButton("DirectX 9", &renderApi, 2);
 					ImGui::NextColumn();
 #endif
-#ifdef _WIN32
+#ifdef USE_DX11
 					ImGui::RadioButton("DirectX 11", &renderApi, 3);
 					ImGui::NextColumn();
 #endif
@@ -2025,25 +2011,25 @@ static void gui_display_settings()
 				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
             }
 
-			audiobackend_t* backend = nullptr;
+			AudioBackend *backend = nullptr;
 			std::string backend_name = config::AudioBackend;
 			if (backend_name != "auto")
 			{
-				backend = GetAudioBackend(config::AudioBackend);
-				if (backend != NULL)
+				backend = AudioBackend::getBackend(config::AudioBackend);
+				if (backend != nullptr)
 					backend_name = backend->slug;
 			}
 
-			audiobackend_t* current_backend = backend;
+			AudioBackend *current_backend = backend;
 			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
 			{
 				bool is_selected = (config::AudioBackend.get() == "auto");
 				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
 					config::AudioBackend.set("auto");
 
-				for (u32 i = 0; i < GetAudioBackendCount(); i++)
+				for (u32 i = 0; i < AudioBackend::getCount(); i++)
 				{
-					backend = GetAudioBackend(i);
+					backend = AudioBackend::getBackend(i);
 					is_selected = (config::AudioBackend.get() == backend->slug);
 
 					if (is_selected)
@@ -2059,42 +2045,42 @@ static void gui_display_settings()
 			ImGui::SameLine();
 			ShowHelpMarker("The audio driver to use");
 
-			if (current_backend != NULL && current_backend->get_options != NULL)
+			if (current_backend != nullptr)
 			{
 				// get backend specific options
 				int option_count;
-				audio_option_t* options = current_backend->get_options(&option_count);
+				const AudioBackend::Option *options = current_backend->getOptions(&option_count);
 
 				for (int o = 0; o < option_count; o++)
 				{
-					std::string value = cfgLoadStr(current_backend->slug, options->cfg_name, "");
+					std::string value = cfgLoadStr(current_backend->slug, options->name, "");
 
-					if (options->type == integer)
+					if (options->type == AudioBackend::Option::integer)
 					{
 						int val = stoi(value);
-						if (ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value))
+						if (ImGui::SliderInt(options->caption.c_str(), &val, options->minValue, options->maxValue))
 						{
 							std::string s = std::to_string(val);
-							cfgSaveStr(current_backend->slug, options->cfg_name, s);
+							cfgSaveStr(current_backend->slug, options->name, s);
 						}
 					}
-					else if (options->type == checkbox)
+					else if (options->type == AudioBackend::Option::checkbox)
 					{
 						bool check = value == "1";
 						if (ImGui::Checkbox(options->caption.c_str(), &check))
-							cfgSaveStr(current_backend->slug, options->cfg_name,
+							cfgSaveStr(current_backend->slug, options->name,
 									check ? "1" : "0");
 					}
-					else if (options->type == ::list)
+					else if (options->type == AudioBackend::Option::list)
 					{
 						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 						{
 							bool is_selected = false;
-							for (const auto& cur : options->list_callback())
+							for (const auto& cur : options->values)
 							{
 								is_selected = value == cur;
 								if (ImGui::Selectable(cur.c_str(), &is_selected))
-									cfgSaveStr(current_backend->slug, options->cfg_name, cur);
+									cfgSaveStr(current_backend->slug, options->name, cur);
 
 								if (is_selected)
 									ImGui::SetItemDefaultFocus();
@@ -2135,8 +2121,12 @@ static void gui_display_settings()
 	    	ImGui::Spacing();
 		    header("Network");
 		    {
-		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+				{
+					DisabledScope scope(game_started);
+
+					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	}
 //		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
 //		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
@@ -2217,8 +2207,6 @@ static void gui_display_settings()
 #endif
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
-
-	            OptionCheckbox("Debugger Menu", config::DisplayDebuggerMenu, "Debugger button on the option menu");
 				
 	            OptionCheckbox("Upload Crash Logs", config::UploadCrashLogs, "Upload Crash Logs, App Logs & emu.cfg to developer for troubleshooting");
 
@@ -2233,6 +2221,10 @@ static void gui_display_settings()
 				}
 	            ImGui::SameLine();
 	            ShowHelpMarker("Log debug information to flycast.log");
+#ifdef SENTRY_UPLOAD
+	            OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
+	            		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+#endif
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -2302,8 +2294,8 @@ static void gui_display_settings()
 #endif
 						);
 #ifdef TARGET_IPHONE
-				extern std::string iosJitStatus;
-				ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
+				const char *getIosJitStatus();
+				ImGui::Text("JIT Status: %s", getIosJitStatus());
 #endif
 		    }
 	    	ImGui::Spacing();
@@ -2316,13 +2308,6 @@ static void gui_display_settings()
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
-#ifdef __ANDROID__
-		    ImGui::Separator();
-		    if (ImGui::Button("Send Logs")) {
-		    	void android_send_logs();
-		    	android_send_logs();
-		    }
-#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
@@ -2368,22 +2353,22 @@ static void gameTooltip(const std::string& tip)
     }
 }
 
-static bool getGameImage(const GameBoxart *art, ImTextureID& textureId, bool allowLoad)
+static bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
 {
 	textureId = ImTextureID{};
-	if (art->boxartPath.empty())
+	if (art.boxartPath.empty())
 		return false;
 
 	// Get the boxart texture. Load it if needed.
-	textureId = imguiDriver->getTexture(art->boxartPath);
+	textureId = imguiDriver->getTexture(art.boxartPath);
 	if (textureId == ImTextureID() && allowLoad)
 	{
 		int width, height;
-		u8 *imgData = loadImage(art->boxartPath, width, height);
+		u8 *imgData = loadImage(art.boxartPath, width, height);
 		if (imgData != nullptr)
 		{
 			try {
-				textureId = imguiDriver->updateTextureAndAspectRatio(art->boxartPath, imgData, width, height);
+				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
 			} catch (...) {
 				// vulkan can throw during resizing
 			}
@@ -2456,8 +2441,8 @@ static void gui_display_content()
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
-		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (200 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
-		const int responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
+		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
 		
 		if (config::BoxartDisplayMode)
@@ -2475,12 +2460,9 @@ static void gui_display_content()
 			{
 				ImTextureID textureId{};
 				GameMedia game;
-				const GameBoxart *art = boxart.getBoxart(game);
-				if (art != nullptr)
-				{
-					if (getGameImage(art, textureId, loadedImages < 10))
-						loadedImages++;
-				}
+				GameBoxart art = boxart.getBoxart(game);
+				if (getGameImage(art, textureId, loadedImages < 10))
+					loadedImages++;
 				if (textureId != ImTextureID())
 					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
 				else
@@ -2508,12 +2490,11 @@ static void gui_display_content()
 						continue;
 				}
 				std::string gameName = game.name;
-				const GameBoxart *art = nullptr;
+				GameBoxart art;
 				if (config::BoxartDisplayMode)
 				{
 					art = boxart.getBoxart(game);
-					if (art != nullptr)
-						gameName = art->name;
+					gameName = art.name;
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
@@ -2525,12 +2506,9 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						ImTextureID textureId{};
-						if (art != nullptr)
-						{
-							// Get the boxart texture. Load it if needed (max 10 per frame).
-							if (getGameImage(art, textureId, loadedImages < 10))
-								loadedImages++;
-						}
+						// Get the boxart texture. Load it if needed (max 10 per frame).
+						if (getGameImage(art, textureId, loadedImages < 10))
+							loadedImages++;
 						if (textureId != ImTextureID())
 							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
 						else
@@ -2659,19 +2637,11 @@ static void gui_network_start()
 		ImGui::Text("Starting...");
 		try {
 			if (networkStatus.get())
-			{
 				gui_state = GuiState::Closed;
-			}
 			else
-			{
-				emu.unloadGame();
-				gui_state = GuiState::Main;
-			}
+				gui_stop_game();
 		} catch (const FlycastException& e) {
-			NetworkHandshake::instance->stop();
-			emu.unloadGame();
-			gui_error(e.what());
-			gui_state = GuiState::Main;
+			gui_stop_game(e.what());
 		}
 	}
 	else
@@ -2685,7 +2655,7 @@ static void gui_network_start()
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
-	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
 		try {
@@ -2693,14 +2663,13 @@ static void gui_network_start()
 		}
 		catch (const FlycastException& e) {
 		}
-		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_stop_game();
 	}
 	ImGui::PopStyleVar();
 
 	ImGui::End();
 
-	if ((kcode[0] & DC_BTN_START) == 0)
+	if ((kcode[0] & DC_BTN_START) == 0 && NetworkHandshake::instance != nullptr)
 		NetworkHandshake::instance->startNow();
 }
 
@@ -2715,6 +2684,15 @@ static void gui_display_loadscreen()
     ImGui::AlignTextToFramePadding();
     ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 	try {
+		const char *label = gameLoader.getProgress().label;
+		if (label == nullptr)
+		{
+			if (gameLoader.ready())
+				label = "Starting...";
+			else
+				label = "Loading...";
+		}
+
 		if (gameLoader.ready())
 		{
 			if (NetworkHandshake::instance != nullptr)
@@ -2725,14 +2703,11 @@ static void gui_display_loadscreen()
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("Starting...");
+				ImGui::Text("%s", label);
 			}
 		}
 		else
 		{
-			const char *label = gameLoader.getProgress().label;
-			if (label == nullptr)
-				label = "Loading...";
 			ImGui::Text("%s", label);
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
@@ -2746,12 +2721,10 @@ static void gui_display_loadscreen()
 		}
 	} catch (const FlycastException& ex) {
 		ERROR_LOG(BOOT, "%s", ex.what());
-		gui_error(ex.what());
 #ifdef TEST_AUTOMATION
 		die("Game load failed");
 #endif
-		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_stop_game(ex.what());
 	}
 	ImGui::PopStyleVar();
 
@@ -2760,6 +2733,9 @@ static void gui_display_loadscreen()
 
 void gui_display_ui()
 {
+	FC_PROFILE_SCOPE;
+	const LockGuard lock(guiMutex);
+
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
 		return;
 	if (gui_state == GuiState::Main)
@@ -2777,6 +2753,7 @@ void gui_display_ui()
 	gui_newFrame();
 	ImGui::NewFrame();
 	error_msg_shown = false;
+	bool gui_open = gui_is_open();
 
 	switch (gui_state)
 	{
@@ -2821,7 +2798,7 @@ void gui_display_ui()
 	error_popup();
 	gdxsv_update_popup();
 	wireless_warning_popup();
-	gui_endFrame();
+	gui_endFrame(gui_open);
 
 	if (gui_state == GuiState::Closed)
 		emu.start();
@@ -2873,7 +2850,7 @@ void gui_display_osd()
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
 			ImGui::SetWindowFontScale(1.5);
-			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
 			ImGui::End();
 		}
 		imguiDriver->displayCrosshairs();
@@ -2890,8 +2867,44 @@ void gui_display_osd()
 
 		gdxsv_gui_display_osd();
 
-		gui_endFrame();
+		gui_endFrame(gui_is_open());
 	}
+}
+
+void gui_display_profiler()
+{
+#if FC_PROFILER
+	gui_newFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
+
+	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+
+	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
+	
+	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		char text[256];
+		std::snprintf(text, 256, "%.3f : Thread %s", (float)profileThread->cachedTime, profileThread->threadName.c_str());
+		ImGui::TreeNode(text);
+
+		ImGui::Indent();
+		fc_profiler::drawGUI(profileThread->cachedResultTree);
+		ImGui::Unindent();
+	}
+
+	ImGui::PopStyleColor();
+	
+	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+	{
+		fc_profiler::drawGraph(*profileThread);
+	}
+
+	ImGui::End();
+
+	gui_endFrame(true);
+#endif
 }
 
 void gui_open_onboarding()
@@ -2909,6 +2922,7 @@ void gui_term()
 	if (inited)
 	{
 		inited = false;
+		scanner.stop();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);

@@ -21,6 +21,8 @@
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
+#define ALLOC_F64 true
+
 enum eReg {
 	W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15, W16,
 	W17, W18, W19, W20, W21, W22, W23, W24, W25, W26, W27, W28, W29, W30
@@ -35,7 +37,7 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg, ALLOC_F64>
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 
@@ -57,9 +59,9 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 		return Register::GetWRegFromCode(ereg);
 	}
 
-	const VRegister& MapVRegister(const shil_param& param)
+	const VRegister& MapVRegister(const shil_param& param, int index = 0)
 	{
-		eFReg ereg = mapf(param);
+		eFReg ereg = mapf(param, index);
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
 		return VRegister::GetSRegFromCode(ereg);

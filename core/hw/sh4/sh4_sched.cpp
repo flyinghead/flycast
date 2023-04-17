@@ -1,7 +1,9 @@
 #include "types.h"
-#include "sh4_interrupts.h"
-#include "sh4_core.h"
+#include "sh4_if.h"
 #include "sh4_sched.h"
+
+#include <algorithm>
+#include <vector>
 
 //sh4 scheduler
 
@@ -164,7 +166,6 @@ void sh4_sched_tick(int cycles)
 		for (sched_list& sched : sch_list)
 		{
 			int remaining = sh4_sched_remaining(sched, fztime);
-			verify(remaining >= 0 || remaining == -1);
 			if (remaining >= 0 && remaining <= (int)cycles)
 				handle_cb(sched);
 		}

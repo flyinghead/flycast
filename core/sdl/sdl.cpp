@@ -3,9 +3,11 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
+#ifdef WIN32
 #include <SDL_syswm.h>
+#endif
 #include <SDL_video.h>
-#ifdef USE_VULKAN
+#if defined(USE_VULKAN)
 #include <SDL_vulkan.h>
 #endif
 #endif
@@ -27,6 +29,7 @@
 #endif
 
 static SDL_Window* window = NULL;
+static u32 windowFlags;
 
 #ifdef TARGET_PANDORA
 	#define WINDOW_WIDTH  800
@@ -63,8 +66,11 @@ static void sdl_open_joystick(int index)
 		INFO_LOG(INPUT, "SDL: Cannot open joystick %d", index + 1);
 		return;
 	}
-	std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
-	SDLGamepad::AddSDLGamepad(gamepad);
+	try {
+		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		SDLGamepad::AddSDLGamepad(gamepad);
+	} catch (const FlycastException& e) {
+	}
 }
 
 static void sdl_close_joystick(SDL_JoystickID instance)
@@ -196,7 +202,7 @@ void input_sdl_init()
 
 	checkRawInput();
 
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(__OpenBSD__)
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45
@@ -289,6 +295,17 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
+#ifdef USE_VULKAN
+					if (windowFlags & SDL_WINDOW_VULKAN)
+						SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
+#endif
+#ifdef USE_OPENGL
+					if (windowFlags & SDL_WINDOW_OPENGL)
+						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+					else
+#endif
+						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
 					GraphicsContext::Instance()->resize();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
@@ -459,6 +476,8 @@ static inline void get_window_state()
 
 HWND getNativeHwnd()
 {
+	if (window == nullptr)
+		return NULL;
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	SDL_GetWindowWMInfo(window, &wmInfo);
@@ -468,6 +487,7 @@ HWND getNativeHwnd()
 
 bool sdl_recreate_window(u32 flags)
 {
+	windowFlags = flags;
 #ifdef _WIN32
     //Enable HiDPI mode in Windows
     typedef enum PROCESS_DPI_AWARENESS {
@@ -517,7 +537,10 @@ bool sdl_recreate_window(u32 flags)
 		get_window_state();
 #endif
 	if (window != nullptr)
+	{
 		SDL_DestroyWindow(window);
+		window = nullptr;
+	}
 
 #if !defined(GLES)
 	flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
@@ -662,5 +685,24 @@ void sdl_window_destroy()
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);
+	window = nullptr;
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+}
+
+void sdl_fix_steamdeck_dpi(SDL_Window *window)
+{
+#ifdef __linux__
+	// Fixing Steam Deck's incorrect 60mm * 60mm EDID
+	if (settings.display.dpi > 500)
+	{
+		int displayIndex = SDL_GetWindowDisplayIndex(window);
+		SDL_DisplayMode mode;
+		SDL_GetDisplayMode(displayIndex, 0, &mode);
+		if (displayIndex == 0
+				&& (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0
+						|| strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0)
+				&& mode.w == 1280 && mode.h == 800)
+			settings.display.dpi = 206;
+	}
+#endif
 }

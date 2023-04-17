@@ -1,11 +1,11 @@
-#include "profiler.h"
+#include "dc_profiler.h"
 
-profiler_cfg prof;
+dc_profiler_cfg dc_prof;
 
-void prof_init()
+void dc_prof_init()
 {
-	memset(&prof,0,sizeof(prof));
-	prof.enable=false;
+	memset(&dc_prof,0,sizeof(dc_prof));
+	dc_prof.enable=false;
 }
 
 struct regacc
@@ -69,7 +69,7 @@ void print_blocks();
 
 #if FEAT_SHREC != DYNAREC_NONE
 //called every emulated second
-void prof_periodical()
+void dc_prof_periodical()
 {
 #if defined(HAS_PROFILE)
 #if 0
@@ -160,17 +160,17 @@ void prof_periodical()
 #endif
 	for(int i=0;i<shop_max;i++)
 	{
-		double v=prof.counters.shil.executed[i]/1000.0/1000.0;
-		prof.counters.shil.executed[i]=0;
+		double v=dc_prof.counters.shil.executed[i]/1000.0/1000.0;
+		dc_prof.counters.shil.executed[i]=0;
 		if (v>0.05)
 			printf("%s: %.2fM\n",shil_opcode_name(i),v);
 	}
 
 	
-	if (prof.counters.shil.readm_reg!=0)
+	if (dc_prof.counters.shil.readm_reg!=0)
 	{
 		printf("***PROFILE REPORT***\n");
-		prof.counters.print();
+		dc_prof.counters.print();
 	}
 
 	printf("opcode fallbacks:\n");
@@ -196,11 +196,11 @@ void prof_periodical()
 	}
 
 	printf("********************\n");
-	memset(&prof.counters,0,sizeof(prof.counters));
+	memset(&dc_prof.counters,0,sizeof(dc_prof.counters));
 #endif
 }
 #else
-void prof_periodical() { }
+void dc_prof_periodical() { }
 #endif
 /*
 

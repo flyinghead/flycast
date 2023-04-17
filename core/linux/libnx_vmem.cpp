@@ -118,19 +118,19 @@ static mem_handle_t allocate_shared_filemem(unsigned size)
 */
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
-// The function supports allocating 512MB or 4GB addr spaces.
-// vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
+
+// vmem_base_addr points to an address space of 512MB that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
+bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
-	return MemTypeError;
+	return false;
 #if 0
 	const unsigned size_aligned = ((RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + PAGE_SIZE) & (~(PAGE_SIZE-1)));
 	vmem_fd_page = allocate_shared_filemem(size_aligned);
 	if (vmem_fd_page < 0)
-		return MemTypeError;
+		return false;
 
 	vmem_fd_codememory = (uintptr_t)virtmemReserve(size_aligned);
 
@@ -141,15 +141,12 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ra
 		WARN_LOG(VMEM, "Failed to set perms (platform_int)...");
 
 	// Now try to allocate a contiguous piece of memory.
-	VMemType rv;
 	if (reserved_base == NULL)
 	{
 		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 		reserved_base = mem_region_reserve(NULL, reserved_size);
 		if (!reserved_base)
-			return MemTypeError;
-
-		rv = MemType512MB;
+			return false;
 	}
 
 	*sh4rcb_addr = reserved_base;
@@ -160,7 +157,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ra
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
 	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
-	return rv;
+	return true;
 #endif
 }
 
@@ -178,7 +175,8 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
-	verify(mem_region_unlock(address, size_bytes));
+	bool rc = mem_region_unlock(address, size_bytes);
+	verify(rc);
 }
 
 // Creates mappings to the underlying file including mirroring sections
@@ -196,9 +194,11 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
-			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
-					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
+			bool rc = mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize);
+			verify(rc);
+			void *p = mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
+					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes);
+			verify(p != nullptr);
 		}
 	}
 }

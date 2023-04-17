@@ -38,9 +38,10 @@
 		<Capability Name="codeGeneration"/>
 		<Capability Name="internetClientServer"/>
 		<Capability Name="privateNetworkClientServer"/>
-    <rescap:Capability Name="runFullTrust"/>
-    <rescap:Capability Name="broadFileSystemAccess" />
-    <uap:Capability Name="removableStorage" />
-    <DeviceCapability Name="microphone"/>
+		<rescap:Capability Name="runFullTrust"/>
+		<rescap:Capability Name="broadFileSystemAccess" />
+		<rescap:Capability Name="expandedResources" />
+		<uap:Capability Name="removableStorage" />
+		<DeviceCapability Name="microphone"/>
 	</Capabilities>
 </Package>

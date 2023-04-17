@@ -46,6 +46,67 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	return [httpResponse statusCode];
 }
 
+int post(const std::string& url, const std::vector<PostField>& fields)
+{
+	NSString *nsurl = [NSString stringWithCString:url.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
+	[request setHTTPMethod:@"POST"];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setHTTPShouldHandleCookies:NO];
+
+	NSString *boundary = @"----flycast-boundary-7192397596";
+	NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary];
+	[request setValue:contentType forHTTPHeaderField: @"Content-Type"];
+	
+	NSMutableData *body = [NSMutableData data];
+	for (const PostField& field : fields)
+	{
+        NSString *value = [NSString stringWithCString:field.value.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]];
+		[body appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+		[body appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"", [NSString stringWithCString:field.name.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]]] dataUsingEncoding:NSUTF8StringEncoding]];
+        if (!field.contentType.empty())
+        {
+	        [body appendData:[[NSString stringWithFormat:@"; filename=\"%@\"\r\n", value] dataUsingEncoding:NSUTF8StringEncoding]];
+	        [body appendData:[[NSString stringWithFormat:@"Content-Type: %@", [NSString stringWithCString:field.contentType.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]]] dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+        [body appendData:[@"\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        
+        if (field.contentType.empty())
+        {
+	        [body appendData:[value dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+        else
+        {
+        	NSError* error = nil;
+			NSData *filedata = [NSData dataWithContentsOfFile:value options:0 error:&error];
+			if (error != nil)
+				return 500;
+	        [body appendData:filedata];
+        }
+        [body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+	}
+	[body appendData:[[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+	
+	[request setHTTPBody:body];
+	NSString *postLength = [NSString stringWithFormat:@"%ld", (unsigned long)[body length]];
+    [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+    
+	NSURLResponse *response = nil;
+	NSError *error = nil;
+	[NSURLConnection sendSynchronousRequest:request
+                          returningResponse:&response
+                                      error:&error];
+	if (error != nil)
+		return 500;
+
+	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response; 
+	return [httpResponse statusCode];
+}
+
 void init() {
 }
 

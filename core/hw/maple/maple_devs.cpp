@@ -4,7 +4,6 @@
 #include "hw/pvr/spg.h"
 #include "oslib/audiostream.h"
 #include "oslib/oslib.h"
-#include "cfg/option.h"
 #include "hw/aica/sgc_if.h"
 #include <zlib.h>
 

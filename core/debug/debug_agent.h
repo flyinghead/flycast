@@ -34,6 +34,9 @@
 #define SIGBUS 7
 #endif
 
+#define SWAP_32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
+#define SWAP_16(a) ((((a) & 0x00ff) << 8) | (((a) & 0xff00) >> 8))
+
 const std::array<Sh4RegType, 59> Sh4RegList {
 		reg_r0,
 		reg_r1,
@@ -82,11 +85,20 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = removeMatchpoint(0, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		u32 savedPc = Sh4cntx.pc;
 		emu.step();
 		if (restoreBreakpoint)
-			insertMatchpoint(0, savedPc, 2);
+			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+	}
+
+	void stepRange(u32 from, u32 to)
+	{
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		u32 savedPc = Sh4cntx.pc;
+		emu.stepRange(from, to);
+		if (restoreBreakpoint)
+			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
 	}
 
 	int readAllRegs(u32 **regs)
@@ -95,9 +107,9 @@ public:
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 		{
 			if (Sh4RegList[i] == reg_sr_status)
-				allregs[i] = sh4_sr_GetFull();
+				allregs[i] = SWAP_32(sh4_sr_GetFull());
 			else if (Sh4RegList[i] != NoReg)
-				allregs[i] = *GetRegPtr(Sh4RegList[i]);
+				allregs[i] = SWAP_32(*GetRegPtr(Sh4RegList[i]));
 		}
 		*regs = &allregs[0];
 		return allregs.size();
@@ -107,7 +119,7 @@ public:
 	{
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 			if (Sh4RegList[i] != NoReg)
-				*GetRegPtr(Sh4RegList[i]) = regs[i];
+				*GetRegPtr(Sh4RegList[i]) = SWAP_32(regs[i]);
 	}
 
 	u32 readReg(u32 regNum)
@@ -116,9 +128,9 @@ public:
 			return 0;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			return sh4_sr_GetFull();
+			return SWAP_32(sh4_sr_GetFull());
 		if (reg != NoReg)
-			return *GetRegPtr(reg);
+			return SWAP_32(*GetRegPtr(reg));
 		return 0;
 	}
 	void writeReg(u32 regNum, u32 value)
@@ -127,9 +139,9 @@ public:
 			return;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			sh4_sr_SetFull(value);
+			sh4_sr_SetFull(SWAP_32(value));
 		else if (reg != NoReg)
-			*GetRegPtr(reg) = value;
+			*GetRegPtr(reg) = SWAP_32(value);
 	}
 
 	const u8 *readMem(u32 addr, u32 len)
@@ -141,14 +153,14 @@ public:
 		{
 			if (len >= 4 && (addr & 3) == 0)
 			{
-				*(u32 *)p = ReadMem32_nommu(addr);
+				*(u32 *)p = SWAP_32(ReadMem32_nommu(addr));
 				addr += 4;
 				len -= 4;
 				p += 4;
 			}
 			else if (len >= 2 && (addr & 1) == 0)
 			{
-				*(u16 *)p = ReadMem16_nommu(addr);
+				*(u16 *)p = SWAP_16(ReadMem16_nommu(addr));
 				addr += 2;
 				len -= 2;
 				p += 2;
@@ -170,14 +182,14 @@ public:
 		{
 			if (len >= 4 && (addr & 3) == 0)
 			{
-				WriteMem32_nommu(addr, *(u32 *)p);
+				WriteMem32_nommu(addr, SWAP_32(*(u32 *)p));
 				addr += 4;
 				len -= 4;
 				p += 4;
 			}
 			else if (len >= 2 && (addr & 3) == 0)
 			{
-				WriteMem16_nommu(addr, *(u16 *)p);
+				WriteMem16_nommu(addr, SWAP_16(*(u16 *)p));
 				addr += 2;
 				len -= 2;
 				p += 2;
@@ -197,10 +209,10 @@ public:
 			return false;
 		}
 		// TODO other matchpoint types
-		if (breakpoints.find(addr) != breakpoints.end())
+		if (breakpoints[type].find(addr) != breakpoints[type].end())
 			return true;
-		breakpoints[addr] = Breakpoint(type, addr);
-		breakpoints[addr].savedOp = ReadMem16_nommu(addr);
+		breakpoints[type][addr] = Breakpoint(type, addr);
+		breakpoints[type][addr].savedOp = ReadMem16_nommu(addr);
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
 		return true;
 	}
@@ -210,11 +222,11 @@ public:
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;
 		}
-		auto it = breakpoints.find(addr);
-		if (it == breakpoints.end())
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
 			return false;
 		WriteMem16_nommu(addr, it->second.savedOp);
-		breakpoints.erase(it);
+		breakpoints[type].erase(it);
 		return true;
 	}
 
@@ -316,12 +328,22 @@ public:
 	u32 exception = 0;
 
 	struct Breakpoint {
+		enum Type
+		{
+			BP_TYPE_SOFTWARE_BREAK,
+			BP_TYPE_HARDWARE_BREAK,
+			BP_TYPE_WRITE_WATCHPOINT,
+			BP_TYPE_READ_WATCHPOINT,
+			BP_TYPE_ACCESS_WATCHPOINT,
+			BP_TYPE_COUNT
+		};
+
 		Breakpoint() = default;
 		Breakpoint(u16 type, u32 addr) : addr(addr), type(type) { }
 		u32 addr = 0;
 		u16 type = 0;
 		u16 savedOp = 0;
 	};
-	std::map<u32, Breakpoint> breakpoints;
+	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
 };

@@ -43,12 +43,13 @@ protected:
 	vk::UniqueRenderPass MakeRenderPass(bool initial, bool last);
 	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const
 	{
-		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
+		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 				vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	virtual vk::Format GetColorFormat() const { return GetContext()->GetColorFormat(); }
+
 	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const
 	{
 		std::vector<vk::SubpassDependency> deps;
@@ -72,7 +73,7 @@ protected:
 				vk::ImageLayout::eUndefined,
 				config::RenderToTextureBuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
+
 	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
 	{
 		std::vector<vk::SubpassDependency> deps;

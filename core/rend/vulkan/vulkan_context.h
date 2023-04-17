@@ -59,7 +59,7 @@ public:
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -89,9 +89,12 @@ public:
 			return true;
 		}
 	}
-	std::string getDriverName() override;
-	std::string getDriverVersion() override;
-	vk::Format GetColorFormat() const { return colorFormat; }
+	std::string getDriverName() override {
+		return driverName;
+	}
+	std::string getDriverVersion() override {
+		return driverVersion;
+	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
@@ -119,7 +122,7 @@ public:
 		nameInfo.objectType = objectType;
 		nameInfo.object = object;
 		nameInfo.pObjectName = name.c_str();
-		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
+		VULKAN_HPP_DEFAULT_DISPATCHER.vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
 	}
 #endif
 	constexpr static int VENDOR_AMD = 0x1022;
@@ -137,7 +140,7 @@ private:
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	void InitImgui();
 	void DoSwapAutomation();
-	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
+	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
 	vk::SurfaceKHR GetSurface() const { return *surface; }
 
 	bool HasSurfaceDimensionChanged() const;
@@ -207,10 +210,14 @@ private:
 
 	vk::ImageView lastFrameView;
 	vk::Extent2D lastFrameExtent;
+	float lastFrameAR = 0.f;
 
 	std::unique_ptr<VulkanOverlay> overlay;
 	// only used to delay the destruction of overlay textures
 	std::unique_ptr<TextureCache> textureCache;
+
+	std::string driverName;
+	std::string driverVersion;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

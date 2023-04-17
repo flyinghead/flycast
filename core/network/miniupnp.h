@@ -17,10 +17,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <vector>
-#include <utility>
 #ifndef FEAT_NO_MINIUPNPC
 #include <miniupnpc.h>
+
+#include <cstring>
+#include <string>
+#include <utility>
+#include <vector>
 
 class MiniUPnP
 {

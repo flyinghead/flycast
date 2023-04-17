@@ -324,6 +324,9 @@ public:
 
 		pipelines.clear();
 		modVolPipelines.clear();
+		trModVolPipelines.clear();
+		finalPipeline.reset();
+		clearPipeline.reset();
 	}
 
 	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette)

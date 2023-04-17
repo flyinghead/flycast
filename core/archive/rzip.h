@@ -41,4 +41,5 @@ private:
 	u8 *chunk = nullptr;
 	u32 chunkSize = 0;
 	u32 chunkIndex = 0;
+	bool write = false;
 };

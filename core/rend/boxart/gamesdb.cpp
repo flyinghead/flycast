@@ -101,7 +101,7 @@ json TheGamesDb::httpGet(const std::string& url)
 		// TODO can this happen? http status should be the same
 		std::string status;
 		try {
-			status = v["status"];
+			status = v.at("status");
 		} catch (const json::exception& e) {
 		}
 		throw std::runtime_error(std::string("TheGamesDB error ") + std::to_string(code) + ": " + status);
@@ -120,15 +120,21 @@ void TheGamesDb::fetchPlatforms()
 		std::string url = makeUrl("Platforms/ByPlatformName") + "&name=" + platform;
 		json v = httpGet(url);
 
-		const json& array = v["data"]["platforms"];
+		try {
+			const json& array = v.at("data").at("platforms");
 
-		for (const auto& o : array)
-		{
-			std::string name = o["name"];
-			if (name == "Sega Dreamcast")
-				dreamcastPlatformId = o["id"];
-			else if (name == "Arcade")
-				arcadePlatformId = o["id"];
+			for (const auto& o : array)
+			{
+				try {
+					std::string name = o.at("name");
+					if (name == "Sega Dreamcast")
+						dreamcastPlatformId = o.at("id");
+					else if (name == "Arcade")
+						arcadePlatformId = o.at("id");
+				} catch (const json::exception& e) {
+				}
+			}
+		} catch (const json::exception& e) {
 		}
 	};
 	getPlatformId("Dreamcast");
@@ -141,89 +147,98 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 {
 	std::string baseUrl;
 	try {
-		baseUrl = j["base_url"]["thumb"];
+		baseUrl = j.at("base_url").at("thumb");
 	} catch (const json::exception& e) {
 		try {
-			baseUrl = j["base_url"]["small"];
+			baseUrl = j.at("base_url").at("small");
 		} catch (const json::exception& e) {
 			return;
 		}
 	}
 
-	const json& images = j.contains("data") ? j["data"] : j["images"];
-	if (images.is_array())
+	if (!j.contains("data") && !j.contains("images"))
 		// No boxart
 		return;
-	json dataArray = images[std::to_string(gameId)];
-	std::string imagePath;
-	for (const auto& o : dataArray)
-	{
-		try {
-			// Look for boxart
-			if (o["type"] != "boxart")
-				continue;
-		} catch (const json::exception& e) {
-			continue;
-		}
-		try {
-			// We want the front side if specified
-			if (o["side"] == "back")
-				continue;
-		} catch (const json::exception& e) {
-			// ignore if not found
-		}
-		imagePath = o["filename"].get<std::string>();
-		break;
-	}
-	if (imagePath.empty())
-	{
-		// Use titlescreen
+	const json& images = j.contains("data") ? j.at("data") : j.at("images");
+
+	try {
+		const json& dataArray = images.at(std::to_string(gameId));
+		std::string imagePath;
 		for (const auto& o : dataArray)
 		{
 			try {
-				if (o["type"] != "titlescreen")
+				// Look for boxart
+				if (o.at("type") != "boxart")
 					continue;
 			} catch (const json::exception& e) {
 				continue;
 			}
-			imagePath = o["filename"].get<std::string>();
-			break;
-		}
-	}
-	if (imagePath.empty())
-	{
-		// Use screenshot
-		for (const auto& o : dataArray)
-		{
 			try {
-				if (o["type"] != "screenshot")
+				// We want the front side if specified
+				if (o.at("side") == "back")
 					continue;
 			} catch (const json::exception& e) {
-				continue;
+				// ignore if not found
 			}
-			imagePath = o["filename"].get<std::string>();
-			break;
+			try {
+				imagePath = o.at("filename").get<std::string>();
+				break;
+			} catch (const json::exception& e) {
+				// continue if not found
+			}
 		}
-	}
-	if (!imagePath.empty())
-	{
-		// Build the full URL and get from cache or download
-		std::string url = baseUrl + imagePath;
-		std::string filename = makeUniqueFilename("dummy.jpg");	// thegamesdb returns some images as png, but they are really jpeg
-		auto cached = boxartCache.find(url);
-		if (cached != boxartCache.end())
+		if (imagePath.empty())
 		{
-			copyFile(cached->second, filename);
-			item.setBoxartPath(filename);
-		}
-		else
-		{
-			if (downloadImage(url, filename))
+			// Use titlescreen
+			for (const auto& o : dataArray)
 			{
-				item.setBoxartPath(filename);
-				boxartCache[url] = filename;
+				try {
+					if (o.at("type") != "titlescreen")
+						continue;
+					imagePath = o.at("filename").get<std::string>();
+					break;
+				} catch (const json::exception& e) {
+					// continue if not found
+				}
 			}
 		}
+		if (imagePath.empty())
+		{
+			// Use screenshot
+			for (const auto& o : dataArray)
+			{
+				try {
+					if (o.at("type") != "screenshot")
+						continue;
+					imagePath = o.at("filename").get<std::string>();
+					break;
+				} catch (const json::exception& e) {
+					// continue if not found
+				}
+			}
+		}
+		if (!imagePath.empty())
+		{
+			// Build the full URL and get from cache or download
+			std::string url = baseUrl + imagePath;
+			std::string filename = makeUniqueFilename("dummy.jpg");	// thegamesdb returns some images as png, but they are really jpeg
+			auto cached = boxartCache.find(url);
+			if (cached != boxartCache.end())
+			{
+				copyFile(cached->second, filename);
+				item.setBoxartPath(filename);
+			}
+			else
+			{
+				if (downloadImage(url, filename))
+				{
+					item.setBoxartPath(filename);
+					boxartCache[url] = filename;
+				}
+			}
+		}
+	} catch (const json::exception& e) {
+		// No boxart for this game
 	}
 }
 
@@ -235,8 +250,8 @@ bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, G
 		{
 			bool found = false;
 			try {
-				for (const auto& uid : game["uids"])
-					if (uid["uid"] == diskId) {
+				for (const auto& uid : game.at("uids"))
+					if (uid.at("uid") == diskId) {
 						found = true;
 						break;
 					}
@@ -246,24 +261,27 @@ bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, G
 				continue;
 		}
 		// Name
-		item.name = game["game_title"];
+		try {
+			item.name = game.at("game_title");
+		} catch (const json::exception& e) {
+		}
 
 		// Release date
 		try {
-			item.releaseDate = game["release_date"];
+			item.releaseDate = game.at("release_date");
 		} catch (const json::exception& e) {
 		}
 
 		// Overview
 		try {
-			item.overview = game["overview"];
+			item.overview = game.at("overview");
 		} catch (const json::exception& e) {
 		}
 
 		// GameDB id
 		int id;
 		try {
-			id = game["id"];
+			id = game.at("id");
 		} catch (const json::exception& e) {
 			return true;
 		}
@@ -275,7 +293,10 @@ bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, G
 		{
 			std::string imgUrl = makeUrl("Games/Images") + "&games_id=" + std::to_string(id);
 			json images = httpGet(imgUrl);
-			parseBoxart(item, images["data"], id);
+			try {
+				parseBoxart(item, images.at("data"), id);
+			} catch (const json::exception& e) {
+			}
 		}
 		return true;
 	}
@@ -285,11 +306,13 @@ bool TheGamesDb::parseGameInfo(const json& gameArray, const json& boxartArray, G
 bool TheGamesDb::fetchGameInfo(GameBoxart& item, const std::string& url, const std::string& diskId)
 {
 	json v = httpGet(url);
-	json& array = v["data"]["games"];
-	if (array.empty())
+	try {
+		const json& array = v.at("data").at("games");
+		const json& boxart = v.at("include").at("boxart");
+		return parseGameInfo(array, boxart, item, diskId);
+	} catch (const json::exception& e) {
 		return false;
-
-	return parseGameInfo(array, v["include"]["boxart"], item, diskId);
+	}
 }
 
 void TheGamesDb::scrape(GameBoxart& item)
@@ -343,14 +366,15 @@ void TheGamesDb::fetchByUids(std::vector<GameBoxart>& items)
 	std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview,uids&include=boxart&filter%5Bplatform%5D="
 			+ std::to_string(dreamcastPlatformId) + "&uid=" + http::urlEncode(uidCriteria);
 	json v = httpGet(url);
-	json& array = v["data"]["games"];
-	if (array.empty())
-		return;
-	json& boxartArray = v["include"]["boxart"];
-	for (GameBoxart& item : items)
-	{
-		if (!item.scraped && !item.uniqueId.empty() && parseGameInfo(array, boxartArray, item, item.uniqueId))
-			item.scraped = true;
+	try {
+		const json& array = v.at("data").at("games");
+		const json& boxartArray = v.at("include").at("boxart");
+		for (GameBoxart& item : items)
+		{
+			if (!item.scraped && !item.uniqueId.empty() && parseGameInfo(array, boxartArray, item, item.uniqueId))
+				item.scraped = true;
+		}
+	} catch (const json::exception& e) {
 	}
 }
 

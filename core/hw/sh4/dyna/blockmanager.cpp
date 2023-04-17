@@ -13,6 +13,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/modules/mmu.h"
 
 
 #if defined(__unix__) && defined(DYNA_OPROF)
@@ -235,7 +236,6 @@ void bm_Reset()
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
 		// so we have to unlock each region individually
-		// No need for this mess in 4GB mode since windows doesn't use it
 		if (settings.platform.ram_size == 16 * 1024 * 1024)
 		{
 			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
@@ -248,11 +248,6 @@ void bm_Reset()
 			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
 			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
 		}
-		if (_nvmem_4gb_space())
-		{
-			mem_region_unlock(virt_ram_base + 0x8C000000u, 0x90000000u - 0x8C000000u);
-			mem_region_unlock(virt_ram_base + 0xAC000000u, 0xB0000000u - 0xAC000000u);
-		}
 	}
 	else
 	{
@@ -264,38 +259,18 @@ void bm_LockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
 	if (_nvmem_enabled())
-	{
 		mem_region_lock(virt_ram_base + 0x0C000000 + addr, size);
-		if (_nvmem_4gb_space())
-		{
-			mem_region_lock(virt_ram_base + 0x8C000000 + addr, size);
-			mem_region_lock(virt_ram_base + 0xAC000000 + addr, size);
-			// TODO wraps
-		}
-	}
 	else
-	{
 		mem_region_lock(&mem_b[addr], size);
-	}
 }
 
 void bm_UnlockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
 	if (_nvmem_enabled())
-	{
 		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, size);
-		if (_nvmem_4gb_space())
-		{
-			mem_region_unlock(virt_ram_base + 0x8C000000 + addr, size);
-			mem_region_unlock(virt_ram_base + 0xAC000000 + addr, size);
-			// TODO wraps
-		}
-	}
 	else
-	{
 		mem_region_unlock(&mem_b[addr], size);
-	}
 }
 
 void bm_ResetCache()
@@ -618,18 +593,10 @@ u32 bm_getRamOffset(void *p)
 {
 	if (_nvmem_enabled())
 	{
-		if (_nvmem_4gb_space())
-		{
-			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
-				return -1;
-		}
-		else
-		{
-			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
-				return -1;
-		}
+		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
+			return -1;
 		u32 addr = (u8*)p - virt_ram_base;
-		if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
+		if (!IsOnRam(addr))
 			return -1;
 		return addr & RAM_MASK;
 	}

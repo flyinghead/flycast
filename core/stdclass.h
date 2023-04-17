@@ -2,10 +2,11 @@
 #include "types.h"
 #include "md5/md5.h"
 
-#include <condition_variable>
-#include <mutex>
 #include <algorithm>
 #include <cctype>
+#include <condition_variable>
+#include <cstring>
+#include <mutex>
 #include <thread>
 
 #ifdef __ANDROID__
@@ -85,7 +86,7 @@ public:
 		std::memset(data, 0, size);
 	}
 
-	INLINE u8& operator [](unsigned i) {
+	u8& operator [](unsigned i) {
 #ifdef MEM_BOUND_CHECK
         if (i >= size)
 		{

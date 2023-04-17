@@ -7,8 +7,8 @@
 #include "hw/hwreg.h"
 #include <array>
 
-u32 sb_ReadMem(u32 addr,u32 sz);
-void sb_WriteMem(u32 addr,u32 data,u32 sz);
+u32 sb_ReadMem(u32 addr);
+void sb_WriteMem(u32 addr, u32 data);
 void sb_Init();
 void sb_Reset(bool hard);
 void sb_Term();
@@ -355,7 +355,7 @@ extern std::array<RegisterStruct, 0x540> sb_regs;
 //0x005F6888    SB_LMMODE1  RW  Via TA texture memory bus select 1
 #define SB_LMMODE1 SB_REG_32(LMMODE1)
 //0x005F688C    SB_FFST R   FIFO status
-extern u32 SB_FFST;
+//#define SB_FFST SB_REG_32(FFST)
 //0x005F6890    SB_SFRES    W   System reset
 #define SB_SFRES SB_REG_32(SFRES)
 

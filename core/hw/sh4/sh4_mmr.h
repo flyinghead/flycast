@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "types.h"
 #include "sh4_if.h"
 #include "hw/hwreg.h"
@@ -14,30 +13,53 @@ void map_p4();
 
 #define sq_both (sh4rcb.sq_buffer)
 
-extern std::array<RegisterStruct, 18> CCN;
-extern std::array<RegisterStruct, 9> UBC;
-extern std::array<RegisterStruct, 19> BSC;
-extern std::array<RegisterStruct, 17> DMAC;
-extern std::array<RegisterStruct, 5> CPG;
-extern std::array<RegisterStruct, 16> RTC;
-extern std::array<RegisterStruct, 5> INTC;
-extern std::array<RegisterStruct, 12> TMU;
-extern std::array<RegisterStruct, 8> SCI;
-extern std::array<RegisterStruct, 10> SCIF;
+extern RegisterStruct CCN[18];
+extern RegisterStruct UBC[9];
+extern RegisterStruct BSC[19];
+extern RegisterStruct DMAC[17];
+extern RegisterStruct CPG[5];
+extern RegisterStruct RTC[16];
+extern RegisterStruct INTC[5];
+extern RegisterStruct TMU[12];
+extern RegisterStruct SCI[8];
+extern RegisterStruct SCIF[10];
 
 void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
-template<typename T>
-void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf=0, RegWriteAddrFP* wf=0);
+void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP *rf = nullptr, RegWriteAddrFP *wf = nullptr);
 
-#define SH4IO_REGN(mod, addr, size) ((mod)[((addr) & 255) / 4].data##size)
-#define SH4IO_REG(mod, name, size) SH4IO_REGN(mod, mod##_##name##_addr, size)
-#define SH4IO_REG_T(mod, name, size) ((mod##_##name##_type&)SH4IO_REG(mod, name, size))
+#define SH4IO_REGN(mod, addr) ((mod)[((addr) & 255) / 4].data32)
+#define SH4IO_REG(mod, name) SH4IO_REGN(mod, mod##_##name##_addr)
+#define SH4IO_REG_T(mod, name) ((mod##_##name##_type&)SH4IO_REG(mod, name))
 
-#define SH4IO_REG_OFS(mod, name, o, s, size) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s), size)
-#define SH4IO_REG_T_OFS(mod, name, o, s, size) ((mod##_##name##_type&)SH4IO_REG_OFS(mod, name, o, s, size))
+#define SH4IO_REG_OFS(mod, name, o, s) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s))
+#define SH4IO_REG_T_OFS(mod, name, o, s) ((mod##_##name##_type&)SH4IO_REG_OFS(mod, name, o, s))
+
+template <RegisterStruct *Module, u32 Addr, u32 Mask = 0xffffffff, u32 OrMask = 0>
+void sh4_write_reg(u32 addr, u32 data)
+{
+	SH4IO_REGN(Module, Addr) = (data & Mask) | OrMask;
+}
+
+template<RegisterStruct *Module, u32 Addr, u32 Mask>
+void sh4_rio_reg_wmask()
+{
+	sh4_rio_reg(Module, Addr, RIO_WF, nullptr, sh4_write_reg<Module, Addr, Mask>);
+};
+
+template<RegisterStruct *Module, u32 Addr>
+void sh4_rio_reg16()
+{
+	sh4_rio_reg_wmask<Module, Addr, 0xffff>();
+};
+
+template<RegisterStruct *Module, u32 Addr>
+void sh4_rio_reg8()
+{
+	sh4_rio_reg_wmask<Module, Addr, 0xff>();
+};
 
 //CCN module registers base
 #define CCN_BASE_addr 0x1F000000
@@ -478,7 +500,7 @@ union BSC_BCR1_type
 };
 
 
-#define BSC_BCR1 SH4IO_REG_T(BSC,BCR1,32)
+#define BSC_BCR1 SH4IO_REG_T(BSC, BCR1)
 //extern BCR1_type BSC_BCR1;
 
 //16 bit
@@ -509,7 +531,7 @@ union BSC_BCR2_type
 
 	u16 full;
 };
-#define BSC_BCR2 SH4IO_REG_T(BSC,BCR2,16)
+#define BSC_BCR2 SH4IO_REG_T(BSC, BCR2)
 
 //32 bits
 union BSC_WCR1_type
@@ -555,7 +577,7 @@ union BSC_WCR1_type
 
 	u32 full;
 };
-#define BSC_WCR1 SH4IO_REG_T(BSC,WCR1,32)
+#define BSC_WCR1 SH4IO_REG_T(BSC, WCR1)
 
 //32 bits
 union BSC_WCR2_type
@@ -602,7 +624,7 @@ union BSC_WCR2_type
 	u32 full;
 };
 
-#define BSC_WCR2 SH4IO_REG_T(BSC,WCR2,32)
+#define BSC_WCR2 SH4IO_REG_T(BSC, WCR2)
 
 //32 bits
 union BSC_WCR3_type
@@ -650,7 +672,7 @@ union BSC_WCR3_type
 };
 
 
-#define BSC_WCR3 SH4IO_REG_T(BSC,WCR3,32)
+#define BSC_WCR3 SH4IO_REG_T(BSC, WCR3)
 
 //32 bits
 union BSC_MCR_type
@@ -698,7 +720,7 @@ union BSC_MCR_type
 };
 
 
-#define BSC_MCR SH4IO_REG_T(BSC,MCR,32)
+#define BSC_MCR SH4IO_REG_T(BSC, MCR)
 
 //16 bits
 union BSC_PCR_type
@@ -727,7 +749,7 @@ union BSC_PCR_type
 	u16 full;
 };
 
-#define BSC_PCR SH4IO_REG_T(BSC,PCR,16)
+#define BSC_PCR SH4IO_REG_T(BSC, PCR)
 
 //16 bits -> misstype on manual ? RTSCR vs RTCSR...
 union BSC_RTCSR_type
@@ -756,7 +778,7 @@ union BSC_RTCSR_type
 	u16 full;
 };
 
-#define BSC_RTCSR SH4IO_REG_T(BSC,RTCSR,16)
+#define BSC_RTCSR SH4IO_REG_T(BSC, RTCSR)
 
 //16 bits
 union BSC_RTCNT_type
@@ -778,7 +800,7 @@ union BSC_RTCNT_type
 	u16 full;
 };
 
-#define BSC_RTCNT SH4IO_REG_T(BSC,RTCNT,16)
+#define BSC_RTCNT SH4IO_REG_T(BSC, RTCNT)
 
 //16 bits
 union BSC_RTCOR_type
@@ -801,7 +823,7 @@ union BSC_RTCOR_type
 };
 
 
-#define BSC_RTCOR SH4IO_REG_T(BSC,RTCOR,16)
+#define BSC_RTCOR SH4IO_REG_T(BSC, RTCOR)
 
 //16 bits
 union BSC_RFCR_type
@@ -821,7 +843,7 @@ union BSC_RFCR_type
 	u16 full;
 };
 
-#define BSC_RFCR SH4IO_REG_T(BSC,RFCR,16)
+#define BSC_RFCR SH4IO_REG_T(BSC, RFCR)
 
 //32 bits
 union BSC_PCTRA_type
@@ -868,7 +890,7 @@ union BSC_PCTRA_type
 	u32 full;
 };
 
-#define BSC_PCTRA SH4IO_REG_T(BSC,PCTRA,32)
+#define BSC_PCTRA SH4IO_REG_T(BSC, PCTRA)
 
 //16 bits
 union BSC_PDTRA_type
@@ -944,7 +966,7 @@ union BSC_PCTRB_type
 	u32 full;
 };
 
-#define BSC_PCTRB SH4IO_REG_T(BSC,PCTRB,32)
+#define BSC_PCTRB SH4IO_REG_T(BSC, PCTRB)
 
 //16 bits
 union BSC_PDTRB_type
@@ -973,7 +995,7 @@ union BSC_PDTRB_type
 	u16 full;
 };
 
-#define BSC_PDTRB SH4IO_REG_T(BSC,PDTRB,16)
+#define BSC_PDTRB SH4IO_REG_T(BSC, PDTRB)
 
 //16 bits
 union BSC_GPIOIC_type
@@ -1002,7 +1024,7 @@ union BSC_GPIOIC_type
 	u16 full;
 };
 
-#define BSC_GPIOIC SH4IO_REG_T(BSC,GPIOIC,16)
+#define BSC_GPIOIC SH4IO_REG_T(BSC, GPIOIC)
 
 
 
@@ -1101,27 +1123,27 @@ union CCN_QACR_type
 
 
 //Types
-#define CCN_PTEH SH4IO_REG_T(CCN,PTEH,32)
-#define CCN_PTEL SH4IO_REG_T(CCN,PTEL,32)
-#define CCN_TTB SH4IO_REG(CCN,TTB,32)
-#define CCN_TEA SH4IO_REG(CCN,TEA,32)
-#define CCN_MMUCR SH4IO_REG_T(CCN,MMUCR,32)
-#define CCN_BASRA SH4IO_REG(CCN,BASRA,8)
-#define CCN_BASRB SH4IO_REG(CCN,BASRB,8)
-#define CCN_CCR SH4IO_REG_T(CCN,CCR,32)
-#define CCN_TRA SH4IO_REG(CCN,TRA,32)
-#define CCN_EXPEVT SH4IO_REG(CCN,EXPEVT,32)
-#define CCN_INTEVT SH4IO_REG(CCN,INTEVT,32)
-#define CCN_PTEA SH4IO_REG_T(CCN,PTEA,32)
+#define CCN_PTEH SH4IO_REG_T(CCN, PTEH)
+#define CCN_PTEL SH4IO_REG_T(CCN, PTEL)
+#define CCN_TTB SH4IO_REG(CCN, TTB)
+#define CCN_TEA SH4IO_REG(CCN, TEA)
+#define CCN_MMUCR SH4IO_REG_T(CCN, MMUCR)
+#define CCN_BASRA SH4IO_REG(CCN, BASRA)
+#define CCN_BASRB SH4IO_REG(CCN, BASRB)
+#define CCN_CCR SH4IO_REG_T(CCN, CCR)
+#define CCN_TRA SH4IO_REG(CCN, TRA)
+#define CCN_EXPEVT SH4IO_REG(CCN, EXPEVT)
+#define CCN_INTEVT SH4IO_REG(CCN, INTEVT)
+#define CCN_PTEA SH4IO_REG_T(CCN, PTEA)
 
-#define CCN_QACR0 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR0, 32))
-#define CCN_QACR1 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR1, 32))
+#define CCN_QACR0 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR0))
+#define CCN_QACR1 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR1))
 
-#define CPG_FRQCR SH4IO_REG(CPG,FRQCR,16)
-#define CPG_STBCR SH4IO_REG(CPG,STBCR,8)
-#define CPG_WTCNT SH4IO_REG(CPG,WTCNT,16)
-#define CPG_WTCSR SH4IO_REG(CPG,WTCSR,16)
-#define CPG_STBCR2 SH4IO_REG(CPG,STBCR2,8)
+#define CPG_FRQCR SH4IO_REG(CPG, FRQCR)
+#define CPG_STBCR SH4IO_REG(CPG, STBCR)
+#define CPG_WTCNT SH4IO_REG(CPG, WTCNT)
+#define CPG_WTCSR SH4IO_REG(CPG, WTCSR)
+#define CPG_STBCR2 SH4IO_REG(CPG, STBCR2)
 
 
 
@@ -1200,41 +1222,41 @@ extern u32 DMAC_DMATCR[4];//only 24 bits valid
 extern DMAC_CHCR_type DMAC_CHCR[4];
 */
 
-#define DMAC_SAR(x) SH4IO_REG_OFS(DMAC,SAR,x,0x10,32)
-#define DMAC_DAR(x) SH4IO_REG_OFS(DMAC,DAR,x,0x10,32)
-#define DMAC_DMATCR(x) SH4IO_REG_OFS(DMAC,DMATCR,x,0x10,32)
-#define DMAC_CHCR(x) SH4IO_REG_T_OFS(DMAC,CHCR,x,0x10,32)
+#define DMAC_SAR(x) SH4IO_REG_OFS(DMAC, SAR, x, 0x10)
+#define DMAC_DAR(x) SH4IO_REG_OFS(DMAC, DAR, x, 0x10)
+#define DMAC_DMATCR(x) SH4IO_REG_OFS(DMAC, DMATCR, x, 0x10)
+#define DMAC_CHCR(x) SH4IO_REG_T_OFS(DMAC, CHCR, x, 0x10)
 
-#define DMAC_DMAOR SH4IO_REG_T(DMAC,DMAOR,32)
+#define DMAC_DMAOR SH4IO_REG_T(DMAC, DMAOR)
 
 
 //UBC BARA 0xFF200000 0x1F200000 32 Undefined Held Held Held Iclk
-#define UBC_BARA SH4IO_REG(UBC,BARA,32)
+#define UBC_BARA SH4IO_REG(UBC, BARA)
 //UBC BAMRA 0xFF200004 0x1F200004 8 Undefined Held Held Held Iclk
-#define UBC_BAMRA SH4IO_REG(UBC,BAMRA,8)
+#define UBC_BAMRA SH4IO_REG(UBC, BAMRA)
 //UBC BBRA 0xFF200008 0x1F200008 16 0x0000 Held Held Held Iclk
-#define UBC_BBRA SH4IO_REG(UBC,BBRA,16)
+#define UBC_BBRA SH4IO_REG(UBC, BBRA)
 //UBC BARB 0xFF20000C 0x1F20000C 32 Undefined Held Held Held Iclk
-#define UBC_BARB SH4IO_REG(UBC,BARB,32)
+#define UBC_BARB SH4IO_REG(UBC, BARB)
 //UBC BAMRB 0xFF200010 0x1F200010 8 Undefined Held Held Held Iclk
-#define UBC_BAMRB SH4IO_REG(UBC,BAMRB,8)
+#define UBC_BAMRB SH4IO_REG(UBC, BAMRB)
 //UBC BBRB 0xFF200014 0x1F200014 16 0x0000 Held Held Held Iclk
-#define UBC_BBRB SH4IO_REG(UBC,BBRB,16)
+#define UBC_BBRB SH4IO_REG(UBC, BBRB)
 //UBC BDRB 0xFF200018 0x1F200018 32 Undefined Held Held Held Iclk
-#define UBC_BDRB SH4IO_REG(UBC,BDRB,32)
+#define UBC_BDRB SH4IO_REG(UBC, BDRB)
 //UBC BDMRB 0xFF20001C 0x1F20001C 32 Undefined Held Held Held Iclk
-#define UBC_BDMRB SH4IO_REG(UBC,BDMRB,32)
+#define UBC_BDMRB SH4IO_REG(UBC, BDMRB)
 //UBC BRCR 0xFF200020 0x1F200020 16 0x0000 Held Held Held Iclk
-#define UBC_BRCR SH4IO_REG(UBC,BRCR,16)
+#define UBC_BRCR SH4IO_REG(UBC, BRCR)
 
 //TCNT exists only as cached state
 //#define TMU_TCNT(x) SH4IO_REG_OFS(TMU,TCNT,x,12,32)
 
-#define TMU_TCOR(x) SH4IO_REG_OFS(TMU,TCOR,x,12,32)
-#define TMU_TCR(x) SH4IO_REG_OFS(TMU,TCR,x,12,16)
+#define TMU_TCOR(x) SH4IO_REG_OFS(TMU, TCOR, x, 12)
+#define TMU_TCR(x) SH4IO_REG_OFS(TMU, TCR, x, 12)
 
-#define TMU_TOCR SH4IO_REG(TMU,TOCR,8)
-#define TMU_TSTR SH4IO_REG(TMU,TSTR,8)
+#define TMU_TOCR SH4IO_REG(TMU, TOCR)
+#define TMU_TSTR SH4IO_REG(TMU, TSTR)
 
 
 
@@ -1265,10 +1287,10 @@ union SCIF_SCSMR2_type
 	u16 full;
 };
 
-#define SCIF_SCSMR2 SH4IO_REG_T(SCIF,SCSMR2,16)
+#define SCIF_SCSMR2 SH4IO_REG_T(SCIF, SCSMR2)
 
 //SCIF SCBRR2 0xFFE80004 0x1FE80004 8 0xFF 0xFF Held Held Pclk
-#define SCIF_SCBRR2 SH4IO_REG(SCIF,SCBRR2,8)
+#define SCIF_SCBRR2 SH4IO_REG(SCIF, SCBRR2)
 
 //SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
 union SCIF_SCSCR2_type
@@ -1299,7 +1321,7 @@ union SCIF_SCSCR2_type
 extern SCIF_SCSCR2_type SCIF_SCSCR2;
 
 //SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-#define SCIF_SCFTDR2 SH4IO_REG(SCIF,SCFTDR2,8)
+#define SCIF_SCFTDR2 SH4IO_REG(SCIF, SCFTDR2)
 
 //SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
 union SCIF_SCFSR2_type
@@ -1359,7 +1381,7 @@ union SCIF_SCFCR2_type
 	};
 	u16 full;
 };
-#define SCIF_SCFCR2 SH4IO_REG_T(SCIF,SCFCR2,16)
+#define SCIF_SCFCR2 SH4IO_REG_T(SCIF, SCFCR2)
 
 //Read OLNY
 //SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
@@ -1403,7 +1425,7 @@ union SCIF_SCSPTR2_type
 	};
 	u16 full;
 };
-#define SCIF_SCSPTR2 SH4IO_REG_T(SCIF,SCSPTR2,16)
+#define SCIF_SCSPTR2 SH4IO_REG_T(SCIF, SCSPTR2)
 
 //SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 union SCIF_SCLSR2_type
@@ -1418,26 +1440,26 @@ union SCIF_SCLSR2_type
 	};
 	u16 full;
 };
-#define SCIF_SCLSR2 SH4IO_REG_T(SCIF,SCLSR2,16)
+#define SCIF_SCLSR2 SH4IO_REG_T(SCIF, SCLSR2)
 
 
-#define RTC_R64CNT SH4IO_REG(RTC,R64CNT,8)
-#define RTC_RSECCNT SH4IO_REG(RTC,RSECCNT,8)
-#define RTC_RMINCNT SH4IO_REG(RTC,RMINCNT,8)
-#define RTC_RHRCNT SH4IO_REG(RTC,RHRCNT,8)
-#define RTC_RWKCNT SH4IO_REG(RTC,RWKCNT,8)
-#define RTC_RDAYCNT SH4IO_REG(RTC,RDAYCNT,8)
-#define RTC_RMONCNT SH4IO_REG(RTC,RMONCNT,8)
-#define RTC_RYRCNT SH4IO_REG(RTC,RYRCNT,16)
+#define RTC_R64CNT SH4IO_REG(RTC, R64CNT)
+#define RTC_RSECCNT SH4IO_REG(RTC, RSECCNT)
+#define RTC_RMINCNT SH4IO_REG(RTC, RMINCNT)
+#define RTC_RHRCNT SH4IO_REG(RTC, RHRCNT)
+#define RTC_RWKCNT SH4IO_REG(RTC, RWKCNT)
+#define RTC_RDAYCNT SH4IO_REG(RTC, RDAYCNT)
+#define RTC_RMONCNT SH4IO_REG(RTC, RMONCNT)
+#define RTC_RYRCNT SH4IO_REG(RTC, RYRCNT)
 
-#define RTC_RSECAR SH4IO_REG(RTC,RSECAR,8)
-#define RTC_RMINAR SH4IO_REG(RTC,RMINAR,8)
-#define RTC_RHRAR SH4IO_REG(RTC,RHRAR,8)
-#define RTC_RWKAR SH4IO_REG(RTC,RWKAR,8)
-#define RTC_RDAYAR SH4IO_REG(RTC,RDAYAR,8)
-#define RTC_RMONAR SH4IO_REG(RTC,RMONAR,8)
-#define RTC_RCR1 SH4IO_REG(RTC,RCR1,8)
-#define RTC_RCR2 SH4IO_REG(RTC,RCR2,8)
+#define RTC_RSECAR SH4IO_REG(RTC, RSECAR)
+#define RTC_RMINAR SH4IO_REG(RTC, RMINAR)
+#define RTC_RHRAR SH4IO_REG(RTC, RHRAR)
+#define RTC_RWKAR SH4IO_REG(RTC, RWKAR)
+#define RTC_RDAYAR SH4IO_REG(RTC, RDAYAR)
+#define RTC_RMONAR SH4IO_REG(RTC, RMONAR)
+#define RTC_RCR1 SH4IO_REG(RTC, RCR1)
+#define RTC_RCR2 SH4IO_REG(RTC, RCR2)
 
 
 
@@ -1492,16 +1514,16 @@ union INTC_IPRC_type
 	};
 };
 
-#define INTC_ICR SH4IO_REG_T(INTC,ICR,16)
+#define INTC_ICR SH4IO_REG_T(INTC, ICR)
 
-#define INTC_IPRA SH4IO_REG_T(INTC,IPRA,16)
-#define INTC_IPRB SH4IO_REG_T(INTC,IPRB,16)
-#define INTC_IPRC SH4IO_REG_T(INTC,IPRC,16)
+#define INTC_IPRA SH4IO_REG_T(INTC, IPRA)
+#define INTC_IPRB SH4IO_REG_T(INTC, IPRB)
+#define INTC_IPRC SH4IO_REG_T(INTC, IPRC)
 
-#define SCI_SCSMR1 SH4IO_REG(SCI, SCSMR1, 8)
-#define SCI_SCBRR1 SH4IO_REG(SCI, SCBRR1, 8)
-#define SCI_SCSCR1 SH4IO_REG(SCI, SCSCR1, 8)
-#define SCI_SCTDR1 SH4IO_REG(SCI, SCTDR1, 8)
-#define SCI_SCSSR1 SH4IO_REG(SCI, SCSSR1, 8)
-#define SCI_SCRDR1 SH4IO_REG(SCI, SCRDR1, 8)
-#define SCI_SCSPTR1 SH4IO_REG(SCI, SCSPTR1, 8)
+#define SCI_SCSMR1 SH4IO_REG(SCI, SCSMR1)
+#define SCI_SCBRR1 SH4IO_REG(SCI, SCBRR1)
+#define SCI_SCSCR1 SH4IO_REG(SCI, SCSCR1)
+#define SCI_SCTDR1 SH4IO_REG(SCI, SCTDR1)
+#define SCI_SCSSR1 SH4IO_REG(SCI, SCSSR1)
+#define SCI_SCRDR1 SH4IO_REG(SCI, SCRDR1)
+#define SCI_SCSPTR1 SH4IO_REG(SCI, SCSPTR1)

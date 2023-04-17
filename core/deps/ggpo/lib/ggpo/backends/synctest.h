@@ -24,7 +24,6 @@ public:
    virtual GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size);
    virtual GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags);
    virtual GGPOErrorCode IncrementFrame(void);
-   virtual GGPOErrorCode Logv(char *fmt, va_list list);
    GGPOErrorCode GetCurrentFrame(int* frame) override { *frame = _sync.GetFrameCount(); return GGPO_OK; }
 
 protected:
@@ -37,8 +36,6 @@ protected:
    };
 
    void RaiseSyncError(const char *fmt, ...);
-   void BeginLog(int saving);
-   void EndLog();
    void LogSaveStates(SavedInfo &info);
 
 protected:

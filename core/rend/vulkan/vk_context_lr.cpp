@@ -23,6 +23,10 @@
 #include "compiler.h"
 #include "oslib/oslib.h"
 
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
+
 VulkanContext *VulkanContext::contextInstance;
 
 const VkApplicationInfo* VkGetApplicationInfo()
@@ -39,10 +43,10 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		const char** required_device_layers, unsigned num_required_device_layers,
 		const VkPhysicalDeviceFeatures* required_features)
 {
-	vulkan_symbol_wrapper_init(get_instance_proc_addr);
-	vulkan_symbol_wrapper_load_global_symbols();
-	vulkan_symbol_wrapper_load_core_symbols(instance);
-	VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(instance, vkGetPhysicalDeviceSurfaceSupportKHR);
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance_proc_addr);
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
+#endif
 
 	vk::PhysicalDevice physicalDevice(gpu);
 	if (gpu == VK_NULL_HANDLE)
@@ -159,7 +163,9 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 			context->queue_family_index == context->presentation_queue_family_index ? 1 : 2, deviceQueueCreateInfos,
 					num_required_device_layers, required_device_layers, deviceExtensions.size(), &deviceExtensions[0], &features));
 	context->device = (VkDevice)device;
-	vulkan_symbol_wrapper_load_core_device_symbols(context->device);
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(context->device);
+#endif
 
 	// Queues
 	context->queue = (VkQueue)device.getQueue(context->queue_family_index, 0);
@@ -188,7 +194,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			VK_API_VERSION_MAJOR(props.apiVersion),
 			VK_API_VERSION_MINOR(props.apiVersion),
 			VK_API_VERSION_PATCH(props.apiVersion));
-	if (VK_VERSION_MINOR(props.apiVersion) >= 1 && ::vkGetPhysicalDeviceFormatProperties2 != nullptr)
+	if (VK_VERSION_MINOR(props.apiVersion) >= 1)
 	{
 		NOTICE_LOG(RENDERER, "GPU Supports vkGetPhysicalDeviceProperties2");
 		static vk::PhysicalDeviceProperties2 properties2;
@@ -274,7 +280,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	retro_image.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	retro_image.create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	retro_image.create_info.pNext = nullptr;
-	retro_image.create_info.format = (VkFormat)colorFormat;
+	retro_image.create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
 	retro_image.create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	retro_image.create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 	retro_image.create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -290,7 +296,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	return true;
 }
 
-void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent)
+void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
 	retro_image.image_view = (VkImageView)imageView;
 	retro_image.create_info.image = (VkImage)image;

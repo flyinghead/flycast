@@ -1,27 +1,62 @@
+/*
+	Copyright 2022 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 
-#include <list>
-#include <mutex>
-#include <string>
-
-#include "Log.h"
 #include "LogManager.h"
+#include <deque>
+#include <mutex>
+#include <vector>
 
 class InMemoryListener : public LogListener
 {
 public:
-	InMemoryListener() = default;
-	~InMemoryListener() override = default;
+	InMemoryListener() {
+		instance = this;
+	}
+	~InMemoryListener() override {
+		instance = nullptr;
+	}
 
-	void Log(LogTypes::LOG_LEVELS, const char* msg) override;
-	void SetMaxLines(int maxLines) { m_max_lines = maxLines; }
-	void Clear();
-	std::list<std::string> GetLines(int start_line_no, int* tail_line_no);
+	void Log(LogTypes::LOG_LEVELS, const char* msg) override
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+		lines.emplace_back(msg);
+		if (lines.size() > MaxLines)
+			lines.pop_front();
+	}
+
+	std::vector<std::string> getLog()
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+		std::vector<std::string> v(lines.begin(), lines.end());
+
+		return v;
+	}
+
+	static InMemoryListener *getInstance() {
+		return instance;
+	}
+
 private:
-	std::mutex m_log_lock;
-	std::list<std::pair<int, std::string>> m_log;
-	int m_max_lines = 0;
-	int m_line_no = 0;
-};
+	std::mutex mutex;
+	std::deque<std::string> lines;
 
-extern InMemoryListener inMemoryListener;
+	static constexpr int MaxLines = 100;
+	static InMemoryListener *instance;
+};

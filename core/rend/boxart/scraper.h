@@ -17,12 +17,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <string>
-#include <memory>
-#include <vector>
 
 #include "types.h"
 #include "json.hpp"
+
+#include <string>
+#include <vector>
 
 using namespace nlohmann;
 
@@ -66,14 +66,10 @@ struct GameBoxart
 	static void loadProperty(T& i, const json& j, const std::string& propName)
 	{
 		try {
-			// asan error if missing contains(). json bug?
-			if (j.contains(propName)) {
-				i = j[propName].get<T>();
-				return;
-			}
+			i = j.at(propName).get<T>();
 		} catch (const json::exception& e) {
+			i = T();
 		}
-		i = T();
 	}
 
 	GameBoxart() = default;

@@ -55,25 +55,26 @@
 #include "ta_ctx.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
-#include "hw/pvr/Renderer_if.h"
-#include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mem.h"
-#include "emulator.h"
+#include "hw/sh4/sh4_mmr.h"
 #include "serialize.h"
 #include "elan_struct.h"
 #include "network/ggpo.h"
+#include "cfg/option.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace elan {
+
+constexpr u32 ELAN_RAM_MASK = ERAM_SIZE_MAX - 1;
 
 static _vmem_handler elanRegHandler;
 static _vmem_handler elanCmdHandler;
 static _vmem_handler elanRamHandler;
 
 u8 *RAM;
+u32 ERAM_SIZE;
 
 static u32 reg10;
 static u32 reg74;
@@ -88,7 +89,7 @@ static u32 DYNACALL read_elanreg(u32 paddr)
 	{
 	case 0x5F:
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-			return sb_ReadMem(paddr, sizeof(u32));
+			return sb_ReadMem(paddr);
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 			return pvr_ReadReg(paddr);
 
@@ -154,7 +155,7 @@ static void DYNACALL write_elanreg(u32 paddr, u32 data)
 	{
 	case 0x5F:
 		if (addr>= 0x005F6800 && addr <= 0x005F7CFF)
-			sb_WriteMem(paddr, data, sizeof(u32));
+			sb_WriteMem(paddr, data);
 		else if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 			pvr_WriteReg(paddr, data);
 		else
@@ -478,7 +479,7 @@ struct State
 
 	static u32 elanRamAddress(void *p)
 	{
-		if ((u8 *)p < RAM || (u8 *)p >= RAM + ELAN_RAM_SIZE)
+		if ((u8 *)p < RAM || (u8 *)p >= RAM + ERAM_SIZE)
 			return Null;
 		else
 			return (u32)((u8 *)p - RAM);
@@ -561,12 +562,6 @@ template<typename T>
 static glm::vec3 getNormal(const T& vtx)
 {
 	return { (int8_t)vtx.header.nx / 127.f, (int8_t)vtx.header.ny / 127.f, (int8_t)vtx.header.nz / 127.f };
-}
-
-template<>
-glm::vec3 getNormal(const N2_VERTEX_VNU& vtx)
-{
-	return { vtx.normal.nx, vtx.normal.ny, vtx.normal.nz };
 }
 
 template<typename T>
@@ -1447,7 +1442,7 @@ template<bool Active = true>
 static void executeCommand(u8 *data, int size)
 {
 //	verify(size >= 0);
-//	verify(size < (int)ELAN_RAM_SIZE);
+//	verify(size < (int)ERAM_SIZE);
 //	if (0x2b00 == (u32)(data - RAM))
 //		for (int i = 0; i < size; i += 4)
 //			DEBUG_LOG(PVR, "Elan Parse %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
@@ -1754,7 +1749,7 @@ void reset(bool hard)
 {
 	if (hard)
 	{
-		memset(RAM, 0, ELAN_RAM_SIZE);
+		memset(RAM, 0, ERAM_SIZE);
 		state.reset();
 	}
 }
@@ -1772,6 +1767,8 @@ void vmem_init()
 
 void vmem_map(u32 base)
 {
+	if (!settings.platform.isNaomi2())
+		return;
 	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
 	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
 	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
@@ -1786,7 +1783,7 @@ void serialize(Serializer& ser)
 	ser << reg74;
 	ser << elanCmd;
 	if (!ser.rollback())
-		ser.serialize(RAM, ELAN_RAM_SIZE);
+		ser.serialize(RAM, ERAM_SIZE);
 	state.serialize(ser);
 }
 
@@ -1798,7 +1795,7 @@ void deserialize(Deserializer& deser)
 	deser >> reg74;
 	deser >> elanCmd;
 	if (!deser.rollback())
-		deser.deserialize(RAM, ELAN_RAM_SIZE);
+		deser.deserialize(RAM, ERAM_SIZE);
 	state.deserialize(deser);
 }
 

@@ -20,30 +20,7 @@
 */
 #include "drawer.h"
 #include "hw/pvr/pvr_mem.h"
-
-void Drawer::SortTriangles()
-{
-	sortedPolys.resize(pvrrc.render_passes.used());
-	sortedIndexes.resize(pvrrc.render_passes.used());
-	sortedIndexCount = 0;
-	RenderPass previousPass = {};
-
-	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-	{
-		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
-		sortedIndexes[render_pass].clear();
-		if (current_pass.autosort)
-		{
-			GenSorted(previousPass.tr_count, current_pass.tr_count - previousPass.tr_count, sortedPolys[render_pass], sortedIndexes[render_pass]);
-			for (auto& poly : sortedPolys[render_pass])
-				poly.first += sortedIndexCount;
-			sortedIndexCount += sortedIndexes[render_pass].size();
-		}
-		else
-			sortedPolys[render_pass].clear();
-		previousPass = current_pass;
-	}
-}
+#include "rend/sorter.h"
 
 TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
@@ -62,8 +39,8 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 
 void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 {
-	bool wide_screen_on = config::Widescreen && !pvrrc.isRenderFramebuffer
-			&& !matrices.IsClipped() && !config::Rotate90;
+	bool wide_screen_on = config::Widescreen
+			&& !matrices.IsClipped() && !config::Rotate90 && !config::EmulateFramebuffer;
 	if (!wide_screen_on)
 	{
 		float width;
@@ -101,6 +78,87 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 	{
 		baseScissor = { 0, 0, (u32)viewport.width, (u32)viewport.height };
 	}
+}
+
+void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB)
+{
+	u32 width = (pvrrc.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (pvrrc.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+
+	float xscale = pvrrc.scaler_ctl.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / pvrrc.scaler_ctl.vscalefactor;
+	if (std::abs(yscale - 1.f) < 0.01f)
+		yscale = 1.f;
+
+	FramebufferAttachment *scaledFB = nullptr;
+	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
+	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
+
+	if (xscale != 1.f || yscale != 1.f)
+	{
+		u32 scaledW = width * xscale;
+		u32 scaledH = height * yscale;
+
+		scaledFB = new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
+		scaledFB->Init(scaledW, scaledH, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst);
+
+		setImageLayout(commandBuffer, scaledFB->GetImage(), vk::Format::eR8G8B8A8Unorm, 1, vk::ImageLayout::eUndefined,
+				vk::ImageLayout::eTransferDstOptimal);
+
+		vk::ImageBlit imageBlit;
+		imageBlit.setSrcOffsets({ vk::Offset3D(0, 0, 0), vk::Offset3D(width, height, 1) });
+		imageBlit.setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1));
+		imageBlit.setDstOffsets({ vk::Offset3D(0, 0, 0), vk::Offset3D(scaledW, scaledH, 1) });
+		imageBlit.setDstSubresource(imageBlit.srcSubresource);
+		commandBuffer.blitImage(finalFB->GetImage(), vk::ImageLayout::eTransferSrcOptimal, scaledFB->GetImage(), vk::ImageLayout::eTransferDstOptimal,
+				1, &imageBlit, vk::Filter::eLinear);
+
+		setImageLayout(commandBuffer, scaledFB->GetImage(), vk::Format::eR8G8B8A8Unorm, 1, vk::ImageLayout::eTransferDstOptimal,
+				vk::ImageLayout::eTransferSrcOptimal);
+
+		finalFB = scaledFB;
+		width = scaledW;
+		height = scaledH;
+		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
+		if (yscale > 1) {
+			yClip.min = std::round(yClip.min * yscale);
+			yClip.max = std::round(yClip.max * yscale);
+		}
+	}
+
+	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
+			vk::Extent3D(width, height, 1));
+	commandBuffer.copyImageToBuffer(finalFB->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
+			*finalFB->GetBufferData()->buffer, copyRegion);
+
+	vk::BufferMemoryBarrier bufferMemoryBarrier(
+			vk::AccessFlagBits::eTransferWrite,
+			vk::AccessFlagBits::eHostRead,
+			VK_QUEUE_FAMILY_IGNORED,
+			VK_QUEUE_FAMILY_IGNORED,
+			*finalFB->GetBufferData()->buffer,
+			0,
+			VK_WHOLE_SIZE);
+	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
+
+	commandBuffer.end();
+	commandPool->EndFrame();
+
+	vk::Fence fence = commandPool->GetCurrentFence();
+	GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
+	PixelBuffer<u32> tmpBuf;
+	tmpBuf.init(width, height);
+	finalFB->GetBufferData()->download(width * height * 4, tmpBuf.data());
+
+	xClip.min = std::min(xClip.min, width - 1);
+	xClip.max = std::min(xClip.max, width - 1);
+	yClip.min = std::min(yClip.min, height - 1);
+	yClip.max = std::min(yClip.max, height - 1);
+	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), pvrrc.fb_W_SOF1 & VRAM_MASK,
+			pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8, xClip, yClip);
+
+	delete scaledFB;
 }
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
@@ -172,15 +230,16 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
 
-void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass)
+void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass)
 {
-	for (const SortTrigDrawParam& param : polys)
-		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.used() + param.first, param.count);
+	for (u32 idx = first; idx < last; idx++)
+		DrawPoly(cmdBuffer, ListType_Translucent, true, *polys[idx].ppid, polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
-		for (const SortTrigDrawParam& param : polys)
+		for (u32 idx = first; idx < last; idx++)
 		{
+			const SortedTriangle& param = polys[idx];
 			if (param.ppid->isp.ZWriteDis)
 				continue;
 			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode, param.ppid->isNaomi2());
@@ -269,9 +328,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 	// Index
 	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
-	for (const std::vector<u32>& idx : sortedIndexes)
-		if (!idx.empty())
-			packer.add(&idx[0], idx.size() * sizeof(u32));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -291,7 +347,6 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
-	SortTriangles();
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
@@ -302,17 +357,6 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	}
 
 	setFirstProvokingVertex(pvrrc);
-
-	// Do per-poly sorting
-	RenderPass previous_pass = {};
-	if (config::PerStripSorting)
-		for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-		{
-			const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
-			if (current_pass.autosort)
-				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-			previous_pass = current_pass;
-		}
 
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;
@@ -334,7 +378,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	previous_pass = {};
+	RenderPass previous_pass{};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
@@ -350,7 +394,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-				DrawSorted(cmdBuffer, sortedPolys[render_pass], render_pass + 1 < pvrrc.render_passes.used());
+				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < pvrrc.render_passes.used());
 			else
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }
@@ -555,10 +599,11 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	{
 		std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
 				// Color attachment
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
 				// Depth attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
@@ -606,8 +651,12 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		{
 			colorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 					new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
-			colorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
-					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+			if (config::EmulateFramebuffer)
+				usage |= vk::ImageUsageFlagBits::eTransferSrc;
+			else
+				usage |= vk::ImageUsageFlagBits::eSampled;
+			colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage);
 			attachments[0] = colorAttachments.back()->GetImageView();
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
 					attachments, viewport.width, viewport.height, 1);
@@ -626,13 +675,15 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
+	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (transitionNeeded[GetCurrentImage()])
 	{
-		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), GetContext()->GetColorFormat(),
-				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
+				1, vk::ImageLayout::eUndefined,
+				config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 		transitionNeeded[GetCurrentImage()] = false;
 	}
 
@@ -655,9 +706,17 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 void ScreenDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
-	currentCommandBuffer.end();
+	if (config::EmulateFramebuffer)
+	{
+		scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[GetCurrentImage()].get());
+	}
+	else
+	{
+		currentCommandBuffer.end();
+		commandPool->EndFrame();
+		aspectRatio = getOutputFramebufferAspectRatio();
+	}
 	currentCommandBuffer = nullptr;
-	commandPool->EndFrame();
 	Drawer::EndRenderPass();
 	frameRendered = true;
 }

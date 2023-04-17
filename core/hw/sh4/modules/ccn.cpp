@@ -18,9 +18,9 @@ template<u32 idx>
 void CCN_QACR_write(u32 addr, u32 value)
 {
 	if (idx == 0)
-		CCN_QACR0.reg_data = value;
+		CCN_QACR0.reg_data = value & 0x1c;
 	else
-		CCN_QACR1.reg_data = value;
+		CCN_QACR1.reg_data = value & 0x1c;
 
 	u32 area = ((CCN_QACR_type&)value).Area;
 
@@ -45,20 +45,22 @@ void CCN_QACR_write(u32 addr, u32 value)
 	}
 }
 
-void CCN_PTEH_write(u32 addr, u32 value)
+static void CCN_PTEH_write(u32 addr, u32 value)
 {
 	CCN_PTEH_type temp;
-	temp.reg_data = value;
+	temp.reg_data = value & 0xfffffcff;
+#ifdef FAST_MMU
 	if (temp.ASID != CCN_PTEH.ASID)
 		mmuAddressLUTFlush(false);
+#endif
 
 	CCN_PTEH = temp;
 }
 
-void CCN_MMUCR_write(u32 addr, u32 value)
+static void CCN_MMUCR_write(u32 addr, u32 value)
 {
 	CCN_MMUCR_type temp;
-	temp.reg_data=value;
+	temp.reg_data = value & 0xfcfcff05;
 
 	bool mmu_changed_state = temp.AT != CCN_MMUCR.AT;
 
@@ -69,7 +71,7 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 		temp.TI = 0;
 	}
-	CCN_MMUCR=temp;
+	CCN_MMUCR = temp;
 
 	if (mmu_changed_state)
 	{
@@ -78,10 +80,11 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 		mmu_set_state();
 	}
 }
-void CCN_CCR_write(u32 addr, u32 value)
+
+static void CCN_CCR_write(u32 addr, u32 value)
 {
 	CCN_CCR_type temp;
-	temp.reg_data=value;
+	temp.reg_data = value & 0x89AF;
 
 	if (temp.ICI) {
 		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
@@ -114,52 +117,52 @@ static u32 CCN_PRR_read(u32 addr)
 void ccn_init()
 {
 	//CCN PTEH 0xFF000000 0x1F000000 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_PTEH_addr,RIO_WF,32,0,&CCN_PTEH_write);
+	sh4_rio_reg(CCN, CCN_PTEH_addr, RIO_WF, nullptr, CCN_PTEH_write);
 
 	//CCN PTEL 0xFF000004 0x1F000004 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_PTEL_addr,RIO_DATA,32);
+	sh4_rio_reg_wmask<CCN, CCN_PTEL_addr, 0x1ffffdff>();
 
 	//CCN TTB 0xFF000008 0x1F000008 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_TTB_addr,RIO_DATA,32);
+	sh4_rio_reg(CCN, CCN_TTB_addr, RIO_DATA);
 
 	//CCN TEA 0xFF00000C 0x1F00000C 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(CCN,CCN_TEA_addr,RIO_DATA,32);
+	sh4_rio_reg(CCN, CCN_TEA_addr, RIO_DATA);
 
 	//CCN MMUCR 0xFF000010 0x1F000010 32 0x00000000 0x00000000 Held Held Iclk
-	sh4_rio_reg(CCN,CCN_MMUCR_addr,RIO_WF,32,0,&CCN_MMUCR_write);
+	sh4_rio_reg(CCN, CCN_MMUCR_addr, RIO_WF, nullptr, CCN_MMUCR_write);
 
 	//CCN BASRA 0xFF000014 0x1F000014 8 Undefined Held Held Held Iclk
-	sh4_rio_reg(CCN,CCN_BASRA_addr,RIO_DATA,8);
+	sh4_rio_reg8<CCN, CCN_BASRA_addr>();
 
 	//CCN BASRB 0xFF000018 0x1F000018 8 Undefined Held Held Held Iclk
-	sh4_rio_reg(CCN,CCN_BASRB_addr,RIO_DATA,8);
+	sh4_rio_reg8<CCN, CCN_BASRB_addr>();
 
 	//CCN CCR 0xFF00001C 0x1F00001C 32 0x00000000 0x00000000 Held Held Iclk
-	sh4_rio_reg(CCN,CCN_CCR_addr,RIO_WF,32,0,&CCN_CCR_write);
+	sh4_rio_reg(CCN, CCN_CCR_addr, RIO_WF, nullptr, CCN_CCR_write);
 
 	//CCN TRA 0xFF000020 0x1F000020 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_TRA_addr,RIO_DATA,32);
+	sh4_rio_reg_wmask<CCN, CCN_TRA_addr, 0x000003fc>();
 
 	//CCN EXPEVT 0xFF000024 0x1F000024 32 0x00000000 0x00000020 Held Held Iclk
-	sh4_rio_reg(CCN,CCN_EXPEVT_addr,RIO_DATA,32);
+	sh4_rio_reg_wmask<CCN, CCN_EXPEVT_addr, 0x00000fff>();
 
 	//CCN INTEVT 0xFF000028 0x1F000028 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_INTEVT_addr,RIO_DATA,32);
+	sh4_rio_reg_wmask<CCN, CCN_INTEVT_addr, 0x00000fff>();
 
 	// CPU VERSION 0xFF000030 0x1F000030 (undocumented)
-	sh4_rio_reg(CCN,CPU_VERSION_addr, RIO_RO_FUNC, 32, &CPU_VERSION_read, 0);
+	sh4_rio_reg(CCN, CPU_VERSION_addr, RIO_RO_FUNC, CPU_VERSION_read, nullptr);
 
 	//CCN PTEA 0xFF000034 0x1F000034 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_PTEA_addr,RIO_DATA,32);
+	sh4_rio_reg_wmask<CCN, CCN_PTEA_addr, 0x0000000f>();
 
 	//CCN QACR0 0xFF000038 0x1F000038 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_QACR0_addr,RIO_WF,32,0,&CCN_QACR_write<0>);
+	sh4_rio_reg(CCN, CCN_QACR0_addr, RIO_WF, nullptr, CCN_QACR_write<0>);
 
 	//CCN QACR1 0xFF00003C 0x1F00003C 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_QACR1_addr,RIO_WF,32,0,&CCN_QACR_write<1>);
+	sh4_rio_reg(CCN, CCN_QACR1_addr, RIO_WF, nullptr, CCN_QACR_write<1>);
 
 	// CCN PRR 0xFF000044 0x1F000044 (undocumented)
-	sh4_rio_reg(CCN,CCN_PRR_addr, RIO_RO_FUNC, 32, &CCN_PRR_read, 0);
+	sh4_rio_reg(CCN,CCN_PRR_addr, RIO_RO_FUNC, &CCN_PRR_read, 0);
 
 }
 

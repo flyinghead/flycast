@@ -1,6 +1,5 @@
 #include "glcache.h"
 #include "gles.h"
-#include "cfg/cfg.h"
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
 #include "rend/gui.h"
@@ -13,6 +12,11 @@
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
+#include "rend/gles/postprocess.h"
+
+#ifdef TEST_AUTOMATION
+#include "cfg/cfg.h"
+#endif
 
 #include <cmath>
 
@@ -356,6 +360,8 @@ void main()
 }
 )";
 
+static void gl_free_osd_resources();
+
 GLCache glcache;
 gl_ctx gl;
 
@@ -370,13 +376,16 @@ void do_swap_automation()
 	static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
 	extern bool do_screenshot;
 
+	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
+	if (framebuffer == nullptr)
+		return;
+	int bytesz = framebuffer->getWidth() * framebuffer->getHeight() * 3;
 	if (video_file)
 	{
-		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		framebuffer->bind(GL_READ_FRAMEBUFFER);
+		glReadPixels(0, 0, framebuffer->getWidth(), framebuffer->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, img);
 		fwrite(img, 1, bytesz, video_file);
 		delete[] img;
 		fflush(video_file);
@@ -384,13 +393,12 @@ void do_swap_automation()
 
 	if (do_screenshot)
 	{
-		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		framebuffer->bind(GL_READ_FRAMEBUFFER);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
-		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
+		glReadPixels(0, 0, framebuffer->getWidth(), framebuffer->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, img);
+		dump_screenshot(img, framebuffer->getWidth(), framebuffer->getHeight());
 		delete[] img;
 		dc_exit();
 		flycast_term();
@@ -428,18 +436,15 @@ void termGLCommon()
 	glDeleteBuffers(1, &gl.rtt.pbo);
 	gl.rtt.pbo = 0;
 	gl.rtt.pboSize = 0;
-	glDeleteFramebuffers(1, &gl.rtt.fbo);
-	gl.rtt.fbo = 0;
-	glcache.DeleteTextures(1, &gl.rtt.tex);
-	gl.rtt.tex = 0;
-	glDeleteRenderbuffers(1, &gl.rtt.depthb);
-	gl.rtt.depthb = 0;
+	gl.rtt.framebuffer.reset();
 	gl.rtt.texAddress = ~0;
 
 	gl_free_osd_resources();
-	free_output_framebuffer();
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
+	gl.ofbo.framebuffer.reset();
+	glcache.DeleteTextures(1, &gl.dcfb.tex);
+	gl.dcfb.tex = 0;
+	gl.ofbo2.framebuffer.reset();
+	gl.fbscaling.framebuffer.reset();
 #ifdef LIBRETRO
 	termVmuLightgun();
 #endif
@@ -454,7 +459,6 @@ static void gles_term()
 	gl.vbo.geometry.reset();
 	gl.vbo.modvols.reset();
 	gl.vbo.idxs.reset();
-	gl.vbo.idxs2.reset();
 	termGLCommon();
 
 	gl_delete_shaders();
@@ -475,12 +479,16 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 300 es";
 			if (gl.gl_major > 3 || gl.gl_minor >= 2)
 		    	gl.border_clamp_supported = true;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = true;
 		}
 		else
 		{
 			gl.gl_version = "GLES2";
 			gl.glsl_version_header = "";
 			gl.index_type = GL_UNSIGNED_SHORT;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = false;
 		}
 		gl.single_channel_format = GL_ALPHA;
 		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
@@ -508,12 +516,17 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 130";
 #endif
 			gl.single_channel_format = GL_RED;
+			gl.prim_restart_supported = gl.gl_major > 3 || gl.gl_minor >= 1; // 3.1 min
+			gl.prim_restart_fixed_supported = gl.gl_major > 4
+					|| (gl.gl_major == 4 && gl.gl_minor >= 3);				// 4.3 min
 		}
 		else
 		{
 			gl.gl_version = "GL2";
 			gl.glsl_version_header = "#version 120";
 			gl.single_channel_format = GL_ALPHA;
+			gl.prim_restart_supported = false;
+			gl.prim_restart_fixed_supported = false;
 		}
     	gl.highp_float_supported = true;
     	gl.border_clamp_supported = true;
@@ -637,8 +650,6 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 	glDeleteShader(ps);
 
 	glcache.UseProgram(program);
-
-	verify(glIsProgram(program));
 
 	return program;
 }
@@ -796,9 +807,10 @@ bool CompilePipelineShader(PipelineShader* s)
 
 	ShaderUniforms.Set(s);
 
-	return glIsProgram(s->program)==GL_TRUE;
+	return true;
 }
 
+#ifdef __ANDROID__
 static void SetupOSDVBO()
 {
 #ifndef GLES2
@@ -828,7 +840,7 @@ static void SetupOSDVBO()
 	bindVertexArray(0);
 }
 
-void gl_load_osd_resources()
+static void gl_load_osd_resources()
 {
 	OpenGlSource vertexSource;
 	vertexSource.addSource(VertexCompatShader)
@@ -841,7 +853,6 @@ void gl_load_osd_resources()
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
-#ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
 	{
 		int width, height;
@@ -854,11 +865,11 @@ void gl_load_osd_resources()
 
 		delete[] image_data;
 	}
-#endif
 	SetupOSDVBO();
 }
+#endif
 
-void gl_free_osd_resources()
+static void gl_free_osd_resources()
 {
 	if (gl.OSD_SHADER.program != 0)
 	{
@@ -923,7 +934,6 @@ static bool gl_create_resources()
 	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
 	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
 	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
-	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
 	initQuad();
 
@@ -962,7 +972,7 @@ void gl_DebugOutput(GLenum source,
 }
 #endif
 
-bool gles_init()
+bool OpenGLRenderer::Init()
 {
 	glcache.EnableCache();
 
@@ -1001,7 +1011,7 @@ bool gles_init()
 }
 
 
-void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
+static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
 {
 	glActiveTexture(texture_slot);
 	if (fogTextureId == 0)
@@ -1026,7 +1036,7 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void UpdatePaletteTexture(GLenum texture_slot)
+static void updatePaletteTexture(GLenum texture_slot)
 {
 	glActiveTexture(texture_slot);
 	if (paletteTextureId == 0)
@@ -1048,7 +1058,7 @@ void UpdatePaletteTexture(GLenum texture_slot)
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void OSD_DRAW(bool clear_screen)
+void OpenGLRenderer::DrawOSD(bool clear_screen)
 {
 #ifdef LIBRETRO
 	void DrawVmuTexture(u8 vmu_screen_number);
@@ -1078,7 +1088,7 @@ void OSD_DRAW(bool clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			render_output_framebuffer();
+			renderLastFrame();
 			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
@@ -1089,7 +1099,6 @@ void OSD_DRAW(bool clear_screen)
 #endif
 			SetupOSDVBO();
 
-		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		float scale_h = settings.display.height / 480.f;
@@ -1139,25 +1148,17 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		TexCache.Clear();
 	TexCache.Cleanup();
 
-	if (ctx->rend.isRenderFramebuffer)
+	if (fog_needs_update && config::Fog)
 	{
-		RenderFramebuffer();
-		return true;
+		fog_needs_update = false;
+		updateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
 	}
-	else
+	if (palette_updated)
 	{
-		if (fog_needs_update && config::Fog)
-		{
-			fog_needs_update = false;
-			UpdateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
-		}
-		if (palette_updated)
-		{
-			UpdatePaletteTexture(getPaletteTextureSlot());
-			palette_updated = false;
-		}
-		return ta_parse(ctx);
+		updatePaletteTexture(getPaletteTextureSlot());
+		palette_updated = false;
 	}
+	return ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 
 static void upload_vertex_indices()
@@ -1178,7 +1179,7 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame(int width, int height)
+bool OpenGLRenderer::renderFrame(int width, int height)
 {
 	bool is_rtt = pvrrc.isRTT;
 
@@ -1194,12 +1195,13 @@ bool RenderFrame(int width, int height)
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
+			is_rtt ? pvrrc.getFramebufferHeight() : height);
 	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-	if (!is_rtt)
+	if (!is_rtt && !config::EmulateFramebuffer)
 		gcflip = 0;
 	else
 		gcflip = 1;
@@ -1243,14 +1245,17 @@ bool RenderFrame(int width, int height)
 		ShaderUniforms.Set(&it.second);
 		resetN2UniformCache(&it.second);
 	}
-
-	//setup render target first
-#ifdef LIBRETRO
-	gl.ofbo.origFbo = glsm_get_current_framebuffer();
-#else
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#ifndef GLES2
+	if (gl.prim_restart_fixed_supported)
+		glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+#ifndef GLES
+	else if (gl.prim_restart_supported) {
+		glEnable(GL_PRIMITIVE_RESTART);
+		glPrimitiveRestartIndex(-1);
+	}
 #endif
+#endif
+	//setup render target first
 	if (is_rtt)
 	{
 		if (BindRTT() == 0)
@@ -1259,12 +1264,17 @@ bool RenderFrame(int width, int height)
 	else
 	{
 #ifdef LIBRETRO
-		gl.ofbo.width = width;
-		gl.ofbo.height = height;
-		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+		if (config::PowerVR2Filter)
 			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
+		else if (config::EmulateFramebuffer)
+		{
+			if (init_output_framebuffer(width, height) == 0)
+				return false;
+		}
 		else
+		{
 			glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
+		}
 		glViewport(0, 0, width, height);
 #else
 		if (init_output_framebuffer(width, height) == 0)
@@ -1272,7 +1282,8 @@ bool RenderFrame(int width, int height)
 #endif
 	}
 
-	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
+	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped()
+			&& !config::Rotate90 && !config::EmulateFramebuffer;
 
 	//Color is cleared by the background plane
 
@@ -1291,7 +1302,7 @@ bool RenderFrame(int width, int height)
 		// Video output disabled
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	else if (!pvrrc.isRenderFramebuffer)
+	else
 	{
 		//move vertex to gpu
 		//Main VBO
@@ -1373,29 +1384,28 @@ bool RenderFrame(int width, int height)
 		DrawStrips();
 #ifdef LIBRETRO
 		if (config::PowerVR2Filter && !is_rtt)
-			postProcessor.render(glsm_get_current_framebuffer());
+		{
+			if (config::EmulateFramebuffer)
+				postProcessor.render(init_output_framebuffer(width, height));
+			else
+				postProcessor.render(glsm_get_current_framebuffer());
+		}
 #endif
-	}
-	else
-	{
-		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (config::EmulateFramebuffer)
+		writeFramebufferToVRAM();
 #ifndef LIBRETRO
-	else
-		render_output_framebuffer();
+	else {
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+		renderLastFrame();
+	}
 #endif
 	bindVertexArray(0);
 
 	return !is_rtt;
-}
-
-bool OpenGLRenderer::Init()
-{
-	return gles_init();
 }
 
 void OpenGLRenderer::Term()
@@ -1406,19 +1416,22 @@ void OpenGLRenderer::Term()
 
 bool OpenGLRenderer::Render()
 {
-	RenderFrame(width, height);
-	if (pvrrc.isRTT)
+	saveCurrentFramebuffer();
+	renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+	if (pvrrc.isRTT) {
+		restoreCurrentFramebuffer();
 		return false;
+	}
 
-	DrawOSD(false);
-	frameRendered = true;
+	if (!config::EmulateFramebuffer)
+	{
+		DrawOSD(false);
+		frameRendered = true;
+		gl.ofbo2.ready = false;
+	}
+	restoreCurrentFramebuffer();
 
 	return true;
-}
-
-bool OpenGLRenderer::RenderLastFrame()
-{
-	return render_output_framebuffer();
 }
 
 Renderer* rend_GLES2()

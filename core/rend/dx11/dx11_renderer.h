@@ -25,7 +25,6 @@
 #include "dx11_quad.h"
 #include "dx11_texture.h"
 #include "dx11_shaders.h"
-#include "rend/sorter.h"
 #include "dx11_renderstate.h"
 #include "dx11_naomi2.h"
 #ifndef LIBRETRO
@@ -35,10 +34,10 @@
 struct DX11Renderer : public Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override;
 	void Term() override;
 	bool Process(TA_context* ctx) override;
 	bool Render() override;
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
 	bool Present() override
 	{
@@ -83,6 +82,7 @@ protected:
 		float trilinearAlpha;
 	};
 
+	virtual void resize(int w, int h);
 	bool ensureBufferSize(ComPtr<ID3D11Buffer>& buffer, D3D11_BIND_FLAG bind, u32& currentSize, u32 minSize);
 	void createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT, UINT bindFlags = 0);
 	void createTexAndRenderTarget(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11RenderTargetView>& renderTarget, int width, int height);
@@ -91,11 +91,11 @@ protected:
 	void setupPixelShaderConstants();
 	void updateFogTexture();
 	void updatePaletteTexture();
-	void renderDCFramebuffer();
 	void readRttRenderTarget(u32 texAddress);
-	void renderFramebuffer();
+	void displayFramebuffer();
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
+	void writeFramebufferToVRAM();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -121,6 +121,7 @@ protected:
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;
+	float aspectRatio = 4.f / 3.f;
 
 private:
 	void readDCFramebuffer();
@@ -131,15 +132,12 @@ private:
 	void drawList(const List<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setRenderState(const PolyParam *gp);
-	void sortTriangles(int first, int count);
-	void drawSorted(bool multipass);
+	void drawSorted(int first, int count, bool multipass);
 	void drawModVols(int first, int count);
 
 	u32 vertexBufferSize = 0;
 	u32 modvolBufferSize = 0;
 	u32 indexBufferSize = 0;
-	ComPtr<ID3D11Buffer> sortedTriIndexBuffer;
-	u32 sortedTriIndexBufferSize = 0;
 
 	ComPtr<ID3D11Texture2D> fbTex;
 	ComPtr<ID3D11Texture2D> dcfbTexture;
@@ -153,12 +151,14 @@ private:
 	ComPtr<ID3D11DepthStencilView> rttDepthTexView;
 	ComPtr<ID3D11Texture2D> whiteTexture;
 	ComPtr<ID3D11ShaderResourceView> whiteTextureView;
+	ComPtr<ID3D11Texture2D> fbScaledTexture;
+	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
+	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 
 	DX11TextureCache texCache;
 	DX11Shaders *shaders;
-	std::vector<SortTrigDrawParam> pidx_sort;
 	std::unique_ptr<Quad> quad;
 	ComPtr<ID3D11Buffer> vtxConstants;
 	ComPtr<ID3D11Buffer> pxlConstants;

@@ -22,13 +22,13 @@
 #include "vulkan_context.h"
 #include "buffer.h"
 #include "rend/TexCache.h"
-#include "hw/pvr/Renderer_if.h"
 
 #include <algorithm>
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
@@ -59,9 +59,11 @@ public:
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	vk::ImageView GetImageView() const { return *imageView; }
+	vk::Image GetImage() const { return *image; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
+	vk::Extent2D getSize() const { return extent; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -93,9 +95,13 @@ private:
 class SamplerManager
 {
 public:
+	void term() {
+		samplers.clear();
+	}
+
 	vk::Sampler GetSampler(TSP tsp)
 	{
-		u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
+		const u32 samplerHash = tsp.full & TSP_Mask;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
@@ -107,23 +113,24 @@ public:
 		} else {
 			filter = vk::Filter::eLinear;
 		}
-		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
+		const vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
-		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
+		const vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
-		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
+		const bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
 				&& filter == vk::Filter::eLinear;
 #ifndef __APPLE__
-		float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
+		const float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
 #else
 		// not supported by metal
-		float mipLodBias = 0;
+		const float mipLodBias = 0;
 #endif
+		const vk::SamplerMipmapMode mipmapMode = filter == vk::Filter::eLinear ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest;
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							mipmapMode, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
 							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();

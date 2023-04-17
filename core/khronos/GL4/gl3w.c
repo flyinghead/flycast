@@ -115,7 +115,11 @@ static GL3WglProc (*glx_get_proc_address)(const GLubyte *);
 
 static int open_libgl(void)
 {
+#if defined(__OpenBSD__)
+	libgl = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
+#else
 	libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_LOCAL);
+#endif
 	if (!libgl)
 		return GL3W_ERROR_LIBRARY_OPEN;
 

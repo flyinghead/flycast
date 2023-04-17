@@ -30,7 +30,7 @@ std::string os_GetConnectionMedium();
 #include <intrin.h>
 #endif
 
-u32 static INLINE bitscanrev(u32 v)
+u32 static inline bitscanrev(u32 v)
 {
 #ifdef __GNUC__
 	return 31-__builtin_clz(v);
@@ -147,3 +147,5 @@ static inline void freeAligned(void *p)
 #endif
 }
 
+void registerCrash(const char *directory, const char *path);
+void uploadCrashes(const std::string& directory);

@@ -51,27 +51,27 @@ struct sh4_opcodelistentry
 		strcpy(strout, text.c_str());
 	}
 
-	INLINE bool SetPC() const
+	bool SetPC() const
 	{
 		return (type & WritesPC)!=0;
 	}
 
-	INLINE bool NeedPC() const
+	bool NeedPC() const
 	{
 		return (type & ReadsPC)!=0;
 	}
 
-	INLINE bool SetSR() const
+	bool SetSR() const
 	{
 		return (type & WritesSR)!=0;
 	}
 
-	INLINE bool SetFPSCR() const
+	bool SetFPSCR() const
 	{
 		return (type & WritesFPSCR)!=0;
 	}
 
-	INLINE bool IsFloatingPoint() const
+	bool IsFloatingPoint() const
 	{
 		return (type & UsesFPU) != 0;
 	}

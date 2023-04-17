@@ -18,7 +18,8 @@
  */
 #pragma once
 #include "types.h"
-#include "cfg/option.h"
+
+#include <string>
 
 void gui_init();
 void gui_initFonts();
@@ -26,6 +27,7 @@ void gui_open_settings();
 void gui_display_ui();
 void gui_display_notification(const char *msg, int duration);
 void gui_display_osd();
+void gui_display_profiler();
 void gui_open_onboarding();
 void gui_term();
 void gui_cancel_load();

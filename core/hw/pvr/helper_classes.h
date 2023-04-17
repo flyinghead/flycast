@@ -10,10 +10,9 @@ struct List
 	bool* overrun;
 	const char *list_name;
 
-	__forceinline int used() const { return size-avail; }
-	__forceinline int bytes() const { return used()* sizeof(T); }
+	int used() const { return size-avail; }
+	int bytes() const { return used()* sizeof(T); }
 
-	NOINLINE
 	T* sig_overrun() 
 	{ 
 		*overrun |= true;
@@ -24,7 +23,6 @@ struct List
 		return daty;
 	}
 
-	__forceinline 
 	T* Append(int n=1)
 	{
 		int ad=avail-n;
@@ -40,7 +38,6 @@ struct List
 			return sig_overrun();
 	}
 
-	__forceinline 
 	T* LastPtr(int n = 1) const
 	{ 
 		return daty-n; 

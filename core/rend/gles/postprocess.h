@@ -27,15 +27,11 @@ public:
 	GLuint getFramebuffer(int width, int height);
 
 private:
-	void init();
+	void init(int width, int height);
 
-	GLuint texture = 0;
-	GLuint framebuffer = 0;
-	GLuint depthBuffer = 0;
 	GLuint vertexBuffer = 0;
 	GLuint vertexArray = 0;
-	float width = 0;
-	float height = 0;
+	std::unique_ptr<GlFramebuffer> framebuffer;
 };
 
 extern PostProcessor postProcessor;

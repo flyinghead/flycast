@@ -11,12 +11,19 @@ def getVersionName = { ->
     return stdout.toString().trim()
 }
 
+def getSentryUrl = { ->
+	def url = System.env.SENTRY_UPLOAD_URL
+	return url == null ? "" : url
+}
+
 android {
+    namespace 'com.reicast.emulator'
     compileSdk 29
 
     defaultConfig {
         applicationId "com.flycast.emulator"
         minSdk 16
+        //noinspection ExpiredTargetSdkVersion
         targetSdk 29
         versionCode 8
         versionName getVersionName()
@@ -24,7 +31,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_ARM_MODE=arm"
+                arguments "-DANDROID_ARM_MODE=arm", "-DSENTRY_UPLOAD_URL=" + getSentryUrl()
             }
         }
 
@@ -41,7 +48,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
@@ -56,15 +63,17 @@ android {
             version '3.18.1'
         }
     }
-
-    buildFeatures {
-        prefab true
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES']
+        }
     }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.oboe:oboe:1.6.1'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.3'
+    implementation 'org.slf4j:slf4j-android:1.7.35'
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }

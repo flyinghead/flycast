@@ -121,14 +121,11 @@
 #define USE_WINCE_HACK
 #endif
 
-#define DC_PLATFORM_MASK        7
-#define DC_PLATFORM_DREAMCAST   0   /* Works, for the most part */
-#define DC_PLATFORM_DEV_UNIT    1   /* This is missing hardware */
-#define DC_PLATFORM_NAOMI       2   /* Works, for the most part */ 
-#define DC_PLATFORM_NAOMI2      3   /* Needs to be done, 2xsh4 + 2xpvr + custom TNL */
-#define DC_PLATFORM_ATOMISWAVE  4   /* Works, for the most part */
-#define DC_PLATFORM_HIKARU      5   /* Needs to be done, 2xsh4, 2x aica , custom vpu */
-#define DC_PLATFORM_AURORA      6   /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
+#define DC_PLATFORM_DREAMCAST   0
+#define DC_PLATFORM_DEV_UNIT    1
+#define DC_PLATFORM_NAOMI       2
+#define DC_PLATFORM_NAOMI2      3
+#define DC_PLATFORM_ATOMISWAVE  4
 
 //HOST_CPU
 #define CPU_X86      0x20000001
@@ -139,13 +136,11 @@
 #define CPU_PPC      0x20000006
 #define CPU_PPC64    0x20000007
 #define CPU_ARM64    0x20000008
-#define CPU_MIPS64   0x20000009
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
 #define DYNAREC_JIT		0x40000002
 #define DYNAREC_CPP		0x40000003
-
 
 //automatic
 
@@ -222,11 +217,10 @@
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #define TARGET_UWP
 #endif
-#if !defined(LIBRETRO) && !defined(TARGET_UWP)
-#define USE_DX9
+#ifdef HAVE_D3D11
+#define USE_DX11
 #endif
 #endif
-
 
 #if !defined(LIBRETRO) && !defined(TARGET_NO_EXCEPTIONS)
 #define USE_GGPO
@@ -238,15 +232,11 @@
 #define VRAM_SIZE_MAX (16*1024*1024)
 #define ARAM_SIZE_MAX (8*1024*1024)
 
-#define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
-
-#define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
-#define ADAC_CLOCK (AICA_CORE_CLOCK/4)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
-#define AICA_ARM_CLOCK (AICA_CORE_CLOCK/2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
-#define AICA_SDRAM_CLOCK (GD_CLOCK*2)		//[67737600]  GD-> PLL 2 -> SDRAM
-#define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
-#define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
-#define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
+#define GD_CLOCK 33868800						//GDROM XTAL -- 768fs
+#define AICA_CORE_CLOCK (GD_CLOCK * 4 / 3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
+#define AICA_ARM_CLOCK (AICA_CORE_CLOCK / 2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
+#define SH4_MAIN_CLOCK (200 * 1000 * 1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
+#define G2_BUS_CLOCK (25 * 1000 * 1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
 
 #if defined(GLES) && !defined(GLES3) && !defined(GLES2)
 // Only use GL ES 2.0 API functions

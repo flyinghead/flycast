@@ -31,6 +31,7 @@ DXContext theDXContext;
 
 bool DXContext::init(bool keepCurrentWindow)
 {
+	NOTICE_LOG(RENDERER, "DX9 Context initializing");
 	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0))
@@ -38,8 +39,10 @@ bool DXContext::init(bool keepCurrentWindow)
 #endif
 
 	pD3D.reset(Direct3DCreate9(D3D_SDK_VERSION));
-	if (!pD3D)
+	if (!pD3D) {
+		ERROR_LOG(RENDERER, "Direct3DCreate9 failed");
 		return false;
+	}
 	memset(&d3dpp, 0, sizeof(d3dpp));
 	d3dpp.hDeviceWindow = (HWND)window;
 	d3dpp.Windowed = true;
@@ -71,33 +74,55 @@ bool DXContext::init(bool keepCurrentWindow)
 		d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	// TODO should be 0 in windowed mode
 	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
-	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
-			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
+	HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
+			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get());
+	if (FAILED(hr))
+	{
+		ERROR_LOG(RENDERER, "DirectX9 device creation failed: %x", hr);
 	    return false;
+	}
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver(pDevice));
 	overlay.init(pDevice);
+
+	D3DADAPTER_IDENTIFIER9 id;
+	pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
+	driverName = std::string(id.Description);
+	driverVersion = std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
+		+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+	deviceReady = true;
 
 	return true;
 }
 
 void DXContext::term()
 {
+	NOTICE_LOG(RENDERER, "DX9 Context terminating");
 	GraphicsContext::instance = nullptr;
 	overlay.term();
 	imguiDriver.reset();
 	pDevice.reset();
 	pD3D.reset();
+	deviceReady = false;
 }
 
 void DXContext::Present()
 {
 	if (!frameRendered)
 		return;
-	frameRendered = false;
+	if (!pDevice)
+	{
+		if (init(true))
+		{
+			renderer = new D3DRenderer();
+			rend_init_renderer();
+		}
+		return;
+	}
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST)
 	{
+		deviceReady = false;
 		result = pDevice->TestCooperativeLevel();
 		if (result == D3DERR_DEVICENOTRESET)
 			resetDevice();
@@ -106,6 +131,7 @@ void DXContext::Present()
 		WARN_LOG(RENDERER, "Present failed %x", result);
 	else
 	{
+		frameRendered = false;
 		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync))
 		{
 			DEBUG_LOG(RENDERER, "Switch vsync %d", !swapOnVSync);
@@ -113,14 +139,17 @@ void DXContext::Present()
 			{
 				renderer->Term();
 				delete renderer;
+				renderer = nullptr;
 			}
 			term();
-			init(true);
-			if (renderer != nullptr)
+			if (init(true))
 			{
 				renderer = new D3DRenderer();
-				renderer->Init();
-				rend_resize_renderer();
+				rend_init_renderer();
+			}
+			else
+			{
+				deviceReady = false;
 			}
 		}
 	}
@@ -128,29 +157,32 @@ void DXContext::Present()
 
 void DXContext::EndImGuiFrame()
 {
-	verify((bool)pDevice);
-	pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	if (!overlayOnly)
+	if (deviceReady)
 	{
-		pDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
-		if (renderer != nullptr)
-			renderer->RenderLastFrame();
-	}
-	if (SUCCEEDED(pDevice->BeginScene()))
-	{
-		if (overlayOnly)
+		verify((bool)pDevice);
+		pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+		pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		if (!overlayOnly)
 		{
-			if (crosshairsNeeded() || config::FloatVMUs)
-				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+			pDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
+			if (renderer != nullptr)
+				renderer->RenderLastFrame();
 		}
-		else
+		if (SUCCEEDED(pDevice->BeginScene()))
 		{
-			overlay.draw(settings.display.width, settings.display.height, true, false);
+			if (overlayOnly)
+			{
+				if (crosshairsNeeded() || config::FloatVMUs)
+					overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+			}
+			else
+			{
+				overlay.draw(settings.display.width, settings.display.height, true, false);
+			}
+			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+			pDevice->EndScene();
 		}
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-		pDevice->EndScene();
 	}
 	frameRendered = true;
 }
@@ -171,18 +203,23 @@ void DXContext::resize()
 
 void DXContext::resetDevice()
 {
+	D3DRenderer *dxrenderer{};
 	if (renderer != nullptr)
-		((D3DRenderer *)renderer)->preReset();
+		dxrenderer = dynamic_cast<D3DRenderer*>(renderer);
+	if (dxrenderer != nullptr)
+		dxrenderer->preReset();
 	overlay.term();
     ImGui_ImplDX9_InvalidateDeviceObjects();
     HRESULT hr = pDevice->Reset(&d3dpp);
-    if (hr == D3DERR_INVALIDCALL)
+    if (FAILED(hr))
     {
-        ERROR_LOG(RENDERER, "DX9 device reset failed");
+        ERROR_LOG(RENDERER, "DX9 device reset failed: %x", hr);
+        deviceReady = false;
         return;
     }
+    deviceReady = true;
     ImGui_ImplDX9_CreateDeviceObjects();
     overlay.init(pDevice);
-	if (renderer != nullptr)
-		((D3DRenderer *)renderer)->postReset();
+	if (dxrenderer != nullptr)
+		dxrenderer->postReset();
 }

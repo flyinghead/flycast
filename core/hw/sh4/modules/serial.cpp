@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #else
+#include <windows.h>
 #include <io.h>
 #endif
 #include "types.h"
@@ -98,7 +99,7 @@ static void WriteSerialStatus(u32 addr,u32 data)
 	if (!SCIF_SCFSR2.BRK)
 		data &= ~0x10;
 
-	SCIF_SCFSR2.full = data & ~3;
+	SCIF_SCFSR2.full = data & 0x00f0;
 
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
@@ -134,7 +135,7 @@ static u32 SCSCR2_read(u32 addr)
 
 static void SCSCR2_write(u32 addr, u32 data)
 {
-	SCIF_SCSCR2.full = data;
+	SCIF_SCSCR2.full = data & 0x00fa;
 
 	Serial_UpdateInterrupts();
 }
@@ -164,9 +165,9 @@ struct PTYPipe : public SerialPipe
 
 	void init()
 	{
-#if defined(__unix__) || defined(__APPLE__)
 		if (config::SerialConsole && config::SerialPTY && tty == 1)
 		{
+#if defined(__unix__) || defined(__APPLE__)
 			tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
 			if (tty < 0)
 			{
@@ -179,8 +180,23 @@ struct PTYPipe : public SerialPipe
 				unlockpt(tty);
 				NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
 			}
-		}
+#elif defined(_WIN32)
+			if (AllocConsole())
+			{
+				SetConsoleTitle(TEXT("Flycast Serial Output"));
+
+				// Pipe stdout
+				HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+				tty = _open_osfhandle((intptr_t)hStd, _O_TEXT);
+				_dup2(tty, fileno(stdout));
+				SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(fileno(stdout)));
+			}
+			else
+			{
+				ERROR_LOG(BOOT, "Cannot AllocConsole(): errno %d", GetLastError());
+			}
 #endif
+		}
 		serial_setPipe(this);
 	}
 
@@ -204,46 +220,46 @@ void serial_init()
 	// Serial Communication Interface with FIFO
 
 	//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<SCIF, SCIF_SCSMR2_addr, 0x007b>();
 
 	//SCIF SCBRR2 0xFFE80004 0x1FE80004 8 0xFF 0xFF Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCBRR2_addr,RIO_DATA,8);
+	sh4_rio_reg8<SCIF, SCIF_SCBRR2_addr>();
 
 	//SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF, SCIF_SCSCR2_addr, RIO_FUNC, 16, &SCSCR2_read, &SCSCR2_write);
+	sh4_rio_reg(SCIF, SCIF_SCSCR2_addr, RIO_FUNC, SCSCR2_read, SCSCR2_write);
 
 	//Write only 
 	//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFTDR2_addr,RIO_WF,8,0,&SerialWrite);
+	sh4_rio_reg(SCIF, SCIF_SCFTDR2_addr, RIO_WF, nullptr, SerialWrite);
 
 	//SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFSR2_addr,RIO_FUNC,16,&ReadSerialStatus,&WriteSerialStatus);
+	sh4_rio_reg(SCIF, SCIF_SCFSR2_addr, RIO_FUNC, ReadSerialStatus, WriteSerialStatus);
 
 	//READ only
 	//SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFRDR2_addr,RIO_RO_FUNC,8,&ReadSerialData);
+	sh4_rio_reg(SCIF, SCIF_SCFRDR2_addr, RIO_RO_FUNC, ReadSerialData);
 
 	//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFCR2_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<SCIF, SCIF_SCFCR2_addr, 0x00ff>();
 
 	//Read only
 	//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFDR2_addr,RIO_RO_FUNC,16,&Read_SCFDR2);
+	sh4_rio_reg(SCIF, SCIF_SCFDR2_addr, RIO_RO_FUNC, Read_SCFDR2);
 
 	//SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSPTR2_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<SCIF, SCIF_SCSPTR2_addr, 0x00f3>();
 
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
+	sh4_rio_reg_wmask<SCIF, SCIF_SCLSR2_addr, 1>();
 
 	// Serial Communication Interface
-	sh4_rio_reg(SCI, SCI_SCSMR1_addr, RIO_DATA, 8);
-	sh4_rio_reg(SCI, SCI_SCBRR1_addr, RIO_DATA, 8);
-	sh4_rio_reg(SCI, SCI_SCSCR1_addr, RIO_DATA, 8);
-	sh4_rio_reg(SCI, SCI_SCTDR1_addr, RIO_DATA, 8);
-	sh4_rio_reg(SCI, SCI_SCSSR1_addr, RIO_DATA, 8);
-	sh4_rio_reg(SCI, SCI_SCRDR1_addr, RIO_RO, 8);
-	sh4_rio_reg(SCI, SCI_SCSPTR1_addr, RIO_DATA, 8);
+	sh4_rio_reg8<SCI, SCI_SCSMR1_addr>();
+	sh4_rio_reg8<SCI, SCI_SCBRR1_addr>();
+	sh4_rio_reg8<SCI, SCI_SCSCR1_addr>();
+	sh4_rio_reg8<SCI, SCI_SCTDR1_addr>();
+	sh4_rio_reg_wmask<SCI, SCI_SCSSR1_addr, 0xf9>();
+	sh4_rio_reg(SCI, SCI_SCRDR1_addr, RIO_RO);
+	sh4_rio_reg_wmask<SCI, SCI_SCSPTR1_addr, 0x8f>();
 }
 
 void serial_reset(bool hard)

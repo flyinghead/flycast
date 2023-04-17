@@ -42,6 +42,7 @@ static bool operator<(const GameMedia &left, const GameMedia &right)
 class GameScanner
 {
 	std::vector<GameMedia> game_list;
+	std::vector<GameMedia> arcade_game_list;
 	std::mutex mutex;
 	std::mutex threadMutex;
 	std::unique_ptr<std::thread> scan_thread;
@@ -56,13 +57,18 @@ class GameScanner
 		game_list.insert(std::upper_bound(game_list.begin(), game_list.end(), game), game);
 	}
 
+	void insert_arcade_game(const GameMedia& game)
+	{
+		arcade_game_list.insert(std::upper_bound(arcade_game_list.begin(), arcade_game_list.end(), game), game);
+	}
+
 	void add_game_directory(const std::string& path)
 	{
         DirectoryTree tree(path);
         std::string emptyParentPath;
         for (const DirectoryTree::item& item : tree)
         {
-            if (running == false)
+            if (!running)
                 break;
             
             if (game_list.empty())
@@ -100,6 +106,14 @@ class GameScanner
 					continue;
 				gameName = it->second->description;
 				fileName = fileName + " (" + gameName + ")";
+				insert_arcade_game(GameMedia{ fileName, child_path, gameName });
+				continue;
+			}
+			else if (extension == "bin" || extension == "lst" || extension == "dat")
+			{
+				if (!config::HideLegacyNaomiRoms)
+					insert_arcade_game(GameMedia{ fileName, child_path, gameName });
+				continue;
 			}
 			else if (extension == "chd" || extension == "gdi")
 			{
@@ -109,9 +123,7 @@ class GameScanner
 				if (arcade_gdroms.count(basename) != 0)
 					continue;
 			}
-			else if ((config::HideLegacyNaomiRoms
-							|| (extension != "bin" && extension != "lst" && extension != "dat"))
-					&& extension != "cdi" && extension != "cue")
+			else if (extension != "cdi" && extension != "cue")
 				continue;
 			insert_game(GameMedia{ fileName, child_path, gameName });
 		}
@@ -161,11 +173,16 @@ public:
 					std::lock_guard<std::mutex> guard(mutex);
 					game_list.clear();
 				}
+				arcade_game_list.clear();
 				for (const auto& path : config::ContentPath.get())
 				{
 					add_game_directory(path);
 					if (!running)
 						break;
+				}
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					game_list.insert(game_list.end(), arcade_game_list.begin(), arcade_game_list.end());
 				}
 				if (running)
 					scan_done = true;

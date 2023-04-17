@@ -22,12 +22,14 @@
 #include "gdb_server.h"
 #include "debug_agent.h"
 #include "network/net_platform.h"
+#include "cfg/option.h"
 #include <stdexcept>
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <cassert>
 
-#define SERVER_PORT 3263
+#define MAX_PACKET_LEN 4096
 
 namespace debugger {
 
@@ -40,7 +42,7 @@ public:
 		Error(const char *reason) : std::runtime_error(reason) {}
 	};
 
-	void init()
+	void init(int port)
 	{
 		if (VALID(serverSocket))
 			return;
@@ -55,7 +57,7 @@ public:
 		struct sockaddr_in serveraddr;
 		memset(&serveraddr, 0, sizeof(serveraddr));
 		serveraddr.sin_family = AF_INET;
-		serveraddr.sin_port = htons(SERVER_PORT);
+		serveraddr.sin_port = htons(port);
 
 		if (::bind(serverSocket, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 		{
@@ -69,10 +71,14 @@ public:
 		}
 		EventManager::listen(Event::Resume, emuEventCallback);
 		EventManager::listen(Event::Terminate, emuEventCallback);
+
+		initialised = true;
 	}
 
 	void term()
 	{
+		if (!initialised)
+			return;
 		EventManager::unlisten(Event::Resume, emuEventCallback);
 		EventManager::unlisten(Event::Terminate, emuEventCallback);
 		stop();
@@ -90,12 +96,21 @@ public:
 
 	void run()
 	{
+		if (!initialised || thread.joinable())
+			return;
 		DEBUG_LOG(COMMON, "GdbServer starting");
 		thread = std::thread(&GdbServer::serverThread, this);
+		if (config::GDBWaitForConnection)
+		{
+			DEBUG_LOG(COMMON, "Waiting for GDB connection...");
+			agent.interrupt();
+		}
 	}
 
 	void stop()
 	{
+		if (!initialised)
+			return;
 		if (thread.joinable())
 		{
 			DEBUG_LOG(COMMON, "GdbServer stopping");
@@ -106,7 +121,7 @@ public:
 	}
 
 	bool isRunning() const {
-		return thread.joinable();
+		return initialised && thread.joinable();
 	}
 
 	// called on the emu thread
@@ -496,7 +511,12 @@ private:
 				const u32 *data = agent.getStack(len);
 				len /= 4;
 
+#if _MSC_VER // Non-const array size is a GCC extension
+				assert((len * 9 * 2 + 1) < MAX_PACKET_LEN);
+				char reply[MAX_PACKET_LEN];
+#else
 				char reply[len * 9 * 2 + 1];
+#endif
 				char *r = reply;
 				for (u32 i = 0; i < len; i++)
 				{
@@ -515,9 +535,13 @@ private:
 				sendPacket("");
 		}
 		else if (pkt.rfind("qSupported", 0) == 0)
+		{
 			// Tell the remote stub about features supported by GDB,
 			// and query the stub for features it supports
-			sendPacket("PacketSize=10000");
+			char qsupported[128];
+			sprintf_s(qsupported, 128, "PacketSize=%i;vContSupported+", MAX_PACKET_LEN);
+			sendPacket(qsupported);
+		}
 		else if (pkt.rfind("qSymbol:", 0) == 0)
 			// Notify the target that GDB is prepared to serve symbol lookup requests
 			sendPacket("OK");
@@ -570,11 +594,41 @@ private:
 		if (pkt.rfind("vAttach;", 0) == 0)
 			sendPacket("S05");
 		else if (pkt.rfind("vCont?", 0) == 0)
-			// not supported
-			sendPacket("vCont;s;c");
+			// supported vCont actions - (c)ontinue, (C)ontinue with signal, (s)tep, (S)tep with signal, (r)ange-step
+			sendPacket("vCont;c;C;s;S;t;r");
 		else if (pkt.rfind("vCont", 0) == 0)
-			// not supported
-			WARN_LOG(COMMON, "vCont not supported %s", pkt.c_str());
+		{
+			std::string vContCmd = pkt.substr(strlen("vCont;"));
+			switch (vContCmd[0])
+			{
+			case 'c':
+			case 'C':
+				sendContinue(vContCmd);
+				break;
+			case 's':
+				step(EXCEPT_NONE);
+				break;
+			case 'S':
+				step();
+			case 'r':
+			{
+				u32 from, to;
+				if (sscanf(vContCmd.c_str(), "r%x,%x", &from, &to) == 2)
+				{
+					stepRange(from, to);
+				}
+				else
+				{
+					WARN_LOG(COMMON, "Unsupported vCont:r format %s", pkt.c_str());
+					sendContinue("c");
+				}
+
+				break;
+			}
+			default:
+				WARN_LOG(COMMON, "vCont action not supported %s", pkt[6], pkt.c_str());
+			}
+		}
 		else if (pkt.rfind("vFile:", 0) == 0)
 			// not supported
 			sendPacket("");
@@ -599,11 +653,11 @@ private:
 			sendPacket("OK");
 			agent.kill();
 		}
-		else if (pkt.rfind("vMustReplyEmpty", 0) == 0)
-			// Reply empty packet
-			sendPacket("");
 		else
+		{
 			WARN_LOG(COMMON, "unknown v packet: %s", pkt.c_str());
+			sendPacket("");
+		}
 	}
 
 	void restart()
@@ -617,6 +671,13 @@ private:
 		sendPacket("S05");
 	}
 
+	void stepRange(u32 from, u32 to)
+	{
+		sendPacket("OK");
+		agent.stepRange(from, to);
+		sendPacket("S05");
+	}
+
 	void insertMatchpoint(const std::string& pkt)
 	{
 		u32 type;
@@ -627,22 +688,22 @@ private:
 			sendPacket("E01");
 		}
 		switch (type) {
-		    case 0:		// soft bp
+			case DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK:		// soft bp
 		    	if (agent.insertMatchpoint(0, addr, len))
 		    		sendPacket("OK");
 		    	else
 		    		sendPacket("E01");
 		    	break;
-		    case 1:		// hardware bp
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_HARDWARE_BREAK:		// hardware bp
 		    	sendPacket("");
 		    	break;
-		    case 2:		// write watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_WRITE_WATCHPOINT:	// write watchpoint
 		    	sendPacket("");
 		    	break;
-		    case 3:		// read watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_READ_WATCHPOINT:		// read watchpoint
 		    	sendPacket("");
 		    	break;
-		    case 4:		// access watchpoint
+		    case DebugAgent::Breakpoint::Type::BP_TYPE_ACCESS_WATCHPOINT:	// access watchpoint
 		    	sendPacket("");
 		    	break;
 		    default:
@@ -827,6 +888,7 @@ private:
 			throw Error("I/O error");
 	}
 
+	bool initialised = false;
 	bool stopRequested = false;
 	bool attached = false;
 	bool postDebugTrapNeeded = false;
@@ -840,9 +902,9 @@ public:
 
 static GdbServer gdbServer;
 
-void init()
+void init(int port)
 {
-	gdbServer.init();
+	gdbServer.init(port);
 }
 
 void term()

@@ -35,7 +35,7 @@ public:
 	void newFrame() override {
 	}
 
-	void renderDrawData(ImDrawData *drawData) override
+	void renderDrawData(ImDrawData *drawData, bool gui_open) override
 	{
 		VulkanContext *context = getContext();
 		if (!context->IsValid())

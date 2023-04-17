@@ -37,6 +37,11 @@ void GLGraphicsContext::findGLVersion()
 	const char *version = (const char *)glGetString(GL_VERSION);
 	_isGLES = !strncmp(version, "OpenGL ES", 9);
 	INFO_LOG(RENDERER, "OpenGL version: %s", version);
+
+	const char *p = (const char *)glGetString(GL_RENDERER);
+	driverName = p != nullptr ? p : "unknown";
+	p = (const char *)glGetString(GL_VERSION);
+	driverVersion = p != nullptr ? p : "unknown";
 }
 
 void GLGraphicsContext::postInit()
@@ -52,14 +57,6 @@ void GLGraphicsContext::preTerm()
 	imguiDriver.reset();
 #endif
 	instance = nullptr;
-}
-
-std::string GLGraphicsContext::getDriverName() {
-	return (const char *)glGetString(GL_RENDERER);
-}
-
-std::string GLGraphicsContext::getDriverVersion() {
-	return (const char *)glGetString(GL_VERSION);
 }
 
 void GLGraphicsContext::resetUIDriver()

@@ -140,7 +140,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_hle_bios",
-      "HLE BIOS",
+      "HLE BIOS (Restart Required)",
       NULL,
       "Force use of high-level emulation BIOS.",
       NULL,
@@ -226,6 +226,35 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      "Broadband Adapter Emulation",
+      NULL,
+      "Emulate the ethernet broadband adapter instead of the modem. (Restart Required)",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      "Enable UPnP",
+      NULL,
+      "Use UPnP to automatically configure your Internet router for online games.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
    {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution",
@@ -371,11 +400,25 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "32",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      "Full framebuffer emulation",
+      NULL,
+      "Enable full framebuffer emulation in VRAM. This is useful for games that directly read or write the framebuffer in VRAM. When enabled, Internal Resolution is forced to 640x480 and performance may be severely impacted.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       "Enable RTT (Render To Texture) Buffer",
       NULL,
-      "",
+      "Copy rendered textures back from the GPU to VRAM. This option is normally enabled for games that require it. When enabled, texture rendering upscaling is disabled and performance may be impacted.",
       NULL,
       "video",
       {
@@ -1512,6 +1555,11 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
    &options_id,      /* RETRO_LANGUAGE_INDONESIAN */
    &options_sv,      /* RETRO_LANGUAGE_SWEDISH */
    &options_uk,      /* RETRO_LANGUAGE_UKRAINIAN */
+   &options_cs,      /* RETRO_LANGUAGE_CZECH */
+   &options_val,     /* RETRO_LANGUAGE_CATALAN_VALENCIA */
+   &options_ca,      /* RETRO_LANGUAGE_CATALAN */
+   &options_en,      /* RETRO_LANGUAGE_BRITISH_ENGLISH */
+   &options_hu,      /* RETRO_LANGUAGE_HUNGARIAN */
 };
 #endif
 
@@ -1529,7 +1577,7 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
  *   be as painless as possible for core devs)
  */
 
-static INLINE void libretro_set_core_options(retro_environment_t environ_cb,
+static inline void libretro_set_core_options(retro_environment_t environ_cb,
       bool *categories_supported)
 {
    unsigned version  = 0;
