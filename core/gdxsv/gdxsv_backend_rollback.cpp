@@ -218,6 +218,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
 		SetCloseReason("game_end");
 		ggpo::stopSession();
+		config::GGPOEnable.reset();
 		state_ = State::End;
 	}
 
@@ -225,6 +226,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
 		SetCloseReason("error_fast_return");
 		ggpo::stopSession();
+		config::GGPOEnable.reset();
 		state_ = State::End;
 		gdxsv_WriteMem16(NetCountDown, 1);
 	}
@@ -322,7 +324,9 @@ void GdxsvBackendRollback::Close() {
 	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
+	config::GGPOEnable.reset();
 	RestorePatch();
+	KillTex = true;
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
