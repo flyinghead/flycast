@@ -105,7 +105,7 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }} -DSENTRY_UPLOAD_URL=${{ env.SENTRY_UPLOAD_URL }}
           cmake --build build --config ${{ matrix.config.buildType }} --target install
         env:
-          SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
+          SENTRY_UPLOAD_URL: "${{ startsWith(github.ref, 'refs/tags/gdxsv-') && secrets.SENTRY_UPLOAD_URL_PUBLIC || secrets.SENTRY_UPLOAD_URL_DEV }}"
 
       - name: Unit Tests
         run: |
