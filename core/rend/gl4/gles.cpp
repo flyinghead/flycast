@@ -22,6 +22,11 @@
 #include "rend/osd.h"
 #include "glsl.h"
 #include "gl4naomi2.h"
+#include "rend/gles/naomi2.h"
+
+#ifdef LIBRETRO
+#include "rend/gles/postprocess.h"
+#endif
 
 //Fragment and vertex shaders code
 
@@ -67,17 +72,21 @@ in vec4 in_pos;
 in vec4 in_base;
 in vec4 in_offs;
 in vec2 in_uv;
+#if pp_TwoVolumes == 1
 in vec4 in_base1;
 in vec4 in_offs1;
 in vec2 in_uv1;
+#endif
 
 // Output
 INTERPOLATION out vec4 vtx_base;
 INTERPOLATION out vec4 vtx_offs;
 out vec3 vtx_uv;
+#if pp_TwoVolumes == 1
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
 out vec2 vtx_uv1;
+#endif
 flat out uint vtx_index;
 
 void main()
@@ -90,20 +99,26 @@ void main()
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv, vpos.z);
-	vtx_base1 = in_base1;
-	vtx_offs1 = in_offs1;
-	vtx_uv1 = in_uv1;
+	#if pp_TwoVolumes == 1
+		vtx_base1 = in_base1;
+		vtx_offs1 = in_offs1;
+		vtx_uv1 = in_uv1;
+	#endif
 	vtx_index = uint(pp_Number) + uint(gl_VertexID);
 	#if pp_Gouraud == 1 && DIV_POS_Z != 1
 		vtx_base *= vpos.z;
 		vtx_offs *= vpos.z;
-		vtx_base1 *= vpos.z;
-		vtx_offs1 *= vpos.z;
+		#if pp_TwoVolumes == 1
+			vtx_base1 *= vpos.z;
+			vtx_offs1 *= vpos.z;
+		#endif
 	#endif
 	
 	#if DIV_POS_Z != 1
 		vtx_uv.xy *= vpos.z;
-		vtx_uv1 *= vpos.z;
+		#if pp_TwoVolumes == 1
+			vtx_uv1 *= vpos.z;
+		#endif
 		vpos.w = 1.0;
 		vpos.z = 0.0;
 	#endif
@@ -164,9 +179,11 @@ uniform int fog_control[2];
 INTERPOLATION in vec4 vtx_base;
 INTERPOLATION in vec4 vtx_offs;
 in vec3 vtx_uv;
+#if pp_TwoVolumes == 1
 INTERPOLATION in vec4 vtx_base1;
 INTERPOLATION in vec4 vtx_offs1;
 in vec2 vtx_uv1;
+#endif
 flat in uint vtx_index;
 
 float fog_mode2(float w)
@@ -270,21 +287,27 @@ void main()
 		vec4 texcol;
 		#if pp_Palette == 0
 			#if DIV_POS_Z == 1
-				if (area1)
-					texcol = texture(tex1, vtx_uv1);
-				else
-					texcol = texture(tex0, vtx_uv.xy);
+				#if pp_TwoVolumes == 1
+					if (area1)
+						texcol = texture(tex1, vtx_uv1);
+					else
+				#endif
+						texcol = texture(tex0, vtx_uv.xy);
 			#else
-				if (area1)
-					texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-				else
-					texcol = textureProj(tex0, vtx_uv);
+				#if pp_TwoVolumes == 1
+					if (area1)
+						texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+					else
+				#endif
+						texcol = textureProj(tex0, vtx_uv);
 			#endif
 		#else
-			if (area1)
-				texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-			else
-				texcol = palettePixel(tex0, vtx_uv);
+			#if pp_TwoVolumes == 1
+				if (area1)
+					texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+				else
+			#endif
+					texcol = palettePixel(tex0, vtx_uv);
 		#endif
 
 		#if pp_BumpMap == 1
@@ -365,60 +388,6 @@ void main()
 	#if PASS == PASS_COLOR 
 		FragColor = color;
 	#elif PASS == PASS_OIT
-		// Discard as many pixels as possible
-		switch (cur_blend_mode.y) // DST
-		{
-		case ONE:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-					discard;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (color == vec4(0.0))
-						discard;
-					break;
-				case SRC_ALPHA:
-					if (color.a == 0.0 || color.rgb == vec3(0.0))
-						discard;
-					break;
-				case INVERSE_SRC_ALPHA:
-					if (color.a == 1.0 || color.rgb == vec3(0.0))
-						discard;
-					break;
-			}
-			break;
-		case OTHER_COLOR:
-			if (cur_blend_mode.x == ZERO && color == vec4(1.0))
-				discard;
-			break;
-		case INVERSE_OTHER_COLOR:
-			if (cur_blend_mode.x <= SRC_ALPHA && color == vec4(0.0))
-				discard;
-			break;
-		case SRC_ALPHA:
-			if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0)
-				discard;
-			break;
-		case INVERSE_SRC_ALPHA:
-			switch (cur_blend_mode.x) // SRC
-			{
-				case ZERO:
-				case SRC_ALPHA:
-					if (color.a == 0.0)
-						discard;
-					break;
-				case ONE:
-				case OTHER_COLOR:
-				case INVERSE_OTHER_COLOR:
-					if (color == vec4(0.0))
-						discard;
-					break;
-			}
-			break;
-		}
-		
 		ivec2 coords = ivec2(gl_FragCoord.xy);
 		uint idx =  getNextPixelIndex();
 		
@@ -452,7 +421,9 @@ void main()
 class Vertex4Source : public OpenGl4Source
 {
 public:
-	Vertex4Source(bool gouraud, bool divPosZ) : OpenGl4Source() {
+	Vertex4Source(bool gouraud, bool divPosZ, bool twoVolumes) : OpenGl4Source()
+	{
+		addConstant("pp_TwoVolumes", twoVolumes);
 		addConstant("pp_Gouraud", gouraud);
 		addConstant("DIV_POS_Z", divPosZ);
 
@@ -500,7 +471,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	if (s->naomi2)
 		vertexSource = N2Vertex4Source(s).generate();
 	else
-		vertexSource = Vertex4Source(s->pp_Gouraud, s->divPosZ).generate();
+		vertexSource = Vertex4Source(s->pp_Gouraud, s->divPosZ, s->pp_TwoVolumes).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
 	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
@@ -616,7 +587,7 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	Vertex4Source vertexShader(false, config::NativeDepthInterpolation);
+	Vertex4Source vertexShader(false, config::NativeDepthInterpolation, false);
 	OpenGl4Source fragmentShader;
 	fragmentShader.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
 		.addSource(ShaderHeader)
@@ -662,11 +633,86 @@ static bool gl_create_resources()
 	return true;
 }
 
+struct OpenGL4Renderer : OpenGLRenderer
+{
+	bool Init() override;
+
+	void Term() override
+	{
+		termABuffer();
+		glcache.DeleteTextures(1, &stencilTexId);
+		stencilTexId = 0;
+		glcache.DeleteTextures(1, &depthTexId);
+		depthTexId = 0;
+		glcache.DeleteTextures(1, &opaqueTexId);
+		opaqueTexId = 0;
+		glcache.DeleteTextures(1, &depthSaveTexId);
+		depthSaveTexId = 0;
+		glDeleteFramebuffers(1, &geom_fbo);
+		geom_fbo = 0;
+		glDeleteSamplers(2, texSamplers);
+		texSamplers[0] = texSamplers[1] = 0;
+		glDeleteFramebuffers(1, &depth_fbo);
+		depth_fbo = 0;
+
+		TexCache.Clear();
+		termGLCommon();
+		gl4_term();
+	}
+
+	bool Render() override
+	{
+		saveCurrentFramebuffer();
+		renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.isRTT) {
+			restoreCurrentFramebuffer();
+			return false;
+		}
+
+		if (!config::EmulateFramebuffer)
+		{
+			DrawOSD(false);
+			gl.ofbo2.ready = false;
+			frameRendered = true;
+		}
+		restoreCurrentFramebuffer();
+
+		return true;
+	}
+
+	GLenum getFogTextureSlot() const override {
+		return GL_TEXTURE5;
+	}
+	GLenum getPaletteTextureSlot() const override {
+		return GL_TEXTURE6;
+	}
+
+	bool renderFrame(int width, int height);
+
+#ifdef LIBRETRO
+	void DrawOSD(bool clearScreen) override
+	{
+		void gl4DrawVmuTexture(u8 vmu_screen_number);
+		void gl4DrawGunCrosshair(u8 port);
+
+		if (settings.platform.isConsole())
+		{
+			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if (vmu_lcd_status[vmu_screen_number * 2])
+					gl4DrawVmuTexture(vmu_screen_number);
+		}
+
+		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+			gl4DrawGunCrosshair(lightgun_port);
+	}
+#endif
+};
+
 //setup
 void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
 		const GLchar *message, const void *userParam);
 
-static bool gl4_init()
+bool OpenGL4Renderer::Init()
 {
 	findGLVersion();
 	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
@@ -733,26 +779,20 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 }
 
-static bool RenderFrame(int width, int height)
+bool OpenGL4Renderer::renderFrame(int width, int height)
 {
 	const bool is_rtt = pvrrc.isRTT;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
+			is_rtt ? pvrrc.getFramebufferHeight() : height);
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-#ifdef LIBRETRO
-	gl.ofbo.origFbo = glsm_get_current_framebuffer();
-#else
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
-#endif
-	if (!is_rtt)
+	if (!is_rtt && !config::EmulateFramebuffer)
 		gcflip = 0;
 	else
 		gcflip = 1;
@@ -796,21 +836,21 @@ static bool RenderFrame(int width, int height)
 	}
 	for (auto& it : gl4.shaders)
 		resetN2UniformCache(&it.second);
-
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	GLuint output_fbo;
+	glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
+	GLuint output_fbo;
 	//setup render target first
 	if (is_rtt)
 		output_fbo = BindRTT(false);
 	else
 	{
 #ifdef LIBRETRO
-		gl.ofbo.width = width;
-		gl.ofbo.height = height;
-		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+		if (config::PowerVR2Filter)
 			output_fbo = postProcessor.getFramebuffer(width, height);
+		else if (config::EmulateFramebuffer)
+			output_fbo = init_output_framebuffer(width, height);
 		else
 			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
@@ -833,7 +873,7 @@ static bool RenderFrame(int width, int height)
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	else if (!pvrrc.isRenderFramebuffer)
+	else
 	{
 		//Main VBO
 		//move vertex to gpu
@@ -861,7 +901,7 @@ static bool RenderFrame(int width, int height)
 		}
 		glCheck();
 
-		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
+		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
 		{
 			float fWidth;
 			float fHeight;
@@ -932,109 +972,29 @@ static bool RenderFrame(int width, int height)
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
 		if (config::PowerVR2Filter && !is_rtt)
-			postProcessor.render(glsm_get_current_framebuffer());
+		{
+			if (config::EmulateFramebuffer)
+				postProcessor.render(init_output_framebuffer(width, height));
+			else
+				postProcessor.render(glsm_get_current_framebuffer());
+		}
 #endif
-	}
-	else
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (config::EmulateFramebuffer)
+		writeFramebufferToVRAM();
 #ifndef LIBRETRO
-	else
-		render_output_framebuffer();
+	else {
+		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+		renderLastFrame();
+	}
 #endif
 	glBindVertexArray(0);
 
 	return !is_rtt;
 }
-
-struct OpenGL4Renderer : OpenGLRenderer
-{
-	bool Init() override
-	{
-		return gl4_init();
-	}
-
-	void Resize(int w, int h) override
-	{
-		width = w;
-		height = h;
-		resize(w, h);
-	}
-
-	void Term() override
-	{
-		termABuffer();
-		glcache.DeleteTextures(1, &stencilTexId);
-		stencilTexId = 0;
-		glcache.DeleteTextures(1, &depthTexId);
-		depthTexId = 0;
-		glcache.DeleteTextures(1, &opaqueTexId);
-		opaqueTexId = 0;
-		glcache.DeleteTextures(1, &depthSaveTexId);
-		depthSaveTexId = 0;
-		glDeleteFramebuffers(1, &geom_fbo);
-		geom_fbo = 0;
-		glDeleteSamplers(2, texSamplers);
-		texSamplers[0] = texSamplers[1] = 0;
-		glDeleteFramebuffers(1, &depth_fbo);
-		depth_fbo = 0;
-
-		TexCache.Clear();
-		termGLCommon();
-		gl4_term();
-	}
-
-	bool Render() override
-	{
-		RenderFrame(width, height);
-		if (pvrrc.isRTT)
-			return false;
-
-		DrawOSD(false);
-		frameRendered = true;
-
-		return true;
-	}
-
-	bool RenderLastFrame() override
-	{
-		return render_output_framebuffer();
-	}
-
-	GLenum getFogTextureSlot() const override {
-		return GL_TEXTURE5;
-	}
-	GLenum getPaletteTextureSlot() const override {
-		return GL_TEXTURE6;
-	}
-
-#ifdef LIBRETRO
-	void DrawOSD(bool clearScreen) override
-	{
-		void gl4DrawVmuTexture(u8 vmu_screen_number);
-		void gl4DrawGunCrosshair(u8 port);
-
-		if (settings.platform.isConsole())
-		{
-			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-				if (vmu_lcd_status[vmu_screen_number * 2])
-					gl4DrawVmuTexture(vmu_screen_number);
-		}
-
-		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			gl4DrawGunCrosshair(lightgun_port);
-	}
-#endif
-};
 
 Renderer* rend_GL4()
 {

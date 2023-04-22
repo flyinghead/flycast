@@ -1,4 +1,5 @@
 #include "mmu.h"
+#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
@@ -20,14 +21,10 @@ This is mostly hacked-on as the core was never meant to have mmu support
 There are two modes, one with 'full' mmu emulation (for wince/bleem/wtfever)
 and a fast-hack mode for 1mb sqremaps (for katana)
 */
-#include "mmu.h"
-#include "hw/sh4/sh4_if.h"
+#ifndef FAST_MMU
 #include "ccn.h"
-#include "hw/sh4/sh4_interrupts.h"
-#include "hw/sh4/sh4_if.h"
+#endif
 #include "hw/sh4/sh4_mem.h"
-
-#include "hw/mem/_vmem.h"
 
 //#define TRACE_WINCE_SYSCALLS
 
@@ -470,7 +467,13 @@ retry_ITLB_Match:
 
 	if (entry == 4)
 	{
-		verify(mmach == false);
+#ifndef FAST_MMU
+		verify(!mmach);
+#else
+		// the matching may be approximative
+		if (mmach)
+			return MMU_ERROR_TLB_MISS;
+#endif
 		const TLB_Entry *tlb_entry;
 		u32 lookup = mmu_full_lookup(va, &tlb_entry, rv);
 
@@ -512,6 +515,8 @@ void mmu_set_state()
 	SetMemoryHandlers();
 }
 
+u32 mmuAddressLUT[0x100000];
+
 void MMU_init()
 {
 	memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
@@ -529,9 +534,11 @@ void MMU_init()
 		}
 	}
 	mmu_set_state();
+#ifdef FAST_MMU
 	// pre-fill kernel memory
 	for (u32 vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
 		mmuAddressLUT[vpn] = vpn << 12;
+#endif
 }
 
 
@@ -559,7 +566,6 @@ void mmu_flush_table()
 
 	for (u32 i = 0; i < 64; i++)
 		UTLB[i].Data.V = 0;
-	mmuAddressLUTFlush(true);
 }
 #endif
 

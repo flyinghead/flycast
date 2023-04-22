@@ -6,7 +6,7 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
-    container: devkitpro/devkita64:latest
+    container: devkitpro/devkita64:20220128
 
     strategy:
       matrix:

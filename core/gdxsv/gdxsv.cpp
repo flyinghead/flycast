@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 #include "emulator.h"
 #include "gdxsv_translation.h"
 #include "hw/sh4/sh4_mem.h"
@@ -242,11 +243,7 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
 	auto rbk_report = rollback_net.GetReport();
 	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
-	auto lines = inMemoryListener.GetLines(0, nullptr);
-
-	while (100 < lines.size()) {
-		lines.pop_front();
-	}
+	auto lines = InMemoryListener::getInstance()->getLog();
 
 	for (const auto &line : lines) {
 		*rbk_report.mutable_logs()->Add() = line;

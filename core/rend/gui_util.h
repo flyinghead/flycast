@@ -18,14 +18,17 @@
  */
 #pragma once
 
-#include <string>
-
 #include "types.h"
+#include "cfg/option.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
-#include "stdclass.h"
+
+#include <algorithm>
+#include <chrono>
+#include <future>
+#include <string>
 
 typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
@@ -138,3 +141,30 @@ inline static ImVec2 operator/(const ImVec2& v, float f) {
 }
 
 u8 *loadImage(const std::string& path, int& width, int& height);
+
+class DisabledScope
+{
+public:
+	DisabledScope(bool disabled) : disabled(disabled)
+	{
+		if (disabled)
+		{
+	        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+	        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+	}
+	~DisabledScope()
+	{
+		if (disabled)
+		{
+	        ImGui::PopItemFlag();
+	        ImGui::PopStyleVar();
+		}
+	}
+	bool isDisabled() const {
+		return disabled;
+	}
+
+private:
+	bool disabled;
+};

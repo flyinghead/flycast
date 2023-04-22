@@ -27,7 +27,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
-			vk::PrimitiveTopology::eTriangleStrip);
+			vk::PrimitiveTopology::eTriangleStrip, true);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
@@ -57,16 +57,13 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
-	bool depthWriteEnable = false;
-	if (pass == Pass::Depth || pass == Pass::Color)
-	{
-		// Z Write Disable seems to be ignored for punch-through.
-		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-		if (listType == ListType_Punch_Through)
-			depthWriteEnable = true;
-		else
-			depthWriteEnable = !pp.isp.ZWriteDis;
-	}
+	bool depthWriteEnable;
+	// Z Write Disable seems to be ignored for punch-through.
+	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+	if (listType == ListType_Punch_Through)
+		depthWriteEnable = true;
+	else
+		depthWriteEnable = !pp.isp.ZWriteDis;
 
 	bool shadowed = pass == Pass::Depth && (listType == ListType_Opaque || listType == ListType_Punch_Through);
 	vk::StencilOpState stencilOpState;
@@ -135,8 +132,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
-	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
+	std::array<vk::DynamicState, 2> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	bool twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;

@@ -24,13 +24,19 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/elan.h"
 #include "rend/TexCache.h"
-#include <array>
 #include <unordered_map>
 
 namespace memwatch
 {
 
-using PageMap = std::unordered_map<u32, std::array<u8, PAGE_SIZE>>;
+struct Page
+{
+	Page() {
+		// don't initialize data
+	}
+	u8 data[PAGE_SIZE];
+};
+using PageMap = std::unordered_map<u32, Page>;
 
 template<typename T>
 class Watcher
@@ -51,7 +57,11 @@ public:
 			for (const auto& pair : pages)
 				static_cast<T&>(*this).protectMem(pair.first, PAGE_SIZE);
 		}
-		pages.clear();
+	}
+
+	void unprotect()
+	{
+		static_cast<T&>(*this).unprotectMem(0, 0xffffffff);
 	}
 
 	void reset()
@@ -66,16 +76,20 @@ public:
 		if (offset == (u32)-1)
 			return false;
 		offset &= ~PAGE_MASK;
-		if (pages.count(offset) > 0)
-			// already saved
-			return true;
-		memcpy(&pages[offset][0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
+	    auto rv = pages.emplace(offset, Page());
+	    if (!rv.second)
+	      // already saved
+	      return true;
+	    Page& page = rv.first->second;
+	    memcpy(&page.data[0], static_cast<T&>(*this).getMemPage(offset), PAGE_SIZE);
 		static_cast<T&>(*this).unprotectMem(offset, PAGE_SIZE);
 		return true;
 	}
 
-	const PageMap& getPages() {
-		return pages;
+	void getPages(PageMap& other)
+	{
+		std::swap(pages, other);
+		pages = PageMap();
 	}
 };
 
@@ -197,6 +211,14 @@ inline static void protect()
 	ramWatcher.protect();
 	aramWatcher.protect();
 	elanWatcher.protect();
+}
+
+inline static void unprotect()
+{
+	vramWatcher.unprotect();
+	ramWatcher.unprotect();
+	aramWatcher.unprotect();
+	elanWatcher.unprotect();
 }
 
 inline static void reset()

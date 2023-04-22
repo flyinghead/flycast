@@ -1,12 +1,6 @@
 #pragma once
 #include "types.h"
 
-enum VMemType {
-	MemType4GB,
-	MemType512MB,
-	MemTypeError
-};
-
 struct vmem_mapping {
 	u64 start_address, end_address;
 	u64 memoffset, memsize;
@@ -15,7 +9,7 @@ struct vmem_mapping {
 
 // Platform specific vmemory API
 // To initialize (maybe) the vmem subsystem
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize);
+bool vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize);
 // To reset the on-demand allocated pages.
 void vmem_platform_reset_mem(void *ptr, unsigned size_bytes);
 // To handle a fault&allocate an ondemand page.
@@ -36,7 +30,7 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 void vmem_platform_jit_set_exec(void* code, size_t size, bool enable);
 
 // Note: if you want to disable vmem magic in any given platform, implement the
-// above functions as empty functions and make vmem_platform_init return MemTypeError.
+// above functions as empty functions and make vmem_platform_init return false.
 
 //Typedef's
 //ReadMem 
@@ -99,13 +93,9 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 void* _vmem_write_const(u32 addr,bool& ismem,u32 sz);
 
 extern u8* virt_ram_base;
-extern bool vmem_4gb_space;
 
 static inline bool _nvmem_enabled() {
 	return virt_ram_base != 0;
-}
-static inline bool _nvmem_4gb_space() {
-	return vmem_4gb_space;
 }
 void _vmem_bm_reset();
 

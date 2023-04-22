@@ -15,7 +15,7 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
-### Flatpak (Linux)
+### Flatpak (Linux ![ubuntu logo](https://flyinghead.github.io/flycast-builds/ubuntu.png))
 
 1. [Set up Flatpak](https://www.flatpak.org/setup/).
 
@@ -27,7 +27,7 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 `flatpak run org.flycast.Flycast`
 
-### Homebrew (MacOS)
+### Homebrew (MacOS ![apple logo](https://flyinghead.github.io/flycast-builds/apple.png))
 
 1. [Set up Homebrew](https://brew.sh).
 
@@ -35,7 +35,7 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 `brew install --cask flycast`
 
-### Xbox One/Series
+### Xbox One/Series ![xbox logo](https://flyinghead.github.io/flycast-builds/xbox.png)
 
 #### Retail:
 Open [**gamr13's github page**](https://gamr13.github.io/) from your Xbox console.
@@ -43,7 +43,7 @@ Open [**gamr13's github page**](https://gamr13.github.io/) from your Xbox consol
 #### Dev Mode:
 Grab the latest build from [**the builds page**](https://flyinghead.github.io/flycast-builds/), or the [**GitHub Actions**](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml). Then install it using the **Xbox Device Portal**.
 
-### Binaries
+### Binaries ![android](https://flyinghead.github.io/flycast-builds/android.jpg) ![windows](https://flyinghead.github.io/flycast-builds/windows.png) ![linux](https://flyinghead.github.io/flycast-builds/ubuntu.png) ![apple](https://flyinghead.github.io/flycast-builds/apple.png) ![switch](https://flyinghead.github.io/flycast-builds/switch.png) ![xbox](https://flyinghead.github.io/flycast-builds/xbox.png)
 
 Get fresh builds for your system [**on the builds page**](https://flyinghead.github.io/flycast-builds/).
 

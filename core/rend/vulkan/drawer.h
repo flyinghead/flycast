@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/sorter.h"
 #include "rend/tileclip.h"
 #include "rend/transform_matrix.h"
 #include "vulkan.h"
@@ -42,8 +41,9 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
+	void scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB);
 
-	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
+	void SetScissor(vk::CommandBuffer cmdBuffer, const vk::Rect2D& scissor)
 	{
 		if (scissor != currentScissor)
 		{
@@ -170,6 +170,13 @@ class Drawer : public BaseDrawer
 {
 public:
 	virtual ~Drawer() = default;
+
+	void Term()
+	{
+		descriptorSets.term();
+		mainBuffers.clear();
+	}
+
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() { renderPass++; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
@@ -225,7 +232,7 @@ protected:
 private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
-	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass);
+	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
@@ -247,11 +254,6 @@ private:
 	DescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	PipelineManager *pipelineManager = nullptr;
-
-	// Per-triangle sort results
-	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
-	std::vector<std::vector<u32>> sortedIndexes;
-	u32 sortedIndexCount = 0;
 	bool perStripSorting = false;
 };
 
@@ -259,6 +261,18 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
+
+	void Term()
+	{
+		screenPipelineManager.reset();
+		renderPassLoad.reset();
+		renderPassClear.reset();
+		framebuffers.clear();
+		colorAttachments.clear();
+		depthAttachment.reset();
+		Drawer::Term();
+	}
+
 	vk::RenderPass GetRenderPass() const { return *renderPassClear; }
 	void EndRenderPass() override;
 	bool PresentFrame()
@@ -267,8 +281,7 @@ public:
 			return false;
 		frameRendered = false;
 		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
-				colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
-		NewImage();
+				colorAttachments[GetCurrentImage()]->GetImageView(), viewport, aspectRatio);
 
 		return true;
 	}
@@ -290,12 +303,23 @@ private:
 	std::vector<bool> transitionNeeded;
 	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
+	float aspectRatio = 0.f;
 };
 
 class TextureDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
+
+	void Term()
+	{
+		rttPipelineManager.reset();
+		framebuffers.clear();
+		colorAttachment.reset();
+		depthAttachment.reset();
+		Drawer::Term();
+	}
+
 	void EndRenderPass() override;
 
 protected:

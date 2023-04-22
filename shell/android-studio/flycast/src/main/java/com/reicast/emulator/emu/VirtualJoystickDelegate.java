@@ -46,6 +46,14 @@ public class VirtualJoystickDelegate {
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
     }
 
+    public void stop() {
+        vibratorThread.stopVibrator();
+        try {
+            vibratorThread.join();
+        } catch (InterruptedException e) {
+        }
+    }
+
     public void readCustomVjoyValues() {
         vjoy_d_custom = VJoy.readCustomVjoyValues(context);
     }
@@ -57,7 +65,6 @@ public class VirtualJoystickDelegate {
         resetEditMode();
         view.requestLayout();
     }
-
 
     private void reset_analog()
     {

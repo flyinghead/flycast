@@ -3,9 +3,12 @@
 #include "cfg/option.h"
 #include "Renderer_if.h"
 #include "serialize.h"
+#include "stdclass.h"
+
+#include <mutex>
+#include <vector>
 
 extern u32 fskip;
-extern u32 FrameCount;
 static int RenderCount;
 
 TA_context* ta_ctx;
@@ -40,14 +43,14 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-TA_context* rqueue;
-cResetEvent frame_finished;
+static TA_context* rqueue;
+static cResetEvent frame_finished;
 
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	bool skipFrame = settings.disableRenderer;
+	bool skipFrame = !rend_is_enabled();
 	if (!skipFrame)
 	{
 		RenderCount++;
@@ -64,7 +67,7 @@ bool QueueRender(TA_context* ctx)
 	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
-		if (!settings.disableRenderer)
+		if (rend_is_enabled())
 			fskip++;
 		return false;
 	}
@@ -84,10 +87,6 @@ TA_context* DequeueRender()
 		FrameCount++;
 
 	return rqueue;
-}
-
-bool rend_framePending() {
-	return rqueue != nullptr;
 }
 
 void FinishRender(TA_context* ctx)

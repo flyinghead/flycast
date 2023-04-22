@@ -3,7 +3,7 @@
 	url = https://github.com/libsdl-org/SDL.git
 [submodule "core/deps/libchdr"]
 	path = core/deps/libchdr
-	url = https://github.com/rtissera/libchdr.git
+	url = https://github.com/flyinghead/libchdr.git
 [submodule "core/deps/luabridge"]
 	path = core/deps/luabridge
 	url = https://github.com/vinniefalco/LuaBridge.git
@@ -19,6 +19,6 @@
 [submodule "core/deps/glslang"]
 	path = core/deps/glslang
 	url = https://github.com/KhronosGroup/glslang.git
-[submodule "core/deps/volk"]
-	path = core/deps/volk
-	url = https://github.com/zeux/volk.git
+[submodule "core/deps/oboe"]
+	path = core/deps/oboe
+	url = https://github.com/google/oboe.git

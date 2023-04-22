@@ -17,10 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "types.h"
+
 #include <climits>
 #include <cinttypes>
-#include "types.h"
-#include "hw/sh4/sh4_sched.h"
 
 typedef u8 uint8_t;
 typedef u16 uint16_t;

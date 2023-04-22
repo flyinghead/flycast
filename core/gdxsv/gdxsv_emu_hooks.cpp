@@ -120,7 +120,7 @@ void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
 		return;
 	}
 
-	const auto lines = inMemoryListener.GetLines(0, nullptr);
+	const auto lines = InMemoryListener::getInstance()->getLog();
 	for (const auto& line : lines) {
 		ofs << line << std::endl;
 	}

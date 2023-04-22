@@ -34,6 +34,8 @@ jobs:
       - name: Gradle
         working-directory: shell/android-studio
         run: ./gradlew assembleRelease --parallel
+        env:
+          SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
       - uses: actions/upload-artifact@v3
         with:
@@ -71,6 +73,24 @@ jobs:
         run: aws s3 sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
-      - name: Upload to S3 (symbols)
-        run: aws s3 sync symbols s3://flycast-symbols/android --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+      - name: Setup Sentry CLI
+        uses: mathieu-bour/setup-sentry-cli@v1
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        with:
+          url: https://sentry.io
+          token: ${{ env.SENTRY_TOKEN }}
+          organization: flycast
+          project: minidump
+        if: ${{ env.SENTRY_TOKEN != '' }}
+      
+      - name: Upload symbols to Sentry
+        run: |
+          VERSION=$(git describe --tags --always)
+          sentry-cli releases new "$VERSION"
+          sentry-cli releases set-commits "$VERSION" --auto
+          sentry-cli upload-dif symbols 
+        shell: bash
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        if: ${{ env.SENTRY_TOKEN != '' }}

@@ -115,6 +115,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 			item.scraped = true;
 			item.uniqueId.clear();
 			item.searchName.clear();
+			delete disc;
 			return;
 		}
 

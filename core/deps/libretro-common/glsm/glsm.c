@@ -2725,6 +2725,16 @@ void rglGetShaderPrecisionFormat(GLenum shaderType, GLenum precisionType, GLint 
 #endif
 }
 
+void rglPrimitiveRestartIndex(GLuint index)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glPrimitiveRestartIndex.\n");
+#endif
+#if defined(HAVE_OPENGL)
+   glPrimitiveRestartIndex(index);
+#endif
+}
+
 /* GLSM-side */
 
 static void glsm_state_setup(void)
@@ -2744,6 +2754,10 @@ static void glsm_state_setup(void)
    gl_state.cap_translate[SGL_COLOR_LOGIC_OP]       = GL_COLOR_LOGIC_OP;
    gl_state.cap_translate[SGL_CLIP_DISTANCE0]       = GL_CLIP_DISTANCE0;
    gl_state.cap_translate[SGL_DEPTH_CLAMP]          = GL_DEPTH_CLAMP;
+   gl_state.cap_translate[SGL_PRIMITIVE_RESTART]    = GL_PRIMITIVE_RESTART;
+#endif
+#ifdef GL_PRIMITIVE_RESTART_FIXED_INDEX
+   gl_state.cap_translate[SGL_PRIMITIVE_RESTART_FIXED_INDEX] = GL_PRIMITIVE_RESTART_FIXED_INDEX;
 #endif
 
    for (i = 0; i < MAX_ATTRIB; i++)

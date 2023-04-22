@@ -203,13 +203,18 @@ void CHDDisc::tryOpen(const char* file)
 		tracks.push_back(t);
 	}
 
-	if (isGdrom && (total_frames != 549300 || tracks.size() < 3))
-		WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
-
 	if (isGdrom)
+	{
+		if (total_frames != 549300)
+			WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
+		if (tracks.size() < 3)
+			throw FlycastException("Invalid CHD: less than 3 tracks");
 		FillGDSession();
+	}
 	else
 	{
+		if (tracks.empty())
+			throw FlycastException("Invalid CHD: no track found");
 		type = CdRom_XA;
 
 		Session ses;
@@ -228,7 +233,7 @@ void CHDDisc::tryOpen(const char* file)
 		DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
 
 		EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
-}
+	}
 }
 
 

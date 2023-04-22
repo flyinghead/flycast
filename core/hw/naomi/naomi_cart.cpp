@@ -295,6 +295,8 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 			{
 				u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
 				u8 *src = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].src_offset, len);
+				if (dst == nullptr || src == nullptr)
+					throw NaomiCartException("Invalid ROM");
 				memcpy(dst, src, game->blobs[romid].length);
 				DEBUG_LOG(NAOMI, "Copied: %x bytes from %07x to %07x", game->blobs[romid].length, game->blobs[romid].src_offset, game->blobs[romid].offset);
 			}
@@ -324,6 +326,8 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 					case Normal:
 						{
 							u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
+							if (dst == nullptr)
+								throw NaomiCartException(std::string("Invalid ROM: truncated ") + game->blobs[romid].filename);
 							u32 read = file->Read(dst, game->blobs[romid].length);
 							if (config::GGPOEnable)
 								md5.add(dst, game->blobs[romid].length);
@@ -339,6 +343,8 @@ static void loadMameRom(const char *filename, LoadProgress *progress)
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							u16 *to = (u16 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
+							if (to == nullptr)
+								throw NaomiCartException(std::string("Invalid ROM: truncated ") + game->blobs[romid].filename);
 							u16 *from = (u16 *)buf;
 							for (int i = game->blobs[romid].length / 2; --i >= 0; to++)
 								*to++ = *from++;
@@ -499,12 +505,15 @@ static void loadDecryptedRom(const char* file, LoadProgress *progress)
 	}
 
 	INFO_LOG(NAOMI, "+%zd romfiles, %.2f MB set address space", files.size(), romSize / 1024.f / 1024.f);
+	if (romSize == 0)
+		throw FlycastException("Invalid empty ROM");
 
 	MD5Sum md5;
 
 	// Allocate space for the rom
 	u8 *romBase = (u8 *)malloc(romSize);
-	verify(romBase != nullptr);
+	if (romBase == nullptr)
+		throw FlycastException("Out of memory");
 
 	bool load_error = false;
 
@@ -676,10 +685,14 @@ bool Cartridge::Write(u32 offset, u32 size, u32 data)
 
 void* Cartridge::GetPtr(u32 offset, u32& size)
 {
-	offset &= 0x1FFFffff;
+	offset &= 0x1fffffff;
 
-	verify(offset < RomSize);
-	verify((offset + size) <= RomSize);
+	if (offset >= RomSize || offset + size > RomSize)
+	{
+		WARN_LOG(NAOMI, "Invalid naomi cart: offset %x size %x rom size %x", offset, size, RomSize);
+		size = 0;
+		return nullptr;
+	}
 
 	return &RomPtr[offset];
 }
@@ -711,7 +724,7 @@ void* NaomiCartridge::GetDmaPtr(u32& size)
 	{
 		INFO_LOG(NAOMI, "Error: DmaOffset >= RomSize");
 		size = 0;
-		return NULL;
+		return nullptr;
 	}
 	size = std::min(size, RomSize - (DmaOffset & 0x1fffffff));
 	return GetPtr(DmaOffset, size);

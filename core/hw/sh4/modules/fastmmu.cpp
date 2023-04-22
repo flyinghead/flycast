@@ -25,8 +25,6 @@
 #ifdef FAST_MMU
 
 #include "hw/mem/_vmem.h"
-
-#include "ccn.h"
 #include "hw/sh4/sh4_mem.h"
 
 extern TLB_Entry UTLB[64];
@@ -49,7 +47,6 @@ struct TLB_LinkedEntry {
 static TLB_LinkedEntry full_table[65536];
 static u32 full_table_size;
 static TLB_LinkedEntry *entry_buckets[NBUCKETS];
-u32 mmuAddressLUT[0x100000];
 
 static u16 bucket_index(u32 address, int size, u32 asid)
 {
@@ -60,7 +57,8 @@ static void cache_entry(const TLB_Entry &entry)
 {
 	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
 		return;
-	verify(full_table_size < ARRAY_SIZE(full_table));
+	if (full_table_size >= ARRAY_SIZE(full_table))
+		return;
 
 	full_table[full_table_size].entry = entry;
 

@@ -11,4 +11,5 @@ void spg_Deserialize(Deserializer& deser);
 
 void CalculateSync();
 void read_lightgun_position(int x, int y);
-void SetREP(TA_context* cntx);
+void scheduleRenderDone(TA_context *cntx);
+void rescheduleSPG();

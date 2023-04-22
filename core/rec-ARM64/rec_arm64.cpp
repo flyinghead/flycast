@@ -54,7 +54,6 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-static u32 cycle_counter;
 static u64 jmp_stack;
 static Arm64UnwindInfo unwinder;
 
@@ -388,11 +387,28 @@ public:
 				break;
 
 			case shop_mov64:
-				verify(op.rd.is_reg());
-				verify(op.rs1.is_reg() || op.rs1.is_imm());
+				{
+					verify(op.rd.is_reg());
+					verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-				shil_param_to_host_reg(op.rs1, x15);
-				host_reg_to_shil_param(op.rd, x15);
+					if (!regalloc.IsAllocf(op.rd))
+					{
+						verify(!regalloc.IsAllocf(op.rs1));
+						shil_param_to_host_reg(op.rs1, x15);
+						host_reg_to_shil_param(op.rd, x15);
+					}
+					else
+					{
+						const VRegister& rd0 = regalloc.MapVRegister(op.rd, 0);
+						const VRegister& rs0 = regalloc.MapVRegister(op.rs1, 0);
+						if (!rd0.Is(rs0))
+							Fmov(rd0, rs0);
+						const VRegister& rd1 = regalloc.MapVRegister(op.rd, 1);
+						const VRegister& rs1 = regalloc.MapVRegister(op.rs1, 1);
+						if (!rd1.Is(rs1))
+							Fmov(rd1, rs1);
+					}
+				}
 				break;
 
 			case shop_readm:
@@ -775,12 +791,12 @@ public:
 					{
 						reg2 = regalloc.MapRegister(op.rs2);
 					}
-					const Register& rd_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd).GetCode());
+					const Register& rd_xreg = regalloc.MapRegister(op.rd).X();
 					if (op.op == shop_mul_u64)
 						Umull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
 					else
 						Smull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
-					const Register& rd2_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd2).GetCode());
+					const Register& rd2_xreg = regalloc.MapRegister(op.rd2).X();
 					Lsr(rd2_xreg, rd_xreg, 32);
 				}
 				break;
@@ -839,11 +855,27 @@ public:
 			case shop_xtrct:
 				{
 					const Register rd = regalloc.MapRegister(op.rd);
-					const Register rs1 = regalloc.MapRegister(op.rs1);
-					const Register rs2 = regalloc.MapRegister(op.rs2);
-					if (op.rs1._reg == op.rd._reg)
+					Register rs1;
+					if (op.rs1.is_imm()) {
+						rs1 = w1;
+						Mov(rs1, op.rs1._imm);
+					}
+					else
 					{
-						verify(op.rs2._reg != op.rd._reg);
+						rs1 = regalloc.MapRegister(op.rs1);
+					}
+					Register rs2;
+					if (op.rs2.is_imm()) {
+						rs2 = w2;
+						Mov(rs2, op.rs2._imm);
+					}
+					else
+					{
+						rs2 = regalloc.MapRegister(op.rs2);
+					}
+					if (rd.Is(rs1))
+					{
+						verify(!rd.Is(rs2));
 						Lsr(rd, rs1, 16);
 						Lsl(w0, rs2, 16);
 					}
@@ -905,8 +937,15 @@ public:
 					Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
 				else
 					Add(x1, x1, Operand(op.rs1.imm_value() << 3));
-				Ldr(x2, MemOperand(x1));
-				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+				if (regalloc.IsAllocf(op.rd))
+				{
+					Ldp(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
+				}
+				else
+				{
+					Ldr(x2, MemOperand(x1));
+					Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+				}
 				break;
 
 			case shop_fipr:
@@ -1134,11 +1173,19 @@ public:
 			// next_pc = block->BranchBlock;
 #ifndef NO_BLOCK_LINKING
 			if (block->pBranchBlock != NULL)
+			{
 				GenBranch((DynaCode *)block->pBranchBlock->code);
+				Nop();
+				Nop();
+			}
 			else
 			{
 				if (!mmu_enabled())
+				{
 					GenCall(linkBlockGenericStub);
+					Nop();
+					Nop();
+				}
 				else
 #else
 			{
@@ -1170,11 +1217,19 @@ public:
 				B(ne, &branch_not_taken);
 #ifndef NO_BLOCK_LINKING
 				if (block->pBranchBlock != NULL)
+				{
 					GenBranch((DynaCode *)block->pBranchBlock->code);
+					Nop();
+					Nop();
+				}
 				else
 				{
 					if (!mmu_enabled())
+					{
 						GenCall(linkBlockBranchStub);
+						Nop();
+						Nop();
+					}
 					else
 #else
 				{
@@ -1190,11 +1245,19 @@ public:
 
 #ifndef NO_BLOCK_LINKING
 				if (block->pNextBlock != NULL)
+				{
 					GenBranch((DynaCode *)block->pNextBlock->code);
+					Nop();
+					Nop();
+				}
 				else
 				{
 					if (!mmu_enabled())
+					{
 						GenCall(linkBlockNextStub);
+						Nop();
+						Nop();
+					}
 					else
 #else
 				{
@@ -1229,6 +1292,9 @@ public:
 			else
 			{
 				GenBranch(arm64_no_update);
+				Nop();
+				Nop();
+				Nop();
 			}
 
 			break;
@@ -1660,14 +1726,13 @@ private:
 		GenMemAddr(op, &w0);
 		genMmuLookup(op, 0);
 
-		u32 size = op.flags & 0x7f;
 		if (!optimise || !GenReadMemoryFast(op, opid))
-			GenReadMemorySlow(size);
+			GenReadMemorySlow(op.size);
 
-		if (size < 8)
+		if (op.size < 8)
 			host_reg_to_shil_param(op.rd, w0);
 		else
-			Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
+			host_reg_to_shil_param(op.rd, x0);
 	}
 
 	bool GenReadMemoryImmediate(const shil_opcode& op)
@@ -1675,16 +1740,15 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, op.size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
 			u32 rv;
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
@@ -1706,14 +1770,14 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
 
 		if (isram)
 		{
 			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));	// faster than Mov
 			if (regalloc.IsAllocAny(op.rd))
 			{
-				switch (size)
+				switch (op.size)
 				{
 				case 1:
 					Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x1));
@@ -1730,6 +1794,10 @@ private:
 						Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
 					break;
 
+				case 8:
+					Ldp(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
+					break;
+
 				default:
 					die("Invalid size");
 					break;
@@ -1737,7 +1805,7 @@ private:
 			}
 			else
 			{
-				switch (size)
+				switch (op.size)
 				{
 				case 1:
 					Ldrsb(w1, MemOperand(x1));
@@ -1759,7 +1827,7 @@ private:
 					die("Invalid size");
 					break;
 				}
-				if (size == 8)
+				if (op.size == 8)
 					Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
 				else
 					Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
@@ -1768,23 +1836,28 @@ private:
 		else
 		{
 			// Not RAM
-			if (size == 8)
+			if (op.size == 8)
 			{
-				verify(!regalloc.IsAllocAny(op.rd));
 				// Need to call the handler twice
 				Mov(w0, addr);
 				GenCallRuntime((void (*)())ptr);
-				Str(w0, sh4_context_mem_operand(op.rd.reg_ptr()));
+				if (regalloc.IsAllocf(op.rd))
+					Fmov(regalloc.MapVRegister(op.rd, 0), w0);
+				else
+					Str(w0, sh4_context_mem_operand(op.rd.reg_ptr()));
 
 				Mov(w0, addr + 4);
 				GenCallRuntime((void (*)())ptr);
-				Str(w0, sh4_context_mem_operand((u8*)op.rd.reg_ptr() + 4));
+				if (regalloc.IsAllocf(op.rd))
+					Fmov(regalloc.MapVRegister(op.rd, 1), w0);
+				else
+					Str(w0, sh4_context_mem_operand((u8*)op.rd.reg_ptr() + 4));
 			}
 			else
 			{
 				Mov(w0, addr);
 
-				switch(size)
+				switch(op.size)
 				{
 				case 1:
 					GenCallRuntime((void (*)())ptr);
@@ -1826,20 +1899,12 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
+		// WARNING: the rewrite code relies on having 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
-		if (!_nvmem_4gb_space())
-		{
-			Ubfx(x1, x0, 0, 29);
-			Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
-		}
-		else
-		{
-			Add(x1, x0, sizeof(Sh4Context), LeaveFlags);
-		}
+		Ubfx(x1, x0, 0, 29);
+		Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 
-		u32 size = op.flags & 0x7f;
-		switch(size)
+		switch (op.size)
 		{
 		case 1:
 			Ldrsb(w0, MemOperand(x28, x1));
@@ -1870,15 +1935,14 @@ private:
 		GenMemAddr(op, &w0);
 		genMmuLookup(op, 1);
 
-		u32 size = op.flags & 0x7f;
-		if (size != 8)
+		if (op.size != 8)
 			shil_param_to_host_reg(op.rs2, w1);
 		else
 			shil_param_to_host_reg(op.rs2, x1);
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
-		GenWriteMemorySlow(size);
+		GenWriteMemorySlow(op.size);
 	}
 
 	bool GenWriteMemoryImmediate(const shil_opcode& op)
@@ -1886,16 +1950,15 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, op.size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
 			u32 rv;
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
@@ -1917,11 +1980,11 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
 
-		Register reg2;
-		if (size != 8)
+		if (isram)
 		{
+			Register reg2;
 			if (op.rs2.is_imm())
 			{
 				Mov(w1, op.rs2._imm);
@@ -1931,6 +1994,11 @@ private:
 			{
 				reg2 = regalloc.MapRegister(op.rs2);
 			}
+			else if (op.size == 8)
+			{
+				shil_param_to_host_reg(op.rs2, x1);
+				reg2 = x1;
+			}
 			else if (regalloc.IsAllocf(op.rs2))
 			{
 				Fmov(w1, regalloc.MapVRegister(op.rs2));
@@ -1938,11 +2006,9 @@ private:
 			}
 			else
 				die("Invalid rs2 param");
-		}
-		if (isram)
-		{
+
 			Ldr(x0, reinterpret_cast<uintptr_t>(ptr));
-			switch (size)
+			switch (op.size)
 			{
 			case 1:
 				Strb(reg2, MemOperand(x0));
@@ -1957,8 +2023,7 @@ private:
 				break;
 
 			case 8:
-				shil_param_to_host_reg(op.rs2, x1);
-				Str(x1, MemOperand(x0));
+				Str(reg2, MemOperand(x0));
 				break;
 
 			default:
@@ -1970,10 +2035,10 @@ private:
 		{
 			// Not RAM
 			Mov(w0, addr);
-			if (size == 8)
+			shil_param_to_host_reg(op.rs2, x1);
+			if (op.size == 8)
 			{
 				// Need to call the handler twice
-				shil_param_to_host_reg(op.rs2, x1);
 				GenCallRuntime((void (*)())ptr);
 
 				Mov(w0, addr + 4);
@@ -1983,7 +2048,6 @@ private:
 			}
 			else
 			{
-				Mov(w1, reg2);
 				GenCallRuntime((void (*)())ptr);
 			}
 		}
@@ -1999,20 +2063,12 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
+		// WARNING: the rewrite code relies on having 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
-		if (!_nvmem_4gb_space())
-		{
-			Ubfx(x7, x0, 0, 29);
-			Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
-		}
-		else
-		{
-			Add(x7, x0, sizeof(Sh4Context), LeaveFlags);
-		}
+		Ubfx(x7, x0, 0, 29);
+		Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 
-		u32 size = op.flags & 0x7f;
-		switch(size)
+		switch(op.size)
 		{
 		case 1:
 			Strb(w1, MemOperand(x28, x7));
@@ -2127,21 +2183,28 @@ private:
 		}
 		else if (param.is_reg())
 		{
-			if (param.is_r64f())
+			if (param.is_r64f() && !regalloc.IsAllocf(param))
+			{
 				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
-			else if (param.is_r32f())
+			}
+			else if (param.is_r32f() || param.is_r64f())
 			{
 				if (regalloc.IsAllocf(param))
-					Fmov(reg, regalloc.MapVRegister(param));
+					Fmov(reg.W(), regalloc.MapVRegister(param, 0));
 				else
-					Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
+				if (param.is_r64f())
+				{
+					Fmov(w15, regalloc.MapVRegister(param, 1));
+					Bfm(reg, x15, 32, 31);
+				}
 			}
 			else
 			{
 				if (regalloc.IsAllocg(param))
-					Mov(reg, regalloc.MapRegister(param));
+					Mov(reg.W(), regalloc.MapRegister(param));
 				else
-					Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
 			}
 		}
 		else
@@ -2154,7 +2217,17 @@ private:
 	{
 		if (reg.Is64Bits())
 		{
-			Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+			if (regalloc.IsAllocf(param))
+			{
+				verify(param.count() == 2);
+				Fmov(regalloc.MapVRegister(param, 0), reg.W());
+				Lsr(reg.X(), reg.X(), 32);
+				Fmov(regalloc.MapVRegister(param, 1), reg.W());
+			}
+			else
+			{
+				Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+			}
 		}
 		else if (regalloc.IsAllocg(param))
 		{
@@ -2187,7 +2260,7 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr
+	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr for fast access. calling a handler can use more than 3 depending on offset
 	const int write_memory_rewrite_size = 5; // ubfx, add, str
 };
 
@@ -2280,11 +2353,11 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	verify(found);
 
 	// Skip the preceding ops (add, ubfx)
-	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0);
+	u32 *code_rewrite = code_ptr - 2;
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
 		assembler->GenReadMemorySlow(size);
-	else if (!is_read && size >= 4 && (((u8 *)faultAddress - virt_ram_base) >> 26) == 0x38)
+	else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
 		assembler->GenWriteStoreQueue(size);
 	else
 		assembler->GenWriteMemorySlow(size);

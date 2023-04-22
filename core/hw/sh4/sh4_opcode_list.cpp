@@ -9,63 +9,49 @@
 OpCallFP* OpPtr[0x10000];
 sh4_opcodelistentry* OpDesc[0x10000];
 
-//XR_N,XR_M,FR_M,FR_N,GPR_N,GPR_M,EREAD,EWRITE
-//
-//IMM8,IMM4,IMM12
 #define Mask_n_m 0xF00F
 #define Mask_n_m_imm4 0xF000
 #define Mask_n 0xF0FF
 #define Mask_none 0xFFFF
 #define Mask_imm8 0xFF00
-#define Mask_imm12 0xF000
 #define Mask_n_imm8 0xF000
 #define Mask_n_ml3bit 0xF08F
 #define Mask_nh3bit 0xF1FF
 #define Mask_nh2bit 0xF3FF
 
-//,DEC_D_RN|DEC_S_RM|DEC_OP(shop_and)
-u64 dec_Fill(DecMode mode,DecParam d,DecParam s,shilop op,u32 extra=0)
+static u64 dec_Fill(DecMode mode,DecParam d,DecParam s,shilop op,u32 extra=0)
 {
 	return (((u64)extra)<<32)|(mode<<24)|(d<<16)|(s<<8)|op;
 }
-u64 dec_Un_rNrN(shilop op)
-{
-	return dec_Fill(DM_UnaryOp,PRM_RN,PRM_RN,op);
-}
-u64 dec_Un_rNrM(shilop op)
+static u64 dec_Un_rNrM(shilop op)
 {
 	return dec_Fill(DM_UnaryOp,PRM_RN,PRM_RM,op);
 }
-u64 dec_Un_frNfrN(shilop op)
+static u64 dec_Un_frNfrN(shilop op)
 {
 	return dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FRN,op);
 }
-u64 dec_Un_frNfrM(shilop op)
-{
-	return dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FRM,op);
-}
-u64 dec_Bin_frNfrM(shilop op, u32 haswrite=1)
+static u64 dec_Bin_frNfrM(shilop op, u32 haswrite=1)
 {
 	return dec_Fill(DM_BinaryOp,PRM_FRN,PRM_FRM,op,haswrite);
 }
-u64 dec_Bin_rNrM(shilop op, u32 haswrite=1)
+static u64 dec_Bin_rNrM(shilop op, u32 haswrite=1)
 {
 	return dec_Fill(DM_BinaryOp,PRM_RN,PRM_RM,op,haswrite);
 }
-u64 dec_mul(u32 type)
+static u64 dec_mul(u32 type)
 {
-	//return 0;
 	return dec_Fill(DM_MUL,PRM_RN,PRM_RM,shop_mul_s16,type);
 }
-u64 dec_Bin_S8R(shilop op, u32 haswrite=1)
+static u64 dec_Bin_S8R(shilop op, u32 haswrite=1)
 {
 	return dec_Fill(DM_BinaryOp,PRM_RN,PRM_SIMM8,op,haswrite);
 }
-u64 dec_Bin_r0u8(shilop op, u32 haswrite=1)
+static u64 dec_Bin_r0u8(shilop op, u32 haswrite=1)
 {
 	return dec_Fill(DM_BinaryOp,PRM_R0,PRM_UIMM8,op,haswrite);
 }
-u64 dec_shft(s32 offs,bool arithm)
+static u64 dec_shft(s32 offs,bool arithm)
 {
 	if (offs>0)
 	{
@@ -76,41 +62,25 @@ u64 dec_shft(s32 offs,bool arithm)
 	{
 		return dec_Fill(DM_Shift,PRM_RN,PRM_RN,arithm?shop_sar:shop_shr,-offs);
 	}
-
 }
 
-u64 dec_cmp(shilop op, DecParam s1,DecParam s2)
+static u64 dec_cmp(shilop op, DecParam s1,DecParam s2)
 {
 	return dec_Fill(DM_WriteTOp,s1,s2,op);
 }
 
-u64 dec_LD(DecParam d)  { return dec_Fill(DM_UnaryOp,d,PRM_RN,shop_mov32); }
-u64 dec_LDM(DecParam d) { return dec_Fill(DM_ReadM,d,PRM_RN,shop_readm,-4); }
-u64 dec_ST(DecParam d)  { return dec_Fill(DM_UnaryOp,PRM_RN,d,shop_mov32); }
-u64 dec_STSRF(DecParam d)   { return dec_Fill(DM_ReadSRF,PRM_RN,d,shop_mov32); }
-u64 dec_STM(DecParam d) { return dec_Fill(DM_WriteM,PRM_RN,d,shop_writem,-4); }
+static u64 dec_LD(DecParam d)  { return dec_Fill(DM_UnaryOp,d,PRM_RN,shop_mov32); }
+static u64 dec_LDM(DecParam d) { return dec_Fill(DM_ReadM,d,PRM_RN,shop_readm,-4); }
+static u64 dec_ST(DecParam d)  { return dec_Fill(DM_UnaryOp,PRM_RN,d,shop_mov32); }
+static u64 dec_STSRF(DecParam d)   { return dec_Fill(DM_ReadSRF,PRM_RN,d,shop_mov32); }
+static u64 dec_STM(DecParam d) { return dec_Fill(DM_WriteM,PRM_RN,d,shop_writem,-4); }
 
 //d=reg to read into
-u64 dec_MRd(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_ReadM,d,s,shop_readm,sz); }
+static u64 dec_MRd(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_ReadM,d,s,shop_readm,sz); }
 //d= reg to read from
-u64 dec_MWt(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_WriteM,d,s,shop_writem,sz); }
-
-//use this to disable opcodes :p
-u64 dec_rz(...) { return 0; }
-
-//jump for now..
-//how bout a decoded switch list ? could that _much_ faster ?
+static u64 dec_MWt(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_WriteM,d,s,shop_writem,sz); }
 
 sh4_opcodelistentry missing_opcode = {0,iNotImplemented,0,0,ReadWritePC,"missing",0,0,CO,fix_none };
-
-#define R_GP (NO_SP|NO_FP)          //only general
-#define R_FP (NO_SP|NO_GP)          //only float
-#define R_SP (NO_GP|NO_FP)          //only special
-#define R_GSP (NO_FP)               //general + special
-#define R_GFP (NO_SP)               //general + float
-#define R_NON (NO_SP|NO_GP|NO_FP)   //no registers at all (...)
-#define R_MMR (R_NON)               //Memory mapped registers
-#define R_ALL (0)
 
 sh4_opcodelistentry opcodes[]=
 {
@@ -125,7 +95,7 @@ sh4_opcodelistentry opcodes[]=
 	{dec_i0000_0000_0000_1001   ,i0000_nnnn_1011_0011   ,Mask_n         ,0x00B3 ,Normal         ,"ocbwb @<REG_N>"                       ,1,2,MA,fix_none},  //ocbwb @<REG_N>
 	{0                          ,i0000_nnnn_1000_0011   ,Mask_n         ,0x0083 ,Normal         ,"pref @<REG_N>"                        ,1,2,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_RN,PRM_ONE,shop_pref,1)},  //pref @<REG_N>
 	{0                          ,i0000_nnnn_mmmm_0111   ,Mask_n_m       ,0x0007 ,Normal         ,"mul.l <REG_M>,<REG_N>"                ,2,4,CO,fix_none    ,dec_mul(-32)}, //mul.l <REG_M>,<REG_N>
-	{0                          ,i0000_0000_0010_1000   ,Mask_none      ,0x0028 ,Normal   | R_SP,"clrmac"                               ,1,3,LS,fix_none},  //clrmac
+	{0                          ,i0000_0000_0010_1000   ,Mask_none      ,0x0028 ,Normal         ,"clrmac"                               ,1,3,LS,fix_none},  //clrmac
 	{0                          ,i0000_0000_0100_1000   ,Mask_none      ,0x0048 ,Normal         ,"clrs"                                 ,1,1,CO,fix_none    ,dec_Fill(DM_BinaryOp, PRM_SR_STATUS, PRM_TWO_INV, shop_and, 1) }, //clrs
 	{0                          ,i0000_0000_0000_1000   ,Mask_none      ,0x0008 ,Normal         ,"clrt"                                 ,1,1,MT,fix_none    ,dec_Fill(DM_UnaryOp,PRM_SR_T,PRM_ZERO,shop_mov32)},    //clrt
 	{0                          ,i0000_0000_0011_1000   ,Mask_none      ,0x0038 ,Normal         ,"ldtlb"                                ,1,1,CO,fix_none}   ,//ldtlb
@@ -149,14 +119,14 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0010_nnnn_mmmm_1001   ,Mask_n_m       ,0x2009 ,Normal         ,"and <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_and)},   //and <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1010   ,Mask_n_m       ,0x200A ,Normal         ,"xor <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_xor)},   //xor <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1011   ,Mask_n_m       ,0x200B ,Normal         ,"or <REG_M>,<REG_N>"                   ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_or)},    //or <REG_M>,<REG_N>
-	{0                          ,i0010_nnnn_mmmm_1100   ,Mask_n_m       ,0x200C ,Normal   |NO_FP,"cmp/str <REG_M>,<REG_N>"              ,1,1,MT,fix_none    ,dec_cmp(shop_setpeq,PRM_RN,PRM_RM)},   //cmp/str <REG_M>,<REG_N>
-	{0                          ,i0010_nnnn_mmmm_1101   ,Mask_n_m       ,0x200D ,Normal   |NO_FP,"xtrct <REG_M>,<REG_N>"                ,1,1,EX,fix_none	,dec_Bin_rNrM(shop_xtrct)},  //xtrct <REG_M>,<REG_N>
+	{0                          ,i0010_nnnn_mmmm_1100   ,Mask_n_m       ,0x200C ,Normal         ,"cmp/str <REG_M>,<REG_N>"              ,1,1,MT,fix_none    ,dec_cmp(shop_setpeq,PRM_RN,PRM_RM)},   //cmp/str <REG_M>,<REG_N>
+	{0                          ,i0010_nnnn_mmmm_1101   ,Mask_n_m       ,0x200D ,Normal         ,"xtrct <REG_M>,<REG_N>"                ,1,1,EX,fix_none	,dec_Bin_rNrM(shop_xtrct)},  //xtrct <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1110   ,Mask_n_m       ,0x200E ,Normal         ,"mulu.w <REG_M>,<REG_N>"               ,1,4,CO,fix_none    ,dec_mul(16)},  //mulu.w <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1111   ,Mask_n_m       ,0x200F ,Normal         ,"muls.w <REG_M>,<REG_N>"               ,1,4,CO,fix_none    ,dec_mul(-16)}, //muls.w <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0000   ,Mask_n_m       ,0x3000 ,Normal         ,"cmp/eq <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_seteq,PRM_RN,PRM_RM)},    // cmp/eq <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0010   ,Mask_n_m       ,0x3002 ,Normal         ,"cmp/hs <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setae,PRM_RN,PRM_RM)},    // cmp/hs <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0011   ,Mask_n_m       ,0x3003 ,Normal         ,"cmp/ge <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setge,PRM_RN,PRM_RM)},    //cmp/ge <REG_M>,<REG_N>
-	{0                          ,i0011_nnnn_mmmm_0100   ,Mask_n_m       ,0x3004 ,Normal         ,"div1 <REG_M>,<REG_N>"                 ,1,1,EX,fix_none},  //div1 <REG_M>,<REG_N>
+	{0                          ,i0011_nnnn_mmmm_0100   ,Mask_n_m       ,0x3004 ,Normal         ,"div1 <REG_M>,<REG_N>"                 ,1,1,EX,fix_none    ,dec_Fill(DM_ADC,PRM_RN,PRM_RM,shop_div1,0)},  //div1 <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0101   ,Mask_n_m       ,0x3005 ,Normal         ,"dmulu.l <REG_M>,<REG_N>"              ,2,4,CO,fix_none    ,dec_mul(64)},  //dmulu.l <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0110   ,Mask_n_m       ,0x3006 ,Normal         ,"cmp/hi <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setab,PRM_RN,PRM_RM)},    // cmp/hi <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0111   ,Mask_n_m       ,0x3007 ,Normal         ,"cmp/gt <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setgt,PRM_RN,PRM_RM)},    //cmp/gt <REG_M>,<REG_N>
@@ -222,7 +192,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0011_0010   ,Mask_n         ,0x4032 ,Normal         ,"stc.l SGR,@-<REG_N>"                  ,3,3,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l SGR,@-<REG_N>
 
 	//stc : @-rn
-	{0                          ,i0100_nnnn_0000_0011   ,Mask_n         ,0x4003 ,Normal         ,"stc.l SR,@-<REG_N>"                   ,1,1,CO,rn_4},      //stc.l SR,@-<REG_N>
+	{dec_i0100_nnnn_0000_0011   ,i0100_nnnn_0000_0011   ,Mask_n         ,0x4003 ,Normal         ,"stc.l SR,@-<REG_N>"                   ,1,1,CO,rn_4},      //stc.l SR,@-<REG_N>
 	{0                          ,i0100_nnnn_0001_0011   ,Mask_n         ,0x4013 ,Normal         ,"stc.l GBR,@-<REG_N>"                  ,1,1,CO,rn_4        ,dec_STM(PRM_CREG)},    //stc.l GBR,@-<REG_N>
 	{0                          ,i0100_nnnn_0010_0011   ,Mask_n         ,0x4023 ,Normal         ,"stc.l VBR,@-<REG_N>"                  ,1,1,CO,rn_4        ,dec_STM(PRM_CREG)},    //stc.l VBR,@-<REG_N>
 	{0                          ,i0100_nnnn_0011_0011   ,Mask_n         ,0x4033 ,Normal         ,"stc.l SSR,@-<REG_N>"                  ,1,1,CO,rn_4        ,dec_STM(PRM_CREG)},    //stc.l SSR,@-<REG_N>
@@ -235,11 +205,11 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0010_0110   ,Mask_n         ,0x4026 ,Normal         ,"lds.l @<REG_N>+,PR"                   ,1,2,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,PR
 	{0                          ,i0100_nnnn_0011_0110   ,Mask_n         ,0x4036 ,Normal         ,"ldc.l @<REG_N>+,SGR"                  ,3,3,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,SGR
 	{0                          ,i0100_nnnn_0101_0110   ,Mask_n         ,0x4056 ,UsesFPU        ,"lds.l @<REG_N>+,FPUL"                 ,1,1,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,FPUL
-	{0                          ,i0100_nnnn_0110_0110   ,Mask_n         ,0x4066 ,FWritesFPSCR   ,"lds.l @<REG_N>+,FPSCR"                ,1,1,CO,fix_none},  //lds.l @<REG_N>+,FPSCR
+	{dec_i0100_nnnn_0110_0110   ,i0100_nnnn_0110_0110   ,Mask_n         ,0x4066 ,FWritesFPSCR   ,"lds.l @<REG_N>+,FPSCR"                ,1,1,CO,fix_none},  //lds.l @<REG_N>+,FPSCR
 	{0                          ,i0100_nnnn_1111_0110   ,Mask_n         ,0x40F6 ,Normal         ,"ldc.l @<REG_N>+,DBR"                  ,1,3,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,DBR
 
 	//ldc : @rn+
-	{0                          ,i0100_nnnn_0000_0111   ,Mask_n         ,0x4007 ,WritesSRRWPC   ,"ldc.l @<REG_N>+,SR"                   ,1,1,CO,fix_none},  //ldc.l @<REG_N>+,SR
+	{dec_i0100_nnnn_0000_0111   ,i0100_nnnn_0000_0111   ,Mask_n         ,0x4007 ,WritesSRRWPC   ,"ldc.l @<REG_N>+,SR"                   ,1,1,CO,fix_none},  //ldc.l @<REG_N>+,SR
 	{0                          ,i0100_nnnn_0001_0111   ,Mask_n         ,0x4017 ,Normal         ,"ldc.l @<REG_N>+,GBR"                  ,1,1,CO,fix_none    ,dec_LDM(PRM_CREG)},    //ldc.l @<REG_N>+,GBR
 	{0                          ,i0100_nnnn_0010_0111   ,Mask_n         ,0x4027 ,Normal         ,"ldc.l @<REG_N>+,VBR"                  ,1,1,CO,fix_none    ,dec_LDM(PRM_CREG)},    //ldc.l @<REG_N>+,VBR
 	{0                          ,i0100_nnnn_0011_0111   ,Mask_n         ,0x4037 ,Normal         ,"ldc.l @<REG_N>+,SSR"                  ,1,1,CO,fix_none    ,dec_LDM(PRM_CREG)},    //ldc.l @<REG_N>+,SSR
@@ -270,7 +240,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0010_1010   ,Mask_n         ,0x402A ,Normal         ,"lds <REG_N>,PR"                       ,1,2,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,PR
 	{0                          ,i0100_nnnn_0011_1010   ,Mask_n         ,0x403A ,Normal         ,"ldc <REG_N>,SGR"                      ,3,3,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,SGR
 	{0                          ,i0100_nnnn_0101_1010   ,Mask_n         ,0x405A ,UsesFPU        ,"lds <REG_N>,FPUL"                     ,1,1,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,FPUL
-	{0                          ,i0100_nnnn_0110_1010   ,Mask_n         ,0x406A ,FWritesFPSCR   ,"lds <REG_N>,FPSCR"                    ,1,1,CO,fix_none},  //lds <REG_N>,FPSCR
+	{dec_i0100_nnnn_0110_1010   ,i0100_nnnn_0110_1010   ,Mask_n         ,0x406A ,FWritesFPSCR   ,"lds <REG_N>,FPSCR"                    ,1,1,CO,fix_none},  //lds <REG_N>,FPSCR
 	{0                          ,i0100_nnnn_1111_1010   ,Mask_n         ,0x40FA ,Normal         ,"ldc <REG_N>,DBR"                      ,1,1,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,DBR
 
 	//ldc : rn
@@ -301,7 +271,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0010_1001   ,Mask_n         ,0x4029 ,Normal         ,"shlr16 <REG_N>"                       ,1,1,EX,fix_none    ,dec_shft(-16,false)},  //shlr16 <REG_N>
 	{dec_i0100_nnnn_0010_1011   ,i0100_nnnn_0010_1011   ,Mask_n         ,0x402B ,Branch_dir_d   ,"jmp @<REG_N>"                         ,2,3,CO,fix_none},  //jmp @<REG_N>
 	{dec_i0100_nnnn_0000_1011   ,i0100_nnnn_0000_1011   ,Mask_n         ,0x400B ,Branch_dir_d   ,"jsr @<REG_N>"                         ,2,3,CO,fix_none},  //jsr @<REG_N>
-	{0                          ,i0100_nnnn_0001_1011   ,Mask_n         ,0x401B ,Normal         ,"tas.b @<REG_N>"                       ,5,5,CO,fix_none},  //tas.b @<REG_N>
+	{dec_i0100_nnnn_0001_1011   ,i0100_nnnn_0001_1011   ,Mask_n         ,0x401B ,Normal         ,"tas.b @<REG_N>"                       ,5,5,CO,fix_none},  //tas.b @<REG_N>
 	{0                          ,i0100_nnnn_mmmm_1100   ,Mask_n_m       ,0x400C ,Normal         ,"shad <REG_M>,<REG_N>"                 ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_shad)},  //shad <REG_M>,<REG_N>
 	{0                          ,i0100_nnnn_mmmm_1101   ,Mask_n_m       ,0x400D ,Normal         ,"shld <REG_M>,<REG_N>"                 ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_shld)},  //shld <REG_M>,<REG_N>
 	{0                          ,i0100_nnnn_mmmm_1111   ,Mask_n_m       ,0x400F ,Normal         ,"mac.w @<REG_M>+,@<REG_N>+"            ,2,3,CO,fix_none},  //mac.w @<REG_M>+,@<REG_N>+

@@ -59,7 +59,13 @@ public:
 	}
 	void drawOverlay(int width, int height);
 
+	bool textureFormatSupported(TextureType texType) {
+		return supportedTexFormats[(int)texType];
+	}
+
 private:
+	bool checkTextureSupport();
+
 	ComPtr<ID3D11Device> pDevice;
 	ComPtr<ID3D11DeviceContext> pDeviceContext;
 	pD3DCompile D3DCompile = nullptr;
@@ -69,6 +75,7 @@ private:
 	Samplers samplers;
 	DX11Overlay overlay;
 	D3D_FEATURE_LEVEL featureLevel{};
+	bool supportedTexFormats[5] {}; // indexed by TextureType enum
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
 };

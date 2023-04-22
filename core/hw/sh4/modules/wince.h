@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifdef TRACE_WINCE_SYSCALLS
 #include "hw/sh4/sh4_sched.h"
 
 #define	PUserKData 			0x00005800
@@ -225,10 +226,8 @@ static const char *wince_methods[][256] = {
 		},
 };
 
-#ifdef TRACE_WINCE_SYSCALLS
 extern u32 unresolved_ascii_string;
 extern u32 unresolved_unicode_string;
-#endif
 
 static inline std::string get_unicode_string(u32 addr)
 {
@@ -238,9 +237,7 @@ static inline std::string get_unicode_string(u32 addr)
 		u16 c;
 		if (!read_mem16(addr, c))
 		{
-#ifdef TRACE_WINCE_SYSCALLS
 			unresolved_unicode_string = addr;
-#endif
 			return "(page fault)";
 		}
 		if (c == 0)
@@ -250,6 +247,7 @@ static inline std::string get_unicode_string(u32 addr)
 	}
 	return str;
 }
+
 static inline std::string get_ascii_string(u32 addr)
 {
 	std::string str;
@@ -258,9 +256,7 @@ static inline std::string get_ascii_string(u32 addr)
 		u8 c;
 		if (!read_mem8(addr++, c))
 		{
-#ifdef TRACE_WINCE_SYSCALLS
 			unresolved_ascii_string = addr;
-#endif
 			return "(page fault)";
 		}
 		if (c == 0)
@@ -352,7 +348,9 @@ static bool print_wince_syscall(u32 address)
 		return false;
 
 }
+#endif
 
+#if defined(FAST_MMU) && defined(USE_WINCE_HACK)
 static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 {
 	// WinCE hack
@@ -407,3 +405,4 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 
 	return false;
 }
+#endif

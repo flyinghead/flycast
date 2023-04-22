@@ -12,7 +12,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 	if (fsource == nullptr)
 	{
-		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
+		WARN_LOG(GDROM, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CDI file ") + file);
 	}
 
@@ -59,6 +59,14 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 				CDI_read_track (fsource, &image, &track);
 
+				if (track.sector_size != 2048 && track.sector_size != 2336 && track.sector_size != 2352 && track.sector_size != 2448)
+				{
+					delete rv;
+					std::fclose(fsource);
+					WARN_LOG(GDROM, "Invalid sector size: %lu", track.sector_size);
+					throw FlycastException("Invalid CDI sector size");
+				}
+
 				image.header_position = std::ftell(fsource);
 
 				// Show info
@@ -101,7 +109,15 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
 				t.EndFAD=t.StartFAD+track.length-1;
-				t.file = new RawTrackFile(nowide::fopen(file, "rb"), track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
+				FILE *trackFile = nowide::fopen(file, "rb");
+				if (trackFile == nullptr)
+				{
+					delete rv;
+					std::fclose(fsource);
+					WARN_LOG(GDROM, "Cannot re-open file '%s' errno %d", file, errno);
+					throw FlycastException("Cannot re-open CDI file");
+				}
+				t.file = new RawTrackFile(trackFile, track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
 
 				rv->tracks.push_back(t);
 

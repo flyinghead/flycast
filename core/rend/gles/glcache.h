@@ -292,8 +292,6 @@ private:
 		}
 	}
 
-	GLuint _array_buffer;
-	GLuint _element_array_buffer;
 	GLuint _texture;
 	GLenum _src_blend_factor;
 	GLenum _dst_blend_factor;

@@ -72,6 +72,7 @@ enum ta_state
 u8 ta_fsm[2049];	//[2048] stores the current state
 u32 ta_fsm_cl=7;
 
+u32 taRenderPass;
 
 static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
@@ -204,7 +205,7 @@ static const HollyInterruptID ListEndInterrupt[5]=
 };
 
 
-static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+static void DYNACALL ta_handle_cmd(u32 trans)
 {
 	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
 
@@ -345,8 +346,7 @@ u32 TaTypeLut::poly_data_type_id(PCW pcw)
 			}
 			else if (pcw.Col_Type==1)
 			{
-				//die ("invalid");
-				return 0xFFFFFFFF;
+				return TaTypeLut::INVALID_TYPE;
 			}
 			else
 			{
@@ -376,14 +376,9 @@ u32 TaTypeLut::poly_data_type_id(PCW pcw)
 			if (pcw.Col_Type==0)
 				return 9;               //(Non-Textured, Packed Color, with Two Volumes)
 			else if (pcw.Col_Type==1)
-			{
-				//die ("invalid");
-				return 0xFFFFFFFF;
-			}
+				return TaTypeLut::INVALID_TYPE;
 			else
-			{
 				return 10;              //(Non-Textured, Intensity, with Two Volumes)
-			}
 		}
 	}
 }
@@ -435,7 +430,7 @@ u32 TaTypeLut::poly_header_type_size(PCW pcw)
 		}
 		else
 		{
-			return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
+			return TaTypeLut::INVALID_TYPE;
 		}
 	}
 }
@@ -465,40 +460,58 @@ static u32 opbSize(int n)
 	return n == 0 ? 0 : 16 << n;
 }
 
-static void markObjectListBlocks()
+static void markObjectListBlocks(int renderPass)
 {
-	u32 addr = TA_OL_BASE;
+	u32 addr;
+	u32 tile_size;
+	getRegionTileAddrAndSize(addr, tile_size);
+	addr += tile_size * renderPass;
+
+	// Read the opaque pointer of the first tile and check that it's non-null (Naomi doom)
+	u32 opbAddr = pvr_read32p<u32>(addr + 4);
+	bool emptyOpaqueList = (opbAddr & 0x80000000) != 0;
+
+	addr = TA_OL_BASE;
+	const int tileCount = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
 	// opaque
 	u32 opBlockSize = opbSize(TA_ALLOC_CTRL & 3);
-	if (opBlockSize == 0)
+	if (emptyOpaqueList)
+		addr += opBlockSize * tileCount;
+	if (opBlockSize == 0 || emptyOpaqueList)
 	{
 		// skip modvols OPBs
-		addr += opbSize((TA_ALLOC_CTRL >> 4) & 3) * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
+		addr += opbSize((TA_ALLOC_CTRL >> 4) & 3) * tileCount;
 		// transparent
 		opBlockSize = opbSize((TA_ALLOC_CTRL >> 8) & 3);
 		if (opBlockSize == 0)
 		{
 			// skip TR modvols OPBs
-			addr += opbSize((TA_ALLOC_CTRL >> 12) & 3) * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
+			addr += opbSize((TA_ALLOC_CTRL >> 12) & 3) * tileCount;
 			// punch-through
 			opBlockSize = opbSize((TA_ALLOC_CTRL >> 16) & 3);
-			if (opBlockSize == 0)
+			if (opBlockSize == 0) {
+				INFO_LOG(PVR, "markObjectListBlocks: all lists are empty");
 				return;
+			}
 		}
 	}
-	for (int y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
-		for (int x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
+	for (u32 y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
+		for (u32 x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
 		{
 			pvr_write32p(addr, TA_OL_BASE);
 			addr += opBlockSize;
 		}
 }
 
-void ta_vtx_ListInit()
+void ta_vtx_ListInit(bool continuation)
 {
+	if (!continuation)
+		taRenderPass = 0;
+	else
+		taRenderPass++;
 	SetCurrentTARC(TA_OL_BASE);
 	ta_tad.ClearPartial();
-	markObjectListBlocks();
+	markObjectListBlocks(taRenderPass);
 
 	ta_cur_state = TAS_NS;
 	ta_fsm_cl = 7;
@@ -511,8 +524,7 @@ void ta_vtx_SoftReset()
 	ta_cur_state = TAS_NS;
 }
 
-static INLINE
-void DYNACALL ta_thd_data32_i(const simd256_t *data)
+static void DYNACALL ta_thd_data32_i(const simd256_t *data)
 {
 	if (ta_ctx == NULL)
 	{

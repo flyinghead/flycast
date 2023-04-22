@@ -37,9 +37,9 @@ public:
     	ImGui_ImplDX9_NewFrame();
 	}
 
-	void renderDrawData(ImDrawData *drawData) override {
+	void renderDrawData(ImDrawData *drawData, bool gui_open) override {
 		theDXContext.EndImGuiFrame();
-		if (gui_is_open())
+		if (gui_open)
 			frameRendered = true;
 	}
 
@@ -65,7 +65,13 @@ public:
 	{
 		ComPtr<IDirect3DTexture9>& texture = textures[name];
 		texture.reset();
-		theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.get(), 0);
+		HRESULT hr = theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.get(), 0);
+		if (FAILED(hr) || !texture)
+		{
+			WARN_LOG(RENDERER, "CreateTexture failed (%d x %d): error %x", width, height, hr);
+			textures.erase(name);
+			return ImTextureID();
+		}
 
 		width *= 4;
 

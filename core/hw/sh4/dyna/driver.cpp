@@ -7,10 +7,8 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
-#include "cfg/option.h"
 
 #include <ctime>
-#include <cfloat>
 
 #include "blockmanager.h"
 #include "ngen.h"
@@ -24,7 +22,9 @@
 static u8 *SH4_TCB;
 #else
 static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
-#if defined(__unix__) || defined(__SWITCH__)
+#if defined(__OpenBSD__)
+	__attribute__((section(".openbsd.mutable")));
+#elif defined(__unix__) || defined(__SWITCH__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));
@@ -147,8 +147,16 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 		}
 	}
+	else if (vaddr & 1)
+	{
+		// read address error
+		Do_Exception(vaddr, 0xE0, 0x100);
+		return false;
+	}
 	else
+	{
 		addr = vaddr;
+	}
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
@@ -244,6 +252,10 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
+	if (!rbi)
+		rbi = bm_GetStaleBlock(block_cpde);
+	verify(rbi != nullptr);
+
 	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
@@ -255,14 +267,17 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	if (mmu_enabled())
 	{
 		RuntimeBlockInfoPtr block = bm_GetBlock(addr);
-		blockcheck_failures = block->blockcheck_failures + 1;
-		if (blockcheck_failures > 5)
+		if (block)
 		{
-			bool inserted = smc_hotspots.insert(addr).second;
-			if (inserted)
-				DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail SMC hotspot @ %08x fails %d", addr, blockcheck_failures);
+			blockcheck_failures = block->blockcheck_failures + 1;
+			if (blockcheck_failures > 5)
+			{
+				bool inserted = smc_hotspots.insert(addr).second;
+				if (inserted)
+					DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail SMC hotspot @ %08x fails %d", addr, blockcheck_failures);
+			}
+			bm_DiscardBlock(block.get());
 		}
-		bm_DiscardBlock(block.get());
 	}
 	else
 	{
@@ -385,27 +400,19 @@ static void recSh4_Init()
 
 	
 	if (_nvmem_enabled())
-	{
-		if (!_nvmem_4gb_space())
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-		}
-		else
-		{
-			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x8C000000));
-		}
-	}
+		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
 	// Prepare some pointer to the pre-allocated code cache:
 	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = NULL;
-	#ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
-	#else
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache));
-	#endif
+#ifdef FEAT_NO_RWX_PAGES
+	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+#else
+	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+#endif
+	verify(rc);
 	// Ensure the pointer returned is non-null
 	verify(CodeCache != NULL);
 

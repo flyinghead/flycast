@@ -92,6 +92,12 @@ extern "C" {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_AR NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_AR NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_AR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_AR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_AR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AR NULL
 #define OPTION_VAL_320X240_AR NULL
@@ -144,23 +150,36 @@ extern "C" {
 #define OPTION_VAL_1GB_AR NULL
 #define OPTION_VAL_2GB_AR NULL
 #define OPTION_VAL_4GB_AR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_AR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_AR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_AR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_AR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_AR NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_AR NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_AR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_AR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_AR NULL
+#define OPTION_VAL_1_AR NULL
+#define OPTION_VAL_2_AR NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_AR NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_AR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_AR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_AR NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_AR NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AR NULL
-#define OPTION_VAL_2_AR NULL
+#define OPTION_VAL_2_O27_AR NULL
 #define OPTION_VAL_4_AR NULL
 #define OPTION_VAL_6_AR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_AR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_AR NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_AR NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_AR NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_AR NULL
@@ -189,6 +208,8 @@ extern "C" {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_AR NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_AR NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_AR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_AR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_AR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AR NULL
@@ -415,6 +436,49 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_AR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AR,
       NULL,
@@ -541,12 +605,43 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AR,
       NULL,
       "video",
       {
@@ -616,10 +711,39 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_AR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_AR },
+         { "1",  OPTION_VAL_1_AR },
+         { "2",  OPTION_VAL_2_AR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_AR,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_AR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_AR,
       NULL,
       "video",
       {
@@ -653,7 +777,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_AR },
+         { "2",  OPTION_VAL_2_O27_AR },
          { "4",  OPTION_VAL_4_AR },
          { "6",  OPTION_VAL_6_AR },
          { NULL, NULL },
@@ -676,6 +800,20 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_AR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_AR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_AR,
@@ -869,6 +1007,20 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AR,
       NULL,
@@ -1018,7 +1170,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1169,7 +1321,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1320,7 +1472,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1471,7 +1623,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AR },
-         { "2x", OPTION_VAL_2_AR },
+         { "2x", OPTION_VAL_2_O27_AR },
          { "3x", OPTION_VAL_3X_AR },
          { "4x", OPTION_VAL_4_AR },
          { "5x", OPTION_VAL_5X_AR },
@@ -1598,7 +1750,7 @@ struct retro_core_options_v2 options_ar = {
 #define CATEGORY_VIDEO_INFO_0_AST NULL
 #define CATEGORY_PERFORMANCE_LABEL_AST "Rindimientu"
 #define CATEGORY_PERFORMANCE_INFO_0_AST NULL
-#define CATEGORY_HACKS_LABEL_AST NULL
+#define CATEGORY_HACKS_LABEL_AST "Hacks de la emulación"
 #define CATEGORY_HACKS_INFO_0_AST NULL
 #define CATEGORY_INPUT_LABEL_AST "Entrada"
 #define CATEGORY_INPUT_INFO_0_AST NULL
@@ -1617,16 +1769,22 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_FRENCH_AST "Francés"
 #define OPTION_VAL_SPANISH_AST "Castellán"
 #define OPTION_VAL_ITALIAN_AST "Italianu"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_AST "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_AST "Activar el DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital (DSP) d'audiu de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos de rindimientu."
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital (DSP) d'audiu de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_AST "Forciar el mou de Windows CE"
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_AST "Activa la emulación completa de la unidá de xestión de memoria (MMU) y otros axustes pa los xuegos de Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_AST NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AST NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AST NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AST NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_AST NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AST NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_AST NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_AST NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AST "Modifica la resolución del renderizáu."
 #define OPTION_VAL_320X240_AST NULL
@@ -1679,23 +1837,36 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_1GB_AST NULL
 #define OPTION_VAL_2GB_AST NULL
 #define OPTION_VAL_4GB_AST NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_AST NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AST NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AST NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AST NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AST NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_AST NULL
-#define CORE_OPTION_NAME_FOG_LABEL_AST NULL
+#define CORE_OPTION_NAME_FOG_LABEL_AST "Efeutos de nublina"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_AST "Modificador del volume"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_AST NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_AST NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_AST "Filtru anisotrópicu"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_AST NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_AST NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_AST NULL
+#define OPTION_VAL_1_AST NULL
+#define OPTION_VAL_2_AST NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_AST NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_AST NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_AST NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_AST NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_AST NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_AST "Filtru del posprocesamientu de PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_AST "x2"
+#define OPTION_VAL_2_O27_AST "x2"
 #define OPTION_VAL_4_AST "x4"
-#define OPTION_VAL_6_AST NULL
+#define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_AST NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_AST NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_AST NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_AST NULL
@@ -1724,6 +1895,8 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_AST NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_AST NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_AST NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_AST NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AST NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AST NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AST NULL
@@ -1766,18 +1939,18 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_LIGHT_PURPLE_13_AST "Moráu claro"
 #define OPTION_VAL_YELLOW_14_AST "Mariellu"
 #define OPTION_VAL_GRAY_15_AST "Buxu"
-#define OPTION_VAL_LIGHT_PURPLE_2_16_AST NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_AST NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_AST NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_AST NULL
-#define OPTION_VAL_LIGHT_RED_2_20_AST NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_AST "Moráu claro (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_AST "Verde claro (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_AST "Verde claro (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_AST "Cianu claro (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_AST "Coloráu claro (2)"
 #define OPTION_VAL_MAGENTA_21_AST "Maxenta"
-#define OPTION_VAL_LIGHT_PURPLE_3_22_AST NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_AST "Moráu claro (3)"
 #define OPTION_VAL_LIGHT_ORANGE_23_AST "Naranxa claro"
 #define OPTION_VAL_ORANGE_24_AST "Naranxa"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_AST NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_AST "Moráu claro (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_AST "Mariellu claro"
-#define OPTION_VAL_LIGHT_YELLOW_2_27_AST NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_AST "Mariellu claro (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_AST NULL
 #define OPTION_VAL_40_AST NULL
@@ -1950,6 +2123,49 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_AST,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AST,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_AST,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST,
       NULL,
@@ -2076,12 +2292,43 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_AST,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_AST,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_AST,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_AST,
       NULL,
       "video",
       {
@@ -2151,10 +2398,39 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_AST,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_AST },
+         { "1",  OPTION_VAL_1_AST },
+         { "2",  OPTION_VAL_2_AST },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_AST,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_AST,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_AST,
       NULL,
       "video",
       {
@@ -2188,7 +2464,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_AST },
+         { "2",  OPTION_VAL_2_O27_AST },
          { "4",  OPTION_VAL_4_AST },
          { "6",  OPTION_VAL_6_AST },
          { NULL, NULL },
@@ -2211,6 +2487,20 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_AST,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_AST,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_AST,
@@ -2404,6 +2694,20 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AST,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AST,
       NULL,
@@ -2553,7 +2857,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -2704,7 +3008,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -2855,7 +3159,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3006,7 +3310,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_AST },
-         { "2x", OPTION_VAL_2_AST },
+         { "2x", OPTION_VAL_2_O27_AST },
          { "3x", OPTION_VAL_3X_AST },
          { "4x", OPTION_VAL_4_AST },
          { "5x", OPTION_VAL_5X_AST },
@@ -3125,13 +3429,1700 @@ struct retro_core_options_v2 options_ast = {
    option_defs_ast
 };
 
+/* RETRO_LANGUAGE_BE */
+
+#define CATEGORY_SYSTEM_LABEL_BE NULL
+#define CATEGORY_SYSTEM_INFO_0_BE NULL
+#define CATEGORY_VIDEO_LABEL_BE NULL
+#define CATEGORY_VIDEO_INFO_0_BE NULL
+#define CATEGORY_PERFORMANCE_LABEL_BE NULL
+#define CATEGORY_PERFORMANCE_INFO_0_BE NULL
+#define CATEGORY_HACKS_LABEL_BE NULL
+#define CATEGORY_HACKS_INFO_0_BE NULL
+#define CATEGORY_INPUT_LABEL_BE NULL
+#define CATEGORY_INPUT_INFO_0_BE NULL
+#define CATEGORY_VMU_LABEL_BE NULL
+#define CATEGORY_VMU_INFO_0_BE NULL
+#define CORE_OPTION_NAME_REGION_LABEL_BE NULL
+#define OPTION_VAL_JAPAN_BE NULL
+#define OPTION_VAL_USA_BE NULL
+#define OPTION_VAL_EUROPE_BE NULL
+#define OPTION_VAL_DEFAULT_BE NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_BE NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_BE NULL
+#define OPTION_VAL_JAPANESE_BE NULL
+#define OPTION_VAL_ENGLISH_BE NULL
+#define OPTION_VAL_GERMAN_BE NULL
+#define OPTION_VAL_FRENCH_BE NULL
+#define OPTION_VAL_SPANISH_BE NULL
+#define OPTION_VAL_ITALIAN_BE NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_BE NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_BE NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_BE NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_BE NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_BE NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_BE NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_BE NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_BE NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_BE NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE NULL
+#define OPTION_VAL_320X240_BE NULL
+#define OPTION_VAL_640X480_BE NULL
+#define OPTION_VAL_800X600_BE NULL
+#define OPTION_VAL_960X720_BE NULL
+#define OPTION_VAL_1024X768_BE NULL
+#define OPTION_VAL_1280X960_BE NULL
+#define OPTION_VAL_1440X1080_BE NULL
+#define OPTION_VAL_1600X1200_BE NULL
+#define OPTION_VAL_1920X1440_BE NULL
+#define OPTION_VAL_2560X1920_BE NULL
+#define OPTION_VAL_2880X2160_BE NULL
+#define OPTION_VAL_3200X2400_BE NULL
+#define OPTION_VAL_3840X2880_BE NULL
+#define OPTION_VAL_4480X3360_BE NULL
+#define OPTION_VAL_5120X3840_BE NULL
+#define OPTION_VAL_5760X4320_BE NULL
+#define OPTION_VAL_6400X4800_BE NULL
+#define OPTION_VAL_7040X5280_BE NULL
+#define OPTION_VAL_7680X5760_BE NULL
+#define OPTION_VAL_8320X6240_BE NULL
+#define OPTION_VAL_8960X6720_BE NULL
+#define OPTION_VAL_9600X7200_BE NULL
+#define OPTION_VAL_10240X7680_BE NULL
+#define OPTION_VAL_10880X8160_BE NULL
+#define OPTION_VAL_11520X8640_BE NULL
+#define OPTION_VAL_12160X9120_BE NULL
+#define OPTION_VAL_12800X9600_BE NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_BE NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_BE NULL
+#define OPTION_VAL_VGA_BE NULL
+#define OPTION_VAL_TV_RGB_BE NULL
+#define OPTION_VAL_TV_COMPOSITE_BE NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_BE NULL
+#define OPTION_VAL_NTSC_BE NULL
+#define OPTION_VAL_PAL_BE NULL
+#define OPTION_VAL_PAL_N_BE NULL
+#define OPTION_VAL_PAL_M_BE NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE NULL
+#define OPTION_VAL_HORIZONTAL_BE NULL
+#define OPTION_VAL_VERTICAL_BE NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_BE NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_BE NULL
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_BE NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_BE NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_BE NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_BE NULL
+#define OPTION_VAL_512MB_BE NULL
+#define OPTION_VAL_1GB_BE NULL
+#define OPTION_VAL_2GB_BE NULL
+#define OPTION_VAL_4GB_BE NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_BE NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_BE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_BE NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_BE NULL
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_BE NULL
+#define CORE_OPTION_NAME_FOG_LABEL_BE NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_BE NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_BE NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_BE NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_BE NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_BE NULL
+#define OPTION_VAL_1_BE NULL
+#define OPTION_VAL_2_BE NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_BE NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_BE NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_BE NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_BE NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_BE NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_BE NULL
+#define OPTION_VAL_2_O27_BE NULL
+#define OPTION_VAL_4_BE NULL
+#define OPTION_VAL_6_BE NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_BE NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_BE NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_BE NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_BE NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_BE NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_BE NULL
+#define OPTION_VAL_SOME_BE NULL
+#define OPTION_VAL_MORE_BE NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_BE NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_BE NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_BE NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_BE NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_BE NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE NULL
+#define OPTION_VAL_0_BE NULL
+#define OPTION_VAL_5_BE NULL
+#define OPTION_VAL_10_BE NULL
+#define OPTION_VAL_15_BE NULL
+#define OPTION_VAL_20_BE NULL
+#define OPTION_VAL_25_BE NULL
+#define OPTION_VAL_30_BE NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_BE NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_BE NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_BE NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_BE NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE NULL
+#define OPTION_VAL_WHITE_BE NULL
+#define OPTION_VAL_RED_BE NULL
+#define OPTION_VAL_GREEN_BE NULL
+#define OPTION_VAL_BLUE_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_BE NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_BE NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_BE NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE NULL
+#define OPTION_VAL_VMU_A1_BE NULL
+#define OPTION_VAL_ALL_VMUS_BE NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BE NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BE NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_BE NULL
+#define OPTION_VAL_UPPER_LEFT_BE NULL
+#define OPTION_VAL_UPPER_RIGHT_BE NULL
+#define OPTION_VAL_LOWER_LEFT_BE NULL
+#define OPTION_VAL_LOWER_RIGHT_BE NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_BE NULL
+#define OPTION_VAL_1X_BE NULL
+#define OPTION_VAL_3X_BE NULL
+#define OPTION_VAL_5X_BE NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_BE NULL
+#define OPTION_VAL_DEFAULT_ON_00_BE NULL
+#define OPTION_VAL_DEFAULT_OFF_01_BE NULL
+#define OPTION_VAL_BLACK_02_BE NULL
+#define OPTION_VAL_LIGHT_BLUE_04_BE NULL
+#define OPTION_VAL_CYAN_06_BE NULL
+#define OPTION_VAL_CYAN_BLUE_07_BE NULL
+#define OPTION_VAL_LIGHT_GREEN_08_BE NULL
+#define OPTION_VAL_CYAN_GREEN_09_BE NULL
+#define OPTION_VAL_LIGHT_CYAN_10_BE NULL
+#define OPTION_VAL_PURPLE_12_BE NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_BE NULL
+#define OPTION_VAL_YELLOW_14_BE NULL
+#define OPTION_VAL_GRAY_15_BE NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_BE NULL
+#define OPTION_VAL_LIGHT_GREEN_2_17_BE NULL
+#define OPTION_VAL_LIGHT_GREEN_3_18_BE NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_BE NULL
+#define OPTION_VAL_LIGHT_RED_2_20_BE NULL
+#define OPTION_VAL_MAGENTA_21_BE NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_BE NULL
+#define OPTION_VAL_LIGHT_ORANGE_23_BE NULL
+#define OPTION_VAL_ORANGE_24_BE NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_BE NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_BE NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_BE NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_BE NULL
+#define OPTION_VAL_40_BE NULL
+#define OPTION_VAL_50_BE NULL
+#define OPTION_VAL_60_BE NULL
+#define OPTION_VAL_70_BE NULL
+#define OPTION_VAL_80_BE NULL
+#define OPTION_VAL_90_BE NULL
+#define OPTION_VAL_100_BE NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_BE NULL
+
+struct retro_core_option_v2_category option_cats_be[] = {
+   {
+      "system",
+      CATEGORY_SYSTEM_LABEL_BE,
+      CATEGORY_SYSTEM_INFO_0_BE
+   },
+   {
+      "video",
+      CATEGORY_VIDEO_LABEL_BE,
+      CATEGORY_VIDEO_INFO_0_BE
+   },
+   {
+      "performance",
+      CATEGORY_PERFORMANCE_LABEL_BE,
+      CATEGORY_PERFORMANCE_INFO_0_BE
+   },
+   {
+      "hacks",
+      CATEGORY_HACKS_LABEL_BE,
+      CATEGORY_HACKS_INFO_0_BE
+   },
+   {
+      "input",
+      CATEGORY_INPUT_LABEL_BE,
+      CATEGORY_INPUT_INFO_0_BE
+   },
+   {
+      "vmu",
+      CATEGORY_VMU_LABEL_BE,
+      CATEGORY_VMU_INFO_0_BE
+   },
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_be[] = {
+   {
+      CORE_OPTION_NAME "_region",
+      CORE_OPTION_NAME_REGION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "system",
+      {
+         { "Japan",   OPTION_VAL_JAPAN_BE },
+         { "USA",     OPTION_VAL_USA_BE },
+         { "Europe",  OPTION_VAL_EUROPE_BE },
+         { "Default", OPTION_VAL_DEFAULT_BE },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_language",
+      CORE_OPTION_NAME_LANGUAGE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_LANGUAGE_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "Japanese", OPTION_VAL_JAPANESE_BE },
+         { "English",  OPTION_VAL_ENGLISH_BE },
+         { "German",   OPTION_VAL_GERMAN_BE },
+         { "French",   OPTION_VAL_FRENCH_BE },
+         { "Spanish",  OPTION_VAL_SPANISH_BE },
+         { "Italian",  OPTION_VAL_ITALIAN_BE },
+         { "Default",  OPTION_VAL_DEFAULT_BE },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      CORE_OPTION_NAME_HLE_BIOS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_HLE_BIOS_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_boot_to_bios",
+      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_dsp",
+      CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "disabled",
+#else
+      "enabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_force_wince",
+      CORE_OPTION_NAME_FORCE_WINCE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_allow_service_buttons",
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_BE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
+      CORE_OPTION_NAME "_internal_resolution",
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "320x240",    OPTION_VAL_320X240_BE },
+         { "640x480",    OPTION_VAL_640X480_BE },
+         { "800x600",    OPTION_VAL_800X600_BE },
+         { "960x720",    OPTION_VAL_960X720_BE },
+         { "1024x768",   OPTION_VAL_1024X768_BE },
+         { "1280x960",   OPTION_VAL_1280X960_BE },
+         { "1440x1080",  OPTION_VAL_1440X1080_BE },
+         { "1600x1200",  OPTION_VAL_1600X1200_BE },
+         { "1920x1440",  OPTION_VAL_1920X1440_BE },
+         { "2560x1920",  OPTION_VAL_2560X1920_BE },
+         { "2880x2160",  OPTION_VAL_2880X2160_BE },
+         { "3200x2400",  OPTION_VAL_3200X2400_BE },
+         { "3840x2880",  OPTION_VAL_3840X2880_BE },
+         { "4480x3360",  OPTION_VAL_4480X3360_BE },
+         { "5120x3840",  OPTION_VAL_5120X3840_BE },
+         { "5760x4320",  OPTION_VAL_5760X4320_BE },
+         { "6400x4800",  OPTION_VAL_6400X4800_BE },
+         { "7040x5280",  OPTION_VAL_7040X5280_BE },
+         { "7680x5760",  OPTION_VAL_7680X5760_BE },
+         { "8320x6240",  OPTION_VAL_8320X6240_BE },
+         { "8960x6720",  OPTION_VAL_8960X6720_BE },
+         { "9600x7200",  OPTION_VAL_9600X7200_BE },
+         { "10240x7680", OPTION_VAL_10240X7680_BE },
+         { "10880x8160", OPTION_VAL_10880X8160_BE },
+         { "11520x8640", OPTION_VAL_11520X8640_BE },
+         { "12160x9120", OPTION_VAL_12160X9120_BE },
+         { "12800x9600", OPTION_VAL_12800X9600_BE },
+         { NULL, NULL },
+      },
+#ifdef LOW_RES
+      "320x240",
+#else
+      "640x480",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_cable_type",
+      CORE_OPTION_NAME_CABLE_TYPE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "VGA",	    	 OPTION_VAL_VGA_BE },
+         { "TV (RGB)",       OPTION_VAL_TV_RGB_BE },
+         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_BE },
+         { NULL, NULL },
+      },
+      "TV (Composite)",
+   },
+   {
+      CORE_OPTION_NAME "_broadcast",
+      CORE_OPTION_NAME_BROADCAST_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "NTSC",    OPTION_VAL_NTSC_BE },
+         { "PAL",     OPTION_VAL_PAL_BE },
+         { "PAL_N",   OPTION_VAL_PAL_N_BE },
+         { "PAL_M",   OPTION_VAL_PAL_M_BE },
+         { "Default", OPTION_VAL_DEFAULT_BE },
+         { NULL, NULL },
+      },
+      "NTSC",
+   },
+   {
+      CORE_OPTION_NAME "_screen_rotation",
+      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "horizontal", OPTION_VAL_HORIZONTAL_BE },
+         { "vertical",   OPTION_VAL_VERTICAL_BE },
+         { NULL, NULL },
+      },
+      "horizontal",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_alpha_sorting",
+      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_BE },
+         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_BE },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_BE },
+#endif
+         { NULL, NULL },
+      },
+#if defined(LOW_END)
+      "per-strip (fast, least accurate)",
+#else
+      "per-triangle (normal)",
+#endif
+   },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+   {
+      CORE_OPTION_NAME "_oit_abuffer_size",
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "512MB", OPTION_VAL_512MB_BE },
+         { "1GB",   OPTION_VAL_1GB_BE },
+         { "2GB",   OPTION_VAL_2GB_BE },
+         { "4GB",   OPTION_VAL_4GB_BE },
+         { NULL, NULL },
+      },
+      "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_enable_rttb",
+      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_mipmapping",
+      CORE_OPTION_NAME_MIPMAPPING_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_fog",
+      CORE_OPTION_NAME_FOG_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_volume_modifier_enable",
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_BE },
+         { "1",  OPTION_VAL_1_BE },
+         { "2",  OPTION_VAL_2_BE },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+#ifdef _OPENMP
+   {
+      CORE_OPTION_NAME "_texupscale",
+      CORE_OPTION_NAME_TEXUPSCALE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_BE,
+      NULL,
+      "video",
+      {
+         { "1", "disabled" },
+         { "2",  OPTION_VAL_2_O27_BE },
+         { "4",  OPTION_VAL_4_BE },
+         { "6",  OPTION_VAL_6_BE },
+         { NULL, NULL },
+      },
+      "1",
+   },
+   {/* TODO: needs clarification */
+      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "256",  NULL },
+         { "512",  NULL },
+         { "1024", NULL },
+         { NULL, NULL },
+      },
+      "256",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_BE,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_BE,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_threaded_rendering",
+      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_BE,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_BE,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "some", OPTION_VAL_SOME_BE },
+         { "more", OPTION_VAL_MORE_BE },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_frame_skipping",
+      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_BE,
+      NULL,
+      "performance",
+      {
+         { "disabled",  NULL },
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_hack",
+      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_gdrom_fast_loading",
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "enabled",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_custom_textures",
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: probably needs explanation */
+      CORE_OPTION_NAME "_dump_textures",
+      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_analog_stick_deadzone",
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_BE },
+         { "5%",  OPTION_VAL_5_BE },
+         { "10%", OPTION_VAL_10_BE },
+         { "15%", OPTION_VAL_15_BE },
+         { "20%", OPTION_VAL_20_BE },
+         { "25%", OPTION_VAL_25_BE },
+         { "30%", OPTION_VAL_30_BE },
+         { NULL, NULL },
+      },
+      "15%",
+   },
+   {
+      CORE_OPTION_NAME "_trigger_deadzone",
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_BE },
+         { "5%",  OPTION_VAL_5_BE },
+         { "10%", OPTION_VAL_10_BE },
+         { "15%", OPTION_VAL_15_BE },
+         { "20%", OPTION_VAL_20_BE },
+         { "25%", OPTION_VAL_25_BE },
+         { "30%", OPTION_VAL_30_BE },
+         { NULL, NULL },
+      },
+      "0%",
+   },
+   {
+      CORE_OPTION_NAME "_digital_triggers",
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_purupuru",
+      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_BE,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_BE,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE,
+      NULL,
+      "input",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_lightgun1_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_BE },
+         { "Red",      OPTION_VAL_RED_BE },
+         { "Green",    OPTION_VAL_GREEN_BE },
+         { "Blue",     OPTION_VAL_BLUE_BE },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun2_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_BE },
+         { "Red",      OPTION_VAL_RED_BE },
+         { "Green",    OPTION_VAL_GREEN_BE },
+         { "Blue",     OPTION_VAL_BLUE_BE },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun3_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_BE },
+         { "Red",      OPTION_VAL_RED_BE },
+         { "Green",    OPTION_VAL_GREEN_BE },
+         { "Blue",     OPTION_VAL_BLUE_BE },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun4_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_BE },
+         { "Red",      OPTION_VAL_RED_BE },
+         { "Green",    OPTION_VAL_GREEN_BE },
+         { "Blue",     OPTION_VAL_BLUE_BE },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_per_content_vmus",
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_BE,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_BE,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "VMU A1",   OPTION_VAL_VMU_A1_BE },
+         { "All VMUs", OPTION_VAL_ALL_VMUS_BE },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BE,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BE,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_BE,
+      NULL,
+      "vmu",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_display",
+      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_position",
+      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_BE },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_BE },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_BE },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_BE },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_size_mult",
+      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_BE },
+         { "2x", OPTION_VAL_2_O27_BE },
+         { "3x", OPTION_VAL_3X_BE },
+         { "4x", OPTION_VAL_4_BE },
+         { "5x", OPTION_VAL_5X_BE },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_on_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_off_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_opacity",
+      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_BE },
+         { "20%",  OPTION_VAL_20_BE },
+         { "30%",  OPTION_VAL_30_BE },
+         { "40%",  OPTION_VAL_40_BE },
+         { "50%",  OPTION_VAL_50_BE },
+         { "60%",  OPTION_VAL_60_BE },
+         { "70%",  OPTION_VAL_70_BE },
+         { "80%",  OPTION_VAL_80_BE },
+         { "90%",  OPTION_VAL_90_BE },
+         { "100%", OPTION_VAL_100_BE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_display",
+      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_position",
+      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_BE },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_BE },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_BE },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_BE },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_size_mult",
+      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_BE },
+         { "2x", OPTION_VAL_2_O27_BE },
+         { "3x", OPTION_VAL_3X_BE },
+         { "4x", OPTION_VAL_4_BE },
+         { "5x", OPTION_VAL_5X_BE },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_on_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_off_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_opacity",
+      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_BE },
+         { "20%",  OPTION_VAL_20_BE },
+         { "30%",  OPTION_VAL_30_BE },
+         { "40%",  OPTION_VAL_40_BE },
+         { "50%",  OPTION_VAL_50_BE },
+         { "60%",  OPTION_VAL_60_BE },
+         { "70%",  OPTION_VAL_70_BE },
+         { "80%",  OPTION_VAL_80_BE },
+         { "90%",  OPTION_VAL_90_BE },
+         { "100%", OPTION_VAL_100_BE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_display",
+      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_position",
+      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_BE },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_BE },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_BE },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_BE },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_size_mult",
+      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_BE },
+         { "2x", OPTION_VAL_2_O27_BE },
+         { "3x", OPTION_VAL_3X_BE },
+         { "4x", OPTION_VAL_4_BE },
+         { "5x", OPTION_VAL_5X_BE },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_on_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_off_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_opacity",
+      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_BE },
+         { "20%",  OPTION_VAL_20_BE },
+         { "30%",  OPTION_VAL_30_BE },
+         { "40%",  OPTION_VAL_40_BE },
+         { "50%",  OPTION_VAL_50_BE },
+         { "60%",  OPTION_VAL_60_BE },
+         { "70%",  OPTION_VAL_70_BE },
+         { "80%",  OPTION_VAL_80_BE },
+         { "90%",  OPTION_VAL_90_BE },
+         { "100%", OPTION_VAL_100_BE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_display",
+      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_position",
+      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_BE },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_BE },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_BE },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_BE },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_size_mult",
+      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_BE },
+         { "2x", OPTION_VAL_2_O27_BE },
+         { "3x", OPTION_VAL_3X_BE },
+         { "4x", OPTION_VAL_4_BE },
+         { "5x", OPTION_VAL_5X_BE },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_on_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_off_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_BE },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_BE },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_BE },
+         { "BLUE 03",           OPTION_VAL_BLUE_BE },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_BE },
+         { "GREEN 05",          OPTION_VAL_GREEN_BE },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_BE },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_BE },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_BE },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_BE },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_BE },
+         { "RED 11",            OPTION_VAL_RED_BE },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_BE },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_BE },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_BE },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_BE },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_BE },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_BE },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_BE },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_BE },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_BE },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_BE },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_BE },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_BE },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_BE },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_BE },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_BE },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_BE },
+         { "WHITE 28",          OPTION_VAL_WHITE_BE },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_opacity",
+      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_BE },
+         { "20%",  OPTION_VAL_20_BE },
+         { "30%",  OPTION_VAL_30_BE },
+         { "40%",  OPTION_VAL_40_BE },
+         { "50%",  OPTION_VAL_50_BE },
+         { "60%",  OPTION_VAL_60_BE },
+         { "70%",  OPTION_VAL_70_BE },
+         { "80%",  OPTION_VAL_80_BE },
+         { "90%",  OPTION_VAL_90_BE },
+         { "100%", OPTION_VAL_100_BE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_be = {
+   option_cats_be,
+   option_defs_be
+};
+
 /* RETRO_LANGUAGE_CA */
 
-#define CATEGORY_SYSTEM_LABEL_CA NULL
+#define CATEGORY_SYSTEM_LABEL_CA "Sistema"
 #define CATEGORY_SYSTEM_INFO_0_CA NULL
 #define CATEGORY_VIDEO_LABEL_CA "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_CA NULL
-#define CATEGORY_PERFORMANCE_LABEL_CA NULL
+#define CATEGORY_PERFORMANCE_LABEL_CA "Rendiment"
 #define CATEGORY_PERFORMANCE_INFO_0_CA NULL
 #define CATEGORY_HACKS_LABEL_CA NULL
 #define CATEGORY_HACKS_INFO_0_CA NULL
@@ -3139,12 +5130,12 @@ struct retro_core_options_v2 options_ast = {
 #define CATEGORY_INPUT_INFO_0_CA NULL
 #define CATEGORY_VMU_LABEL_CA NULL
 #define CATEGORY_VMU_INFO_0_CA NULL
-#define CORE_OPTION_NAME_REGION_LABEL_CA NULL
+#define CORE_OPTION_NAME_REGION_LABEL_CA "Regió"
 #define OPTION_VAL_JAPAN_CA NULL
 #define OPTION_VAL_USA_CA NULL
 #define OPTION_VAL_EUROPE_CA NULL
 #define OPTION_VAL_DEFAULT_CA NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_CA NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_CA "Llengua"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_CA NULL
 #define OPTION_VAL_JAPANESE_CA NULL
 #define OPTION_VAL_ENGLISH_CA NULL
@@ -3162,35 +5153,41 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA "Resolució Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CA NULL
-#define OPTION_VAL_320X240_CA NULL
-#define OPTION_VAL_640X480_CA NULL
-#define OPTION_VAL_800X600_CA NULL
-#define OPTION_VAL_960X720_CA NULL
-#define OPTION_VAL_1024X768_CA NULL
-#define OPTION_VAL_1280X960_CA NULL
-#define OPTION_VAL_1440X1080_CA NULL
-#define OPTION_VAL_1600X1200_CA NULL
-#define OPTION_VAL_1920X1440_CA NULL
-#define OPTION_VAL_2560X1920_CA NULL
-#define OPTION_VAL_2880X2160_CA NULL
-#define OPTION_VAL_3200X2400_CA NULL
-#define OPTION_VAL_3840X2880_CA NULL
-#define OPTION_VAL_4480X3360_CA NULL
-#define OPTION_VAL_5120X3840_CA NULL
-#define OPTION_VAL_5760X4320_CA NULL
-#define OPTION_VAL_6400X4800_CA NULL
-#define OPTION_VAL_7040X5280_CA NULL
-#define OPTION_VAL_7680X5760_CA NULL
-#define OPTION_VAL_8320X6240_CA NULL
-#define OPTION_VAL_8960X6720_CA NULL
-#define OPTION_VAL_9600X7200_CA NULL
-#define OPTION_VAL_10240X7680_CA NULL
-#define OPTION_VAL_10880X8160_CA NULL
-#define OPTION_VAL_11520X8640_CA NULL
-#define OPTION_VAL_12160X9120_CA NULL
-#define OPTION_VAL_12800X9600_CA NULL
+#define OPTION_VAL_320X240_CA "320×240"
+#define OPTION_VAL_640X480_CA "640×480"
+#define OPTION_VAL_800X600_CA "800×600"
+#define OPTION_VAL_960X720_CA "960×720"
+#define OPTION_VAL_1024X768_CA "1024×768"
+#define OPTION_VAL_1280X960_CA "1280×960"
+#define OPTION_VAL_1440X1080_CA "1440×1080"
+#define OPTION_VAL_1600X1200_CA "1600×1200"
+#define OPTION_VAL_1920X1440_CA "1920×1440"
+#define OPTION_VAL_2560X1920_CA "2560×1920"
+#define OPTION_VAL_2880X2160_CA "2880×2160"
+#define OPTION_VAL_3200X2400_CA "3200×2400"
+#define OPTION_VAL_3840X2880_CA "3840×2880"
+#define OPTION_VAL_4480X3360_CA "4480×3360"
+#define OPTION_VAL_5120X3840_CA "5120×3840"
+#define OPTION_VAL_5760X4320_CA "5760×4320"
+#define OPTION_VAL_6400X4800_CA "6400×4800"
+#define OPTION_VAL_7040X5280_CA "7040×5280"
+#define OPTION_VAL_7680X5760_CA "7680×5760"
+#define OPTION_VAL_8320X6240_CA "8320×6240"
+#define OPTION_VAL_8960X6720_CA "8960×6720"
+#define OPTION_VAL_9600X7200_CA "9600×7200"
+#define OPTION_VAL_10240X7680_CA "10240×7680"
+#define OPTION_VAL_10880X8160_CA "10880×8160"
+#define OPTION_VAL_11520X8640_CA "11520×8640"
+#define OPTION_VAL_12160X9120_CA "12160×9120"
+#define OPTION_VAL_12800X9600_CA "12800×9600"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CA NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CA NULL
 #define OPTION_VAL_VGA_CA NULL
@@ -3201,7 +5198,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_PAL_CA NULL
 #define OPTION_VAL_PAL_N_CA NULL
 #define OPTION_VAL_PAL_M_CA NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CA NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CA "Orientació de la pantalla"
 #define OPTION_VAL_HORIZONTAL_CA NULL
 #define OPTION_VAL_VERTICAL_CA NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CA NULL
@@ -3214,23 +5211,36 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_1GB_CA NULL
 #define OPTION_VAL_2GB_CA NULL
 #define OPTION_VAL_4GB_CA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CA NULL
+#define OPTION_VAL_1_CA NULL
+#define OPTION_VAL_2_CA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CA NULL
-#define OPTION_VAL_2_CA NULL
+#define OPTION_VAL_2_O27_CA NULL
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CA NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CA NULL
@@ -3259,6 +5269,8 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CA NULL
@@ -3485,6 +5497,49 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA,
       NULL,
@@ -3611,12 +5666,43 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CA,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA,
       NULL,
       "video",
       {
@@ -3686,10 +5772,39 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CA,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_CA },
+         { "1",  OPTION_VAL_1_CA },
+         { "2",  OPTION_VAL_2_CA },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CA,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CA,
       NULL,
       "video",
       {
@@ -3723,7 +5838,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_CA },
+         { "2",  OPTION_VAL_2_O27_CA },
          { "4",  OPTION_VAL_4_CA },
          { "6",  OPTION_VAL_6_CA },
          { NULL, NULL },
@@ -3746,6 +5861,20 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CA,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CA,
@@ -3939,6 +6068,20 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CA,
       NULL,
@@ -4088,7 +6231,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4239,7 +6382,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4390,7 +6533,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4541,7 +6684,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CA },
-         { "2x", OPTION_VAL_2_CA },
+         { "2x", OPTION_VAL_2_O27_CA },
          { "3x", OPTION_VAL_3X_CA },
          { "4x", OPTION_VAL_4_CA },
          { "5x", OPTION_VAL_5X_CA },
@@ -4697,6 +6840,12 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHS NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CHS NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS "内部分辨率"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHS NULL
 #define OPTION_VAL_320X240_CHS NULL
@@ -4749,23 +6898,36 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_1GB_CHS NULL
 #define OPTION_VAL_2GB_CHS NULL
 #define OPTION_VAL_4GB_CHS NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHS NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHS NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHS NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CHS "纹理过滤"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CHS NULL
+#define OPTION_VAL_1_CHS NULL
+#define OPTION_VAL_2_CHS NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CHS NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHS NULL
-#define OPTION_VAL_2_CHS "2 倍"
+#define OPTION_VAL_2_O27_CHS "2 倍"
 #define OPTION_VAL_4_CHS "4 倍"
 #define OPTION_VAL_6_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHS NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CHS NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CHS "多线程渲染"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CHS NULL
@@ -4794,6 +6956,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CHS NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CHS NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHS NULL
@@ -5020,6 +7184,49 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CHS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS,
       NULL,
@@ -5146,12 +7353,43 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHS,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHS,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHS,
       NULL,
       "video",
       {
@@ -5221,10 +7459,39 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CHS,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_CHS },
+         { "1",  OPTION_VAL_1_CHS },
+         { "2",  OPTION_VAL_2_CHS },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CHS,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CHS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CHS,
       NULL,
       "video",
       {
@@ -5258,7 +7525,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_CHS },
+         { "2",  OPTION_VAL_2_O27_CHS },
          { "4",  OPTION_VAL_4_CHS },
          { "6",  OPTION_VAL_6_CHS },
          { NULL, NULL },
@@ -5281,6 +7548,20 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CHS,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CHS,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CHS,
@@ -5474,6 +7755,20 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHS,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHS,
       NULL,
@@ -5623,7 +7918,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -5774,7 +8069,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -5925,7 +8220,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6076,7 +8371,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHS },
-         { "2x", OPTION_VAL_2_CHS },
+         { "2x", OPTION_VAL_2_O27_CHS },
          { "3x", OPTION_VAL_3X_CHS },
          { "4x", OPTION_VAL_4_CHS },
          { "5x", OPTION_VAL_5X_CHS },
@@ -6199,21 +8494,21 @@ struct retro_core_options_v2 options_chs = {
 
 #define CATEGORY_SYSTEM_LABEL_CHT "系統"
 #define CATEGORY_SYSTEM_INFO_0_CHT NULL
-#define CATEGORY_VIDEO_LABEL_CHT "視訊"
-#define CATEGORY_VIDEO_INFO_0_CHT NULL
-#define CATEGORY_PERFORMANCE_LABEL_CHT NULL
+#define CATEGORY_VIDEO_LABEL_CHT "顯示"
+#define CATEGORY_VIDEO_INFO_0_CHT "變更解析度、渲染透明度和視覺效果的設定。"
+#define CATEGORY_PERFORMANCE_LABEL_CHT "效能"
 #define CATEGORY_PERFORMANCE_INFO_0_CHT NULL
-#define CATEGORY_HACKS_LABEL_CHT NULL
+#define CATEGORY_HACKS_LABEL_CHT "進階"
 #define CATEGORY_HACKS_INFO_0_CHT NULL
 #define CATEGORY_INPUT_LABEL_CHT "輸入"
 #define CATEGORY_INPUT_INFO_0_CHT NULL
 #define CATEGORY_VMU_LABEL_CHT NULL
 #define CATEGORY_VMU_INFO_0_CHT NULL
-#define CORE_OPTION_NAME_REGION_LABEL_CHT NULL
+#define CORE_OPTION_NAME_REGION_LABEL_CHT "發售地"
 #define OPTION_VAL_JAPAN_CHT NULL
 #define OPTION_VAL_USA_CHT NULL
 #define OPTION_VAL_EUROPE_CHT NULL
-#define OPTION_VAL_DEFAULT_CHT NULL
+#define OPTION_VAL_DEFAULT_CHT "預設"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_CHT "語言"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_CHT NULL
 #define OPTION_VAL_JAPANESE_CHT "日語"
@@ -6232,7 +8527,13 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CHT NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHT NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CHT NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT "內部解析度"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHT NULL
 #define OPTION_VAL_320X240_CHT NULL
 #define OPTION_VAL_640X480_CHT NULL
@@ -6284,23 +8585,36 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_1GB_CHT NULL
 #define OPTION_VAL_2GB_CHT NULL
 #define OPTION_VAL_4GB_CHT NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHT NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHT NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CHT "材質過濾"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CHT NULL
+#define OPTION_VAL_1_CHT NULL
+#define OPTION_VAL_2_CHT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CHT NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_CHT NULL
-#define OPTION_VAL_4_CHT NULL
-#define OPTION_VAL_6_CHT NULL
+#define OPTION_VAL_2_O27_CHT "2倍"
+#define OPTION_VAL_4_CHT "4倍"
+#define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CHT NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CHT NULL
@@ -6329,10 +8643,12 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CHT NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHT NULL
-#define OPTION_VAL_WHITE_CHT NULL
+#define OPTION_VAL_WHITE_CHT "白色"
 #define OPTION_VAL_RED_CHT "紅色"
 #define OPTION_VAL_GREEN_CHT "綠色"
 #define OPTION_VAL_BLUE_CHT "藍色"
@@ -6354,35 +8670,35 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_LOWER_LEFT_CHT NULL
 #define OPTION_VAL_LOWER_RIGHT_CHT NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_CHT NULL
-#define OPTION_VAL_1X_CHT NULL
-#define OPTION_VAL_3X_CHT NULL
-#define OPTION_VAL_5X_CHT NULL
+#define OPTION_VAL_1X_CHT "1倍"
+#define OPTION_VAL_3X_CHT "3倍"
+#define OPTION_VAL_5X_CHT "5倍"
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_CHT NULL
 #define OPTION_VAL_DEFAULT_ON_00_CHT NULL
 #define OPTION_VAL_DEFAULT_OFF_01_CHT NULL
-#define OPTION_VAL_BLACK_02_CHT NULL
-#define OPTION_VAL_LIGHT_BLUE_04_CHT NULL
-#define OPTION_VAL_CYAN_06_CHT NULL
-#define OPTION_VAL_CYAN_BLUE_07_CHT NULL
-#define OPTION_VAL_LIGHT_GREEN_08_CHT NULL
-#define OPTION_VAL_CYAN_GREEN_09_CHT NULL
-#define OPTION_VAL_LIGHT_CYAN_10_CHT NULL
-#define OPTION_VAL_PURPLE_12_CHT NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_CHT NULL
+#define OPTION_VAL_BLACK_02_CHT "黑色"
+#define OPTION_VAL_LIGHT_BLUE_04_CHT "淺藍色"
+#define OPTION_VAL_CYAN_06_CHT "青色"
+#define OPTION_VAL_CYAN_BLUE_07_CHT "青藍色"
+#define OPTION_VAL_LIGHT_GREEN_08_CHT "淺綠色"
+#define OPTION_VAL_CYAN_GREEN_09_CHT "青綠色"
+#define OPTION_VAL_LIGHT_CYAN_10_CHT "淺青色"
+#define OPTION_VAL_PURPLE_12_CHT "紫色"
+#define OPTION_VAL_LIGHT_PURPLE_13_CHT "淺紫色"
 #define OPTION_VAL_YELLOW_14_CHT "黃色"
-#define OPTION_VAL_GRAY_15_CHT NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_CHT NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_CHT NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_CHT NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_CHT NULL
-#define OPTION_VAL_LIGHT_RED_2_20_CHT NULL
-#define OPTION_VAL_MAGENTA_21_CHT NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_CHT NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_CHT NULL
-#define OPTION_VAL_ORANGE_24_CHT NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_CHT NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_CHT NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_CHT NULL
+#define OPTION_VAL_GRAY_15_CHT "灰色"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_CHT "淺紫色 (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_CHT "淺綠色 (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_CHT "淺綠色 (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_CHT "淺青色 (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_CHT "淡紅色 (2)"
+#define OPTION_VAL_MAGENTA_21_CHT "洋紅色"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_CHT "淺紫色 (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_CHT "淺橘色"
+#define OPTION_VAL_ORANGE_24_CHT "橙色"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_CHT "淺紫色 (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_CHT "淡黃色"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_CHT "淡黃色 (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CHT NULL
 #define OPTION_VAL_40_CHT NULL
@@ -6555,6 +8871,49 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CHT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHT,
       NULL,
@@ -6681,12 +9040,43 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CHT,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CHT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CHT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CHT,
       NULL,
       "video",
       {
@@ -6756,10 +9146,39 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CHT,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_CHT },
+         { "1",  OPTION_VAL_1_CHT },
+         { "2",  OPTION_VAL_2_CHT },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CHT,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CHT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CHT,
       NULL,
       "video",
       {
@@ -6793,7 +9212,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_CHT },
+         { "2",  OPTION_VAL_2_O27_CHT },
          { "4",  OPTION_VAL_4_CHT },
          { "6",  OPTION_VAL_6_CHT },
          { NULL, NULL },
@@ -6816,6 +9235,20 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CHT,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CHT,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CHT,
@@ -7009,6 +9442,20 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHT,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHT,
       NULL,
@@ -7158,7 +9605,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7309,7 +9756,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7460,7 +9907,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7611,7 +10058,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CHT },
-         { "2x", OPTION_VAL_2_CHT },
+         { "2x", OPTION_VAL_2_O27_CHT },
          { "3x", OPTION_VAL_3X_CHT },
          { "4x", OPTION_VAL_4_CHT },
          { "5x", OPTION_VAL_5X_CHT },
@@ -7732,43 +10179,49 @@ struct retro_core_options_v2 options_cht = {
 
 /* RETRO_LANGUAGE_CS */
 
-#define CATEGORY_SYSTEM_LABEL_CS NULL
-#define CATEGORY_SYSTEM_INFO_0_CS NULL
+#define CATEGORY_SYSTEM_LABEL_CS "Systém"
+#define CATEGORY_SYSTEM_INFO_0_CS "Konfigurace regionu, jazyka, systému BIOS a základního nastavení hardwaru."
 #define CATEGORY_VIDEO_LABEL_CS NULL
-#define CATEGORY_VIDEO_INFO_0_CS NULL
-#define CATEGORY_PERFORMANCE_LABEL_CS NULL
-#define CATEGORY_PERFORMANCE_INFO_0_CS NULL
+#define CATEGORY_VIDEO_INFO_0_CS "Konfigurace rozlišení, nastavení průhlednosti a vizuálních efektů nezávislých na pořadí."
+#define CATEGORY_PERFORMANCE_LABEL_CS "Výkon"
+#define CATEGORY_PERFORMANCE_INFO_0_CS "Konfigurace nastavení vykreslování ve vláknech a přeskakování snímků."
 #define CATEGORY_HACKS_LABEL_CS NULL
-#define CATEGORY_HACKS_INFO_0_CS NULL
+#define CATEGORY_HACKS_INFO_0_CS "Konfigurace přepisu širokoúhlého zobrazení, rychlosti načítání GD-ROM a nastavení výměny textur."
 #define CATEGORY_INPUT_LABEL_CS "Vstup"
-#define CATEGORY_INPUT_INFO_0_CS NULL
-#define CATEGORY_VMU_LABEL_CS NULL
-#define CATEGORY_VMU_INFO_0_CS NULL
+#define CATEGORY_INPUT_INFO_0_CS "Konfigurace nastavení gamepadu a světelné pistole."
+#define CATEGORY_VMU_LABEL_CS "Jednotka Vizuální Paměti"
+#define CATEGORY_VMU_INFO_0_CS "Konfigurace ukládacích souborů VMU pro jednotlivé hry a nastavení viditelnosti VMU na obrazovce."
 #define CORE_OPTION_NAME_REGION_LABEL_CS NULL
-#define OPTION_VAL_JAPAN_CS NULL
+#define OPTION_VAL_JAPAN_CS "Japonsko"
 #define OPTION_VAL_USA_CS NULL
-#define OPTION_VAL_EUROPE_CS NULL
-#define OPTION_VAL_DEFAULT_CS NULL
+#define OPTION_VAL_EUROPE_CS "Evropa"
+#define OPTION_VAL_DEFAULT_CS "Výchozí"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_CS "Jazyk"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_CS NULL
-#define OPTION_VAL_JAPANESE_CS NULL
-#define OPTION_VAL_ENGLISH_CS NULL
-#define OPTION_VAL_GERMAN_CS NULL
-#define OPTION_VAL_FRENCH_CS NULL
-#define OPTION_VAL_SPANISH_CS NULL
-#define OPTION_VAL_ITALIAN_CS NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_CS NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_CS NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_CS NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CS NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_CS NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CS NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CS NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_CS "Změní jazyk používaný systémem BIOS a všemi hrami, které obsahují více jazyků."
+#define OPTION_VAL_JAPANESE_CS "Japonština"
+#define OPTION_VAL_ENGLISH_CS "Angličtina"
+#define OPTION_VAL_GERMAN_CS "Němčina"
+#define OPTION_VAL_FRENCH_CS "Francouzština"
+#define OPTION_VAL_SPANISH_CS "Španělština"
+#define OPTION_VAL_ITALIAN_CS "Italský"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_CS "HLE BIOS (nutný restart)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_CS "Vynucení použití vysokoúrovňové emulace systému BIOS."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_CS "Nabootovat Bios (Nutný Restart)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CS "Spustit přímo do menu Dreamcast BIOS."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_CS "Povolit DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CS "Umožňuje emulaci zvukového DSP (digitálního signálového procesoru) konzole Dreamcast. Zlepšuje přesnost generovaného zvuku, ale zvyšuje nároky na výkon."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_CS "Vynutit Režim Windows CE"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CS "Povolte úplnou emulaci jednotky MMU (Memory Management Unit) a další nastavení pro hry pro Windows CE."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CS "Povolení servisních tlačítek NAOMI"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS "Povolí tlačítko SERVIS pro NAOMI, abyste mohli vstoupit do nastavení skříně."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS "Emulace širokopásmového adaptéru"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS "Místo modemu emulujte širokopásmový adaptér ethernetu. (nutný restart)"
+#define CORE_OPTION_NAME_UPNP_LABEL_CS "Povolit UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_CS "Pomocí UPnP můžete automaticky nakonfigurovat svůj internetový směrovač pro online hry."
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní Rozlišení"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava Rozlišení Vykreslování."
 #define OPTION_VAL_320X240_CS NULL
 #define OPTION_VAL_640X480_CS NULL
 #define OPTION_VAL_800X600_CS NULL
@@ -7796,63 +10249,76 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_11520X8640_CS NULL
 #define OPTION_VAL_12160X9120_CS NULL
 #define OPTION_VAL_12800X9600_CS NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CS NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CS "Typ Kabelu"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CS "Typ výstupního signálu. Nejvíce podporovaný je 'TV (Kompozitní)'."
 #define OPTION_VAL_VGA_CS NULL
 #define OPTION_VAL_TV_RGB_CS NULL
-#define OPTION_VAL_TV_COMPOSITE_CS NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_CS NULL
+#define OPTION_VAL_TV_COMPOSITE_CS "TV (Kompozitní)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_CS "Standardní Vysílání"
 #define OPTION_VAL_NTSC_CS NULL
-#define OPTION_VAL_PAL_CS NULL
+#define OPTION_VAL_PAL_CS "PAL (Svět)"
 #define OPTION_VAL_PAL_N_CS NULL
-#define OPTION_VAL_PAL_M_CS NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CS NULL
-#define OPTION_VAL_HORIZONTAL_CS NULL
-#define OPTION_VAL_VERTICAL_CS NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CS NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CS NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_CS NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_CS NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CS NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CS NULL
+#define OPTION_VAL_PAL_M_CS "PAL-M (Brazílie)"
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CS "Orientace Obrazovky"
+#define OPTION_VAL_HORIZONTAL_CS "Horizontální"
+#define OPTION_VAL_VERTICAL_CS "Vertikální"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CS "Třídění Alpha"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CS "Per-Strip (rychlé, nejméně přesné)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_CS "Per-Triangle (normální)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_CS "Per-Pixel (přesné, ale nejpomalejší)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CS "Velikost akumulační vyrovnávací paměti pixelů"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CS "Pro správný výstup ve vyšších rozlišeních mohou být nutné vyšší hodnoty."
 #define OPTION_VAL_512MB_CS NULL
 #define OPTION_VAL_1GB_CS NULL
 #define OPTION_VAL_2GB_CS NULL
 #define OPTION_VAL_4GB_CS NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS NULL
-#define CORE_OPTION_NAME_FOG_LABEL_CS NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CS NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CS NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CS NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CS NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CS NULL
-#define OPTION_VAL_2_CS NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS "Maximální počet průhledných vrstev"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS "U složitých scén mohou být nutné vyšší hodnoty."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS "Úplná emulace framebufferu"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS "Povolení úplné emulace framebufferu v paměti VRAM. To je užitečné pro hry, které přímo čtou nebo zapisují framebuffer do VRAM. Pokud je tato funkce povolena, interní rozlišení je vynuceno na 640x480 a může dojít k výraznému snížení výkonu."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS "Povolení Vyrovnávací Paměti RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS "Kopírování vykreslených textur z GPU zpět do VRAM. Tato možnost je obvykle povolena u her, které ji vyžadují. Pokud je povolena, je vypnuto zvyšování rozlišení vykreslovaných textur a může dojít ke snížení výkonu."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS "Mipmapování"
+#define CORE_OPTION_NAME_FOG_LABEL_CS "Efekty Mlhy"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS "Modifikátor Hlasitosti"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CS "Funkce grafického procesoru Dreamcast, která se obvykle používá ve hrách ke kreslení stínů objektů. Tato funkce by měla být normálně povolena - dopad na výkon je obvykle minimální až zanedbatelný."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CS "Anizotropní Filtrování"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CS "Vylepšete kvalitu textur na površích, které jsou vůči kameře pod šikmým úhlem pohledu. Vyšší hodnoty jsou náročnější na grafický procesor. Změny tohoto nastavení se uplatní až po restartu."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CS "Filtrování Textur"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CS "Režim filtrování textur, který se má použít. Tento parametr lze použít k vynucení určitého režimu filtrování textur na všech texturách, abyste dosáhli ostřejšího (nebo hladšího) vzhledu než ve výchozím nastavení. Jiné hodnoty než výchozí mohou způsobit různé problémy s vykreslováním. Změny tohoto nastavení se uplatní až po restartu."
+#define OPTION_VAL_1_CS "Vynucený Nearest-Neighbor"
+#define OPTION_VAL_2_CS "Vynucený lineární"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CS "Výměna Zpožděných Snímků"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CS "Je užitečné vyhnout se blikajícím obrazovkám nebo poruchovým videím. Nedoporučuje se na pomalých platformách."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CS "Detekce změn snímkové frekvence"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CS "Upozornit frontend při změně interní snímkové frekvence (např. z 60 fps na 30 fps). Zlepšuje snímkovou frekvenci ve hrách, které běží s uzamčenou snímkovou frekvencí 30 fps nebo 20 fps, ale měl by být vypnut pro hry s odemčenou (nestabilní) snímkovou frekvencí (např. Ecco the Dolphin, Unreal Tournament). Poznámka: Není k dispozici, pokud je povoleno 'Automatické přeskakování snímků'."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CS "Postprocesní Filtr PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CS "Následné zpracování vykresleného obrazu pro simulaci efektů specifických pro grafický procesor PowerVR2 a analogové video signály."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS "Vylepšení Textur (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CS "Vylepšete ručně kreslenou 2D pixelovou grafiku. Mělo by se používat pouze ve 2D pixelových hrách."
+#define OPTION_VAL_2_O27_CS NULL
 #define OPTION_VAL_4_CS NULL
 #define OPTION_VAL_6_CS NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CS NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CS NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_CS NULL
-#define OPTION_VAL_SOME_CS NULL
-#define OPTION_VAL_MORE_CS NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_CS NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_CS NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_CS NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CS NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CS NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CS NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS "Zvýšení Rozlišení Textur Max. Filtrovaná Velikost"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CS "Nativní interpolace hloubky"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CS "Pomáhá řešit problémy s poškozením textur a hloubkou na grafických procesorech AMD. V některých případech může pomoci i GPU Intel."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CS "Vykreslování Vláken"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CS "Spouští GPU a CPU v různých vláknech. Důrazně doporučujeme."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CS "Automatické Přeskočení Snímků"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_CS "Automatické přeskakování snímků při pomalém běhu emulátoru. Poznámka: Toto nastavení platí pouze tehdy, když je povoleno 'Vláknové Vykreslování'."
+#define OPTION_VAL_SOME_CS "Normální"
+#define OPTION_VAL_MORE_CS "Maximální"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_CS "Přeskočení Snímků"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_CS "Nastaví počet snímků, které se mají přeskočit mezi jednotlivými zobrazenými snímky."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_CS "Širokoúhlé Cheaty (Nutný Restart)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_CS "Aktivuje cheaty, které umožňují zobrazení některých her v širokoúhlém formátu."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_CS "Hack Širokoúhleho Obrazu"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CS "Kreslení geometrie mimo běžný poměr stran 4:3. Může způsobit grafické závady v odhalených oblastech."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CS "Rychlé Načítání GD-ROM (nepřesné)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CS "Zrychluje načítání GD-ROM."
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS "Načíst Vlastní Textury"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS "Skladiště Textur"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS "Analogova Páčka Mrtvé Zóny"
 #define OPTION_VAL_0_CS NULL
 #define OPTION_VAL_5_CS NULL
 #define OPTION_VAL_10_CS NULL
@@ -7860,66 +10326,68 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_20_CS NULL
 #define OPTION_VAL_25_CS NULL
 #define OPTION_VAL_30_CS NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CS NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CS NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CS NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CS NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS NULL
-#define OPTION_VAL_WHITE_CS NULL
-#define OPTION_VAL_RED_CS NULL
-#define OPTION_VAL_GREEN_CS NULL
-#define OPTION_VAL_BLUE_CS NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_CS NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_CS NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_CS NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CS NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CS NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CS NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CS "Spouštěč Mrtvé Zóny"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CS "Digitální Spouštěče"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CS "Purupuru Pack/Vibrační Balíček"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CS "Povoluje silovou zpětnou vazbu regulátoru."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CS "Digitální výstupy pro vysílání"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS "Vysílání digitálních výstupů a stavu vynucene zpětné vazby na portu TCP 8000. Kompatibilní s volbou MAME \"-výstupní síť\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS "Zobrazit Nastavení Světelné Pistole"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CS "Povolení konfigurace možností zobrazení zaměřovacího kříže světelné pistole. POZNÁMKA: Aby se toto nastavení projevilo, může být nutné přepnout rychlou nabídku."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 1"
+#define OPTION_VAL_WHITE_CS "Bílá"
+#define OPTION_VAL_RED_CS "Červený"
+#define OPTION_VAL_GREEN_CS "Zelený"
+#define OPTION_VAL_BLUE_CS "Modrý"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 4"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CS "Vizuální Paměťové Jednotky/Systémy pro Jednotlivé Hry (VMU)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CS "VMUs Na-Hru"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CS "Pokud je tato funkce vypnuta, všechny hry sdílejí 4 ukládací soubory VMU (A1, B1, C1, D1) umístěné v systémovém adresáři aplikace RetroArch. Nastavení 'VMU A1' vytvoří v adresáři ukládání aplikace RetroArch pro každou spuštěnou hru jedinečný soubor VMU 'A1'. Nastavení 'All VMUs' Všechny VMU vytvoří 4 jedinečné soubory VMU (A1, B1, C1, D1) pro každou spuštěnou hru."
 #define OPTION_VAL_VMU_A1_CS NULL
 #define OPTION_VAL_ALL_VMUS_CS NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_CS NULL
-#define OPTION_VAL_UPPER_LEFT_CS NULL
-#define OPTION_VAL_UPPER_RIGHT_CS NULL
-#define OPTION_VAL_LOWER_LEFT_CS NULL
-#define OPTION_VAL_LOWER_RIGHT_CS NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_CS NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS "Zobrazit Nastavení Displeje Vizuální Paměťové Jednotky/Systému (VMU)"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS "Zobrazit Nastavení VMU Displeje"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS "Umožňuje konfiguraci viditelnosti, velikosti, polohy a barvy obrazovky LCD emulovaného VMU. POZNÁMKA: Může být nutné přepnout Rychlé Menu, aby se toto nastavení projevilo."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 1"
+#define OPTION_VAL_UPPER_LEFT_CS "Vlevo Nahoře"
+#define OPTION_VAL_UPPER_RIGHT_CS "Vpravo Nahoře"
+#define OPTION_VAL_LOWER_LEFT_CS "Vlevo Dole"
+#define OPTION_VAL_LOWER_RIGHT_CS "Vpravo Dole"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 1"
 #define OPTION_VAL_1X_CS NULL
 #define OPTION_VAL_3X_CS NULL
 #define OPTION_VAL_5X_CS NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_CS NULL
-#define OPTION_VAL_DEFAULT_ON_00_CS NULL
-#define OPTION_VAL_DEFAULT_OFF_01_CS NULL
-#define OPTION_VAL_BLACK_02_CS NULL
-#define OPTION_VAL_LIGHT_BLUE_04_CS NULL
-#define OPTION_VAL_CYAN_06_CS NULL
-#define OPTION_VAL_CYAN_BLUE_07_CS NULL
-#define OPTION_VAL_LIGHT_GREEN_08_CS NULL
-#define OPTION_VAL_CYAN_GREEN_09_CS NULL
-#define OPTION_VAL_LIGHT_CYAN_10_CS NULL
-#define OPTION_VAL_PURPLE_12_CS NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_CS NULL
-#define OPTION_VAL_YELLOW_14_CS NULL
-#define OPTION_VAL_GRAY_15_CS NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_CS NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_CS NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_CS NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_CS NULL
-#define OPTION_VAL_LIGHT_RED_2_20_CS NULL
-#define OPTION_VAL_MAGENTA_21_CS NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_CS NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_CS NULL
-#define OPTION_VAL_ORANGE_24_CS NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_CS NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_CS NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_CS NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CS NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_CS "Zapnout Barvu Pixelu Obrazovky VMU 1"
+#define OPTION_VAL_DEFAULT_ON_00_CS "Výchozí ON"
+#define OPTION_VAL_DEFAULT_OFF_01_CS "Výchozí OFF"
+#define OPTION_VAL_BLACK_02_CS "Černá"
+#define OPTION_VAL_LIGHT_BLUE_04_CS "Světle Modrá"
+#define OPTION_VAL_CYAN_06_CS "Azurová"
+#define OPTION_VAL_CYAN_BLUE_07_CS "Azurově Modrá"
+#define OPTION_VAL_LIGHT_GREEN_08_CS "Světle Zelená"
+#define OPTION_VAL_CYAN_GREEN_09_CS "Azurově Zelená"
+#define OPTION_VAL_LIGHT_CYAN_10_CS "Světle Azurová"
+#define OPTION_VAL_PURPLE_12_CS "Fialová"
+#define OPTION_VAL_LIGHT_PURPLE_13_CS "Světle Fialová"
+#define OPTION_VAL_YELLOW_14_CS "Žlutá"
+#define OPTION_VAL_GRAY_15_CS "Šedá"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_CS "Světle Fialová (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_CS "Světle Zelená (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_CS "Světle Zelená (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_CS "Světle Azurová (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_CS "Světle Červená (2)"
+#define OPTION_VAL_MAGENTA_21_CS "Purpurová"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_CS "Světle Fialová (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_CS "Světle Oranžová"
+#define OPTION_VAL_ORANGE_24_CS "Oranžová"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_CS "Světle Fialová (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_CS "Světle Žlutá"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_CS "Světle Žlutá (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CS "Vypnout Barvu Pixelu Obrazovky VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CS "Průhlednost Obrazovky VMU 1"
 #define OPTION_VAL_40_CS NULL
 #define OPTION_VAL_50_CS NULL
 #define OPTION_VAL_60_CS NULL
@@ -7927,24 +10395,24 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_80_CS NULL
 #define OPTION_VAL_90_CS NULL
 #define OPTION_VAL_100_CS NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_CS NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_CS NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_CS "Zapnout Barvu Pixelu Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_CS "Vypnout Barvu Pixelu Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_CS "Průhlednost Obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_CS "Zapnout Barvu Pixelu Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_CS "Vypnout Barvu Pixelu Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_CS "Průhlednost Obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_CS "Zapnout Barvu Pixelu Obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_CS "Vypnout Barvu Pixelu Obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_CS "Průhlednost Obrazovky VMU 4"
 
 struct retro_core_option_v2_category option_cats_cs[] = {
    {
@@ -8090,6 +10558,49 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CS,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS,
       NULL,
@@ -8216,12 +10727,43 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CS,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS,
       NULL,
       "video",
       {
@@ -8291,10 +10833,39 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CS,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_CS },
+         { "1",  OPTION_VAL_1_CS },
+         { "2",  OPTION_VAL_2_CS },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CS,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CS,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CS,
       NULL,
       "video",
       {
@@ -8328,7 +10899,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_CS },
+         { "2",  OPTION_VAL_2_O27_CS },
          { "4",  OPTION_VAL_4_CS },
          { "6",  OPTION_VAL_6_CS },
          { NULL, NULL },
@@ -8351,6 +10922,20 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CS,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CS,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CS,
@@ -8544,6 +11129,20 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS,
       NULL,
@@ -8693,7 +11292,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -8844,7 +11443,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -8995,7 +11594,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9146,7 +11745,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CS },
-         { "2x", OPTION_VAL_2_CS },
+         { "2x", OPTION_VAL_2_O27_CS },
          { "3x", OPTION_VAL_3X_CS },
          { "4x", OPTION_VAL_4_CS },
          { "5x", OPTION_VAL_5X_CS },
@@ -9302,6 +11901,12 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_CY NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CY NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CY NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CY NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CY NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CY NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CY NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_CY NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CY NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CY NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CY NULL
 #define OPTION_VAL_320X240_CY NULL
@@ -9354,23 +11959,36 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_1GB_CY NULL
 #define OPTION_VAL_2GB_CY NULL
 #define OPTION_VAL_4GB_CY NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CY NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CY NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CY NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CY NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CY NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CY NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CY NULL
 #define CORE_OPTION_NAME_FOG_LABEL_CY NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CY NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CY NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CY NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CY NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CY NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CY NULL
+#define OPTION_VAL_1_CY NULL
+#define OPTION_VAL_2_CY NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CY NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CY NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CY NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CY NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CY NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CY NULL
-#define OPTION_VAL_2_CY NULL
+#define OPTION_VAL_2_O27_CY NULL
 #define OPTION_VAL_4_CY NULL
 #define OPTION_VAL_6_CY NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CY NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CY NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CY NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CY NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CY NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CY NULL
@@ -9399,6 +12017,8 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CY NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_CY NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_CY NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CY NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CY NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CY NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CY NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CY NULL
@@ -9625,6 +12245,49 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CY,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CY,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_CY,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CY,
       NULL,
@@ -9751,12 +12414,43 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CY,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CY,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CY,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CY,
       NULL,
       "video",
       {
@@ -9826,10 +12520,39 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CY,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_CY },
+         { "1",  OPTION_VAL_1_CY },
+         { "2",  OPTION_VAL_2_CY },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CY,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CY,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CY,
       NULL,
       "video",
       {
@@ -9863,7 +12586,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_CY },
+         { "2",  OPTION_VAL_2_O27_CY },
          { "4",  OPTION_VAL_4_CY },
          { "6",  OPTION_VAL_6_CY },
          { NULL, NULL },
@@ -9886,6 +12609,20 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CY,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CY,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CY,
@@ -10079,6 +12816,20 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CY,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CY,
       NULL,
@@ -10228,7 +12979,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -10379,7 +13130,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -10530,7 +13281,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -10681,7 +13432,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_CY },
-         { "2x", OPTION_VAL_2_CY },
+         { "2x", OPTION_VAL_2_O27_CY },
          { "3x", OPTION_VAL_3X_CY },
          { "4x", OPTION_VAL_4_CY },
          { "5x", OPTION_VAL_5X_CY },
@@ -10837,6 +13588,12 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_DA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_DA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_DA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_DA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DA NULL
 #define OPTION_VAL_320X240_DA NULL
@@ -10889,23 +13646,36 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_1GB_DA NULL
 #define OPTION_VAL_2GB_DA NULL
 #define OPTION_VAL_4GB_DA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_DA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_DA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_DA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_DA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_DA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_DA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_DA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_DA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_DA NULL
+#define OPTION_VAL_1_DA NULL
+#define OPTION_VAL_2_DA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_DA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_DA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_DA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_DA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_DA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DA NULL
-#define OPTION_VAL_2_DA NULL
+#define OPTION_VAL_2_O27_DA NULL
 #define OPTION_VAL_4_DA NULL
 #define OPTION_VAL_6_DA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_DA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_DA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_DA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_DA NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_DA NULL
@@ -10934,6 +13704,8 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_DA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_DA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_DA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_DA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DA NULL
@@ -11160,6 +13932,49 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_DA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DA,
       NULL,
@@ -11286,12 +14101,43 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DA,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DA,
       NULL,
       "video",
       {
@@ -11361,10 +14207,39 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_DA,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_DA },
+         { "1",  OPTION_VAL_1_DA },
+         { "2",  OPTION_VAL_2_DA },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_DA,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_DA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_DA,
       NULL,
       "video",
       {
@@ -11398,7 +14273,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_DA },
+         { "2",  OPTION_VAL_2_O27_DA },
          { "4",  OPTION_VAL_4_DA },
          { "6",  OPTION_VAL_6_DA },
          { NULL, NULL },
@@ -11421,6 +14296,20 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_DA,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_DA,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_DA,
@@ -11614,6 +14503,20 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DA,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DA,
       NULL,
@@ -11763,7 +14666,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -11914,7 +14817,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12065,7 +14968,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12216,7 +15119,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DA },
-         { "2x", OPTION_VAL_2_DA },
+         { "2x", OPTION_VAL_2_O27_DA },
          { "3x", OPTION_VAL_3X_DA },
          { "4x", OPTION_VAL_4_DA },
          { "5x", OPTION_VAL_5X_DA },
@@ -12338,42 +15241,48 @@ struct retro_core_options_v2 options_da = {
 /* RETRO_LANGUAGE_DE */
 
 #define CATEGORY_SYSTEM_LABEL_DE NULL
-#define CATEGORY_SYSTEM_INFO_0_DE NULL
+#define CATEGORY_SYSTEM_INFO_0_DE "Region, Sprache, BIOS und Basis-Hardware Einstellungen konfigurieren."
 #define CATEGORY_VIDEO_LABEL_DE NULL
-#define CATEGORY_VIDEO_INFO_0_DE NULL
+#define CATEGORY_VIDEO_INFO_0_DE "Auflösung, sortierungsunabhängige Transparenz und visuelle Effekt-Einstellungen konfigurieren."
 #define CATEGORY_PERFORMANCE_LABEL_DE "Leistung"
-#define CATEGORY_PERFORMANCE_INFO_0_DE NULL
+#define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für Mehrgängiges Rendern und Bilder überspringen ändern."
 #define CATEGORY_HACKS_LABEL_DE "Emulations-Hacks"
-#define CATEGORY_HACKS_INFO_0_DE NULL
-#define CATEGORY_INPUT_LABEL_DE NULL
-#define CATEGORY_INPUT_INFO_0_DE NULL
+#define CATEGORY_HACKS_INFO_0_DE "Breitbild-Überschreibungen, GD-ROM Ladegeschwindigkeit und Textur-Austausch-Einstellungen konfigurieren."
+#define CATEGORY_INPUT_LABEL_DE "Eingabe"
+#define CATEGORY_INPUT_INFO_0_DE "Gamepad- und Pistoleneinstellungen konfigurieren."
 #define CATEGORY_VMU_LABEL_DE NULL
-#define CATEGORY_VMU_INFO_0_DE NULL
+#define CATEGORY_VMU_INFO_0_DE "VMU Dateien pro Spiel und VMU Anzeigeeinstellungen konfigurieren."
 #define CORE_OPTION_NAME_REGION_LABEL_DE NULL
 #define OPTION_VAL_JAPAN_DE NULL
 #define OPTION_VAL_USA_DE NULL
 #define OPTION_VAL_EUROPE_DE "Europa"
 #define OPTION_VAL_DEFAULT_DE "Standard"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_DE "Sprache"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_DE NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_DE "Ändert die Sprache, die vom BIOS und von Spielen verwendet wird, die mehrere Sprachen enthalten."
 #define OPTION_VAL_JAPANESE_DE "Japanisch"
 #define OPTION_VAL_ENGLISH_DE "Englisch"
 #define OPTION_VAL_GERMAN_DE "Deutsch"
 #define OPTION_VAL_FRENCH_DE "Französisch"
 #define OPTION_VAL_SPANISH_DE "Spanisch"
 #define OPTION_VAL_ITALIAN_DE "Italienisch"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_DE NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_DE NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_DE NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_DE NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_DE "HLE BIOS (Neustart erforderlich)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_DE "Erzwingt Verwendung von High-Level-Emulation BIOS."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_DE "BIOS starten (Neustart erforderlich)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_DE "Direkt ins Dreamcast BIOS Menü starten."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_DE "DSP aktivieren"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_DE NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_DE NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_DE NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_DE NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DE NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_DE "Aktiviert Emulation von DSP des Dreamcasts (digitaler Signalprozessor). Verbessert die Genauigkeit des erzeugten Klanges, erhöht aber die Leistungsanforderungen."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_DE "Windows CE-Modus erzwingen"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_DE "Aktiviert vollständige MMU (Memory Management Unit) Emulation und andere Einstellungen für Windows CE Spiele."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_DE "NAOMI-Servicetasten erlauben"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_DE "Aktiviert den SERVICE-Knopf für NAOMI, um die Automateneinstellungen aufzurufen."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DE "NAOMI Spiele auf kostenloses Spiel setzen"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DE "Ändert die Münzeinstellungen des Spiels zu kostenlos."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE "Breitbandadapter-Emulation"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet-Breitbandadapter anstelle des Modems emulieren. (Neustart erforderlich)"
+#define CORE_OPTION_NAME_UPNP_LABEL_DE "UPnP aktivieren"
+#define CORE_OPTION_NAME_UPNP_INFO_0_DE "Verwendet UPnP, um den Internetrouter automatisch für Onlinespiele zu konfigurieren."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE "Interne Auflösung"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE "Rendering-Auflösung ändern."
 #define OPTION_VAL_320X240_DE "320 x 240"
 #define OPTION_VAL_640X480_DE "640 x 480"
 #define OPTION_VAL_800X600_DE "800 x 600"
@@ -12402,11 +15311,11 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_12160X9120_DE "12160 x 9120"
 #define OPTION_VAL_12800X9600_DE "12800 x 9600"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_DE "Kabeltyp"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_DE NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_DE "Das Ausgabesignalkabel: 'TV (Composite)' ist das am weitesten unterstützte."
 #define OPTION_VAL_VGA_DE NULL
 #define OPTION_VAL_TV_RGB_DE NULL
 #define OPTION_VAL_TV_COMPOSITE_DE NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_DE NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_DE "Ausgabe-Regions-Standard"
 #define OPTION_VAL_NTSC_DE NULL
 #define OPTION_VAL_PAL_DE "PAL (Welt)"
 #define OPTION_VAL_PAL_N_DE "PAL-N (Argentinien, Paraguay, Uruguay)"
@@ -12414,50 +15323,63 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_DE "Bildschirmausrichtung"
 #define OPTION_VAL_HORIZONTAL_DE NULL
 #define OPTION_VAL_VERTICAL_DE "Vertikal"
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_DE NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_DE NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_DE NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_DE NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_DE NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_DE NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_DE "Alpha-Sortierung"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_DE "Pro-Streifen (schnell, am wenigsten genau)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_DE "Pro-Dreieck (normal)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_DE "Pro-Pixel (genau, aber langsamer)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_DE "Anhäufung Pixel Puffergröße"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_DE "Für eine korrekte Ausgabe höherer Auflösungen sind möglicherweise höhere Werte erforderlich."
 #define OPTION_VAL_512MB_DE "512 MB"
 #define OPTION_VAL_1GB_DE "1 GB"
 #define OPTION_VAL_2GB_DE "2 GB"
 #define OPTION_VAL_4GB_DE "4 GB"
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DE NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_DE "Maximale transparente Ebenen"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DE "Höhere Werte könnten erforderlich sein für komplexe Szenen."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DE "Vollständige Bildspeicheremulation"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DE "Vollständige Bildspeicheremulation in VRAM aktivieren. Dies ist für Spiele nützlich, die den Bildspeicher direkt in VRAM lesen oder schreiben. Wenn aktiviert, wird die interne Auflösung auf 640×480 erzwungen und die Leistung kann stark beeinträchtigt werden."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DE "RTT-Puffer (Render-To-Texture) erlauben"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DE "Kopiert gerenderte Texturen von der GPU in VRAM zurück. Diese Option ist normalerweise für Spiele aktiviert, die dies erfordern. Wenn aktiviert, ist das Hochskalieren von Texturen deaktiviert und die Leistung kann beeinträchtigt werden."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_DE NULL
 #define CORE_OPTION_NAME_FOG_LABEL_DE "Nebeleffekte"
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_DE NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_DE NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_DE "Volumen-Modifizierer"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_DE "Eine Dreamcast GPU-Funktion, die normalerweise von Spielen benutzt wird, um Objektschatten zu zeichnen. Normalerweise sollte dies aktiviert werden - der Performance-Verlust ist in der Regel minimal bis vernachlässigbar."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_DE "Anisotrope Filterung"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_DE NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_DE NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DE NULL
-#define OPTION_VAL_2_DE NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_DE "Verbessert die Qualität der Texturen auf Oberflächen, die in schrägen Blickwinkeln gegenüber der Kamera liegen. Höhere Werte sind anspruchsvoller für die GPU. Änderungen an dieser Einstellung gelten erst nach einem Neustart."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_DE "Texturfilterung"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_DE "Der zu verwendende Texturfiltermodus. Dies kann verwendet werden, um einen bestimmten Texturfiltermodus für alle Texturen zu erzwingen, um ein klareres (oder glatteres) Erscheinungsbild als Standard zu erhalten. Andere Werte als Standardwerte können zu verschiedenen Rendering-Problemen führen. Änderungen an dieser Einstellung werden nur nach einem Neustart angewendet."
+#define OPTION_VAL_1_DE "Nächste-Nachbarn erzwingen"
+#define OPTION_VAL_2_DE "Linear erzwingen"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_DE "Bildaustausch verzögern"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_DE "Nützlich, um flackernden Bildschirm oder fehlerhafte Videos zu vermeiden. Nicht empfohlen auf langsamen Plattformen."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_DE "Änderungen der Bildrate erkennen"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_DE "Benachrichtigt das Frontend, wenn sich die interne Bildrate ändert (z.B. von 60 fps auf 30 fps). Verbessert das Bildtempo in Spielen, die mit gesperrten 30 bps oder 20 bps laufen, aber sollte deaktiviert sein für Spiele mit entsperrten (instabilen) Bildraten (z. B. Ecco the Dolphin, Unreal Tournament). Hinweis: Nicht verfügbar, wenn 'Automatisches Bilder überspringen' aktiviert ist."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_DE "PowerVR2 Nachbearbeitungs-Filter"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_DE "Nachbearbeitung des gerenderten Bildes zur Simulation von Effekten speziell für PowerVR2 GPU und analoge Videosignale."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE "Texturen hochskalieren (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_DE "Erweitert handgezeichnete 2D Pixel Kunstgrafiken. Darf nur mit 2D verpixelten Spielen verwendet werden."
+#define OPTION_VAL_2_O27_DE NULL
 #define OPTION_VAL_4_DE NULL
 #define OPTION_VAL_6_DE "6 x"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DE NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_DE NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_DE NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_DE NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_DE "Textur-Hochskalierung Max. Gefilterte Größe"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_DE "Native Tiefeninterpolation"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_DE "Hilft bei Texturfehlern und tieferen Problemen mit AMD GPUs. Kann auch Intel GPUs in einigen Fällen helfen."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_DE "Mehrgängiges Rendern"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_DE "Führt die GPU und CPU in verschiedenen Prozessen aus. Sehr empfohlen."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_DE "Automatisches Bilder überspringen"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_DE "Überspringt Bilder automatisch, wenn der Emulator langsam läuft. Hinweis: Diese Einstellung gilt nur, wenn 'Mehrgängiges Rendern' aktiviert ist."
 #define OPTION_VAL_SOME_DE NULL
 #define OPTION_VAL_MORE_DE NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_DE NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_DE NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_DE NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_DE NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DE NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DE NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DE NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DE NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DE NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DE NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_DE "Bilder überspringen"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_DE "Legt die Anzahl der Bilder fest, die zwischen jedem angezeigten Bild übersprungen werden sollen."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_DE "Breitbild-Cheats (Neustart erforderlich)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_DE "Aktiviert Cheats, mit denen bestimmte Spiele im Breitbild-Format angezeigt werden können."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_DE "Breitbildmodus-Hack"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DE "Zeichnet Geometrie außerhalb des normalen 4:3 Seitenverhältnisses. Kann grafische Fehler in den aufgedeckten Bereichen erzeugen."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DE "GD-ROM schnelles Laden (ungenau)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DE "Beschleunigt das Laden von GD-ROM."
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DE "Eigene Texturen laden"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DE "Texturen dumpen"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DE "Analog-Stick Totzone"
 #define OPTION_VAL_0_DE "0 %"
 #define OPTION_VAL_5_DE "5 %"
 #define OPTION_VAL_10_DE "10 %"
@@ -12465,66 +15387,68 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_20_DE "20 %"
 #define OPTION_VAL_25_DE "25 %"
 #define OPTION_VAL_30_DE "30 %"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_DE NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_DE NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_DE "Trigger Totzone"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_DE "Digitale Trigger"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_DE NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_DE NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DE NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DE NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_DE "Aktiviert das Vibrieren des Controllers."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_DE "Digitale Ausgänge übertragen"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DE "Digitale Ausgänge und Force-Feedback-Status auf TCP Port 8000 übertragen. Kompatibel mit der \"-output network\" MAME Option."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DE "Pistolen-Einstellungen anzeigen"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DE "Aktiviert die Konfiguration der Pistolen Fadenkreuz Anzeigeoptionen. HINWEIS: Schnellmenü muss eingeschaltet sein, damit diese Einstellung wirksam wird."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 1 anzeigen"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
 #define OPTION_VAL_GREEN_DE "Grün"
 #define OPTION_VAL_BLUE_DE "Blau"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_DE NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_DE NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_DE NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_DE NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_DE NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 2 anzeigen"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 3 anzeigen"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 4 anzeigen"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_DE "Visual Memory Units/Systeme (VMU) pro Spiel"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_DE "VMUs pro Spiel"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE "Wenn deaktiviert, teilen alle Spiele 4 VMU Speicherdateien (A1, B1, C1, D1) im Systemverzeichnis von RetroArch. Die Einstellung 'VMU A1' erzeugt für jedes Spiel, das gestartet wird, eine einzigartige VMU 'A1' Datei im Speicherverzeichnis von RetroArch. Die Einstellung 'Alle VMUs' erzeugt 4 einzigartige VMU-Dateien (A1, B1, C1, D1) für jedes Spiel, das gestartet wird."
 #define OPTION_VAL_VMU_A1_DE NULL
-#define OPTION_VAL_ALL_VMUS_DE NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DE NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DE NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DE NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_DE NULL
+#define OPTION_VAL_ALL_VMUS_DE "Alle VMUs"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DE "Visual Memory Unit/System (VMU) Anzeigeeinstellungen anzeigen"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DE "VMU Bildschirmeinstellungen anzeigen"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DE "Konfiguration von emulierten VMU LCD-Bildschirmen über Sichtbarkeit, Größe, Position und Farbe aktivieren. HINWEIS: Das Schnellmenü muss aktiviert sein, damit diese Einstellung wirksam wird."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_DE "VMU Bildschirm 1 anzeigen"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_DE "VMU Bildschirm 1 Position"
 #define OPTION_VAL_UPPER_LEFT_DE "Oben links"
 #define OPTION_VAL_UPPER_RIGHT_DE "Oben rechts"
 #define OPTION_VAL_LOWER_LEFT_DE "Unten links"
 #define OPTION_VAL_LOWER_RIGHT_DE "Unten rechts"
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_DE NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_DE "VMU Bildschirm 1 Grösse"
 #define OPTION_VAL_1X_DE "1 x"
 #define OPTION_VAL_3X_DE "3 x"
 #define OPTION_VAL_5X_DE "5 x"
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_DE NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_DE "VMU Bildschirm 1 Pixel an Farbe"
 #define OPTION_VAL_DEFAULT_ON_00_DE "Standard EIN"
 #define OPTION_VAL_DEFAULT_OFF_01_DE "Standard AUS"
 #define OPTION_VAL_BLACK_02_DE "Schwarz"
 #define OPTION_VAL_LIGHT_BLUE_04_DE "Hellblau"
 #define OPTION_VAL_CYAN_06_DE NULL
-#define OPTION_VAL_CYAN_BLUE_07_DE NULL
+#define OPTION_VAL_CYAN_BLUE_07_DE "Zyanblau"
 #define OPTION_VAL_LIGHT_GREEN_08_DE "Hellgrün"
-#define OPTION_VAL_CYAN_GREEN_09_DE NULL
-#define OPTION_VAL_LIGHT_CYAN_10_DE NULL
+#define OPTION_VAL_CYAN_GREEN_09_DE "Zyangrün"
+#define OPTION_VAL_LIGHT_CYAN_10_DE "Hellzyan"
 #define OPTION_VAL_PURPLE_12_DE "Lila"
-#define OPTION_VAL_LIGHT_PURPLE_13_DE NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_DE "Hellviolett"
 #define OPTION_VAL_YELLOW_14_DE "Gelb"
 #define OPTION_VAL_GRAY_15_DE "Grau"
-#define OPTION_VAL_LIGHT_PURPLE_2_16_DE NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_DE "Hellviolett (2)"
 #define OPTION_VAL_LIGHT_GREEN_2_17_DE "Hellgrün (2)"
 #define OPTION_VAL_LIGHT_GREEN_3_18_DE "Hellgrün (3)"
-#define OPTION_VAL_LIGHT_CYAN_2_19_DE NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_DE "Hellzyan (2)"
 #define OPTION_VAL_LIGHT_RED_2_20_DE "Hellrot (2)"
 #define OPTION_VAL_MAGENTA_21_DE NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_DE NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_DE NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_DE "Hellviolett (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_DE "Hellorange"
 #define OPTION_VAL_ORANGE_24_DE NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_DE NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_DE "Hellviolett (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_DE "Hellgelb"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_DE "Hellgelb (2)"
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_DE NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_DE "VMU Bildschirm 1 Pixel aus Farbe"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_DE "VMU Bildschirm 1 Deckkraft"
 #define OPTION_VAL_40_DE "40 %"
 #define OPTION_VAL_50_DE "50 %"
 #define OPTION_VAL_60_DE "60 %"
@@ -12532,24 +15456,24 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
 #define OPTION_VAL_100_DE "100 %"
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_DE NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_DE NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DE "VMU Bildschirm 2 anzeigen"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DE "VMU Bildschirm 2 Position"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DE "VMU Bildschirm 2 Grösse"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_DE "VMU Bildschirm 2 Pixel an Farbe"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_DE "VMU Bildschirm 2 Pixel aus Farbe"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_DE "VMU Bildschirm 2 Deckkraft"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_DE "VMU Bildschirm 3 anzeigen"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_DE "VMU Bildschirm 3 Position"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_DE "VMU Bildschirm 3 Grösse"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_DE "VMU Bildschirm 3 Pixel an Farbe"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_DE "VMU Bildschirm 3 Pixel aus Farbe"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_DE "VMU Bildschirm 3 Deckkraft"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_DE "VMU Bildschirm 4 anzeigen"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_DE "VMU Bildschirm 4 Position"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_DE "VMU Bildschirm 4 Grösse"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_DE "VMU Bildschirm 4 Pixel an Farbe"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_DE "VMU Bildschirm 4 Pixel aus Farbe"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_DE "VMU Bildschirm 4 Deckkraft"
 
 struct retro_core_option_v2_category option_cats_de[] = {
    {
@@ -12695,6 +15619,49 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_DE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_DE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE,
       NULL,
@@ -12821,12 +15788,43 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_DE,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_DE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_DE,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_DE,
       NULL,
       "video",
       {
@@ -12896,10 +15894,39 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_DE,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_DE },
+         { "1",  OPTION_VAL_1_DE },
+         { "2",  OPTION_VAL_2_DE },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_DE,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_DE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_DE,
       NULL,
       "video",
       {
@@ -12933,7 +15960,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_DE },
+         { "2",  OPTION_VAL_2_O27_DE },
          { "4",  OPTION_VAL_4_DE },
          { "6",  OPTION_VAL_6_DE },
          { NULL, NULL },
@@ -12956,6 +15983,20 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_DE,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_DE,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_DE,
@@ -13149,6 +16190,20 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DE,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DE,
       NULL,
@@ -13298,7 +16353,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -13449,7 +16504,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -13600,7 +16655,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -13751,7 +16806,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_DE },
-         { "2x", OPTION_VAL_2_DE },
+         { "2x", OPTION_VAL_2_O27_DE },
          { "3x", OPTION_VAL_3X_DE },
          { "4x", OPTION_VAL_4_DE },
          { "5x", OPTION_VAL_5X_DE },
@@ -13907,6 +16962,12 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_EL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_EL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EL NULL
 #define OPTION_VAL_320X240_EL NULL
@@ -13959,23 +17020,36 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_1GB_EL NULL
 #define OPTION_VAL_2GB_EL NULL
 #define OPTION_VAL_4GB_EL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_EL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_EL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_EL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_EL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_EL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EL NULL
+#define OPTION_VAL_1_EL NULL
+#define OPTION_VAL_2_EL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_EL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EL NULL
-#define OPTION_VAL_2_EL NULL
+#define OPTION_VAL_2_O27_EL NULL
 #define OPTION_VAL_4_EL NULL
 #define OPTION_VAL_6_EL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_EL NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_EL NULL
@@ -14004,6 +17078,8 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_EL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_EL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_EL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EL NULL
@@ -14230,6 +17306,49 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EL,
       NULL,
@@ -14356,12 +17475,43 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EL,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EL,
       NULL,
       "video",
       {
@@ -14431,10 +17581,39 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EL,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_EL },
+         { "1",  OPTION_VAL_1_EL },
+         { "2",  OPTION_VAL_2_EL },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EL,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EL,
       NULL,
       "video",
       {
@@ -14468,7 +17647,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_EL },
+         { "2",  OPTION_VAL_2_O27_EL },
          { "4",  OPTION_VAL_4_EL },
          { "6",  OPTION_VAL_6_EL },
          { NULL, NULL },
@@ -14491,6 +17670,20 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EL,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EL,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EL,
@@ -14684,6 +17877,20 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EL,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EL,
       NULL,
@@ -14833,7 +18040,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -14984,7 +18191,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -15135,7 +18342,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -15286,7 +18493,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EL },
-         { "2x", OPTION_VAL_2_EL },
+         { "2x", OPTION_VAL_2_O27_EL },
          { "3x", OPTION_VAL_3X_EL },
          { "4x", OPTION_VAL_4_EL },
          { "5x", OPTION_VAL_5X_EL },
@@ -15405,6 +18612,1693 @@ struct retro_core_options_v2 options_el = {
    option_defs_el
 };
 
+/* RETRO_LANGUAGE_EN */
+
+#define CATEGORY_SYSTEM_LABEL_EN NULL
+#define CATEGORY_SYSTEM_INFO_0_EN NULL
+#define CATEGORY_VIDEO_LABEL_EN NULL
+#define CATEGORY_VIDEO_INFO_0_EN NULL
+#define CATEGORY_PERFORMANCE_LABEL_EN NULL
+#define CATEGORY_PERFORMANCE_INFO_0_EN NULL
+#define CATEGORY_HACKS_LABEL_EN NULL
+#define CATEGORY_HACKS_INFO_0_EN NULL
+#define CATEGORY_INPUT_LABEL_EN NULL
+#define CATEGORY_INPUT_INFO_0_EN NULL
+#define CATEGORY_VMU_LABEL_EN NULL
+#define CATEGORY_VMU_INFO_0_EN NULL
+#define CORE_OPTION_NAME_REGION_LABEL_EN NULL
+#define OPTION_VAL_JAPAN_EN NULL
+#define OPTION_VAL_USA_EN NULL
+#define OPTION_VAL_EUROPE_EN NULL
+#define OPTION_VAL_DEFAULT_EN NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_EN NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_EN NULL
+#define OPTION_VAL_JAPANESE_EN NULL
+#define OPTION_VAL_ENGLISH_EN NULL
+#define OPTION_VAL_GERMAN_EN NULL
+#define OPTION_VAL_FRENCH_EN NULL
+#define OPTION_VAL_SPANISH_EN NULL
+#define OPTION_VAL_ITALIAN_EN NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_EN NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_EN NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_EN NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_EN NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_EN NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_EN NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_EN NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EN NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EN NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EN NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EN NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EN NULL
+#define OPTION_VAL_320X240_EN NULL
+#define OPTION_VAL_640X480_EN NULL
+#define OPTION_VAL_800X600_EN NULL
+#define OPTION_VAL_960X720_EN NULL
+#define OPTION_VAL_1024X768_EN NULL
+#define OPTION_VAL_1280X960_EN NULL
+#define OPTION_VAL_1440X1080_EN NULL
+#define OPTION_VAL_1600X1200_EN NULL
+#define OPTION_VAL_1920X1440_EN NULL
+#define OPTION_VAL_2560X1920_EN NULL
+#define OPTION_VAL_2880X2160_EN NULL
+#define OPTION_VAL_3200X2400_EN NULL
+#define OPTION_VAL_3840X2880_EN NULL
+#define OPTION_VAL_4480X3360_EN NULL
+#define OPTION_VAL_5120X3840_EN NULL
+#define OPTION_VAL_5760X4320_EN NULL
+#define OPTION_VAL_6400X4800_EN NULL
+#define OPTION_VAL_7040X5280_EN NULL
+#define OPTION_VAL_7680X5760_EN NULL
+#define OPTION_VAL_8320X6240_EN NULL
+#define OPTION_VAL_8960X6720_EN NULL
+#define OPTION_VAL_9600X7200_EN NULL
+#define OPTION_VAL_10240X7680_EN NULL
+#define OPTION_VAL_10880X8160_EN NULL
+#define OPTION_VAL_11520X8640_EN NULL
+#define OPTION_VAL_12160X9120_EN NULL
+#define OPTION_VAL_12800X9600_EN NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_EN NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_EN NULL
+#define OPTION_VAL_VGA_EN NULL
+#define OPTION_VAL_TV_RGB_EN NULL
+#define OPTION_VAL_TV_COMPOSITE_EN NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_EN NULL
+#define OPTION_VAL_NTSC_EN NULL
+#define OPTION_VAL_PAL_EN NULL
+#define OPTION_VAL_PAL_N_EN NULL
+#define OPTION_VAL_PAL_M_EN NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_EN NULL
+#define OPTION_VAL_HORIZONTAL_EN NULL
+#define OPTION_VAL_VERTICAL_EN NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_EN NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_EN NULL
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_EN NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_EN NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_EN NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_EN NULL
+#define OPTION_VAL_512MB_EN NULL
+#define OPTION_VAL_1GB_EN NULL
+#define OPTION_VAL_2GB_EN NULL
+#define OPTION_VAL_4GB_EN NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EN NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EN "Full frame-buffer emulation"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EN "Enable full frame-buffer emulation in VRAM. This is useful for games that directly read or write the frame-buffer in VRAM. When enabled, Internal Resolution is forced to 640x480 and performance may be severely impacted."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EN NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EN NULL
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_EN NULL
+#define CORE_OPTION_NAME_FOG_LABEL_EN NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EN NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_EN NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_EN NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EN NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EN NULL
+#define OPTION_VAL_1_EN "Force Nearest-Neighbour"
+#define OPTION_VAL_2_EN NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EN NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EN "Notify front-end when internal frame rate changes (e.g. from 60 fps to 30 fps). Improves frame pacing in games that run at a locked 30 fps or 20 fps, but should be disabled for games with unlocked (unstable) frame rates (e.g. Ecco the Dolphin, Unreal Tournament). Note: Unavailable when 'Auto Skip Frame' is enabled."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_EN NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EN "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analogue video signals."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EN NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EN NULL
+#define OPTION_VAL_2_O27_EN NULL
+#define OPTION_VAL_4_EN NULL
+#define OPTION_VAL_6_EN NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EN "Texture Upscaling Maximum Filtered Size"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EN NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EN NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EN NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_EN NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_EN NULL
+#define OPTION_VAL_SOME_EN NULL
+#define OPTION_VAL_MORE_EN NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_EN NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_EN NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_EN NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_EN NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EN NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EN NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EN NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EN NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EN "Analogue Stick Dead-zone"
+#define OPTION_VAL_0_EN NULL
+#define OPTION_VAL_5_EN NULL
+#define OPTION_VAL_10_EN NULL
+#define OPTION_VAL_15_EN NULL
+#define OPTION_VAL_20_EN NULL
+#define OPTION_VAL_25_EN NULL
+#define OPTION_VAL_30_EN NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_EN "Trigger Dead-zone"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_EN NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_EN NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_EN NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EN NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EN NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EN NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EN "Enable configuration of light gun cross-hair display options. NOTE: Quick Menu may need to be toggled for this setting to take effect."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EN NULL
+#define OPTION_VAL_WHITE_EN NULL
+#define OPTION_VAL_RED_EN NULL
+#define OPTION_VAL_GREEN_EN NULL
+#define OPTION_VAL_BLUE_EN NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_EN NULL
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_EN NULL
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_EN NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_EN NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_EN NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_EN NULL
+#define OPTION_VAL_VMU_A1_EN NULL
+#define OPTION_VAL_ALL_VMUS_EN NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EN NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EN NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EN "Enable configuration of emulated VMU LCD screen visibility, size, position and colour. NOTE: Quick Menu may need to be toggled for this setting to take effect."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_EN NULL
+#define OPTION_VAL_UPPER_LEFT_EN NULL
+#define OPTION_VAL_UPPER_RIGHT_EN NULL
+#define OPTION_VAL_LOWER_LEFT_EN NULL
+#define OPTION_VAL_LOWER_RIGHT_EN NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_EN NULL
+#define OPTION_VAL_1X_EN NULL
+#define OPTION_VAL_3X_EN NULL
+#define OPTION_VAL_5X_EN NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_EN NULL
+#define OPTION_VAL_DEFAULT_ON_00_EN NULL
+#define OPTION_VAL_DEFAULT_OFF_01_EN NULL
+#define OPTION_VAL_BLACK_02_EN NULL
+#define OPTION_VAL_LIGHT_BLUE_04_EN NULL
+#define OPTION_VAL_CYAN_06_EN NULL
+#define OPTION_VAL_CYAN_BLUE_07_EN NULL
+#define OPTION_VAL_LIGHT_GREEN_08_EN NULL
+#define OPTION_VAL_CYAN_GREEN_09_EN NULL
+#define OPTION_VAL_LIGHT_CYAN_10_EN NULL
+#define OPTION_VAL_PURPLE_12_EN NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_EN NULL
+#define OPTION_VAL_YELLOW_14_EN NULL
+#define OPTION_VAL_GRAY_15_EN "Grey"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_EN NULL
+#define OPTION_VAL_LIGHT_GREEN_2_17_EN NULL
+#define OPTION_VAL_LIGHT_GREEN_3_18_EN NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_EN NULL
+#define OPTION_VAL_LIGHT_RED_2_20_EN NULL
+#define OPTION_VAL_MAGENTA_21_EN NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_EN NULL
+#define OPTION_VAL_LIGHT_ORANGE_23_EN NULL
+#define OPTION_VAL_ORANGE_24_EN NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_EN NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_EN NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_EN NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_EN NULL
+#define OPTION_VAL_40_EN NULL
+#define OPTION_VAL_50_EN NULL
+#define OPTION_VAL_60_EN NULL
+#define OPTION_VAL_70_EN NULL
+#define OPTION_VAL_80_EN NULL
+#define OPTION_VAL_90_EN NULL
+#define OPTION_VAL_100_EN NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_EN NULL
+
+struct retro_core_option_v2_category option_cats_en[] = {
+   {
+      "system",
+      CATEGORY_SYSTEM_LABEL_EN,
+      CATEGORY_SYSTEM_INFO_0_EN
+   },
+   {
+      "video",
+      CATEGORY_VIDEO_LABEL_EN,
+      CATEGORY_VIDEO_INFO_0_EN
+   },
+   {
+      "performance",
+      CATEGORY_PERFORMANCE_LABEL_EN,
+      CATEGORY_PERFORMANCE_INFO_0_EN
+   },
+   {
+      "hacks",
+      CATEGORY_HACKS_LABEL_EN,
+      CATEGORY_HACKS_INFO_0_EN
+   },
+   {
+      "input",
+      CATEGORY_INPUT_LABEL_EN,
+      CATEGORY_INPUT_INFO_0_EN
+   },
+   {
+      "vmu",
+      CATEGORY_VMU_LABEL_EN,
+      CATEGORY_VMU_INFO_0_EN
+   },
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_en[] = {
+   {
+      CORE_OPTION_NAME "_region",
+      CORE_OPTION_NAME_REGION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "system",
+      {
+         { "Japan",   OPTION_VAL_JAPAN_EN },
+         { "USA",     OPTION_VAL_USA_EN },
+         { "Europe",  OPTION_VAL_EUROPE_EN },
+         { "Default", OPTION_VAL_DEFAULT_EN },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_language",
+      CORE_OPTION_NAME_LANGUAGE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_LANGUAGE_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "Japanese", OPTION_VAL_JAPANESE_EN },
+         { "English",  OPTION_VAL_ENGLISH_EN },
+         { "German",   OPTION_VAL_GERMAN_EN },
+         { "French",   OPTION_VAL_FRENCH_EN },
+         { "Spanish",  OPTION_VAL_SPANISH_EN },
+         { "Italian",  OPTION_VAL_ITALIAN_EN },
+         { "Default",  OPTION_VAL_DEFAULT_EN },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      CORE_OPTION_NAME_HLE_BIOS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_HLE_BIOS_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_boot_to_bios",
+      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_dsp",
+      CORE_OPTION_NAME_ENABLE_DSP_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "disabled",
+#else
+      "enabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_force_wince",
+      CORE_OPTION_NAME_FORCE_WINCE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_allow_service_buttons",
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
+      CORE_OPTION_NAME "_internal_resolution",
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "320x240",    OPTION_VAL_320X240_EN },
+         { "640x480",    OPTION_VAL_640X480_EN },
+         { "800x600",    OPTION_VAL_800X600_EN },
+         { "960x720",    OPTION_VAL_960X720_EN },
+         { "1024x768",   OPTION_VAL_1024X768_EN },
+         { "1280x960",   OPTION_VAL_1280X960_EN },
+         { "1440x1080",  OPTION_VAL_1440X1080_EN },
+         { "1600x1200",  OPTION_VAL_1600X1200_EN },
+         { "1920x1440",  OPTION_VAL_1920X1440_EN },
+         { "2560x1920",  OPTION_VAL_2560X1920_EN },
+         { "2880x2160",  OPTION_VAL_2880X2160_EN },
+         { "3200x2400",  OPTION_VAL_3200X2400_EN },
+         { "3840x2880",  OPTION_VAL_3840X2880_EN },
+         { "4480x3360",  OPTION_VAL_4480X3360_EN },
+         { "5120x3840",  OPTION_VAL_5120X3840_EN },
+         { "5760x4320",  OPTION_VAL_5760X4320_EN },
+         { "6400x4800",  OPTION_VAL_6400X4800_EN },
+         { "7040x5280",  OPTION_VAL_7040X5280_EN },
+         { "7680x5760",  OPTION_VAL_7680X5760_EN },
+         { "8320x6240",  OPTION_VAL_8320X6240_EN },
+         { "8960x6720",  OPTION_VAL_8960X6720_EN },
+         { "9600x7200",  OPTION_VAL_9600X7200_EN },
+         { "10240x7680", OPTION_VAL_10240X7680_EN },
+         { "10880x8160", OPTION_VAL_10880X8160_EN },
+         { "11520x8640", OPTION_VAL_11520X8640_EN },
+         { "12160x9120", OPTION_VAL_12160X9120_EN },
+         { "12800x9600", OPTION_VAL_12800X9600_EN },
+         { NULL, NULL },
+      },
+#ifdef LOW_RES
+      "320x240",
+#else
+      "640x480",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_cable_type",
+      CORE_OPTION_NAME_CABLE_TYPE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "VGA",	    	 OPTION_VAL_VGA_EN },
+         { "TV (RGB)",       OPTION_VAL_TV_RGB_EN },
+         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_EN },
+         { NULL, NULL },
+      },
+      "TV (Composite)",
+   },
+   {
+      CORE_OPTION_NAME "_broadcast",
+      CORE_OPTION_NAME_BROADCAST_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "NTSC",    OPTION_VAL_NTSC_EN },
+         { "PAL",     OPTION_VAL_PAL_EN },
+         { "PAL_N",   OPTION_VAL_PAL_N_EN },
+         { "PAL_M",   OPTION_VAL_PAL_M_EN },
+         { "Default", OPTION_VAL_DEFAULT_EN },
+         { NULL, NULL },
+      },
+      "NTSC",
+   },
+   {
+      CORE_OPTION_NAME "_screen_rotation",
+      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "horizontal", OPTION_VAL_HORIZONTAL_EN },
+         { "vertical",   OPTION_VAL_VERTICAL_EN },
+         { NULL, NULL },
+      },
+      "horizontal",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_alpha_sorting",
+      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_EN },
+         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_EN },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_EN },
+#endif
+         { NULL, NULL },
+      },
+#if defined(LOW_END)
+      "per-strip (fast, least accurate)",
+#else
+      "per-triangle (normal)",
+#endif
+   },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+   {
+      CORE_OPTION_NAME "_oit_abuffer_size",
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "512MB", OPTION_VAL_512MB_EN },
+         { "1GB",   OPTION_VAL_1GB_EN },
+         { "2GB",   OPTION_VAL_2GB_EN },
+         { "4GB",   OPTION_VAL_4GB_EN },
+         { NULL, NULL },
+      },
+      "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_enable_rttb",
+      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_mipmapping",
+      CORE_OPTION_NAME_MIPMAPPING_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_fog",
+      CORE_OPTION_NAME_FOG_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_volume_modifier_enable",
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_EN },
+         { "1",  OPTION_VAL_1_EN },
+         { "2",  OPTION_VAL_2_EN },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+#ifdef _OPENMP
+   {
+      CORE_OPTION_NAME "_texupscale",
+      CORE_OPTION_NAME_TEXUPSCALE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EN,
+      NULL,
+      "video",
+      {
+         { "1", "disabled" },
+         { "2",  OPTION_VAL_2_O27_EN },
+         { "4",  OPTION_VAL_4_EN },
+         { "6",  OPTION_VAL_6_EN },
+         { NULL, NULL },
+      },
+      "1",
+   },
+   {/* TODO: needs clarification */
+      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "256",  NULL },
+         { "512",  NULL },
+         { "1024", NULL },
+         { NULL, NULL },
+      },
+      "256",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EN,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EN,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_threaded_rendering",
+      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_EN,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_EN,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "some", OPTION_VAL_SOME_EN },
+         { "more", OPTION_VAL_MORE_EN },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_frame_skipping",
+      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_EN,
+      NULL,
+      "performance",
+      {
+         { "disabled",  NULL },
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_hack",
+      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_gdrom_fast_loading",
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "enabled",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_custom_textures",
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: probably needs explanation */
+      CORE_OPTION_NAME "_dump_textures",
+      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_analog_stick_deadzone",
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_EN },
+         { "5%",  OPTION_VAL_5_EN },
+         { "10%", OPTION_VAL_10_EN },
+         { "15%", OPTION_VAL_15_EN },
+         { "20%", OPTION_VAL_20_EN },
+         { "25%", OPTION_VAL_25_EN },
+         { "30%", OPTION_VAL_30_EN },
+         { NULL, NULL },
+      },
+      "15%",
+   },
+   {
+      CORE_OPTION_NAME "_trigger_deadzone",
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_EN },
+         { "5%",  OPTION_VAL_5_EN },
+         { "10%", OPTION_VAL_10_EN },
+         { "15%", OPTION_VAL_15_EN },
+         { "20%", OPTION_VAL_20_EN },
+         { "25%", OPTION_VAL_25_EN },
+         { "30%", OPTION_VAL_30_EN },
+         { NULL, NULL },
+      },
+      "0%",
+   },
+   {
+      CORE_OPTION_NAME "_digital_triggers",
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_purupuru",
+      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_EN,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EN,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EN,
+      NULL,
+      "input",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_lightgun1_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_EN },
+         { "Red",      OPTION_VAL_RED_EN },
+         { "Green",    OPTION_VAL_GREEN_EN },
+         { "Blue",     OPTION_VAL_BLUE_EN },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun2_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_EN },
+         { "Red",      OPTION_VAL_RED_EN },
+         { "Green",    OPTION_VAL_GREEN_EN },
+         { "Blue",     OPTION_VAL_BLUE_EN },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun3_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_EN },
+         { "Red",      OPTION_VAL_RED_EN },
+         { "Green",    OPTION_VAL_GREEN_EN },
+         { "Blue",     OPTION_VAL_BLUE_EN },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun4_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_EN },
+         { "Red",      OPTION_VAL_RED_EN },
+         { "Green",    OPTION_VAL_GREEN_EN },
+         { "Blue",     OPTION_VAL_BLUE_EN },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_per_content_vmus",
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_EN,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_EN,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_EN,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "VMU A1",   OPTION_VAL_VMU_A1_EN },
+         { "All VMUs", OPTION_VAL_ALL_VMUS_EN },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EN,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EN,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EN,
+      NULL,
+      "vmu",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_display",
+      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_position",
+      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_EN },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_EN },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_EN },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_EN },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_size_mult",
+      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
+         { "3x", OPTION_VAL_3X_EN },
+         { "4x", OPTION_VAL_4_EN },
+         { "5x", OPTION_VAL_5X_EN },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_on_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_off_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_opacity",
+      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_EN },
+         { "20%",  OPTION_VAL_20_EN },
+         { "30%",  OPTION_VAL_30_EN },
+         { "40%",  OPTION_VAL_40_EN },
+         { "50%",  OPTION_VAL_50_EN },
+         { "60%",  OPTION_VAL_60_EN },
+         { "70%",  OPTION_VAL_70_EN },
+         { "80%",  OPTION_VAL_80_EN },
+         { "90%",  OPTION_VAL_90_EN },
+         { "100%", OPTION_VAL_100_EN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_display",
+      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_position",
+      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_EN },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_EN },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_EN },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_EN },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_size_mult",
+      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
+         { "3x", OPTION_VAL_3X_EN },
+         { "4x", OPTION_VAL_4_EN },
+         { "5x", OPTION_VAL_5X_EN },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_on_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_off_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_opacity",
+      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_EN },
+         { "20%",  OPTION_VAL_20_EN },
+         { "30%",  OPTION_VAL_30_EN },
+         { "40%",  OPTION_VAL_40_EN },
+         { "50%",  OPTION_VAL_50_EN },
+         { "60%",  OPTION_VAL_60_EN },
+         { "70%",  OPTION_VAL_70_EN },
+         { "80%",  OPTION_VAL_80_EN },
+         { "90%",  OPTION_VAL_90_EN },
+         { "100%", OPTION_VAL_100_EN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_display",
+      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_position",
+      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_EN },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_EN },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_EN },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_EN },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_size_mult",
+      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
+         { "3x", OPTION_VAL_3X_EN },
+         { "4x", OPTION_VAL_4_EN },
+         { "5x", OPTION_VAL_5X_EN },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_on_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_off_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_opacity",
+      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_EN },
+         { "20%",  OPTION_VAL_20_EN },
+         { "30%",  OPTION_VAL_30_EN },
+         { "40%",  OPTION_VAL_40_EN },
+         { "50%",  OPTION_VAL_50_EN },
+         { "60%",  OPTION_VAL_60_EN },
+         { "70%",  OPTION_VAL_70_EN },
+         { "80%",  OPTION_VAL_80_EN },
+         { "90%",  OPTION_VAL_90_EN },
+         { "100%", OPTION_VAL_100_EN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_display",
+      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_position",
+      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_EN },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_EN },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_EN },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_EN },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_size_mult",
+      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_EN },
+         { "2x", OPTION_VAL_2_O27_EN },
+         { "3x", OPTION_VAL_3X_EN },
+         { "4x", OPTION_VAL_4_EN },
+         { "5x", OPTION_VAL_5X_EN },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_on_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_off_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_EN },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_EN },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_EN },
+         { "BLUE 03",           OPTION_VAL_BLUE_EN },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_EN },
+         { "GREEN 05",          OPTION_VAL_GREEN_EN },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_EN },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_EN },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_EN },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_EN },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_EN },
+         { "RED 11",            OPTION_VAL_RED_EN },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_EN },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_EN },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_EN },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_EN },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_EN },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_EN },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_EN },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_EN },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_EN },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_EN },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_EN },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_EN },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_EN },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_EN },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_EN },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_EN },
+         { "WHITE 28",          OPTION_VAL_WHITE_EN },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_opacity",
+      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_EN },
+         { "20%",  OPTION_VAL_20_EN },
+         { "30%",  OPTION_VAL_30_EN },
+         { "40%",  OPTION_VAL_40_EN },
+         { "50%",  OPTION_VAL_50_EN },
+         { "60%",  OPTION_VAL_60_EN },
+         { "70%",  OPTION_VAL_70_EN },
+         { "80%",  OPTION_VAL_80_EN },
+         { "90%",  OPTION_VAL_90_EN },
+         { "100%", OPTION_VAL_100_EN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_en = {
+   option_cats_en,
+   option_defs_en
+};
+
 /* RETRO_LANGUAGE_EO */
 
 #define CATEGORY_SYSTEM_LABEL_EO NULL
@@ -15442,6 +20336,12 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_EO NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_EO NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_EO NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EO NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EO NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_EO NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_EO NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EO "Interna Rezolucio"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_EO NULL
 #define OPTION_VAL_320X240_EO NULL
@@ -15494,23 +20394,36 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_1GB_EO NULL
 #define OPTION_VAL_2GB_EO NULL
 #define OPTION_VAL_4GB_EO NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_EO NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EO NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EO NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EO NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_EO NULL
 #define CORE_OPTION_NAME_FOG_LABEL_EO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_EO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_EO NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_EO NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_EO NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EO NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EO NULL
+#define OPTION_VAL_1_EO NULL
+#define OPTION_VAL_2_EO NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EO NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EO NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EO NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EO NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_EO NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_EO NULL
-#define OPTION_VAL_2_EO NULL
+#define OPTION_VAL_2_O27_EO NULL
 #define OPTION_VAL_4_EO NULL
 #define OPTION_VAL_6_EO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_EO NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EO NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EO NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EO NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_EO NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_EO NULL
@@ -15539,6 +20452,8 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_EO NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_EO NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_EO NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EO NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EO NULL
@@ -15765,6 +20680,49 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_EO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EO,
       NULL,
@@ -15891,12 +20849,43 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_EO,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_EO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_EO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_EO,
       NULL,
       "video",
       {
@@ -15966,10 +20955,39 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_EO,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_EO },
+         { "1",  OPTION_VAL_1_EO },
+         { "2",  OPTION_VAL_2_EO },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_EO,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_EO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_EO,
       NULL,
       "video",
       {
@@ -16003,7 +21021,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_EO },
+         { "2",  OPTION_VAL_2_O27_EO },
          { "4",  OPTION_VAL_4_EO },
          { "6",  OPTION_VAL_6_EO },
          { NULL, NULL },
@@ -16026,6 +21044,20 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_EO,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_EO,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_EO,
@@ -16219,6 +21251,20 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EO,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EO,
       NULL,
@@ -16368,7 +21414,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -16519,7 +21565,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -16670,7 +21716,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -16821,7 +21867,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_EO },
-         { "2x", OPTION_VAL_2_EO },
+         { "2x", OPTION_VAL_2_O27_EO },
          { "3x", OPTION_VAL_3X_EO },
          { "4x", OPTION_VAL_4_EO },
          { "5x", OPTION_VAL_5X_EO },
@@ -16947,7 +21993,7 @@ struct retro_core_options_v2 options_eo = {
 #define CATEGORY_VIDEO_LABEL_ES "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_ES "Cambia los ajustes de resolución, las transparencias independientes del orden y los efectos visuales."
 #define CATEGORY_PERFORMANCE_LABEL_ES "Rendimiento"
-#define CATEGORY_PERFORMANCE_INFO_0_ES "Cambia los ajustes del renderizado multihilo, las optimizaciones de la división de números enteros y la omisión de fotogramas."
+#define CATEGORY_PERFORMANCE_INFO_0_ES "Configura los ajustes del renderizado multihilo y la omisión de fotogramas."
 #define CATEGORY_HACKS_LABEL_ES "Arreglos de emulación"
 #define CATEGORY_HACKS_INFO_0_ES "Cambia los ajustes de forzado de imagen panorámica, la velocidad de carga de GD-ROM y la sustitución de texturas."
 #define CATEGORY_INPUT_LABEL_ES "Entrada"
@@ -16967,7 +22013,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_FRENCH_ES "Francés"
 #define OPTION_VAL_SPANISH_ES "Español"
 #define OPTION_VAL_ITALIAN_ES "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ES "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ES "BIOS HLE (es necesario reiniciar)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ES "Fuerza el uso de una BIOS creada con emulación de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ES "Arrancar desde la BIOS (es necesario reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ES "Arranca directamente el menú de la BIOS de Dreamcast."
@@ -16977,6 +22023,12 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_ES "Permite emular por completo la MMU (unidad de gestión de memoria) y otros elementos necesarios para los juegos compatibles con Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_ES "Activar botones de servicio de NAOMI"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_ES "Activa el botón SERVICE de la placa NAOMI para acceder a la configuración del mueble."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ES "Partidas gratuitas en NAOMI"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ES "Modifica la configuración de monedas del juego a partidas gratuitas."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ES "Emulación del Broadband Adapter (BBA)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES "Emula el adaptador de banda ancha por Ethernet en lugar del módem (es necesario reiniciar)."
+#define CORE_OPTION_NAME_UPNP_LABEL_ES "Activar UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_ES "Utiliza UPnP para configurar automáticamente tu router/enrutador de Internet para poder conectarte a juegos online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ES "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ES "Modifica la resolución de renderizado."
 #define OPTION_VAL_320X240_ES "320 × 240"
@@ -17023,29 +22075,42 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_ES "Por bandas (rápida, menos precisa)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_ES "Por triángulos (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_ES "Por píxeles (precisa, pero lenta)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_ES "Tamaño del búfer de acumulación de píxeles (es necesario reiniciar)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_ES "Tamaño del búfer de acumulación de píxeles"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_ES "Es posible que sea necesario un valor alto para que la imagen se muestre bien a resoluciones superiores a la nativa."
 #define OPTION_VAL_512MB_ES "512 MB"
 #define OPTION_VAL_1GB_ES "1 GB"
 #define OPTION_VAL_2GB_ES "2 GB"
 #define OPTION_VAL_4GB_ES "4 GB"
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_ES "N.º máximo de capas transparentes"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ES "Las escenas más complejas podrían necesitar un valor más alto."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ES "Emulación completa del framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ES "Activa la emulación completa del framebuffer dentro de la VRAM. Ideal para aquellos juegos que lean o escriban directamente al framebuffer en la VRAM. Al activar esta opción, se forzará una resolución interna de 640 × 480 y el rendimiento podría verse gravemente afectado."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ES "Activar el búfer RTT (renderizado a texturas)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ES "Copia las texturas renderizadas en la GPU de vuelta a la VRAM. Esta opción suele dejarse activada para aquellos juegos que la requieran. Al activar esta opción, se desactivará el escalado de texturas y el rendimiento podría verse afectado."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_ES "«Mipmapping»"
 #define CORE_OPTION_NAME_FOG_LABEL_ES "Efectos de niebla"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ES "Modificador de volúmenes"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_ES "Una característica de la GPU de Dreamcast que suelen utilizar los juegos para dibujar las sombras de objetos. Esta opción debe activarse por norma general; apenas afecta al rendimiento."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ES "Filtrado anisotrópico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ES "Mejora la calidad de las texturas en aquellas superficies que se encuentren en un ángulo oblicuo respecto a la cámara."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ES "Mejora la calidad de las texturas en aquellas superficies que se encuentren en un ángulo oblicuo respecto a la cámara. Un valor muy alto necesitará de mayores recursos de la GPU. Es necesario reiniciar para aplicar los cambios en este ajuste."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ES "Filtrado de texturas"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ES "Indica el modo de filtrado de texturas que se utilizará. Puede utilizarse para forzar un modo de filtrado concreto en todas las texturas con el fin de conseguir un aspecto más definido (o suavizado) que el valor predeterminado. Cualquier valor que no sea el predeterminado puede provocar problemas de renderizado. Es necesario reiniciar para aplicar los cambios en este ajuste."
+#define OPTION_VAL_1_ES "Forzar vecino más cercano"
+#define OPTION_VAL_2_ES "Forzar lineal"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ES "Retrasar cambio de fotogramas"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_ES "Ideal para evitar parpadeos constantes o vídeos con fallos gráficos. No se recomienda su uso en plataformas lentas."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_ES "Detectar cambios en la frecuencia de actualización"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_ES "Informa en el front-end cuando cambie la frecuencia de actualización interna (p. ej.: de 60 a 30 FPS). Mejora la cadencia de fotogramas en aquellos juegos que se ejecuten a 30 o 20 FPS fijos, pero esta opción debería desactivarse en aquellos juegos con frecuencias de fotogramas desbloqueadas (es decir, inestables, p. ej.: Ecco the Dolphin, Unreal Tournament...). NOTA: esta opción no estará disponible si se activa Omisión automática de fotogramas."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ES "Filtro de posprocesamiento del PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ES "Posprocesa la imagen renderizada para simular los efectos dedicados de la GPU PowerVR2 y las señales de vídeo analógico."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ES "Reescalado de texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ES "Mejora los gráficos 2D de corte «pixel art» dibujado a mano. Utilizar solo con juegos en 2D pixelado."
-#define OPTION_VAL_2_ES NULL
+#define OPTION_VAL_2_O27_ES NULL
 #define OPTION_VAL_4_ES NULL
 #define OPTION_VAL_6_ES NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ES "Tamaño máximo del escalado de texturas"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_ES "Interpolación nativa de profundidad"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_ES "Mitiga la corrupción de texturas y los problemas de profundidad en GPU de AMD. En algunos casos podría ayudar también en GPU de Intel."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_ES "Renderizado multihilo"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_ES "Ejecuta la GPU y la CPU en hilos distintos. Muy recomendado."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_ES "Omisión automática de fotogramas"
@@ -17074,6 +22139,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_ES "Gatillos digitales"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_ES "Puru Puru/Vibration Pack (Vibración)"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_ES "Activa la vibración del mando."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_ES "Transmitir salidas digitales"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ES "Transmite las salidas digitales y el estado de la vibración al puerto TCP 8000. Compatible con la opción de MAME «-output network»."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ES "Mostrar ajustes de las pistolas de luz"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_ES "Permite configurar los puntos de mira de las pistolas de luz. NOTA: es necesario salir y volver a entrar del menú rápido para que el cambio surta efecto."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES "Mostrar punto de mira del arma 1"
@@ -17300,6 +22367,49 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ES,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_ES,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ES,
       NULL,
@@ -17426,12 +22536,43 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ES,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ES,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ES,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ES,
       NULL,
       "video",
       {
@@ -17501,10 +22642,39 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ES,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_ES },
+         { "1",  OPTION_VAL_1_ES },
+         { "2",  OPTION_VAL_2_ES },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ES,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_ES,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_ES,
       NULL,
       "video",
       {
@@ -17538,7 +22708,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_ES },
+         { "2",  OPTION_VAL_2_O27_ES },
          { "4",  OPTION_VAL_4_ES },
          { "6",  OPTION_VAL_6_ES },
          { NULL, NULL },
@@ -17561,6 +22731,20 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_ES,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_ES,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_ES,
@@ -17754,6 +22938,20 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ES,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ES,
       NULL,
@@ -17903,7 +23101,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -18054,7 +23252,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -18205,7 +23403,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -18356,7 +23554,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ES },
-         { "2x", OPTION_VAL_2_ES },
+         { "2x", OPTION_VAL_2_O27_ES },
          { "3x", OPTION_VAL_3X_ES },
          { "4x", OPTION_VAL_4_ES },
          { "5x", OPTION_VAL_5X_ES },
@@ -18477,11 +23675,11 @@ struct retro_core_options_v2 options_es = {
 
 /* RETRO_LANGUAGE_FA */
 
-#define CATEGORY_SYSTEM_LABEL_FA NULL
+#define CATEGORY_SYSTEM_LABEL_FA "سیستم"
 #define CATEGORY_SYSTEM_INFO_0_FA NULL
 #define CATEGORY_VIDEO_LABEL_FA "ویدیو"
 #define CATEGORY_VIDEO_INFO_0_FA NULL
-#define CATEGORY_PERFORMANCE_LABEL_FA NULL
+#define CATEGORY_PERFORMANCE_LABEL_FA "عملکرد"
 #define CATEGORY_PERFORMANCE_INFO_0_FA NULL
 #define CATEGORY_HACKS_LABEL_FA NULL
 #define CATEGORY_HACKS_INFO_0_FA NULL
@@ -18489,7 +23687,7 @@ struct retro_core_options_v2 options_es = {
 #define CATEGORY_INPUT_INFO_0_FA NULL
 #define CATEGORY_VMU_LABEL_FA NULL
 #define CATEGORY_VMU_INFO_0_FA NULL
-#define CORE_OPTION_NAME_REGION_LABEL_FA NULL
+#define CORE_OPTION_NAME_REGION_LABEL_FA "منطقه"
 #define OPTION_VAL_JAPAN_FA NULL
 #define OPTION_VAL_USA_FA NULL
 #define OPTION_VAL_EUROPE_FA NULL
@@ -18512,6 +23710,12 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_FA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_FA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_FA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_FA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FA NULL
 #define OPTION_VAL_320X240_FA NULL
@@ -18551,7 +23755,7 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_PAL_FA NULL
 #define OPTION_VAL_PAL_N_FA NULL
 #define OPTION_VAL_PAL_M_FA NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_FA NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_FA "جهت صفحه نمایش"
 #define OPTION_VAL_HORIZONTAL_FA NULL
 #define OPTION_VAL_VERTICAL_FA NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_FA NULL
@@ -18564,23 +23768,36 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_1GB_FA NULL
 #define OPTION_VAL_2GB_FA NULL
 #define OPTION_VAL_4GB_FA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_FA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_FA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_FA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FA NULL
+#define OPTION_VAL_1_FA NULL
+#define OPTION_VAL_2_FA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_FA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FA NULL
-#define OPTION_VAL_2_FA NULL
+#define OPTION_VAL_2_O27_FA NULL
 #define OPTION_VAL_4_FA NULL
 #define OPTION_VAL_6_FA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_FA NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_FA NULL
@@ -18609,6 +23826,8 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_FA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_FA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_FA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FA NULL
@@ -18835,6 +24054,49 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FA,
       NULL,
@@ -18961,12 +24223,43 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FA,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FA,
       NULL,
       "video",
       {
@@ -19036,10 +24329,39 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FA,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_FA },
+         { "1",  OPTION_VAL_1_FA },
+         { "2",  OPTION_VAL_2_FA },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FA,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FA,
       NULL,
       "video",
       {
@@ -19073,7 +24395,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_FA },
+         { "2",  OPTION_VAL_2_O27_FA },
          { "4",  OPTION_VAL_4_FA },
          { "6",  OPTION_VAL_6_FA },
          { NULL, NULL },
@@ -19096,6 +24418,20 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FA,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FA,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FA,
@@ -19289,6 +24625,20 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FA,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FA,
       NULL,
@@ -19438,7 +24788,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -19589,7 +24939,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -19740,7 +25090,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -19891,7 +25241,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FA },
-         { "2x", OPTION_VAL_2_FA },
+         { "2x", OPTION_VAL_2_O27_FA },
          { "3x", OPTION_VAL_3X_FA },
          { "4x", OPTION_VAL_4_FA },
          { "5x", OPTION_VAL_5X_FA },
@@ -20047,6 +25397,12 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_FI NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_FI NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FI NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FI NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FI NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FI "Laajakaista-adapterin emulaatio"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FI NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_FI "Käytä UPnP:tä"
+#define CORE_OPTION_NAME_UPNP_INFO_0_FI "Käytä UPnP:tä Internet-reitittimen määrittämiseksi verkkopelejä varten."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI "Sisäinen resoluutio"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FI NULL
 #define OPTION_VAL_320X240_FI NULL
@@ -20084,8 +25440,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_BROADCAST_LABEL_FI NULL
 #define OPTION_VAL_NTSC_FI NULL
 #define OPTION_VAL_PAL_FI NULL
-#define OPTION_VAL_PAL_N_FI NULL
-#define OPTION_VAL_PAL_M_FI NULL
+#define OPTION_VAL_PAL_N_FI "PAL-N (Argentiina, Paraguay, Uruguay)"
+#define OPTION_VAL_PAL_M_FI "PAL-M (Brasilia)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_FI "Näytön suunta"
 #define OPTION_VAL_HORIZONTAL_FI NULL
 #define OPTION_VAL_VERTICAL_FI NULL
@@ -20099,24 +25455,37 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_1GB_FI "1 Gt"
 #define OPTION_VAL_2GB_FI "2 Gt"
 #define OPTION_VAL_4GB_FI "4 Gt"
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FI NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FI NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FI NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FI NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FI NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FI NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FI NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FI "Sumutehosteet"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FI NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_FI NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_FI "Anisotrooppinen suodatus"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_FI NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FI "Tekstuurisuodatus"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FI NULL
+#define OPTION_VAL_1_FI NULL
+#define OPTION_VAL_2_FI NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FI NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FI NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FI NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FI NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_FI "PowerVR2-jälkikäsittelysuodatin"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FI "Tekstuurin yliskaalaus (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FI NULL
-#define OPTION_VAL_2_FI NULL
+#define OPTION_VAL_2_O27_FI NULL
 #define OPTION_VAL_4_FI NULL
 #define OPTION_VAL_6_FI NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FI NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FI NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FI NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FI NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FI "Säikeistetty renderöinti"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_FI NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_FI NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_FI NULL
@@ -20144,6 +25513,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_FI NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_FI NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_FI NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FI NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FI NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FI "Näytä valoaseen asetukset"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FI NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI NULL
@@ -20370,6 +25741,49 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FI,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FI,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FI,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI,
       NULL,
@@ -20496,12 +25910,43 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FI,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FI,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FI,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FI,
       NULL,
       "video",
       {
@@ -20571,10 +26016,39 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FI,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_FI },
+         { "1",  OPTION_VAL_1_FI },
+         { "2",  OPTION_VAL_2_FI },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FI,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FI,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FI,
       NULL,
       "video",
       {
@@ -20608,7 +26082,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_FI },
+         { "2",  OPTION_VAL_2_O27_FI },
          { "4",  OPTION_VAL_4_FI },
          { "6",  OPTION_VAL_6_FI },
          { NULL, NULL },
@@ -20631,6 +26105,20 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FI,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FI,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FI,
@@ -20824,6 +26312,20 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FI,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FI,
       NULL,
@@ -20973,7 +26475,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -21124,7 +26626,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -21275,7 +26777,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -21426,7 +26928,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FI },
-         { "2x", OPTION_VAL_2_FI },
+         { "2x", OPTION_VAL_2_O27_FI },
          { "3x", OPTION_VAL_3X_FI },
          { "4x", OPTION_VAL_4_FI },
          { "5x", OPTION_VAL_5X_FI },
@@ -21552,7 +27054,7 @@ struct retro_core_options_v2 options_fi = {
 #define CATEGORY_VIDEO_LABEL_FR "Vidéo"
 #define CATEGORY_VIDEO_INFO_0_FR "Configurez les réglages de résolution, de transparence indépendante de l'ordre et des effets visuels."
 #define CATEGORY_PERFORMANCE_LABEL_FR "Performances"
-#define CATEGORY_PERFORMANCE_INFO_0_FR "Configurer les réglages de rendu sur plusieurs fils d'exécution, d'optimisation de la division à l'entier et de saut d'images."
+#define CATEGORY_PERFORMANCE_INFO_0_FR "Configurer les réglages de rendu et de saut d'images."
 #define CATEGORY_HACKS_LABEL_FR "Hacks d'émulation"
 #define CATEGORY_HACKS_INFO_0_FR "Configurez les réglages de remplacements pour écrans larges, de vitesse de chargement des GD-ROM et de remplacement de textures."
 #define CATEGORY_INPUT_LABEL_FR "Entrées"
@@ -21572,7 +27074,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_FRENCH_FR "Français"
 #define OPTION_VAL_SPANISH_FR "Espagnol"
 #define OPTION_VAL_ITALIAN_FR "Italien"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_FR "BIOS HLE (Redémarrage requis)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_FR "Forcer l'utilisation d'un BIOS en émulation de haut niveau."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_FR "Démarrer sur le BIOS (Redémarrage requis)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_FR "Démarrer directement sur le menu BIOS Dreamcast."
@@ -21582,6 +27084,12 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_FR "Activer l'émulation MMU (unité de gestion mémoire) complète et d'autres réglages pour les jeux Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_FR "Autoriser les boutons de service NAOMI"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_FR "Active le bouton SERVICE pour NAOMI, pour entrer dans les paramètres de la borne."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FR "Définir les jeux NAOMI en Free Play"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FR "Modifier les réglages de pièces du jeu en mode gratuit."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR "Émulation de l'adaptateur haut débit"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR "Émuler l'adaptateur haut débit Ethernet au lieu du modem. (Redémarrage requis)"
+#define CORE_OPTION_NAME_UPNP_LABEL_FR "Activer l'UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_FR "Utilisez l'UPnP pour configurer automatiquement votre routeur Internet pour les jeux en ligne."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR "Résolution interne"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FR "Modifier la résolution de rendu."
 #define OPTION_VAL_320X240_FR NULL
@@ -21628,29 +27136,42 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_FR "Par bande (rapide, moins précis)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_FR "Par triangle (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_FR "Par pixel (précis, mais le plus lent)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_FR "Taille du tampon des pixels d'accumulation (Redémarrage requis)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_FR "Taille du tampon d'accumulation des pixels"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_FR "Des valeurs plus élevées peuvent être requises pour que les résolutions plus élevées s'affichent correctement."
 #define OPTION_VAL_512MB_FR "512 Mo"
 #define OPTION_VAL_1GB_FR "1 Go"
 #define OPTION_VAL_2GB_FR "2 Go"
 #define OPTION_VAL_4GB_FR "4 Go"
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FR "Calques transparents maximum"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FR "Des valeurs plus élevées peuvent être requises pour les scènes complexes."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR "Émulation complète du framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du framebuffer dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640x480 et les performances peuvent être sévèrement affectées."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR "Activer la mémoire tampon du RTT (rendu vers texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR "Copier les textures rendues depuis le processeur graphique vers la VRAM. Cette option est normalement activée pour les jeux qui en ont besoin. Lorsque cette option est activée, la mise à l'échelle du rendu des textures est désactivée et les performances peuvent être impactées."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_FR "Effets de brouillard"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_FR "Modificateur du volume"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_FR "Une fonctionnalité du processeur graphique de la Dreamcast qui est généralement utilisée par les jeux pour le rendu des ombres d'objets. Cette option devrait normalement être activée — l'impact sur les performances va généralement de minimal à négligeable."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_FR "Filtrage anisotrope"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_FR "Améliore la qualité des textures sur les surfaces qui sont à des angles de vue obliques par rapport à la caméra."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_FR "Améliore la qualité des textures sur les surfaces qui sont à des angles de vue obliques par rapport à la caméra. Des valeurs plus élevées sont plus exigeantes sur le processeur graphique. Les modifications de ce réglage ne sont appliqués qu'après redémarrage."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FR "Filtrage des textures"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FR "Le mode de filtrage des textures à utiliser. Cela peut être utilisé pour forcer un certain mode de filtrage de texture sur toutes les textures pour obtenir une apparence plus nette (ou plus lisse) que par défaut. Les valeurs autres que celles par défaut peuvent causer divers problèmes de rendu. Les modifications de ce réglage ne sont appliquées qu'après redémarrage."
+#define OPTION_VAL_1_FR "Forcer au plus proche"
+#define OPTION_VAL_2_FR "Forcer linéaire"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FR "Retarder l'échange d'images"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FR "Utile pour éviter les écrans clignotants ou les vidéos buggées. Non recommandé sur les plates-formes lentes."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FR "Détecter les changements de fréquence d'images"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FR "Notifier l'interface lorsque la fréquence d’images interne change (par exemple, de 60 i/s à 30 i/s). Améliore la cadence des images dans les jeux qui fonctionnent à 30 i/s ou 20 i/s, mais devrait être désactivé pour les jeux avec des fréquences d'images (non stables) déverrouillées (Ecco the Dolphin, Unreal Tournament par exemple). Remarque : Indisponible lorsque 'Saut d'images automatique' est activé."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_FR "Filtre de post-traitement PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_FR "x2"
+#define OPTION_VAL_2_O27_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FR "Interpolation de profondeur native"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FR "Aide pour la corruption de textures et les problèmes de profondeur sur les processeurs graphiques AMD. Peut aussi aider les processeurs graphiques Intel dans certains cas."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FR "Rendu sur plusieurs fils d'exécution"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_FR "Fais tourner le processeur graphique et le processeur sur différents fils d'exécution. Fortement recommandé."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_FR "Saut d'images automatique"
@@ -21679,6 +27200,8 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_FR "Gâchettes numériques"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_FR "Pack Puru Puru/vibration"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_FR "Active le retour de force de la manette."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FR "Diffuser les sorties numériques"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FR "Diffuser les sorties numériques et l'état du retour de force sur le port TCP 8000. Compatible avec l'option de MAME \"-output network\" ."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FR "Afficher les réglages du pistolet"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FR "Activer la configuration des options d'affichage du viseur des pistolets. REMARQUE : le menu rapide devrait être réouvert pour que ce paramètre prenne effet."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FR "Afficher le viseur du pistolet 1"
@@ -21905,6 +27428,49 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_FR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_FR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR,
       NULL,
@@ -22031,12 +27597,43 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR,
       NULL,
       "video",
       {
@@ -22106,10 +27703,39 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_FR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_FR },
+         { "1",  OPTION_VAL_1_FR },
+         { "2",  OPTION_VAL_2_FR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FR,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FR,
       NULL,
       "video",
       {
@@ -22143,7 +27769,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_FR },
+         { "2",  OPTION_VAL_2_O27_FR },
          { "4",  OPTION_VAL_4_FR },
          { "6",  OPTION_VAL_6_FR },
          { NULL, NULL },
@@ -22166,6 +27792,20 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_FR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_FR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_FR,
@@ -22359,6 +27999,20 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FR,
       NULL,
@@ -22508,7 +28162,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -22659,7 +28313,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -22810,7 +28464,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -22961,7 +28615,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_FR },
-         { "2x", OPTION_VAL_2_FR },
+         { "2x", OPTION_VAL_2_O27_FR },
          { "3x", OPTION_VAL_3X_FR },
          { "4x", OPTION_VAL_4_FR },
          { "5x", OPTION_VAL_5X_FR },
@@ -23107,7 +28761,7 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_FRENCH_GL NULL
 #define OPTION_VAL_SPANISH_GL NULL
 #define OPTION_VAL_ITALIAN_GL NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GL "Forza o uso de emulación BIOS de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GL "Arranca na BIOS (requírese reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GL "Arranca directamente no menú da BIOS de Dreamcast."
@@ -23117,6 +28771,12 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_GL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GL "Permite os botóns de servizo Naomi"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL "Activa o botón SERVIZO para NAOMI, para entrar nas opcións da recreativa."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_GL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_GL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL NULL
@@ -23163,29 +28823,42 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GL "Por franxa (rápido, menos preciso)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_GL "Por triángulo (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_GL NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL "Tamaño do buffer de píxeis de acumulación (requírese reiniciar)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_GL "É posible que se precisen valores máis altos para que as resolucións máis altas saian correctamente."
 #define OPTION_VAL_512MB_GL NULL
 #define OPTION_VAL_1GB_GL NULL
 #define OPTION_VAL_2GB_GL NULL
 #define OPTION_VAL_4GB_GL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL "Activa o buffer RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_GL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_GL "Filtrado anisotrópico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL "Millora a calidade das texturas nas superficies que se atopan en ángulos de visión oblicuos con respecto á cámara."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GL "Filtrado de Texturas"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL NULL
+#define OPTION_VAL_1_GL NULL
+#define OPTION_VAL_2_GL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GL "Intercambio de fotogramas con retardo"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GL "Útil para evitar o parpadeo nas pantallas ou os vídeos con fallos. Non recomendado en plataformas lentas."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_GL "Filtrado de postprocesado PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GL "Postproceso da imaxe renderizada para simular efectos específicos da PowerVR2 GPU e os sinais analóxicos de vídeo."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL "Aumento das texturas (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_GL "Millora dos gráficos 2D pixel art debuxados a man. Só se debería usar con xogos pixelados en 2D."
-#define OPTION_VAL_2_GL NULL
+#define OPTION_VAL_2_O27_GL NULL
 #define OPTION_VAL_4_GL NULL
 #define OPTION_VAL_6_GL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GL "Aumento da escala das texturas. Tamaño filtrado"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GL "Renderizado de fíos"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_GL "Fai funcionar a GPU e a CPU en fíos diferentes. Altamente recomendado."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_GL "Salto de fotograma automático"
@@ -23214,6 +28887,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_GL "Pack Purupuru/Pack de vibración"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_GL "Activa a retroalimentación de forza do controlador."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL NULL
@@ -23440,6 +29115,49 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_GL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL,
       NULL,
@@ -23566,12 +29284,43 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL,
       NULL,
       "video",
       {
@@ -23641,10 +29390,39 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_GL },
+         { "1",  OPTION_VAL_1_GL },
+         { "2",  OPTION_VAL_2_GL },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GL,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL,
       NULL,
       "video",
       {
@@ -23678,7 +29456,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_GL },
+         { "2",  OPTION_VAL_2_O27_GL },
          { "4",  OPTION_VAL_4_GL },
          { "6",  OPTION_VAL_6_GL },
          { NULL, NULL },
@@ -23701,6 +29479,20 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GL,
@@ -23894,6 +29686,20 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL,
       NULL,
@@ -24043,7 +29849,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -24194,7 +30000,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -24345,7 +30151,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -24496,7 +30302,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_GL },
-         { "2x", OPTION_VAL_2_GL },
+         { "2x", OPTION_VAL_2_O27_GL },
          { "3x", OPTION_VAL_3X_GL },
          { "4x", OPTION_VAL_4_GL },
          { "5x", OPTION_VAL_5X_GL },
@@ -24652,6 +30458,12 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HE NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HE NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HE NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HE NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_HE NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_HE NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HE NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HE NULL
 #define OPTION_VAL_320X240_HE NULL
@@ -24704,23 +30516,36 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_1GB_HE NULL
 #define OPTION_VAL_2GB_HE NULL
 #define OPTION_VAL_4GB_HE NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HE NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HE NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HE NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HE NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HE NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HE NULL
 #define CORE_OPTION_NAME_FOG_LABEL_HE NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HE NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HE NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HE NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HE NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HE NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HE NULL
+#define OPTION_VAL_1_HE NULL
+#define OPTION_VAL_2_HE NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HE NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HE NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HE NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HE NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HE NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HE NULL
-#define OPTION_VAL_2_HE NULL
+#define OPTION_VAL_2_O27_HE NULL
 #define OPTION_VAL_4_HE NULL
 #define OPTION_VAL_6_HE NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HE NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HE NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HE NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HE NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HE NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HE NULL
@@ -24749,6 +30574,8 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HE NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_HE NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HE NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HE NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HE NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HE NULL
@@ -24975,6 +30802,49 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HE,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HE,
       NULL,
@@ -25101,12 +30971,43 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HE,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HE,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HE,
       NULL,
       "video",
       {
@@ -25176,10 +31077,39 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HE,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_HE },
+         { "1",  OPTION_VAL_1_HE },
+         { "2",  OPTION_VAL_2_HE },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HE,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HE,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HE,
       NULL,
       "video",
       {
@@ -25213,7 +31143,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_HE },
+         { "2",  OPTION_VAL_2_O27_HE },
          { "4",  OPTION_VAL_4_HE },
          { "6",  OPTION_VAL_6_HE },
          { NULL, NULL },
@@ -25236,6 +31166,20 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HE,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HE,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HE,
@@ -25429,6 +31373,20 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HE,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HE,
       NULL,
@@ -25578,7 +31536,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -25729,7 +31687,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -25880,7 +31838,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -26031,7 +31989,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HE },
-         { "2x", OPTION_VAL_2_HE },
+         { "2x", OPTION_VAL_2_O27_HE },
          { "3x", OPTION_VAL_3X_HE },
          { "4x", OPTION_VAL_4_HE },
          { "5x", OPTION_VAL_5X_HE },
@@ -26150,45 +32108,1738 @@ struct retro_core_options_v2 options_he = {
    option_defs_he
 };
 
+/* RETRO_LANGUAGE_HR */
+
+#define CATEGORY_SYSTEM_LABEL_HR NULL
+#define CATEGORY_SYSTEM_INFO_0_HR NULL
+#define CATEGORY_VIDEO_LABEL_HR NULL
+#define CATEGORY_VIDEO_INFO_0_HR NULL
+#define CATEGORY_PERFORMANCE_LABEL_HR NULL
+#define CATEGORY_PERFORMANCE_INFO_0_HR NULL
+#define CATEGORY_HACKS_LABEL_HR NULL
+#define CATEGORY_HACKS_INFO_0_HR NULL
+#define CATEGORY_INPUT_LABEL_HR NULL
+#define CATEGORY_INPUT_INFO_0_HR NULL
+#define CATEGORY_VMU_LABEL_HR NULL
+#define CATEGORY_VMU_INFO_0_HR NULL
+#define CORE_OPTION_NAME_REGION_LABEL_HR "Regija"
+#define OPTION_VAL_JAPAN_HR NULL
+#define OPTION_VAL_USA_HR NULL
+#define OPTION_VAL_EUROPE_HR NULL
+#define OPTION_VAL_DEFAULT_HR NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_HR "Jezik"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_HR NULL
+#define OPTION_VAL_JAPANESE_HR NULL
+#define OPTION_VAL_ENGLISH_HR NULL
+#define OPTION_VAL_GERMAN_HR NULL
+#define OPTION_VAL_FRENCH_HR NULL
+#define OPTION_VAL_SPANISH_HR NULL
+#define OPTION_VAL_ITALIAN_HR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_HR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HR NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HR NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HR NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_HR NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_HR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_HR NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HR NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HR NULL
+#define OPTION_VAL_320X240_HR NULL
+#define OPTION_VAL_640X480_HR NULL
+#define OPTION_VAL_800X600_HR NULL
+#define OPTION_VAL_960X720_HR NULL
+#define OPTION_VAL_1024X768_HR NULL
+#define OPTION_VAL_1280X960_HR NULL
+#define OPTION_VAL_1440X1080_HR NULL
+#define OPTION_VAL_1600X1200_HR NULL
+#define OPTION_VAL_1920X1440_HR NULL
+#define OPTION_VAL_2560X1920_HR NULL
+#define OPTION_VAL_2880X2160_HR NULL
+#define OPTION_VAL_3200X2400_HR NULL
+#define OPTION_VAL_3840X2880_HR NULL
+#define OPTION_VAL_4480X3360_HR NULL
+#define OPTION_VAL_5120X3840_HR NULL
+#define OPTION_VAL_5760X4320_HR NULL
+#define OPTION_VAL_6400X4800_HR NULL
+#define OPTION_VAL_7040X5280_HR NULL
+#define OPTION_VAL_7680X5760_HR NULL
+#define OPTION_VAL_8320X6240_HR NULL
+#define OPTION_VAL_8960X6720_HR NULL
+#define OPTION_VAL_9600X7200_HR NULL
+#define OPTION_VAL_10240X7680_HR NULL
+#define OPTION_VAL_10880X8160_HR NULL
+#define OPTION_VAL_11520X8640_HR NULL
+#define OPTION_VAL_12160X9120_HR NULL
+#define OPTION_VAL_12800X9600_HR NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_HR NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HR NULL
+#define OPTION_VAL_VGA_HR NULL
+#define OPTION_VAL_TV_RGB_HR NULL
+#define OPTION_VAL_TV_COMPOSITE_HR NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_HR NULL
+#define OPTION_VAL_NTSC_HR NULL
+#define OPTION_VAL_PAL_HR NULL
+#define OPTION_VAL_PAL_N_HR NULL
+#define OPTION_VAL_PAL_M_HR NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_HR NULL
+#define OPTION_VAL_HORIZONTAL_HR NULL
+#define OPTION_VAL_VERTICAL_HR NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HR NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HR NULL
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_HR NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_HR NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HR NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HR NULL
+#define OPTION_VAL_512MB_HR NULL
+#define OPTION_VAL_1GB_HR NULL
+#define OPTION_VAL_2GB_HR NULL
+#define OPTION_VAL_4GB_HR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HR NULL
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_HR NULL
+#define CORE_OPTION_NAME_FOG_LABEL_HR NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HR NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HR NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HR NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HR NULL
+#define OPTION_VAL_1_HR NULL
+#define OPTION_VAL_2_HR NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HR NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HR NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HR NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HR NULL
+#define OPTION_VAL_2_O27_HR NULL
+#define OPTION_VAL_4_HR NULL
+#define OPTION_VAL_6_HR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HR NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HR NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HR NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_HR NULL
+#define OPTION_VAL_SOME_HR NULL
+#define OPTION_VAL_MORE_HR NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_HR NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_HR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_HR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HR NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HR NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HR NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HR NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HR NULL
+#define OPTION_VAL_0_HR NULL
+#define OPTION_VAL_5_HR NULL
+#define OPTION_VAL_10_HR NULL
+#define OPTION_VAL_15_HR NULL
+#define OPTION_VAL_20_HR NULL
+#define OPTION_VAL_25_HR NULL
+#define OPTION_VAL_30_HR NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HR NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HR NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_HR NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HR NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HR NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HR NULL
+#define OPTION_VAL_WHITE_HR NULL
+#define OPTION_VAL_RED_HR NULL
+#define OPTION_VAL_GREEN_HR NULL
+#define OPTION_VAL_BLUE_HR NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HR NULL
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HR NULL
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HR NULL
+#define OPTION_VAL_VMU_A1_HR NULL
+#define OPTION_VAL_ALL_VMUS_HR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HR NULL
+#define OPTION_VAL_UPPER_LEFT_HR NULL
+#define OPTION_VAL_UPPER_RIGHT_HR NULL
+#define OPTION_VAL_LOWER_LEFT_HR NULL
+#define OPTION_VAL_LOWER_RIGHT_HR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HR NULL
+#define OPTION_VAL_1X_HR NULL
+#define OPTION_VAL_3X_HR NULL
+#define OPTION_VAL_5X_HR NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HR NULL
+#define OPTION_VAL_DEFAULT_ON_00_HR NULL
+#define OPTION_VAL_DEFAULT_OFF_01_HR NULL
+#define OPTION_VAL_BLACK_02_HR NULL
+#define OPTION_VAL_LIGHT_BLUE_04_HR NULL
+#define OPTION_VAL_CYAN_06_HR NULL
+#define OPTION_VAL_CYAN_BLUE_07_HR NULL
+#define OPTION_VAL_LIGHT_GREEN_08_HR NULL
+#define OPTION_VAL_CYAN_GREEN_09_HR NULL
+#define OPTION_VAL_LIGHT_CYAN_10_HR NULL
+#define OPTION_VAL_PURPLE_12_HR NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_HR NULL
+#define OPTION_VAL_YELLOW_14_HR NULL
+#define OPTION_VAL_GRAY_15_HR NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_HR NULL
+#define OPTION_VAL_LIGHT_GREEN_2_17_HR NULL
+#define OPTION_VAL_LIGHT_GREEN_3_18_HR NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_HR NULL
+#define OPTION_VAL_LIGHT_RED_2_20_HR NULL
+#define OPTION_VAL_MAGENTA_21_HR NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_HR NULL
+#define OPTION_VAL_LIGHT_ORANGE_23_HR NULL
+#define OPTION_VAL_ORANGE_24_HR NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_HR NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_HR NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_HR NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HR NULL
+#define OPTION_VAL_40_HR NULL
+#define OPTION_VAL_50_HR NULL
+#define OPTION_VAL_60_HR NULL
+#define OPTION_VAL_70_HR NULL
+#define OPTION_VAL_80_HR NULL
+#define OPTION_VAL_90_HR NULL
+#define OPTION_VAL_100_HR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HR NULL
+
+struct retro_core_option_v2_category option_cats_hr[] = {
+   {
+      "system",
+      CATEGORY_SYSTEM_LABEL_HR,
+      CATEGORY_SYSTEM_INFO_0_HR
+   },
+   {
+      "video",
+      CATEGORY_VIDEO_LABEL_HR,
+      CATEGORY_VIDEO_INFO_0_HR
+   },
+   {
+      "performance",
+      CATEGORY_PERFORMANCE_LABEL_HR,
+      CATEGORY_PERFORMANCE_INFO_0_HR
+   },
+   {
+      "hacks",
+      CATEGORY_HACKS_LABEL_HR,
+      CATEGORY_HACKS_INFO_0_HR
+   },
+   {
+      "input",
+      CATEGORY_INPUT_LABEL_HR,
+      CATEGORY_INPUT_INFO_0_HR
+   },
+   {
+      "vmu",
+      CATEGORY_VMU_LABEL_HR,
+      CATEGORY_VMU_INFO_0_HR
+   },
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_hr[] = {
+   {
+      CORE_OPTION_NAME "_region",
+      CORE_OPTION_NAME_REGION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "system",
+      {
+         { "Japan",   OPTION_VAL_JAPAN_HR },
+         { "USA",     OPTION_VAL_USA_HR },
+         { "Europe",  OPTION_VAL_EUROPE_HR },
+         { "Default", OPTION_VAL_DEFAULT_HR },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_language",
+      CORE_OPTION_NAME_LANGUAGE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_LANGUAGE_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "Japanese", OPTION_VAL_JAPANESE_HR },
+         { "English",  OPTION_VAL_ENGLISH_HR },
+         { "German",   OPTION_VAL_GERMAN_HR },
+         { "French",   OPTION_VAL_FRENCH_HR },
+         { "Spanish",  OPTION_VAL_SPANISH_HR },
+         { "Italian",  OPTION_VAL_ITALIAN_HR },
+         { "Default",  OPTION_VAL_DEFAULT_HR },
+         { NULL, NULL },
+      },
+      "Default",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      CORE_OPTION_NAME_HLE_BIOS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_HLE_BIOS_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_boot_to_bios",
+      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_dsp",
+      CORE_OPTION_NAME_ENABLE_DSP_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "disabled",
+#else
+      "enabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_force_wince",
+      CORE_OPTION_NAME_FORCE_WINCE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_allow_service_buttons",
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
+      CORE_OPTION_NAME "_internal_resolution",
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "320x240",    OPTION_VAL_320X240_HR },
+         { "640x480",    OPTION_VAL_640X480_HR },
+         { "800x600",    OPTION_VAL_800X600_HR },
+         { "960x720",    OPTION_VAL_960X720_HR },
+         { "1024x768",   OPTION_VAL_1024X768_HR },
+         { "1280x960",   OPTION_VAL_1280X960_HR },
+         { "1440x1080",  OPTION_VAL_1440X1080_HR },
+         { "1600x1200",  OPTION_VAL_1600X1200_HR },
+         { "1920x1440",  OPTION_VAL_1920X1440_HR },
+         { "2560x1920",  OPTION_VAL_2560X1920_HR },
+         { "2880x2160",  OPTION_VAL_2880X2160_HR },
+         { "3200x2400",  OPTION_VAL_3200X2400_HR },
+         { "3840x2880",  OPTION_VAL_3840X2880_HR },
+         { "4480x3360",  OPTION_VAL_4480X3360_HR },
+         { "5120x3840",  OPTION_VAL_5120X3840_HR },
+         { "5760x4320",  OPTION_VAL_5760X4320_HR },
+         { "6400x4800",  OPTION_VAL_6400X4800_HR },
+         { "7040x5280",  OPTION_VAL_7040X5280_HR },
+         { "7680x5760",  OPTION_VAL_7680X5760_HR },
+         { "8320x6240",  OPTION_VAL_8320X6240_HR },
+         { "8960x6720",  OPTION_VAL_8960X6720_HR },
+         { "9600x7200",  OPTION_VAL_9600X7200_HR },
+         { "10240x7680", OPTION_VAL_10240X7680_HR },
+         { "10880x8160", OPTION_VAL_10880X8160_HR },
+         { "11520x8640", OPTION_VAL_11520X8640_HR },
+         { "12160x9120", OPTION_VAL_12160X9120_HR },
+         { "12800x9600", OPTION_VAL_12800X9600_HR },
+         { NULL, NULL },
+      },
+#ifdef LOW_RES
+      "320x240",
+#else
+      "640x480",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_cable_type",
+      CORE_OPTION_NAME_CABLE_TYPE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "VGA",	    	 OPTION_VAL_VGA_HR },
+         { "TV (RGB)",       OPTION_VAL_TV_RGB_HR },
+         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_HR },
+         { NULL, NULL },
+      },
+      "TV (Composite)",
+   },
+   {
+      CORE_OPTION_NAME "_broadcast",
+      CORE_OPTION_NAME_BROADCAST_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "NTSC",    OPTION_VAL_NTSC_HR },
+         { "PAL",     OPTION_VAL_PAL_HR },
+         { "PAL_N",   OPTION_VAL_PAL_N_HR },
+         { "PAL_M",   OPTION_VAL_PAL_M_HR },
+         { "Default", OPTION_VAL_DEFAULT_HR },
+         { NULL, NULL },
+      },
+      "NTSC",
+   },
+   {
+      CORE_OPTION_NAME "_screen_rotation",
+      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "horizontal", OPTION_VAL_HORIZONTAL_HR },
+         { "vertical",   OPTION_VAL_VERTICAL_HR },
+         { NULL, NULL },
+      },
+      "horizontal",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_alpha_sorting",
+      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HR },
+         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_HR },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_HR },
+#endif
+         { NULL, NULL },
+      },
+#if defined(LOW_END)
+      "per-strip (fast, least accurate)",
+#else
+      "per-triangle (normal)",
+#endif
+   },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+   {
+      CORE_OPTION_NAME "_oit_abuffer_size",
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "512MB", OPTION_VAL_512MB_HR },
+         { "1GB",   OPTION_VAL_1GB_HR },
+         { "2GB",   OPTION_VAL_2GB_HR },
+         { "4GB",   OPTION_VAL_4GB_HR },
+         { NULL, NULL },
+      },
+      "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_enable_rttb",
+      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_mipmapping",
+      CORE_OPTION_NAME_MIPMAPPING_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_fog",
+      CORE_OPTION_NAME_FOG_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_volume_modifier_enable",
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_HR },
+         { "1",  OPTION_VAL_1_HR },
+         { "2",  OPTION_VAL_2_HR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+#ifdef _OPENMP
+   {
+      CORE_OPTION_NAME "_texupscale",
+      CORE_OPTION_NAME_TEXUPSCALE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HR,
+      NULL,
+      "video",
+      {
+         { "1", "disabled" },
+         { "2",  OPTION_VAL_2_O27_HR },
+         { "4",  OPTION_VAL_4_HR },
+         { "6",  OPTION_VAL_6_HR },
+         { NULL, NULL },
+      },
+      "1",
+   },
+   {/* TODO: needs clarification */
+      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "256",  NULL },
+         { "512",  NULL },
+         { "1024", NULL },
+         { NULL, NULL },
+      },
+      "256",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_threaded_rendering",
+      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HR,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_HR,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "some", OPTION_VAL_SOME_HR },
+         { "more", OPTION_VAL_MORE_HR },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_frame_skipping",
+      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_HR,
+      NULL,
+      "performance",
+      {
+         { "disabled",  NULL },
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_hack",
+      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_gdrom_fast_loading",
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "enabled",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_custom_textures",
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: probably needs explanation */
+      CORE_OPTION_NAME "_dump_textures",
+      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_analog_stick_deadzone",
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_HR },
+         { "5%",  OPTION_VAL_5_HR },
+         { "10%", OPTION_VAL_10_HR },
+         { "15%", OPTION_VAL_15_HR },
+         { "20%", OPTION_VAL_20_HR },
+         { "25%", OPTION_VAL_25_HR },
+         { "30%", OPTION_VAL_30_HR },
+         { NULL, NULL },
+      },
+      "15%",
+   },
+   {
+      CORE_OPTION_NAME "_trigger_deadzone",
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_HR },
+         { "5%",  OPTION_VAL_5_HR },
+         { "10%", OPTION_VAL_10_HR },
+         { "15%", OPTION_VAL_15_HR },
+         { "20%", OPTION_VAL_20_HR },
+         { "25%", OPTION_VAL_25_HR },
+         { "30%", OPTION_VAL_30_HR },
+         { NULL, NULL },
+      },
+      "0%",
+   },
+   {
+      CORE_OPTION_NAME "_digital_triggers",
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_purupuru",
+      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HR,
+      NULL,
+      "input",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_lightgun1_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_HR },
+         { "Red",      OPTION_VAL_RED_HR },
+         { "Green",    OPTION_VAL_GREEN_HR },
+         { "Blue",     OPTION_VAL_BLUE_HR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun2_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_HR },
+         { "Red",      OPTION_VAL_RED_HR },
+         { "Green",    OPTION_VAL_GREEN_HR },
+         { "Blue",     OPTION_VAL_BLUE_HR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun3_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_HR },
+         { "Red",      OPTION_VAL_RED_HR },
+         { "Green",    OPTION_VAL_GREEN_HR },
+         { "Blue",     OPTION_VAL_BLUE_HR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun4_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_HR },
+         { "Red",      OPTION_VAL_RED_HR },
+         { "Green",    OPTION_VAL_GREEN_HR },
+         { "Blue",     OPTION_VAL_BLUE_HR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_per_content_vmus",
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HR,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HR,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "VMU A1",   OPTION_VAL_VMU_A1_HR },
+         { "All VMUs", OPTION_VAL_ALL_VMUS_HR },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HR,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HR,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HR,
+      NULL,
+      "vmu",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_display",
+      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_position",
+      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_HR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_HR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_HR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_HR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_size_mult",
+      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
+         { "3x", OPTION_VAL_3X_HR },
+         { "4x", OPTION_VAL_4_HR },
+         { "5x", OPTION_VAL_5X_HR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_on_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_off_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_opacity",
+      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_HR },
+         { "20%",  OPTION_VAL_20_HR },
+         { "30%",  OPTION_VAL_30_HR },
+         { "40%",  OPTION_VAL_40_HR },
+         { "50%",  OPTION_VAL_50_HR },
+         { "60%",  OPTION_VAL_60_HR },
+         { "70%",  OPTION_VAL_70_HR },
+         { "80%",  OPTION_VAL_80_HR },
+         { "90%",  OPTION_VAL_90_HR },
+         { "100%", OPTION_VAL_100_HR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_display",
+      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_position",
+      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_HR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_HR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_HR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_HR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_size_mult",
+      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
+         { "3x", OPTION_VAL_3X_HR },
+         { "4x", OPTION_VAL_4_HR },
+         { "5x", OPTION_VAL_5X_HR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_on_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_off_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_opacity",
+      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_HR },
+         { "20%",  OPTION_VAL_20_HR },
+         { "30%",  OPTION_VAL_30_HR },
+         { "40%",  OPTION_VAL_40_HR },
+         { "50%",  OPTION_VAL_50_HR },
+         { "60%",  OPTION_VAL_60_HR },
+         { "70%",  OPTION_VAL_70_HR },
+         { "80%",  OPTION_VAL_80_HR },
+         { "90%",  OPTION_VAL_90_HR },
+         { "100%", OPTION_VAL_100_HR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_display",
+      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_position",
+      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_HR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_HR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_HR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_HR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_size_mult",
+      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
+         { "3x", OPTION_VAL_3X_HR },
+         { "4x", OPTION_VAL_4_HR },
+         { "5x", OPTION_VAL_5X_HR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_on_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_off_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_opacity",
+      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_HR },
+         { "20%",  OPTION_VAL_20_HR },
+         { "30%",  OPTION_VAL_30_HR },
+         { "40%",  OPTION_VAL_40_HR },
+         { "50%",  OPTION_VAL_50_HR },
+         { "60%",  OPTION_VAL_60_HR },
+         { "70%",  OPTION_VAL_70_HR },
+         { "80%",  OPTION_VAL_80_HR },
+         { "90%",  OPTION_VAL_90_HR },
+         { "100%", OPTION_VAL_100_HR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_display",
+      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_position",
+      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_HR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_HR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_HR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_HR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_size_mult",
+      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_HR },
+         { "2x", OPTION_VAL_2_O27_HR },
+         { "3x", OPTION_VAL_3X_HR },
+         { "4x", OPTION_VAL_4_HR },
+         { "5x", OPTION_VAL_5X_HR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_on_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_off_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_HR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_HR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_HR },
+         { "BLUE 03",           OPTION_VAL_BLUE_HR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_HR },
+         { "GREEN 05",          OPTION_VAL_GREEN_HR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_HR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_HR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_HR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_HR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_HR },
+         { "RED 11",            OPTION_VAL_RED_HR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_HR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_HR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_HR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_HR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_HR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_HR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_HR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_HR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_HR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_HR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_HR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_HR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_HR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_HR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_HR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_HR },
+         { "WHITE 28",          OPTION_VAL_WHITE_HR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_opacity",
+      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_HR },
+         { "20%",  OPTION_VAL_20_HR },
+         { "30%",  OPTION_VAL_30_HR },
+         { "40%",  OPTION_VAL_40_HR },
+         { "50%",  OPTION_VAL_50_HR },
+         { "60%",  OPTION_VAL_60_HR },
+         { "70%",  OPTION_VAL_70_HR },
+         { "80%",  OPTION_VAL_80_HR },
+         { "90%",  OPTION_VAL_90_HR },
+         { "100%", OPTION_VAL_100_HR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_hr = {
+   option_cats_hr,
+   option_defs_hr
+};
+
 /* RETRO_LANGUAGE_HU */
 
-#define CATEGORY_SYSTEM_LABEL_HU NULL
-#define CATEGORY_SYSTEM_INFO_0_HU NULL
-#define CATEGORY_VIDEO_LABEL_HU "Videó"
-#define CATEGORY_VIDEO_INFO_0_HU NULL
-#define CATEGORY_PERFORMANCE_LABEL_HU NULL
-#define CATEGORY_PERFORMANCE_INFO_0_HU NULL
-#define CATEGORY_HACKS_LABEL_HU NULL
-#define CATEGORY_HACKS_INFO_0_HU NULL
-#define CATEGORY_INPUT_LABEL_HU "Bevitel"
-#define CATEGORY_INPUT_INFO_0_HU NULL
+#define CATEGORY_SYSTEM_LABEL_HU "Rendszer"
+#define CATEGORY_SYSTEM_INFO_0_HU "A régió, nyelv, BIOS, és a hardveralap beállításai."
+#define CATEGORY_VIDEO_LABEL_HU "Kép"
+#define CATEGORY_VIDEO_INFO_0_HU "A felbontás, sorrendfüggetlen átlátszóság, és vizuális effektek beállításai."
+#define CATEGORY_PERFORMANCE_LABEL_HU "Teljesítmény"
+#define CATEGORY_PERFORMANCE_INFO_0_HU "A többszálas megjelenítés és képkockakihagyás beállításai."
+#define CATEGORY_HACKS_LABEL_HU "Emulációs trükkök"
+#define CATEGORY_HACKS_INFO_0_HU "A szélesvásznú módosítások, GD-ROM betöltés sebessége, és a textúracserék beállításai."
+#define CATEGORY_INPUT_LABEL_HU "Bemenet"
+#define CATEGORY_INPUT_INFO_0_HU "A kontroller és fénypisztoly beállításai."
 #define CATEGORY_VMU_LABEL_HU NULL
-#define CATEGORY_VMU_INFO_0_HU NULL
-#define CORE_OPTION_NAME_REGION_LABEL_HU "Terület"
-#define OPTION_VAL_JAPAN_HU NULL
+#define CATEGORY_VMU_INFO_0_HU "A játékonkénti VMU mentések és a képernyőn látható VMU beállításai."
+#define CORE_OPTION_NAME_REGION_LABEL_HU "Régió"
+#define OPTION_VAL_JAPAN_HU "Japán"
 #define OPTION_VAL_USA_HU NULL
-#define OPTION_VAL_EUROPE_HU NULL
-#define OPTION_VAL_DEFAULT_HU NULL
+#define OPTION_VAL_EUROPE_HU "Európa"
+#define OPTION_VAL_DEFAULT_HU "Alapértelmezett"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_HU "Nyelv"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_HU NULL
-#define OPTION_VAL_JAPANESE_HU NULL
-#define OPTION_VAL_ENGLISH_HU NULL
-#define OPTION_VAL_GERMAN_HU NULL
-#define OPTION_VAL_FRENCH_HU NULL
-#define OPTION_VAL_SPANISH_HU NULL
-#define OPTION_VAL_ITALIAN_HU NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_HU NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HU NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_HU NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_HU "A nyelv, amelyet a BIOS és a több nyelvet tartalmazó játékok használnak."
+#define OPTION_VAL_JAPANESE_HU "japán"
+#define OPTION_VAL_ENGLISH_HU "angol"
+#define OPTION_VAL_GERMAN_HU "német"
+#define OPTION_VAL_FRENCH_HU "francia"
+#define OPTION_VAL_SPANISH_HU "spanyol"
+#define OPTION_VAL_ITALIAN_HU "olasz"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_HU "HLE BIOS (újraindítás szükséges)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_HU "Mindenképp a magas szinten emulált BIOS használata."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_HU "Indítás BIOS-ban (újraindítás szükséges)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU "Belépés a Dreamcast BIOS menüjébe rögtön Indításkor."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU "DSP engedélyezése"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU "A Dreamcast DSP (digitális jelfeldolgozó) emulálásának engedélyezése. Javítja a generált hang pontosságát, de megnöveli a teljesítményigényt."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_HU "Mindenképp Windows CE mód"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_HU "A teljes MMU (Memory Management Unit) emulálása és egyéb beállítások Windows CE játékokhoz."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU "NAOMI szervizgombok engedélyezése"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A NAOMI szervizgombjának engedélyezése, a kabinet beállításaihoz."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU "Modem helyett a szélessávú Ethernet adapter emulálása. (Újraindítás szükséges.)"
+#define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
+#define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU NULL
 #define OPTION_VAL_640X480_HU NULL
 #define OPTION_VAL_800X600_HU NULL
@@ -26216,63 +33867,76 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_11520X8640_HU NULL
 #define OPTION_VAL_12160X9120_HU NULL
 #define OPTION_VAL_12800X9600_HU NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_HU NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_HU "Kábel típusa"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_HU "A kimenő jel típusa. A \"TV (kompozit)\" támogatása a legelterjedtebb."
 #define OPTION_VAL_VGA_HU NULL
 #define OPTION_VAL_TV_RGB_HU NULL
-#define OPTION_VAL_TV_COMPOSITE_HU NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_HU NULL
+#define OPTION_VAL_TV_COMPOSITE_HU "TV (kompozit)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_HU "Műsorszórási szabvány"
 #define OPTION_VAL_NTSC_HU NULL
-#define OPTION_VAL_PAL_HU NULL
+#define OPTION_VAL_PAL_HU "PAL (Világszerte)"
 #define OPTION_VAL_PAL_N_HU NULL
 #define OPTION_VAL_PAL_M_HU NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_HU "Képernyő tájolása"
-#define OPTION_VAL_HORIZONTAL_HU NULL
-#define OPTION_VAL_VERTICAL_HU NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_HU NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_HU NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HU NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HU NULL
+#define OPTION_VAL_HORIZONTAL_HU "Vízszintes"
+#define OPTION_VAL_VERTICAL_HU "Függőleges"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU "Alfa rendezés"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU "Per-strip (gyors, legkevésbé pontos)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_HU "Per-triangle (normál)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_HU "Per-pixel (pontos, de a leglassabb)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_HU "Pixel gyűjtőbuffer mérete"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_HU "Magasabb felbontások helyes visszaadásához nagyobb értékek kellhetnek."
 #define OPTION_VAL_512MB_HU NULL
 #define OPTION_VAL_1GB_HU NULL
 #define OPTION_VAL_2GB_HU NULL
 #define OPTION_VAL_4GB_HU NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU "Átlátszó rétegek maximális száma"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU "Összetett jelenetekhez nagyobb értékekre lehet szükség."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU "Teljes framebuffer emuláció"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU "A VRAM framebuffer teljes emulálásának engedélyezése. Olyan játékokhoz hasznos, amelyek közvetlenül a VRAM-ban írják vagy olvassák a framebuffert. Bekapcsolva a belső felbontás mindenképpen 640x480 lesz és a teljesítmény erősen visszaeshet."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU "Az előállított textúrák visszamásolása a GPU-ból a VRAM-ba. Ez a lehetőség rendszerint be van kapcsolva azoknál a játékoknál, amelyek igénylik. Bekapcsolt állapotban a textúra előállítás felméretezése kikapcsol, és hatással lehet a teljesítményre."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_FOG_LABEL_HU NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HU NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU NULL
-#define OPTION_VAL_2_HU NULL
+#define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU "A Dreamcast GPU-jának egy szolgáltatása, amit a játékok rendszerint tárgyak árnyékának megrajzolásához használnak. Normál esetben legyen bekapcsolva, hatása a teljesítményre rendszerint minimális vagy elhanyagolható."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_HU "Anizotróp szûrés"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_HU "Minőségjavítás azokon a felületi textúrákon, amik a kamerához képest rézsútosan helyezkednek el. Nagyobb érték jobban terheli a GPU-t. A változtatás csak újraindítás után lép életbe."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HU "Textúraszűrés"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HU "A textúraszűrés módja. Ezzel lehet egy bizonyos textúraszűrési módot rákényszeríteni minden textúrára, hogy az alapértelmezésnél élesebb (vagy simább) megjelenésük legyen. Az alapértelmezettől eltérő értékek különféle megjelenítési hibákat okozhatnak. A változások csak újraindítás után lépnek életbe."
+#define OPTION_VAL_1_HU "Mindenképp Nearest-Neighbor"
+#define OPTION_VAL_2_HU "Mindenképp lineáris"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HU "Képkockacsere késleltetése"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HU "A villódzó képernyőt vagy hibás mozgóképet segít elkerülni. Lassú platformokon nem ajánlott."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HU "Képkockasebesség változásainak érzékelése"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HU "A frontend értesítése, amikor a belső képsebesség megváltozik (pl. 60 fps-ről 30 fps-re). Javítja a megjelenítés ütemét olyan játékoknál, amelyek fix 20 vagy 30 fps-sel futnak, de legyen kikapcsolva nem rögzített (instabil) képsebességű játékoknál (pl. Ecco the Dolphin, Unreal Tournament). Figyelem: nem elérhető, ha az automatikus képkocka kihagyás be van kapcsolva."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_HU "PowerVR2 utófeldolgozó szűrő"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_HU "Az előállított kép utófeldolgozása a PowerVR2 GPU és az analóg videojelek egyedi effektjeinek szimulálásához."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU "Textúra felméretezés (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_HU "A kézzel rajzolt 2D pixel art grafikák feljavítása. Csak a 2D pixelgrafikus játékokhoz ajánlott."
+#define OPTION_VAL_2_O27_HU NULL
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HU NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HU NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU "Textúra felméretezés maximális szűrt mérete"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HU "Natív mélységi interpoláció"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HU "Segíthet a textúrahibákon és mélységi problémákon AMD GPU-k, vagy néhány esetben Intel GPU-k használatakor is."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HU "Többszálas képelőállítás"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HU "A CPU és GPU külön szálon futnak. Erősen ajánlott."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HU "Automatikus képkocka kihagyás"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_HU "Képkockák automatikus kihagyása, ha az emulátor lassan fut. Figyelem: csak akkor érvényes, ha a többszálas képelőállítás engedélyezett."
 #define OPTION_VAL_SOME_HU "Normál"
-#define OPTION_VAL_MORE_HU NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_HU NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_HU NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HU NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HU NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HU NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU NULL
+#define OPTION_VAL_MORE_HU "Maximális"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_HU "Képkocka kihagyás"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_HU "Két megjelenített képkocka közt ennyi képkocka eldobása."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_HU "Szélesvásznú csalások (újraindítás szükséges)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_HU "Csalások alkalmazása, amelyekkel bizonyos játékok szélesvásznú formátumban jelennek meg."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_HU "Szélesvásznú trükk"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HU "A normál 4:3-as képarányon kívüli geometria felrajzolása. Grafikai hibákat tartalmazhat az így megjelenített területeken."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HU "GD-ROM gyorstöltés (pontatlan)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HU "A GD-ROM betöltésének felgyorsítása."
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU "Egyedi textúrák betöltése"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
 #define OPTION_VAL_0_HU NULL
 #define OPTION_VAL_5_HU NULL
 #define OPTION_VAL_10_HU NULL
@@ -26280,66 +33944,68 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_20_HU NULL
 #define OPTION_VAL_25_HU NULL
 #define OPTION_VAL_30_HU NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HU NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HU NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_HU NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HU NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU NULL
-#define OPTION_VAL_WHITE_HU NULL
-#define OPTION_VAL_RED_HU NULL
-#define OPTION_VAL_GREEN_HU NULL
-#define OPTION_VAL_BLUE_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HU "Ravasz holtsávja"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HU "Digitális ravasz"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_HU "Purupuru csomag / Vibrációs csomag"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_HU "A kontroller erővisszacsatolásának engedélyezése."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HU "Digitális kimenetek sugárzása"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU "A digitális kimenetek és az erővisszacsatolás állapotának közzététele a 8000-es TCP porton. Kompatibilis a MAME \"-output network\" opciójával."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU "Fénypisztoly beállítások megjelenítése"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HU "A fénypisztoly célkereszt megjelenítés beállításai. Figyelem: a változtatás életbelépéséhez újra be kell lépni a gyorsmenübe."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU "1. fénypisztoly célkeresztjének megjelenítése"
+#define OPTION_VAL_WHITE_HU "Fehér"
+#define OPTION_VAL_RED_HU "Vörös"
+#define OPTION_VAL_GREEN_HU "Zöld"
+#define OPTION_VAL_BLUE_HU "Kék"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU "2. fénypisztoly célkeresztjének megjelenítése"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU "3. fénypisztoly célkeresztjének megjelenítése"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU "4. fénypisztoly célkeresztjének megjelenítése"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a 4 VMU mentés fájlt (A1, B1, C1, D1) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak négy külön VMU fájlt (A1, B1, C1, D1) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
-#define OPTION_VAL_ALL_VMUS_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HU NULL
-#define OPTION_VAL_UPPER_LEFT_HU NULL
-#define OPTION_VAL_UPPER_RIGHT_HU NULL
-#define OPTION_VAL_LOWER_LEFT_HU NULL
-#define OPTION_VAL_LOWER_RIGHT_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HU NULL
+#define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU "Visual Memory Unit/System (VMU) megjelenítési beállítások jelenjenek meg"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU "VMU megjelenítési beállítások jelenjenek meg"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU "Az emulált VMU LCD képernyő láthatósági, méret, helyzet, és szín beállításainak engedélyezése. Figyelem: a gyorsmenüt ki-be kell kapcsolni, hogy ez a beállítás érvényre jusson."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_HU "VMU 1 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_HU "VMU 1 képernyő helyzete"
+#define OPTION_VAL_UPPER_LEFT_HU "Bal felső"
+#define OPTION_VAL_UPPER_RIGHT_HU "Jobb felső"
+#define OPTION_VAL_LOWER_LEFT_HU "Bal alsó"
+#define OPTION_VAL_LOWER_RIGHT_HU "Jobb alsó"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_HU "VMU 1 képernyő mérete"
 #define OPTION_VAL_1X_HU NULL
 #define OPTION_VAL_3X_HU NULL
 #define OPTION_VAL_5X_HU NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HU NULL
-#define OPTION_VAL_DEFAULT_ON_00_HU NULL
-#define OPTION_VAL_DEFAULT_OFF_01_HU NULL
-#define OPTION_VAL_BLACK_02_HU NULL
-#define OPTION_VAL_LIGHT_BLUE_04_HU NULL
-#define OPTION_VAL_CYAN_06_HU NULL
-#define OPTION_VAL_CYAN_BLUE_07_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_08_HU NULL
-#define OPTION_VAL_CYAN_GREEN_09_HU NULL
-#define OPTION_VAL_LIGHT_CYAN_10_HU NULL
-#define OPTION_VAL_PURPLE_12_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_HU NULL
-#define OPTION_VAL_YELLOW_14_HU NULL
-#define OPTION_VAL_GRAY_15_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_HU NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_HU NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_HU NULL
-#define OPTION_VAL_LIGHT_RED_2_20_HU NULL
-#define OPTION_VAL_MAGENTA_21_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_HU NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_HU NULL
-#define OPTION_VAL_ORANGE_24_HU NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_HU NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_HU NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_HU NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_HU "VMU 1 képernyő bekapcsolt pixel színe"
+#define OPTION_VAL_DEFAULT_ON_00_HU "Alapértelmezésben bekapcsolva"
+#define OPTION_VAL_DEFAULT_OFF_01_HU "Alapértelmezésben kikapcsolva"
+#define OPTION_VAL_BLACK_02_HU "Fekete"
+#define OPTION_VAL_LIGHT_BLUE_04_HU "Világoskék"
+#define OPTION_VAL_CYAN_06_HU "Ciánkék"
+#define OPTION_VAL_CYAN_BLUE_07_HU "Ciánkék"
+#define OPTION_VAL_LIGHT_GREEN_08_HU "Világoszöld"
+#define OPTION_VAL_CYAN_GREEN_09_HU "Ciánzöld"
+#define OPTION_VAL_LIGHT_CYAN_10_HU "Világos ciánkék"
+#define OPTION_VAL_PURPLE_12_HU "Lila"
+#define OPTION_VAL_LIGHT_PURPLE_13_HU "Világoslila"
+#define OPTION_VAL_YELLOW_14_HU "Sárga"
+#define OPTION_VAL_GRAY_15_HU "Szürke"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_HU "Világoslila (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_HU "Világoszöld (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_HU "Világoszöld (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_HU "Világos ciánkék (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_HU "Világospiros (2)"
+#define OPTION_VAL_MAGENTA_21_HU "Bíbor"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_HU "Világoslila (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_HU "Világos narancs"
+#define OPTION_VAL_ORANGE_24_HU "Narancssárga"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_HU "Világoslila (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_HU "Halványsárga"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_HU "Halványsárga (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU "VMU 1 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU "VMU 1 képernyő átlátszatlansága"
 #define OPTION_VAL_40_HU NULL
 #define OPTION_VAL_50_HU NULL
 #define OPTION_VAL_60_HU NULL
@@ -26347,24 +34013,24 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_80_HU NULL
 #define OPTION_VAL_90_HU NULL
 #define OPTION_VAL_100_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HU NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU "VMU 2 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU "VMU 2 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU "VMU 2 képernyő mérete"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_HU "VMU 2 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_HU "VMU 2 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_HU "VMU 2 képernyő átlátszatlansága"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_HU "VMU 3 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_HU "VMU 3 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_HU "VMU 3 képernyő mérete"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_HU "VMU 3 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_HU "VMU 3 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_HU "VMU 3 képernyő átlátszatlansága"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_HU "VMU 4 képernyő megjelenítése"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_HU "VMU 4 képernyő helyzete"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_HU "VMU 4 képernyő mérete"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_HU "VMU 4 képernyő bekapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_HU "VMU 4 képernyő kikapcsolt pixel színe"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_HU "VMU 4 képernyő átlátszatlansága"
 
 struct retro_core_option_v2_category option_cats_hu[] = {
    {
@@ -26510,6 +34176,49 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_HU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU,
       NULL,
@@ -26636,12 +34345,43 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_HU,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_HU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU,
       NULL,
       "video",
       {
@@ -26711,10 +34451,39 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_HU,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_HU },
+         { "1",  OPTION_VAL_1_HU },
+         { "2",  OPTION_VAL_2_HU },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_HU,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_HU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_HU,
       NULL,
       "video",
       {
@@ -26748,7 +34517,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_HU },
+         { "2",  OPTION_VAL_2_O27_HU },
          { "4",  OPTION_VAL_4_HU },
          { "6",  OPTION_VAL_6_HU },
          { NULL, NULL },
@@ -26771,6 +34540,20 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HU,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HU,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HU,
@@ -26964,6 +34747,20 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU,
       NULL,
@@ -27113,7 +34910,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -27264,7 +35061,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -27415,7 +35212,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -27566,7 +35363,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_HU },
-         { "2x", OPTION_VAL_2_HU },
+         { "2x", OPTION_VAL_2_O27_HU },
          { "3x", OPTION_VAL_3X_HU },
          { "4x", OPTION_VAL_4_HU },
          { "5x", OPTION_VAL_5X_HU },
@@ -27687,43 +35484,49 @@ struct retro_core_options_v2 options_hu = {
 
 /* RETRO_LANGUAGE_ID */
 
-#define CATEGORY_SYSTEM_LABEL_ID NULL
+#define CATEGORY_SYSTEM_LABEL_ID "Sistem"
 #define CATEGORY_SYSTEM_INFO_0_ID NULL
 #define CATEGORY_VIDEO_LABEL_ID NULL
 #define CATEGORY_VIDEO_INFO_0_ID NULL
-#define CATEGORY_PERFORMANCE_LABEL_ID NULL
+#define CATEGORY_PERFORMANCE_LABEL_ID "Kinerja"
 #define CATEGORY_PERFORMANCE_INFO_0_ID NULL
-#define CATEGORY_HACKS_LABEL_ID NULL
+#define CATEGORY_HACKS_LABEL_ID "Peretasan Emulasi"
 #define CATEGORY_HACKS_INFO_0_ID NULL
 #define CATEGORY_INPUT_LABEL_ID "Masukan"
 #define CATEGORY_INPUT_INFO_0_ID NULL
 #define CATEGORY_VMU_LABEL_ID NULL
 #define CATEGORY_VMU_INFO_0_ID NULL
-#define CORE_OPTION_NAME_REGION_LABEL_ID NULL
-#define OPTION_VAL_JAPAN_ID NULL
+#define CORE_OPTION_NAME_REGION_LABEL_ID "Daerah"
+#define OPTION_VAL_JAPAN_ID "Jepang"
 #define OPTION_VAL_USA_ID NULL
-#define OPTION_VAL_EUROPE_ID NULL
+#define OPTION_VAL_EUROPE_ID "Eropa"
 #define OPTION_VAL_DEFAULT_ID NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_ID NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_ID "Bahasa"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_ID NULL
-#define OPTION_VAL_JAPANESE_ID NULL
-#define OPTION_VAL_ENGLISH_ID NULL
-#define OPTION_VAL_GERMAN_ID NULL
-#define OPTION_VAL_FRENCH_ID NULL
-#define OPTION_VAL_SPANISH_ID NULL
-#define OPTION_VAL_ITALIAN_ID NULL
+#define OPTION_VAL_JAPANESE_ID "Bahasa Jepang"
+#define OPTION_VAL_ENGLISH_ID "Bahasa Inggris"
+#define OPTION_VAL_GERMAN_ID "Bahasa Jerman"
+#define OPTION_VAL_FRENCH_ID "Bahasa Perancis"
+#define OPTION_VAL_SPANISH_ID "Bahasa Spanyol"
+#define OPTION_VAL_ITALIAN_ID "Bahasa Itali"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ID NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ID NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_ID NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_ID NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ID "Paksa penggunaan BIOS emulasi tingkat tinggi."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Boot ke BIOS (Perlu Dimulai Ulang)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ID "Boot langsung ke menu BIOS Dreamcast."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_ID "Aktifkan DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_ID "Aktifkan emulasi DSP audio Dreamcast (pengolah sinyal digital). Perbaiki akurasi suara yang dihasilakan, tetapi tingkatkan persyaratan kinerja."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_ID NULL
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_ID NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_ID NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ID NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ID "Modifikasi resolusi pelukisan."
 #define OPTION_VAL_320X240_ID NULL
 #define OPTION_VAL_640X480_ID NULL
 #define OPTION_VAL_800X600_ID NULL
@@ -27763,36 +35566,49 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_PAL_M_ID NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_ID "Orientasi Layar"
 #define OPTION_VAL_HORIZONTAL_ID NULL
-#define OPTION_VAL_VERTICAL_ID NULL
+#define OPTION_VAL_VERTICAL_ID "Vertikal"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_ID NULL
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_ID NULL
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_ID NULL
 #define OPTION_VAL_PER_PIXEL_ACCURATE_ID NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_ID NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_ID NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_ID "Mungkin perlu nilai yang lebih besar agar resolusi yang lebih besar terlihat benar."
 #define OPTION_VAL_512MB_ID NULL
 #define OPTION_VAL_1GB_ID NULL
 #define OPTION_VAL_2GB_ID NULL
 #define OPTION_VAL_4GB_ID NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ID NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_ID NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ID NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ID NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ID "Mengaktifkan Penyangga RTT (Lukis Ke Tekstur)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ID NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_FOG_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_ID NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID "Pemfilteran Anisotropik"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID NULL
+#define OPTION_VAL_1_ID NULL
+#define OPTION_VAL_2_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_ID NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID NULL
-#define OPTION_VAL_2_ID NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_ID NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_ID NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID "Filter Pasca-pengolahan PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Tingkatkan grafis seni piksel 2D tulisan tangan. Hanya bisa digunakan di pemainan terpikselisasi 2D."
+#define OPTION_VAL_2_O27_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID "Ukuran Terfilter Maks. Penskalaan Naik"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_ID NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_ID NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_ID NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_ID "Jalankan GPU dan CPU pada Thread berbeda. Sangat direkomendasikan."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_ID NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_ID NULL
 #define OPTION_VAL_SOME_ID NULL
@@ -27815,10 +35631,12 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_20_ID NULL
 #define OPTION_VAL_25_ID NULL
 #define OPTION_VAL_30_ID NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_ID NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_ID NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_ID "Pemicu Deadzone"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_ID "Pemicu Digital"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_ID NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_ID NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_ID NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ID NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ID NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ID NULL
@@ -27839,10 +35657,10 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_ID NULL
-#define OPTION_VAL_UPPER_LEFT_ID NULL
-#define OPTION_VAL_UPPER_RIGHT_ID NULL
-#define OPTION_VAL_LOWER_LEFT_ID NULL
-#define OPTION_VAL_LOWER_RIGHT_ID NULL
+#define OPTION_VAL_UPPER_LEFT_ID "Kiri Atas"
+#define OPTION_VAL_UPPER_RIGHT_ID "Kanan Atas"
+#define OPTION_VAL_LOWER_LEFT_ID "Kiri Bawah"
+#define OPTION_VAL_LOWER_RIGHT_ID "Kanan Bawah"
 #define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_ID NULL
 #define OPTION_VAL_1X_ID NULL
 #define OPTION_VAL_3X_ID NULL
@@ -28045,6 +35863,49 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_ID,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID,
       NULL,
@@ -28171,12 +36032,43 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_ID,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_ID,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_ID,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_ID,
       NULL,
       "video",
       {
@@ -28246,10 +36138,39 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_ID },
+         { "1",  OPTION_VAL_1_ID },
+         { "2",  OPTION_VAL_2_ID },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ID,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_ID,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_ID,
       NULL,
       "video",
       {
@@ -28283,7 +36204,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_ID },
+         { "2",  OPTION_VAL_2_O27_ID },
          { "4",  OPTION_VAL_4_ID },
          { "6",  OPTION_VAL_6_ID },
          { NULL, NULL },
@@ -28306,6 +36227,20 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_ID,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_ID,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_ID,
@@ -28499,6 +36434,20 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ID,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ID,
       NULL,
@@ -28648,7 +36597,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -28799,7 +36748,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -28950,7 +36899,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -29101,7 +37050,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_ID },
-         { "2x", OPTION_VAL_2_ID },
+         { "2x", OPTION_VAL_2_O27_ID },
          { "3x", OPTION_VAL_3X_ID },
          { "4x", OPTION_VAL_4_ID },
          { "5x", OPTION_VAL_5X_ID },
@@ -29227,7 +37176,7 @@ struct retro_core_options_v2 options_id = {
 #define CATEGORY_VIDEO_LABEL_IT NULL
 #define CATEGORY_VIDEO_INFO_0_IT "Configurare la risoluzione, la trasparenza indipendente dall'ordine e le impostazioni degli effetti visivi."
 #define CATEGORY_PERFORMANCE_LABEL_IT "Prestazioni"
-#define CATEGORY_PERFORMANCE_INFO_0_IT "Configura il rendering filettato, ottimizzazioni della divisione intere e impostazioni del frame skip."
+#define CATEGORY_PERFORMANCE_INFO_0_IT "Configurare il rendering filettato e le impostazioni del salto di fotogramma."
 #define CATEGORY_HACKS_LABEL_IT "Hack di Emulazione"
 #define CATEGORY_HACKS_INFO_0_IT "Configura override widescreen, velocità di caricamento GD-ROM e impostazioni di sostituzione texture."
 #define CATEGORY_INPUT_LABEL_IT NULL
@@ -29247,7 +37196,7 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_FRENCH_IT "Francese"
 #define OPTION_VAL_SPANISH_IT "Spagnolo"
 #define OPTION_VAL_ITALIAN_IT "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_IT NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_IT "HLE BIOS (Riavvio Richiesto)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_IT "Forza l'uso di BIOS di emulazione di alto livello."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_IT "Avvio in BIOS (Riavvio richiesto)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_IT "Avviare direttamente nel menu BIOS Dreamcast."
@@ -29257,6 +37206,12 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_IT "Abilita l'emulazione di MMU (Memory Management Unit) e altre impostazioni per i giochi Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_IT "Consenti I Pulsanti Di Servizio NAOMI"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_IT "Abilita il pulsante SERVICE per NAOMI, per inserire le impostazioni del cabinato."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_IT "Imposta giochi NAOMI a Free Play"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_IT "Modificare le impostazioni del gioco per free play."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT "Emulazione Adattatore A banda larga"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT "Emulare l'adattatore a banda larga ethernet invece del modem. (Riavvio richiesto)"
+#define CORE_OPTION_NAME_UPNP_LABEL_IT "Abilita UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_IT "Usa UPnP per configurare automaticamente il router Internet per i giochi online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT "Risoluzione Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_IT "Modificare la risoluzione di rendering."
 #define OPTION_VAL_320X240_IT NULL
@@ -29303,29 +37258,42 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_IT "Per-Strip (veloce, meno preciso)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_IT "Per-Triangolo (normale)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_IT "Per-Pixel (preciso, ma più lento)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_IT "Dimensione Pixel Buffer Accumulo (Riavvio Richiesto)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_IT "Dimensione di accumulo del Buffer Pixel"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_IT "Potrebbero essere necessari valori più alti per ottenere risoluzioni più elevate in uscita correttamente."
 #define OPTION_VAL_512MB_IT NULL
 #define OPTION_VAL_1GB_IT NULL
 #define OPTION_VAL_2GB_IT NULL
 #define OPTION_VAL_4GB_IT NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_IT "Strati trasparenti massimi"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_IT "Potrebbero essere necessari valori più elevati per scene complesse."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_IT "Emulazione framebuffer completa"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_IT "Abilita l'emulazione completa del framebuffer in VRAM. Ciò è utile per i giochi che leggono o scrivono direttamente il framebuffer in VRAM. Se abilitata, la risoluzione interna è costretta a 640x480 e le prestazioni possono essere gravemente colpite."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_IT "Abilita Buffer RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_IT "Copia le texture renderizzate dalla GPU a VRAM. Questa opzione è normalmente abilitata per i giochi che lo richiedono. Se abilitata, il rendering delle texture è disabilitato e le prestazioni potrebbero essere influenzate."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_IT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_IT "Effetti Nebbia"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_IT "Modificatore del Volume"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_IT "Una funzionalità della GPU Dreamcast che viene tipicamente utilizzata dai giochi per disegnare ombre degli oggetti. Questo dovrebbe normalmente essere abilitato - l'impatto delle prestazioni di solito è minimo o trascurabile."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_IT "Filtro Anisotropico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_IT "Migliorare la qualità delle texture su superfici che sono ad angoli obliqui rispetto alla fotocamera."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_IT "Migliorare la qualità delle texture su superfici che sono ad angoli obliqui rispetto alla fotocamera. Valori più alti sono più impegnativi per la GPU. Le modifiche a questa impostazione si applicano solo dopo il riavvio."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_IT "Filtro Texture"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_IT "La modalità di filtraggio delle texture da usare. Questo può essere usato per forzare una certa modalità di filtraggio delle texture su tutte le texture per ottenere un aspetto più nitido (o più liscio) di quello predefinito. Valori diversi da quelli predefiniti possono causare vari problemi di rendering. Le modifiche a questa impostazione si applicano solo dopo il riavvio."
+#define OPTION_VAL_1_IT "Forza il Vicino più Vicino"
+#define OPTION_VAL_2_IT "Forza Lineare"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_IT "Ritardo Scambio fotogrammi"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_IT "Utile per evitare di lampeggiare schermi o video glitchati. Sconsigliato su piattaforme lente."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_IT "Rileva Modifiche Frame Rate"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_IT "Notificare il frontend quando il frame rate interno cambia (ad esempio da 60 fps a 30 fps). Migliora il ritmo dei fotogrammi nei giochi che girano a un bloccato 30 fps o 20 fps, ma dovrebbe essere disabilitato per i giochi con frame rate sbloccati (instabili) (e.. Ecco il delfino, torneo irreale). Nota: non disponibile quando 'Auto Salta Frame' è abilitato."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_IT "Filtro Di Post-Elaborazione PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_IT "Post-elaborare l'immagine renderizzata per simulare effetti specifici alla GPU PowerVR2 e segnali video analogici."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_IT "Miglioramento Della Texture (xbrz)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_IT "Migliora la grafica grafica grafica a pixel 2D disegnata a mano. Dovrebbe essere usata solo con giochi in pixel 2D."
-#define OPTION_VAL_2_IT NULL
+#define OPTION_VAL_2_O27_IT NULL
 #define OPTION_VAL_4_IT NULL
 #define OPTION_VAL_6_IT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_IT "Miglioramento Texture Dimensione Massima Filtrata"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_IT "Interpolazione Di Profondità Nativa"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_IT "Aiuta con la corruzione della texture e problemi di profondità sulle GPU AMD. Può anche aiutare le GPU Intel in alcuni casi."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_IT "Rendering Filettato"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_IT "Esegue la GPU e la CPU su diversi thread. Altamente raccomandato."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_IT "Auto Salto Fotogrammi"
@@ -29354,6 +37322,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_IT "Trigger Digitali"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_IT "Pacchetto/Vibrazione Purupuru"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_IT "Attiva al vibrazione del controller."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_IT "Uscite di trasmissione digitale"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_IT "Trasmissione di uscite digitali e stato di forza-feedback sulla porta TCP 8000. Compatibile con l'opzione MAME \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_IT "Mostra Impostazioni Pistola Ottica"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_IT "Abilita la configurazione delle opzioni di visualizzazione di una pistola leggera. NOTA: potrebbe essere necessario attivare il menu rapido perché questa impostazione abbia effetto."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_IT "Mostra mirino della Pistola 1"
@@ -29580,6 +37550,49 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_IT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_IT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT,
       NULL,
@@ -29706,12 +37719,43 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_IT,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_IT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_IT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_IT,
       NULL,
       "video",
       {
@@ -29781,10 +37825,39 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_IT,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_IT },
+         { "1",  OPTION_VAL_1_IT },
+         { "2",  OPTION_VAL_2_IT },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_IT,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_IT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_IT,
       NULL,
       "video",
       {
@@ -29818,7 +37891,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_IT },
+         { "2",  OPTION_VAL_2_O27_IT },
          { "4",  OPTION_VAL_4_IT },
          { "6",  OPTION_VAL_6_IT },
          { NULL, NULL },
@@ -29841,6 +37914,20 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_IT,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_IT,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_IT,
@@ -30034,6 +38121,20 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_IT,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_IT,
       NULL,
@@ -30183,7 +38284,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -30334,7 +38435,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -30485,7 +38586,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -30636,7 +38737,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_IT },
-         { "2x", OPTION_VAL_2_IT },
+         { "2x", OPTION_VAL_2_O27_IT },
          { "3x", OPTION_VAL_3X_IT },
          { "4x", OPTION_VAL_4_IT },
          { "5x", OPTION_VAL_5X_IT },
@@ -30761,7 +38862,7 @@ struct retro_core_options_v2 options_it = {
 #define CATEGORY_SYSTEM_INFO_0_JA NULL
 #define CATEGORY_VIDEO_LABEL_JA "ビデオのドライバ"
 #define CATEGORY_VIDEO_INFO_0_JA NULL
-#define CATEGORY_PERFORMANCE_LABEL_JA NULL
+#define CATEGORY_PERFORMANCE_LABEL_JA "パフォーマンス"
 #define CATEGORY_PERFORMANCE_INFO_0_JA NULL
 #define CATEGORY_HACKS_LABEL_JA "エミュレーションハック"
 #define CATEGORY_HACKS_INFO_0_JA NULL
@@ -30792,6 +38893,12 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_JA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_JA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_JA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_JA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_JA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_JA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_JA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_JA NULL
 #define OPTION_VAL_320X240_JA NULL
@@ -30844,23 +38951,36 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_1GB_JA NULL
 #define OPTION_VAL_2GB_JA NULL
 #define OPTION_VAL_4GB_JA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_JA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_JA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_JA NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_JA NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_JA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_JA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_JA NULL
 #define CORE_OPTION_NAME_FOG_LABEL_JA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_JA NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_JA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_JA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_JA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_JA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_JA NULL
+#define OPTION_VAL_1_JA NULL
+#define OPTION_VAL_2_JA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_JA NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_JA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_JA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_JA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_JA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_JA NULL
-#define OPTION_VAL_2_JA NULL
+#define OPTION_VAL_2_O27_JA NULL
 #define OPTION_VAL_4_JA NULL
 #define OPTION_VAL_6_JA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_JA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_JA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_JA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_JA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_JA NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_JA NULL
@@ -30889,6 +39009,8 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_JA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_JA NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_JA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_JA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_JA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_JA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_JA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_JA NULL
@@ -31115,6 +39237,49 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_JA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_JA,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA,
       NULL,
@@ -31241,12 +39406,43 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_JA,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_JA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_JA,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_JA,
       NULL,
       "video",
       {
@@ -31316,10 +39512,39 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_JA,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_JA },
+         { "1",  OPTION_VAL_1_JA },
+         { "2",  OPTION_VAL_2_JA },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_JA,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_JA,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_JA,
       NULL,
       "video",
       {
@@ -31353,7 +39578,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_JA },
+         { "2",  OPTION_VAL_2_O27_JA },
          { "4",  OPTION_VAL_4_JA },
          { "6",  OPTION_VAL_6_JA },
          { NULL, NULL },
@@ -31376,6 +39601,20 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_JA,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_JA,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_JA,
@@ -31569,6 +39808,20 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_JA,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_JA,
       NULL,
@@ -31718,7 +39971,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -31869,7 +40122,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -32020,7 +40273,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -32171,7 +40424,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_JA },
-         { "2x", OPTION_VAL_2_JA },
+         { "2x", OPTION_VAL_2_O27_JA },
          { "3x", OPTION_VAL_3X_JA },
          { "4x", OPTION_VAL_4_JA },
          { "5x", OPTION_VAL_5X_JA },
@@ -32293,42 +40546,48 @@ struct retro_core_options_v2 options_ja = {
 /* RETRO_LANGUAGE_KO */
 
 #define CATEGORY_SYSTEM_LABEL_KO "시스템"
-#define CATEGORY_SYSTEM_INFO_0_KO "지역, 언어, 바이오스 및 하드웨어 설정을 구성."
+#define CATEGORY_SYSTEM_INFO_0_KO "지역, 언어, BIOS 및 하드웨어 설정을 구성합니다."
 #define CATEGORY_VIDEO_LABEL_KO "비디오"
-#define CATEGORY_VIDEO_INFO_0_KO "해상도, 투명도 및 화면 효과 설정을 구성."
+#define CATEGORY_VIDEO_INFO_0_KO "해상도, 투명도 및 화면 효과 설정을 구성합니다."
 #define CATEGORY_PERFORMANCE_LABEL_KO "성능"
-#define CATEGORY_PERFORMANCE_INFO_0_KO NULL
+#define CATEGORY_PERFORMANCE_INFO_0_KO "스레드 렌더링 및 프레임 스킵 설정을 구성합니다."
 #define CATEGORY_HACKS_LABEL_KO "에뮬레이션 핵"
-#define CATEGORY_HACKS_INFO_0_KO NULL
+#define CATEGORY_HACKS_INFO_0_KO "와이드스크린 핵, GD롬 로딩 속도 조절 및 텍스쳐 변경 설정등을 구성합니다."
 #define CATEGORY_INPUT_LABEL_KO "입력"
-#define CATEGORY_INPUT_INFO_0_KO NULL
+#define CATEGORY_INPUT_INFO_0_KO "게임패드 및 라이트 건 설정을 구성합니다."
 #define CATEGORY_VMU_LABEL_KO "비쥬얼 메모리 유닛"
-#define CATEGORY_VMU_INFO_0_KO NULL
+#define CATEGORY_VMU_INFO_0_KO "게임 별 VMU 저장 파일 및 VMU OSD 설정을 구성합니다."
 #define CORE_OPTION_NAME_REGION_LABEL_KO "지역"
 #define OPTION_VAL_JAPAN_KO "일본"
 #define OPTION_VAL_USA_KO "미국"
 #define OPTION_VAL_EUROPE_KO "유럽"
 #define OPTION_VAL_DEFAULT_KO "기본"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_KO "언어"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_KO "바이오스 및 멀티 랭귀지 게임에서 사용되는 언어를 변경."
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_KO "BIOS 및 다국어 게임에서 사용되는 언어 설정을 변경합니다"
 #define OPTION_VAL_JAPANESE_KO "일본어"
 #define OPTION_VAL_ENGLISH_KO "영어"
 #define OPTION_VAL_GERMAN_KO "독일어"
 #define OPTION_VAL_FRENCH_KO "프랑스어"
 #define OPTION_VAL_SPANISH_KO "스페인어"
 #define OPTION_VAL_ITALIAN_KO "이탈리아어"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_KO NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_KO NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_KO NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_KO NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_KO NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_KO NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_KO NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_KO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_KO "HLE BIOS (재시작 필요)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_KO "HLE BIOS 사용을 강제합니다."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_KO "BIOS 로 부트 (재시작 필요)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_KO "드림캐스트 BIOS 메뉴로 부팅합니다."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_KO "HDR 활성화"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_KO "Dreamcast의 오디오 DSP(디지털 신호 프로세서)의 에뮬레이션을 활성화합니다. 사운드의 정확도는 향상되지만 성능 요구 사항이 증가합니다."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_KO "Windows CE 모드 강제 사용"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_KO "Windows CE 게임을 위한 전체 MMU(메모리 관리 유닛) 에뮬레이션 및 기타 설정을 활성화합니다."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO "NAOMI 서비스 버튼 허용"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO "캐비넷 설정에 들어가기위한 NAOMI 서비스 버튼을 활성화합니다."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO "NAOMI 게임을 무료 플레이로 설정"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO "무료 플레이를 위해 게임의 코인 설정을 수정합니다."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO "브로드밴드 어댑터 에뮬레이션"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO "모뎀 대신 이더넷 브로드밴드 어댑터를 에뮬레이트합니다. (재시작 필요)"
+#define CORE_OPTION_NAME_UPNP_LABEL_KO "UPnP 활성화"
+#define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO NULL
 #define OPTION_VAL_640X480_KO NULL
 #define OPTION_VAL_800X600_KO NULL
@@ -32369,50 +40628,63 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_KO "화면 방향"
 #define OPTION_VAL_HORIZONTAL_KO "가로"
 #define OPTION_VAL_VERTICAL_KO "세로"
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_KO NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_KO NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_KO NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_KO NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_KO NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_KO "알파 정렬"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_KO "줄당 (빠름, 가장 부정확)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_KO "삼각형당 (중간)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_KO "픽셀당 (정확, 가장 느림)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_KO "누산 픽셀 버퍼 크기"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_KO "높은 해상도 출력을 올바르게 표시하려면 이 값을 높은 값으로 설정해야 할 수도 있습니다."
 #define OPTION_VAL_512MB_KO NULL
 #define OPTION_VAL_1GB_KO NULL
 #define OPTION_VAL_2GB_KO NULL
 #define OPTION_VAL_4GB_KO NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_KO NULL
-#define CORE_OPTION_NAME_FOG_LABEL_KO NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_KO NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_KO NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_KO NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_KO NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_KO NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_KO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_KO NULL
-#define OPTION_VAL_2_KO NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_KO "최대 투명 레이어"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_KO "복잡한 장면을 그릴 때 높은 값이 필요할 수 있습니다."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_KO "전체 프레임버퍼 에뮬레이션"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_KO "VRAM 상 전체 프레임버퍼 에뮬레이션을 활성화합니다. VRAM 상의 프레임버퍼에 직접 읽기 또는 쓰기를 수행하는 게임을 실행할 때 유용합니다. 활성화할 경우, 내부 해상도가 640x480으로 고정되며 성능에 큰 영향을 끼칠 수 있습니다."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO "RTT (Render To Texture) 버퍼 사용"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO "렌더된 텍스쳐를 GPU에서 VRAM으로 복사합니다. 이 옵션은 이 옵션을 필요로 하는 게임에서는 기본적으로 활성화됩니다. 활성화할 경우, 텍스쳐 업스케일링이 비활성화되며 성능에 큰 영향을 끼칠 수 있습니다."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_KO "밉맵"
+#define CORE_OPTION_NAME_FOG_LABEL_KO "안개 효과"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_KO "볼륨 모디파이어"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_KO "드림캐스트 GPU의 기능으로 보통 개체의 그림자를 그리는 데 사용됩니다. 이 기능은 보통 활성화해두어야 하며 성능에 미치는 영향은 아주 적습니다."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_KO "비등방성 필터링"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_KO "카메라와 비스듬하게 배치된 표면의 텍스쳐 품질을 향상합니다. 높은 값으로 설정하면 GPU 부하가 높아집니다. 변경 사항은 코어를 다시 시작해야 적용됩니다."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_KO "텍스쳐 필터링"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_KO "사용할 텍스쳐 필터링 모드를 선택합니다. 모든 텍스쳐에 강제로 특정 필터링 모드를 적용하여 더 날카로운(또는 부드러운) 비주얼을 얻을 수 있습니다. 기본 외의 다른 값으로 설정 시 다양한 렌더링 문제가 발생할 수 있습니다. 변경 사항은 코어를 다시 시작해야 적용됩니다."
+#define OPTION_VAL_1_KO "강제 최근접이웃"
+#define OPTION_VAL_2_KO "강제 선형"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_KO "프레임 스왑 지연"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_KO "화면이 번쩍이거나 깨지는 것을 방지할 수 있습니다. 느린 플랫폼에서는 사용을 권장하지 않습니다."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_KO "프레임 레이트 변화 감지"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_KO "내부 프레임 레이트가 변경될 때(예: 60FPS에서 30FPS로) 프론트엔드에게 알림을 보냅니다. 30FPS 또는 20FPS 고정으로 실행되는 게임에서는 프레임 페이스를 개선하지만, 무제한(불안정) 프레임 레이트로 실행되는 게임(예: Ecco the Dolphin, Unreal Tournament)을 실행할 때는 비활성화되어야 합니다. 주의: '자동 프레임 건너뛰기'가 활성화되어있으면 작동하지 않습니다."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_KO "PowerVR2 포스트프로세싱 필터"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_KO "렌더된 이미지에 PowerVR2 GPU와 아날로그 비디오 신호에서 나타나는 효과를 후처리로 구현합니다."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_KO "텍스쳐 업스케일링 (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_KO "손으로 그려진 2D 픽셀아트 그래픽을 개선합니다. 2D 픽셀아트 게임에서만 사용되어야 합니다."
+#define OPTION_VAL_2_O27_KO NULL
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_6_KO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_KO NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_KO NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_KO NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO "텍스쳐 업스케일링 필터 최대 크기"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_KO "네이티브 깊이 보간"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_KO "AMD GPU에서 깊이 문제와 텍스쳐 망가짐 증상을 개선하는 데 도움이 됩니다. 일부 상황에서는 인텔 GPU에서도 도움이 될 수 있습니다."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_KO "스레드 렌더링"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_KO "GPU와 CPU를 별도의 스레드에서 실행합니다. 사용하는 것이 매우 권장됩니다."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_KO "자동 프레임 건너뛰기"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_KO "에뮬레이터 실행이 느려질 경우 자동으로 프레임을 건너뜁니다. 주의: 이 설정은 '스레드 렌더링'이 활성화되어 있어야 적용됩니다."
 #define OPTION_VAL_SOME_KO "보통"
-#define OPTION_VAL_MORE_KO NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_KO NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_KO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_KO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_KO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO NULL
+#define OPTION_VAL_MORE_KO "최대"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_KO "프레임 건너뛰기"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_KO "표시되는 각 프레임 사이에서 건너뛸 프레임 수를 설정합니다."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_KO "와이드스크린 핵 (재시작 필요)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_KO "일부 게임이 와이드스크린 형식으로 출력되게 하는 치트를 활성화합니다."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_KO "와이드스크린 핵"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO "일반적인 4:3 화면비 밖에도 개체를 그립니다. 드러난 부분에서 그래픽 오류가 발생할 수도 있습니다."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO "GD-ROM 빠른 로딩 (정확하지 않음)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO "GD-ROM 로딩 속도를 높입니다."
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO "사용자 텍스처 불러오기"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_KO "텍스쳐 덤프하기"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO "아날로그 스틱 데드존"
 #define OPTION_VAL_0_KO NULL
 #define OPTION_VAL_5_KO NULL
 #define OPTION_VAL_10_KO NULL
@@ -32420,66 +40692,68 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_20_KO NULL
 #define OPTION_VAL_25_KO NULL
 #define OPTION_VAL_30_KO NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_KO NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_KO NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_KO NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_KO NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_KO NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_KO NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_KO "트리거 데드존"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_KO "디지털 트리거"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_KO "부루부루 팩/진동 팩"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_KO "컨트롤러 포스 피드백을 활성합니다."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_KO "디지털 출력 송출하기"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_KO "디지털 출력과 포스 피드백 상태를 TCP 포트 8000번으로 송출합니다. MAME의 \"-output network\" 옵션과 호환됩니다."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO "라이트 건 설정 표시"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_KO "라이트건 십자 조준선 옵션 구성을 활성화합니다. 참고: 이 설정을 적용하려면 빠른 메뉴를 다시 표시해야 할 수 있습니다."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_KO "라이트건 조준선 1 표시"
 #define OPTION_VAL_WHITE_KO "흰색"
 #define OPTION_VAL_RED_KO "빨강"
 #define OPTION_VAL_GREEN_KO "초록"
 #define OPTION_VAL_BLUE_KO "파랑"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_KO NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_KO NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_KO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_KO "라이트건 조준선 2 표시"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_KO "라이트건 조준선 3 표시"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_KO "라이트건 조준선 4 표시"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO "게임당 별도 Visual Memory Units/Systems(VMU) 사용"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO "게임당 별도 VMU 사용"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 4개의 VMU 저장 파일(A1, B1, C1, D1)을 공유합니다. 'VMU A1' 설정은 RetroArch의 세이브 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다. '모든 VMU'는 게임 하나 당 4개의 VMU 파일(A1, B1, C1, D1)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
-#define OPTION_VAL_ALL_VMUS_KO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_KO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_KO NULL
-#define OPTION_VAL_UPPER_LEFT_KO NULL
-#define OPTION_VAL_UPPER_RIGHT_KO NULL
-#define OPTION_VAL_LOWER_LEFT_KO NULL
-#define OPTION_VAL_LOWER_RIGHT_KO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_KO NULL
+#define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO "Visual Memory Unit/System(VMU) 디스플레이 설정 표시"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO "VMU 디스플레이 설정 표시"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_KO "에뮬레이트되는 VMU LCD 화면의 표시 여부, 크기, 위치, 색상 설정을 표시합니다. 주의: 변경 사항이 적용되려면 빠른 메뉴를 껐다 켜야 할 수도 있습니다."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_KO "VMU 화면 1 표시"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_KO "VMU 화면 1 위치"
+#define OPTION_VAL_UPPER_LEFT_KO "왼쪽 위"
+#define OPTION_VAL_UPPER_RIGHT_KO "오른쪽 위"
+#define OPTION_VAL_LOWER_LEFT_KO "왼쪽 아래"
+#define OPTION_VAL_LOWER_RIGHT_KO "오른쪽 아래"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 1 크기"
 #define OPTION_VAL_1X_KO NULL
 #define OPTION_VAL_3X_KO NULL
 #define OPTION_VAL_5X_KO NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_KO NULL
-#define OPTION_VAL_DEFAULT_ON_00_KO NULL
-#define OPTION_VAL_DEFAULT_OFF_01_KO NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_KO "VMU 화면 1 켜진 픽셀 색상"
+#define OPTION_VAL_DEFAULT_ON_00_KO "기본설정 켜짐"
+#define OPTION_VAL_DEFAULT_OFF_01_KO "기본설정 꺼짐"
 #define OPTION_VAL_BLACK_02_KO "검정"
-#define OPTION_VAL_LIGHT_BLUE_04_KO NULL
+#define OPTION_VAL_LIGHT_BLUE_04_KO "밝은 파랑"
 #define OPTION_VAL_CYAN_06_KO "청록"
-#define OPTION_VAL_CYAN_BLUE_07_KO NULL
-#define OPTION_VAL_LIGHT_GREEN_08_KO NULL
-#define OPTION_VAL_CYAN_GREEN_09_KO NULL
-#define OPTION_VAL_LIGHT_CYAN_10_KO NULL
+#define OPTION_VAL_CYAN_BLUE_07_KO "청록 파랑"
+#define OPTION_VAL_LIGHT_GREEN_08_KO "밝은 녹색"
+#define OPTION_VAL_CYAN_GREEN_09_KO "청록 초록"
+#define OPTION_VAL_LIGHT_CYAN_10_KO "밝은 청록"
 #define OPTION_VAL_PURPLE_12_KO "보라"
-#define OPTION_VAL_LIGHT_PURPLE_13_KO NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_KO "밝은 보라"
 #define OPTION_VAL_YELLOW_14_KO "노란색"
-#define OPTION_VAL_GRAY_15_KO NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_KO NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_KO NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_KO NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_KO NULL
-#define OPTION_VAL_LIGHT_RED_2_20_KO NULL
-#define OPTION_VAL_MAGENTA_21_KO NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_KO NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_KO NULL
+#define OPTION_VAL_GRAY_15_KO "회색"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_KO "연보라색 (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_KO "밝은 녹색 (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_KO "밝은 녹색 (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_KO "밝은 청록 (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_KO "밝은 빨강 (2)"
+#define OPTION_VAL_MAGENTA_21_KO "자홍색"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_KO "연보라색 (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_KO "밝은 주황색"
 #define OPTION_VAL_ORANGE_24_KO "오렌지"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_KO NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_KO NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_KO NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_KO NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_KO "연보라색 (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_KO "연한 노란색"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_KO "연한 노란색 (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_KO "VMU 화면 1 꺼진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_KO "VMU 화면 1 투명도"
 #define OPTION_VAL_40_KO NULL
 #define OPTION_VAL_50_KO NULL
 #define OPTION_VAL_60_KO NULL
@@ -32487,24 +40761,24 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_80_KO NULL
 #define OPTION_VAL_90_KO NULL
 #define OPTION_VAL_100_KO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_KO NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_KO "VMU 화면 2 표시"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_KO "VMU 화면 2 위치"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 2 크기"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_KO "VMU 화면 2 켜진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_KO "VMU 화면 2 꺼진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_KO "VMU 화면 2 투명도"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_KO "VMU 화면 3 표시"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_KO "VMU 화면 3 위치"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 3 크기"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_KO "VMU 화면 3 켜진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_KO "VMU 화면 3 꺼진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_KO "VMU 화면 3 투명도"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_KO "VMU 화면 4 표시"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_KO "VMU 화면 4 위치"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 4 크기"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_KO "VMU 화면 4 켜진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_KO "VMU 화면 4 꺼진 픽셀 색상"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_KO "VMU 화면 4 투명도"
 
 struct retro_core_option_v2_category option_cats_ko[] = {
    {
@@ -32650,6 +40924,49 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_KO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO,
       NULL,
@@ -32776,12 +41093,43 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_KO,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_KO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO,
       NULL,
       "video",
       {
@@ -32851,10 +41199,39 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_KO,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_KO },
+         { "1",  OPTION_VAL_1_KO },
+         { "2",  OPTION_VAL_2_KO },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_KO,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_KO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_KO,
       NULL,
       "video",
       {
@@ -32888,7 +41265,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_KO },
+         { "2",  OPTION_VAL_2_O27_KO },
          { "4",  OPTION_VAL_4_KO },
          { "6",  OPTION_VAL_6_KO },
          { NULL, NULL },
@@ -32911,6 +41288,20 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_KO,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_KO,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_KO,
@@ -33104,6 +41495,20 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_KO,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO,
       NULL,
@@ -33253,7 +41658,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -33404,7 +41809,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -33555,7 +41960,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -33706,7 +42111,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_KO },
-         { "2x", OPTION_VAL_2_KO },
+         { "2x", OPTION_VAL_2_O27_KO },
          { "3x", OPTION_VAL_3X_KO },
          { "4x", OPTION_VAL_4_KO },
          { "5x", OPTION_VAL_5X_KO },
@@ -33825,1541 +42230,6 @@ struct retro_core_options_v2 options_ko = {
    option_defs_ko
 };
 
-/* RETRO_LANGUAGE_MT */
-
-#define CATEGORY_SYSTEM_LABEL_MT NULL
-#define CATEGORY_SYSTEM_INFO_0_MT NULL
-#define CATEGORY_VIDEO_LABEL_MT NULL
-#define CATEGORY_VIDEO_INFO_0_MT NULL
-#define CATEGORY_PERFORMANCE_LABEL_MT NULL
-#define CATEGORY_PERFORMANCE_INFO_0_MT NULL
-#define CATEGORY_HACKS_LABEL_MT NULL
-#define CATEGORY_HACKS_INFO_0_MT NULL
-#define CATEGORY_INPUT_LABEL_MT NULL
-#define CATEGORY_INPUT_INFO_0_MT NULL
-#define CATEGORY_VMU_LABEL_MT NULL
-#define CATEGORY_VMU_INFO_0_MT NULL
-#define CORE_OPTION_NAME_REGION_LABEL_MT NULL
-#define OPTION_VAL_JAPAN_MT NULL
-#define OPTION_VAL_USA_MT NULL
-#define OPTION_VAL_EUROPE_MT NULL
-#define OPTION_VAL_DEFAULT_MT NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_MT NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_MT NULL
-#define OPTION_VAL_JAPANESE_MT NULL
-#define OPTION_VAL_ENGLISH_MT NULL
-#define OPTION_VAL_GERMAN_MT NULL
-#define OPTION_VAL_FRENCH_MT NULL
-#define OPTION_VAL_SPANISH_MT NULL
-#define OPTION_VAL_ITALIAN_MT NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_MT NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_MT NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_MT NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_MT NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_MT NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_MT NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_MT NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_MT NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_MT NULL
-#define OPTION_VAL_320X240_MT NULL
-#define OPTION_VAL_640X480_MT NULL
-#define OPTION_VAL_800X600_MT NULL
-#define OPTION_VAL_960X720_MT NULL
-#define OPTION_VAL_1024X768_MT NULL
-#define OPTION_VAL_1280X960_MT NULL
-#define OPTION_VAL_1440X1080_MT NULL
-#define OPTION_VAL_1600X1200_MT NULL
-#define OPTION_VAL_1920X1440_MT NULL
-#define OPTION_VAL_2560X1920_MT NULL
-#define OPTION_VAL_2880X2160_MT NULL
-#define OPTION_VAL_3200X2400_MT NULL
-#define OPTION_VAL_3840X2880_MT NULL
-#define OPTION_VAL_4480X3360_MT NULL
-#define OPTION_VAL_5120X3840_MT NULL
-#define OPTION_VAL_5760X4320_MT NULL
-#define OPTION_VAL_6400X4800_MT NULL
-#define OPTION_VAL_7040X5280_MT NULL
-#define OPTION_VAL_7680X5760_MT NULL
-#define OPTION_VAL_8320X6240_MT NULL
-#define OPTION_VAL_8960X6720_MT NULL
-#define OPTION_VAL_9600X7200_MT NULL
-#define OPTION_VAL_10240X7680_MT NULL
-#define OPTION_VAL_10880X8160_MT NULL
-#define OPTION_VAL_11520X8640_MT NULL
-#define OPTION_VAL_12160X9120_MT NULL
-#define OPTION_VAL_12800X9600_MT NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_MT NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_MT NULL
-#define OPTION_VAL_VGA_MT NULL
-#define OPTION_VAL_TV_RGB_MT NULL
-#define OPTION_VAL_TV_COMPOSITE_MT NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_MT NULL
-#define OPTION_VAL_NTSC_MT NULL
-#define OPTION_VAL_PAL_MT NULL
-#define OPTION_VAL_PAL_N_MT NULL
-#define OPTION_VAL_PAL_M_MT NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_MT NULL
-#define OPTION_VAL_HORIZONTAL_MT NULL
-#define OPTION_VAL_VERTICAL_MT NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_MT NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_MT NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_MT NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_MT NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_MT NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_MT NULL
-#define OPTION_VAL_512MB_MT NULL
-#define OPTION_VAL_1GB_MT NULL
-#define OPTION_VAL_2GB_MT NULL
-#define OPTION_VAL_4GB_MT NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_MT NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_MT NULL
-#define CORE_OPTION_NAME_FOG_LABEL_MT NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_MT NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_MT NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_MT NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_MT NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_MT NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_MT NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_MT NULL
-#define OPTION_VAL_2_MT NULL
-#define OPTION_VAL_4_MT NULL
-#define OPTION_VAL_6_MT NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_MT NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_MT NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_MT NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_MT NULL
-#define OPTION_VAL_SOME_MT NULL
-#define OPTION_VAL_MORE_MT NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_MT NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_MT NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_MT NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_MT NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_MT NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_MT NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_MT NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_MT NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_MT NULL
-#define OPTION_VAL_0_MT NULL
-#define OPTION_VAL_5_MT NULL
-#define OPTION_VAL_10_MT NULL
-#define OPTION_VAL_15_MT NULL
-#define OPTION_VAL_20_MT NULL
-#define OPTION_VAL_25_MT NULL
-#define OPTION_VAL_30_MT NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_MT NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_MT NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_MT NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_MT NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_MT NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_MT NULL
-#define OPTION_VAL_WHITE_MT NULL
-#define OPTION_VAL_RED_MT NULL
-#define OPTION_VAL_GREEN_MT NULL
-#define OPTION_VAL_BLUE_MT NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_MT NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_MT NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_MT NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_MT NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_MT NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_MT NULL
-#define OPTION_VAL_VMU_A1_MT NULL
-#define OPTION_VAL_ALL_VMUS_MT NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_MT NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_MT NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_MT NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_MT NULL
-#define OPTION_VAL_UPPER_LEFT_MT NULL
-#define OPTION_VAL_UPPER_RIGHT_MT NULL
-#define OPTION_VAL_LOWER_LEFT_MT NULL
-#define OPTION_VAL_LOWER_RIGHT_MT NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_MT NULL
-#define OPTION_VAL_1X_MT NULL
-#define OPTION_VAL_3X_MT NULL
-#define OPTION_VAL_5X_MT NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_MT NULL
-#define OPTION_VAL_DEFAULT_ON_00_MT NULL
-#define OPTION_VAL_DEFAULT_OFF_01_MT NULL
-#define OPTION_VAL_BLACK_02_MT NULL
-#define OPTION_VAL_LIGHT_BLUE_04_MT NULL
-#define OPTION_VAL_CYAN_06_MT NULL
-#define OPTION_VAL_CYAN_BLUE_07_MT NULL
-#define OPTION_VAL_LIGHT_GREEN_08_MT NULL
-#define OPTION_VAL_CYAN_GREEN_09_MT NULL
-#define OPTION_VAL_LIGHT_CYAN_10_MT NULL
-#define OPTION_VAL_PURPLE_12_MT NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_MT NULL
-#define OPTION_VAL_YELLOW_14_MT NULL
-#define OPTION_VAL_GRAY_15_MT NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_MT NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_MT NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_MT NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_MT NULL
-#define OPTION_VAL_LIGHT_RED_2_20_MT NULL
-#define OPTION_VAL_MAGENTA_21_MT NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_MT NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_MT NULL
-#define OPTION_VAL_ORANGE_24_MT NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_MT NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_MT NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_MT NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_MT NULL
-#define OPTION_VAL_40_MT NULL
-#define OPTION_VAL_50_MT NULL
-#define OPTION_VAL_60_MT NULL
-#define OPTION_VAL_70_MT NULL
-#define OPTION_VAL_80_MT NULL
-#define OPTION_VAL_90_MT NULL
-#define OPTION_VAL_100_MT NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_MT NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_MT NULL
-
-struct retro_core_option_v2_category option_cats_mt[] = {
-   {
-      "system",
-      CATEGORY_SYSTEM_LABEL_MT,
-      CATEGORY_SYSTEM_INFO_0_MT
-   },
-   {
-      "video",
-      CATEGORY_VIDEO_LABEL_MT,
-      CATEGORY_VIDEO_INFO_0_MT
-   },
-   {
-      "performance",
-      CATEGORY_PERFORMANCE_LABEL_MT,
-      CATEGORY_PERFORMANCE_INFO_0_MT
-   },
-   {
-      "hacks",
-      CATEGORY_HACKS_LABEL_MT,
-      CATEGORY_HACKS_INFO_0_MT
-   },
-   {
-      "input",
-      CATEGORY_INPUT_LABEL_MT,
-      CATEGORY_INPUT_INFO_0_MT
-   },
-   {
-      "vmu",
-      CATEGORY_VMU_LABEL_MT,
-      CATEGORY_VMU_INFO_0_MT
-   },
-   { NULL, NULL, NULL },
-};
-struct retro_core_option_v2_definition option_defs_mt[] = {
-   {
-      CORE_OPTION_NAME "_region",
-      CORE_OPTION_NAME_REGION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "system",
-      {
-         { "Japan",   OPTION_VAL_JAPAN_MT },
-         { "USA",     OPTION_VAL_USA_MT },
-         { "Europe",  OPTION_VAL_EUROPE_MT },
-         { "Default", OPTION_VAL_DEFAULT_MT },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_language",
-      CORE_OPTION_NAME_LANGUAGE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_LANGUAGE_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "Japanese", OPTION_VAL_JAPANESE_MT },
-         { "English",  OPTION_VAL_ENGLISH_MT },
-         { "German",   OPTION_VAL_GERMAN_MT },
-         { "French",   OPTION_VAL_FRENCH_MT },
-         { "Spanish",  OPTION_VAL_SPANISH_MT },
-         { "Italian",  OPTION_VAL_ITALIAN_MT },
-         { "Default",  OPTION_VAL_DEFAULT_MT },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_hle_bios",
-      CORE_OPTION_NAME_HLE_BIOS_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_HLE_BIOS_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "disabled",  NULL },
-         { "enabled",  NULL },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_boot_to_bios",
-      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_dsp",
-      CORE_OPTION_NAME_ENABLE_DSP_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "disabled",
-#else
-      "enabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_force_wince",
-      CORE_OPTION_NAME_FORCE_WINCE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_allow_service_buttons",
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_MT,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_internal_resolution",
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "320x240",    OPTION_VAL_320X240_MT },
-         { "640x480",    OPTION_VAL_640X480_MT },
-         { "800x600",    OPTION_VAL_800X600_MT },
-         { "960x720",    OPTION_VAL_960X720_MT },
-         { "1024x768",   OPTION_VAL_1024X768_MT },
-         { "1280x960",   OPTION_VAL_1280X960_MT },
-         { "1440x1080",  OPTION_VAL_1440X1080_MT },
-         { "1600x1200",  OPTION_VAL_1600X1200_MT },
-         { "1920x1440",  OPTION_VAL_1920X1440_MT },
-         { "2560x1920",  OPTION_VAL_2560X1920_MT },
-         { "2880x2160",  OPTION_VAL_2880X2160_MT },
-         { "3200x2400",  OPTION_VAL_3200X2400_MT },
-         { "3840x2880",  OPTION_VAL_3840X2880_MT },
-         { "4480x3360",  OPTION_VAL_4480X3360_MT },
-         { "5120x3840",  OPTION_VAL_5120X3840_MT },
-         { "5760x4320",  OPTION_VAL_5760X4320_MT },
-         { "6400x4800",  OPTION_VAL_6400X4800_MT },
-         { "7040x5280",  OPTION_VAL_7040X5280_MT },
-         { "7680x5760",  OPTION_VAL_7680X5760_MT },
-         { "8320x6240",  OPTION_VAL_8320X6240_MT },
-         { "8960x6720",  OPTION_VAL_8960X6720_MT },
-         { "9600x7200",  OPTION_VAL_9600X7200_MT },
-         { "10240x7680", OPTION_VAL_10240X7680_MT },
-         { "10880x8160", OPTION_VAL_10880X8160_MT },
-         { "11520x8640", OPTION_VAL_11520X8640_MT },
-         { "12160x9120", OPTION_VAL_12160X9120_MT },
-         { "12800x9600", OPTION_VAL_12800X9600_MT },
-         { NULL, NULL },
-      },
-#ifdef LOW_RES
-      "320x240",
-#else
-      "640x480",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_cable_type",
-      CORE_OPTION_NAME_CABLE_TYPE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "VGA",	    	 OPTION_VAL_VGA_MT },
-         { "TV (RGB)",       OPTION_VAL_TV_RGB_MT },
-         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_MT },
-         { NULL, NULL },
-      },
-      "TV (Composite)",
-   },
-   {
-      CORE_OPTION_NAME "_broadcast",
-      CORE_OPTION_NAME_BROADCAST_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "NTSC",    OPTION_VAL_NTSC_MT },
-         { "PAL",     OPTION_VAL_PAL_MT },
-         { "PAL_N",   OPTION_VAL_PAL_N_MT },
-         { "PAL_M",   OPTION_VAL_PAL_M_MT },
-         { "Default", OPTION_VAL_DEFAULT_MT },
-         { NULL, NULL },
-      },
-      "NTSC",
-   },
-   {
-      CORE_OPTION_NAME "_screen_rotation",
-      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "horizontal", OPTION_VAL_HORIZONTAL_MT },
-         { "vertical",   OPTION_VAL_VERTICAL_MT },
-         { NULL, NULL },
-      },
-      "horizontal",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_alpha_sorting",
-      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_MT },
-         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_MT },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_MT },
-#endif
-         { NULL, NULL },
-      },
-#if defined(LOW_END)
-      "per-strip (fast, least accurate)",
-#else
-      "per-triangle (normal)",
-#endif
-   },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-   {
-      CORE_OPTION_NAME "_oit_abuffer_size",
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "512MB", OPTION_VAL_512MB_MT },
-         { "1GB",   OPTION_VAL_1GB_MT },
-         { "2GB",   OPTION_VAL_2GB_MT },
-         { "4GB",   OPTION_VAL_4GB_MT },
-         { NULL, NULL },
-      },
-      "512MB",
-   },
-#endif
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_enable_rttb",
-      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_mipmapping",
-      CORE_OPTION_NAME_MIPMAPPING_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_fog",
-      CORE_OPTION_NAME_FOG_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_volume_modifier_enable",
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_anisotropic_filtering",
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "off", "disabled" },
-         { "2",  NULL },
-         { "4",  NULL },
-         { "8",  NULL },
-         { "16",  NULL },
-         { NULL, NULL },
-      },
-      "4",
-   },
-   {
-      CORE_OPTION_NAME "_delay_frame_swapping",
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_pvr2_filtering",
-      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-#ifdef _OPENMP
-   {
-      CORE_OPTION_NAME "_texupscale",
-      CORE_OPTION_NAME_TEXUPSCALE_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_MT,
-      NULL,
-      "video",
-      {
-         { "1", "disabled" },
-         { "2",  OPTION_VAL_2_MT },
-         { "4",  OPTION_VAL_4_MT },
-         { "6",  OPTION_VAL_6_MT },
-         { NULL, NULL },
-      },
-      "1",
-   },
-   {/* TODO: needs clarification */
-      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
-      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "256",  NULL },
-         { "512",  NULL },
-         { "1024", NULL },
-         { NULL, NULL },
-      },
-      "256",
-   },
-#endif
-   {
-      CORE_OPTION_NAME "_threaded_rendering",
-      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_MT,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_MT,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "some", OPTION_VAL_SOME_MT },
-         { "more", OPTION_VAL_MORE_MT },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "some",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_frame_skipping",
-      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_MT,
-      NULL,
-      "performance",
-      {
-         { "disabled",  NULL },
-         { "1",         NULL },
-         { "2",         NULL },
-         { "3",         NULL },
-         { "4",         NULL },
-         { "5",         NULL },
-         { "6",         NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_cheats",
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_MT,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_hack",
-      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_MT,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_gdrom_fast_loading",
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_MT,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "enabled",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_custom_textures",
-      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: probably needs explanation */
-      CORE_OPTION_NAME "_dump_textures",
-      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_analog_stick_deadzone",
-      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_MT },
-         { "5%",  OPTION_VAL_5_MT },
-         { "10%", OPTION_VAL_10_MT },
-         { "15%", OPTION_VAL_15_MT },
-         { "20%", OPTION_VAL_20_MT },
-         { "25%", OPTION_VAL_25_MT },
-         { "30%", OPTION_VAL_30_MT },
-         { NULL, NULL },
-      },
-      "15%",
-   },
-   {
-      CORE_OPTION_NAME "_trigger_deadzone",
-      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_MT },
-         { "5%",  OPTION_VAL_5_MT },
-         { "10%", OPTION_VAL_10_MT },
-         { "15%", OPTION_VAL_15_MT },
-         { "20%", OPTION_VAL_20_MT },
-         { "25%", OPTION_VAL_25_MT },
-         { "30%", OPTION_VAL_30_MT },
-         { NULL, NULL },
-      },
-      "0%",
-   },
-   {
-      CORE_OPTION_NAME "_digital_triggers",
-      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_purupuru",
-      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_MT,
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_lightgun_settings",
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_MT,
-      NULL,
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_MT,
-      NULL,
-      "input",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_lightgun1_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_MT },
-         { "Red",      OPTION_VAL_RED_MT },
-         { "Green",    OPTION_VAL_GREEN_MT },
-         { "Blue",     OPTION_VAL_BLUE_MT },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun2_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_MT },
-         { "Red",      OPTION_VAL_RED_MT },
-         { "Green",    OPTION_VAL_GREEN_MT },
-         { "Blue",     OPTION_VAL_BLUE_MT },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun3_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_MT },
-         { "Red",      OPTION_VAL_RED_MT },
-         { "Green",    OPTION_VAL_GREEN_MT },
-         { "Blue",     OPTION_VAL_BLUE_MT },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun4_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_MT },
-         { "Red",      OPTION_VAL_RED_MT },
-         { "Green",    OPTION_VAL_GREEN_MT },
-         { "Blue",     OPTION_VAL_BLUE_MT },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_per_content_vmus",
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_MT,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_MT,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_MT,
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "VMU A1",   OPTION_VAL_VMU_A1_MT },
-         { "All VMUs", OPTION_VAL_ALL_VMUS_MT },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_vmu_screen_settings",
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_MT,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_MT,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_MT,
-      NULL,
-      "vmu",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_display",
-      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_position",
-      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_MT },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_MT },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_MT },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_MT },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_size_mult",
-      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_MT },
-         { "2x", OPTION_VAL_2_MT },
-         { "3x", OPTION_VAL_3X_MT },
-         { "4x", OPTION_VAL_4_MT },
-         { "5x", OPTION_VAL_5X_MT },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_on_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_off_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_opacity",
-      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_MT },
-         { "20%",  OPTION_VAL_20_MT },
-         { "30%",  OPTION_VAL_30_MT },
-         { "40%",  OPTION_VAL_40_MT },
-         { "50%",  OPTION_VAL_50_MT },
-         { "60%",  OPTION_VAL_60_MT },
-         { "70%",  OPTION_VAL_70_MT },
-         { "80%",  OPTION_VAL_80_MT },
-         { "90%",  OPTION_VAL_90_MT },
-         { "100%", OPTION_VAL_100_MT },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_display",
-      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_position",
-      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_MT },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_MT },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_MT },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_MT },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_size_mult",
-      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_MT },
-         { "2x", OPTION_VAL_2_MT },
-         { "3x", OPTION_VAL_3X_MT },
-         { "4x", OPTION_VAL_4_MT },
-         { "5x", OPTION_VAL_5X_MT },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_on_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_off_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_opacity",
-      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_MT },
-         { "20%",  OPTION_VAL_20_MT },
-         { "30%",  OPTION_VAL_30_MT },
-         { "40%",  OPTION_VAL_40_MT },
-         { "50%",  OPTION_VAL_50_MT },
-         { "60%",  OPTION_VAL_60_MT },
-         { "70%",  OPTION_VAL_70_MT },
-         { "80%",  OPTION_VAL_80_MT },
-         { "90%",  OPTION_VAL_90_MT },
-         { "100%", OPTION_VAL_100_MT },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_display",
-      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_position",
-      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_MT },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_MT },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_MT },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_MT },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_size_mult",
-      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_MT },
-         { "2x", OPTION_VAL_2_MT },
-         { "3x", OPTION_VAL_3X_MT },
-         { "4x", OPTION_VAL_4_MT },
-         { "5x", OPTION_VAL_5X_MT },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_on_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_off_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_opacity",
-      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_MT },
-         { "20%",  OPTION_VAL_20_MT },
-         { "30%",  OPTION_VAL_30_MT },
-         { "40%",  OPTION_VAL_40_MT },
-         { "50%",  OPTION_VAL_50_MT },
-         { "60%",  OPTION_VAL_60_MT },
-         { "70%",  OPTION_VAL_70_MT },
-         { "80%",  OPTION_VAL_80_MT },
-         { "90%",  OPTION_VAL_90_MT },
-         { "100%", OPTION_VAL_100_MT },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_display",
-      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_position",
-      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_MT },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_MT },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_MT },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_MT },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_size_mult",
-      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_MT },
-         { "2x", OPTION_VAL_2_MT },
-         { "3x", OPTION_VAL_3X_MT },
-         { "4x", OPTION_VAL_4_MT },
-         { "5x", OPTION_VAL_5X_MT },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_on_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_off_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_MT },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_MT },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_MT },
-         { "BLUE 03",           OPTION_VAL_BLUE_MT },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_MT },
-         { "GREEN 05",          OPTION_VAL_GREEN_MT },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_MT },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_MT },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_MT },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_MT },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_MT },
-         { "RED 11",            OPTION_VAL_RED_MT },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_MT },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_MT },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_MT },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_MT },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_MT },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_MT },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_MT },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_MT },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_MT },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_MT },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_MT },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_MT },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_MT },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_MT },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_MT },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_MT },
-         { "WHITE 28",          OPTION_VAL_WHITE_MT },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_opacity",
-      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_MT,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_MT },
-         { "20%",  OPTION_VAL_20_MT },
-         { "30%",  OPTION_VAL_30_MT },
-         { "40%",  OPTION_VAL_40_MT },
-         { "50%",  OPTION_VAL_50_MT },
-         { "60%",  OPTION_VAL_60_MT },
-         { "70%",  OPTION_VAL_70_MT },
-         { "80%",  OPTION_VAL_80_MT },
-         { "90%",  OPTION_VAL_90_MT },
-         { "100%", OPTION_VAL_100_MT },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
-};
-struct retro_core_options_v2 options_mt = {
-   option_cats_mt,
-   option_defs_mt
-};
-
 /* RETRO_LANGUAGE_NL */
 
 #define CATEGORY_SYSTEM_LABEL_NL "Systeem"
@@ -35374,7 +42244,7 @@ struct retro_core_options_v2 options_mt = {
 #define CATEGORY_INPUT_INFO_0_NL NULL
 #define CATEGORY_VMU_LABEL_NL NULL
 #define CATEGORY_VMU_INFO_0_NL NULL
-#define CORE_OPTION_NAME_REGION_LABEL_NL NULL
+#define CORE_OPTION_NAME_REGION_LABEL_NL "Regio"
 #define OPTION_VAL_JAPAN_NL NULL
 #define OPTION_VAL_USA_NL NULL
 #define OPTION_VAL_EUROPE_NL NULL
@@ -35397,6 +42267,12 @@ struct retro_core_options_v2 options_mt = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_NL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_NL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_NL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_NL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_NL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_NL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_NL NULL
 #define OPTION_VAL_320X240_NL NULL
@@ -35449,27 +42325,40 @@ struct retro_core_options_v2 options_mt = {
 #define OPTION_VAL_1GB_NL NULL
 #define OPTION_VAL_2GB_NL NULL
 #define OPTION_VAL_4GB_NL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_NL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_NL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_NL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_NL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_NL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_NL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_NL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_NL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_NL NULL
+#define OPTION_VAL_1_NL NULL
+#define OPTION_VAL_2_NL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_NL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_NL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_NL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_NL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_NL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NL NULL
-#define OPTION_VAL_2_NL NULL
+#define OPTION_VAL_2_O27_NL NULL
 #define OPTION_VAL_4_NL NULL
 #define OPTION_VAL_6_NL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NL NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_NL NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_NL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_NL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_NL NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_NL "Gedraaide Rendering"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_NL "Voert de GPU en CPU uit op verschillende threads. Zeer aanbevolen."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_NL NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_NL NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_NL "Automatisch frames overslaan wanneer de emulator traag draait. Deze instelling is alleen van toepassing wanneer 'Gedraaide Rendering' is ingeschakeld."
 #define OPTION_VAL_SOME_NL "Normaal"
 #define OPTION_VAL_MORE_NL NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_NL NULL
@@ -35494,6 +42383,8 @@ struct retro_core_options_v2 options_mt = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_NL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_NL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_NL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_NL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_NL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NL NULL
@@ -35720,6 +42611,49 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_NL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NL,
       NULL,
@@ -35846,12 +42780,43 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NL,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NL,
       NULL,
       "video",
       {
@@ -35921,10 +42886,39 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_NL,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_NL },
+         { "1",  OPTION_VAL_1_NL },
+         { "2",  OPTION_VAL_2_NL },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_NL,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_NL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_NL,
       NULL,
       "video",
       {
@@ -35958,7 +42952,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_NL },
+         { "2",  OPTION_VAL_2_O27_NL },
          { "4",  OPTION_VAL_4_NL },
          { "6",  OPTION_VAL_6_NL },
          { NULL, NULL },
@@ -35981,6 +42975,20 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_NL,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_NL,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_NL,
@@ -36174,6 +43182,20 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NL,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NL,
       NULL,
@@ -36323,7 +43345,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -36474,7 +43496,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -36625,7 +43647,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -36776,7 +43798,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NL },
-         { "2x", OPTION_VAL_2_NL },
+         { "2x", OPTION_VAL_2_O27_NL },
          { "3x", OPTION_VAL_3X_NL },
          { "4x", OPTION_VAL_4_NL },
          { "5x", OPTION_VAL_5X_NL },
@@ -36932,6 +43954,12 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_NO NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_NO NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_NO NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NO NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_NO NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NO NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_NO NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_NO NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NO "Intern oppløsning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_NO NULL
 #define OPTION_VAL_320X240_NO NULL
@@ -36984,23 +44012,36 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_1GB_NO NULL
 #define OPTION_VAL_2GB_NO NULL
 #define OPTION_VAL_4GB_NO NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_NO NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NO NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NO NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NO NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NO NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_NO NULL
 #define CORE_OPTION_NAME_FOG_LABEL_NO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_NO NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_NO NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_NO NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_NO NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_NO NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_NO NULL
+#define OPTION_VAL_1_NO NULL
+#define OPTION_VAL_2_NO NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_NO NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_NO NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_NO NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_NO NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_NO NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_NO NULL
-#define OPTION_VAL_2_NO NULL
+#define OPTION_VAL_2_O27_NO NULL
 #define OPTION_VAL_4_NO NULL
 #define OPTION_VAL_6_NO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_NO NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_NO NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_NO NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_NO NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_NO NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_NO NULL
@@ -37029,6 +44070,8 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_NO NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_NO NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_NO NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_NO NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO NULL
@@ -37255,6 +44298,49 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_NO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_NO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_NO,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_NO,
       NULL,
@@ -37381,12 +44467,43 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_NO,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_NO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_NO,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_NO,
       NULL,
       "video",
       {
@@ -37456,10 +44573,39 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_NO,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_NO },
+         { "1",  OPTION_VAL_1_NO },
+         { "2",  OPTION_VAL_2_NO },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_NO,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_NO,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_NO,
       NULL,
       "video",
       {
@@ -37493,7 +44639,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_NO },
+         { "2",  OPTION_VAL_2_O27_NO },
          { "4",  OPTION_VAL_4_NO },
          { "6",  OPTION_VAL_6_NO },
          { NULL, NULL },
@@ -37516,6 +44662,20 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_NO,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_NO,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_NO,
@@ -37709,6 +44869,20 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NO,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NO,
       NULL,
@@ -37858,7 +45032,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -38009,7 +45183,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -38160,7 +45334,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -38311,7 +45485,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_NO },
-         { "2x", OPTION_VAL_2_NO },
+         { "2x", OPTION_VAL_2_O27_NO },
          { "3x", OPTION_VAL_3X_NO },
          { "4x", OPTION_VAL_4_NO },
          { "5x", OPTION_VAL_5X_NO },
@@ -38430,1541 +45604,6 @@ struct retro_core_options_v2 options_no = {
    option_defs_no
 };
 
-/* RETRO_LANGUAGE_OC */
-
-#define CATEGORY_SYSTEM_LABEL_OC NULL
-#define CATEGORY_SYSTEM_INFO_0_OC NULL
-#define CATEGORY_VIDEO_LABEL_OC "Vidèo"
-#define CATEGORY_VIDEO_INFO_0_OC NULL
-#define CATEGORY_PERFORMANCE_LABEL_OC NULL
-#define CATEGORY_PERFORMANCE_INFO_0_OC NULL
-#define CATEGORY_HACKS_LABEL_OC NULL
-#define CATEGORY_HACKS_INFO_0_OC NULL
-#define CATEGORY_INPUT_LABEL_OC NULL
-#define CATEGORY_INPUT_INFO_0_OC NULL
-#define CATEGORY_VMU_LABEL_OC NULL
-#define CATEGORY_VMU_INFO_0_OC NULL
-#define CORE_OPTION_NAME_REGION_LABEL_OC NULL
-#define OPTION_VAL_JAPAN_OC NULL
-#define OPTION_VAL_USA_OC NULL
-#define OPTION_VAL_EUROPE_OC NULL
-#define OPTION_VAL_DEFAULT_OC NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_OC NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_OC NULL
-#define OPTION_VAL_JAPANESE_OC NULL
-#define OPTION_VAL_ENGLISH_OC NULL
-#define OPTION_VAL_GERMAN_OC NULL
-#define OPTION_VAL_FRENCH_OC NULL
-#define OPTION_VAL_SPANISH_OC NULL
-#define OPTION_VAL_ITALIAN_OC NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_OC NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_OC NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_OC NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_OC NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_OC NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_OC NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_OC NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_OC NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_OC NULL
-#define OPTION_VAL_320X240_OC NULL
-#define OPTION_VAL_640X480_OC NULL
-#define OPTION_VAL_800X600_OC NULL
-#define OPTION_VAL_960X720_OC NULL
-#define OPTION_VAL_1024X768_OC NULL
-#define OPTION_VAL_1280X960_OC NULL
-#define OPTION_VAL_1440X1080_OC NULL
-#define OPTION_VAL_1600X1200_OC NULL
-#define OPTION_VAL_1920X1440_OC NULL
-#define OPTION_VAL_2560X1920_OC NULL
-#define OPTION_VAL_2880X2160_OC NULL
-#define OPTION_VAL_3200X2400_OC NULL
-#define OPTION_VAL_3840X2880_OC NULL
-#define OPTION_VAL_4480X3360_OC NULL
-#define OPTION_VAL_5120X3840_OC NULL
-#define OPTION_VAL_5760X4320_OC NULL
-#define OPTION_VAL_6400X4800_OC NULL
-#define OPTION_VAL_7040X5280_OC NULL
-#define OPTION_VAL_7680X5760_OC NULL
-#define OPTION_VAL_8320X6240_OC NULL
-#define OPTION_VAL_8960X6720_OC NULL
-#define OPTION_VAL_9600X7200_OC NULL
-#define OPTION_VAL_10240X7680_OC NULL
-#define OPTION_VAL_10880X8160_OC NULL
-#define OPTION_VAL_11520X8640_OC NULL
-#define OPTION_VAL_12160X9120_OC NULL
-#define OPTION_VAL_12800X9600_OC NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_OC NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_OC NULL
-#define OPTION_VAL_VGA_OC NULL
-#define OPTION_VAL_TV_RGB_OC NULL
-#define OPTION_VAL_TV_COMPOSITE_OC NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_OC NULL
-#define OPTION_VAL_NTSC_OC NULL
-#define OPTION_VAL_PAL_OC NULL
-#define OPTION_VAL_PAL_N_OC NULL
-#define OPTION_VAL_PAL_M_OC NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_OC NULL
-#define OPTION_VAL_HORIZONTAL_OC NULL
-#define OPTION_VAL_VERTICAL_OC NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_OC NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_OC NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_OC NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_OC NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_OC NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_OC NULL
-#define OPTION_VAL_512MB_OC NULL
-#define OPTION_VAL_1GB_OC NULL
-#define OPTION_VAL_2GB_OC NULL
-#define OPTION_VAL_4GB_OC NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_OC NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_OC NULL
-#define CORE_OPTION_NAME_FOG_LABEL_OC NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_OC NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_OC NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_OC NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_OC NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_OC NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_OC NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_OC NULL
-#define OPTION_VAL_2_OC NULL
-#define OPTION_VAL_4_OC NULL
-#define OPTION_VAL_6_OC NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_OC NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_OC NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_OC NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_OC NULL
-#define OPTION_VAL_SOME_OC NULL
-#define OPTION_VAL_MORE_OC NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_OC NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_OC NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_OC NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_OC NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_OC NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_OC NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_OC NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_OC NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_OC NULL
-#define OPTION_VAL_0_OC NULL
-#define OPTION_VAL_5_OC NULL
-#define OPTION_VAL_10_OC NULL
-#define OPTION_VAL_15_OC NULL
-#define OPTION_VAL_20_OC NULL
-#define OPTION_VAL_25_OC NULL
-#define OPTION_VAL_30_OC NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_OC NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_OC NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_OC NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_OC NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_OC NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OC NULL
-#define OPTION_VAL_WHITE_OC NULL
-#define OPTION_VAL_RED_OC NULL
-#define OPTION_VAL_GREEN_OC NULL
-#define OPTION_VAL_BLUE_OC NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_OC NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_OC NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_OC NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_OC NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_OC NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_OC NULL
-#define OPTION_VAL_VMU_A1_OC NULL
-#define OPTION_VAL_ALL_VMUS_OC NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_OC NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_OC NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_OC NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_OC NULL
-#define OPTION_VAL_UPPER_LEFT_OC NULL
-#define OPTION_VAL_UPPER_RIGHT_OC NULL
-#define OPTION_VAL_LOWER_LEFT_OC NULL
-#define OPTION_VAL_LOWER_RIGHT_OC NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_OC NULL
-#define OPTION_VAL_1X_OC NULL
-#define OPTION_VAL_3X_OC NULL
-#define OPTION_VAL_5X_OC NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_OC NULL
-#define OPTION_VAL_DEFAULT_ON_00_OC NULL
-#define OPTION_VAL_DEFAULT_OFF_01_OC NULL
-#define OPTION_VAL_BLACK_02_OC NULL
-#define OPTION_VAL_LIGHT_BLUE_04_OC NULL
-#define OPTION_VAL_CYAN_06_OC NULL
-#define OPTION_VAL_CYAN_BLUE_07_OC NULL
-#define OPTION_VAL_LIGHT_GREEN_08_OC NULL
-#define OPTION_VAL_CYAN_GREEN_09_OC NULL
-#define OPTION_VAL_LIGHT_CYAN_10_OC NULL
-#define OPTION_VAL_PURPLE_12_OC NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_OC NULL
-#define OPTION_VAL_YELLOW_14_OC NULL
-#define OPTION_VAL_GRAY_15_OC NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_OC NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_OC NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_OC NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_OC NULL
-#define OPTION_VAL_LIGHT_RED_2_20_OC NULL
-#define OPTION_VAL_MAGENTA_21_OC NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_OC NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_OC NULL
-#define OPTION_VAL_ORANGE_24_OC NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_OC NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_OC NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_OC NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_OC NULL
-#define OPTION_VAL_40_OC NULL
-#define OPTION_VAL_50_OC NULL
-#define OPTION_VAL_60_OC NULL
-#define OPTION_VAL_70_OC NULL
-#define OPTION_VAL_80_OC NULL
-#define OPTION_VAL_90_OC NULL
-#define OPTION_VAL_100_OC NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_OC NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_OC NULL
-
-struct retro_core_option_v2_category option_cats_oc[] = {
-   {
-      "system",
-      CATEGORY_SYSTEM_LABEL_OC,
-      CATEGORY_SYSTEM_INFO_0_OC
-   },
-   {
-      "video",
-      CATEGORY_VIDEO_LABEL_OC,
-      CATEGORY_VIDEO_INFO_0_OC
-   },
-   {
-      "performance",
-      CATEGORY_PERFORMANCE_LABEL_OC,
-      CATEGORY_PERFORMANCE_INFO_0_OC
-   },
-   {
-      "hacks",
-      CATEGORY_HACKS_LABEL_OC,
-      CATEGORY_HACKS_INFO_0_OC
-   },
-   {
-      "input",
-      CATEGORY_INPUT_LABEL_OC,
-      CATEGORY_INPUT_INFO_0_OC
-   },
-   {
-      "vmu",
-      CATEGORY_VMU_LABEL_OC,
-      CATEGORY_VMU_INFO_0_OC
-   },
-   { NULL, NULL, NULL },
-};
-struct retro_core_option_v2_definition option_defs_oc[] = {
-   {
-      CORE_OPTION_NAME "_region",
-      CORE_OPTION_NAME_REGION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "system",
-      {
-         { "Japan",   OPTION_VAL_JAPAN_OC },
-         { "USA",     OPTION_VAL_USA_OC },
-         { "Europe",  OPTION_VAL_EUROPE_OC },
-         { "Default", OPTION_VAL_DEFAULT_OC },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_language",
-      CORE_OPTION_NAME_LANGUAGE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_LANGUAGE_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "Japanese", OPTION_VAL_JAPANESE_OC },
-         { "English",  OPTION_VAL_ENGLISH_OC },
-         { "German",   OPTION_VAL_GERMAN_OC },
-         { "French",   OPTION_VAL_FRENCH_OC },
-         { "Spanish",  OPTION_VAL_SPANISH_OC },
-         { "Italian",  OPTION_VAL_ITALIAN_OC },
-         { "Default",  OPTION_VAL_DEFAULT_OC },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_hle_bios",
-      CORE_OPTION_NAME_HLE_BIOS_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_HLE_BIOS_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "disabled",  NULL },
-         { "enabled",  NULL },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_boot_to_bios",
-      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_dsp",
-      CORE_OPTION_NAME_ENABLE_DSP_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "disabled",
-#else
-      "enabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_force_wince",
-      CORE_OPTION_NAME_FORCE_WINCE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_allow_service_buttons",
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_OC,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_internal_resolution",
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "320x240",    OPTION_VAL_320X240_OC },
-         { "640x480",    OPTION_VAL_640X480_OC },
-         { "800x600",    OPTION_VAL_800X600_OC },
-         { "960x720",    OPTION_VAL_960X720_OC },
-         { "1024x768",   OPTION_VAL_1024X768_OC },
-         { "1280x960",   OPTION_VAL_1280X960_OC },
-         { "1440x1080",  OPTION_VAL_1440X1080_OC },
-         { "1600x1200",  OPTION_VAL_1600X1200_OC },
-         { "1920x1440",  OPTION_VAL_1920X1440_OC },
-         { "2560x1920",  OPTION_VAL_2560X1920_OC },
-         { "2880x2160",  OPTION_VAL_2880X2160_OC },
-         { "3200x2400",  OPTION_VAL_3200X2400_OC },
-         { "3840x2880",  OPTION_VAL_3840X2880_OC },
-         { "4480x3360",  OPTION_VAL_4480X3360_OC },
-         { "5120x3840",  OPTION_VAL_5120X3840_OC },
-         { "5760x4320",  OPTION_VAL_5760X4320_OC },
-         { "6400x4800",  OPTION_VAL_6400X4800_OC },
-         { "7040x5280",  OPTION_VAL_7040X5280_OC },
-         { "7680x5760",  OPTION_VAL_7680X5760_OC },
-         { "8320x6240",  OPTION_VAL_8320X6240_OC },
-         { "8960x6720",  OPTION_VAL_8960X6720_OC },
-         { "9600x7200",  OPTION_VAL_9600X7200_OC },
-         { "10240x7680", OPTION_VAL_10240X7680_OC },
-         { "10880x8160", OPTION_VAL_10880X8160_OC },
-         { "11520x8640", OPTION_VAL_11520X8640_OC },
-         { "12160x9120", OPTION_VAL_12160X9120_OC },
-         { "12800x9600", OPTION_VAL_12800X9600_OC },
-         { NULL, NULL },
-      },
-#ifdef LOW_RES
-      "320x240",
-#else
-      "640x480",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_cable_type",
-      CORE_OPTION_NAME_CABLE_TYPE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "VGA",	    	 OPTION_VAL_VGA_OC },
-         { "TV (RGB)",       OPTION_VAL_TV_RGB_OC },
-         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_OC },
-         { NULL, NULL },
-      },
-      "TV (Composite)",
-   },
-   {
-      CORE_OPTION_NAME "_broadcast",
-      CORE_OPTION_NAME_BROADCAST_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "NTSC",    OPTION_VAL_NTSC_OC },
-         { "PAL",     OPTION_VAL_PAL_OC },
-         { "PAL_N",   OPTION_VAL_PAL_N_OC },
-         { "PAL_M",   OPTION_VAL_PAL_M_OC },
-         { "Default", OPTION_VAL_DEFAULT_OC },
-         { NULL, NULL },
-      },
-      "NTSC",
-   },
-   {
-      CORE_OPTION_NAME "_screen_rotation",
-      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "horizontal", OPTION_VAL_HORIZONTAL_OC },
-         { "vertical",   OPTION_VAL_VERTICAL_OC },
-         { NULL, NULL },
-      },
-      "horizontal",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_alpha_sorting",
-      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_OC },
-         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_OC },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_OC },
-#endif
-         { NULL, NULL },
-      },
-#if defined(LOW_END)
-      "per-strip (fast, least accurate)",
-#else
-      "per-triangle (normal)",
-#endif
-   },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-   {
-      CORE_OPTION_NAME "_oit_abuffer_size",
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "512MB", OPTION_VAL_512MB_OC },
-         { "1GB",   OPTION_VAL_1GB_OC },
-         { "2GB",   OPTION_VAL_2GB_OC },
-         { "4GB",   OPTION_VAL_4GB_OC },
-         { NULL, NULL },
-      },
-      "512MB",
-   },
-#endif
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_enable_rttb",
-      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_mipmapping",
-      CORE_OPTION_NAME_MIPMAPPING_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_fog",
-      CORE_OPTION_NAME_FOG_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_volume_modifier_enable",
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_anisotropic_filtering",
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "off", "disabled" },
-         { "2",  NULL },
-         { "4",  NULL },
-         { "8",  NULL },
-         { "16",  NULL },
-         { NULL, NULL },
-      },
-      "4",
-   },
-   {
-      CORE_OPTION_NAME "_delay_frame_swapping",
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_pvr2_filtering",
-      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-#ifdef _OPENMP
-   {
-      CORE_OPTION_NAME "_texupscale",
-      CORE_OPTION_NAME_TEXUPSCALE_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_OC,
-      NULL,
-      "video",
-      {
-         { "1", "disabled" },
-         { "2",  OPTION_VAL_2_OC },
-         { "4",  OPTION_VAL_4_OC },
-         { "6",  OPTION_VAL_6_OC },
-         { NULL, NULL },
-      },
-      "1",
-   },
-   {/* TODO: needs clarification */
-      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
-      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "256",  NULL },
-         { "512",  NULL },
-         { "1024", NULL },
-         { NULL, NULL },
-      },
-      "256",
-   },
-#endif
-   {
-      CORE_OPTION_NAME "_threaded_rendering",
-      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_OC,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_OC,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "some", OPTION_VAL_SOME_OC },
-         { "more", OPTION_VAL_MORE_OC },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "some",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_frame_skipping",
-      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_OC,
-      NULL,
-      "performance",
-      {
-         { "disabled",  NULL },
-         { "1",         NULL },
-         { "2",         NULL },
-         { "3",         NULL },
-         { "4",         NULL },
-         { "5",         NULL },
-         { "6",         NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_cheats",
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_OC,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_hack",
-      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_OC,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_gdrom_fast_loading",
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_OC,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "enabled",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_custom_textures",
-      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: probably needs explanation */
-      CORE_OPTION_NAME "_dump_textures",
-      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_analog_stick_deadzone",
-      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_OC },
-         { "5%",  OPTION_VAL_5_OC },
-         { "10%", OPTION_VAL_10_OC },
-         { "15%", OPTION_VAL_15_OC },
-         { "20%", OPTION_VAL_20_OC },
-         { "25%", OPTION_VAL_25_OC },
-         { "30%", OPTION_VAL_30_OC },
-         { NULL, NULL },
-      },
-      "15%",
-   },
-   {
-      CORE_OPTION_NAME "_trigger_deadzone",
-      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_OC },
-         { "5%",  OPTION_VAL_5_OC },
-         { "10%", OPTION_VAL_10_OC },
-         { "15%", OPTION_VAL_15_OC },
-         { "20%", OPTION_VAL_20_OC },
-         { "25%", OPTION_VAL_25_OC },
-         { "30%", OPTION_VAL_30_OC },
-         { NULL, NULL },
-      },
-      "0%",
-   },
-   {
-      CORE_OPTION_NAME "_digital_triggers",
-      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_purupuru",
-      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_OC,
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_lightgun_settings",
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_OC,
-      NULL,
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_OC,
-      NULL,
-      "input",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_lightgun1_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_OC },
-         { "Red",      OPTION_VAL_RED_OC },
-         { "Green",    OPTION_VAL_GREEN_OC },
-         { "Blue",     OPTION_VAL_BLUE_OC },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun2_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_OC },
-         { "Red",      OPTION_VAL_RED_OC },
-         { "Green",    OPTION_VAL_GREEN_OC },
-         { "Blue",     OPTION_VAL_BLUE_OC },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun3_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_OC },
-         { "Red",      OPTION_VAL_RED_OC },
-         { "Green",    OPTION_VAL_GREEN_OC },
-         { "Blue",     OPTION_VAL_BLUE_OC },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun4_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_OC },
-         { "Red",      OPTION_VAL_RED_OC },
-         { "Green",    OPTION_VAL_GREEN_OC },
-         { "Blue",     OPTION_VAL_BLUE_OC },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_per_content_vmus",
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_OC,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_OC,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_OC,
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "VMU A1",   OPTION_VAL_VMU_A1_OC },
-         { "All VMUs", OPTION_VAL_ALL_VMUS_OC },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_vmu_screen_settings",
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_OC,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_OC,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_OC,
-      NULL,
-      "vmu",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_display",
-      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_position",
-      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OC },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OC },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OC },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OC },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_size_mult",
-      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_OC },
-         { "2x", OPTION_VAL_2_OC },
-         { "3x", OPTION_VAL_3X_OC },
-         { "4x", OPTION_VAL_4_OC },
-         { "5x", OPTION_VAL_5X_OC },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_on_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_off_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_opacity",
-      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_OC },
-         { "20%",  OPTION_VAL_20_OC },
-         { "30%",  OPTION_VAL_30_OC },
-         { "40%",  OPTION_VAL_40_OC },
-         { "50%",  OPTION_VAL_50_OC },
-         { "60%",  OPTION_VAL_60_OC },
-         { "70%",  OPTION_VAL_70_OC },
-         { "80%",  OPTION_VAL_80_OC },
-         { "90%",  OPTION_VAL_90_OC },
-         { "100%", OPTION_VAL_100_OC },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_display",
-      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_position",
-      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OC },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OC },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OC },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OC },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_size_mult",
-      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_OC },
-         { "2x", OPTION_VAL_2_OC },
-         { "3x", OPTION_VAL_3X_OC },
-         { "4x", OPTION_VAL_4_OC },
-         { "5x", OPTION_VAL_5X_OC },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_on_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_off_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_opacity",
-      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_OC },
-         { "20%",  OPTION_VAL_20_OC },
-         { "30%",  OPTION_VAL_30_OC },
-         { "40%",  OPTION_VAL_40_OC },
-         { "50%",  OPTION_VAL_50_OC },
-         { "60%",  OPTION_VAL_60_OC },
-         { "70%",  OPTION_VAL_70_OC },
-         { "80%",  OPTION_VAL_80_OC },
-         { "90%",  OPTION_VAL_90_OC },
-         { "100%", OPTION_VAL_100_OC },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_display",
-      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_position",
-      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OC },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OC },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OC },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OC },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_size_mult",
-      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_OC },
-         { "2x", OPTION_VAL_2_OC },
-         { "3x", OPTION_VAL_3X_OC },
-         { "4x", OPTION_VAL_4_OC },
-         { "5x", OPTION_VAL_5X_OC },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_on_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_off_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_opacity",
-      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_OC },
-         { "20%",  OPTION_VAL_20_OC },
-         { "30%",  OPTION_VAL_30_OC },
-         { "40%",  OPTION_VAL_40_OC },
-         { "50%",  OPTION_VAL_50_OC },
-         { "60%",  OPTION_VAL_60_OC },
-         { "70%",  OPTION_VAL_70_OC },
-         { "80%",  OPTION_VAL_80_OC },
-         { "90%",  OPTION_VAL_90_OC },
-         { "100%", OPTION_VAL_100_OC },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_display",
-      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_position",
-      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OC },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OC },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OC },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OC },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_size_mult",
-      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_OC },
-         { "2x", OPTION_VAL_2_OC },
-         { "3x", OPTION_VAL_3X_OC },
-         { "4x", OPTION_VAL_4_OC },
-         { "5x", OPTION_VAL_5X_OC },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_on_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_off_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OC },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OC },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_OC },
-         { "BLUE 03",           OPTION_VAL_BLUE_OC },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OC },
-         { "GREEN 05",          OPTION_VAL_GREEN_OC },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_OC },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OC },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OC },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OC },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OC },
-         { "RED 11",            OPTION_VAL_RED_OC },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OC },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OC },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OC },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_OC },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OC },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OC },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OC },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OC },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OC },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OC },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OC },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OC },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OC },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OC },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OC },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OC },
-         { "WHITE 28",          OPTION_VAL_WHITE_OC },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_opacity",
-      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_OC,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_OC },
-         { "20%",  OPTION_VAL_20_OC },
-         { "30%",  OPTION_VAL_30_OC },
-         { "40%",  OPTION_VAL_40_OC },
-         { "50%",  OPTION_VAL_50_OC },
-         { "60%",  OPTION_VAL_60_OC },
-         { "70%",  OPTION_VAL_70_OC },
-         { "80%",  OPTION_VAL_80_OC },
-         { "90%",  OPTION_VAL_90_OC },
-         { "100%", OPTION_VAL_100_OC },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
-};
-struct retro_core_options_v2 options_oc = {
-   option_cats_oc,
-   option_defs_oc
-};
-
 /* RETRO_LANGUAGE_PL */
 
 #define CATEGORY_SYSTEM_LABEL_PL NULL
@@ -39972,7 +45611,7 @@ struct retro_core_options_v2 options_oc = {
 #define CATEGORY_VIDEO_LABEL_PL "Wideo"
 #define CATEGORY_VIDEO_INFO_0_PL NULL
 #define CATEGORY_PERFORMANCE_LABEL_PL "Wydajność"
-#define CATEGORY_PERFORMANCE_INFO_0_PL "Skonfiguruj renderowanie gwintowane, optymalizację podziału całkowitego i ustawienia pominięcia ramki."
+#define CATEGORY_PERFORMANCE_INFO_0_PL NULL
 #define CATEGORY_HACKS_LABEL_PL "Hacki emulacyjne"
 #define CATEGORY_HACKS_INFO_0_PL NULL
 #define CATEGORY_INPUT_LABEL_PL "Wejście"
@@ -39992,7 +45631,7 @@ struct retro_core_options_v2 options_oc = {
 #define OPTION_VAL_FRENCH_PL "francuski"
 #define OPTION_VAL_SPANISH_PL "hiszpański"
 #define OPTION_VAL_ITALIAN_PL "włoski"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL "HLE BIOS (wymagany restart)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PL NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_PL NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_PL NULL
@@ -40002,6 +45641,12 @@ struct retro_core_options_v2 options_oc = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_PL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PL "Ustaw gry NAOMI jako Free Play"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PL "Emulacja adaptera szerokopasmowego"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PL "Włącz UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_PL "Użyj UPnP, aby automatycznie skonfigurować router internetowy dla gier online."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PL "Rozdzielczość wewnętrzna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PL NULL
 #define OPTION_VAL_320X240_PL NULL
@@ -40054,23 +45699,36 @@ struct retro_core_options_v2 options_oc = {
 #define OPTION_VAL_1GB_PL NULL
 #define OPTION_VAL_2GB_PL NULL
 #define OPTION_VAL_4GB_PL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL "Emulacja pełnego bufora ramki"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_PL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_PL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PL "Filtrowanie tekstur"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PL NULL
+#define OPTION_VAL_1_PL NULL
+#define OPTION_VAL_2_PL "Wymuś liniowy"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PL "Wykrywanie zmian częstotliwości klatek"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PL NULL
-#define OPTION_VAL_2_PL NULL
+#define OPTION_VAL_2_O27_PL NULL
 #define OPTION_VAL_4_PL NULL
 #define OPTION_VAL_6_PL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PL NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PL NULL
@@ -40099,6 +45757,8 @@ struct retro_core_options_v2 options_oc = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_PL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_PL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_PL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PL NULL
@@ -40325,6 +45985,49 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PL,
       NULL,
@@ -40451,12 +46154,43 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PL,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL,
       NULL,
       "video",
       {
@@ -40526,10 +46260,39 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PL,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_PL },
+         { "1",  OPTION_VAL_1_PL },
+         { "2",  OPTION_VAL_2_PL },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PL,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PL,
       NULL,
       "video",
       {
@@ -40563,7 +46326,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_PL },
+         { "2",  OPTION_VAL_2_O27_PL },
          { "4",  OPTION_VAL_4_PL },
          { "6",  OPTION_VAL_6_PL },
          { NULL, NULL },
@@ -40586,6 +46349,20 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PL,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PL,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PL,
@@ -40779,6 +46556,20 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PL,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PL,
       NULL,
@@ -40928,7 +46719,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -41079,7 +46870,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -41230,7 +47021,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -41381,7 +47172,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PL },
-         { "2x", OPTION_VAL_2_PL },
+         { "2x", OPTION_VAL_2_O27_PL },
          { "3x", OPTION_VAL_3X_PL },
          { "4x", OPTION_VAL_4_PL },
          { "5x", OPTION_VAL_5X_PL },
@@ -41507,7 +47298,7 @@ struct retro_core_options_v2 options_pl = {
 #define CATEGORY_VIDEO_LABEL_PT_BR "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_PT_BR "Configure a resolução, a transparência independente da ordem e dos efeitos visuais."
 #define CATEGORY_PERFORMANCE_LABEL_PT_BR "Desempenho"
-#define CATEGORY_PERFORMANCE_INFO_0_PT_BR "Configure a cadência de renderização, as otimizações da divisão dos números inteiros e das configurações do salto de quadros."
+#define CATEGORY_PERFORMANCE_INFO_0_PT_BR NULL
 #define CATEGORY_HACKS_LABEL_PT_BR "Hacks de emulação"
 #define CATEGORY_HACKS_INFO_0_PT_BR "Configura as configurações da substituição da tela widescreen, da velocidade do carregamento da GD-ROM e da textura."
 #define CATEGORY_INPUT_LABEL_PT_BR "Entrada"
@@ -41527,7 +47318,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_FRENCH_PT_BR "Francês"
 #define OPTION_VAL_SPANISH_PT_BR "Espanhol"
 #define OPTION_VAL_ITALIAN_PT_BR "Italiano"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PT_BR "BIOS HLE"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PT_BR "Força o uso de uma BIOS criada com emulação de alto nível."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_PT_BR "Inicialização a partir da BIOS (requer reinício)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_PT_BR "Inicializa diretamente no menu da BIOS do Dreamcast."
@@ -41537,6 +47328,12 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_PT_BR "Ativa a emulação completa da MMU (Unidade de Gerenciamento de Memória) e outras configurações para jogos compatíveis com o Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PT_BR "Ativar botões de serviço da NAOMI"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PT_BR "Ativa o botão SERVICE da placa NAOMI para acessar a configuração do gabinete."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR "Resolução interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_BR "Modificar resolução de renderização."
 #define OPTION_VAL_320X240_PT_BR NULL
@@ -41583,29 +47380,42 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PT_BR "Por faixa (rápido, menos preciso)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_PT_BR "Por triângulo (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_PT_BR "Por pixel (preciso, mas lento)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_BR "Tamanho do buffer de acumulação de pixel (requer reinício)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_PT_BR "Um alto valor pode ser necessário para que a imagem seja bem exibida em resoluções superiores às nativas."
 #define OPTION_VAL_512MB_PT_BR NULL
 #define OPTION_VAL_1GB_PT_BR NULL
 #define OPTION_VAL_2GB_PT_BR NULL
 #define OPTION_VAL_4GB_PT_BR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR "Ativar o buffer RTT (renderização para texturas)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PT_BR "Efeitos de nevoeiro"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PT_BR "Modificador de volume"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_PT_BR "Uma característica da GPU do Dreamcast que é frequentemente usada por jogos para desenhar sombras em objetos. Esta opção deve geralmente ser ativada; tem pouco efeito sobre o desempenho."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_PT_BR "Filtro anisotrópico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_PT_BR "Melhora a qualidade das texturas em superfícies que estão em um ângulo oblíquo em relação à câmera."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PT_BR "Filtragem de textura"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PT_BR NULL
+#define OPTION_VAL_1_PT_BR NULL
+#define OPTION_VAL_2_PT_BR NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_BR "Atrasar troca de quadro"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_BR "Útil para evitar tremulações da imagem ou defeitos de vídeo. Não recomendado para uso em plataformas lentas."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PT_BR "Filtro de pós-processamento do PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Pós-processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e os sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Redimensionamento de textura (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_BR "Melhora os gráficos 2D de 'pixel arte' desenhados à mão. Usar somente com jogos em 2D pixelado."
-#define OPTION_VAL_2_PT_BR NULL
+#define OPTION_VAL_2_O27_PT_BR NULL
 #define OPTION_VAL_4_PT_BR NULL
 #define OPTION_VAL_6_PT_BR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_BR "Tamanho máximo do redimensionamento de texturas"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_BR "Renderização multi-thread"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PT_BR "Executa a GPU e a CPU em diferentes threads. Altamente recomendado."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_BR "Pulo de quadros automático"
@@ -41634,6 +47444,8 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_PT_BR "Gatilhos digitais"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_PT_BR "Purupuru Pack (vibração)"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_PT_BR "Habilita a vibração do controle."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_BR "Mostrar configurações das pistolas de luz"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PT_BR "Ativa a configuração do da mira da pistola de luz na tela. OBSERVAÇÃO: O menu rápido pode precisar ser alternado para que esta configuração surta efeito."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_BR "Mostrar ponto de mira da arma 1"
@@ -41860,6 +47672,49 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_BR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PT_BR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR,
       NULL,
@@ -41986,12 +47841,43 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_BR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_BR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_BR,
       NULL,
       "video",
       {
@@ -42061,10 +47947,39 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PT_BR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_PT_BR },
+         { "1",  OPTION_VAL_1_PT_BR },
+         { "2",  OPTION_VAL_2_PT_BR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_BR,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_BR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_BR,
       NULL,
       "video",
       {
@@ -42098,7 +48013,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_PT_BR },
+         { "2",  OPTION_VAL_2_O27_PT_BR },
          { "4",  OPTION_VAL_4_PT_BR },
          { "6",  OPTION_VAL_6_PT_BR },
          { NULL, NULL },
@@ -42121,6 +48036,20 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PT_BR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PT_BR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_BR,
@@ -42314,6 +48243,20 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_BR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_BR,
       NULL,
@@ -42463,7 +48406,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -42614,7 +48557,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -42765,7 +48708,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -42916,7 +48859,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_BR },
-         { "2x", OPTION_VAL_2_PT_BR },
+         { "2x", OPTION_VAL_2_O27_PT_BR },
          { "3x", OPTION_VAL_3X_PT_BR },
          { "4x", OPTION_VAL_4_PT_BR },
          { "5x", OPTION_VAL_5X_PT_BR },
@@ -43072,6 +49015,12 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_PT NULL
 #define OPTION_VAL_320X240_PT_PT NULL
@@ -43124,23 +49073,36 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_1GB_PT_PT NULL
 #define OPTION_VAL_2GB_PT_PT NULL
 #define OPTION_VAL_4GB_PT_PT NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_FOG_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PT_PT NULL
+#define OPTION_VAL_1_PT_PT NULL
+#define OPTION_VAL_2_PT_PT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_PT NULL
-#define OPTION_VAL_2_PT_PT NULL
+#define OPTION_VAL_2_O27_PT_PT NULL
 #define OPTION_VAL_4_PT_PT NULL
 #define OPTION_VAL_6_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_PT NULL
@@ -43169,6 +49131,8 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_PT NULL
@@ -43395,6 +49359,49 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_PT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_PT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_PT_PT,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_PT,
       NULL,
@@ -43521,12 +49528,43 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_PT,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_PT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_PT,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_PT,
       NULL,
       "video",
       {
@@ -43596,10 +49634,39 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PT_PT,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_PT_PT },
+         { "1",  OPTION_VAL_1_PT_PT },
+         { "2",  OPTION_VAL_2_PT_PT },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_PT,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_PT,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_PT,
       NULL,
       "video",
       {
@@ -43633,7 +49700,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_PT_PT },
+         { "2",  OPTION_VAL_2_O27_PT_PT },
          { "4",  OPTION_VAL_4_PT_PT },
          { "6",  OPTION_VAL_6_PT_PT },
          { NULL, NULL },
@@ -43656,6 +49723,20 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PT_PT,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PT_PT,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_PT,
@@ -43849,6 +49930,20 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_PT,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_PT,
       NULL,
@@ -43998,7 +50093,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -44149,7 +50244,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -44300,7 +50395,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -44451,7 +50546,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_PT_PT },
-         { "2x", OPTION_VAL_2_PT_PT },
+         { "2x", OPTION_VAL_2_O27_PT_PT },
          { "3x", OPTION_VAL_3X_PT_PT },
          { "4x", OPTION_VAL_4_PT_PT },
          { "5x", OPTION_VAL_5X_PT_PT },
@@ -44570,1569 +50665,34 @@ struct retro_core_options_v2 options_pt_pt = {
    option_defs_pt_pt
 };
 
-/* RETRO_LANGUAGE_RO */
-
-#define CATEGORY_SYSTEM_LABEL_RO NULL
-#define CATEGORY_SYSTEM_INFO_0_RO NULL
-#define CATEGORY_VIDEO_LABEL_RO NULL
-#define CATEGORY_VIDEO_INFO_0_RO NULL
-#define CATEGORY_PERFORMANCE_LABEL_RO NULL
-#define CATEGORY_PERFORMANCE_INFO_0_RO NULL
-#define CATEGORY_HACKS_LABEL_RO NULL
-#define CATEGORY_HACKS_INFO_0_RO NULL
-#define CATEGORY_INPUT_LABEL_RO NULL
-#define CATEGORY_INPUT_INFO_0_RO NULL
-#define CATEGORY_VMU_LABEL_RO NULL
-#define CATEGORY_VMU_INFO_0_RO NULL
-#define CORE_OPTION_NAME_REGION_LABEL_RO NULL
-#define OPTION_VAL_JAPAN_RO NULL
-#define OPTION_VAL_USA_RO NULL
-#define OPTION_VAL_EUROPE_RO NULL
-#define OPTION_VAL_DEFAULT_RO NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_RO NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_RO NULL
-#define OPTION_VAL_JAPANESE_RO NULL
-#define OPTION_VAL_ENGLISH_RO NULL
-#define OPTION_VAL_GERMAN_RO NULL
-#define OPTION_VAL_FRENCH_RO NULL
-#define OPTION_VAL_SPANISH_RO NULL
-#define OPTION_VAL_ITALIAN_RO NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_RO NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_RO NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_RO NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_RO NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_RO NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_RO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RO NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RO NULL
-#define OPTION_VAL_320X240_RO NULL
-#define OPTION_VAL_640X480_RO NULL
-#define OPTION_VAL_800X600_RO NULL
-#define OPTION_VAL_960X720_RO NULL
-#define OPTION_VAL_1024X768_RO NULL
-#define OPTION_VAL_1280X960_RO NULL
-#define OPTION_VAL_1440X1080_RO NULL
-#define OPTION_VAL_1600X1200_RO NULL
-#define OPTION_VAL_1920X1440_RO NULL
-#define OPTION_VAL_2560X1920_RO NULL
-#define OPTION_VAL_2880X2160_RO NULL
-#define OPTION_VAL_3200X2400_RO NULL
-#define OPTION_VAL_3840X2880_RO NULL
-#define OPTION_VAL_4480X3360_RO NULL
-#define OPTION_VAL_5120X3840_RO NULL
-#define OPTION_VAL_5760X4320_RO NULL
-#define OPTION_VAL_6400X4800_RO NULL
-#define OPTION_VAL_7040X5280_RO NULL
-#define OPTION_VAL_7680X5760_RO NULL
-#define OPTION_VAL_8320X6240_RO NULL
-#define OPTION_VAL_8960X6720_RO NULL
-#define OPTION_VAL_9600X7200_RO NULL
-#define OPTION_VAL_10240X7680_RO NULL
-#define OPTION_VAL_10880X8160_RO NULL
-#define OPTION_VAL_11520X8640_RO NULL
-#define OPTION_VAL_12160X9120_RO NULL
-#define OPTION_VAL_12800X9600_RO NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_RO NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RO NULL
-#define OPTION_VAL_VGA_RO NULL
-#define OPTION_VAL_TV_RGB_RO NULL
-#define OPTION_VAL_TV_COMPOSITE_RO NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_RO NULL
-#define OPTION_VAL_NTSC_RO NULL
-#define OPTION_VAL_PAL_RO NULL
-#define OPTION_VAL_PAL_N_RO NULL
-#define OPTION_VAL_PAL_M_RO NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_RO NULL
-#define OPTION_VAL_HORIZONTAL_RO NULL
-#define OPTION_VAL_VERTICAL_RO NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_RO NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RO NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_RO NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_RO NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RO NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_RO NULL
-#define OPTION_VAL_512MB_RO NULL
-#define OPTION_VAL_1GB_RO NULL
-#define OPTION_VAL_2GB_RO NULL
-#define OPTION_VAL_4GB_RO NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RO NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_RO NULL
-#define CORE_OPTION_NAME_FOG_LABEL_RO NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RO NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RO NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_RO NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RO NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RO NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RO NULL
-#define OPTION_VAL_2_RO NULL
-#define OPTION_VAL_4_RO NULL
-#define OPTION_VAL_6_RO NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RO NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RO NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RO NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RO NULL
-#define OPTION_VAL_SOME_RO NULL
-#define OPTION_VAL_MORE_RO NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RO NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RO NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RO NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_RO NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_RO NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RO NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RO NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RO NULL
-#define OPTION_VAL_0_RO NULL
-#define OPTION_VAL_5_RO NULL
-#define OPTION_VAL_10_RO NULL
-#define OPTION_VAL_15_RO NULL
-#define OPTION_VAL_20_RO NULL
-#define OPTION_VAL_25_RO NULL
-#define OPTION_VAL_30_RO NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_RO NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_RO NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RO NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RO NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RO NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RO NULL
-#define OPTION_VAL_WHITE_RO NULL
-#define OPTION_VAL_RED_RO NULL
-#define OPTION_VAL_GREEN_RO NULL
-#define OPTION_VAL_BLUE_RO NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RO NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RO NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RO NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RO NULL
-#define OPTION_VAL_VMU_A1_RO NULL
-#define OPTION_VAL_ALL_VMUS_RO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RO NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_RO NULL
-#define OPTION_VAL_UPPER_LEFT_RO NULL
-#define OPTION_VAL_UPPER_RIGHT_RO NULL
-#define OPTION_VAL_LOWER_LEFT_RO NULL
-#define OPTION_VAL_LOWER_RIGHT_RO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_RO NULL
-#define OPTION_VAL_1X_RO NULL
-#define OPTION_VAL_3X_RO NULL
-#define OPTION_VAL_5X_RO NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_RO NULL
-#define OPTION_VAL_DEFAULT_ON_00_RO NULL
-#define OPTION_VAL_DEFAULT_OFF_01_RO NULL
-#define OPTION_VAL_BLACK_02_RO NULL
-#define OPTION_VAL_LIGHT_BLUE_04_RO NULL
-#define OPTION_VAL_CYAN_06_RO NULL
-#define OPTION_VAL_CYAN_BLUE_07_RO NULL
-#define OPTION_VAL_LIGHT_GREEN_08_RO NULL
-#define OPTION_VAL_CYAN_GREEN_09_RO NULL
-#define OPTION_VAL_LIGHT_CYAN_10_RO NULL
-#define OPTION_VAL_PURPLE_12_RO NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_RO NULL
-#define OPTION_VAL_YELLOW_14_RO NULL
-#define OPTION_VAL_GRAY_15_RO NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_RO NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_RO NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_RO NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_RO NULL
-#define OPTION_VAL_LIGHT_RED_2_20_RO NULL
-#define OPTION_VAL_MAGENTA_21_RO NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_RO NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_RO NULL
-#define OPTION_VAL_ORANGE_24_RO NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_RO NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_RO NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_RO NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_RO NULL
-#define OPTION_VAL_40_RO NULL
-#define OPTION_VAL_50_RO NULL
-#define OPTION_VAL_60_RO NULL
-#define OPTION_VAL_70_RO NULL
-#define OPTION_VAL_80_RO NULL
-#define OPTION_VAL_90_RO NULL
-#define OPTION_VAL_100_RO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_RO NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_RO NULL
-
-struct retro_core_option_v2_category option_cats_ro[] = {
-   {
-      "system",
-      CATEGORY_SYSTEM_LABEL_RO,
-      CATEGORY_SYSTEM_INFO_0_RO
-   },
-   {
-      "video",
-      CATEGORY_VIDEO_LABEL_RO,
-      CATEGORY_VIDEO_INFO_0_RO
-   },
-   {
-      "performance",
-      CATEGORY_PERFORMANCE_LABEL_RO,
-      CATEGORY_PERFORMANCE_INFO_0_RO
-   },
-   {
-      "hacks",
-      CATEGORY_HACKS_LABEL_RO,
-      CATEGORY_HACKS_INFO_0_RO
-   },
-   {
-      "input",
-      CATEGORY_INPUT_LABEL_RO,
-      CATEGORY_INPUT_INFO_0_RO
-   },
-   {
-      "vmu",
-      CATEGORY_VMU_LABEL_RO,
-      CATEGORY_VMU_INFO_0_RO
-   },
-   { NULL, NULL, NULL },
-};
-struct retro_core_option_v2_definition option_defs_ro[] = {
-   {
-      CORE_OPTION_NAME "_region",
-      CORE_OPTION_NAME_REGION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "system",
-      {
-         { "Japan",   OPTION_VAL_JAPAN_RO },
-         { "USA",     OPTION_VAL_USA_RO },
-         { "Europe",  OPTION_VAL_EUROPE_RO },
-         { "Default", OPTION_VAL_DEFAULT_RO },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_language",
-      CORE_OPTION_NAME_LANGUAGE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_LANGUAGE_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "Japanese", OPTION_VAL_JAPANESE_RO },
-         { "English",  OPTION_VAL_ENGLISH_RO },
-         { "German",   OPTION_VAL_GERMAN_RO },
-         { "French",   OPTION_VAL_FRENCH_RO },
-         { "Spanish",  OPTION_VAL_SPANISH_RO },
-         { "Italian",  OPTION_VAL_ITALIAN_RO },
-         { "Default",  OPTION_VAL_DEFAULT_RO },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_hle_bios",
-      CORE_OPTION_NAME_HLE_BIOS_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_HLE_BIOS_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "disabled",  NULL },
-         { "enabled",  NULL },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_boot_to_bios",
-      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_dsp",
-      CORE_OPTION_NAME_ENABLE_DSP_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "disabled",
-#else
-      "enabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_force_wince",
-      CORE_OPTION_NAME_FORCE_WINCE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_allow_service_buttons",
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RO,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_internal_resolution",
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "320x240",    OPTION_VAL_320X240_RO },
-         { "640x480",    OPTION_VAL_640X480_RO },
-         { "800x600",    OPTION_VAL_800X600_RO },
-         { "960x720",    OPTION_VAL_960X720_RO },
-         { "1024x768",   OPTION_VAL_1024X768_RO },
-         { "1280x960",   OPTION_VAL_1280X960_RO },
-         { "1440x1080",  OPTION_VAL_1440X1080_RO },
-         { "1600x1200",  OPTION_VAL_1600X1200_RO },
-         { "1920x1440",  OPTION_VAL_1920X1440_RO },
-         { "2560x1920",  OPTION_VAL_2560X1920_RO },
-         { "2880x2160",  OPTION_VAL_2880X2160_RO },
-         { "3200x2400",  OPTION_VAL_3200X2400_RO },
-         { "3840x2880",  OPTION_VAL_3840X2880_RO },
-         { "4480x3360",  OPTION_VAL_4480X3360_RO },
-         { "5120x3840",  OPTION_VAL_5120X3840_RO },
-         { "5760x4320",  OPTION_VAL_5760X4320_RO },
-         { "6400x4800",  OPTION_VAL_6400X4800_RO },
-         { "7040x5280",  OPTION_VAL_7040X5280_RO },
-         { "7680x5760",  OPTION_VAL_7680X5760_RO },
-         { "8320x6240",  OPTION_VAL_8320X6240_RO },
-         { "8960x6720",  OPTION_VAL_8960X6720_RO },
-         { "9600x7200",  OPTION_VAL_9600X7200_RO },
-         { "10240x7680", OPTION_VAL_10240X7680_RO },
-         { "10880x8160", OPTION_VAL_10880X8160_RO },
-         { "11520x8640", OPTION_VAL_11520X8640_RO },
-         { "12160x9120", OPTION_VAL_12160X9120_RO },
-         { "12800x9600", OPTION_VAL_12800X9600_RO },
-         { NULL, NULL },
-      },
-#ifdef LOW_RES
-      "320x240",
-#else
-      "640x480",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_cable_type",
-      CORE_OPTION_NAME_CABLE_TYPE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "VGA",	    	 OPTION_VAL_VGA_RO },
-         { "TV (RGB)",       OPTION_VAL_TV_RGB_RO },
-         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_RO },
-         { NULL, NULL },
-      },
-      "TV (Composite)",
-   },
-   {
-      CORE_OPTION_NAME "_broadcast",
-      CORE_OPTION_NAME_BROADCAST_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "NTSC",    OPTION_VAL_NTSC_RO },
-         { "PAL",     OPTION_VAL_PAL_RO },
-         { "PAL_N",   OPTION_VAL_PAL_N_RO },
-         { "PAL_M",   OPTION_VAL_PAL_M_RO },
-         { "Default", OPTION_VAL_DEFAULT_RO },
-         { NULL, NULL },
-      },
-      "NTSC",
-   },
-   {
-      CORE_OPTION_NAME "_screen_rotation",
-      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "horizontal", OPTION_VAL_HORIZONTAL_RO },
-         { "vertical",   OPTION_VAL_VERTICAL_RO },
-         { NULL, NULL },
-      },
-      "horizontal",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_alpha_sorting",
-      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RO },
-         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_RO },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_RO },
-#endif
-         { NULL, NULL },
-      },
-#if defined(LOW_END)
-      "per-strip (fast, least accurate)",
-#else
-      "per-triangle (normal)",
-#endif
-   },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-   {
-      CORE_OPTION_NAME "_oit_abuffer_size",
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "512MB", OPTION_VAL_512MB_RO },
-         { "1GB",   OPTION_VAL_1GB_RO },
-         { "2GB",   OPTION_VAL_2GB_RO },
-         { "4GB",   OPTION_VAL_4GB_RO },
-         { NULL, NULL },
-      },
-      "512MB",
-   },
-#endif
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_enable_rttb",
-      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_mipmapping",
-      CORE_OPTION_NAME_MIPMAPPING_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_fog",
-      CORE_OPTION_NAME_FOG_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_volume_modifier_enable",
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_anisotropic_filtering",
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "off", "disabled" },
-         { "2",  NULL },
-         { "4",  NULL },
-         { "8",  NULL },
-         { "16",  NULL },
-         { NULL, NULL },
-      },
-      "4",
-   },
-   {
-      CORE_OPTION_NAME "_delay_frame_swapping",
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_pvr2_filtering",
-      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-#ifdef _OPENMP
-   {
-      CORE_OPTION_NAME "_texupscale",
-      CORE_OPTION_NAME_TEXUPSCALE_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RO,
-      NULL,
-      "video",
-      {
-         { "1", "disabled" },
-         { "2",  OPTION_VAL_2_RO },
-         { "4",  OPTION_VAL_4_RO },
-         { "6",  OPTION_VAL_6_RO },
-         { NULL, NULL },
-      },
-      "1",
-   },
-   {/* TODO: needs clarification */
-      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
-      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "256",  NULL },
-         { "512",  NULL },
-         { "1024", NULL },
-         { NULL, NULL },
-      },
-      "256",
-   },
-#endif
-   {
-      CORE_OPTION_NAME "_threaded_rendering",
-      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RO,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RO,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "some", OPTION_VAL_SOME_RO },
-         { "more", OPTION_VAL_MORE_RO },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "some",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_frame_skipping",
-      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RO,
-      NULL,
-      "performance",
-      {
-         { "disabled",  NULL },
-         { "1",         NULL },
-         { "2",         NULL },
-         { "3",         NULL },
-         { "4",         NULL },
-         { "5",         NULL },
-         { "6",         NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_cheats",
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RO,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_hack",
-      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RO,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_gdrom_fast_loading",
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_RO,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "enabled",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_custom_textures",
-      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: probably needs explanation */
-      CORE_OPTION_NAME "_dump_textures",
-      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_analog_stick_deadzone",
-      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_RO },
-         { "5%",  OPTION_VAL_5_RO },
-         { "10%", OPTION_VAL_10_RO },
-         { "15%", OPTION_VAL_15_RO },
-         { "20%", OPTION_VAL_20_RO },
-         { "25%", OPTION_VAL_25_RO },
-         { "30%", OPTION_VAL_30_RO },
-         { NULL, NULL },
-      },
-      "15%",
-   },
-   {
-      CORE_OPTION_NAME "_trigger_deadzone",
-      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_RO },
-         { "5%",  OPTION_VAL_5_RO },
-         { "10%", OPTION_VAL_10_RO },
-         { "15%", OPTION_VAL_15_RO },
-         { "20%", OPTION_VAL_20_RO },
-         { "25%", OPTION_VAL_25_RO },
-         { "30%", OPTION_VAL_30_RO },
-         { NULL, NULL },
-      },
-      "0%",
-   },
-   {
-      CORE_OPTION_NAME "_digital_triggers",
-      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_purupuru",
-      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RO,
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_lightgun_settings",
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RO,
-      NULL,
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RO,
-      NULL,
-      "input",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_lightgun1_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_RO },
-         { "Red",      OPTION_VAL_RED_RO },
-         { "Green",    OPTION_VAL_GREEN_RO },
-         { "Blue",     OPTION_VAL_BLUE_RO },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun2_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_RO },
-         { "Red",      OPTION_VAL_RED_RO },
-         { "Green",    OPTION_VAL_GREEN_RO },
-         { "Blue",     OPTION_VAL_BLUE_RO },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun3_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_RO },
-         { "Red",      OPTION_VAL_RED_RO },
-         { "Green",    OPTION_VAL_GREEN_RO },
-         { "Blue",     OPTION_VAL_BLUE_RO },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun4_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_RO },
-         { "Red",      OPTION_VAL_RED_RO },
-         { "Green",    OPTION_VAL_GREEN_RO },
-         { "Blue",     OPTION_VAL_BLUE_RO },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_per_content_vmus",
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RO,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RO,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RO,
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "VMU A1",   OPTION_VAL_VMU_A1_RO },
-         { "All VMUs", OPTION_VAL_ALL_VMUS_RO },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_vmu_screen_settings",
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RO,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RO,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RO,
-      NULL,
-      "vmu",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_display",
-      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_position",
-      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_RO },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_RO },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_RO },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_RO },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_size_mult",
-      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_RO },
-         { "2x", OPTION_VAL_2_RO },
-         { "3x", OPTION_VAL_3X_RO },
-         { "4x", OPTION_VAL_4_RO },
-         { "5x", OPTION_VAL_5X_RO },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_on_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_off_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_opacity",
-      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_RO },
-         { "20%",  OPTION_VAL_20_RO },
-         { "30%",  OPTION_VAL_30_RO },
-         { "40%",  OPTION_VAL_40_RO },
-         { "50%",  OPTION_VAL_50_RO },
-         { "60%",  OPTION_VAL_60_RO },
-         { "70%",  OPTION_VAL_70_RO },
-         { "80%",  OPTION_VAL_80_RO },
-         { "90%",  OPTION_VAL_90_RO },
-         { "100%", OPTION_VAL_100_RO },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_display",
-      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_position",
-      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_RO },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_RO },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_RO },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_RO },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_size_mult",
-      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_RO },
-         { "2x", OPTION_VAL_2_RO },
-         { "3x", OPTION_VAL_3X_RO },
-         { "4x", OPTION_VAL_4_RO },
-         { "5x", OPTION_VAL_5X_RO },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_on_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_off_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_opacity",
-      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_RO },
-         { "20%",  OPTION_VAL_20_RO },
-         { "30%",  OPTION_VAL_30_RO },
-         { "40%",  OPTION_VAL_40_RO },
-         { "50%",  OPTION_VAL_50_RO },
-         { "60%",  OPTION_VAL_60_RO },
-         { "70%",  OPTION_VAL_70_RO },
-         { "80%",  OPTION_VAL_80_RO },
-         { "90%",  OPTION_VAL_90_RO },
-         { "100%", OPTION_VAL_100_RO },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_display",
-      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_position",
-      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_RO },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_RO },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_RO },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_RO },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_size_mult",
-      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_RO },
-         { "2x", OPTION_VAL_2_RO },
-         { "3x", OPTION_VAL_3X_RO },
-         { "4x", OPTION_VAL_4_RO },
-         { "5x", OPTION_VAL_5X_RO },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_on_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_off_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_opacity",
-      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_RO },
-         { "20%",  OPTION_VAL_20_RO },
-         { "30%",  OPTION_VAL_30_RO },
-         { "40%",  OPTION_VAL_40_RO },
-         { "50%",  OPTION_VAL_50_RO },
-         { "60%",  OPTION_VAL_60_RO },
-         { "70%",  OPTION_VAL_70_RO },
-         { "80%",  OPTION_VAL_80_RO },
-         { "90%",  OPTION_VAL_90_RO },
-         { "100%", OPTION_VAL_100_RO },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_display",
-      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_position",
-      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_RO },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_RO },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_RO },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_RO },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_size_mult",
-      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_RO },
-         { "2x", OPTION_VAL_2_RO },
-         { "3x", OPTION_VAL_3X_RO },
-         { "4x", OPTION_VAL_4_RO },
-         { "5x", OPTION_VAL_5X_RO },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_on_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_off_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_RO },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_RO },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_RO },
-         { "BLUE 03",           OPTION_VAL_BLUE_RO },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_RO },
-         { "GREEN 05",          OPTION_VAL_GREEN_RO },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_RO },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_RO },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_RO },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_RO },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_RO },
-         { "RED 11",            OPTION_VAL_RED_RO },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_RO },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_RO },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_RO },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_RO },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_RO },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_RO },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_RO },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_RO },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_RO },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_RO },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_RO },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_RO },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_RO },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_RO },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_RO },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_RO },
-         { "WHITE 28",          OPTION_VAL_WHITE_RO },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_opacity",
-      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_RO,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_RO },
-         { "20%",  OPTION_VAL_20_RO },
-         { "30%",  OPTION_VAL_30_RO },
-         { "40%",  OPTION_VAL_40_RO },
-         { "50%",  OPTION_VAL_50_RO },
-         { "60%",  OPTION_VAL_60_RO },
-         { "70%",  OPTION_VAL_70_RO },
-         { "80%",  OPTION_VAL_80_RO },
-         { "90%",  OPTION_VAL_90_RO },
-         { "100%", OPTION_VAL_100_RO },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
-};
-struct retro_core_options_v2 options_ro = {
-   option_cats_ro,
-   option_defs_ro
-};
-
 /* RETRO_LANGUAGE_RU */
 
 #define CATEGORY_SYSTEM_LABEL_RU "Системные"
-#define CATEGORY_SYSTEM_INFO_0_RU NULL
+#define CATEGORY_SYSTEM_INFO_0_RU "Настройка региона, языка, BIOS и основных параметров оборудования."
 #define CATEGORY_VIDEO_LABEL_RU "Видео"
-#define CATEGORY_VIDEO_INFO_0_RU NULL
+#define CATEGORY_VIDEO_INFO_0_RU "Настройки разрешения, порядко-независимой прозрачности и визуальных эффектов."
 #define CATEGORY_PERFORMANCE_LABEL_RU "Производительность"
-#define CATEGORY_PERFORMANCE_INFO_0_RU NULL
+#define CATEGORY_PERFORMANCE_INFO_0_RU "Настройки многопоточного рендеринга и пропуска кадров."
 #define CATEGORY_HACKS_LABEL_RU "Хаки эмуляции"
-#define CATEGORY_HACKS_INFO_0_RU NULL
+#define CATEGORY_HACKS_INFO_0_RU "Настройки широкоформатных чит-кодов, скорости загрузки GD-ROM и замены текстур."
 #define CATEGORY_INPUT_LABEL_RU "Ввод"
-#define CATEGORY_INPUT_INFO_0_RU NULL
+#define CATEGORY_INPUT_INFO_0_RU "Настройки геймпада и светового пистолета."
 #define CATEGORY_VMU_LABEL_RU NULL
-#define CATEGORY_VMU_INFO_0_RU NULL
+#define CATEGORY_VMU_INFO_0_RU "Настройки файлов сохранений VMU для каждой игры и отображения VMU на экране."
 #define CORE_OPTION_NAME_REGION_LABEL_RU "Регион"
 #define OPTION_VAL_JAPAN_RU "Япония"
 #define OPTION_VAL_USA_RU "США"
 #define OPTION_VAL_EUROPE_RU "Европа"
 #define OPTION_VAL_DEFAULT_RU "Стандартный"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_RU "Язык"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_RU NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_RU "Меняет язык, используемый BIOS и любыми играми, содержащими несколько языков."
 #define OPTION_VAL_JAPANESE_RU "Японский"
 #define OPTION_VAL_ENGLISH_RU "Английский"
 #define OPTION_VAL_GERMAN_RU "Немецкий"
 #define OPTION_VAL_FRENCH_RU "Французский"
 #define OPTION_VAL_SPANISH_RU "Испанский"
 #define OPTION_VAL_ITALIAN_RU "Итальянский"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_RU NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_RU "HLE BIOS (требуется перезапуск)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_RU "Принудительно использовать высокоуровневую эмуляцию BIOS."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_RU "Загрузка в BIOS (требуется перезапуск)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RU "Загружаться непосредственно в меню Dreamcast BIOS."
@@ -46140,8 +50700,14 @@ struct retro_core_options_v2 options_ro = {
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_RU "Включить эмуляцию звукового DSP (цифрового сигнального процессора) Dreamcast. Улучшает точность генерируемого звука, но повышает системные требования."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_RU "Принудительный режим Windows CE"
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_RU "Включает полную эмуляцию MMU (блока управления памятью) и другие настройки для игр Windows CE."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RU "Разрешить сервисные кнопки NAOMI"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU "Включает сервисную кнопку NAOMI для входа в настройки автомата."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU "Включать Free Play для игр NAOMI"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU "Изменять настройки оплаты для бесплатной игры."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU "Эмулировать вместо модема широкополосный Ethernet-адаптер (требуется перезапуск)."
+#define CORE_OPTION_NAME_UPNP_LABEL_RU "Включить UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_RU "Использовать UPnP для автоматической настройки вашего Интернет-роутера для онлайн-игр."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU "Внутреннее разрешение"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RU "Настройка разрешения рендеринга."
 #define OPTION_VAL_320X240_RU NULL
@@ -46172,10 +50738,10 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_12160X9120_RU NULL
 #define OPTION_VAL_12800X9600_RU NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_RU "Тип кабеля"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU "Тип выходного сигнала. Наиболее поддерживаемым является 'ТВ (композит)'."
 #define OPTION_VAL_VGA_RU NULL
 #define OPTION_VAL_TV_RGB_RU "ТВ (RGB)"
-#define OPTION_VAL_TV_COMPOSITE_RU "ТВ (композитный)"
+#define OPTION_VAL_TV_COMPOSITE_RU "ТВ (композит)"
 #define CORE_OPTION_NAME_BROADCAST_LABEL_RU "Стандарт вещания"
 #define OPTION_VAL_NTSC_RU NULL
 #define OPTION_VAL_PAL_RU "PAL (Мир)"
@@ -46185,47 +50751,60 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_HORIZONTAL_RU "Горизонтальная"
 #define OPTION_VAL_VERTICAL_RU "Вертикальная"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_RU "Альфа-сортировка"
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RU NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_RU NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_RU NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RU "Размер накопительного пикс. буфера (требуется перезапуск)"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_RU "По слоям (самая быстрая, наименее точная)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_RU "По треугольникам (стандартная)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_RU "По пикселям (точная, самая медленная)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_RU "Размер накопительного буфера пикселей"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_RU "Большие значения могут требоваться для правильного отображения высоких разрешений."
 #define OPTION_VAL_512MB_RU "512 МБ"
 #define OPTION_VAL_1GB_RU "1 ГБ"
 #define OPTION_VAL_2GB_RU "2 ГБ"
 #define OPTION_VAL_4GB_RU "4 ГБ"
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU "Максимум прозрачных слоёв"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU "Сложные сцены могут потребовать более высоких значений."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU "Полная эмуляция фреймбуфера"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU "Включает полную эмуляцию кадрового буфера в VRAM. Полезно для игр, которые напрямую производят чтение или запись фреймбуфера в VRAM. При включении внутреннее разрешение будет принудительно установлено в 640x480 и возможно сильное падение скорости."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU "Включить буфер рендера в текстуру"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU "Копирует отрисованные текстуры из GPU обратно в VRAM. Данная настройка обычно включена для игр, которые этого требуют. При включении не используется масштабирование рендеринга текстур и возможно падение производительности."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_RU "MIP-текстурирование"
 #define CORE_OPTION_NAME_FOG_LABEL_RU "Эффекты тумана"
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RU NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RU NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RU "Модификатор объема"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RU "Функция графического процессора Dreamcast, которая обычно используется играми для отрисовки теней объектов. По умолчанию она должна быть включена - влияние на производительность обычно минимально или незначительно."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_RU "Анизотропная фильтрация"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RU "Улучшает качество текстур на поверхностях, расположенных под непрямым углом к камере."
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RU NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU NULL
-#define OPTION_VAL_2_RU NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RU "Улучшает качество текстур на поверхностях под непрямыми углами обзора по отношению к камере. Более высокие значения повышают требования к GPU. Изменения настройки вступают в силу при перезапуске."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_RU "Фильтрация текстур"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_RU "Используемый режим фильтрации текстур. Применяется для принудительной фильтрации всех текстур, чтобы получить более чёткое (или сглаженное) изображение, отличное от стандартного. Любое значение не по умолчанию может приводить к ошибкам рендеринга. Для применения настройки требуется перезапуск."
+#define OPTION_VAL_1_RU "Форс. методом ближайшего соседа"
+#define OPTION_VAL_2_RU "Форс. линейное"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RU "Задержка замены кадров"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU "Помогает избежать мерцания экрана или искажения заставок. Не рекомендуется на медленных платформах."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU "Определять изменение частоты кадров"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU "Уведомлять фронтенд об изменениях внутренней частоты кадров (напр. с 60 до 30 к/с). Улучшает распределение кадров в играх с постоянной частотой в 30 или 20 к/с, но должно быть выключено для игр с плавающим значением частоты кадров (напр. Ecco the Dolphin, Unreal Tournament). Недоступно при вкл. опции 'Автопропуск кадров'."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU "Фильтр постобработки PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU "Улучшает отрисованный вручную пиксель-арт. Рекомендуется применять только в 2D-играх с пиксельной графикой."
+#define OPTION_VAL_2_O27_RU NULL
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RU NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RU NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RU NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RU NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_RU "Нативная глубина интерполяции"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_RU "Помогает при проблемах с глубиной и искажением текстур на видеокартах AMD. В ряде случаев также устраняет проблемы на видеокартах Intel."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RU "Рендеринг в отдельном потоке"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RU "Запускает графический и центральный процессоры в разных потоках. Настоятельно рекомендуется."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RU "Автоматический пропуск кадров"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RU "Автоматически пропускать кадры при замедлении эмулятора. Применяется только с вкл. опцией 'Рендеринг в отдельном потоке'."
 #define OPTION_VAL_SOME_RU "Нормальный"
-#define OPTION_VAL_MORE_RU NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RU NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU NULL
+#define OPTION_VAL_MORE_RU "Максимум"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RU "Пропуск кадров"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU "Устанавливает количество кадров пропуска между отображаемыми кадрами."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RU "Широкоэкранные чит-коды (требуется перезапуск)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RU "Активирует чит-коды, которые позволяют отображать некоторые игры в широкоэкранном формате."
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RU NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RU NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RU "Широкоэкранный хак"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RU "Отрисовывать геометрию вне нормального соотношения 4:3. Может вызвать графические артефакты в показываемых областях."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_RU "Быстрая загрузка GD-ROM (неточно)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_RU "Ускоряет загрузку GD-ROM."
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать пользовательские текстуры"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RU "Мёртвая зона аналогового стика"
 #define OPTION_VAL_0_RU NULL
@@ -46237,26 +50816,28 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_30_RU NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_RU "Мёртвая зона триггеров"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_RU "Цифровые триггеры"
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RU NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_RU "Модуль вибрации/Puru Puru"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU "Включает отдачу контроллера."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU "Транслировать цифровые сигналы"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU "Транслировать события цифрового ввода и состояние вибрации в TCP-порт 8000. Совместимо с параметром MAME \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показать настройки светового пистолета"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU "Включает конфигурацию параметров прицела светового пистолета. Для применения настройки требуется переключить быстрое меню."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
 #define OPTION_VAL_RED_RU "Красный"
 #define OPTION_VAL_GREEN_RU "Зелёный"
 #define OPTION_VAL_BLUE_RU "Голубой"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RU NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RU NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 4"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RU "Отдельные блоки визуальной памяти (VMU) для игр"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RU "VMU для каждой игры"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если выключено, для всех игр используются 4 общие файла сохранений VMU (A1, B1, C1, D1), расположенные в системном каталоге RetroArch. В режиме 'VMU A1' для каждой загруженной игры в каталоге сохранений RetroArch создаётся уникальный файл VMU 'A1'. В режиме 'Все VMU' для каждой запускаемой игры создаётся по 4 уникальных файла VMU (A1, B1, C1, D1)."
 #define OPTION_VAL_VMU_A1_RU NULL
-#define OPTION_VAL_ALL_VMUS_RU NULL
+#define OPTION_VAL_ALL_VMUS_RU "Все VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения блока визуальной памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_RU "Положение экрана VMU 1"
 #define OPTION_VAL_UPPER_LEFT_RU "Вверху слева"
@@ -46278,21 +50859,21 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_CYAN_GREEN_09_RU "Голубовато-зелёный"
 #define OPTION_VAL_LIGHT_CYAN_10_RU "Светло-голубой"
 #define OPTION_VAL_PURPLE_12_RU "Фиолетовый"
-#define OPTION_VAL_LIGHT_PURPLE_13_RU NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_RU "Светло-фиолетовый"
 #define OPTION_VAL_YELLOW_14_RU "Жёлтая"
-#define OPTION_VAL_GRAY_15_RU NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_RU NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_RU NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_RU NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_RU NULL
-#define OPTION_VAL_LIGHT_RED_2_20_RU NULL
-#define OPTION_VAL_MAGENTA_21_RU NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_RU NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_RU NULL
+#define OPTION_VAL_GRAY_15_RU "Серый"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_RU "Светло-фиолетовый (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_RU "Светло-зелёный (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_RU "Светло-зелёный (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_RU "Светло-циановый (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_RU "Светло-красный (2)"
+#define OPTION_VAL_MAGENTA_21_RU "Пурпурный"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_RU "Светло-фиолетовый (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_RU "Светло-оранжевый"
 #define OPTION_VAL_ORANGE_24_RU "Оранжевый"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_RU NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_RU NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_RU NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_RU "Светло-фиолетовый (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_RU "Светло-жёлтый"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_RU "Светло-жёлтый (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RU "Цвет выкл. пикселей VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_RU "Видимость экрана VMU 1"
 #define OPTION_VAL_40_RU NULL
@@ -46465,6 +51046,49 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_RU,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU,
       NULL,
@@ -46591,12 +51215,43 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_RU,
       NULL,
       "video",
       {
@@ -46666,10 +51321,39 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_RU,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_RU },
+         { "1",  OPTION_VAL_1_RU },
+         { "2",  OPTION_VAL_2_RU },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RU,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU,
       NULL,
       "video",
       {
@@ -46703,7 +51387,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_RU },
+         { "2",  OPTION_VAL_2_O27_RU },
          { "4",  OPTION_VAL_4_RU },
          { "6",  OPTION_VAL_6_RU },
          { NULL, NULL },
@@ -46726,6 +51410,20 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_RU,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_RU,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RU,
@@ -46919,6 +51617,20 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU,
       NULL,
@@ -47068,7 +51780,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -47219,7 +51931,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -47370,7 +52082,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -47521,7 +52233,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_RU },
-         { "2x", OPTION_VAL_2_RU },
+         { "2x", OPTION_VAL_2_O27_RU },
          { "3x", OPTION_VAL_3X_RU },
          { "4x", OPTION_VAL_4_RU },
          { "5x", OPTION_VAL_5X_RU },
@@ -47640,1564 +52352,29 @@ struct retro_core_options_v2 options_ru = {
    option_defs_ru
 };
 
-/* RETRO_LANGUAGE_SI */
-
-#define CATEGORY_SYSTEM_LABEL_SI NULL
-#define CATEGORY_SYSTEM_INFO_0_SI NULL
-#define CATEGORY_VIDEO_LABEL_SI NULL
-#define CATEGORY_VIDEO_INFO_0_SI NULL
-#define CATEGORY_PERFORMANCE_LABEL_SI NULL
-#define CATEGORY_PERFORMANCE_INFO_0_SI NULL
-#define CATEGORY_HACKS_LABEL_SI NULL
-#define CATEGORY_HACKS_INFO_0_SI NULL
-#define CATEGORY_INPUT_LABEL_SI NULL
-#define CATEGORY_INPUT_INFO_0_SI NULL
-#define CATEGORY_VMU_LABEL_SI NULL
-#define CATEGORY_VMU_INFO_0_SI NULL
-#define CORE_OPTION_NAME_REGION_LABEL_SI NULL
-#define OPTION_VAL_JAPAN_SI NULL
-#define OPTION_VAL_USA_SI NULL
-#define OPTION_VAL_EUROPE_SI NULL
-#define OPTION_VAL_DEFAULT_SI NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_SI NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_SI NULL
-#define OPTION_VAL_JAPANESE_SI NULL
-#define OPTION_VAL_ENGLISH_SI NULL
-#define OPTION_VAL_GERMAN_SI NULL
-#define OPTION_VAL_FRENCH_SI NULL
-#define OPTION_VAL_SPANISH_SI NULL
-#define OPTION_VAL_ITALIAN_SI NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_SI NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_SI NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SI NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SI NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_SI NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SI NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SI NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SI NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SI NULL
-#define OPTION_VAL_320X240_SI NULL
-#define OPTION_VAL_640X480_SI NULL
-#define OPTION_VAL_800X600_SI NULL
-#define OPTION_VAL_960X720_SI NULL
-#define OPTION_VAL_1024X768_SI NULL
-#define OPTION_VAL_1280X960_SI NULL
-#define OPTION_VAL_1440X1080_SI NULL
-#define OPTION_VAL_1600X1200_SI NULL
-#define OPTION_VAL_1920X1440_SI NULL
-#define OPTION_VAL_2560X1920_SI NULL
-#define OPTION_VAL_2880X2160_SI NULL
-#define OPTION_VAL_3200X2400_SI NULL
-#define OPTION_VAL_3840X2880_SI NULL
-#define OPTION_VAL_4480X3360_SI NULL
-#define OPTION_VAL_5120X3840_SI NULL
-#define OPTION_VAL_5760X4320_SI NULL
-#define OPTION_VAL_6400X4800_SI NULL
-#define OPTION_VAL_7040X5280_SI NULL
-#define OPTION_VAL_7680X5760_SI NULL
-#define OPTION_VAL_8320X6240_SI NULL
-#define OPTION_VAL_8960X6720_SI NULL
-#define OPTION_VAL_9600X7200_SI NULL
-#define OPTION_VAL_10240X7680_SI NULL
-#define OPTION_VAL_10880X8160_SI NULL
-#define OPTION_VAL_11520X8640_SI NULL
-#define OPTION_VAL_12160X9120_SI NULL
-#define OPTION_VAL_12800X9600_SI NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_SI NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SI NULL
-#define OPTION_VAL_VGA_SI NULL
-#define OPTION_VAL_TV_RGB_SI NULL
-#define OPTION_VAL_TV_COMPOSITE_SI NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_SI NULL
-#define OPTION_VAL_NTSC_SI NULL
-#define OPTION_VAL_PAL_SI NULL
-#define OPTION_VAL_PAL_N_SI NULL
-#define OPTION_VAL_PAL_M_SI NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SI NULL
-#define OPTION_VAL_HORIZONTAL_SI NULL
-#define OPTION_VAL_VERTICAL_SI NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SI NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SI NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_SI NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_SI NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SI NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SI NULL
-#define OPTION_VAL_512MB_SI NULL
-#define OPTION_VAL_1GB_SI NULL
-#define OPTION_VAL_2GB_SI NULL
-#define OPTION_VAL_4GB_SI NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SI NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_SI NULL
-#define CORE_OPTION_NAME_FOG_LABEL_SI NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SI NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SI NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SI NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SI NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SI NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SI NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SI NULL
-#define OPTION_VAL_2_SI NULL
-#define OPTION_VAL_4_SI NULL
-#define OPTION_VAL_6_SI NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SI NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SI NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SI NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SI NULL
-#define OPTION_VAL_SOME_SI NULL
-#define OPTION_VAL_MORE_SI NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SI NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SI NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SI NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SI NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SI NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SI NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SI NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SI NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SI NULL
-#define OPTION_VAL_0_SI NULL
-#define OPTION_VAL_5_SI NULL
-#define OPTION_VAL_10_SI NULL
-#define OPTION_VAL_15_SI NULL
-#define OPTION_VAL_20_SI NULL
-#define OPTION_VAL_25_SI NULL
-#define OPTION_VAL_30_SI NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SI NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SI NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SI NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SI NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SI NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SI NULL
-#define OPTION_VAL_WHITE_SI NULL
-#define OPTION_VAL_RED_SI NULL
-#define OPTION_VAL_GREEN_SI NULL
-#define OPTION_VAL_BLUE_SI NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SI NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SI NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SI NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SI NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SI NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SI NULL
-#define OPTION_VAL_VMU_A1_SI NULL
-#define OPTION_VAL_ALL_VMUS_SI NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SI NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SI NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SI NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SI NULL
-#define OPTION_VAL_UPPER_LEFT_SI NULL
-#define OPTION_VAL_UPPER_RIGHT_SI NULL
-#define OPTION_VAL_LOWER_LEFT_SI NULL
-#define OPTION_VAL_LOWER_RIGHT_SI NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SI NULL
-#define OPTION_VAL_1X_SI NULL
-#define OPTION_VAL_3X_SI NULL
-#define OPTION_VAL_5X_SI NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SI NULL
-#define OPTION_VAL_DEFAULT_ON_00_SI NULL
-#define OPTION_VAL_DEFAULT_OFF_01_SI NULL
-#define OPTION_VAL_BLACK_02_SI NULL
-#define OPTION_VAL_LIGHT_BLUE_04_SI NULL
-#define OPTION_VAL_CYAN_06_SI NULL
-#define OPTION_VAL_CYAN_BLUE_07_SI NULL
-#define OPTION_VAL_LIGHT_GREEN_08_SI NULL
-#define OPTION_VAL_CYAN_GREEN_09_SI NULL
-#define OPTION_VAL_LIGHT_CYAN_10_SI NULL
-#define OPTION_VAL_PURPLE_12_SI NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_SI NULL
-#define OPTION_VAL_YELLOW_14_SI NULL
-#define OPTION_VAL_GRAY_15_SI NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_SI NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_SI NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_SI NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_SI NULL
-#define OPTION_VAL_LIGHT_RED_2_20_SI NULL
-#define OPTION_VAL_MAGENTA_21_SI NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_SI NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_SI NULL
-#define OPTION_VAL_ORANGE_24_SI NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_SI NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_SI NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_SI NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SI NULL
-#define OPTION_VAL_40_SI NULL
-#define OPTION_VAL_50_SI NULL
-#define OPTION_VAL_60_SI NULL
-#define OPTION_VAL_70_SI NULL
-#define OPTION_VAL_80_SI NULL
-#define OPTION_VAL_90_SI NULL
-#define OPTION_VAL_100_SI NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SI NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SI NULL
-
-struct retro_core_option_v2_category option_cats_si[] = {
-   {
-      "system",
-      CATEGORY_SYSTEM_LABEL_SI,
-      CATEGORY_SYSTEM_INFO_0_SI
-   },
-   {
-      "video",
-      CATEGORY_VIDEO_LABEL_SI,
-      CATEGORY_VIDEO_INFO_0_SI
-   },
-   {
-      "performance",
-      CATEGORY_PERFORMANCE_LABEL_SI,
-      CATEGORY_PERFORMANCE_INFO_0_SI
-   },
-   {
-      "hacks",
-      CATEGORY_HACKS_LABEL_SI,
-      CATEGORY_HACKS_INFO_0_SI
-   },
-   {
-      "input",
-      CATEGORY_INPUT_LABEL_SI,
-      CATEGORY_INPUT_INFO_0_SI
-   },
-   {
-      "vmu",
-      CATEGORY_VMU_LABEL_SI,
-      CATEGORY_VMU_INFO_0_SI
-   },
-   { NULL, NULL, NULL },
-};
-struct retro_core_option_v2_definition option_defs_si[] = {
-   {
-      CORE_OPTION_NAME "_region",
-      CORE_OPTION_NAME_REGION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "system",
-      {
-         { "Japan",   OPTION_VAL_JAPAN_SI },
-         { "USA",     OPTION_VAL_USA_SI },
-         { "Europe",  OPTION_VAL_EUROPE_SI },
-         { "Default", OPTION_VAL_DEFAULT_SI },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_language",
-      CORE_OPTION_NAME_LANGUAGE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_LANGUAGE_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "Japanese", OPTION_VAL_JAPANESE_SI },
-         { "English",  OPTION_VAL_ENGLISH_SI },
-         { "German",   OPTION_VAL_GERMAN_SI },
-         { "French",   OPTION_VAL_FRENCH_SI },
-         { "Spanish",  OPTION_VAL_SPANISH_SI },
-         { "Italian",  OPTION_VAL_ITALIAN_SI },
-         { "Default",  OPTION_VAL_DEFAULT_SI },
-         { NULL, NULL },
-      },
-      "Default",
-   },
-   {
-      CORE_OPTION_NAME "_hle_bios",
-      CORE_OPTION_NAME_HLE_BIOS_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_HLE_BIOS_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "disabled",  NULL },
-         { "enabled",  NULL },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_boot_to_bios",
-      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_dsp",
-      CORE_OPTION_NAME_ENABLE_DSP_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "disabled",
-#else
-      "enabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_force_wince",
-      CORE_OPTION_NAME_FORCE_WINCE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_allow_service_buttons",
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SI,
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_internal_resolution",
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "320x240",    OPTION_VAL_320X240_SI },
-         { "640x480",    OPTION_VAL_640X480_SI },
-         { "800x600",    OPTION_VAL_800X600_SI },
-         { "960x720",    OPTION_VAL_960X720_SI },
-         { "1024x768",   OPTION_VAL_1024X768_SI },
-         { "1280x960",   OPTION_VAL_1280X960_SI },
-         { "1440x1080",  OPTION_VAL_1440X1080_SI },
-         { "1600x1200",  OPTION_VAL_1600X1200_SI },
-         { "1920x1440",  OPTION_VAL_1920X1440_SI },
-         { "2560x1920",  OPTION_VAL_2560X1920_SI },
-         { "2880x2160",  OPTION_VAL_2880X2160_SI },
-         { "3200x2400",  OPTION_VAL_3200X2400_SI },
-         { "3840x2880",  OPTION_VAL_3840X2880_SI },
-         { "4480x3360",  OPTION_VAL_4480X3360_SI },
-         { "5120x3840",  OPTION_VAL_5120X3840_SI },
-         { "5760x4320",  OPTION_VAL_5760X4320_SI },
-         { "6400x4800",  OPTION_VAL_6400X4800_SI },
-         { "7040x5280",  OPTION_VAL_7040X5280_SI },
-         { "7680x5760",  OPTION_VAL_7680X5760_SI },
-         { "8320x6240",  OPTION_VAL_8320X6240_SI },
-         { "8960x6720",  OPTION_VAL_8960X6720_SI },
-         { "9600x7200",  OPTION_VAL_9600X7200_SI },
-         { "10240x7680", OPTION_VAL_10240X7680_SI },
-         { "10880x8160", OPTION_VAL_10880X8160_SI },
-         { "11520x8640", OPTION_VAL_11520X8640_SI },
-         { "12160x9120", OPTION_VAL_12160X9120_SI },
-         { "12800x9600", OPTION_VAL_12800X9600_SI },
-         { NULL, NULL },
-      },
-#ifdef LOW_RES
-      "320x240",
-#else
-      "640x480",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_cable_type",
-      CORE_OPTION_NAME_CABLE_TYPE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "VGA",	    	 OPTION_VAL_VGA_SI },
-         { "TV (RGB)",       OPTION_VAL_TV_RGB_SI },
-         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_SI },
-         { NULL, NULL },
-      },
-      "TV (Composite)",
-   },
-   {
-      CORE_OPTION_NAME "_broadcast",
-      CORE_OPTION_NAME_BROADCAST_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "NTSC",    OPTION_VAL_NTSC_SI },
-         { "PAL",     OPTION_VAL_PAL_SI },
-         { "PAL_N",   OPTION_VAL_PAL_N_SI },
-         { "PAL_M",   OPTION_VAL_PAL_M_SI },
-         { "Default", OPTION_VAL_DEFAULT_SI },
-         { NULL, NULL },
-      },
-      "NTSC",
-   },
-   {
-      CORE_OPTION_NAME "_screen_rotation",
-      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "horizontal", OPTION_VAL_HORIZONTAL_SI },
-         { "vertical",   OPTION_VAL_VERTICAL_SI },
-         { NULL, NULL },
-      },
-      "horizontal",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_alpha_sorting",
-      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SI },
-         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_SI },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_SI },
-#endif
-         { NULL, NULL },
-      },
-#if defined(LOW_END)
-      "per-strip (fast, least accurate)",
-#else
-      "per-triangle (normal)",
-#endif
-   },
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
-   {
-      CORE_OPTION_NAME "_oit_abuffer_size",
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "512MB", OPTION_VAL_512MB_SI },
-         { "1GB",   OPTION_VAL_1GB_SI },
-         { "2GB",   OPTION_VAL_2GB_SI },
-         { "4GB",   OPTION_VAL_4GB_SI },
-         { NULL, NULL },
-      },
-      "512MB",
-   },
-#endif
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_enable_rttb",
-      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: needs explanation */
-      CORE_OPTION_NAME "_mipmapping",
-      CORE_OPTION_NAME_MIPMAPPING_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_fog",
-      CORE_OPTION_NAME_FOG_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_volume_modifier_enable",
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_anisotropic_filtering",
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "off", "disabled" },
-         { "2",  NULL },
-         { "4",  NULL },
-         { "8",  NULL },
-         { "16",  NULL },
-         { NULL, NULL },
-      },
-      "4",
-   },
-   {
-      CORE_OPTION_NAME "_delay_frame_swapping",
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_pvr2_filtering",
-      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-#ifdef _OPENMP
-   {
-      CORE_OPTION_NAME "_texupscale",
-      CORE_OPTION_NAME_TEXUPSCALE_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SI,
-      NULL,
-      "video",
-      {
-         { "1", "disabled" },
-         { "2",  OPTION_VAL_2_SI },
-         { "4",  OPTION_VAL_4_SI },
-         { "6",  OPTION_VAL_6_SI },
-         { NULL, NULL },
-      },
-      "1",
-   },
-   {/* TODO: needs clarification */
-      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
-      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "video",
-      {
-         { "256",  NULL },
-         { "512",  NULL },
-         { "1024", NULL },
-         { NULL, NULL },
-      },
-      "256",
-   },
-#endif
-   {
-      CORE_OPTION_NAME "_threaded_rendering",
-      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SI,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SI,
-      NULL,
-      "performance",
-      {
-         { "disabled", NULL },
-         { "some", OPTION_VAL_SOME_SI },
-         { "more", OPTION_VAL_MORE_SI },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "some",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_frame_skipping",
-      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SI,
-      NULL,
-      "performance",
-      {
-         { "disabled",  NULL },
-         { "1",         NULL },
-         { "2",         NULL },
-         { "3",         NULL },
-         { "4",         NULL },
-         { "5",         NULL },
-         { "6",         NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_cheats",
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SI,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_widescreen_hack",
-      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SI,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_gdrom_fast_loading",
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SI,
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "enabled",
-#else
-      "disabled",
-#endif
-   },
-   {
-      CORE_OPTION_NAME "_custom_textures",
-      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {/* TODO: probably needs explanation */
-      CORE_OPTION_NAME "_dump_textures",
-      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "hacks",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_analog_stick_deadzone",
-      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_SI },
-         { "5%",  OPTION_VAL_5_SI },
-         { "10%", OPTION_VAL_10_SI },
-         { "15%", OPTION_VAL_15_SI },
-         { "20%", OPTION_VAL_20_SI },
-         { "25%", OPTION_VAL_25_SI },
-         { "30%", OPTION_VAL_30_SI },
-         { NULL, NULL },
-      },
-      "15%",
-   },
-   {
-      CORE_OPTION_NAME "_trigger_deadzone",
-      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "0%",  OPTION_VAL_0_SI },
-         { "5%",  OPTION_VAL_5_SI },
-         { "10%", OPTION_VAL_10_SI },
-         { "15%", OPTION_VAL_15_SI },
-         { "20%", OPTION_VAL_20_SI },
-         { "25%", OPTION_VAL_25_SI },
-         { "30%", OPTION_VAL_30_SI },
-         { NULL, NULL },
-      },
-      "0%",
-   },
-   {
-      CORE_OPTION_NAME "_digital_triggers",
-      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_purupuru",
-      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SI,
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_lightgun_settings",
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SI,
-      NULL,
-      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SI,
-      NULL,
-      "input",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_lightgun1_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_SI },
-         { "Red",      OPTION_VAL_RED_SI },
-         { "Green",    OPTION_VAL_GREEN_SI },
-         { "Blue",     OPTION_VAL_BLUE_SI },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun2_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_SI },
-         { "Red",      OPTION_VAL_RED_SI },
-         { "Green",    OPTION_VAL_GREEN_SI },
-         { "Blue",     OPTION_VAL_BLUE_SI },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun3_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_SI },
-         { "Red",      OPTION_VAL_RED_SI },
-         { "Green",    OPTION_VAL_GREEN_SI },
-         { "Blue",     OPTION_VAL_BLUE_SI },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_lightgun4_crosshair",
-      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "input",
-      {
-         { "disabled", NULL },
-         { "White",    OPTION_VAL_WHITE_SI },
-         { "Red",      OPTION_VAL_RED_SI },
-         { "Green",    OPTION_VAL_GREEN_SI },
-         { "Blue",     OPTION_VAL_BLUE_SI },
-         { NULL,       NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_per_content_vmus",
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SI,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SI,
-      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SI,
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "VMU A1",   OPTION_VAL_VMU_A1_SI },
-         { "All VMUs", OPTION_VAL_ALL_VMUS_SI },
-         { NULL, NULL},
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_show_vmu_screen_settings",
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SI,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SI,
-      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SI,
-      NULL,
-      "vmu",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_display",
-      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_position",
-      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_SI },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_SI },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_SI },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_SI },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_size_mult",
-      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_SI },
-         { "2x", OPTION_VAL_2_SI },
-         { "3x", OPTION_VAL_3X_SI },
-         { "4x", OPTION_VAL_4_SI },
-         { "5x", OPTION_VAL_5X_SI },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_on_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_pixel_off_color",
-      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu1_screen_opacity",
-      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_SI },
-         { "20%",  OPTION_VAL_20_SI },
-         { "30%",  OPTION_VAL_30_SI },
-         { "40%",  OPTION_VAL_40_SI },
-         { "50%",  OPTION_VAL_50_SI },
-         { "60%",  OPTION_VAL_60_SI },
-         { "70%",  OPTION_VAL_70_SI },
-         { "80%",  OPTION_VAL_80_SI },
-         { "90%",  OPTION_VAL_90_SI },
-         { "100%", OPTION_VAL_100_SI },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_display",
-      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_position",
-      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_SI },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_SI },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_SI },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_SI },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_size_mult",
-      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_SI },
-         { "2x", OPTION_VAL_2_SI },
-         { "3x", OPTION_VAL_3X_SI },
-         { "4x", OPTION_VAL_4_SI },
-         { "5x", OPTION_VAL_5X_SI },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_on_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_pixel_off_color",
-      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu2_screen_opacity",
-      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_SI },
-         { "20%",  OPTION_VAL_20_SI },
-         { "30%",  OPTION_VAL_30_SI },
-         { "40%",  OPTION_VAL_40_SI },
-         { "50%",  OPTION_VAL_50_SI },
-         { "60%",  OPTION_VAL_60_SI },
-         { "70%",  OPTION_VAL_70_SI },
-         { "80%",  OPTION_VAL_80_SI },
-         { "90%",  OPTION_VAL_90_SI },
-         { "100%", OPTION_VAL_100_SI },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_display",
-      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_position",
-      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_SI },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_SI },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_SI },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_SI },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_size_mult",
-      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_SI },
-         { "2x", OPTION_VAL_2_SI },
-         { "3x", OPTION_VAL_3X_SI },
-         { "4x", OPTION_VAL_4_SI },
-         { "5x", OPTION_VAL_5X_SI },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_on_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_pixel_off_color",
-      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu3_screen_opacity",
-      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_SI },
-         { "20%",  OPTION_VAL_20_SI },
-         { "30%",  OPTION_VAL_30_SI },
-         { "40%",  OPTION_VAL_40_SI },
-         { "50%",  OPTION_VAL_50_SI },
-         { "60%",  OPTION_VAL_60_SI },
-         { "70%",  OPTION_VAL_70_SI },
-         { "80%",  OPTION_VAL_80_SI },
-         { "90%",  OPTION_VAL_90_SI },
-         { "100%", OPTION_VAL_100_SI },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_display",
-      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_position",
-      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "Upper Left",  OPTION_VAL_UPPER_LEFT_SI },
-         { "Upper Right", OPTION_VAL_UPPER_RIGHT_SI },
-         { "Lower Left",  OPTION_VAL_LOWER_LEFT_SI },
-         { "Lower Right", OPTION_VAL_LOWER_RIGHT_SI },
-         { NULL, NULL },
-      },
-      "Upper Left",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_size_mult",
-      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "1x", OPTION_VAL_1X_SI },
-         { "2x", OPTION_VAL_2_SI },
-         { "3x", OPTION_VAL_3X_SI },
-         { "4x", OPTION_VAL_4_SI },
-         { "5x", OPTION_VAL_5X_SI },
-         { NULL, NULL },
-      },
-      "1x",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_on_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_ON 00",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_pixel_off_color",
-      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_SI },
-         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_SI },
-         { "BLACK 02",          OPTION_VAL_BLACK_02_SI },
-         { "BLUE 03",           OPTION_VAL_BLUE_SI },
-         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_SI },
-         { "GREEN 05",          OPTION_VAL_GREEN_SI },
-         { "CYAN 06",           OPTION_VAL_CYAN_06_SI },
-         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_SI },
-         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_SI },
-         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_SI },
-         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_SI },
-         { "RED 11",            OPTION_VAL_RED_SI },
-         { "PURPLE 12",         OPTION_VAL_PURPLE_12_SI },
-         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_SI },
-         { "YELLOW 14",         OPTION_VAL_YELLOW_14_SI },
-         { "GRAY 15",           OPTION_VAL_GRAY_15_SI },
-         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_SI },
-         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_SI },
-         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_SI },
-         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_SI },
-         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_SI },
-         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_SI },
-         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_SI },
-         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_SI },
-         { "ORANGE 24",         OPTION_VAL_ORANGE_24_SI },
-         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_SI },
-         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_SI },
-         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_SI },
-         { "WHITE 28",          OPTION_VAL_WHITE_SI },
-         { NULL, NULL },
-      },
-      "DEFAULT_OFF 01",
-   },
-   {
-      CORE_OPTION_NAME "_vmu4_screen_opacity",
-      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SI,
-      NULL,
-      "",
-      NULL,
-      "vmu",
-      {
-         { "10%",  OPTION_VAL_10_SI },
-         { "20%",  OPTION_VAL_20_SI },
-         { "30%",  OPTION_VAL_30_SI },
-         { "40%",  OPTION_VAL_40_SI },
-         { "50%",  OPTION_VAL_50_SI },
-         { "60%",  OPTION_VAL_60_SI },
-         { "70%",  OPTION_VAL_70_SI },
-         { "80%",  OPTION_VAL_80_SI },
-         { "90%",  OPTION_VAL_90_SI },
-         { "100%", OPTION_VAL_100_SI },
-         { NULL,   NULL },
-      },
-      "100%",
-   },
-   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
-};
-struct retro_core_options_v2 options_si = {
-   option_cats_si,
-   option_defs_si
-};
-
 /* RETRO_LANGUAGE_SK */
 
-#define CATEGORY_SYSTEM_LABEL_SK NULL
+#define CATEGORY_SYSTEM_LABEL_SK "Systém"
 #define CATEGORY_SYSTEM_INFO_0_SK NULL
 #define CATEGORY_VIDEO_LABEL_SK NULL
 #define CATEGORY_VIDEO_INFO_0_SK NULL
-#define CATEGORY_PERFORMANCE_LABEL_SK NULL
+#define CATEGORY_PERFORMANCE_LABEL_SK "Výkon"
 #define CATEGORY_PERFORMANCE_INFO_0_SK NULL
-#define CATEGORY_HACKS_LABEL_SK NULL
+#define CATEGORY_HACKS_LABEL_SK "Emulačné hacky"
 #define CATEGORY_HACKS_INFO_0_SK NULL
 #define CATEGORY_INPUT_LABEL_SK "Vstup"
 #define CATEGORY_INPUT_INFO_0_SK NULL
 #define CATEGORY_VMU_LABEL_SK NULL
 #define CATEGORY_VMU_INFO_0_SK NULL
-#define CORE_OPTION_NAME_REGION_LABEL_SK NULL
-#define OPTION_VAL_JAPAN_SK NULL
+#define CORE_OPTION_NAME_REGION_LABEL_SK "Región"
+#define OPTION_VAL_JAPAN_SK "Japonsko"
 #define OPTION_VAL_USA_SK NULL
-#define OPTION_VAL_EUROPE_SK NULL
-#define OPTION_VAL_DEFAULT_SK NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_SK NULL
+#define OPTION_VAL_EUROPE_SK "Európa"
+#define OPTION_VAL_DEFAULT_SK "Predvolené"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_SK "Jazyk"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_SK NULL
 #define OPTION_VAL_JAPANESE_SK "Japončina"
-#define OPTION_VAL_ENGLISH_SK NULL
+#define OPTION_VAL_ENGLISH_SK "Angličtina"
 #define OPTION_VAL_GERMAN_SK "Nemčina"
 #define OPTION_VAL_FRENCH_SK "Francúzština"
 #define OPTION_VAL_SPANISH_SK "Španielčina"
@@ -49206,13 +52383,19 @@ struct retro_core_options_v2 options_si = {
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SK NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_SK NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SK NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SK "Povoliť DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SK NULL
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_SK NULL
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SK NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SK NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SK NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SK NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK "Vnútorné rozlíšenie"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SK NULL
 #define OPTION_VAL_320X240_SK NULL
 #define OPTION_VAL_640X480_SK NULL
@@ -49241,53 +52424,66 @@ struct retro_core_options_v2 options_si = {
 #define OPTION_VAL_11520X8640_SK NULL
 #define OPTION_VAL_12160X9120_SK NULL
 #define OPTION_VAL_12800X9600_SK NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_SK NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_SK "Typ kábla"
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SK NULL
 #define OPTION_VAL_VGA_SK NULL
 #define OPTION_VAL_TV_RGB_SK NULL
-#define OPTION_VAL_TV_COMPOSITE_SK NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_SK NULL
+#define OPTION_VAL_TV_COMPOSITE_SK "TV (composite)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_SK "Vysielací štandard"
 #define OPTION_VAL_NTSC_SK NULL
-#define OPTION_VAL_PAL_SK NULL
-#define OPTION_VAL_PAL_N_SK NULL
-#define OPTION_VAL_PAL_M_SK NULL
+#define OPTION_VAL_PAL_SK "PAL (svet)"
+#define OPTION_VAL_PAL_N_SK "PAL-N (Argentína, Paraguaj, Uruguaj)"
+#define OPTION_VAL_PAL_M_SK "PAL-M (Brazília)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SK "Orientácia Obrazovky"
-#define OPTION_VAL_HORIZONTAL_SK NULL
-#define OPTION_VAL_VERTICAL_SK NULL
+#define OPTION_VAL_HORIZONTAL_SK "Vodorovne"
+#define OPTION_VAL_VERTICAL_SK "Zvislo"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SK NULL
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SK NULL
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_SK NULL
 #define OPTION_VAL_PER_PIXEL_ACCURATE_SK NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SK NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SK NULL
-#define OPTION_VAL_512MB_SK NULL
+#define OPTION_VAL_512MB_SK "512 MB"
 #define OPTION_VAL_1GB_SK NULL
 #define OPTION_VAL_2GB_SK NULL
 #define OPTION_VAL_4GB_SK NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SK NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SK NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SK NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SK NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SK "Anizotropné filtrovanie"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SK "Filtrovanie textúr"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SK NULL
+#define OPTION_VAL_1_SK NULL
+#define OPTION_VAL_2_SK NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SK NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SK NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SK NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SK NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SK NULL
-#define OPTION_VAL_2_SK NULL
+#define OPTION_VAL_2_O27_SK NULL
 #define OPTION_VAL_4_SK NULL
 #define OPTION_VAL_6_SK NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SK NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SK NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SK NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SK NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SK NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SK NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SK NULL
 #define OPTION_VAL_SOME_SK "Normálne"
-#define OPTION_VAL_MORE_SK NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SK NULL
+#define OPTION_VAL_MORE_SK "Maximálne"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SK "Preskakovanie snímkov"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SK NULL
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SK NULL
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SK NULL
@@ -49309,10 +52505,12 @@ struct retro_core_options_v2 options_si = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SK NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SK NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SK NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SK NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK NULL
-#define OPTION_VAL_WHITE_SK NULL
+#define OPTION_VAL_WHITE_SK "Biela"
 #define OPTION_VAL_RED_SK "Červená"
 #define OPTION_VAL_GREEN_SK "Zelená"
 #define OPTION_VAL_BLUE_SK "Modrá"
@@ -49323,46 +52521,46 @@ struct retro_core_options_v2 options_si = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SK NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SK NULL
 #define OPTION_VAL_VMU_A1_SK NULL
-#define OPTION_VAL_ALL_VMUS_SK NULL
+#define OPTION_VAL_ALL_VMUS_SK "Všetky VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SK NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SK NULL
-#define OPTION_VAL_UPPER_LEFT_SK NULL
-#define OPTION_VAL_UPPER_RIGHT_SK NULL
-#define OPTION_VAL_LOWER_LEFT_SK NULL
-#define OPTION_VAL_LOWER_RIGHT_SK NULL
+#define OPTION_VAL_UPPER_LEFT_SK "Hore vľavo"
+#define OPTION_VAL_UPPER_RIGHT_SK "Hore vpravo"
+#define OPTION_VAL_LOWER_LEFT_SK "Vľavo dolu"
+#define OPTION_VAL_LOWER_RIGHT_SK "Vpravo dolu"
 #define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SK NULL
 #define OPTION_VAL_1X_SK NULL
 #define OPTION_VAL_3X_SK NULL
 #define OPTION_VAL_5X_SK NULL
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SK NULL
-#define OPTION_VAL_DEFAULT_ON_00_SK NULL
-#define OPTION_VAL_DEFAULT_OFF_01_SK NULL
-#define OPTION_VAL_BLACK_02_SK NULL
-#define OPTION_VAL_LIGHT_BLUE_04_SK NULL
-#define OPTION_VAL_CYAN_06_SK NULL
-#define OPTION_VAL_CYAN_BLUE_07_SK NULL
-#define OPTION_VAL_LIGHT_GREEN_08_SK NULL
-#define OPTION_VAL_CYAN_GREEN_09_SK NULL
-#define OPTION_VAL_LIGHT_CYAN_10_SK NULL
-#define OPTION_VAL_PURPLE_12_SK NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_SK NULL
-#define OPTION_VAL_YELLOW_14_SK NULL
-#define OPTION_VAL_GRAY_15_SK NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_SK NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_SK NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_SK NULL
+#define OPTION_VAL_DEFAULT_ON_00_SK "Predvolene zapnuté"
+#define OPTION_VAL_DEFAULT_OFF_01_SK "Predvolene vypnuté"
+#define OPTION_VAL_BLACK_02_SK "Čierna"
+#define OPTION_VAL_LIGHT_BLUE_04_SK "Svetlomodrá"
+#define OPTION_VAL_CYAN_06_SK "Azúrová"
+#define OPTION_VAL_CYAN_BLUE_07_SK "Tyrkysová modrá"
+#define OPTION_VAL_LIGHT_GREEN_08_SK "Svetlozelená"
+#define OPTION_VAL_CYAN_GREEN_09_SK "Tyrkysová zelená"
+#define OPTION_VAL_LIGHT_CYAN_10_SK "Svetloazúrová"
+#define OPTION_VAL_PURPLE_12_SK "Fialová"
+#define OPTION_VAL_LIGHT_PURPLE_13_SK "Svetlofialová"
+#define OPTION_VAL_YELLOW_14_SK "Žltá"
+#define OPTION_VAL_GRAY_15_SK "Šedá"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_SK "Svetlofialová (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_SK "Svetlozelená (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_SK "Svetlozelená (3)"
 #define OPTION_VAL_LIGHT_CYAN_2_19_SK NULL
-#define OPTION_VAL_LIGHT_RED_2_20_SK NULL
-#define OPTION_VAL_MAGENTA_21_SK NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_SK NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_SK NULL
-#define OPTION_VAL_ORANGE_24_SK NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_SK NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_SK NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_SK NULL
+#define OPTION_VAL_LIGHT_RED_2_20_SK "Svetločervená (2)"
+#define OPTION_VAL_MAGENTA_21_SK "Purpurová"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_SK "Svetlofialová (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_SK "Svetlooranžová"
+#define OPTION_VAL_ORANGE_24_SK "Oranžová"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_SK "Svetlofialová (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_SK "Svetložltá"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_SK "Svetložltá (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SK NULL
 #define OPTION_VAL_40_SK NULL
@@ -49535,6 +52733,49 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK,
       NULL,
@@ -49661,12 +52902,43 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SK,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK,
       NULL,
       "video",
       {
@@ -49736,10 +53008,39 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SK,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_SK },
+         { "1",  OPTION_VAL_1_SK },
+         { "2",  OPTION_VAL_2_SK },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SK,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SK,
       NULL,
       "video",
       {
@@ -49773,7 +53074,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_SK },
+         { "2",  OPTION_VAL_2_O27_SK },
          { "4",  OPTION_VAL_4_SK },
          { "6",  OPTION_VAL_6_SK },
          { NULL, NULL },
@@ -49796,6 +53097,20 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SK,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SK,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SK,
@@ -49989,6 +53304,20 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SK,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK,
       NULL,
@@ -50138,7 +53467,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50289,7 +53618,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50440,7 +53769,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50591,7 +53920,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SK },
-         { "2x", OPTION_VAL_2_SK },
+         { "2x", OPTION_VAL_2_O27_SK },
          { "3x", OPTION_VAL_3X_SK },
          { "4x", OPTION_VAL_4_SK },
          { "5x", OPTION_VAL_5X_SK },
@@ -50747,6 +54076,12 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SR NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SR NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SR NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SR NULL
 #define OPTION_VAL_320X240_SR NULL
@@ -50799,23 +54134,36 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_1GB_SR NULL
 #define OPTION_VAL_2GB_SR NULL
 #define OPTION_VAL_4GB_SR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SR NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SR NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SR NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SR NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SR NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SR NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SR NULL
+#define OPTION_VAL_1_SR NULL
+#define OPTION_VAL_2_SR NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SR NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SR NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SR NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SR NULL
-#define OPTION_VAL_2_SR NULL
+#define OPTION_VAL_2_O27_SR NULL
 #define OPTION_VAL_4_SR NULL
 #define OPTION_VAL_6_SR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SR NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SR NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SR NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SR NULL
@@ -50844,6 +54192,8 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SR NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SR NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SR NULL
@@ -51070,6 +54420,49 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SR,
       NULL,
@@ -51196,12 +54589,43 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SR,
       NULL,
       "video",
       {
@@ -51271,10 +54695,39 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_SR },
+         { "1",  OPTION_VAL_1_SR },
+         { "2",  OPTION_VAL_2_SR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SR,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SR,
       NULL,
       "video",
       {
@@ -51308,7 +54761,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_SR },
+         { "2",  OPTION_VAL_2_O27_SR },
          { "4",  OPTION_VAL_4_SR },
          { "6",  OPTION_VAL_6_SR },
          { NULL, NULL },
@@ -51331,6 +54784,20 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SR,
@@ -51524,6 +54991,20 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SR,
       NULL,
@@ -51673,7 +55154,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -51824,7 +55305,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -51975,7 +55456,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52126,7 +55607,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SR },
-         { "2x", OPTION_VAL_2_SR },
+         { "2x", OPTION_VAL_2_O27_SR },
          { "3x", OPTION_VAL_3X_SR },
          { "4x", OPTION_VAL_4_SR },
          { "5x", OPTION_VAL_5X_SR },
@@ -52282,6 +55763,12 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SV NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_SV NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_SV NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV NULL
 #define OPTION_VAL_320X240_SV NULL
@@ -52334,23 +55821,36 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_1GB_SV NULL
 #define OPTION_VAL_2GB_SV NULL
 #define OPTION_VAL_4GB_SV NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SV NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SV NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SV "Dimeffekter"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SV NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SV NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SV NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SV NULL
+#define OPTION_VAL_1_SV NULL
+#define OPTION_VAL_2_SV NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SV NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SV NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SV NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SV NULL
-#define OPTION_VAL_2_SV NULL
+#define OPTION_VAL_2_O27_SV NULL
 #define OPTION_VAL_4_SV NULL
 #define OPTION_VAL_6_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV NULL
@@ -52368,17 +55868,19 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV NULL
-#define OPTION_VAL_0_SV NULL
-#define OPTION_VAL_5_SV NULL
-#define OPTION_VAL_10_SV NULL
-#define OPTION_VAL_15_SV NULL
-#define OPTION_VAL_20_SV NULL
-#define OPTION_VAL_25_SV NULL
-#define OPTION_VAL_30_SV NULL
+#define OPTION_VAL_0_SV "0 %"
+#define OPTION_VAL_5_SV "5 %"
+#define OPTION_VAL_10_SV "10 %"
+#define OPTION_VAL_15_SV "15 %"
+#define OPTION_VAL_20_SV "20 %"
+#define OPTION_VAL_25_SV "25 %"
+#define OPTION_VAL_30_SV "30 %"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV NULL
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SV NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SV NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV NULL
@@ -52435,13 +55937,13 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_SV NULL
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SV NULL
-#define OPTION_VAL_40_SV NULL
-#define OPTION_VAL_50_SV NULL
-#define OPTION_VAL_60_SV NULL
-#define OPTION_VAL_70_SV NULL
-#define OPTION_VAL_80_SV NULL
-#define OPTION_VAL_90_SV NULL
-#define OPTION_VAL_100_SV NULL
+#define OPTION_VAL_40_SV "40 %"
+#define OPTION_VAL_50_SV "50 %"
+#define OPTION_VAL_60_SV "60 %"
+#define OPTION_VAL_70_SV "70 %"
+#define OPTION_VAL_80_SV "80 %"
+#define OPTION_VAL_90_SV "90 %"
+#define OPTION_VAL_100_SV "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV NULL
@@ -52605,6 +56107,49 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_SV,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV,
       NULL,
@@ -52731,12 +56276,43 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SV,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV,
       NULL,
       "video",
       {
@@ -52806,10 +56382,39 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SV,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_SV },
+         { "1",  OPTION_VAL_1_SV },
+         { "2",  OPTION_VAL_2_SV },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SV,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SV,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SV,
       NULL,
       "video",
       {
@@ -52843,7 +56448,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_SV },
+         { "2",  OPTION_VAL_2_O27_SV },
          { "4",  OPTION_VAL_4_SV },
          { "6",  OPTION_VAL_6_SV },
          { NULL, NULL },
@@ -52866,6 +56471,20 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV,
@@ -53059,6 +56678,20 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV,
       NULL,
@@ -53208,7 +56841,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53359,7 +56992,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53510,7 +57143,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53661,7 +57294,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_SV },
-         { "2x", OPTION_VAL_2_SV },
+         { "2x", OPTION_VAL_2_O27_SV },
          { "3x", OPTION_VAL_3X_SV },
          { "4x", OPTION_VAL_4_SV },
          { "5x", OPTION_VAL_5X_SV },
@@ -53787,7 +57420,7 @@ struct retro_core_options_v2 options_sv = {
 #define CATEGORY_VIDEO_LABEL_TR NULL
 #define CATEGORY_VIDEO_INFO_0_TR "Çözünürlüğü, istenenden bağımsız şeffaflığı ve görsel efekt ayarlarını yapılandırın."
 #define CATEGORY_PERFORMANCE_LABEL_TR "Performans"
-#define CATEGORY_PERFORMANCE_INFO_0_TR "İş parçacığı oluşturma, tamsayı bölme optimizasyonları ve kare atlama ayarlarını yapılandırın."
+#define CATEGORY_PERFORMANCE_INFO_0_TR "Zorlu işleme ve kare atlama ayarlarını yapılandırın."
 #define CATEGORY_HACKS_LABEL_TR "Emülatör Geliştirmeleri"
 #define CATEGORY_HACKS_INFO_0_TR "Geniş ekran geçersiz kılmaları, GD-ROM yükleme hızı ve doku değiştirme ayarlarını yapılandırın."
 #define CATEGORY_INPUT_LABEL_TR "Girdi"
@@ -53807,7 +57440,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_FRENCH_TR "Fransızca"
 #define OPTION_VAL_SPANISH_TR "İspanyolca"
 #define OPTION_VAL_ITALIAN_TR "İtalyanca"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TR "HLE BIOS (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_TR "Yüksek seviyeli taklit BIOS kullanımını zorunlu kılın."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_TR "BIOS Önyükleme (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_TR "Doğrudan Dreamcast BIOS menüsüne önyükleme yapın."
@@ -53817,6 +57450,12 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_TR "Windows CE oyunları için tam MMU (Bellek Yönetim Birimi) öykünmesini ve diğer ayarları etkinleştirin."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TR "NAOMI Hizmet Düğmelerine İzin Ver"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR "Kabin ayarlarına girmek için NAOMI için SERVICE düğmesini etkinleştirir."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR "Geniş Bant Adaptör Taklidi"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR "Modem yerine ethernet geniş bant adaptörünü taklit edin. (Yeniden Başlatılmalı)"
+#define CORE_OPTION_NAME_UPNP_LABEL_TR "UPnP Etkinleştir"
+#define CORE_OPTION_NAME_UPNP_INFO_0_TR "İnternet yönlendiricinizi çevrimiçi oyunlar için otomatik olarak yapılandırmak üzere UPnP kullanın."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR "Dahili Çözünürlük"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TR "İşleme çözünürlüğünü değiştirin."
 #define OPTION_VAL_320X240_TR NULL
@@ -53863,41 +57502,54 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TR "Şerit Başına (hızlı, en az doğru)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_TR "Üçgen Başına (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_TR "Piksel Başına (doğru, ancak en yavaş)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TR "Yığın Piksel Arabellek Boyutu (Yeniden Başlatılmalı)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TR "Toplama Piksel Tampon Boyutu"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_TR "Daha yüksek çözünürlüklerin doğru çıktı alması için daha yüksek değerler gerekebilir."
 #define OPTION_VAL_512MB_TR NULL
 #define OPTION_VAL_1GB_TR NULL
 #define OPTION_VAL_2GB_TR NULL
 #define OPTION_VAL_4GB_TR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TR "En Fazla Şeffaf Katman"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TR "Karmaşık sahneler için daha yüksek değerler gerekebilir."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR "Tam kare önbellek taklidi"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR "VRAM üstünde tam kare önbellek taklidini etkinleştirin. Kare önbelleğini doğrudan VRAM üstünden okuyan veya yazan oyunlar için kullanışlıdır. Etkinleştirildiğinde, Dahili Çözünürlük 640x480 olarak zorlanır ve performans ciddi şekilde etkilenebilir."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR "RTT (Dokuya Dönüştür) Önbelleğini Etkinleştir"
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR "İşlenen dokuları GPU'dan VRAM'e geri kopyalayın. Bu seçenek normalde bunu gerektiren oyunlar için etkinleştirilir. Etkinleştirildiğinde, doku işleme yükseltme devre dışı bırakılır ve performans etkilenebilir."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR "Görüş Açısı"
 #define CORE_OPTION_NAME_FOG_LABEL_TR "Sis Efektleri"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TR "Hacim Değiştirici"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TR "Genellikle oyunlar tarafından nesne gölgeleri çizmek için kullanılan bir Dreamcast GPU özelliği. Bu normalde etkinleştirilmelidir - performansa olumsuz etkisi yok denilebilecek düzeydedir."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_TR "Eşyönsüz Filtreleme"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TR NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TR NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TR NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TR "Kameraya göre eğik görüş açılarında olan yüzeylerdeki dokuların kalitesini iyileştirin. Daha yüksek değerler GPU'da daha fazla talepkardır. Bu ayarda yapılan değişiklikler yalnızca yeniden başlatmanın ardından geçerlidir."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TR "Doku Filtreleme"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TR "Kullanılacak doku filtreleme kipi. Bu, Varsayılan'dan daha net (veya pürüzsüz) bir görünüm elde etmek için tüm dokularda belirli bir doku filtreleme kipini zorlamak için kullanılabilir. Varsayılan dışındaki değerler, çeşitli işleme sorunlarına neden olabilir. Bu ayarda yapılan değişiklikler yalnızca yeniden başlatmanın ardından geçerlidir."
+#define OPTION_VAL_1_TR "En Yakına Zorla"
+#define OPTION_VAL_2_TR "Doğrusala Zorla"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TR "Gecikmeli Kare Değişimi"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TR "Yanıp sönen ekranlardan veya sorunlu videolardan kaçınmak için kullanışlıdır. Yavaş platformlarda önerilmez."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TR "Kare Hızı Değişikliklerini Algıla"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TR "Dahili kare hızı değiştiğinde (örneğin, 60 fps'den 30 fps'ye) ön ucu bilgilendirin. Kilitli 30 fps veya 20 fps'de çalışan oyunlarda kare hızını iyileştirir, ancak kilitlenmemiş (dengesiz) kare hızlarına sahip oyunlar için devre dışı bırakılması gerekir (örn. Ecco the Dolphin, Unreal Tournament). Not: 'Otomatik Kare Atla' etkinleştirildiğinde kullanılamaz."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TR "PowerVR2 Rötuş Filtresi"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TR "PowerVR2 GPU'ya ve analog video sinyallerine özgü efektleri simüle etmek için işlenen görüntüyü son işlemden geçirin."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_TR "Doku Yükseltme (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TR "Elle çizilmiş 2B piksel sanatsal grafiklerini geliştirin. Yalnızca 2D piksel oyunlarla kullanılmalıdır."
-#define OPTION_VAL_2_TR NULL
+#define OPTION_VAL_2_O27_TR NULL
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_6_TR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TR "Doku Yükseltme Azami Filtre Boyutu"
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TR "İş Parçacığı İşleme"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR "Yerel Derinlik Enterpolasyonu"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR "AMD GPU'larda doku bozulması ve derinlik sorunlarına yardımcı olur. Bazı durumlarda Intel GPU'lara da yardımcı olabilir."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TR "Zorlu İşleme"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TR "GPU ve CPU'yu farklı iş parçacıklarında çalıştırır. Şiddetle tavsiye edilir."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TR "Kareyi Otomatik Atla"
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TR NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TR "Emulatör yavaş çalışırken kareleri otomatik olarak atlayın. Not: Bu ayar yalnızca 'Zorlu İşleme' etkinleştirildiğinde geçerlidir."
 #define OPTION_VAL_SOME_TR NULL
 #define OPTION_VAL_MORE_TR "Azami"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_TR "Kare Atlama"
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TR "Görüntülenen her kare arasında atlanacak kare sayısını ayarlar."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_TR "Geniş Ekran Hileleri (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_TR "Belirli oyunların geniş ekran biçiminde görüntülenmesine izin veren hileleri etkinleştirir."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_TR "Geniş Ekran Geliştirmesi"
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TR "Normal 4:3 en boy oranının dışına geometri çizin. Ortaya çıkan alanlarda grafiksel hatalara neden olabilir."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TR "GDROM Hızlı Yükleme (kusurlu)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TR "GD-ROM yüklemesini hızlandırır."
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
@@ -53912,8 +57564,10 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_30_TR "%30"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TR "Tetik Ölü Bölge"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TR "Dijital Tetikleyiciler"
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_TR NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_TR "Purupuru Paketi/Titreşim Paketi"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_TR "Kontrolcü için zorla titreşimi etkinleştirir."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TR "Yayın Dijital Çıkışları"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TR "TCP port 8000'de dijital çıkışları ve zorla geri bildirim durumunu yayınlayın. \"-output network\" MAME seçeneğiyle uyumludur."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TR "Light Gun Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TR "Light gun artı gösterge seçeneklerinin yapılandırılmasını etkinleştirin. NOT: Bu ayarın etkili olması için Hızlı Menü'nün değiştirilmesi gerekebilir."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 1 Görüntüle"
@@ -53929,7 +57583,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem dizininde bulunan 4 VMU kayıt dosyasını (A1, B1, C1, D1) paylaşır. 'VMU A1' ayarı, başlatılan her oyun için RetroArch kayıt dizininde benzersiz bir VMU 'A1' dosyası oluşturur. 'Tüm VMU'' ayarı, başlatılan her oyun için 4 benzersiz VMU dosyası (A1, B1, C1, D1) oluşturur."
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TR "Görsel Bellek Birimi/Sistem (VMU) Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TR "VMU Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TR "Taklit edilmiş VMU LCD ekran görünürlüğünün, boyutunun, konumunun ve renginin yapılandırılmasını etkinleştirin. NOT: Bu ayarın etkili olması için Hızlı Menü'nün değiştirilmesi gerekebilir."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_TR "VMU Ekranı 1 Görüntüle"
@@ -54140,6 +57794,49 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_TR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR,
       NULL,
@@ -54266,12 +57963,43 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR,
       NULL,
       "video",
       {
@@ -54341,10 +58069,39 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_TR },
+         { "1",  OPTION_VAL_1_TR },
+         { "2",  OPTION_VAL_2_TR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TR,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TR,
       NULL,
       "video",
       {
@@ -54378,7 +58135,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_TR },
+         { "2",  OPTION_VAL_2_O27_TR },
          { "4",  OPTION_VAL_4_TR },
          { "6",  OPTION_VAL_6_TR },
          { NULL, NULL },
@@ -54401,6 +58158,20 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TR,
@@ -54594,6 +58365,20 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TR,
       NULL,
@@ -54743,7 +58528,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -54894,7 +58679,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55045,7 +58830,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55196,7 +58981,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_TR },
-         { "2x", OPTION_VAL_2_TR },
+         { "2x", OPTION_VAL_2_O27_TR },
          { "3x", OPTION_VAL_3X_TR },
          { "4x", OPTION_VAL_4_TR },
          { "5x", OPTION_VAL_5X_TR },
@@ -55321,8 +59106,8 @@ struct retro_core_options_v2 options_tr = {
 #define CATEGORY_SYSTEM_INFO_0_UK NULL
 #define CATEGORY_VIDEO_LABEL_UK "Відео"
 #define CATEGORY_VIDEO_INFO_0_UK NULL
-#define CATEGORY_PERFORMANCE_LABEL_UK NULL
-#define CATEGORY_PERFORMANCE_INFO_0_UK NULL
+#define CATEGORY_PERFORMANCE_LABEL_UK "Продуктивність"
+#define CATEGORY_PERFORMANCE_INFO_0_UK "Налаштування потокового рендерингу та пропуску кадрів."
 #define CATEGORY_HACKS_LABEL_UK "Гаки емуляції"
 #define CATEGORY_HACKS_INFO_0_UK NULL
 #define CATEGORY_INPUT_LABEL_UK "Ввід"
@@ -55333,7 +59118,7 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_JAPAN_UK NULL
 #define OPTION_VAL_USA_UK NULL
 #define OPTION_VAL_EUROPE_UK NULL
-#define OPTION_VAL_DEFAULT_UK NULL
+#define OPTION_VAL_DEFAULT_UK "За замовчуванням"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_UK "Мова"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_UK NULL
 #define OPTION_VAL_JAPANESE_UK NULL
@@ -55343,44 +59128,50 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_SPANISH_UK NULL
 #define OPTION_VAL_ITALIAN_UK NULL
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_UK NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_UK NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_UK NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_UK NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_UK NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_UK NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_UK "Примусово використовувати BIOS високого рівня."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_UK "Завантаження в BIOS (потрібний перезапуск)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_UK "Завантаження безпосередньо в меню Dreamcast BIOS."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_UK "Увімкнути DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_UK "Увімкнути емуляцію аудіо DSP(цифровий процесор сигналів). Покращує точність згенерованого звуку, але збільшує вимоги до продуктивності."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_UK NULL
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_UK NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_UK NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_UK NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_UK NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_UK "Встановити NAOMI ігри для безкоштовної гри"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_UK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_UK NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_UK NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK "Роздільна здатність"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_UK "Змінити роздільну здатність візуалізації."
 #define OPTION_VAL_320X240_UK NULL
-#define OPTION_VAL_640X480_UK NULL
+#define OPTION_VAL_640X480_UK "640х480"
 #define OPTION_VAL_800X600_UK NULL
-#define OPTION_VAL_960X720_UK NULL
+#define OPTION_VAL_960X720_UK "960х720"
 #define OPTION_VAL_1024X768_UK NULL
 #define OPTION_VAL_1280X960_UK NULL
-#define OPTION_VAL_1440X1080_UK NULL
+#define OPTION_VAL_1440X1080_UK "1440х1080"
 #define OPTION_VAL_1600X1200_UK NULL
-#define OPTION_VAL_1920X1440_UK NULL
-#define OPTION_VAL_2560X1920_UK NULL
-#define OPTION_VAL_2880X2160_UK NULL
-#define OPTION_VAL_3200X2400_UK NULL
-#define OPTION_VAL_3840X2880_UK NULL
-#define OPTION_VAL_4480X3360_UK NULL
-#define OPTION_VAL_5120X3840_UK NULL
-#define OPTION_VAL_5760X4320_UK NULL
-#define OPTION_VAL_6400X4800_UK NULL
-#define OPTION_VAL_7040X5280_UK NULL
-#define OPTION_VAL_7680X5760_UK NULL
-#define OPTION_VAL_8320X6240_UK NULL
-#define OPTION_VAL_8960X6720_UK NULL
-#define OPTION_VAL_9600X7200_UK NULL
-#define OPTION_VAL_10240X7680_UK NULL
-#define OPTION_VAL_10880X8160_UK NULL
-#define OPTION_VAL_11520X8640_UK NULL
-#define OPTION_VAL_12160X9120_UK NULL
-#define OPTION_VAL_12800X9600_UK NULL
+#define OPTION_VAL_1920X1440_UK "1920х1440"
+#define OPTION_VAL_2560X1920_UK "2560х1920"
+#define OPTION_VAL_2880X2160_UK "2880х2160"
+#define OPTION_VAL_3200X2400_UK "3200х2400"
+#define OPTION_VAL_3840X2880_UK "3840х2880"
+#define OPTION_VAL_4480X3360_UK "4480х3360"
+#define OPTION_VAL_5120X3840_UK "5120х3840"
+#define OPTION_VAL_5760X4320_UK "5760х4320"
+#define OPTION_VAL_6400X4800_UK "6400х4800"
+#define OPTION_VAL_7040X5280_UK "7040х5280"
+#define OPTION_VAL_7680X5760_UK "7680х5760"
+#define OPTION_VAL_8320X6240_UK "8320х6240"
+#define OPTION_VAL_8960X6720_UK "8960х6720"
+#define OPTION_VAL_9600X7200_UK "9600х7200"
+#define OPTION_VAL_10240X7680_UK "10240х7680"
+#define OPTION_VAL_10880X8160_UK "10880х8160"
+#define OPTION_VAL_11520X8640_UK "11520х8640"
+#define OPTION_VAL_12160X9120_UK "12160х9120"
+#define OPTION_VAL_12800X9600_UK "12800х9600"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_UK NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_UK NULL
 #define OPTION_VAL_VGA_UK NULL
@@ -55392,42 +59183,55 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_PAL_N_UK NULL
 #define OPTION_VAL_PAL_M_UK NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_UK "Орієнтація екрану"
-#define OPTION_VAL_HORIZONTAL_UK NULL
-#define OPTION_VAL_VERTICAL_UK NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_UK NULL
+#define OPTION_VAL_HORIZONTAL_UK "Горизонтально"
+#define OPTION_VAL_VERTICAL_UK "Вертикально"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_UK "Альфа-Сортування"
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_UK NULL
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_UK NULL
 #define OPTION_VAL_PER_PIXEL_ACCURATE_UK NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_UK NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_UK NULL
-#define OPTION_VAL_512MB_UK NULL
-#define OPTION_VAL_1GB_UK NULL
-#define OPTION_VAL_2GB_UK NULL
-#define OPTION_VAL_4GB_UK NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_UK "Для коректного виводу можуть бути потрібні більші значення."
+#define OPTION_VAL_512MB_UK "512 МБ"
+#define OPTION_VAL_1GB_UK "1 ГБ"
+#define OPTION_VAL_2GB_UK "2 ГБ"
+#define OPTION_VAL_4GB_UK "4 ГБ"
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_UK NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_UK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_UK NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_UK NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_UK NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_UK NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_UK NULL
 #define CORE_OPTION_NAME_FOG_LABEL_UK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_UK NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_UK NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_UK NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_UK "Анізотропна фільтрація"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_UK NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_UK "Фільтрація текстур"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_UK NULL
+#define OPTION_VAL_1_UK NULL
+#define OPTION_VAL_2_UK NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_UK NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_UK NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_UK NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_UK NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_UK NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_UK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_UK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_UK NULL
-#define OPTION_VAL_2_UK NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_UK "Постобробка зображення для імітації ефектів відеоданих на PowerVR2 та аналогових відео сигналів."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_UK "Вдосконалення текстур (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_UK "Покращення графіки 2D пікселів. Має використовуватися лише з 2D піксельними іграми."
+#define OPTION_VAL_2_O27_UK NULL
 #define OPTION_VAL_4_UK NULL
 #define OPTION_VAL_6_UK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_UK NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_UK "Збільшення масштабу текстур. Відфільтрований розмір"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_UK NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_UK NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_UK NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_UK NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_UK NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_UK NULL
 #define OPTION_VAL_SOME_UK "Нормально"
 #define OPTION_VAL_MORE_UK NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_UK NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_UK "Пропуск кадрів"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_UK NULL
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_UK NULL
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_UK NULL
@@ -55449,6 +59253,8 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_UK NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_UK NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_UK NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_UK NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_UK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_UK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_UK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_UK NULL
@@ -55675,6 +59481,49 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_UK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_UK,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK,
       NULL,
@@ -55801,12 +59650,43 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_UK,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_UK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_UK,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_UK,
       NULL,
       "video",
       {
@@ -55876,10 +59756,39 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_UK,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_UK },
+         { "1",  OPTION_VAL_1_UK },
+         { "2",  OPTION_VAL_2_UK },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_UK,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_UK,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_UK,
       NULL,
       "video",
       {
@@ -55913,7 +59822,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_UK },
+         { "2",  OPTION_VAL_2_O27_UK },
          { "4",  OPTION_VAL_4_UK },
          { "6",  OPTION_VAL_6_UK },
          { NULL, NULL },
@@ -55936,6 +59845,20 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_UK,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_UK,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_UK,
@@ -56129,6 +60052,20 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_UK,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_UK,
       NULL,
@@ -56278,7 +60215,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -56429,7 +60366,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -56580,7 +60517,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -56731,7 +60668,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_UK },
-         { "2x", OPTION_VAL_2_UK },
+         { "2x", OPTION_VAL_2_O27_UK },
          { "3x", OPTION_VAL_3X_UK },
          { "4x", OPTION_VAL_4_UK },
          { "5x", OPTION_VAL_5X_UK },
@@ -56852,8 +60789,8 @@ struct retro_core_options_v2 options_uk = {
 
 /* RETRO_LANGUAGE_VAL */
 
-#define CATEGORY_SYSTEM_LABEL_VAL NULL
-#define CATEGORY_SYSTEM_INFO_0_VAL NULL
+#define CATEGORY_SYSTEM_LABEL_VAL "Sistema"
+#define CATEGORY_SYSTEM_INFO_0_VAL "Configura regió, llengua, BIOS i ajustos de maquinari."
 #define CATEGORY_VIDEO_LABEL_VAL "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_VAL NULL
 #define CATEGORY_PERFORMANCE_LABEL_VAL NULL
@@ -56864,12 +60801,12 @@ struct retro_core_options_v2 options_uk = {
 #define CATEGORY_INPUT_INFO_0_VAL NULL
 #define CATEGORY_VMU_LABEL_VAL NULL
 #define CATEGORY_VMU_INFO_0_VAL NULL
-#define CORE_OPTION_NAME_REGION_LABEL_VAL NULL
+#define CORE_OPTION_NAME_REGION_LABEL_VAL "Regió"
 #define OPTION_VAL_JAPAN_VAL NULL
 #define OPTION_VAL_USA_VAL NULL
 #define OPTION_VAL_EUROPE_VAL NULL
 #define OPTION_VAL_DEFAULT_VAL NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_VAL NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_VAL "Llengua"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_VAL NULL
 #define OPTION_VAL_JAPANESE_VAL NULL
 #define OPTION_VAL_ENGLISH_VAL NULL
@@ -56887,35 +60824,41 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VAL NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_VAL NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VAL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VAL NULL
-#define OPTION_VAL_320X240_VAL NULL
-#define OPTION_VAL_640X480_VAL NULL
-#define OPTION_VAL_800X600_VAL NULL
-#define OPTION_VAL_960X720_VAL NULL
-#define OPTION_VAL_1024X768_VAL NULL
-#define OPTION_VAL_1280X960_VAL NULL
-#define OPTION_VAL_1440X1080_VAL NULL
-#define OPTION_VAL_1600X1200_VAL NULL
-#define OPTION_VAL_1920X1440_VAL NULL
-#define OPTION_VAL_2560X1920_VAL NULL
-#define OPTION_VAL_2880X2160_VAL NULL
-#define OPTION_VAL_3200X2400_VAL NULL
-#define OPTION_VAL_3840X2880_VAL NULL
-#define OPTION_VAL_4480X3360_VAL NULL
-#define OPTION_VAL_5120X3840_VAL NULL
-#define OPTION_VAL_5760X4320_VAL NULL
-#define OPTION_VAL_6400X4800_VAL NULL
-#define OPTION_VAL_7040X5280_VAL NULL
-#define OPTION_VAL_7680X5760_VAL NULL
-#define OPTION_VAL_8320X6240_VAL NULL
-#define OPTION_VAL_8960X6720_VAL NULL
-#define OPTION_VAL_9600X7200_VAL NULL
-#define OPTION_VAL_10240X7680_VAL NULL
-#define OPTION_VAL_10880X8160_VAL NULL
-#define OPTION_VAL_11520X8640_VAL NULL
-#define OPTION_VAL_12160X9120_VAL NULL
-#define OPTION_VAL_12800X9600_VAL NULL
+#define OPTION_VAL_320X240_VAL "320×240"
+#define OPTION_VAL_640X480_VAL "640×480"
+#define OPTION_VAL_800X600_VAL "800×600"
+#define OPTION_VAL_960X720_VAL "960×720"
+#define OPTION_VAL_1024X768_VAL "1024×768"
+#define OPTION_VAL_1280X960_VAL "1280×960"
+#define OPTION_VAL_1440X1080_VAL "1440×1080"
+#define OPTION_VAL_1600X1200_VAL "1600×1200"
+#define OPTION_VAL_1920X1440_VAL "1920×1440"
+#define OPTION_VAL_2560X1920_VAL "2560×1920"
+#define OPTION_VAL_2880X2160_VAL "2880×2160"
+#define OPTION_VAL_3200X2400_VAL "3200×2400"
+#define OPTION_VAL_3840X2880_VAL "3840×2880"
+#define OPTION_VAL_4480X3360_VAL "4480×3360"
+#define OPTION_VAL_5120X3840_VAL "5120×3840"
+#define OPTION_VAL_5760X4320_VAL "5760×4320"
+#define OPTION_VAL_6400X4800_VAL "6400×4800"
+#define OPTION_VAL_7040X5280_VAL "7040×5280"
+#define OPTION_VAL_7680X5760_VAL "7680×5760"
+#define OPTION_VAL_8320X6240_VAL "8320×6240"
+#define OPTION_VAL_8960X6720_VAL "8960×6720"
+#define OPTION_VAL_9600X7200_VAL "9600×7200"
+#define OPTION_VAL_10240X7680_VAL "10240×7680"
+#define OPTION_VAL_10880X8160_VAL "10880×8160"
+#define OPTION_VAL_11520X8640_VAL "11520×8640"
+#define OPTION_VAL_12160X9120_VAL "12160×9120"
+#define OPTION_VAL_12800X9600_VAL "12800×9600"
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_VAL NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_VAL NULL
 #define OPTION_VAL_VGA_VAL NULL
@@ -56926,7 +60869,7 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_PAL_VAL NULL
 #define OPTION_VAL_PAL_N_VAL NULL
 #define OPTION_VAL_PAL_M_VAL NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_VAL NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_VAL "Orientació de pantalla"
 #define OPTION_VAL_HORIZONTAL_VAL NULL
 #define OPTION_VAL_VERTICAL_VAL NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_VAL NULL
@@ -56939,23 +60882,36 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_1GB_VAL NULL
 #define OPTION_VAL_2GB_VAL NULL
 #define OPTION_VAL_4GB_VAL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VAL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VAL NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VAL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_FOG_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_VAL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VAL NULL
+#define OPTION_VAL_1_VAL NULL
+#define OPTION_VAL_2_VAL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_VAL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VAL NULL
-#define OPTION_VAL_2_VAL NULL
+#define OPTION_VAL_2_O27_VAL NULL
 #define OPTION_VAL_4_VAL NULL
 #define OPTION_VAL_6_VAL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VAL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VAL NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_VAL NULL
@@ -56984,6 +60940,8 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_VAL NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VAL NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VAL NULL
@@ -57210,6 +61168,49 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VAL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VAL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_VAL,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VAL,
       NULL,
@@ -57336,12 +61337,43 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VAL,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VAL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VAL,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VAL,
       NULL,
       "video",
       {
@@ -57411,10 +61443,39 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VAL,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_VAL },
+         { "1",  OPTION_VAL_1_VAL },
+         { "2",  OPTION_VAL_2_VAL },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VAL,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VAL,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VAL,
       NULL,
       "video",
       {
@@ -57448,7 +61509,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_VAL },
+         { "2",  OPTION_VAL_2_O27_VAL },
          { "4",  OPTION_VAL_4_VAL },
          { "6",  OPTION_VAL_6_VAL },
          { NULL, NULL },
@@ -57471,6 +61532,20 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VAL,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VAL,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VAL,
@@ -57664,6 +61739,20 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VAL,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VAL,
       NULL,
@@ -57813,7 +61902,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -57964,7 +62053,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58115,7 +62204,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58266,7 +62355,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VAL },
-         { "2x", OPTION_VAL_2_VAL },
+         { "2x", OPTION_VAL_2_O27_VAL },
          { "3x", OPTION_VAL_3X_VAL },
          { "4x", OPTION_VAL_4_VAL },
          { "5x", OPTION_VAL_5X_VAL },
@@ -58393,18 +62482,18 @@ struct retro_core_options_v2 options_val = {
 #define CATEGORY_VIDEO_INFO_0_VN NULL
 #define CATEGORY_PERFORMANCE_LABEL_VN NULL
 #define CATEGORY_PERFORMANCE_INFO_0_VN NULL
-#define CATEGORY_HACKS_LABEL_VN NULL
+#define CATEGORY_HACKS_LABEL_VN "Hacks giả lập"
 #define CATEGORY_HACKS_INFO_0_VN NULL
 #define CATEGORY_INPUT_LABEL_VN "Input Driver"
 #define CATEGORY_INPUT_INFO_0_VN NULL
 #define CATEGORY_VMU_LABEL_VN NULL
 #define CATEGORY_VMU_INFO_0_VN NULL
-#define CORE_OPTION_NAME_REGION_LABEL_VN NULL
+#define CORE_OPTION_NAME_REGION_LABEL_VN "Khu vực"
 #define OPTION_VAL_JAPAN_VN NULL
 #define OPTION_VAL_USA_VN NULL
 #define OPTION_VAL_EUROPE_VN NULL
 #define OPTION_VAL_DEFAULT_VN NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_VN NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_VN "Ngôn ngữ"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_VN NULL
 #define OPTION_VAL_JAPANESE_VN "Tiếng Nhật"
 #define OPTION_VAL_ENGLISH_VN "Tiếng Anh"
@@ -58422,6 +62511,12 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_VN NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_VN NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_VN NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_VN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VN NULL
 #define OPTION_VAL_320X240_VN NULL
@@ -58474,23 +62569,36 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_1GB_VN NULL
 #define OPTION_VAL_2GB_VN NULL
 #define OPTION_VAL_4GB_VN NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VN NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN NULL
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VN NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_VN NULL
 #define CORE_OPTION_NAME_FOG_LABEL_VN NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_VN NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_VN NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_VN NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_VN NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VN NULL
+#define OPTION_VAL_1_VN NULL
+#define OPTION_VAL_2_VN NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VN NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_VN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VN NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_VN NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_VN NULL
-#define OPTION_VAL_2_VN NULL
+#define OPTION_VAL_2_O27_VN NULL
 #define OPTION_VAL_4_VN NULL
 #define OPTION_VAL_6_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VN NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VN NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VN NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VN NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_VN NULL
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_VN NULL
@@ -58519,6 +62627,8 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_VN NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_VN NULL
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_VN NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VN NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VN NULL
@@ -58745,6 +62855,49 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_VN,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
       CORE_OPTION_NAME "_internal_resolution",
       CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VN,
       NULL,
@@ -58871,12 +63024,43 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       },
       "512MB",
    },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VN,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
 #endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {/* TODO: needs explanation */
       CORE_OPTION_NAME "_enable_rttb",
       CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VN,
       NULL,
-      "",
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN,
       NULL,
       "video",
       {
@@ -58946,10 +63130,39 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "4",
    },
    {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VN,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_VN },
+         { "1",  OPTION_VAL_1_VN },
+         { "2",  OPTION_VAL_2_VN },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VN,
       NULL,
       CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VN,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VN,
       NULL,
       "video",
       {
@@ -58983,7 +63196,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "video",
       {
          { "1", "disabled" },
-         { "2",  OPTION_VAL_2_VN },
+         { "2",  OPTION_VAL_2_O27_VN },
          { "4",  OPTION_VAL_4_VN },
          { "6",  OPTION_VAL_6_VN },
          { NULL, NULL },
@@ -59006,6 +63219,20 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "256",
    },
 #endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VN,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VN,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
    {
       CORE_OPTION_NAME "_threaded_rendering",
       CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VN,
@@ -59199,6 +63426,20 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "enabled",
    },
    {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_lightgun_settings",
       CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN,
       NULL,
@@ -59348,7 +63589,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -59499,7 +63740,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -59650,7 +63891,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },
@@ -59801,7 +64042,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "vmu",
       {
          { "1x", OPTION_VAL_1X_VN },
-         { "2x", OPTION_VAL_2_VN },
+         { "2x", OPTION_VAL_2_O27_VN },
          { "3x", OPTION_VAL_3X_VN },
          { "4x", OPTION_VAL_4_VN },
          { "5x", OPTION_VAL_5X_VN },

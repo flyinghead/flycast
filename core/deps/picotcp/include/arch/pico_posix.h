@@ -24,6 +24,8 @@
    #define TIME_PRESCALE
    #define PICO_SUPPORT_THREADING
  */
+#define PICO_SUPPORT_THREADING
+
 #if defined(NDEBUG) && !defined(DEBUGFAST)
 #define dbg(...)
 #else
@@ -127,6 +129,7 @@ static inline uint32_t PICO_TIME_MS(void)
 extern void *pico_mutex_init(void);
 extern void pico_mutex_lock(void *mux);
 extern void pico_mutex_unlock(void *mux);
+extern void pico_mutex_deinit(void *mux);
 
 /* semaphore implementations (only used in wrapper code) */
 extern void *pico_sem_init(void);

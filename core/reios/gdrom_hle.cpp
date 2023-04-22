@@ -16,6 +16,7 @@
 #include "hw/holly/holly_intc.h"
 #include "reios.h"
 #include "imgread/common.h"
+#include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
 
@@ -347,6 +348,7 @@ static void GD_HLE_Command(gd_command cc)
 		break;
 
 	case GDCC_PLAY:
+		if (libGDR_GetDiscType() != Open && libGDR_GetDiscType() != NoDisk)
 		{
 			u32 first_track = gd_hle_state.params[0];
 			u32 last_track = gd_hle_state.params[1];
@@ -363,6 +365,12 @@ static void GD_HLE_Command(gd_command cc)
 					|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
 				cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 			SecNumber.Status = GD_PLAY;
+		}
+		else
+		{
+			gd_hle_state.status = GDC_ERR;
+			cdda.status = cdda_t::NoInfo;
+			SecNumber.Status = GD_STANDBY;
 		}
 		break;
 
@@ -716,7 +724,7 @@ void gdrom_hle_op()
 			//	r4 = request id
 			//
 			// Returns: GDC_OK, GDC_ERR
-			WARN_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND req id%x", r[4]);
+			INFO_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND req id%x", r[4]);
 			if (r[4] == gd_hle_state.last_request_id
 					&& (gd_hle_state.status == GDC_CONTINUE || gd_hle_state.status == GDC_BUSY || gd_hle_state.status == GDC_COMPLETE))
 			{

@@ -8,6 +8,7 @@
 #if defined(__APPLE__) || defined(_WIN32)
 #pragma once
 
+#include "../rend/TexCache.h"
 #include "../rend/CustomTexture.h"
 
 class GdxsvCustomTexture : public CustomTexture {

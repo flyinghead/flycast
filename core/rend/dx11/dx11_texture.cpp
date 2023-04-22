@@ -94,6 +94,10 @@ void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, 
 			viewDesc.Texture2D.MipLevels = desc.MipLevels == 0 ? -1 : desc.MipLevels;
 			theDX11Context.getDevice()->CreateShaderResourceView(texture, &viewDesc, &textureView.get());
 		}
+		else
+		{
+			ERROR_LOG(RENDERER, "Texture creation failed type %d dim %dx%d mipmap %d (included %d)", tex_type, width, height, mipmapped, mipmapsIncluded);
+		}
 		verify(texture != nullptr);
 		verify(textureView != nullptr);
 	}
@@ -112,6 +116,8 @@ void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, 
 #ifndef TARGET_UWP
 bool DX11Texture::Force32BitTexture(TextureType type) const
 {
+	if (!theDX11Context.textureFormatSupported(type))
+		return true;
 	if (IsWindows8OrGreater())
 		return false;
 	// DXGI_FORMAT_B5G5R5A1_UNORM, DXGI_FORMAT_B4G4R4A4_UNORM and DXGI_FORMAT_B5G6R5_UNORM

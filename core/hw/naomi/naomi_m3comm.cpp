@@ -30,6 +30,8 @@
 #include "hw/sh4/sh4_mem.h"
 #include "network/naomi_network.h"
 #include "emulator.h"
+#include "rend/gui.h"
+
 #include <chrono>
 #include <memory>
 
@@ -51,10 +53,12 @@ struct CommBoardStat
 	u16 dummy[7];
 };
 
+#if !defined(__OpenBSD__)
 static inline u16 swap16(u16 w)
 {
 	return (w >> 8) | (w << 8);
 }
+#endif
 
 static void vblankCallback(Event event, void *param) {
 	((NaomiM3Comm *)param)->vblank();

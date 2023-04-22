@@ -27,7 +27,6 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.AudioBackend;
 import com.reicast.emulator.emu.HttpClient;
 import com.reicast.emulator.emu.JNIdc;
@@ -80,7 +79,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();
         }
@@ -91,6 +89,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         Emulator.setCurrentActivity(this);
 
         OuyaController.init(this);
+        new HttpClient().nativeInit();
 
         String home_directory = prefs.getString(Config.pref_home, "");
         String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), home_directory,
@@ -115,7 +114,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         }
         Log.i("flycast", "Environment initialized");
         installButtons();
-        new HttpClient().nativeInit();
         setStorageDirectories();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !storagePermissionGranted) {
@@ -408,25 +406,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
     // Called from native code
-    protected void generateErrorLog() {
-        try {
-            new GenerateLogs(this).execute(getFilesDir().getAbsolutePath());
-		} catch (RuntimeException e) {
-            AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("An error occurred retrieving the log file:\n\n"
-                    + e.getMessage());
-            dlgAlert.setTitle("Flycast Error");
-            dlgAlert.setPositiveButton("Ok",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog,int id) {
-                            dialog.cancel();
-                        }
-                    });
-            dlgAlert.setIcon(android.R.drawable.ic_dialog_info);
-            dlgAlert.setCancelable(false);
-            dlgAlert.create().show();
-		}
+    public void onGameStateChange(boolean started) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                if (started)
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                else
+                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+        });
     }
 
     private static native void register(BaseGLActivity activity);

@@ -90,8 +90,6 @@ const int AICA_TICK = 145125;	// 44.1 KHz / 32
 static int AicaUpdate(int tag, int c, int j)
 {
 	aicaarm::run(32);
-	if (!settings.aica.NoBatch)
-		AICA_Sample32();
 
 	return AICA_TICK;
 }
@@ -106,8 +104,7 @@ void libAICA_TimeStep()
 	SCIPD->SAMPLE_DONE = 1;
 	MCIPD->SAMPLE_DONE = 1;
 
-	if (settings.aica.NoBatch)
-		AICA_Sample();
+	AICA_Sample();
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
@@ -169,27 +166,23 @@ static void AicaInternalDMA()
 template<typename T>
 void WriteAicaReg(u32 reg, T data)
 {
-	constexpr size_t sz = sizeof(T);
 	switch (reg)
 	{
 	case SCIPD_addr:
-		verify(sz!=1);
 		// other bits are read-only
-		if (data & (1<<5))
+		if (data & (1 << 5))
 		{
-			SCIPD->SCPU=1;
+			SCIPD->SCPU = 1;
 			update_arm_interrupts();
 		}
 		break;
 
 	case SCIRE_addr:
-		verify(sz != 1);
-		SCIPD->full &= ~data /*& SCIEB->full)*/;	//is the & SCIEB->full needed ? doesn't seem like it
+		SCIPD->full &= ~data;
 		update_arm_interrupts();
 		break;
 
 	case MCIPD_addr:
-		verify(sz != 1);
 		// other bits are read-only
 		if (data & (1 << 5))
 		{
@@ -200,7 +193,6 @@ void WriteAicaReg(u32 reg, T data)
 		break;
 
 	case MCIRE_addr:
-		verify(sz != 1);
 		MCIPD->full &= ~data;
 		UpdateSh4Ints();
 		break;

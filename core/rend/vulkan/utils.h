@@ -89,7 +89,7 @@ static const char GouraudSource[] = R"(
 class VulkanSource : public ShaderSource
 {
 public:
-	VulkanSource() : ShaderSource("#version 450") {}
+	VulkanSource() : ShaderSource("#version 430") {}
 };
 
 

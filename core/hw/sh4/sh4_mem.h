@@ -6,7 +6,7 @@
 extern VArray2 mem_b;
 
 #include "hw/mem/_vmem.h"
-#include "modules/mmu.h"
+#include "sh4_if.h"
 
 #ifdef _MSC_VER
 	typedef u8 (DYNACALL *ReadMem8Func)(u32 addr);

@@ -158,6 +158,10 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 		disc->tracks.push_back(t);
 	}
 
+	if (disc->tracks.size() < 3) {
+		delete disc;
+		throw FlycastException("GDI parse error: less than 3 tracks");
+	}
 	disc->FillGDSession();
 	if (digest != nullptr)
 		*digest = md5.getDigest();

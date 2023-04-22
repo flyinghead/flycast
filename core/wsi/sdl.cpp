@@ -84,6 +84,8 @@ bool SDLGLGraphicsContext::init()
 	float hdpi, vdpi;
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWindow), nullptr, &hdpi, &vdpi))
 		settings.display.dpi = roundf(std::max(hdpi, vdpi));
+	
+	sdl_fix_steamdeck_dpi(sdlWindow);
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 

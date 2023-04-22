@@ -8,12 +8,14 @@ import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.DisplayCutout;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.periph.InputDeviceManager;
@@ -27,7 +29,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         vjoyDelegate.restoreCustomVjoyValues(vjoy_d_cached);
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public NativeGLView(Context context) {
         this(context, null);
     }
@@ -35,7 +36,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public NativeGLView(final Context context, AttributeSet attrs) {
         super(context, attrs);
         getHolder().addCallback(this);
-        setKeepScreenOn(true);
         setFocusable(true);
         setFocusableInTouchMode(true);
         requestFocus();
@@ -53,11 +53,22 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
                 }
             });
         }
-        vjoyDelegate = new VirtualJoystickDelegate(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         this.setLayerType(LAYER_TYPE_HARDWARE, null);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        vjoyDelegate = new VirtualJoystickDelegate(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        vjoyDelegate.stop();
     }
 
     @Override
@@ -66,8 +77,17 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         super.onLayout(changed, left, top, right, bottom);
         vjoyDelegate.layout(getWidth(), getHeight());
         DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
-        Log.i("flycast", "Display density: " + dm.xdpi + " x " + dm.ydpi + " dpi. Refresh rate: " + getDisplay().getRefreshRate());
-        JNIdc.screenCharacteristics(Math.max(dm.xdpi, dm.ydpi), getDisplay().getRefreshRate());
+
+        Display d;
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
+            WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+            d = wm.getDefaultDisplay();
+        } else {
+            d = getDisplay();
+        }
+
+        Log.i("flycast", "Display density: " + dm.xdpi + " x " + dm.ydpi + " dpi. Refresh rate: " + d.getRefreshRate());
+        JNIdc.screenCharacteristics(Math.max(dm.xdpi, dm.ydpi), d.getRefreshRate());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // Get the display cutouts if any
             WindowInsets insets = getRootWindowInsets();

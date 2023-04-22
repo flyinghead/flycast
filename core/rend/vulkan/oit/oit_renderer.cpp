@@ -38,7 +38,7 @@ public:
 			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 			screenDrawer.SetCommandPool(&texCommandPool);
 			BaseInit(screenDrawer.GetRenderPass(), 2);
-
+			emulateFramebuffer = config::EmulateFramebuffer;
 
 			return true;
 		}
@@ -49,15 +49,6 @@ public:
 		return false;
 	}
 
-	void Resize(int w, int h) override
-	{
-		if ((u32)w == viewport.width && (u32)h == viewport.height)
-			return;
-		BaseVulkanRenderer::Resize(w, h);
-		GetContext()->WaitIdle();
-		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
-	}
-
 	void Term() override
 	{
 		DEBUG_LOG(RENDERER, "OITVulkanRenderer::Term");
@@ -65,22 +56,35 @@ public:
 		screenDrawer.Term();
 		textureDrawer.Term();
 		oitBuffers.Term();
+		oitShaderManager.term();
+		samplerManager.term();
 		BaseVulkanRenderer::Term();
 	}
 
 	bool Render() override
 	{
 		try {
+			if (emulateFramebuffer != config::EmulateFramebuffer)
+			{
+				VulkanContext::Instance()->WaitIdle();
+				screenDrawer.Term();
+				screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
+				BaseInit(screenDrawer.GetRenderPass(), 2);
+				emulateFramebuffer = config::EmulateFramebuffer;
+			}
 			OITDrawer *drawer;
 			if (pvrrc.isRTT)
 				drawer = &textureDrawer;
-			else
+			else {
+				resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 				drawer = &screenDrawer;
+			}
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
 #ifdef LIBRETRO
 			if (!pvrrc.isRTT)
-				overlay->Draw(screenDrawer.GetCurrentCommandBuffer(), viewport, (int)config::RenderResolution / 480.f, true, true);
+				overlay->Draw(screenDrawer.GetCurrentCommandBuffer(), viewport,
+						config::EmulateFramebuffer ? 1 : (int)config::RenderResolution / 480.f, true, true);
 #endif
 
 			drawer->EndFrame();
@@ -96,7 +100,20 @@ public:
 
 	bool Present() override
 	{
-		return screenDrawer.PresentFrame();
+		if (config::EmulateFramebuffer || framebufferRendered)
+			return presentFramebuffer();
+		else
+			return screenDrawer.PresentFrame();
+	}
+
+protected:
+	void resize(int w, int h) override
+	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
+		BaseVulkanRenderer::resize(w, h);
+		GetContext()->WaitIdle();
+		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 	}
 
 private:
@@ -105,6 +122,7 @@ private:
 	OITShaderManager oitShaderManager;
 	OITScreenDrawer screenDrawer;
 	OITTextureDrawer textureDrawer;
+	bool emulateFramebuffer = false;
 };
 
 Renderer* rend_OITVulkan()

@@ -18,47 +18,6 @@
 */
 #pragma once
 #include "vulkan_context.h"
-#include <array>
-
-template<int Size>
-class DescSetAlloc
-{
-public:
-	void setLayout(vk::DescriptorSetLayout layout) {
-		this->layout = layout;
-	}
-	void setAllocChunk(int size) {
-		this->allocChunk = size;
-	}
-
-	void nextFrame()
-	{
-		index = (index + 1) % Size;
-		for (auto& descset : descSetsInFlight[index])
-			descSets.emplace_back(std::move(descset));
-		descSetsInFlight[index].clear();
-	}
-
-	vk::DescriptorSet alloc()
-	{
-		if (descSets.empty())
-		{
-			std::vector<vk::DescriptorSetLayout> layouts(allocChunk, layout);
-			descSets = VulkanContext::Instance()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(VulkanContext::Instance()->GetDescriptorPool(), layouts));
-		}
-		descSetsInFlight[index].emplace_back(std::move(descSets.back()));
-		descSets.pop_back();
-		return *descSetsInFlight[index].back();
-	}
-
-private:
-	vk::DescriptorSetLayout layout;
-	std::vector<vk::UniqueDescriptorSet> descSets;
-	std::array<std::vector<vk::UniqueDescriptorSet>, Size> descSetsInFlight;
-	int index = 0;
-	int allocChunk = 10;
-};
 
 class DynamicDescSetAlloc
 {

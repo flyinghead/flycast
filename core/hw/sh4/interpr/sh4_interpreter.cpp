@@ -10,10 +10,8 @@
 #include "../sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "../sh4_sched.h"
-#include "hw/holly/sb.h"
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
-#include "emulator.h"
 
 #define CPU_RATIO      (8)
 
@@ -47,72 +45,6 @@ static void Sh4_int_Run()
 			try {
 				do
 				{
-					if (emu.running()) {
-						switch (next_pc)
-						{
-							case 0xaC010000:
-								NOTICE_LOG(COMMON, "HI, we are at 1ST_READ.BIN entry 0x%08x", next_pc);
-								emu.stop();
-								throw debugger::Stop();
-							
-							// case 0x8c053ba6:
-							// 	NOTICE_LOG(COMMON, "gdFsOpen: %s, called from 0x%08x", GetMemPtr(r[4], 0), pr);
-							// 	break;
-
-							// case 0x8c0532ac:
-							// 	NOTICE_LOG(COMMON, "gdFsChangeDir: %s", GetMemPtr(r[4], 0));
-							// 	break;
-							
-							// case 0x8c014b26:
-							// {
-							// 	u32 taskAddress = *((u32 *) GetMemPtr(r[15] + 8, 0));
-							// 	auto it = knownTasks.find(taskAddress);
-							// 	if (it != knownTasks.end()) {
-							// 		NOTICE_LOG(COMMON, "pushTask() %s", it->second.c_str());
-							// 	} else {
-							// 		NOTICE_LOG(COMMON, "pushTask() task: 0x%08x", taskAddress);
-							// 	}
-
-							// 	break;
-							// }
-
-							// case 0x8c014b66:
-							// {
-							// 	auto it = knownTasks.find(r[5]);
-							// 	if (it != knownTasks.end()) {
-							// 		NOTICE_LOG(COMMON, "freeTask() %s", it->second.c_str());
-							// 	} else {
-							// 		if (r[4] != 0x8c1ba428) {
-							// 			NOTICE_LOG(COMMON, "freeTask() task: 0x%08x", r[4]);
-							// 		}
-							// 	}
-
-							// 	break;
-							// }
-
-							// case 0x8c022ccc:
-							// {
-							// 	NOTICE_LOG(COMMON, "Bus r4 is 0x%08x\n", r[4]);
-							// 	break;
-							// }
-
-							default:
-								break;
-						}
-						// if (next_pc == 0xaC010000) {
-						// 	NOTICE_LOG(COMMON, "HI, we are at 1ST_READ.BIN entry 0x%08X", next_pc);
-						// 	emu.stop();
-						// 	throw debugger::Stop();
-						// } else if (next_pc == 0x8c053ba6) {
-						// 	NOTICE_LOG(COMMON, "gdFsOpen: %s, called from 0x%08X", GetMemPtr(r[4], 0), pr);
-						// } else if (next_pc == 0x8c0532ac) {
-						// 	NOTICE_LOG(COMMON, "gdFsChangeDir: %s", GetMemPtr(r[4], 0));
-						// }
-						// else if (next_pc == 0x8c0533ee) {
-						// 	NOTICE_LOG(COMMON, "gdFsRead: dest = %08X", r[6]);
-						// }
-					}
-
 					u32 op = ReadNexOp();
 
 					ExecuteOpcode(op);

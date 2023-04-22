@@ -51,6 +51,8 @@ void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
 #if defined(_WIN32) || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *ARM7_TCB;
+#elif defined(__OpenBSD__)
+alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".openbsd.mutable")));
 #elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
@@ -340,7 +342,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 			{
 				// LDR/STR w pc-based offset and write-back
 				op.flags |= ArmOp::OP_SETS_PC;
-				// TODO not supported
+				// Invalid: Write-back must not be specified if R15 is used as the base register
 				op.op_type = ArmOp::FALLBACK;
 				op.arg[0] = ArmOp::Operand(opcode);
 				op.arg[1] = ArmOp::Operand();
@@ -368,8 +370,13 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				op.arg[1].shift_value = bits.shift_imm;
 				if (op.arg[1].getReg().armreg == RN_PC)
 				{
-					verify(op.arg[1].shift_value == 0 && op.arg[1].shift_type == ArmOp::LSL);
-					op.arg[1] = ArmOp::Operand(arm_pc + 8);
+					// Invalid: r15 cannot be used as the offset register
+					op.op_type = ArmOp::FALLBACK;
+					op.arg[0] = ArmOp::Operand(opcode);
+					op.arg[1] = ArmOp::Operand();
+					op.arg[2] = ArmOp::Operand();
+					op.cycles = 0;
+					return op;
 				}
 				if (op.arg[1].shift_type == ArmOp::RRX && op.arg[1].shift_value == 0)
 					op.flags |= ArmOp::OP_READS_FLAGS;
@@ -668,10 +675,11 @@ void flush()
 void init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
+	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
 #else
-	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
+	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
 #endif
+	verify(rc);
 
 	icPtr = ICache;
 

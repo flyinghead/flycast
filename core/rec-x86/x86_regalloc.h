@@ -19,9 +19,11 @@
 #pragma once
 #include "hw/sh4/dyna/ssa_regalloc.h"
 
+#define ALLOC_F64 false
+
 class X86Compiler;
 
-struct X86RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
+struct X86RegAlloc : RegAlloc<Xbyak::Operand::Code, s8, ALLOC_F64>
 {
 	X86RegAlloc(X86Compiler *compiler) : compiler(compiler) {}
 
@@ -40,9 +42,9 @@ struct X86RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 		return Xbyak::Reg32(ereg);
 	}
 
-	Xbyak::Xmm MapXRegister(const shil_param& param)
+	Xbyak::Xmm MapXRegister(const shil_param& param, int index = 0)
 	{
-		s8 ereg = mapf(param);
+		s8 ereg = mapf(param, index);
 		if (ereg == -1)
 			die("VRegister not allocated");
 		return Xbyak::Xmm(ereg);

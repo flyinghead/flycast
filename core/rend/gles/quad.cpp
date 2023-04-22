@@ -48,7 +48,9 @@ void main()
 static GLuint shader;
 static GLuint rot90shader;
 static GLuint quadVertexArray;
+static GLuint quadVertexArraySwapY;
 static GLuint quadBuffer;
+static GLuint quadBufferSwapY;
 static GLuint quadIndexBuffer;
 
 static void setupVertexAttribs()
@@ -87,8 +89,13 @@ void initQuad()
 		glUniform1i(tex, 0);	// texture 0
 	}
 #ifndef GLES2
-	if (quadVertexArray == 0 && gl.gl_major >= 3)
-		glGenVertexArrays(1, &quadVertexArray);
+	if (gl.gl_major >= 3)
+	{
+		if (quadVertexArray == 0)
+			glGenVertexArrays(1, &quadVertexArray);
+		if (quadVertexArraySwapY == 0)
+			glGenVertexArrays(1, &quadVertexArraySwapY);
+	}
 #endif
 	if (quadIndexBuffer == 0)
 	{
@@ -101,6 +108,14 @@ void initQuad()
 	if (quadBuffer == 0)
 	{
 		glGenBuffers(1, &quadBuffer);
+		float vertices[4][5] = {
+			{ -1.f,  1.f, 1.f, 0.f, 1.f },
+			{ -1.f, -1.f, 1.f, 0.f, 0.f },
+			{  1.f,  1.f, 1.f, 1.f, 1.f },
+			{  1.f, -1.f, 1.f, 1.f, 0.f },
+		};
+		glBindBuffer(GL_ARRAY_BUFFER, quadBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 #ifndef GLES2
 		if (gl.gl_major >= 3)
 		{
@@ -109,10 +124,34 @@ void initQuad()
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
 			setupVertexAttribs();
 			bindVertexArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 #endif
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	if (quadBufferSwapY == 0)
+	{
+		glGenBuffers(1, &quadBufferSwapY);
+		float vertices[4][5] = {
+			{ -1.f,  1.f, 1.f, 0.f, 0.f },
+			{ -1.f, -1.f, 1.f, 0.f, 1.f },
+			{  1.f,  1.f, 1.f, 1.f, 0.f },
+			{  1.f, -1.f, 1.f, 1.f, 1.f },
+		};
+		glBindBuffer(GL_ARRAY_BUFFER, quadBufferSwapY);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+#ifndef GLES2
+		if (gl.gl_major >= 3)
+		{
+			bindVertexArray(quadVertexArraySwapY);
+			glBindBuffer(GL_ARRAY_BUFFER, quadBufferSwapY);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
+			setupVertexAttribs();
+			bindVertexArray(0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
+#endif
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 	glCheck();
 }
@@ -124,6 +163,11 @@ void termQuad()
 		glDeleteBuffers(1, &quadBuffer);
 		quadBuffer = 0;
 	}
+	if (quadBufferSwapY != 0)
+	{
+		glDeleteBuffers(1, &quadBufferSwapY);
+		quadBufferSwapY = 0;
+	}
 	if (quadIndexBuffer != 0)
 	{
 		glDeleteBuffers(1, &quadIndexBuffer);
@@ -133,6 +177,11 @@ void termQuad()
 	{
 		deleteVertexArray(quadVertexArray);
 		quadVertexArray = 0;
+	}
+	if (quadVertexArraySwapY != 0)
+	{
+		deleteVertexArray(quadVertexArraySwapY);
+		quadVertexArraySwapY = 0;
 	}
 	if (shader != 0)
 	{
@@ -145,13 +194,6 @@ void termQuad()
 
 void drawQuad(GLuint texId, bool rotate, bool swapY)
 {
-	float vertices[4][5] = {
-		{ -1.f,  1.f, 1.f, 0.f, (float)!swapY },
-		{ -1.f, -1.f, 1.f, 0.f, (float)swapY },
-		{  1.f,  1.f, 1.f, 1.f, (float)!swapY },
-		{  1.f, -1.f, 1.f, 1.f, (float)swapY },
-	};
-
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
@@ -163,14 +205,13 @@ void drawQuad(GLuint texId, bool rotate, bool swapY)
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, texId);
 
-	glBindBuffer(GL_ARRAY_BUFFER, quadBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, swapY ? quadBufferSwapY : quadBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
 	if (gl.gl_major < 3)
 		setupVertexAttribs();
 	else
-		bindVertexArray(quadVertexArray);
+		bindVertexArray(swapY ? quadVertexArraySwapY : quadVertexArray);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
 	bindVertexArray(0);
 	glCheck();

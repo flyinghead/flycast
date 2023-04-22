@@ -38,7 +38,7 @@ public:
 	void term() override;
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent);
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return device; }
@@ -78,7 +78,6 @@ public:
 			+ "." + std::to_string(VK_API_VERSION_MINOR(props.driverVersion))
 			+ "." + std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
 	}
-	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
@@ -113,7 +112,6 @@ public:
 	bool dedicatedAllocationSupported = false;
 private:
 	u32 vendorID = 0;
-	vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
 
 	vk::UniqueDescriptorPool descriptorPool;
 

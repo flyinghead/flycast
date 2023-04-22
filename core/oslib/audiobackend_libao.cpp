@@ -2,49 +2,53 @@
 #include "audiostream.h"
 #include <ao/ao.h>
 
-static ao_device *aodevice;
-static ao_sample_format aoformat;
-
-static void libao_init()
+class LibAOBackend : public AudioBackend
 {
-	ao_initialize();
-	memset(&aoformat, 0, sizeof(aoformat));
+	ao_device *aodevice = nullptr;
 
-	aoformat.bits = 16;
-	aoformat.channels = 2;
-	aoformat.rate = 44100;
-	aoformat.byte_format = AO_FMT_LITTLE;
+public:
+	LibAOBackend()
+		: AudioBackend("libao", "libao") {}
 
-	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
-	if (!aodevice)
-		aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
-}
-
-static u32 libao_push(const void* frame, u32 samples, bool wait)
-{
-	if (aodevice)
-		ao_play(aodevice, (char*)frame, samples * 4);
-
-	return 1;
-}
-
-static void libao_term()
-{
-	if (aodevice)
+	bool init() override
 	{
-		ao_close(aodevice);
-		ao_shutdown();
+		ao_initialize();
+
+		ao_sample_format aoformat {};
+		aoformat.bits = 16;
+		aoformat.channels = 2;
+		aoformat.rate = 44100;
+		aoformat.byte_format = AO_FMT_LITTLE;
+
+		aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
+		if (aodevice == nullptr)
+			aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
+		if (aodevice == nullptr) {
+			ERROR_LOG(AUDIO, "Cannot open libao driver");
+			ao_shutdown();
+		}
+
+		return aodevice != nullptr;
 	}
-}
 
-static audiobackend_t audiobackend_libao = {
-		"libao", // Slug
-		"libao", // Name
-		&libao_init,
-		&libao_push,
-		&libao_term,
-		NULL
+	u32 push(const void* frame, u32 samples, bool wait) override
+	{
+		if (aodevice != nullptr)
+			ao_play(aodevice, (char*)frame, samples * 4);
+
+		return 1;
+	}
+
+	void term() override
+	{
+		if (aodevice != nullptr)
+		{
+			ao_close(aodevice);
+			aodevice = nullptr;
+			ao_shutdown();
+		}
+	}
 };
+static LibAOBackend libAOBackend;
 
-static bool ao = RegisterAudioBackend(&audiobackend_libao);
 #endif

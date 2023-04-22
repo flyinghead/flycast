@@ -17,9 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "naomi_network.h"
-#include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
+#include "rend/gui.h"
+
 #include <chrono>
 #include <thread>
 
@@ -292,81 +293,81 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 // Node 0 is master, nodes 1+ are slave
 void SetNaomiNetworkConfig(int node)
 {
-	if (!strcmp("ALIEN FRONT", naomi_game_id))
+	const std::string& gameId = settings.content.gameId;
+	if (gameId == "ALIEN FRONT")
 	{
 		// no way to disable the network
 		write_naomi_eeprom(0x3f, node == 0 ? 0 : 1);
 	}
-	else if (!strcmp("MOBILE SUIT GUNDAM JAPAN", naomi_game_id) // gundmct
-			|| !strcmp("MOBILE SUIT GUNDAM DELUXE JAPAN", naomi_game_id)) // gundmxgd
+	else if (gameId == "MOBILE SUIT GUNDAM JAPAN" // gundmct
+			|| gameId == "MOBILE SUIT GUNDAM DELUXE JAPAN") // gundmxgd
 	{
 		write_naomi_eeprom(0x38, node == -1 ? 2
 				: node == 0 ? 0 : 1);
 	}
-	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
+	else if (gameId == " BIOHAZARD  GUN SURVIVOR2")
 	{
 		// FIXME need default flash
 		write_naomi_flash(0x21c, node == 0 ? 0 : 1);	// CPU ID - 1
 		write_naomi_flash(0x22a, node == -1 ? 0 : 1);	// comm link on
 	}
-	else if (!strcmp("HEAVY METAL JAPAN", naomi_game_id))
+	else if (gameId == "HEAVY METAL JAPAN")
 	{
 		write_naomi_eeprom(0x31, node == -1 ? 0 : node == 0 ? 1 : 2);
 	}
-	else if (!strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
+	else if (gameId == "OUTTRIGGER     JAPAN")
 	{
 		// FIXME need default flash
 		write_naomi_flash(0x21a, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x21b, node);					// node id
 	}
-	else if (!strcmp("SLASHOUT JAPAN VERSION", naomi_game_id))
+	else if (gameId == "SLASHOUT JAPAN VERSION")
 	{
 		write_naomi_eeprom(0x30, node + 1);
 	}
-	else if (!strcmp("SPAWN JAPAN", naomi_game_id))
+	else if (gameId == "SPAWN JAPAN")
 	{
 		write_naomi_eeprom(0x44, node == -1 ? 0 : 1);	// network on
 		write_naomi_eeprom(0x30, node <= 0 ? 1 : 2);	// node id
 	}
-	else if (!strcmp("SPIKERS BATTLE JAPAN VERSION", naomi_game_id))
+	else if (gameId == "SPIKERS BATTLE JAPAN VERSION")
 	{
 		write_naomi_eeprom(0x30, node == -1 ? 0
 				: node == 0 ? 1 : 2);
 	}
-	else if (!strcmp("VIRTUAL-ON ORATORIO TANGRAM", naomi_game_id))
+	else if (gameId == "VIRTUAL-ON ORATORIO TANGRAM")
 	{
 		write_naomi_eeprom(0x45, node == -1 ? 3
 				: node == 0 ? 0 : 1);
 		write_naomi_eeprom(0x47, node == 0 ? 0 : 1);
 	}
-	else if (!strcmp("WAVE RUNNER GP", naomi_game_id))
+	else if (gameId == "WAVE RUNNER GP")
 	{
 		write_naomi_eeprom(0x33, node);
 		write_naomi_eeprom(0x35, node == -1 ? 2
 				: node == 0 ? 0 : 1);
 	}
-	else if (!strcmp("WORLD KICKS", naomi_game_id))
+	else if (gameId == "WORLD KICKS")
 	{
 		// FIXME need default flash
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
-	else if (!strcmp("CLUB KART IN JAPAN", naomi_game_id))
+	else if (gameId == "CLUB KART IN JAPAN")
 	{
 		write_naomi_eeprom(0x34, node + 1); // also 03 = satellite
 	}
-	else if (!strcmp("INITIAL D", naomi_game_id)
-			|| !strcmp("INITIAL D Ver.2", naomi_game_id)
-			|| !strcmp("INITIAL D Ver.3", naomi_game_id))
+	else if (gameId == "INITIAL D"
+			|| gameId == "INITIAL D Ver.2"
+			|| gameId == "INITIAL D Ver.3")
 	{
 		write_naomi_eeprom(0x34, node == -1 ? 0x02 : node == 0 ? 0x12 : 0x22);
 	}
-	else if (!strcmp("THE KING OF ROUTE66", naomi_game_id))
+	else if (gameId == "THE KING OF ROUTE66")
 	{
-		// FIXME no input when linked
 		write_naomi_eeprom(0x3d, node == -1 ? 0x44 : node == 0 ? 0x54 : 0x64);
 	}
-	else if (!strcmp("MAXIMUM SPEED", naomi_game_id))
+	else if (gameId == "MAXIMUM SPEED")
 	{
 		configure_maxspeed_flash(node != -1, node == 0);
 	}
@@ -384,7 +385,7 @@ bool NaomiNetworkSupported()
 	if (!config::NetworkEnable)
 		return false;
 	for (auto game : games)
-		if (!strcmp(game, naomi_game_id))
+		if (settings.content.gameId == game)
 			return true;
 
 	return false;

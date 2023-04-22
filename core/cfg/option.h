@@ -157,8 +157,8 @@ public:
 	T& get() { return value; }
 	void set(T v) { value = v; }
 
-	void override(T v) {
-		verify(PerGameOption);
+	void override(T v)
+	{
 		overriddenDefault = v;
 		overridden = true;
 		value = v;
@@ -372,10 +372,10 @@ extern Option<bool> FullMMU;
 extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
-extern Option<int> SavestateSlot;
+extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;
-extern Option<bool> FetchBoxart;
-extern Option<bool> BoxartDisplayMode;
+extern Option<bool, false> FetchBoxart;
+extern Option<bool, false> BoxartDisplayMode;
 
 // Sound
 
@@ -415,10 +415,10 @@ extern AudioVolumeOption AudioVolume;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
-#ifdef USE_DX9
-		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
-#elif defined(TARGET_UWP)
+#if defined(USE_DX11)
 		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
+#elif defined(USE_DX9)
+		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
 #else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
 #endif
@@ -466,21 +466,30 @@ extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force l
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
+extern Option<bool> EmulateFramebuffer;
 extern Option<int> FixedFrequency;
 
 // Misc
 
 extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
+extern Option<bool> GDB;
+extern Option<int> GDBPort;
+extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
-extern Option<bool> DisplayDebuggerMenu;
-extern Option<bool> UploadCrashLogs;
 
 extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
+extern Option<bool, false> UploadCrashLogs;
+
+// Profiling
+extern Option<bool> ProfilerEnabled;
+extern Option<bool> ProfilerDrawToGUI;
+extern Option<bool> ProfilerOutputTTY;
+extern Option<float> ProfilerFrameWarningTime;
 
 // Gdxsv
 
@@ -522,13 +531,13 @@ extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
 #ifdef _WIN32
-extern Option<bool> UseRawInput;
+extern Option<bool, false> UseRawInput;
 #else
 constexpr bool UseRawInput = false;
 #endif
 
 #ifdef USE_LUA
-extern OptionString LuaFileName;
+extern Option<std::string, false> LuaFileName;
 #endif
 
 } // namespace config

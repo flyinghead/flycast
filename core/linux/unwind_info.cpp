@@ -301,8 +301,9 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 		unwindfuncaddr[0] = (uintptr_t)startAddr + rwRxOffset;
 		unwindfuncaddr[1] = (ptrdiff_t)(endAddr - startAddr);
 
-#ifdef __APPLE__
-		// On macOS __register_frame takes a single FDE as an argument
+// Android NDK 23 switched to using clang's unwind instead of gcc
+#if defined(__llvm__) && (!defined(__NDK_MAJOR__) || __NDK_MAJOR__ >= 23)
+		// With clang __register_frame takes a single FDE as an argument
 		u8 *entry = unwindInfoDest;
 		while (true)
 		{
@@ -336,7 +337,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 			}
 		}
 #else
-		// On Linux it takes a pointer to the entire .eh_frame
+		// With gcc it takes a pointer to the entire .eh_frame
 		__register_frame(unwindInfoDest);
 		registeredFrames.push_back(unwindInfoDest);
 #endif

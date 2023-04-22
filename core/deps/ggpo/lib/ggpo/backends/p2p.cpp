@@ -132,12 +132,12 @@ Peer2PeerBackend::DoPoll(int timeout)
             total_min_confirmed = PollNPlayers(current_frame);
          }
 
-         Log("last confirmed frame in p2p backend is %d.\n", total_min_confirmed);
+         Log("last confirmed frame in p2p backend is %d.", total_min_confirmed);
          if (total_min_confirmed >= 0) {
             ASSERT(total_min_confirmed != INT_MAX);
             if (_num_spectators > 0) {
                while (_next_spectator_frame <= total_min_confirmed) {
-                  Log("pushing frame %d to spectators.\n", _next_spectator_frame);
+                  Log("pushing frame %d to spectators.", _next_spectator_frame);
    
                   GameInput input;
                   input.frame = _next_spectator_frame;
@@ -149,7 +149,7 @@ Peer2PeerBackend::DoPoll(int timeout)
                   _next_spectator_frame++;
                }
             }
-            Log("setting confirmed frame in sync to %d.\n", total_min_confirmed);
+            Log("setting confirmed frame in sync to %d.", total_min_confirmed);
             _sync.SetLastConfirmedFrame(total_min_confirmed);
          }
 
@@ -191,12 +191,12 @@ int Peer2PeerBackend::Poll2Players(int current_frame)
       if (!_local_connect_status[i].disconnected) {
          total_min_confirmed = MIN(_local_connect_status[i].last_frame, total_min_confirmed);
       }
-      Log("  local endp: connected = %d, last_received = %d, total_min_confirmed = %d.\n", !_local_connect_status[i].disconnected, _local_connect_status[i].last_frame, total_min_confirmed);
+      Log("  local endp: connected = %d, last_received = %d, total_min_confirmed = %d.", !_local_connect_status[i].disconnected, _local_connect_status[i].last_frame, total_min_confirmed);
       if (!queue_connected && !_local_connect_status[i].disconnected) {
-         Log("disconnecting i %d by remote request.\n", i);
+         Log("disconnecting i %d by remote request.", i);
          DisconnectPlayerQueue(i, total_min_confirmed);
       }
-      Log("  total_min_confirmed = %d.\n", total_min_confirmed);
+      Log("  total_min_confirmed = %d.", total_min_confirmed);
    }
    return total_min_confirmed;
 }
@@ -210,7 +210,7 @@ int Peer2PeerBackend::PollNPlayers(int current_frame)
    for (queue = 0; queue < _num_players; queue++) {
       bool queue_connected = true;
       int queue_min_confirmed = MAX_INT;
-      Log("considering queue %d.\n", queue);
+      Log("considering queue %d.", queue);
       for (i = 0; i < _num_players; i++) {
          // we're going to do a lot of logic here in consideration of endpoint i.
          // keep accumulating the minimum confirmed point for all n*n packets and
@@ -220,16 +220,16 @@ int Peer2PeerBackend::PollNPlayers(int current_frame)
 
             queue_connected = queue_connected && connected;
             queue_min_confirmed = MIN(last_received, queue_min_confirmed);
-            Log("  endpoint %d: connected = %d, last_received = %d, queue_min_confirmed = %d.\n", i, connected, last_received, queue_min_confirmed);
+            Log("  endpoint %d: connected = %d, last_received = %d, queue_min_confirmed = %d.", i, connected, last_received, queue_min_confirmed);
          } else {
-            Log("  endpoint %d: ignoring... not running.\n", i);
+            Log("  endpoint %d: ignoring... not running.", i);
          }
       }
       // merge in our local status only if we're still connected!
       if (!_local_connect_status[queue].disconnected) {
          queue_min_confirmed = MIN(_local_connect_status[queue].last_frame, queue_min_confirmed);
       }
-      Log("  local endp: connected = %d, last_received = %d, queue_min_confirmed = %d.\n", !_local_connect_status[queue].disconnected, _local_connect_status[queue].last_frame, queue_min_confirmed);
+      Log("  local endp: connected = %d, last_received = %d, queue_min_confirmed = %d.", !_local_connect_status[queue].disconnected, _local_connect_status[queue].last_frame, queue_min_confirmed);
 
       if (queue_connected) {
          total_min_confirmed = MIN(queue_min_confirmed, total_min_confirmed);
@@ -238,11 +238,11 @@ int Peer2PeerBackend::PollNPlayers(int current_frame)
          // so, we need to re-adjust.  This can happen when we detect our own disconnect at frame n
          // and later receive a disconnect notification for frame n-1.
          if (!_local_connect_status[queue].disconnected || _local_connect_status[queue].last_frame > queue_min_confirmed) {
-            Log("disconnecting queue %d by remote request.\n", queue);
+            Log("disconnecting queue %d by remote request.", queue);
             DisconnectPlayerQueue(queue, queue_min_confirmed);
          }
       }
-      Log("  total_min_confirmed = %d.\n", total_min_confirmed);
+      Log("  total_min_confirmed = %d.", total_min_confirmed);
    }
    return total_min_confirmed;
 }
@@ -343,7 +343,7 @@ Peer2PeerBackend::SyncInput(void *values,
 GGPOErrorCode
 Peer2PeerBackend::IncrementFrame(void)
 {  
-   Log("End of frame (%d)...\n", _sync.GetFrameCount());
+   Log("End of frame (%d)...", _sync.GetFrameCount());
    _sync.IncrementFrame();
    DoPoll(0);
    PollSyncEvents();
@@ -391,7 +391,7 @@ Peer2PeerBackend::OnUdpProtocolPeerEvent(UdpProtocol::Event &evt, int queue)
 
             _sync.AddRemoteInput(queue, evt.u.input.input);
             // Notify the other endpoints which frame we received from a peer
-            Log("setting remote connect status for queue %d to %d\n", queue, evt.u.input.input.frame);
+            Log("setting remote connect status for queue %d to %d", queue, evt.u.input.input.frame);
             _local_connect_status[queue].last_frame = evt.u.input.input.frame;
          }
          break;
@@ -501,14 +501,14 @@ Peer2PeerBackend::DisconnectPlayer(GGPOPlayerHandle player)
       int current_frame = _sync.GetFrameCount();
       // xxx: we should be tracking who the local player is, but for now assume
       // that if the endpoint is not initalized, this must be the local player.
-      Log("Disconnecting local player %d at frame %d by user request.\n", queue, _local_connect_status[queue].last_frame);
+      Log("Disconnecting local player %d at frame %d by user request.", queue, _local_connect_status[queue].last_frame);
       for (int i = 0; i < _num_players; i++) {
          if (_endpoints[i].IsInitialized()) {
             DisconnectPlayerQueue(i, current_frame);
          }
       }
    } else {
-      Log("Disconnecting queue %d at frame %d by user request.\n", queue, _local_connect_status[queue].last_frame);
+      Log("Disconnecting queue %d at frame %d by user request.", queue, _local_connect_status[queue].last_frame);
       DisconnectPlayerQueue(queue, _local_connect_status[queue].last_frame);
    }
    return GGPO_OK;
@@ -522,16 +522,16 @@ Peer2PeerBackend::DisconnectPlayerQueue(int queue, int syncto)
 
    _endpoints[queue].Disconnect();
 
-   Log("Changing queue %d local connect status for last frame from %d to %d on disconnect request (current: %d).\n",
+   Log("Changing queue %d local connect status for last frame from %d to %d on disconnect request (current: %d).",
        queue, _local_connect_status[queue].last_frame, syncto, framecount);
 
    _local_connect_status[queue].disconnected = 1;
    _local_connect_status[queue].last_frame = syncto;
 
    if (syncto != GameInput::NullFrame && syncto < framecount) {
-      Log("adjusting simulation to account for the fact that %d disconnected @ %d.\n", queue, syncto);
+      Log("adjusting simulation to account for the fact that %d disconnected @ %d.", queue, syncto);
       _sync.AdjustSimulation(syncto);
-      Log("finished adjusting simulation.\n");
+      Log("finished adjusting simulation.");
    }
 
    info.code = GGPO_EVENTCODE_DISCONNECTED_FROM_PEER;

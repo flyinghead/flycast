@@ -20,7 +20,6 @@
  */
 #include "naomi_flashrom.h"
 #include "hw/flashrom/flashrom.h"
-#include "hw/holly/sb_mem.h"
 #include "hw/maple/maple_devs.h"
 #include "cfg/option.h"
 

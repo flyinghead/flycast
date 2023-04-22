@@ -173,57 +173,38 @@ static const char *regName(u32 addr)
 		return it->second;
 }
 
-u32 sb_ReadMem(u32 addr,u32 sz)
+u32 sb_ReadMem(u32 addr)
 {
 	u32 offset = ((addr - SB_BASE) >> 2) & 0x1fff;
 	u32 rv;
 
-	if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
-	{
-		if (sz==4)
-			rv = sb_regs[offset].data32;
-		else if (sz==2)
-			rv = sb_regs[offset].data16;
-		else
-			rv = sb_regs[offset].data8;
+	if (!(sb_regs[offset].flags & REG_RF))
+		rv = sb_regs[offset].data32;
+	else if (sb_regs[offset].flags & REG_WO) {
+		INFO_LOG(HOLLY, "sb_ReadMem write-only reg %s", regName(addr));
+		rv = 0;
 	}
 	else
-	{
-		if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
-		{
-			INFO_LOG(HOLLY, "sb_ReadMem write-only reg %08x %d", addr, sz);
-			rv = 0;
-		}
-		else
-			rv = sb_regs[offset].readFunctionAddr(addr);
-	}
+		rv = sb_regs[offset].readFunctionAddr(addr);
+
 	if ((addr & 0xffffff) != 0x5f6c18) // SB_MDST
-		DEBUG_LOG(HOLLY, "read(%d) %s.%c == %x", sz, regName(addr),
+		DEBUG_LOG(HOLLY, "read %s.%c == %x", regName(addr),
 				((addr >> 26) & 7) == 2 ? 'b' : (addr & 0x2000000) ? '1' : '0',
 						rv);
 	return rv;
 }
 
-void sb_WriteMem(u32 addr,u32 data,u32 sz)
+void sb_WriteMem(u32 addr, u32 data)
 {
-	DEBUG_LOG(HOLLY, "write(%d) %s.%c = %x", sz, regName(addr),
+	DEBUG_LOG(HOLLY, "write %s.%c = %x", regName(addr),
 			((addr >> 26) & 7) == 2 ? 'b' : (addr & 0x2000000) ? '1' : '0',
 					data);
 	u32 offset = ((addr - SB_BASE) >> 2) & 0x1fff;
 
 	if (!(sb_regs[offset].flags & REG_WF))
-	{
-		if (sz==4)
-			sb_regs[offset].data32=data;
-		else if (sz==2)
-			sb_regs[offset].data16=(u16)data;
-		else
-			sb_regs[offset].data8=(u8)data;
-	}
+		sb_regs[offset].data32 = data;
 	else
-	{
-		sb_regs[offset].writeFunctionAddr(addr,data);
-	}
+		sb_regs[offset].writeFunctionAddr(addr, data);
 }
 
 static u32 sbio_read_noacc(u32 addr)
@@ -253,7 +234,7 @@ static void sb_write_gdrom_unlock(u32 addr, u32 data)
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
 {
-	u32 idx=(reg_addr-SB_BASE)/4;
+	u32 idx = (reg_addr - SB_BASE) / 4;
 
 	verify(idx < sb_regs.size());
 
@@ -261,22 +242,23 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 
 	if (flags == RIO_NO_ACCESS)
 	{
-		sb_regs[idx].readFunctionAddr=&sbio_read_noacc;
-		sb_regs[idx].writeFunctionAddr=&sbio_write_noacc;
+		sb_regs[idx].readFunctionAddr = sbio_read_noacc;
+		sb_regs[idx].writeFunctionAddr = sbio_write_noacc;
 	}
-	else if (flags == RIO_CONST)
+	else if (flags == RIO_RO)
 	{
-		sb_regs[idx].writeFunctionAddr=&sbio_write_const;
+		sb_regs[idx].writeFunctionAddr = sbio_write_const;
+		sb_regs[idx].data32 = 0;
 	}
 	else
 	{
-		sb_regs[idx].data32=0;
-
-		if (flags & REG_RF)
-			sb_regs[idx].readFunctionAddr=rf;
+		if ((flags & REG_RF) && !(flags & REG_WO))
+			sb_regs[idx].readFunctionAddr = rf;
+		else
+			sb_regs[idx].data32 = 0;
 
 		if (flags & REG_WF)
-			sb_regs[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
+			sb_regs[idx].writeFunctionAddr = wf == nullptr ? sbio_write_noacc : wf;
 	}
 }
 
@@ -286,16 +268,9 @@ void sb_write_reg(u32 addr, u32 data)
 	SB_REGN_32(reg_addr) = (data & mask) | or_mask;
 }
 
-u32 SB_FFST_rc;
-u32 SB_FFST;
-static u32 sb_read_SB_FFST(u32 addr)
+static u32 read_SB_FFST(u32 addr)
 {
-	SB_FFST_rc++;
-	if (SB_FFST_rc & 0x8)
-	{
-		SB_FFST^=31;
-	}
-	return 0; // does the fifo status has really to be faked ?
+	return 0;
 }
 
 static void sb_write_SB_SFRES(u32 addr, u32 data)
@@ -367,13 +342,13 @@ void sb_Init()
 	sb_rio_register(SB_LMMODE1_addr, RIO_WF, 0, sb_write_reg<SB_LMMODE1_addr, 1>);
 
 	//0x005F688C    SB_FFST     R   FIFO status
-	sb_rio_register(SB_FFST_addr, RIO_RO_FUNC, sb_read_SB_FFST);
+	sb_rio_register(SB_FFST_addr, RIO_RO_FUNC, read_SB_FFST);
 
 	//0x005F6890    SB_SFRES    W   System reset
 	sb_rio_register(SB_SFRES_addr, RIO_WO_FUNC, 0, sb_write_SB_SFRES);
 
 	//0x005F689C    SB_SBREV    R   System bus revision number
-	sb_rio_register(SB_SBREV_addr,RIO_CONST);
+	sb_rio_register(SB_SBREV_addr, RIO_RO);
 
 	//0x005F68A0    SB_RBSPLT   RW  SH4 Root Bus split enable
 	sb_rio_register(SB_RBSPLT_addr, RIO_WF, 0, sb_write_reg<SB_RBSPLT_addr, 0x80000000>);
@@ -620,7 +595,7 @@ void sb_Init()
 	sb_rio_register(SB_DDSUSP_addr, RIO_WF, 0, sb_write_SUSP<SB_DDSUSP_addr>);
 
 	//0x005F7880    SB_G2ID     R   G2 bus version
-	sb_rio_register(SB_G2ID_addr,RIO_CONST);
+	sb_rio_register(SB_G2ID_addr, RIO_RO);
 
 	//0x005F7890    SB_G2DSTO   RW  G2/DS timeout
 	sb_rio_register(SB_G2DSTO_addr,RIO_DATA);
@@ -747,11 +722,11 @@ void sb_Reset(bool hard)
 	{
 		for (auto& reg : sb_regs)
 			reg.reset();
+		SB_PDAPRO = 0x7f00;
+		SB_GDAPRO = 0x7f00;
 	}
 	SB_ISTNRM = 0;
 	SB_ISTNRM1 = 0;
-	SB_FFST_rc = 0;
-	SB_FFST = 0;
 
 	bba_Reset(hard);
 	ModemReset();

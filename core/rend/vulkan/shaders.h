@@ -158,6 +158,21 @@ public:
 		return *osdFragmentShader;
 	}
 
+	void term()
+	{
+		vertexShaders.clear();
+		fragmentShaders.clear();
+		modVolVertexShaders.clear();
+		modVolShaders[0].reset();
+		modVolShaders[1].reset();
+		quadVertexShader.reset();
+		quadRotateVertexShader.reset();
+		quadFragmentShader.reset();
+		quadNoAlphaFragmentShader.reset();
+		osdVertexShader.reset();
+		osdFragmentShader.reset();
+	}
+
 private:
 	template<typename T>
 	vk::ShaderModule getShader(std::map<u32, vk::UniqueShaderModule>& map, T params)

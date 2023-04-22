@@ -21,8 +21,6 @@
 #include <cstdio>
 #include <set>
 #include <map>
-#include <deque>
-#include <cmath>
 #include "types.h"
 #include "decoder.h"
 #include "hw/sh4/modules/mmu.h"
@@ -124,7 +122,7 @@ private:
 	{
 		verify(op.rd2.is_null());
 		op.op = shop_mov32;
-		op.rs1 = shil_param(FMT_IMM, v);
+		op.rs1 = shil_param(v);
 		op.rs2.type = FMT_NULL;
 		op.rs3.type = FMT_NULL;
 		stats.constant_ops_replaced++;
@@ -182,8 +180,19 @@ private:
 				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
 				{
 					Sh4RegType reg = it->first.get_reg();
-					if (reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
+					if (reg == reg_sr_status || (reg >= reg_r0 && reg <= reg_r7)
 							|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank))
+						it = constprop_values.erase(it);
+					else
+						it++;
+				}
+			}
+			else if (op.op == shop_div1)
+			{
+				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
+				{
+					Sh4RegType reg = it->first.get_reg();
+					if (reg == reg_sr_status)
 						it = constprop_values.erase(it);
 					else
 						it++;
@@ -224,7 +233,7 @@ private:
 					if (op.rs1.is_imm() && op.op == shop_readm  && block->read_only
 							&& (op.rs1._imm >> 12) >= (block->vaddr >> 12)
 							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
-							&& (op.flags & 0x7f) <= 4)
+							&& op.size <= 4)
 					{
 						bool doit = false;
 						if (mmu_enabled())
@@ -251,7 +260,7 @@ private:
 						if (doit)
 						{
 							u32 v;
-							switch (op.flags & 0x7f)
+							switch (op.size)
 							{
 							case 1:
 								v = (s32)(::s8)ReadMem8(op.rs1._imm);
@@ -355,13 +364,15 @@ private:
 			{
 				last_versions[reg_sr_T] = -1;
 				last_versions[reg_sr_status] = -1;
-				last_versions[reg_old_sr_status] = -1;
 				for (int i = reg_r0; i <= reg_r7; i++)
 					last_versions[i] = -1;
 				for (int i = reg_r0_Bank; i <= reg_r7_Bank; i++)
 					last_versions[i] = -1;
 				continue;
 			}
+			if (op.op == shop_div1)
+				last_versions[reg_sr_status] = -1;
+
 			if (op.op == shop_sync_fpscr)
 			{
 				last_versions[reg_fpscr] = -1;
@@ -500,7 +511,7 @@ private:
 					// There's quite a few of these
 					//printf("%08x +t<< %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					op.op = shop_shl;
-					op.rs2 = shil_param(FMT_IMM, 1);
+					op.rs2 = shil_param(1);
 				}
 				// a ^ a == 0
 				// a - a == 0
@@ -513,8 +524,8 @@ private:
 				else if (op.op == shop_sbc)
 				{
 					//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
-					op.rs1 = shil_param(FMT_IMM, 0);
-					op.rs2 = shil_param(FMT_IMM, 0);
+					op.rs1 = shil_param(0);
+					op.rs2 = shil_param(0);
 					stats.prop_constants += 2;
 				}
 				// a & a == a
@@ -722,7 +733,7 @@ private:
 		bool success = false;
 		const u32 start_page = block->vaddr >> 12;
 		const u32 end_page = (block->vaddr + (block->guest_opcodes - 1) * 2) >> 12;
-		while (true)
+		for (int i = 0; i < 5; i++)
 		{
 			if ((addr >> 12) < start_page || ((addr + 2) >> 12) > end_page)
 				break;

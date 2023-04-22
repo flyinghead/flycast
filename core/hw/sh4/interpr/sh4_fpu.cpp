@@ -44,33 +44,8 @@ static void iNimp(const char *str);
 #define WriteMemBOU16(addr,offset,data)     WriteMemU16(addr+offset,data)
 #define WriteMemBOU8(addr,offset,data)      WriteMemU8(addr+offset,data)
 
-INLINE void Denorm32(float &value)
-{
-	if (fpscr.DN)
-	{
-		u32* v=(u32*)&value;
-		if (IS_DENORMAL(v) && (*v&0x7fFFFFFF)!=0)
-		{
-			*v&=0x80000000;
-			//printf("Denormal ..\n");
-		}
-		if ((*v<=0x007FFFFF) && *v>0)
-		{
-			*v=0;
-			INFO_LOG(INTERPRETER, "Fixed +denorm");
-		}
-		else if ((*v<=0x807FFFFF) && *v>0x80000000)
-		{
-			*v=0x80000000;
-			INFO_LOG(INTERPRETER, "Fixed -denorm");
-		}
-	}
-}
-
-
 #define CHECK_FPU_32(v) v = fixNaN(v)
 #define CHECK_FPU_64(v) v = fixNaN64(v)
-
 
 //fadd <FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_0000)
@@ -666,8 +641,7 @@ sh4op(i1111_nnnn_mmmm_1110)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-//		fr[n] =(f32) ((f64)fr[n]+(f64)fr[0] * (f64)fr[m]);
-		fr[n] =(f32) (fr[n]+fr[0] * fr[m]); //align double rounding with x86 dynarec, may not align with actual hardware
+		fr[n] =(f32) ((f64)fr[n]+(f64)fr[0] * (f64)fr[m]);
 		CHECK_FPU_32(fr[n]);
 	}
 	else

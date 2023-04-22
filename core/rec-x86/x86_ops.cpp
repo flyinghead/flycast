@@ -268,10 +268,10 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 		break;
 
 	case shop_mov64:
-		verify(op.rd.is_r64());
-		verify(op.rs1.is_r64());
+		verify(op.rd.is_r64f());
+		verify(op.rs1.is_r64f());
 
-#ifdef EXPLODE_SPANS
+#if ALLOC_F64 == true
 		movss(regalloc.MapXRegister(op.rd, 0), regalloc.MapXRegister(op.rs1, 0));
 		movss(regalloc.MapXRegister(op.rd, 1), regalloc.MapXRegister(op.rs1, 1));
 #else
@@ -297,7 +297,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 
 			int memOpSize;
-			switch (op.flags & 0x7f)
+			switch (op.size)
 			{
 			case 1:
 				memOpSize = MemSize::S8;
@@ -329,14 +329,12 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 			else
 			{
-#ifdef EXPLODE_SPANS
-				if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
+				if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd))
 				{
 					mov(regalloc.MapXRegister(op.rd, 0), xmm0);
 					mov(regalloc.MapXRegister(op.rd, 1), xmm1);
 				}
 				else
-#endif
 				{
 					verify(!regalloc.IsAllocAny(op.rd));
 					movss(dword[op.rd.reg_ptr()], xmm0);
@@ -361,7 +359,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 
 			int memOpSize;
-			switch (op.flags & 0x7f)
+			switch (op.size)
 			{
 			case 1:
 				memOpSize = MemSize::S8;
@@ -382,14 +380,12 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			else if (memOpSize == MemSize::F32)
 				shil_param_to_host_reg(op.rs2, xmm0);
 			else {
-#ifdef EXPLODE_SPANS
-				if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
+				if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2))
 				{
 					mov(xmm0, regalloc.MapXRegister(op.rs2, 0));
 					mov(xmm1, regalloc.MapXRegister(op.rs2, 1));
 				}
 				else
-#endif
 				{
 					movd(xmm0, dword[op.rs2.reg_ptr()]);
 					movd(xmm1, dword[op.rs2.reg_ptr() + 1]);

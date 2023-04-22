@@ -8,17 +8,19 @@ constexpr u32 SZ64 = 2;
 
 struct TA_context;
 
-void ta_vtx_ListInit();
+void ta_vtx_ListInit(bool continuation);
 void ta_vtx_SoftReset();
 
 void DYNACALL ta_vtx_data32(const SQBuffer *data);
 void ta_vtx_data(const SQBuffer *data, u32 size);
 
-bool ta_parse(TA_context *ctx);
+bool ta_parse(TA_context *ctx, bool primRestart);
 
 class TaTypeLut
 {
 public:
+	static constexpr u32 INVALID_TYPE = 0xFFFFFFFF;
+
 	static const TaTypeLut& instance() {
 		static TaTypeLut _instance;
 		return _instance;

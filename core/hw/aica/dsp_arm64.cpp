@@ -451,10 +451,11 @@ void recompile()
 void recInit()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer, &rx_offset));
+	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer, &rx_offset);
 #else
-	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
+	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
 #endif
+	verify(rc);
 #if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 	DynCode = pCodeBuffer;
 #endif

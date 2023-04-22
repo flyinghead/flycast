@@ -34,6 +34,10 @@
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
 
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#endif
+
 void ReInitOSD();
 
 VulkanContext *VulkanContext::contextInstance;
@@ -130,23 +134,26 @@ static void CheckImGuiResult(VkResult err)
 
 bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
-#ifndef TARGET_IPHONE
-	if (volkInitialize() != VK_SUCCESS)
-	{
-		ERROR_LOG(RENDERER, "Cannot load Vulkan libraries");
-		return false;
-	}
-#endif
 	try
 	{
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		static vk::DynamicLoader dl;
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		if (vkGetInstanceProcAddr == nullptr) {
+			ERROR_LOG(RENDERER, "Vulkan entry point vkGetInstanceProcAddr not found");
+			return false;
+		}
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+#endif
 		bool vulkan11 = false;
-		if (::vkEnumerateInstanceVersion != nullptr)
+		if (VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateInstanceVersion != nullptr)
 		{
-			u32 apiVersion;
-			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
-				vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
+			u32 apiVersion = vk::enumerateInstanceVersion();
+
+			vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
 					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
 		}
+
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (uint32_t i = 0; i < extensions_count; i++)
@@ -171,8 +178,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
-#ifndef TARGET_IPHONE
-		volkLoadInstance(static_cast<VkInstance>(*instance));
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
 #endif
 
 #ifdef VK_DEBUG
@@ -190,9 +197,15 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 #endif
 
+		const auto devices = instance->enumeratePhysicalDevices();
+		if (devices.empty())
+		{
+			ERROR_LOG(RENDERER, "Vulkan error: no physical devices found");
+			return false;
+		}
+
 		// Choose a discrete gpu if there's one, otherwise just pick the first one
 		physicalDevice = nullptr;
-		const auto devices = instance->enumeratePhysicalDevices();
 		for (const auto& phyDev : devices)
 		{
 			vk::PhysicalDeviceProperties props;
@@ -204,10 +217,10 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			}
 		}
 		if (!physicalDevice)
-			physicalDevice = instance->enumeratePhysicalDevices().front();
+			physicalDevice = devices.front();
 
 		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11 && ::vkGetPhysicalDeviceProperties2 != nullptr)
+		if (vulkan11)
 		{
 			static vk::PhysicalDeviceProperties2 properties2;
 			vk::PhysicalDeviceMaintenance3Properties properties3;
@@ -269,6 +282,10 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	{
 		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
 	}
+	catch (const std::exception& err)
+	{
+		ERROR_LOG(RENDERER, "Vulkan instance init failed: %s", err.what());
+	}
 	catch (...)
 	{
 		ERROR_LOG(RENDERER, "Unknown error");
@@ -292,6 +309,12 @@ void VulkanContext::InitImgui()
 	initInfo.ImageCount = GetSwapChainSize();
 #ifdef VK_DEBUG
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
+#endif
+
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+	ImGui_ImplVulkan_LoadFunctions([](const char *function_name, void *) {
+		return VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr((VkInstance) *contextInstance->instance, function_name);
+	});
 #endif
 
 	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
@@ -391,17 +414,17 @@ bool VulkanContext::InitDevice()
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 			}
 			else if(!strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 			}
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
 				deviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			}
 #endif
@@ -416,13 +439,11 @@ bool VulkanContext::InitDevice()
 			features.fragmentStoresAndAtomics = true;
 		if (samplerAnisotropy)
 			features.samplerAnisotropy = true;
-		const char *layers[] = { "VK_LAYER_ARM_AGA" };
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
-				layers, deviceExtensions, &features));
+				nullptr, deviceExtensions, &features));
 
-#ifndef TARGET_IPHONE
-		// This links entry points directly from the driver and isn't absolutely necessary
-		volkLoadDevice(static_cast<VkDevice>(*device));
+#if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
 #endif
 
 	    // Queues
@@ -479,6 +500,23 @@ bool VulkanContext::InitDevice()
 	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
 	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+
+		vk::PhysicalDeviceProperties props;
+		physicalDevice.getProperties(&props);
+		driverName = (const char *)props.deviceName;
+#ifdef __APPLE__
+		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
+				+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
+				+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
+				// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
+				+ std::to_string(props.driverVersion / 10000) + "."
+				+ std::to_string((props.driverVersion % 10000) / 100) + "."
+				+ std::to_string(props.driverVersion % 100);
+#else
+		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
+				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
+				+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
+#endif
 
 		CreateSwapChain();
 
@@ -540,9 +578,9 @@ void VulkanContext::CreateSwapChain()
 			vk::Extent2D swapchainExtent;
 			if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 			{
-				// If the surface size is undefined, the size is set to the size of the images requested.
-				swapchainExtent.width = std::min(std::max(640u, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
-				swapchainExtent.height = std::min(std::max(480u, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
+				// If the surface size is undefined, use the current display size
+				swapchainExtent.width = std::min(std::max((u32)settings.display.width, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
+				swapchainExtent.height = std::min(std::max((u32)settings.display.height, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
 			}
 			else
 			{
@@ -728,6 +766,8 @@ bool VulkanContext::init()
 	float hdpi, vdpi;
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWin), nullptr, &hdpi, &vdpi))
 		settings.display.dpi = roundf(std::max(hdpi, vdpi));
+
+	sdl_fix_steamdeck_dpi(sdlWin);
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -821,7 +861,7 @@ void VulkanContext::Present() noexcept
 			if (lastFrameView && IsValid() && !gui_is_open())
 				for (int i = 1; i < swapInterval; i++)
 				{
-					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent);
+					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 					currentSemaphore = (currentSemaphore + 1) % imageViews.size();
 				}
@@ -845,7 +885,7 @@ void VulkanContext::Present() noexcept
 		}
 }
 
-void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
 	QuadVertex vtx[] = {
 		{ { -1, -1, 0 }, { 0, 0 } },
@@ -860,14 +900,13 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float renderAR = getOutputFramebufferAspectRatio();
 	float screenAR = (float)width / height;
 	float dx = 0;
 	float dy = 0;
-	if (renderAR > screenAR)
-		dy = height * (1 - screenAR / renderAR) / 2;
+	if (aspectRatio > screenAR)
+		dy = height * (1 - screenAR / aspectRatio) / 2;
 	else
-		dx = width * (1 - renderAR / screenAR) / 2;
+		dx = width * (1 - aspectRatio / screenAR) / 2;
 
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, viewport);
@@ -887,32 +926,6 @@ void VulkanContext::WaitIdle() const
 	}
 }
 
-std::string VulkanContext::getDriverName()
-{
-	vk::PhysicalDeviceProperties props;
-	physicalDevice.getProperties(&props);
-	return props.deviceName;
-}
-
-std::string VulkanContext::getDriverVersion()
-{
-	vk::PhysicalDeviceProperties props;
-	physicalDevice.getProperties(&props);
-#ifdef __APPLE__
-	return std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
-			+ std::to_string(VK_API_VERSION_MINOR(props.apiVersion)) + "."
-			+ std::to_string(VK_API_VERSION_PATCH(props.apiVersion)) + " MoltenVK-"
-			// driverVersion = MoltenVK version, not using Vulkan apiVersion encoding
-			+ std::to_string(props.driverVersion / 10000) + "."
-			+ std::to_string((props.driverVersion % 10000) / 100) + "."
-			+ std::to_string(props.driverVersion % 100);
-#else
-	return std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
-			+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
-			+ std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
-#endif
-}
-
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
 	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair, *textureCache);
@@ -926,10 +939,11 @@ vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 
 extern Renderer *renderer;
 
-void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept
+void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept
 {
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
+	lastFrameAR = aspectRatio;
 
 	if (imageView && IsValid())
 	{
@@ -940,7 +954,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
-				DrawFrame(imageView, extent);
+				DrawFrame(imageView, extent, aspectRatio);
 
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
@@ -953,7 +967,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 void VulkanContext::PresentLastFrame()
 {
 	if (lastFrameView && IsValid())
-		DrawFrame(lastFrameView, lastFrameExtent);
+		DrawFrame(lastFrameView, lastFrameExtent, lastFrameAR);
 }
 
 void VulkanContext::term()
@@ -1001,7 +1015,8 @@ void VulkanContext::term()
 #ifndef USE_SDL
 	surface.reset();
 #else
-	instance->destroySurfaceKHR(surface.release());
+	if (instance && surface)
+		instance->destroySurfaceKHR(surface.release());
 #endif
 	pipelineCache.reset();
 	device.reset();

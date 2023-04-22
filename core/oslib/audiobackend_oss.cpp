@@ -5,117 +5,112 @@
 #include <sys/soundcard.h>
 #include <unistd.h>
 
-static int oss_audio_fd = -1;
-static int oss_rec_fd = -1;
-
-static void oss_init()
+class OSSAudioBackend : public AudioBackend
 {
-	oss_audio_fd = open("/dev/dsp", O_WRONLY);
-	if (oss_audio_fd < 0)
+	int audioFD = -1;
+	int recordFD = -1;
+
+public:
+	OSSAudioBackend()
+		: AudioBackend("oss", "Open Sound System") {}
+
+	bool init() override
 	{
-		WARN_LOG(AUDIO, "Couldn't open /dev/dsp.");
-	}
-	else
-	{
+		audioFD = open("/dev/dsp", O_WRONLY);
+		if (audioFD < 0)
+		{
+			WARN_LOG(AUDIO, "Couldn't open /dev/dsp.");
+			return false;
+		}
 		INFO_LOG(AUDIO, "sound enabled, dsp opened for write");
 		int tmp=44100;
 		int err_ret;
-		err_ret=ioctl(oss_audio_fd,SNDCTL_DSP_SPEED,&tmp);
+		err_ret=ioctl(audioFD,SNDCTL_DSP_SPEED,&tmp);
 		INFO_LOG(AUDIO, "set Frequency to %i, return %i (rate=%i)", 44100, err_ret, tmp);
 		int channels=2;
-		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_CHANNELS, &channels);
+		err_ret=ioctl(audioFD, SNDCTL_DSP_CHANNELS, &channels);
 		INFO_LOG(AUDIO, "set dsp to stereo (%i => %i)", channels, err_ret);
 		int format=AFMT_S16_LE;
-		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_SETFMT, &format);
+		err_ret=ioctl(audioFD, SNDCTL_DSP_SETFMT, &format);
 		INFO_LOG(AUDIO, "set dsp to %s audio (%i/%i => %i)", "16bits signed", AFMT_S16_LE, format, err_ret);
-	}
-}
 
-static u32 oss_push(const void* frame, u32 samples, bool wait)
-{
-	write(oss_audio_fd, frame, samples*4);
-	return 1;
-}
-
-static void oss_term()
-{
-	if (oss_audio_fd >= 0)
-		close(oss_audio_fd);
-	oss_audio_fd = -1;
-}
-
-// recording untested
-
-static bool oss_init_record(u32 sampling_freq)
-{
-	int oss_rec_fd = open("/dev/dsp", O_RDONLY);
-	if (oss_rec_fd < 0)
-	{
-		INFO_LOG(AUDIO, "OSS: can't open default audio capture device");
-		return false;
-	}
-	int tmp = AFMT_S16_NE;	// Native 16 bits
-	if (ioctl(oss_rec_fd, SNDCTL_DSP_SETFMT, &tmp) == -1 || tmp != AFMT_S16_NE)
-	{
-		INFO_LOG(AUDIO, "OSS: can't set sample format");
-		close(oss_rec_fd);
-		oss_rec_fd = -1;
-		return false;
-	}
-	tmp = 1;
-	if (ioctl(oss_rec_fd, SNDCTL_DSP_CHANNELS, &tmp) == -1)
-	{
-		INFO_LOG(AUDIO, "OSS: can't set channel count");
-		close(oss_rec_fd);
-		oss_rec_fd = -1;
-		return false;
-	}
-	tmp = sampling_freq;
-	if (ioctl(oss_rec_fd, SNDCTL_DSP_SPEED, &tmp) == -1)
-	{
-		INFO_LOG(AUDIO, "OSS: can't set sample rate");
-		close(oss_rec_fd);
-		oss_rec_fd = -1;
-		return false;
+		return true;
 	}
 
-	return true;
-}
-
-static void oss_term_record()
-{
-	if (oss_rec_fd >= 0)
-		close(oss_rec_fd);
-	oss_rec_fd = -1;
-}
-
-static u32 oss_record(void *buffer, u32 samples)
-{
-	samples *= 2;
-	int l = read(oss_rec_fd, buffer, samples);
-	if (l < (int)samples)
+	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		if (l < 0)
+		write(audioFD, frame, samples * 4);
+		return 1;
+	}
+
+	void term() override
+	{
+		if (audioFD >= 0)
+			close(audioFD);
+		audioFD = -1;
+	}
+
+	// recording untested
+
+	bool initRecord(u32 sampling_freq) override
+	{
+		recordFD = open("/dev/dsp", O_RDONLY);
+		if (recordFD < 0)
 		{
-			INFO_LOG(AUDIO, "OSS: Recording error");
-			l = 0;
+			INFO_LOG(AUDIO, "OSS: can't open default audio capture device");
+			return false;
 		}
-		memset((u8 *)buffer + l, 0, samples - l);
+		int tmp = AFMT_S16_NE;	// Native 16 bits
+		if (ioctl(recordFD, SNDCTL_DSP_SETFMT, &tmp) == -1 || tmp != AFMT_S16_NE)
+		{
+			INFO_LOG(AUDIO, "OSS: can't set sample format");
+			close(recordFD);
+			recordFD = -1;
+			return false;
+		}
+		tmp = 1;
+		if (ioctl(recordFD, SNDCTL_DSP_CHANNELS, &tmp) == -1)
+		{
+			INFO_LOG(AUDIO, "OSS: can't set channel count");
+			close(recordFD);
+			recordFD = -1;
+			return false;
+		}
+		tmp = sampling_freq;
+		if (ioctl(recordFD, SNDCTL_DSP_SPEED, &tmp) == -1)
+		{
+			INFO_LOG(AUDIO, "OSS: can't set sample rate");
+			close(recordFD);
+			recordFD = -1;
+			return false;
+		}
+
+		return true;
 	}
-	return l / 2;
-}
 
-static audiobackend_t audiobackend_oss = {
-		"oss", // Slug
-		"Open Sound System", // Name
-		&oss_init,
-		&oss_push,
-		&oss_term,
-		NULL,
-		&oss_init_record,
-		&oss_record,
-		&oss_term_record
+	void termRecord() override
+	{
+		if (recordFD >= 0)
+			close(recordFD);
+		recordFD = -1;
+	}
+
+	u32 record(void *buffer, u32 samples) override
+	{
+		samples *= 2;
+		int l = read(recordFD, buffer, samples);
+		if (l < (int)samples)
+		{
+			if (l < 0)
+			{
+				INFO_LOG(AUDIO, "OSS: Recording error");
+				l = 0;
+			}
+			memset((u8 *)buffer + l, 0, samples - l);
+		}
+		return l / 2;
+	}
 };
+static OSSAudioBackend ossAudioBackend;
 
-static bool oss = RegisterAudioBackend(&audiobackend_oss);
 #endif

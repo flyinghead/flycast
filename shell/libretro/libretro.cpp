@@ -60,7 +60,6 @@
 #include "imgread/common.h"
 #include "LogManager.h"
 #include "cheats.h"
-#include "rend/CustomTexture.h"
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "version.h"
@@ -165,6 +164,7 @@ static int framebufferWidth;
 static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
+static float framebufferAspectRatio = 4.f / 3.f;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -186,7 +186,6 @@ static retro_rumble_interface rumble;
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
-void UpdateInputState();
 void gui_display_notification(const char *msg, int duration);
 static void updateVibration(u32 port, float power, float inclination, u32 durationMs);
 
@@ -280,13 +279,14 @@ void retro_set_environment(retro_environment_t cb)
 			{ "Light Gun",			RETRO_DEVICE_LIGHTGUN },
 			{ "Twin Stick",			RETRO_DEVICE_TWINSTICK },
 			{ "Saturn Twin-Stick",	RETRO_DEVICE_TWINSTICK_SATURN },
+			{ "Pointer",			RETRO_DEVICE_POINTER },
 			{ 0 },
 	};
 	static const struct retro_controller_info ports[] = {
-			{ ports_default,  7 },
-			{ ports_default,  7 },
-			{ ports_default,  7 },
-			{ ports_default,  7 },
+			{ ports_default,  8 },
+			{ ports_default,  8 },
+			{ ports_default,  8 },
+			{ ports_default,  8 },
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -327,13 +327,19 @@ void retro_init()
 	init_disk_control_interface();
 	retro_audio_init();
 
+#if defined(__APPLE__)
+    char *data_dir = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &data_dir) && data_dir)
+        set_user_data_dir(std::string(data_dir) + "/");
+#endif
+
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)
 #endif
 		emu.init();
@@ -352,7 +358,7 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	
-#if defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__)
+#if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	_vmem_release();
 #else
 	emu.term();
@@ -415,6 +421,11 @@ static bool set_variable_visibility(void)
 		option_display.key = CORE_OPTION_NAME "_enable_purupuru";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.key = CORE_OPTION_NAME "_per_content_vmus";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.visible = platformIsDreamcast || settings.platform.isAtomiswave();
+		option_display.key = CORE_OPTION_NAME "_emulate_bba";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_upnp";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 		vmuScreenSettingsShown = option_display.visible;
@@ -600,7 +611,7 @@ static bool set_variable_visibility(void)
 
 static void setGameGeometry(retro_game_geometry& geometry)
 {
-	geometry.aspect_ratio = getOutputFramebufferAspectRatio();
+	geometry.aspect_ratio = framebufferAspectRatio;
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
 	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
@@ -622,19 +633,18 @@ void setAVInfo(retro_system_av_info& avinfo)
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
 }
 
-void retro_resize_renderer(int w, int h)
+void retro_resize_renderer(int w, int h, float aspectRatio)
 {
-	if (w == framebufferWidth && h == framebufferHeight)
+	if (w == framebufferWidth && h == framebufferHeight && aspectRatio == framebufferAspectRatio)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
+	framebufferAspectRatio = aspectRatio;
 	bool avinfoNeeded = framebufferHeight > maxFramebufferHeight || framebufferWidth > maxFramebufferWidth;
 	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
 	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
 
-	if (avinfoNeeded
-			// TODO crash with dx11
-			&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
+	if (avinfoNeeded)
 	{
 		retro_system_av_info avinfo;
 		setAVInfo(avinfo);
@@ -670,6 +680,7 @@ static void update_variables(bool first_startup)
 	bool wasThreadedRendering = config::ThreadedRendering;
 	bool prevRotateScreen = rotate_screen;
 	bool prevDetectVsyncSwapInterval = libretro_detect_vsync_swap_interval;
+	bool emulateBba = config::EmulateBBA;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -769,7 +780,6 @@ static void update_variables(bool first_startup)
 	if (!first_startup && previous_renderer != config::RendererType) {
 		rend_term_renderer();
 		rend_init_renderer();
-		rend_resize_renderer();
 	}
 
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
@@ -1030,7 +1040,6 @@ static void update_variables(bool first_startup)
 			rotate_screen ^= rotate_game;
 		if (rotate_game)
 			config::Widescreen.override(false);
-		rend_resize_renderer();
 
 		if ((libretro_detect_vsync_swap_interval != prevDetectVsyncSwapInterval) &&
 			 !libretro_detect_vsync_swap_interval &&
@@ -1041,6 +1050,8 @@ static void update_variables(bool first_startup)
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
 		}
+		// must *not* be changed once a game is started
+		config::EmulateBBA.override(emulateBba);
 	}
 }
 
@@ -1109,6 +1120,7 @@ static bool loadGame()
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		gui_display_notification(e.what(), 5000);
+        retro_unload_game();
 		return false;
 	}
 
@@ -1127,7 +1139,6 @@ void retro_reset()
 		config::Widescreen.override(false);
 	config::Rotate90 = false;
 
-	rend_resize_renderer();
 	retro_game_geometry geometry;
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
@@ -1147,7 +1158,6 @@ static void context_reset()
 	rend_term_renderer();
 	theGLContext.init();
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void context_destroy()
@@ -1287,6 +1297,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		switch (device)
 		{
 		case RETRO_DEVICE_JOYPAD:
+		case RETRO_DEVICE_POINTER:
 			joymap = dc_joymap;
 			joymap_size = ARRAY_SIZE(dc_joymap);
 			break;
@@ -1304,6 +1315,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		switch (device)
 		{
 		case RETRO_DEVICE_JOYPAD:
+		case RETRO_DEVICE_POINTER:
 			joymap = nao_joymap;
 			joymap_size = ARRAY_SIZE(nao_joymap);
 			break;
@@ -1320,6 +1332,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		switch (device)
 		{
 		case RETRO_DEVICE_JOYPAD:
+		case RETRO_DEVICE_POINTER:
 			joymap = aw_joymap;
 			joymap_size = ARRAY_SIZE(aw_joymap);
 			break;
@@ -1613,7 +1626,6 @@ static void retro_vk_context_reset()
 	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void retro_vk_context_destroy()
@@ -1747,7 +1759,6 @@ static void dx11_context_reset()
 	else if (config::RendererType != RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::DirectX11;
 	rend_init_renderer();
-	rend_resize_renderer();
 }
 
 static void dx11_context_destroy()
@@ -2183,6 +2194,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 				}
 				break;
 			case RETRO_DEVICE_LIGHTGUN:
+			case RETRO_DEVICE_POINTER:
 				config::MapleMainDevices[in_port] = MDT_LightGun;
 				if (settings.platform.isConsole()) {
 					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
@@ -2235,10 +2247,7 @@ unsigned retro_api_version()
 void retro_rend_present()
 {
 	if (!config::ThreadedRendering)
-	{
 		is_dupe = false;
-		sh4_cpu.Stop();
-	}
 }
 
 static uint32_t get_time_ms()
@@ -2411,13 +2420,35 @@ static void updateMouseState(u32 port)
 
 static void updateLightgunCoordinates(u32 port)
 {
-	int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
-	int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
-	if (config::Widescreen && config::ScreenStretching == 100)
+	int x;
+	int y;
+	if (device_type[port] == RETRO_DEVICE_LIGHTGUN)
+	{
+		x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
+		y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
+	}
+	else
+	{
+		x = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
+		y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
+	}
+	if (config::Widescreen && config::ScreenStretching == 100 && !config::EmulateFramebuffer)
 		mo_x_abs[port] = 640.f * ((x + 0x8000) * 4.f / 3.f / 0x10000 - (4.f / 3.f - 1.f) / 2.f);
 	else
 		mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
 	mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
+
+	lightgun_params[port].offscreen = false;
+	lightgun_params[port].x = mo_x_abs[port];
+	lightgun_params[port].y = mo_y_abs[port];
+}
+
+void updateLightgunCoordinatesFromAnalogStick(int port)
+{
+	int x = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+	mo_x_abs[port] = 320 + x * 320 / 32767;
+	int y = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+	mo_y_abs[port] = 240 + y * 240 / 32767;
 
 	lightgun_params[port].offscreen = false;
 	lightgun_params[port].x = mo_x_abs[port];
@@ -2429,6 +2460,7 @@ static void UpdateInputStateNaomi(u32 port)
 	switch (config::MapleMainDevices[port])
 	{
 	case MDT_LightGun:
+		if (device_type[port] == RETRO_DEVICE_LIGHTGUN)
 		{
 			//
 			// -- buttons
@@ -2469,6 +2501,44 @@ static void UpdateInputStateNaomi(u32 port)
 			else
 			{
 				updateLightgunCoordinates(port);
+			}
+		}
+		else
+		{
+			// RETRO_DEVICE_POINTER
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_B);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_START);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_UP);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_DOWN);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_LEFT);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_RIGHT);
+
+			int pressed = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+			int count = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_COUNT);
+			if (count > 1)
+			{
+				// reload
+				mo_x_abs[port] = 0;
+				mo_y_abs[port] = 0;
+				lightgun_params[port].offscreen = true;
+			}
+			else if (count == 1)
+			{
+				updateLightgunCoordinates(port);
+			}
+			if (pressed)
+			{
+				if (settings.platform.isAtomiswave())
+					kcode[port] &= ~AWAVE_TRIGGER_KEY;
+				else
+					kcode[port] &= ~NAOMI_BTN0_KEY;
+			}
+			else
+			{
+				if (settings.platform.isAtomiswave())
+					kcode[port] |= AWAVE_TRIGGER_KEY;
+				else
+					kcode[port] |= NAOMI_BTN0_KEY;
 			}
 		}
 		break;
@@ -2560,6 +2630,35 @@ static void UpdateInputStateNaomi(u32 port)
 
 			// -- mouse, for rotary encoders
 			updateMouseState(port);
+			// lightgun with analog stick
+			if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+			{
+				updateLightgunCoordinatesFromAnalogStick(port);
+				if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
+				{
+					mo_x_abs[port] = 0;
+					mo_y_abs[port] = 0;
+					lightgun_params[port].offscreen = true;
+					if (settings.platform.isAtomiswave())
+						kcode[port] &= ~AWAVE_TRIGGER_KEY;
+					else
+						kcode[port] &= ~NAOMI_BTN0_KEY;
+				}
+				else if (settings.platform.isAtomiswave())
+				{
+					// map btn0 to trigger, btn1 to btn0, etc.
+					u32 k = kcode[port] | (AWAVE_BTN0_KEY | AWAVE_BTN1_KEY | AWAVE_BTN2_KEY | AWAVE_BTN3_KEY | AWAVE_TRIGGER_KEY);
+					if ((kcode[port] & AWAVE_BTN0_KEY) == 0)
+						k &= ~AWAVE_TRIGGER_KEY;
+					if ((kcode[port] & AWAVE_BTN1_KEY) == 0)
+						k &= ~AWAVE_BTN0_KEY;
+					if ((kcode[port] & AWAVE_BTN2_KEY) == 0)
+						k &= ~AWAVE_BTN1_KEY;
+					if ((kcode[port] & AWAVE_BTN3_KEY) == 0)
+						k &= ~AWAVE_BTN2_KEY;
+					kcode[port] = k;
+				}
+			}
 		}
 		break;
 	}
@@ -2853,6 +2952,7 @@ static void UpdateInputState(u32 port)
 		break;
 
 	case MDT_LightGun:
+		if (device_type[port] == RETRO_DEVICE_LIGHTGUN)
 		{
 			//
 			// -- buttons
@@ -2885,6 +2985,37 @@ static void UpdateInputState(u32 port)
 			{
 				updateLightgunCoordinates(port);
 			}
+		}
+		else
+		{
+			// RETRO_DEVICE_POINTER
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_B);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_START);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_UP);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_DOWN);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_LEFT);
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_RIGHT);
+
+			int pressed = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+			int count = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_COUNT);
+			if (count > 1)
+			{
+				// reload
+				mo_x_abs[port] = -1000;
+				mo_y_abs[port] = -1000;
+				lightgun_params[port].offscreen = true;
+
+				lightgun_params[port].x = mo_x_abs[port];
+				lightgun_params[port].y = mo_y_abs[port];
+			}
+			else if (count == 1)
+			{
+				updateLightgunCoordinates(port);
+			}
+			if (pressed)
+				kcode[port] &= ~DC_BTN_A;
+			else
+				kcode[port] |= DC_BTN_A;
 		}
 		break;
 

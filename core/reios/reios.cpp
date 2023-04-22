@@ -18,7 +18,6 @@
 #include "hw/sh4/sh4_core.h"
 #undef r
 #include "hw/sh4/sh4_mem.h"
-#include "hw/holly/sb_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
 #include "font.h"
@@ -28,6 +27,7 @@
 #include "imgread/common.h"
 #include "imgread/isofs.h"
 #include "oslib/oslib.h"
+#include "hw/sh4/sh4_mmr.h"
 
 #include <map>
 
@@ -63,12 +63,12 @@ static void reios_pre_init()
 
 static bool reios_locate_bootfile(const char* bootfile)
 {
-	reios_pre_init();
-	if (ip_meta.wince == '1' && descrambl)
+	if (disc == nullptr)
 	{
-		ERROR_LOG(REIOS, "Unsupported CDI: wince == '1'");
+		ERROR_LOG(REIOS, "No disk loaded");
 		return false;
 	}
+	reios_pre_init();
 
 	// Load IP.BIN bootstrap
 	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
@@ -90,7 +90,7 @@ static bool reios_locate_bootfile(const char* bootfile)
 
 	u32 offset = 0;
 	u32 size = bootFile->getSize();
-	if (ip_meta.wince == '1')
+	if (ip_meta.wince == '1' && !descrambl)
 	{
 		bootFile->read(GetMemPtr(0x8ce01000, 2048), 2048);
 		offset = 2048;
@@ -120,8 +120,11 @@ static bool reios_locate_bootfile(const char* bootfile)
 
 	// system settings
 	flash_syscfg_block syscfg{};
-	verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
-	memcpy(&data[16], &syscfg.time_lo, 8);
+	int rc = static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+	if (rc == 0)
+		WARN_LOG(REIOS, "Can't read system settings from flash");
+	else
+		memcpy(&data[16], &syscfg.time_lo, 8);
 
 	memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
 
@@ -372,7 +375,8 @@ static void reios_sys_misc()
 
 typedef void hook_fp();
 
-static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
+static void setup_syscall(u32 hook_addr, u32 syscall_addr)
+{
 	WriteMem32(syscall_addr, hook_addr);
 	WriteMem16(hook_addr, REIOS_OPCODE);
 
@@ -382,11 +386,38 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 
 static void reios_setup_state(u32 boot_addr)
 {
+	// San Francisco Rush checksum
+	short *p = (short *)GetMemPtr(0x8c0010f0, 2);
+	int chksum = (int)0xFFF937D1;
+	for (int i = 0; i < 10; i++)
+		chksum -= *p++;
+	p += 0xee - 1;
+	for (int i = 0; i < 3; i++)
+		chksum += *p++;
+	p += 0x347 - 1;
+	for (int i = 0; i < 11; i++)
+		chksum -= *p++;
+	p += 0xbf8 - 1;
+	for (int i = 0; i < 98; i++)
+	{
+		short v = chksum < 0 ? std::min(-chksum, 32767) : std::max(-chksum, -32768);
+		*p = v;
+		chksum += *p++;
+	}
+
 	// Set up AICA interrupt masks
 	aicaWriteReg(SCIEB_addr, (u16)0x48);
 	aicaWriteReg(SCILV0_addr, (u8)0x18);
 	aicaWriteReg(SCILV1_addr, (u8)0x50);
 	aicaWriteReg(SCILV2_addr, (u8)0x08);
+
+	// KOS seems to expect this
+	DMAC_DMAOR.full = 0x8201;
+
+	// WinCE needs this to detect PAL
+	if (config::Broadcast == 1)
+		BSC_PDTRA.full = 4;
+	BSC_PCTRA.full = 0x000A03F0;
 
 	/*
 	Post Boot registers from actual bios boot
@@ -658,7 +689,13 @@ void DYNACALL reios_trap(u32 op) {
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
-	hooks[mapd]();
+	auto it = hooks.find(mapd);
+	if (it == hooks.end()) {
+		ERROR_LOG(REIOS, "Unknown trap vector %08x pc %08x", mapd, pc);
+		return;
+	}
+
+	it->second();
 
 	// Return from syscall, except if pc was modified
 	if (pc == next_pc - 2)
@@ -695,6 +732,11 @@ void reios_reset(u8* rom)
 	u16* rom16 = (u16*)rom;
 
 	rom16[0] = REIOS_OPCODE;
+
+	// The Grinch game bug
+	*(u32 *)&rom[0x44c] = 0xe303d463;
+	// Jeremy McGrath game bug
+	*(u32 *)&rom[0x1c] = 0x71294118;
 
 	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
 

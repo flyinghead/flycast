@@ -16,8 +16,6 @@
 	 You should have received a copy of the GNU General Public License
 	 along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <array>
-#include <memory>
 #include "maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
 #include <xxhash.h>
@@ -25,6 +23,10 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -147,8 +149,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	void serialize(Serializer& ser) const;
-	void deserialize(Deserializer& deser);
+	virtual void serialize(Serializer& ser) const;
+	virtual void deserialize(Deserializer& deser);
 
 	bool lightgun_as_analog = false;
 
@@ -161,6 +163,10 @@ protected:
 		memset(v, 0, sizeof(u16) * 4);
 		for (u32 player = first_player; player < 4; player++)
 		{
+			// always-on mapping
+			for (u32 i = 0; i < cur_mapping.size(); i++)
+				if (cur_mapping[i] == 0xffffffff)
+					v[player - first_player] |= 1 << i;
 			u32 keycode = buttons[player];
 			if (keycode == 0)
 				continue;
@@ -176,7 +182,7 @@ protected:
 			}
 			// normal mapping
 			for (u32 i = 0; i < cur_mapping.size(); i++)
-				if ((keycode & (1 << i)) != 0)
+				if ((keycode & (1 << i)) != 0 && cur_mapping[i] != 0xffffffff)
 					v[player - first_player] |= cur_mapping[i];
 			// P2 mapping (only for P1)
 			if (player == 0)
@@ -361,14 +367,28 @@ public:
 	}
 };
 
-// Wave Runner GP: fake the drive board
-class jvs_837_13844_wrungp : public jvs_837_13844
+class jvs_837_13844_motor_board : public jvs_837_13844
 {
 public:
-	jvs_837_13844_wrungp(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_motor_board(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
 		: jvs_837_13844(node_id, parent, first_player)
 	{
 	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << out;
+		jvs_837_13844::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31)
+			deser >> out;
+		else
+			out = 0xff;
+		jvs_837_13844::deserialize(deser);
+	}
+
 protected:
 	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
@@ -376,59 +396,187 @@ protected:
 
 		// The drive board RX0-7 is connected to the following player inputs
 		v[0] |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
-		if (drive_board & 16)
+		if (out & 16)
 			v[0] &= ~NAOMI_BTN5_KEY;
-		if (drive_board & 32)
+		if (out & 32)
 			v[0] &= ~NAOMI_BTN4_KEY;
-		if (drive_board & 64)
+		if (out & 64)
 			v[0] &= ~NAOMI_BTN3_KEY;
-		if (drive_board & 128)
+		if (out & 128)
 			v[0] &= ~NAOMI_BTN2_KEY;
 		v[1] |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
-		if (drive_board & 1)
+		if (out & 1)
 			v[1] &= ~NAOMI_BTN5_KEY;
-		if (drive_board & 2)
+		if (out & 2)
 			v[1] &= ~NAOMI_BTN4_KEY;
-		if (drive_board & 4)
+		if (out & 4)
 			v[1] &= ~NAOMI_BTN3_KEY;
-		if (drive_board & 8)
+		if (out & 8)
 			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
-	void write_digital_out(int count, u8 *data) override {
+	void write_digital_out(int count, u8 *data) override
+	{
 		if (count != 3)
 			return;
 
 		// The drive board TX0-7 is connected to outputs 15-22
 		// shifting right by 2 to get the last 8 bits of the output
-		u16 out = (data[1] << 6) | (data[2] >> 2);
+		u16 in = (data[1] << 6) | (data[2] >> 2);
+		// reverse
+		in = (in & 0xF0) >> 4 | (in & 0x0F) << 4;
+		in = (in & 0xCC) >> 2 | (in & 0x33) << 2;
+		in = (in & 0xAA) >> 1 | (in & 0x55) << 1;
+
+		out = process(in);
+	}
+
+	virtual u8 process(u8 in) = 0;
+
+protected:
+	u8 out = 0;	// output from motor board
+};
+
+// Wave Runner GP: fake the drive board
+class jvs_837_13844_wrungp : public jvs_837_13844_motor_board
+{
+public:
+	jvs_837_13844_wrungp(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844_motor_board(node_id, parent, first_player)
+	{
+	}
+
+protected:
+	u8 process(u8 in) override
+	{
+		u8 out = ~this->out;
+		if (in == 0xff)
+			out = 0;
+		else if ((in & 0xf) == 0xf)
+		{
+			in >>= 4;
+			if (in > 7)
+				out = 1 << (14 - in);
+			else
+				out = 1 << in;
+		}
+		else if ((in & 0xf0) == 0xf0)
+		{
+			in &= 0xf;
+			if (in > 7)
+				out = 1 << (in - 7);
+			else
+				out = 1 << (7 - in);
+		}
+
+		return ~out;
+	}
+};
+
+// 18 Wheeler: fake the drive board and limit the wheel analog value
+class jvs_837_13844_18wheeler : public jvs_837_13844_motor_board
+{
+public:
+	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844_motor_board(node_id, parent, first_player)
+	{
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << gear;
+		ser << testMode;
+		jvs_837_13844_motor_board::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31) {
+			deser >> gear;
+			deser >> testMode;
+		}
+		jvs_837_13844_motor_board::deserialize(deser);
+	}
+
+protected:
+	void read_digital_in(const u32 *buttons, u16 *v) override
+	{
+		jvs_837_13844_motor_board::read_digital_in(buttons, v);
+		if (buttons[0] & NAOMI_BTN2_KEY)
+		{
+			gear = -1;
+		}
+		else if (buttons[0] & NAOMI_BTN1_KEY)
+		{
+			if (!transitionWait)
+			{
+				gear = gear == 0 ? 1 : 0;
+				transitionWait = true;
+			}
+		}
+		else
+		{
+			transitionWait = false;
+		}
+
+		switch (gear)
+		{
+		case -1:
+			v[1] |= NAOMI_LEFT_KEY | NAOMI_DOWN_KEY;
+			v[1] &= ~NAOMI_UP_KEY;
+			break;
+		case 0:
+		default:
+			v[1] |= NAOMI_DOWN_KEY;
+			v[1] &= ~(NAOMI_UP_KEY | NAOMI_LEFT_KEY);
+			break;
+		case 1:
+			v[1] &= ~(NAOMI_LEFT_KEY | NAOMI_DOWN_KEY);
+			v[1] |= NAOMI_UP_KEY;
+			break;
+		}
+	}
+
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override
+	{
+		u16 v = jvs_837_13844_motor_board::read_analog_axis(player_num, player_axis, inverted);
+		if (player_axis == 0)
+			return std::min<u16>(0xefff, std::max<u16>(0x1000, v));
+		else
+			return v;
+	}
+
+	u8 process(u8 in) override
+	{
+		in = ~in;
+		switch (in)
+		{
+		case 0xf0:
+			testMode = true;
+			break;
+
+		case 0xff:
+			testMode = false;
+			break;
+
+		default:
+			break;
+		}
+		u8 out = 0;
+		if (testMode)
+			out = in;
+
 		// reverse
 		out = (out & 0xF0) >> 4 | (out & 0x0F) << 4;
 		out = (out & 0xCC) >> 2 | (out & 0x33) << 2;
 		out = (out & 0xAA) >> 1 | (out & 0x55) << 1;
 
-		if (out == 0xff)
-			drive_board = 0xff;
-		else if ((out & 0xf) == 0xf)
-		{
-			out >>= 4;
-			if (out > 7)
-				drive_board = 0xff & ~(1 << (14 - out));
-			else
-				drive_board = 0xff & ~(1 << out);
-		}
-		else if ((out & 0xf0) == 0xf0)
-		{
-			out &= 0xf;
-			if (out > 7)
-				drive_board = 0xff & ~(1 << (out - 7));
-			else
-				drive_board = 0xff & ~(1 << (7 - out));
-		}
+		return out;
 	}
 
 private:
-	u8 drive_board = 0;
+	bool testMode = false;
+	int8_t gear = 0;	// 0: low, 1: high, -1: reverse
+	bool transitionWait = false;
 };
 
 // Ninja assault
@@ -661,7 +809,7 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		if (!strcmp(naomi_game_id, "VIRTUA ATHLETE"))
+		if (settings.content.gameId == "VIRTUA ATHLETE")
 		{
 			// reverse the board order so that P1 is P1
 			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
@@ -702,6 +850,9 @@ maple_naomi_jamma::maple_naomi_jamma()
 		break;
 	case JVS::WaveRunnerGP:
 		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
+		break;
+	case JVS::_18Wheeler:
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_18wheeler>(new jvs_837_13844_18wheeler(1, this)));
 		break;
 	}
 
@@ -1561,6 +1712,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 											axis_value = 0;
 										if (axisDesc.inverted)
 											axis_value = 0xff00u - axis_value;
+										// this fixes kingrt66 immediate win
+										if (axis_value == 0x8000)
+											axis_value = 0x8100;
 									}
 									else
 									{

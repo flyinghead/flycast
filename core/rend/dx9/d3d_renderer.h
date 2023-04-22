@@ -25,7 +25,6 @@
 #include "rend/transform_matrix.h"
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
-#include "rend/sorter.h"
 #include "rend/imgui_driver.h"
 
 class RenderStateCache
@@ -100,7 +99,6 @@ public:
 struct D3DRenderer : public Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override;
 	void Term() override;
 	bool Process(TA_context* ctx) override;
 	bool Render() override;
@@ -117,10 +115,12 @@ struct D3DRenderer : public Renderer
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void preReset();
 	void postReset();
+	void RenderFramebuffer(const FramebufferInfo& info) override;
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
+	void resize(int w, int h);
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
 	void drawList(const List<PolyParam>& gply, int first, int count);
@@ -130,18 +130,15 @@ private:
 	bool ensureIndexBufferSize(ComPtr<IDirect3DIndexBuffer9>& buffer, u32& currentSize, u32 minSize);
 	void updatePaletteTexture();
 	void updateFogTexture();
-	void renderFramebuffer();
-	void readDCFramebuffer();
-	void renderDCFramebuffer();
-	void sortTriangles(int first, int count);
-	void drawSorted(bool multipass);
+	void displayFramebuffer();
+	void drawSorted(int first, int count, bool multipass);
 	void setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 	void drawModVols(int first, int count);
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
 	void setBaseScissor();
 	void prepareRttRenderTarget(u32 texAddress);
-
 	void readRttRenderTarget(u32 texAddress);
+	void writeFramebufferToVRAM();
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;
@@ -151,8 +148,6 @@ private:
 	u32 modvolBufferSize = 0;
 	ComPtr<IDirect3DIndexBuffer9> indexBuffer;
 	u32 indexBufferSize = 0;
-	ComPtr<IDirect3DIndexBuffer9> sortedTriIndexBuffer;
-	u32 sortedTriIndexBufferSize = 0;
 	ComPtr<IDirect3DVertexDeclaration9> mainVtxDecl;
 	ComPtr<IDirect3DVertexDeclaration9> modVolVtxDecl;
 
@@ -166,18 +161,19 @@ private:
 	ComPtr<IDirect3DTexture9> rttTexture;
 	ComPtr<IDirect3DSurface9> rttSurface;
 	ComPtr<IDirect3DSurface9> depthSurface;
+	ComPtr<IDirect3DTexture9> fbScaledTexture;
+	ComPtr<IDirect3DSurface9> fbScaledSurface;
 
 	u32 width = 0;
 	u32 height = 0;
 	TransformMatrix<COORD_DIRECTX> matrices;
 	D3DTextureCache texCache;
-	std::vector<SortTrigDrawParam> pidx_sort;
 	D3DShaders shaders;
 	RECT scissorRect{};
 	bool scissorEnable = false;
-	bool resetting = false;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	int maxAnisotropy = 1;
+	float aspectRatio = 4.f / 3.f;
 };
 

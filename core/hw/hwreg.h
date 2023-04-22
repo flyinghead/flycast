@@ -11,7 +11,6 @@ typedef void RegWriteAddrFP(u32 addr, u32 data);
 	F    F     N      -> RF|WF		-> RIO_FUNC
 	D    X     N      -> RO|WF		-> RIO_RO
 	F    X     N      -> RF|WF|RO	-> RIO_RO_FUNC
-	D    X     Y      -> CONST|RO|WF-> RIO_CONST
 	X    F     N      -> RF|WF|WO	-> RIO_WO_FUNC
 */
 enum RegStructFlags
@@ -30,7 +29,6 @@ enum RegIO
 	RIO_FUNC = REG_WF | REG_RF,
 	RIO_RO = REG_RO | REG_WF,
 	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
-	RIO_CONST = REG_RO | REG_WF,
 	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
 	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
 };
@@ -39,16 +37,13 @@ struct RegisterStruct
 {
 	union
 	{
-		u32 data32;					//stores data of reg variable [if used] 32b
-		u16 data16;					//stores data of reg variable [if used] 16b
-		u8  data8;					//stores data of reg variable [if used]	8b
-
-		RegReadAddrFP* readFunctionAddr; //stored pointer to reg read function
+		u32 data32;						 // Register value
+		RegReadAddrFP* readFunctionAddr; // Register read handler
 	};
 
-	RegWriteAddrFP* writeFunctionAddr; //stored pointer to reg write function
+	RegWriteAddrFP* writeFunctionAddr;	 // Register write handler
 
-	u32 flags;					//Access flags !
+	u32 flags;							 // Access flags
 
 	void reset()
 	{

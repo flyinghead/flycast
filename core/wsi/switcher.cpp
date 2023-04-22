@@ -46,12 +46,14 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
-#ifdef _WIN32
+#ifdef USE_DX11
+	bool dx11Failed = false;
 	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
 		theDX11Context.setWindow(window, display);
 		if (theDX11Context.init())
 			return;
+		dx11Failed = true;
 		WARN_LOG(RENDERER, "DirectX 11 init failed. Falling back to DirectX 9.");
 		config::RendererType = RenderType::DirectX9;
 	}
@@ -73,6 +75,17 @@ void initRenderApi(void *window, void *display)
 	theGLContext.setWindow(window, display);
 	if (theGLContext.init())
 		return;
+#endif
+#ifdef USE_DX11
+	if (!dx11Failed)
+	{
+		// Try dx11 as a last resort if it hasn't been tried before
+		WARN_LOG(RENDERER, "OpenGL init failed. Trying DirectX 11.");
+		config::RendererType = RenderType::DirectX11;
+		theDX11Context.setWindow(window, display);
+		if (theDX11Context.init())
+			return;
+	}
 #endif
 	die("Cannot initialize the graphics API");
 }

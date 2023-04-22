@@ -9,11 +9,14 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/modules/ccn.h"
+#include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_interrupts.h"
-#include "hw/sh4/sh4_cache.h"
 #include "debug/gdb_server.h"
-#include "debug/debug_agent.h"
-#include "emulator.h"
+#include "hw/sh4/dyna/decoder.h"
+
+#ifdef STRICT_MODE
+#include "hw/sh4/sh4_cache.h"
+#endif
 
 #define iNimp cpu_iNimp
 
@@ -808,34 +811,14 @@ sh4op(i0000_0000_0010_1000)
 	mac.full=0;
 }
 
-void logbranch(u32 src, u32 dest) {
-	// if (dest >= 0x8c010000 && dest <= 0x8c040000) {
-	// 	NOTICE_LOG(SH4, "0x%08x: branch to %08x", src, dest);
-	// }
-}
-
-void logcall(u32 src, u32 dest) {
-	// if (dest >= 0x8c010000 && dest <= 0x8c040000) {
-	// 	NOTICE_LOG(SH4, "0x%08x: call _%08x()", src, dest);
-	// }
-}
-
-void logret(u32 src, u32 dest) {
-	// if (dest >= 0x8c010000 && dest <= 0x8c040000) {
-	// 	NOTICE_LOG(SH4, "0x%08x: ret", src);
-	// }
-}
-
 //braf <REG_N>
 sh4op(i0000_nnnn_0010_0011)
 {
 	u32 n = GetN(op);
 	u32 newpc = r[n] + next_pc + 2;//
 	ExecuteDelayslot();	//WARN : r[n] can change here
-	logbranch(curr_pc, newpc);
 	next_pc = newpc;
 }
-
 //bsrf <REG_N>
 sh4op(i0000_nnnn_0000_0011)
 {
@@ -846,7 +829,6 @@ sh4op(i0000_nnnn_0000_0011)
 	ExecuteDelayslot(); //WARN : pr and r[n] can change here
 	
 	pr = newpr;
-	logcall(curr_pc, newpc);
 	next_pc = newpc;
 	debugger::subroutineCall();
 }
@@ -863,7 +845,6 @@ sh4op(i0000_0000_0010_1011)
 	// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
 	sh4_sr_SetFull(ssr);
 	ExecuteDelayslot_RTE();
-	logret(curr_pc, newpc);
 	next_pc = newpc;
 	if (UpdateSR())
 	{
@@ -878,7 +859,6 @@ sh4op(i0000_0000_0000_1011)
 {
 	u32 newpc=pr;
 	ExecuteDelayslot(); //WARN : pr can change here
-	logret(curr_pc, newpc);
 	next_pc=newpc;
 	debugger::subroutineReturn();
 }
@@ -893,7 +873,6 @@ sh4op(i1000_1011_iiii_iiii)
 	if (sr.T==0)
 	{
 		//direct jump
-		logbranch(curr_pc, branch_target_s8(op));
 		next_pc = branch_target_s8(op);
 	}
 }
@@ -907,7 +886,6 @@ sh4op(i1000_1111_iiii_iiii)
 		//delay 1 instruction
 		u32 newpc=branch_target_s8(op);
 		ExecuteDelayslot();
-		logbranch(curr_pc, branch_target_s8(op));
 		next_pc = newpc;
 	}
 }
@@ -919,7 +897,6 @@ sh4op(i1000_1001_iiii_iiii)
 	if (sr.T != 0)
 	{
 		//direct jump
-		logbranch(curr_pc, branch_target_s8(op));
 		next_pc = branch_target_s8(op);
 	}
 }
@@ -932,7 +909,6 @@ sh4op(i1000_1101_iiii_iiii)
 	{
 		//delay 1 instruction
 		u32 newpc=branch_target_s8(op);
-		logbranch(curr_pc, newpc);
 		ExecuteDelayslot();
 		next_pc = newpc;
 	}
@@ -948,7 +924,6 @@ sh4op(i1010_iiii_iiii_iiii)
 {
 	u32 newpc = branch_target_s12(op);
 	ExecuteDelayslot();
-	logbranch(curr_pc, newpc);
 	next_pc=newpc;
 }
 
@@ -960,7 +935,6 @@ sh4op(i1011_iiii_iiii_iiii)
 	ExecuteDelayslot();
 
 	pr = newpr;
-	logcall(curr_pc, newpc);
 	next_pc = newpc;
 	debugger::subroutineCall();
 }
@@ -969,10 +943,7 @@ sh4op(i1011_iiii_iiii_iiii)
 sh4op(i1100_0011_iiii_iiii)
 {
 	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
-	// debugger::debugTrap(0x160);
-	debugAgent.debugTrap(0x160);
-	emu.stop();
-	throw debugger::Stop();
+	debugger::debugTrap(0x160);
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc,0x160,0x100);
 }
@@ -984,7 +955,6 @@ sh4op(i0100_nnnn_0010_1011)
 
 	u32 newpc=r[n];
 	ExecuteDelayslot(); //r[n] can change here
-	logcall(curr_pc, newpc);
 	next_pc=newpc;
 }
 
@@ -998,7 +968,6 @@ sh4op(i0100_nnnn_0000_1011)
 	ExecuteDelayslot(); //r[n]/pr can change here
 
 	pr = newpr;
-	logcall(curr_pc, newpc);
 	next_pc = newpc;
 	debugger::subroutineCall();
 }
@@ -1193,7 +1162,7 @@ sh4op(i0000_nnnn_1011_0011)
 
 //pref @<REG_N>
 template<bool mmu_on>
-INLINE void DYNACALL do_sqw(u32 Dest)
+void DYNACALL do_sqw(u32 Dest)
 {
 	//TODO : Check for enabled store queues ?
 	u32 Address;

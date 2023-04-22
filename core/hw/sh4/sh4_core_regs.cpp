@@ -10,12 +10,12 @@
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 
-static INLINE void ChangeGPR()
+static void ChangeGPR()
 {
 	std::swap((u32 (&)[8])r, r_bank);
 }
 
-static INLINE void ChangeFP()
+static void ChangeFP()
 {
 	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
 }
@@ -206,10 +206,6 @@ static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			return &next_pc;
 			break;
 
-		case reg_old_sr_status :
-			return &old_sr.status;
-			break;
-
 		case reg_sr_status :
 			return &sr.status;
 			break;
@@ -244,24 +240,4 @@ static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 u32* GetRegPtr(u32 reg)
 {
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-f32* GetFloatRegPtr(u32 reg)
-{
-	auto type = (Sh4RegType) reg;
-
-	if ((reg>=reg_fr_0) && (reg<=reg_fr_15))
-	{
-		return &fr[reg-reg_fr_0];
-	}
-	else if ((reg>=reg_xf_0) && (reg<=reg_xf_15))
-	{
-		return &xf[reg-reg_xf_0];
-	}
-
-	ERROR_LOG(SH4, "Unknown fp register ID %d", reg);
-	die("Invalid reg");
-	return 0;
-	
-	// return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }

@@ -23,6 +23,8 @@
 #include "../utils.h"
 #include "cfg/option.h"
 
+#include <map>
+
 enum class Pass { Depth, Color, OIT };
 
 class OITShaderManager
@@ -122,6 +124,20 @@ public:
 		if (!clearShader)
 			clearShader = compileClearShader();
 		return *clearShader;
+	}
+
+	void term()
+	{
+		vertexShaders.clear();
+		fragmentShaders.clear();
+		modVolVertexShaders.clear();
+		modVolShaders[0].reset();
+		modVolShaders[1].reset();
+		trModVolShaders.clear();
+
+		finalVertexShader.reset();
+		finalFragmentShader.reset();
+		clearShader.reset();
 	}
 
 private:

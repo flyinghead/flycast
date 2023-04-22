@@ -31,7 +31,7 @@ public:
 	virtual ~ImGuiDriver() = default;
 
 	virtual void newFrame() = 0;
-	virtual void renderDrawData(ImDrawData* drawData) = 0;
+	virtual void renderDrawData(ImDrawData* drawData, bool gui_open) = 0;
 
 	virtual void displayVmus() {}
 	virtual void displayCrosshairs() {}

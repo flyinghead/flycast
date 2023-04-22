@@ -396,7 +396,8 @@ void mcfg_SerializeDevices(Serializer& ser)
 
 void mcfg_DeserializeDevices(Deserializer& deser)
 {
-	mcfg_DestroyDevices();
+	if (!deser.rollback())
+		mcfg_DestroyDevices();
 	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
 	if (deser.version() < Deserializer::V23)
 	{
@@ -428,7 +429,8 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 			deser >> deviceType;
 			if (deviceType != MDT_None)
 			{
-				mcfg_Create((MapleDeviceType)deviceType, i, j);
+				if (!deser.rollback())
+					mcfg_Create((MapleDeviceType)deviceType, i, j);
 				MapleDevices[i][j]->deserialize(deser);
 			}
 		}

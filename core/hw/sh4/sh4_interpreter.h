@@ -18,10 +18,6 @@ enum OpcodeType
 	WritesFPSCR  = 16,  // Writes to FPSCR , and UpdateSR needs to be called
 	Invalid      = 128, // Invalid
 
-	NO_FP        = 256,
-	NO_GP        = 512,
-	NO_SP        = 1024,
-
 	UsesFPU      = 2048, // Floating point op
 	FWritesFPSCR = UsesFPU | WritesFPSCR,
 

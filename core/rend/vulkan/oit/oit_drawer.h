@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/sorter.h"
 #include "rend/transform_matrix.h"
 #include "../vulkan.h"
 #include "../buffer.h"
@@ -70,6 +69,8 @@ protected:
 		depthAttachments[1].reset();
 		mainBuffers.clear();
 		descriptorSets.term();
+		maxWidth = 0;
+		maxHeight = 0;
 	}
 
 	int GetCurrentImage() const { return imageIndex; }
@@ -101,10 +102,9 @@ protected:
 					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
 		return mainBuffers[bufferIndex].get();
-	};
+	}
 
 	void MakeBuffers(int width, int height);
-	virtual vk::Format GetColorFormat() const = 0;
 	virtual vk::Framebuffer GetFinalFramebuffer() const = 0;
 
 	vk::Rect2D viewport;
@@ -166,7 +166,7 @@ public:
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
 		MakeFramebuffers(viewport);
-		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport);
+		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport, 0);
 	}
 	void Term()
 	{
@@ -177,12 +177,21 @@ public:
 	}
 
 	vk::CommandBuffer NewFrame() override;
+
 	void EndFrame() override
 	{
 		currentCommandBuffer.endRenderPass();
-		currentCommandBuffer.end();
+		if (config::EmulateFramebuffer)
+		{
+			scaleAndWriteFramebuffer(currentCommandBuffer, finalColorAttachments[GetCurrentImage()].get());
+		}
+		else
+		{
+			currentCommandBuffer.end();
+			commandPool->EndFrame();
+			aspectRatio = getOutputFramebufferAspectRatio();
+		}
 		currentCommandBuffer = nullptr;
-		commandPool->EndFrame();
 		OITDrawer::EndFrame();
 		frameRendered = true;
 	}
@@ -193,8 +202,7 @@ public:
 			return false;
 		frameRendered = false;
 		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImage(),
-				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
-		NewImage();
+				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent, aspectRatio);
 
 		return true;
 	}
@@ -203,7 +211,6 @@ public:
 
 protected:
 	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
 	void MakeFramebuffers(const vk::Extent2D& viewport);
@@ -213,6 +220,7 @@ private:
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
+	float aspectRatio = 0.f;
 };
 
 class OITTextureDrawer : public OITDrawer
@@ -241,7 +249,6 @@ public:
 protected:
 	vk::CommandBuffer NewFrame() override;
 	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
 	u32 textureAddr = 0;
