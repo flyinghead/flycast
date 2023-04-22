@@ -24,6 +24,7 @@ WIDE = int(os.getenv("WIDE", 0))
 ROM = os.getenv("ROM", r"C:\rom\gdx-disc2\gdx-disc2.gdi")
 FLYCAST = os.getenv("FLYCAST", r"R:\Temp\flycast.exe")
 GDXSV = os.getenv("GDXSV", r"127.0.0.1")
+REPLAY = os.getenv("REPLAY", "")
 FLYCAST_NAME = Path(FLYCAST).name
 X_OFFSET = 0
 Y_OFFSET = 50
@@ -120,6 +121,7 @@ def run_replay(idx: int) -> subprocess.Popen:
         conf_volume(idx),
         conf_window_layout(idx),
         conf_log(idx),
+        f"--config gdxsv:replay={REPLAY}"
     )
 
 
@@ -152,7 +154,7 @@ def truncate(path: str):
 
 
 def tail(parent: subprocess.Popen, path: str):
-    with open(path, "r") as f:
+    with open(path, "r", encoding='utf-8') as f:
         f.seek(0, 2)
         while parent.poll() == None:
             print(f.readline(), end="")

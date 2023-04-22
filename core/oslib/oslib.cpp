@@ -157,7 +157,7 @@ std::string getBiosFontPath()
 #include "log/InMemoryListener.h"
 #include "wsi/context.h"
 
-#define FLYCAST_CRASH_LIST "flycast-crashes.txt"
+#define FLYCAST_CRASH_LIST "flycast-gdxsv-crashes.txt"
 
 void registerCrash(const char *directory, const char *path)
 {
