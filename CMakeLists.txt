@@ -296,38 +296,41 @@ if(NOT LIBRETRO)
 		)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-		# add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
-		# ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+#[===[  NOTE: gdxsv-flycast uploads dSYM to sentry so no need these steps.
 
-		# if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
-		# 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		# 		COMMAND sleep 20
-		# 		COMMAND mkdir -p ../symbols
-		# 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-		# 			-a x86_64
-		# 			-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-		# 			${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
-		# 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-		# 			-a arm64
-		# 			-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
-		# 			${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
-		# 	)
-		# else()
-		# 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		# 		COMMAND sleep 20
-		# 		COMMAND mkdir -p ../symbols
-		# 		COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast
-		# 			-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-		# 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-		# 			-a x86_64
-		# 			-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-		# 			${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
-		# 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
-		# 			-a arm64
-		# 			-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
-		# 			${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
-		# 	)
-		# endif()
+		add_custom_target(dump_syms COMMAND xcodebuild -project ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/breakpad/src/tools/mac/dump_syms/dump_syms.xcodeproj -target dump_syms -configuration Release CONFIGURATION_BUILD_DIR=${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad)
+		ADD_DEPENDENCIES(${PROJECT_NAME} dump_syms)
+
+		if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a x86_64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a arm64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
+			)
+		else()
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+				COMMAND sleep 20
+				COMMAND mkdir -p ../symbols
+				COMMAND dsymutil ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast
+					-o ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a x86_64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-x64.sym
+				COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/build/breakpad/dump_syms
+					-a arm64
+					-g ${CMAKE_CURRENT_BINARY_DIR}/Flycast.app.dSYM
+					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/MacOS/Flycast > ../symbols/Flycast-arm64.sym
+			)
+		endif()
+#]===]
 	endif()
 endif()
 
