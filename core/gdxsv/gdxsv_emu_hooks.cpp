@@ -376,10 +376,18 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
             }
 
             post_fields.emplace_back("sentry[tags][disk]", f_disk);
-            post_fields.emplace_back("user[id]", f_user_id);
+            post_fields.emplace_back("sentry[tags][username]", f_user_id);
             post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
         }
     }
+
+	const std::string machine_id = os_GetMachineID();
+	if (machine_id.length()) {
+		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
+		std::stringstream ss;
+		ss << std::hex << digest;
+        post_fields.emplace_back("sentry[tags][id]", ss.str().c_str());
+	}
 }
 
 #undef CHAR_PATH_SEPARATOR
