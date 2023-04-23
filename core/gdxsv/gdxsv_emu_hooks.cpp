@@ -10,6 +10,8 @@
 #include "rend/gui_util.h"
 #include "version.h"
 #include <fstream>
+
+#include "xxhash.h"
 #include "log/LogManager.h"
 #include "cfg/cfg.h"
 #include "nowide/fstream.hpp"
@@ -341,5 +343,51 @@ void gdxsv_latest_version_check() {
 void gdxsv_mainui_loop() { gdxsv.HookMainUiLoop(); }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
+
+void gdxsv_crash_append_log(FILE* f) {
+	if (gdxsv.Enabled()) {
+        fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
+        fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
+		fprintf(f, "[gdxsv]netmode: %s\n", gdxsv.NetModeString());
+	}
+}
+
+static bool trim_prefix(const std::string& s, const std::string& prefix, std::string& out) {
+	auto size = prefix.size();
+	if (s.size() < size) return false;
+	if (std::equal(std::begin(prefix), std::end(prefix), std::begin(s))) {
+		out = s.substr(prefix.size());
+		return true;
+	}
+	return false;
+}
+
+void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields) {
+    if (file_exists(logfile)) {
+        nowide::ifstream ifs(logfile);
+        if (ifs.is_open()) {
+			std::string line;
+            std::string f_disk, f_user_id, f_netmode;
+
+            while (std::getline(ifs, line)) {
+				trim_prefix(line, "[gdxsv]disk: ", f_disk);
+				trim_prefix(line, "[gdxsv]user_id: ", f_user_id);
+				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
+            }
+
+            post_fields.emplace_back("sentry[tags][disk]", f_disk);
+            post_fields.emplace_back("sentry[tags][username]", f_user_id);
+            post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
+        }
+    }
+
+	const std::string machine_id = os_GetMachineID();
+	if (machine_id.length()) {
+		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
+		std::stringstream ss;
+		ss << std::hex << digest;
+        post_fields.emplace_back("sentry[tags][id]", ss.str().c_str());
+	}
+}
 
 #undef CHAR_PATH_SEPARATOR

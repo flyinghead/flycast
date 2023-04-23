@@ -8,7 +8,6 @@
 #include "gdxsv_backend_rollback.h"
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
-#include "log/InMemoryListener.h"
 #include "network/miniupnp.h"
 #include "types.h"
 
@@ -56,6 +55,19 @@ class Gdxsv {
 
 	int Disk() const { return disk; }
 
+	std::string UserId() const { return user_id; }
+
+	const char* NetModeString() const {
+        switch (netmode) {
+        case NetMode::Offline: return "Offline";
+        case NetMode::Lbs: return "Lbs";
+        case NetMode::McsUdp: return "McsUdp";
+        case NetMode::McsRollback: return "McsRollback";
+        case NetMode::Replay: return "Replay";
+		default: return "Unknown";
+        }
+	}
+
 	MiniUPnP& UPnP() { return upnp; }
 
    private:
@@ -76,8 +88,6 @@ class Gdxsv {
 	void WritePatchDisk1();
 
 	void WritePatchDisk2();
-
-	void WriteWidescreenPatchDisk2();
 
 	NetMode netmode = NetMode::Offline;
 	std::atomic<bool> enabled;
