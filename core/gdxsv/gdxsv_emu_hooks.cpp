@@ -375,9 +375,9 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
             }
 
-            post_fields.emplace_back("sentry[tags][disk]", f_disk);
-            post_fields.emplace_back("sentry[tags][username]", f_user_id);
-            post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
+            if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
+            if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
+            if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
         }
     }
 
@@ -386,7 +386,7 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
 		std::stringstream ss;
 		ss << std::hex << digest;
-        post_fields.emplace_back("sentry[tags][id]", ss.str().c_str());
+		post_fields.emplace_back("sentry[tags][machine_id]", ss.str().c_str());
 	}
 }
 
