@@ -208,18 +208,28 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		}
 	}
 
+	static int disconnect_frame = 0;
+
 	// Rebattle end
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
-		ggpo::disconnect(matching_.peer_id());
-		state_ = State::CloseWait;
+		if (state_ != State::CloseWait) {
+			ggpo::disconnect(matching_.peer_id());
+			ggpo::getCurrentFrame(&disconnect_frame);
+			state_ = State::CloseWait;
+		}
 	}
 
 	// Friend save scene
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
 		SetCloseReason("game_end");
-		ggpo::stopSession();
-		config::GGPOEnable.reset();
-		state_ = State::End;
+		int frame = 0;
+		ggpo::getCurrentFrame(&frame);
+
+		if (16 < frame - disconnect_frame) {
+			ggpo::stopSession();
+			config::GGPOEnable.reset();
+			state_ = State::End;
+		}
 	}
 
 	// Fast return to lobby on error
@@ -232,7 +242,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	}
 
 	if (is_local_test_ && state_ == State::End) {
-		exit(0);
+		dc_exit();
 	}
 }
 
