@@ -15,6 +15,10 @@
 #include "log/LogManager.h"
 #include "cfg/cfg.h"
 #include "nowide/fstream.hpp"
+#include "json.hpp"
+
+using namespace nlohmann;
+
 
 #ifdef _WIN32
 #define CHAR_PATH_SEPARATOR '\\'
@@ -25,6 +29,7 @@
 void gdxsv_latest_version_check();
 static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
+static std::string gdxsv_latest_version_download_url;
 
 void gdxsv_flycast_init() {
 	config::GGPOEnable = false;
@@ -98,15 +103,19 @@ void gdxsv_update_popup() {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
 		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
-							 55.f * settings.display.uiScale);
+			-55.f * settings.display.uiScale);
 		if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
 			gdxsv_update_available = false;
-			os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+			if (!gdxsv_latest_version_download_url.empty()) {
+				os_LaunchFromURL(gdxsv_latest_version_download_url);
+			} else {
+				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+			}
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
-							 55.f * settings.display.uiScale);
+			-55.f * settings.display.uiScale);
 		if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
 			gdxsv_update_available = false;
 			ImGui::CloseCurrentPopup();
@@ -294,10 +303,39 @@ void gdxsv_emu_settings() {
 	gui_header("Flycast Settings");
 }
 
-void gdxsv_handle_release_json(const std::string &json) {
-	const std::string version_prefix = "gdxsv-";
+void gdxsv_handle_release_json(const std::string &json_string) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
+	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
+
+	std::string latest_tag_name;
+	std::string latest_download_url;
+	std::string expected_name;
+
+	#if HOST_CPU == CPU_X64
+	#if defined(_WIN32)
+	expected_name = "flycast-gdxsv-windows-msvc.zip";
+	#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
+	expected_name = "flycast-gdxsv-macos-x86_64.zip";
+	#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+	expected_name = "flycast-gdxsv-linux-x86_64.zip"
+	#endif
+	#endif
+
+	try {
+		json v = json::parse(json_string);
+		latest_tag_name = v.at("tag_name");
+		for (auto e : v.at("assets")) {
+			std::string name = e.at("name");
+			if (name == expected_name) {
+				latest_download_url = e.at("browser_download_url");
+			}
+		}
+	} catch (const json::exception& e) {
+		WARN_LOG(COMMON, "json parse failure: %s", e.what());
+	}
+
+	if (latest_tag_name.empty()) return;
 
 	auto trim_prefix = [&version_prefix](const std::string &s) {
 		if (s.size() < version_prefix.size()) return s;
@@ -309,20 +347,16 @@ void gdxsv_handle_release_json(const std::string &json) {
 
 	auto current_version_str = trim_prefix(std::string(GIT_VERSION));
 	if (!std::regex_match(current_version_str, match, semver_regex)) return;
-
 	if (match.size() < 4) return;
 	auto current_version = std::tuple<int, int, int>(std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
 
-	if (!std::regex_search(json, match, tag_name_regex)) return;
-	if (match.size() < 2) return;
-	auto tag_name = match.str(1);
-	auto latest_version_str = trim_prefix(tag_name);
-
+	auto latest_version_str = trim_prefix(latest_tag_name);
 	if (!std::regex_match(latest_version_str, match, semver_regex)) return;
 	if (match.size() < 4) return;
 	auto latest_version = std::tuple<int, int, int>(std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
 
-	gdxsv_latest_version_tag = tag_name;
+	gdxsv_latest_version_tag = latest_tag_name;
+	gdxsv_latest_version_download_url = latest_download_url;
 
 	if (current_version < latest_version) {
 		gdxsv_update_available = true;
