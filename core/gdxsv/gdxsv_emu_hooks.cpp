@@ -318,7 +318,7 @@ void gdxsv_handle_release_json(const std::string &json_string) {
 	#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 	expected_name = "flycast-gdxsv-macos-x86_64.zip";
 	#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
-	expected_name = "flycast-gdxsv-linux-x86_64.zip"
+	expected_name = "flycast-gdxsv-linux-x86_64.zip";
 	#endif
 	#endif
 
