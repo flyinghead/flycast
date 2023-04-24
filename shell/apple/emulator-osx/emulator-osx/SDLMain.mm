@@ -252,8 +252,7 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 	    char path[512];
 	    sprintf(path, "%s/%s.dmp", dump_dir, minidump_id);
 	    printf("Minidump saved to '%s'\n", path);
-	    // registerCrash(dump_dir, path);
-		gdxsv_prepare_crashlog(dump_dir, minidump_id);
+	    registerCrash(dump_dir, path);
 	}
     return succeeded;
 }

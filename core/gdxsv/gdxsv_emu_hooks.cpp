@@ -10,6 +10,8 @@
 #include "rend/gui_util.h"
 #include "version.h"
 #include <fstream>
+
+#include "xxhash.h"
 #include "log/LogManager.h"
 #include "cfg/cfg.h"
 #include "nowide/fstream.hpp"
@@ -26,104 +28,6 @@ static std::string gdxsv_latest_version_tag;
 
 void gdxsv_flycast_init() {
 	config::GGPOEnable = false;
-
-	if (config::UploadCrashLogs) {
-		std::thread([]() {
-			try {
-				nowide::ifstream ifs(get_writable_data_path("crash_dmp_list.txt"));
-				if (!ifs.is_open())
-					return;
-
-				std::vector<std::string> unhandled_dmp = {};
-				std::string line;
-
-				while (std::getline(ifs, line)) {
-					const auto found = line.find_last_of(",");
-					if (found == std::string::npos)
-						continue;
-
-					const auto file_path = line.substr(0, found);
-					const auto git_version = line.substr(found + 1);
-
-					// Check if the dmp still exists
-					if (!file_exists(file_path))
-						continue;
-
-					std::vector<UploadField> fields = {};
-
-					// Upload dmp
-					fields.push_back({ "upload_file_minidump", file_path, "application/octet-stream" });
-
-					// Upload tail log
-					if (file_path.find(".dmp") != std::string::npos) {
-						auto log_file = file_path;
-						log_file.replace(log_file.find(".dmp"), 4, ".log");
-
-						if (file_exists(log_file))
-							fields.push_back({ "flycast_log", log_file, "text/plain" });
-					}
-
-					// Upload emu.cfg
-					if (file_exists(get_writable_config_path("emu.cfg")))
-						fields.push_back({ "emu_cfg", get_writable_config_path("emu.cfg"), "text/plain" });
-
-					fields.push_back({ "sentry[release]", "", "", git_version });
-
-					const std::string minidump_upload_url = git_version.find("dev") == std::string::npos ?
-						"https://o4503934635540480.ingest.sentry.io/api/4503960868683776/minidump/?sentry_key=6fd422fe4ade467c842416de430a9968" :
-						"https://o4503934635540480.ingest.sentry.io/api/4503960859443200/minidump/?sentry_key=1bcd9bcca32a46c888244b392b4dc6eb";
-
-					const int result = os_UploadFilesToURL(minidump_upload_url, fields);
-					NOTICE_LOG(COMMON, "Upload status: %d, %s", result, file_path.c_str());
-					if (result != 200) {
-						unhandled_dmp.push_back(line);
-					}
-				}
-				ifs.close();
-
-				//Clear contents of crash_dmp_list.txt
-				nowide::ofstream ofs(get_writable_data_path("crash_dmp_list.txt"), std::ios::trunc);
-				if (!ofs.is_open()) {
-					ERROR_LOG(COMMON, "crash_dmp_list.txt trunc open failed");
-					return;
-				}
-
-				for (const auto& dmp : unhandled_dmp) {
-					ofs << dmp << std::endl;
-				}
-			}
-			catch (...) {
-				ERROR_LOG(COMMON, "Error while uploading crash logs");
-			}
-		}).detach();
-	}
-}
-
-void gdxsv_prepare_crashlog(const char* dump_dir, const char* minidump_id) {
-	NOTICE_LOG(COMMON, "gdxsv_prepare_crashlog");
-	nowide::ofstream ofs(get_writable_data_path("crash_dmp_list.txt"), std::ios::app);
-	if (!ofs.is_open()) {
-		ERROR_LOG(COMMON, "crash_dmp_list.txt open failed");
-		return;
-	}
-
-	auto dump_dir_str = std::string(dump_dir);
-	if (!dump_dir_str.empty() && dump_dir_str.back() != CHAR_PATH_SEPARATOR) {
-		dump_dir_str += CHAR_PATH_SEPARATOR;
-	}
-
-	ofs << dump_dir << minidump_id << ".dmp" << "," << GIT_VERSION << std::endl;
-	ofs.close();
-
-	ofs.open(dump_dir_str + minidump_id + ".log");
-	if (!ofs.is_open()) {
-		return;
-	}
-
-	const auto lines = InMemoryListener::getInstance()->getLog();
-	for (const auto& line : lines) {
-		ofs << line << std::endl;
-	}
 }
 
 void gdxsv_emu_start() {
@@ -439,5 +343,51 @@ void gdxsv_latest_version_check() {
 void gdxsv_mainui_loop() { gdxsv.HookMainUiLoop(); }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
+
+void gdxsv_crash_append_log(FILE* f) {
+	if (gdxsv.Enabled()) {
+        fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
+        fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
+		fprintf(f, "[gdxsv]netmode: %s\n", gdxsv.NetModeString());
+	}
+}
+
+static bool trim_prefix(const std::string& s, const std::string& prefix, std::string& out) {
+	auto size = prefix.size();
+	if (s.size() < size) return false;
+	if (std::equal(std::begin(prefix), std::end(prefix), std::begin(s))) {
+		out = s.substr(prefix.size());
+		return true;
+	}
+	return false;
+}
+
+void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields) {
+    if (file_exists(logfile)) {
+        nowide::ifstream ifs(logfile);
+        if (ifs.is_open()) {
+			std::string line;
+            std::string f_disk, f_user_id, f_netmode;
+
+            while (std::getline(ifs, line)) {
+				trim_prefix(line, "[gdxsv]disk: ", f_disk);
+				trim_prefix(line, "[gdxsv]user_id: ", f_user_id);
+				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
+            }
+
+            if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
+            if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
+            if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
+        }
+    }
+
+	const std::string machine_id = os_GetMachineID();
+	if (machine_id.length()) {
+		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
+		std::stringstream ss;
+		ss << std::hex << digest;
+		post_fields.emplace_back("sentry[tags][machine_id]", ss.str().c_str());
+	}
+}
 
 #undef CHAR_PATH_SEPARATOR

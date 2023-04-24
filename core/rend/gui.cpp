@@ -2308,6 +2308,10 @@ static void gui_display_settings()
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
+			if (ImGui::Button("Die", ImVec2(0, 40))) {
+				die("Die Button");
+			}
+
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
