@@ -485,7 +485,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				}
 			}
 
-			if (loop_count % 500 == 0) {
+			if (0 < loop_count && loop_count % 500 == 0) {
 				bool matrix_ok = true;
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
 
