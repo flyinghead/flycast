@@ -223,14 +223,23 @@ public:
 				mov(rcx, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rcx], rax);
 #else
-				Xbyak::Xmm rd = regalloc.MapXRegister(op.rd, 0);
-				Xbyak::Xmm rs = regalloc.MapXRegister(op.rs1, 0);
-				if (rd != rs)
-					movss(rd, rs);
-				rd = regalloc.MapXRegister(op.rd, 1);
-				rs = regalloc.MapXRegister(op.rs1, 1);
-				if (rd != rs)
-					movss(rd, rs);
+				Xbyak::Xmm rd0 = regalloc.MapXRegister(op.rd, 0);
+				Xbyak::Xmm rs0 = regalloc.MapXRegister(op.rs1, 0);
+				Xbyak::Xmm rd1 = regalloc.MapXRegister(op.rd, 1);
+				Xbyak::Xmm rs1 = regalloc.MapXRegister(op.rs1, 1);
+				if (rd0 == rs1)
+				{
+					movss(xmm0, rd0);
+					movss(rd0, rs0);
+					movss(rd1, xmm0);
+				}
+				else
+				{
+					if (rd0 != rs0)
+						movss(rd0, rs0);
+					if (rd1 != rs1)
+						movss(rd1, rs1);
+				}
 #endif
 			}
 			break;
@@ -265,7 +274,10 @@ public:
 					}
 					else
 #endif
-						host_reg_to_shil_param(op.rd, rax);
+					{
+						mov(rcx, rax);
+						host_reg_to_shil_param(op.rd, rcx);
+					}
 				}
 				break;
 
@@ -554,7 +566,6 @@ public:
 		}
 		break;
 
-
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
@@ -598,16 +609,28 @@ public:
 				//push the ptr itself
 			case CPT_ptr:
 				verify(prm.is_reg());
-
 				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
-
 				break;
+
             default:
                // Other cases handled in ngen_CC_param
                break;
 			}
 		}
 		GenCall((void (*)())function);
+#if ALLOC_F64 == true
+		for (const CC_PS& ccParam : CC_pars)
+		{
+			const shil_param& prm = *ccParam.prm;
+			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op.rd._reg == prm._reg || op.rd2._reg == prm._reg)) {
+				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
+				mov(rax, (size_t)GetRegPtr(prm._reg));
+				movss(regalloc.MapXRegister(prm, 0), dword[rax]);
+				mov(rax, (size_t)GetRegPtr(prm._reg + 1));
+				movss(regalloc.MapXRegister(prm, 1), dword[rax]);
+			}
+		}
+#endif
 	}
 
 	void RegPreload(u32 reg, Xbyak::Operand::Code nreg)
@@ -961,7 +984,8 @@ private:
 					die("Invalid immediate size");
 						break;
 				}
-				host_reg_to_shil_param(op.rd, eax);
+				mov(ecx, eax);
+				host_reg_to_shil_param(op.rd, ecx);
 			}
 		}
 

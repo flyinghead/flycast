@@ -1892,7 +1892,7 @@ static void gui_display_settings()
                 ImGui::SameLine();
                 ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
-		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
 		    			"Stretch the screen horizontally");
 		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");

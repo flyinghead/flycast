@@ -401,12 +401,21 @@ public:
 					{
 						const VRegister& rd0 = regalloc.MapVRegister(op.rd, 0);
 						const VRegister& rs0 = regalloc.MapVRegister(op.rs1, 0);
-						if (!rd0.Is(rs0))
-							Fmov(rd0, rs0);
 						const VRegister& rd1 = regalloc.MapVRegister(op.rd, 1);
 						const VRegister& rs1 = regalloc.MapVRegister(op.rs1, 1);
-						if (!rd1.Is(rs1))
-							Fmov(rd1, rs1);
+						if (rd0.Is(rs1))
+						{
+							Fmov(w0, rd0);
+							Fmov(rd0, rs0);
+							Fmov(rd1, w0);
+						}
+						else
+						{
+							if (!rd0.Is(rs0))
+								Fmov(rd0, rs0);
+							if (!rd1.Is(rs1))
+								Fmov(rd1, rs1);
+						}
 					}
 				}
 				break;
@@ -1092,6 +1101,16 @@ public:
 			}
 		}
 		GenCallRuntime((void (*)())function);
+		for (const CC_PS& ccParam : CC_pars)
+		{
+			const shil_param& prm = *ccParam.prm;
+			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
+			{
+				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
+				Ldr(regalloc.MapVRegister(prm, 0), sh4_context_mem_operand(GetRegPtr(prm._reg)));
+				Ldr(regalloc.MapVRegister(prm, 1), sh4_context_mem_operand(GetRegPtr(prm._reg + 1)));
+			}
+		}
 	}
 
 	MemOperand sh4_context_mem_operand(void *p)

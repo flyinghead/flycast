@@ -543,6 +543,17 @@ void ngen_CC_Call(shil_opcode* op, void* function)
 		fd = SRegister(fd.GetCode() + 1);
 	}
 	call(function);
+	for (const CC_PS& ccParam : CC_pars)
+	{
+		const shil_param& prm = *ccParam.par;
+		if (ccParam.type == CPT_ptr && prm.count() == 2 && reg.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
+		{
+			// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
+			const int shRegOffs = (u8*)GetRegPtr(prm._reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+			ass.Vldr(reg.mapFReg(prm, 0), MemOperand(r8, shRegOffs));
+			ass.Vldr(reg.mapFReg(prm, 1), MemOperand(r8, shRegOffs + 4));
+		}
+	}
 }
 
 void ngen_CC_Finish(shil_opcode* op) 
@@ -1415,8 +1426,23 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 			if (reg.IsAllocf(op->rd))
 			{
 				verify(reg.IsAllocf(op->rs1));
-				ass.Vmov(reg.mapFReg(op->rd, 0), reg.mapFReg(op->rs1, 0));
-				ass.Vmov(reg.mapFReg(op->rd, 1), reg.mapFReg(op->rs1, 1));
+				SRegister rd0 = reg.mapFReg(op->rd, 0);
+				SRegister rs0 = reg.mapFReg(op->rs1, 0);
+				SRegister rd1 = reg.mapFReg(op->rd, 1);
+				SRegister rs1 = reg.mapFReg(op->rs1, 1);
+				if (rd0.Is(rs1))
+				{
+					ass.Vmov(s0, rd0);
+					ass.Vmov(rd0, rs0);
+					ass.Vmov(rd1, s0);
+				}
+				else
+				{
+					if (!rd0.Is(rs0))
+						ass.Vmov(rd0, rs0);
+					if (!rd1.Is(rs1))
+						ass.Vmov(rd1, rs1);
+				}
 			}
 			else
 			{
