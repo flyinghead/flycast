@@ -38,8 +38,12 @@ s8 joyx[4];
 s8 joyy[4];
 s8 joyrx[4];
 s8 joyry[4];
+s8 joy3x[4];
+s8 joy3y[4];
 u8 rt[4];
 u8 lt[4];
+u8 t2[4];
+u8 t3[4];
 // Keyboards
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
@@ -108,6 +112,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (port >= 0)
 				rt[port] = pressed ? 255 : 0;
 			break;
+		case DC_AXIS_T2:
+			if (port >= 0)
+				t2[port] = pressed ? 255 : 0;
+			break;
+		case DC_AXIS_T3:
+			if (port >= 0)
+				t3[port] = pressed ? 255 : 0;
+			break;
 
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
@@ -124,6 +136,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case DC_AXIS2_LEFT:
 		case DC_AXIS2_RIGHT:
 			buttonToAnalogInput<DC_AXIS2_LEFT, DIGANA2_LEFT, DIGANA2_RIGHT>(port, key, pressed, joyrx[port]);
+			break;
+		case DC_AXIS3_UP:
+		case DC_AXIS3_DOWN:
+			buttonToAnalogInput<DC_AXIS3_UP, DIGANA3_UP, DIGANA3_DOWN>(port, key, pressed, joy3y[port]);
+			break;
+		case DC_AXIS3_LEFT:
+		case DC_AXIS3_RIGHT:
+			buttonToAnalogInput<DC_AXIS3_LEFT, DIGANA3_LEFT, DIGANA3_RIGHT>(port, key, pressed, joy3x[port]);
 			break;
 
 		default:
@@ -191,6 +211,10 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				lt[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_RT)
 				rt[port] = std::min(std::abs(v) >> 7, 255);
+			if (key == DC_AXIS_T2)
+				t2[port] = std::min(std::abs(v) >> 7, 255);
+			else if (key == DC_AXIS_T3)
+				t3[port] = std::min(std::abs(v) >> 7, 255);
 			else
 				return false;
 		}
@@ -232,6 +256,22 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			case DC_AXIS2_UP:
 				this_axis = &joyry[port];
 				other_axis = &joyrx[port];
+				break;
+
+			case DC_AXIS3_RIGHT:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS3_LEFT:
+				this_axis = &joy3x[port];
+				other_axis = &joy3y[port];
+				break;
+
+			case DC_AXIS3_DOWN:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS3_UP:
+				this_axis = &joy3y[port];
+				other_axis = &joy3x[port];
 				break;
 
 			default:

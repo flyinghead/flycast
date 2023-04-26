@@ -655,8 +655,30 @@ inline static void header(const char *title)
 	ImGui::PopStyleVar();
 }
 
-const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
-const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
+const char *maple_device_types[] = 
+{
+	"None", 
+	"Sega Controller", 
+	"Light Gun", 
+	"Keyboard", 
+	"Mouse", 
+	"Twin Stick", 
+	"Ascii Stick",
+	"Maracas Controller",
+	"Fishing Controller",
+	"Pop'n Music controller",
+	"Racing Controller",
+	"Densha de Go! Controller",
+	"Dreameye",
+};
+
+const char *maple_expansion_device_types[] = 
+{ 
+	"None", 
+	"Sega VMU", 
+	"Purupuru", 
+	"Microphone"
+};
 
 static const char *maple_device_name(MapleDeviceType type)
 {
@@ -674,6 +696,18 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[5];
 	case MDT_AsciiStick:
 		return maple_device_types[6];
+	case MDT_MaracasController:
+		return maple_device_types[7];
+	case MDT_FishingController:
+		return maple_device_types[8];
+	case MDT_PopnMusicController:
+		return maple_device_types[9];
+	case MDT_RacingController:
+		return maple_device_types[10];
+	case MDT_DenshaDeGoController:
+		return maple_device_types[11];
+	case MDT_Dreameye:
+		return maple_device_types[12];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -696,6 +730,18 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 		return MDT_TwinStick;
 	case 6:
 		return MDT_AsciiStick;
+	case 7:
+		return MDT_MaracasController;
+	case 8:
+		return MDT_FishingController;
+	case 9:
+		return MDT_PopnMusicController;
+	case 10:
+		return MDT_RacingController;
+	case 11:
+		return MDT_DenshaDeGoController;
+	case 12:
+		return MDT_Dreameye;
 	case 0:
 	default:
 		return MDT_None;
@@ -726,20 +772,30 @@ struct Mapping {
 };
 
 const Mapping dcButtons[] = {
-	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "Up" },
-	{ DC_DPAD_DOWN, "Down" },
-	{ DC_DPAD_LEFT, "Left" },
+	{ EMU_BTN_NONE,  "Directions" },
+	{ DC_DPAD_UP,    "Up" },
+	{ DC_DPAD_DOWN,  "Down" },
+	{ DC_DPAD_LEFT,  "Left" },
 	{ DC_DPAD_RIGHT, "Right" },
 
-	{ DC_AXIS_UP, "Thumbstick Up" },
-	{ DC_AXIS_DOWN, "Thumbstick Down" },
-	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_UP,    "Thumbstick Up" },
+	{ DC_AXIS_DOWN,  "Thumbstick Down" },
+	{ DC_AXIS_LEFT,  "Thumbstick Left" },
 	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
-	{ DC_DPAD2_UP, "DPad2 Up" },
-	{ DC_DPAD2_DOWN, "DPad2 Down" },
-	{ DC_DPAD2_LEFT, "DPad2 Left" },
+	{ DC_AXIS2_UP,    "Axis 2 Up"    },
+	{ DC_AXIS2_DOWN,  "Axis 2 Down"  },
+	{ DC_AXIS2_LEFT,  "Axis 2 Left"  },
+	{ DC_AXIS2_RIGHT, "Axis 2 Right" },
+
+	{ DC_AXIS3_UP,    "Axis 3 Up"    },
+	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
+	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
+	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
+
+	{ DC_DPAD2_UP,    "DPad2 Up" },
+	{ DC_DPAD2_DOWN,  "DPad2 Down" },
+	{ DC_DPAD2_LEFT,  "DPad2 Left" },
 	{ DC_DPAD2_RIGHT, "DPad2 Right" },
 
 	{ EMU_BTN_NONE, "Buttons" },
@@ -751,18 +807,20 @@ const Mapping dcButtons[] = {
 	{ DC_BTN_D, "D" },
 	{ DC_BTN_Z, "Z" },
 
-	{ EMU_BTN_NONE, "Triggers" },
-	{ DC_AXIS_LT, "Left Trigger" },
-	{ DC_AXIS_RT, "Right Trigger" },
+	{ EMU_BTN_NONE, "Triggers"      },
+	{ DC_AXIS_LT,   "Left Trigger"  },
+	{ DC_AXIS_RT,   "Right Trigger" },
+	{ DC_AXIS_T2,   "Trigger 2"     },
+	{ DC_AXIS_T3,   "Trigger 3"     },
 
-	{ EMU_BTN_NONE, "System Buttons" },
-	{ DC_BTN_START, "Start" },
+	{ EMU_BTN_NONE,  "System Buttons" },
+	{ DC_BTN_START,  "Start" },
 	{ DC_BTN_RELOAD, "Reload" },
 
-	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
-	{ EMU_BTN_ESCAPE, "Exit" },
-	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_NONE,      "Emulator" },
+	{ EMU_BTN_MENU,      "Menu" },
+	{ EMU_BTN_ESCAPE,    "Exit" },
+	{ EMU_BTN_FFORWARD,  "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
 
@@ -885,6 +943,14 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return DC_AXIS2_RIGHT;
 	case DC_AXIS2_RIGHT:
 		return DC_AXIS2_LEFT;
+	case DC_AXIS3_UP:
+		return DC_AXIS3_DOWN;
+	case DC_AXIS3_DOWN:
+		return DC_AXIS3_UP;
+	case DC_AXIS3_LEFT:
+		return DC_AXIS3_RIGHT;
+	case DC_AXIS3_RIGHT:
+		return DC_AXIS3_LEFT;
 	default:
 		return EMU_BTN_NONE;
 	}

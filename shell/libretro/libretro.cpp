@@ -130,6 +130,8 @@ static bool lightgunSettingsShown = true;
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
 u8 lt[4];
+u8 t2[4];
+u8 t3[4];
 u32 vks[4];
 s8 joyx[4], joyy[4];
 s8 joyrx[4], joyry[4];

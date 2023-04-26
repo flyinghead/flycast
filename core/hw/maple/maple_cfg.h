@@ -3,20 +3,23 @@
 
 enum MapleDeviceType
 {
-	MDT_SegaController,
-
-	MDT_SegaVMU,
-	MDT_Microphone,
-	MDT_PurupuruPack,
-	MDT_AsciiStick,
-	MDT_Keyboard,
-	MDT_Mouse,
-	MDT_LightGun,
-	MDT_TwinStick,
-
-	MDT_NaomiJamma,
-
-	MDT_None,
+	MDT_SegaController =  0,
+	MDT_SegaVMU        =  1,
+	MDT_Microphone     =  2,
+	MDT_PurupuruPack   =  3,
+	MDT_AsciiStick     =  4,
+	MDT_Keyboard       =  5,
+	MDT_Mouse          =  6,
+	MDT_LightGun       =  7,
+	MDT_TwinStick      =  8,
+	MDT_NaomiJamma     =  9,
+	MDT_None           = 10,
+	MDT_MaracasController    = 11,
+	MDT_FishingController    = 12,
+	MDT_PopnMusicController  = 13,
+	MDT_RacingController     = 14,
+	MDT_DenshaDeGoController = 15,
+	MDT_Dreameye             = 16,
 	MDT_Count
 };
 
@@ -26,24 +29,31 @@ enum PlainJoystickAxisId
 	PJAI_Y1 = 1,
 	PJAI_X2 = 2,
 	PJAI_Y2 = 3,
+	PJAI_X3 = 4,
+	PJAI_Y3 = 5,
 
-	PJAI_Count = 4
+	PJAI_Count = 6
 };
 
 enum PlainJoystickTriggerId
 {
 	PJTI_L = 0,
 	PJTI_R = 1,
+	PJTI_2 = 2,
+	PJTI_3 = 3,
 
-	PJTI_Count = 2
+	PJTI_Count = 4
 };
 
 struct PlainJoystickState
 {
 	PlainJoystickState()
 	{
-		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
-		trigger[0]=trigger[1]=0;
+		u32 i;
+		for (i=0; i < PJAI_Count; i++)
+			joy[i] = 0x80;
+		for (i=0; i < PJTI_Count; i++)
+			trigger[i] = 0;
 	}
 
 	u32 kcode = ~0;
@@ -81,8 +91,8 @@ struct MapleInputState
 	}
 
 	u32 kcode = ~0;
-	u8 halfAxes[PJTI_Count];		// LT, RT
-	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y
+	u8 halfAxes[PJTI_Count];		// LT, RT, 2, 3
+	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y, Other X, Other Y
 	u8 mouseButtons = ~0;
 	struct {
 		int x = -1;
