@@ -18,6 +18,10 @@
 */
 #pragma once
 #if defined(LIBRETRO) && (defined(HAVE_OPENGL) || defined(HAVE_OPENGLES))
+#if defined(TARGET_IPHONE) //apple-specific ogles3 headers
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
+#endif
 #include "gl_context.h"
 #include <libretro.h>
 #include <glsm/glsm.h>
