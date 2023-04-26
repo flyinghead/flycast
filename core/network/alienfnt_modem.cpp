@@ -46,7 +46,7 @@ struct ModemEmu : public SerialPipe
 			toSend.pop_front();
 			return c;
 		}
-		else if (connected)
+		else if (dataMode)
 			return read_pico();
 		else
 			return 0;
@@ -56,7 +56,7 @@ struct ModemEmu : public SerialPipe
 	{
 		if (!toSend.empty())
 			return toSend.size();
-		else if (connected)
+		else if (dataMode)
 			return pico_available();
 		else
 			return 0;
@@ -64,8 +64,40 @@ struct ModemEmu : public SerialPipe
 
 	void write(u8 data) override
 	{
-		if (connected)
-			write_pico(data);
+		if (dataMode)
+		{
+			if (pluses == 3)
+			{
+				if (sh4_sched_now64() - plusTime >= SH4_MAIN_CLOCK)
+				{
+					dataMode = false;
+					send("OK");
+					recvBuf.push_back(data);
+				}
+				else
+				{
+					write_pico('+');
+					write_pico('+');
+					write_pico('+');
+					write_pico(data);
+				}
+				pluses = 0;
+				plusTime = 0;
+			}
+			else if (data == '+')
+			{
+				if (++pluses == 3)
+					plusTime = sh4_sched_now64();
+			}
+			else
+			{
+				while (pluses > 0) {
+					write_pico('+');
+					pluses--;
+				}
+				write_pico(data);
+			}
+		}
 		else if (data == '\r' || data == '\n')
 			handleCmd();
 		else
@@ -82,11 +114,18 @@ private:
 		if (line.substr(0, 4) == "ATDT") {
 			send("CONNECT 14400");
 			start_pico();
-			connected = true;
+			dataMode = true;
 			sh4_sched_request(schedId, SH4_MAIN_CLOCK / 60);
+		}
+		if (line.substr(0, 3) == "ATH")
+		{
+			stop_pico();
+			send("OK");
 		}
 		else if (line.substr(0, 2) == "AT")
 			send("OK");
+		else if (!line.empty())
+			send("ERROR");
 	}
 
 	void send(const std::string& l)
@@ -104,8 +143,10 @@ private:
 
 	std::deque<char> toSend;
 	std::vector<char> recvBuf;
-	bool connected = false;
 	int schedId = -1;
+	int pluses = 0;
+	u64 plusTime = 0;
+	bool dataMode = false;
 };
 
 static std::unique_ptr<ModemEmu> modemEmu;
