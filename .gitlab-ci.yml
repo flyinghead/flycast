@@ -28,6 +28,12 @@
     CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
     EXTRA_PATH: Release
 
+.core-defs-ios-arm64:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
+    EXTRA_PATH: Release-iphoneos
+
 .core-defs-android:
   extends: .core-defs
   script:
@@ -61,6 +67,10 @@ include:
   # Android
   - project: 'libretro-infrastructure/ci-templates'
     file: '/android-cmake.yml'
+
+  # iOS arm64
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/ios-cmake.yml'
 
   ################################## CONSOLES ################################  
   # Nintendo Switch
@@ -138,6 +148,11 @@ android-x86:
   extends:
     - .libretro-android-cmake-x86
     - .core-defs-android
+
+libretro-build-ios-arm64:
+  extends:
+    - .libretro-ios-cmake-arm64
+    - .core-defs-ios-arm64
 
 ################################### CONSOLES #################################
 # Nintendo Switch

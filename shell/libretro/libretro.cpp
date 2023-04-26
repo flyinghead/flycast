@@ -1793,6 +1793,16 @@ static bool set_dx11_hw_render()
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
+#if defined(IOS)
+	bool can_jit;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
+		// jit is required both for performance and for audio. trying to run
+		// without the jit will cause a crash.
+		gui_display_notification("Cannot run without JIT", 5000);
+		return false;
+	}
+#endif
+
 	NOTICE_LOG(BOOT, "retro_load_game: %s", game->path);
 
 	extract_basename(g_base_name, game->path, sizeof(g_base_name));
