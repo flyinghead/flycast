@@ -29,7 +29,6 @@ class Gdxsv {
 		  udp_port(0),
 		  lbs_net(symbols),
 		  udp_net(symbols, maxlag),
-		  replay_net(symbols, maxlag),
 		  rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;

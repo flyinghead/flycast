@@ -1,5 +1,6 @@
 #include "gdxsv_backend_replay.h"
 
+#include "gdxsv.h"
 #include "gdx_rpc.h"
 #include "libs.h"
 
@@ -12,12 +13,7 @@ void GdxsvBackendReplay::Reset() {
 	recv_buf_.clear();
 	recv_delay_ = 0;
 	me_ = 0;
-	msg_list_.clear();
-	for (int i = 0; i < 4; ++i) {
-		key_msg_index_[i].clear();
-	}
 	key_msg_count_ = 0;
-	std::fill(start_index_.begin(), start_index_.end(), 0);
 }
 
 bool GdxsvBackendReplay::StartFile(const char *path) {
@@ -118,92 +114,87 @@ u32 GdxsvBackendReplay::OnSockPoll() {
 bool GdxsvBackendReplay::Start() {
 	NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
 
-	McsMessageReader r;
-	McsMessage msg;
-
 	if (log_file_.log_file_version() < 20210802) {
-		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-			auto data = log_file_.mutable_battle_data(i);
-			const auto &fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
-			if (!fields.empty()) {
-				for (int j = 0; j < fields.field_count(); ++j) {
-					const auto &field = fields.field(j);
-					if (j == 0 && field.type() == google::protobuf::UnknownField::TYPE_LENGTH_DELIMITED) {
-						const auto &body = field.length_delimited();
-						data->set_body(body.data(), body.size());
-					}
-					if (j == 1 && field.type() == google::protobuf::UnknownField::TYPE_VARINT) {
-						data->set_seq(field.varint());
-					}
-				}
-			}
-		}
-
-		std::map<std::string, int> player_position;
-		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-			const auto &data = log_file_.battle_data(i);
-			if (player_position.find(data.user_id()) == player_position.end()) {
-				r.Write(data.body().data(), data.body().size());
-				while (r.Read(msg)) {
-					if (msg.Type() == McsMessage::MsgType::PingMsg) {
-						player_position[data.user_id()] = msg.Sender();
-						break;
-					}
-				}
-			}
-			if (log_file_.users_size() == player_position.size()) {
-				break;
-			}
-		}
-
-		for (int i = 0; i < log_file_.users_size(); ++i) {
-			int pos = player_position[log_file_.users(i).user_id()];
-			log_file_.mutable_users(i)->set_pos(pos + 1);
-			log_file_.mutable_users(i)->set_team(1 + pos / 2);
-			// NOTE: Surprisingly, player's grade seems to affect the game.
-			log_file_.mutable_users(i)->set_grade(std::min(14, log_file_.users(i).win_count() / 100));
-			log_file_.mutable_users(i)->set_user_name_sjis(log_file_.users(i).user_id());
-		}
-
-		std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
-				  [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
+		ERROR_LOG(COMMON, "Replay file format is too old");
+		return false;
 	}
 
-	msg_list_.clear();
-	r.Clear();
-	for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-		const auto &data = log_file_.battle_data(i);
-		r.Write(data.body().data(), data.body().size());
-		while (r.Read(msg)) {
-			// NOTICE_LOG(COMMON, "MSG:%s", msg.ToHex().c_str());
-			if (msg.Type() == McsMessage::KeyMsg2) {
-				msg_list_.emplace_back(msg.FirstKeyMsg());
-				msg_list_.emplace_back(msg.SecondKeyMsg());
-			} else {
-				msg_list_.emplace_back(msg);
+	if (log_file_.inputs_size() == 0 && log_file_.battle_data_size() != 0) {
+        McsMessageReader r;
+        McsMessage msg;
+		std::vector<std::vector<std::vector<u16>>> player_chunked_inputs(log_file_.users_size());
+		std::vector<int> start_msg_count(log_file_.users_size());
+
+		for (const auto& data : log_file_.battle_data()) {
+            r.Write(data.body().data(), data.body().size());
+
+            while (r.Read(msg)) {
+				const int p = msg.Sender();
+                if (msg.Type() == McsMessage::StartMsg) {
+                    start_msg_count[p]++;
+					player_chunked_inputs[p].emplace_back();
+                }
+                if (msg.Type() == McsMessage::KeyMsg1) {
+					player_chunked_inputs[p].back().emplace_back(msg.FirstInput());
+                }
+                if (msg.Type() == McsMessage::KeyMsg2) {
+					player_chunked_inputs[p].back().emplace_back(msg.FirstInput());
+					player_chunked_inputs[p].back().emplace_back(msg.SecondInput());
+                }
+            }
+        }
+
+        for (int chunk = 0; chunk < player_chunked_inputs[0].size(); chunk++) {
+			int min_t = player_chunked_inputs[0][chunk].size();
+			for (int p = 0; p < log_file_.users_size(); p++) {
+                min_t = std::min<int>(min_t, player_chunked_inputs[p][chunk].size());
+			}
+
+			for (int t = 0; t < min_t; t++) {
+                uint64_t input = 0;
+                for (int p = 0; p < log_file_.users_size(); p++) {
+                    input |= static_cast<uint64_t>(player_chunked_inputs[p][chunk][t]) << (p * 16);
+                }
+                log_file_.add_inputs(input);
 			}
 		}
-	}
 
-	key_msg_count_ = 0;
+        PrintDisconnectionSummary();
+	}
 
 	NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 	NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
-	NOTICE_LOG(COMMON, "msg_list.size = %d", msg_list_.size());
-	PrintDisconnectionSummary();
+	NOTICE_LOG(COMMON, "inputs_size = %d", log_file_.inputs_size());
 
-	std::fill(start_index_.begin(), start_index_.end(), 0);
 	state_ = State::Start;
-	maxlag_ = 1;
+	gdxsv.maxlag = 1;
+	key_msg_count_ = 0;
 	NOTICE_LOG(COMMON, "Replay Start");
 	return true;
 }
 
 void GdxsvBackendReplay::PrintDisconnectionSummary() {
+	std::vector<McsMessage> msg_list;
+	McsMessageReader r;
+	McsMessage msg;
+
+	for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+		const auto &data = log_file_.battle_data(i);
+		r.Write(data.body().data(), data.body().size());
+		while (r.Read(msg)) {
+			if (msg.Type() == McsMessage::KeyMsg2) {
+				msg_list.emplace_back(msg.FirstKeyMsg());
+				msg_list.emplace_back(msg.SecondKeyMsg());
+			} else {
+				msg_list.emplace_back(msg);
+			}
+		}
+	}
+
 	std::vector<int> last_keymsg_seq(log_file_.users_size());
 	std::vector<int> last_force_msg_index(log_file_.users_size());
-	for (int i = 0; i < msg_list_.size(); ++i) {
-		const auto &msg = msg_list_[i];
+	for (int i = 0; i < msg_list.size(); ++i) {
+		const auto &msg = msg_list[i];
 		if (msg.Type() == McsMessage::KeyMsg1) {
 			last_keymsg_seq[msg.Sender()] = msg.FirstSeq();
 			last_force_msg_index[msg.Sender()] = 0;
@@ -239,32 +230,6 @@ void GdxsvBackendReplay::PrintDisconnectionSummary() {
 	}
 }
 
-void GdxsvBackendReplay::PrepareKeyMsgIndex() {
-	for (int p = 0; p < log_file_.users_size(); ++p) {
-		key_msg_index_[p].clear();
-
-		for (int i = start_index_[p]; i < msg_list_.size(); ++i) {
-			const auto &msg = msg_list_[i];
-			if (msg.Sender() == p) {
-				if (!key_msg_index_[p].empty()) {
-					if (msg.Type() == McsMessage::MsgType::StartMsg) {
-						start_index_[p] = i + 1;
-						break;
-					}
-				}
-
-				if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
-					if (!key_msg_index_[p].empty()) {
-						verify(msg_list_[key_msg_index_[p].back()].FirstSeq() + 1 == msg.FirstSeq());
-					}
-					key_msg_index_[p].emplace_back(i);
-				}
-				verify(msg.Type() != McsMessage::KeyMsg2);
-			}
-		}
-	}
-}
-
 void GdxsvBackendReplay::ProcessLbsMessage() {
 	if (state_ == State::Start) {
 		LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
@@ -292,7 +257,6 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 
 		if (msg.command == LbsMessage::lbsAskPlayerSide) {
 			// camera player id
-			me_ = 0;
 			LbsMessage::SvAnswer(msg).Write8(me_ + 1)->Serialize(recv_buf_);
 		}
 
@@ -384,13 +348,10 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
 						std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
 					}
 				}
-				PrepareKeyMsgIndex();
 				break;
 			case McsMessage::MsgType::ForceMsg:
 				break;
 			case McsMessage::MsgType::KeyMsg1: {
-				// NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
-
 					if (log_file_.inputs_size()) {
                         if (key_msg_count_ < log_file_.inputs_size()) {
 							const u64 inputs = log_file_.inputs(key_msg_count_);
@@ -405,14 +366,6 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
                             }
 
                             key_msg_count_++;
-                        }
-					} else {
-                        for (int i = 0; i < log_file_.users_size(); ++i) {
-                            if (msg.FirstSeq() < key_msg_index_[i].size()) {
-                                auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                                NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
-                                std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                            }
                         }
 					}
 				break;

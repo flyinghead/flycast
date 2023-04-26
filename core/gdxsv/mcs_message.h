@@ -168,6 +168,16 @@ class McsMessage {
 		return int(body[17]) << 8 | int(body[16]);
 	}
 
+	u16 FirstInput() const {
+		verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
+		return u16(body[2]) << 8 | u16(body[3]);
+	}
+
+	u16 SecondInput() const {
+		verify(Type() == MsgType::KeyMsg2);
+		return u16(body[10]) << 8 | u16(body[11]);
+	}
+
 	McsMessage FirstKeyMsg() const {
 		verify(Type() == MsgType::KeyMsg2);
 		auto ret = McsMessage::Create(MsgType::KeyMsg1, Sender());
