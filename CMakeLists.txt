@@ -926,6 +926,7 @@ cmrc_add_resources(flycast-resources
 		WHENCE resources
 		resources/flash/alienfnt.nvmem.zip	# network settings
 		resources/flash/gunsur2.nvmem.zip
+		resources/flash/mazan.nvmem.zip		# free play, calibrated
 		resources/flash/otrigger.nvmem.zip
 		resources/flash/wldkicks.nvmem.zip	# free play
 		resources/flash/wldkicksj.nvmem.zip	# free play
