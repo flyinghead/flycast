@@ -18,6 +18,7 @@
 #include "oslib/oslib.h"
 #include "reios/reios.h"
 #include "version.h"
+#include "rend/boxart/http_client.h"
 
 bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
 
@@ -29,6 +30,7 @@ void Gdxsv::Reset() {
 	lbs_net.Reset();
 	udp_net.Reset();
 	rollback_net.Reset();
+	http::init();
 
 	// Automatically add ContentPath if it is empty.
 	if (config::ContentPath.get().empty()) {

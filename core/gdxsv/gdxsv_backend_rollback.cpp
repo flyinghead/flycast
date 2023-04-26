@@ -521,6 +521,7 @@ u32 GdxsvBackendRollback::OnSockPoll() {
 	if (state_ <= State::LbsStartBattleFlow) {
 		ProcessLbsMessage();
 	}
+
 	if (0 < recv_delay_) {
 		recv_delay_--;
 		return 0;
@@ -610,6 +611,7 @@ void GdxsvBackendRollback::SaveReplay() {
 	if (matching_.battle_code().empty() || input_logs_.empty()) {
 		return;
 	}
+
 	proto::BattleLogFile log;
 	log.set_game_disk(gdxsv.Disk() == 1 ? "dc1" : "dc2");
 	log.set_battle_code(matching_.battle_code());
@@ -640,9 +642,9 @@ void GdxsvBackendRollback::SaveReplay() {
 	}
 
 #if _WIN32
-	auto replay_file = replay_dir + "\\" + log.game_disk() + "_" + matching_.battle_code() + ".pb";
+	auto replay_file = replay_dir + "\\" + matching_.battle_code() + ".pb";
 #else
-	auto replay_file = replay_dir + "/" + log.game_disk() + "_" + matching_.battle_code() + ".pb";
+	auto replay_file = replay_dir + "/" + matching_.battle_code() + ".pb";
 #endif
 
 	FILE* f = nowide::fopen(replay_file.c_str(), "wb");
@@ -662,8 +664,16 @@ void GdxsvBackendRollback::SaveReplay() {
         return;
 	}
 	fclose(f);
-}
 
+    std::vector<http::PostField> fields;
+    fields.emplace_back("file", replay_file, "application/octet-stream");
+	int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/uploader", fields);
+	if (rc == 200 || rc == 409) {
+		NOTICE_LOG(COMMON, "SaveReplay: upload OK");
+	} else {
+		ERROR_LOG(COMMON, "SaveReplay: upload Failed staus: %d", rc);
+	}
+}
 
 void GdxsvBackendRollback::ApplyPatch(bool first_time) {
 	if (state_ == State::None || state_ == State::End) {
