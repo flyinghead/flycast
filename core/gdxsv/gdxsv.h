@@ -13,6 +13,9 @@
 
 class Gdxsv {
    public:
+	friend GdxsvBackendReplay;
+	friend GdxsvBackendRollback;
+
 	enum class NetMode {
 		Offline,
 		Lbs,

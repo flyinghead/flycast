@@ -16,6 +16,7 @@ void GdxsvBackendReplay::Reset() {
 	for (int i = 0; i < 4; ++i) {
 		key_msg_index_[i].clear();
 	}
+	key_msg_count_ = 0;
 	std::fill(start_index_.begin(), start_index_.end(), 0);
 }
 
@@ -183,6 +184,8 @@ bool GdxsvBackendReplay::Start() {
 			}
 		}
 	}
+
+	key_msg_count_ = 0;
 
 	NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 	NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
@@ -387,13 +390,31 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
 				break;
 			case McsMessage::MsgType::KeyMsg1: {
 				// NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
-				for (int i = 0; i < log_file_.users_size(); ++i) {
-					if (msg.FirstSeq() < key_msg_index_[i].size()) {
-						auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-						NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
-						std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+
+					if (log_file_.inputs_size()) {
+                        if (key_msg_count_ < log_file_.inputs_size()) {
+							const u64 inputs = log_file_.inputs(key_msg_count_);
+
+                            for (int i = 0; i < log_file_.users_size(); ++i) {
+								const u16 input = u16(inputs >> (i * 16));
+								auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
+                                key_msg.body[2] = input >> 8 & 0xff;
+                                key_msg.body[3] = input & 0xff;
+                                NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+                                std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                            }
+
+                            key_msg_count_++;
+                        }
+					} else {
+                        for (int i = 0; i < log_file_.users_size(); ++i) {
+                            if (msg.FirstSeq() < key_msg_index_[i].size()) {
+                                auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
+                                NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+                                std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                            }
+                        }
 					}
-				}
 				break;
 			}
 			case McsMessage::MsgType::KeyMsg2:

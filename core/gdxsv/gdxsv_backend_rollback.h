@@ -38,7 +38,8 @@ class GdxsvBackendRollback {
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockPoll();
 	void SetCloseReason(const char *reason);
-	proto::P2PMatchingReport &GetReport() { return report_; }
+    void SaveReplay();
+    proto::P2PMatchingReport &GetReport() { return report_; }
 	void ClearReport() { report_.Clear(); }
 
    private:
@@ -59,4 +60,7 @@ class GdxsvBackendRollback {
 	proto::P2PMatchingReport report_;
 	UdpPingPong ping_pong_;
 	std::future<bool> start_network_;
+
+	uint64_t start_at_;
+	std::unordered_map<int, u64> input_logs_;
 };

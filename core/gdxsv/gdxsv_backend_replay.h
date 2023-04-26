@@ -57,4 +57,5 @@ class GdxsvBackendReplay {
 	std::vector<McsMessage> msg_list_;
 	std::array<int, 4> start_index_;
 	std::array<std::vector<int>, 4> key_msg_index_;
+	int key_msg_count_;
 };

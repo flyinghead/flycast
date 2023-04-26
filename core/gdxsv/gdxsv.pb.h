@@ -498,14 +498,34 @@ class P2PMatching PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kUsersFieldNumber = 9,
     kCandidatesFieldNumber = 10,
     kBattleCodeFieldNumber = 1,
+    kRuleBinFieldNumber = 8,
     kSessionIdFieldNumber = 2,
     kPlayerCountFieldNumber = 3,
     kPeerIdFieldNumber = 4,
     kTimeoutMinMsFieldNumber = 5,
     kTimeoutMaxMsFieldNumber = 6,
   };
+  // repeated .proto.BattleLogUser users = 9;
+  int users_size() const;
+  private:
+  int _internal_users_size() const;
+  public:
+  void clear_users();
+  ::proto::BattleLogUser* mutable_users(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser >*
+      mutable_users();
+  private:
+  const ::proto::BattleLogUser& _internal_users(int index) const;
+  ::proto::BattleLogUser* _internal_add_users();
+  public:
+  const ::proto::BattleLogUser& users(int index) const;
+  ::proto::BattleLogUser* add_users();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser >&
+      users() const;
+
   // repeated .proto.PlayerAddress candidates = 10;
   int candidates_size() const;
   private:
@@ -538,6 +558,22 @@ class P2PMatching PROTOBUF_FINAL :
   const std::string& _internal_battle_code() const;
   void _internal_set_battle_code(const std::string& value);
   std::string* _internal_mutable_battle_code();
+  public:
+
+  // bytes rule_bin = 8;
+  void clear_rule_bin();
+  const std::string& rule_bin() const;
+  void set_rule_bin(const std::string& value);
+  void set_rule_bin(std::string&& value);
+  void set_rule_bin(const char* value);
+  void set_rule_bin(const void* value, size_t size);
+  std::string* mutable_rule_bin();
+  std::string* release_rule_bin();
+  void set_allocated_rule_bin(std::string* rule_bin);
+  private:
+  const std::string& _internal_rule_bin() const;
+  void _internal_set_rule_bin(const std::string& value);
+  std::string* _internal_mutable_rule_bin();
   public:
 
   // int32 session_id = 2;
@@ -592,8 +628,10 @@ class P2PMatching PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser > users_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::PlayerAddress > candidates_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr rule_bin_;
   ::PROTOBUF_NAMESPACE_ID::int32 session_id_;
   ::PROTOBUF_NAMESPACE_ID::int32 player_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 peer_id_;
@@ -1724,7 +1762,8 @@ class BattleLogFile PROTOBUF_FINAL :
     kPatchesFieldNumber = 7,
     kUsersFieldNumber = 11,
     kBattleDataFieldNumber = 12,
-    kGdxsvVersionFieldNumber = 2,
+    kInputsFieldNumber = 15,
+    kGdxsvVersionDeprecatedFieldNumber = 2,
     kBattleCodeFieldNumber = 3,
     kGameDiskFieldNumber = 5,
     kRuleBinFieldNumber = 10,
@@ -1786,20 +1825,42 @@ class BattleLogFile PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >&
       battle_data() const;
 
-  // string gdxsv_version = 2;
-  void clear_gdxsv_version();
-  const std::string& gdxsv_version() const;
-  void set_gdxsv_version(const std::string& value);
-  void set_gdxsv_version(std::string&& value);
-  void set_gdxsv_version(const char* value);
-  void set_gdxsv_version(const char* value, size_t size);
-  std::string* mutable_gdxsv_version();
-  std::string* release_gdxsv_version();
-  void set_allocated_gdxsv_version(std::string* gdxsv_version);
+  // repeated fixed64 inputs = 15;
+  int inputs_size() const;
   private:
-  const std::string& _internal_gdxsv_version() const;
-  void _internal_set_gdxsv_version(const std::string& value);
-  std::string* _internal_mutable_gdxsv_version();
+  int _internal_inputs_size() const;
+  public:
+  void clear_inputs();
+  private:
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_inputs(int index) const;
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >&
+      _internal_inputs() const;
+  void _internal_add_inputs(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >*
+      _internal_mutable_inputs();
+  public:
+  ::PROTOBUF_NAMESPACE_ID::uint64 inputs(int index) const;
+  void set_inputs(int index, ::PROTOBUF_NAMESPACE_ID::uint64 value);
+  void add_inputs(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >&
+      inputs() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >*
+      mutable_inputs();
+
+  // string gdxsv_version_deprecated = 2;
+  void clear_gdxsv_version_deprecated();
+  const std::string& gdxsv_version_deprecated() const;
+  void set_gdxsv_version_deprecated(const std::string& value);
+  void set_gdxsv_version_deprecated(std::string&& value);
+  void set_gdxsv_version_deprecated(const char* value);
+  void set_gdxsv_version_deprecated(const char* value, size_t size);
+  std::string* mutable_gdxsv_version_deprecated();
+  std::string* release_gdxsv_version_deprecated();
+  void set_allocated_gdxsv_version_deprecated(std::string* gdxsv_version_deprecated);
+  private:
+  const std::string& _internal_gdxsv_version_deprecated() const;
+  void _internal_set_gdxsv_version_deprecated(const std::string& value);
+  std::string* _internal_mutable_gdxsv_version_deprecated();
   public:
 
   // string battle_code = 3;
@@ -1887,7 +1948,9 @@ class BattleLogFile PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::GamePatch > patches_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser > users_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage > battle_data_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr gdxsv_version_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 > inputs_;
+  mutable std::atomic<int> _inputs_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr gdxsv_version_deprecated_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr game_disk_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr rule_bin_;
@@ -3611,6 +3674,107 @@ inline void P2PMatching::set_timeout_max_ms(::PROTOBUF_NAMESPACE_ID::int32 value
   // @@protoc_insertion_point(field_set:proto.P2PMatching.timeout_max_ms)
 }
 
+// bytes rule_bin = 8;
+inline void P2PMatching::clear_rule_bin() {
+  rule_bin_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& P2PMatching::rule_bin() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatching.rule_bin)
+  return _internal_rule_bin();
+}
+inline void P2PMatching::set_rule_bin(const std::string& value) {
+  _internal_set_rule_bin(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatching.rule_bin)
+}
+inline std::string* P2PMatching::mutable_rule_bin() {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatching.rule_bin)
+  return _internal_mutable_rule_bin();
+}
+inline const std::string& P2PMatching::_internal_rule_bin() const {
+  return rule_bin_.Get();
+}
+inline void P2PMatching::_internal_set_rule_bin(const std::string& value) {
+  
+  rule_bin_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void P2PMatching::set_rule_bin(std::string&& value) {
+  
+  rule_bin_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.P2PMatching.rule_bin)
+}
+inline void P2PMatching::set_rule_bin(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  rule_bin_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.P2PMatching.rule_bin)
+}
+inline void P2PMatching::set_rule_bin(const void* value,
+    size_t size) {
+  
+  rule_bin_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatching.rule_bin)
+}
+inline std::string* P2PMatching::_internal_mutable_rule_bin() {
+  
+  return rule_bin_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* P2PMatching::release_rule_bin() {
+  // @@protoc_insertion_point(field_release:proto.P2PMatching.rule_bin)
+  return rule_bin_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void P2PMatching::set_allocated_rule_bin(std::string* rule_bin) {
+  if (rule_bin != nullptr) {
+    
+  } else {
+    
+  }
+  rule_bin_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), rule_bin,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.P2PMatching.rule_bin)
+}
+
+// repeated .proto.BattleLogUser users = 9;
+inline int P2PMatching::_internal_users_size() const {
+  return users_.size();
+}
+inline int P2PMatching::users_size() const {
+  return _internal_users_size();
+}
+inline void P2PMatching::clear_users() {
+  users_.Clear();
+}
+inline ::proto::BattleLogUser* P2PMatching::mutable_users(int index) {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatching.users)
+  return users_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser >*
+P2PMatching::mutable_users() {
+  // @@protoc_insertion_point(field_mutable_list:proto.P2PMatching.users)
+  return &users_;
+}
+inline const ::proto::BattleLogUser& P2PMatching::_internal_users(int index) const {
+  return users_.Get(index);
+}
+inline const ::proto::BattleLogUser& P2PMatching::users(int index) const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatching.users)
+  return _internal_users(index);
+}
+inline ::proto::BattleLogUser* P2PMatching::_internal_add_users() {
+  return users_.Add();
+}
+inline ::proto::BattleLogUser* P2PMatching::add_users() {
+  // @@protoc_insertion_point(field_add:proto.P2PMatching.users)
+  return _internal_add_users();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser >&
+P2PMatching::users() const {
+  // @@protoc_insertion_point(field_list:proto.P2PMatching.users)
+  return users_;
+}
+
 // repeated .proto.PlayerAddress candidates = 10;
 inline int P2PMatching::_internal_candidates_size() const {
   return candidates_.size();
@@ -4714,66 +4878,66 @@ inline void BattleLogFile::set_allocated_game_disk(std::string* game_disk) {
   // @@protoc_insertion_point(field_set_allocated:proto.BattleLogFile.game_disk)
 }
 
-// string gdxsv_version = 2;
-inline void BattleLogFile::clear_gdxsv_version() {
-  gdxsv_version_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+// string gdxsv_version_deprecated = 2;
+inline void BattleLogFile::clear_gdxsv_version_deprecated() {
+  gdxsv_version_deprecated_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& BattleLogFile::gdxsv_version() const {
-  // @@protoc_insertion_point(field_get:proto.BattleLogFile.gdxsv_version)
-  return _internal_gdxsv_version();
+inline const std::string& BattleLogFile::gdxsv_version_deprecated() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogFile.gdxsv_version_deprecated)
+  return _internal_gdxsv_version_deprecated();
 }
-inline void BattleLogFile::set_gdxsv_version(const std::string& value) {
-  _internal_set_gdxsv_version(value);
-  // @@protoc_insertion_point(field_set:proto.BattleLogFile.gdxsv_version)
+inline void BattleLogFile::set_gdxsv_version_deprecated(const std::string& value) {
+  _internal_set_gdxsv_version_deprecated(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogFile.gdxsv_version_deprecated)
 }
-inline std::string* BattleLogFile::mutable_gdxsv_version() {
-  // @@protoc_insertion_point(field_mutable:proto.BattleLogFile.gdxsv_version)
-  return _internal_mutable_gdxsv_version();
+inline std::string* BattleLogFile::mutable_gdxsv_version_deprecated() {
+  // @@protoc_insertion_point(field_mutable:proto.BattleLogFile.gdxsv_version_deprecated)
+  return _internal_mutable_gdxsv_version_deprecated();
 }
-inline const std::string& BattleLogFile::_internal_gdxsv_version() const {
-  return gdxsv_version_.Get();
+inline const std::string& BattleLogFile::_internal_gdxsv_version_deprecated() const {
+  return gdxsv_version_deprecated_.Get();
 }
-inline void BattleLogFile::_internal_set_gdxsv_version(const std::string& value) {
+inline void BattleLogFile::_internal_set_gdxsv_version_deprecated(const std::string& value) {
   
-  gdxsv_version_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+  gdxsv_version_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void BattleLogFile::set_gdxsv_version(std::string&& value) {
+inline void BattleLogFile::set_gdxsv_version_deprecated(std::string&& value) {
   
-  gdxsv_version_.Set(
+  gdxsv_version_deprecated_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogFile.gdxsv_version)
+  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogFile.gdxsv_version_deprecated)
 }
-inline void BattleLogFile::set_gdxsv_version(const char* value) {
+inline void BattleLogFile::set_gdxsv_version_deprecated(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
-  gdxsv_version_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+  gdxsv_version_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:proto.BattleLogFile.gdxsv_version)
+  // @@protoc_insertion_point(field_set_char:proto.BattleLogFile.gdxsv_version_deprecated)
 }
-inline void BattleLogFile::set_gdxsv_version(const char* value,
+inline void BattleLogFile::set_gdxsv_version_deprecated(const char* value,
     size_t size) {
   
-  gdxsv_version_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+  gdxsv_version_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogFile.gdxsv_version)
+  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogFile.gdxsv_version_deprecated)
 }
-inline std::string* BattleLogFile::_internal_mutable_gdxsv_version() {
+inline std::string* BattleLogFile::_internal_mutable_gdxsv_version_deprecated() {
   
-  return gdxsv_version_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  return gdxsv_version_deprecated_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* BattleLogFile::release_gdxsv_version() {
-  // @@protoc_insertion_point(field_release:proto.BattleLogFile.gdxsv_version)
-  return gdxsv_version_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+inline std::string* BattleLogFile::release_gdxsv_version_deprecated() {
+  // @@protoc_insertion_point(field_release:proto.BattleLogFile.gdxsv_version_deprecated)
+  return gdxsv_version_deprecated_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void BattleLogFile::set_allocated_gdxsv_version(std::string* gdxsv_version) {
-  if (gdxsv_version != nullptr) {
+inline void BattleLogFile::set_allocated_gdxsv_version_deprecated(std::string* gdxsv_version_deprecated) {
+  if (gdxsv_version_deprecated != nullptr) {
     
   } else {
     
   }
-  gdxsv_version_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), gdxsv_version,
+  gdxsv_version_deprecated_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), gdxsv_version_deprecated,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogFile.gdxsv_version)
+  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogFile.gdxsv_version_deprecated)
 }
 
 // string battle_code = 3;
@@ -5035,6 +5199,53 @@ inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >
 BattleLogFile::battle_data() const {
   // @@protoc_insertion_point(field_list:proto.BattleLogFile.battle_data)
   return battle_data_;
+}
+
+// repeated fixed64 inputs = 15;
+inline int BattleLogFile::_internal_inputs_size() const {
+  return inputs_.size();
+}
+inline int BattleLogFile::inputs_size() const {
+  return _internal_inputs_size();
+}
+inline void BattleLogFile::clear_inputs() {
+  inputs_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 BattleLogFile::_internal_inputs(int index) const {
+  return inputs_.Get(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint64 BattleLogFile::inputs(int index) const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogFile.inputs)
+  return _internal_inputs(index);
+}
+inline void BattleLogFile::set_inputs(int index, ::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  inputs_.Set(index, value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogFile.inputs)
+}
+inline void BattleLogFile::_internal_add_inputs(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  inputs_.Add(value);
+}
+inline void BattleLogFile::add_inputs(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  _internal_add_inputs(value);
+  // @@protoc_insertion_point(field_add:proto.BattleLogFile.inputs)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >&
+BattleLogFile::_internal_inputs() const {
+  return inputs_;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >&
+BattleLogFile::inputs() const {
+  // @@protoc_insertion_point(field_list:proto.BattleLogFile.inputs)
+  return _internal_inputs();
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >*
+BattleLogFile::_internal_mutable_inputs() {
+  return &inputs_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint64 >*
+BattleLogFile::mutable_inputs() {
+  // @@protoc_insertion_point(field_mutable_list:proto.BattleLogFile.inputs)
+  return _internal_mutable_inputs();
 }
 
 // int64 start_at = 20;
