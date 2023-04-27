@@ -11,9 +11,9 @@ gdxsv_WriteMem16(0x0c4e0220u, 0x0000u); // .word 0x0000
 symbols_["host_entry"] = 0x0c4e0224;
 symbols_["print_buf"] = 0x0c4e0238;
 symbols_["ppp_status_ok"] = 0x0c4e0638;
-gdxsv_WriteMem16(0x0c4e0638u, 0xa701u); // bra	c4e143e <patch_id+0xde6> 
+gdxsv_WriteMem16(0x0c4e0638u, 0xa701u); // bra	c4e143e <patch_id+0xde2> 
 gdxsv_WriteMem16(0x0c4e063au, 0xc0a8u); // mov.b	r0,@(168,gbr) 
-gdxsv_WriteMem16(0x0c4e063cu, 0xa702u); // bra	c4e1444 <patch_id+0xdec> 
+gdxsv_WriteMem16(0x0c4e063cu, 0xa702u); // bra	c4e1444 <patch_id+0xde8> 
 gdxsv_WriteMem16(0x0c4e063eu, 0xc0a8u); // mov.b	r0,@(168,gbr) 
 gdxsv_WriteMem16(0x0c4e0640u, 0x0004u); // mov.b	r0,@(r0,r0) 
 gdxsv_WriteMem16(0x0c4e0642u, 0x0000u); // .word 0x0000 
@@ -22,12 +22,14 @@ gdxsv_WriteMem16(0x0c4e0646u, 0x0000u); // .word 0x0000
 gdxsv_WriteMem16(0x0c4e0648u, 0x0001u); // .word 0x0001 
 symbols_["print_buf_pos"] = 0x0c4e064c;
 gdxsv_WriteMem16(0x0c4e064cu, 0x0000u); // .word 0x0000 
-symbols_["is_online"] = 0x0c4e0650;
+symbols_["rbk_ex_input"] = 0x0c4e0650;
 gdxsv_WriteMem16(0x0c4e0650u, 0x0000u); // .word 0x0000 
-symbols_["disk"] = 0x0c4e0654;
+symbols_["is_online"] = 0x0c4e0654;
 gdxsv_WriteMem16(0x0c4e0654u, 0x0000u); // .word 0x0000 
-symbols_["patch_id"] = 0x0c4e0658;
+symbols_["disk"] = 0x0c4e0658;
 gdxsv_WriteMem16(0x0c4e0658u, 0x0000u); // .word 0x0000 
+symbols_["patch_id"] = 0x0c4e065c;
+gdxsv_WriteMem16(0x0c4e065cu, 0x0000u); // .word 0x0000 
 //
 // section gdx.func
 //
@@ -35,7 +37,7 @@ symbols_["gdx_sock_create"] = 0x0c4f0000;
 gdxsv_WriteMem16(0x8c4f0000u, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f0002u, 0xe001u); // mov	#1,r0 
 symbols_["gdx_sock_close"] = 0x0c4f0004;
-gdxsv_WriteMem16(0x8c4f0004u, 0xd109u); // mov.l	c4f002c <gdx_sock_close+0x28>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f0004u, 0xd109u); // mov.l	c4f002c <gdx_sock_close+0x28>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f0006u, 0xe200u); // mov	#0,r2 
 gdxsv_WriteMem16(0x8c4f0008u, 0xe302u); // mov	#2,r3 
 gdxsv_WriteMem16(0x8c4f000au, 0x2122u); // mov.l	r2,@r1 
@@ -55,7 +57,7 @@ gdxsv_WriteMem16(0x8c4f0024u, 0x5111u); // mov.l	@(4,r1),r1
 gdxsv_WriteMem16(0x8c4f0026u, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f0028u, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f002au, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f002cu, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f002cu, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f002eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f0030u, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f0032u, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -87,7 +89,7 @@ gdxsv_WriteMem16(0x8c4f0062u, 0x0c4eu); // mov.l	@(r0,r4),r12
 gdxsv_WriteMem16(0x8c4f0064u, 0x0220u); // .word 0x0220 
 gdxsv_WriteMem16(0x8c4f0066u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 symbols_["gdx_connect_sock"] = 0x0c4f0068;
-gdxsv_WriteMem16(0x8c4f0068u, 0xd10eu); // mov.l	c4f00a4 <gdx_connect_sock+0x3c>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f0068u, 0xd10eu); // mov.l	c4f00a4 <gdx_connect_sock+0x3c>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f006au, 0xe301u); // mov	#1,r3 
 gdxsv_WriteMem16(0x8c4f006cu, 0x8551u); // mov.w	@(2,r5),r0 
 gdxsv_WriteMem16(0x8c4f006eu, 0x5751u); // mov.l	@(4,r5),r7 
@@ -117,7 +119,7 @@ gdxsv_WriteMem16(0x8c4f009cu, 0x000bu); // rts
 gdxsv_WriteMem16(0x8c4f009eu, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f00a0u, 0x0707u); // mul.l	r0,r7 
 gdxsv_WriteMem16(0x8c4f00a2u, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f00a4u, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f00a4u, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f00a6u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f00a8u, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f00aau, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -126,7 +128,7 @@ gdxsv_WriteMem16(0x8c4f00aeu, 0x0040u); // .word 0x0040
 gdxsv_WriteMem16(0x8c4f00b0u, 0x0218u); // .word 0x0218 
 gdxsv_WriteMem16(0x8c4f00b2u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 symbols_["gdx_select"] = 0x0c4f00b4;
-gdxsv_WriteMem16(0x8c4f00b4u, 0xd10bu); // mov.l	c4f00e4 <gdx_select+0x30>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f00b4u, 0xd10bu); // mov.l	c4f00e4 <gdx_select+0x30>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f00b6u, 0x6112u); // mov.l	@r1,r1 
 gdxsv_WriteMem16(0x8c4f00b8u, 0x2118u); // tst	r1,r1 
 gdxsv_WriteMem16(0x8c4f00bau, 0x8d10u); // bt.s	c4f00de <gdx_select+0x2a> 
@@ -150,7 +152,7 @@ gdxsv_WriteMem16(0x8c4f00dcu, 0x600au); // negc	r0,r0
 gdxsv_WriteMem16(0x8c4f00deu, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f00e0u, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f00e2u, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f00e4u, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f00e4u, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f00e6u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f00e8u, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f00eau, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -182,7 +184,7 @@ gdxsv_WriteMem16(0x8c4f011au, 0x0040u); // .word 0x0040
 gdxsv_WriteMem16(0x8c4f011cu, 0x0218u); // .word 0x0218 
 gdxsv_WriteMem16(0x8c4f011eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 symbols_["gdx_lbs_sock_read"] = 0x0c4f0120;
-gdxsv_WriteMem16(0x8c4f0120u, 0xd10au); // mov.l	c4f014c <gdx_lbs_sock_read+0x2c>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f0120u, 0xd10au); // mov.l	c4f014c <gdx_lbs_sock_read+0x2c>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f0122u, 0x6112u); // mov.l	@r1,r1 
 gdxsv_WriteMem16(0x8c4f0124u, 0x2118u); // tst	r1,r1 
 gdxsv_WriteMem16(0x8c4f0126u, 0x8d0fu); // bt.s	c4f0148 <gdx_lbs_sock_read+0x28> 
@@ -204,7 +206,7 @@ gdxsv_WriteMem16(0x8c4f0144u, 0x000bu); // rts
 gdxsv_WriteMem16(0x8c4f0146u, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f0148u, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f014au, 0xe0ffu); // mov	#-1,r0 
-gdxsv_WriteMem16(0x8c4f014cu, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f014cu, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f014eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f0150u, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f0152u, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -244,7 +246,7 @@ gdxsv_WriteMem16(0x8c4f0190u, 0x0218u); // .word 0x0218
 gdxsv_WriteMem16(0x8c4f0192u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 symbols_["gdx_softreset_disconnect"] = 0x0c4f0194;
 gdxsv_WriteMem16(0x8c4f0194u, 0x2f86u); // mov.l	r8,@-r15 
-gdxsv_WriteMem16(0x8c4f0196u, 0xd819u); // mov.l	c4f01fc <gdx_softreset_disconnect+0x68>,r8	! c4e0654 <disk> 
+gdxsv_WriteMem16(0x8c4f0196u, 0xd819u); // mov.l	c4f01fc <gdx_softreset_disconnect+0x68>,r8	! c4e0658 <disk> 
 gdxsv_WriteMem16(0x8c4f0198u, 0x4f22u); // sts.l	pr,@-r15 
 gdxsv_WriteMem16(0x8c4f019au, 0x6082u); // mov.l	@r8,r0 
 gdxsv_WriteMem16(0x8c4f019cu, 0x8801u); // cmp/eq	#1,r0 
@@ -272,7 +274,7 @@ gdxsv_WriteMem16(0x8c4f01c6u, 0x6023u); // mov	r2,r0
 gdxsv_WriteMem16(0x8c4f01c8u, 0x8801u); // cmp/eq	#1,r0 
 gdxsv_WriteMem16(0x8c4f01cau, 0x8fedu); // bf.s	c4f01a8 <gdx_softreset_disconnect+0x14> 
 gdxsv_WriteMem16(0x8c4f01ccu, 0x6023u); // mov	r2,r0 
-gdxsv_WriteMem16(0x8c4f01ceu, 0xd10eu); // mov.l	c4f0208 <gdx_softreset_disconnect+0x74>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f01ceu, 0xd10eu); // mov.l	c4f0208 <gdx_softreset_disconnect+0x74>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f01d0u, 0x6112u); // mov.l	@r1,r1 
 gdxsv_WriteMem16(0x8c4f01d2u, 0x2118u); // tst	r1,r1 
 gdxsv_WriteMem16(0x8c4f01d4u, 0x8de8u); // bt.s	c4f01a8 <gdx_softreset_disconnect+0x14> 
@@ -295,13 +297,13 @@ gdxsv_WriteMem16(0x8c4f01f4u, 0x4f26u); // lds.l	@r15+,pr
 gdxsv_WriteMem16(0x8c4f01f6u, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f01f8u, 0x68f6u); // mov.l	@r15+,r8 
 gdxsv_WriteMem16(0x8c4f01fau, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f01fcu, 0x0654u); // mov.b	r5,@(r0,r6) 
+gdxsv_WriteMem16(0x8c4f01fcu, 0x0658u); // .word 0x0658 
 gdxsv_WriteMem16(0x8c4f01feu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f0200u, 0x5c68u); // mov.l	@(32,r6),r12 
 gdxsv_WriteMem16(0x8c4f0202u, 0x0c04u); // mov.b	r0,@(r0,r12) 
 gdxsv_WriteMem16(0x8c4f0204u, 0x308cu); // add	r8,r0 
 gdxsv_WriteMem16(0x8c4f0206u, 0x0c03u); // bsrf	r12 
-gdxsv_WriteMem16(0x8c4f0208u, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f0208u, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f020au, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f020cu, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f020eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -327,7 +329,7 @@ gdxsv_WriteMem16(0x8c4f0232u, 0x4110u); // dt	r1
 gdxsv_WriteMem16(0x8c4f0234u, 0x2270u); // mov.b	r7,@r2 
 gdxsv_WriteMem16(0x8c4f0236u, 0x8ffbu); // bf.s	c4f0230 <gdx_ppp_get_status+0x18> 
 gdxsv_WriteMem16(0x8c4f0238u, 0x7201u); // add	#1,r2 
-gdxsv_WriteMem16(0x8c4f023au, 0xd121u); // mov.l	c4f02c0 <gdx_ppp_get_status+0xa8>,r1	! c4e0654 <disk> 
+gdxsv_WriteMem16(0x8c4f023au, 0xd121u); // mov.l	c4f02c0 <gdx_ppp_get_status+0xa8>,r1	! c4e0658 <disk> 
 gdxsv_WriteMem16(0x8c4f023cu, 0x6312u); // mov.l	@r1,r3 
 gdxsv_WriteMem16(0x8c4f023eu, 0x6033u); // mov	r3,r0 
 gdxsv_WriteMem16(0x8c4f0240u, 0x8801u); // cmp/eq	#1,r0 
@@ -394,7 +396,7 @@ gdxsv_WriteMem16(0x8c4f02b8u, 0x8068u); // mov.b	r0,@(8,r6)
 gdxsv_WriteMem16(0x8c4f02bau, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f02bcu, 0x0638u); // .word 0x0638 
 gdxsv_WriteMem16(0x8c4f02beu, 0x0c4eu); // mov.l	@(r0,r4),r12 
-gdxsv_WriteMem16(0x8c4f02c0u, 0x0654u); // mov.b	r5,@(r0,r6) 
+gdxsv_WriteMem16(0x8c4f02c0u, 0x0658u); // .word 0x0658 
 gdxsv_WriteMem16(0x8c4f02c2u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f02c4u, 0x0200u); // .word 0x0200 
 gdxsv_WriteMem16(0x8c4f02c6u, 0x0c4eu); // mov.l	@(r0,r4),r12 
@@ -437,12 +439,12 @@ gdxsv_WriteMem16(0x8c4f030au, 0x0040u); // .word 0x0040
 gdxsv_WriteMem16(0x8c4f030cu, 0x0218u); // .word 0x0218 
 gdxsv_WriteMem16(0x8c4f030eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 symbols_["gdx_initialize"] = 0x0c4f0310;
-gdxsv_WriteMem16(0x8c4f0310u, 0xd74cu); // mov.l	c4f0444 <gdx_initialize+0x134>,r7	! c4e0654 <disk> 
+gdxsv_WriteMem16(0x8c4f0310u, 0xd74cu); // mov.l	c4f0444 <gdx_initialize+0x134>,r7	! c4e0658 <disk> 
 gdxsv_WriteMem16(0x8c4f0312u, 0x6072u); // mov.l	@r7,r0 
 gdxsv_WriteMem16(0x8c4f0314u, 0x2008u); // tst	r0,r0 
 gdxsv_WriteMem16(0x8c4f0316u, 0x8d06u); // bt.s	c4f0326 <gdx_initialize+0x16> 
 gdxsv_WriteMem16(0x8c4f0318u, 0x8801u); // cmp/eq	#1,r0 
-gdxsv_WriteMem16(0x8c4f031au, 0xd14bu); // mov.l	c4f0448 <gdx_initialize+0x138>,r1	! c4e0650 <is_online> 
+gdxsv_WriteMem16(0x8c4f031au, 0xd14bu); // mov.l	c4f0448 <gdx_initialize+0x138>,r1	! c4e0654 <is_online> 
 gdxsv_WriteMem16(0x8c4f031cu, 0xe200u); // mov	#0,r2 
 gdxsv_WriteMem16(0x8c4f031eu, 0x8d49u); // bt.s	c4f03b4 <gdx_initialize+0xa4> 
 gdxsv_WriteMem16(0x8c4f0320u, 0x2122u); // mov.l	r2,@r1 
@@ -591,9 +593,9 @@ gdxsv_WriteMem16(0x8c4f043cu, 0x8bb8u); // bf	c4f03b0 <gdx_initialize+0xa0>
 gdxsv_WriteMem16(0x8c4f043eu, 0xaf74u); // bra	c4f032a <gdx_initialize+0x1a> 
 gdxsv_WriteMem16(0x8c4f0440u, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f0442u, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f0444u, 0x0654u); // mov.b	r5,@(r0,r6) 
+gdxsv_WriteMem16(0x8c4f0444u, 0x0658u); // .word 0x0658 
 gdxsv_WriteMem16(0x8c4f0446u, 0x0c4eu); // mov.l	@(r0,r4),r12 
-gdxsv_WriteMem16(0x8c4f0448u, 0x0650u); // .word 0x0650 
+gdxsv_WriteMem16(0x8c4f0448u, 0x0654u); // mov.b	r5,@(r0,r6) 
 gdxsv_WriteMem16(0x8c4f044au, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f044cu, 0x0000u); // .word 0x0000 
 gdxsv_WriteMem16(0x8c4f044eu, 0x0c4fu); // mac.l	@r4+,@r12+ 
@@ -718,7 +720,7 @@ gdxsv_WriteMem16(0x8c4f053au, 0x8c06u); // .word 0x8c06
 gdxsv_WriteMem16(0x8c4f053cu, 0x53f4u); // mov.l	@(16,r15),r3 
 gdxsv_WriteMem16(0x8c4f053eu, 0x8c03u); // .word 0x8c03 
 symbols_["gdx_dial_start_disk1"] = 0x0c4f0540;
-gdxsv_WriteMem16(0x8c4f0540u, 0xd106u); // mov.l	c4f055c <gdx_dial_start_disk1+0x1c>,r1	! c4e0654 <disk> 
+gdxsv_WriteMem16(0x8c4f0540u, 0xd106u); // mov.l	c4f055c <gdx_dial_start_disk1+0x1c>,r1	! c4e0658 <disk> 
 gdxsv_WriteMem16(0x8c4f0542u, 0xe201u); // mov	#1,r2 
 gdxsv_WriteMem16(0x8c4f0544u, 0x4f22u); // sts.l	pr,@-r15 
 gdxsv_WriteMem16(0x8c4f0546u, 0x2122u); // mov.l	r2,@r1 
@@ -732,7 +734,7 @@ gdxsv_WriteMem16(0x8c4f0554u, 0x4f26u); // lds.l	@r15+,pr
 gdxsv_WriteMem16(0x8c4f0556u, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f0558u, 0x0009u); // nop 
 gdxsv_WriteMem16(0x8c4f055au, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f055cu, 0x0654u); // mov.b	r5,@(r0,r6) 
+gdxsv_WriteMem16(0x8c4f055cu, 0x0658u); // .word 0x0658 
 gdxsv_WriteMem16(0x8c4f055eu, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f0560u, 0x0310u); // .word 0x0310 
 gdxsv_WriteMem16(0x8c4f0562u, 0x0c4fu); // mac.l	@r4+,@r12+ 
@@ -741,7 +743,7 @@ gdxsv_WriteMem16(0x8c4f0566u, 0x0c2fu); // mac.l	@r2+,@r12+
 symbols_["gdx_dial_start_disk2"] = 0x0c4f0568;
 gdxsv_WriteMem16(0x8c4f0568u, 0x2f86u); // mov.l	r8,@-r15 
 gdxsv_WriteMem16(0x8c4f056au, 0xe802u); // mov	#2,r8 
-gdxsv_WriteMem16(0x8c4f056cu, 0xd105u); // mov.l	c4f0584 <gdx_dial_start_disk2+0x1c>,r1	! c4e0654 <disk> 
+gdxsv_WriteMem16(0x8c4f056cu, 0xd105u); // mov.l	c4f0584 <gdx_dial_start_disk2+0x1c>,r1	! c4e0658 <disk> 
 gdxsv_WriteMem16(0x8c4f056eu, 0x4f22u); // sts.l	pr,@-r15 
 gdxsv_WriteMem16(0x8c4f0570u, 0x2182u); // mov.l	r8,@r1 
 gdxsv_WriteMem16(0x8c4f0572u, 0xd105u); // mov.l	c4f0588 <gdx_dial_start_disk2+0x20>,r1	! c4f0310 <gdx_initialize> 
@@ -753,7 +755,7 @@ gdxsv_WriteMem16(0x8c4f057cu, 0x4f26u); // lds.l	@r15+,pr
 gdxsv_WriteMem16(0x8c4f057eu, 0x000bu); // rts 
 gdxsv_WriteMem16(0x8c4f0580u, 0x68f6u); // mov.l	@r15+,r8 
 gdxsv_WriteMem16(0x8c4f0582u, 0x0009u); // nop 
-gdxsv_WriteMem16(0x8c4f0584u, 0x0654u); // mov.b	r5,@(r0,r6) 
+gdxsv_WriteMem16(0x8c4f0584u, 0x0658u); // .word 0x0658 
 gdxsv_WriteMem16(0x8c4f0586u, 0x0c4eu); // mov.l	@(r0,r4),r12 
 gdxsv_WriteMem16(0x8c4f0588u, 0x0310u); // .word 0x0310 
 gdxsv_WriteMem16(0x8c4f058au, 0x0c4fu); // mac.l	@r4+,@r12+ 
@@ -761,5 +763,5 @@ gdxsv_WriteMem16(0x8c4f058cu, 0x1d79u); // mov.l	r7,@(36,r13)
 gdxsv_WriteMem16(0x8c4f058eu, 0x0c39u); // .word 0x0c39 
 if (disk_ == 1) gdxsv_WriteMem32(0x8c181bb4, symbols_["gdx_dial_start_disk1"]);
 if (disk_ == 2) gdxsv_WriteMem32(0x8c1e0274, symbols_["gdx_dial_start_disk2"]);
-symbols_[":patch_id"] = 82631140;
+symbols_[":patch_id"] = 82632564;
 gdxsv_WriteMem32(symbols_["patch_id"], symbols_[":patch_id"]);

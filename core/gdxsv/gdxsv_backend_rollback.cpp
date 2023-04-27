@@ -382,7 +382,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		}
 
 		auto inputState = mapleInputState;
-		auto memExInputAddr = gdxsv.symbols_.at("print_buf");  // TODO
+		auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
 
 		int msg_len = gdxsv_ReadMem8(InetBuf);
 		if (0 < msg_len) {

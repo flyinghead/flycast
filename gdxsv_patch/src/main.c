@@ -59,6 +59,7 @@ struct sockaddr_t {
 GDXDATA u32 patch_id = 0;
 GDXDATA u32 disk = 0;
 GDXDATA u32 is_online = 0;
+GDXDATA u32 rbk_ex_input = 0;
 GDXDATA u32 print_buf_pos = 0;
 GDXDATA u8 ppp_status_ok[] = {
         0x01, 0xa7, 0xa8, 0xc0, 0x02, 0xa7, 0xa8, 0xc0,

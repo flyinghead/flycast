@@ -15,7 +15,7 @@ r_section = re.compile(r"^Disassembly of section ([0-9a-zA-Z._]+):")
 section = None
 start = False
 
-f = open('bin/gdxsv_patch.inc', 'w')
+f = open('../core/gdxsv/gdxsv_patch.inc', 'w')
 for line in open('bin/gdxsv_patch.asm'):
     line = line.rstrip()
     if 'Disassembly' in line:
