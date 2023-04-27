@@ -9,8 +9,10 @@
 #include "cfg/cfg.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "gdx_rpc.h"
 #include "gdxsv_translation.h"
 #include "hw/sh4/sh4_mem.h"
+#include "libs.h"
 #include "log/InMemoryListener.h"
 #include "log/LogManager.h"
 #include "lzma/CpuArch.h"
@@ -18,6 +20,7 @@
 #include "oslib/oslib.h"
 #include "reios/reios.h"
 #include "rend/boxart/http_client.h"
+#include "rend/gui.h"
 #include "version.h"
 
 bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }

@@ -13,6 +13,7 @@
 #include "nowide/fstream.hpp"
 #include "oslib/oslib.h"
 #include "rend/gui_util.h"
+#include "stdclass.h"
 #include "version.h"
 #include "xxhash.h"
 

@@ -1951,7 +1951,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/gdxsv/gdxsv_backend_rollback.h
 		core/gdxsv/gdxsv_backend_rollback.cpp
 		core/gdxsv/gdxsv_backend_tcp.h
+		core/gdxsv/gdxsv_backend_tcp.cpp
 		core/gdxsv/gdxsv_backend_udp.h
+		core/gdxsv/gdxsv_backend_udp.cpp
 		core/gdxsv/gdxsv_network.cpp
 		core/gdxsv/gdxsv_network.h
 		core/gdxsv/gdxsv_patch.inc

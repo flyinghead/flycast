@@ -15,6 +15,8 @@ class Gdxsv {
    public:
 	friend GdxsvBackendReplay;
 	friend GdxsvBackendRollback;
+	friend GdxsvBackendTcp;
+	friend GdxsvBackendUdp;
 
 	enum class NetMode {
 		Offline,
@@ -23,8 +25,6 @@ class Gdxsv {
 		McsRollback,
 		Replay,
 	};
-
-	Gdxsv() : upnp_port(0), udp_port(0), lbs_net(symbols), udp_net(symbols, maxlag), rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;
 
@@ -104,8 +104,8 @@ class Gdxsv {
 
 	MiniUPnP upnp;
 	std::future<std::string> upnp_result;
-	int upnp_port;
-	int udp_port;
+	int upnp_port = 0;
+	int udp_port = 0;
 	std::string user_id;
 
 	UdpRemote lbs_remote = {};
