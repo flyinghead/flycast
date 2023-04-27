@@ -367,7 +367,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
-		const int Krnd0 = disk == 1 ? 0x0c310800 : 0x0c3abf40;
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {

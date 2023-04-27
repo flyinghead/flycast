@@ -396,14 +396,13 @@ void GdxsvBackendReplay::ApplyPatch(bool first_time) {
 	}
 
 	// Skip Key MsgPush
-	// TODO: disk1
-	if (log_file_.game_disk() == "dc2") {
+	if (gdxsv.Disk() == 1) {
+		gdxsv_WriteMem16(0x8c058b7c, 9);
+		gdxsv_WriteMem8(0x0c310450, 1);
+	}
+	if (gdxsv.Disk() == 2) {
 		gdxsv_WriteMem16(0x8c045f64, 9);
 		gdxsv_WriteMem8(0x0c3abb90, 1);
-	}
-	if (log_file_.game_disk() == "ps2") {
-		gdxsv_WriteMem32(0x0037f5a0, 0);
-		gdxsv_WriteMem8(0x00580340, 1);
 	}
 
 	// Online Patch
@@ -428,14 +427,13 @@ void GdxsvBackendReplay::ApplyPatch(bool first_time) {
 }
 
 void GdxsvBackendReplay::RestorePatch() {
-	if (log_file_.game_disk() == "dc2") {
+	if (gdxsv.Disk() == 1) {
+		gdxsv_WriteMem16(0x8c058b7c, 0x410b);
+		gdxsv_WriteMem8(0x0c310450, 2);
+	}
+	if (gdxsv.Disk() == 2) {
 		gdxsv_WriteMem16(0x8c045f64, 0x410b);
 		gdxsv_WriteMem8(0x0c3abb90, 2);
-	}
-
-	if (log_file_.game_disk() == "ps2") {
-		gdxsv_WriteMem32(0x0037f5a0, 0x0c0e0be4);
-		gdxsv_WriteMem8(0x00580340, 2);
 	}
 
 	// Online Patch
