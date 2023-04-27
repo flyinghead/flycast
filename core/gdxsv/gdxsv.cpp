@@ -28,21 +28,21 @@ bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || 
 bool Gdxsv::Enabled() const { return enabled_; }
 
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
-const char* Gdxsv::NetModeString() const {
-    switch (netmode_) {
-    case NetMode::Offline:
-        return "Offline";
-    case NetMode::Lbs:
-        return "Lbs";
-    case NetMode::McsUdp:
-        return "McsUdp";
-    case NetMode::McsRollback:
-        return "McsRollback";
-    case NetMode::Replay:
-        return "Replay";
-    default:
-        return "Unknown";
-    }
+const char *Gdxsv::NetModeString() const {
+	switch (netmode_) {
+		case NetMode::Offline:
+			return "Offline";
+		case NetMode::Lbs:
+			return "Lbs";
+		case NetMode::McsUdp:
+			return "McsUdp";
+		case NetMode::McsRollback:
+			return "McsRollback";
+		case NetMode::Replay:
+			return "Replay";
+		default:
+			return "Unknown";
+	}
 }
 
 void Gdxsv::Reset() {

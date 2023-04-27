@@ -41,7 +41,7 @@ class Gdxsv {
 	void WritePatch();
 	int Disk() const { return disk_; }
 	std::string UserId() const { return user_id_; }
-    MiniUPnP& UPnP() { return upnp_; }
+	MiniUPnP& UPnP() { return upnp_; }
 
    private:
 	void GcpPingTest();
