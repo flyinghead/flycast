@@ -169,7 +169,7 @@ bool GdxsvBackendReplay::Start() {
 	NOTICE_LOG(COMMON, "inputs_size = %d", log_file_.inputs_size());
 
 	state_ = State::Start;
-	gdxsv.maxlag = 1;
+	gdxsv.maxlag_ = 1;
 	key_msg_count_ = 0;
 	NOTICE_LOG(COMMON, "Replay Start");
 	return true;

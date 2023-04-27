@@ -170,11 +170,11 @@ void GdxsvBackendUdp::NetThreadLoop() {
 			} else {
 				auto rtt = float(rtt_sum) / ping_recv_count;
 				NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-				gdxsv.maxlag = std::min<int>(0x7f, std::max(5, 4 + (int)std::floor(rtt / 16)));
-				NOTICE_LOG(COMMON, "set maxlag %d", (int)gdxsv.maxlag);
+				gdxsv.maxlag_ = std::min<int>(0x7f, std::max(5, 4 + (int)std::floor(rtt / 16)));
+				NOTICE_LOG(COMMON, "set maxlag %d", (int)gdxsv.maxlag_);
 
 				char osd_msg[128] = {};
-				sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int)gdxsv.maxlag);
+				sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int)gdxsv.maxlag_);
 				gui_display_notification(osd_msg, 3000);
 				state = State::McsInBattle;
 			}

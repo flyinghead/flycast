@@ -36,7 +36,7 @@ f.write("""};
 #undef TRANSLATE
 #undef CUSTOMIZE
 
-if (disk == 2) {
+if (disk_ == 2) {
     for (const auto& translation : translations_disk2) {
         const static u32 offset = 0x8C000000 + 0x00010000;
         const char * text = translation.Text();
@@ -49,10 +49,10 @@ if (disk == 2) {
     }
     
     // To manage lang-path version, overwrite "UNUSED" text area
-    symbols["lang_patch_id"] = 0x0c1d37dc;
-    symbols[":lang_patch_id"] = """ + lang_patch_id + """;
-    symbols[":lang_patch_lang"] = (u32)GdxsvLanguage::Language();
-    gdxsv_WriteMem32(symbols["lang_patch_id"], symbols[":lang_patch_id"]);
+    symbols_["lang_patch_id"] = 0x0c1d37dc;
+    symbols_[":lang_patch_id"] = """ + lang_patch_id + """;
+    symbols_[":lang_patch_lang"] = (u32)GdxsvLanguage::Language();
+    gdxsv_WriteMem32(symbols_["lang_patch_id"], symbols_[":lang_patch_id"]);
 }
 """)
 f.close()

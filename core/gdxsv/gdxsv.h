@@ -27,99 +27,57 @@ class Gdxsv {
 	};
 
 	bool Enabled() const;
-
 	bool InGame() const;
-
 	void DisplayOSD();
-
+	const char* NetModeString() const;
 	void Reset();
-
 	void Update();
-
 	void HookMainUiLoop();
-
 	void HandleRPC();
-
 	void RestoreOnlinePatch();
-
 	void StartPingTest();
-
 	bool StartReplayFile(const char* path);
-
 	bool StartRollbackTest(const char* param);
-
 	void WritePatch();
-
-	int Disk() const { return disk; }
-
-	std::string UserId() const { return user_id; }
-
-	const char* NetModeString() const {
-		switch (netmode) {
-			case NetMode::Offline:
-				return "Offline";
-			case NetMode::Lbs:
-				return "Lbs";
-			case NetMode::McsUdp:
-				return "McsUdp";
-			case NetMode::McsRollback:
-				return "McsRollback";
-			case NetMode::Replay:
-				return "Replay";
-			default:
-				return "Unknown";
-		}
-	}
-
-	MiniUPnP& UPnP() { return upnp; }
+	int Disk() const { return disk_; }
+	std::string UserId() const { return user_id_; }
+    MiniUPnP& UPnP() { return upnp_; }
 
    private:
 	void GcpPingTest();
-
 	static std::string GenerateLoginKey();
-
 	std::vector<u8> GeneratePlatformInfoPacket();
-
 	std::string GeneratePlatformInfoString();
-
 	std::vector<u8> GenerateP2PMatchReportPacket();
-
 	LbsMessage GenerateP2PMatchReportMessage();
-
 	void ApplyOnlinePatch(bool first_time);
-
 	void WritePatchDisk1();
-
 	void WritePatchDisk2();
 
-	NetMode netmode = NetMode::Offline;
-	std::atomic<bool> enabled;
-	std::atomic<int> disk;
-	std::atomic<int> maxlag;
-	std::atomic<int> maxrebattle;
+	NetMode netmode_ = NetMode::Offline;
+	std::atomic<bool> enabled_;
+	std::atomic<int> disk_;
+	std::atomic<int> maxlag_;
+	std::atomic<int> maxrebattle_;
+	std::string server_;
+	std::string loginkey_;
+	std::string user_id_;
+	std::map<std::string, u32> symbols_;
+	proto::GamePatchList patch_list_;
+	std::map<std::string, int> gcp_ping_test_result_;
+	std::atomic<bool> gcp_ping_test_finished_;
 
-	std::string server;
-	std::string loginkey;
-	std::map<std::string, u32> symbols;
+	MiniUPnP upnp_;
+	std::future<std::string> upnp_result_;
+	int upnp_port_ = 0;
+	int udp_port_ = 0;
 
-	MiniUPnP upnp;
-	std::future<std::string> upnp_result;
-	int upnp_port = 0;
-	int udp_port = 0;
-	std::string user_id;
-
-	UdpRemote lbs_remote = {};
-	UdpClient udp = {};
-
-	proto::GamePatchList patch_list;
-
-	GdxsvBackendTcp lbs_net;
-	GdxsvBackendUdp udp_net;
-	GdxsvBackendReplay replay_net;
-	GdxsvBackendRollback rollback_net;
-
-	std::atomic<bool> gcp_ping_test_finished;
-	std::map<std::string, int> gcp_ping_test_result;
+	UdpRemote lbs_remote_ = {};
+	UdpClient udp_ = {};
+	GdxsvBackendTcp lbs_net_;
+	GdxsvBackendUdp udp_net_;
+	GdxsvBackendReplay replay_net_;
+	GdxsvBackendRollback rollback_net_;
 };
 
 extern Gdxsv gdxsv;
