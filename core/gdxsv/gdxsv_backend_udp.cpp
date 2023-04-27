@@ -1,5 +1,7 @@
 #include "gdxsv_backend_udp.h"
 
+#include <cmath>
+
 #include "gdxsv.h"
 #include "libs.h"
 #include "rend/gui.h"
