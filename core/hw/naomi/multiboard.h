@@ -140,9 +140,7 @@ public:
 	{
 		pthread_mutexattr_t mattr;
 		pthread_mutexattr_init(&mattr);
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 		pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-#endif
 		pthread_mutex_init(&mutex, &mattr);
 		pthread_mutexattr_destroy(&mattr);
 	}
@@ -176,9 +174,7 @@ public:
 	{
 		pthread_condattr_t cvattr;
 		pthread_condattr_init(&cvattr);
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 		pthread_condattr_setpshared(&cvattr, PTHREAD_PROCESS_SHARED);
-#endif
 		pthread_cond_init(&cond, &cvattr);
 		pthread_condattr_destroy(&cvattr);
 	}
