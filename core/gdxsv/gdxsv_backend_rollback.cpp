@@ -286,11 +286,11 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	Prepare(matching, 20010 + me);
 	state_ = State::StartLocalTest;
 	is_local_test_ = true;
-	gdxsv.maxlag = 0;
-	gdxsv.maxrebattle = 1;
+	gdxsv.maxlag_ = 0;
+	gdxsv.maxrebattle_ = 1;
 
 	if (getenv("MAXREBATTLE")) {
-		gdxsv.maxrebattle = atoi(getenv("MAXREBATTLE"));
+		gdxsv.maxrebattle_ = atoi(getenv("MAXREBATTLE"));
 	}
 
 	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
@@ -324,7 +324,7 @@ void GdxsvBackendRollback::Open() {
 	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Open");
 	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
 	state_ = State::McsSessionExchange;
-	gdxsv.maxlag = 0;
+	gdxsv.maxlag_ = 0;
 	ApplyPatch(true);
 }
 
@@ -367,7 +367,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
-		const int Krnd0 = disk == 1 ? 0x0c310800 : 0x0c3abf40;
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -382,7 +381,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		}
 
 		auto inputState = mapleInputState;
-		auto memExInputAddr = gdxsv.symbols.at("print_buf");  // TODO
+		auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
 
 		int msg_len = gdxsv_ReadMem8(InetBuf);
 		if (0 < msg_len) {
@@ -620,8 +619,8 @@ void GdxsvBackendRollback::SaveReplay() {
 	log.set_game_disk(gdxsv.Disk() == 1 ? "dc1" : "dc2");
 	log.set_battle_code(matching_.battle_code());
 	log.set_log_file_version(20230426);
-	for (int i = 0; i < gdxsv.patch_list.patches_size(); ++i) {
-		log.add_patches()->CopyFrom(gdxsv.patch_list.patches(i));
+	for (int i = 0; i < gdxsv.patch_list_.patches_size(); ++i) {
+		log.add_patches()->CopyFrom(gdxsv.patch_list_.patches(i));
 	}
 	log.set_rule_bin(matching_.rule_bin());
 	log.mutable_users()->CopyFrom(matching_.users());

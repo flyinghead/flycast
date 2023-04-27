@@ -38,8 +38,6 @@ static bool forceReinit;
 
 void UpdateInputState();
 
-std::atomic<bool> display_refresh(false);
-
 int64_t get_period() {
 	const auto mode = config::FixedFrequency.get();
 	// Native NTSC/VGA

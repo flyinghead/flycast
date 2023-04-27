@@ -5,8 +5,7 @@
 
 #include "types.h"
 
-class LbsMessage {
-   public:
+struct LbsMessage {
 	u8 direction = 0;
 	u8 category = 0;
 	u16 command = 0;
@@ -16,36 +15,36 @@ class LbsMessage {
 	std::vector<u8> body;
 	int reading = 0;
 
-	static const int HeaderSize = 12;
-	static const u8 ServerToClient = 0x18;
-	static const u8 ClientToServer = 0x81;
-	static const u8 CategoryQuestion = 0x01;
-	static const u8 CategoryAnswer = 0x02;
-	static const u8 CategoryNotice = 0x10;
-	static const u8 CategoryCustom = 0xFF;
-	static const u32 StatusError = 0xFFFFFFFFu;
-	static const u32 StatusSuccess = 0x00FFFFFFu;
+	static constexpr int HeaderSize = 12;
+	static constexpr u8 ServerToClient = 0x18;
+	static constexpr u8 ClientToServer = 0x81;
+	static constexpr u8 CategoryQuestion = 0x01;
+	static constexpr u8 CategoryAnswer = 0x02;
+	static constexpr u8 CategoryNotice = 0x10;
+	static constexpr u8 CategoryCustom = 0xFF;
+	static constexpr u32 StatusError = 0xFFFFFFFFu;
+	static constexpr u32 StatusSuccess = 0x00FFFFFFu;
 
-	static const u16 lbsLineCheck = 0x6001;
-	static const u16 lbsUserRegist = 0x6112;
-	static const u16 lbsUserDecide = 0x6113;
+	static constexpr u16 lbsLineCheck = 0x6001;
+	static constexpr u16 lbsUserRegist = 0x6112;
+	static constexpr u16 lbsUserDecide = 0x6113;
 
-	static const u16 lbsLobbyMatchingEntry = 0x640e;
-	static const u16 lbsReadyBattle = 0x6910;
-	static const u16 lbsAskMatchingJoin = 0x6911;
-	static const u16 lbsAskPlayerSide = 0x6912;
-	static const u16 lbsAskPlayerInfo = 0x6913;
-	static const u16 lbsAskRuleData = 0x6914;
-	static const u16 lbsAskBattleCode = 0x6915;
-	static const u16 lbsAskMcsAddress = 0x6916;
-	static const u16 lbsAskMcsVersion = 0x6917;
-	static const u16 lbsLogout = 0x6002;
-	static const u16 lbsShutdown = 0x6003;
-	static const u16 lbsPlatformInfo = 0x9950;
-	static const u16 lbsGamePatch = 0x9960;
-	static const u16 lbsP2PMatching = 0x9961;
-	static const u16 lbsP2PMatchingReport = 0x9962;
-	static const u16 lbsBattleUserCount = 0x9965;
+	static constexpr u16 lbsLobbyMatchingEntry = 0x640e;
+	static constexpr u16 lbsReadyBattle = 0x6910;
+	static constexpr u16 lbsAskMatchingJoin = 0x6911;
+	static constexpr u16 lbsAskPlayerSide = 0x6912;
+	static constexpr u16 lbsAskPlayerInfo = 0x6913;
+	static constexpr u16 lbsAskRuleData = 0x6914;
+	static constexpr u16 lbsAskBattleCode = 0x6915;
+	static constexpr u16 lbsAskMcsAddress = 0x6916;
+	static constexpr u16 lbsAskMcsVersion = 0x6917;
+	static constexpr u16 lbsLogout = 0x6002;
+	static constexpr u16 lbsShutdown = 0x6003;
+	static constexpr u16 lbsPlatformInfo = 0x9950;
+	static constexpr u16 lbsGamePatch = 0x9960;
+	static constexpr u16 lbsP2PMatching = 0x9961;
+	static constexpr u16 lbsP2PMatchingReport = 0x9962;
+	static constexpr u16 lbsBattleUserCount = 0x9965;
 
 	int Serialize(std::deque<u8> &buf) const {
 		buf.push_back(direction);
@@ -88,7 +87,7 @@ class LbsMessage {
 		return pkt_size;
 	}
 
-	static int MessageSize(const char *buf, int size) {	 // TODO
+	static int MessageSize(const char *buf, int size) {
 		if (size < HeaderSize) {
 			return 0;
 		}

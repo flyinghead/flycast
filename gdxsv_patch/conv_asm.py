@@ -15,7 +15,7 @@ r_section = re.compile(r"^Disassembly of section ([0-9a-zA-Z._]+):")
 section = None
 start = False
 
-f = open('bin/gdxsv_patch.inc', 'w')
+f = open('../core/gdxsv/gdxsv_patch.inc', 'w')
 for line in open('bin/gdxsv_patch.asm'):
     line = line.rstrip()
     if 'Disassembly' in line:
@@ -44,10 +44,10 @@ for line in open('bin/gdxsv_patch.asm'):
         addr = int(g.group(1), 16)
         name = g.group(2)
         if section in ("gdx.data", "gdx.func"):
-            f.write(f'symbols["{name}"] = 0x{addr:08x};\n')
+            f.write(f'symbols_["{name}"] = 0x{addr:08x};\n')
 
-f.write(f'if (disk == 1) gdxsv_WriteMem32(0x8c181bb4, symbols["gdx_dial_start_disk1"]);\n')
-f.write(f'if (disk == 2) gdxsv_WriteMem32(0x8c1e0274, symbols["gdx_dial_start_disk2"]);\n')
-f.write(f'symbols[":patch_id"] = {str(int(time.time()) % 100000000)};\n')
-f.write(f'gdxsv_WriteMem32(symbols["patch_id"], symbols[":patch_id"]);\n')
+f.write(f'if (disk_ == 1) gdxsv_WriteMem32(0x8c181bb4, symbols_["gdx_dial_start_disk1"]);\n')
+f.write(f'if (disk_ == 2) gdxsv_WriteMem32(0x8c1e0274, symbols_["gdx_dial_start_disk2"]);\n')
+f.write(f'symbols_[":patch_id"] = {str(int(time.time()) % 100000000)};\n')
+f.write(f'gdxsv_WriteMem32(symbols_["patch_id"], symbols_[":patch_id"]);\n')
 f.close()

@@ -81,7 +81,6 @@ u32 GdxsvBackendUdp::OnSockPoll() {
 void GdxsvBackendUdp::NetThreadLoop() {
 	ClearBuffers();
 
-	const int kFirstMessageSize = 20;
 	int net_loop_count = 0;
 	int ping_send_count = 0;
 	int ping_recv_count = 0;
@@ -120,8 +119,9 @@ void GdxsvBackendUdp::NetThreadLoop() {
 		if (state == State::McsSessionExchange) {
 			if (session_id.empty()) {
 				send_buf_mtx_.lock();
-				if (kFirstMessageSize <= send_buf_.size()) {
-					for (int j = 12; j < kFirstMessageSize; ++j) {
+				const int FirstMessageSize = 20;
+				if (FirstMessageSize <= send_buf_.size()) {
+					for (int j = 12; j < FirstMessageSize; ++j) {
 						session_id.push_back((char)send_buf_[j]);
 					}
 					NOTICE_LOG(COMMON, "session_id:%s", session_id.c_str());
@@ -170,11 +170,11 @@ void GdxsvBackendUdp::NetThreadLoop() {
 			} else {
 				auto rtt = float(rtt_sum) / ping_recv_count;
 				NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-				gdxsv.maxlag = std::min<int>(0x7f, std::max(5, 4 + (int)std::floor(rtt / 16)));
-				NOTICE_LOG(COMMON, "set maxlag %d", (int)gdxsv.maxlag);
+				gdxsv.maxlag_ = std::min<int>(0x7f, std::max(5, 4 + (int)std::floor(rtt / 16)));
+				NOTICE_LOG(COMMON, "set maxlag %d", (int)gdxsv.maxlag_);
 
 				char osd_msg[128] = {};
-				sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int)gdxsv.maxlag);
+				sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int)gdxsv.maxlag_);
 				gui_display_notification(osd_msg, 3000);
 				state = State::McsInBattle;
 			}
@@ -221,33 +221,22 @@ void GdxsvBackendUdp::NetThreadLoop() {
 				continue;
 			}
 
-			switch (pkt.type()) {
-				case proto::MessageType::None:
-					break;
-
-				case proto::MessageType::HelloServer:
-					if (state != State::McsSessionExchange) break;
-					if (pkt.hello_server_data().ok()) {
-						user_id = pkt.hello_server_data().user_id();
-						NOTICE_LOG(COMMON, "user_id:%s", user_id.c_str());
-					}
-					break;
-
-				case proto::MessageType::Ping:
-					break;
-
-				case proto::MessageType::Pong: {
-					if (state != State::McsPingTest) break;
+			if (pkt.type() == proto::MessageType::HelloServer) {
+				if (state == State::McsSessionExchange && pkt.hello_server_data().ok()) {
+					user_id = pkt.hello_server_data().user_id();
+					NOTICE_LOG(COMMON, "user_id:%s", user_id.c_str());
+				}
+			} else if (pkt.type() == proto::MessageType::Pong) {
+				if (state == State::McsPingTest) {
 					auto t2 =
 						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
 							.count();
 					auto rtt = static_cast<float>(t2 - pkt.pong_data().timestamp());
 					ping_recv_count++;
 					rtt_sum += rtt;
-				} break;
-
-				case proto::MessageType::Battle:
-					if (state != State::McsInBattle) break;
+				}
+			} else if (pkt.type() == proto::MessageType::Battle) {
+				if (state == State::McsInBattle) {
 					msg_buf.ApplySeqAck(pkt.seq(), pkt.ack());
 					recv_buf_mtx_.lock();
 					for (auto& msg : pkt.battle_data()) {
@@ -258,12 +247,10 @@ void GdxsvBackendUdp::NetThreadLoop() {
 						}
 					}
 					recv_buf_mtx_.unlock();
-					break;
-
-				case proto::Fin:
-					CloseMcsRemoteWithReason("cl_recv_fin");
-					state = State::End;
-					break;
+				}
+			} else if (pkt.type() == proto::Fin) {
+				CloseMcsRemoteWithReason("cl_recv_fin");
+				state = State::End;
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
