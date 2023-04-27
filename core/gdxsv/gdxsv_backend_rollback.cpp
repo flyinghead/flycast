@@ -10,7 +10,6 @@
 #include "gdx_rpc.h"
 #include "gdxsv.h"
 #include "gdxsv.pb.h"
-#include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "input/gamepad_device.h"
@@ -21,8 +20,8 @@
 #include "rend/transform_matrix.h"
 
 namespace {
-u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83,
-						  0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07};
+u8 DummyGameParam[] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83,
+					   0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07};
 u8 DummyRuleData[] = {0x03, 0x02, 0x03, 0x00, 0x00, 0x01, 0x58, 0x02, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
 					  0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00, 0x00, 0xff, 0x01, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00};
 
@@ -33,19 +32,19 @@ const u16 ExInputWaitLoadEnd = 2;
 // maple input to mcs pad input
 u16 convertInput(MapleInputState input) {
 	u16 r = 0;
-	if (~input.kcode & 0x0004) r |= 0x4000;		 // A
-	if (~input.kcode & 0x0002) r |= 0x2000;		 // B
-	if (~input.kcode & 0x0001) r |= 0x8000;		 // C
-	if (~input.kcode & 0x0400) r |= 0x0002;		 // X
-	if (~input.kcode & 0x0200) r |= 0x0001;		 // Y
-	if (~input.kcode & 0x0100) r |= 0x1000;		 // Z
-	if (~input.kcode & 0x0010) r |= 0x0020;		 // up
-	if (~input.kcode & 0x0020) r |= 0x0010;		 // down
-	if (~input.kcode & 0x0080) r |= 0x0004;		 // right
-	if (~input.kcode & 0x0040) r |= 0x0008;		 // left
-	if (~input.kcode & 0x0008) r |= 0x0080;		 // Start
-	if (~input.kcode & 0x00020000) r |= 0x8000;	 // LT
-	if (~input.kcode & 0x00040000) r |= 0x1000;	 // RT
+	if (~input.kcode & 0x0004) r |= 0x4000;					 // A
+	if (~input.kcode & 0x0002) r |= 0x2000;					 // B
+	if (~input.kcode & 0x0001) r |= 0x8000;					 // C
+	if (~input.kcode & 0x0400) r |= 0x0002;					 // X
+	if (~input.kcode & 0x0200) r |= 0x0001;					 // Y
+	if (~input.kcode & 0x0100) r |= 0x1000;					 // Z
+	if (~input.kcode & 0x0010) r |= 0x0020;					 // up
+	if (~input.kcode & 0x0020) r |= 0x0010;					 // down
+	if (~input.kcode & 0x0080) r |= 0x0004;					 // right
+	if (~input.kcode & 0x0040) r |= 0x0008;					 // left
+	if (~input.kcode & 0x0008) r |= 0x0080;					 // Start
+	if (~input.kcode & 0x00020000) r |= 0x8000;				 // LT
+	if (~input.kcode & 0x00040000) r |= 0x1000;				 // RT
 	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
 	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
 	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
@@ -86,6 +85,7 @@ void GdxsvBackendRollback::Reset() {
 	report_.Clear();
 	ping_pong_.Reset();
 	start_network_ = std::future<bool>();
+	input_logs_.clear();
 	ggpo::stopSession();
 }
 
@@ -286,12 +286,11 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	Prepare(matching, 20010 + me);
 	state_ = State::StartLocalTest;
 	is_local_test_ = true;
-	maxlag_ = 0;
-	maxrebattle_ = 1;
+	gdxsv.maxlag = 0;
+	gdxsv.maxrebattle = 1;
 
-	if (getenv("MAXREBATTLE"))
-	{
-		maxrebattle_ = atoi(getenv("MAXREBATTLE"));
+	if (getenv("MAXREBATTLE")) {
+		gdxsv.maxrebattle = atoi(getenv("MAXREBATTLE"));
 	}
 
 	NOTICE_LOG(COMMON, "RollbackNet StartLocalTest %d", me);
@@ -318,25 +317,28 @@ void GdxsvBackendRollback::Prepare(const proto::P2PMatching& matching, int port)
 	report_.set_frame_count(0);
 	report_.set_peer_id(matching.peer_id());
 	report_.set_player_count(matching.player_count());
+	start_at_ = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 void GdxsvBackendRollback::Open() {
 	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Open");
 	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
 	state_ = State::McsSessionExchange;
-	maxlag_ = 0;
+	gdxsv.maxlag = 0;
 	ApplyPatch(true);
 }
 
 void GdxsvBackendRollback::Close() {
 	if (state_ < State::McsWaitJoin) return;
+	if (state_ == State::Closed) return;
 
-	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
 	RestorePatch();
 	KillTex = true;
+	SaveReplay();
+	state_ = State::Closed;
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -365,6 +367,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
+		const int Krnd0 = disk == 1 ? 0x0c310800 : 0x0c3abf40;
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -379,7 +382,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		}
 
 		auto inputState = mapleInputState;
-		auto memExInputAddr = symbols_.at("print_buf");	 // TODO
+		auto memExInputAddr = gdxsv.symbols.at("print_buf");  // TODO
 
 		int msg_len = gdxsv_ReadMem8(InetBuf);
 		if (0 < msg_len) {
@@ -432,13 +435,20 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 			}
 
 			if (msg.Type() == McsMessage::KeyMsg1) {
+				u64 inputs = 0;
 				for (int i = 0; i < matching_.player_count(); ++i) {
 					auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
 					auto input = convertInput(inputState[i]);
 					a.body[2] = input >> 8 & 0xff;
 					a.body[3] = input & 0xff;
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+					inputs |= u64(input) << (i * 16);
 				}
+
+				while (!input_logs_.empty() && frame <= input_logs_.back().first) {
+					input_logs_.pop_back();
+				}
+				input_logs_.emplace_back(frame, inputs);
 			}
 
 			if (msg.Type() == McsMessage::LoadEndMsg) {
@@ -515,6 +525,7 @@ u32 GdxsvBackendRollback::OnSockPoll() {
 	if (state_ <= State::LbsStartBattleFlow) {
 		ProcessLbsMessage();
 	}
+
 	if (0 < recv_delay_) {
 		recv_delay_--;
 		return 0;
@@ -597,6 +608,70 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 void GdxsvBackendRollback::SetCloseReason(const char* reason) {
 	if (!report_.close_reason().empty()) {
 		report_.set_close_reason(reason);
+	}
+}
+
+void GdxsvBackendRollback::SaveReplay() {
+	if (matching_.battle_code().empty() || input_logs_.empty()) {
+		return;
+	}
+
+	proto::BattleLogFile log;
+	log.set_game_disk(gdxsv.Disk() == 1 ? "dc1" : "dc2");
+	log.set_battle_code(matching_.battle_code());
+	log.set_log_file_version(20230426);
+	for (int i = 0; i < gdxsv.patch_list.patches_size(); ++i) {
+		log.add_patches()->CopyFrom(gdxsv.patch_list.patches(i));
+	}
+	log.set_rule_bin(matching_.rule_bin());
+	log.mutable_users()->CopyFrom(matching_.users());
+
+	for (const auto& kv : input_logs_) {
+		log.add_inputs(kv.second);
+	}
+
+	const auto now = std::chrono::system_clock::now();
+	log.set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
+
+	auto replay_dir = get_writable_data_path("replays");
+	if (!file_exists(replay_dir)) {
+		if (!make_directory(replay_dir)) {
+			ERROR_LOG(COMMON, "Failed to create replay directory");
+			return;
+		}
+	}
+
+#if _WIN32
+	auto replay_file = replay_dir + "\\" + matching_.battle_code() + ".pb";
+#else
+	auto replay_file = replay_dir + "/" + matching_.battle_code() + ".pb";
+#endif
+
+	FILE* f = nowide::fopen(replay_file.c_str(), "wb");
+	if (f == nullptr) {
+		ERROR_LOG(COMMON, "SaveReplay: fopen failure");
+		return;
+	}
+
+	int fd = fileno(f);
+	if (fd == -1) {
+		ERROR_LOG(COMMON, "SaveReplay: fileno failure");
+		return;
+	}
+
+	if (!log.SerializeToFileDescriptor(fd)) {
+		ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
+		return;
+	}
+	fclose(f);
+
+	std::vector<http::PostField> fields;
+	fields.emplace_back("file", replay_file, "application/octet-stream");
+	int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/uploader", fields);
+	if (rc == 200 || rc == 409) {
+		NOTICE_LOG(COMMON, "SaveReplay: upload OK");
+	} else {
+		ERROR_LOG(COMMON, "SaveReplay: upload Failed staus: %d", rc);
 	}
 }
 

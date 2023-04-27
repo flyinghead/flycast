@@ -13,6 +13,11 @@
 
 class Gdxsv {
    public:
+	friend GdxsvBackendReplay;
+	friend GdxsvBackendRollback;
+	friend GdxsvBackendTcp;
+	friend GdxsvBackendUdp;
+
 	enum class NetMode {
 		Offline,
 		Lbs,
@@ -20,14 +25,6 @@ class Gdxsv {
 		McsRollback,
 		Replay,
 	};
-
-	Gdxsv()
-		: upnp_port(0),
-		  udp_port(0),
-		  lbs_net(symbols),
-		  udp_net(symbols, maxlag),
-		  replay_net(symbols, maxlag),
-		  rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;
 
@@ -58,14 +55,20 @@ class Gdxsv {
 	std::string UserId() const { return user_id; }
 
 	const char* NetModeString() const {
-        switch (netmode) {
-        case NetMode::Offline: return "Offline";
-        case NetMode::Lbs: return "Lbs";
-        case NetMode::McsUdp: return "McsUdp";
-        case NetMode::McsRollback: return "McsRollback";
-        case NetMode::Replay: return "Replay";
-		default: return "Unknown";
-        }
+		switch (netmode) {
+			case NetMode::Offline:
+				return "Offline";
+			case NetMode::Lbs:
+				return "Lbs";
+			case NetMode::McsUdp:
+				return "McsUdp";
+			case NetMode::McsRollback:
+				return "McsRollback";
+			case NetMode::Replay:
+				return "Replay";
+			default:
+				return "Unknown";
+		}
 	}
 
 	MiniUPnP& UPnP() { return upnp; }
@@ -101,8 +104,8 @@ class Gdxsv {
 
 	MiniUPnP upnp;
 	std::future<std::string> upnp_result;
-	int upnp_port;
-	int udp_port;
+	int upnp_port = 0;
+	int udp_port = 0;
 	std::string user_id;
 
 	UdpRemote lbs_remote = {};

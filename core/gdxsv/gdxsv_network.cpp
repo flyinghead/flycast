@@ -1,7 +1,7 @@
 #include "gdxsv_network.h"
 
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <thread>
 
 #ifndef _WIN32

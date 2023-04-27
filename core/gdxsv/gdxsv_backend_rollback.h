@@ -1,16 +1,11 @@
 #pragma once
 #include <future>
-#include <map>
-#include <string>
 
 #include "gdxsv_network.h"
 #include "lbs_message.h"
 
 class GdxsvBackendRollback {
    public:
-	GdxsvBackendRollback(const std::map<std::string, u32> &symbols, std::atomic<int> &maxlag, std::atomic<int> &maxrebattle)
-		: state_(State::None), symbols_(symbols), maxlag_(maxlag), maxrebattle_(maxrebattle), recv_delay_(0), port_(0) {}
-
 	enum class State {
 		None,
 		StartLocalTest,
@@ -25,6 +20,7 @@ class GdxsvBackendRollback {
 		McsInBattle,
 		CloseWait,
 		End,
+		Closed,
 	};
 
 	void DisplayOSD();
@@ -38,6 +34,7 @@ class GdxsvBackendRollback {
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockPoll();
 	void SetCloseReason(const char *reason);
+	void SaveReplay();
 	proto::P2PMatchingReport &GetReport() { return report_; }
 	void ClearReport() { report_.Clear(); }
 
@@ -46,17 +43,17 @@ class GdxsvBackendRollback {
 	void RestorePatch();
 	void ProcessLbsMessage();
 
-	State state_;
-	bool is_local_test_;
-	const std::map<std::string, u32> &symbols_;
-	std::atomic<int> &maxlag_;
-	std::atomic<int> &maxrebattle_;
-	int recv_delay_;
-	int port_;
+	State state_ = State::None;
+	bool is_local_test_ = false;
+	int recv_delay_ = 0;
+	int port_ = 0;
 	std::deque<u8> recv_buf_;
 	LbsMessageReader lbs_tx_reader_;
 	proto::P2PMatching matching_;
 	proto::P2PMatchingReport report_;
 	UdpPingPong ping_pong_;
 	std::future<bool> start_network_;
+
+	uint64_t start_at_ = 0;
+	std::vector<std::pair<int, u64>> input_logs_;
 };

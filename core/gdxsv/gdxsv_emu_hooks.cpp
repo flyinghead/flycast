@@ -1,24 +1,23 @@
 #include "gdxsv_emu_hooks.h"
 
+#include <fstream>
 #include <regex>
 
+#include "cfg/cfg.h"
 #include "gdxsv.h"
 #include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
+#include "json.hpp"
+#include "log/LogManager.h"
+#include "nowide/fstream.hpp"
 #include "oslib/oslib.h"
 #include "rend/gui_util.h"
+#include "stdclass.h"
 #include "version.h"
-#include <fstream>
-
 #include "xxhash.h"
-#include "log/LogManager.h"
-#include "cfg/cfg.h"
-#include "nowide/fstream.hpp"
-#include "json.hpp"
 
 using namespace nlohmann;
-
 
 #ifdef _WIN32
 #define CHAR_PATH_SEPARATOR '\\'
@@ -31,9 +30,7 @@ static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 static std::string gdxsv_latest_version_download_url;
 
-void gdxsv_flycast_init() {
-	config::GGPOEnable = false;
-}
+void gdxsv_flycast_init() { config::GGPOEnable = false; }
 
 void gdxsv_emu_start() {
 	gdxsv.Reset();
@@ -103,7 +100,7 @@ void gdxsv_update_popup() {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
 		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
-			-55.f * settings.display.uiScale);
+							 -55.f * settings.display.uiScale);
 		if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
 			gdxsv_update_available = false;
 			if (!gdxsv_latest_version_download_url.empty()) {
@@ -115,7 +112,7 @@ void gdxsv_update_popup() {
 		}
 		ImGui::SameLine();
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
-			-55.f * settings.display.uiScale);
+							 -55.f * settings.display.uiScale);
 		if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
 			gdxsv_update_available = false;
 			ImGui::CloseCurrentPopup();
@@ -126,7 +123,7 @@ void gdxsv_update_popup() {
 	}
 }
 
-inline static void gui_header(const char *title) {
+inline static void gui_header(const char* title) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));	// Left
 	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleVar();
@@ -243,8 +240,7 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker("Limit frame rate by CPU Sleep and Busy-Wait. Minimize input glitch (Experimental)");
 	if (fixedFrequency) {
-		if (!config::FixedFrequency)
-			config::FixedFrequency = 3;
+		if (!config::FixedFrequency) config::FixedFrequency = 3;
 
 		ImGui::Columns(3, "fixed_frequency", false);
 		OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
@@ -257,8 +253,7 @@ void gdxsv_emu_settings() {
 		ImGui::NextColumn();
 		OptionRadioButton("30 Hz", config::FixedFrequency, 5, "Half NTSC/VGA frequency");
 		ImGui::Columns(1, nullptr, false);
-	}
-	else {
+	} else {
 		config::FixedFrequency = 0;
 	}
 
@@ -303,7 +298,7 @@ void gdxsv_emu_settings() {
 	gui_header("Flycast Settings");
 }
 
-void gdxsv_handle_release_json(const std::string &json_string) {
+void gdxsv_handle_release_json(const std::string& json_string) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -312,15 +307,15 @@ void gdxsv_handle_release_json(const std::string &json_string) {
 	std::string latest_download_url;
 	std::string expected_name;
 
-	#if HOST_CPU == CPU_X64
-	#if defined(_WIN32)
+#if HOST_CPU == CPU_X64
+#if defined(_WIN32)
 	expected_name = "flycast-gdxsv-windows-msvc.zip";
-	#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
+#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 	expected_name = "flycast-gdxsv-macos-x86_64.zip";
-	#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
 	expected_name = "flycast-gdxsv-linux-x86_64.zip";
-	#endif
-	#endif
+#endif
+#endif
 
 	try {
 		json v = json::parse(json_string);
@@ -337,7 +332,7 @@ void gdxsv_handle_release_json(const std::string &json_string) {
 
 	if (latest_tag_name.empty()) return;
 
-	auto trim_prefix = [&version_prefix](const std::string &s) {
+	auto trim_prefix = [&version_prefix](const std::string& s) {
 		if (s.size() < version_prefix.size()) return s;
 		if (version_prefix == s.substr(0, version_prefix.size())) return s.substr(version_prefix.size());
 		return s;
@@ -380,8 +375,8 @@ void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
 
 void gdxsv_crash_append_log(FILE* f) {
 	if (gdxsv.Enabled()) {
-        fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
-        fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
+		fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
+		fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
 		fprintf(f, "[gdxsv]netmode: %s\n", gdxsv.NetModeString());
 	}
 }
@@ -397,23 +392,23 @@ static bool trim_prefix(const std::string& s, const std::string& prefix, std::st
 }
 
 void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields) {
-    if (file_exists(logfile)) {
-        nowide::ifstream ifs(logfile);
-        if (ifs.is_open()) {
+	if (file_exists(logfile)) {
+		nowide::ifstream ifs(logfile);
+		if (ifs.is_open()) {
 			std::string line;
-            std::string f_disk, f_user_id, f_netmode;
+			std::string f_disk, f_user_id, f_netmode;
 
-            while (std::getline(ifs, line)) {
+			while (std::getline(ifs, line)) {
 				trim_prefix(line, "[gdxsv]disk: ", f_disk);
 				trim_prefix(line, "[gdxsv]user_id: ", f_user_id);
 				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
-            }
+			}
 
-            if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
-            if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
-            if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
-        }
-    }
+			if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
+			if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
+			if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
+		}
+	}
 
 	const std::string machine_id = os_GetMachineID();
 	if (machine_id.length()) {

@@ -11,51 +11,33 @@
 
 class TcpClient {
    public:
-	~TcpClient() { Close(); }
-
 	bool Connect(const char *host, int port);
-
 	void SetNonBlocking();
-
 	int IsConnected() const;
-
 	int Recv(char *buf, int len);
-
 	int Send(const char *buf, int len);
-
 	void Close();
-
 	u32 ReadableSize() const;
-
 	const std::string &host() const { return host_; }
-
 	const std::string &local_ip() const { return local_ip_; }
-
 	int port() const { return port_; }
 
    private:
 	sock_t sock_ = INVALID_SOCKET;
 	std::string host_;
 	std::string local_ip_;
-	int port_;
+	int port_ = 0;
 };
 
 class MessageBuffer {
    public:
 	static const int kBufSize = 50;
-
 	MessageBuffer();
-
 	void SessionId(const std::string &session_id);
-
 	bool CanPush() const;
-
 	bool PushBattleMessage(const std::string &user_id, u8 *body, u32 body_length);
-
 	const proto::Packet &Packet();
-
 	void ApplySeqAck(u32 seq, u32 ack);
-
 	void Clear();
 
    private:
@@ -67,7 +49,6 @@ class MessageBuffer {
 class MessageFilter {
    public:
 	bool IsNextMessage(const proto::BattleMessage &msg);
-
 	void Clear();
 
    private:
@@ -94,45 +75,30 @@ class UdpRemote {
 class UdpClient {
    public:
 	bool Bind(int port);
-
 	bool Initialized() const;
-
 	int RecvFrom(char *buf, int len, std::string &sender);
-
 	int SendTo(const char *buf, int len, const UdpRemote &remote);
-
 	u32 ReadableSize() const;
-
 	void Close();
-
 	int bind_port() const { return bind_port_; }
 
    private:
 	sock_t sock_ = INVALID_SOCKET;
-	int bind_port_;
+	int bind_port_ = 0;
 	std::string bind_ip_;
 };
 
 class UdpPingPong {
    public:
 	static const int N = 4;
-
 	void Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms);
-
 	void Stop();
-
 	void Reset();
-
 	bool Running() const;
-
 	int ElapsedMs() const;
-
 	void AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port);
-
 	bool GetAvailableAddress(uint8_t peer_id, sockaddr_in *dst, float *rtt);
-
 	void GetRttMatrix(uint8_t matrix[N][N]);
-
 	void DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id);
 
    private:
