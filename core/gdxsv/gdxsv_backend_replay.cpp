@@ -56,6 +56,7 @@ void GdxsvBackendReplay::Close() {
 	if (state_ != State::End) {
 		PrintDisconnectionSummary();
 	}
+
 	RestorePatch();
 	state_ = State::End;
 }
@@ -120,6 +121,7 @@ bool GdxsvBackendReplay::Start() {
 	}
 
 	if (log_file_.inputs_size() == 0 && log_file_.battle_data_size() != 0) {
+		NOTICE_LOG(COMMON, "Converting inputs..");
 		McsMessageReader r;
 		McsMessage msg;
 		std::vector<std::vector<std::vector<u16>>> player_chunked_inputs(log_file_.users_size());

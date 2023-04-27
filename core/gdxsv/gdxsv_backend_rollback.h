@@ -25,6 +25,7 @@ class GdxsvBackendRollback {
 		McsInBattle,
 		CloseWait,
 		End,
+		Closed,
 	};
 
 	void DisplayOSD();
@@ -62,5 +63,5 @@ class GdxsvBackendRollback {
 	std::future<bool> start_network_;
 
 	uint64_t start_at_;
-	std::unordered_map<int, u64> input_logs_;
+	std::vector<std::pair<int, u64>> input_logs_;
 };

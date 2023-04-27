@@ -20,7 +20,7 @@
 #include "rend/transform_matrix.h"
 
 namespace {
-u8 DummyGameParam[640] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83,
+u8 DummyGameParam[] = {0x00, 0x00, 0x01, 0x00, 0x03, 0x00, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83,
 						  0x76, 0x83, 0x8c, 0x83, 0x43, 0x83, 0x84, 0x81, 0x5b, 0x82, 0x50, 0x00, 0x00, 0x00, 0x00, 0x07};
 u8 DummyRuleData[] = {0x03, 0x02, 0x03, 0x00, 0x00, 0x01, 0x58, 0x02, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
 					  0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00, 0x00, 0xff, 0x01, 0xff, 0xff, 0xff, 0x3f, 0xff, 0xff, 0xff, 0x3f, 0x00};
@@ -242,6 +242,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	}
 
 	if (is_local_test_ && state_ == State::End) {
+		SaveReplay();
 		dc_exit();
 	}
 }
@@ -330,15 +331,15 @@ void GdxsvBackendRollback::Open() {
 
 void GdxsvBackendRollback::Close() {
 	if (state_ < State::McsWaitJoin) return;
+	if (state_ == State::Closed) return;
 
-	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
 	RestorePatch();
 	KillTex = true;
-
 	SaveReplay();
+	state_ = State::Closed;
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -435,15 +436,20 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 			}
 
 			if (msg.Type() == McsMessage::KeyMsg1) {
+				u64 inputs = 0;
 				for (int i = 0; i < matching_.player_count(); ++i) {
 					auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
 					auto input = convertInput(inputState[i]);
 					a.body[2] = input >> 8 & 0xff;
 					a.body[3] = input & 0xff;
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-
-					input_logs_[frame] |= u64(input) << (i * 16);
+					inputs |= u64(input) << (i * 16);
 				}
+
+				while (!input_logs_.empty() && frame <= input_logs_.back().first) {
+					input_logs_.pop_back();
+				}
+				input_logs_.emplace_back(frame, inputs);
 			}
 
 			if (msg.Type() == McsMessage::LoadEndMsg) {
@@ -621,12 +627,8 @@ void GdxsvBackendRollback::SaveReplay() {
 	log.set_rule_bin(matching_.rule_bin());
 	log.mutable_users()->CopyFrom(matching_.users());
 
-	std::set<int> frame_set;
-	for (auto& kv : input_logs_) {
-		frame_set.insert(kv.first);
-	}
-	for (int frame : frame_set) {
-		log.add_inputs(input_logs_[frame]);
+	for (const auto& kv : input_logs_) {
+		log.add_inputs(kv.second);
 	}
 
 	const auto now = std::chrono::system_clock::now();
