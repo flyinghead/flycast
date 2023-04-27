@@ -32,19 +32,19 @@ const u16 ExInputWaitLoadEnd = 2;
 // maple input to mcs pad input
 u16 convertInput(MapleInputState input) {
 	u16 r = 0;
-	if (~input.kcode & 0x0004) r |= 0x4000;		 // A
-	if (~input.kcode & 0x0002) r |= 0x2000;		 // B
-	if (~input.kcode & 0x0001) r |= 0x8000;		 // C
-	if (~input.kcode & 0x0400) r |= 0x0002;		 // X
-	if (~input.kcode & 0x0200) r |= 0x0001;		 // Y
-	if (~input.kcode & 0x0100) r |= 0x1000;		 // Z
-	if (~input.kcode & 0x0010) r |= 0x0020;		 // up
-	if (~input.kcode & 0x0020) r |= 0x0010;		 // down
-	if (~input.kcode & 0x0080) r |= 0x0004;		 // right
-	if (~input.kcode & 0x0040) r |= 0x0008;		 // left
-	if (~input.kcode & 0x0008) r |= 0x0080;		 // Start
-	if (~input.kcode & 0x00020000) r |= 0x8000;	 // LT
-	if (~input.kcode & 0x00040000) r |= 0x1000;	 // RT
+	if (~input.kcode & 0x0004) r |= 0x4000;					 // A
+	if (~input.kcode & 0x0002) r |= 0x2000;					 // B
+	if (~input.kcode & 0x0001) r |= 0x8000;					 // C
+	if (~input.kcode & 0x0400) r |= 0x0002;					 // X
+	if (~input.kcode & 0x0200) r |= 0x0001;					 // Y
+	if (~input.kcode & 0x0100) r |= 0x1000;					 // Z
+	if (~input.kcode & 0x0010) r |= 0x0020;					 // up
+	if (~input.kcode & 0x0020) r |= 0x0010;					 // down
+	if (~input.kcode & 0x0080) r |= 0x0004;					 // right
+	if (~input.kcode & 0x0040) r |= 0x0008;					 // left
+	if (~input.kcode & 0x0008) r |= 0x0080;					 // Start
+	if (~input.kcode & 0x00020000) r |= 0x8000;				 // LT
+	if (~input.kcode & 0x00040000) r |= 0x1000;				 // RT
 	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
 	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
 	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
@@ -289,8 +289,7 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	maxlag_ = 0;
 	maxrebattle_ = 1;
 
-	if (getenv("MAXREBATTLE"))
-	{
+	if (getenv("MAXREBATTLE")) {
 		maxrebattle_ = atoi(getenv("MAXREBATTLE"));
 	}
 
@@ -368,7 +367,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
-        const int Krnd0 = disk == 1 ? 0x0c310800 : 0x0c3abf40;
+		const int Krnd0 = disk == 1 ? 0x0c310800 : 0x0c3abf40;
 
 		// Notify disconnect in game part if other player is disconnect on ggpo
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
@@ -443,7 +442,7 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 					a.body[3] = input & 0xff;
 					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 
-                    input_logs_[frame] |= u64(input) << (i * 16);
+					input_logs_[frame] |= u64(input) << (i * 16);
 				}
 			}
 
@@ -617,13 +616,13 @@ void GdxsvBackendRollback::SaveReplay() {
 	log.set_battle_code(matching_.battle_code());
 	log.set_log_file_version(20230426);
 	for (int i = 0; i < gdxsv.patch_list.patches_size(); ++i) {
-        log.add_patches()->CopyFrom(gdxsv.patch_list.patches(i));
+		log.add_patches()->CopyFrom(gdxsv.patch_list.patches(i));
 	}
 	log.set_rule_bin(matching_.rule_bin());
 	log.mutable_users()->CopyFrom(matching_.users());
 
 	std::set<int> frame_set;
-	for (auto& kv: input_logs_) {
+	for (auto& kv : input_logs_) {
 		frame_set.insert(kv.first);
 	}
 	for (int frame : frame_set) {
@@ -649,24 +648,24 @@ void GdxsvBackendRollback::SaveReplay() {
 
 	FILE* f = nowide::fopen(replay_file.c_str(), "wb");
 	if (f == nullptr) {
-        ERROR_LOG(COMMON, "SaveReplay: fopen failure");
-        return;
+		ERROR_LOG(COMMON, "SaveReplay: fopen failure");
+		return;
 	}
 
 	int fd = fileno(f);
 	if (fd == -1) {
-        ERROR_LOG(COMMON, "SaveReplay: fileno failure");
-        return;
+		ERROR_LOG(COMMON, "SaveReplay: fileno failure");
+		return;
 	}
 
 	if (!log.SerializeToFileDescriptor(fd)) {
-        ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
-        return;
+		ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
+		return;
 	}
 	fclose(f);
 
-    std::vector<http::PostField> fields;
-    fields.emplace_back("file", replay_file, "application/octet-stream");
+	std::vector<http::PostField> fields;
+	fields.emplace_back("file", replay_file, "application/octet-stream");
 	int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/uploader", fields);
 	if (rc == 200 || rc == 409) {
 		NOTICE_LOG(COMMON, "SaveReplay: upload OK");

@@ -24,12 +24,7 @@ class Gdxsv {
 		Replay,
 	};
 
-	Gdxsv()
-		: upnp_port(0),
-		  udp_port(0),
-		  lbs_net(symbols),
-		  udp_net(symbols, maxlag),
-		  rollback_net(symbols, maxlag, maxrebattle) {}
+	Gdxsv() : upnp_port(0), udp_port(0), lbs_net(symbols), udp_net(symbols, maxlag), rollback_net(symbols, maxlag, maxrebattle) {}
 
 	bool Enabled() const;
 
@@ -60,14 +55,20 @@ class Gdxsv {
 	std::string UserId() const { return user_id; }
 
 	const char* NetModeString() const {
-        switch (netmode) {
-        case NetMode::Offline: return "Offline";
-        case NetMode::Lbs: return "Lbs";
-        case NetMode::McsUdp: return "McsUdp";
-        case NetMode::McsRollback: return "McsRollback";
-        case NetMode::Replay: return "Replay";
-		default: return "Unknown";
-        }
+		switch (netmode) {
+			case NetMode::Offline:
+				return "Offline";
+			case NetMode::Lbs:
+				return "Lbs";
+			case NetMode::McsUdp:
+				return "McsUdp";
+			case NetMode::McsRollback:
+				return "McsRollback";
+			case NetMode::Replay:
+				return "Replay";
+			default:
+				return "Unknown";
+		}
 	}
 
 	MiniUPnP& UPnP() { return upnp; }

@@ -17,8 +17,8 @@
 #include "network/ggpo.h"
 #include "oslib/oslib.h"
 #include "reios/reios.h"
-#include "version.h"
 #include "rend/boxart/http_client.h"
+#include "version.h"
 
 bool Gdxsv::InGame() const { return enabled && (netmode == NetMode::McsUdp || netmode == NetMode::McsRollback); }
 
@@ -519,8 +519,7 @@ void Gdxsv::GcpPingTest() {
 		auto t2 = std::chrono::high_resolution_clock::now();
 		int rtt = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 		const std::string response_header(buf, n);
-		if (response_header.find("200 OK") == std::string::npos &&
-			response_header.find("302 Found") == std::string::npos) {
+		if (response_header.find("200 OK") == std::string::npos && response_header.find("302 Found") == std::string::npos) {
 			ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
 		} else {
 			gcp_ping_test_result[region_host.first] = rtt;
@@ -604,7 +603,7 @@ void Gdxsv::WritePatch() {
 		if (symbols["lang_patch_id"] == 0 || gdxsv_ReadMem32(symbols["lang_patch_id"]) != symbols[":lang_patch_id"] ||
 			symbols[":lang_patch_lang"] != (u8)GdxsvLanguage::Language()) {
 			NOTICE_LOG(COMMON, "lang_patch id=%d prev=%d lang=%d", gdxsv_ReadMem32(symbols["lang_patch_id"]), symbols[":lang_patch_id"],
-				GdxsvLanguage::Language());
+					   GdxsvLanguage::Language());
 #include "gdxsv_translation_patch.inc"
 		}
 	}
@@ -672,7 +671,7 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Dirty widescreen cheat
 	if (config::WidescreenGameHacks.get()) {
-		u32 ratio = 0x3faaaaab;  // default 4/3
+		u32 ratio = 0x3faaaaab;	 // default 4/3
 		int stretching = 100;
 		if (gdxsv_ReadMem8(0x0c336254) == 2 && (gdxsv_ReadMem8(0x0c336255) == 5 || gdxsv_ReadMem8(0x0c336255) == 7)) {
 			ratio = 0x40155555;
@@ -755,7 +754,7 @@ void Gdxsv::WritePatchDisk2() {
 
 	// Dirty widescreen cheat
 	if (config::WidescreenGameHacks.get()) {
-		u32 ratio = 0x3faaaaab;  // default 4/3
+		u32 ratio = 0x3faaaaab;	 // default 4/3
 		int stretching = 100;
 		if (gdxsv_ReadMem8(0x0c3d16d4) == 2 && (gdxsv_ReadMem8(0x0c3d16d5) == 5 || gdxsv_ReadMem8(0x0c3d16d5) == 7)) {
 			ratio = 0x40155555;

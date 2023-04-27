@@ -1,7 +1,7 @@
 #include "gdxsv_backend_replay.h"
 
-#include "gdxsv.h"
 #include "gdx_rpc.h"
+#include "gdxsv.h"
 #include "libs.h"
 
 void GdxsvBackendReplay::Reset() {
@@ -120,46 +120,46 @@ bool GdxsvBackendReplay::Start() {
 	}
 
 	if (log_file_.inputs_size() == 0 && log_file_.battle_data_size() != 0) {
-        McsMessageReader r;
-        McsMessage msg;
+		McsMessageReader r;
+		McsMessage msg;
 		std::vector<std::vector<std::vector<u16>>> player_chunked_inputs(log_file_.users_size());
 		std::vector<int> start_msg_count(log_file_.users_size());
 
-		for (const auto& data : log_file_.battle_data()) {
-            r.Write(data.body().data(), data.body().size());
+		for (const auto &data : log_file_.battle_data()) {
+			r.Write(data.body().data(), data.body().size());
 
-            while (r.Read(msg)) {
+			while (r.Read(msg)) {
 				const int p = msg.Sender();
-                if (msg.Type() == McsMessage::StartMsg) {
-                    start_msg_count[p]++;
+				if (msg.Type() == McsMessage::StartMsg) {
+					start_msg_count[p]++;
 					player_chunked_inputs[p].emplace_back();
-                }
-                if (msg.Type() == McsMessage::KeyMsg1) {
+				}
+				if (msg.Type() == McsMessage::KeyMsg1) {
 					player_chunked_inputs[p].back().emplace_back(msg.FirstInput());
-                }
-                if (msg.Type() == McsMessage::KeyMsg2) {
+				}
+				if (msg.Type() == McsMessage::KeyMsg2) {
 					player_chunked_inputs[p].back().emplace_back(msg.FirstInput());
 					player_chunked_inputs[p].back().emplace_back(msg.SecondInput());
-                }
-            }
-        }
-
-        for (int chunk = 0; chunk < player_chunked_inputs[0].size(); chunk++) {
-			int min_t = player_chunked_inputs[0][chunk].size();
-			for (int p = 0; p < log_file_.users_size(); p++) {
-                min_t = std::min<int>(min_t, player_chunked_inputs[p][chunk].size());
-			}
-
-			for (int t = 0; t < min_t; t++) {
-                uint64_t input = 0;
-                for (int p = 0; p < log_file_.users_size(); p++) {
-                    input |= static_cast<uint64_t>(player_chunked_inputs[p][chunk][t]) << (p * 16);
-                }
-                log_file_.add_inputs(input);
+				}
 			}
 		}
 
-        PrintDisconnectionSummary();
+		for (int chunk = 0; chunk < player_chunked_inputs[0].size(); chunk++) {
+			int min_t = player_chunked_inputs[0][chunk].size();
+			for (int p = 0; p < log_file_.users_size(); p++) {
+				min_t = std::min<int>(min_t, player_chunked_inputs[p][chunk].size());
+			}
+
+			for (int t = 0; t < min_t; t++) {
+				uint64_t input = 0;
+				for (int p = 0; p < log_file_.users_size(); p++) {
+					input |= static_cast<uint64_t>(player_chunked_inputs[p][chunk][t]) << (p * 16);
+				}
+				log_file_.add_inputs(input);
+			}
+		}
+
+		PrintDisconnectionSummary();
 	}
 
 	NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
@@ -352,22 +352,22 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
 			case McsMessage::MsgType::ForceMsg:
 				break;
 			case McsMessage::MsgType::KeyMsg1: {
-					if (log_file_.inputs_size()) {
-                        if (key_msg_count_ < log_file_.inputs_size()) {
-							const u64 inputs = log_file_.inputs(key_msg_count_);
+				if (log_file_.inputs_size()) {
+					if (key_msg_count_ < log_file_.inputs_size()) {
+						const u64 inputs = log_file_.inputs(key_msg_count_);
 
-                            for (int i = 0; i < log_file_.users_size(); ++i) {
-								const u16 input = u16(inputs >> (i * 16));
-								auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
-                                key_msg.body[2] = input >> 8 & 0xff;
-                                key_msg.body[3] = input & 0xff;
-                                NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
-                                std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                            }
+						for (int i = 0; i < log_file_.users_size(); ++i) {
+							const u16 input = u16(inputs >> (i * 16));
+							auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
+							key_msg.body[2] = input >> 8 & 0xff;
+							key_msg.body[3] = input & 0xff;
+							NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+							std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+						}
 
-                            key_msg_count_++;
-                        }
+						key_msg_count_++;
 					}
+				}
 				break;
 			}
 			case McsMessage::MsgType::KeyMsg2:
