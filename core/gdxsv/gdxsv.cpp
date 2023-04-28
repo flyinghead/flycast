@@ -346,7 +346,10 @@ void Gdxsv::HandleRPC() {
 				}
 
 				lbs_remote_.Open(host.c_str(), port);
-				if (udp_.Bind(udp_port_)) {
+				if (!udp_.Initialized()) {
+					udp_.Bind(udp_port_);
+				}
+				if (udp_.Initialized()) {
 					if (udp_port_ != udp_.bind_port()) {
 						config::GdxLocalPort = udp_port_ = udp_.bind_port();
 					}

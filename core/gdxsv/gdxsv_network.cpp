@@ -2,11 +2,62 @@
 
 #include <chrono>
 #include <cmath>
+#include <random>
 #include <thread>
+
+#include "rend/boxart/http_client.h"
 
 #ifndef _WIN32
 #include <sys/ioctl.h>
 #endif
+
+std::future<std::string> test_udp_port_connectivity(int port) {
+	return std::async(std::launch::async, [port]() -> std::string {
+		UdpClient udp;
+		if (!udp.Bind(port)) {
+			return "Bind failed";
+		}
+
+		std::vector<u8> myip;
+		std::string dummy;
+		http::init();
+		int rc = http::get("https://api4.my-ip.io/ip", myip, dummy);
+		if (!http::success(rc)) {
+			return "Failed to get external IP: " + std::to_string(rc);
+		}
+
+		std::vector<u8> content;
+		std::string content_type;
+		std::vector<http::PostField> fields;
+		fields.emplace_back("addr", std::string(myip.begin(), myip.end()) + ":" + std::to_string(port));
+		rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/udptest", fields);  // TODO: edit url
+		if (!http::success(rc)) {
+			return "HTTP Request failed: " + std::to_string(rc);
+		}
+
+		for (int t = 0; t < 30; t++) {
+			if (0 < udp.ReadableSize()) {
+				char buf[128];
+				std::string sender;
+				int n = udp.RecvFrom(buf, 128, sender);
+				if (0 < n) {
+					return "Success";
+				}
+				break;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		return "Failed (Timeout)";
+	});
+}
+
+int get_random_port_number() {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dist(29700, 29800);
+	return dist(gen);
+}
 
 bool TcpClient::Connect(const char *host, int port) {
 	NOTICE_LOG(COMMON, "TCP Connect: %s:%d", host, port);
@@ -234,6 +285,9 @@ bool UdpClient::Bind(int port) {
 	set_send_timeout(new_sock, 1);
 	set_non_blocking(new_sock);
 
+	if (sock_ != INVALID_SOCKET) {
+		closesocket(sock_);
+	}
 	sock_ = new_sock;
 	bind_ip_ = std::string(::inet_ntoa(recv_addr.sin_addr));
 	bind_port_ = ntohs(recv_addr.sin_port);

@@ -42,6 +42,7 @@ class Gdxsv {
 	int Disk() const { return disk_; }
 	std::string UserId() const { return user_id_; }
 	MiniUPnP& UPnP() { return upnp_; }
+	UdpClient& Udp() { return udp_; }
 
    private:
 	void GcpPingTest();

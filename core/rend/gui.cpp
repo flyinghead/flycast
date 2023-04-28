@@ -1308,10 +1308,16 @@ static void gui_display_settings()
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
-		if (ImGui::BeginTabItem("General"))
+		if (ImGui::BeginTabItem("Gdxsv"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			gdxsv_emu_settings();
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("General"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
 			OptionComboBox("Language", config::Language, languages, ARRAY_SIZE(languages),
 				"The language as configured in the Dreamcast BIOS");
