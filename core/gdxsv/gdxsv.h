@@ -32,6 +32,7 @@ class Gdxsv {
 	const char* NetModeString() const;
 	void Reset();
 	bool HookOpenMenu();
+	void HookVBlank();
 	void HookMainUiLoop();
 	void HandleRPC();
 	void RestoreOnlinePatch();

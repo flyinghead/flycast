@@ -12,6 +12,7 @@
 #include "gdx_rpc.h"
 #include "gdxsv_translation.h"
 #include "hw/sh4/sh4_mem.h"
+#include "imgui/imgui.h"
 #include "libs.h"
 #include "log/InMemoryListener.h"
 #include "log/LogManager.h"
@@ -22,15 +23,12 @@
 #include "rend/boxart/http_client.h"
 #include "rend/gui.h"
 #include "version.h"
-#include "imgui/imgui.h"
 
 bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback); }
 
 bool Gdxsv::Enabled() const { return enabled_; }
 
-void Gdxsv::DisplayOSD() {
-	rollback_net_.DisplayOSD();
-}
+void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
 
 const char *Gdxsv::NetModeString() const {
 	switch (netmode_) {
@@ -165,6 +163,13 @@ bool Gdxsv::HookOpenMenu() {
 	return true;
 }
 
+void Gdxsv::HookVBlank() {
+	if (!ggpo::active()) {
+		// Don't edit memory at vsync if ggpo::active
+		WritePatch();
+	}
+}
+
 void Gdxsv::HookMainUiLoop() {
 	if (!enabled_) return;
 
@@ -174,11 +179,6 @@ void Gdxsv::HookMainUiLoop() {
 
 	if (netmode_ == NetMode::McsRollback) {
 		gdxsv.rollback_net_.OnMainUiLoop();
-	}
-
-	if (!ggpo::active()) {
-		// Don't edit memory at vsync if ggpo::active
-		WritePatch();
 	}
 }
 

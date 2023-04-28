@@ -49,7 +49,17 @@ void gdxsv_emu_start() {
 
 void gdxsv_emu_reset() { gdxsv.Reset(); }
 
-void gdxsv_emu_update() {}
+void gdxsv_emu_vblank() {
+	if (gdxsv.Enabled()) {
+		gdxsv.HookVBlank();
+	}
+}
+
+void gdxsv_mainui_loop() {
+	if (gdxsv.Enabled()) {
+		gdxsv.HookMainUiLoop();
+	}
+}
 
 void gdxsv_emu_rpc() {
 	if (gdxsv.Enabled()) {
@@ -152,7 +162,7 @@ void gdxsv_emu_settings() {
 	if (ImGui::Button(" Apply Recommended Settings ", ImVec2(0, 40))) {
 		// Frame Limit
 		config::LimitFPS = false;
-		config::VSync = true;
+		config::VSync = false;
 		config::FixedFrequency = 2;
 		// Controls
 		config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
@@ -189,7 +199,7 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use gdxsv recommended settings:
     Frame Limit Method:
-      VSync + CPU Sleep (59.94Hz)
+      CPU Sleep (59.94Hz)
 
     Control:
       Device A: Sega Controller / Sega VMU
@@ -391,8 +401,6 @@ void gdxsv_latest_version_check() {
 		}).detach();
 	});
 }
-
-void gdxsv_mainui_loop() { gdxsv.HookMainUiLoop(); }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
 

@@ -87,7 +87,8 @@ void GdxsvBackendRollback::DisplayOSD() {
 		ImGui::SetNextWindowPos(ImVec2(10, 10));
 		ImGui::SetNextWindowSize(ImVec2(160 * settings.display.uiScale, 0));
 		ImGui::SetNextWindowBgAlpha(0.3f);
-		ImGui::Begin("##gdxsv_osd_network_stat", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+		ImGui::Begin("##gdxsv_osd_network_stat", NULL,
+					 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 		textCentered("Network Stat");
 
@@ -100,13 +101,15 @@ void GdxsvBackendRollback::DisplayOSD() {
 				std::string delay = std::to_string(config::GGPODelay.get());
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
 				ImGui::Text("%s", delay.c_str());
-				
+
 				ImGui::Text("Rollback");
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats.extra.total_rollbacked_frames).c_str()).x);
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x -
+								ImGui::CalcTextSize(std::to_string(stats.extra.total_rollbacked_frames).c_str()).x);
 				ImGui::Text("%d", stats.extra.total_rollbacked_frames);
 
 				ImGui::Text("Timesync");
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats.extra.total_timesync).c_str()).x);
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x -
+								ImGui::CalcTextSize(std::to_string(stats.extra.total_timesync).c_str()).x);
 				ImGui::Text("%d", stats.extra.total_timesync);
 
 				// Predicted Frames
@@ -257,7 +260,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			config::GGPODelay.override(delay);
 			config::NetworkStats.override(false);
 			config::FixedFrequency.override(2);
-			config::VSync.override(true);
+			config::VSync.override(false);
 			config::LimitFPS.override(false);
 			config::ThreadedRendering.override(false);
 

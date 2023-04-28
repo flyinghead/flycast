@@ -450,7 +450,7 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
-	gdxsv_emu_update();
+	gdxsv_emu_vblank();
 	emu.vblank();
 }
 

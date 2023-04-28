@@ -11,7 +11,9 @@ void gdxsv_emu_start();
 
 void gdxsv_emu_reset();
 
-void gdxsv_emu_update();
+void gdxsv_emu_vblank();
+
+void gdxsv_mainui_loop();
 
 void gdxsv_emu_rpc();
 
@@ -30,8 +32,6 @@ bool gdxsv_widescreen_hack_enabled();
 void gdxsv_update_popup();
 
 void gdxsv_emu_settings();
-
-void gdxsv_mainui_loop();
 
 void gdxsv_gui_display_osd();
 
