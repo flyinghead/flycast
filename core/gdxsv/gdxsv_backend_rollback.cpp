@@ -176,6 +176,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			config::FixedFrequency.override(2);
 			config::VSync.override(true);
 			config::LimitFPS.override(false);
+			config::ThreadedRendering.override(false);
 
 			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports, relays);
 			ggpo::receiveChatMessages(nullptr);
@@ -342,6 +343,7 @@ void GdxsvBackendRollback::Close() {
 	config::FixedFrequency.load();
 	config::VSync.load();
 	config::LimitFPS.load();
+	config::ThreadedRendering.load();
 	RestorePatch();
 	KillTex = true;
 	SaveReplay();
