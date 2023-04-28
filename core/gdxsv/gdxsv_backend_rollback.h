@@ -37,6 +37,7 @@ class GdxsvBackendRollback {
 	void SaveReplay();
 	proto::P2PMatchingReport &GetReport() { return report_; }
 	void ClearReport() { report_.Clear(); }
+	void ToggleNetworkStat() { osd_network_stat_ = !osd_network_stat_; }
 
    private:
 	void ApplyPatch(bool first_time);
@@ -45,6 +46,7 @@ class GdxsvBackendRollback {
 
 	State state_ = State::None;
 	bool is_local_test_ = false;
+	bool osd_network_stat_ = false;
 	int recv_delay_ = 0;
 	int port_ = 0;
 	std::deque<u8> recv_buf_;

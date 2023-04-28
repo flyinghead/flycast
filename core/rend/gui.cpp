@@ -455,14 +455,17 @@ void gui_open_settings()
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed)
 	{
-		if (!ggpo::active())
+		if (gdxsv_emu_menu_open())
 		{
-			gui_state = GuiState::Commands;
-			HideOSD();
-			emu.stop();
+			if (!ggpo::active())
+			{
+				gui_state = GuiState::Commands;
+				HideOSD();
+				emu.stop();
+			}
+			else
+				chat.toggle();
 		}
-		else
-			chat.toggle();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
@@ -1308,10 +1311,16 @@ static void gui_display_settings()
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
-		if (ImGui::BeginTabItem("General"))
+		if (ImGui::BeginTabItem("Gdxsv"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			gdxsv_emu_settings();
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("General"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
 			OptionComboBox("Language", config::Language, languages, ARRAY_SIZE(languages),
 				"The language as configured in the Dreamcast BIOS");

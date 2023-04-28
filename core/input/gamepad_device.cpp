@@ -82,7 +82,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				dc_exit();
 			break;
 		case EMU_BTN_MENU:
-			if (pressed && !gdxsv_emu_ingame())
+			if (pressed)
 				gui_open_settings();
 			break;
 		case EMU_BTN_FFORWARD:

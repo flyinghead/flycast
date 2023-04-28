@@ -151,8 +151,8 @@ struct MemPages
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
-static int lastLoadStateFrame = -1;
-
+static int totalRollbackFrames;
+static int totalTimeSync;
 static int timesyncOccurred;
 
 #pragma pack(push, 1)
@@ -242,6 +242,7 @@ static bool on_event(GGPOEvent *info)
 	case GGPO_EVENTCODE_TIMESYNC:
 		NOTICE_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
+		totalTimeSync++;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / (msPerFrameAvg >= 25 ? 30 : 60)));
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
@@ -280,6 +281,7 @@ static bool advance_frame(int)
 	inRollback = false;
 	_endOfFrame = false;
 
+	totalRollbackFrames++;
 	return true;
 }
 
@@ -299,7 +301,6 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
-	lastLoadStateFrame = frame;
 	memwatch::unprotect();
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
@@ -626,6 +627,8 @@ void stopSession()
 	ggpoSession = nullptr;
 	connected.clear();
 	miniupnp.Term();
+	totalRollbackFrames = 0;
+	totalTimeSync = 0;
 	emu.setNetworkState(false);
 	memwatch::unprotect();
 	memwatch::reset();
@@ -876,30 +879,12 @@ std::future<bool> startNetwork()
 	});
 }
 
-static ImColor msColor(int ms) {
-    if (ms <= 30) return ImColor(87, 213, 213);
-    if (ms <= 60) return ImColor(0, 255, 149);
-    if (ms <= 90) return ImColor(255, 255, 0);
-    if (ms <= 120) return ImColor(255, 170, 0);
-    if (ms <= 150) return ImColor(255, 0, 0);
-    return ImColor(128, 128, 128);
-}
-
 void displayStats()
 {
 	if (!active())
 		return;
 
 	GGPONetworkStats stats;
-	int rollbackedFrame = 0;
-
-	if (lastLoadStateFrame != -1) {
-		int frame;
-		getCurrentFrame(&frame);
-		rollbackedFrame = frame - lastLoadStateFrame - 1;
-		lastLoadStateFrame = -1;
-	}
-
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
@@ -917,10 +902,6 @@ void displayStats()
 			std::string delay = std::to_string(config::GGPODelay.get());
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
 			ImGui::Text("%s", delay.c_str());
-
-			ImGui::Text("Rollback");
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("0").x);
-			ImGui::Text("%d", rollbackedFrame);
 
 			// Predicted Frames
 			if (stats.sync.predicted_frames >= 7)
@@ -942,11 +923,9 @@ void displayStats()
 
 		// Ping
 		ImGui::Text("Ping");
-		ImGui::PushStyleColor(ImGuiCol_Text, msColor(stats.network.ping).Value);
 		std::string ping = std::to_string(stats.network.ping);
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
 		ImGui::Text("%s", ping.c_str());
-		ImGui::PopStyleColor();
 
 		ImGui::Text("Loss");
 		std::string loss = std::to_string(stats.network.recv_packet_loss);
@@ -1026,6 +1005,17 @@ void randomInput(bool enable, u64 seed, u32 inputMask) {
 	useRandInput = enable;
 	randInputMask = inputMask;
 	randSource.seed(seed);
+}
+
+void getNetworkStats(int playerNum, NetworkStats* stats)
+{
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	if (ggpoSession == nullptr) {
+		return;
+	}
+	stats->extra.total_rollbacked_frames = totalRollbackFrames;
+	stats->extra.total_timesync = totalTimeSync;
+	ggpo_get_network_stats(ggpoSession, playerHandles[playerNum], (GGPONetworkStats*)stats);
 }
 
 void gdxsvStartSession(const char* sessionCode, int me,
@@ -1236,6 +1226,9 @@ void disconnect(int playerNum) {
 }
 
 void randomInput(bool enable, u64 seed, u32 inputMask) {
+}
+
+void getNetworkStats(int playerNum, NetworkStats* stats) {
 }
 
 void gdxsvStartSession(const char* sessionCode, int me, const std::vector<std::string>& ips, const std::vector<u16>& ports, const std::vector<u8>& relays) {

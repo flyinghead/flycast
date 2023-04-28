@@ -53,6 +53,13 @@ u16 convertInput(MapleInputState input) {
 }
 
 void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id);
+ImColor msColor(int ms);
+void textCentered(std::string text) {
+	auto windowWidth = ImGui::GetWindowSize().x;
+	auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+	ImGui::Text(text.c_str());
+}
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {
@@ -70,6 +77,81 @@ void GdxsvBackendRollback::DisplayOSD() {
 			pos_to_id[pos] = p.first;
 		}
 		drawConnectionDiagram(elapsed, matrix, pos_to_id);
+	}
+
+	if (osd_network_stat_ && ggpo::active()) {
+		ggpo::NetworkStats stats{};
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+		ImGui::SetNextWindowPos(ImVec2(10, 10));
+		ImGui::SetNextWindowSize(ImVec2(160 * settings.display.uiScale, 0));
+		ImGui::SetNextWindowBgAlpha(0.3f);
+		ImGui::Begin("##gdxsv_osd_network_stat", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+		textCentered("Network Stat");
+
+		for (int i = 0; i < matching_.users_size(); i++) {
+			ggpo::getNetworkStats(i, &stats);
+
+			if (i == 0) {
+				// Frame Delay
+				ImGui::Text("Delay");
+				std::string delay = std::to_string(config::GGPODelay.get());
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+				ImGui::Text("%s", delay.c_str());
+				
+				ImGui::Text("Rollback");
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats.extra.total_rollbacked_frames).c_str()).x);
+				ImGui::Text("%d", stats.extra.total_rollbacked_frames);
+
+				ImGui::Text("Timesync");
+				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats.extra.total_timesync).c_str()).x);
+				ImGui::Text("%d", stats.extra.total_timesync);
+
+				// Predicted Frames
+				if (stats.sync.predicted_frames >= 7)
+					// red
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+				else if (stats.sync.predicted_frames >= 5)
+					// yellow
+					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+				ImGui::Text("Predicted");
+				ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+				if (stats.sync.predicted_frames >= 5) ImGui::PopStyleColor();
+			}
+
+			if (i == matching_.peer_id()) continue;
+
+			ImGui::Separator();
+			textCentered(std::to_string(i + 1) + "P: " + matching_.users(i).user_id());
+			textCentered(matching_.users(i).user_name());
+			textCentered(matching_.users(i).pilot_name().c_str());
+
+			// Ping
+			ImGui::Text("Ping");
+			ImGui::PushStyleColor(ImGuiCol_Text, msColor(stats.network.ping).Value);
+			std::string ping = std::to_string(stats.network.ping);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+			ImGui::Text("%s", ping.c_str());
+			ImGui::PopStyleColor();
+
+			ImGui::Text("Loss");
+			std::string loss = std::to_string(stats.network.recv_packet_loss);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(loss.c_str()).x);
+			ImGui::Text("%s", loss.c_str());
+
+			// Send Queue
+			ImGui::Text("Send Q");
+			ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+
+			ImGui::Text("Behind");
+			ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+		}
+
+		ImGui::PopStyleColor();
+		ImGui::End();
+		ImGui::PopStyleVar(2);
 	}
 }
 
@@ -173,6 +255,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
 			config::GGPOEnable.override(true);
 			config::GGPODelay.override(delay);
+			config::NetworkStats.override(false);
 			config::FixedFrequency.override(2);
 			config::VSync.override(true);
 			config::LimitFPS.override(false);
@@ -283,11 +366,20 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 		proto::PlayerAddress player{};
 		player.set_ip("127.0.0.1");
 		player.set_port(20010 + i);
-		player.set_user_id(std::to_string(i));
+		player.set_user_id("USER0" + std::to_string(i));
 		player.set_peer_id(i);
 		player.set_team(i / 2 + 1);
 		matching.mutable_candidates()->Add(std::move(player));
 	}
+	for (int i = 0; i < n; i++) {
+		proto::BattleLogUser user{};
+		user.set_user_id("USER0" + std::to_string(i));
+		user.set_user_name("USER0" + std::to_string(i));
+		user.set_pilot_name("PILOT0" + std::to_string(i));
+		user.set_team(i / 2 + 1);
+		matching.mutable_users()->Add(std::move(user));
+	}
+
 	Prepare(matching, 20010 + me);
 	state_ = State::StartLocalTest;
 	is_local_test_ = true;
@@ -340,6 +432,7 @@ void GdxsvBackendRollback::Close() {
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
+	config::NetworkStats.load();
 	config::FixedFrequency.load();
 	config::VSync.load();
 	config::LimitFPS.load();
@@ -746,7 +839,7 @@ ImColor fadeColor(ImColor color, int elapsed) {
 	return color;
 }
 
-ImColor barColor(int ms) {
+ImColor msColor(int ms) {
 	if (ms <= 0) return ImColor(64, 64, 64);
 	if (ms <= 30) return ImColor(87, 213, 213);
 	if (ms <= 60) return ImColor(0, 255, 149);
@@ -764,7 +857,7 @@ ImColor barStep(int ms) {
 	return 1;
 }
 
-ImColor barColor(int ms, int elapsed) { return fadeColor(barColor(ms), elapsed); }
+ImColor barColor(int ms, int elapsed) { return fadeColor(msColor(ms), elapsed); }
 
 void drawDot(ImDrawList* draw_list, ImVec2 center, ImColor c, float scale) {
 	draw_list->AddCircleFilled(center, 6.5 * scale, ImColor(0, 0, 0, 128), 20);

@@ -9,8 +9,13 @@
 #include "network/net_platform.h"
 #include "types.h"
 
+std::future<std::string> test_udp_port_connectivity(int port);
+
+int get_random_port_number();
+
 class TcpClient {
    public:
+	~TcpClient() { Close(); }
 	bool Connect(const char *host, int port);
 	void SetNonBlocking();
 	int IsConnected() const;
@@ -74,6 +79,7 @@ class UdpRemote {
 
 class UdpClient {
    public:
+	~UdpClient() { Close(); }
 	bool Bind(int port);
 	bool Initialized() const;
 	int RecvFrom(char *buf, int len, std::string &sender);

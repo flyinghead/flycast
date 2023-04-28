@@ -49,11 +49,7 @@ void gdxsv_emu_start() {
 
 void gdxsv_emu_reset() { gdxsv.Reset(); }
 
-void gdxsv_emu_update() {
-	if (gdxsv.Enabled()) {
-		gdxsv.Update();
-	}
-}
+void gdxsv_emu_update() {}
 
 void gdxsv_emu_rpc() {
 	if (gdxsv.Enabled()) {
@@ -84,6 +80,13 @@ void gdxsv_emu_loadstate(int slot) {
 bool gdxsv_emu_enabled() { return gdxsv.Enabled(); }
 
 bool gdxsv_emu_ingame() { return gdxsv.InGame(); }
+
+bool gdxsv_emu_menu_open() {
+	if (gdxsv.Enabled()) {
+		return gdxsv.HookOpenMenu();
+	}
+	return true;
+}
 
 bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
@@ -133,7 +136,6 @@ void gdxsv_emu_settings() {
 	gui_header("gdxsv Settings");
 
 	ImGui::Columns(5, "gdxlang", false);
-	ImGui::SetColumnWidth(0, 135.0f * settings.display.uiScale);
 	ImGui::Text("Language mod:");
 	ImGui::SameLine();
 	ShowHelpMarker("Patch game language and texture, for DX only");
@@ -147,7 +149,7 @@ void gdxsv_emu_settings() {
 	OptionRadioButton("Disabled", config::GdxLanguage, 3);
 	ImGui::Columns(1, nullptr, false);
 
-	if (ImGui::Button("Apply Recommended Settings", ImVec2(0, 40))) {
+	if (ImGui::Button(" Apply Recommended Settings ", ImVec2(0, 40))) {
 		// Frame Limit
 		config::LimitFPS = false;
 		config::VSync = true;
@@ -177,7 +179,9 @@ void gdxsv_emu_settings() {
 		config::ThreadedRendering = false;
 		// Network
 		config::EnableUPnP = true;
-		config::GdxLocalPort = 0;
+		if (config::GdxLocalPort == 0) {
+			config::GdxLocalPort = get_random_port_number();
+		}
 		config::GdxMinDelay = 2;
 
 		maple_ReconnectDevices();
@@ -210,7 +214,6 @@ void gdxsv_emu_settings() {
 
     Network:
       Enable UPnP
-      Gdx Local UDP Port: 0
       Gdx Minimum Delay: 2)");
 
 	bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
@@ -238,7 +241,7 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker("Limit frame rate by CPU Sleep and Busy-Wait. Minimize input glitch (Experimental)");
 	if (fixedFrequency) {
-		if (!config::FixedFrequency) config::FixedFrequency = 3;
+		if (!config::FixedFrequency) config::FixedFrequency = 2;
 
 		ImGui::Columns(3, "fixed_frequency", false);
 		OptionRadioButton("Auto", config::FixedFrequency, 1, "Automatically sets frequency by Cable & Broadcast type");
@@ -266,34 +269,56 @@ void gdxsv_emu_settings() {
 	sprintf(local_port, "%d", (int)config::GdxLocalPort);
 	ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
 	ImGui::SameLine();
-	ShowHelpMarker("The local UDP Port. Set to 0 to automatically configure next time");
+	ShowHelpMarker("UDP port number used for P2P communication. Cannot use the same number as another application.");
 	config::GdxLocalPort.set(atoi(local_port));
 
-	static char upnp_result[256];
 	if (config::GdxLocalPort == 0) {
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("UPnP Now")) {
-		auto upnp = gdxsv.UPnP();
-		if (upnp.Init() && upnp.AddPortMapping(config::GdxLocalPort, false))
-			strcpy(upnp_result, "Success");
-		else
-			strcpy(upnp_result, upnp.getLastError());
+
+	static std::string upnp_result;
+	static std::future<std::string> upnp_future;
+	if (upnp_future.valid() && upnp_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		upnp_result = upnp_future.get();
 	}
+	if (ImGui::Button("UPnP Now") && !upnp_future.valid()) {
+		upnp_result = "Please wait...";
+		int port = config::GdxLocalPort;
+		upnp_future = std::async(std::launch::async, [port]() -> std::string {
+			auto& upnp = gdxsv.UPnP();
+			std::string result = upnp.Init() && upnp.AddPortMapping(port, false) ? "Success" : upnp.getLastError();
+			return result;
+		});
+	}
+	ImGui::SameLine();
+	ShowHelpMarker("Open the port using UPnP");
+	ImGui::SameLine();
+	ImGui::Text(upnp_result.c_str());
+
+	static std::string udp_test_result;
+	static std::future<std::string> udp_test_future;
+	if (udp_test_future.valid() && udp_test_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		udp_test_result = udp_test_future.get();
+	}
+	if (ImGui::Button("Test the port") && !udp_test_future.valid()) {
+		udp_test_result = "Please wait...";
+		udp_test_future = test_udp_port_connectivity(config::GdxLocalPort);
+	}
+	ImGui::SameLine();
+	ShowHelpMarker("Test if this port number can be used");
+	ImGui::SameLine();
+	ImGui::Text(udp_test_result.c_str());
+
 	if (config::GdxLocalPort == 0) {
 		ImGui::PopItemFlag();
 		ImGui::PopStyleVar();
 	}
-	ImGui::SameLine();
-	ImGui::Text(upnp_result);
 
-	OptionSlider("Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
-				 "Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and "
-				 "introduces glitches.");
-
-	ImGui::NewLine();
-	gui_header("Flycast Settings");
+	OptionArrowButtons(
+		"Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
+		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and "
+		"introduces glitches.");
 }
 
 void gdxsv_handle_release_json(const std::string& json_string) {

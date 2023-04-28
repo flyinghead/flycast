@@ -22,12 +22,16 @@
 #include "rend/boxart/http_client.h"
 #include "rend/gui.h"
 #include "version.h"
+#include "imgui/imgui.h"
 
 bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback); }
 
 bool Gdxsv::Enabled() const { return enabled_; }
 
-void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
+void Gdxsv::DisplayOSD() {
+	rollback_net_.DisplayOSD();
+}
+
 const char *Gdxsv::NetModeString() const {
 	switch (netmode_) {
 		case NetMode::Offline:
@@ -148,24 +152,33 @@ void Gdxsv::Reset() {
 	});
 }
 
-void Gdxsv::Update() {
+bool Gdxsv::HookOpenMenu() {
+	if (!enabled_) return true;
+
+	if (InGame()) {
+		if (netmode_ == NetMode::McsRollback) {
+			rollback_net_.ToggleNetworkStat();
+		}
+		return false;
+	}
+
+	return true;
+}
+
+void Gdxsv::HookMainUiLoop() {
 	if (!enabled_) return;
 
 	if (InGame()) {
 		settings.input.fastForwardMode = false;
 	}
 
+	if (netmode_ == NetMode::McsRollback) {
+		gdxsv.rollback_net_.OnMainUiLoop();
+	}
+
 	if (!ggpo::active()) {
 		// Don't edit memory at vsync if ggpo::active
 		WritePatch();
-	}
-}
-
-void Gdxsv::HookMainUiLoop() {
-	if (enabled_) {
-		if (netmode_ == NetMode::McsRollback) {
-			gdxsv.rollback_net_.OnMainUiLoop();
-		}
 	}
 }
 
@@ -346,7 +359,10 @@ void Gdxsv::HandleRPC() {
 				}
 
 				lbs_remote_.Open(host.c_str(), port);
-				if (udp_.Bind(udp_port_)) {
+				if (!udp_.Initialized()) {
+					udp_.Bind(udp_port_);
+				}
+				if (udp_.Initialized()) {
 					if (udp_port_ != udp_.bind_port()) {
 						config::GdxLocalPort = udp_port_ = udp_.bind_port();
 					}
