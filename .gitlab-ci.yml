@@ -31,8 +31,7 @@
 .core-defs-ios-arm64:
   extends: .core-defs
   variables:
-    CORE_ARGS: -DLIBRETRO=ON -G Xcode -DCMAKE_BUILD_TYPE=Release
-    EXTRA_PATH: Release-iphoneos
+    CORE_ARGS: -DLIBRETRO=ON -DCMAKE_BUILD_TYPE=Release
 
 .core-defs-android:
   extends: .core-defs
