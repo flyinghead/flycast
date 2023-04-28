@@ -615,63 +615,65 @@ void GdxsvBackendRollback::SaveReplay() {
 		return;
 	}
 
-	proto::BattleLogFile log;
-	log.set_game_disk(gdxsv.Disk() == 1 ? "dc1" : "dc2");
-	log.set_battle_code(matching_.battle_code());
-	log.set_log_file_version(20230426);
+	auto log = std::make_unique<proto::BattleLogFile>();
+	log->set_game_disk(gdxsv.Disk() == 1 ? "dc1" : "dc2");
+	log->set_battle_code(matching_.battle_code());
+	log->set_log_file_version(20230426);
 	for (int i = 0; i < gdxsv.patch_list_.patches_size(); ++i) {
-		log.add_patches()->CopyFrom(gdxsv.patch_list_.patches(i));
+		log->add_patches()->CopyFrom(gdxsv.patch_list_.patches(i));
 	}
-	log.set_rule_bin(matching_.rule_bin());
-	log.mutable_users()->CopyFrom(matching_.users());
+	log->set_rule_bin(matching_.rule_bin());
+	log->mutable_users()->CopyFrom(matching_.users());
 
 	for (const auto& kv : input_logs_) {
-		log.add_inputs(kv.second);
+		log->add_inputs(kv.second);
 	}
 
 	const auto now = std::chrono::system_clock::now();
-	log.set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
+	log->set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
 
-	auto replay_dir = get_writable_data_path("replays");
-	if (!file_exists(replay_dir)) {
-		if (!make_directory(replay_dir)) {
-			ERROR_LOG(COMMON, "Failed to create replay directory");
-			return;
+	std::thread([log = std::move(log)]() {
+		auto replay_dir = get_writable_data_path("replays");
+		if (!file_exists(replay_dir)) {
+			if (!make_directory(replay_dir)) {
+				ERROR_LOG(COMMON, "Failed to create replay directory");
+				return;
+			}
 		}
-	}
 
 #if _WIN32
-	auto replay_file = replay_dir + "\\" + matching_.battle_code() + ".pb";
+		auto replay_file = replay_dir + "\\" + log->battle_code() + ".pb";
 #else
-	auto replay_file = replay_dir + "/" + matching_.battle_code() + ".pb";
+		auto replay_file = replay_dir + "/" + log->battle_code() + ".pb";
 #endif
 
-	FILE* f = nowide::fopen(replay_file.c_str(), "wb");
-	if (f == nullptr) {
-		ERROR_LOG(COMMON, "SaveReplay: fopen failure");
-		return;
-	}
+		FILE* f = nowide::fopen(replay_file.c_str(), "wb");
+		if (f == nullptr) {
+			ERROR_LOG(COMMON, "SaveReplay: fopen failure");
+			return;
+		}
 
-	int fd = fileno(f);
-	if (fd == -1) {
-		ERROR_LOG(COMMON, "SaveReplay: fileno failure");
-		return;
-	}
+		int fd = fileno(f);
+		if (fd == -1) {
+			ERROR_LOG(COMMON, "SaveReplay: fileno failure");
+			return;
+		}
 
-	if (!log.SerializeToFileDescriptor(fd)) {
-		ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
-		return;
-	}
-	fclose(f);
+		if (!log->SerializeToFileDescriptor(fd)) {
+			ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
+			return;
+		}
+		fclose(f);
 
-	std::vector<http::PostField> fields;
-	fields.emplace_back("file", replay_file, "application/octet-stream");
-	int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/uploader", fields);
-	if (rc == 200 || rc == 409) {
-		NOTICE_LOG(COMMON, "SaveReplay: upload OK");
-	} else {
-		ERROR_LOG(COMMON, "SaveReplay: upload Failed staus: %d", rc);
-	}
+		std::vector<http::PostField> fields;
+		fields.emplace_back("file", replay_file, "application/octet-stream");
+		int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/uploader", fields);
+		if (rc == 200 || rc == 409) {
+			NOTICE_LOG(COMMON, "SaveReplay: upload OK");
+		} else {
+			ERROR_LOG(COMMON, "SaveReplay: upload Failed staus: %d", rc);
+		}
+	}).detach();
 }
 
 void GdxsvBackendRollback::ApplyPatch(bool first_time) {
