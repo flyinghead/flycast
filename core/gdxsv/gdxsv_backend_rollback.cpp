@@ -173,6 +173,10 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
 			config::GGPOEnable.override(true);
 			config::GGPODelay.override(delay);
+			config::FixedFrequency.override(2);
+			config::VSync.override(true);
+			config::LimitFPS.override(false);
+
 			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports, relays);
 			ggpo::receiveChatMessages(nullptr);
 			session_start_time = std::chrono::high_resolution_clock::now();
@@ -335,6 +339,9 @@ void GdxsvBackendRollback::Close() {
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
+	config::FixedFrequency.load();
+	config::VSync.load();
+	config::LimitFPS.load();
 	RestorePatch();
 	KillTex = true;
 	SaveReplay();
