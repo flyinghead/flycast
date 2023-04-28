@@ -260,7 +260,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			config::GGPODelay.override(delay);
 			config::NetworkStats.override(false);
 			config::FixedFrequency.override(2);
-			config::VSync.override(true);
+			config::VSync.override(false);
 			config::LimitFPS.override(false);
 			config::ThreadedRendering.override(false);
 
