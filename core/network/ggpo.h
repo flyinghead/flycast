@@ -24,6 +24,26 @@ struct MapleInputState;
 
 namespace ggpo
 {
+struct NetworkStats {
+   struct {
+      int   send_queue_len;
+      int   recv_queue_len;
+      int   ping;
+      int   kbps_sent;
+      int   recv_packet_loss;
+   } network;
+   struct {
+      int   local_frames_behind;
+      int   remote_frames_behind;
+   } timesync;
+   struct {
+	   int predicted_frames;
+   } sync;
+   struct {
+	   int total_rollbacked_frames;
+	   int total_timesync;
+   } extra;
+};
 
 std::future<bool> startNetwork();
 void startSession(int localPort, int localPlayerNum);
@@ -39,6 +59,7 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 bool isConnected(int playerNum);
 void disconnect(int playerNum);
 void randomInput(bool enable, u64 seed, u32 inputMask);
+void getNetworkStats(int playerNum, NetworkStats* stats);
 std::future<bool> gdxsvStartNetwork(
     const char* sessionCode, int me,
     const std::vector<std::string>& ips,

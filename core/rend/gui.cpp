@@ -455,14 +455,17 @@ void gui_open_settings()
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed)
 	{
-		if (!ggpo::active())
+		if (gdxsv_emu_menu_open())
 		{
-			gui_state = GuiState::Commands;
-			HideOSD();
-			emu.stop();
+			if (!ggpo::active())
+			{
+				gui_state = GuiState::Commands;
+				HideOSD();
+				emu.stop();
+			}
+			else
+				chat.toggle();
 		}
-		else
-			chat.toggle();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{

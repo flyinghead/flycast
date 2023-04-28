@@ -30,7 +30,7 @@ std::future<std::string> test_udp_port_connectivity(int port) {
 		std::string content_type;
 		std::vector<http::PostField> fields;
 		fields.emplace_back("addr", std::string(myip.begin(), myip.end()) + ":" + std::to_string(port));
-		rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/udptest", fields);  // TODO: edit url
+		rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/udptest", fields);
 		if (!http::success(rc)) {
 			return "HTTP Request failed: " + std::to_string(rc);
 		}

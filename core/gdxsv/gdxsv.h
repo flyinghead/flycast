@@ -31,7 +31,7 @@ class Gdxsv {
 	void DisplayOSD();
 	const char* NetModeString() const;
 	void Reset();
-	void Update();
+	bool HookOpenMenu();
 	void HookMainUiLoop();
 	void HandleRPC();
 	void RestoreOnlinePatch();

@@ -49,11 +49,7 @@ void gdxsv_emu_start() {
 
 void gdxsv_emu_reset() { gdxsv.Reset(); }
 
-void gdxsv_emu_update() {
-	if (gdxsv.Enabled()) {
-		gdxsv.Update();
-	}
-}
+void gdxsv_emu_update() {}
 
 void gdxsv_emu_rpc() {
 	if (gdxsv.Enabled()) {
@@ -84,6 +80,13 @@ void gdxsv_emu_loadstate(int slot) {
 bool gdxsv_emu_enabled() { return gdxsv.Enabled(); }
 
 bool gdxsv_emu_ingame() { return gdxsv.InGame(); }
+
+bool gdxsv_emu_menu_open() {
+	if (gdxsv.Enabled()) {
+		return gdxsv.HookOpenMenu();
+	}
+	return true;
+}
 
 bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
