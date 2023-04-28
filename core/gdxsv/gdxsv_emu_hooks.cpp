@@ -49,7 +49,17 @@ void gdxsv_emu_start() {
 
 void gdxsv_emu_reset() { gdxsv.Reset(); }
 
-void gdxsv_emu_update() {}
+void gdxsv_emu_vblank() {
+	if (gdxsv.Enabled()) {
+		gdxsv.HookVBlank();
+	}
+}
+
+void gdxsv_mainui_loop() {
+	if (gdxsv.Enabled()) {
+		gdxsv.HookMainUiLoop();
+	}
+}
 
 void gdxsv_emu_rpc() {
 	if (gdxsv.Enabled()) {
@@ -391,8 +401,6 @@ void gdxsv_latest_version_check() {
 		}).detach();
 	});
 }
-
-void gdxsv_mainui_loop() { gdxsv.HookMainUiLoop(); }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
 
