@@ -82,13 +82,12 @@ void Gdxsv::Reset() {
 	if (disk_num == "2") disk_ = 2;
 
 	maxrebattle_ = 5;
-	udp_port_ = config::GdxLocalPort;
 
 #ifdef __APPLE__
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(), udp_port_);
+	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(), config::GdxLocalPort.get());
 
 	lbs_net_.lbs_packet_filter([this](const LbsMessage &lbs_msg) -> bool {
 		if (netmode_ != NetMode::Lbs) {
@@ -259,7 +258,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
 	ss << "patch_id=" << symbols_[":patch_id"] << "\n";
 	ss << "language=" << GdxsvLanguage::TextureDirectoryName() << "\n";
 	ss << "local_ip=" << lbs_net_.LocalIP() << "\n";
-	ss << "udp_port=" << udp_port_ << "\n";
+	ss << "udp_port=" << config::GdxLocalPort << "\n";
 	std::string machine_id = os_GetMachineID();
 	if (machine_id.length()) {
 		auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
@@ -390,11 +389,11 @@ void Gdxsv::HandleRPC() {
 
 				lbs_remote_.Open(host.c_str(), port);
 				if (!udp_.Initialized()) {
-					udp_.Bind(udp_port_);
+					udp_.Bind(config::GdxLocalPort);
 				}
 				if (udp_.Initialized()) {
-					if (udp_port_ != udp_.bind_port()) {
-						config::GdxLocalPort = udp_port_ = udp_.bind_port();
+					if (config::GdxLocalPort != udp_.bind_port()) {
+						config::GdxLocalPort = udp_.bind_port();
 					}
 
 					if (config::EnableUPnP && upnp_port_ != udp_.bind_port()) {

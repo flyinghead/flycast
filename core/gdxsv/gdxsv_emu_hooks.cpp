@@ -292,7 +292,9 @@ void gdxsv_emu_settings() {
 	if (upnp_future.valid() && upnp_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 		upnp_result = upnp_future.get();
 	}
-	if (ImGui::Button("UPnP Now") && !upnp_future.valid()) {
+
+	const auto buttonWidth = ImGui::CalcTextSize("Test The Port").x + ImGui::GetStyle().ItemSpacing.x * 2;
+	if (ImGui::Button("UPnP Now", ImVec2(buttonWidth, 0)) && !upnp_future.valid()) {
 		upnp_result = "Please wait...";
 		int port = config::GdxLocalPort;
 		upnp_future = std::async(std::launch::async, [port]() -> std::string {
@@ -311,12 +313,12 @@ void gdxsv_emu_settings() {
 	if (udp_test_future.valid() && udp_test_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 		udp_test_result = udp_test_future.get();
 	}
-	if (ImGui::Button("Test the port") && !udp_test_future.valid()) {
+	if (ImGui::Button("Test The Port", ImVec2(buttonWidth, 0)) && !udp_test_future.valid()) {
 		udp_test_result = "Please wait...";
 		udp_test_future = test_udp_port_connectivity(config::GdxLocalPort);
 	}
 	ImGui::SameLine();
-	ShowHelpMarker("Test if this port number can be used");
+	ShowHelpMarker("Test receiving data using this UDP port");
 	ImGui::SameLine();
 	ImGui::Text(udp_test_result.c_str());
 
