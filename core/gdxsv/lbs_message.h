@@ -46,7 +46,8 @@ struct LbsMessage {
 	static constexpr u16 lbsP2PMatchingReport = 0x9962;
 	static constexpr u16 lbsBattleUserCount = 0x9965;
 
-	int Serialize(std::deque<u8> &buf) const {
+	template <typename C>
+	int Serialize(C &buf) const {
 		buf.push_back(direction);
 		buf.push_back(category);
 		buf.push_back((command >> 8) & 0xffu);
@@ -63,7 +64,8 @@ struct LbsMessage {
 		return int(HeaderSize) + int(body.size());
 	}
 
-	int Deserialize(const std::deque<u8> &buf) {
+	template <typename C>
+	int Deserialize(const C &buf) {
 		if (buf.size() < HeaderSize) {
 			return 0;
 		}
@@ -200,6 +202,8 @@ struct LbsMessage {
 class LbsMessageReader {
    public:
 	void Write(const char *buf, int size) { std::copy(buf, buf + size, std::back_inserter(buf_)); }
+
+	void Write(u8 byte) { buf_.emplace_back(byte); }
 
 	bool Read(LbsMessage &msg) {
 		int size = msg.Deserialize(buf_);
