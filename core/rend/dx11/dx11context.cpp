@@ -208,7 +208,9 @@ void DX11Context::Present()
 	}
 	else if (swapOnVSync)
 	{
-		int swapInterval = std::min(4, std::max(1, (int)(settings.display.refreshRate / 60)));
+		int swapInterval = 1;
+		if (config::DupeFrames)
+			swapInterval = std::min(4, std::max(1, (int)(settings.display.refreshRate / 60)));
 		hr = swapchain->Present(swapInterval, 0);
 	}
 	else
