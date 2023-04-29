@@ -162,7 +162,7 @@ void gdxsv_emu_settings() {
 	if (ImGui::Button(" Apply Recommended Settings ", ImVec2(0, 40))) {
 		// Frame Limit
 		config::LimitFPS = false;
-		config::VSync = false;
+		config::VSync = true;
 		config::FixedFrequency = 2;
 		// Controls
 		config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
@@ -199,7 +199,7 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use gdxsv recommended settings:
     Frame Limit Method:
-      CPU Sleep (59.94Hz)
+      VSync + CPU Sleep (59.94Hz)
 
     Control:
       Device A: Sega Controller / Sega VMU
