@@ -73,7 +73,6 @@ class Gdxsv {
 	MiniUPnP upnp_;
 	std::future<std::string> upnp_result_;
 	int upnp_port_ = 0;
-	int udp_port_ = 0;
 
 	UdpRemote lbs_remote_ = {};
 	UdpClient udp_ = {};
