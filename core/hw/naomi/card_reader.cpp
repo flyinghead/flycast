@@ -19,6 +19,7 @@
 #include "card_reader.h"
 #include "oslib/oslib.h"
 #include "hw/sh4/modules/modules.h"
+#include "hw/maple/maple_cfg.h"
 #include <deque>
 #include <memory>
 
@@ -362,12 +363,14 @@ void barcodeSetCard(const std::string& card)
 		barcodeReader->setCard(card);
 }
 
-void insertCard()
+void insertCard(int playerNum)
 {
 	if (initdReader != nullptr)
 		initdReader->insertCard();
 	else if (barcodeReader != nullptr)
 		barcodeReader->insertCard();
+	else
+		insertRfidCard(playerNum);
 }
 
 }

@@ -90,7 +90,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case EMU_BTN_INSERT_CARD:
 			if (pressed && settings.platform.isNaomi())
-				card_reader::insertCard();
+				card_reader::insertCard(maple_port());
 			break;
 		case EMU_BTN_LOADSTATE:
 			if (pressed)

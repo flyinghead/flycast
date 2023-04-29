@@ -838,6 +838,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/naomi_roms.cpp
 		core/hw/naomi/naomi_roms.h
 		core/hw/naomi/naomi_roms_input.h
+		core/hw/naomi/netdimm.cpp
+		core/hw/naomi/netdimm.h
 		core/hw/naomi/card_reader.h
 		core/hw/naomi/card_reader.cpp
 		core/hw/naomi/touchscreen.h

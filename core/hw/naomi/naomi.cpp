@@ -331,65 +331,8 @@ u16 NaomiGameIDRead()
 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
 }
 
-//DIMM board
-//Uses interrupt ext#3  (holly_EXT_PCI)
-
-//status/flags ? 0x1 is some completion/init flag(?), 0x100 is the interrupt disable flag (?)
-//n1 bios rev g (n2/epr-23605b has similar behavior of not same):
-//3c=0x1E03
-//40=0
-//44=0
-//48=0
-//read 4c
-//wait for 4c not 0
-//4c=[4c]-1
-
-//Naomi 2 bios epr-23609
-//read 3c
-//wait 4c to be non 0
-//
-
-//SO the writes to 3c/stuff are not relaced with 4c '1'
-//If the dimm board has some internal cpu/pic logic 
-//4c '1' seems to be the init done bit (?)
-//n1/n2 clears it after getting a non 0 value
-//n1 bios writes the value -1, meaning it expects the bit 0 to be set
-//.//
-
-u32 reg_dimm_command;		// command, written, 0x1E03 some flag ?
-u32 reg_dimm_offsetl;
-u32 reg_dimm_parameterl;
-u32 reg_dimm_parameterh;
-u32 reg_dimm_status = 0x11;
-
 static bool aw_ram_test_skipped = false;
 
-void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
-{
-	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
-	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
-	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
-	// command: param1 & 3f << 9 | param2
-	//   offsetl, paraml, paramh: params 3 4 5
-	//   HOLLY::SB_IML2EXT |= 8 when done
-
-
-	u32 param=(command&0xFF);
-	if (param==0xFF)
-	{
-		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
-	}
-	static int opcd=0;
-	//else if (param!=3)
-	if (opcd<255)
-	{
-		reg_dimm_command=0x8000 | (opcd%12<<9) | (0x0);
-		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_command);
-		asic_RaiseInterrupt(holly_EXP_PCI);
-		DEBUG_LOG(NAOMI, "Interrupt raised");
-		opcd++;
-	}
-}
 
 u32 ReadMem_naomi(u32 address, u32 size)
 {
@@ -515,11 +458,6 @@ void naomi_reg_Reset(bool hard)
 	GLastCmd = 0;
 	SerStep = 0;
 	SerStep2 = 0;
-	reg_dimm_command = 0;
-	reg_dimm_offsetl = 0;
-	reg_dimm_parameterl = 0;
-	reg_dimm_parameterh = 0;
-	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
 	if (hard)
 	{
@@ -667,11 +605,6 @@ void naomi_Serialize(Serializer& ser)
 	ser << SerStep2;
 	ser.serialize(BSerial, 69);
 	ser.serialize(GSerial, 69);
-	ser << reg_dimm_command;
-	ser << reg_dimm_offsetl;
-	ser << reg_dimm_parameterl;
-	ser << reg_dimm_parameterh;
-	ser << reg_dimm_status;
 	ser << aw_maple_devs;
 	ser << coin_chute_time;
 	ser << aw_ram_test_skipped;
@@ -700,11 +633,14 @@ void naomi_Deserialize(Deserializer& deser)
 	deser >> SerStep2;
 	deser.deserialize(BSerial, 69);
 	deser.deserialize(GSerial, 69);
-	deser >> reg_dimm_command;
-	deser >> reg_dimm_offsetl;
-	deser >> reg_dimm_parameterl;
-	deser >> reg_dimm_parameterh;
-	deser >> reg_dimm_status;
+	if (deser.version() < Deserializer::V36)
+	{
+		deser.skip<u32>(); // reg_dimm_command;
+		deser.skip<u32>(); // reg_dimm_offsetl;
+		deser.skip<u32>(); // reg_dimm_parameterl;
+		deser.skip<u32>(); // reg_dimm_parameterh;
+		deser.skip<u32>(); // reg_dimm_status;
+	}
 	if (deser.version() < Deserializer::V11)
 		deser.skip<u8>();
 	else if (deser.version() >= Deserializer::V14)

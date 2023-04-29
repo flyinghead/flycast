@@ -2593,7 +2593,7 @@ static void UpdateInputStateNaomi(u32 port)
 					if (haveCardReader)
 					{
 						 if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
-							 card_reader::insertCard();
+							 card_reader::insertCard(port);
 					}
 					else
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);

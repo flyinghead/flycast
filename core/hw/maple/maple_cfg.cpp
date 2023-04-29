@@ -188,7 +188,7 @@ bool maple_atomiswave_coin_chute(int slot)
 #ifdef LIBRETRO
 	return mapleInputState[slot].kcode & AWAVE_COIN_KEY;
 #else
-	for (int i = 0; i < 16; i++)
+	for (size_t i = 0; i < std::size(awave_button_mapping); i++)
 	{
 		if ((mapleInputState[slot].kcode & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
@@ -214,6 +214,14 @@ static void createNaomiDevices()
 	{
 		mcfg_Create(MDT_Keyboard, 1, 5, 0);
 		mcfg_Create(MDT_Keyboard, 2, 5, 1);
+	}
+	else if (settings.content.gameId.substr(0, 8) == "MKG TKOB"
+			|| settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN"
+			|| settings.content.gameId == "VF4 EVOLUTION JAPAN"
+			|| settings.content.gameId == "VF4 FINAL TUNED JAPAN")
+	{
+		mcfg_Create(MDT_RFIDReaderWriter, 1, 5, 0);
+		mcfg_Create(MDT_RFIDReaderWriter, 2, 5, 1);
 	}
 	else
 	{
