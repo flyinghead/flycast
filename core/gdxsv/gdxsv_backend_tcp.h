@@ -20,7 +20,7 @@ class GdxsvBackendTcp {
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockWrite(u32 addr, u32 size);
 	u32 OnSockPoll();
-	void callback_lbs_packet(std::function<void(const LbsMessage &)> callback) { callback_lbs_packet_ = std::move(callback); }
+	void lbs_packet_filter(std::function<bool(const LbsMessage &)> callback) { lbs_packet_filter_ = std::move(callback); }
 
    private:
 	TcpClient tcp_client_;
@@ -28,5 +28,5 @@ class GdxsvBackendTcp {
 	LbsMessageReader rx_msg_reader_;
 	LbsMessageReader tx_msg_reader_;
 	std::deque<u8> recv_buf_;
-	std::function<void(const LbsMessage &)> callback_lbs_packet_;
+	std::function<bool(const LbsMessage &)> lbs_packet_filter_;
 };

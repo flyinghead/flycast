@@ -122,6 +122,16 @@ struct LbsMessage {
 		return msg;
 	}
 
+	static LbsMessage ClAnswer(const LbsMessage &q) {
+		LbsMessage msg;
+		msg.direction = ClientToServer;
+		msg.category = CategoryAnswer;
+		msg.command = q.command;
+		msg.seq = q.seq;
+		msg.status = StatusSuccess;
+		return msg;
+	}
+
 	static LbsMessage ClNotice(u16 cmd) {
 		LbsMessage msg;
 		msg.direction = ServerToClient;

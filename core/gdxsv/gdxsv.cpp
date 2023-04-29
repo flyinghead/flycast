@@ -90,7 +90,20 @@ void Gdxsv::Reset() {
 
 	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(), udp_port_);
 
-	lbs_net_.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
+	lbs_net_.lbs_packet_filter([this](const LbsMessage &lbs_msg) -> bool {
+		if (netmode_ != NetMode::Lbs) {
+			if (lbs_net_.IsConnected()) {
+				// The user is not in lobby but connection is alive
+				if (lbs_msg.command == LbsMessage::lbsLineCheck) {
+					std::vector<u8> buf;
+					LbsMessage::ClAnswer(lbs_msg).Serialize(buf);
+					lbs_net_.Send(buf);
+				}
+			}
+
+			return false;
+		}
+
 		if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide) {
 			std::string id(6, ' ');
 			for (int i = 0; i < 6; i++) {
@@ -98,6 +111,7 @@ void Gdxsv::Reset() {
 			}
 			user_id_ = id;
 		}
+
 		if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide ||
 			lbs_msg.command == LbsMessage::lbsLineCheck) {
 			if (udp_.Initialized()) {
@@ -109,15 +123,23 @@ void Gdxsv::Reset() {
 				pkt.set_type(proto::MessageType::HelloLbs);
 				pkt.mutable_hello_lbs_data()->set_user_id(user_id_);
 				char buf[128];
-				if (pkt.SerializePartialToArray((void *)buf, (int)sizeof(buf))) {
-					udp_.SendTo((const char *)buf, pkt.GetCachedSize(), lbs_remote_);
-				} else {
+				if (pkt.SerializePartialToArray((void*)buf, (int)sizeof(buf))) {
+					udp_.SendTo((const char*)buf, pkt.GetCachedSize(), lbs_remote_);
+				}
+				else {
 					ERROR_LOG(COMMON, "packet serialize error");
 				}
 			}
 
 			lbs_net_.Send(GeneratePlatformInfoPacket());
 		}
+
+		if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
+			// Reset current patches for no-patched game
+			RestoreOnlinePatch();
+			going_to_battle_ = true;
+		}
+
 		if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
 			proto::P2PMatching matching;
 			if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
@@ -128,11 +150,10 @@ void Gdxsv::Reset() {
 			} else {
 				ERROR_LOG(COMMON, "p2p matching deserialize error");
 			}
+
+			return false;
 		}
-		if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
-			// Reset current patches for no-patched game
-			RestoreOnlinePatch();
-		}
+
 		if (lbs_msg.command == LbsMessage::lbsGamePatch) {
 			// Reset current patches and update patch_list
 			RestoreOnlinePatch();
@@ -141,12 +162,19 @@ void Gdxsv::Reset() {
 			} else {
 				ERROR_LOG(COMMON, "patch_list deserialize error");
 			}
+
+			return false;
 		}
+
 		if (lbs_msg.command == LbsMessage::lbsBattleUserCount && disk_ == 2 && GdxsvLanguage::Language() != GdxsvLanguage::Lang::Disabled) {
 			u32 battle_user_count = u32(lbs_msg.body[0]) << 24 | u32(lbs_msg.body[1]) << 16 | u32(lbs_msg.body[2]) << 8 | lbs_msg.body[3];
 			const u32 offset = 0x8C000000 + 0x00010000;
 			gdxsv_WriteMem32(offset + 0x3839FC, battle_user_count);
+
+			return false;
 		}
+
+		return true;
 	});
 }
 
@@ -164,6 +192,9 @@ bool Gdxsv::HookOpenMenu() {
 }
 
 void Gdxsv::HookVBlank() {
+	if (netmode_ != NetMode::Lbs && lbs_net_.IsConnected()) {
+		lbs_net_.OnSockPoll();
+	}
 	if (!ggpo::active()) {
 		// Don't edit memory at vsync if ggpo::active
 		WritePatch();
@@ -266,11 +297,10 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 	if (32700 <= msg.body.size()) {
 		ERROR_LOG(COMMON, "too large body");
 	} else {
-		std::deque<u8> buf;
+		std::vector<u8> buf;
 		msg.Serialize(buf);
-		return {buf.begin(), buf.end()};
+		return buf;
 	}
-
 	return {};
 }
 
@@ -381,7 +411,6 @@ void Gdxsv::HandleRPC() {
 				netmode_ = NetMode::Offline;
 			}
 		} else {
-			lbs_net_.Close();
 			if (~host_ip == 0) {
 				lbs_remote_.Close();
 				udp_.Close();
@@ -401,37 +430,23 @@ void Gdxsv::HandleRPC() {
 	}
 
 	if (gdx_rpc.request == GDX_RPC_SOCK_CLOSE) {
-		if (netmode_ == NetMode::Replay) {
-			replay_net_.Close();
-		} else if (netmode_ == NetMode::McsRollback) {
-			lbs_net_.Close();
-
-			if (gdx_rpc.param2 == 0) {
-				rollback_net_.SetCloseReason("cl_app_close");
-			} else if (gdx_rpc.param2 == 1) {
-				rollback_net_.SetCloseReason("cl_ppp_close");
-			} else if (gdx_rpc.param2 == 2) {
-				rollback_net_.SetCloseReason("cl_soft_reset");
-			} else {
-				rollback_net_.SetCloseReason("cl_tcp_close");
+		if (netmode_ == NetMode::Lbs) {
+			netmode_ = NetMode::Offline;
+			if (!going_to_battle_) {
+				lbs_net_.Close();
 			}
+			going_to_battle_ = false;
+		} else if (netmode_ == NetMode::McsUdp) {
+			netmode_ = NetMode::Offline;
+			udp_net_.CloseMcsRemoteWithReason("cl_app_close");
+
+		} else if (netmode_ == NetMode::McsRollback) {
+			rollback_net_.SetCloseReason("cl_app_close");
 			rollback_net_.Close();
 
 			netmode_ = NetMode::Offline;
-		} else {
-			lbs_net_.Close();
-
-			if (gdx_rpc.param2 == 0) {
-				udp_net_.CloseMcsRemoteWithReason("cl_app_close");
-			} else if (gdx_rpc.param2 == 1) {
-				udp_net_.CloseMcsRemoteWithReason("cl_ppp_close");
-			} else if (gdx_rpc.param2 == 2) {
-				udp_net_.CloseMcsRemoteWithReason("cl_soft_reset");
-			} else {
-				udp_net_.CloseMcsRemoteWithReason("cl_tcp_close");
-			}
-
-			netmode_ = NetMode::Offline;
+		} else if (netmode_ == NetMode::Replay) {
+			replay_net_.Close();
 		}
 	}
 
