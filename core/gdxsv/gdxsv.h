@@ -68,6 +68,7 @@ class Gdxsv {
 	proto::GamePatchList patch_list_;
 	std::map<std::string, int> gcp_ping_test_result_;
 	std::atomic<bool> gcp_ping_test_finished_;
+	bool going_to_battle_ = false;
 
 	MiniUPnP upnp_;
 	std::future<std::string> upnp_result_;

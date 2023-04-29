@@ -8,7 +8,7 @@ void GdxsvBackendTcp::Reset() {
 	rx_msg_reader_.Clear();
 	tx_msg_reader_.Clear();
 	recv_buf_.clear();
-	callback_lbs_packet_ = nullptr;
+	lbs_packet_filter_ = nullptr;
 }
 
 bool GdxsvBackendTcp::Connect(const std::string &host, u16 port) {
@@ -65,12 +65,11 @@ u32 GdxsvBackendTcp::OnSockPoll() {
 			rx_msg_reader_.Write(reinterpret_cast<char *>(buf), n);
 
 			while (rx_msg_reader_.Read(lbs_msg_)) {
-				if (callback_lbs_packet_) {
-					callback_lbs_packet_(lbs_msg_);
-				}
-
-				// Do not pass gdxsv extended commands to the game
-				if (lbs_msg_.command < 0x9000) {
+				if (lbs_packet_filter_) {
+					if (lbs_packet_filter_(lbs_msg_)) {
+						lbs_msg_.Serialize(recv_buf_);
+					}
+				} else {
 					lbs_msg_.Serialize(recv_buf_);
 				}
 			}
