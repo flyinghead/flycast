@@ -51,7 +51,7 @@ u32 GdxsvBackendTcp::OnSockWrite(u32 addr, u32 size) {
 	while (tx_msg_reader_.Read(lbs_msg_)) {
 		std::vector<u8> v;
 		lbs_msg_.Serialize(v);
-		tcp_client_.Send(reinterpret_cast<const char*>(v.data()), v.size());
+		tcp_client_.Send(reinterpret_cast<const char *>(v.data()), v.size());
 	}
 
 	return size;
@@ -60,9 +60,9 @@ u32 GdxsvBackendTcp::OnSockWrite(u32 addr, u32 size) {
 u32 GdxsvBackendTcp::OnSockPoll() {
 	if (tcp_client_.ReadableSize()) {
 		u8 buf[InetBufSize];
-		int n = tcp_client_.Recv(reinterpret_cast<char*>(buf), InetBufSize);
+		int n = tcp_client_.Recv(reinterpret_cast<char *>(buf), InetBufSize);
 		if (0 < n) {
-			rx_msg_reader_.Write(reinterpret_cast<char*>(buf), n);
+			rx_msg_reader_.Write(reinterpret_cast<char *>(buf), n);
 
 			while (rx_msg_reader_.Read(lbs_msg_)) {
 				if (lbs_packet_filter_) {
