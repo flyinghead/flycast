@@ -87,7 +87,8 @@ void Gdxsv::Reset() {
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(), config::GdxLocalPort.get());
+	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(),
+			   config::GdxLocalPort.get());
 
 	lbs_net_.lbs_packet_filter([this](const LbsMessage &lbs_msg) -> bool {
 		if (netmode_ != NetMode::Lbs) {
@@ -122,10 +123,9 @@ void Gdxsv::Reset() {
 				pkt.set_type(proto::MessageType::HelloLbs);
 				pkt.mutable_hello_lbs_data()->set_user_id(user_id_);
 				char buf[128];
-				if (pkt.SerializePartialToArray((void*)buf, (int)sizeof(buf))) {
-					udp_.SendTo((const char*)buf, pkt.GetCachedSize(), lbs_remote_);
-				}
-				else {
+				if (pkt.SerializePartialToArray((void *)buf, (int)sizeof(buf))) {
+					udp_.SendTo((const char *)buf, pkt.GetCachedSize(), lbs_remote_);
+				} else {
 					ERROR_LOG(COMMON, "packet serialize error");
 				}
 			}
