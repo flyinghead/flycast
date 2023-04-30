@@ -86,12 +86,12 @@ class UdpClient {
 	int SendTo(const char *buf, int len, const UdpRemote &remote);
 	u32 ReadableSize() const;
 	void Close();
-	int bind_port() const { return bind_port_; }
+	int bound_port() const { return bound_port_; }
 
    private:
 	sock_t sock_ = INVALID_SOCKET;
-	int bind_port_ = 0;
-	std::string bind_ip_;
+	int bound_port_ = 0;
+	std::string local_ip_;
 };
 
 class UdpPingPong {

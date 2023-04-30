@@ -57,7 +57,7 @@ int flycast_init(int argc, char* argv[])
 	if(config::GDB)
 		debugger::init(config::GDBPort);
 	lua::init();
-	gdxsv_flycast_init();
+	gdxsv_emu_flycast_init();
 
 	if(config::ProfilerEnabled)
 		LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);

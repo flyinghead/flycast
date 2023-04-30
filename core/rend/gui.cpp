@@ -1231,33 +1231,6 @@ static void contentpath_warning_popup()
     }
 }
 
-static void wireless_warning_popup()
-{
-    static bool show_wireless_warning = true;
-    static std::string connection_medium = os_GetConnectionMedium();
-    if (show_wireless_warning && no_popup_opened() && connection_medium == "Wireless")
-    {
-        ImGui::OpenPopup("Wireless connection detected");
-        show_wireless_warning = false;
-    }
-    if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-    {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
-        ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
-        float currentwidth = ImGui::GetContentRegionAvail().x;
-
-        ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-        if (ImGui::Button("OK", ImVec2(100.f * settings.display.uiScale, 0.f)))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SetItemDefaultFocus();
-        ImGui::PopStyleVar();
-        ImGui::EndPopup();
-    }
-}
-
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -1314,7 +1287,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Gdxsv"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			gdxsv_emu_settings();
+			gdxsv_emu_gui_settings();
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
@@ -2806,8 +2779,7 @@ void gui_display_ui()
 		break;
 	}
 	error_popup();
-	gdxsv_update_popup();
-	wireless_warning_popup();
+	gdxsv_emu_gui_display();
 	gui_endFrame(gui_open);
 
 	if (gui_state == GuiState::Closed)

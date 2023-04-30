@@ -184,6 +184,7 @@ int TcpClient::Recv(char *buf, int len) {
 }
 
 int TcpClient::Send(const char *buf, int len) {
+	if (len == 0) return 0;
 	int n = ::send(sock_, buf, len, 0);
 	if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
 		WARN_LOG(COMMON, "TCP Send failed. errno=%d", get_last_error());
@@ -289,9 +290,9 @@ bool UdpClient::Bind(int port) {
 		closesocket(sock_);
 	}
 	sock_ = new_sock;
-	bind_ip_ = std::string(::inet_ntoa(recv_addr.sin_addr));
-	bind_port_ = ntohs(recv_addr.sin_port);
-	NOTICE_LOG(COMMON, "UDP Initialize ok: %s:%d", bind_ip_.c_str(), bind_port_);
+	local_ip_ = std::string(::inet_ntoa(recv_addr.sin_addr));
+	bound_port_ = ntohs(recv_addr.sin_port);
+	NOTICE_LOG(COMMON, "UDP Initialize ok: %s:%d", local_ip_.c_str(), bound_port_);
 	return true;
 }
 

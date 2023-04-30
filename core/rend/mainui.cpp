@@ -153,7 +153,7 @@ void mainui_loop()
 			currentRenderer = config::RendererType;
 		}
 
-		gdxsv_mainui_loop();
+		gdxsv_emu_mainui_loop();
 
 		fc_profiler::endThread(config::ProfilerFrameWarningTime);
 	}

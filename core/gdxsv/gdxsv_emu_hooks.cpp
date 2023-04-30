@@ -25,12 +25,14 @@ using namespace nlohmann;
 #define CHAR_PATH_SEPARATOR '/'
 #endif
 
-void gdxsv_latest_version_check();
+static void gdxsv_update_popup();
+static void wireless_warning_popup();
+static void gdxsv_latest_version_check();
 static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 static std::string gdxsv_latest_version_download_url;
 
-void gdxsv_flycast_init() { config::GGPOEnable = false; }
+void gdxsv_emu_flycast_init() { config::GGPOEnable = false; }
 
 void gdxsv_emu_start() {
 	gdxsv.Reset();
@@ -55,7 +57,7 @@ void gdxsv_emu_vblank() {
 	}
 }
 
-void gdxsv_mainui_loop() {
+void gdxsv_emu_mainui_loop() {
 	if (gdxsv.Enabled()) {
 		gdxsv.HookMainUiLoop();
 	}
@@ -87,9 +89,7 @@ void gdxsv_emu_loadstate(int slot) {
 	}
 }
 
-bool gdxsv_emu_enabled() { return gdxsv.Enabled(); }
-
-bool gdxsv_emu_ingame() { return gdxsv.InGame(); }
+bool gdxsv_ingame() { return gdxsv.InGame(); }
 
 bool gdxsv_emu_menu_open() {
 	if (gdxsv.Enabled()) {
@@ -100,49 +100,20 @@ bool gdxsv_emu_menu_open() {
 
 bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
-void gdxsv_update_popup() {
-	gdxsv_latest_version_check();
-	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
-	if (gdxsv_update_available && no_popup_opened) {
-		ImGui::OpenPopup("New version");
-		gdxsv_update_available = false;
-	}
-	if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
-		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
-		ImGui::TextWrapped("  %s is available for download!  ", gdxsv_latest_version_tag.c_str());
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
-		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
-							 -55.f * settings.display.uiScale);
-		if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-			gdxsv_update_available = false;
-			if (!gdxsv_latest_version_download_url.empty()) {
-				os_LaunchFromURL(gdxsv_latest_version_download_url);
-			} else {
-				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
-			}
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SameLine();
-		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
-							 -55.f * settings.display.uiScale);
-		if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-			gdxsv_update_available = false;
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SetItemDefaultFocus();
-		ImGui::PopStyleVar();
-		ImGui::EndPopup();
+void gdxsv_emu_gui_display() {
+	if (gui_state == GuiState::Main) {
+		gdxsv_update_popup();
+		wireless_warning_popup();
 	}
 }
 
-inline static void gui_header(const char* title) {
+static void gui_header(const char* title) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));	// Left
 	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleVar();
 }
 
-void gdxsv_emu_settings() {
+void gdxsv_emu_gui_settings() {
 	gui_header("gdxsv Settings");
 
 	ImGui::Columns(5, "gdxlang", false);
@@ -338,7 +309,117 @@ void gdxsv_emu_settings() {
 		"introduces glitches.");
 }
 
-void gdxsv_handle_release_json(const std::string& json_string) {
+void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
+
+void gdxsv_crash_append_log(FILE* f) {
+	if (gdxsv.Enabled()) {
+		fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
+		fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
+		fprintf(f, "[gdxsv]netmode: %s\n", gdxsv.NetModeString());
+	}
+}
+
+static bool trim_prefix(const std::string& s, const std::string& prefix, std::string& out) {
+	auto size = prefix.size();
+	if (s.size() < size) return false;
+	if (std::equal(std::begin(prefix), std::end(prefix), std::begin(s))) {
+		out = s.substr(prefix.size());
+		return true;
+	}
+	return false;
+}
+
+void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields) {
+	if (file_exists(logfile)) {
+		nowide::ifstream ifs(logfile);
+		if (ifs.is_open()) {
+			std::string line;
+			std::string f_disk, f_user_id, f_netmode;
+
+			while (std::getline(ifs, line)) {
+				trim_prefix(line, "[gdxsv]disk: ", f_disk);
+				trim_prefix(line, "[gdxsv]user_id: ", f_user_id);
+				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
+			}
+
+			if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
+			if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
+			if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
+		}
+	}
+
+	const std::string machine_id = os_GetMachineID();
+	if (machine_id.length()) {
+		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
+		std::stringstream ss;
+		ss << std::hex << digest;
+		post_fields.emplace_back("sentry[tags][machine_id]", ss.str().c_str());
+	}
+}
+
+static void gdxsv_update_popup() {
+	gdxsv_latest_version_check();
+	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+	if (gdxsv_update_available && no_popup_opened) {
+		ImGui::OpenPopup("New version");
+		gdxsv_update_available = false;
+	}
+	if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
+		ImGui::TextWrapped("  %s is available for download!  ", gdxsv_latest_version_tag.c_str());
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
+		float currentwidth = ImGui::GetContentRegionAvail().x;
+		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
+							 -55.f * settings.display.uiScale);
+		if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+			gdxsv_update_available = false;
+			if (!gdxsv_latest_version_download_url.empty()) {
+				os_LaunchFromURL(gdxsv_latest_version_download_url);
+			} else {
+				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+			}
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
+							 -55.f * settings.display.uiScale);
+		if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+			gdxsv_update_available = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::PopStyleVar();
+		ImGui::EndPopup();
+	}
+}
+
+static void wireless_warning_popup() {
+	static bool show_wireless_warning = true;
+	static std::string connection_medium = os_GetConnectionMedium();
+	const bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+
+	if (show_wireless_warning && no_popup_opened && connection_medium == "Wireless") {
+		ImGui::OpenPopup("Wireless connection detected");
+		show_wireless_warning = false;
+	}
+
+	if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
+		ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
+		float currentwidth = ImGui::GetContentRegionAvail().x;
+
+		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		if (ImGui::Button("OK", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::PopStyleVar();
+		ImGui::EndPopup();
+	}
+}
+
+static void gdxsv_handle_release_json(const std::string& json_string) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -398,7 +479,7 @@ void gdxsv_handle_release_json(const std::string& json_string) {
 	}
 }
 
-void gdxsv_latest_version_check() {
+static void gdxsv_latest_version_check() {
 	static std::once_flag once;
 	std::call_once(once, [] {
 		std::thread([]() {
@@ -407,54 +488,6 @@ void gdxsv_latest_version_check() {
 			gdxsv_handle_release_json(json);
 		}).detach();
 	});
-}
-
-void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
-
-void gdxsv_crash_append_log(FILE* f) {
-	if (gdxsv.Enabled()) {
-		fprintf(f, "[gdxsv]disk: %d\n", gdxsv.Disk());
-		fprintf(f, "[gdxsv]user_id: %s\n", gdxsv.UserId().c_str());
-		fprintf(f, "[gdxsv]netmode: %s\n", gdxsv.NetModeString());
-	}
-}
-
-static bool trim_prefix(const std::string& s, const std::string& prefix, std::string& out) {
-	auto size = prefix.size();
-	if (s.size() < size) return false;
-	if (std::equal(std::begin(prefix), std::end(prefix), std::begin(s))) {
-		out = s.substr(prefix.size());
-		return true;
-	}
-	return false;
-}
-
-void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields) {
-	if (file_exists(logfile)) {
-		nowide::ifstream ifs(logfile);
-		if (ifs.is_open()) {
-			std::string line;
-			std::string f_disk, f_user_id, f_netmode;
-
-			while (std::getline(ifs, line)) {
-				trim_prefix(line, "[gdxsv]disk: ", f_disk);
-				trim_prefix(line, "[gdxsv]user_id: ", f_user_id);
-				trim_prefix(line, "[gdxsv]netmode: ", f_netmode);
-			}
-
-			if (!f_disk.empty()) post_fields.emplace_back("sentry[tags][disk]", f_disk);
-			if (!f_user_id.empty()) post_fields.emplace_back("sentry[tags][user_id]", f_user_id);
-			if (!f_netmode.empty()) post_fields.emplace_back("sentry[tags][netmode]", f_netmode);
-		}
-	}
-
-	const std::string machine_id = os_GetMachineID();
-	if (machine_id.length()) {
-		const auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
-		std::stringstream ss;
-		ss << std::hex << digest;
-		post_fields.emplace_back("sentry[tags][machine_id]", ss.str().c_str());
-	}
 }
 
 #undef CHAR_PATH_SEPARATOR
