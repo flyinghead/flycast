@@ -703,7 +703,8 @@ UdpProtocol::OnQualityReport(UdpMsg *msg, int len)
 bool
 UdpProtocol::OnQualityReply(UdpMsg *msg, int len)
 {
-   _round_trip_time = GGPOPlatform::GetCurrentTimeMS() - msg->u.quality_reply.pong;
+   uint32 rtt = GGPOPlatform::GetCurrentTimeMS() - msg->u.quality_reply.pong;
+   _round_trip_time = _round_trip_time == 0 ? rtt : uint32(0.5 + 0.9 * _round_trip_time + 0.1 * rtt);
    return true;
 }
 
