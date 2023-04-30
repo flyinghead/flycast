@@ -108,6 +108,7 @@ void mainui_loop()
 	mainui_enabled = true;
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
+	int currentDupeFrames = config::DupeFrames;
 
 	set_timer_resolution();
 	std::chrono::time_point<std::chrono::steady_clock> start;
@@ -134,6 +135,11 @@ void mainui_loop()
 			forceReinit = true;
 		else
 			imguiDriver->present();
+
+		if (currentDupeFrames != config::DupeFrames) {
+			forceReinit = true;
+			currentDupeFrames = config::DupeFrames;
+		}
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{

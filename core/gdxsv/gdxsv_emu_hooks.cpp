@@ -199,7 +199,9 @@ void gdxsv_emu_settings() {
 	ImGui::SameLine();
 	ShowHelpMarker(R"(Use gdxsv recommended settings:
     Frame Limit Method:
-      VSync + CPU Sleep (59.94Hz)
+      VSync:Yes
+        DupeFrames: No
+      CPU Sleep (59.94Hz)
 
     Control:
       Device A: Sega Controller / Sega VMU
@@ -245,6 +247,13 @@ void gdxsv_emu_settings() {
 
 	OptionCheckbox("AudioSync", config::LimitFPS, "Limit frame rate by audio. Minimize audio glitch");
 	OptionCheckbox("VSync", config::VSync, "Limit frame rate by VSync. Minimize video glitch");
+	ImGui::Indent();
+	{
+		DisabledScope scope(!config::VSync);
+
+		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+	}
+	ImGui::Unindent();
 
 	bool fixedFrequency = config::FixedFrequency != 0;
 	ImGui::Checkbox("CPU Sleep", &fixedFrequency);
@@ -274,13 +283,9 @@ void gdxsv_emu_settings() {
 
 	gui_header("Network Settings (P2P Lobby Only)");
 	OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
-
-	char local_port[256];
-	sprintf(local_port, "%d", (int)config::GdxLocalPort);
-	ImGui::InputText("Gdx UDP Port", local_port, sizeof(local_port), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+	ImGui::InputInt("Gdx UDP Port", &config::GdxLocalPort.get());
 	ImGui::SameLine();
 	ShowHelpMarker("UDP port number used for P2P communication. Cannot use the same number as another application.");
-	config::GdxLocalPort.set(atoi(local_port));
 
 	if (config::GdxLocalPort == 0) {
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);

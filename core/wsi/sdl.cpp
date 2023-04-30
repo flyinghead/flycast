@@ -92,10 +92,9 @@ bool SDLGLGraphicsContext::init()
 	SDL_GL_MakeCurrent(sdlWindow, glcontext);
 	// Swap at vsync
 	swapOnVSync = config::VSync;
-	if (settings.display.refreshRate > 60.f)
+	int swapInterval = 1;
+	if (config::DupeFrames)
 		swapInterval = settings.display.refreshRate / 60.f;
-	else
-		swapInterval = 1;
 
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
@@ -126,10 +125,9 @@ void SDLGLGraphicsContext::swap()
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
-		if (settings.display.refreshRate > 60.f)
+		swapInterval = 1;
+		if (config::DupeFrames && settings.display.refreshRate > 60.f)
 			swapInterval = settings.display.refreshRate / 60.f;
-		else
-			swapInterval = 1;
 		SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 	}
 	SDL_GL_SwapWindow((SDL_Window *)window);

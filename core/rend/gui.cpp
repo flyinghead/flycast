@@ -1786,16 +1786,13 @@ static void gui_display_settings()
 
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-		    	if (isVulkan(config::RendererType))
-		    	{
-			    	ImGui::Indent();
-					{
-						DisabledScope scope(!config::VSync);
+				ImGui::Indent();
+				{
+					DisabledScope scope(!config::VSync);
 
-						OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	}
-			    	ImGui::Unindent();
-		    	}
+					OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+				}
+				ImGui::Unindent();
 #endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
@@ -2216,8 +2213,6 @@ static void gui_display_settings()
 #endif
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
-				
-	            OptionCheckbox("Upload Crash Logs", config::UploadCrashLogs, "Upload Crash Logs, App Logs & emu.cfg to developer for troubleshooting");
 
 	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;
@@ -2320,6 +2315,8 @@ static void gui_display_settings()
 			if (ImGui::Button("Die", ImVec2(0, 40))) {
 				die("Die Button");
 			}
+			ImGui::SameLine();
+			ShowHelpMarker("Crash flycast to test crash reporting");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();

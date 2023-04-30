@@ -18,6 +18,7 @@ print = functools.partial(print, flush=True)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 N = int(os.getenv("N", 4))
+V = int(os.getenv("V", 3))
 TIMEOUT = int(os.getenv("TIMEOUT", 3600))
 ITERATION = int(os.getenv("ITERATION", 1))
 WIDE = int(os.getenv("WIDE", 0))
@@ -76,7 +77,7 @@ def prepare_workdir(idx: int):
 
 
 def conf_log(idx: int):
-    return f"--config log:Verbosity={1} --config log:LogToFile=1"
+    return f"--config log:Verbosity={V} --config log:LogToFile=1"
 
 
 def conf_volume(idx: int):
