@@ -142,7 +142,7 @@ void Gdxsv::Reset() {
 		if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
 			proto::P2PMatching matching;
 			if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-				int port = udp_.bind_port();
+				int port = udp_.bound_port();
 				udp_.Close();
 				lbs_remote_.Close();
 				rollback_net_.Prepare(matching, port);
@@ -210,9 +210,16 @@ void Gdxsv::HookMainUiLoop() {
 	if (netmode_ == NetMode::McsRollback) {
 		gdxsv.rollback_net_.OnMainUiLoop();
 	}
+
+	if (gui_is_open() || gui_state == GuiState::VJoyEdit) {
+		if (netmode_ == NetMode::Lbs && lbs_net_.IsConnected()) {
+			// Prevent disconnection from lobby server
+			lbs_net_.OnSockPoll();
+		}
+	}
 }
 
-std::string Gdxsv::GeneratePlatformInfoString() {
+std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	std::stringstream ss;
 	ss << "cpu="
 	   <<
@@ -270,12 +277,9 @@ std::string Gdxsv::GeneratePlatformInfoString() {
 			ss << res.first << "=" << res.second << "\n";
 		}
 	}
-	return ss.str();
-}
 
-std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
+	auto s = ss.str();
 	std::vector<u8> packet = {0x81, 0xff, 0x99, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff};
-	auto s = GeneratePlatformInfoString();
 	packet.push_back((s.size() >> 8) & 0xffu);
 	packet.push_back(s.size() & 0xffu);
 	std::copy(std::begin(s), std::end(s), std::back_inserter(packet));
@@ -292,19 +296,11 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 }
 
 std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
-	auto msg = GenerateP2PMatchReportMessage();
-	if (32700 <= msg.body.size()) {
-		ERROR_LOG(COMMON, "too large body");
-	} else {
-		std::vector<u8> buf;
-		msg.Serialize(buf);
-		return buf;
-	}
-	return {};
-}
-
-LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
 	auto rbk_report = rollback_net_.GetReport();
+	if (rbk_report.battle_code().empty()) {
+		return {};
+	}
+
 	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
 	auto lines = InMemoryListener::getInstance()->getLog();
 
@@ -313,7 +309,7 @@ LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
 	}
 
 	std::string data;
-	if (rbk_report.SerializePartialToString(&data)) {
+	if (rbk_report.SerializeToString(&data)) {
 		z_stream z{};
 		int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
 		if (ret == Z_OK) {
@@ -339,7 +335,17 @@ LbsMessage Gdxsv::GenerateP2PMatchReportMessage() {
 		ERROR_LOG(COMMON, "report serialize error");
 	}
 
-	return msg;
+	rollback_net_.ClearReport();
+
+	if (32700 <= msg.body.size()) {
+		ERROR_LOG(COMMON, "too large body");
+		return {};
+	}
+
+	std::vector<u8> buf;
+	msg.Serialize(buf);
+	NOTICE_LOG(COMMON, "report msg size %d", buf.size());
+	return buf;
 }
 
 void Gdxsv::HandleRPC() {
@@ -358,54 +364,19 @@ void Gdxsv::HandleRPC() {
 	gdx_rpc.param4 = gdxsv_ReadMem32(gdx_rpc_addr + 20);
 
 	if (gdx_rpc.request == GDX_RPC_SOCK_OPEN) {
-		u32 tolobby = gdx_rpc.param1;
-		u32 host_ip = gdx_rpc.param2;
-		u32 port_no = gdx_rpc.param3;
-
-		std::string host = server_;
-		u16 port = port_no;
+		const u32 tolobby = gdx_rpc.param1;
+		const u32 host_ip = gdx_rpc.param2;
+		const u16 port = gdx_rpc.param3;
 
 		if (netmode_ == NetMode::Replay) {
 			replay_net_.Open();
 		} else if (tolobby == 1) {
-			udp_net_.CloseMcsRemoteWithReason("cl_to_lobby");
-			rollback_net_.SetCloseReason("cl_to_lobby");
-			rollback_net_.Close();
-
-			if (lbs_net_.Connect(host, port)) {
+			if (lbs_net_.Connect(server_, port)) {
 				netmode_ = NetMode::Lbs;
 				lbs_net_.Send(GeneratePlatformInfoPacket());
-
-				if (!rollback_net_.GetReport().battle_code().empty()) {
-					const auto data = GenerateP2PMatchReportPacket();
-					if (!data.empty()) {
-						NOTICE_LOG(COMMON, "Sending matching report..");
-						lbs_net_.Send(data);
-					} else {
-						NOTICE_LOG(COMMON, "Failed to generate matching report packet");
-					}
-					rollback_net_.ClearReport();
-				}
-
-				lbs_remote_.Open(host.c_str(), port);
-				if (!udp_.Initialized()) {
-					udp_.Bind(config::GdxLocalPort);
-				}
-				if (udp_.Initialized()) {
-					if (config::GdxLocalPort != udp_.bind_port()) {
-						config::GdxLocalPort = udp_.bind_port();
-					}
-
-					if (config::EnableUPnP && upnp_port_ != udp_.bind_port()) {
-						upnp_port_ = udp_.bind_port();
-						upnp_result_ = std::async(std::launch::async, [this]() -> std::string {
-							NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", upnp_port_);
-							std::string result = upnp_.Init() && upnp_.AddPortMapping(upnp_port_, false) ? "Success" : upnp_.getLastError();
-							NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", upnp_port_, result.c_str());
-							return result;
-						});
-					}
-				}
+				lbs_net_.Send(GenerateP2PMatchReportPacket());
+				lbs_remote_.Open(server_.c_str(), port);
+				InitUDP(true);
 			} else {
 				netmode_ = NetMode::Offline;
 			}
@@ -418,8 +389,7 @@ void Gdxsv::HandleRPC() {
 			} else {
 				char addr_buf[INET_ADDRSTRLEN];
 				inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
-				host = std::string(addr_buf);
-				if (udp_net_.Connect(host, port)) {
+				if (udp_net_.Connect(std::string(addr_buf), port)) {
 					netmode_ = NetMode::McsUdp;
 				} else {
 					netmode_ = NetMode::Offline;
@@ -580,6 +550,30 @@ void Gdxsv::GcpPingTest() {
 	}
 	gcp_ping_test_finished_ = true;
 	gui_display_notification("Ping test finished", 3000);
+}
+
+bool Gdxsv::InitUDP(bool upnp) {
+	if (!udp_.Initialized() || config::GdxLocalPort != udp_.bound_port()) {
+		if (!udp_.Bind(config::GdxLocalPort)) {
+			return false;
+		}
+	}
+
+	if (config::GdxLocalPort != udp_.bound_port()) {
+		config::GdxLocalPort = udp_.bound_port();
+	}
+
+	if (upnp && config::EnableUPnP && upnp_port_ != udp_.bound_port()) {
+		upnp_port_ = udp_.bound_port();
+		upnp_result_ = std::async(std::launch::async, [this]() -> std::string {
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", upnp_port_);
+			std::string result = upnp_.Init() && upnp_.AddPortMapping(upnp_port_, false) ? "Success" : upnp_.getLastError();
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", upnp_port_, result.c_str());
+			return result;
+		});
+	}
+
+	return true;
 }
 
 std::string Gdxsv::GenerateLoginKey() {

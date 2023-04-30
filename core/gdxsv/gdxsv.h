@@ -47,11 +47,10 @@ class Gdxsv {
 
    private:
 	void GcpPingTest();
+	bool InitUDP(bool upnp);
 	static std::string GenerateLoginKey();
 	std::vector<u8> GeneratePlatformInfoPacket();
-	std::string GeneratePlatformInfoString();
 	std::vector<u8> GenerateP2PMatchReportPacket();
-	LbsMessage GenerateP2PMatchReportMessage();
 	void ApplyOnlinePatch(bool first_time);
 	void WritePatchDisk1();
 	void WritePatchDisk2();

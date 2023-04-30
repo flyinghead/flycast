@@ -19,6 +19,9 @@ bool GdxsvBackendTcp::Connect(const std::string &host, u16 port) {
 	}
 
 	tcp_client_.SetNonBlocking();
+	rx_msg_reader_.Clear();
+	tx_msg_reader_.Clear();
+	recv_buf_.clear();
 	return true;
 }
 

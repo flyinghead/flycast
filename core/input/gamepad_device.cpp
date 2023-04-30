@@ -78,7 +78,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		switch (key)
 		{
 		case EMU_BTN_ESCAPE:
-			if (pressed && !gdxsv_emu_ingame())
+			if (pressed && !gdxsv_ingame())
 				dc_exit();
 			break;
 		case EMU_BTN_MENU:
@@ -86,7 +86,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 				gui_open_settings();
 			break;
 		case EMU_BTN_FFORWARD:
-			if (pressed && !gui_is_open() && !gdxsv_emu_ingame())
+			if (pressed && !gui_is_open() && !gdxsv_ingame())
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online;
 			break;
 		case EMU_BTN_INSERT_CARD:
