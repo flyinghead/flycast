@@ -46,7 +46,9 @@ class GdxsvBackendRollback {
 
 	State state_ = State::None;
 	bool is_local_test_ = false;
+	bool error_fast_return_ = false;
 	bool osd_network_stat_ = false;
+	int osd_network_stat_countdown_ = 0;
 	int recv_delay_ = 0;
 	int port_ = 0;
 	std::deque<u8> recv_buf_;

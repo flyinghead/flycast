@@ -53,13 +53,7 @@ u16 convertInput(MapleInputState input) {
 }
 
 void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::map<int, int>& pos_to_id);
-ImColor msColor(int ms);
-void textCentered(std::string text) {
-	auto windowWidth = ImGui::GetWindowSize().x;
-	auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
-	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-	ImGui::Text(text.c_str());
-}
+void drawNetworkStat(const proto::P2PMatching& matching);
 }  // namespace
 
 void GdxsvBackendRollback::DisplayOSD() {
@@ -79,82 +73,9 @@ void GdxsvBackendRollback::DisplayOSD() {
 		drawConnectionDiagram(elapsed, matrix, pos_to_id);
 	}
 
-	if (osd_network_stat_ && ggpo::active()) {
-		ggpo::NetworkStats stats{};
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-		ImGui::SetNextWindowPos(ImVec2(10, 10));
-		ImGui::SetNextWindowSize(ImVec2(160 * settings.display.uiScale, 0));
-		ImGui::SetNextWindowBgAlpha(0.3f);
-		ImGui::Begin("##gdxsv_osd_network_stat", NULL,
-					 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-		textCentered("Network Stat");
-
-		for (int i = 0; i < matching_.users_size(); i++) {
-			ggpo::getNetworkStats(i, &stats);
-
-			if (i == 0) {
-				// Frame Delay
-				ImGui::Text("Delay");
-				std::string delay = std::to_string(config::GGPODelay.get());
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
-				ImGui::Text("%s", delay.c_str());
-
-				ImGui::Text("Rollback");
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x -
-								ImGui::CalcTextSize(std::to_string(stats.extra.total_rollbacked_frames).c_str()).x);
-				ImGui::Text("%d", stats.extra.total_rollbacked_frames);
-
-				ImGui::Text("Timesync");
-				ImGui::SameLine(ImGui::GetContentRegionAvail().x -
-								ImGui::CalcTextSize(std::to_string(stats.extra.total_timesync).c_str()).x);
-				ImGui::Text("%d", stats.extra.total_timesync);
-
-				// Predicted Frames
-				if (stats.sync.predicted_frames >= 7)
-					// red
-					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
-				else if (stats.sync.predicted_frames >= 5)
-					// yellow
-					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
-				ImGui::Text("Predicted");
-				ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
-				if (stats.sync.predicted_frames >= 5) ImGui::PopStyleColor();
-			}
-
-			if (i == matching_.peer_id()) continue;
-
-			ImGui::Separator();
-			textCentered(std::to_string(i + 1) + "P: " + matching_.users(i).user_id());
-			textCentered(matching_.users(i).user_name());
-			textCentered(matching_.users(i).pilot_name().c_str());
-
-			// Ping
-			ImGui::Text("Ping");
-			ImGui::PushStyleColor(ImGuiCol_Text, msColor(stats.network.ping).Value);
-			std::string ping = std::to_string(stats.network.ping);
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
-			ImGui::Text("%s", ping.c_str());
-			ImGui::PopStyleColor();
-
-			ImGui::Text("Loss");
-			std::string loss = std::to_string(stats.network.recv_packet_loss);
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(loss.c_str()).x);
-			ImGui::Text("%s", loss.c_str());
-
-			// Send Queue
-			ImGui::Text("Send Q");
-			ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
-
-			ImGui::Text("Behind");
-			ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
-		}
-
-		ImGui::PopStyleColor();
-		ImGui::End();
-		ImGui::PopStyleVar(2);
+	if (osd_network_stat_ || osd_network_stat_countdown_) {
+		if (osd_network_stat_countdown_) osd_network_stat_countdown_--;
+		drawNetworkStat(matching_);
 	}
 }
 
@@ -171,6 +92,7 @@ void GdxsvBackendRollback::Reset() {
 	ping_pong_.Reset();
 	start_network_ = std::future<bool>();
 	input_logs_.clear();
+	osd_network_stat_ = false;
 	ggpo::stopSession();
 }
 
@@ -269,7 +191,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			session_start_time = std::chrono::high_resolution_clock::now();
 			state_ = State::WaitGGPOSession;
 		} else {
-			gdxsv_WriteMem16(NetCountDown, 1);
 			emu.start();
 			state_ = State::End;
 		}
@@ -293,6 +214,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		} else if (timeout) {
 			NOTICE_LOG(COMMON, "StartNetwork timeout");
 			SetCloseReason("ggpo_start_timeout");
+			error_fast_return_ = true;
 			ggpo::stopSession();
 			state_ = State::End;
 			emu.start();
@@ -326,14 +248,15 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	// Fast return to lobby on error
 	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
 		SetCloseReason("error_fast_return");
+		error_fast_return_ = true;
 		ggpo::stopSession();
 		config::GGPOEnable.reset();
 		state_ = State::End;
-		gdxsv_WriteMem16(NetCountDown, 1);
 	}
 
-	if (is_local_test_ && state_ == State::End) {
-		dc_exit();
+	if (is_local_test_ && State::End <= state_) {
+		static int local_test_closing = 120;
+		if (--local_test_closing == 0) dc_exit();
 	}
 }
 
@@ -442,6 +365,7 @@ void GdxsvBackendRollback::Close() {
 	config::ThreadedRendering.load();
 	RestorePatch();
 	KillTex = true;
+	osd_network_stat_ = false;
 	SaveReplay();
 	state_ = State::Closed;
 }
@@ -464,164 +388,175 @@ u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
 u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	if (state_ <= State::LbsStartBattleFlow) {
 		ProcessLbsMessage();
-	} else {
-		int frame = 0;
-		ggpo::getCurrentFrame(&frame);
 
-		const int disk = gdxsv.Disk();
-		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
-		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
-		const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
-
-		// Notify disconnect in game part if other player is disconnect on ggpo
-		if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
-			for (int i = 0; i < matching_.player_count(); ++i) {
-				if (!ggpo::isConnected(i)) {
-					SetCloseReason("player_disconnected");
-					gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
-					ggpo::setExInput(ExInputNone);
-					break;
-				}
-			}
+		int n = std::min<int>(recv_buf_.size(), size);
+		for (int i = 0; i < n; ++i) {
+			gdxsv_WriteMem8(addr + i, recv_buf_.front());
+			recv_buf_.pop_front();
 		}
 
-		auto inputState = mapleInputState;
-		auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
+		return n;
+	}
 
-		int msg_len = gdxsv_ReadMem8(InetBuf);
-		if (0 < msg_len) {
-			if (msg_len == 0x82) {
-				msg_len = 20;
+	int frame = 0;
+	ggpo::getCurrentFrame(&frame);
+
+	const int disk = gdxsv.Disk();
+	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
+	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
+	const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
+	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+	const auto inputState = mapleInputState;
+	const auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
+
+	// Notify disconnect in game part if other player is disconnect on ggpo
+	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+		for (int i = 0; i < matching_.player_count(); ++i) {
+			if (!ggpo::isConnected(i)) {
+				SetCloseReason("player_disconnected");
+				osd_network_stat_countdown_ = 60 * 10;
+				gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
+				ggpo::setExInput(ExInputNone);
+				break;
 			}
-			McsMessage msg;
-			msg.body.resize(msg_len);
-			for (int i = 0; i < msg_len; i++) {
-				msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
-				gdxsv_WriteMem8(InetBuf + i, 0);
-			}
+		}
+	}
 
-			if (msg.Type() == McsMessage::ConnectionIdMsg) {
-				state_ = State::StopEmulator;
-			}
-
-			if (msg.Type() == McsMessage::IntroMsg) {
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::IntroMsg, i);
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
-			}
-
-			if (msg.Type() == McsMessage::IntroMsgReturn) {
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::IntroMsgReturn, i);
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
-			}
-
-			if (msg.Type() == McsMessage::PingMsg) {
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::PongMsg, i);
-					a.SetPongTo(matching_.peer_id());
-					a.PongCount(msg.PingCount());
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
-			}
-
-			if (msg.Type() == McsMessage::StartMsg) {
-				gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
-				if (!ggpo::rollbacking()) {
-					ggpo::setExInput(ExInputWaitStart);
-					NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
-				}
-			}
-
-			if (msg.Type() == McsMessage::KeyMsg1) {
-				u64 inputs = 0;
-				for (int i = 0; i < matching_.player_count(); ++i) {
-					auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
-					auto input = convertInput(inputState[i]);
-					a.body[2] = input >> 8 & 0xff;
-					a.body[3] = input & 0xff;
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-					inputs |= u64(input) << (i * 16);
-				}
-
-				while (!input_logs_.empty() && frame <= input_logs_.back().first) {
-					input_logs_.pop_back();
-				}
-				input_logs_.emplace_back(frame, inputs);
-			}
-
-			if (msg.Type() == McsMessage::LoadEndMsg) {
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::LoadStartMsg, i);
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
-
-				gdxsv_WriteMem16(memExInputAddr, ExInputWaitLoadEnd);
-				if (!ggpo::rollbacking()) {
-					ggpo::setExInput(ExInputWaitLoadEnd);
-					NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
-				}
-			}
-
-			verify(recv_buf_.size() <= size);
+	int msg_len = gdxsv_ReadMem8(InetBuf);
+	if (0 < msg_len) {
+		if (msg_len == 0x82) {
+			msg_len = 20;
+		}
+		McsMessage msg;
+		msg.body.resize(msg_len);
+		for (int i = 0; i < msg_len; i++) {
+			msg.body[i] = gdxsv_ReadMem8(InetBuf + i);
+			gdxsv_WriteMem8(InetBuf + i, 0);
 		}
 
-		if (gdxsv_ReadMem16(memExInputAddr) != ExInputNone) {
-			auto exInput = gdxsv_ReadMem16(memExInputAddr);
-			bool ok = true;
+		if (msg.Type() == McsMessage::ConnectionIdMsg) {
+			state_ = State::StopEmulator;
+		}
+
+		if (msg.Type() == McsMessage::IntroMsg) {
 			for (int i = 0; i < matching_.player_count(); i++) {
-				ok &= inputState[i].exInput == exInput;
-			}
-
-			if (ok && exInput == ExInputWaitStart) {
-				NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
-				gdxsv_WriteMem16(memExInputAddr, ExInputNone);
-				if (!ggpo::rollbacking()) {
-					ggpo::setExInput(ExInputNone);
-				}
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
-			}
-
-			if (ok && exInput == ExInputWaitLoadEnd) {
-				NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
-				gdxsv_WriteMem16(memExInputAddr, ExInputNone);
-				if (!ggpo::rollbacking()) {
-					ggpo::setExInput(ExInputNone);
-				}
-				for (int i = 0; i < matching_.player_count(); i++) {
-					if (i == matching_.peer_id()) continue;
-					auto a = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
-					std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
-				}
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::IntroMsg, i);
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
 			}
 		}
 
-		if (!ggpo::rollbacking()) {
-			report_.set_frame_count(frame);
+		if (msg.Type() == McsMessage::IntroMsgReturn) {
+			for (int i = 0; i < matching_.player_count(); i++) {
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::IntroMsgReturn, i);
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+			}
+		}
+
+		if (msg.Type() == McsMessage::PingMsg) {
+			for (int i = 0; i < matching_.player_count(); i++) {
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::PongMsg, i);
+				a.SetPongTo(matching_.peer_id());
+				a.PongCount(msg.PingCount());
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+			}
+		}
+
+		if (msg.Type() == McsMessage::StartMsg) {
+			gdxsv_WriteMem16(memExInputAddr, ExInputWaitStart);
+			if (!ggpo::rollbacking()) {
+				ggpo::setExInput(ExInputWaitStart);
+				NOTICE_LOG(COMMON, "StartMsg KeyFrame:%d", frame);
+			}
+		}
+
+		if (msg.Type() == McsMessage::KeyMsg1) {
+			u64 inputs = 0;
+			for (int i = 0; i < matching_.player_count(); ++i) {
+				auto a = McsMessage::Create(McsMessage::KeyMsg1, i);
+				auto input = convertInput(inputState[i]);
+				a.body[2] = input >> 8 & 0xff;
+				a.body[3] = input & 0xff;
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+				inputs |= u64(input) << (i * 16);
+			}
+
+			while (!input_logs_.empty() && frame <= input_logs_.back().first) {
+				input_logs_.pop_back();
+			}
+			input_logs_.emplace_back(frame, inputs);
+		}
+
+		if (msg.Type() == McsMessage::LoadEndMsg) {
+			for (int i = 0; i < matching_.player_count(); i++) {
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::LoadStartMsg, i);
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+			}
+
+			gdxsv_WriteMem16(memExInputAddr, ExInputWaitLoadEnd);
+			if (!ggpo::rollbacking()) {
+				ggpo::setExInput(ExInputWaitLoadEnd);
+				NOTICE_LOG(COMMON, "LoadEndMsg KeyFrame:%d", frame);
+			}
 		}
 
 		verify(recv_buf_.size() <= size);
 	}
 
-	if (recv_buf_.empty()) {
-		return 0;
+	if (gdxsv_ReadMem16(memExInputAddr) != ExInputNone) {
+		auto exInput = gdxsv_ReadMem16(memExInputAddr);
+		bool ok = true;
+		for (int i = 0; i < matching_.player_count(); i++) {
+			ok &= inputState[i].exInput == exInput;
+		}
+
+		if (ok && exInput == ExInputWaitStart) {
+			NOTICE_LOG(COMMON, "StartMsg Join:%d", frame);
+			gdxsv_WriteMem16(memExInputAddr, ExInputNone);
+			if (!ggpo::rollbacking()) {
+				ggpo::setExInput(ExInputNone);
+			}
+			for (int i = 0; i < matching_.player_count(); i++) {
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+			}
+		}
+
+		if (ok && exInput == ExInputWaitLoadEnd) {
+			NOTICE_LOG(COMMON, "LoadEndMsg Join:%d", frame);
+			gdxsv_WriteMem16(memExInputAddr, ExInputNone);
+			if (!ggpo::rollbacking()) {
+				ggpo::setExInput(ExInputNone);
+			}
+			for (int i = 0; i < matching_.player_count(); i++) {
+				if (i == matching_.peer_id()) continue;
+				auto a = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
+				std::copy(a.body.begin(), a.body.end(), std::back_inserter(recv_buf_));
+			}
+		}
 	}
+
+	if (!ggpo::rollbacking()) {
+		report_.set_frame_count(frame);
+	}
+
+	if (error_fast_return_) {
+		gdxsv_WriteMem16(NetCountDown, 60 * 3);
+		error_fast_return_ = false;
+	}
+
+	verify(recv_buf_.size() <= size);
 
 	int n = std::min<int>(recv_buf_.size(), size);
 	for (int i = 0; i < n; ++i) {
 		gdxsv_WriteMem8(addr + i, recv_buf_.front());
 		recv_buf_.pop_front();
 	}
+
 	return n;
 }
 
@@ -986,5 +921,98 @@ void drawConnectionDiagram(int elapsed, const uint8_t matrix[4][4], const std::m
 	ImGui::End();
 	ImGui::PopStyleVar();
 	ImGui::PopStyleVar();
+}
+
+void textCentered(std::string text) {
+	auto windowWidth = ImGui::GetWindowSize().x;
+	auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+	ImGui::Text(text.c_str());
+}
+
+void drawNetworkStat(const proto::P2PMatching& matching) {
+	auto me = matching.peer_id();
+	static ggpo::NetworkStats stats[4] = {};
+	static bool is_connected[4] = {};
+	if (ggpo::active()) {
+		for (int i = 0; i < matching.users_size(); i++) {
+			ggpo::getNetworkStats(i, &stats[i]);
+			is_connected[i] = ggpo::isConnected(i);
+		}
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y / 2.f), ImGuiCond_Always, ImVec2(0.0f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(160 * settings.display.uiScale, 0));
+	ImGui::SetNextWindowBgAlpha(0.3f);
+	ImGui::Begin("##gdxsv_osd_network_stat", NULL,
+				 ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+	textCentered("Network Stat");
+
+	// Frame Delay
+	ImGui::Text("Delay");
+	std::string delay = std::to_string(config::GGPODelay.get());
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+	ImGui::Text("%s", delay.c_str());
+
+	ImGui::Text("Rollback");
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x -
+					ImGui::CalcTextSize(std::to_string(stats[me].extra.total_rollbacked_frames).c_str()).x);
+	ImGui::Text("%d", stats[me].extra.total_rollbacked_frames);
+
+	ImGui::Text("Timesync");
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats[me].extra.total_timesync).c_str()).x);
+	ImGui::Text("%d", stats[me].extra.total_timesync);
+
+	// Predicted Frames
+	if (stats[me].sync.predicted_frames >= 7)
+		// red
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+	else if (stats[me].sync.predicted_frames >= 5)
+		// yellow
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+	ImGui::Text("Predicted");
+	ImGui::ProgressBar(stats[me].sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	if (stats[me].sync.predicted_frames >= 5) ImGui::PopStyleColor();
+
+	for (int i = 0; i < matching.users_size(); i++) {
+		if (i == matching.peer_id()) continue;
+		ImGui::Separator();
+		textCentered(std::to_string(i + 1) + "P: " + matching.users(i).user_id());
+		textCentered(matching.users(i).user_name());
+		textCentered(matching.users(i).pilot_name().c_str());
+
+		if (is_connected[i]) {
+			// Ping
+			ImGui::Text("Ping");
+			ImGui::PushStyleColor(ImGuiCol_Text, msColor(stats[i].network.ping).Value);
+			std::string ping = std::to_string(stats[i].network.ping);
+			ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+			ImGui::Text("%s", ping.c_str());
+			ImGui::PopStyleColor();
+		} else {
+			ImGui::PushStyleColor(ImGuiCol_Text, msColor(999).Value);
+			textCentered("Disconnected");
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::Text("Loss");
+		std::string loss = std::to_string(stats[i].network.recv_packet_loss);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(loss.c_str()).x);
+		ImGui::Text("%s", loss.c_str());
+
+		// Send Queue
+		ImGui::Text("Send Q");
+		ImGui::ProgressBar(stats[i].network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+
+		ImGui::Text("Behind");
+		ImGui::ProgressBar(0.5f + stats[i].timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	}
+
+	ImGui::PopStyleColor();
+	ImGui::End();
+	ImGui::PopStyleVar(2);
 }
 }  // namespace
