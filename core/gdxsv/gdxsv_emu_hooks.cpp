@@ -394,32 +394,29 @@ void gdxsv_update_popup() {
 }
 
 static void wireless_warning_popup() {
-    static bool show_wireless_warning = true;
-    static std::string connection_medium = os_GetConnectionMedium();
-    const bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+	static bool show_wireless_warning = true;
+	static std::string connection_medium = os_GetConnectionMedium();
+	const bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
 
-    if (show_wireless_warning && no_popup_opened && connection_medium == "Wireless")
-    {
-        ImGui::OpenPopup("Wireless connection detected");
-        show_wireless_warning = false;
-    }
+	if (show_wireless_warning && no_popup_opened && connection_medium == "Wireless") {
+		ImGui::OpenPopup("Wireless connection detected");
+		show_wireless_warning = false;
+	}
 
-    if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-    {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
-        ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
-        float currentwidth = ImGui::GetContentRegionAvail().x;
+	if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
+		ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
+		float currentwidth = ImGui::GetContentRegionAvail().x;
 
-        ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-        if (ImGui::Button("OK", ImVec2(100.f * settings.display.uiScale, 0.f)))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SetItemDefaultFocus();
-        ImGui::PopStyleVar();
-        ImGui::EndPopup();
-    }
+		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		if (ImGui::Button("OK", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::PopStyleVar();
+		ImGui::EndPopup();
+	}
 }
 
 void gdxsv_handle_release_json(const std::string& json_string) {
