@@ -25,9 +25,9 @@ using namespace nlohmann;
 #define CHAR_PATH_SEPARATOR '/'
 #endif
 
-void gdxsv_update_popup();
-void wireless_warning_popup();
-void gdxsv_latest_version_check();
+static void gdxsv_update_popup();
+static void wireless_warning_popup();
+static void gdxsv_latest_version_check();
 static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 static std::string gdxsv_latest_version_download_url;
@@ -357,7 +357,7 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 	}
 }
 
-void gdxsv_update_popup() {
+static void gdxsv_update_popup() {
 	gdxsv_latest_version_check();
 	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
 	if (gdxsv_update_available && no_popup_opened) {
@@ -419,7 +419,7 @@ static void wireless_warning_popup() {
 	}
 }
 
-void gdxsv_handle_release_json(const std::string& json_string) {
+static void gdxsv_handle_release_json(const std::string& json_string) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -479,7 +479,7 @@ void gdxsv_handle_release_json(const std::string& json_string) {
 	}
 }
 
-void gdxsv_latest_version_check() {
+static void gdxsv_latest_version_check() {
 	static std::once_flag once;
 	std::call_once(once, [] {
 		std::thread([]() {
