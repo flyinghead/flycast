@@ -307,6 +307,9 @@ void gdxsv_emu_gui_settings() {
 		"Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
 		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and "
 		"introduces glitches.");
+	
+	OptionCheckbox("Display Network Statistics", config::NetworkStats,
+			"Display network statistics on screen by default.\nUse Flycast Menu button to show/hide.");
 }
 
 void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }

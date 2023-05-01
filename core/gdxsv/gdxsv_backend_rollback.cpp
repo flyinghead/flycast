@@ -351,6 +351,7 @@ void GdxsvBackendRollback::Open() {
 	state_ = State::McsSessionExchange;
 	gdxsv.maxlag_ = 0;
 	ApplyPatch(true);
+	osd_network_stat_ = config::NetworkStats;
 }
 
 void GdxsvBackendRollback::Close() {
