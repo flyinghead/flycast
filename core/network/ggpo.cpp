@@ -243,8 +243,7 @@ static bool on_event(GGPOEvent *info)
 	case GGPO_EVENTCODE_TIMESYNC:
 		NOTICE_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
-		// timeSyncFrames = info->u.timesync.frames_ahead;
-		timeSyncFrames = 1;
+		timeSyncFrames = info->u.timesync.frames_ahead;
 		totalTimeSync++;
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
