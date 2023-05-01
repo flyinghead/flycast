@@ -266,3 +266,12 @@ GGPOErrorCode ggpo_get_current_frame(
 
 	return ggpo->GetCurrentFrame(frame);
 }
+
+GGPOErrorCode ggpo_set_disconnect_without_rollback(
+    GGPOSession *ggpo, bool allow)
+{
+	if (ggpo == nullptr)
+		return GGPO_ERRORCODE_INVALID_SESSION;
+
+	return ggpo->SetDisconnectWithoutRollback(true);
+}

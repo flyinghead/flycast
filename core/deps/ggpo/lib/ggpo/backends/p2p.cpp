@@ -27,7 +27,8 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
     _num_players(num_players),
     _next_spectator_frame(0),
     _disconnect_timeout(DEFAULT_DISCONNECT_TIMEOUT),
-    _disconnect_notify_start(DEFAULT_DISCONNECT_NOTIFY_START)
+    _disconnect_notify_start(DEFAULT_DISCONNECT_NOTIFY_START),
+    _disconnect_without_rollback(false)
 {
    _callbacks = *cb;
    _synchronizing = true;
@@ -525,6 +526,10 @@ Peer2PeerBackend::DisconnectPlayerQueue(int queue, int syncto)
    Log("Changing queue %d local connect status for last frame from %d to %d on disconnect request (current: %d).",
        queue, _local_connect_status[queue].last_frame, syncto, framecount);
 
+    if (_disconnect_without_rollback) {
+       syncto = GameInput::NullFrame;
+    }
+
    _local_connect_status[queue].disconnected = 1;
    _local_connect_status[queue].last_frame = syncto;
 
@@ -596,6 +601,13 @@ Peer2PeerBackend::SetDisconnectNotifyStart(int timeout)
       }
    }
    return GGPO_OK;
+}
+
+GGPOErrorCode
+Peer2PeerBackend::SetDisconnectWithoutRollback(bool allow)
+{
+    _disconnect_without_rollback = allow;
+    return GGPO_OK;
 }
 
 GGPOErrorCode

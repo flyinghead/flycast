@@ -33,6 +33,7 @@ public:
    GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay) override;
    GGPOErrorCode SetDisconnectTimeout(int timeout) override;
    GGPOErrorCode SetDisconnectNotifyStart(int timeout) override;
+   GGPOErrorCode SetDisconnectWithoutRollback(bool allow) override;
    GGPOErrorCode SendMessage(const void *msg, int len, bool spectators) override;
    GGPOErrorCode GetCurrentFrame(int* frame) override { *frame = _sync.GetFrameCount(); return GGPO_OK; }
 
@@ -73,6 +74,7 @@ protected:
    int                   _next_spectator_frame;
    int                   _disconnect_timeout;
    int                   _disconnect_notify_start;
+   bool                  _disconnect_without_rollback;
 
    UdpMsg::connect_status _local_connect_status[UDP_MSG_MAX_PLAYERS];
 };
