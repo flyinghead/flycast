@@ -226,8 +226,10 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	// Rebattle end
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
 		if (state_ != State::CloseWait) {
-			ggpo::disconnect(matching_.peer_id());
 			ggpo::getCurrentFrame(&disconnect_frame);
+			for (int i = 0; i < matching_.users_size(); i++) {
+				ggpo::disconnect(matching_.peer_id());
+			}
 			state_ = State::CloseWait;
 		}
 	}
