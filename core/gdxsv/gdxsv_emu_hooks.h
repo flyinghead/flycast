@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "rend/boxart/http_client.h"
+#include "imgui/imgui.h"
 
 // Functions provided to the emulator by the gdxsv module.
 
@@ -38,3 +39,5 @@ void gdxsv_gui_display_osd();
 void gdxsv_crash_append_log(FILE* f);
 
 void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields);
+
+const ImWchar* gdxsv_get_glyph_ranges_shiftjis();
