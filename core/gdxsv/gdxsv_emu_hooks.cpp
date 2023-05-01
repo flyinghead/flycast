@@ -1,7 +1,7 @@
 #include "gdxsv_emu_hooks.h"
 
-#include <fstream>
 #include <regex>
+#include <sstream>
 
 #include "cfg/cfg.h"
 #include "gdxsv.h"
@@ -12,6 +12,7 @@
 #include "log/LogManager.h"
 #include "nowide/fstream.hpp"
 #include "oslib/oslib.h"
+#include "rend/boxart/http_client.h"
 #include "rend/gui_util.h"
 #include "stdclass.h"
 #include "version.h"
@@ -26,9 +27,7 @@ static bool gdxsv_update_available = false;
 static std::string gdxsv_latest_version_tag;
 static std::string gdxsv_latest_version_download_url;
 
-void gdxsv_emu_flycast_init() {
-	config::GGPOEnable = false;
-}
+void gdxsv_emu_flycast_init() { config::GGPOEnable = false; }
 
 void gdxsv_emu_start() {
 	gdxsv.Reset();
@@ -45,9 +44,7 @@ void gdxsv_emu_start() {
 	}
 }
 
-void gdxsv_emu_reset() {
-	gdxsv.Reset();
-}
+void gdxsv_emu_reset() { gdxsv.Reset(); }
 
 void gdxsv_emu_vblank() {
 	if (gdxsv.Enabled()) {
@@ -87,9 +84,7 @@ void gdxsv_emu_loadstate(int slot) {
 	}
 }
 
-bool gdxsv_ingame() {
-	return gdxsv.InGame();
-}
+bool gdxsv_ingame() { return gdxsv.InGame(); }
 
 bool gdxsv_emu_menu_open() {
 	if (gdxsv.Enabled()) {
@@ -98,9 +93,7 @@ bool gdxsv_emu_menu_open() {
 	return true;
 }
 
-bool gdxsv_widescreen_hack_enabled() {
-	return gdxsv.Enabled() && config::WidescreenGameHacks;
-}
+bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
 void gdxsv_emu_gui_display() {
 	if (gui_state == GuiState::Main) {
@@ -309,14 +302,12 @@ void gdxsv_emu_gui_settings() {
 		"Gdx Minimum Delay", config::GdxMinDelay, 2, 6,
 		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and "
 		"introduces glitches.");
-	
+
 	OptionCheckbox("Display Network Statistics", config::NetworkStats,
-			"Display network statistics on screen by default.\nUse Flycast Menu button to show/hide.");
+				   "Display network statistics on screen by default.\nUse Flycast Menu button to show/hide.");
 }
 
-void gdxsv_gui_display_osd() {
-	gdxsv.DisplayOSD();
-}
+void gdxsv_gui_display_osd() { gdxsv.DisplayOSD(); }
 
 void gdxsv_crash_append_log(FILE* f) {
 	if (gdxsv.Enabled()) {

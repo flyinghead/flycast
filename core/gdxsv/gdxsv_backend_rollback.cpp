@@ -16,6 +16,7 @@
 #include "libs.h"
 #include "network/ggpo.h"
 #include "network/net_platform.h"
+#include "rend/boxart/http_client.h"
 #include "rend/gui_util.h"
 #include "rend/transform_matrix.h"
 
