@@ -76,7 +76,17 @@ if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 		OUTPUT_VARIABLE GIT_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
+	# Transform git describe to semver format, e.g. gdxsv-1.2.4-3-g89b14873e -> gdxsv-1.2.4-dev.3+89b14873e
 	string(REGEX REPLACE "-([0-9]+)-g(.+)$" "-dev.\\1+\\2" GIT_VERSION "${GIT_VERSION}")
+
+	# Auto increment semver if it is prelease, since 1.2.3-beta.1 < 1.2.3
+	string(REGEX MATCH "[0-9]+-dev" SEMVER_PATCH "${GIT_VERSION}")
+	if(DEFINED SEMVER_PATCH)
+		string(REPLACE "-dev" "" SEMVER_PATCH "${SEMVER_PATCH}")
+		MATH(EXPR SEMVER_PATCH "${SEMVER_PATCH}+1")
+		string(REGEX REPLACE "[0-9]+-dev" "${SEMVER_PATCH}-dev" GIT_VERSION "${GIT_VERSION}")
+	endif()
+	
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
