@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 #include <future>
+#include <atomic>
 
 struct MapleInputState;
 
@@ -77,11 +78,5 @@ static inline void setExInput(u16 exInput) {
 	localExInput = exInput;
 }
 
-static int timeSync(int maxWaitFrame) {
-	extern int timeSyncFrames;
-	int frameToWait = std::max(0, std::min(timeSyncFrames, maxWaitFrame));
-	timeSyncFrames -= frameToWait;
-	return frameToWait;
-}
-
+extern std::atomic<int> timeSyncFrames;
 }

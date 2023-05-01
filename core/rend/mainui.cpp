@@ -139,8 +139,9 @@ void mainui_loop()
 		else
 			imguiDriver->present();
 
-		if (ggpo::timeSync(1))
+		if (0 < ggpo::timeSyncFrames.fetch_sub(1)) {
 			fixedFrequencyWait();
+		}
 
 		if (currentDupeFrames != config::DupeFrames) {
 			forceReinit = true;

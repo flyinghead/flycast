@@ -32,7 +32,7 @@ namespace ggpo
 
 bool inRollback;
 u16 localExInput;
-int timeSyncFrames;
+std::atomic<int> timeSyncFrames;
 
 static void getLocalInput(MapleInputState inputState[4])
 {
