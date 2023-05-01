@@ -39,6 +39,8 @@ void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_L
 
 IMGUI_API const ImWchar*    GetGlyphRangesChineseSimplifiedOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 7800 CJK Unified Ideographs from General Standard Chinese Characters
 IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 4700 CJK Unified Ideographs from Hong Kong's List of Graphemes of Commonly-Used Chinese Characters
+IMGUI_API const ImWchar*    GetGlyphRangesShiftJIS();
+
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 void ShowHelpMarker(const char* desc);

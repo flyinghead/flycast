@@ -31,20 +31,12 @@ bool Gdxsv::Enabled() const { return enabled_; }
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
 
 const char *Gdxsv::NetModeString() const {
-	switch (netmode_) {
-		case NetMode::Offline:
-			return "Offline";
-		case NetMode::Lbs:
-			return "Lbs";
-		case NetMode::McsUdp:
-			return "McsUdp";
-		case NetMode::McsRollback:
-			return "McsRollback";
-		case NetMode::Replay:
-			return "Replay";
-		default:
-			return "Unknown";
-	}
+	if (netmode_ == NetMode::Offline) return "Offline";
+	if (netmode_ == NetMode::Lbs) return "Lbs";
+	if (netmode_ == NetMode::McsUdp) return "McsUdp";
+	if (netmode_ == NetMode::McsRollback) return "McsRollback";
+	if (netmode_ == NetMode::Replay) return "Replay";
+	return "Unknown";
 }
 
 void Gdxsv::Reset() {
@@ -272,10 +264,11 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 		ss << "machine_id=" << std::hex << digest << std::dec << "\n";
 	}
 
-	if (gcp_ping_test_finished_) {
+	if (gcp_ping_test_mutex_.try_lock()) {
 		for (const auto &res : gcp_ping_test_result_) {
 			ss << res.first << "=" << res.second << "\n";
 		}
+		gcp_ping_test_mutex_.unlock();
 	}
 
 	auto s = ss.str();
@@ -473,6 +466,8 @@ void Gdxsv::StartPingTest() {
 }
 
 void Gdxsv::GcpPingTest() {
+	std::map<std::string, int> test_result;
+
 	// powered by https://github.com/GoogleCloudPlatform/gcping
 	static const std::string get_path = "/api/ping";
 	static const std::map<std::string, std::string> gcp_region_hosts = {
@@ -501,7 +496,6 @@ void Gdxsv::GcpPingTest() {
 	};
 
 	for (const auto &region_host : gcp_region_hosts) {
-		gui_display_notification("Ping testing...", 1000);
 		TcpClient client;
 		std::stringstream ss;
 		ss << "HEAD " << get_path << " HTTP/1.1"
@@ -541,15 +535,17 @@ void Gdxsv::GcpPingTest() {
 		if (response_header.find("200 OK") == std::string::npos && response_header.find("302 Found") == std::string::npos) {
 			ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
 		} else {
-			gcp_ping_test_result_[region_host.first] = rtt;
+			test_result[region_host.first] = rtt;
 			char latency_str[256];
 			snprintf(latency_str, 256, "%s : %d[ms]", region_host.first.c_str(), rtt);
 			NOTICE_LOG(COMMON, "%s", latency_str);
 		}
 		client.Close();
 	}
-	gcp_ping_test_finished_ = true;
-	gui_display_notification("Ping test finished", 3000);
+
+	gcp_ping_test_mutex_.lock();
+	gcp_ping_test_result_.swap(test_result);
+	gcp_ping_test_mutex_.unlock();
 }
 
 bool Gdxsv::InitUDP(bool upnp) {

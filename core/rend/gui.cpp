@@ -197,10 +197,10 @@ void gui_initFonts()
 	// Always load ShiftJIS for Gdxsv
 	{
 		font_cfg.FontNo = 2;	// Meiryo UI
-		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "meiryo.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "meiryo.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesShiftJIS());
 		font_cfg.FontNo = 2;	// UIGothic
 		if (font == nullptr)
-			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesShiftJIS());
 	}
 /* Load ShiftJIS only to prevent crash with older GPU
     switch (cp)
@@ -244,7 +244,7 @@ void gui_initFonts()
     std::string fontDir = std::string("/System/Library/Fonts/");
 
     // Always load ShiftJIS for Gdxsv
-    io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+    io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesShiftJIS());
 /* Load ShiftJIS only to prevent crash with older GPU
     extern std::string os_Locale();
     std::string locale = os_Locale();

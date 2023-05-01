@@ -66,7 +66,7 @@ class Gdxsv {
 	std::map<std::string, u32> symbols_;
 	proto::GamePatchList patch_list_;
 	std::map<std::string, int> gcp_ping_test_result_;
-	std::atomic<bool> gcp_ping_test_finished_;
+	std::mutex gcp_ping_test_mutex_;
 	bool going_to_battle_ = false;
 
 	MiniUPnP upnp_;

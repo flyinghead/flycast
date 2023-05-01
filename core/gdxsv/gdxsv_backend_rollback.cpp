@@ -16,6 +16,7 @@
 #include "libs.h"
 #include "network/ggpo.h"
 #include "network/net_platform.h"
+#include "rend/boxart/http_client.h"
 #include "rend/gui_util.h"
 #include "rend/transform_matrix.h"
 
@@ -684,12 +685,7 @@ void GdxsvBackendRollback::SaveReplay() {
 			}
 		}
 
-#if _WIN32
-		auto replay_file = replay_dir + "\\" + log->battle_code() + ".pb";
-#else
 		auto replay_file = replay_dir + "/" + log->battle_code() + ".pb";
-#endif
-
 		FILE* f = nowide::fopen(replay_file.c_str(), "wb");
 		if (f == nullptr) {
 			ERROR_LOG(COMMON, "SaveReplay: fopen failure");
@@ -702,11 +698,13 @@ void GdxsvBackendRollback::SaveReplay() {
 			return;
 		}
 
-		if (!log->SerializeToFileDescriptor(fd)) {
+		bool ok = log->SerializeToFileDescriptor(fd);
+		fclose(f);
+
+		if (!ok) {
 			ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
 			return;
 		}
-		fclose(f);
 
 		std::vector<http::PostField> fields;
 		fields.emplace_back("file", replay_file, "application/octet-stream");

@@ -7,7 +7,9 @@ shell/apple/emulator-ios/OpenMP/OpenMP.xcframework
 # Visual Studio
 .vs/
 out/
+*.aps
 
 # JetBrains IDES
 .idea/
 cmake-build-*/
+
