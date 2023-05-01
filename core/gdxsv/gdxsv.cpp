@@ -31,20 +31,12 @@ bool Gdxsv::Enabled() const { return enabled_; }
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
 
 const char *Gdxsv::NetModeString() const {
-	switch (netmode_) {
-		case NetMode::Offline:
-			return "Offline";
-		case NetMode::Lbs:
-			return "Lbs";
-		case NetMode::McsUdp:
-			return "McsUdp";
-		case NetMode::McsRollback:
-			return "McsRollback";
-		case NetMode::Replay:
-			return "Replay";
-		default:
-			return "Unknown";
-	}
+	if (netmode_ == NetMode::Offline) return "Offline";
+	if (netmode_ == NetMode::Lbs) return "Lbs";
+	if (netmode_ == NetMode::McsUdp) return "McsUdp";
+	if (netmode_ == NetMode::McsRollback) return "McsRollback";
+	if (netmode_ == NetMode::Replay) return "Replay";
+	return "Unknown";
 }
 
 void Gdxsv::Reset() {

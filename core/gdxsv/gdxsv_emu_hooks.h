@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "rend/boxart/http_client.h"
 #include "imgui/imgui.h"
+#include "rend/boxart/http_client.h"
 
 // Functions provided to the emulator by the gdxsv module.
 
