@@ -7,7 +7,6 @@ constexpr u32 CODEPAGE_WINDOWS_1252 = 1252;
 #else
 #include <codecvt>
 #include <errno.h>
-#include <iconv.h>
 #include <locale.h>
 #endif
 
