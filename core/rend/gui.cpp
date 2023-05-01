@@ -193,16 +193,26 @@ void gui_initFonts()
 #ifdef _WIN32
     u32 cp = GetACP();
     std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
+	
+	// Always load ShiftJIS for Gdxsv
+	{
+		font_cfg.FontNo = 2;	// UIGothic
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+		font_cfg.FontNo = 2;	// Meiryo UI
+		if (font == nullptr)
+			io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+	}
+
     switch (cp)
     {
     case 932:	// Japanese
-		{
-			font_cfg.FontNo = 2;	// UIGothic
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
-			font_cfg.FontNo = 2;	// Meiryo UI
-			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
-		}
+//		{
+//			font_cfg.FontNo = 2;	// UIGothic
+//			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+//			font_cfg.FontNo = 2;	// Meiryo UI
+//			if (font == nullptr)
+//				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+//		}
 		break;
     case 949:	// Korean
 		{
@@ -232,12 +242,15 @@ void gui_initFonts()
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
 
+    // Always load ShiftJIS for Gdxsv
+    io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+
     extern std::string os_Locale();
     std::string locale = os_Locale();
 
     if (locale.find("ja") == 0)             // Japanese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+//        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
     }
     else if (locale.find("ko") == 0)       // Korean
     {
