@@ -26,6 +26,7 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 #include "profiler/fc_profiler.h"
+#include "network/ggpo.h"
 
 #include <chrono>
 #include <thread>
@@ -112,29 +113,34 @@ void mainui_loop()
 
 	set_timer_resolution();
 	std::chrono::time_point<std::chrono::steady_clock> start;
+	auto fixedFrequencyWait = [&start]() {
+		if (!config::FixedFrequency || gui_is_open() || settings.input.fastForwardMode)
+			return;
+
+		const auto period = get_period();
+		const auto deltaUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+		int64_t overSlept = 0;
+		if (deltaUs < period)
+			overSlept = sleep_and_busy_wait(period - deltaUs);
+		start = std::chrono::steady_clock::now();
+		if (1000 <= overSlept)
+			WARN_LOG(RENDERER, "FixedFrequency: Over slept %d [us]", overSlept);
+	};
 
 	while (mainui_enabled)
 	{
 		fc_profiler::startThread("main");
 
 		if (mainui_rend_frame())
-		{
-			if (config::FixedFrequency && !gui_is_open() && !settings.input.fastForwardMode) {
-				const auto period = get_period();
-				const auto deltaUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
-				int64_t overSlept = 0;
-				if (deltaUs < period)
-					overSlept = sleep_and_busy_wait(period - deltaUs);
-				start = std::chrono::steady_clock::now();
-				if (1000 <= overSlept)
-					WARN_LOG(RENDERER, "FixedFrequency: Over slept %d [us]", overSlept);
-			}
-		}
+			fixedFrequencyWait();
 
 		if (imguiDriver == nullptr)
 			forceReinit = true;
 		else
 			imguiDriver->present();
+
+		if (ggpo::timeSync(1))
+			fixedFrequencyWait();
 
 		if (currentDupeFrames != config::DupeFrames) {
 			forceReinit = true;

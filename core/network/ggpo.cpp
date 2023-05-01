@@ -32,6 +32,7 @@ namespace ggpo
 
 bool inRollback;
 u16 localExInput;
+int timeSyncFrames;
 
 static void getLocalInput(MapleInputState inputState[4])
 {
@@ -242,8 +243,8 @@ static bool on_event(GGPOEvent *info)
 	case GGPO_EVENTCODE_TIMESYNC:
 		NOTICE_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
+		timeSyncFrames = info->u.timesync.frames_ahead;
 		totalTimeSync++;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / (msPerFrameAvg >= 25 ? 30 : 60)));
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		NOTICE_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);

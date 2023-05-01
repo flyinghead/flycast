@@ -77,4 +77,11 @@ static inline void setExInput(u16 exInput) {
 	localExInput = exInput;
 }
 
+static int timeSync(int maxWaitFrame) {
+	extern int timeSyncFrames;
+	int frameToWait = std::max(0, std::min(timeSyncFrames, maxWaitFrame));
+	timeSyncFrames -= frameToWait;
+	return frameToWait;
+}
+
 }
