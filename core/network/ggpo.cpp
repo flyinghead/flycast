@@ -1087,6 +1087,7 @@ void gdxsvStartSession(const char* sessionCode, int me,
 
 	ggpo_set_disconnect_timeout(ggpoSession, 10000);
 	ggpo_set_disconnect_notify_start(ggpoSession, 1000);
+	ggpo_set_disconnect_without_rollback(ggpoSession, true);
 
 	GGPOPlayer player{sizeof(GGPOPlayer), GGPO_PLAYERTYPE_LOCAL, me + 1};
 	result = ggpo_add_player(ggpoSession, &player, &playerHandles[me]);

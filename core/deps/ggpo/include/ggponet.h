@@ -601,6 +601,14 @@ GGPO_API GGPOErrorCode __cdecl ggpo_send_message(GGPOSession *,
  */
 GGPO_API GGPOErrorCode __cdecl ggpo_get_current_frame(GGPOSession*, int *frame);
 
+/*
+ * ggpo_set_disconnect_without_rollback --
+ *
+ * Disable rollback when player disconnects.
+ * This introduces out of sync, but makes the disconnect process easier.
+ */
+GGPO_API GGPOErrorCode __cdecl ggpo_set_disconnect_without_rollback(GGPOSession*, bool allow);
+
 #ifdef __cplusplus
 };
 #endif
