@@ -196,13 +196,12 @@ void gui_initFonts()
 	
 	// Always load ShiftJIS for Gdxsv
 	{
-		font_cfg.FontNo = 2;	// UIGothic
-		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
 		font_cfg.FontNo = 2;	// Meiryo UI
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "meiryo.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+		font_cfg.FontNo = 2;	// UIGothic
 		if (font == nullptr)
-			io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
+			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, gdxsv_get_glyph_ranges_shiftjis());
 	}
-
 /* Load ShiftJIS only to prevent crash with older GPU
     switch (cp)
     {
