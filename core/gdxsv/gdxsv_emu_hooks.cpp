@@ -5,27 +5,22 @@
 
 #include "cfg/cfg.h"
 #include "gdxsv.h"
+#include "gdxsv_update.h"
 #include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "json.hpp"
-#include "log/LogManager.h"
 #include "nowide/fstream.hpp"
 #include "oslib/oslib.h"
 #include "rend/boxart/http_client.h"
 #include "rend/gui_util.h"
 #include "stdclass.h"
-#include "version.h"
 #include "xxhash.h"
 
 using namespace nlohmann;
 
 static void gdxsv_update_popup();
 static void wireless_warning_popup();
-static void gdxsv_latest_version_check();
-static bool gdxsv_update_available = false;
-static std::string gdxsv_latest_version_tag;
-static std::string gdxsv_latest_version_download_url;
 
 void gdxsv_emu_flycast_init() { config::GGPOEnable = false; }
 
@@ -362,13 +357,17 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 	}
 }
 
+static std::shared_future<bool> self_update_result;
+
 static void gdxsv_update_popup() {
 	gdxsv_latest_version_check();
 	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+
 	if (gdxsv_update_available && no_popup_opened) {
 		ImGui::OpenPopup("New version");
 		gdxsv_update_available = false;
 	}
+
 	if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
 		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
 		ImGui::TextWrapped("  %s is available for download!  ", gdxsv_latest_version_tag.c_str());
@@ -376,14 +375,18 @@ static void gdxsv_update_popup() {
 		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
 							 -55.f * settings.display.uiScale);
-		if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-			gdxsv_update_available = false;
-			if (!gdxsv_latest_version_download_url.empty()) {
-				os_LaunchFromURL(gdxsv_latest_version_download_url);
-			} else {
-				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+		if (gdxsv_self_update_support()) {
+			if (ImGui::Button("Update", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+				gdxsv_update_available = false;
+				self_update_result = gdxsv_self_update(gdxsv_latest_version_download_url);
+				ImGui::CloseCurrentPopup();
 			}
-			ImGui::CloseCurrentPopup();
+		} else {
+			if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
+				gdxsv_update_available = false;
+				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+				ImGui::CloseCurrentPopup();
+			}
 		}
 		ImGui::SameLine();
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
@@ -396,6 +399,49 @@ static void gdxsv_update_popup() {
 		ImGui::PopStyleVar();
 		ImGui::EndPopup();
 	}
+
+	if (self_update_result.valid() && no_popup_opened) {
+		ImGui::OpenPopup("Update");
+		gdxsv_update_available = false;
+	}
+
+	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	centerNextWindow();
+	ImVec2 padding = ScaledVec2(20, 20);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
+	if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
+		if (self_update_result.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+			if (self_update_result.get()) {
+				ImGui::Text("Download Completed");
+				ImGui::Text("Please restart the emulator");
+				if (ImGui::Button("Exit", ImVec2(0, 0))) {
+					self_update_result = std::shared_future<bool>();
+					ImGui::CloseCurrentPopup();
+					dc_exit();
+				}
+			} else {
+				ImGui::Text("Download Failed");
+				ImGui::Text("Please download the latest version manually");
+				if (ImGui::Button("Download", ImVec2(0, 0))) {
+					self_update_result = std::shared_future<bool>();
+					os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		} else {
+			ImGui::Text("Updating...");
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+			ImGui::ProgressBar(gdxsv_self_update_progress(), ImVec2(-1, 20.f * settings.display.uiScale));
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::PopStyleVar();
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar(2);
 }
 
 static void wireless_warning_popup() {
@@ -422,75 +468,4 @@ static void wireless_warning_popup() {
 		ImGui::PopStyleVar();
 		ImGui::EndPopup();
 	}
-}
-
-static void gdxsv_handle_release_json(const std::string& json_string) {
-	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
-	const std::string version_prefix = "gdxsv-";
-	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
-
-	std::string latest_tag_name;
-	std::string latest_download_url;
-	std::string expected_name;
-
-#if HOST_CPU == CPU_X64
-#if defined(_WIN32)
-	expected_name = "flycast-gdxsv-windows-msvc.zip";
-#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-	expected_name = "flycast-gdxsv-macos-x86_64.zip";
-#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
-	expected_name = "flycast-gdxsv-linux-x86_64.zip";
-#endif
-#endif
-
-	try {
-		json v = json::parse(json_string);
-		latest_tag_name = v.at("tag_name");
-		for (auto e : v.at("assets")) {
-			std::string name = e.at("name");
-			if (name == expected_name) {
-				latest_download_url = e.at("browser_download_url");
-			}
-		}
-	} catch (const json::exception& e) {
-		WARN_LOG(COMMON, "json parse failure: %s", e.what());
-	}
-
-	if (latest_tag_name.empty()) return;
-
-	auto trim_prefix = [&version_prefix](const std::string& s) {
-		if (s.size() < version_prefix.size()) return s;
-		if (version_prefix == s.substr(0, version_prefix.size())) return s.substr(version_prefix.size());
-		return s;
-	};
-
-	std::smatch match;
-
-	auto current_version_str = trim_prefix(std::string(GIT_VERSION));
-	if (!std::regex_match(current_version_str, match, semver_regex)) return;
-	if (match.size() < 4) return;
-	auto current_version = std::tuple<int, int, int>(std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
-
-	auto latest_version_str = trim_prefix(latest_tag_name);
-	if (!std::regex_match(latest_version_str, match, semver_regex)) return;
-	if (match.size() < 4) return;
-	auto latest_version = std::tuple<int, int, int>(std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
-
-	gdxsv_latest_version_tag = latest_tag_name;
-	gdxsv_latest_version_download_url = latest_download_url;
-
-	if (current_version < latest_version) {
-		gdxsv_update_available = true;
-	}
-}
-
-static void gdxsv_latest_version_check() {
-	static std::once_flag once;
-	std::call_once(once, [] {
-		std::thread([]() {
-			const std::string json = os_FetchStringFromURL("https://api.github.com/repos/inada-s/flycast/releases/latest");
-			if (json.empty()) return;
-			gdxsv_handle_release_json(json);
-		}).detach();
-	});
 }
