@@ -496,6 +496,8 @@ extern Option<float> ProfilerFrameWarningTime;
 extern Option<int> GdxLanguage;
 extern Option<int> GdxLocalPort;
 extern Option<int> GdxMinDelay;
+extern Option<bool> GdxSaveReplay;
+extern Option<bool> GdxUploadReplay;
 
 // Network
 
