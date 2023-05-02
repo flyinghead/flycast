@@ -183,8 +183,10 @@ ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data,
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     if (gl.border_clamp_supported)
 	{
+#ifndef __vita__
 		float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+#endif
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	}

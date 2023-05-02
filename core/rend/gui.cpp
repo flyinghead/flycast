@@ -59,6 +59,15 @@
 #include <mutex>
 #include <algorithm>
 
+#ifdef __vita__
+#include <vitasdk.h>
+extern bool is_standalone;
+extern bool is_ap_on;
+extern bool is_bypass_on;
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 static bool game_started;
 
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -178,7 +187,7 @@ void gui_initFonts()
 
 	verify(inited);
 
-#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+#if !defined(TARGET_UWP) && !defined(__SWITCH__) && !defined(__vita__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
@@ -517,6 +526,11 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
+#ifdef __vita__
+	// FIXME: Workaround to get the json database be generated at all
+	if (config::BoxartDisplayMode)
+		gui_save();
+#endif
 	gui_setState(GuiState::Loading);
 	gameLoader.load(path);
 }
@@ -644,6 +658,11 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ScaledVec2(300, 50)
 			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
+#ifdef __vita__
+		if (is_standalone)
+			sceKernelExitProcess(0);
+		else
+#endif
 		gui_stop_game();
 	}
 
@@ -1527,6 +1546,71 @@ static void gui_display_settings()
                 	ImGui::PopID();
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+#ifdef __vita__
+                if (ImGui::Button("Add from ux0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 1");
+				}
+                select_file_popup("Select Directory 1", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "ux0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from uma0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 2");
+				}
+                select_file_popup("Select Directory 2", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "uma0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from imc0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 3");
+				}
+                select_file_popup("Select Directory 3", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "imc0:/");
+				ImGui::SameLine();
+				if (ImGui::Button("Add from xmc0:")) {
+					folder_reset = true;
+					subfolders_read = false;
+                	ImGui::OpenPopup("Select Directory 4");
+				}
+                select_file_popup("Select Directory 4", [](bool cancelled, std::string selection)
+                		{
+                			if (!cancelled)
+                			{
+                				scanner.stop();
+                				config::ContentPath.get().push_back(selection);
+                				scanner.refresh();
+                			}
+                			return true;
+                		}, false, "", "xmc0:/");
+#else
 #ifdef __ANDROID__
                 if (ImGui::Button("Add"))
                 {
@@ -1543,6 +1627,7 @@ static void gui_display_settings()
         				addContentPath(selection);
 					return true;
                 });
+#endif
 #endif
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
@@ -1873,6 +1958,9 @@ static void gui_display_settings()
 		    		break;
 		    	}
 		    }
+#ifdef __vita__
+			OptionCheckbox("Fast Sorting", config::FastSorting, "Use a more unsafe but faster algorithm for transparency sorting");
+#endif
 	    	ImGui::Spacing();
             ImGuiStyle& style = ImGui::GetStyle();
             float innerSpacing = style.ItemInnerSpacing.x;
@@ -1904,6 +1992,7 @@ static void gui_display_settings()
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 
+#ifndef __vita__
 				const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
 	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
 	            u32 afSelected = 0;
@@ -1945,6 +2034,7 @@ static void gui_display_settings()
                 ImGui::Text("Anisotropic Filtering");
                 ImGui::SameLine();
                 ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
+#endif
 
 		    	ImGui::Text("Texture Filtering:");
 		    	ImGui::Columns(3, "textureFiltering", false);
@@ -1955,6 +2045,10 @@ static void gui_display_settings()
 		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
 		    	ImGui::Columns(1, nullptr, false);
 
+#ifdef __vita__
+		    	OptionCheckbox("Use Mipmaps", config::UseMipmaps, "Enables the generation and use of texture mipmaps");
+		    	OptionCheckbox("Use Simple Shaders", config::UseSimpleShaders, "Enables usage of simplified shaders");
+#endif
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
 		    	if (isVulkan(config::RendererType))
@@ -2332,6 +2426,17 @@ static void gui_display_settings()
 						"%d MHz");
 		    }
 	    	ImGui::Spacing();
+#ifdef __vita__
+			ImGui::Text("Self-Modifying Code Checks:");
+		    ImGui::Columns(3, "DynarecSmcChecks", false);
+		    OptionRadioButton("Off", config::DynarecSmcChecks, 0, "Disables checks for self-modifying code");
+            ImGui::NextColumn();
+		    OptionRadioButton("Reduced", config::DynarecSmcChecks, 1, "Performs a simplified check for self-modifying code");
+            ImGui::NextColumn();
+		    OptionRadioButton("Full", config::DynarecSmcChecks, 2, "Checks the whole code block for self-modifying code");
+		    ImGui::Columns(1, nullptr, false);
+			ImGui::Spacing();
+#endif
 		    header("Network");
 		    {
 				{
@@ -2421,6 +2526,9 @@ static void gui_display_settings()
 	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
 	            		"Run the emulated CPU and GPU on different threads");
+#ifdef __vita__
+				OptionCheckbox("Fast GDRom Load", config::FastGDRomLoad, "Enables fast GDRom loading for smaller loading times.");
+#endif
 #ifndef __ANDROID
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
@@ -2517,6 +2625,8 @@ static void gui_display_settings()
 					"Windows"
 #elif defined(__SWITCH__)
 					"Switch"
+#elif defined(__vita__)
+					"PSVita"
 #else
 					"Unknown"
 #endif

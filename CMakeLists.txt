@@ -23,6 +23,16 @@ if(APPLE)
 	endif()
 endif()
 
+if (VITA)
+	if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+		if(DEFINED ENV{VITASDK})
+			set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+		else()
+			message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+		endif()
+	endif()
+endif()
+
 if(LIBRETRO)
 	project(flycast_libretro)
 else()
@@ -111,7 +121,32 @@ endif()
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
-if(NINTENDO_SWITCH)
+if(VITA)
+	include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${VITASDK}/arm-vita-eabi/include/SDL2 -Wl,-q,--wrap,memcpy,--wrap,memset,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${VITASDK}/arm-vita-eabi/include/SDL2 -Wl,-q,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -O3 -DNDEBUG -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+
+	set(VITA_APP_NAME "Flycast")
+	set(VITA_TITLEID  "FLYCASTDC")
+	set(VITA_VPKNAME  "Flycast")
+	set(VITA_VERSION  "01.00")
+	set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+
+	set(USE_VULKAN OFF)
+	set(USE_GLES2 ON)
+	enable_language(ASM)
+
+	add_executable(${PROJECT_NAME} core/emulator.cpp)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+	# target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
+
+	# For proper fseek/ftell definition in external dependency "libchdr", doesn't impact anything else:
+	target_compile_definitions(${PROJECT_NAME} PRIVATE __PS3__)
+
+elseif(NINTENDO_SWITCH)
 	set(USE_VULKAN OFF)
 	enable_language(ASM)
 
@@ -200,9 +235,11 @@ if(WINDOWS_STORE)
 	set(USE_VULKAN OFF)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-	CXX_EXTENSIONS OFF
-	LINK_FLAGS_RELEASE -s)
+if(NOT VITA)
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		CXX_EXTENSIONS OFF
+		LINK_FLAGS_RELEASE -s)
+endif()
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS-)
 	if(WINDOWS_STORE)
@@ -400,6 +437,9 @@ if(NOT LIBRETRO)
 		if(USE_HOST_SDL)
 			find_package(SDL2)
 		endif()
+		if(VITA)
+			set(SDL2_FOUND 1)
+		endif()
 		if(NOT SDL2_FOUND)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
 			set(SDL2_FOUND 1)
@@ -411,7 +451,7 @@ if(NOT LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
 		endif()
 
-		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+		if((APPLE OR WIN32 OR VITA) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
@@ -510,6 +550,10 @@ if(NINTENDO_SWITCH AND USE_GLES)
 	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GLESV2)
 endif()
 
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon curl ssl crypto)
+endif()
+
 if(UNIX AND NOT APPLE AND NOT ANDROID)
 	add_definitions(
 		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
@@ -598,7 +642,7 @@ target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
-	if(NINTENDO_SWITCH)
+	if(NINTENDO_SWITCH OR VITA)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_NO_MINIUPNPC)
 	else()
 		option(UPNPC_BUILD_SHARED "Build shared library" OFF)
@@ -615,7 +659,7 @@ if(NOT MINIUPNP_FOUND)
 	endif()
 endif()
 
-if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
+if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH OR VITA)
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
@@ -633,6 +677,32 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	add_subdirectory(core/deps/libzip)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip/lib)
 	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+endif()
+
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+			-Wl,--whole-archive pthread -Wl,--no-whole-archive
+			stdc++
+			SDL2
+			kubridge_stub
+			ScePgf_stub
+			SceHid_stub
+			SceAppMgr_stub
+			SceAppUtil_stub
+			SceAudio_stub
+			SceAudioIn_stub
+			SceDisplay_stub
+			SceKernelDmacMgr_stub
+			SceIme_stub
+			ScePower_stub
+			SceSysmodule_stub
+			SceTouch_stub
+			SceMotion_stub
+			SceCommonDialog_stub
+			SceCtrl_stub
+			SceGxm_stub
+			SceVshBridge_stub
+	)
 endif()
 
 if(WIN32)
@@ -1023,6 +1093,12 @@ if(WIN32)
 			core/windows/fault_handler.cpp
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
+elseif(VITA)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/linux/common.cpp
+		core/linux/unwind_info.cpp
+		core/linux/vita_fault_handler.cpp
+		core/linux/vita_vmem.cpp)
 else()
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/linux/common.cpp
@@ -1702,7 +1778,7 @@ if(NOT LIBRETRO)
 					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 			endif()
 		endif()
-	elseif(UNIX OR NINTENDO_SWITCH)
+	elseif(UNIX OR NINTENDO_SWITCH OR VITA)
 		if(NOT BUILD_TESTING)
 			target_sources(${PROJECT_NAME} PRIVATE
 					core/linux-dist/main.cpp)
@@ -1785,6 +1861,19 @@ if(NINTENDO_SWITCH)
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
 	endif()
+endif()
+
+if(VITA)
+	vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE STRIPPED NOASLR)
+	vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
+		VERSION ${VITA_VERSION}
+		NAME ${VITA_APP_NAME}
+		FILE ${CMAKE_SOURCE_DIR}/shell/vita/icon0.png sce_sys/icon0.png
+		${CMAKE_SOURCE_DIR}/shell/vita/startup.png sce_sys/livearea/contents/startup.png
+		${CMAKE_SOURCE_DIR}/shell/vita/bg.png sce_sys/livearea/contents/bg.png
+		${CMAKE_SOURCE_DIR}/shell/vita/template.xml sce_sys/livearea/contents/template.xml
+		${VPK_INCLUDES}
+	)
 endif()
 
 if(IOS)

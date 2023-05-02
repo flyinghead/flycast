@@ -180,13 +180,29 @@ void term()
 #endif	// !TARGET_UWP
 
 #else
+#ifdef __vita__
+#include <vitasdk.h>
+void *net_mem;
+#endif
 #include <curl/curl.h>
 
 namespace http {
 
 void init()
 {
+#ifdef __vita__
+	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+	int ret = sceNetShowNetstat();
+	SceNetInitParam initparam;
+	if (ret == SCE_NET_ERROR_ENOTINIT) {
+		initparam.memory = net_mem = malloc(141 * 1024);
+		initparam.size = 141 * 1024;
+		initparam.flags = 0;
+		sceNetInit(&initparam);
+	}
+#else
 	curl_global_init(CURL_GLOBAL_ALL);
+#endif
 }
 
 static size_t receiveData(void *buffer, size_t size, size_t nmemb, std::vector<u8> *recvBuffer)
@@ -202,6 +218,11 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 
+#ifdef __vita__
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+#endif
 	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -229,6 +250,7 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 
 int post(const std::string& url, const std::vector<PostField>& fields)
 {
+#ifndef __vita__
 	CURL *curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, "Flycast/1.0");
 	curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
@@ -263,12 +285,19 @@ int post(const std::string& url, const std::vector<PostField>& fields)
 	curl_easy_cleanup(curl);
 
 	return (int)httpCode;
-
+#else
+	return 500;
+#endif
 }
 
 void term()
 {
+#ifdef __vita__
+	sceNetTerm();
+	free(net_mem);
+#else
 	curl_global_cleanup();
+#endif
 }
 
 }

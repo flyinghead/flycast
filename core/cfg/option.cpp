@@ -26,6 +26,9 @@ namespace config {
 
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
 Option<int> Sh4Clock("Sh4Clock", 200);
+#ifdef __vita__
+Option<int> DynarecSmcChecks("Dynarec.smcChecks", 0);
+#endif
 
 // General
 
@@ -38,8 +41,13 @@ Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int, false> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
+#ifdef __vita__
+Option<bool, false> FetchBoxart("FetchBoxart", false);
+Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", false);
+#else
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
+#endif
 
 // Sound
 
@@ -81,6 +89,10 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
+#ifdef __vita__
+Option<bool> UseSimpleShaders("rend.UseSimpleShaders", true);
+Option<bool> FastSorting("rend.FastSorting", true);
+#endif
 #ifdef __APPLE__
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
 #else
