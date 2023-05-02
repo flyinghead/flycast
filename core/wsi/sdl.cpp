@@ -93,7 +93,7 @@ bool SDLGLGraphicsContext::init()
 	// Swap at vsync
 	swapOnVSync = config::VSync;
 	int swapInterval = 1;
-	if (config::DupeFrames)
+	if (config::DupeFrames && settings.display.refreshRate > 60.f)
 		swapInterval = settings.display.refreshRate / 60.f;
 
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
