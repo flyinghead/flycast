@@ -384,7 +384,7 @@ static void gdxsv_update_popup() {
 		} else {
 			if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
 				gdxsv_update_available = false;
-				os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+				gdxsv_open_download_page();
 				ImGui::CloseCurrentPopup();
 			}
 		}
@@ -426,7 +426,7 @@ static void gdxsv_update_popup() {
 				ImGui::Text("Please download the latest version manually");
 				if (ImGui::Button("Download", ImVec2(0, 0))) {
 					self_update_result = std::shared_future<bool>();
-					os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
+					gdxsv_open_download_page();
 					ImGui::CloseCurrentPopup();
 				}
 			}

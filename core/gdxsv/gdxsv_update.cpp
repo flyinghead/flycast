@@ -9,6 +9,7 @@
 #include "json.hpp"
 #include "rend/boxart/http_client.h"
 #include "version.h"
+#include "oslib/oslib.h"
 
 #if defined(_WIN32)
 // #include <libloaderapi.h>
@@ -124,6 +125,10 @@ bool gdxsv_self_update_support() {
 #else
 	return false;
 #endif
+}
+
+void gdxsv_open_download_page() {
+	os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
 }
 
 std::string gdxsv_release_file_name() {
