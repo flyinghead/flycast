@@ -185,7 +185,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			config::FixedFrequency.override(2);
 			config::LimitFPS.override(false);
 			config::AudioBufferSize.override(2822);
-			config::ThreadedRendering.override(false);
 
 			start_network_ = ggpo::gdxsvStartNetwork(matching_.battle_code().c_str(), matching_.peer_id(), ips, ports, relays);
 			ggpo::receiveChatMessages(nullptr);
@@ -366,7 +365,6 @@ void GdxsvBackendRollback::Close() {
 	config::FixedFrequency.load();
 	config::LimitFPS.load();
 	config::AudioBufferSize.load();
-	config::ThreadedRendering.load();
 	RestorePatch();
 	KillTex = true;
 	osd_network_stat_ = false;
