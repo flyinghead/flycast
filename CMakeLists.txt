@@ -26,6 +26,12 @@ else()
 	project(flycast)
 endif()
 
+include(DetectArchitecture)
+if(NOT DEFINED ARCHITECTURE)
+	message(FATAL_ERROR "Unsupported architecture encountered. Ending CMake generation.")
+endif()
+message(STATUS "Target architecture: ${ARCHITECTURE}")
+
 set(USE_HOST_SDL_DEFAULT OFF)
 if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 	set(USE_HOST_SDL_DEFAULT ON)
@@ -508,7 +514,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 
 	find_package(Threads REQUIRED)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*" AND NOT LIBRETRO)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND "x86_64" IN_LIST ARCHITECTURE AND NOT LIBRETRO)
 		set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
 		if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
@@ -544,7 +550,7 @@ if(ASAN)
 	endif()
 endif()
 
-if(ANDROID AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+if(ANDROID AND "arm" IN_LIST ARCHITECTURE)
 	enable_language(ASM)
 	option(LIBUNWIND_ENABLE_SHARED "Build libunwind as a shared library." OFF)
 	add_subdirectory(core/deps/libunwind/libunwind)
@@ -1284,7 +1290,7 @@ if(USE_VULKAN)
 	endif()
 endif()
 
-if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))
 	set(REND_DX9_FILES
 		core/rend/dx9/d3d_overlay.h
 		core/rend/dx9/d3d_overlay.cpp
@@ -1356,7 +1362,7 @@ if(ENABLE_GDB_SERVER)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE GDB_SERVER)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
+if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1390,9 +1396,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 		core/deps/vixl/pool-manager-impl.h
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
-	set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+if("arm64" IN_LIST ARCHITECTURE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h
@@ -1437,9 +1442,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
 	target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-	set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
 	add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -1455,10 +1459,6 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*"
 			core/rec-x64/rec_x64.cpp
 			core/rec-x64/x64_regalloc.h)
 	endif()
-	set(KNOWN_ARCHITECTURE_DETECTED ON)
-endif()
-if(NOT KNOWN_ARCHITECTURE_DETECTED)
-	message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(NOT LIBRETRO)
