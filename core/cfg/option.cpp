@@ -136,6 +136,8 @@ Option<float> ProfilerFrameWarningTime("Profiler.FrameWarningTime", 1.0f / 55.0f
 Option<int> GdxLanguage("language", -1, "gdxsv");
 Option<int> GdxLocalPort("LocalPort", 0, "gdxsv");
 Option<int> GdxMinDelay("MinDelay", 2, "gdxsv");
+Option<bool> GdxSaveReplay("SaveReplay", false, "gdxsv");
+Option<bool> GdxUploadReplay("UploadReplay", false, "gdxsv");
 
 // Network
 

@@ -655,6 +655,10 @@ void GdxsvBackendRollback::SetCloseReason(const char* reason) {
 }
 
 void GdxsvBackendRollback::SaveReplay() {
+	if (!config::GdxSaveReplay) {
+		return;
+	}
+
 	if (matching_.battle_code().empty() || input_logs_.empty()) {
 		return;
 	}
@@ -703,6 +707,10 @@ void GdxsvBackendRollback::SaveReplay() {
 
 		if (!ok) {
 			ERROR_LOG(COMMON, "SaveReplay: SerializeToFileDescriptor failure");
+			return;
+		}
+
+		if (!config::GdxUploadReplay) {
 			return;
 		}
 

@@ -303,6 +303,13 @@ void gdxsv_emu_gui_settings() {
 		"Minimum frame of input delay used for rollback communication.\nSmaller value reduces latency, but uses more CPU and "
 		"introduces glitches.");
 
+	OptionCheckbox("Save Replay", config::GdxSaveReplay, "Save replay file to replays directory");
+	{
+		DisabledScope scope(!config::GdxSaveReplay);
+		ImGui::SameLine();
+		OptionCheckbox("Upload Replay", config::GdxUploadReplay, "Automatically upload the replay file after save");
+	}
+
 	OptionCheckbox("Display Network Statistics", config::NetworkStats,
 				   "Display network statistics on screen by default.\nUse Flycast Menu button to show/hide.");
 }
