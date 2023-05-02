@@ -357,9 +357,9 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 	}
 }
 
-static std::shared_future<bool> self_update_result;
-
 static void gdxsv_update_popup() {
+	static std::shared_future<bool> self_update_result;
+
 	gdxsv_latest_version_check();
 	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
 
@@ -414,7 +414,7 @@ static void gdxsv_update_popup() {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
 		if (self_update_result.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			if (self_update_result.get()) {
-				ImGui::Text("Download Completed");
+				ImGui::TextColored(ImVec4(0, 0.8, 0, 1), "Download Completed");
 				ImGui::Text("Please restart the emulator");
 				if (ImGui::Button("Exit", ImVec2(0, 0))) {
 					self_update_result = std::shared_future<bool>();
@@ -422,7 +422,7 @@ static void gdxsv_update_popup() {
 					dc_exit();
 				}
 			} else {
-				ImGui::Text("Download Failed");
+				ImGui::TextColored(ImVec4(0, 0.8, 0, 1), "Download Failed");
 				ImGui::Text("Please download the latest version manually");
 				if (ImGui::Button("Download", ImVec2(0, 0))) {
 					self_update_result = std::shared_future<bool>();
