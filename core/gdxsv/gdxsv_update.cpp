@@ -116,7 +116,6 @@ static void gdxsv_handle_release_json(const std::string& json_string) {
 	if (current_version < latest_version) {
 		gdxsv_update_available = true;
 	}
-	gdxsv_update_available = true;	// TODO
 }
 
 bool gdxsv_self_update_support() {
@@ -189,119 +188,119 @@ static std::string get_temp_path() {
 }
 
 std::shared_future<bool> gdxsv_self_update(const std::string& download_url) {
-	return std::async(std::launch::async,
-					  [download_url]() -> bool {
-						  const auto executable_path = get_executable_path();
-						  if (!file_exists(executable_path)) {
-							  ERROR_LOG(COMMON, "get_executable_path failure: %s", executable_path.c_str());
-							  return false;
-						  }
+	auto update_fn = [download_url]() -> bool {
+		const auto executable_path = get_executable_path();
+		if (!file_exists(executable_path)) {
+			ERROR_LOG(COMMON, "get_executable_path failure: %s", executable_path.c_str());
+			return false;
+		}
 
-						  const auto download_file_name = get_file_name(download_url);
-						  if (download_file_name != gdxsv_release_file_name()) {
-							  ERROR_LOG(COMMON, "unexcpected download file");
-							  return false;
-						  }
+		const auto download_file_name = get_file_name(download_url);
+		if (download_file_name != gdxsv_release_file_name()) {
+			ERROR_LOG(COMMON, "unexcpected download file");
+			return false;
+		}
 
-						  if (MAX_DOWNLOAD_SIZE < gdxsv_latest_version_download_size) {
-							  ERROR_LOG(COMMON, "latest version is too big");
-							  return false;
-						  }
+		if (MAX_DOWNLOAD_SIZE < gdxsv_latest_version_download_size) {
+			ERROR_LOG(COMMON, "latest version is too big");
+			return false;
+		}
 
-						  std::string content_type;
-						  downloaded.clear();
-						  downloaded.reserve(gdxsv_latest_version_download_size);
-						  http::init();
-						  int rc = http::get(download_url, downloaded, content_type);
-						  if (rc != 200) {
-							  ERROR_LOG(COMMON, "download failure: %s", download_url.c_str());
-							  return false;
-						  }
+		std::string content_type;
+		downloaded.clear();
+		downloaded.reserve(gdxsv_latest_version_download_size);
+		http::init();
+		int rc = http::get(download_url, downloaded, content_type);
+		if (rc != 200) {
+			ERROR_LOG(COMMON, "download failure: %s", download_url.c_str());
+			return false;
+		}
 
-						  if (downloaded.size() != gdxsv_latest_version_download_size) {
-							  ERROR_LOG(COMMON, "invalid size e:%d a:%d", gdxsv_latest_version_download_size, downloaded.size());
-							  return false;
-						  }
+		if (downloaded.size() != gdxsv_latest_version_download_size) {
+			ERROR_LOG(COMMON, "invalid size e:%d a:%d", gdxsv_latest_version_download_size, downloaded.size());
+			return false;
+		}
 
-						  const auto download_file_path = get_temp_path() + "/" + download_file_name;
-						  FILE* fp = nowide::fopen(download_file_path.c_str(), "wb");
-						  if (fp == nullptr) {
-							  ERROR_LOG(COMMON, "fopen failure: %s", download_file_path.c_str());
-							  return false;
-						  }
+		const auto download_file_path = get_temp_path() + "/" + download_file_name;
+		FILE* fp = nowide::fopen(download_file_path.c_str(), "wb");
+		if (fp == nullptr) {
+			ERROR_LOG(COMMON, "fopen failure: %s", download_file_path.c_str());
+			return false;
+		}
 
-						  const auto written = std::fwrite(downloaded.data(), 1, downloaded.size(), fp);
-						  std::fclose(fp);
-						  if (written != downloaded.size()) {
-							  ERROR_LOG(COMMON, "fwrite failure");
-							  return false;
-						  }
+		const auto written = std::fwrite(downloaded.data(), 1, downloaded.size(), fp);
+		std::fclose(fp);
+		if (written != downloaded.size()) {
+			ERROR_LOG(COMMON, "fwrite failure");
+			return false;
+		}
 
-						  downloaded.clear();
-						  downloaded.shrink_to_fit();
+		downloaded.clear();
+		downloaded.shrink_to_fit();
 
-						  const auto executable_file_name = get_file_name(executable_path);
-						  const auto executable_dir = executable_path.substr(0, get_last_slash_pos(executable_path));
-						  const auto new_version_path = executable_dir + "/" + get_flycast_filename_with_version(gdxsv_latest_version);
+		const auto executable_file_name = get_file_name(executable_path);
+		const auto executable_dir = executable_path.substr(0, get_last_slash_pos(executable_path));
+		const auto new_version_path = executable_dir + "/" + get_flycast_filename_with_version(gdxsv_latest_version);
 
-						  fp = nowide::fopen(new_version_path.c_str(), "wb");
-						  if (fp == nullptr) {
-							  ERROR_LOG(COMMON, "fopen failure: %s", new_version_path.c_str());
-							  return false;
-						  }
+		fp = nowide::fopen(new_version_path.c_str(), "wb");
+		if (fp == nullptr) {
+			ERROR_LOG(COMMON, "fopen failure: %s", new_version_path.c_str());
+			return false;
+		}
 
-						  std::unique_ptr<Archive> archive(OpenArchive(download_file_path.c_str()));
-						  if (archive == nullptr) {
-							  ERROR_LOG(COMMON, "OpenArchive failure: %s", download_file_path.c_str());
-						  }
+		std::unique_ptr<Archive> archive(OpenArchive(download_file_path.c_str()));
+		if (archive == nullptr) {
+			ERROR_LOG(COMMON, "OpenArchive failure: %s", download_file_path.c_str());
+		}
 
-						  auto zip = archive->OpenFile(default_flycast_name.c_str());  // TODO: will now work on APPLE
-						  if (zip == nullptr) {
-							  ERROR_LOG(COMMON, "zip OpenFile failure: %s", download_file_path.c_str());
-							  std::fclose(fp);
-							  return false;
-						  }
+		auto zip = archive->OpenFile(default_flycast_name.c_str());	 // TODO: will now work on APPLE
+		if (zip == nullptr) {
+			ERROR_LOG(COMMON, "zip OpenFile failure: %s", download_file_path.c_str());
+			std::fclose(fp);
+			return false;
+		}
 
-						  bool unzip_ok = false;
-						  u8 buffer[4096];
-						  while (true) {
-							  const auto read = zip->Read(buffer, sizeof(buffer));
-							  if (read == 0) {
-								  unzip_ok = true;
-								  break;
-							  }
+		bool unzip_ok = false;
+		u8 buffer[4096];
+		while (true) {
+			const auto read = zip->Read(buffer, sizeof(buffer));
+			if (read == 0) {
+				unzip_ok = true;
+				break;
+			}
 
-							  if (sizeof(buffer) < read) {
-								  ERROR_LOG(COMMON, "zip Read failure");
-								  break;
-							  }
+			if (sizeof(buffer) < read) {
+				ERROR_LOG(COMMON, "zip Read failure");
+				break;
+			}
 
-							  if (fwrite(buffer, 1, read, fp) != read) {
-								  ERROR_LOG(COMMON, "fwrite failure");
-								  break;
-							  }
-						  }
-						  std::fclose(fp);
+			if (fwrite(buffer, 1, read, fp) != read) {
+				ERROR_LOG(COMMON, "fwrite failure");
+				break;
+			}
+		}
+		std::fclose(fp);
 
-						  if (!unzip_ok) {
-							  nowide::remove(new_version_path.c_str());
-							  return false;
-						  }
+		if (!unzip_ok) {
+			nowide::remove(new_version_path.c_str());
+			return false;
+		}
 
-						  if (executable_file_name == default_flycast_name) {
-							  // overwrite the binary
-							  const auto old_version_path = executable_dir + "/" + get_flycast_filename_with_version("old");
-							  if (file_exists(old_version_path)) {
-								  nowide::remove(old_version_path.c_str());
-							  }
+		if (executable_file_name == default_flycast_name) {
+			// overwrite the binary
+			const auto old_version_path = executable_dir + "/" + get_flycast_filename_with_version("old");
+			if (file_exists(old_version_path)) {
+				nowide::remove(old_version_path.c_str());
+			}
 
-							  nowide::rename(executable_path.c_str(), old_version_path.c_str());
-							  nowide::rename(new_version_path.c_str(), executable_path.c_str());
-						  }
+			nowide::rename(executable_path.c_str(), old_version_path.c_str());
+			nowide::rename(new_version_path.c_str(), executable_path.c_str());
+		}
 
-						  return true;
-					  })
-		.share();
+		return true;
+	};
+
+	return std::async(std::launch::async, update_fn).share();
 }
 
 float gdxsv_self_update_progress() {
