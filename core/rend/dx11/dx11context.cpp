@@ -25,7 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx11_driver.h"
-#include "imgui_impl_dx11.h"
+#include "imgui/backends/imgui_impl_dx11.h"
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>

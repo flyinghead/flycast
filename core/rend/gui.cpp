@@ -22,7 +22,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui/imgui.h"
-#include "imgui/roboto_medium.h"
+#include "roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"

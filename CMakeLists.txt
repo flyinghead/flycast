@@ -1141,8 +1141,8 @@ if(USE_OPENGL)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
-				core/rend/gles/imgui_impl_opengl3.cpp
-				core/rend/gles/imgui_impl_opengl3.h
+				core/deps/imgui/backends/imgui_impl_opengl3.cpp
+				core/deps/imgui/backends/imgui_impl_opengl3.h
 				core/rend/gles/opengl_driver.cpp
 				core/rend/gles/opengl_driver.h)
 	endif()
@@ -1276,8 +1276,8 @@ if(USE_VULKAN)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vulkan_driver.h
 				core/rend/vulkan/vulkan_context.cpp
-				core/rend/vulkan/imgui_impl_vulkan.cpp
-				core/rend/vulkan/imgui_impl_vulkan.h)
+				core/deps/imgui/backends/imgui_impl_vulkan.cpp
+				core/deps/imgui/backends/imgui_impl_vulkan.h)
 		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
 		endif()
@@ -1297,8 +1297,8 @@ if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 		core/rend/dx9/dx9_driver.h
 		core/rend/dx9/dxcontext.cpp
 		core/rend/dx9/dxcontext.h
-		core/rend/dx9/imgui_impl_dx9.h
-		core/rend/dx9/imgui_impl_dx9.cpp)
+		core/deps/imgui/backends/imgui_impl_dx9.h
+		core/deps/imgui/backends/imgui_impl_dx9.cpp)
 	target_sources(${PROJECT_NAME} PRIVATE ${REND_DX9_FILES})
 
 	if(NOT MINGW)
@@ -1317,8 +1317,8 @@ endif()
 if(WIN32 AND USE_DX11)
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
-			core/rend/dx11/imgui_impl_dx11.cpp
-			core/rend/dx11/imgui_impl_dx11.h)
+			core/deps/imgui/backends/imgui_impl_dx11.cpp
+			core/deps/imgui/backends/imgui_impl_dx11.h)
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx11/dx11_driver.h
