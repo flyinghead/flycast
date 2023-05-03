@@ -67,7 +67,7 @@
 #endif
 
 #include "wsi/gl_context.h"
-#include "glcache.h"
+#include "rend/gles/glcache.h"
 #include "hw/pvr/Renderer_if.h"
 
 // OpenGL Data

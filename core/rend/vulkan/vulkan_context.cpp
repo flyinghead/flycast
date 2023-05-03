@@ -20,7 +20,7 @@
 */
 #include "vulkan_context.h"
 #include "imgui/imgui.h"
-#include "imgui_impl_vulkan.h"
+#include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
