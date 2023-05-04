@@ -198,8 +198,12 @@ void gdxsv_emu_gui_settings() {
       Multi-threaded emulation: No
 
     Network:
-      Enable UPnP
-      Gdx Minimum Delay: 2)");
+      Enable UPnP: Yes
+      Gdx Minimum Delay: 2
+
+    Gdxsv:
+      SaveReplay: yes
+      UploadReplay: yes");
 
 	bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
 	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);

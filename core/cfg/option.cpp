@@ -102,7 +102,7 @@ Option<bool> VSync("rend.vsync", true);
 Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
-Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
+Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
@@ -136,8 +136,8 @@ Option<float> ProfilerFrameWarningTime("Profiler.FrameWarningTime", 1.0f / 55.0f
 Option<int> GdxLanguage("language", -1, "gdxsv");
 Option<int> GdxLocalPort("LocalPort", 0, "gdxsv");
 Option<int> GdxMinDelay("MinDelay", 2, "gdxsv");
-Option<bool> GdxSaveReplay("SaveReplay", false, "gdxsv");
-Option<bool> GdxUploadReplay("UploadReplay", false, "gdxsv");
+Option<bool> GdxSaveReplay("SaveReplay", true, "gdxsv");
+Option<bool> GdxUploadReplay("UploadReplay", true, "gdxsv");
 
 // Network
 
