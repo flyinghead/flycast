@@ -60,7 +60,8 @@ enum class GuiState {
 	SelectDisk,
 	Loading,
 	NetworkStart,
-	Cheats
+	Cheats,
+	GdxsvReplay,
 };
 extern GuiState gui_state;
 

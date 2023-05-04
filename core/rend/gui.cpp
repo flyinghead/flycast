@@ -541,7 +541,7 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
     {
-    	DisabledScope scope(settings.content.path.empty() || settings.network.online);
+    	DisabledScope scope(settings.content.path.empty() || settings.network.online || !gdxsv_is_savestate_allowed());
 
 		// Load State
 		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
@@ -621,6 +621,12 @@ static void gui_display_commands()
 			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
 		gui_stop_game();
+	}
+
+	// GdxReplay
+	if (gdxsv_enabled() && !gdxsv_is_online() && ImGui::Button("Replays", ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
+	{
+		gui_state = GuiState::GdxsvReplay;
 	}
 
 	ImGui::End();
@@ -2788,6 +2794,8 @@ void gui_display_ui()
 		break;
 	case GuiState::Cheats:
 		gui_cheats();
+		break;
+	case GuiState::GdxsvReplay:
 		break;
 	default:
 		die("Unknown UI state");

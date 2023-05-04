@@ -1982,6 +1982,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/gdxsv/gdxsv_emu_hooks.h
 		core/gdxsv/gdxsv_update.h
 		core/gdxsv/gdxsv_update.cpp
+		"core/gdxsv/gdxsv_replay_util.h"
+		"core/gdxsv/gdxsv_replay_util.cpp"
 		core/gdxsv/gdxsv_translation.h
 		core/gdxsv/gdxsv_translation.cpp
 		core/gdxsv/gdxsv_translation_patch.inc

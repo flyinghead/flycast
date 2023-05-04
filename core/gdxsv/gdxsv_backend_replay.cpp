@@ -2,6 +2,8 @@
 
 #include "gdx_rpc.h"
 #include "gdxsv.h"
+#include "gdxsv_replay_util.h"
+#include "input/gamepad_device.h"
 #include "libs.h"
 
 void GdxsvBackendReplay::Reset() {
@@ -16,14 +18,25 @@ void GdxsvBackendReplay::Reset() {
 	key_msg_count_ = 0;
 }
 
-bool GdxsvBackendReplay::StartFile(const char *path) {
+void GdxsvBackendReplay::OnMainUiLoop() {
+	if (state_ == State::Start) {
+		kcode[0] = ~0x0004;
+	}
+
+	if (state_ == State::End) {
+		state_ = State::None;
+		gdxsv_end_replay();
+	}
+}
+
+bool GdxsvBackendReplay::StartFile(const char *path, int pov) {
 #ifdef NOWIDE_CONFIG_H_INCLUDED
 	FILE *fp = nowide::fopen(path, "rb");
 #else
 	FILE *fp = fopen(path, "rb");
 #endif
 	if (fp == nullptr) {
-		NOTICE_LOG(COMMON, "fopen failed");
+		NOTICE_LOG(COMMON, "fopen failed path:%s", path);
 		return false;
 	}
 
@@ -33,6 +46,12 @@ bool GdxsvBackendReplay::StartFile(const char *path) {
 		return false;
 	}
 	fclose(fp);
+
+	if (log_file_.users_size() <= pov) {
+		return false;
+	}
+
+	me_ = pov;
 
 	return Start();
 }
@@ -53,6 +72,10 @@ void GdxsvBackendReplay::Open() {
 }
 
 void GdxsvBackendReplay::Close() {
+	if (state_ <= State::McsWaitJoin) {
+		return;
+	}
+
 	if (state_ != State::End) {
 		PrintDisconnectionSummary();
 	}
@@ -310,7 +333,7 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 void GdxsvBackendReplay::ProcessMcsMessage() {
 	McsMessage msg;
 	if (mcs_tx_reader_.Read(msg)) {
-		NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+		// NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
 
 		const auto msg_type = msg.Type();
 
@@ -360,11 +383,15 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
 						auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
 						key_msg.body[2] = input >> 8 & 0xff;
 						key_msg.body[3] = input & 0xff;
-						NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+						// NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
 						std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
 					}
 
 					key_msg_count_++;
+
+					if (key_msg_count_ == log_file_.inputs_size()) {
+						state_ = State::End;
+					}
 				}
 			}
 		} else if (msg_type == McsMessage::MsgType::KeyMsg2) {
