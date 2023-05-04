@@ -675,6 +675,7 @@ void GdxsvBackendRollback::SaveReplay() {
 		log->add_inputs(kv.second);
 	}
 
+	log->set_start_at(start_at_);
 	const auto now = std::chrono::system_clock::now();
 	log->set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
 
