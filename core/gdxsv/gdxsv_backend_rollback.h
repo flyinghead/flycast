@@ -58,6 +58,6 @@ class GdxsvBackendRollback {
 	UdpPingPong ping_pong_;
 	std::future<bool> start_network_;
 
-	uint64_t start_at_ = 0;
+	int64_t start_at_ = 0;
 	std::vector<std::pair<int, u64>> input_logs_;
 };
