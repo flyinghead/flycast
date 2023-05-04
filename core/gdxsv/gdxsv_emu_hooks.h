@@ -14,6 +14,8 @@ bool gdxsv_is_ingame();
 
 bool gdxsv_is_online();
 
+bool gdxsv_is_savestate_allowed();
+
 void gdxsv_emu_flycast_init();
 
 void gdxsv_emu_start();

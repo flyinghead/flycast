@@ -51,7 +51,9 @@ static bool download_replay_savestate(int disk, const std::string& save_path) {
 }
 
 void gdxsv_start_replay(const std::string& replay_file, int pov) {
-	dc_savestate(90);
+	if (gdxsv.IsSaveStateAllowed()) {
+		dc_savestate(90);
+	}
 
 	bool ok = true;
 	auto savestate_path = hostfs::getSavestatePath(99, false);

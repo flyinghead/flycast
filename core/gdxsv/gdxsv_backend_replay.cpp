@@ -333,7 +333,7 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 void GdxsvBackendReplay::ProcessMcsMessage() {
 	McsMessage msg;
 	if (mcs_tx_reader_.Read(msg)) {
-		NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+		// NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
 
 		const auto msg_type = msg.Type();
 
@@ -383,7 +383,7 @@ void GdxsvBackendReplay::ProcessMcsMessage() {
 						auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
 						key_msg.body[2] = input >> 8 & 0xff;
 						key_msg.body[3] = input & 0xff;
-						NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+						// NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
 						std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
 					}
 

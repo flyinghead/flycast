@@ -541,7 +541,7 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
     {
-    	DisabledScope scope(settings.content.path.empty() || settings.network.online);
+    	DisabledScope scope(settings.content.path.empty() || settings.network.online || !gdxsv_is_savestate_allowed());
 
 		// Load State
 		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())

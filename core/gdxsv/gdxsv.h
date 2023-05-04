@@ -29,6 +29,7 @@ class Gdxsv {
 	bool Enabled() const;
 	bool InGame() const;
 	bool IsOnline() const;
+	bool IsSaveStateAllowed() const;
 	void DisplayOSD();
 	const char* NetModeString() const;
 	void Reset();

@@ -30,6 +30,8 @@ bool gdxsv_is_ingame() { return gdxsv.InGame(); }
 
 bool gdxsv_is_online() { return gdxsv.IsOnline(); }
 
+bool gdxsv_is_savestate_allowed() { return gdxsv.IsSaveStateAllowed(); }
+
 void gdxsv_emu_flycast_init() { config::GGPOEnable = false; }
 
 void gdxsv_emu_start() {

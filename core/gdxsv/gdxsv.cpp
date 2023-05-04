@@ -31,6 +31,8 @@ bool Gdxsv::IsOnline() const {
 		   (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback || netmode_ == NetMode::Lbs || lbs_net_.IsConnected());
 }
 
+bool Gdxsv::IsSaveStateAllowed() const { return netmode_ == NetMode::Offline; }
+
 bool Gdxsv::Enabled() const { return enabled_; }
 
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
