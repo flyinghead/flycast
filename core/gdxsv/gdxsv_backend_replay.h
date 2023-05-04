@@ -1,9 +1,5 @@
 #pragma once
 
-#include <atomic>
-#include <map>
-#include <string>
-
 #include "gdxsv.pb.h"
 #include "lbs_message.h"
 #include "mcs_message.h"
@@ -23,7 +19,8 @@ class GdxsvBackendReplay {
 	};
 
 	void Reset();
-	bool StartFile(const char *path);
+	void OnMainUiLoop();
+	bool StartFile(const char *path, int pov);
 	bool StartBuffer(const char *buf, int size);
 	void Open();
 	void Close();

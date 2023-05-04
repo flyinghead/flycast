@@ -28,6 +28,7 @@ class Gdxsv {
 
 	bool Enabled() const;
 	bool InGame() const;
+	bool IsOnline() const;
 	void DisplayOSD();
 	const char* NetModeString() const;
 	void Reset();
@@ -37,7 +38,7 @@ class Gdxsv {
 	void HandleRPC();
 	void RestoreOnlinePatch();
 	void StartPingTest();
-	bool StartReplayFile(const char* path);
+	bool StartReplayFile(const char* path, int pov);
 	bool StartRollbackTest(const char* param);
 	void WritePatch();
 	int Disk() const { return disk_; }

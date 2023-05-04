@@ -5,12 +5,14 @@
 
 #include "cfg/cfg.h"
 #include "gdxsv.h"
+#include "gdxsv_replay_util.h"
 #include "gdxsv_update.h"
 #include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "json.hpp"
 #include "nowide/fstream.hpp"
+#include "oslib/directory.h"
 #include "oslib/oslib.h"
 #include "rend/boxart/http_client.h"
 #include "rend/gui_util.h"
@@ -21,6 +23,12 @@ using namespace nlohmann;
 
 static void gdxsv_update_popup();
 static void wireless_warning_popup();
+
+bool gdxsv_enabled() { return gdxsv.Enabled(); }
+
+bool gdxsv_is_ingame() { return gdxsv.InGame(); }
+
+bool gdxsv_is_online() { return gdxsv.IsOnline(); }
 
 void gdxsv_emu_flycast_init() { config::GGPOEnable = false; }
 
@@ -69,7 +77,7 @@ void gdxsv_emu_loadstate(int slot) {
 	if (gdxsv.Enabled()) {
 		auto replay = cfgLoadStr("gdxsv", "replay", "");
 		if (!replay.empty() && slot == 99) {
-			gdxsv.StartReplayFile(replay.c_str());
+			gdxsv.StartReplayFile(replay.c_str(), 0);
 		}
 
 		auto rbk_test = cfgLoadStr("gdxsv", "rbk_test", "");
@@ -78,8 +86,6 @@ void gdxsv_emu_loadstate(int slot) {
 		}
 	}
 }
-
-bool gdxsv_ingame() { return gdxsv.InGame(); }
 
 bool gdxsv_emu_menu_open() {
 	if (gdxsv.Enabled()) {
@@ -90,17 +96,21 @@ bool gdxsv_emu_menu_open() {
 
 bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
+static void gui_header(const char* title) {
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));	// Left
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleVar();
+}
+
 void gdxsv_emu_gui_display() {
 	if (gui_state == GuiState::Main) {
 		gdxsv_update_popup();
 		wireless_warning_popup();
 	}
-}
 
-static void gui_header(const char* title) {
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));	// Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
-	ImGui::PopStyleVar();
+	if (gui_state == GuiState::GdxsvReplay) {
+		gdxsv_replay_select_dialog();
+	}
 }
 
 void gdxsv_emu_gui_settings() {

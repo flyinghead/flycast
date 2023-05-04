@@ -26,6 +26,11 @@
 
 bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback); }
 
+bool Gdxsv::IsOnline() const {
+	return enabled_ &&
+		   (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback || netmode_ == NetMode::Lbs || lbs_net_.IsConnected());
+}
+
 bool Gdxsv::Enabled() const { return enabled_; }
 
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
@@ -201,6 +206,10 @@ void Gdxsv::HookMainUiLoop() {
 
 	if (netmode_ == NetMode::McsRollback) {
 		gdxsv.rollback_net_.OnMainUiLoop();
+	}
+
+	if (netmode_ == NetMode::Replay) {
+		gdxsv.replay_net_.OnMainUiLoop();
 	}
 
 	if (gui_is_open() || gui_state == GuiState::VJoyEdit) {
@@ -810,9 +819,9 @@ void Gdxsv::WritePatchDisk2() {
 	ApplyOnlinePatch(false);
 }
 
-bool Gdxsv::StartReplayFile(const char *path) {
+bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	replay_net_.Reset();
-	if (replay_net_.StartFile(path)) {
+	if (replay_net_.StartFile(path, pov)) {
 		netmode_ = NetMode::Replay;
 		return true;
 	}

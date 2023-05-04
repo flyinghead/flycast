@@ -623,6 +623,12 @@ static void gui_display_commands()
 		gui_stop_game();
 	}
 
+	// GdxReplay
+	if (gdxsv_enabled() && !gdxsv_is_online() && ImGui::Button("Replays", ScaledVec2(300, 50) + ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
+	{
+		gui_state = GuiState::GdxsvReplay;
+	}
+
 	ImGui::End();
 }
 
@@ -2788,6 +2794,8 @@ void gui_display_ui()
 		break;
 	case GuiState::Cheats:
 		gui_cheats();
+		break;
+	case GuiState::GdxsvReplay:
 		break;
 	default:
 		die("Unknown UI state");
