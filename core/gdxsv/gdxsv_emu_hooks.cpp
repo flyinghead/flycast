@@ -118,6 +118,22 @@ void gdxsv_emu_gui_display() {
 void gdxsv_emu_gui_settings() {
 	gui_header("gdxsv Settings");
 
+	if (config::ThreadedRendering.get()) {
+		ImGui::TextColored(ImVec4(0.8f,0.1f,0.1f,1), "WARNING: Multi-threaded emulation is enabled. Disable is strongly recommended.");
+		ImGui::SameLine();
+		if (ImGui::Button("Set Disable")) {
+			config::ThreadedRendering = false;
+		}
+	}
+
+	if (config::PerStripSorting.get()) {
+		ImGui::TextColored(ImVec4(0.8f,0.1f,0.1f,1), "WARNING: Transparent Sorting is not Per Triangle. Per Triangle is strongly recommended.");
+		ImGui::SameLine();
+		if (ImGui::Button("Set Per Triangle")) {
+			config::PerStripSorting = false;
+		}
+	}
+
 	ImGui::Columns(5, "gdxlang", false);
 	ImGui::Text("Language mod:");
 	ImGui::SameLine();
