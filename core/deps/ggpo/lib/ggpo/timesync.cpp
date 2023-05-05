@@ -6,6 +6,7 @@
  */
 
 #include "timesync.h"
+#include <cmath>
 
 TimeSync::TimeSync()
 {
@@ -59,7 +60,7 @@ TimeSync::recommend_frame_wait_duration(bool require_idle_input)
    // Both clients agree that we're the one ahead.  Split
    // the difference between the two to figure out how long to
    // sleep for.
-   int sleep_frames = (int)round(((radvantage - advantage) / 2.0));
+   int sleep_frames = (int)std::round(((radvantage - advantage) / 2.0));
 
    Log("iteration %d:  sleep frames is %d", count, sleep_frames);
 
