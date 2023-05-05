@@ -103,26 +103,30 @@ void gdxsv_replay_select_dialog() {
 	if (!read_dir) {
 		files.clear();
 		read_dir = true;
-		DIR* dir = flycast::opendir(replay_dir.c_str());
 
-		while (true) {
-			struct dirent* entry = flycast::readdir(dir);
-			if (entry == NULL) break;
-			std::string name(entry->d_name);
+		if (file_exists(replay_dir)) {
+			DIR* dir = flycast::opendir(replay_dir.c_str());
+
+			while (true) {
+				struct dirent* entry = flycast::readdir(dir);
+				if (entry == nullptr) break;
+				std::string name(entry->d_name);
 #ifdef __APPLE__
-			extern std::string os_PrecomposedString(std::string string);
-			name = os_PrecomposedString(name);
+				extern std::string os_PrecomposedString(std::string string);
+				name = os_PrecomposedString(name);
 #endif
-			if (name == ".") continue;
-			std::string extension = get_file_extension(name);
-			if (extension == "pb") {
-				struct stat result;
-				if (stat((replay_dir + "/" + name).c_str(), &result) == 0) {
-					files.emplace_back(name, result.st_mtime);
+				if (name == ".") continue;
+				std::string extension = get_file_extension(name);
+				if (extension == "pb") {
+					struct stat result;
+					if (stat((replay_dir + "/" + name).c_str(), &result) == 0) {
+						files.emplace_back(name, result.st_mtime);
+					}
 				}
 			}
+
+			flycast::closedir(dir);
 		}
-		flycast::closedir(dir);
 	}
 
 	ImGui::Unindent(10 * settings.display.uiScale);
