@@ -50,22 +50,28 @@ TimeSync::recommend_frame_wait_duration(bool require_idle_input)
    // See if someone should take action.  The person furthest ahead
    // needs to slow down so the other user can catch up.
    // Only do this if both clients agree on who's ahead!!
+   /*
    if (advantage >= radvantage) {
       return 0;
    }
+   */
 
    // Both clients agree that we're the one ahead.  Split
    // the difference between the two to figure out how long to
    // sleep for.
-   int sleep_frames = (int)(((radvantage - advantage) / 2) + 0.5);
+   int sleep_frames = (int)round(((radvantage - advantage) / 2.0));
 
    Log("iteration %d:  sleep frames is %d", count, sleep_frames);
 
    // Some things just aren't worth correcting for.  Make sure
    // the difference is relevant before proceeding.
-   if (sleep_frames < MIN_FRAME_ADVANTAGE) {
+   if (abs(sleep_frames) < MIN_FRAME_ADVANTAGE) {
       return 0;
    }
+
+   // abs sub
+   if (sleep_frames > MAX_FRAME_ADVANTAGE) sleep_frames = MAX_FRAME_ADVANTAGE;
+   if (sleep_frames < -MAX_FRAME_ADVANTAGE) sleep_frames = -MAX_FRAME_ADVANTAGE;
 
    // Make sure our input had been "idle enough" before recommending
    // a sleep.  This tries to make the emulator sleep while the
@@ -81,5 +87,5 @@ TimeSync::recommend_frame_wait_duration(bool require_idle_input)
    }
 
    // Success!!! Recommend the number of frames to sleep and adjust
-   return MIN(sleep_frames, MAX_FRAME_ADVANTAGE);
+   return sleep_frames;
 }

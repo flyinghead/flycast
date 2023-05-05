@@ -43,6 +43,7 @@ struct NetworkStats {
    struct {
 	   int total_rollbacked_frames;
 	   int total_timesync;
+	   int current_timesync;
    } extra;
 };
 

@@ -970,9 +970,10 @@ void drawNetworkStat(const proto::P2PMatching& matching) {
 					ImGui::CalcTextSize(std::to_string(stats[me].extra.total_rollbacked_frames).c_str()).x);
 	ImGui::Text("%d", stats[me].extra.total_rollbacked_frames);
 
+	const auto ts = std::to_string(stats[me].extra.current_timesync) + " / " + std::to_string(stats[me].extra.total_timesync);
 	ImGui::Text("Timesync");
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(std::to_string(stats[me].extra.total_timesync).c_str()).x);
-	ImGui::Text("%d", stats[me].extra.total_timesync);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ts.c_str()).x);
+	ImGui::Text(ts.c_str());
 
 	// Predicted Frames
 	if (stats[me].sync.predicted_frames >= 7)

@@ -4,6 +4,7 @@
 #include "Renderer_if.h"
 #include "serialize.h"
 #include "stdclass.h"
+#include "network/ggpo.h"
 
 #include <mutex>
 #include <vector>
@@ -56,6 +57,10 @@ bool QueueRender(TA_context* ctx)
 		RenderCount++;
 		if (RenderCount % (1 + config::SkipFrame + settings.input.fastForwardMode) != 0)
 			skipFrame = true;
+		else if (ggpo::active() && RenderCount % 30 == 0 && ggpo::timeSyncFrames < 0) {
+			ggpo::timeSyncFrames.fetch_add(1);
+			skipFrame = true;
+		}
 		else if (config::ThreadedRendering && rqueue != nullptr
 				&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
 			// The previous render hasn't completed yet so we wait.
