@@ -203,7 +203,7 @@ void gdxsv_emu_gui_settings() {
 
     Gdxsv:
       SaveReplay: yes
-      UploadReplay: yes");
+      UploadReplay: yes)");
 
 	bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
 	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
