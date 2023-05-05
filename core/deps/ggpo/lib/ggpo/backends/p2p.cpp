@@ -9,7 +9,7 @@
 #include <chrono>
 #include <thread>
 
-static const int RECOMMENDATION_INTERVAL           = 240;
+static const int RECOMMENDATION_INTERVAL           = 180;
 static const int DEFAULT_DISCONNECT_TIMEOUT        = 5000;
 static const int DEFAULT_DISCONNECT_NOTIFY_START   = 750;
 
@@ -156,12 +156,17 @@ Peer2PeerBackend::DoPoll(int timeout)
 
          // send timesync notifications if now is the proper time
          if (current_frame > _next_recommended_sleep) {
+            int interval_max = 0;
             int interval = 0;
             for (int i = 0; i < _num_players; i++) {
-               interval = MAX(interval, _endpoints[i].RecommendFrameDelay());
+               int delay = _endpoints[i].RecommendFrameDelay();
+               if (interval_max < abs(delay)) {
+                  interval_max = abs(delay);
+                  interval = delay;
+               }
             }
 
-            if (interval > 0) {
+            if (interval != 0) {
                GGPOEvent info;
                info.code = GGPO_EVENTCODE_TIMESYNC;
                info.u.timesync.frames_ahead = interval;

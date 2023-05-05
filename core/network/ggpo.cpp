@@ -242,9 +242,11 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
 		NOTICE_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
-		timesyncOccurred += 5;
+		if (0 < info->u.timesync.frames_ahead) {
+			timesyncOccurred += 5;
+		}
 		timeSyncFrames = info->u.timesync.frames_ahead;
-		totalTimeSync++;
+		totalTimeSync += info->u.timesync.frames_ahead;
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		NOTICE_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
@@ -1016,6 +1018,7 @@ void getNetworkStats(int playerNum, NetworkStats* stats)
 	}
 	stats->extra.total_rollbacked_frames = totalRollbackFrames;
 	stats->extra.total_timesync = totalTimeSync;
+	stats->extra.current_timesync = timeSyncFrames;
 	ggpo_get_network_stats(ggpoSession, playerHandles[playerNum], (GGPONetworkStats*)stats);
 }
 
