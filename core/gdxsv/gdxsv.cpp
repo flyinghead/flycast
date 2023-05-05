@@ -132,6 +132,12 @@ void Gdxsv::Reset() {
 			lbs_net_.Send(GeneratePlatformInfoPacket());
 		}
 
+		if (lbs_msg.command == LbsMessage::lbsLineCheck) {
+			if (gui_is_open() || gui_state == GuiState::VJoyEdit) {
+				return false;
+			}
+		}
+
 		if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
 			// Reset current patches for no-patched game
 			RestoreOnlinePatch();
