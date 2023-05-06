@@ -24,8 +24,7 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 	}
 
 	if (state_ == State::End) {
-		state_ = State::None;
-		gdxsv.netmode_ = Gdxsv::NetMode::Offline;
+		gdxsv.Reset();
 		gdxsv_end_replay();
 	}
 }

@@ -50,6 +50,7 @@ void Gdxsv::Reset() {
 	lbs_net_.Reset();
 	udp_net_.Reset();
 	rollback_net_.Reset();
+	replay_net_.Reset();
 	http::init();
 
 	// Automatically add ContentPath if it is empty.

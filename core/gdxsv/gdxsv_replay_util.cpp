@@ -73,6 +73,8 @@ void gdxsv_start_replay(const std::string& replay_file, int pov) {
 
 void gdxsv_end_replay() {
 	dc_loadstate(90);
+	settings.input.fastForwardMode = false;
+
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
