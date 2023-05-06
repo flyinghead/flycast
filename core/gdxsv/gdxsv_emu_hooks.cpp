@@ -119,7 +119,7 @@ void gdxsv_emu_gui_settings() {
 	gui_header("gdxsv Settings");
 
 	if (config::ThreadedRendering.get()) {
-		ImGui::TextColored(ImVec4(0.8f,0.1f,0.1f,1), "WARNING: Multi-threaded emulation is enabled. Disable is strongly recommended.");
+		ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1), "WARNING: Multi-threaded emulation is enabled. Disable is strongly recommended.");
 		ImGui::SameLine();
 		if (ImGui::Button("Set Disable")) {
 			config::ThreadedRendering = false;
@@ -127,7 +127,8 @@ void gdxsv_emu_gui_settings() {
 	}
 
 	if (config::PerStripSorting.get()) {
-		ImGui::TextColored(ImVec4(0.8f,0.1f,0.1f,1), "WARNING: Transparent Sorting is not Per Triangle. Per Triangle is strongly recommended.");
+		ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1),
+						   "WARNING: Transparent Sorting is not Per Triangle. Per Triangle is strongly recommended.");
 		ImGui::SameLine();
 		if (ImGui::Button("Set Per Triangle")) {
 			config::PerStripSorting = false;
@@ -389,34 +390,46 @@ void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostFi
 	}
 }
 
-static void gdxsv_update_popup() {
-	static std::shared_future<bool> self_update_result;
+static void textCentered(const std::string& text) {
+	const auto windowWidth = ImGui::GetWindowSize().x;
+	const auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+	ImGui::Text(text.c_str());
+}
 
-	gdxsv_latest_version_check();
+static void textCentered(const ImVec4& color, const std::string& text) {
+	const auto windowWidth = ImGui::GetWindowSize().x;
+	const auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+	ImGui::TextColored(color, text.c_str());
+}
+
+static void gdxsv_update_popup() {
+	static bool update_popup_shown = false;
+	static std::shared_future<bool> self_update_result;
 	bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
 
-	if (gdxsv_update_available && no_popup_opened) {
+	if (gdxsv_update.IsUpdateAvailable() && !update_popup_shown && no_popup_opened) {
 		ImGui::OpenPopup("New version");
-		gdxsv_update_available = false;
 	}
 
 	if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
 		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
-		ImGui::TextWrapped("  %s is available for download!  ", gdxsv_latest_version_tag.c_str());
+		ImGui::TextWrapped("  %s is available for download!  ", gdxsv_update.GetLatestVersionTag().c_str());
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
 		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x -
 							 -55.f * settings.display.uiScale);
-		if (gdxsv_self_update_support()) {
+		if (GdxsvUpdate::IsSupportSelfUpdate()) {
 			if (ImGui::Button("Update", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-				gdxsv_update_available = false;
-				self_update_result = gdxsv_self_update(gdxsv_latest_version_download_url);
+				self_update_result = gdxsv_update.StartSelfUpdate();
+				update_popup_shown = true;
 				ImGui::CloseCurrentPopup();
 			}
 		} else {
 			if (ImGui::Button("Download", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-				gdxsv_update_available = false;
-				gdxsv_open_download_page();
+				os_LaunchFromURL(GdxsvUpdate::DownloadPageURL());
+				update_popup_shown = true;
 				ImGui::CloseCurrentPopup();
 			}
 		}
@@ -424,7 +437,7 @@ static void gdxsv_update_popup() {
 		ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x +
 							 -55.f * settings.display.uiScale);
 		if (ImGui::Button("Cancel", ImVec2(100.f * settings.display.uiScale, 0.f))) {
-			gdxsv_update_available = false;
+			update_popup_shown = true;
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
@@ -434,38 +447,40 @@ static void gdxsv_update_popup() {
 
 	if (self_update_result.valid() && no_popup_opened) {
 		ImGui::OpenPopup("Update");
-		gdxsv_update_available = false;
 	}
 
-	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(340, 0));
 	centerNextWindow();
 	ImVec2 padding = ScaledVec2(20, 20);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal("Update", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, 3 * settings.display.uiScale));
+
 		if (self_update_result.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			if (self_update_result.get()) {
-				ImGui::TextColored(ImVec4(0, 0.8, 0, 1), "Download Completed");
-				ImGui::Text("Please restart the emulator");
-				if (ImGui::Button("Exit", ImVec2(0, 0))) {
-					self_update_result = std::shared_future<bool>();
+				textCentered(ImVec4(0, 0.8, 0, 1), "Download Completed");
+				textCentered("Please restart the emulator");
+
+				if (ImGui::Button("Exit", ImVec2(300, 30))) {
+					self_update_result = {};
 					ImGui::CloseCurrentPopup();
 					dc_exit();
 				}
 			} else {
-				ImGui::TextColored(ImVec4(0, 0.8, 0, 1), "Download Failed");
-				ImGui::Text("Please download the latest version manually");
-				if (ImGui::Button("Download", ImVec2(0, 0))) {
-					self_update_result = std::shared_future<bool>();
-					gdxsv_open_download_page();
+				textCentered(ImVec4(0.8, 0, 0, 1), "Download Failed");
+				textCentered("Please download the latest version manually");
+
+				if (ImGui::Button("Download", ImVec2(300, 30))) {
+					self_update_result = {};
+					os_LaunchFromURL(GdxsvUpdate::DownloadPageURL());
 					ImGui::CloseCurrentPopup();
 				}
 			}
 		} else {
 			ImGui::Text("Updating...");
 			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-			ImGui::ProgressBar(gdxsv_self_update_progress(), ImVec2(-1, 20.f * settings.display.uiScale));
+			ImGui::ProgressBar(gdxsv_update.SelfUpdateProgress(), ImVec2(-1, 20.f * settings.display.uiScale));
 			ImGui::PopStyleColor();
 		}
 
