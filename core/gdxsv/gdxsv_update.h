@@ -2,6 +2,7 @@
 
 #include <future>
 #include <string>
+#include <vector>
 
 class GdxsvUpdate {
 public:
