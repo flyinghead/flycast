@@ -129,6 +129,7 @@ void gdxsv_replay_select_dialog() {
 					}
 				}
 			}
+			std::sort(files.begin(), files.end(), std::greater<>());
 
 			flycast::closedir(dir);
 		}
