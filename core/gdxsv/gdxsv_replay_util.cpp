@@ -75,6 +75,8 @@ void gdxsv_end_replay() {
 	dc_loadstate(90);
 	settings.input.fastForwardMode = false;
 
+	emu.start();
+	emu.render();
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
