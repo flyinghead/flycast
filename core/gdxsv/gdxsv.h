@@ -30,6 +30,7 @@ class Gdxsv {
 	bool InGame() const;
 	bool IsOnline() const;
 	bool IsSaveStateAllowed() const;
+	bool IsReplaying() const;
 	void DisplayOSD();
 	const char* NetModeString() const;
 	void Reset();
@@ -40,6 +41,7 @@ class Gdxsv {
 	void RestoreOnlinePatch();
 	void StartPingTest();
 	bool StartReplayFile(const char* path, int pov);
+	void StopReplay();
 	bool StartRollbackTest(const char* param);
 	void WritePatch();
 	int Disk() const { return disk_; }

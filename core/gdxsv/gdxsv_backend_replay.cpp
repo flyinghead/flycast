@@ -65,14 +65,16 @@ bool GdxsvBackendReplay::StartBuffer(const char *buf, int size) {
 	return Start();
 }
 
+bool GdxsvBackendReplay::isReplaying() { return state_ == State::McsInBattle; }
+
 void GdxsvBackendReplay::Open() {
 	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
 	state_ = State::McsSessionExchange;
 	ApplyPatch(true);
 }
 
-void GdxsvBackendReplay::Close() {
-	if (state_ <= State::McsWaitJoin) {
+void GdxsvBackendReplay::Close(bool by_user) {
+	if (by_user == false && state_ <= State::McsWaitJoin) {
 		return;
 	}
 

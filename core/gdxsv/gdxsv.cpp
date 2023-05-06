@@ -11,6 +11,7 @@
 #include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv_translation.h"
+#include "gdxsv_replay_util.h"
 #include "hw/sh4/sh4_mem.h"
 #include "imgui/imgui.h"
 #include "libs.h"
@@ -32,6 +33,8 @@ bool Gdxsv::IsOnline() const {
 }
 
 bool Gdxsv::IsSaveStateAllowed() const { return netmode_ == NetMode::Offline; }
+
+bool Gdxsv::IsReplaying() const { return netmode_ == NetMode::Replay; }
 
 bool Gdxsv::Enabled() const { return enabled_; }
 
@@ -846,6 +849,8 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	}
 	return false;
 }
+
+void Gdxsv::StopReplay() { replay_net_.Close(true); }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
 	rollback_net_.Reset();
