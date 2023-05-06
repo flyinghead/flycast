@@ -87,13 +87,14 @@ void gdxsv_replay_select_dialog() {
 
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	const float scaling = settings.display.uiScale;
 
 	ImGui::Begin("##gdxsv_emu_replay_menu", nullptr,
 				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8) * scaling);
 	ImGui::AlignTextToFramePadding();
-	ImGui::Indent(10 * settings.display.uiScale);
+	ImGui::Indent(10 * scaling);
 
 	ImGui::SameLine();
 	if (ImGui::Button("Close")) {
@@ -133,10 +134,10 @@ void gdxsv_replay_select_dialog() {
 		}
 	}
 
-	ImGui::Unindent(10 * settings.display.uiScale);
-	ImGui::PopStyleVar();
+	ImGui::Unindent(10 * scaling);
+	ImGui::PopStyleVar(); //ImGuiStyleVar_FramePadding
 
-	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_list"), ImVec2(330, 0), true, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_list"), ImVec2(330, 0) * scaling, true, ImGuiWindowFlags_DragScrolling);
 	{
 		if (files.empty()) {
 			ImGui::Text("(No replay found)");
@@ -201,6 +202,8 @@ void gdxsv_replay_select_dialog() {
 			}
 
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.2f, .1f, .6f, 1));
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f * scaling);
+			
 			for (int i : renpo_index) {
 				if (i != renpo_index.front()) ImGui::SameLine();
 				ImGui::BeginChild(
@@ -225,6 +228,8 @@ void gdxsv_replay_select_dialog() {
 				ImGui::EndChild();
 			}
 			ImGui::PopStyleColor();
+			
+			ImGui::PopStyleVar(); //ImGuiStyleVar_ChildBorderSize
 
 			auto povString = [](int i) -> std::string {
 				if (battle_log.users_size() <= i) return "";
