@@ -73,13 +73,15 @@ void gdxsv_start_replay(const std::string& replay_file, int pov) {
 
 void gdxsv_end_replay() {
 	dc_loadstate(90);
+	settings.input.fastForwardMode = false;
+
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
 }
 
 void gdxsv_replay_select_dialog() {
-	auto replay_dir = get_writable_data_path("replays");
+	const auto replay_dir = get_writable_data_path("replays");
 
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -119,7 +121,7 @@ void gdxsv_replay_select_dialog() {
 				std::string extension = get_file_extension(name);
 				if (extension == "pb") {
 					struct stat result;
-					if (stat((replay_dir + "/" + name).c_str(), &result) == 0) {
+					if (flycast::stat((replay_dir + "/" + name).c_str(), &result) == 0) {
 						files.emplace_back(name, result.st_mtime);
 					}
 				}
@@ -157,9 +159,10 @@ void gdxsv_replay_select_dialog() {
 	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_detail"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
 	{
 		if (!selected_replay_file.empty()) {
-			auto replay_file_path = replay_dir + "/" + selected_replay_file;
+			const auto replay_file_path = replay_dir + "/" + selected_replay_file;
 			if (battle_log_file_name != selected_replay_file) {
 				battle_log_file_name = selected_replay_file;
+				battle_log.Clear();
 				FILE* fp = nowide::fopen(replay_file_path.c_str(), "rb");
 				if (fp != nullptr) {
 					battle_log.ParseFromFileDescriptor(fileno(fp));
@@ -168,7 +171,7 @@ void gdxsv_replay_select_dialog() {
 				pov_index = 0;
 			}
 
-			bool playable = "dc" + std::to_string(gdxsv.Disk()) == battle_log.game_disk();
+			const bool playable = "dc" + std::to_string(gdxsv.Disk()) == battle_log.game_disk();
 
 			ImGui::Text("BattleCode: %s", battle_log.battle_code().c_str());
 			ImGui::Text("Game: %s", battle_log.game_disk().c_str());
@@ -199,7 +202,7 @@ void gdxsv_replay_select_dialog() {
 			for (int i : renpo_index) {
 				if (i != renpo_index.front()) ImGui::SameLine();
 				ImGui::BeginChild(ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-								  ImGuiWindowFlags_NoScrollbar);
+								  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
@@ -211,7 +214,7 @@ void gdxsv_replay_select_dialog() {
 			for (int i : zeon_index) {
 				if (i != zeon_index.front()) ImGui::SameLine();
 				ImGui::BeginChild(ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-								  ImGuiWindowFlags_NoScrollbar);
+								  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
@@ -220,6 +223,7 @@ void gdxsv_replay_select_dialog() {
 			ImGui::PopStyleColor();
 
 			auto povString = [](int i) -> std::string {
+				if (battle_log.users_size() <= i) return "";
 				const auto& u = battle_log.users(i);
 				char buf[128] = {};
 				snprintf(buf, sizeof(buf), "%dP\tID: %s\tHN: %s\tPN: %s", i + 1, u.user_id().c_str(), u.user_name().c_str(),

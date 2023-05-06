@@ -24,7 +24,7 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 	}
 
 	if (state_ == State::End) {
-		state_ = State::None;
+		gdxsv.Reset();
 		gdxsv_end_replay();
 	}
 }
