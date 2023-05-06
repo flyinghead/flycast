@@ -2,6 +2,7 @@
 
 #include <stdclass.h>
 #include <types.h>
+
 #include <future>
 #include <regex>
 #include <string>
@@ -20,30 +21,30 @@ static constexpr size_t MaxDownloadSize = 30 * 1024 * 1024;
 static const std::string ReleaseFileName =
 #if HOST_CPU == CPU_X64
 #if defined(_WIN32)
-"flycast-gdxsv-windows-msvc.zip";
+	"flycast-gdxsv-windows-msvc.zip";
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-"flycast-gdxsv-macos-x86_64.zip";
+	"flycast-gdxsv-macos-x86_64.zip";
 #elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
-"flycast-gdxsv-linux-x86_64.zip";
+	"flycast-gdxsv-linux-x86_64.zip";
 #else
-"";
+	"";
 #endif
 #else
-"";
+	"";
 #endif
 
 static const std::string DefaultFlycastName =
 #if defined(_WIN32)
-"flycast-gdxsv.exe";
+	"flycast-gdxsv.exe";
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-"Flycast-gdxsv.app";
+	"Flycast-gdxsv.app";
 #elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
-"flycast-gdxsv";
+		"flycast-gdxsv";
 #else
-"";
+		"";
 #endif
 
-template<typename T>
+template <typename T>
 static bool future_is_ready(const T& future) {
 	return future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
 }
@@ -79,7 +80,7 @@ void GdxsvUpdate::FetchLatestVersionInfo() {
 		return;
 	}
 
-	fetch_latest_version_future_ = std::async(std::launch::async, [this]() -> LatestVersionInfo {
+	const auto future_fn = [this]() -> LatestVersionInfo {
 		LatestVersionInfo latest{};
 		std::vector<u8> dl;
 		std::string content_type;
@@ -93,7 +94,9 @@ void GdxsvUpdate::FetchLatestVersionInfo() {
 
 		HandleReleaseJSON(std::string(dl.begin(), dl.end()), latest);
 		return latest;
-		}).share();
+	};
+
+	fetch_latest_version_future_ = std::async(std::launch::async, future_fn).share();
 }
 
 bool GdxsvUpdate::IsSupportSelfUpdate() {
@@ -104,8 +107,7 @@ bool GdxsvUpdate::IsSupportSelfUpdate() {
 #endif
 }
 
-
-void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string,  LatestVersionInfo& out) const {
+void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) const {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -155,9 +157,7 @@ void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string,  LatestVersi
 	out.is_new_version = current_version < latest_version;
 }
 
-std::string GdxsvUpdate::DownloadPageURL() {
-	return "https://github.com/inada-s/flycast/releases/latest/";
-}
+std::string GdxsvUpdate::DownloadPageURL() { return "https://github.com/inada-s/flycast/releases/latest/"; }
 
 std::string GdxsvUpdate::GetFlycastFileNameWithVersion(const std::string& version) {
 	const auto dot_pos = DefaultFlycastName.find_last_of('.');

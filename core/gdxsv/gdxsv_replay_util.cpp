@@ -201,8 +201,9 @@ void gdxsv_replay_select_dialog() {
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.2f, .1f, .6f, 1));
 			for (int i : renpo_index) {
 				if (i != renpo_index.front()) ImGui::SameLine();
-				ImGui::BeginChild(ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-								  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
+				ImGui::BeginChild(
+					ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
+					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
@@ -213,8 +214,9 @@ void gdxsv_replay_select_dialog() {
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.6f, .1f, .2f, 1));
 			for (int i : zeon_index) {
 				if (i != zeon_index.front()) ImGui::SameLine();
-				ImGui::BeginChild(ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-								  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
+				ImGui::BeginChild(
+					ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
+					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
