@@ -114,7 +114,7 @@ static void gdxsv_handle_release_json(const std::string& json_string) {
 	gdxsv_latest_version_download_url = latest_download_url;
 	gdxsv_latest_version_download_size = latest_download_size;
 
-	if (current_version < latest_version) {
+	if (current_version < latest_version && !gdxsv_latest_version_download_url.empty()) {
 		gdxsv_update_available = true;
 	}
 }
