@@ -23,7 +23,6 @@
 #include "rend/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/naomi/card_reader.h"
 #include "mouse.h"
 
 #include <algorithm>
@@ -58,7 +57,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	if (key == EMU_BTN_NONE)
 		return false;
 
-	if (key <= DC_BTN_RELOAD)
+	if (key <= DC_BTN_BITMAPPED_LAST)
 	{
 		if (port >= 0)
 		{
@@ -87,10 +86,6 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_FFORWARD:
 			if (pressed && !gui_is_open())
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online && !settings.naomi.multiboard;
-			break;
-		case EMU_BTN_INSERT_CARD:
-			if (pressed && settings.platform.isNaomi())
-				card_reader::insertCard(maple_port());
 			break;
 		case EMU_BTN_LOADSTATE:
 			if (pressed)
@@ -258,7 +253,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			else
 				*this_axis = v * axisDirection;
 		}
-		else if (key != EMU_BTN_NONE && key <= DC_BTN_RELOAD) // Map triggers to digital buttons
+		else if (key != EMU_BTN_NONE && key <= DC_BTN_BITMAPPED_LAST) // Map triggers to digital buttons
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?

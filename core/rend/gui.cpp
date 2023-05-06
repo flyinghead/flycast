@@ -808,6 +808,7 @@ const Mapping arcadeButtons[] = {
 	{ DC_BTN_D, "Coin" },
 	{ DC_DPAD2_UP, "Service" },
 	{ DC_DPAD2_DOWN, "Test" },
+	{ DC_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, "Emulator" },
 	{ EMU_BTN_MENU, "Menu" },
@@ -815,7 +816,6 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, nullptr }
 };

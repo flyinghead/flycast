@@ -160,7 +160,7 @@ private:
 	};
 	std::vector<Socket> sockets;
 	bool dnsInProgress = false;
-	u32 serverIp = 0; //0x1e01a8c0 for testing only
+	u32 serverIp = 0; //0x0100007f for testing only
 	bool finalTuned = false;
 
 	u32 dimmBufferOffset = 0x0f000000;

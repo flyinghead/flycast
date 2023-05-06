@@ -94,8 +94,8 @@ using namespace std::chrono;
 constexpr int MAX_PLAYERS = 2;
 constexpr int SERVER_PORT = 19713;
 
-constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
-constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
+constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_BITMAPPED_LAST << 1;
+constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_BITMAPPED_LAST << 2;
 
 #pragma pack(push, 1)
 struct VerificationData
@@ -169,6 +169,7 @@ struct Inputs
 	} u;
 };
 static_assert(sizeof(Inputs) == 10, "wrong Inputs size");
+static_assert(BTN_TRIGGER_RIGHT < (1 << 20));
 
 struct GameEvent
 {

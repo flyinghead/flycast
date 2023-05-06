@@ -1498,7 +1498,7 @@ struct RFIDReaderWriter : maple_base
 
 	void OnSetup() override
 	{
-		loadCard();
+		memset(cardData, 0, sizeof(cardData));
 	}
 
 	std::string getCardPath() const {
@@ -1576,6 +1576,7 @@ struct RFIDReaderWriter : maple_base
 
 	void insertCard() {
 		cardInserted = true;
+		loadCard();
 	}
 
 	u8 cardData[128];
