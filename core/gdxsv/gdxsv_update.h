@@ -3,18 +3,33 @@
 #include <future>
 #include <string>
 
-extern bool gdxsv_update_available;
-extern std::string gdxsv_latest_version_tag;
-extern std::string gdxsv_latest_version_download_url;
+class GdxsvUpdate {
+public:
+	void Reset();
+	bool IsUpdateAvailable();
+	void FetchLatestVersionInfo();
+	std::string GetLatestVersionTag() const;
+	static bool IsSupportSelfUpdate();
+	static std::string DownloadPageURL();
+	std::shared_future<bool> StartSelfUpdate();
+	float SelfUpdateProgress() const;
 
-void gdxsv_latest_version_check();
+private:
+	struct LatestVersionInfo {
+		bool is_new_version;
+		std::string version;
+		std::string version_tag;
+		std::string download_url;
+		size_t download_size = 0;
+	};
 
-bool gdxsv_self_update_support();
+	void HandleReleaseJSON(const std::string& json_string,  LatestVersionInfo& out) const;
+	static std::string GetFlycastFileNameWithVersion(const std::string& version);
+	static std::string GetExecutablePath();
+	static std::string GetTempDir();
 
-void gdxsv_open_download_page();
+	std::shared_future<LatestVersionInfo> fetch_latest_version_future_;
+	std::vector<uint8_t> download_buf_;
+};
 
-std::string gdxsv_release_file_name();
-
-std::shared_future<bool> gdxsv_self_update(const std::string& download_url);
-
-float gdxsv_self_update_progress();
+extern GdxsvUpdate gdxsv_update;
