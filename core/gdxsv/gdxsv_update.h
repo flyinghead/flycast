@@ -17,7 +17,7 @@ class GdxsvUpdate {
 
    private:
 	struct LatestVersionInfo {
-		bool is_new_version;
+		bool is_new_version = false;
 		std::string version;
 		std::string version_tag;
 		std::string download_url;
