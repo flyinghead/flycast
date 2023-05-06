@@ -51,6 +51,7 @@ void Gdxsv::Reset() {
 	udp_net_.Reset();
 	rollback_net_.Reset();
 	replay_net_.Reset();
+	netmode_ = NetMode::Offline;
 	http::init();
 
 	// Automatically add ContentPath if it is empty.
