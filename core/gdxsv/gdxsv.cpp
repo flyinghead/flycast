@@ -11,7 +11,6 @@
 #include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv_translation.h"
-#include "gdxsv_replay_util.h"
 #include "hw/sh4/sh4_mem.h"
 #include "imgui/imgui.h"
 #include "libs.h"
