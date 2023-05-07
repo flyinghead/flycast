@@ -6,8 +6,8 @@
 #include <future>
 #include <regex>
 #include <string>
+#include <zip.h>
 
-#include "archive/ZipArchive.h"
 #include "json.hpp"
 #include "rend/boxart/http_client.h"
 #include "version.h"
@@ -18,6 +18,10 @@
 #include <libproc.h>
 #include <sys/types.h>
 #include <unistd.h>
+#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+#include <libgen.h>
+#include <unistd.h>
+#include <linux/limits.h>
 #endif
 
 static constexpr size_t MaxDownloadSize = 30 * 1024 * 1024;
@@ -193,9 +197,15 @@ std::string GdxsvUpdate::GetExecutablePath() {
         return std::string(buffer);
     }
     return "";
-#endif
-	// TODO: Linux support
+#else
+	char result[PATH_MAX] = {};
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	const char* path;
+	if (count != -1) {
+		return std::string(dirname(result));
+	}
 	return "";
+#endif
 }
 
 std::string GdxsvUpdate::GetTempDir() {
@@ -402,6 +412,7 @@ bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string&
             zip_int64_t read_bytes = 0;
             
             if (opsys == ZIP_OPSYS_UNIX && ((attributes >> 16) & FA_IFLNK) == FA_IFLNK) {
+#if defined(__APPLE__) && !defined(TARGET_IPHONE) || defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
                 read_bytes = zip_fread(zfp, buf, sizeof(buf));
                 buf[read_bytes] = '\0';
                 auto dst = dst_path + "/" + name;
@@ -410,8 +421,14 @@ bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string&
                 }
                 if (symlink(buf, dst.c_str()) != 0) {
                     ERROR_LOG(COMMON, "ExtractZipFile: symlink failure: %d", errno);
-                    return false;
+					result = false;
+					break;
                 }
+#else
+				ERROR_LOG(COMMON, "ExtractZipFile: symlink is not supported");
+				result = false;
+				break;
+#endif
                 break;
             }
 
@@ -427,7 +444,9 @@ bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string&
             }
             
             if (opsys == ZIP_OPSYS_UNIX && ((attributes >> 16) & FA_IFREG) == FA_IFREG) {
+#if defined(__APPLE__) && !defined(TARGET_IPHONE) || defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
                 fchmod(fileno(wfp), attributes >> 16);
+#endif
             }
         } while(0);
         if (wfp != nullptr) fclose(wfp);
