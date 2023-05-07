@@ -25,6 +25,7 @@ class GdxsvUpdate {
 	};
 
 	void HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) const;
+    bool ExtractZipFile(const std::string& zip_path, const std::string& dst_path) const;
 	static std::string GetFlycastFileNameWithVersion(const std::string& version);
 	static std::string GetExecutablePath();
 	static std::string GetTempDir();
