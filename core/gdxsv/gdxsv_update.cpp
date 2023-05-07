@@ -2,18 +2,28 @@
 
 #include <stdclass.h>
 #include <types.h>
+#include <zip.h>
 
 #include <future>
 #include <regex>
 #include <string>
 
-#include "archive/ZipArchive.h"
 #include "json.hpp"
 #include "rend/boxart/http_client.h"
 #include "version.h"
 
 #if defined(_WIN32)
 #include <Windows.h>
+#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
+#include <libproc.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+#include <libgen.h>
+#include <linux/limits.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 static constexpr size_t MaxDownloadSize = 30 * 1024 * 1024;
@@ -102,12 +112,14 @@ void GdxsvUpdate::FetchLatestVersionInfo() {
 bool GdxsvUpdate::IsSupportSelfUpdate() {
 #if defined(_WIN32)
 	return true;
+#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
+	return true;
 #else
 	return false;
 #endif
 }
 
-void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) const {
+void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -180,9 +192,22 @@ std::string GdxsvUpdate::GetExecutablePath() {
 		return nws.c_str();
 	}
 	return "";
-#endif
-	// TODO: Other platform
+#elif defined(__APPLE__) && defined(__MACH__)
+	std::string path;
+	char buffer[PROC_PIDPATHINFO_MAXSIZE];
+	if (proc_pidpath(getpid(), buffer, sizeof(buffer)) > 0) {
+		return std::string(buffer);
+	}
 	return "";
+#else
+	char result[PATH_MAX] = {};
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	const char* path;
+	if (count != -1) {
+		return std::string(dirname(result));
+	}
+	return "";
+#endif
 }
 
 std::string GdxsvUpdate::GetTempDir() {
@@ -194,9 +219,9 @@ std::string GdxsvUpdate::GetTempDir() {
 	auto result = std::string(nws.c_str());
 	if (result.back() == '/' || result.back() == '\\') result.pop_back();
 	return result;
+#else
+	return "/tmp";
 #endif
-	// TODO: Other platform
-	return "";
 }
 
 static std::string get_file_name(const std::string& file_path) {
@@ -212,15 +237,28 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 	verify(future_is_ready(fetch_latest_version_future_));
 
 	auto update_fn = [this]() -> bool {
-		const auto& latest = fetch_latest_version_future_.get();
-		const auto executable_path = GetExecutablePath();
+		auto executable_path = GetExecutablePath();
 		if (!file_exists(executable_path)) {
-			ERROR_LOG(COMMON, "get_executable_path failure: %s", executable_path.c_str());
+			ERROR_LOG(COMMON, "GetExecutablePath failure: %s", executable_path.c_str());
 			return false;
 		}
 
-		const auto download_file_name = get_file_name(latest.download_url);
-		if (download_file_name != ReleaseFileName) {
+#if defined(__APPLE__)
+		{
+			// Fix Flycast.app/Contents/MacOS/Flycast to Flycast.app
+			const auto pos = executable_path.find_last_of('.');
+			if (pos == std::string::npos) {
+				return false;
+			}
+			if (executable_path.substr(pos, 4) != ".app") {
+				return false;
+			}
+			executable_path = executable_path.substr(0, pos + 4);
+		}
+#endif
+
+		const auto& latest = fetch_latest_version_future_.get();
+		if (get_file_name(latest.download_url) != ReleaseFileName) {
 			ERROR_LOG(COMMON, "unexcpected download file");
 			return false;
 		}
@@ -242,12 +280,23 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 		}
 
 		if (download_buf_.size() != latest.download_size) {
-			ERROR_LOG(COMMON, "invalid size e:%d a:%d", latest.download_size, download_buf_.size());
+			ERROR_LOG(COMMON, "invalid size e:%ld a:%ld", latest.download_size, download_buf_.size());
 			return false;
 		}
 
-		const auto download_file_path = GetTempDir() + "/" + download_file_name;
-		FILE* fp = nowide::fopen(download_file_path.c_str(), "wb");
+		const auto tmp_dir = GetTempDir() + "/" + latest.version_tag;
+		if (tmp_dir.empty()) {
+			ERROR_LOG(COMMON, "GetTempDir failure");
+			return false;
+		}
+
+		if (!file_exists(tmp_dir) && !make_directory(tmp_dir)) {
+			ERROR_LOG(COMMON, "cannot access tmp_dir");
+			return false;
+		}
+
+		const auto download_file_path = tmp_dir + "/" + ReleaseFileName;
+		auto fp = nowide::fopen(download_file_path.c_str(), "wb");
 		if (fp == nullptr) {
 			ERROR_LOG(COMMON, "fopen failure: %s", download_file_path.c_str());
 			return false;
@@ -263,55 +312,33 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 		download_buf_.clear();
 		download_buf_.shrink_to_fit();
 
-		const auto executable_file_name = get_file_name(executable_path);
+		if (!ExtractZipFile(download_file_path, tmp_dir)) {
+			ERROR_LOG(COMMON, "Extract zip failure");
+			return false;
+		}
+
 		const auto executable_dir = executable_path.substr(0, get_last_slash_pos(executable_path));
 		const auto new_version_path = executable_dir + "/" + GetFlycastFileNameWithVersion(latest.version);
 
-		fp = nowide::fopen(new_version_path.c_str(), "wb");
-		if (fp == nullptr) {
-			ERROR_LOG(COMMON, "fopen failure: %s", new_version_path.c_str());
+		if (nowide::rename((tmp_dir + "/" + DefaultFlycastName).c_str(), new_version_path.c_str()) != 0) {
+			ERROR_LOG(COMMON, "failed to move latest version");
 			return false;
 		}
 
-		std::unique_ptr<Archive> archive(OpenArchive(download_file_path.c_str()));
-		if (archive == nullptr) {
-			ERROR_LOG(COMMON, "OpenArchive failure: %s", download_file_path.c_str());
+#if defined(__APPLE__)
+		// Move macOS current executable to Trash, rename new version to original
+		auto current_version = std::string(GIT_VERSION).erase(0, 6);
+		auto trash_path = std::string(getenv("HOME")) + "/.Trash/" + GetFlycastFileNameWithVersion(current_version);
+		
+		while (file_exists(trash_path.c_str())) {
+			trash_path = trash_path.substr(0, trash_path.length() - 4) + "_.app";
 		}
-
-		const auto zip = archive->OpenFile(DefaultFlycastName.c_str());	 // TODO: will now work on APPLE
-		if (zip == nullptr) {
-			ERROR_LOG(COMMON, "zip OpenFile failure: %s", download_file_path.c_str());
-			std::fclose(fp);
-			return false;
+		
+		if (nowide::rename(executable_path.c_str(), trash_path.c_str()) == 0) {
+			nowide::rename(new_version_path.c_str(), executable_path.c_str());
 		}
-
-		bool unzip_ok = false;
-		while (true) {
-			u8 buffer[4096];
-			const auto read = zip->Read(buffer, sizeof(buffer));
-			if (read == 0) {
-				unzip_ok = true;
-				break;
-			}
-
-			if (sizeof(buffer) < read) {
-				ERROR_LOG(COMMON, "zip Read failure");
-				break;
-			}
-
-			if (fwrite(buffer, 1, read, fp) != read) {
-				ERROR_LOG(COMMON, "fwrite failure");
-				break;
-			}
-		}
-		std::fclose(fp);
-
-		if (!unzip_ok) {
-			nowide::remove(new_version_path.c_str());
-			return false;
-		}
-
-		if (executable_file_name == DefaultFlycastName) {
+#else
+		if (get_file_name(executable_path) == DefaultFlycastName) {
 			// overwrite the binary
 			const auto old_version_path = executable_dir + "/" + GetFlycastFileNameWithVersion("old");
 			if (file_exists(old_version_path)) {
@@ -321,11 +348,128 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 			nowide::rename(executable_path.c_str(), old_version_path.c_str());
 			nowide::rename(new_version_path.c_str(), executable_path.c_str());
 		}
+#endif
 
 		return true;
 	};
 
 	return std::async(std::launch::async, update_fn).share();
+}
+
+bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string& dst_path) {
+	auto zip_file = nowide::fopen(zip_path.c_str(), "rb");
+	if (zip_file == nullptr) {
+		ERROR_LOG(COMMON, "ExtractZipFile: fopen zip_path failure");
+		return false;
+	}
+
+	zip_error_t error;
+	zip_source_t* source = zip_source_filep_create(zip_file, 0, -1, &error);
+	if (source == nullptr) {
+		ERROR_LOG(COMMON, "ExtractZipFile: zip_source_filep_create failure: %s", error.str);
+		std::fclose(zip_file);
+		return false;
+	}
+
+	auto zip = zip_open_from_source(source, ZIP_RDONLY, &error);
+	if (zip == nullptr) {
+		ERROR_LOG(COMMON, "ExtractZipFile: zip_open_from_source failure: %s", error.str);
+		std::fclose(zip_file);
+		zip_source_free(source);
+		return false;
+	}
+
+	bool result = true;
+	auto num_entries = zip_get_num_entries(zip, 0);
+	if (num_entries < 0) {
+		ERROR_LOG(COMMON, "ExtractZipFile: zip_get_num_entries failure");
+		result = false;
+	}
+
+	for (int i = 0; i < num_entries && result; i++) {
+		std::string name(zip_get_name(zip, i, 0));	// NOTE: need nowide?
+		if (name.empty()) {
+			ERROR_LOG(COMMON, "ExtractZipFile: zip_get_name");
+			result = false;
+			break;
+		}
+
+		zip_uint8_t opsys = 0;
+		zip_uint32_t attributes = 0;
+		zip_file_get_external_attributes(zip, i, 0, &opsys, &attributes);
+
+		if (name.back() == '/') {
+			name.pop_back();
+			const auto dir = dst_path + "/" + name;
+			if (!file_exists(dir) && !make_directory(dir.c_str())) {
+				ERROR_LOG(COMMON, "ExtractZipFile: make_directory failure: %s", name.c_str());
+				result = false;
+				break;
+			}
+			continue;
+		}
+
+		constexpr uint32_t FA_IFREG = 0100000;
+		constexpr uint32_t FA_IFLNK = 0120000;
+		FILE* wfp = nullptr;
+		zip_file_t* zfp = nullptr;
+
+		do {
+			zfp = zip_fopen_index(zip, i, 0);
+			if (zfp == nullptr) {
+				ERROR_LOG(COMMON, "ExtractZipFile: zip_fopen_index failure");
+				result = false;
+				break;
+			}
+
+			char buf[4096];
+			zip_int64_t read_bytes = 0;
+
+			if (opsys == ZIP_OPSYS_UNIX && ((attributes >> 16) & FA_IFLNK) == FA_IFLNK) {
+#if defined(__APPLE__) && !defined(TARGET_IPHONE) || defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+				read_bytes = zip_fread(zfp, buf, sizeof(buf));
+				buf[read_bytes] = '\0';
+				auto dst = dst_path + "/" + name;
+				if (file_exists(dst)) {
+					nowide::remove(dst.c_str());
+				}
+				if (symlink(buf, dst.c_str()) != 0) {
+					ERROR_LOG(COMMON, "ExtractZipFile: symlink failure: %d", errno);
+					result = false;
+					break;
+				}
+#else
+				ERROR_LOG(COMMON, "ExtractZipFile: symlink is not supported");
+				result = false;
+				break;
+#endif
+				break;
+			}
+
+			wfp = nowide::fopen((dst_path + "/" + name).c_str(), "wb");
+			if (wfp == nullptr) {
+				ERROR_LOG(COMMON, "ExtractZipFile: nowide::fopen failure");
+				result = false;
+				break;
+			}
+
+			while (0 < (read_bytes = zip_fread(zfp, buf, sizeof(buf)))) {
+				std::fwrite(buf, 1, read_bytes, wfp);
+			}
+
+			if (opsys == ZIP_OPSYS_UNIX && ((attributes >> 16) & FA_IFREG) == FA_IFREG) {
+#if defined(__APPLE__) && !defined(TARGET_IPHONE) || defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
+				fchmod(fileno(wfp), attributes >> 16);
+#endif
+			}
+		} while (0);
+		if (wfp != nullptr) fclose(wfp);
+		if (zfp != nullptr) zip_fclose(zfp);
+	}
+
+	zip_close(zip);
+	std::fclose(zip_file);
+	return result;
 }
 
 float GdxsvUpdate::SelfUpdateProgress() const {
