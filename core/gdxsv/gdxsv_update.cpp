@@ -166,7 +166,7 @@ void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersio
 	out.version_tag = latest_tag_name;
 	out.download_url = latest_download_url;
 	out.download_size = latest_download_size;
-	out.is_new_version = current_version < latest_version || true;	// TODO: DELETE
+	out.is_new_version = current_version < latest_version;
 }
 
 std::string GdxsvUpdate::DownloadPageURL() { return "https://github.com/inada-s/flycast/releases/latest/"; }
@@ -450,7 +450,7 @@ bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string&
 			}
 
 			while (0 < (read_bytes = zip_fread(zfp, buf, sizeof(buf)))) {
-				std::fwrite(buf, read_bytes, 1, wfp);
+				std::fwrite(buf, 1, read_bytes, wfp);
 			}
 
 			if (opsys == ZIP_OPSYS_UNIX && ((attributes >> 16) & FA_IFREG) == FA_IFREG) {
