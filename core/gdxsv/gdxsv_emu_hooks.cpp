@@ -99,8 +99,8 @@ bool gdxsv_emu_menu_open() {
 bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::WidescreenGameHacks; }
 
 static void gui_header(const char* title) {
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));	// Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ScaledVec2(0.f, 0.5f));	// Left
+	ImGui::ButtonEx(title, ScaledVec2(-1, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleVar();
 }
 
@@ -149,7 +149,7 @@ void gdxsv_emu_gui_settings() {
 	OptionRadioButton("Disabled", config::GdxLanguage, 3);
 	ImGui::Columns(1, nullptr, false);
 
-	if (ImGui::Button(" Apply Recommended Settings ", ImVec2(0, 40))) {
+	if (ImGui::Button(" Apply Recommended Settings ", ScaledVec2(0, 40))) {
 		// Frame Limit
 		config::LimitFPS = false;
 		config::VSync = true;
@@ -293,7 +293,7 @@ void gdxsv_emu_gui_settings() {
 	}
 
 	const auto buttonWidth = ImGui::CalcTextSize("Test The Port").x + ImGui::GetStyle().ItemSpacing.x * 2;
-	if (ImGui::Button("UPnP Now", ImVec2(buttonWidth, 0)) && !upnp_future.valid()) {
+	if (ImGui::Button("UPnP Now", ScaledVec2(buttonWidth, 0)) && !upnp_future.valid()) {
 		upnp_result = "Please wait...";
 		int port = config::GdxLocalPort;
 		upnp_future = std::async(std::launch::async, [port]() -> std::string {
@@ -312,7 +312,7 @@ void gdxsv_emu_gui_settings() {
 	if (udp_test_future.valid() && udp_test_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 		udp_test_result = udp_test_future.get();
 	}
-	if (ImGui::Button("Test The Port", ImVec2(buttonWidth, 0)) && !udp_test_future.valid()) {
+	if (ImGui::Button("Test The Port", ScaledVec2(buttonWidth, 0)) && !udp_test_future.valid()) {
 		udp_test_result = "Please wait...";
 		udp_test_future = test_udp_port_connectivity(config::GdxLocalPort);
 	}
@@ -462,7 +462,7 @@ static void gdxsv_update_popup() {
 				textCentered(ImVec4(0, 0.8, 0, 1), "Download Completed");
 				textCentered("Please restart the emulator");
 
-				if (ImGui::Button("Exit", ImVec2(300, 30))) {
+				if (ImGui::Button("Exit", ScaledVec2(300, 30))) {
 					self_update_result = {};
 					ImGui::CloseCurrentPopup();
 					dc_exit();
@@ -471,7 +471,7 @@ static void gdxsv_update_popup() {
 				textCentered(ImVec4(0.8, 0, 0, 1), "Download Failed");
 				textCentered("Please download the latest version manually");
 
-				if (ImGui::Button("Download", ImVec2(300, 30))) {
+				if (ImGui::Button("Download", ScaledVec2(300, 30))) {
 					self_update_result = {};
 					os_LaunchFromURL(GdxsvUpdate::DownloadPageURL());
 					ImGui::CloseCurrentPopup();
