@@ -325,6 +325,15 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 			return false;
 		}
 
+#if defined(__APPLE__)
+		// Move macOS current executable to Trash, rename new version to original
+		auto current_version = std::string(GIT_VERSION).erase(0, 6);
+		auto trash_path = std::string(getenv("HOME")) + "/.Trash/" + GetFlycastFileNameWithVersion(current_version);
+		
+		if (nowide::rename(executable_path.c_str(), trash_path.c_str()) == 0) {
+			nowide::rename(new_version_path.c_str(), executable_path.c_str());
+		}
+#else
 		if (get_file_name(executable_path) == DefaultFlycastName) {
 			// overwrite the binary
 			const auto old_version_path = executable_dir + "/" + GetFlycastFileNameWithVersion("old");
@@ -335,6 +344,7 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 			nowide::rename(executable_path.c_str(), old_version_path.c_str());
 			nowide::rename(new_version_path.c_str(), executable_path.c_str());
 		}
+#endif
 
 		return true;
 	};
