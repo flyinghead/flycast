@@ -163,6 +163,7 @@ const static GdxsvTranslation translations_disk2[] = {
     TRANSLATE(0x1C074C, 16, R"(メールを開く)", R"(打開郵箱)", R"(Open Mailbox)"),
     TRANSLATE(0x1C075C, 12, R"(対戦成績)", R"(對戰成績)", R"(Ranking)"),
     TRANSLATE(0x1C0768, 12, R"(ネット終了)", R"(中斷連線)", R"(Disconnect)"),
+    CUSTOMIZE(0x1C0774, 12, R"(ＥＸＩＴ)", R"(取消)", R"(DISMISS)", R"(閉じる)"),
     TRANSLATE(0x1C0780, 28, R"(戦場選択画面に移動します)", R"(前往戰場選擇畫面)", R"(Go to battlefield selection)"),
     TRANSLATE(0x1C07A0, 36, R"(発言したユーザーの一覧を表示します)", R"(査閲發言者名單)", R"(Display speaker list)"),
     TRANSLATE(0x1C07C4, 20, R"(メールを送ったり、)", R"(傳送信息、)", R"(Send mail)"),
@@ -172,7 +173,7 @@ const static GdxsvTranslation translations_disk2[] = {
     TRANSLATE(0x1C0824, 24, R"(操作ボタンを説明します)", R"(顯示操作説明)", R"(Show tutorial)"),
     TRANSLATE(0x1C083C, 20, R"(回線を切断して、)", R"(中斷連線)", R"(Disconnect and)"),
     TRANSLATE(0x1C0850, 24, R"(通信対戦を終了します)", R"(結束「連線對戰」)", R"(end Online Battle)"),
-    TRANSLATE(0x1C0868, 20, R"(前の画面に戻ります)", R"( )", R"( )"),
+    TRANSLATE(0x1C0868, 20, R"(前の画面に戻ります)", R"(返回遊戲大廳)", R"(Return to lobby)"),
     TRANSLATE(0x1C08AC, 24, R"(Ｌトリガー ：ページ送り)", R"(Ｌ掣     ：上一頁)", R"(L: Previous Page)"),
     TRANSLATE(0x1C08C4, 24, R"(Ｒトリガー ：ページ送り)", R"(Ｒ掣     ：下一頁)", R"(R: Next Page)"),
     TRANSLATE(0x1C0908, 32, R"(知らない人と対戦や会話をします)", R"( 請不要超越現實世界的道徳標準)", R"(You are playing with strangers)"),
@@ -347,7 +348,7 @@ if (disk_ == 2) {
     
     // To manage lang-path version, overwrite "UNUSED" text area
     symbols_["lang_patch_id"] = 0x0c1d37dc;
-    symbols_[":lang_patch_id"] = 82631814;
+    symbols_[":lang_patch_id"] = 83458926;
     symbols_[":lang_patch_lang"] = (u32)GdxsvLanguage::Language();
     gdxsv_WriteMem32(symbols_["lang_patch_id"], symbols_[":lang_patch_id"]);
 }
