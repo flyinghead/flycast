@@ -16,11 +16,13 @@
 #include <Windows.h>
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 #include <libproc.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #elif defined(__unix__) && !defined(__APPLE__) && !defined(__ANDROID__)
 #include <libgen.h>
 #include <linux/limits.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
