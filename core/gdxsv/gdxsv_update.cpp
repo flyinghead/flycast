@@ -119,7 +119,7 @@ bool GdxsvUpdate::IsSupportSelfUpdate() {
 #endif
 }
 
-void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) const {
+void GdxsvUpdate::HandleReleaseJSON(const std::string& json_string, LatestVersionInfo& out) {
 	const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
 	const std::string version_prefix = "gdxsv-";
 	const std::regex semver_regex(R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
@@ -352,7 +352,7 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 	return std::async(std::launch::async, update_fn).share();
 }
 
-bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string& dst_path) const {
+bool GdxsvUpdate::ExtractZipFile(const std::string& zip_path, const std::string& dst_path) {
 	auto zip_file = nowide::fopen(zip_path.c_str(), "rb");
 	if (zip_file == nullptr) {
 		ERROR_LOG(COMMON, "ExtractZipFile: fopen zip_path failure");
