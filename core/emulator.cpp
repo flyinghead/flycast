@@ -636,6 +636,7 @@ void Emulator::runInternal()
 void Emulator::unloadGame()
 {
 	stop();
+	gdxsv_emu_reset();
 	if (state == Loaded || state == Error)
 	{
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())

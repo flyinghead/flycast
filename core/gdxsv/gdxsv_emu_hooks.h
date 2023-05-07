@@ -16,6 +16,10 @@ bool gdxsv_is_online();
 
 bool gdxsv_is_savestate_allowed();
 
+bool gdxsv_is_replaying();
+
+void gdxsv_stop_replay();
+
 void gdxsv_emu_flycast_init();
 
 void gdxsv_emu_start();

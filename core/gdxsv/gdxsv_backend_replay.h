@@ -22,8 +22,9 @@ class GdxsvBackendReplay {
 	void OnMainUiLoop();
 	bool StartFile(const char *path, int pov);
 	bool StartBuffer(const char *buf, int size);
+	bool isReplaying();
 	void Open();
-	void Close();
+	void Close(bool by_user = false);
 	u32 OnSockWrite(u32 addr, u32 size);
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockPoll();

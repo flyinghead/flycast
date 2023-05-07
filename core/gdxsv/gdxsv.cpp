@@ -33,6 +33,8 @@ bool Gdxsv::IsOnline() const {
 
 bool Gdxsv::IsSaveStateAllowed() const { return netmode_ == NetMode::Offline; }
 
+bool Gdxsv::IsReplaying() const { return netmode_ == NetMode::Replay; }
+
 bool Gdxsv::Enabled() const { return enabled_; }
 
 void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
@@ -51,6 +53,7 @@ void Gdxsv::Reset() {
 	udp_net_.Reset();
 	rollback_net_.Reset();
 	replay_net_.Reset();
+	netmode_ = NetMode::Offline;
 	http::init();
 
 	// Automatically add ContentPath if it is empty.
@@ -845,6 +848,8 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	}
 	return false;
 }
+
+void Gdxsv::StopReplay() { replay_net_.Close(true); }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
 	rollback_net_.Reset();

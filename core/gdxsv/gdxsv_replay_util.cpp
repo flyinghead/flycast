@@ -23,7 +23,7 @@ static std::vector<std::pair<std::string, uint64_t>> files;
 static std::string selected_replay_file;
 static std::string battle_log_file_name;
 static proto::BattleLogFile battle_log;
-static int pov_index = 0;
+static int pov_index = -1;
 
 static bool download_replay_savestate(int disk, const std::string& save_path) {
 	std::string content_type;
@@ -75,6 +75,8 @@ void gdxsv_end_replay() {
 	dc_loadstate(90);
 	settings.input.fastForwardMode = false;
 
+	emu.start();
+	emu.render();
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
@@ -85,13 +87,14 @@ void gdxsv_replay_select_dialog() {
 
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	const float scaling = settings.display.uiScale;
 
 	ImGui::Begin("##gdxsv_emu_replay_menu", nullptr,
 				 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8) * scaling);
 	ImGui::AlignTextToFramePadding();
-	ImGui::Indent(10 * settings.display.uiScale);
+	ImGui::Indent(10 * scaling);
 
 	ImGui::SameLine();
 	if (ImGui::Button("Close")) {
@@ -126,15 +129,16 @@ void gdxsv_replay_select_dialog() {
 					}
 				}
 			}
+			std::sort(files.begin(), files.end(), std::greater<>());
 
 			flycast::closedir(dir);
 		}
 	}
 
-	ImGui::Unindent(10 * settings.display.uiScale);
-	ImGui::PopStyleVar();
+	ImGui::Unindent(10 * scaling);
+	ImGui::PopStyleVar(); //ImGuiStyleVar_FramePadding
 
-	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_list"), ImVec2(330, 0), true, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_list"), ImVec2(330, 0) * scaling, true, ImGuiWindowFlags_DragScrolling);
 	{
 		if (files.empty()) {
 			ImGui::Text("(No replay found)");
@@ -168,7 +172,7 @@ void gdxsv_replay_select_dialog() {
 					battle_log.ParseFromFileDescriptor(fileno(fp));
 					std::fclose(fp);
 				}
-				pov_index = 0;
+				pov_index = -1;
 			}
 
 			const bool playable = "dc" + std::to_string(gdxsv.Disk()) == battle_log.game_disk();
@@ -197,10 +201,23 @@ void gdxsv_replay_select_dialog() {
 				if (battle_log.users(i).team() == 1) renpo_index.push_back(i);
 				if (battle_log.users(i).team() == 2) zeon_index.push_back(i);
 			}
+			int user_index = 0;
 
-			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.2f, .1f, .6f, 1));
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f * scaling);
+			
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.42f, .79f, .99f, 1));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(.055f, .122f, .227f, .3f));
 			for (int i : renpo_index) {
 				if (i != renpo_index.front()) ImGui::SameLine();
+				auto pos = ImGui::GetCursorPos();
+				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 80))) {
+					if (pov_index == user_index) {
+						pov_index = -1;
+					} else {
+						pov_index = user_index;
+					}
+				}
+				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
 				ImGui::BeginChild(
 					ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
 					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
@@ -208,12 +225,24 @@ void gdxsv_replay_select_dialog() {
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
 				ImGui::EndChild();
+				user_index++;
 			}
 			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
 
-			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.6f, .1f, .2f, 1));
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.97f, .23f, .35f, 1));
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(.196f, .07f, .05f, .3f));
 			for (int i : zeon_index) {
 				if (i != zeon_index.front()) ImGui::SameLine();
+				auto pos = ImGui::GetCursorPos();
+				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 80))) {
+					if (pov_index == user_index) {
+						pov_index = -1;
+					} else {
+						pov_index = user_index;
+					}
+				}
+				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
 				ImGui::BeginChild(
 					ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
 					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
@@ -221,32 +250,17 @@ void gdxsv_replay_select_dialog() {
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
 				ImGui::EndChild();
+				user_index++;
 			}
 			ImGui::PopStyleColor();
+			ImGui::PopStyleColor();
+			
+			ImGui::PopStyleVar(); //ImGuiStyleVar_ChildBorderSize
 
-			auto povString = [](int i) -> std::string {
-				if (battle_log.users_size() <= i) return "";
-				const auto& u = battle_log.users(i);
-				char buf[128] = {};
-				snprintf(buf, sizeof(buf), "%dP\tID: %s\tHN: %s\tPN: %s", i + 1, u.user_id().c_str(), u.user_name().c_str(),
-						 u.pilot_name().c_str());
-				return buf;
-			};
+			bool pov_selected = (pov_index == -1);
+			DisabledScope scope(pov_selected);
 
-			if (ImGui::BeginCombo("POV", povString(pov_index).c_str())) {
-				for (int i = 0; i < battle_log.users_size(); i++) {
-					bool selected = pov_index == i;
-					if (ImGui::Selectable(povString(i).c_str(), selected, 0, ImVec2(0, 0))) {
-						pov_index = i;
-					}
-					if (selected) {
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
-
-			if (ImGui::ButtonEx("Play", ScaledVec2(240, 50), playable ? 0 : ImGuiButtonFlags_Disabled)) {
+			if (ImGui::ButtonEx(pov_selected ? "Select a player" : "Replay", ScaledVec2(240, 50), playable ? 0 : ImGuiButtonFlags_Disabled) && !scope.isDisabled()) {
 				gdxsv_start_replay(replay_dir + "/" + selected_replay_file, pov_index);
 			}
 		}
