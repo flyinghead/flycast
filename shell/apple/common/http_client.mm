@@ -19,31 +19,79 @@
 #import <Foundation/Foundation.h>
 #include "rend/boxart/http_client.h"
 
+@interface NSURLSessionHandler:NSObject <NSURLSessionDataDelegate, NSURLSessionDelegate, NSURLSessionTaskDelegate>
+- (void)setSemaphore:(dispatch_semaphore_t)sema;
+- (void)setContent:(std::vector<u8>&)content;
+- (NSHTTPURLResponse*)httpResponse;
+- (NSError*)httpError;
+@end
+@implementation NSURLSessionHandler
+{
+	dispatch_semaphore_t _sema;
+	NSHTTPURLResponse* _httpResponse;
+	NSError* _httpError;
+	std::vector<u8>* _content;
+}
+
+- (void)setSemaphore:(dispatch_semaphore_t)sema { _sema = sema; }
+
+- (void)setContent:(std::vector<u8>&)content { _content = &content; }
+
+- (NSHTTPURLResponse*)httpResponse { return _httpResponse; }
+
+- (NSError*)httpError { return _httpError; }
+	
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
+	completionHandler(NSURLSessionResponseAllow);
+	_httpResponse = (NSHTTPURLResponse *)response;
+}
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+	_content->insert(_content->end(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+didCompleteWithError:(nullable NSError *)error {
+	_httpError = error;
+	dispatch_semaphore_signal(_sema);
+}
+
+@end
+
 namespace http {
 
 int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
 {
 	NSString *nsurl = [NSString stringWithCString:url.c_str() 
                                          encoding:[NSString defaultCStringEncoding]];
-	NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
-	NSURLResponse *response = nil;
-	NSError *error = nil;
-	NSData *data = [NSURLConnection sendSynchronousRequest:urlRequest
-                                         returningResponse:&response
-                                                     error:&error];
-	if (error != nil)
+	NSURLSessionHandler* handler = [[NSURLSessionHandler alloc] init];
+	content.clear();
+	[handler setContent:content];
+	NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+	NSURLSession *defaultSession = [NSURLSession sessionWithConfiguration: defaultConfigObject delegate: handler delegateQueue: [NSOperationQueue mainQueue]];
+	NSURLSessionDataTask *dataTask = [defaultSession dataTaskWithURL: [NSURL URLWithString:nsurl]];
+	
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+	[handler setSemaphore:sema];
+	
+	[dataTask resume];
+	
+	if (![NSThread isMainThread]) {
+		dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+	} else {
+		while (dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)) {
+			[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
+		}
+	}
+	
+	if ([handler httpError] != nil)
 		return 500;
-
-	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response; 
-	if (httpResponse.MIMEType != nil)
-		contentType = std::string([httpResponse.MIMEType UTF8String]);
+	
+	if ([handler httpResponse].MIMEType != nil)
+		contentType = std::string([[handler httpResponse].MIMEType UTF8String]);
 	else
 		contentType.clear();
-		
-	content.clear();
-	content.insert(content.begin(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);
 	
-	return [httpResponse statusCode];
+	return [[handler httpResponse] statusCode];
 }
 
 int post(const std::string& url, const std::vector<PostField>& fields)
