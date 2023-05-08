@@ -163,23 +163,23 @@ public:
 	}
 	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, emit_FreeSpace()), regalloc(this)
 	{
-		call_regs.push_back(&w0);
-		call_regs.push_back(&w1);
-		call_regs.push_back(&w2);
-		call_regs.push_back(&w3);
-		call_regs.push_back(&w4);
-		call_regs.push_back(&w5);
-		call_regs.push_back(&w6);
-		call_regs.push_back(&w7);
+		call_regs.push_back((const WRegister*)&w0);
+		call_regs.push_back((const WRegister*)&w1);
+		call_regs.push_back((const WRegister*)&w2);
+		call_regs.push_back((const WRegister*)&w3);
+		call_regs.push_back((const WRegister*)&w4);
+		call_regs.push_back((const WRegister*)&w5);
+		call_regs.push_back((const WRegister*)&w6);
+		call_regs.push_back((const WRegister*)&w7);
 
-		call_regs64.push_back(&x0);
-		call_regs64.push_back(&x1);
-		call_regs64.push_back(&x2);
-		call_regs64.push_back(&x3);
-		call_regs64.push_back(&x4);
-		call_regs64.push_back(&x5);
-		call_regs64.push_back(&x6);
-		call_regs64.push_back(&x7);
+		call_regs64.push_back((const XRegister*)&x0);
+		call_regs64.push_back((const XRegister*)&x1);
+		call_regs64.push_back((const XRegister*)&x2);
+		call_regs64.push_back((const XRegister*)&x3);
+		call_regs64.push_back((const XRegister*)&x4);
+		call_regs64.push_back((const XRegister*)&x5);
+		call_regs64.push_back((const XRegister*)&x6);
+		call_regs64.push_back((const XRegister*)&x7);
 
 		call_fregs.push_back(&s0);
 		call_fregs.push_back(&s1);
@@ -485,7 +485,7 @@ public:
 			case shop_adc:
 				{
 					Register reg1;
-					Operand op2;
+					Operand op2 = Operand(0);
 					Register reg3;
 					if (op.rs1.is_imm())
 					{
@@ -517,8 +517,8 @@ public:
 			case shop_sbc:
 				{
 					Register reg1;
-					Operand op2;
-					Operand op3;
+					Operand op2 = Operand(0);
+					Operand op3 = Operand(0);
 					if (op.rs1.is_imm())
 					{
 						Mov(w0, op.rs1.imm_value());
@@ -543,8 +543,8 @@ public:
 				break;
 			case shop_negc:
 				{
-					Operand op1;
-					Operand op2;
+					Operand op1 = Operand(0);
+					Operand op2 = Operand(0);
 					if (op.rs1.is_imm())
 						op1 = Operand(op.rs1.imm_value());
 					else

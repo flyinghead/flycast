@@ -63,7 +63,8 @@ class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 	static const WRegister& getReg(int i)
 	{
 		static const WRegister regs[] = {
-				w19, w20, w21, w22, w23, w24, w25, w27
+				(WRegister)w19, (WRegister)w20, (WRegister)w21, (WRegister)w22,
+				(WRegister)w23, (WRegister)w24, (WRegister)w25, (WRegister)w27
 		};
 		static_assert(MAX_REGS == std::size(regs), "MAX_REGS == std::size(regs)");
 		verify(i >= 0 && (u32)i < std::size(regs));
@@ -141,7 +142,7 @@ class Arm7Compiler : public MacroAssembler
 	{
 		Register rm;
 		if (arg.isNone())
-			return Operand();
+			return Operand(0);
 		else if (arg.isImmediate())
 		{
 			if (!arg.isShifted())
@@ -154,7 +155,7 @@ class Arm7Compiler : public MacroAssembler
 		{
 			rm = regalloc->map(arg.getReg().armreg);
 		}
-		Operand rv;
+		Operand rv = Operand(0);
 		if (!arg.shift_imm)
 		{
 			// Shift by register
@@ -322,7 +323,7 @@ class Arm7Compiler : public MacroAssembler
 	{
 		Operand arg0 = getOperand(op.arg[0], w1);
 		Register rn;
-		Operand op2;
+		Operand op2 = Operand(0);
 		if (op.op_type != ArmOp::MOV && op.op_type != ArmOp::MVN)
 		{
 			rn = getRegister(w1, arg0);

@@ -244,8 +244,8 @@ public:
 
 			// ACCUM
 			//ACC = (((s64)X * (s64)Y) >> 12) + B;
-			const Register& X64 = Register::GetXRegFromCode(X_alias->GetCode());
-			const Register& Y64 = Register::GetXRegFromCode(Y.GetCode());
+			const Register& X64 = XRegister(X_alias->GetCode());
+			const Register& Y64 = XRegister(Y.GetCode());
 			Sxtw(X64, *X_alias);
 			Sxtw(Y64, Y);
 			Mul(x0, X64, Y64);
@@ -284,7 +284,7 @@ public:
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
 					Ldr(x1, GetAicaRam());
-					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
+					MemOperand aram_op(x1, XRegister(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
 					GenCallRuntime(UNPACK);
 					Mov(w2, w0);
@@ -299,7 +299,7 @@ public:
 
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
 					Ldr(x1, GetAicaRam());
-					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
+					MemOperand aram_op(x1, XRegister(ADDR.GetCode()));
 					Strh(w2, aram_op);
 				}
 			}
