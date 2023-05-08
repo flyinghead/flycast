@@ -33,13 +33,12 @@ class GdxsvBackendReplay {
 	bool Start();
 	void PrintDisconnectionSummary();
 	void ProcessLbsMessage();
-	void ProcessMcsMessage();
+	void ProcessMcsMessage(const McsMessage &msg);
 	void ApplyPatch(bool first_time);
 	void RestorePatch();
 
 	State state_;
 	LbsMessageReader lbs_tx_reader_;
-	McsMessageReader mcs_tx_reader_;
 	proto::BattleLogFile log_file_;
 	std::deque<u8> recv_buf_;
 	int recv_delay_;
