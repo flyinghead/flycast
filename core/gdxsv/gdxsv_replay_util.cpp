@@ -77,6 +77,7 @@ void gdxsv_end_replay() {
 
 	emu.start();
 	emu.render();
+	emu.stop();
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
@@ -136,7 +137,7 @@ void gdxsv_replay_select_dialog() {
 	}
 
 	ImGui::Unindent(10 * scaling);
-	ImGui::PopStyleVar(); //ImGuiStyleVar_FramePadding
+	ImGui::PopStyleVar();  // ImGuiStyleVar_FramePadding
 
 	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_list"), ImVec2(330, 0) * scaling, true, ImGuiWindowFlags_DragScrolling);
 	{
@@ -204,7 +205,7 @@ void gdxsv_replay_select_dialog() {
 			int user_index = 0;
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f * scaling);
-			
+
 			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.42f, .79f, .99f, 1));
 			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(.055f, .122f, .227f, .3f));
 			for (int i : renpo_index) {
@@ -254,13 +255,15 @@ void gdxsv_replay_select_dialog() {
 			}
 			ImGui::PopStyleColor();
 			ImGui::PopStyleColor();
-			
-			ImGui::PopStyleVar(); //ImGuiStyleVar_ChildBorderSize
+
+			ImGui::PopStyleVar();  // ImGuiStyleVar_ChildBorderSize
 
 			bool pov_selected = (pov_index == -1);
 			DisabledScope scope(pov_selected);
 
-			if (ImGui::ButtonEx(pov_selected ? "Select a player" : "Replay", ScaledVec2(240, 50), playable ? 0 : ImGuiButtonFlags_Disabled) && !scope.isDisabled()) {
+			if (ImGui::ButtonEx(pov_selected ? "Select a player" : "Replay", ScaledVec2(240, 50),
+								playable ? 0 : ImGuiButtonFlags_Disabled) &&
+				!scope.isDisabled()) {
 				gdxsv_start_replay(replay_dir + "/" + selected_replay_file, pov_index);
 			}
 		}

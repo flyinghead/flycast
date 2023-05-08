@@ -329,11 +329,11 @@ std::shared_future<bool> GdxsvUpdate::StartSelfUpdate() {
 		// Move macOS current executable to Trash, rename new version to original
 		auto current_version = std::string(GIT_VERSION).erase(0, 6);
 		auto trash_path = std::string(getenv("HOME")) + "/.Trash/" + GetFlycastFileNameWithVersion(current_version);
-		
+
 		while (file_exists(trash_path.c_str())) {
 			trash_path = trash_path.substr(0, trash_path.length() - 4) + "_.app";
 		}
-		
+
 		if (nowide::rename(executable_path.c_str(), trash_path.c_str()) == 0) {
 			nowide::rename(new_version_path.c_str(), executable_path.c_str());
 		}
