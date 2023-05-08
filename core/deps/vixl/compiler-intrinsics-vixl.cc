@@ -25,12 +25,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "compiler-intrinsics-vixl.h"
+#include "utils-vixl.h"
 
 namespace vixl {
 
 
 int CountLeadingSignBitsFallBack(int64_t value, int width) {
   VIXL_ASSERT(IsPowerOf2(width) && (width <= 64));
+  if (width < 64) VIXL_ASSERT(IsIntN(width, value));
   if (value >= 0) {
     return CountLeadingZeros(value, width) - 1;
   } else {

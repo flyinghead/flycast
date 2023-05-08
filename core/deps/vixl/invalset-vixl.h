@@ -91,7 +91,7 @@ template <TEMPLATE_INVALSET_P_DECL>
 class InvalSet {
  public:
   InvalSet();
-  ~InvalSet();
+  ~InvalSet() VIXL_NEGATIVE_TESTING_ALLOW_EXCEPTION;
 
   static const size_t kNPreallocatedElements = N_PREALLOCATED_ELEMENTS;
   static const KeyType kInvalidKey = INVALID_KEY;
@@ -112,7 +112,7 @@ class InvalSet {
   size_t size() const;
 
   // Returns true if no elements are stored in the set.
-  // Note that this does not mean the the backing storage is empty: it can still
+  // Note that this does not mean the backing storage is empty: it can still
   // contain invalid elements.
   bool empty() const;
 
@@ -323,7 +323,8 @@ InvalSet<TEMPLATE_INVALSET_P_DEF>::InvalSet()
 
 
 template <TEMPLATE_INVALSET_P_DECL>
-InvalSet<TEMPLATE_INVALSET_P_DEF>::~InvalSet() {
+InvalSet<TEMPLATE_INVALSET_P_DEF>::~InvalSet()
+    VIXL_NEGATIVE_TESTING_ALLOW_EXCEPTION {
   VIXL_ASSERT(monitor_ == 0);
   delete vector_;
 }
@@ -841,9 +842,7 @@ InvalSetIterator<S>::InvalSetIterator(const InvalSetIterator<S>& other)
 #if __cplusplus >= 201103L
 template <class S>
 InvalSetIterator<S>::InvalSetIterator(InvalSetIterator<S>&& other) noexcept
-    : using_vector_(false),
-      index_(0),
-      inval_set_(NULL) {
+    : using_vector_(false), index_(0), inval_set_(NULL) {
   swap(*this, other);
 }
 #endif

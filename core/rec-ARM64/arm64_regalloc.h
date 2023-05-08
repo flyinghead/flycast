@@ -53,18 +53,26 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg, ALLOC_F64>
 
 	const Register& MapRegister(const shil_param& param)
 	{
+		#define WREG(n) vixl::aarch64::w##n,
+		static const Register wregisters[] = {AARCH64_REGISTER_CODE_LIST(WREG)};
+		#undef WREG
+
 		eReg ereg = mapg(param);
 		if (ereg == (eReg)-1)
 			die("Register not allocated");
-		return Register::GetWRegFromCode(ereg);
+		return wregisters[ereg];
 	}
 
 	const VRegister& MapVRegister(const shil_param& param, int index = 0)
 	{
+		#define SREG(n) vixl::aarch64::s##n,
+		static const VRegister sregisters[] = {AARCH64_REGISTER_CODE_LIST(SREG)};
+		#undef SREG
+
 		eFReg ereg = mapf(param, index);
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
-		return VRegister::GetSRegFromCode(ereg);
+		return sregisters[ereg];
 	}
 
 	Arm64Assembler *assembler;

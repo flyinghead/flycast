@@ -1435,24 +1435,26 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/aarch64/abi-aarch64.h
 		core/deps/vixl/aarch64/assembler-aarch64.cc
 		core/deps/vixl/aarch64/assembler-aarch64.h
+		core/deps/vixl/aarch64/assembler-sve-aarch64.cc
 		core/deps/vixl/aarch64/constants-aarch64.h
-		core/deps/vixl/aarch64/cpu-aarch64.cc
-		core/deps/vixl/aarch64/cpu-aarch64.h
 		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
 		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
 		core/deps/vixl/aarch64/decoder-aarch64.cc
 		core/deps/vixl/aarch64/decoder-aarch64.h
+		core/deps/vixl/aarch64/decoder-constants-aarch64.h
+		core/deps/vixl/aarch64/decoder-visitor-map-aarch64.h
 		core/deps/vixl/aarch64/disasm-aarch64.cc
 		core/deps/vixl/aarch64/disasm-aarch64.h
 		core/deps/vixl/aarch64/instructions-aarch64.cc
 		core/deps/vixl/aarch64/instructions-aarch64.h
-		core/deps/vixl/aarch64/instrument-aarch64.cc
-		core/deps/vixl/aarch64/instrument-aarch64.h
 		core/deps/vixl/aarch64/logic-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.h
+		core/deps/vixl/aarch64/macro-assembler-sve-aarch64.cc
 		core/deps/vixl/aarch64/operands-aarch64.cc
 		core/deps/vixl/aarch64/operands-aarch64.h
+		core/deps/vixl/aarch64/registers-aarch64.cc
+		core/deps/vixl/aarch64/registers-aarch64.h
 		core/deps/vixl/aarch64/pointer-auth-aarch64.cc
 		core/deps/vixl/aarch64/simulator-aarch64.cc
 		core/deps/vixl/aarch64/simulator-aarch64.h

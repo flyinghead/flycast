@@ -89,7 +89,7 @@ class CodeBufferCheckScope {
     VIXL_ASSERT(!initialised_);
     VIXL_ASSERT(assembler != NULL);
     assembler_ = assembler;
-    if (check_policy == kReserveBufferSpace && assembler->GetBuffer()->IsManaged()) {
+    if (check_policy == kReserveBufferSpace) {
       assembler->GetBuffer()->EnsureSpaceFor(size);
     }
 #ifdef VIXL_DEBUG
