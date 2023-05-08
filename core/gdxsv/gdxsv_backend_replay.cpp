@@ -269,8 +269,6 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 
 	LbsMessage msg;
 	if (lbs_tx_reader_.Read(msg)) {
-		// NOTICE_LOG(COMMON, "RECV cmd=%04x seq=%d", msg.command, msg.seq);
-
 		if (state_ == State::Start) {
 			state_ = State::LbsStartBattleFlow;
 		}
@@ -293,7 +291,6 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 		if (msg.command == LbsMessage::lbsAskPlayerInfo) {
 			int pos = msg.Read8();
 			const auto &user = log_file_.users(pos - 1);
-			NOTICE_LOG(COMMON, "pos=%d game_param.size=%d", pos, user.game_param().size());
 			LbsMessage::SvAnswer(msg)
 				.Write8(pos)
 				->WriteString(user.user_id())
@@ -336,8 +333,6 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 }
 
 void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
-	// NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
-
 	const auto msg_type = msg.Type();
 
 	if (msg_type == McsMessage::MsgType::ConnectionIdMsg) {
@@ -373,7 +368,6 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 			if (i != me_) {
 				auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
 				std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
-				NOTICE_LOG(COMMON, "StartMsg:%s", start_msg.ToHex().c_str());
 			}
 		}
 	} else if (msg_type == McsMessage::MsgType::ForceMsg) {
@@ -389,13 +383,10 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 					auto key_msg = McsMessage::Create(McsMessage::MsgType::KeyMsg1, i);
 					key_msg.body[2] = input >> 8 & 0xff;
 					key_msg.body[3] = input & 0xff;
-					// NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
 					std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
 				}
 
 				key_msg_count_++;
-				NOTICE_LOG(COMMON, "%d / %d", key_msg_count_, log_file_.inputs_size());
-
 				if (key_msg_count_ == log_file_.inputs_size()) {
 					state_ = State::End;
 				}
@@ -404,7 +395,6 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 	} else if (msg_type == McsMessage::MsgType::KeyMsg2) {
 		verify(false);
 	} else if (msg_type == McsMessage::MsgType::LoadEndMsg) {
-		// gdxsv.maxlag_ = 1;
 		for (int i = 0; i < log_file_.users_size(); ++i) {
 			if (i != me_) {
 				auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);

@@ -77,6 +77,7 @@ void gdxsv_end_replay() {
 
 	emu.start();
 	emu.render();
+	emu.stop();
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
 	}
