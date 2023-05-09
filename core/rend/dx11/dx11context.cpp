@@ -31,6 +31,8 @@
 #include <gamingdeviceinformation.h>
 #endif
 
+#include "nowide/stackstring.hpp"
+
 DX11Context theDX11Context;
 
 bool DX11Context::init(bool keepCurrentWindow)
@@ -88,7 +90,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	dxgiAdapter->GetDesc(&desc);
 	nowide::stackstring wdesc;
 	wdesc.convert(desc.Description);
-	adapterDesc = wdesc.c_str();
+	adapterDesc = wdesc.get();
 	adapterVersion = std::to_string(desc.Revision);
 	vendorId = desc.VendorId;
 

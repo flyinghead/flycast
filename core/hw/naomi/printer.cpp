@@ -20,9 +20,9 @@
 #include "printer.h"
 #include "serialize.h"
 #include "rend/gui.h"
-#include <map>
-#include <memory>
 #include <cassert>
+#include <memory>
+#include <vector>
 #ifdef STANDALONE_TEST
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #undef INFO_LOG

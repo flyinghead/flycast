@@ -8,6 +8,7 @@
 #include <cstring>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>

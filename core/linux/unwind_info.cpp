@@ -96,6 +96,9 @@ constexpr int dwarfRegSP = 13;
 
 #if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || (HOST_CPU == CPU_ARM && defined(__ANDROID__))
 
+#include <cstring>
+#include <vector>
+
 using ByteStream = std::vector<u8>;
 
 static void writeLength(ByteStream &stream, u32 pos, u32 v)

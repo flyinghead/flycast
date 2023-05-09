@@ -23,6 +23,7 @@
 #include <initguid.h>
 #include <devpkey.h>
 #include "hw/maple/maple_devs.h"
+#include "nowide/stackstring.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -379,11 +380,11 @@ static void findDevices()
 				    {
 						DEVPROPTYPE propType;
 						ULONG bufSize = 0;
-						if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
+						if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
 						{
 							std::vector<wchar_t> buf;
 							buf.resize(bufSize / sizeof(wchar_t));
-							if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
+							if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
 							{
 								// Locate the device using the device instance id
 								DEVINST devInst;
@@ -398,7 +399,7 @@ static void findDevices()
 										{
 											nowide::stackstring nwname;
 											if (nwname.convert(&buf[0]))
-												name = nwname.c_str();
+												name = nwname.get();
 										}
 									}
 								}

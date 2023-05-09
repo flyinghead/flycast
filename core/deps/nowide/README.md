@@ -1,245 +1,109 @@
-NoWide
-======
+# Boost.Nowide
 
-|  Linux/GCC  |  Windows/MSVC  |  Binaries  |
-| :---------: | :------------: | :--------: |
-|  [Travis CI](https://travis-ci.org/Nephatrine/nowide-standalone)  |  [Appveyor CI](https://ci.appveyor.com/project/Nephatrine/nowide-standalone)  |  [MSVC 2013 32-Bit/64-Bit](https://ci.appveyor.com/project/Nephatrine/nowide-standalone/build/artifacts)  |
-|  ![Build Status](https://travis-ci.org/Nephatrine/nowide-standalone.svg?branch=master)  |  ![Build Status](https://ci.appveyor.com/api/projects/status/github/nephatrine/nowide-standalone?branch=master)  |  ---  |
+Branch      | Appveyor | Github | codecov.io | Deps | Docs | Tests |
+------------|----------|--------|------------| ---- | ---- | ----- |
+[master](https://github.com/boostorg/nowide/tree/master)   | [![Build status](https://ci.appveyor.com/api/projects/status/w5sywrekwd66say4/branch/master?svg=true)](https://ci.appveyor.com/project/Flamefire/nowide-fr98b/branch/master)   | ![](https://github.com/boostorg/nowide/workflows/CI%20Tests/badge.svg?branch=master) ![](https://github.com/boostorg/nowide/workflows/POSIX/badge.svg?branch=master)  | [![codecov](https://codecov.io/gh/boostorg/nowide/branch/master/graph/badge.svg)](https://codecov.io/gh/boostorg/nowide/branch/master)   | [![Deps](https://img.shields.io/badge/deps-master-brightgreen.svg)](https://pdimov.github.io/boostdep-report/master/nowide.html)   | [![Documentation](https://img.shields.io/badge/docs-master-brightgreen.svg)](https://www.boost.org/doc/libs/master/libs/nowide/index.html)   | [![Enter the Matrix](https://img.shields.io/badge/matrix-master-brightgreen.svg)](https://www.boost.org/development/tests/master/developer/nowide.html)
+[develop](https://github.com/boostorg/nowide/tree/develop) | [![Build status](https://ci.appveyor.com/api/projects/status/w5sywrekwd66say4/branch/develop?svg=true)](https://ci.appveyor.com/project/Flamefire/nowide-fr98b/branch/develop) | ![](https://github.com/boostorg/nowide/workflows/CI%20Tests/badge.svg?branch=develop) ![](https://github.com/boostorg/nowide/workflows/POSIX/badge.svg?branch=develop) | [![codecov](https://codecov.io/gh/boostorg/nowide/branch/develop/graph/badge.svg)](https://codecov.io/gh/boostorg/nowide/branch/develop) | [![Deps](https://img.shields.io/badge/deps-develop-brightgreen.svg)](https://pdimov.github.io/boostdep-report/develop/nowide.html) | [![Documentation](https://img.shields.io/badge/docs-develop-brightgreen.svg)](https://www.boost.org/doc/libs/develop/libs/nowide/index.html) | [![Enter the Matrix](https://img.shields.io/badge/matrix-develop-brightgreen.svg)](https://www.boost.org/development/tests/develop/developer/nowide.html)
 
-NoWide is a library originally implemented by Artyom Beilis that makes
-cross-platform, Unicode-aware programming easier.
+Quality checks:
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/20464/badge.svg)](https://scan.coverity.com/projects/boostorg-nowide)
+[![CodeFactor](https://www.codefactor.io/repository/github/boostorg/nowide/badge)](https://www.codefactor.io/repository/github/boostorg/nowide)
 
-The library provides an implementation of standard C and C++ library functions,
-such that their inputs are UTF-8--aware on Windows without requiring to use Wide
-API.
+Library for cross-platform, unicode aware programming.
 
-------------------------------------------------------
+The library provides an implementation of standard C and C++ library functions, such that their inputs are UTF-8 aware on Windows without requiring to use the Wide API.
 
-Rationale
----------
+### License
 
-### The Problem ###
+Distributed under the [Boost Software License, Version 1.0](https://www.boost.org/LICENSE_1_0.txt).
 
-Consider a simple application that splits a big file into chunks, such that
-they can be sent by email. It requires doing a few very simple tasks:
+### Properties
 
-  * Access Command-Line Arguments
-  * Open Input File
-  * Open Output Files
-  * Possibly Remove Output Files During Rollback
-  * Print Progress Report In Console
+* optional C++17 (filesystem) support
+* Usable outside of Boost via CMake
+* Compiled library on every OS
 
-Unfortunately, it is **impossible** to implement this task in simple, standard
-C++. **Why?** Well, what happens when the filename being used in those
-operations contains non-ASCII characters?
+Note on the last point:
+Having a compiled library allows cross-platform access to e.g. `setenv` which would not be available when using a `-std=c++nn` flag.
+This is different to the version available prior to the inclusion in Boost.
 
-On modern POSIX systems (Linux, Mac OSX, Solaris, BSD), filenames are
-internally encoded in UTF-8. On such systems, the program reads the UTF-8
-filenames from ```argv[]``` and simply pass them verbatim to the needed classes
-and functions (```std::fstream```, ```std::remove```, ```std::cout```, etc.).
+### Requirements (All versions)
 
-Windows, though, is not so simple. Windows uses UTF-16 internally. UTF-16
-cannot fit into a simple ```char```. This means a Unicode filename simply
-cannot be passed via the normal ```argv[]``` and such files cannot be
-opened or manipulated via the standard C and C++ APIs. Instead, the
-Microsoft-specific APIs and extensions would need to be used to handle such a
-program.
+* **C++11** (or higher) compatible compiler
+    * MSVC 2015 and up work
+    * libstdc++ < 5 is unsupported as it is silently lacking C++11 features
+    * When building with B2 pass e.g. `cxxstd=11` if your compiler defaults to C++03
 
-Normally, you'd need to write any code dealing with filenames twice: once for
-Windows and then again for all other platforms. This makes writing portable
-code a challenge even for such simple programs.
-  
-### The Solution ###
+### Requirements (Boost version)
 
-NoWide implements drop-in replacement functions for various C and C++ standard
-library functions in the ```nowide``` namespace rather than ```std```. On
-Windows, these functions will translate between UTF-8 and UTF-16 where needed
-and present a solely UTF-8 interface for you to program against that will work
-anywhere. On other platforms, the functions are simply aliases to the
-corresponding standard library function.
+* Boost (>= 1.56)
+* CMake (when not using as part of Boost) or B2 (otherwise)
 
-The library provides:
+### Requirements (Standalone version)
 
-  * Easy to use functions for converting between UTF-8 and UTF-16.
-  * A helper class to access UTF-8 ```argc```, ```argc``` and ```env```.
-  * UTF-8--Aware Implementations:
-    * ```<cstdio> Functions:```
-      * ```fopen```
-      * ```freopen```
-      * ```remove```
-      * ```rename```
-    * ```<cstdlib> Functions:```
-      * ```system```
-      * ```getenv```
-      * ```setenv```
-      * ```unsetenv```
-      * ```putenv```
-    * ```<fstream> Functions:```
-      * ```filebuf```
-      * ```fstream```
-	  * ```ofstream```
-	  * ```ifstream```
-    * ```<iostream> Functions:```
-      * ```cout```
-      * ```cerr```
-      * ```clog```
-      * ```cin```
+The [standalone branch](https://github.com/boostorg/nowide/tree/standalone) keeps track of the [develop branch](https://github.com/boostorg/nowide/tree/develop) and can be used without any other part of Boost.
+It is automatically updated so referring to a specific commit is recommended.
+You can also use the standalone source archive which is part of every release.
 
-### Why not use a wide API everywhere? ###
+* CMake
 
-The trouble is ```wchar_t``` **isn't portable**. It could be 1, 2, or 4 bytes
-and there is no specific encoding it should be in. Additionally, the standard
-library only provides narrow functions when dealing with the OS (e.g. there is
-no ```fopen(wchar_t)``` in the standard). We determined it would be better to
-try and stick closely to the C and C++ standards rather than implement wide
-function variants everywhere as Microsoft does.
+# Quickstart
 
-For further reading, see [UTF-8 Everywhere](http://www.utf8everywhere.org/).
+Instead of using the standard library functions use the corresponding member of Boost.Nowide with the same name.
+On Linux those are (mostly) aliases for the `std` ones, but on Windows they accept UTF-8 as input and use the wide API for the underlying functionality.
 
-------------------------------------------------------
+Examples:
+- `std::ifstream -> boost::nowide::ifstream`
+- `std::fopen -> boost::nowide::fopen`
+- `std::fclose -> boost::nowide::fclose`
+- `std::getenv -> boost::nowide::getenv`
+- `std::putenv -> boost::nowide::putenv`
+- `std::cout -> boost::nowide::cout`
 
-Usage
------
+To also convert your input arguments to UTF-8 on Windows use:
 
-**IMPORTANT:** If you are using MSVC and a dynamic/shared build of NoWide, you
-will need to define the ```NOWIDE_DLL``` symbol prior to including the NoWide
-headers so the functions are decorated with ```__declspec(dllimport)``` as
-needed. This is not required if using a static library or MinGW/GCC.
-
-To use the library, you need to do to include the ```<nowide/*>``` headers
-instead of the standard ones and then call the functions using the ```nowide```
-namespace instead of ```std```.
-
-For example, this is a naïve file line counter that cannot handle Unicode:
-
-```cpp
-#include <fstream>
-#include <iostream>
-
-int main(int argc,char **argv)
+```
+int main(int argc, char **argv)
 {
-    if(argc!=2) {
-        std::cerr << "Usage: file_name" << std::endl;
-        return 1;
-    }
-
-    std::ifstream f(argv[1]);
-    if(!f) {
-        std::cerr << "Can't open a file " << argv[1] << std::endl;
-        return 1;
-    }
-    int total_lines = 0;
-    while(f) {
-        if(f.get() == '\n')
-            total_lines++;
-    }
-    f.close();
-    std::cout << "File " << argv[1] << " has " << total_lines << " lines"
-	        << std::endl;
-    return 0;
+    boost::nowide::args _(argc, argv); // Must use an instance!
+    ...
 }
 ```
 
-To make this program handle Unicode properly we make the following changes:
+See the [Documentation](https://www.boost.org/doc/libs/master/libs/nowide/index.html) for details.
 
-```cpp
-#include <nowide/args.hpp>
-#include <nowide/fstream.hpp>
-#include <nowide/iostream.hpp>
+# Compile
 
-int main(int argc,char **argv)
-{
-    nowide::args a(argc,argv); // UTF-8
-    if(argc!=2) {
-        nowide::cerr << "Usage: file_name" << std::endl; // UTF-8
-        return 1;
-    }
+## With Boost
 
-    nowide::ifstream f(argv[1]); // UTF-8
-    if(!f) {
-        nowide::cerr << "Can't open a file " << argv[1] << std::endl; // UTF-8
-        return 1;
-    }
-    int total_lines = 0;
-    while(f) {
-        if(f.get() == '\n')
-            total_lines++;
-    }
-    f.close();
-    nowide::cout << "File " << argv[1] << " has " << total_lines << " lines"
-	        << std::endl; // UTF-8
-    return 0;
-}
+Compile and install the Boost super project the usual way via `./b2`.
+The headers and library will then be available together with all other Boost libraries.
+From within CMake you can then use `find_package(Boost COMPONENTS nowide)` and link against `Boost::nowide`.
+Note that `find_package(boost_nowide)` will find the package too, but the above is the canonical way.
+
+## With CMake
+
+Boost.Nowide fully supports CMake.
+So you can use `add_subdirectory("path-to-boost-nowide-repo")` and link your project against the target `Boost::nowide`.
+
+You can also pre-compile and install Boost.Nowide via the usual workflow:
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+make install
 ```
 
-This simple and straightforward approach helps writing Unicode-aware programs.
+A CMake-Config file will be installed alongside Boost.Nowide so `find_package(boost_nowide)` does work out-of the box
+(provided it was installed into a "standard" location or its `INSTALL_PREFIX` was added to `CMAKE_PREFIX_PATH`).
 
-### Interacting With Wide APIs ###
+# Boost.Filesystem integration
 
-Of course, the above cannot cover every use-case. There may be a Wide API that
-you need to work with at some point -- either a Microsoft API or a custom
-external one. When dealing with such APIs, use the ```nowide::widen``` and ```nowide::narrow```
-functions to convert to/from UTF-8 at the point of use.
+Boost.Nowide integrates with Boost.Filesystem:
+- Call `boost::nowide::nowide_filesystem()` to imbue UTF-8 into Boost.Filesystem (for use by `boost::filesystem::path`) such that narrow strings passed into Boost.Filesystem are treated as UTF-8 on Windows
 
-For Example:
+### More information
 
-```cpp
-CopyFileW( nowide::widen(existing_file).c_str(),
-           nowide::widen(new_file).c_str(),
-           TRUE);
-```
-
-These functions allocate normal ```std::string```s, but you may want to
-allocate the string on the stack for particularly short strings. To do this,
-the ```nowide::basic_stackstring``` class can be used.
-
-```cpp
-nowide::basic_stackstring<wchar_t,char,64> wexisting_file, wnew_file;
-if(!wexisting_file.convert(existing_file) || !wnew_file.convert(new_file))
-    return -1;     // invalid UTF-8
-CopyFileW(wexisting_file.c_str(), wnew_file.c_str(), TRUE);
-```
-
-The following ```typedef```s are also provided for convenience:
-
-  * ```stackstring```: narrows ```wchar_t``` to ```char```; holds 256 characters.
-  * ```wstackstring```: widens ```char_t``` to ```wchar```; holds 256 characters.
-  * ```short_stackstring```: narrows ```wchar_t``` to ```char```; holds 16 characters.
-  * ```wshort_stackstring```: widens ```char_t``` to ```wchar```; holds 16 characters.
-
-These types will fall back to heap-based allocation if the string does not fit
-into the specified stack space.
-
-### <windows.h> ###
-
-The library does not include ```<windows.h>``` in order to prevent namespace
-pollution. The library rather defines the prototypes to the needed Win32 API
-functions.
-
-You may request to use the actual ```<windows.h>``` anyways by setting defining
-the ```NOWIDE_USE_WINDOWS_H``` symbol before including any NoWide headers.
-
-------------------------------------------------------
-
-Building Source
----------------
-
-You will need a standard build environment for your platform (i.e. GCC,
-Xcode/Clang, MinGW, MSVC, etc.) as well as the following tools:
-
-* CMake 2.8+
-* Doxygen (*Optional*; For Documentation)
-  * GraphViz/Dot (Class Diagrams)
-  * HTML Help Workshop (CHM Documentation)
-  * PDFLaTeX (PDF Documentation)
-  
-Compilation steps are bog-standard for a CMake project:
-
-	mkdir build
-	cd build
-	cmake ..
-	make && make test
-
-Optionally, to install:
-	
-	make install
+* [Ask questions](http://stackoverflow.com/questions/ask?tags=c%2B%2B,boost,boost-nowide)
+* [Report bugs](https://github.com/boostorg/nowide/issues): Be sure to mention Boost version, platform and compiler you're using. A small compilable code sample to reproduce the problem is always good as well.
+* Submit your patches as pull requests against **develop** branch. Note that by submitting patches you agree to license your modifications under the [Boost Software License, Version 1.0](https://www.boost.org/LICENSE_1_0.txt).
+* Discussions about the library are held on the [Boost developers mailing list](https://www.boost.org/community/groups.html#main). Be sure to read the [discussion policy](https://www.boost.org/community/policy.html) before posting and add the `[nowide]` tag at the beginning of the subject line.
