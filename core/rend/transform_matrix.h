@@ -111,6 +111,8 @@ public:
 		if (renderingContext->isRTT)
 		{
 			dcViewport.x = (float)(renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1);
+			if (renderingContext->scaler_ctl.hscale)
+				dcViewport.x *= 2;
 			dcViewport.y = (float)(renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1);
 			normalMatrix = glm::translate(glm::vec3(-1, -rttFlipY, 0))
 				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * rttFlipY, 1.f));
