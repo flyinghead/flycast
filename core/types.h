@@ -116,11 +116,10 @@ enum HollyInterruptID
 #else
 #include "nowide/config.hpp"
 #include "nowide/convert.hpp"
+#include "nowide/cstdlib.hpp"
 #include "nowide/stackstring.hpp"
-#include "nowide/cenv.hpp"
 
 #include <cstdio>
-#include <stdio.h>
 namespace nowide {
 FILE *fopen(char const *file_name, char const *mode);
 int remove(const char *pathname);

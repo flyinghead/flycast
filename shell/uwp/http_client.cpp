@@ -45,7 +45,7 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 		return 500;
 	try
 	{
-		Uri^ uri = ref new Uri(ref new String(wurl.c_str()));
+		Uri^ uri = ref new Uri(ref new String(wurl.get()));
 		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->GetAsync(uri);
 		cResetEvent asyncEvent;
 		op->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
@@ -65,7 +65,7 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 				String^ mediaType = contentTypeHeader->MediaType;
 				nowide::stackstring nwstring;
 				nwstring.convert(mediaType->Data());
-				contentType = nwstring.c_str();
+				contentType = nwstring.get();
 			}
 			IAsyncOperationWithProgress<IBuffer^, uint64_t>^ readOp = httpContent->ReadAsBufferAsync();
 			asyncEvent.Reset();

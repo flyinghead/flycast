@@ -21,6 +21,8 @@
 #pragma once
 #include "types.h"
 
+#include <vector>
+
 struct WidescreenCheat
 {
 	const char *game_id;

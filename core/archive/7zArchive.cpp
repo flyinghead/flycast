@@ -23,6 +23,8 @@
 #include "deps/lzma/7zCrc.h"
 #include "deps/lzma/Alloc.h"
 
+#include <cstring>
+
 #define kInputBufSize ((size_t)1 << 18)
 
 static bool crc_tables_generated;

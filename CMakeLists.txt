@@ -587,7 +587,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.cpp
 		core/deps/chdpsr/cdipsr.h)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
+add_subdirectory(core/deps/nowide)
+target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
+target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
 	if(NINTENDO_SWITCH)
