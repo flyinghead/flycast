@@ -211,7 +211,7 @@ void gdxsv_replay_select_dialog() {
 			for (int i : renpo_index) {
 				if (i != renpo_index.front()) ImGui::SameLine();
 				auto pos = ImGui::GetCursorPos();
-				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 80))) {
+				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 90))) {
 					if (pov_index == user_index) {
 						pov_index = -1;
 					} else {
@@ -220,8 +220,8 @@ void gdxsv_replay_select_dialog() {
 				}
 				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
 				ImGui::BeginChild(
-					ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
+					ImGui::GetID(("gdxsv_replay_file_detail_renpo_" + std::to_string(i)).c_str()), ScaledVec2(180, 90), true,
+					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
@@ -236,7 +236,7 @@ void gdxsv_replay_select_dialog() {
 			for (int i : zeon_index) {
 				if (i != zeon_index.front()) ImGui::SameLine();
 				auto pos = ImGui::GetCursorPos();
-				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 80))) {
+				if (ImGui::Selectable(("##pov_" + std::to_string(user_index)).c_str(), (pov_index == user_index), 0, ScaledVec2(180, 90))) {
 					if (pov_index == user_index) {
 						pov_index = -1;
 					} else {
@@ -245,8 +245,8 @@ void gdxsv_replay_select_dialog() {
 				}
 				ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
 				ImGui::BeginChild(
-					ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 80), true,
-					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNavFocus);
+					ImGui::GetID(("gdxsv_replay_file_detail_zeon_" + std::to_string(i)).c_str()), ScaledVec2(180, 90), true,
+					ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 				textCentered("ID: " + battle_log.users(i).user_id());
 				textCentered("HN: " + battle_log.users(i).user_name());
 				textCentered("PN: " + battle_log.users(i).pilot_name());
