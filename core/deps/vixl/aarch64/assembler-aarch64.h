@@ -49,7 +49,7 @@ class Label {
     VIXL_ASSERT(!IsLinked());
   }
 
-  bool IsBound() const { return location_ >= 0; }
+  bool IsBound() const { return location_ != kLocationUnbound; }
   bool IsLinked() const { return !links_.empty(); }
 
   ptrdiff_t GetLocation() const { return location_; }
