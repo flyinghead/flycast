@@ -32,6 +32,31 @@ extern "C" {
 #include <signal.h>
 }
 
+#define VIXL_INCLUDE_TARGET_A32
+#define VIXL_CODE_BUFFER_MALLOC
+//#define VIXL_DEBUG
+
+#if defined(__ANDROID__) && defined(VIXL_DEBUG)
+#include <android/log.h>
+
+#ifdef printf
+#undef printf
+#endif
+
+#ifdef puts
+#undef puts
+#endif
+
+#define LOG_TAG   "flycast"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
+#define puts      LOGI
+#define printf    LOGI
+#define putinf    LOGI
+#endif
+
 namespace vixl {
 inline void HostBreakpoint() { raise(SIGINT); }
 }  // namespace vixl
