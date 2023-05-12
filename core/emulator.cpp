@@ -101,7 +101,9 @@ static void loadSpecialSettings()
 				// Shenmue (EU)
 				|| prod_id == "MK-5105950"
 				// Shenmue (JP)
-				|| prod_id == "HDR-0016")
+				|| prod_id == "HDR-0016"
+				// Izumo
+				|| prod_id == "T46902M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
