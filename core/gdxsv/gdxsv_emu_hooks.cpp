@@ -44,6 +44,7 @@ void gdxsv_emu_start() {
 	if (gdxsv.Enabled()) {
 		auto replay = cfgLoadStr("gdxsv", "replay", "");
 		if (!replay.empty()) {
+			dc_savestate(90);
 			dc_loadstate(99);
 		} else if (!cfgLoadStr("gdxsv", "rbk_test", "").empty()) {
 			dc_loadstate(99);
@@ -83,7 +84,8 @@ void gdxsv_emu_loadstate(int slot) {
 	if (gdxsv.Enabled()) {
 		auto replay = cfgLoadStr("gdxsv", "replay", "");
 		if (!replay.empty() && slot == 99) {
-			gdxsv.StartReplayFile(replay.c_str(), 0);
+			auto replay_pov = cfgLoadInt("gdxsv", "ReplayPOV", 1);
+			gdxsv.StartReplayFile(replay.c_str(), replay_pov - 1);
 		}
 
 		auto rbk_test = cfgLoadStr("gdxsv", "rbk_test", "");

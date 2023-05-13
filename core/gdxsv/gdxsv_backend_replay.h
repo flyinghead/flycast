@@ -21,7 +21,7 @@ class GdxsvBackendReplay {
 	void Reset();
 	void OnMainUiLoop();
 	bool StartFile(const char *path, int pov);
-	bool StartBuffer(const char *buf, int size);
+	bool StartBuffer(const std::vector<u8> &buf, int pov);
 	bool isReplaying();
 	void Open();
 	void Close(bool by_user = false);
