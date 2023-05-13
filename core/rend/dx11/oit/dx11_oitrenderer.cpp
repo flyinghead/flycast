@@ -622,7 +622,10 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
-		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		bool is_rtt = pvrrc.isRTT;
+
+		if (!is_rtt)
+			resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		if (pixelBufferSize != config::PixelBufferSize)
 		{
 			buffers.init(device, deviceContext);
@@ -635,8 +638,6 @@ struct DX11OITRenderer : public DX11Renderer
 	    // To avoid DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET warnings
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), nullptr);
 		configVertexShader();
-
-		bool is_rtt = pvrrc.isRTT;
 
 		deviceContext->IASetInputLayout(mainInputLayout);
 
