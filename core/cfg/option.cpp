@@ -138,6 +138,7 @@ Option<int> GdxLocalPort("LocalPort", 0, "gdxsv");
 Option<int> GdxMinDelay("MinDelay", 2, "gdxsv");
 Option<bool> GdxSaveReplay("SaveReplay", true, "gdxsv");
 Option<bool> GdxUploadReplay("UploadReplay", true, "gdxsv");
+Option<bool> GdxReplayHideName("ReplayHideName", false, "gdxsv");
 
 // Network
 

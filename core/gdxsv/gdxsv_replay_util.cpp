@@ -189,6 +189,8 @@ void gdxsv_replay_select_dialog() {
 			time = battle_log.end_at();
 			std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
 			ImGui::Text("EndAt: %s", buf);
+			OptionCheckbox("Hide name", config::GdxReplayHideName, "Replace player names with generic names");
+			ImGui::NewLine();
 
 			auto textCentered = [](const std::string& text) {
 				auto windowWidth = ImGui::GetWindowSize().x;
@@ -257,6 +259,7 @@ void gdxsv_replay_select_dialog() {
 			ImGui::PopStyleColor();
 
 			ImGui::PopStyleVar();  // ImGuiStyleVar_ChildBorderSize
+			ImGui::NewLine();
 
 			bool pov_selected = (pov_index == -1);
 			DisabledScope scope(pov_selected);
