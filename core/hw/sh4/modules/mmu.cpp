@@ -411,7 +411,13 @@ retry_ITLB_Match:
 
 	if (*tlb_entry_ret == nullptr)
 	{
-		verify(mmach == false);
+#ifndef FAST_MMU
+		verify(!mmach);
+#else
+		// the matching may be approximative
+		if (mmach)
+			return MmuError::TLB_MISS;
+#endif
 		const TLB_Entry *tlb_entry;
 		MmuError lookup = mmu_full_lookup(va, &tlb_entry, rv);
 		if (lookup != MmuError::NONE)

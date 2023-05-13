@@ -310,16 +310,14 @@ struct DX11OITRenderer : public DX11Renderer
 		else
 			zfunc = gp->isp.DepthMode;
 
-		bool zwriteEnable = false;
-		if (pass == DX11OITShaders::Depth || pass == DX11OITShaders::Color)
-		{
-			// Z Write Disable seems to be ignored for punch-through.
-			// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-			if (Type == ListType_Punch_Through)
-				zwriteEnable = true;
-			else
-				zwriteEnable = !gp->isp.ZWriteDis;
-		}
+		bool zwriteEnable;
+		// Z Write Disable seems to be ignored for punch-through.
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+		if (Type == ListType_Punch_Through)
+			zwriteEnable = true;
+		else
+			zwriteEnable = !gp->isp.ZWriteDis;
+
 		bool needStencil = config::ModifierVolumes && pass == DX11OITShaders::Depth && Type != ListType_Translucent;
 		const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, needStencil), stencil);
@@ -533,8 +531,8 @@ struct DX11OITRenderer : public DX11Renderer
 			// PASS 1: Geometry pass to update depth and stencil
 			//
 			// unbind depth/stencil
-			ID3D11ShaderResourceView *p = nullptr;
-		    deviceContext->PSSetShaderResources(4, 1, &p);
+			ID3D11ShaderResourceView * const nullView = nullptr;
+		    deviceContext->PSSetShaderResources(4, 1, &nullView);
 		    // disable color writes
 			deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
@@ -557,22 +555,22 @@ struct DX11OITRenderer : public DX11Renderer
 			//
 			if (current_pass.autosort)
 			{
+			    deviceContext->PSSetShaderResources(4, 1, &nullView);
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 			    deviceContext->PSSetShaderResources(4, 1, &depthView.get());
 			    // disable color writes
 				deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+				// unbind depth tex
+			    deviceContext->PSSetShaderResources(4, 1, &nullView);
 				if (render_pass < render_pass_count - 1)
 				{
 					//
 					// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
 					//
-					ID3D11ShaderResourceView *p = nullptr;
-				    deviceContext->PSSetShaderResources(4, 1, &p);
-					deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
+					deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 				}
-				ID3D11ShaderResourceView *p = nullptr;
-			    deviceContext->PSSetShaderResources(4, 1, &p);
 			    if (!theDX11Context.isIntel())
 			    {
 			    	// Intel Iris Plus 640 just crashes
@@ -584,8 +582,7 @@ struct DX11OITRenderer : public DX11Renderer
 			}
 			else
 			{
-				ID3D11ShaderResourceView *p = nullptr;
-			    deviceContext->PSSetShaderResources(4, 1, &p);
+			    deviceContext->PSSetShaderResources(4, 1, &nullView);
 				drawList<ListType_Translucent, false, DX11OITShaders::Color>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 			}
 			if (render_pass < render_pass_count - 1)
@@ -608,7 +605,7 @@ struct DX11OITRenderer : public DX11Renderer
 				std::swap(opaqueTex, multipassTex);
 				std::swap(opaqueRenderTarget, multipassRenderTarget);
 				std::swap(opaqueTextureView, multipassTextureView);
-			    deviceContext->PSSetShaderResources(0, 1, &p);
+			    deviceContext->PSSetShaderResources(0, 1, &nullView);
 				deviceContext->IASetInputLayout(mainInputLayout);
 
 				// Clear the stencil from this pass
@@ -626,7 +623,10 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
-		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		bool is_rtt = pvrrc.isRTT;
+
+		if (!is_rtt)
+			resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		if (pixelBufferSize != config::PixelBufferSize)
 		{
 			buffers.init(device, deviceContext);
@@ -639,8 +639,6 @@ struct DX11OITRenderer : public DX11Renderer
 	    // To avoid DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET warnings
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), nullptr);
 		configVertexShader();
-
-		bool is_rtt = pvrrc.isRTT;
 
 		deviceContext->IASetInputLayout(mainInputLayout);
 

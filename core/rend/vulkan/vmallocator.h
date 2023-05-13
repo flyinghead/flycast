@@ -63,7 +63,9 @@ public:
 		if (allocInfo.pMappedData != nullptr)
 			return allocInfo.pMappedData;
 		void *p;
-		vmaMapMemory(allocator, allocation, &p);
+		VkResult res = vmaMapMemory(allocator, allocation, &p);
+		if (res != VK_SUCCESS)
+			vk::throwResultException((vk::Result)res, "vmaMapMemory failed");
 		VkMemoryPropertyFlags flags;
 		vmaGetMemoryTypeProperties(allocator, allocInfo.memoryType, &flags);
 		if ((flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) && (flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)

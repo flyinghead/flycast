@@ -388,9 +388,9 @@ static void loadSpecialSettings()
 
 void dc_reset(bool hard)
 {
-	NetworkHandshake::term();
 	if (hard)
 	{
+		NetworkHandshake::term();
 		memwatch::unprotect();
 		memwatch::reset();
 	}
