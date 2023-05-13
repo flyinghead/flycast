@@ -5,6 +5,7 @@
 #include "gdxsv_replay_util.h"
 #include "input/gamepad_device.h"
 #include "libs.h"
+#include "cfg/option.h"
 
 void GdxsvBackendReplay::Reset() {
 	RestorePatch();
@@ -55,12 +56,19 @@ bool GdxsvBackendReplay::StartFile(const char *path, int pov) {
 	return Start();
 }
 
-bool GdxsvBackendReplay::StartBuffer(const char *buf, int size) {
-	bool ok = log_file_.ParseFromArray(buf, size);
+bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
+	bool ok = log_file_.ParseFromArray(buf.data(), buf.size());
 	if (!ok) {
 		NOTICE_LOG(COMMON, "ParseFromArray failed");
 		return false;
 	}
+	
+	if (log_file_.users_size() <= pov) {
+		return false;
+	}
+
+	me_ = pov;
+	
 	return Start();
 }
 

@@ -80,6 +80,9 @@ void gdxsv_end_replay() {
 	emu.stop();
 	if (!selected_replay_file.empty()) {
 		gui_state = GuiState::GdxsvReplay;
+	} else {
+		// Replay from command-line, resume game when end replaying
+		emu.start();
 	}
 }
 

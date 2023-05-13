@@ -840,8 +840,17 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 
 	auto str = std::string(path);
 	if (4 <= str.length() && str.substr(0, 4) == "http") {
-		auto resp = os_FetchStringFromURL(str);
-		if (0 < resp.size() && replay_net_.StartBuffer(resp.data(), resp.size())) {
+		std::string content_type;
+		http::init();
+		std::vector<u8> downloaded;
+		
+		int rc = http::get(str, downloaded, content_type);
+		if (rc != 200) {
+			ERROR_LOG(COMMON, "replay download failure: %s", str.c_str());
+			return false;
+		}
+		
+		if (replay_net_.StartBuffer(downloaded, pov)) {
 			netmode_ = NetMode::Replay;
 			return true;
 		}
