@@ -563,13 +563,6 @@ void os_LaunchFromURL(const std::string& url)
     jvm_attacher.getEnv()->DeleteLocalRef(jurl);
 }
 
-std::string os_FetchStringFromURL(const std::string& url)
-{
-    //Not implemented
-    std::string empty;
-    return empty;
-}
-
 std::string os_GetMachineID()
 {
     //Not implemented

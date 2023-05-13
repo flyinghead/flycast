@@ -113,19 +113,6 @@ void os_LaunchFromURL(const std::string& url)
     auto rv = system(cmd.c_str());
 }
 
-std::string os_FetchStringFromURL(const std::string& url)
-{
-    //Not implemented
-    std::string empty;
-    return empty;
-}
-
-int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
-{
-	//Not implemented
-	return 501;
-}
-
 std::string os_GetMachineID()
 {
     //Not implemented
