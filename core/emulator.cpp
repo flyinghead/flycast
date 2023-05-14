@@ -144,6 +144,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
 		}
+		// Re-Volt (JP)
+		else if (prod_id == "T-8101M")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(100.f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
