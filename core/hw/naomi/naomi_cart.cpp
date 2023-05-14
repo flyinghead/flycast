@@ -135,8 +135,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 				case InterleavedWord:
 				{
 					u8 *buf = (u8 *)malloc(bios->blobs[romid].length);
-					if (buf == NULL)
-						throw NaomiCartException(std::string("Memory allocation failed"));
+					if (buf == nullptr)
+						throw NaomiCartException("Memory allocation failed");
 
 					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 					u32 read = file->Read(buf, bios->blobs[romid].length);
@@ -213,8 +213,8 @@ void naomi_cart_LoadBios(const char *filename)
 		if (!loadBios(bios, archive.get(), parent_archive.get(), -1))
 		{
 			// If a specific BIOS is needed for this game, fail.
-			if (game->bios != NULL || !bios_loaded)
-				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip"));
+			if (game->bios != nullptr || !bios_loaded)
+				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != nullptr ? game->bios : "naomi.zip"));
 
 			// otherwise use the default BIOS
 		}
@@ -225,7 +225,7 @@ void naomi_cart_LoadBios(const char *filename)
 static void loadMameRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
 	const Game *game = FindGame(fileName.c_str());
-	if (game == NULL)
+	if (game == nullptr)
 		throw NaomiCartException("Unknown game");
 
 	// Open archive and parent archive if any
@@ -243,9 +243,9 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
 	}
 
-	if (archive == NULL && parent_archive == NULL)
+	if (archive == nullptr && parent_archive == nullptr)
 	{
-		if (game->parent_name != NULL)
+		if (game->parent_name != nullptr)
 			throw NaomiCartException(std::string("Cannot open ") + fileName + std::string(" or ") + game->parent_name);
 		else
 			throw NaomiCartException(std::string("Cannot open ") + fileName);
@@ -358,8 +358,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case InterleavedWord:
 						{
 							u8 *buf = (u8 *)malloc(game->blobs[romid].length);
-							if (buf == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (buf == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							u16 *to = (u16 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
@@ -378,8 +378,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case Key:
 						{
 							u8 *buf = (u8 *)malloc(game->blobs[romid].length);
-							if (buf == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (buf == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							CurrentCartridge->SetKeyData(buf);
@@ -392,8 +392,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case Eeprom:
 						{
 							naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
-							if (naomi_default_eeprom == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (naomi_default_eeprom == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
 							if (config::GGPOEnable)
@@ -770,6 +770,8 @@ int naomi_cart_GetPlatform(const char *path)
 Cartridge::Cartridge(u32 size)
 {
 	RomPtr = (u8 *)malloc(size);
+	if (RomPtr == nullptr)
+		throw NaomiCartException("Memory allocation failed");
 	RomSize = size;
 	if (size != 0)
 		memset(RomPtr, 0xFF, RomSize);
