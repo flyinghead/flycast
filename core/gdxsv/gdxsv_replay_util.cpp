@@ -360,6 +360,11 @@ void FetchReplayJSON() {
 	fetch_replay_entry_future_ = std::async(std::launch::async, future_fn).share();
 }
 
+void FetchNewResults(){
+	selected_replay_entry_index = -1;
+	fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
+}
+
 void gdxsv_replay_server_tab() {
 	ImGui::AlignTextToFramePadding();
 	
@@ -370,8 +375,8 @@ void gdxsv_replay_server_tab() {
 	ImGui::SameLine();
 	if (ImGui::Button("Search")) {
 		search_user_id = std::string(user_id_buf);
-		selected_replay_entry_index = -1;
-		fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
+		entry_paging = 0;
+		FetchNewResults();
 	}
 	
 	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_server_list_paging"), ScaledVec2(330, 0), false, ImGuiWindowFlags_NoDecoration);
@@ -405,15 +410,13 @@ void gdxsv_replay_server_tab() {
 			DisabledScope scope(entry_paging == 0);
 			if (ImGui::Button("Prev Page") && !scope.isDisabled()){
 				entry_paging--;
-				selected_replay_entry_index = -1;
-				fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
+				FetchNewResults();
 			}
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Next Page")) {
 			entry_paging++;
-			selected_replay_entry_index = -1;
-			fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
+			FetchNewResults();
 		}
 	}
 	ImGui::EndChild();
