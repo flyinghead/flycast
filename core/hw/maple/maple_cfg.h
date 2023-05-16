@@ -108,3 +108,5 @@ void mcfg_DeserializeDevices(Deserializer& deser);
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 void insertRfidCard(int playerNum);
+const u8 *getRfidCardData(int playerNum);
+void setRfidCardData(int playerNum, u8 *data);

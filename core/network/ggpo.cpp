@@ -174,13 +174,18 @@ static_assert(BTN_TRIGGER_RIGHT < (1 << 20));
 struct GameEvent
 {
 	enum : char {
-		Chat
+		Chat,
+		VF4Card
 	} type;
 	union {
 		struct {
 			u8 playerNum;
 			char message[512 - sizeof(playerNum) - sizeof(type)];
 		} chat;
+		struct {
+			u8 playerNum;
+			u8 data[128];
+		} card;
 	} u;
 
 	constexpr static int chatMessageLen(int len) { return len - sizeof(u.chat.playerNum) - sizeof(type); }
@@ -449,6 +454,10 @@ static void on_message(u8 *msg, int len)
 	case GameEvent::Chat:
 		if (chatCallback != nullptr && GameEvent::chatMessageLen(len) > 0)
 			chatCallback(event->u.chat.playerNum, std::string(event->u.chat.message, GameEvent::chatMessageLen(len)));
+		break;
+
+	case GameEvent::VF4Card:
+		setRfidCardData(event->u.card.playerNum, event->u.card.data);
 		break;
 
 	default:
@@ -817,6 +826,21 @@ std::future<bool> startNetwork()
 			getInput(state);
 		}
 #endif
+		if (active() && (settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN"
+				|| settings.content.gameId == "VF4 EVOLUTION JAPAN"
+				|| settings.content.gameId == "VF4 FINAL TUNED JAPAN"))
+		{
+			// Send the local P1 card
+			const u8 *cardData = getRfidCardData(0);
+			if (cardData != nullptr)
+			{
+				GameEvent event;
+				event.type = GameEvent::VF4Card;
+				event.u.card.playerNum = config::ActAsServer ? 0 : 1;
+				memcpy(event.u.card.data, cardData, sizeof(event.u.card.data));
+				ggpo_send_message(ggpoSession, &event, sizeof(event.type) + sizeof(event.u.card), true);
+			}
+		}
 		emu.setNetworkState(active());
 		return active();
 	});

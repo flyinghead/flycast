@@ -6,6 +6,7 @@
 #include "oslib/audiostream.h"
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
+#include "cfg/option.h"
 #include <zlib.h>
 #include <time.h>
 
@@ -1499,14 +1500,24 @@ struct RFIDReaderWriter : maple_base
 	void OnSetup() override
 	{
 		memset(cardData, 0, sizeof(cardData));
+		transientData = false;
 	}
 
-	std::string getCardPath() const {
-		return hostfs::getArcadeFlashPath() + "-p" + std::to_string(player_num + 1) + ".card";
-	}
-
-	bool loadCard()
+	std::string getCardPath() const
 	{
+		int playerNum;
+		if (config::GGPOEnable && !config::ActAsServer)
+			// Always load P1 card with GGPO to be consistent with P1 inputs being used
+			playerNum = 1;
+		else
+			playerNum = player_num + 1;
+		return hostfs::getArcadeFlashPath() + "-p" + std::to_string(playerNum) + ".card";
+	}
+
+	void loadCard()
+	{
+		if (transientData)
+			return;
 		std::string path = getCardPath();
 		FILE *fp = nowide::fopen(path.c_str(), "rb");
 		if (fp == nullptr)
@@ -1538,12 +1549,12 @@ struct RFIDReaderWriter : maple_base
 				WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
 			fclose(fp);
 		}
-
-		return true;
 	}
 
 	void saveCard() const
 	{
+		if (transientData)
+			return;
 		std::string path = getCardPath();
 		FILE *fp = nowide::fopen(path.c_str(), "wb");
 		if (fp == nullptr)
@@ -1579,10 +1590,21 @@ struct RFIDReaderWriter : maple_base
 		loadCard();
 	}
 
+	const u8 *getCardData() {
+		loadCard();
+		return cardData;
+	}
+
+	void setCardData(u8 *data) {
+		memcpy(cardData, data, sizeof(cardData));
+		transientData = true;
+	}
+
 	u8 cardData[128];
 	bool d4Seen = false;
 	bool cardInserted = false;
 	bool cardLocked = false;
+	bool transientData = false;
 };
 
 void insertRfidCard(int playerNum)
@@ -1590,6 +1612,22 @@ void insertRfidCard(int playerNum)
 	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
 	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
 		((RFIDReaderWriter *)mapleDev)->insertCard();
+}
+
+void setRfidCardData(int playerNum, u8 *data)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		((RFIDReaderWriter *)mapleDev)->setCardData(data);
+}
+
+const u8 *getRfidCardData(int playerNum)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		return ((RFIDReaderWriter *)mapleDev)->getCardData();
+	else
+		return nullptr;
 }
 
 maple_device* maple_Create(MapleDeviceType type)
