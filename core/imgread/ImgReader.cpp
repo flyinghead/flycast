@@ -48,3 +48,18 @@ std::string libGDR_GetTrackIsrc(u32 trackNum)
 		return "";
 	return disc->tracks[trackNum - 1].isrc;
 }
+
+void libGDR_GetTrackAdrAndControl(u32 trackNum, u8& adr, u8& ctrl)
+{
+	if (trackNum == 0 || disc == nullptr || trackNum > disc->tracks.size())
+	{
+		adr = 0;
+		ctrl = 0;
+	}
+	else
+	{
+		const Track& track = disc->tracks[trackNum - 1];
+		adr = track.ADR | !track.isDataTrack();	// Force subcode Q data type 1 for audio tracks
+		ctrl = track.CTRL;
+	}
+}

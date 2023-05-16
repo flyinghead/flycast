@@ -232,7 +232,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	else
 	{
 		disc->type = CdRom_XA;
-		disc->LeadOut.ADDR = 0;
+		disc->LeadOut.ADR = 0;
 		disc->LeadOut.CTRL = 0;
 		disc->EndFAD = disc->LeadOut.StartFAD = current_fad;
 	}

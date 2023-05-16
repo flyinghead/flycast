@@ -83,7 +83,7 @@ struct Track
 	u32 StartFAD = 0;			// Start FAD
 	u32 EndFAD = 0;				// End FAD
 	u8 CTRL = 0;
-	u8 ADDR = 0;
+	u8 ADR = 0;
 	std::string isrc;
 
 	bool Read(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type)
@@ -148,7 +148,7 @@ struct Disc
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code
 		type=GdRom;
-		LeadOut.ADDR=0;
+		LeadOut.ADR=0;
 		LeadOut.CTRL=0;
 		LeadOut.StartFAD=549300;
 
@@ -272,6 +272,7 @@ u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
 bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 std::string libGDR_GetDiskCatalog();
 std::string libGDR_GetTrackIsrc(u32 trackNum);
+void libGDR_GetTrackAdrAndControl(u32 trackNum, u8& adr, u8& ctrl);
 
 namespace flycast
 {

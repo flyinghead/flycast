@@ -105,7 +105,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				if (track.mode==0)
 					CD_DA=true;
 
-				t.ADDR=1;//hmm is that ok ?
+				t.ADR=1;//hmm is that ok ?
 
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
@@ -156,7 +156,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);
 
 	rv->LeadOut.StartFAD=rv->EndFAD;
-	rv->LeadOut.ADDR=0;
+	rv->LeadOut.ADR=0;
 	rv->LeadOut.CTRL=0;
 
 	return rv;
