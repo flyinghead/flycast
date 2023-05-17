@@ -147,12 +147,12 @@ struct Disc
 		sessions.push_back(ses);
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code
-		type=GdRom;
-		LeadOut.ADR=0;
-		LeadOut.CTRL=0;
-		LeadOut.StartFAD=549300;
+		type = GdRom;
+		LeadOut.ADR = 1;	// subcode-q channel
+		LeadOut.CTRL = 4;	// data
+		LeadOut.StartFAD = 549300;
 
-		EndFAD=549300;
+		EndFAD = 549300;
 	}
 
 	void Dump(const std::string& path)

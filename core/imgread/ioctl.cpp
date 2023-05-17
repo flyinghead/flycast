@@ -241,9 +241,9 @@ struct PhysicalDrive:Disc
 					}
 				}
 			}
-			LeadOut.StartFAD=EndFAD;
-			LeadOut.ADR=0;
-			LeadOut.CTRL=0;
+			LeadOut.StartFAD = EndFAD;
+			LeadOut.ADR = 1;
+			LeadOut.CTRL = 4;
 		}
 
 		DWORD bytesReturnedIO = 0;

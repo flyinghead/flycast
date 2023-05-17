@@ -155,9 +155,9 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);
 
-	rv->LeadOut.StartFAD=rv->EndFAD;
-	rv->LeadOut.ADR=0;
-	rv->LeadOut.CTRL=0;
+	rv->LeadOut.StartFAD = rv->EndFAD;
+	rv->LeadOut.ADR = 1;
+	rv->LeadOut.CTRL = 4;
 
 	return rv;
 }
