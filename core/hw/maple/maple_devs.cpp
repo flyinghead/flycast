@@ -1585,9 +1585,17 @@ struct RFIDReaderWriter : maple_base
 		deser >> cardLocked;
 	}
 
-	void insertCard() {
-		cardInserted = true;
-		loadCard();
+	void insertCard()
+	{
+		if (!cardInserted) {
+			cardInserted = true;
+			loadCard();
+		}
+		else if (!cardLocked) {
+			cardInserted = false;
+			if (!transientData)
+				memset(cardData, 0, sizeof(cardData));
+		}
 	}
 
 	const u8 *getCardData() {
