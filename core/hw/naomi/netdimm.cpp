@@ -185,7 +185,7 @@ int NetDimm::schedCallback()
 					socklen_t len = sizeof(so_error);
 
 					getsockopt(socket.fd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &len);
-					if (so_error != L_EINPROGRESS)
+					if (so_error != L_EINPROGRESS && so_error != L_EWOULDBLOCK)
 					{
 						INFO_LOG(NAOMI, "connect(%d) completed -> %d", socket.fd, so_error);
 						socket.connecting = false;
@@ -508,7 +508,7 @@ void NetDimm::netCmd(int cmd)
 				if (rc == -1)
 				{
 					int error = get_last_error();
-					if (error == L_EINPROGRESS)
+					if (error == L_EINPROGRESS || error == L_EWOULDBLOCK)
 					{
 						sockets[sockidx - 1].connecting = true;
 						sockets[sockidx - 1].connectTime = sh4_sched_now64();

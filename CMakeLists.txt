@@ -961,7 +961,10 @@ cmrc_add_resources(flycast-resources
 		resources/flash/f355twin.nvmem.zip
 		resources/flash/f355twn2.nvmem.zip
 		resources/flash/dirtypig.nvmem.zip	# 4 players
-		resources/flash/dirtypig.nvmem2.zip)
+		resources/flash/dirtypig.nvmem2.zip
+		resources/flash/vf4.nvmem.zip		# card all day, stage select
+		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
+		resources/flash/vf4tuned.nvmem.zip) # card all day, stage select, 45 sec time limit, 3 match
 
 cmrc_add_resources(flycast-resources
 		fonts/printer_ascii8x16.bin

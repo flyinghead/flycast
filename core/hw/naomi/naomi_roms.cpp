@@ -6831,7 +6831,10 @@ const Game Games[] =
 			{ "mpr-23930.ic35",  0xa000000, 0x800000, 0x0e45e4c4, InterleavedWord },
 			{ "mpr-23931.ic36s", 0xa000002, 0x800000, 0x12ecd2f0, InterleavedWord },
             { "copy",            0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
-        }
+        },
+		nullptr,
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"clubkrto",
@@ -7166,6 +7169,8 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"vf4b",
@@ -7180,6 +7185,8 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012b",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"vf4",
@@ -7194,6 +7201,8 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012c",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"beachspi",
@@ -7252,6 +7261,8 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024c",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"vf4evob",
@@ -7266,6 +7277,8 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024b",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"vf4evoa",
@@ -7280,6 +7293,8 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024a",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"initdexp",
@@ -7459,6 +7474,8 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036f",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"vf4tunedd",
@@ -7473,6 +7490,8 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036d",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"vf4tuneda",
@@ -7487,6 +7506,8 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036a",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"inidv3cy",
