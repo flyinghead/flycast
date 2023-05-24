@@ -22,11 +22,12 @@ if [[ -z "${VULKAN_SDK}" ]]; then
     if [ $v == "y" ]; then
         curl https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.dmg -o vulkan-sdk.dmg
         hdiutil attach ./vulkan-sdk.dmg
-        /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
-        hdiutil detach /Volumes/vulkansdk-macos-*
+        /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
+        hdiutil detach /Volumes/VulkanSDK
         rm ./vulkan-sdk.dmg
         echo "export VULKAN_SDK=$HOME/VulkanSDK/macOS" >> ~/.zshrc
-        echo "VULKAN_SDK is now set in .zshrc (Will be effective after you restart the shell)"
+        echo "VULKAN_SDK is now set in .zshrc"
+        source ~/.zshrc
     fi
 fi
 
