@@ -89,8 +89,10 @@ mkdir -p "$OUTDIR/usr/bin" "$OUTDIR/usr/lib" "$OUTDIR/usr/lib/pulseaudio" "$OUTD
 echo "Building checkrt"
 mkdir -p "$OUTDIR/tmp"
 pushd "$OUTDIR/tmp"
-git clone https://github.com/darealshinji/AppImageKit-checkrt
-cd AppImageKit-checkrt/src
+git clone https://github.com/darealshinji/linuxdeploy-plugin-checkrt
+cd linuxdeploy-plugin-checkrt
+git checkout ec6237791c5aeb4cbc1fa00a092d1f7befa58988
+cd src
 make
 cp -a checkrt ../../../usr/optional
 cd ../../..
