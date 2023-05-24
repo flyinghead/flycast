@@ -306,7 +306,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	}
 
 	const TLB_Entry *entry;
-	u32 lookup = mmu_full_lookup(va, &entry, rv);
+	MmuError lookup = mmu_full_lookup(va, &entry, rv);
 
 	if (lookup != MmuError::NONE)
 		return lookup;

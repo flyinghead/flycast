@@ -87,7 +87,7 @@ static inline MmuError mmu_instruction_translation(u32 va, u32& rv)
 	return mmu_full_lookup(va, nullptr, rv);
 }
 #else
-u32 mmu_instruction_translation(u32 va, u32& rv);
+MmuError mmu_instruction_translation(u32 va, u32& rv);
 #endif
 
 template<u32 translation_type>
