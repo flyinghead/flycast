@@ -117,7 +117,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "Default", NULL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -136,7 +136,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "Default",  NULL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",

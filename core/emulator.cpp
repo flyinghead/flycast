@@ -246,6 +246,11 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
 		}
+		if (prod_id == "T-8102N")		// TrickStyle (US)
+		{
+			NOTICE_LOG(BOOT, "Forcing English Language");
+			config::Language.override(1);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
