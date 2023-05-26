@@ -12,7 +12,7 @@
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
-const char* maple_sega_kbd_name 	   = "Emulated Dreamcast Keyboard";
+const char* maple_sega_kbd_name        = "Emulated Dreamcast Keyboard";
 const char* maple_sega_mouse_name      = "Emulated Dreamcast Mouse";
 const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Device";
 const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevice";
