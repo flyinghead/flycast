@@ -3,23 +3,24 @@
 
 enum MapleDeviceType
 {
-	MDT_SegaController =  0,
-	MDT_SegaVMU        =  1,
-	MDT_Microphone     =  2,
-	MDT_PurupuruPack   =  3,
-	MDT_AsciiStick     =  4,
-	MDT_Keyboard       =  5,
-	MDT_Mouse          =  6,
-	MDT_LightGun       =  7,
-	MDT_TwinStick      =  8,
-	MDT_NaomiJamma     =  9,
-	MDT_None           = 10,
-	MDT_MaracasController    = 11,
-	MDT_FishingController    = 12,
-	MDT_PopnMusicController  = 13,
-	MDT_RacingController     = 14,
-	MDT_DenshaDeGoController = 15,
-	MDT_Dreameye             = 16,
+	MDT_SegaController   =  0,
+	MDT_SegaVMU          =  1,
+	MDT_Microphone       =  2,
+	MDT_PurupuruPack     =  3,
+	MDT_AsciiStick       =  4,
+	MDT_Keyboard         =  5,
+	MDT_Mouse            =  6,
+	MDT_LightGun         =  7,
+	MDT_TwinStick        =  8,
+	MDT_NaomiJamma       =  9,
+	MDT_None             = 10,
+	MDT_RFIDReaderWriter = 11,
+	MDT_MaracasController    = 12,
+	MDT_FishingController    = 13,
+	MDT_PopnMusicController  = 14,
+	MDT_RacingController     = 15,
+	MDT_DenshaDeGoController = 16,
+	MDT_Dreameye             = 17,
 	MDT_Count
 };
 
@@ -31,7 +32,6 @@ enum PlainJoystickAxisId
 	PJAI_Y2 = 3,
 	PJAI_X3 = 4,
 	PJAI_Y3 = 5,
-
 	PJAI_Count = 6
 };
 
@@ -41,7 +41,6 @@ enum PlainJoystickTriggerId
 	PJTI_R = 1,
 	PJTI_2 = 2,
 	PJTI_3 = 3,
-
 	PJTI_Count = 4
 };
 
@@ -117,3 +116,6 @@ void mcfg_DeserializeDevices(Deserializer& deser);
 
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
+void insertRfidCard(int playerNum);
+const u8 *getRfidCardData(int playerNum);
+void setRfidCardData(int playerNum, u8 *data);
