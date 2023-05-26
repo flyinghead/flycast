@@ -36,6 +36,8 @@ enum DreamcastKey
 	DC_DPAD2_LEFT      = 1 << 14,
 	DC_DPAD2_RIGHT     = 1 << 15,
 	DC_BTN_RELOAD      = 1 << 16,	// Not a real button but handled like one
+	DC_BTN_INSERT_CARD = 1 << 17,   // Not a real button but handled like one
+	DC_BTN_BITMAPPED_LAST = DC_BTN_INSERT_CARD,
 
 	// System buttons
 	EMU_BTN_NONE			= 0,
@@ -46,7 +48,6 @@ enum DreamcastKey
 	EMU_BTN_MENU,
 	EMU_BTN_FFORWARD,
 	EMU_BTN_ESCAPE,
-	EMU_BTN_INSERT_CARD,
 	EMU_BTN_LOADSTATE,
 	EMU_BTN_SAVESTATE,
 
