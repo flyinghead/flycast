@@ -1,11 +1,14 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "maple_helper.h"
+#include "maple_if.h"
 #include "hw/pvr/spg.h"
 #include "oslib/audiostream.h"
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
+#include "cfg/option.h"
 #include <zlib.h>
+#include <time.h>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
@@ -263,6 +266,7 @@ struct maple_sega_twinstick: maple_sega_controller
 		return get_max_current ? 0x012C : 0x00DC; // Max. 30 mA, standby: 22 mA
 	}
 };
+
 
 /*
 	Ascii Stick (Arcade/FT Stick)
@@ -1362,6 +1366,12 @@ struct maple_maracas_controller: maple_sega_controller
 		if (index < 2 || index > 5)
 			return 0;
 		return pjs.joy[index -2];
+		/* // This should be tested with real maracas to see if it is worth implementing or not
+		u8 maracas_saturation_reduction = 2;
+		s32 axis_val = (pjs.joy[index -2] - 0x80) / maracas_saturation_reduction + 0x80;
+		if      (axis_val <    0) axis_val = 0;
+		else if (axis_val > 0xff) axis_val = 0xFF;
+		return axis_val; */
 	}
 
 	const char *get_device_name() override {
@@ -1674,7 +1684,7 @@ struct maple_racing_controller: maple_sega_controller
 			return MDRS_DeviceReply;
 
 		default:
-			INFO_LOG(MAPLE, "maple_sega_controller: Unknown maple command %d", cmd);
+			INFO_LOG(MAPLE, "maple_racing_controller: Unknown maple command %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1716,6 +1726,318 @@ struct maple_densha_controller: maple_sega_controller
 		return get_max_current ? 0x01F4 : 0x00DC; // Max. 50 mA, standby: 22 mA
 	}
 };
+
+
+// Emulates a 838-14245-92 maple to RS232 converter
+// wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
+struct RFIDReaderWriter : maple_base
+{
+	u32 getStatus() const
+	{
+		// b0: !card switch
+		// b1: state=4	errors?
+		// b2: state=5
+		// b3: state=6
+		// b4: state=7
+		// b5: state=8
+		// b6: card lock
+		// when 0x40 trying to read the card
+		u32 status = 1;
+		if (cardInserted)
+			status &= ~1;
+		if (cardLocked)
+			status |= 0x40;
+		return status;
+	}
+
+	// Surprisingly recipient and sender aren't swapped in the response so we override RawDma for this reason
+	// vf4tuned and mushiking do care
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	{
+		u32 command=buffer_in[0] &0xFF;
+		//Recipient address
+		u32 reci = (buffer_in[0] >> 8) & 0xFF;
+		//Sender address
+		u32 send = (buffer_in[0] >> 16) & 0xFF;
+		u32 outlen = 0;
+		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+
+		if (reci & 0x20)
+			reci |= maple_GetAttachedDevices(maple_GetBusId(reci));
+
+		verify(u8(outlen / 4) * 4 == outlen);
+		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
+
+		return outlen + 4;
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
+			// custom function
+			w32(0x00100000);
+			// function flags
+			w32(0);
+			w32(0);
+			w32(0);
+			//1	area code
+			w8(0xff);				// FF: Worldwide, 01: North America
+			//1	direction
+			w8(0);
+			// Product name (totally made up)
+			wstr("MAPLE/232C CONVERT BD", 30);
+
+			// License (60)
+			wstr(maple_sega_brand, 60);
+
+			// Low-consumption standby current (2)
+			w16(0x0069);	// 10.5 mA
+
+			// Maximum current consumption (2)
+			w16(0x0120);	// 28.8 mA
+
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+
+		case MDCF_GetCondition:
+			w32(0x00100000); // custom function
+
+			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
+		// 90	get status
+		//
+		// read test:
+		// d0	?
+		// 91	get last cmd status?
+		// a0	?
+		// 91
+		// a1	read md5 in data
+		//			or data itself if after D4 xx xx xx xx
+		// d4	in=d2 03 aa db
+		// 91
+		//
+		// d9	lock
+		// da	unlock
+		//
+		// write test:
+		// D0
+		// 91
+		// B1 05 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 0b 06 00 00 00 00 c6 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 11 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 17 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 1d 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (16 bytes)
+		// 91
+		// C1: 00 00 00 00
+		// 91
+
+		case 0xD0:
+			d4Seen = false;
+			[[fallthrough]];
+		case 0x90:
+		case 0x91:
+		case 0xA0:
+		case 0xD4:
+		case 0xC1:
+			w32(getStatus());
+			if (cmd == 0xd4)
+				d4Seen = true;
+			return (MapleDeviceRV)0xfe;
+
+		case 0xA1:	// read card data
+			DEBUG_LOG(MAPLE, "RFID card read (data? %d)", d4Seen);
+			w32(getStatus());
+			if (!d4Seen)
+				w32(0x12345678);	// arbitrary value (unknown)
+			else
+				wptr(cardData, sizeof(cardData));
+			return (MapleDeviceRV)0xfe;
+
+		case 0xD9:	// lock card
+			w32(getStatus());
+			cardLocked = true;
+			INFO_LOG(MAPLE, "RFID card %d locked", player_num);
+			return (MapleDeviceRV)0xfe;
+
+		case 0xDA:	// unlock card
+			w32(getStatus());
+			cardLocked = false;
+			cardInserted = false;
+			INFO_LOG(MAPLE, "RFID card %d unlocked", player_num);
+			return (MapleDeviceRV)0xfe;
+
+		case 0xB1:	// write to card
+			{
+				w32(getStatus());
+				u32 offset = r8() * 4;
+				size_t size = r8() * 4;
+				skip(2);
+				DEBUG_LOG(MAPLE, "RFID card write: offset 0x%x len %d", offset, (int)size);
+				rptr(cardData + offset, std::min(size, sizeof(cardData) - offset));
+				saveCard();
+				return (MapleDeviceRV)0xfe;
+			}
+
+		default:
+			INFO_LOG(MAPLE, "RFIDReaderWriter: unknown MAPLE COMMAND %d", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_RFIDReaderWriter;
+	}
+
+	void OnSetup() override
+	{
+		memset(cardData, 0, sizeof(cardData));
+		transientData = false;
+	}
+
+	std::string getCardPath() const
+	{
+		int playerNum;
+		if (config::GGPOEnable && !config::ActAsServer)
+			// Always load P1 card with GGPO to be consistent with P1 inputs being used
+			playerNum = 1;
+		else
+			playerNum = player_num + 1;
+		return hostfs::getArcadeFlashPath() + "-p" + std::to_string(playerNum) + ".card";
+	}
+
+	void loadCard()
+	{
+		if (transientData)
+			return;
+		std::string path = getCardPath();
+		FILE *fp = nowide::fopen(path.c_str(), "rb");
+		if (fp == nullptr)
+		{
+			static u8 blankCard[128] = {
+					0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
+			};
+			// Generate random bytes used by vf4 vanilla to make the card id
+			srand(time(0));
+			blankCard[2] = rand() & 0xff;
+			blankCard[4] = rand() & 0xff;
+			blankCard[5] = rand() & 0xff;
+			blankCard[6] = rand() & 0xff;
+			blankCard[7] = rand() & 0xff;
+			memcpy(cardData, blankCard, sizeof(blankCard));
+			INFO_LOG(NAOMI, "Card P%d initialized", player_num + 1);
+		}
+		else
+		{
+			INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
+			if (fread(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+				WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
+			fclose(fp);
+		}
+	}
+
+	void saveCard() const
+	{
+		if (transientData)
+			return;
+		std::string path = getCardPath();
+		FILE *fp = nowide::fopen(path.c_str(), "wb");
+		if (fp == nullptr)
+		{
+			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
+			return;
+		}
+		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
+		if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
+		fclose(fp);
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		maple_device::serialize(ser);
+		ser << cardData;
+		ser << d4Seen;
+		ser << cardInserted;
+		ser << cardLocked;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		maple_device::deserialize(deser);
+		deser >> cardData;
+		deser >> d4Seen;
+		deser >> cardInserted;
+		deser >> cardLocked;
+	}
+
+	void insertCard()
+	{
+		if (!cardInserted) {
+			cardInserted = true;
+			loadCard();
+		}
+		else if (!cardLocked) {
+			cardInserted = false;
+			if (!transientData)
+				memset(cardData, 0, sizeof(cardData));
+		}
+	}
+
+	const u8 *getCardData() {
+		loadCard();
+		return cardData;
+	}
+
+	void setCardData(u8 *data) {
+		memcpy(cardData, data, sizeof(cardData));
+		transientData = true;
+	}
+
+	u8 cardData[128];
+	bool d4Seen = false;
+	bool cardInserted = false;
+	bool cardLocked = false;
+	bool transientData = false;
+};
+
+void insertRfidCard(int playerNum)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		((RFIDReaderWriter *)mapleDev)->insertCard();
+}
+
+void setRfidCardData(int playerNum, u8 *data)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		((RFIDReaderWriter *)mapleDev)->setCardData(data);
+}
+
+const u8 *getRfidCardData(int playerNum)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		return ((RFIDReaderWriter *)mapleDev)->getCardData();
+	else
+		return nullptr;
+}
 
 maple_device* maple_Create(MapleDeviceType type)
 {
@@ -1788,6 +2110,10 @@ maple_device* maple_Create(MapleDeviceType type)
 		rv = new maple_densha_controller();
 		break;
 
+	case MDT_RFIDReaderWriter:
+		rv = new RFIDReaderWriter();
+		break;
+
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
 		die("Invalid maple device type");
@@ -1796,4 +2122,3 @@ maple_device* maple_Create(MapleDeviceType type)
 
 	return rv;
 }
-
