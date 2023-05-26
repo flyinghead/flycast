@@ -656,14 +656,14 @@ inline static void header(const char *title)
 	ImGui::PopStyleVar();
 }
 
-const char *maple_device_types[] = 
+const char *maple_device_types[] =
 {
-	"None", 
-	"Sega Controller", 
-	"Light Gun", 
-	"Keyboard", 
-	"Mouse", 
-	"Twin Stick", 
+	"None",
+	"Sega Controller",
+	"Light Gun",
+	"Keyboard",
+	"Mouse",
+	"Twin Stick",
 	"Ascii Stick",
 	"Maracas Controller",
 	"Fishing Controller",
