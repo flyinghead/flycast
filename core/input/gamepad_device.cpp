@@ -23,7 +23,6 @@
 #include "rend/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/naomi/card_reader.h"
 #include "mouse.h"
 
 #include <algorithm>
@@ -38,13 +37,13 @@ s8 joyx[4];
 s8 joyy[4];
 s8 joyrx[4];
 s8 joyry[4];
-s8 joy3x[4];
-s8 joy3y[4];
 u8 rt[4];
 u8 lt[4];
+s8 joy3x[4];
+s8 joy3y[4];
+// Keyboards
 u8 t2[4];
 u8 t3[4];
-// Keyboards
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
@@ -62,7 +61,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	if (key == EMU_BTN_NONE)
 		return false;
 
-	if (key <= DC_BTN_RELOAD)
+	if (key <= DC_BTN_BITMAPPED_LAST)
 	{
 		if (port >= 0)
 		{
@@ -92,10 +91,6 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (pressed && !gui_is_open())
 				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online && !settings.naomi.multiboard;
 			break;
-		case EMU_BTN_INSERT_CARD:
-			if (pressed && settings.platform.isNaomi())
-				card_reader::insertCard();
-			break;
 		case EMU_BTN_LOADSTATE:
 			if (pressed)
 				gui_loadState();
@@ -120,7 +115,6 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (port >= 0)
 				t3[port] = pressed ? 255 : 0;
 			break;
-
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
 			buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
@@ -298,7 +292,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			else
 				*this_axis = v * axisDirection;
 		}
-		else if (key != EMU_BTN_NONE && key <= DC_BTN_RELOAD) // Map triggers to digital buttons
+		else if (key != EMU_BTN_NONE && key <= DC_BTN_BITMAPPED_LAST) // Map triggers to digital buttons
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
