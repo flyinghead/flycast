@@ -1405,9 +1405,9 @@ struct maple_fishing_controller: maple_sega_controller
 	}
 
 	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
-		// In the XYZ axes, acceleration sensor outputs 80 ± 8H (home position) 
+		// In the XYZ axes, acceleration sensor outputs 80 ± 8H (home position)
 		//   in the static state (± 0G), F0h or greater for maximum force (+10G)
-		//   in the positive direction and 11h or less 
+		//   in the positive direction and 11h or less
 		//   for the maximum force (-10G) applied in the negative direction
 		// From the perspective of the player operating the controller:
 		//   X: Right is positive, left is negative
