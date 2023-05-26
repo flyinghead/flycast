@@ -577,7 +577,8 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1)
 				;
 			dimm_data = (u8 *)malloc(dimm_data_size);
-			verify(dimm_data != NULL);
+			if (dimm_data == nullptr)
+				throw NaomiCartException("Memory allocation failed");
 			if (dimm_data_size != file_rounded_size)
 				memset(dimm_data + file_rounded_size, 0, dimm_data_size - file_rounded_size);
 

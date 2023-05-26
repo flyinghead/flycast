@@ -269,7 +269,8 @@ public:
 	void getData(u8 *dst, size_t first = 0, size_t len = 0) const {
 		if (len == 0)
 			len = size();
-		env()->GetByteArrayRegion((jbyteArray)object, first, len, (jbyte *)dst);
+		if (len != 0)
+			env()->GetByteArrayRegion((jbyteArray)object, first, len, (jbyte *)dst);
 	}
 
 	void setData(const u8 *src, size_t first = 0, size_t len = 0) {
@@ -282,7 +283,7 @@ public:
 	{
 		std::vector<u8> v;
 		v.resize(size());
-		getData(v.data(), 0, v.size());
+		getData(v.data());
 		return v;
 	}
 
@@ -311,7 +312,8 @@ public:
 	void getData(int *dst, size_t first = 0, size_t len = 0) const {
 		if (len == 0)
 			len = size();
-		env()->GetIntArrayRegion((jintArray)object, first, len, (jint *)dst);
+		if (len != 0)
+			env()->GetIntArrayRegion((jintArray)object, first, len, (jint *)dst);
 	}
 
 	void setData(const int *src, size_t first = 0, size_t len = 0) {
@@ -324,7 +326,7 @@ public:
 	{
 		std::vector<int> v;
 		v.resize(size());
-		getData(v.data(), 0, v.size());
+		getData(v.data());
 		return v;
 	}
 
@@ -353,7 +355,8 @@ public:
 	void getData(short *dst, size_t first = 0, size_t len = 0) {
 		if (len == 0)
 			len = size();
-		env()->GetShortArrayRegion((jshortArray)object, first, len, (jshort *)dst);
+		if (len != 0)
+			env()->GetShortArrayRegion((jshortArray)object, first, len, (jshort *)dst);
 	}
 
 	void setData(const short *src, size_t first = 0, size_t len = 0) {

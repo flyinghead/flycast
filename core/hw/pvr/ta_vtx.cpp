@@ -988,6 +988,8 @@ private:
 	//Sprite Vertex Handlers
 	static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
+		if (CurrentPP == nullptr)
+			return;
         CurrentPP->count = 4;
 
         vd_rc.verts.resize(vd_rc.verts.size() + 4);
@@ -1063,6 +1065,8 @@ private:
 
 	static void AppendSpriteVertexB(TA_Sprite1B* sv)
 	{
+		if (CurrentPP == nullptr)
+			return;
 		vert_res_base;
 		cv-=3;
 
@@ -1540,7 +1544,7 @@ void decode_pvr_vertex(u32 base, u32 ptr, Vertex* cv)
 
 static u8 float_to_satu8_math(float val)
 {
-	return (u8)(std::min(1.f, std::max(0.f, val)) * 255.f);
+	return (u8)(val == val ? std::min(1.f, std::max(0.f, val)) * 255.f : 255.f);
 }
 
 static void vtxdec_init()

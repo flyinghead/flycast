@@ -1361,7 +1361,8 @@ void ReadCommonReg(u32 reg,bool byte)
 			u32 chan=CommonData->MSLC;
 			
 			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSEL == 0);
+			if (CommonData->AFSEL == 1)
+				WARN_LOG(AICA, "FEG monitor (AFSEL=1) not supported");
 			s32 aeg = Chans[chan].AEG.GetValue();
 			if (aeg > 0x3BF)
 				CommonData->EG = 0x1FFF;

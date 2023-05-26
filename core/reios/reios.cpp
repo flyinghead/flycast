@@ -738,6 +738,8 @@ void reios_reset(u8* rom)
 	*(u32 *)&rom[0x44c] = 0xe303d463;
 	// Jeremy McGrath game bug
 	*(u32 *)&rom[0x1c] = 0x71294118;
+	// Rent a Hero 1 game bug
+	*(u32 *)&rom[0x8] = 0x44094409;
 
 	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
 

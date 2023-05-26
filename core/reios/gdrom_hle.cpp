@@ -287,7 +287,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_PIOREAD:
 		GDROM_HLE_ReadPIO();
-		SecNumber.Status = GD_STANDBY;
+		SecNumber.Status = GD_PAUSE;
 		cdda.status = cdda_t::NoInfo;
 		break;
 
@@ -303,7 +303,7 @@ static void GD_HLE_Command(gd_command cc)
 		}
 		gd_hle_state.result[2] = gd_hle_state.params[1] * 2048;
 		gd_hle_state.result[3] = 0;
-		SecNumber.Status = GD_STANDBY;
+		SecNumber.Status = GD_PAUSE;
 		break;
 
 
@@ -322,7 +322,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_RELEASE:
 		DEBUG_LOG(REIOS, "GDROM: CMD RELEASE");
-		cdda.repeats = gd_hle_state.params[0];
+		// params[0] reptime (ignored)
 		// params[1] debug (0)
 		if (cdda.status == cdda_t::Paused)
 			cdda.status = cdda_t::Playing;
@@ -350,16 +350,19 @@ static void GD_HLE_Command(gd_command cc)
 			u32 last_track = gd_hle_state.params[1];
 			cdda.repeats = gd_hle_state.params[2];
 			// params[3] debug (0)
-			u32 dummy;
-			libGDR_GetTrack(first_track, cdda.StartAddr.FAD, dummy);
-			libGDR_GetTrack(last_track, dummy, cdda.EndAddr.FAD);
+			if (first_track == last_track) {
+				libGDR_GetTrack(first_track, cdda.StartAddr.FAD, cdda.EndAddr.FAD);
+			}
+			else
+			{
+				u32 dummy;
+				libGDR_GetTrack(first_track, cdda.StartAddr.FAD, dummy);
+				libGDR_GetTrack(last_track, dummy, cdda.EndAddr.FAD);
+			}
 			DEBUG_LOG(REIOS, "GDROM: CMD PLAY first_track %x last_track %x repeats %x start_fad %x end_fad %x", first_track, last_track, cdda.repeats,
 					cdda.StartAddr.FAD, cdda.EndAddr.FAD);
 			cdda.status = cdda_t::Playing;
-			if ((SecNumber.Status != GD_PLAY && SecNumber.Status != GD_PAUSE)
-					|| cdda.CurrAddr.FAD < cdda.StartAddr.FAD
-					|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
-				cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
+			cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 			SecNumber.Status = GD_PLAY;
 		}
 		else
@@ -474,8 +477,9 @@ static void GD_HLE_Command(gd_command cc)
 			// 0     | subcode q track number
 			// ------------------------------------------------------
 			// 1-3   |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0
+			const u32 fad = cdda.status == cdda_t::Paused || cdda.status == cdda_t::Playing ? cdda.CurrAddr.FAD : gd_hle_state.cur_sector;
 			u32 elapsed;
-			u32 tracknum = libGDR_GetTrackNumber(gd_hle_state.cur_sector, elapsed);
+			u32 tracknum = libGDR_GetTrackNumber(fad, elapsed);
 			WriteMem32(dst1, tracknum);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
@@ -483,9 +487,10 @@ static void GD_HLE_Command(gd_command cc)
 			// ------------------------------------------------------
 			// 0-2  | fad (little-endian)
 			// ------------------------------------------------------
-			// 3    | address                | control
-			u32 out = (((SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1) << 24)
-					| (gd_hle_state.cur_sector & 0x00ffffff);
+			// 3    | ADR                    | Control
+			u8 adr, ctrl;
+			libGDR_GetTrackAdrAndControl(tracknum, adr, ctrl);
+			u32 out = (adr << 28) | (ctrl << 24) | (fad & 0x00ffffff);
 			WriteMem32(dst2, out);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0

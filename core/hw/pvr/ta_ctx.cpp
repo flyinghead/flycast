@@ -289,7 +289,7 @@ void DeserializeTAContext(Deserializer& deser)
 		}
 		int curCtx;
 		deser >> curCtx;
-		if (curCtx != -1)
+		if (curCtx >= 0 && curCtx < (int)ctx_list.size())
 			SetCurrentTARC(ctx_list[curCtx]->Address);
 	}
 	else

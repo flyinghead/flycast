@@ -430,13 +430,7 @@ void CheatManager::reset(const std::string& gameId)
 		if (!cheatFile.empty())
 			loadCheatFile(cheatFile);
 #endif
-		if (gameId == "VF4 FINAL TUNED JAPAN")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x0007f486, 0xe001); // mov #1, r0
-			cheats.back().builtIn = true;
-		}
-		else if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
+		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
 		{
 			setActive(true);
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0);

@@ -138,8 +138,11 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 		case 2:
 			asic_RaiseInterrupt(holly_HBLank);
 			break;
+		case 1:
+			WARN_LOG(PVR, "Unimplemented HBLANK INT mode");
+			break;
 		default:
-			die("Unimplemented HBLANK INT mode");
+			INFO_LOG(PVR, "Invalid HBLANK INT mode");
 			break;
 		}
 

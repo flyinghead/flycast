@@ -59,7 +59,7 @@ extern u32 awavelg_button_mapping[32];
 
 const char *GetCurrentGameButtonName(DreamcastKey key)
 {
-	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_RELOAD)
+	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_BITMAPPED_LAST)
 		return nullptr;
 	u32 pos = 0;
 	u32 val = (u32)key;

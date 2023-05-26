@@ -6,6 +6,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "network/ggpo.h"
+#include "hw/naomi/card_reader.h"
 
 enum MaplePattern
 {
@@ -135,6 +136,18 @@ static void maple_DoDma()
 #endif
 
 	ggpo::getInput(mapleInputState);
+	// TODO put this elsewhere and let the card readers handle being called multiple times
+	if (settings.platform.isNaomi())
+	{
+		static u32 last_kcode[std::size(mapleInputState)];
+		for (size_t i = 0; i < std::size(mapleInputState); i++)
+		{
+			if ((mapleInputState[i].kcode & DC_BTN_INSERT_CARD) == 0
+					&& (last_kcode[i] & DC_BTN_INSERT_CARD) != 0)
+				card_reader::insertCard(i);
+			last_kcode[i] = mapleInputState[i].kcode;
+		}
+	}
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count = 0;

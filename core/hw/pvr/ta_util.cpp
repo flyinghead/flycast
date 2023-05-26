@@ -23,14 +23,14 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //
-// Check if a vertex has huge x,y,z values or negative z
+// Check if a vertex has NaN or huge x,y,z values
 //
 static bool is_vertex_inf(const Vertex& vtx)
 {
 	// manic panic ghosts needs 1.0e25f for x and y
 	return std::isnan(vtx.x) || fabsf(vtx.x) > 1e25f
 			|| std::isnan(vtx.y) || fabsf(vtx.y) > 1e25f
-			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+			|| std::isnan(vtx.z) || vtx.z > 3.4e37f;
 }
 
 struct IndexTrig

@@ -101,7 +101,9 @@ static void loadSpecialSettings()
 				// Shenmue (EU)
 				|| prod_id == "MK-5105950"
 				// Shenmue (JP)
-				|| prod_id == "HDR-0016")
+				|| prod_id == "HDR-0016"
+				// Izumo
+				|| prod_id == "T46902M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -141,6 +143,12 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
+		}
+		// Re-Volt (JP)
+		else if (prod_id == "T-8101M")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(100.f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
@@ -237,6 +245,11 @@ static void loadSpecialSettings()
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
+		}
+		if (prod_id == "T-8102N")		// TrickStyle (US)
+		{
+			NOTICE_LOG(BOOT, "Forcing English Language");
+			config::Language.override(1);
 		}
 	}
 	else if (settings.platform.isArcade())
@@ -386,9 +399,9 @@ static void loadSpecialSettings()
 
 void dc_reset(bool hard)
 {
-	NetworkHandshake::term();
 	if (hard)
 	{
+		NetworkHandshake::term();
 		memwatch::unprotect();
 		memwatch::reset();
 	}

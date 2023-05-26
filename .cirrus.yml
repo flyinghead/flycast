@@ -1,12 +1,12 @@
 freebsd_instance:
-  image_family: freebsd-13-1
+  image_family: freebsd-13-2
 
 env:
   CCACHE_DIR: /tmp/ccache
   CIRRUS_CLONE_SUBMODULES: true
 
 task:
-  install_script: pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf png pulseaudio sdl2
+  install_script: pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf pulseaudio sdl2
   ccache_cache:
     folder: /tmp/ccache
   script:

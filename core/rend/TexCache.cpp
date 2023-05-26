@@ -987,7 +987,7 @@ void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CT
 			break;
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0);
+				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0);
 				p += 4;
 			}
 			break;
@@ -1085,7 +1085,7 @@ void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_C
 				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
 						| (roundColor<5>(p[Green]) << 5)
 						| roundColor<5>(p[Blue])
-						| (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0)));
+						| (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0)));
 				p += 4;
 				dstAddr += bpp;
 			}

@@ -43,6 +43,7 @@
 #include "printer.h"
 #include "oslib/storage.h"
 #include "network/alienfnt_modem.h"
+#include "netdimm.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -134,8 +135,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 				case InterleavedWord:
 				{
 					u8 *buf = (u8 *)malloc(bios->blobs[romid].length);
-					if (buf == NULL)
-						throw NaomiCartException(std::string("Memory allocation failed"));
+					if (buf == nullptr)
+						throw NaomiCartException("Memory allocation failed");
 
 					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 					u32 read = file->Read(buf, bios->blobs[romid].length);
@@ -212,8 +213,8 @@ void naomi_cart_LoadBios(const char *filename)
 		if (!loadBios(bios, archive.get(), parent_archive.get(), -1))
 		{
 			// If a specific BIOS is needed for this game, fail.
-			if (game->bios != NULL || !bios_loaded)
-				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip"));
+			if (game->bios != nullptr || !bios_loaded)
+				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != nullptr ? game->bios : "naomi.zip"));
 
 			// otherwise use the default BIOS
 		}
@@ -224,7 +225,7 @@ void naomi_cart_LoadBios(const char *filename)
 static void loadMameRom(const std::string& path, const std::string& fileName, LoadProgress *progress)
 {
 	const Game *game = FindGame(fileName.c_str());
-	if (game == NULL)
+	if (game == nullptr)
 		throw NaomiCartException("Unknown game");
 
 	// Open archive and parent archive if any
@@ -242,9 +243,9 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
 	}
 
-	if (archive == NULL && parent_archive == NULL)
+	if (archive == nullptr && parent_archive == nullptr)
 	{
-		if (game->parent_name != NULL)
+		if (game->parent_name != nullptr)
 			throw NaomiCartException(std::string("Cannot open ") + fileName + std::string(" or ") + game->parent_name);
 		else
 			throw NaomiCartException(std::string("Cannot open ") + fileName);
@@ -271,7 +272,11 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 			break;
 		case GD:
 			{
-				GDCartridge *gdcart = new GDCartridge(game->size);
+				GDCartridge *gdcart;
+				if (strncmp(game->name, "vf4", 3) == 0)
+					gdcart = new NetDimm(game->size);
+				else
+					gdcart = new GDCartridge(game->size);
 				gdcart->SetGDRomName(game->gdrom_name, game->parent_name);
 				CurrentCartridge = gdcart;
 			}
@@ -353,8 +358,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case InterleavedWord:
 						{
 							u8 *buf = (u8 *)malloc(game->blobs[romid].length);
-							if (buf == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (buf == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							u16 *to = (u16 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
@@ -373,8 +378,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case Key:
 						{
 							u8 *buf = (u8 *)malloc(game->blobs[romid].length);
-							if (buf == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (buf == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							CurrentCartridge->SetKeyData(buf);
@@ -387,8 +392,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 					case Eeprom:
 						{
 							naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
-							if (naomi_default_eeprom == NULL)
-								throw NaomiCartException(std::string("Memory allocation failed"));
+							if (naomi_default_eeprom == nullptr)
+								throw NaomiCartException("Memory allocation failed");
 
 							u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
 							if (config::GGPOEnable)
@@ -765,6 +770,8 @@ int naomi_cart_GetPlatform(const char *path)
 Cartridge::Cartridge(u32 size)
 {
 	RomPtr = (u8 *)malloc(size);
+	if (RomPtr == nullptr)
+		throw NaomiCartException("Memory allocation failed");
 	RomSize = size;
 	if (size != 0)
 		memset(RomPtr, 0xFF, RomSize);
@@ -855,20 +862,20 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	switch (address)
 	{
 	case NAOMI_DIMM_COMMAND:
-		//DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
-		return 0xffff; //reg_dimm_command
+		//DEBUG_LOG(NAOMI, "DIMM COMMAND read");
+		return 0xffff;
 	case NAOMI_DIMM_OFFSETL:
-		DEBUG_LOG(NAOMI, "DIMM OFFSETL read<%d>", size);
-		return reg_dimm_offsetl;
+		DEBUG_LOG(NAOMI, "DIMM OFFSETL read");
+		return 0xffff;
 	case NAOMI_DIMM_PARAMETERL:
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read<%d>", size);
-		return reg_dimm_parameterl;
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read");
+		return 0xffff;
 	case NAOMI_DIMM_PARAMETERH:
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read<%d>", size);
-		return reg_dimm_parameterh;
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read");
+		return 0xffff;
 	case NAOMI_DIMM_STATUS:
-		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>: %x", size, reg_dimm_status);
-		return reg_dimm_status;
+		DEBUG_LOG(NAOMI, "DIMM STATUS read");
+		return 0xffff;
 
 	case NAOMI_ROM_OFFSETH_addr:
 		return RomPioOffset >> 16 | (RomPioAutoIncrement << 15);
@@ -920,44 +927,21 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	switch (address)
 	{
 	case NAOMI_DIMM_COMMAND:
-		 if (0x1E03 == data)
-		 {
-			 /*
-			 if (!(reg_dimm_status & 0x100))
-				asic_RaiseInterrupt(holly_EXP_PCI);
-			 reg_dimm_status |= 1;*/
-		 }
-		 reg_dimm_command = data;
 		 DEBUG_LOG(NAOMI, "DIMM COMMAND Write<%d>: %x", size, data);
 		 return;
 
 	case NAOMI_DIMM_OFFSETL:
-		reg_dimm_offsetl = data;
 		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write<%d>: %x", size, data);
 		return;
 	case NAOMI_DIMM_PARAMETERL:
-		reg_dimm_parameterl = data;
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write<%d>: %x", size, data);
 		return;
 	case NAOMI_DIMM_PARAMETERH:
-		reg_dimm_parameterh = data;
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write<%d>: %x", size, data);
 		return;
 
 	case NAOMI_DIMM_STATUS:
 		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
-		if (data&0x100)
-		{
-			asic_CancelInterrupt(holly_EXP_PCI);
-		}
-		else if ((data&1)==0)
-		{
-			/*FILE* ramd=fopen("c:\\ndc.ram.bin","wb");
-			fwrite(mem_b.data,1,RAM_SIZE,ramd);
-			fclose(ramd);*/
-			naomi_process(reg_dimm_command, reg_dimm_offsetl, reg_dimm_parameterl, reg_dimm_parameterh);
-		}
-		reg_dimm_status = (data & ~0x100) | 1;
 		return;
 
 		//These are known to be valid on normal ROMs and DIMM board
