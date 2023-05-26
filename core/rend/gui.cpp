@@ -22,7 +22,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui/imgui.h"
-#include "imgui/roboto_medium.h"
+#include "roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
@@ -773,15 +773,15 @@ struct Mapping {
 };
 
 const Mapping dcButtons[] = {
-	{ EMU_BTN_NONE,  "Directions" },
-	{ DC_DPAD_UP,    "Up" },
-	{ DC_DPAD_DOWN,  "Down" },
-	{ DC_DPAD_LEFT,  "Left" },
+	{ EMU_BTN_NONE, "Directions" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
 	{ DC_DPAD_RIGHT, "Right" },
 
-	{ DC_AXIS_UP,    "Thumbstick Up" },
-	{ DC_AXIS_DOWN,  "Thumbstick Down" },
-	{ DC_AXIS_LEFT,  "Thumbstick Left" },
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
 	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
 	{ DC_AXIS2_UP,    "Axis 2 Up"    },
@@ -794,9 +794,9 @@ const Mapping dcButtons[] = {
 	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
 	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
 
-	{ DC_DPAD2_UP,    "DPad2 Up" },
-	{ DC_DPAD2_DOWN,  "DPad2 Down" },
-	{ DC_DPAD2_LEFT,  "DPad2 Left" },
+	{ DC_DPAD2_UP,    "DPad2 Up"    },
+	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
+	{ DC_DPAD2_LEFT,  "DPad2 Left"  },
 	{ DC_DPAD2_RIGHT, "DPad2 Right" },
 
 	{ EMU_BTN_NONE, "Buttons" },
@@ -814,14 +814,14 @@ const Mapping dcButtons[] = {
 	{ DC_AXIS_T2,   "Trigger 2"     },
 	{ DC_AXIS_T3,   "Trigger 3"     },
 
-	{ EMU_BTN_NONE,  "System Buttons" },
-	{ DC_BTN_START,  "Start" },
+	{ EMU_BTN_NONE, "System Buttons" },
+	{ DC_BTN_START, "Start" },
 	{ DC_BTN_RELOAD, "Reload" },
 
-	{ EMU_BTN_NONE,      "Emulator" },
-	{ EMU_BTN_MENU,      "Menu" },
-	{ EMU_BTN_ESCAPE,    "Exit" },
-	{ EMU_BTN_FFORWARD,  "Fast-forward" },
+	{ EMU_BTN_NONE, "Emulator" },
+	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_ESCAPE, "Exit" },
+	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
 
@@ -866,6 +866,7 @@ const Mapping arcadeButtons[] = {
 	{ DC_BTN_D, "Coin" },
 	{ DC_DPAD2_UP, "Service" },
 	{ DC_DPAD2_DOWN, "Test" },
+	{ DC_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, "Emulator" },
 	{ EMU_BTN_MENU, "Menu" },
@@ -873,7 +874,6 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -1712,9 +1712,19 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = config::MapleMainDevices[bus] == MDT_SegaController ? 2
-							: config::MapleMainDevices[bus] == MDT_LightGun || config::MapleMainDevices[bus] == MDT_TwinStick || config::MapleMainDevices[bus] == MDT_AsciiStick ? 1
-							: 0;
+					int port_count = 0;
+					switch (config::MapleMainDevices[bus]) {
+						case MDT_SegaController:
+							port_count = 2;
+							break;
+						case MDT_LightGun:
+						case MDT_TwinStick:
+						case MDT_AsciiStick:
+						case MDT_RacingController:
+							port_count = 1;
+							break;
+						default: break;
+					}
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
@@ -2049,7 +2059,7 @@ static void gui_display_settings()
                 ImGui::SameLine();
                 ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
-		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
+		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
 		    			"Stretch the screen horizontally");
 		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");
