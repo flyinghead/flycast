@@ -92,8 +92,8 @@ std::string get_readonly_data_path(const std::string& filename)
 	}
 	// Try the game directory
 	std::string parent = hostfs::storage().getParentPath(settings.content.path);
-	std::string filepath = hostfs::storage().getSubPath(parent, filename);
 	try {
+		std::string filepath = hostfs::storage().getSubPath(parent, filename);
 		hostfs::FileInfo info = hostfs::storage().getFileInfo(filepath);
 		return info.path;
 	} catch (const FlycastException&) { }

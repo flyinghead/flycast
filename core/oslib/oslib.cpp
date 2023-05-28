@@ -92,8 +92,8 @@ std::string findNaomiBios(const std::string& name)
 		return fullpath;
 	for (const auto& path : config::ContentPath.get())
 	{
-		fullpath = hostfs::storage().getSubPath(path, name);
 		try {
+			fullpath = hostfs::storage().getSubPath(path, name);
 			hostfs::storage().getFileInfo(fullpath);
 			return fullpath;
 		} catch (const hostfs::StorageException& e) {
