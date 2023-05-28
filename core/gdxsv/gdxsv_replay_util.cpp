@@ -8,6 +8,8 @@
 
 #ifdef WIN32
 #define stat _stat
+//#define _AMD64_	 // Fixing GitHub runner's winnt.h error
+//#include <Windows.h>
 #endif
 
 #include "dirent.h"
@@ -18,6 +20,27 @@
 #include "rend/gui_util.h"
 #include "stdclass.h"
 #include "json.hpp"
+
+struct UserEntry {
+	std::string user_id;
+	std::string name;
+	int battle_count;
+	int win_count;
+	int lose_count;
+	int kill_count;
+	int renpo_battle_count;
+	int renpo_win_count;
+	int renpo_lose_count;
+	int renpo_kill_count;
+	int zeon_battle_count;
+	int zeon_win_count;
+	int zeon_lose_count;
+	int zeon_kill_count;
+	int daily_battle_count;
+	int daily_win_count;
+	int daily_lose_count;
+//	std::string created;
+};
 
 struct ReplayEntry {
 	std::string disk;
@@ -36,7 +59,20 @@ static std::string battle_log_file_name;
 static proto::BattleLogFile battle_log;
 
 static std::string search_user_id;
+static std::string search_user_name;
+static std::string search_pilot_name;
+static std::string search_lobby_id;
+static unsigned int search_no_of_players;
+static std::string search_battle_code;
+static int search_ranking = -1;
+static std::string search_disk;
+static bool search_reverse;
+
+static std::shared_future<std::vector<UserEntry>> fetch_user_entry_future_;
+static int fetch_user_entry_http_status;
+
 static std::shared_future<std::vector<ReplayEntry>> fetch_replay_entry_future_;
+static int fetch_replay_entry_http_status;
 static int selected_replay_entry_index = -1;
 
 static int entry_paging = 0;
@@ -203,11 +239,12 @@ void gdxsv_replay_local_tab() {
 #if defined(__APPLE__) && TARGET_OS_OSX
 	if (ImGui::Button("Reveal in Finder")) {
 		char temp[512];
-		sprintf(temp, "open \"%s\"", get_writable_data_path("replays").c_str());
+		snprintf(temp, sizeof(temp), "open \"%s\"", get_writable_data_path("replays").c_str());
 		system(temp);
 	}
 #elif defined(_WIN32) && !defined(TARGET_UWP)
 	if (ImGui::Button("Open folder")) {
+//		ShellExecuteA(NULL, "open", get_writable_data_path("replays").c_str(), NULL, NULL, SW_SHOWNORMAL);
 	}
 #endif
 	ImGui::SameLine();
@@ -325,6 +362,36 @@ void HandleReplayJSON(const std::string& json_string, std::vector<ReplayEntry>& 
 	}
 }
 
+void HandleUserJSON(const std::string& json_string, std::vector<UserEntry>& out) {
+	try {
+		nlohmann::json j = nlohmann::json::parse(json_string);
+		
+		for(auto item : j) {
+			UserEntry entry;
+			entry.user_id = item.value("user_id", "");
+			entry.name = item.value("name", "");
+			entry.battle_count = item.value("battle_count", -1);
+			entry.win_count = item.value("win_count", -1);
+			entry.lose_count = item.value("lose_count", -1);
+			entry.kill_count = item.value("kill_count", -1);
+			entry.renpo_battle_count = item.value("renpo_battle_count", -1);
+			entry.renpo_win_count = item.value("renpo_win_count", -1);
+			entry.renpo_lose_count = item.value("renpo_lose_count", -1);
+			entry.renpo_kill_count = item.value("renpo_kill_count", -1);
+			entry.zeon_battle_count = item.value("zeon_battle_count", -1);
+			entry.zeon_win_count = item.value("zeon_win_count", -1);
+			entry.zeon_lose_count = item.value("zeon_lose_count", -1);
+			entry.zeon_kill_count = item.value("zeon_kill_count", -1);
+			entry.daily_battle_count = item.value("daily_battle_count", -1);
+			entry.daily_win_count = item.value("daily_win_count", -1);
+			entry.daily_lose_count = item.value("daily_lose_count", -1);
+			out.push_back(entry);
+		}
+	} catch (const nlohmann::json::exception& e) {
+		WARN_LOG(COMMON, "json parse failure: %s", e.what());
+	}
+}
+
 
 
 template <typename T>
@@ -347,8 +414,33 @@ void FetchReplayJSON() {
 		if (search_user_id != "") {
 			url += "&user_id=" + http::urlEncode(search_user_id);
 		}
-		const int rc = http::get(url, dl, content_type);
-		if (rc != 200) {
+		if (search_user_name != "") {
+			url += "&user_name=" + http::urlEncode("%" + search_user_name + "%");
+		}
+		if (search_pilot_name != "") {
+			url += "&pilot_name=" + http::urlEncode("%" + search_pilot_name + "%");
+		}
+		if (search_lobby_id != "") {
+			url += "&lobby_id=" + http::urlEncode(search_lobby_id);
+		}
+		if (search_no_of_players != 0) {
+			url += "&players=" + http::urlEncode(std::to_string(search_no_of_players));
+		}
+		if (search_battle_code != "") {
+			url += "&battle_code=" + http::urlEncode(search_battle_code);
+		}
+		if (search_ranking != -1) {
+			url += "&aggregate=" + http::urlEncode(std::to_string(search_ranking));
+		}
+		if (search_disk != "") {
+			url += "&disk=" + http::urlEncode(search_disk);
+		}
+		if (search_reverse) {
+			url += "&reverse=" + http::urlEncode(std::to_string(1));
+		}
+		
+		fetch_replay_entry_http_status = http::get(url, dl, content_type);
+		if (fetch_replay_entry_http_status != 200) {
 			ERROR_LOG(COMMON, "version check failure: %s", url.c_str());
 			return entries;
 		}
@@ -360,26 +452,353 @@ void FetchReplayJSON() {
 	fetch_replay_entry_future_ = std::async(std::launch::async, future_fn).share();
 }
 
+void FetchUserJSON() {
+	if (fetch_user_entry_future_.valid()) {
+		return;
+	}
+	
+	const auto future_fn = []() -> std::vector<UserEntry> {
+		std::vector<UserEntry> entries{};
+		std::vector<u8> dl;
+		std::string content_type;
+		http::init();
+		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/user?";
+		
+		std::string loginkey_ = cfgLoadStr("gdxsv", "loginkey", "");
+		std::vector<u8> e_loginkey(loginkey_.size());
+		static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
+		for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey_[i] ^ magic[i & 3];
+		const unsigned _FNV_offset_basis = 2166136261U;
+		const unsigned _FNV_prime = 16777619U;
+		unsigned hash = _FNV_offset_basis;
+		for (size_t i = 0; i < e_loginkey.size(); ++i)
+		{
+			hash *= _FNV_prime;
+			hash ^= (unsigned)e_loginkey[i];
+		}
+		std::ostringstream hashed_loginkey_s;
+		hashed_loginkey_s << std::setfill('0') << std::setw(8) << std::hex << hash;
+		
+		url += "login_key=" + http::urlEncode(hashed_loginkey_s.str());
+		
+		fetch_user_entry_http_status = http::get(url, dl, content_type);
+		if (fetch_user_entry_http_status != 200) {
+			ERROR_LOG(COMMON, "version check failure: %s", url.c_str());
+			return entries;
+		}
+		
+		HandleUserJSON(std::string(dl.begin(), dl.end()), entries);
+		return entries;
+	};
+	
+	fetch_user_entry_future_ = std::async(std::launch::async, future_fn).share();
+}
+
 void FetchNewResults(){
 	selected_replay_entry_index = -1;
 	fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
 }
 
-void gdxsv_replay_server_tab() {
-	ImGui::AlignTextToFramePadding();
+template<typename Callable>
+void draw_filter_label(const std::string &label, const std::string &value, Callable DidClickButton){
+	static char filter_user_id_buf[100] = {0};
+	snprintf(filter_user_id_buf, sizeof(filter_user_id_buf), "%s = %s  ×", label.c_str(), value.c_str());
 	
-	ImGui::Text("User ID");
 	ImGui::SameLine();
-	static char user_id_buf[7];
-	ImGui::InputText("##user_id_input", user_id_buf, IM_ARRAYSIZE(user_id_buf));
-	ImGui::SameLine();
-	if (ImGui::Button("Search")) {
-		search_user_id = std::string(user_id_buf);
-		entry_paging = 0;
+	ImGui::GetStyle().FrameRounding = 5.0f * scaling;
+	if(ImGui::Button(filter_user_id_buf, ImVec2(ImGui::CalcTextSize(filter_user_id_buf, NULL, true).x + ImGui::GetStyle().FramePadding.x * 2 - 5.0f * scaling, 0))) {
+		DidClickButton();
 		FetchNewResults();
 	}
+	ImGui::GetStyle().FrameRounding = 0.0f;
+};
+
+void draw_filter_label_string(const std::string &label, std::string &value){
+	if (value != "") {
+		draw_filter_label(label, value, [&value](){ value = ""; });
+	}
+};
+
+void draw_filter_label_int(const std::string &label, unsigned int &value){
+	if (value != 0) {
+		draw_filter_label(label, std::to_string(value), [&value](){ value = 0; });
+	}
+};
+void draw_filter_label_yesno(const std::string &label, int &value){
+	if (value != -1) {
+		draw_filter_label(label, value ? "Yes" : "No", [&value](){ value = -1; });
+	}
+};
+void draw_filter_label_bool(const std::string &label, bool &value){
+	if (value != false) {
+		draw_filter_label(label, "Yes", [&value](){ value = false; });
+	}
+};
+
+void gdxsv_replay_server_tab() {
+	struct TextFilters
+	{
+		// Return 0 (pass) if the character is number
+		static int FilterNumber(ImGuiInputTextCallbackData* data)
+		{
+			if (data->EventChar < 256 && strchr("0123456789", (char)data->EventChar))
+				return 0;
+			return 1;
+		}
+		
+		static int FullWidthAlphaNum(ImGuiInputTextCallbackData* data)
+		{
+			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
+				data->EventChar = ((char)data->EventChar + 0xFEE0);
+			
+			return 0;
+		}
+		
+		static int UppercaseAlpha(ImGuiInputTextCallbackData* data)
+		{
+			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
+				data->EventChar = toupper(data->EventChar);
+			
+			return 0;
+		}
+	};
 	
-	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_server_list_paging"), ScaledVec2(330, 0), false, ImGuiWindowFlags_NoDecoration);
+	ImGui::AlignTextToFramePadding();
+	
+	ImGui::Text("Filter by");
+		
+	const std::array<std::string, 9> filter_labels{ "User ID", "User Name", "Pilot Name", "Lobby ID", "No. of Players", "Battle Code", "Ranking", "Disk", "Reverse Order" };
+	static unsigned int filter_selected = 0;
+	
+	ImGui::SameLine();
+	ImGui::PushItemWidth(150.0f * scaling);
+	if (ImGui::BeginCombo("##FilterItems", filter_labels[filter_selected].c_str(), ImGuiComboFlags_HeightLargest))
+	{
+		for (u32 i = 0; i < filter_labels.size(); i++)
+		{
+			bool is_selected = i == filter_selected;
+			if (ImGui::Selectable(filter_labels[i].c_str(), is_selected))
+				filter_selected = i;
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::PopItemWidth();
+	
+	
+	{
+		DisabledScope loading_scope(!future_is_ready(fetch_replay_entry_future_));
+		
+		switch (filter_selected) {
+			case 0: // User ID
+			{
+				if (!fetch_user_entry_future_.valid()) {
+					FetchUserJSON();
+				}
+				static char user_id_buf[7] = {0};
+				{
+					DisabledScope loading_scope(!future_is_ready(fetch_user_entry_future_));
+					ImGui::SameLine();
+					if (ImGui::Button("My IDs"))
+						ImGui::OpenPopup("my_id_popup");
+					ImGui::SameLine();
+					if (ImGui::BeginPopup("my_id_popup"))
+					{
+						ImGui::Text("Handle Name");
+						ImGui::Separator();
+						auto entries = fetch_user_entry_future_.get();
+						for (int i = 0; i < entries.size(); i++)
+							if (ImGui::Selectable(entries[i].name.c_str())){
+								snprintf(user_id_buf, sizeof(user_id_buf), "%s", entries[i].user_id.c_str());
+							}
+						ImGui::EndPopup();
+					}
+				}
+				
+				ImGui::SameLine();
+				if ( ImGui::InputText("##user_id_input", user_id_buf, IM_ARRAYSIZE(user_id_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::UppercaseAlpha) ){
+					search_user_id = std::string(user_id_buf);
+					FetchNewResults();
+				}
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_user_id = std::string(user_id_buf);
+					FetchNewResults();
+				}
+				
+				break;
+			}
+			case 1: // User Name
+			{
+				static char user_name_buf[100] = {0};
+				ImGui::SameLine();
+				if ( ImGui::InputText("##user_name_input", user_name_buf, IM_ARRAYSIZE(user_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
+					search_user_name = std::string(user_name_buf);
+					FetchNewResults();
+				}
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_user_name = std::string(user_name_buf);
+					FetchNewResults();
+				}
+				
+				break;
+			}
+			case 2: // Pilot Name
+			{
+				static char pilot_name_buf[100] = {0};
+				ImGui::SameLine();
+				if ( ImGui::InputText("##user_name_input", pilot_name_buf, IM_ARRAYSIZE(pilot_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
+					search_pilot_name = std::string(pilot_name_buf);
+					FetchNewResults();
+				}
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_pilot_name = std::string(pilot_name_buf);
+					FetchNewResults();
+				}
+				
+				break;
+			}
+			case 3: // Lobby ID
+			{
+				const static std::array<std::array<std::string, 4>, 17> lobby_data { {
+					{ "タクラマカン砂漠", "塔克拉瑪干沙漠", "Taklamakan Desert", "2" },
+					{ "黒海南岸森林地帯", "黒海南岸森林地帶", "Black Sea Forest", "4" },
+					{ "オデッサ", "奧迪沙", "Odessa", "5" },
+					{ "ベルファスト", "貝爾法斯特", "Belfast", "6" },
+					{ "ニューヤーク", "紐約", "New York", "9" },
+					{ "グレートキャニオン", "大峽谷", "Grand Canyon", "10" },
+					{ "ジャブロー", "査布羅", "Jaburo", "11" },
+					{ "地下基地", "地下基地", "UG Complex", "12" },
+					{ "ソロモン", "所羅門", "Solomon", "13" },
+					{ "ソロモン宙域", "所羅門宙域", "Solomon (Space)", "14" },
+					{ "ア・バオア・クー宙域", "阿・巴瓦・庫 宙域", "A Baoa Qu (Space)", "15" },
+					{ "ア・バオア・クー外部", "阿・巴瓦・庫 外部", "A Baoa Qu (Outter)", "16" },
+					{ "ア・バオア・クー内部", "阿・巴瓦・庫 内部", "A Baoa Qu (Inner)", "17" },
+					{ "衛星軌道１", "衛星軌道１", "Sat.Orbit 1", "19" },
+					{ "衛星軌道2", "衛星軌道２", "Sat.Orbit 2", "20" },
+					{ "サイド６宙域", "SIDE 6 宙域", "SIDE 6 (Space)", "21" },
+					{ "サイド７内部", "SIDE 7 内部", "	SIDE 7 (Inner)", "22" }
+				} };
+				
+				static unsigned int lobby_selected = 0;
+				
+				static int language = config::GdxLanguage.get();
+				if (language == 3) {
+					language = 1;
+				}
+				
+				ImGui::SameLine();
+				ImGui::PushItemWidth(300.0f * scaling);
+				if (ImGui::BeginCombo("##LobbyItems", lobby_data[lobby_selected][language].c_str(), ImGuiComboFlags_HeightLargest))
+				{
+					for (u32 i = 0; i < lobby_data.size(); i++)
+					{
+						bool is_selected = i == lobby_selected;
+						if (ImGui::Selectable(lobby_data[i][language].c_str(), is_selected)) {
+							lobby_selected = i;
+							search_lobby_id = lobby_data[i][3];
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::PopItemWidth();
+				
+				break;
+			}
+			case 4: // No of Players
+			{
+				ImGui::SameLine();
+				static int no_of_players_input = 2;
+				ImGui::SliderInt("##no_of_players_input", &no_of_players_input, 2, 4);
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_no_of_players = no_of_players_input;
+					FetchNewResults();
+				}
+				
+				break;
+			}
+			case 5: // Battle Code
+			{
+				static char battle_code_buf[100] = {0};
+				ImGui::SameLine();
+				if ( ImGui::InputText("##battle_code_input", battle_code_buf, IM_ARRAYSIZE(battle_code_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterNumber) ) {
+					search_battle_code = std::string(battle_code_buf);
+					FetchNewResults();
+				}
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_battle_code = std::string(battle_code_buf);
+					FetchNewResults();
+				}
+				
+				break;
+			}
+			case 6: // Ranking
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Yes")) {
+					search_ranking = 1;
+					FetchNewResults();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("No")) {
+					search_ranking = 0;
+					FetchNewResults();
+				}
+				break;
+			}
+			case 7: // Disk
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("MUJI")) {
+					search_disk = "dc1";
+					FetchNewResults();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("DX")) {
+					search_disk = "dc2";
+					FetchNewResults();
+				}
+				break;
+			}
+			case 8: // Reverse
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Add Filter")) {
+					search_reverse = true;
+					FetchNewResults();
+				}
+				break;
+			}
+			default:
+				break;
+		}
+		
+		ImGui::Dummy(ImVec2(0,0)); // Newline
+		
+		draw_filter_label_string("User ID", search_user_id);
+		draw_filter_label_string("User Name", search_user_name);
+		draw_filter_label_string("Pilot Name", search_pilot_name);
+		draw_filter_label_string("Lobby ID", search_lobby_id);
+		draw_filter_label_int("Players", search_no_of_players);
+		draw_filter_label_string("Battle Code", search_battle_code);
+		draw_filter_label_yesno("Ranking", search_ranking);
+		draw_filter_label_string("Disk", search_disk);
+		draw_filter_label_bool("Reverse", search_reverse);
+	}
+	
+	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_server_list_paging"), ScaledVec2(450, 0), false, ImGuiWindowFlags_NoDecoration);
 	{
 		ImGui::BeginChild(ImGui::GetID("gdxsv_replay_server_list"), ImVec2(0, ImGui::GetContentRegionAvail().y - 40.f * scaling), true, ImGuiWindowFlags_DragScrolling);
 		{
@@ -389,34 +808,99 @@ void gdxsv_replay_server_tab() {
 				ImGui::Text("Loading...");
 			} else {
 				const auto& entries = fetch_replay_entry_future_.get();
-				for (int i = 0; i < entries.size(); ++i) {
-					ImGui::PushID(i);
-					
-					time_t t = entries[i].start_unix;
-					char buf[128] = {0};
-					std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-					
-					if (ImGui::Selectable(buf, i == selected_replay_entry_index, 0, ImVec2(0, 0))) {
-						selected_replay_entry_index = i;
-						pov_index = -1;
+				if (entries.size() == 0 || fetch_replay_entry_http_status == 204) {
+					ImGui::Text("No result");
+				} else if (fetch_replay_entry_http_status != 200) {
+					ImGui::Text("Error: HTTP %d", fetch_replay_entry_http_status);
+				} else {
+					const static auto item_spacing = 30.0f;
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(0, item_spacing));
+					for (int i = 0; i < entries.size(); ++i) {
+						ImGui::PushID(i);
+						const auto& entry = entries[i];
+						
+						time_t t = entry.start_unix;
+						char buf[128] = {0};
+						std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+						
+						setlocale(LC_CTYPE, "UTF-8");
+						
+						wchar_t wide_char = entry.renpo_win + L'0' + 0xFEE0;
+						char renpo_win[4] = {0};
+						std::wctomb(renpo_win, wide_char);
+						
+						wide_char = entry.zeon_win + L'0' + 0xFEE0;
+						char zeon_win[4] = {0};
+						std::wctomb(zeon_win, wide_char);
+						
+						snprintf(buf, sizeof(buf), "%s ― Result: %s：%s\n\n", buf, renpo_win, zeon_win);
+
+						for ( int i = 0; i < entry.users.size() ; i++) {
+							const auto& user = entry.users[i];
+							
+							if (i == entry.users.size()-1) {
+								snprintf(buf, sizeof(buf), "%s%s", buf, user.user_name().c_str());
+							} else {
+								snprintf(buf, sizeof(buf), "%s%s%s ", buf, user.user_name().c_str(), (entry.users[i+1].team() != user.team() ? " vs" : ","));
+							}
+						}
+						
+						auto drawlist = ImGui::GetWindowDrawList();
+						
+						static auto SelectableColor = [drawlist](ImU32 color)
+						{
+							ImVec2 p_min = ImGui::GetItemRectMin();
+							ImVec2 p_max = ImGui::GetItemRectMax();
+							drawlist->AddRectFilled(p_min, p_max, color);
+						};
+						
+						drawlist->ChannelsSplit(2);
+						drawlist->ChannelsSetCurrent(1);
+						
+						
+						
+						if (ImGui::Selectable(buf, i == selected_replay_entry_index, 0, ImVec2(0, 0))) {
+							selected_replay_entry_index = i;
+							pov_index = -1;
+						}
+						if ( i % 2 == 1 ) {
+							drawlist->ChannelsSetCurrent(0);
+							SelectableColor(IM_COL32(50, 50, 50, 100));
+						}
+						drawlist->ChannelsMerge();
+						
+						ImGui::PopID();
 					}
-					
-					ImGui::PopID();
+					ImGui::PopStyleVar();
 				}
 			}
 		}
 		ImGui::EndChild();
+		static char page_buf[4] = "1";
 		{
-			DisabledScope scope(entry_paging == 0);
-			if (ImGui::Button("Prev Page") && !scope.isDisabled()){
-				entry_paging--;
+			DisabledScope loading_scope(!future_is_ready(fetch_replay_entry_future_));
+			{
+				DisabledScope scope(entry_paging == 0);
+				if (ImGui::Button("Prev Page") && !scope.isDisabled()){
+					entry_paging--;
+					snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
+					FetchNewResults();
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Next Page")) {
+				entry_paging++;
+				snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
 				FetchNewResults();
 			}
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Next Page")) {
-			entry_paging++;
-			FetchNewResults();
+			
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(60.f * scaling);
+			if (ImGui::InputText("##page_input", page_buf, IM_ARRAYSIZE(page_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterNumber)) {
+				entry_paging = atoi(page_buf) - 1;
+				if (entry_paging < 0) entry_paging = 0;
+				FetchNewResults();
+			}
 		}
 	}
 	ImGui::EndChild();
@@ -431,17 +915,17 @@ void gdxsv_replay_server_tab() {
 			
 			const bool playable = "dc" + std::to_string(gdxsv.Disk()) == entry.disk;
 			
-//			ImGui::Text("BattleCode: %s", battle_log.battle_code().c_str());
+			std::string battle_code = entry.replay_url.substr(entry.replay_url.find_last_of("/") + 1);
+			battle_code = battle_code.substr(0, battle_code.find(".pb"));
+			ImGui::Text("BattleCode: %s", battle_code.c_str());
 			ImGui::Text("Game: %s", entry.disk.c_str());
 			ImGui::Text("Players: %lu", entry.users.size());
-//
+			
 			char buf[128] = {0};
 			time_t time = entry.start_unix;
 			std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
 			ImGui::Text("StartAt: %s", buf);
-//			time = battle_log.end_at();
-//			std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
-//			ImGui::Text("EndAt: %s", buf);
+			
 			OptionCheckbox("Hide name", config::GdxReplayHideName, "Replace player names with generic names");
 			ImGui::NewLine();
 
