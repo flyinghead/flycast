@@ -205,7 +205,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				lt[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_RT)
 				rt[port] = std::min(std::abs(v) >> 7, 255);
-			if (key == DC_AXIS_T2)
+			else if (key == DC_AXIS_T2)
 				t2[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_T3)
 				t3[port] = std::min(std::abs(v) >> 7, 255);
