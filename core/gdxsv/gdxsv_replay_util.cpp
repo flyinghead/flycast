@@ -8,8 +8,9 @@
 
 #ifdef WIN32
 #define stat _stat
-//#define _AMD64_	 // Fixing GitHub runner's winnt.h error
-//#include <Windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <shellapi.h>
 #endif
 
 #include "dirent.h"
@@ -244,7 +245,13 @@ void gdxsv_replay_local_tab() {
 	}
 #elif defined(_WIN32) && !defined(TARGET_UWP)
 	if (ImGui::Button("Open folder")) {
-//		ShellExecuteA(NULL, "open", get_writable_data_path("replays").c_str(), NULL, NULL, SW_SHOWNORMAL);
+		SHELLEXECUTEINFOA sei = { 0 };
+		sei.cbSize = sizeof(sei);
+		sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+		sei.lpFile = "Explorer.exe";
+		sei.lpParameters = ("/root, " + get_writable_data_path("replays")).c_str();
+		sei.nShow = SW_SHOWDEFAULT;
+		ShellExecuteExA(&sei);
 	}
 #endif
 	ImGui::SameLine();
