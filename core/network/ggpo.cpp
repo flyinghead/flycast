@@ -43,8 +43,8 @@ static void getLocalInput(MapleInputState inputState[4])
 		state.kcode = kcode[player];
 		state.halfAxes[PJTI_L] = lt[player];
 		state.halfAxes[PJTI_R] = rt[player];
-		state.halfAxes[PJTI_2] = t2[player];
-		state.halfAxes[PJTI_3] = t3[player];
+		state.halfAxes[PJTI_L2] = lt2[player];
+		state.halfAxes[PJTI_R2] = rt2[player];
 		state.fullAxes[PJAI_X1] = joyx[player];
 		state.fullAxes[PJAI_Y1] = joyy[player];
 		state.fullAxes[PJAI_X2] = joyrx[player];

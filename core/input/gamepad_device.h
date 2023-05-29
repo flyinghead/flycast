@@ -171,7 +171,7 @@ void replay_input();
 #endif
 
 extern u32 kcode[4];
-extern u8 rt[4], lt[4], t2[4], t3[4];
+extern u8 rt[4], lt[4], rt2[4], lt2[4];
 extern s8 joyx[4], joyy[4];
 extern s8 joyrx[4], joyry[4];
 extern s8 joy3x[4], joy3y[4];

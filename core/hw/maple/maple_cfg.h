@@ -39,8 +39,8 @@ enum PlainJoystickTriggerId
 {
 	PJTI_L = 0,
 	PJTI_R = 1,
-	PJTI_2 = 2,
-	PJTI_3 = 3,
+	PJTI_L2 = 2,
+	PJTI_R2 = 3,
 	PJTI_Count = 4
 };
 

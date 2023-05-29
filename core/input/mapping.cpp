@@ -50,8 +50,8 @@ button_list[] =
 	{ EMU_BTN_FFORWARD, "emulator", "btn_fforward" },
 	{ DC_AXIS_LT, "compat", "btn_trigger_left" },
 	{ DC_AXIS_RT, "compat", "btn_trigger_right" },
-	{ DC_AXIS_T2, "compat", "btn_trigger_two" },
-	{ DC_AXIS_T3, "compat", "btn_trigger_three" },
+	{ DC_AXIS_LT2, "compat", "btn_trigger_left2" },
+	{ DC_AXIS_RT2, "compat", "btn_trigger_right2" },
 	{ DC_AXIS_UP, "compat", "btn_analog_up" },
 	{ DC_AXIS_DOWN, "compat", "btn_analog_down" },
 	{ DC_AXIS_LEFT, "compat", "btn_analog_left" },
@@ -87,8 +87,8 @@ axis_list[] =
 	{ DC_AXIS3_DOWN,  "", "axis3_down", "", "" },
 	{ DC_AXIS_LT, "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
 	{ DC_AXIS_RT, "dreamcast", "axis_trigger_right", "compat", "axis_trigger_right_inverted" },
-	{ DC_AXIS_T2, "dreamcast", "axis_trigger_two",   "compat", "axis_trigger_2_inverted" },
-	{ DC_AXIS_T3, "dreamcast", "axis_trigger_three", "compat", "axis_trigger_3_inverted" },
+	{ DC_AXIS_LT2, "dreamcast", "axis_trigger_left2",   "compat", "axis_trigger_left2_inverted" },
+	{ DC_AXIS_RT2, "dreamcast", "axis_trigger_right2", "compat", "axis_trigger_right2_inverted" },
 
 	// legacy (v2)
 	{ DC_AXIS_RIGHT, "dreamcast", "axis_x", "compat", "axis_x_inverted" },

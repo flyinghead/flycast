@@ -42,8 +42,8 @@ u8 lt[4];
 s8 joy3x[4];
 s8 joy3y[4];
 // Keyboards
-u8 t2[4];
-u8 t3[4];
+u8 lt2[4];
+u8 rt2[4];
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
@@ -107,13 +107,13 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (port >= 0)
 				rt[port] = pressed ? 255 : 0;
 			break;
-		case DC_AXIS_T2:
+		case DC_AXIS_LT2:
 			if (port >= 0)
-				t2[port] = pressed ? 255 : 0;
+				lt2[port] = pressed ? 255 : 0;
 			break;
-		case DC_AXIS_T3:
+		case DC_AXIS_RT2:
 			if (port >= 0)
-				t3[port] = pressed ? 255 : 0;
+				rt2[port] = pressed ? 255 : 0;
 			break;
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
@@ -205,10 +205,10 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				lt[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_RT)
 				rt[port] = std::min(std::abs(v) >> 7, 255);
-			else if (key == DC_AXIS_T2)
-				t2[port] = std::min(std::abs(v) >> 7, 255);
-			else if (key == DC_AXIS_T3)
-				t3[port] = std::min(std::abs(v) >> 7, 255);
+			else if (key == DC_AXIS_LT2)
+				lt2[port] = std::min(std::abs(v) >> 7, 255);
+			else if (key == DC_AXIS_RT2)
+				rt2[port] = std::min(std::abs(v) >> 7, 255);
 			else
 				return false;
 		}

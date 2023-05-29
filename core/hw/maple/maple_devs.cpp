@@ -1589,9 +1589,9 @@ struct maple_racing_controller: maple_sega_controller
 		else if (index == 2)
 			return pjs.joy[PJAI_X1];	// A3: 0-0xff, 0x80 at rest
 		else if (index == 4)			// (A5 and A6 are only valid when the accelerator/brake unit is connected)
-			return pjs.trigger[PJTI_2];	// A5: lever, 0 at rest
+			return pjs.trigger[PJTI_R2];// A5: lever, 0 at rest
 		else if (index == 5)
-			return pjs.trigger[PJTI_3];	// A6: lever, 0 at rest
+			return pjs.trigger[PJTI_L2];// A6: lever, 0 at rest
 		return 0x80;					// unused
 	}
 

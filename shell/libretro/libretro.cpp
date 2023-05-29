@@ -130,11 +130,12 @@ static bool lightgunSettingsShown = true;
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
 u8 lt[4];
-u8 t2[4];
-u8 t3[4];
+u8 lt2[4];
+u8 rt2[4];
 u32 vks[4];
 s8 joyx[4], joyy[4];
 s8 joyrx[4], joyry[4];
+s8 joy3x[4], joy3y[4];
 // Mouse buttons
 // bit 0: Button C
 // bit 1: Right button (B)

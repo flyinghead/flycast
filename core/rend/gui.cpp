@@ -784,10 +784,10 @@ const Mapping dcButtons[] = {
 	{ DC_AXIS_LEFT, "Thumbstick Left" },
 	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
-	{ DC_AXIS2_UP,    "Axis 2 Up"    },
-	{ DC_AXIS2_DOWN,  "Axis 2 Down"  },
-	{ DC_AXIS2_LEFT,  "Axis 2 Left"  },
-	{ DC_AXIS2_RIGHT, "Axis 2 Right" },
+	{ DC_AXIS2_UP, "R.Thumbstick Up" },
+	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
+	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
+	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
 
 	{ DC_AXIS3_UP,    "Axis 3 Up"    },
 	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
@@ -811,8 +811,8 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_NONE, "Triggers"      },
 	{ DC_AXIS_LT,   "Left Trigger"  },
 	{ DC_AXIS_RT,   "Right Trigger" },
-	{ DC_AXIS_T2,   "Trigger 2"     },
-	{ DC_AXIS_T3,   "Trigger 3"     },
+	{ DC_AXIS_LT2,   "Left Trigger 2" },
+	{ DC_AXIS_RT2,   "Right Trigger 2" },
 
 	{ EMU_BTN_NONE, "System Buttons" },
 	{ DC_BTN_START, "Start" },

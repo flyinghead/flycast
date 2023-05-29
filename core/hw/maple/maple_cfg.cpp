@@ -82,8 +82,8 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->joy[PJAI_Y3] = GetBtFromSgn(inputState.fullAxes[PJAI_Y3]);
 		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
 		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
-		pjs->trigger[PJTI_2] = inputState.halfAxes[PJTI_2];
-		pjs->trigger[PJTI_3] = inputState.halfAxes[PJTI_3];
+		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2];
+		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2];
 	}
 	else if (settings.platform.isAtomiswave())
 	{
