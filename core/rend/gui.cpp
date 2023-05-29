@@ -670,7 +670,7 @@ const char *maple_device_types[] =
 	"Pop'n Music controller",
 	"Racing Controller",
 	"Densha de Go! Controller",
-	"Dreameye",
+//	"Dreameye",
 };
 
 const char *maple_expansion_device_types[] = 
@@ -708,7 +708,7 @@ static const char *maple_device_name(MapleDeviceType type)
 	case MDT_DenshaDeGoController:
 		return maple_device_types[11];
 	case MDT_Dreameye:
-		return maple_device_types[12];
+//		return maple_device_types[12];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
