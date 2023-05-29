@@ -76,8 +76,14 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->kcode = inputState.kcode;
 		pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
 		pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
+		pjs->joy[PJAI_X2] = GetBtFromSgn(inputState.fullAxes[PJAI_X2]);
+		pjs->joy[PJAI_Y2] = GetBtFromSgn(inputState.fullAxes[PJAI_Y2]);
+		pjs->joy[PJAI_X3] = GetBtFromSgn(inputState.fullAxes[PJAI_X3]);
+		pjs->joy[PJAI_Y3] = GetBtFromSgn(inputState.fullAxes[PJAI_Y3]);
 		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
 		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
+		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2];
+		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2];
 	}
 	else if (settings.platform.isAtomiswave())
 	{
@@ -290,27 +296,20 @@ static void createDreamcastDevices()
 			break;
 
 		case MDT_Keyboard:
-			mcfg_Create(MDT_Keyboard, bus, 5);
-			break;
-
 		case MDT_Mouse:
-			mcfg_Create(MDT_Mouse, bus, 5);
+		case MDT_MaracasController:
+		case MDT_FishingController:
+		case MDT_PopnMusicController:
+		case MDT_RacingController:
+		case MDT_DenshaDeGoController:
+		case MDT_Dreameye:
+			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			break;
 
 		case MDT_LightGun:
-			mcfg_Create(MDT_LightGun, bus, 5);
-			if (config::MapleExpansionDevices[bus][0] != MDT_None)
-				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
-			break;
-
 		case MDT_TwinStick:
-			mcfg_Create(MDT_TwinStick, bus, 5);
-			if (config::MapleExpansionDevices[bus][0] != MDT_None)
-				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
-			break;
-
 		case MDT_AsciiStick:
-			mcfg_Create(MDT_AsciiStick, bus, 5);
+			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			if (config::MapleExpansionDevices[bus][0] != MDT_None)
 				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;

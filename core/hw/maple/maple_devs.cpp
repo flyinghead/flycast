@@ -11,16 +11,21 @@
 #include <time.h>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
-const char* maple_sega_vmu_name = "Visual Memory";
-const char* maple_sega_kbd_name = "Emulated Dreamcast Keyboard";
-const char* maple_sega_mouse_name = "Emulated Dreamcast Mouse";
-const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
-const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
-const char* maple_sega_mic_name = "MicDevice for Dreameye";
-const char* maple_sega_purupuru_name = "Puru Puru Pack";
-const char* maple_sega_lightgun_name = "Dreamcast Gun";
-const char* maple_sega_twinstick_name = "Twin Stick";
-const char* maple_ascii_stick_name = "ASCII STICK";
+const char* maple_sega_vmu_name        = "Visual Memory";
+const char* maple_sega_kbd_name        = "Emulated Dreamcast Keyboard";
+const char* maple_sega_mouse_name      = "Emulated Dreamcast Mouse";
+const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Device";
+const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevice";
+const char* maple_sega_mic_name        = "MicDevice for Dreameye";
+const char* maple_sega_purupuru_name   = "Puru Puru Pack";
+const char* maple_sega_lightgun_name   = "Dreamcast Gun";
+const char* maple_sega_twinstick_name  = "Twin Stick";
+const char* maple_ascii_stick_name     = "ASCII STICK";
+const char* maple_maracas_controller_name   = "Maracas Controller";
+const char* maple_fishing_controller_name   = "Dreamcast Fishing Controller";
+const char* maple_popnmusic_controller_name = "pop'n music controller";
+const char* maple_racing_controller_name    = "Racing Controller";
+const char* maple_densha_controller_name    = "TAITO 001 Controller";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -104,6 +109,11 @@ struct maple_sega_controller: maple_base
 		return maple_sega_brand;
 	}
 
+	virtual u32 get_device_current(int get_max_current)
+	{
+		return get_max_current ? 0x01F4 : 0x01AE; // Max. 50 mA, standby: 43 mA
+	}
+
 	u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
@@ -111,6 +121,8 @@ struct maple_sega_controller: maple_base
 		{
 		case MDC_DeviceRequest:
 		case MDC_AllStatusReq:
+			// Fixed Device Status
+			// (Device ID)
 			//caps
 			//4
 			w32(MFID_0_Input);
@@ -121,23 +133,23 @@ struct maple_sega_controller: maple_base
 			w32(0);
 			w32(0);
 
-			//1	area code
+			//1	area code (Country specification)
 			w8(0xFF);
 
-			//1	direction
+			//1	direction (Connection method)
 			w8(0);
 
-			//30
+			//30 (Model name)
 			wstr(get_device_name(), 30);
 
-			//60
+			//60 (License)
 			wstr(get_device_brand(), 60);
 
-			//2
-			w16(0x01AE);	// 43 mA
+			//2 (Standby current consumption)
+			w16(get_device_current(0));
 
-			//2
-			w16(0x01F4);	// 50 mA
+			//2 (Maximum current consumption)
+			w16(get_device_current(1));
 
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
@@ -249,6 +261,10 @@ struct maple_sega_twinstick: maple_sega_controller
 	const char *get_device_name() override {
 		return maple_sega_twinstick_name;
 	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x012C : 0x00DC; // Max. 30 mA, standby: 22 mA
+	}
 };
 
 
@@ -284,14 +300,16 @@ struct maple_ascii_stick: maple_sega_controller
 	const char *get_device_name() override {
 		return maple_ascii_stick_name;
 	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0172 : 0x010E; // Max. 37 mA, standby: 27 mA
+	}
 };
 
 /*
 	Sega Dreamcast Visual Memory Unit
 	This is pretty much done (?)
 */
-
-
 u8 vmu_default[] = {
 		0x78,0x9c,0xed,0xd2,0x31,0x4e,0x02,0x61,0x10,0x06,0xd0,0x8f,0x04,0x28,0x4c,0x2c,
 		0x28,0x2d,0x0c,0xa5,0x57,0xe0,0x16,0x56,0x16,0x76,0x14,0x1e,0xc4,0x03,0x50,0x98,
@@ -718,7 +736,6 @@ struct maple_sega_vmu: maple_base
 	}
 };
 
-
 struct maple_microphone: maple_base
 {
 	u32 gain;
@@ -895,7 +912,6 @@ struct maple_microphone: maple_base
 		}
 	}
 };
-
 
 struct maple_sega_purupuru : maple_base
 {
@@ -1327,6 +1343,391 @@ struct atomiswave_lightgun : maple_lightgun
 	}
 };
 
+struct maple_maracas_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0x0f093c00;	// 4 analog axes (2-5) A B C D Z Start
+	}
+
+	u32 transform_kcode(u32 kcode) override {
+		return kcode | 0xf6f0;		// mask off DPad2, X, Y, DPad;
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_MaracasController;
+	}
+
+	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		if (index < 2 || index > 5)
+			return 0;
+		return pjs.joy[index -2];
+		/* // This should be tested with real maracas to see if it is worth implementing or not
+		u8 maracas_saturation_reduction = 2;
+		s32 axis_val = (pjs.joy[index -2] - 0x80) / maracas_saturation_reduction + 0x80;
+		if      (axis_val <    0) axis_val = 0;
+		else if (axis_val > 0xff) axis_val = 0xFF;
+		return axis_val; */
+	}
+
+	const char *get_device_name() override {
+		return maple_maracas_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0546 : 0x044C; // Max. 130 mA, standby: 100 mA
+	}
+};
+
+struct maple_fishing_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0x0fe063f00;	// Ra,La,Da,Ua,A,B,X,Y,Start,A1,A2,A3,A4,A5,A6
+	}
+
+	u32 transform_kcode(u32 kcode) override {
+		mutualExclusion(kcode, DC_DPAD_UP   | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		return kcode | 0xf901;		// mask off DPad2, D, Z, C;
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_FishingController;
+	}
+
+	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		// In the XYZ axes, acceleration sensor outputs 80 ± 8H (home position)
+		//   in the static state (± 0G), F0h or greater for maximum force (+10G)
+		//   in the positive direction and 11h or less
+		//   for the maximum force (-10G) applied in the negative direction
+		// From the perspective of the player operating the controller:
+		//   X: Right is positive, left is negative
+		//   Y: Down is positive, up is negative
+		//   Z: Forward is positive, backward is negative
+		if (index == 0)
+			return pjs.trigger[PJTI_R];		// A1: Reel handle output
+		else if (index == 1)
+			return pjs.joy[4];				// A2: acceleration sensor Z
+		else if (index >= 2 || index <= 5) 	// A3, A4 are also output as Ra, La, Ua, Da
+			return pjs.joy[index -2];		// A5, A6: acceleration sensors X and Y
+		return 0x80;
+	}
+
+	const char *get_device_name() override {
+		return maple_fishing_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0960 : 0x0258; // Max. 240 mA, standby: 60 mA
+	}
+
+	u32 dma(u32 cmd) override {
+		//printf("maple_fishing_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
+			// Fixed Device Status
+			// (Device ID)
+			//caps
+			//4
+			w32(MFID_0_Input);
+
+			//struct data
+			//3*4
+			w32(get_capabilities());
+			w32(0);
+			w32(0);
+
+			//1	area code (Country specification)
+			w8(0xFF);
+
+			//1	direction (Connection method)
+			w8(0);
+
+			//30 (Model name)
+			wstr(get_device_name(), 30);
+
+			//60 (License)
+			wstr(get_device_brand(), 60);
+
+			//2 (Standby current consumption)
+			w16(get_device_current(0));
+
+			//2 (Maximum current consumption)
+			w16(get_device_current(1));
+
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+
+			//controller condition
+		case MDCF_GetCondition:
+			{
+				PlainJoystickState pjs;
+				config->GetInput(&pjs);
+				//INFO_LOG(MAPLE, "maple_fishing_controller: MDCF_GetCondition: r32(): %d", r32());
+				//caps
+				//4
+				w32(MFID_0_Input);
+
+				//state data
+				//2 key code
+				w16(transform_kcode(pjs.kcode));
+
+				//triggers
+				//1 R
+				w8(get_analog_axis(0, pjs));
+				//1 L
+				w8(get_analog_axis(1, pjs));
+
+				//joyx
+				//1
+				w8(get_analog_axis(2, pjs));
+				//joyy
+				//1
+				w8(get_analog_axis(3, pjs));
+
+				//not used on dreamcast
+				//1
+				w8(get_analog_axis(4, pjs));
+				//1
+				w8(get_analog_axis(5, pjs));
+			}
+
+			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
+		default:
+			INFO_LOG(MAPLE, "maple_fishing_controller: Unknown maple command %d", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+};
+
+struct maple_popnmusic_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff060000;	// no analog axes, X Y A B C Start U/D/L/R
+	}
+
+	u32 transform_kcode(u32 kcode) override
+	{
+		return kcode | 0xf100; // mask off DPad2 and Z
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_PopnMusicController;
+	}
+
+	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		if (index == 0 || index == 1)
+			return 0;		// Right and left triggers
+		return 0x80;
+	}
+
+	const char *get_device_name() override {
+		return maple_popnmusic_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x012C : 0x00AA; // Max. 30 mA, standby: 17 mA
+	}
+};
+
+struct maple_racing_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfe003700;	// Steering + accelerator/brake unit: Ra,La,Da,Ua,A,B,Start,A1,A2,A3,A5,A6
+							// (A5 & A6 only valid when the accelerator/brake unit is connected.)
+		//return 0xfe000700;	// Steering only
+	}
+
+	u32 transform_kcode_racing(const PlainJoystickState &pjs) {
+		// Ra, La are ON when A3 threshold values (La: 40h, Ra: BEh) are exceeded
+		u32 kcode = pjs.kcode;
+		if (pjs.joy[PJAI_X1] < 0x40)
+			kcode &= 0xffff -DC_DPAD_LEFT;
+		else if (pjs.joy[PJAI_X1] > 0xBE)
+			kcode &= 0xffff -DC_DPAD_RIGHT;
+		mutualExclusion(kcode, DC_DPAD_UP   | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		return kcode | 0xff01;	// mask off DPad2, D, X, Y, Z, C
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_RacingController;
+	}
+
+	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		if (index == 0)
+			return pjs.trigger[PJTI_R];	// A1: lever, 0 at rest
+		else if (index == 1)
+			return pjs.trigger[PJTI_L];	// A2: lever, 0 at rest
+		else if (index == 2)
+			return pjs.joy[PJAI_X1];	// A3: 0-0xff, 0x80 at rest
+		else if (index == 4)			// (A5 and A6 are only valid when the accelerator/brake unit is connected)
+			return pjs.trigger[PJTI_R2];// A5: lever, 0 at rest
+		else if (index == 5)
+			return pjs.trigger[PJTI_L2];// A6: lever, 0 at rest
+		return 0x80;					// unused
+	}
+
+	const char *get_device_name() override {
+		return maple_racing_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0226 : 0x01B8; // Max. 55 mA, standby: 44 mA
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
+			// Fixed Device Status
+			// (Device ID)
+			//caps
+			//4
+			w32(MFID_0_Input);
+
+			//struct data
+			//3*4
+			w32(get_capabilities());
+			w32(0);
+			w32(0);
+
+			//1	area code (Country specification)
+			w8(0xFF);
+
+			//1	direction (Connection method)
+			w8(0);
+
+			//30 (Model name)
+			wstr(get_device_name(), 30);
+
+			//60 (License)
+			wstr(get_device_brand(), 60);
+
+			//2 (Standby current consumption)
+			w16(get_device_current(0));
+
+			//2 (Maximum current consumption)
+			w16(get_device_current(1));
+
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+
+			//controller condition
+		case MDCF_GetCondition:
+			{
+				PlainJoystickState pjs;
+				config->GetInput(&pjs);
+				//caps
+				//4
+				w32(MFID_0_Input);
+
+				//state data
+				//2 key code
+				w16(transform_kcode_racing(pjs));
+
+				//triggers
+				//1 R
+				w8(get_analog_axis(0, pjs));
+				//1 L
+				w8(get_analog_axis(1, pjs));
+
+				//joyx
+				//1
+				w8(get_analog_axis(2, pjs));
+				//joyy
+				//1
+				w8(get_analog_axis(3, pjs));
+
+				//not used on dreamcast
+				//1
+				w8(get_analog_axis(4, pjs));
+				//1
+				w8(get_analog_axis(5, pjs));
+			}
+
+			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
+		default:
+			INFO_LOG(MAPLE, "maple_racing_controller: Unknown maple command %d", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+};
+
+struct maple_densha_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff0f3f00;	// Ra,La,Da,Ua A,B,C,D,X,Y,Z,Start Xa,Ya,Xb,Yb Analog levers R,L
+	}
+
+	u32 transform_kcode(u32 kcode) override {
+		// Ra,La,Da,Ua are used together, corresponding to the brake lever.
+		return kcode | 0xF000; // mask off DPad2
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_DenshaDeGoController;
+	}
+
+	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		if (index == 2 || index == 3)
+			return 0;
+		if (index == 0 || index == 1 || index == 4 || index == 5)
+			return 0xff;
+		return 0xff;
+	}
+
+	const char *get_device_name() override {
+		return maple_densha_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x01F4 : 0x00DC; // Max. 50 mA, standby: 22 mA
+	}
+};
+
+
 // Emulates a 838-14245-92 maple to RS232 converter
 // wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
 struct RFIDReaderWriter : maple_base
@@ -1687,6 +2088,26 @@ maple_device* maple_Create(MapleDeviceType type)
 
 	case MDT_AsciiStick:
 		rv = new maple_ascii_stick();
+		break;
+
+	case MDT_MaracasController:
+		rv = new maple_maracas_controller();
+		break;
+
+	case MDT_FishingController:
+		rv = new maple_fishing_controller();
+		break;
+
+	case MDT_PopnMusicController:
+		rv = new maple_popnmusic_controller();
+		break;
+
+	case MDT_RacingController:
+		rv = new maple_racing_controller();
+		break;
+
+	case MDT_DenshaDeGoController:
+		rv = new maple_densha_controller();
 		break;
 
 	case MDT_RFIDReaderWriter:

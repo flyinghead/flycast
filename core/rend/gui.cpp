@@ -656,8 +656,30 @@ inline static void header(const char *title)
 	ImGui::PopStyleVar();
 }
 
-const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
-const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
+const char *maple_device_types[] =
+{
+	"None",
+	"Sega Controller",
+	"Light Gun",
+	"Keyboard",
+	"Mouse",
+	"Twin Stick",
+	"Ascii Stick",
+	"Maracas Controller",
+	"Fishing Controller",
+	"Pop'n Music controller",
+	"Racing Controller",
+	"Densha de Go! Controller",
+	"Dreameye",
+};
+
+const char *maple_expansion_device_types[] = 
+{ 
+	"None", 
+	"Sega VMU", 
+	"Purupuru", 
+	"Microphone"
+};
 
 static const char *maple_device_name(MapleDeviceType type)
 {
@@ -675,6 +697,18 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[5];
 	case MDT_AsciiStick:
 		return maple_device_types[6];
+	case MDT_MaracasController:
+		return maple_device_types[7];
+	case MDT_FishingController:
+		return maple_device_types[8];
+	case MDT_PopnMusicController:
+		return maple_device_types[9];
+	case MDT_RacingController:
+		return maple_device_types[10];
+	case MDT_DenshaDeGoController:
+		return maple_device_types[11];
+	case MDT_Dreameye:
+		return maple_device_types[12];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -697,6 +731,18 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 		return MDT_TwinStick;
 	case 6:
 		return MDT_AsciiStick;
+	case 7:
+		return MDT_MaracasController;
+	case 8:
+		return MDT_FishingController;
+	case 9:
+		return MDT_PopnMusicController;
+	case 10:
+		return MDT_RacingController;
+	case 11:
+		return MDT_DenshaDeGoController;
+	case 12:
+		return MDT_Dreameye;
 	case 0:
 	default:
 		return MDT_None;
@@ -738,9 +784,19 @@ const Mapping dcButtons[] = {
 	{ DC_AXIS_LEFT, "Thumbstick Left" },
 	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
-	{ DC_DPAD2_UP, "DPad2 Up" },
-	{ DC_DPAD2_DOWN, "DPad2 Down" },
-	{ DC_DPAD2_LEFT, "DPad2 Left" },
+	{ DC_AXIS2_UP, "R.Thumbstick Up" },
+	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
+	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
+	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+
+	{ DC_AXIS3_UP,    "Axis 3 Up"    },
+	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
+	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
+	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
+
+	{ DC_DPAD2_UP,    "DPad2 Up"    },
+	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
+	{ DC_DPAD2_LEFT,  "DPad2 Left"  },
 	{ DC_DPAD2_RIGHT, "DPad2 Right" },
 
 	{ EMU_BTN_NONE, "Buttons" },
@@ -752,9 +808,11 @@ const Mapping dcButtons[] = {
 	{ DC_BTN_D, "D" },
 	{ DC_BTN_Z, "Z" },
 
-	{ EMU_BTN_NONE, "Triggers" },
-	{ DC_AXIS_LT, "Left Trigger" },
-	{ DC_AXIS_RT, "Right Trigger" },
+	{ EMU_BTN_NONE, "Triggers"      },
+	{ DC_AXIS_LT,   "Left Trigger"  },
+	{ DC_AXIS_RT,   "Right Trigger" },
+	{ DC_AXIS_LT2,   "Left Trigger 2" },
+	{ DC_AXIS_RT2,   "Right Trigger 2" },
 
 	{ EMU_BTN_NONE, "System Buttons" },
 	{ DC_BTN_START, "Start" },
@@ -886,6 +944,14 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return DC_AXIS2_RIGHT;
 	case DC_AXIS2_RIGHT:
 		return DC_AXIS2_LEFT;
+	case DC_AXIS3_UP:
+		return DC_AXIS3_DOWN;
+	case DC_AXIS3_DOWN:
+		return DC_AXIS3_UP;
+	case DC_AXIS3_LEFT:
+		return DC_AXIS3_RIGHT;
+	case DC_AXIS3_RIGHT:
+		return DC_AXIS3_LEFT;
 	default:
 		return EMU_BTN_NONE;
 	}
@@ -1646,9 +1712,19 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = config::MapleMainDevices[bus] == MDT_SegaController ? 2
-							: config::MapleMainDevices[bus] == MDT_LightGun || config::MapleMainDevices[bus] == MDT_TwinStick || config::MapleMainDevices[bus] == MDT_AsciiStick ? 1
-							: 0;
+					int port_count = 0;
+					switch (config::MapleMainDevices[bus]) {
+						case MDT_SegaController:
+							port_count = 2;
+							break;
+						case MDT_LightGun:
+						case MDT_TwinStick:
+						case MDT_AsciiStick:
+						case MDT_RacingController:
+							port_count = 1;
+							break;
+						default: break;
+					}
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
