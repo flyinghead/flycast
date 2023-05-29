@@ -73,7 +73,7 @@
 // OpenGL Data
 static char         g_GlslVersionString[32] = "";
 static GLuint       g_FontTexture = 0;
-static GLuint       g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
+static GLuint       g_ShaderHandle = 0;
 static int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
 static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
 static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
@@ -441,22 +441,27 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
 
     // Create shaders
     const GLchar* vertex_shader_with_version[2] = { g_GlslVersionString, vertex_shader };
-    g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(g_VertHandle, 2, vertex_shader_with_version, NULL);
-    glCompileShader(g_VertHandle);
-    CheckShader(g_VertHandle, "vertex shader");
+    GLuint vert_handle = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vert_handle, 2, vertex_shader_with_version, NULL);
+    glCompileShader(vert_handle);
+    CheckShader(vert_handle, "vertex shader");
 
     const GLchar* fragment_shader_with_version[2] = { g_GlslVersionString, fragment_shader };
-    g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(g_FragHandle, 2, fragment_shader_with_version, NULL);
-    glCompileShader(g_FragHandle);
-    CheckShader(g_FragHandle, "fragment shader");
+    GLuint frag_handle = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(frag_handle, 2, fragment_shader_with_version, NULL);
+    glCompileShader(frag_handle);
+    CheckShader(frag_handle, "fragment shader");
 
     g_ShaderHandle = glCreateProgram();
-    glAttachShader(g_ShaderHandle, g_VertHandle);
-    glAttachShader(g_ShaderHandle, g_FragHandle);
+    glAttachShader(g_ShaderHandle, vert_handle);
+    glAttachShader(g_ShaderHandle, frag_handle);
     glLinkProgram(g_ShaderHandle);
     CheckProgram(g_ShaderHandle, "shader program");
+
+    glDetachShader(g_ShaderHandle, vert_handle);
+    glDetachShader(g_ShaderHandle, frag_handle);
+    glDeleteShader(vert_handle);
+    glDeleteShader(frag_handle);
 
     g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
     g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
@@ -480,8 +485,6 @@ static void ImGui_ImplOpenGL3_DestroyDeviceObjects()
     g_VboHandle = g_ElementsHandle = 0;
 
     glcache.DeleteProgram(g_ShaderHandle);
-    g_VertHandle = 0;
-    g_FragHandle = 0;
     g_ShaderHandle = 0;
 
     ImGui_ImplOpenGL3_DestroyFontsTexture();

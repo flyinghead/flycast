@@ -624,7 +624,6 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 	GLint result;
 	glGetProgramiv(program, GL_LINK_STATUS, &result);
 
-
 	GLint compile_log_len;
 	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &compile_log_len);
 
@@ -644,7 +643,8 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
-
+	glDetachShader(program, vs);
+	glDetachShader(program, ps);
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
@@ -988,7 +988,6 @@ bool OpenGLRenderer::Init()
 
 	return true;
 }
-
 
 static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
 {

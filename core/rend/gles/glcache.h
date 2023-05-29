@@ -165,12 +165,6 @@ public:
 	{
 		if (program == 0)
 			return;
-		GLsizei shader_count;
-		GLuint shaders[2];
-		glGetAttachedShaders(program, std::size(shaders), &shader_count, shaders);
-		for (int i = 0; i < shader_count; i++)
-			glDeleteShader(shaders[i]);
-
 		glDeleteProgram(program);
 		if (_program == program)
 			_program = 0;
