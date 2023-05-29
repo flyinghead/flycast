@@ -83,20 +83,21 @@ void OfflineScraper::scrape(GameBoxart& item)
 			item.searchName.clear();
 			return;
 		}
-		Disc *disc;
+		Disc *disc = nullptr;
 		try {
 			disc = OpenDisc(item.gamePath.c_str());
+			if (disc == nullptr)
+				WARN_LOG(COMMON, "Can't open disk %s", item.gamePath.c_str());
 		} catch (const std::runtime_error& e) {
 			WARN_LOG(COMMON, "Can't open disk %s: %s", item.gamePath.c_str(), e.what());
-			// No need to retry if the disk is invalid/corrupted
-			item.scraped = true;
-			item.uniqueId.clear();
-			item.searchName.clear();
-			return;
 		} catch (const std::exception& e) {
 			// For some reason, this doesn't catch FlycastException on macOS/clang, so we need the
 			// previous catch block
 			WARN_LOG(COMMON, "Can't open disk %s: %s", item.gamePath.c_str(), e.what());
+		}
+		if (disc == nullptr)
+		{
+			// No need to retry if the disk is invalid/corrupted
 			item.scraped = true;
 			item.uniqueId.clear();
 			item.searchName.clear();
