@@ -76,6 +76,24 @@ const std::array<Sh4RegType, 59> Sh4RegList {
 class DebugAgent
 {
 public:
+	struct Breakpoint {
+		enum Type
+		{
+			BP_TYPE_SOFTWARE_BREAK,
+			BP_TYPE_HARDWARE_BREAK,
+			BP_TYPE_WRITE_WATCHPOINT,
+			BP_TYPE_READ_WATCHPOINT,
+			BP_TYPE_ACCESS_WATCHPOINT,
+			BP_TYPE_COUNT
+		};
+
+		Breakpoint() = default;
+		Breakpoint(u16 type, u32 addr) : addr(addr), type(type) { }
+		u32 addr = 0;
+		u16 type = 0;
+		u16 savedOp = 0;
+	};
+
 	void doContinue(u32 pc = 1)
 	{
 		if (pc != 1)
@@ -85,20 +103,20 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		u32 savedPc = Sh4cntx.pc;
 		emu.step();
 		if (restoreBreakpoint)
-			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
 	}
 
 	void stepRange(u32 from, u32 to)
 	{
-		bool restoreBreakpoint = removeMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		u32 savedPc = Sh4cntx.pc;
 		emu.stepRange(from, to);
 		if (restoreBreakpoint)
-			insertMatchpoint(Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
 	}
 
 	int readAllRegs(u32 **regs)
@@ -202,9 +220,9 @@ public:
 			}
 		}
 	}
-	bool insertMatchpoint(char type, u32 addr, u32 len)
+	bool insertMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
-		if (type == 0 && len != 2) {
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
 			return false;
 		}
@@ -216,9 +234,9 @@ public:
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
 		return true;
 	}
-	bool removeMatchpoint(char type, u32 addr, u32 len)
+	bool removeMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
-		if (type == 0 && len != 2) {
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;
 		}
@@ -327,23 +345,6 @@ public:
 
 	u32 exception = 0;
 
-	struct Breakpoint {
-		enum Type
-		{
-			BP_TYPE_SOFTWARE_BREAK,
-			BP_TYPE_HARDWARE_BREAK,
-			BP_TYPE_WRITE_WATCHPOINT,
-			BP_TYPE_READ_WATCHPOINT,
-			BP_TYPE_ACCESS_WATCHPOINT,
-			BP_TYPE_COUNT
-		};
-
-		Breakpoint() = default;
-		Breakpoint(u16 type, u32 addr) : addr(addr), type(type) { }
-		u32 addr = 0;
-		u16 type = 0;
-		u16 savedOp = 0;
-	};
 	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
 };

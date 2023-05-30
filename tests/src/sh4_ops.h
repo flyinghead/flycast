@@ -22,7 +22,15 @@
 #include "gtest/gtest.h"
 #include "types.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
+#include "hw/sh4/sh4_core.h"
+#undef r
+#undef fr
+#undef sr
+#undef mac
+#undef gbr
+#undef fpscr
+#undef fpul
 
 constexpr u32 REG_MAGIC = 0xbaadf00d;
 
@@ -38,6 +46,8 @@ protected:
 	void ClearRegs() {
 		for (int i = 0; i < 16; i++)
 			r(i) = REG_MAGIC;
+		for (int i = 0; i < 32; i++)
+			*(u32 *)&ctx->xffr[i] = REG_MAGIC;
 		sh4_sr_SetFull(0x700000F0);
 		mac() = 0;
 		gbr() = REG_MAGIC;
@@ -51,6 +61,11 @@ protected:
 		{
 			ASSERT_EQ(ctx->gbr, REG_MAGIC);
 		}
+		for (int i = 0; i < 32; i++)
+			if (checkedRegs.count((u32 *)&ctx->xffr[i]) == 0)
+			{
+				ASSERT_EQ(*(u32 *)&ctx->xffr[i], REG_MAGIC);
+			}
 	}
 	static u16 Rm(int r) { return r << 4; }
 	static u16 Rn(int r) { return r << 8; }
@@ -63,6 +78,17 @@ protected:
 	u32& mach() { return ctx->mac.l; }
 	u32& macl() { return ctx->mac.h; }
 	sr_t& sr() { return ctx->sr; }
+	f32& fr(int regNum) { checkedRegs.insert((u32 *)&ctx->xffr[regNum + 16]); return ctx->xffr[regNum + 16]; }
+	double getDr(int regNum) {
+		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 16]);
+		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 1 + 16]);
+		return GetDR(regNum);
+	}
+	void setDr(int regNum, double d) {
+		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 16]);
+		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 1 + 16]);
+		SetDR(regNum, d);
+	}
 
 	Sh4Context *ctx;
 	sh4_if sh4;
@@ -159,7 +185,7 @@ protected:
 	{
 		ClearRegs();
 		r(14) = 0x8C001000;
-		_vmem_WriteMem32(r(14), 0xffccaa88u);
+		addrspace::write32(r(14), 0xffccaa88u);
 		PrepareOp(0x6002 | Rm(14) | Rn(11));	// mov.l @Rm,Rn
 		RunOp();
 		ASSERT_EQ(r(11), 0xffccaa88u);
@@ -181,7 +207,7 @@ protected:
 
 		ClearRegs();
 		r(8) = 0x8C001004;
-		_vmem_WriteMem32(r(8), 0x4433ff11);
+		addrspace::write32(r(8), 0x4433ff11);
 		PrepareOp(0x6006 | Rm(8) | Rn(7));		// mov.l @Rm+,Rn
 		RunOp();
 		ASSERT_EQ(r(7), 0x4433ff11u);
@@ -190,7 +216,7 @@ protected:
 
 		ClearRegs();
 		r(7) = 0x8C001004;
-		_vmem_WriteMem32(r(7), 0x4433ff11);
+		addrspace::write32(r(7), 0x4433ff11);
 		PrepareOp(0x6006 | Rm(7) | Rn(7));		// mov.l @Rm+,Rn
 		RunOp();
 		ASSERT_EQ(r(7), 0x4433ff11u);
@@ -213,7 +239,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x5000 | Rm(8) | Rn(7) | Imm4(3));// mov.l @(disp, Rm), Rn
 		RunOp();
@@ -221,7 +247,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x8500 | Rm(8) | Imm4(6));		// mov.w @(disp, Rm), R0
 		RunOp();
@@ -229,7 +255,7 @@ protected:
 		AssertState();
 
 		ClearRegs();
-		_vmem_WriteMem32(0x8C001010, 0x50607080);
+		addrspace::write32(0x8C001010, 0x50607080);
 		r(8) = 0x8C001004;
 		PrepareOp(0x8400 | Rm(8) | Imm4(12));		// mov.b @(disp, Rm), R0
 		RunOp();
@@ -241,7 +267,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000e | Rm(11) | Rn(12));	// mov.l @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0x88aaccffu);
@@ -250,7 +276,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000d | Rm(11) | Rn(12));	// mov.w @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0xffffccffu);
@@ -259,7 +285,7 @@ protected:
 		ClearRegs();
 		r(11) = 0x8C000800;
 		r(0) = 0x00000800;
-		_vmem_WriteMem32(r(11) + r(0), 0x88aaccffu);
+		addrspace::write32(r(11) + r(0), 0x88aaccffu);
 		PrepareOp(0x000c | Rm(11) | Rn(12));	// mov.b @(R0, Rm), Rn
 		RunOp();
 		ASSERT_EQ(r(12), 0xffffffffu);
@@ -267,7 +293,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x10 * 4, 0x11223344u);
+		addrspace::write32(gbr() + 0x10 * 4, 0x11223344u);
 		PrepareOp(0xc600 | Imm8(0x10));		// mov.l @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0x11223344u);
@@ -275,7 +301,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x18 * 2, 0x11223344u);
+		addrspace::write32(gbr() + 0x18 * 2, 0x11223344u);
 		PrepareOp(0xc500 | Imm8(0x18));		// mov.w @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0x3344u);
@@ -283,7 +309,7 @@ protected:
 
 		ClearRegs();
 		gbr() = 0x8C000800;
-		_vmem_WriteMem32(gbr() + 0x17, 0x112233c4u);
+		addrspace::write32(gbr() + 0x17, 0x112233c4u);
 		PrepareOp(0xc400 | Imm8(0x17));		// mov.b @(disp, GBR), R0
 		RunOp();
 		ASSERT_EQ(r(0), 0xffffffc4u);
@@ -291,7 +317,7 @@ protected:
 
 		ClearRegs();
 		u32 disp = 0x11;
-		_vmem_WriteMem32(START_PC + 4 + disp * 4, 0x01020304u);
+		addrspace::write32(START_PC + 4 + disp * 4, 0x01020304u);
 		PrepareOp(0x9,							// nop
 				0xd000 | Rn(6) | Imm8(disp));	// mov.l @(disp, PC), Rn
 		RunOp(2);
@@ -300,7 +326,7 @@ protected:
 
 		ClearRegs();
 		disp = 0x12;
-		_vmem_WriteMem32(START_PC + 4 + disp * 2, 0x01020304u);
+		addrspace::write32(START_PC + 4 + disp * 2, 0x01020304u);
 		PrepareOp(0x9000 | Rn(5) | Imm8(disp));	// mov.w @(disp, PC), Rn
 		RunOp();
 		ASSERT_EQ(r(5), 0x0304u);
@@ -314,7 +340,7 @@ protected:
 		r(11) = 0xbeeff00d;
 		PrepareOp(0x2002 | Rm(11) | Rn(14));	// mov.l Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbeeff00du);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbeeff00du);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xbeeff00du);
 		AssertState();
@@ -322,10 +348,10 @@ protected:
 		ClearRegs();
 		r(14) = 0x8C001000;
 		r(11) = 0xf00dbeef;
-		_vmem_WriteMem32(0x8C001000, 0xbaadbaad);
+		addrspace::write32(0x8C001000, 0xbaadbaad);
 		PrepareOp(0x2001 | Rm(11) | Rn(14));	// mov.w Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbaadbeefu);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbaadbeefu);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xf00dbeefu);
 		AssertState();
@@ -333,10 +359,10 @@ protected:
 		ClearRegs();
 		r(14) = 0x8C001000;
 		r(11) = 0xccccccf0;
-		_vmem_WriteMem32(0x8C001000, 0xbaadbaad);
+		addrspace::write32(0x8C001000, 0xbaadbaad);
 		PrepareOp(0x2000 | Rm(11) | Rn(14));	// mov.b Rm, @Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xbaadbaf0u);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xbaadbaf0u);
 		ASSERT_EQ(r(14), 0x8C001000u);
 		ASSERT_EQ(r(11), 0xccccccf0u);
 		AssertState();
@@ -346,7 +372,7 @@ protected:
 		r(7) = 0xfeedf00d;
 		PrepareOp(0x2006 | Rm(7) | Rn(8));		// mov.l Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0xfeedf00du);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0xfeedf00du);
 		ASSERT_EQ(r(7), 0xfeedf00du);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -355,7 +381,7 @@ protected:
 		r(7) = 0x8C001004;
 		PrepareOp(0x2006 | Rm(7) | Rn(7));		// mov.l Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x8C001004); // value before decrement is stored
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x8C001004); // value before decrement is stored
 		ASSERT_EQ(r(7), 0x8C001000u);
 		AssertState();
 
@@ -364,7 +390,7 @@ protected:
 		r(7) = 0x1234cafe;
 		PrepareOp(0x2005 | Rm(7) | Rn(8));		// mov.w Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem16(0x8C001000), 0xcafeu);
+		ASSERT_EQ(addrspace::read16(0x8C001000), 0xcafeu);
 		ASSERT_EQ(r(7), 0x1234cafeu);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -374,7 +400,7 @@ protected:
 		r(7) = 0x12345642;
 		PrepareOp(0x2004 | Rm(7) | Rn(8));		// mov.b Rm, @-Rn
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem8(0x8C001000), 0x42u);
+		ASSERT_EQ(addrspace::read8(0x8C001000), 0x42u);
 		ASSERT_EQ(r(7), 0x12345642u);
 		ASSERT_EQ(r(8), 0x8C001000u);
 		AssertState();
@@ -384,7 +410,7 @@ protected:
 		r(7) = 0x50607080;
 		PrepareOp(0x1000 | Rm(7) | Rn(8) | Imm4(3));// mov.l Rm, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001010), 0x50607080u);
+		ASSERT_EQ(addrspace::read32(0x8C001010), 0x50607080u);
 		ASSERT_EQ(r(7), 0x50607080u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -394,7 +420,7 @@ protected:
 		r(0) = 0x10203040;
 		PrepareOp(0x8100 | Rm(8) | Imm4(3));		// mov.w R0, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem16(0x8C00100A), 0x3040u);
+		ASSERT_EQ(addrspace::read16(0x8C00100A), 0x3040u);
 		ASSERT_EQ(r(0), 0x10203040u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -404,7 +430,7 @@ protected:
 		r(0) = 0x66666672;
 		PrepareOp(0x8000 | Rm(8) | Imm4(3));		// mov.b R0, @(disp, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem8(0x8C001007), 0x72u);
+		ASSERT_EQ(addrspace::read8(0x8C001007), 0x72u);
 		ASSERT_EQ(r(0), 0x66666672u);
 		ASSERT_EQ(r(8), 0x8C001004u);
 		AssertState();
@@ -417,7 +443,7 @@ protected:
 		r(12) = 0x87654321;
 		PrepareOp(0x0006 | Rm(12) | Rn(11));	// mov.l Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87654321u);
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87654321u);
 		ASSERT_EQ(r(12), 0x87654321u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -429,7 +455,7 @@ protected:
 		r(12) = 0x12345678;
 		PrepareOp(0x0005 | Rm(12) | Rn(11));	// mov.w Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87655678u);	// relies on value set in previous test
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87655678u);	// relies on value set in previous test
 		ASSERT_EQ(r(12), 0x12345678u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -441,7 +467,7 @@ protected:
 		r(12) = 0x99999999;
 		PrepareOp(0x0004 | Rm(12) | Rn(11));	// mov.b Rm, @(R0, Rn)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C001000), 0x87655699u);	// relies on value set in 2 previous tests
+		ASSERT_EQ(addrspace::read32(0x8C001000), 0x87655699u);	// relies on value set in 2 previous tests
 		ASSERT_EQ(r(12), 0x99999999u);
 		ASSERT_EQ(r(11), 0x8C000800u);
 		ASSERT_EQ(r(0), 0x00000800u);
@@ -452,7 +478,7 @@ protected:
 		r(0) = 0xabcdef01;
 		PrepareOp(0xc200 | Imm8(0x10));			// mov.l R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcdef01u);
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcdef01u);
 		ASSERT_EQ(gbr(), 0x8C000800u);
 		ASSERT_EQ(r(0), 0xabcdef01u);
 		AssertState();
@@ -462,7 +488,7 @@ protected:
 		r(0) = 0x11117777;
 		PrepareOp(0xc100 | Imm8(0x20));			// mov.w R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcd7777u);	// relies on value set in previous test
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcd7777u);	// relies on value set in previous test
 		AssertState();
 
 		ClearRegs();
@@ -470,7 +496,7 @@ protected:
 		r(0) = 0x22222266;
 		PrepareOp(0xc000 | Imm8(0x40));			// mov.b R0, @(disp, GBR)
 		RunOp();
-		ASSERT_EQ(_vmem_ReadMem32(0x8C000840), 0xabcd7766u);	// relies on value set in 2 previous tests
+		ASSERT_EQ(addrspace::read32(0x8C000840), 0xabcd7766u);	// relies on value set in 2 previous tests
 		AssertState();
 	}
 
@@ -865,17 +891,17 @@ protected:
 
 		ClearRegs();
 		r(7) = 0xAC001000;
-		_vmem_WriteMem32(r(7), 4);
+		addrspace::write32(r(7), 4);
 		r(8) = 0xAC002000;
-		_vmem_WriteMem32(r(8), 3);
+		addrspace::write32(r(8), 3);
 		PrepareOp(0x000f | Rn(7) | Rm(8));	// mac.l @Rm+, @Rn+
 		RunOp();
 		ASSERT_EQ(mac(), 12ull);
 		ASSERT_EQ(r(7), 0xAC001004u);
 		ASSERT_EQ(r(8), 0xAC002004u);
 
-		_vmem_WriteMem32(r(7), -5);
-		_vmem_WriteMem32(r(8), 7);
+		addrspace::write32(r(7), -5);
+		addrspace::write32(r(8), 7);
 		RunOp();
 		ASSERT_EQ(mac(), -23ull);
 		ASSERT_EQ(r(7), 0xAC001008u);
@@ -884,17 +910,17 @@ protected:
 
 		ClearRegs();
 		r(7) = 0xAC001000;
-		_vmem_WriteMem32(r(7), (u16)-7);
+		addrspace::write32(r(7), (u16)-7);
 		r(8) = 0xAC002000;
-		_vmem_WriteMem32(r(8), 3);
+		addrspace::write32(r(8), 3);
 		PrepareOp(0x400f | Rn(7) | Rm(8));	// mac.w @Rm+, @Rn+
 		RunOp();
 		ASSERT_EQ(mac(), -21ull);
 		ASSERT_EQ(r(7), 0xAC001002u);
 		ASSERT_EQ(r(8), 0xAC002002u);
 
-		_vmem_WriteMem16(r(7), 5);
-		_vmem_WriteMem16(r(8), 7);
+		addrspace::write16(r(7), 5);
+		addrspace::write16(r(8), 7);
 		RunOp();
 		ASSERT_EQ(mac(), 14ull);
 		ASSERT_EQ(r(7), 0xAC001004u);
@@ -984,5 +1010,452 @@ protected:
 		PrepareOp(0x0018);	// sett
 		RunOp();
 		ASSERT_EQ(sr().T, 1u);
+	}
+
+	void FloatingPointTest()
+	{
+		ctx->fpscr.PR = 0;
+
+		ClearRegs();
+		PrepareOp(0xF08D);	// fldi0 fr0
+		RunOp();
+		ASSERT_EQ(fr(0), 0.f);
+		AssertState();
+
+		ClearRegs();
+		PrepareOp(0xF39D);	// fldi1 fr3
+		RunOp();
+		ASSERT_EQ(fr(3), 1.f);
+		AssertState();
+
+		ClearRegs();
+		fr(2) = 48.f;
+		PrepareOp(0xF21D);	// flds fr2, fpul
+		RunOp();
+		ASSERT_EQ(*(float *)&ctx->fpul, 48.f);
+		AssertState();
+
+		ClearRegs();
+		*(float *)&ctx->fpul = 844.f;
+		PrepareOp(0xF60D);	// fsts fpul, fr6
+		RunOp();
+		ASSERT_EQ(fr(6), 844.f);
+		AssertState();
+
+		ClearRegs();
+		fr(10) = -128.f;
+		PrepareOp(0xFA5D);	// fabs fr10
+		RunOp();
+		ASSERT_EQ(fr(10), 128.f);
+		AssertState();
+
+		ClearRegs();
+		fr(11) = 64.f;
+		PrepareOp(0xFB4D);	// fneg fr11
+		RunOp();
+		ASSERT_EQ(fr(11), -64.f);
+		AssertState();
+
+		// FADD
+		ClearRegs();
+		fr(12) = 13.f;
+		fr(13) = 12.f;
+		PrepareOp(0xFCD0);	// fadd fr13, fr12
+		RunOp();
+		ASSERT_EQ(fr(12), 25.f);
+		ASSERT_EQ(fr(13), 12.f);
+		AssertState();
+		// special cases
+		// +inf + norm = +inf
+		fr(12) = std::numeric_limits<float>::infinity();
+		fr(13) = -10.f;
+		RunOp();
+		ASSERT_EQ(fr(12), std::numeric_limits<float>::infinity());
+		// norm + -inf = -inf
+		fr(12) = 2.f;
+		fr(13) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(12), -std::numeric_limits<float>::infinity());
+		// NaN + norm = NaN
+		fr(12) = 2.f;
+		fr(13) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(12), fr(12));
+
+		// FSUB
+		ClearRegs();
+		fr(14) = 10.f;
+		fr(15) = 11.f;
+		PrepareOp(0xFEF1);	// fsub fr15, fr14
+		RunOp();
+		ASSERT_EQ(fr(14), -1.f);
+		ASSERT_EQ(fr(15), 11.f);
+		AssertState();
+		// special cases
+		// +inf - norm = +inf
+		fr(14) = std::numeric_limits<float>::infinity();
+		fr(15) = 10.f;
+		RunOp();
+		ASSERT_EQ(fr(14), std::numeric_limits<float>::infinity());
+		// -inf - norm = -inf
+		fr(14) = -std::numeric_limits<float>::infinity();
+		fr(15) = -1.f;
+		RunOp();
+		ASSERT_EQ(fr(14), -std::numeric_limits<float>::infinity());
+		// norm - NaN = NaN
+		fr(14) = 2.f;
+		fr(15) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(14), fr(14));
+
+		// FMUL
+		ClearRegs();
+		fr(0) = 4.f;
+		fr(2) = 8.f;
+		PrepareOp(0xF022);	// fmul fr2, fr0
+		RunOp();
+		ASSERT_EQ(fr(0), 32.f);
+		ASSERT_EQ(fr(2), 8.f);
+		AssertState();
+		// special cases
+		// +inf * norm = +inf
+		fr(0) = std::numeric_limits<float>::infinity();
+		fr(2) = 50.f;
+		RunOp();
+		ASSERT_EQ(fr(0), std::numeric_limits<float>::infinity());
+		// -inf * norm = -inf
+		fr(0) = -std::numeric_limits<float>::infinity();
+		fr(2) = 100.f;
+		RunOp();
+		ASSERT_EQ(fr(0), -std::numeric_limits<float>::infinity());
+		// norm * NaN = NaN
+		fr(0) = 2.f;
+		fr(2) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(0), fr(0));
+
+		// FDIV
+		ClearRegs();
+		fr(1) = 8.f;
+		fr(3) = -2.f;
+		PrepareOp(0xF133);	// fdiv fr3, fr1
+		RunOp();
+		ASSERT_EQ(fr(1), -4.f);
+		ASSERT_EQ(fr(3), -2.f);
+		AssertState();
+		// special cases
+		// +inf / -norm = -inf
+		fr(1) = std::numeric_limits<float>::infinity();
+		fr(3) = -50.f;
+		RunOp();
+		ASSERT_EQ(fr(1), -std::numeric_limits<float>::infinity());
+		// -inf / norm = -inf
+		fr(1) = -std::numeric_limits<float>::infinity();
+		fr(3) = 100.f;
+		RunOp();
+		ASSERT_EQ(fr(1), -std::numeric_limits<float>::infinity());
+		// norm / NaN = NaN
+		fr(1) = 2.f;
+		fr(3) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(1), fr(1));
+
+		// FMAC
+		ClearRegs();
+		fr(0) = 3.f;
+		fr(4) = 5.f;
+		fr(5) = -7.f;
+		PrepareOp(0xF45E);	// fmac fr0, fr5, fr4
+		RunOp();
+		ASSERT_EQ(fr(0), 3.f);
+		ASSERT_EQ(fr(4), -16.f);
+		ASSERT_EQ(fr(5), -7.f);
+		AssertState();
+		// special cases
+		// +inf + norm * norm = +inf
+		fr(4) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(4), std::numeric_limits<float>::infinity());
+		// norm + +inf * -inf = -inf
+		fr(0) = std::numeric_limits<float>::infinity();
+		fr(4) = 1.f;
+		fr(5) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(4), -std::numeric_limits<float>::infinity());
+		// norm + norm * NaN = NaN
+		fr(0) = 2.f;
+		fr(4) = 1.f;
+		fr(5) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(4), fr(4));
+
+		// FSQRT
+		ClearRegs();
+		fr(11) = 64.f;
+		PrepareOp(0xFB6D);	// fsqrt fr11
+		RunOp();
+		ASSERT_EQ(fr(11), 8.f);
+		AssertState();
+		// special cases
+		// sqrt(+inf) = +inf
+		fr(11) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(11), std::numeric_limits<float>::infinity());
+		// sqrt(NaN) = NaN
+		fr(11) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(11), fr(11));
+		// sqrt(0) = 0
+		fr(11) = 0.f;
+		RunOp();
+		ASSERT_EQ(fr(11), 0.f);
+
+		// FCMP/EQ
+		ClearRegs();
+		fr(4) = 45.f;
+		fr(7) = 45.f;
+		PrepareOp(0xF474);	// fcmp/eq fr7, fr4
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		AssertState();
+		fr(4) = 46.f;
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		AssertState();
+		// special cases
+		// +inf == +inf
+		fr(4) = std::numeric_limits<float>::infinity();
+		fr(7) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// -inf == -inf
+		fr(4) = -std::numeric_limits<float>::infinity();
+		fr(7) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// NaN != NaN
+		fr(4) = std::numeric_limits<float>::quiet_NaN();
+		fr(7) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+
+		// FCMP/GT
+		ClearRegs();
+		fr(8) = 23.f;
+		fr(9) = 22.f;
+		PrepareOp(0xF895);	// fcmp/gt fr9, fr8
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		AssertState();
+		fr(9) = 100.f;
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		AssertState();
+		// special cases
+		// +inf > norm
+		fr(8) = std::numeric_limits<float>::infinity();
+		fr(9) = 77.f;
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// -inf < +inf
+		fr(8) = -std::numeric_limits<float>::infinity();
+		fr(9) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		// norm > -inf
+		fr(8) = -27.f;
+		fr(9) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		// !(Nan > NaN)
+		fr(8) = std::numeric_limits<float>::quiet_NaN();
+		fr(9) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+
+		ClearRegs();
+		ctx->fpul = 222;
+		PrepareOp(0xF62D);	// float fpul, fr6
+		RunOp();
+		ASSERT_EQ(fr(6), 222.f);
+		AssertState();
+
+		// FTRC
+		ClearRegs();
+		fr(1) = 100.f;
+		PrepareOp(0xF13D);	// ftrc fr1, fpul
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 100u);
+		AssertState();
+		// special cases
+		// 2147483520.f -> 2147483520
+		fr(1) = 2147483520.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 2147483520u);
+		// >2147483520.f -> 0x7fffffff;
+		fr(1) = 2147483648.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x7fffffffu);
+		// -2147483648 -> -2147483648
+		fr(1) = -2147483648.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, (u32)-2147483648);
+		// <-2147483648 -> 0x80000000
+		fr(1) = -2147483904.f;
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
+		// +inf -> 0x7fffffff
+		fr(1) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x7fffffffu);
+		// -inf -> 0x80000000
+		fr(1) = -std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
+		// NaN -> 0x80000000
+		fr(1) = -std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 0x80000000u);
+
+		// FSRRA
+		ClearRegs();
+		fr(5) = 16.f;
+		PrepareOp(0xF57D);	// fsrra fr5
+		RunOp();
+		ASSERT_EQ(fr(5), 0.25f);
+		AssertState();
+		// special cases
+		// 1/sqrt(+inf) -> 0
+		fr(5) = std::numeric_limits<float>::infinity();
+		RunOp();
+		ASSERT_EQ(fr(5), 0);
+		// 1/sqrt(NaN) -> NaN
+		fr(5) = std::numeric_limits<float>::quiet_NaN();
+		RunOp();
+		GTEST_ASSERT_NE(fr(5), fr(5));
+
+		// FSCA
+		ClearRegs();
+		ctx->fpul = 0x8000;	// pi
+		PrepareOp(0xF6FD);	// fsca fpul, dr3
+		RunOp();
+		ASSERT_EQ(fr(6), 0.f);	// sin
+		ASSERT_EQ(fr(7), -1.f);	// cos
+		AssertState();
+	}
+
+	void DoubleFloatingPointTest()
+	{
+		ctx->fpscr.PR = 1;
+		ctx->fpscr.SZ = 0;
+
+		ClearRegs();
+		setDr(5, -128.0);
+		PrepareOp(0xFA5D);	// fabs dr5
+		RunOp();
+		ASSERT_EQ(getDr(5), 128.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(4, 64.0);
+		PrepareOp(0xF84D);	// fneg dr4
+		RunOp();
+		ASSERT_EQ(getDr(4), -64.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(6, 13.0);
+		setDr(7, 12.0);
+		PrepareOp(0xFCE0);	// fadd dr7, dr6
+		RunOp();
+		ASSERT_EQ(getDr(6), 25.0);
+		ASSERT_EQ(getDr(7), 12.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(0, 10.0);
+		setDr(1, 11.0);
+		PrepareOp(0xF021);	// fsub dr1, dr0
+		RunOp();
+		ASSERT_EQ(getDr(0), -1.0);
+		ASSERT_EQ(getDr(1), 11.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(0, 4.0);
+		setDr(2, 8.0);
+		PrepareOp(0xF042);	// fmul dr2, dr0
+		RunOp();
+		ASSERT_EQ(getDr(0), 32.0);
+		ASSERT_EQ(getDr(2), 8.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(1, 8.0);
+		setDr(3, -2.0);
+		PrepareOp(0xF263);	// fdiv dr3, dr1
+		RunOp();
+		ASSERT_EQ(getDr(1), -4.0);
+		ASSERT_EQ(getDr(3), -2.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(1, 64.0);
+		PrepareOp(0xF26D);	// fsqrt dr1
+		RunOp();
+		ASSERT_EQ(getDr(1), 8.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(4, 45.0);
+		setDr(7, 45.0);
+		PrepareOp(0xF8E4);	// fcmp/eq dr7, dr4
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		AssertState();
+		setDr(4, 46.0);
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		AssertState();
+
+		ClearRegs();
+		setDr(4, 23.0);
+		setDr(7, 22.0);
+		PrepareOp(0xF8E5);	// fcmp/gt dr7, dr4
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+		AssertState();
+		setDr(7, 100.0);
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+		AssertState();
+
+		ClearRegs();
+		ctx->fpul = 123;
+		PrepareOp(0xFC2D);	// float fpul, dr6
+		RunOp();
+		ASSERT_EQ(getDr(6), 123.0);
+		AssertState();
+
+		ClearRegs();
+		setDr(1, 100.0);
+		PrepareOp(0xF23D);	// ftrc dr1, fpul
+		RunOp();
+		ASSERT_EQ(ctx->fpul, 100u);
+		AssertState();
+
+		ClearRegs();
+		*(float *)&ctx->fpul = 0.5f;
+		PrepareOp(0xF8AD);	// fcnvsd fpul, dr4
+		RunOp();
+		ASSERT_EQ(getDr(4), 0.5);
+		AssertState();
+
+		ClearRegs();
+		setDr(1, 0.25);
+		PrepareOp(0xF2BD);	// fcnvds dr1, fpul
+		RunOp();
+		ASSERT_EQ(*(float *)&ctx->fpul, 0.25f);
+		AssertState();
 	}
 };

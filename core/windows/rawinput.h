@@ -40,11 +40,11 @@ private:
 	HANDLE handle = NULL;
 };
 
-class RawKeyboard : public KeyboardDeviceTemplate<u8>
+class RawKeyboard : public KeyboardDevice
 {
 public:
 	RawKeyboard(int maple_port, const std::string& name, const std::string& uniqueId, HANDLE handle)
-		: KeyboardDeviceTemplate(maple_port, "RAW"), handle(handle)
+		: KeyboardDevice(maple_port, "RAW"), handle(handle)
 	{
 		this->_name = name;
 		this->_unique_id = uniqueId;
@@ -54,13 +54,14 @@ public:
 		loadMapping();
 	}
 
-protected:
-	u8 convert_keycode(u8 scancode) override
+	void input(u8 scancode, bool pressed)
 	{
+		u8 keycode;
 		if (settings.input.keyboardLangId != KeyboardLayout::US && scancode == 0x31)	// US: backslash and pipe
-			return (u8)0x32;	// non-US: hash and tilde
+			keycode = (u8)0x32;	// non-US: hash and tilde
 		else
-			return (u8)scancode;
+			keycode = (u8)scancode;
+		KeyboardDevice::input(keycode, pressed, 0);
 	}
 private:
 	HANDLE handle = NULL;

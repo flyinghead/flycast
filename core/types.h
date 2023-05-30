@@ -164,17 +164,15 @@ inline static void JITWriteProtect(bool enabled) {
 #define VER_EMUNAME		"Flycast"
 #define VER_SHORTNAME	VER_EMUNAME
 
-void os_DebugBreak();
-#define dbgbreak os_DebugBreak()
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
 
+[[noreturn]] void os_DebugBreak();
 void fatal_error(const char* text, ...);
 
-#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
+#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();}} while (false)
+#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();} while (false)
 
 enum class JVS {
 	Default,
@@ -194,6 +192,7 @@ enum class JVS {
 	LightGunAsAnalog,
 	WaveRunnerGP,
 	_18Wheeler,
+	F355
 };
 
 enum class RenderType {
@@ -279,12 +278,14 @@ struct settings_t
 	{
 		std::string path;
 		std::string gameId;
+		std::string fileName;
 	} content;
 
 	struct {
 		JVS JammaSetup;
 		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 		bool fastForwardMode;
+		bool lightgunGame; // or touchscreen
 	} input;
 
 	struct
@@ -301,6 +302,15 @@ struct settings_t
 			u8 vmu[16];
 		} md5;
 	} network;
+
+	struct
+	{
+		bool multiboard;
+		bool slave;
+		int drivingSimSlave;
+	} naomi;
+
+	bool disableRenderer;
 };
 
 extern settings_t settings;
@@ -318,10 +328,6 @@ struct OnLoad
 	typedef void OnLoadFP();
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#endif
 
 class FlycastException : public std::runtime_error
 {

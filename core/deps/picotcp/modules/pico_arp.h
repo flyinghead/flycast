@@ -32,4 +32,5 @@ int pico_arp_get_neighbors(struct pico_device *dev, struct pico_ip4 *neighbors, 
 void pico_arp_register_ipconflict(struct pico_ip4 *ip, struct pico_eth *mac, void (*cb)(int reason));
 void pico_arp_postpone(struct pico_frame *f);
 void pico_arp_init(void);
+void pico_arp_deinit(void);
 #endif

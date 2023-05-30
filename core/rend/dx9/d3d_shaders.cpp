@@ -313,8 +313,8 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 	auto it = shaders.find(hash);
 	if (it == shaders.end())
 	{
-		verify(pp_ShadInstr < ARRAY_SIZE(MacroValues));
-		verify(pp_FogCtrl < ARRAY_SIZE(MacroValues));
+		verify(pp_ShadInstr < std::size(MacroValues));
+		verify(pp_FogCtrl < std::size(MacroValues));
 		PixelMacros[MacroTexture].Definition = MacroValues[pp_Texture];
 		PixelMacros[MacroUseAlpha].Definition = MacroValues[pp_UseAlpha];
 		PixelMacros[MacroIgnoreTexA].Definition = MacroValues[pp_IgnoreTexA];

@@ -25,7 +25,7 @@ namespace config {
 // Dynarec
 
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
-Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
+Option<int> Sh4Clock("Sh4Clock", 200);
 
 // General
 
@@ -33,7 +33,6 @@ Option<int> Cable("Dreamcast.Cable", 3);			// TV Composite
 Option<int> Region("Dreamcast.Region", 1);			// USA
 Option<int> Broadcast("Dreamcast.Broadcast", 0);	// NTSC
 Option<int> Language("Dreamcast.Language", 1);		// English
-Option<bool> FullMMU("Dreamcast.FullMMU");
 Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
 Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
@@ -60,6 +59,7 @@ Option<bool> AutoLatency("aica.AutoLatency",
 
 OptionString AudioBackend("backend", "auto", "audio");
 AudioVolumeOption AudioVolume;
+Option<bool> VmuSound("VmuSound", false, "audio");
 
 // Rendering
 
@@ -146,6 +146,7 @@ Option<bool> GGPOChat("GGPOChat", true, "network");
 Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
+Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
@@ -180,6 +181,7 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
 };
+Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif

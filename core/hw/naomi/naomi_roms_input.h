@@ -361,32 +361,28 @@ static InputDescriptors marine_fishing_inputs = {
 
 static InputDescriptors f355_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "ASSIST SC" },
-			{ NAOMI_BTN1_KEY, "ASSIST TC" },
-			{ NAOMI_BTN2_KEY, "ASSIST ABS" },
-			{ NAOMI_BTN3_KEY, "ASSIST IBS", 0, NAOMI_BTN1_KEY },
-			{ NAOMI_BTN4_KEY, "WING SHIFT L", 0, NAOMI_DOWN_KEY },
-			{ NAOMI_BTN5_KEY, "WING SHIFT R", 0, NAOMI_UP_KEY },
+			{ NAOMI_UP_KEY, "ASSIST SC" },
+			{ NAOMI_DOWN_KEY, "ASSIST TC" },
+			{ NAOMI_LEFT_KEY, "ASSIST ABS" },
+			{ NAOMI_RIGHT_KEY, "ASSIST IBS" },
 
-			// Manual gearshift (Deluxe only)
-			//    L   R
-			//  U 1 3 5
-			//
-			//  D 2 4 6
-			{ NAOMI_UP_KEY, "SPEED SHIFT UP" },
-			{ NAOMI_DOWN_KEY, "SPEED SHIFT DOWN" },
-			{ NAOMI_LEFT_KEY, "SPEED SHIFT LEFT" },
-			{ NAOMI_RIGHT_KEY, "SPEED SHIFT RIGHT" },
+			{ NAOMI_BTN0_KEY, "WING SHIFT L", 0, NAOMI_BTN1_KEY },
+			{ NAOMI_BTN1_KEY, "WING SHIFT R", 0, NAOMI_BTN0_KEY },
+
+			// manual gear shift on P2 DPad
+			//   L   R
+			// U 2   1
+			//   4   3
+			// D 6   5
 
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
 	  {
+			{ "HANDLE", Full, 0 },
 			{ "ACCEL", Half, 4 },
 			{ "BRAKE", Half, 5 },
 			{ "CLUTCH", Full, 2 },	// Deluxe only
-			{ "unused", Full, 4 },
-			{ "HANDLE", Full, 0 },
 	  },
 };
 
@@ -661,5 +657,46 @@ static InputDescriptors soulsurfer_inputs = {
 			{ "SWING", Full, 2 },
 			{ "ROLL", Full, 0 },
 			{ "PITCH", Full, 1, true },
+	},
+};
+
+static InputDescriptors drvsim_inputs = {
+	{
+			{ NAOMI_BTN0_KEY, "Turn R" },
+			{ NAOMI_BTN1_KEY, "Turn L" },
+			{ NAOMI_BTN2_KEY, "Shift 2" },
+			{ NAOMI_BTN3_KEY, "Shift 3" },
+			{ NAOMI_BTN4_KEY, "O/D Switch" },
+			{ NAOMI_BTN5_KEY, "S-Brake" },
+			{ NAOMI_BTN6_KEY, "IG-START", 0, NAOMI_LEFT_KEY },
+			{ NAOMI_BTN7_KEY, "Shift 0", 0, NAOMI_BTN0_KEY },
+			{ NAOMI_UP_KEY, "Horn" },
+			{ NAOMI_DOWN_KEY, "Light 0" },
+			{ NAOMI_LEFT_KEY, "Light 1" },
+			{ NAOMI_RIGHT_KEY, "Light 2" },
+			// always on unmappable buttons
+			{ NAOMI_BTN8_KEY, "BELT", 0xffffffff, NAOMI_BTN2_KEY },
+			{ NAOMI_RELOAD_KEY, "IG-ON", 0xffffffff, NAOMI_DOWN_KEY },
+
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			// P2 inputs:
+			// BTN0		Shift 0
+			// BTN1		Shift 1
+			// BTN2		BELT
+			// UP		Washer
+			// DOWN		IG-ON
+			// LEFT		IG_START
+			// RIGHT	HAZARD
+			// START	WIPER-LO
+			// Unknown:
+			// STOP
+			// WIPER-HI
+	},
+	{
+			{ "Master", Full, 0, true },
+			{ "Accelerator", Half, 4 },
+			{ "Brake", Half, 5 },
+			{ "Clutch", Full, 1 },
 	},
 };

@@ -26,5 +26,6 @@ int pico_ppp_set_ip(struct pico_device *dev, struct pico_ip4 ip);
 int pico_ppp_set_dns1(struct pico_device *dev, struct pico_ip4 ip);
 int pico_ppp_set_dns2(struct pico_device *dev, struct pico_ip4 ip);
 int pico_ppp_set_peer_ip(struct pico_device *dev, struct pico_ip4 ip);
+void pico_ppp_deinit(void);
 
 #endif /* INCLUDE_PICO_PPP */

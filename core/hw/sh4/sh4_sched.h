@@ -44,12 +44,9 @@ void sh4_sched_tick(int cycles);
 void sh4_sched_ffts();
 void sh4_sched_reset(bool hard);
 
-struct sched_list
-{
-	sh4_sched_callback* cb;
-	int tag;
-	int start;
-	int end;
-};
+void sh4_sched_serialize(Serializer& ser);
+void sh4_sched_deserialize(Deserializer& deser);
+void sh4_sched_serialize(Serializer& ser, int id);
+void sh4_sched_deserialize(Deserializer& deser, int id);
 
 #endif //SH4_SCHED_H

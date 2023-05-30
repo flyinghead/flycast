@@ -23,6 +23,20 @@
 #include "rend/gui.h"
 #include <memory>
 
+extern u8 kb_key[4][6];	// normal keys pressed
+extern u8 kb_shift[4];	// modifier keys pressed (bitmask)
+
+enum DCKeyboardModifiers {
+	DC_KBMOD_LEFTCTRL   = 0x01,
+	DC_KBMOD_LEFTSHIFT  = 0x02,
+	DC_KBMOD_LEFTALT    = 0x04,
+	DC_KBMOD_LEFTGUI    = 0x08,
+	DC_KBMOD_RIGHTCTRL  = 0x10,
+	DC_KBMOD_RIGHTSHIFT = 0x20,
+	DC_KBMOD_RIGHTALT   = 0x40,
+	DC_KBMOD_S2         = 0x80,
+};
+
 class KeyboardInputMapping : public InputMapping
 {
 public:
@@ -62,6 +76,90 @@ protected:
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		return std::make_shared<KeyboardInputMapping>();
+	}
+
+	void input(u8 keycode, bool pressed, int modifier_keys)
+	{
+		// Some OSes (Mac OS) don't distinguish left and right modifier keys so we set them both.
+		// But not for Alt since Right Alt is used as a special modifier keys on some international
+		// keyboards.
+		switch (keycode)
+		{
+			case 0xE1: // Left Shift
+			case 0xE5: // Right Shift
+				setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
+				break;
+			case 0xE0: // Left Ctrl
+			case 0xE4: // Right Ctrl
+				setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
+				break;
+			case 0xE2: // Left Alt
+				setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
+				break;
+			case 0xE6: // Right Alt
+				setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
+				break;
+			case 0xE7: // S2 special key
+				setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
+				break;
+			default:
+				break;
+		}
+		const int port = maple_port();
+		if (port >= 0 && port < (int)std::size(kb_shift))
+			kb_shift[port] = _modifier_keys;
+
+		if (keycode != 0)
+		{
+			gui_keyboard_key(keycode, pressed);
+			if (keycode < 0xE0 && port >= 0 && port < (int)std::size(kb_key))
+			{
+				if (pressed)
+				{
+					if (_kb_used < std::size(kb_key[port]))
+					{
+						bool found = false;
+						for (u32 i = 0; !found && i < _kb_used; i++)
+						{
+							if (kb_key[port][i] == keycode)
+								found = true;
+						}
+						if (!found)
+							kb_key[port][_kb_used++] = keycode;
+					}
+				}
+				else
+				{
+					for (u32 i = 0; i < _kb_used; i++)
+					{
+						if (kb_key[port][i] == keycode)
+						{
+							_kb_used--;
+							for (u32 j = i; j < std::size(kb_key[port]) - 1; j++)
+								kb_key[port][j] = kb_key[port][j + 1];
+							kb_key[port][std::size(kb_key[port]) - 1] = 0;
+							break;
+						}
+					}
+				}
+				kb_shift[port] |= modifier_keys;
+			}
+		}
+		if (gui_keyboard_captured())
+		{
+			// chat: disable the keyboard controller. Only accept emu keys (menu, escape...)
+			set_maple_port(-1);
+			gamepad_btn_input(keycode, pressed);
+			set_maple_port(port);
+		}
+		// Do not map keyboard keys to gamepad buttons unless the GUI is open
+		// or the corresponding maple device (if any) isn't a keyboard
+		else if (gui_is_open()
+				|| port == (int)std::size(kb_key)
+				|| (settings.platform.isConsole() && config::MapleMainDevices[port] != MDT_Keyboard)
+				|| (settings.platform.isNaomi() && settings.input.JammaSetup != JVS::Keyboard)
+				|| settings.platform.isAtomiswave())
+			gamepad_btn_input(keycode, pressed);
 	}
 
 public:
@@ -361,128 +459,16 @@ public:
 			return nullptr;
 		}
 	}
-};
-
-template <typename Keycode>
-class KeyboardDeviceTemplate : public KeyboardDevice
-{
-public:
-	void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
-
-protected:
-	KeyboardDeviceTemplate(int maple_port, const char *apiName, bool remappable = true)
-		: KeyboardDevice(maple_port, apiName, remappable), _modifier_keys(0), _kb_used(0) {}
-	virtual u8 convert_keycode(Keycode keycode) = 0;
 
 private:
-	int _modifier_keys;
-	u32 _kb_used;
+	void setFlag(int& v, u32 bitmask, bool set)
+	{
+		if (set)
+			v |= bitmask;
+		else
+			v &= ~bitmask;
+	}
+
+	int _modifier_keys = 0;
+	u32 _kb_used = 0;
 };
-
-enum DCKeyboardModifiers {
-	DC_KBMOD_LEFTCTRL   = 0x01,
-	DC_KBMOD_LEFTSHIFT  = 0x02,
-	DC_KBMOD_LEFTALT    = 0x04,
-	DC_KBMOD_LEFTGUI    = 0x08,
-	DC_KBMOD_RIGHTCTRL  = 0x10,
-	DC_KBMOD_RIGHTSHIFT = 0x20,
-	DC_KBMOD_RIGHTALT   = 0x40,
-	DC_KBMOD_S2         = 0x80,
-};
-
-extern u8 kb_key[4][6];	// normal keys pressed
-extern u8 kb_shift[4];	// modifier keys pressed (bitmask)
-
-static inline void setFlag(int& v, u32 bitmask, bool set)
-{
-	if (set)
-		v |= bitmask;
-	else
-		v &= ~bitmask;
-}
-
-template <typename Keycode>
-void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool pressed, int modifier_keys)
-{
-	u8 dc_keycode = convert_keycode(keycode);
-	// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
-	// But not for Alt since Right Alt is used as a special modifier keys on some international
-	// keyboards.
-	switch (dc_keycode)
-	{
-		case 0xE1: // Left Shift
-		case 0xE5: // Right Shift
-			setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
-			break;
-		case 0xE0: // Left Ctrl
-		case 0xE4: // Right Ctrl
-			setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
-			break;
-		case 0xE2: // Left Alt
-			setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
-			break;
-		case 0xE6: // Right Alt
-			setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
-			break;
-		case 0xE7: // S2 special key
-			setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
-			break;
-		default:
-			break;
-	}
-	const int port = maple_port();
-	if (port >= 0 && port < (int)ARRAY_SIZE(kb_shift))
-		kb_shift[port] = _modifier_keys;
-
-	if (dc_keycode != 0 && dc_keycode < 0xE0)
-	{
-		gui_keyboard_key(dc_keycode, pressed, _modifier_keys);
-		if (port >= 0 && port < (int)ARRAY_SIZE(kb_key))
-		{
-			if (pressed)
-			{
-				if (_kb_used < ARRAY_SIZE(kb_key[port]))
-				{
-					bool found = false;
-					for (u32 i = 0; !found && i < _kb_used; i++)
-					{
-						if (kb_key[port][i] == dc_keycode)
-							found = true;
-					}
-					if (!found)
-						kb_key[port][_kb_used++] = dc_keycode;
-				}
-			}
-			else
-			{
-				for (u32 i = 0; i < _kb_used; i++)
-				{
-					if (kb_key[port][i] == dc_keycode)
-					{
-						_kb_used--;
-						for (u32 j = i; j < ARRAY_SIZE(kb_key[port]) - 1; j++)
-							kb_key[port][j] = kb_key[port][j + 1];
-						kb_key[port][ARRAY_SIZE(kb_key[port]) - 1] = 0;
-						break;
-					}
-				}
-			}
-			kb_shift[port] |= modifier_keys;
-		}
-	}
-	if (gui_keyboard_captured())
-	{
-		// chat: disable the keyboard controller. Only accept emu keys (menu, escape...)
-		set_maple_port(-1);
-		gamepad_btn_input(dc_keycode, pressed);
-		set_maple_port(port);
-	}
-	// Do not map keyboard keys to gamepad buttons unless the GUI is open
-	// or the corresponding maple device (if any) isn't a keyboard
-	else if (gui_is_open()
-			|| port == (int)ARRAY_SIZE(kb_key)
-			|| (settings.platform.isConsole() && config::MapleMainDevices[port] != MDT_Keyboard)
-			|| (settings.platform.isNaomi() && settings.input.JammaSetup != JVS::Keyboard)
-			|| settings.platform.isAtomiswave())
-		gamepad_btn_input(dc_keycode, pressed);
-}

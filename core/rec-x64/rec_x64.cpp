@@ -19,15 +19,12 @@ using namespace Xbyak::util;
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
 #include "oslib/oslib.h"
+#include "oslib/virtmem.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
 	u32 Relink() override {
 		return 0;
-	}
-
-	void Relocate(void* dst) override {
-		verify(false);
 	}
 };
 
@@ -75,8 +72,8 @@ void ngen_mainloop(void *)
 	verify(mainloop != nullptr);
 	try {
 		mainloop();
-	} catch (const SH4ThrownException&) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+	} catch (const SH4ThrownException& ex) {
+		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop code %x", ex.expEvn);
 		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
@@ -103,7 +100,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		AdjustDelaySlotException(ex);
 		pc--;
 	}
-	Do_Exception(pc, ex.expEvn, ex.callVect);
+	Do_Exception(pc, ex.expEvn);
 	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
 	handleException();
 }
@@ -171,9 +168,8 @@ public:
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
-			mov(call_regs[1], 0x800);			// event
-			mov(call_regs[2], 0x100);			// vector
-			GenCall(Do_Exception);
+			mov(call_regs[1], Sh4Ex_FpuDisabled);// exception code
+			GenCall((void (*)())Do_Exception);
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
@@ -410,18 +406,11 @@ public:
 					}
 					else
 					{
-						if (CCN_MMUCR.AT == 1)
-						{
-							GenCall(do_sqw_mmu);
-						}
-						else
-						{
-							mov(call_regs64[1], (uintptr_t)sq_both);
-							mov(rax, (size_t)&do_sqw_nommu);
-							saveXmmRegisters();
-							call(qword[rax]);
-							restoreXmmRegisters();
-						}
+						mov(call_regs64[1], (uintptr_t)sq_both);
+						mov(rax, (size_t)&do_sqw_nommu);
+						saveXmmRegisters();
+						call(qword[rax]);
+						restoreXmmRegisters();
 					}
 					L(no_sqw);
 				}
@@ -760,7 +749,7 @@ public:
 
 	bool rewriteMemAccess(host_context_t &context)
 	{
-		if (!_nvmem_enabled())
+		if (!addrspace::virtmemEnabled())
 			return false;
 
 		//printf("ngen_Rewrite pc %p\n", context.pc);
@@ -846,38 +835,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-				break;
-			default:
-				die("Invalid immediate size");
-				return false;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_readMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{
@@ -996,39 +958,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
-				break;
-			default:
-				die("Invalid immediate size");
-				return false;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
-
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_writeMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 		if (isram)
 		{
 			// Immediate pointer to RAM: super-duper fast access
@@ -1171,9 +1105,9 @@ private:
 				for (int op = 0; op < MemOp::Count; op++)
 				{
 					MemHandlers[type][size][op] = getCurr();
-					if (type == MemType::Fast && _nvmem_enabled())
+					if (type == MemType::Fast && addrspace::virtmemEnabled())
 					{
-						mov(rax, (uintptr_t)virt_ram_base);
+						mov(rax, (uintptr_t)addrspace::ram_base);
 						mov(r9, call_regs64[0]);
 						and_(call_regs[0], 0x1FFFFFFF);
 
@@ -1228,9 +1162,9 @@ private:
 						ret();
 						L(no_sqw);
 						if (size == MemSize::S32)
-							jmp((const void *)_vmem_WriteMem32);	// tail call
+							jmp((const void *)addrspace::write32);	// tail call
 						else
-							jmp((const void *)_vmem_WriteMem64);	// tail call
+							jmp((const void *)addrspace::write64);	// tail call
 						continue;
 					}
 					else
@@ -1241,21 +1175,21 @@ private:
 							switch (size) {
 							case MemSize::S8:
 								sub(rsp, STACK_ALIGN);
-								call((const void *)_vmem_ReadMem8);
+								call((const void *)addrspace::read8);
 								movsx(eax, al);
 								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S16:
 								sub(rsp, STACK_ALIGN);
-								call((const void *)_vmem_ReadMem16);
+								call((const void *)addrspace::read16);
 								movsx(eax, ax);
 								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S32:
-								jmp((const void *)_vmem_ReadMem32);	// tail call
+								jmp((const void *)addrspace::read32);	// tail call
 								continue;
 							case MemSize::S64:
-								jmp((const void *)_vmem_ReadMem64);	// tail call
+								jmp((const void *)addrspace::read64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");
@@ -1265,16 +1199,16 @@ private:
 						{
 							switch (size) {
 							case MemSize::S8:
-								jmp((const void *)_vmem_WriteMem8);		// tail call
+								jmp((const void *)addrspace::write8);		// tail call
 								continue;
 							case MemSize::S16:
-								jmp((const void *)_vmem_WriteMem16);	// tail call
+								jmp((const void *)addrspace::write16);	// tail call
 								continue;
 							case MemSize::S32:
-								jmp((const void *)_vmem_WriteMem32);	// tail call
+								jmp((const void *)addrspace::write32);	// tail call
 								continue;
 							case MemSize::S64:
-								jmp((const void *)_vmem_WriteMem64);	// tail call
+								jmp((const void *)addrspace::write64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");
@@ -1369,7 +1303,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 	verify(emit_FreeSpace() >= 16 * 1024);
 	void* protStart = emit_GetCCPtr();
 	size_t protSize = emit_FreeSpace();
-	vmem_platform_jit_set_exec(protStart, protSize, false);
+	virtmem::jit_set_exec(protStart, protSize, false);
 
 	BlockCompiler compiler;
 	::ccCompiler = &compiler;
@@ -1379,7 +1313,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
 	::ccCompiler = nullptr;
-	vmem_platform_jit_set_exec(protStart, protSize, true);
+	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
 void ngen_CC_Start(shil_opcode* op)
@@ -1405,14 +1339,14 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
 	void* protStart = emit_GetCCPtr();
 	size_t protSize = emit_FreeSpace();
-	vmem_platform_jit_set_exec(protStart, protSize, false);
+	virtmem::jit_set_exec(protStart, protSize, false);
 
 	u8 *retAddr = *(u8 **)context.rsp - 5;
 	BlockCompiler compiler(retAddr);
 	bool rc = false;
 	try {
 		rc = compiler.rewriteMemAccess(context);
-		vmem_platform_jit_set_exec(protStart, protSize, true);
+		virtmem::jit_set_exec(protStart, protSize, true);
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
@@ -1433,7 +1367,7 @@ void ngen_ResetBlocks()
 
 	void* protStart = emit_GetCCPtr();
 	size_t protSize = emit_FreeSpace();
-	vmem_platform_jit_set_exec(protStart, protSize, false);
+	virtmem::jit_set_exec(protStart, protSize, false);
 
 	BlockCompiler compiler;
 	try {
@@ -1441,7 +1375,7 @@ void ngen_ResetBlocks()
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
-	vmem_platform_jit_set_exec(protStart, protSize, true);
+	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
 #endif

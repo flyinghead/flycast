@@ -63,7 +63,7 @@ struct BIOS_t
 		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
 };
-extern BIOS_t BIOS[];
+extern const BIOS_t BIOS[];
 
 struct InputDescriptors;
 
@@ -89,5 +89,6 @@ struct Game
 	const char *gdrom_name;
 	InputDescriptors *inputs;
 	u8 *eeprom_dump;
+	int multiboard;
 };
-extern Game Games[];
+extern const Game Games[];

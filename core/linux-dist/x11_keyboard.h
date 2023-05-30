@@ -3,10 +3,10 @@
 #include "input/keyboard_device.h"
 #include "x11.h"
 
-class X11Keyboard : public KeyboardDeviceTemplate<int>
+class X11Keyboard : public KeyboardDevice
 {
 public:
-	X11Keyboard(int maple_port) : KeyboardDeviceTemplate(maple_port, "X11")
+	X11Keyboard(int maple_port) : KeyboardDevice(maple_port, "X11")
 	{
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[KEY_A] = 0x04;
@@ -144,14 +144,14 @@ public:
 		loadMapping();
 	}
 
-protected:
-	u8 convert_keycode(int keycode) override
+	void input(int keycode, bool pressed)
 	{
-		if (kb_map.find(keycode) == kb_map.end()) {
+		u8 dcKey = 0;
+		if (kb_map.find(keycode) == kb_map.end())
 			DEBUG_LOG(INPUT, "Unknown key %x", keycode);
-			return 0;
-		}
-		return kb_map[keycode];
+		else
+			dcKey = kb_map[keycode];
+		KeyboardDevice::input(dcKey, pressed, 0);
 	}
 
 private:

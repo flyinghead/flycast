@@ -35,7 +35,7 @@ struct DX11Renderer : public Renderer
 {
 	bool Init() override;
 	void Term() override;
-	bool Process(TA_context* ctx) override;
+	void Process(TA_context* ctx) override;
 	bool Render() override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 
@@ -129,7 +129,7 @@ private:
 	void setBaseScissor();
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
-	void drawList(const List<PolyParam>& gply, int first, int count);
+	void drawList(const std::vector<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setRenderState(const PolyParam *gp);
 	void drawSorted(int first, int count, bool multipass);

@@ -54,8 +54,11 @@ public:
 	{
 		enableNetworkBroadcast(false);
 		emu.setNetworkState(false);
-		closesocket(sock);
-		sock = INVALID_SOCKET;
+		if (sock != INVALID_SOCKET)
+		{
+			closesocket(sock);
+			sock = INVALID_SOCKET;
+		}
 	}
 
 	bool receive(u8 *data, u32 size, u16 *packetNumber)
@@ -190,7 +193,7 @@ private:
 		DEBUG_LOG(NETWORK, "Sent port %d pckt %d size %x", ntohs(addr->sin_port), packet->type, size - (u32)packet->size(0));
 	}
 
-	sock_t sock;
+	sock_t sock = INVALID_SOCKET;
 	int slotCount = 0;
 	int slotId = 0;
 	std::atomic<bool> networkStopping{ false };

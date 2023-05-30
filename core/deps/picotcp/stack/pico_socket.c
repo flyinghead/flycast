@@ -500,7 +500,7 @@ static void pico_socket_check_empty_sockport(struct pico_socket *s, struct pico_
     }
 }
 
-int8_t pico_socket_del(struct pico_socket *s)
+static int8_t socket_del(struct pico_socket *s, int immediate)
 {
     struct pico_sockport *sp = pico_get_sockport(PROTO(s), s->local_port);
     if (!sp) {
@@ -516,7 +516,10 @@ int8_t pico_socket_del(struct pico_socket *s)
 #endif
     pico_socket_tcp_delete(s);
     s->state = PICO_SOCKET_STATE_CLOSED;
-    if (!pico_timer_add((pico_time)10, socket_garbage_collect, s)) {
+    if (immediate) {
+        socket_garbage_collect((pico_time)0, s);
+    }
+    else if (!pico_timer_add((pico_time)10, socket_garbage_collect, s)) {
         dbg("SOCKET: Failed to start garbage collect timer, doing garbage collection now\n");
         PICOTCP_MUTEX_UNLOCK(Mutex);
         socket_garbage_collect((pico_time)0, s);
@@ -524,6 +527,16 @@ int8_t pico_socket_del(struct pico_socket *s)
     }
     PICOTCP_MUTEX_UNLOCK(Mutex);
     return 0;
+}
+
+int8_t pico_socket_del(struct pico_socket *s)
+{
+	return socket_del(s, 0);
+}
+
+int8_t pico_socket_del_imm(struct pico_socket *s)
+{
+	return socket_del(s, 1);
 }
 
 static void pico_socket_update_tcp_state(struct pico_socket *s, uint16_t tcp_state)
@@ -2340,6 +2353,33 @@ int pico_transport_error(struct pico_frame *f, uint8_t proto, int code)
 
     pico_frame_discard(f);
     return ret;
+}
+
+static int deinit_cb(void **p)
+{
+	struct pico_sockport *sp = *p;
+    struct pico_tree_node *index;
+    struct pico_socket *s;
+    pico_tree_foreach(index, &sp->socks){
+        s = index->keyValue;
+        pico_socket_del_imm(s);
+    }
+	PICO_FREE(sp);
+	return 0;
+}
+
+void pico_socket_deinit(void)
+{
+	sp_udp = NULL;
+	sp_tcp = NULL;
+	pico_tree_destroy(&UDPTable, deinit_cb);
+	pico_tree_destroy(&TCPTable, deinit_cb);
+#ifdef PICO_SUPPORT_MUTEX
+	if (Mutex) {
+		PICOTCP_MUTEX_DEL(Mutex);
+		Mutex = NULL;
+	}
+#endif
 }
 #endif
 #endif

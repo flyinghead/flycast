@@ -222,7 +222,7 @@ struct PhysicalDrive:Disc
 					verify(trackn==tracks.size());
 					Track t;
 
-					t.ADDR=ftd->Descriptors[i].Adr;
+					t.ADR=ftd->Descriptors[i].Adr;
 					t.CTRL=ftd->Descriptors[i].Control;
 					t.StartFAD=msf2fad(ftd->Descriptors[i].Msf);
 					t.file = new PhysicalTrack(this);
@@ -241,9 +241,9 @@ struct PhysicalDrive:Disc
 					}
 				}
 			}
-			LeadOut.StartFAD=EndFAD;
-			LeadOut.ADDR=0;
-			LeadOut.CTRL=0;
+			LeadOut.StartFAD = EndFAD;
+			LeadOut.ADR = 1;
+			LeadOut.CTRL = 4;
 		}
 
 		DWORD bytesReturnedIO = 0;

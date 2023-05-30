@@ -28,7 +28,7 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/flashrom/nvmem.h"
 #include "cheats.h"
 #include "oslib/audiostream.h"
 #include "debug/gdb_server.h"
@@ -42,6 +42,7 @@
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
+#include "oslib/storage.h"
 #include <chrono>
 
 settings_t settings;
@@ -52,16 +53,15 @@ static void loadSpecialSettings()
 	std::string& prod_id = settings.content.gameId;
 	NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 
+	settings.input.lightgunGame = false;
+
 	if (settings.platform.isConsole())
 	{
-		if (ip_meta.isWindowsCE() || config::ForceWindowsCE
-				|| prod_id == "T26702N") // PBA Tour Bowling 2001
+		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
-			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for Windows CE game");
 			config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
-			config::FullMMU.override(true);
-			if (!config::ForceWindowsCE)
-				config::ForceWindowsCE.override(true);
+			config::ForceWindowsCE.override(true);
 		}
 
 		// Tony Hawk's Pro Skater 2
@@ -101,7 +101,9 @@ static void loadSpecialSettings()
 				// Shenmue (EU)
 				|| prod_id == "MK-5105950"
 				// Shenmue (JP)
-				|| prod_id == "HDR-0016")
+				|| prod_id == "HDR-0016"
+				// Izumo
+				|| prod_id == "T46902M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -141,6 +143,12 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
+		}
+		// Re-Volt (JP)
+		else if (prod_id == "T-8101M")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(100.f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
@@ -238,6 +246,11 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
 		}
+		if (prod_id == "T-8102N")		// TrickStyle (US)
+		{
+			NOTICE_LOG(BOOT, "Forcing English Language");
+			config::Language.override(1);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
@@ -275,7 +288,8 @@ static void loadSpecialSettings()
 			settings.input.JammaSetup = JVS::RotaryEncoders;
 		}
 		else if (prod_id == "POWER STONE 2 JAPAN"		// Naomi
-				|| prod_id == "GUILTY GEAR isuka")		// AW
+				|| prod_id == "GUILTY GEAR isuka"		// AW
+				|| prod_id == "Dirty Pigskin Football") // AW
 		{
 			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::FourPlayers;
@@ -287,7 +301,10 @@ static void loadSpecialSettings()
 			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
 		else if (prod_id == "RINGOUT 4X4 JAPAN"
-				|| prod_id == "VIRTUA ATHLETE")
+					|| prod_id == "VIRTUA ATHLETE"
+					|| prod_id == "ROYAL RUMBLE"
+					|| prod_id == "BEACH SPIKERS JAPAN"
+					|| prod_id == "MJ JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DualIOBoards4P;
@@ -301,11 +318,13 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGun;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == "MAZAN")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::Mazan;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == " BIOHAZARD  GUN SURVIVOR2")
 		{
@@ -342,6 +361,7 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::LightGunAsAnalog;
+			settings.input.lightgunGame = true;
 		}
 		else if (prod_id == "WAVE RUNNER GP")
 		{
@@ -353,16 +373,26 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::_18Wheeler;
 		}
+		else if (prod_id == "F355 CHALLENGE JAPAN")
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
+			settings.input.JammaSetup = JVS::F355;
+		}
 		else if (prod_id == "INU NO OSANPO")	// Dog Walking
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::DogWalking;
 		}
-		else if (prod_id == " TOUCH DE UNOH -------------"
-				|| prod_id == "POKASUKA GHOST (JAPANESE)")
+		else if (prod_id == " TOUCH DE UNOH -------------" || prod_id == " TOUCH DE UNOH 2 -----------")
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
 			settings.input.JammaSetup = JVS::TouchDeUno;
+			settings.input.lightgunGame = true;
+		}
+		else if (prod_id == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
+				|| prod_id == "TOUCH DE ZUNO (JAPAN)")
+		{
+			settings.input.lightgunGame = true;
 		}
 	}
 }
@@ -377,8 +407,7 @@ void dc_reset(bool hard)
 	}
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
-	libAICA_Reset(hard);
-	aicaarm::reset();
+	aica::reset(hard);
 	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 }
@@ -386,7 +415,7 @@ void dc_reset(bool hard)
 static void setPlatform(int platform)
 {
 	if (VRAM_SIZE != 0)
-		_vmem_unprotect_vram(0, VRAM_SIZE);
+		addrspace::unprotectVram(0, VRAM_SIZE);
 	elan::ERAM_SIZE = 0;
 	switch (platform)
 	{
@@ -427,7 +456,7 @@ static void setPlatform(int platform)
 	settings.platform.ram_mask = settings.platform.ram_size - 1;
 	settings.platform.vram_mask = settings.platform.vram_size - 1;
 	settings.platform.aram_mask = settings.platform.aram_size - 1;
-	_vmem_init_mappings();
+	addrspace::initMappings();
 }
 
 void Emulator::init()
@@ -441,8 +470,7 @@ void Emulator::init()
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
 	pvr::init();
-	libAICA_Init();
-	aicaarm::init();
+	aica::init();
 	mem_Init();
 	reios_init();
 
@@ -464,17 +492,21 @@ void Emulator::init()
 	state = Init;
 }
 
-int getGamePlatform(const char *path)
+int getGamePlatform(const std::string& filename)
 {
-	if (path == NULL)
+	if (settings.naomi.slave)
+		// Multiboard slave
+		return DC_PLATFORM_NAOMI;
+
+	if (filename.empty())
 		// Dreamcast BIOS
 		return DC_PLATFORM_DREAMCAST;
 
-	std::string extension = get_file_extension(path);
+	std::string extension = get_file_extension(filename);
 	if (extension.empty())
 		return DC_PLATFORM_DREAMCAST;	// unknown
 	if (extension == "zip" || extension == "7z")
-		return naomi_cart_GetPlatform(path);
+		return naomi_cart_GetPlatform(filename.c_str());
 	if (extension == "bin" || extension == "dat" || extension == "lst")
 		return DC_PLATFORM_NAOMI;
 
@@ -487,12 +519,25 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 	try {
 		DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 
-		if (path != nullptr)
+		if (path != nullptr && strlen(path) > 0)
+		{
 			settings.content.path = path;
+			if (settings.naomi.slave) {
+				settings.content.fileName = path;
+			}
+			else
+			{
+				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
+				settings.content.fileName = info.name;
+			}
+		}
 		else
+		{
 			settings.content.path.clear();
+			settings.content.fileName.clear();
+		}
 
-		setPlatform(getGamePlatform(path));
+		setPlatform(getGamePlatform(settings.content.fileName));
 		mem_map_default();
 
 		config::Settings::instance().reset();
@@ -500,15 +545,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		dc_reset(true);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
 
-		if (settings.platform.isNaomi2() && config::RendererType == RenderType::DirectX9)
-			throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
-
 		if (settings.platform.isConsole())
 		{
 			if (settings.content.path.empty())
 			{
 				// Boot BIOS
-				if (!LoadRomFiles())
+				if (!nvmem::loadFiles())
 					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
 				InitDrive("");
 			}
@@ -520,9 +562,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					if (InitDrive(settings.content.path))
 					{
 						loadGameSpecificSettings();
-						if (config::UseReios || !LoadRomFiles())
+						if (config::UseReios || !nvmem::loadFiles())
 						{
-							LoadHle();
+							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
 								gui_display_notification("This game requires a real BIOS", 15000);
@@ -532,7 +574,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					{
 						// Content load failed. Boot the BIOS
 						settings.content.path.clear();
-						if (!LoadRomFiles())
+						if (!nvmem::loadFiles())
 							throw FlycastException("This media cannot be loaded");
 						InitDrive("");
 					}
@@ -540,7 +582,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				else
 				{
 					// Elf only supported with HLE BIOS
-					LoadHle();
+					nvmem::loadHle();
 				}
 			}
 
@@ -549,17 +591,20 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		else if (settings.platform.isArcade())
 		{
-			LoadRomFiles();
-			naomi_cart_LoadRom(path, progress);
+			nvmem::loadFiles();
+			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
 		}
-		mcfg_DestroyDevices();
-		mcfg_CreateDevices();
-		if (settings.platform.isNaomi())
-			// Must be done after the maple devices are created and EEPROM is accessible
-			naomi_cart_ConfigureEEPROM();
+		if (!settings.naomi.slave)
+		{
+			mcfg_DestroyDevices();
+			mcfg_CreateDevices();
+			if (settings.platform.isNaomi())
+				// Must be done after the maple devices are created and EEPROM is accessible
+				naomi_cart_ConfigureEEPROM();
+		}
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
@@ -574,7 +619,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
-			else if (config::AutoLoadState && !NaomiNetworkSupported())
+			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
 		}
 		EventManager::event(Event::Start);
@@ -620,7 +665,7 @@ void Emulator::runInternal()
 
 			if (resetRequested)
 			{
-				SaveRomFiles();
+				nvmem::saveFiles();
 				dc_reset(false);
 			}
 		} while (resetRequested);
@@ -629,17 +674,24 @@ void Emulator::runInternal()
 
 void Emulator::unloadGame()
 {
-	stop();
+	try {
+		stop();
+	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty() && !settings.naomi.multiboard)
 			dc_savestate(config::SavestateSlot);
-		dc_reset(true);
+		try {
+			dc_reset(true);
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+		}
 
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
 		settings.content.path.clear();
 		settings.content.gameId.clear();
+		settings.content.fileName.clear();
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
@@ -654,11 +706,11 @@ void Emulator::term()
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
-		libAICA_Term();
+		aica::term();
 		pvr::term();
 		mem_Term();
 
-		_vmem_release();
+		addrspace::release();
 		state = Terminated;
 	}
 }
@@ -677,13 +729,12 @@ void Emulator::stop()
 	{
 		rend_cancel_emu_wait();
 		try {
-			auto future = threadResult;
-			if(future.valid())
-				future.get();
+			checkStatus(true);
 		} catch (const FlycastException& e) {
 			WARN_LOG(COMMON, "%s", e.what());
+			throw e;
 		}
-		SaveRomFiles();
+		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
 	}
 	else
@@ -694,7 +745,7 @@ void Emulator::stop()
 		stopRequested = true;
 #else
 		TermAudio();
-		SaveRomFiles();
+		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
 #endif
 	}
@@ -719,10 +770,6 @@ void loadGameSpecificSettings()
 		if (settings.content.gameId.empty())
 			return;
 	}
-	else
-	{
-		settings.content.gameId = naomi_game_id;
-	}
 
 	// Default per-game settings
 	loadSpecialSettings();
@@ -733,10 +780,7 @@ void loadGameSpecificSettings()
 	config::Settings::instance().load(true);
 
 	if (config::ForceWindowsCE)
-	{
 		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
-		config::FullMMU.override(true);
-	}
 }
 
 void Emulator::step()
@@ -759,7 +803,7 @@ void dc_loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
-	aicaarm::recompiler::flush();
+	aica::arm::recompiler::flush();
 #endif
 	mmu_flush_table();
 #if FEAT_SHREC != DYNAREC_NONE
@@ -795,7 +839,8 @@ void EventManager::registerEvent(Event event, Callback callback, void *param)
 		callbacks.insert({ event, { std::make_pair(callback, param) } });
 }
 
-void EventManager::unregisterEvent(Event event, Callback callback, void *param) {
+void EventManager::unregisterEvent(Event event, Callback callback, void *param)
+{
 	auto it = callbacks.find(event);
 	if (it == callbacks.end())
 		return;
@@ -807,7 +852,8 @@ void EventManager::unregisterEvent(Event event, Callback callback, void *param) 
 	it->second.erase(it2);
 }
 
-void EventManager::broadcastEvent(Event event) {
+void EventManager::broadcastEvent(Event event)
+{
 	auto it = callbacks.find(event);
 	if (it == callbacks.end())
 		return;
@@ -877,12 +923,11 @@ void Emulator::start()
 					TermAudio();
 				} catch (...) {
 					setNetworkState(false);
-					state = Error;
 					sh4_cpu.Stop();
 					TermAudio();
 					throw;
 				}
-		}).share();
+		});
 	}
 	else
 	{
@@ -893,20 +938,24 @@ void Emulator::start()
 	EventManager::event(Event::Resume);
 }
 
-bool Emulator::checkStatus()
+bool Emulator::checkStatus(bool wait)
 {
 	try {
 		const std::lock_guard<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
-			auto result = threadResult.wait_for(std::chrono::seconds(0));
-			if (result == std::future_status::timeout)
-				return true;
+			if (!wait)
+			{
+				auto result = threadResult.wait_for(std::chrono::seconds(0));
+				if (result == std::future_status::timeout)
+					return true;
+			}
 			threadResult.get();
 		}
 		return false;
 	} catch (...) {
 		EventManager::event(Event::Pause);
+		state = Error;
 		throw;
 	}
 }
@@ -924,7 +973,7 @@ bool Emulator::render()
 		{
 			stopRequested = false;
 			TermAudio();
-			SaveRomFiles();
+			nvmem::saveFiles();
 			EventManager::event(Event::Pause);
 		}
 		// TODO if stopping due to a user request, no frame has been rendered

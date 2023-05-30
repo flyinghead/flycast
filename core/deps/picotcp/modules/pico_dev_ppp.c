@@ -1330,10 +1330,12 @@ static void ppp_ipv4_conf(struct pico_device_ppp *ppp)
     ip.addr = ppp->ipcp_peer_ip;
     pico_ipv4_route_add(ip, nm, any, 1, pico_ipv4_link_by_dev(&ppp->dev));
 
+#ifdef PICO_SUPPORT_DNS_CLIENT
     dns1.addr = ppp->ipcp_dns1;
     dns2.addr = ppp->ipcp_dns2;
     pico_dns_client_nameserver(&dns1, PICO_DNS_NS_ADD);
     pico_dns_client_nameserver(&dns2, PICO_DNS_NS_ADD);
+#endif
 }
 
 static void ipcp_send_nack(struct pico_device_ppp *ppp);
@@ -2511,4 +2513,10 @@ int pico_ppp_set_peer_ip(struct pico_device *dev, struct pico_ip4 ip)
 
     ppp->ipcp_peer_ip = ip.addr;
     return 0;
+}
+
+void pico_ppp_deinit(void)
+{
+	ppp_devnum = 0;
+	memset(ppp_recv_buf, 0, sizeof(ppp_recv_buf));
 }

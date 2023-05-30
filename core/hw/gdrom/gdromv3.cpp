@@ -553,7 +553,9 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 			u32 elapsed;
 			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
 			u8 Qch[12];
-			Qch[0] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1;
+			u8 adr, ctrl;
+			libGDR_GetTrackAdrAndControl(tracknum, adr, ctrl);
+			Qch[0] = (ctrl << 4) | adr;
 			Qch[1] = bin2bcd(tracknum);
 			Qch[2] = bin2bcd(1); 					// index
 			Qch[3] = bin2bcd(elapsed / 60 / 75); 	// min
@@ -578,15 +580,18 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 	case 1:	// Q data only
 	default:
 		{
+			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : fad;
 			u32 elapsed;
-			u32 tracknum = libGDR_GetTrackNumber(fad, elapsed);
+			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
 
 			//2 DATA Length MSB (0 = 0h)
 			subc_info[2] = 0;
 			//3 DATA Length LSB (14 = Eh)
 			subc_info[3] = 0xE;
 			//4 Control ADR
-			subc_info[4] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
+			u8 adr, ctrl;
+			libGDR_GetTrackAdrAndControl(tracknum, adr, ctrl);
+			subc_info[4] = (ctrl << 4) | adr;
 			//5-13	DATA-Q
 			u8* data_q = &subc_info[5 - 1];
 			//-When ADR = 1
@@ -601,9 +606,9 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 			//6 ZERO
 			data_q[6] = 0;
 			//7-9 FAD
-			data_q[7] = fad >> 16;
-			data_q[8] = fad >> 8;
-			data_q[9] = fad;
+			data_q[7] = curFad >> 16;
+			data_q[8] = curFad >> 8;
+			data_q[9] = curFad;
 			DEBUG_LOG(GDROM, "gd_get_subcode: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
 					 subc_info[0], subc_info[1], subc_info[2], subc_info[3],
 					 subc_info[4], subc_info[5], subc_info[6], subc_info[7],
@@ -768,34 +773,37 @@ void gd_process_spi_cmd()
 	case SPI_REQ_STAT:
 		{
 			printf_spicmd("SPI_REQ_STAT");
+			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : read_params.start_sector - 1;
 			u32 elapsed;
-			u32 tracknum = libGDR_GetTrackNumber(cdda.CurrAddr.FAD, elapsed);
+			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
 			u8 stat[10];
 
 			//0  0   0   0   0   STATUS
-			stat[0]=SecNumber.Status;   //low nibble 
+			stat[0] = SecNumber.Status;   //low nibble
 			//1 Disc Format Repeat Count
-			stat[1]=(u8)(SecNumber.DiscFormat<<4) | (cdda.repeats);
-			//2 Address Control
-			stat[2] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
-			//3 TNO
+			stat[1] = (u8)(SecNumber.DiscFormat << 4) | cdda.repeats;
+			//2 Control ADR
+			u8 adr, ctrl;
+			libGDR_GetTrackAdrAndControl(tracknum, adr, ctrl);
+			stat[2] = (ctrl << 4) | adr;
+			//3 Track #
 			stat[3] = tracknum;
-			//4 X
+			//4 Index #
 			stat[4] = 1;
 			//5 FAD
-			stat[5]=cdda.CurrAddr.B0;
+			stat[5] = curFad >> 16;
 			//6 FAD
-			stat[6]=cdda.CurrAddr.B1;
+			stat[6] = curFad >> 8;
 			//7 FAD
-			stat[7]=cdda.CurrAddr.B2;
+			stat[7] = curFad;
 			//8 Max Read Error Retry Times
-			stat[8]=0;
+			stat[8] = 0;
 			//9 0   0   0   0   0   0   0   0
-			stat[9]=0;
+			stat[9] = 0;
 
 			
-			verify((packet_cmd.data_8[2]+packet_cmd.data_8[4])<11);
-			gd_spi_pio_end(&stat[packet_cmd.data_8[2]],packet_cmd.data_8[4]);
+			verify(packet_cmd.data_8[2] + packet_cmd.data_8[4] < 11);
+			gd_spi_pio_end(&stat[packet_cmd.data_8[2]], packet_cmd.data_8[4]);
 		}
 		break;
 
@@ -844,7 +852,7 @@ void gd_process_spi_cmd()
 			if (param_type == 1 || param_type == 2)
 			{
 				bool min_sec_frame = param_type == 2;
-				cdda.StartAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
+				cdda.CurrAddr.FAD = cdda.StartAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
 				cdda.EndAddr.FAD = GetFAD(&packet_cmd.data_8[8], min_sec_frame);
 				if (cdda.EndAddr.FAD == 0)
 				{
@@ -855,10 +863,6 @@ void gd_process_spi_cmd()
 					cdda.EndAddr.FAD = ses_inf[3] << 16 | ses_inf[4] << 8 | ses_inf[5];
 				}
 				cdda.repeats = packet_cmd.data_8[6] & 0xF;
-				if ((cdda.status != cdda_t::Playing && cdda.status != cdda_t::Paused)
-						|| cdda.CurrAddr.FAD < cdda.StartAddr.FAD
-						|| cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
-					cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
 				cdda.status = cdda_t::Playing;
 				SecNumber.Status = GD_PLAY;
 
@@ -1306,8 +1310,8 @@ void gdrom_reg_Reset(bool hard)
 {
 	if (hard)
 	{
-		sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-		sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+		hollyRegs.setWriteHandler<SB_GDST_addr>(GDROM_DmaStart);
+		hollyRegs.setWriteHandler<SB_GDEN_addr>(GDROM_DmaEnable);
 
 		// set default hardware information
 		memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
@@ -1399,10 +1403,6 @@ void deserialize(Deserializer& deser)
 	{
 		deser >> packet_cmd;
 		read_buff.cache_size = 0;
-		// read_buff (old)
-		if (deser.version() < Deserializer::V9_LIBRETRO
-				|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
-			deser.skip(4 + 4 + 2352 * 8192);
 	}
 	deser >> pio_buff;
 	deser >> set_mode_offset;
@@ -1422,7 +1422,7 @@ void deserialize(Deserializer& deser)
 	deser >> SecNumber;
 	deser >> GDStatus;
 	deser >> ByteCount;
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
 		deser.skip<u32>(); 			// GDROM_TICK
 }
 

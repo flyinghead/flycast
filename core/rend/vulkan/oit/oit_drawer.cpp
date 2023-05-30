@@ -23,6 +23,7 @@
 #include "rend/sorter.h"
 
 #include <algorithm>
+#include <memory>
 
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)
@@ -81,8 +82,8 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	{
 		OITDescriptorSets::VtxPushConstants vtxPushConstants {};
 		if (listType == ListType_Translucent) {
-			u32 firstVertexIdx = pvrrc.idx.head()[pvrrc.global_param_tr.head()->first];
-			vtxPushConstants.polyNumber = (int)((&poly - pvrrc.global_param_tr.head()) << 17) - firstVertexIdx;
+			u32 firstVertexIdx = pvrrc.idx[pvrrc.global_param_tr[0].first];
+			vtxPushConstants.polyNumber = (int)((&poly - &pvrrc.global_param_tr[0]) << 17) - firstVertexIdx;
 		};
 		cmdBuffer.pushConstants<OITDescriptorSets::VtxPushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eVertex,
 				sizeof(OITDescriptorSets::PushConstants), vtxPushConstants);
@@ -98,15 +99,15 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			{
 			case ListType_Opaque:
 				offset = offsets.naomi2OpaqueOffset;
-				polyNumber = &poly - pvrrc.global_param_op.head();
+				polyNumber = &poly - &pvrrc.global_param_op[0];
 				break;
 			case ListType_Punch_Through:
 				offset = offsets.naomi2PunchThroughOffset;
-				polyNumber = &poly - pvrrc.global_param_pt.head();
+				polyNumber = &poly - &pvrrc.global_param_pt[0];
 				break;
 			case ListType_Translucent:
 				offset = offsets.naomi2TranslucentOffset;
-				polyNumber = &poly - pvrrc.global_param_tr.head();
+				polyNumber = &poly - &pvrrc.global_param_tr[0];
 				break;
 			}
 		}
@@ -120,10 +121,12 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 }
 
 void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-		const List<PolyParam>& polys, u32 first, u32 last)
+		const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
-	const PolyParam *pp_end = polys.head() + last;
-	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+	if (first == last)
+		return;
+	const PolyParam *pp_end = &polys[last];
+	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, pass, *pp, pp->first, pp->count);
 }
@@ -131,7 +134,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 template<bool Translucent>
 void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count, const ModifierVolumeParam *modVolParams)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -152,7 +155,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.size());
 
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -213,23 +216,23 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(pvrrc.verts.head(), pvrrc.verts.bytes());
+	packer.add(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
 	// Index
-	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
+	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
 
 	// Translucent poly params
-	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-	if (pvrrc.global_param_tr.used() == 0)
+	std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+	if (pvrrc.global_param_tr.empty())
 		trPolyParams.push_back(0);	// makes the validation layers happy
 	else
 	{
-		const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
-		const PolyParam *pp = pvrrc.global_param_tr.head();
+		const PolyParam *pp_end = &pvrrc.global_param_tr.back() + 1;
+		const PolyParam *pp = &pvrrc.global_param_tr[0];
 		for (int i = 0; pp != pp_end; i += 2, pp++)
 		{
 			trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
@@ -312,9 +315,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	};
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -328,11 +331,11 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     	oitBuffers->ResetPixelCounter(cmdBuffer);
 
     	const bool initialPass = render_pass == 0;
-    	const bool finalPass = render_pass == pvrrc.render_passes.used() - 1;
+    	const bool finalPass = render_pass == (int)pvrrc.render_passes.size() - 1;
 
     	vk::Framebuffer targetFramebuffer;
     	if (!finalPass)
-    		targetFramebuffer = *tempFramebuffers[(pvrrc.render_passes.used() - 1 - render_pass) % 2];
+    		targetFramebuffer = *tempFramebuffers[(pvrrc.render_passes.size() - 1 - render_pass) % 2];
     	else
     		targetFramebuffer = GetFinalFramebuffer();
     	cmdBuffer.beginRenderPass(
@@ -351,7 +354,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
 			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.head());
+			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, &pvrrc.global_param_mvo[0]);
 
 			// Color subpass
 			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -372,7 +375,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-		descriptorSets.bindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+		descriptorSets.bindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.size() - 1 - render_pass) % 2);
 
 		if (initialPass && !pvrrc.isRTT && clearNeeded[GetCurrentImage()])
 		{
@@ -400,9 +403,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 		{
 			if (current_pass.mv_op_tr_shared)
-				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.head());
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, &pvrrc.global_param_mvo[0]);
 			else
-				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.head());
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, &pvrrc.global_param_mvo_tr[0]);
 		}
 
 		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
@@ -441,8 +444,8 @@ void OITDrawer::MakeBuffers(int width, int height)
 	for (auto& attachment : colorAttachments)
 	{
 		attachment.reset();
-		attachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		attachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, vk::Format::eR8G8B8A8Unorm,
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
@@ -450,8 +453,8 @@ void OITDrawer::MakeBuffers(int width, int height)
 	for (auto& attachment : depthAttachments)
 	{
 		attachment.reset();
-		attachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		attachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
@@ -490,8 +493,8 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 		usage |= vk::ImageUsageFlagBits::eSampled;
 	while (finalColorAttachments.size() < GetSwapChainSize())
 	{
-		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
+		finalColorAttachments.push_back(std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 		finalColorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm,
 				usage);
 		std::array<vk::ImageView, 4> attachments = {
@@ -568,7 +571,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,

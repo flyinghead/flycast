@@ -2,6 +2,9 @@
 #include "types.h"
 #include <deque>
 
+namespace aica
+{
+
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)
 #define SCIRE_addr (0x289C+8)
@@ -306,7 +309,7 @@ extern CommonData_struct* CommonData;
 extern DSPData_struct*	  DSPData;
 
 template<typename T>
-void WriteAicaReg(u32 reg, T data);
+void writeTimerAndIntReg(u32 reg, T data);
 
 class AicaTimer
 {
@@ -380,3 +383,7 @@ public:
 		}
 	}
 };
+
+extern AicaTimer timers[3];
+
+} // namespace aica

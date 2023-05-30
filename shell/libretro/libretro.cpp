@@ -130,9 +130,12 @@ static bool lightgunSettingsShown = true;
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
 u8 lt[4];
+u8 lt2[4];
+u8 rt2[4];
 u32 vks[4];
 s8 joyx[4], joyy[4];
 s8 joyrx[4], joyry[4];
+s8 joy3x[4], joy3y[4];
 // Mouse buttons
 // bit 0: Button C
 // bit 1: Right button (B)
@@ -333,7 +336,7 @@ void retro_init()
         set_user_data_dir(std::string(data_dir) + "/");
 #endif
 
-	if (!_vmem_reserve())
+	if (!addrspace::reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
 	os_InstallFaultHandler();
@@ -359,7 +362,7 @@ void retro_deinit()
 	os_UninstallFaultHandler();
 	
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
-	_vmem_release();
+	addrspace::release();
 #else
 	emu.term();
 #endif
@@ -1025,9 +1028,13 @@ static void update_variables(bool first_startup)
 		if (wasThreadedRendering != config::ThreadedRendering)
 		{
 			config::ThreadedRendering = wasThreadedRendering;
-			emu.stop();
-			config::ThreadedRendering = !wasThreadedRendering;
-			emu.start();
+			try {
+				emu.stop();
+				config::ThreadedRendering = !wasThreadedRendering;
+				emu.start();
+			} catch (const FlycastException& e) {
+				ERROR_LOG(COMMON, "%s", e.what());
+			}
 		}
 		if (rotate_screen != (prevRotateScreen ^ rotate_game))
 		{
@@ -1299,11 +1306,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		case RETRO_DEVICE_JOYPAD:
 		case RETRO_DEVICE_POINTER:
 			joymap = dc_joymap;
-			joymap_size = ARRAY_SIZE(dc_joymap);
+			joymap_size = std::size(dc_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = dc_lg_joymap;
-			joymap_size = ARRAY_SIZE(dc_lg_joymap);
+			joymap_size = std::size(dc_lg_joymap);
 			break;
 		default:
 			return 0;
@@ -1317,11 +1324,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		case RETRO_DEVICE_JOYPAD:
 		case RETRO_DEVICE_POINTER:
 			joymap = nao_joymap;
-			joymap_size = ARRAY_SIZE(nao_joymap);
+			joymap_size = std::size(nao_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = nao_lg_joymap;
-			joymap_size = ARRAY_SIZE(nao_lg_joymap);
+			joymap_size = std::size(nao_lg_joymap);
 			break;
 		default:
 			return 0;
@@ -1334,11 +1341,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		case RETRO_DEVICE_JOYPAD:
 		case RETRO_DEVICE_POINTER:
 			joymap = aw_joymap;
-			joymap_size = ARRAY_SIZE(aw_joymap);
+			joymap_size = std::size(aw_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = aw_lg_joymap;
-			joymap_size = ARRAY_SIZE(aw_lg_joymap);
+			joymap_size = std::size(aw_lg_joymap);
 			break;
 		default:
 			return 0;
@@ -2039,14 +2046,14 @@ void retro_unload_game()
 void *retro_get_memory_data(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return mem_b.data;
+      return &mem_b[0];
    return nullptr;
 }
 
 size_t retro_get_memory_size(unsigned type)
 {
    if (type == RETRO_MEMORY_SYSTEM_RAM)
-      return mem_b.size;
+      return RAM_SIZE;
    return 0;
 }
 
@@ -2056,7 +2063,12 @@ size_t retro_serialize_size()
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return 0;
+		}
 
 	Serializer ser;
 	dc_serialize(ser);
@@ -2072,7 +2084,12 @@ bool retro_serialize(void *data, size_t size)
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return false;
+		}
 
 	Serializer ser(data, size);
 	dc_serialize(ser);
@@ -2088,7 +2105,12 @@ bool retro_unserialize(const void * data, size_t size)
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
 	if (!first_run)
-		emu.stop();
+		try {
+			emu.stop();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			return false;
+		}
 
 	try {
 		Deserializer deser(data, size);
@@ -2584,7 +2606,7 @@ static void UpdateInputStateNaomi(u32 port)
 					if (haveCardReader)
 					{
 						 if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
-							 card_reader::insertCard();
+							 card_reader::insertCard(port);
 					}
 					else
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);
@@ -2641,7 +2663,7 @@ static void UpdateInputStateNaomi(u32 port)
 			// -- mouse, for rotary encoders
 			updateMouseState(port);
 			// lightgun with analog stick
-			if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+			if (settings.input.lightgunGame)
 			{
 				updateLightgunCoordinatesFromAnalogStick(port);
 				if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
@@ -3152,7 +3174,7 @@ void fatal_error(const char* text, ...)
 	}
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	ERROR_LOG(COMMON, "DEBUGBREAK!");
 	//exit(-1);
@@ -3391,3 +3413,5 @@ void gui_display_notification(const char *msg, int duration)
 	retromsg.frames = duration / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }
+
+void os_RunInstance(int argc, const char *argv[]) { }

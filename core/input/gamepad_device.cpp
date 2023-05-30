@@ -23,7 +23,7 @@
 #include "rend/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/naomi/card_reader.h"
+#include "mouse.h"
 
 #include <algorithm>
 #include <mutex>
@@ -39,7 +39,11 @@ s8 joyrx[4];
 s8 joyry[4];
 u8 rt[4];
 u8 lt[4];
+s8 joy3x[4];
+s8 joy3y[4];
 // Keyboards
+u8 lt2[4];
+u8 rt2[4];
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
@@ -57,7 +61,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	if (key == EMU_BTN_NONE)
 		return false;
 
-	if (key <= DC_BTN_RELOAD)
+	if (key <= DC_BTN_BITMAPPED_LAST)
 	{
 		if (port >= 0)
 		{
@@ -85,11 +89,15 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case EMU_BTN_FFORWARD:
 			if (pressed && !gui_is_open())
-				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online;
+				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online && !settings.naomi.multiboard;
 			break;
-		case EMU_BTN_INSERT_CARD:
-			if (pressed && settings.platform.isNaomi())
-				card_reader::insertCard();
+		case EMU_BTN_LOADSTATE:
+			if (pressed)
+				gui_loadState();
+			break;
+		case EMU_BTN_SAVESTATE:
+			if (pressed)
+				gui_saveState();
 			break;
 		case DC_AXIS_LT:
 			if (port >= 0)
@@ -99,7 +107,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (port >= 0)
 				rt[port] = pressed ? 255 : 0;
 			break;
-
+		case DC_AXIS_LT2:
+			if (port >= 0)
+				lt2[port] = pressed ? 255 : 0;
+			break;
+		case DC_AXIS_RT2:
+			if (port >= 0)
+				rt2[port] = pressed ? 255 : 0;
+			break;
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
 			buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
@@ -115,6 +130,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case DC_AXIS2_LEFT:
 		case DC_AXIS2_RIGHT:
 			buttonToAnalogInput<DC_AXIS2_LEFT, DIGANA2_LEFT, DIGANA2_RIGHT>(port, key, pressed, joyrx[port]);
+			break;
+		case DC_AXIS3_UP:
+		case DC_AXIS3_DOWN:
+			buttonToAnalogInput<DC_AXIS3_UP, DIGANA3_UP, DIGANA3_DOWN>(port, key, pressed, joy3y[port]);
+			break;
+		case DC_AXIS3_LEFT:
+		case DC_AXIS3_RIGHT:
+			buttonToAnalogInput<DC_AXIS3_LEFT, DIGANA3_LEFT, DIGANA3_RIGHT>(port, key, pressed, joy3x[port]);
 			break;
 
 		default:
@@ -135,7 +158,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = nullptr;
 		return true;
 	}
-	if (!input_mapper || _maple_port > (int)ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port > (int)std::size(kcode))
 		return false;
 
 	bool rc = false;
@@ -182,6 +205,10 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				lt[port] = std::min(std::abs(v) >> 7, 255);
 			else if (key == DC_AXIS_RT)
 				rt[port] = std::min(std::abs(v) >> 7, 255);
+			else if (key == DC_AXIS_LT2)
+				lt2[port] = std::min(std::abs(v) >> 7, 255);
+			else if (key == DC_AXIS_RT2)
+				rt2[port] = std::min(std::abs(v) >> 7, 255);
 			else
 				return false;
 		}
@@ -225,8 +252,34 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				other_axis = &joyrx[port];
 				break;
 
+			case DC_AXIS3_RIGHT:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS3_LEFT:
+				this_axis = &joy3x[port];
+				other_axis = &joy3y[port];
+				break;
+
+			case DC_AXIS3_DOWN:
+				axisDirection = 1;
+				//no break
+			case DC_AXIS3_UP:
+				this_axis = &joy3y[port];
+				other_axis = &joy3x[port];
+				break;
+
 			default:
 				return false;
+			}
+			// Lightgun with left analog stick
+			int& lastValue = lastAxisValue[port][key];
+			if (lastValue != v)
+			{
+				lastValue = v;
+				if (key == DC_AXIS_RIGHT || key == DC_AXIS_LEFT)
+					mo_x_abs[port] = (std::abs(v) * axisDirection + 32768) * 639 / 65535;
+				else if (key == DC_AXIS_UP || key == DC_AXIS_DOWN)
+					mo_y_abs[port] = (std::abs(v) * axisDirection + 32768) * 479 / 65535;
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
@@ -239,7 +292,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			else
 				*this_axis = v * axisDirection;
 		}
-		else if (key != EMU_BTN_NONE && key <= DC_BTN_RELOAD) // Map triggers to digital buttons
+		else if (key != EMU_BTN_NONE && key <= DC_BTN_BITMAPPED_LAST) // Map triggers to digital buttons
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?

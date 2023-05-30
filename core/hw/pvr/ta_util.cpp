@@ -23,13 +23,14 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //
-// Check if a vertex has huge x,y,z values or negative z
+// Check if a vertex has NaN or huge x,y,z values
 //
 static bool is_vertex_inf(const Vertex& vtx)
 {
-	return std::isnan(vtx.x) || fabsf(vtx.x) > 3.4e37f
-			|| std::isnan(vtx.y) || fabsf(vtx.y) > 3.4e37f
-			|| std::isnan(vtx.z) || vtx.z < 0.f || vtx.z > 3.4e37f;
+	// manic panic ghosts needs 1.0e25f for x and y
+	return std::isnan(vtx.x) || fabsf(vtx.x) > 1e25f
+			|| std::isnan(vtx.y) || fabsf(vtx.y) > 1e25f
+			|| std::isnan(vtx.z) || vtx.z > 3.4e37f;
 }
 
 struct IndexTrig
@@ -69,14 +70,13 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	if (count == 0)
 		return;
 
-	const Vertex * const vtx_base = ctx.verts.head();
-	const PolyParam * const pp_base = &ctx.global_param_tr.head()[first];
+	const PolyParam * const pp_base = &ctx.global_param_tr[first];
 	const PolyParam * const pp_end = pp_base + count;
 
 	//make lists of all triangles, with their pid and vid
 	static std::vector<IndexTrig> triangleList;
 
-	int vtx_count = ctx.verts.used() - pp_base->first;
+	int vtx_count = ctx.verts.size() - pp_base->first;
 	triangleList.reserve(vtx_count);
 	triangleList.clear();
 
@@ -85,14 +85,14 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		if (pp->count < 3)
 			continue;
 
-		const Vertex *v0 = &vtx_base[pp->first];
-		const Vertex *v1 = &vtx_base[pp->first + 1];
+		const Vertex *v0 = &ctx.verts[pp->first];
+		const Vertex *v1 = &ctx.verts[pp->first + 1];
 		float z0 = 0, z1 = 0;
 
 		if (pp->isNaomi2())
 		{
-			z0 = getProjectedZ(v0, pp->mvMatrix);
-			z1 = getProjectedZ(v1, pp->mvMatrix);
+			z0 = getProjectedZ(v0, ctx.matrices[pp->mvMatrix].mat);
+			z1 = getProjectedZ(v1, ctx.matrices[pp->mvMatrix].mat);
 		}
 		else
 		{
@@ -103,23 +103,23 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 		}
 		for (u32 i = 2; i < pp->count; i++)
 		{
-			const Vertex *v2 = &vtx_base[pp->first + i];
+			const Vertex *v2 = &ctx.verts[pp->first + i];
 			if (!pp->isNaomi2() && is_vertex_inf(*v2))
 				v2 = nullptr;
 			if (v0 != nullptr && v1 != nullptr && v2 != nullptr)
 			{
 				triangleList.emplace_back((u32)(pp - pp_base),
-						(u32)(v0 - vtx_base), (u32)(v1 - vtx_base), (u32)(v2 - vtx_base));
+						(u32)(v0 - &ctx.verts[0]), (u32)(v1 - &ctx.verts[0]), (u32)(v2 - &ctx.verts[0]));
 				if (pp->isNaomi2())
 				{
-					float z2 = getProjectedZ(v2, pp->mvMatrix);
+					float z2 = getProjectedZ(v2, ctx.matrices[pp->mvMatrix].mat);
 					triangleList.back().z = std::min(z0, std::min(z1, z2));
 					z0 = z1;
 					z1 = z2;
 				}
 				else
 				{
-					triangleList.back().z = minZ(vtx_base, triangleList.back().vid);
+					triangleList.back().z = minZ(&ctx.verts[0], triangleList.back().vid);
 				}
 			}
 			if (i & 1)
@@ -146,20 +146,20 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	//re-assemble them into drawing commands
 
 	int idx = -1;
-	int idxSize = ctx.idx.used();
+	int idxSize = ctx.idx.size();
 
 	for (size_t i = 0; i < triangleList.size(); i++)
 	{
 		int pid = triangleList[i].pid;
 		u32* midx = triangleList[i].vid;
 
-		*ctx.idx.Append() = midx[0];
-		*ctx.idx.Append() = midx[1];
-		*ctx.idx.Append() = midx[2];
+		ctx.idx.emplace_back(midx[0]);
+		ctx.idx.emplace_back(midx[1]);
+		ctx.idx.emplace_back(midx[2]);
 
 		if (idx != pid)
 		{
-			SortedTriangle cur = { pp_base + pid, (u32)(idxSize + i * 3), 0 };
+			SortedTriangle cur = { (u32)(&pp_base[pid] - &ctx.global_param_tr[0]), (u32)(idxSize + i * 3), 0 };
 
 			if (idx != -1)
 			{
@@ -180,7 +180,7 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	else
 	{
 		// Add a dummy one to signal we're using sorted triangles
-		ctx.sortedTriangles.push_back({ pp_base, 0, 0});
+		ctx.sortedTriangles.push_back({ (u32)(&pp_base[0] - &ctx.global_param_tr[0]), 0, 0});
 	}
 	pass.sorted_tr_count = ctx.sortedTriangles.size();
 
@@ -194,16 +194,14 @@ static bool operator<(const PolyParam& left, const PolyParam& right)
 	return left.zvZ < right.zvZ;
 }
 
-void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ctx)
+void sortPolyParams(std::vector<PolyParam>& polys, int first, int end, rend_context& ctx)
 {
 	if (end - first <= 1)
 		return;
 
-	Vertex *vtx_base = ctx.verts.head();
+	PolyParam * const pp_end = &polys[end];
 
-	PolyParam * const pp_end = &polys->head()[end];
-
-	for (PolyParam *pp = &polys->head()[first]; pp != pp_end; pp++)
+	for (PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 	{
 		if (pp->count < 3)
 		{
@@ -211,12 +209,12 @@ void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ct
 		}
 		else
 		{
-			Vertex *vtx = &vtx_base[pp->first];
-			Vertex *vtx_end = &vtx_base[pp->first + pp->count];
+			Vertex *vtx = &ctx.verts[pp->first];
+			Vertex *vtx_end = &ctx.verts[pp->first + pp->count];
 
 			if (pp->isNaomi2())
 			{
-				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
+				glm::mat4 mvMat = glm::make_mat4(ctx.matrices[pp->mvMatrix].mat);
 				glm::vec3 min{ 1e38f, 1e38f, 1e38f };
 				glm::vec3 max{ -1e38f, -1e38f, -1e38f };
 				while (vtx != vtx_end)
@@ -256,7 +254,7 @@ void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ct
 		}
 	}
 
-	std::stable_sort(&polys->head()[first], pp_end);
+	std::stable_sort(&polys[first], pp_end);
 }
 
 void getRegionTileAddrAndSize(u32& address, u32& size)
@@ -320,11 +318,10 @@ int getTAContextAddresses(u32 *addresses)
 	return count;
 }
 
-void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend_context& ctx)
+void fix_texture_bleeding(const std::vector<PolyParam>& polys, int first, int end, rend_context& ctx)
 {
-	const PolyParam *pp_end = &polys->head()[end];
-	Vertex * const vtx_base = ctx.verts.head();
-	for (const PolyParam *pp = &polys->head()[first]; pp != pp_end; pp++)
+	auto pp_end = polys.begin() + end;
+	for (auto pp = polys.begin() + first; pp != pp_end; ++pp)
 	{
 		if (!pp->pcw.Texture || pp->count < 3 || pp->isNaomi2())
 			continue;
@@ -336,7 +333,7 @@ void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend
 		float z = 0.f;
 		for (u32 idx = pp->first; idx < last && need_fixing; idx++)
 		{
-			Vertex& vtx = vtx_base[idx];
+			Vertex& vtx = ctx.verts[idx];
 
 			if (vtx.u != 0.f && (vtx.u <= 0.995f || vtx.u > 1.f))
 				need_fixing = false;
@@ -353,7 +350,7 @@ void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend
 		u32 tex_height = 8 << pp->tsp.TexV;
 		for (u32 idx = pp->first; idx < last; idx++)
 		{
-			Vertex& vtx = vtx_base[idx];
+			Vertex& vtx = ctx.verts[idx];
 			if (vtx.u > 0.995f)
 				vtx.u = 1.f;
 			vtx.u = (0.5f + vtx.u * (tex_width - 1)) / tex_width;
@@ -368,13 +365,11 @@ void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 // Use primitive restart when merging strips.
 //
-void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx)
+void makePrimRestartIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx)
 {
-	const Vertex *vertices = ctx.verts.head();
-
 	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys->head()[end];
-	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
+	const PolyParam *end_poly = &polys[end];
+	for (PolyParam *poly = &polys[first]; poly != end_poly; poly++)
 	{
 		int first_index;
 		bool dupe_next_vtx = false;
@@ -383,26 +378,26 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 				&& last_poly->count != 0
 				&& poly->equivalentIgnoreCullingDirection(*last_poly))
 		{
-			*ctx.idx.Append() = ~0;
+			ctx.idx.push_back(~0);
 			dupe_next_vtx = poly->isp.CullMode >= 2 && poly->isp.CullMode != last_poly->isp.CullMode;
 			first_index = last_poly->first;
 		}
 		else
 		{
 			last_poly = poly;
-			first_index = ctx.idx.used();
+			first_index = ctx.idx.size();
 		}
 		int last_good_vtx = -1;
 		for (u32 i = 0; i < poly->count; i++)
 		{
-			const Vertex& vtx = vertices[poly->first + i];
+			const Vertex& vtx = ctx.verts[poly->first + i];
 			if (!poly->isNaomi2() && is_vertex_inf(vtx))
 			{
 				bool odd = i & 1;
 				while (i < poly->count - 1)
 				{
 					odd = !odd;
-					const Vertex& next_vtx = vertices[poly->first + i + 1];
+					const Vertex& next_vtx = ctx.verts[poly->first + i + 1];
 					if (!is_vertex_inf(next_vtx))
 					{
 						if (poly->count - (i + 1) < 3)
@@ -412,7 +407,7 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 						{
 							if (last_good_vtx >= 0)
 								// reset the strip
-								*ctx.idx.Append() = ~0;
+								ctx.idx.push_back(~0);
 							if (odd && poly->isp.CullMode >= 2)
 								// repeat next vertex to get culling right
 								dupe_next_vtx = true;
@@ -427,20 +422,20 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 				last_good_vtx = poly->first + i;
 				if (dupe_next_vtx)
 				{
-					*ctx.idx.Append() = last_good_vtx;
+					ctx.idx.push_back(last_good_vtx);
 					dupe_next_vtx = false;
 				}
-				*ctx.idx.Append() = last_good_vtx;
+				ctx.idx.push_back(last_good_vtx);
 			}
 		}
 		if (last_poly == poly)
 		{
 			poly->first = first_index;
-			poly->count = ctx.idx.used() - first_index;
+			poly->count = ctx.idx.size() - first_index;
 		}
 		else
 		{
-			last_poly->count = ctx.idx.used() - last_poly->first;
+			last_poly->count = ctx.idx.size() - last_poly->first;
 			poly->count = 0;
 		}
 	}
@@ -450,15 +445,12 @@ void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool
 // Create the vertex index, eliminating invalid vertices and merging strips when possible.
 // Use degenerate triangles to link strips.
 //
-void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx)
+void makeIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx)
 {
-	const u32 *indices = ctx.idx.head();
-	const Vertex *vertices = ctx.verts.head();
-
 	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys->head()[end];
+	const PolyParam *end_poly = &polys[end];
 	bool cullingReversed = false;
-	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
+	for (PolyParam *poly = &polys[first]; poly != end_poly; poly++)
 	{
 		int first_index;
 		bool dupe_next_vtx = false;
@@ -467,18 +459,18 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 				&& last_poly->count != 0
 				&& poly->equivalentIgnoreCullingDirection(*last_poly))
 		{
-			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-			*ctx.idx.Append() = last_vtx;
+			const u32 last_vtx = ctx.idx[last_poly->first + last_poly->count - 1];
+			ctx.idx.push_back(last_vtx);
 			if (poly->isp.CullMode < 2 || poly->isp.CullMode == last_poly->isp.CullMode)
 			{
 				if (cullingReversed)
-					*ctx.idx.Append() = last_vtx;
+					ctx.idx.push_back(last_vtx);
 				cullingReversed = false;
 			}
 			else
 			{
 				if (!cullingReversed)
-					*ctx.idx.Append() = last_vtx;
+					ctx.idx.push_back(last_vtx);
 				cullingReversed = true;
 			}
 			dupe_next_vtx = true;
@@ -487,25 +479,25 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 		else
 		{
 			last_poly = poly;
-			first_index = ctx.idx.used();
+			first_index = ctx.idx.size();
 			cullingReversed = false;
 		}
 		int last_good_vtx = -1;
 		for (u32 i = 0; i < poly->count; i++)
 		{
-			const Vertex& vtx = vertices[poly->first + i];
+			const Vertex& vtx = ctx.verts[poly->first + i];
 			if (!poly->isNaomi2() && is_vertex_inf(vtx))
 			{
 				while (i < poly->count - 1)
 				{
-					const Vertex& next_vtx = vertices[poly->first + i + 1];
+					const Vertex& next_vtx = ctx.verts[poly->first + i + 1];
 					if (!is_vertex_inf(next_vtx))
 					{
 						// repeat last and next vertices to link strips
 						if (last_good_vtx >= 0)
 						{
 							verify(!dupe_next_vtx);
-							*ctx.idx.Append() = last_good_vtx;
+							ctx.idx.push_back(last_good_vtx);
 							dupe_next_vtx = true;
 						}
 						break;
@@ -518,23 +510,23 @@ void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, ren
 				last_good_vtx = poly->first + i;
 				if (dupe_next_vtx)
 				{
-					*ctx.idx.Append() = last_good_vtx;
+					ctx.idx.push_back(last_good_vtx);
 					dupe_next_vtx = false;
 				}
-				const u32 count = ctx.idx.used() - first_index;
+				const u32 count = ctx.idx.size() - first_index;
 				if (((i ^ count) & 1) ^ cullingReversed)
-					*ctx.idx.Append() = last_good_vtx;
-				*ctx.idx.Append() = last_good_vtx;
+					ctx.idx.push_back(last_good_vtx);
+				ctx.idx.push_back(last_good_vtx);
 			}
 		}
 		if (last_poly == poly)
 		{
 			poly->first = first_index;
-			poly->count = ctx.idx.used() - first_index;
+			poly->count = ctx.idx.size() - first_index;
 		}
 		else
 		{
-			last_poly->count = ctx.idx.used() - last_poly->first;
+			last_poly->count = ctx.idx.size() - last_poly->first;
 			poly->count = 0;
 		}
 	}

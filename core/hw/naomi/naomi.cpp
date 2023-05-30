@@ -16,12 +16,14 @@
 #include "naomi_m3comm.h"
 #include "serialize.h"
 #include "network/output.h"
+#include "hw/sh4/modules/modules.h"
+#include "rend/gui.h"
+#include "printer.h"
 
 #include <algorithm>
 
-//#define NAOMI_COMM
-
 static NaomiM3Comm m3comm;
+Multiboard *multiboard;
 
 static const u32 BoardID = 0x980055AA;
 static u32 GSerialBuffer, BSerialBuffer;
@@ -32,12 +34,6 @@ static int BControl, BCmd, BLastCmd;
 static int GControl, GCmd, GLastCmd;
 static int SerStep, SerStep2;
 
-#ifdef NAOMI_COMM
-	u32 CommOffset;
-	u32* CommSharedMem;
-	HANDLE CommMapFile=INVALID_HANDLE_VALUE;
-#endif
-
 /*
 El numero de serie solo puede contener:
 0-9		(0x30-0x39)
@@ -46,6 +42,7 @@ J-N		(0x4A-0x4E)
 P-Z		(0x50-0x5A)
 */
 static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+//static u8 BSerial[]="\x09\xa1                              0000000000000000\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; // default from mame
 static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 
 static u8 midiTxBuf[4];
@@ -279,11 +276,11 @@ static void NaomiGameIDProcessCmd()
 
 void NaomiGameIDWrite(const u16 Data)
 {
-	int Dat=Data&0x01;
-	int Clk=Data&0x02;
-	int Rst=Data&0x04;
-	int Sta=Data&0x08;
-	int Cmd=Data&0x10;
+	int Dat=Data&0x01;	// mame: SDA
+	int Clk=Data&0x02;	// mame: SCL
+	int Rst=Data&0x04;	// mame: CS
+	int Sta=Data&0x08;	// mame: RST
+	int Cmd=Data&0x10;	// mame: unused...
 	
 	if(Rst)
 	{
@@ -334,69 +331,12 @@ u16 NaomiGameIDRead()
 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
 }
 
-//DIMM board
-//Uses interrupt ext#3  (holly_EXT_PCI)
-
-//status/flags ? 0x1 is some completion/init flag(?), 0x100 is the interrupt disable flag (?)
-//n1 bios rev g (n2/epr-23605b has similar behavior of not same):
-//3c=0x1E03
-//40=0
-//44=0
-//48=0
-//read 4c
-//wait for 4c not 0
-//4c=[4c]-1
-
-//Naomi 2 bios epr-23609
-//read 3c
-//wait 4c to be non 0
-//
-
-//SO the writes to 3c/stuff are not relaced with 4c '1'
-//If the dimm board has some internal cpu/pic logic 
-//4c '1' seems to be the init done bit (?)
-//n1/n2 clears it after getting a non 0 value
-//n1 bios writes the value -1, meaning it expects the bit 0 to be set
-//.//
-
-u32 reg_dimm_command;		// command, written, 0x1E03 some flag ?
-u32 reg_dimm_offsetl;
-u32 reg_dimm_parameterl;
-u32 reg_dimm_parameterh;
-u32 reg_dimm_status = 0x11;
-
 static bool aw_ram_test_skipped = false;
 
-void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
-{
-	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
-	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
-	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
-	// command: param1 & 3f << 9 | param2
-	//   offsetl, paraml, paramh: params 3 4 5
-	//   HOLLY::SB_IML2EXT |= 8 when done
-
-
-	u32 param=(command&0xFF);
-	if (param==0xFF)
-	{
-		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
-	}
-	static int opcd=0;
-	//else if (param!=3)
-	if (opcd<255)
-	{
-		reg_dimm_command=0x8000 | (opcd%12<<9) | (0x0);
-		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_command);
-		asic_RaiseInterrupt(holly_EXP_PCI);
-		DEBUG_LOG(NAOMI, "Interrupt raised");
-		opcd++;
-	}
-}
 
 u32 ReadMem_naomi(u32 address, u32 size)
 {
-	verify(size != 1);
+//	verify(size != 1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
@@ -433,7 +373,10 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 		return;
 	}
 	
-	if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
+	if (multiboard != nullptr && multiboard->dmaStart())
+	{
+	}
+	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
@@ -478,75 +421,23 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 
 void naomi_reg_Init()
 {
-	#ifdef NAOMI_COMM
-	CommMapFile = CreateFileMapping(
-		INVALID_HANDLE_VALUE,    // use paging file
-		NULL,                    // default security 
-		PAGE_READWRITE,          // read/write access
-		0,                       // max. object size 
-		0x1000*4,                // buffer size  
-		L"Global\\nullDC_103_naomi_comm");                 // name of mapping object
-
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not create file mapping object (%d).\nTrying to open existing one\n"), 	GetLastError());
-		
-		CommMapFile=OpenFileMapping(
-                   FILE_MAP_ALL_ACCESS,   // read/write access
-                   FALSE,                 // do not inherit the name
-                   L"Global\\nullDC_103_naomi_comm");               // name of mapping object 
-	}
-	
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not open existing file either\n"), 	GetLastError());
-		CommMapFile=INVALID_HANDLE_VALUE;
-	}
-	else
-	{
-		printf("NAOMI: Created \"Global\\nullDC_103_naomi_comm\"\n");
-		CommSharedMem = (u32*) MapViewOfFile(CommMapFile,   // handle to map object
-			FILE_MAP_ALL_ACCESS, // read/write permission
-			0,                   
-			0,                   
-			0x1000*4);           
-
-		if (CommSharedMem == NULL) 
-		{ 
-			_tprintf(TEXT("Could not map view of file (%d).\n"), 
-				GetLastError()); 
-
-			CloseHandle(CommMapFile);
-			CommMapFile=INVALID_HANDLE_VALUE;
-		}
-		else
-			printf("NAOMI: Mapped CommSharedMem\n");
-	}
-	#endif
 	NaomiInit();
 	networkOutput.init();
 }
 
 void naomi_reg_Term()
 {
-#ifdef NAOMI_COMM
-	if (CommSharedMem)
-	{
-		UnmapViewOfFile(CommSharedMem);
-	}
-	if (CommMapFile!=INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(CommMapFile);
-	}
-#endif
+	if (multiboard != nullptr)
+		delete multiboard;
+	multiboard = nullptr;
 	m3comm.closeNetwork();
 	networkOutput.term();
 }
 
 void naomi_reg_Reset(bool hard)
 {
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+	hollyRegs.setWriteHandler<SB_GDST_addr>(Naomi_DmaStart);
+	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
 
@@ -567,24 +458,29 @@ void naomi_reg_Reset(bool hard)
 	GLastCmd = 0;
 	SerStep = 0;
 	SerStep2 = 0;
-	reg_dimm_command = 0;
-	reg_dimm_offsetl = 0;
-	reg_dimm_parameterl = 0;
-	reg_dimm_parameterh = 0;
-	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
 	if (hard)
 	{
 		naomi_cart_Close();
+		if (multiboard != nullptr)
+		{
+			delete multiboard;
+			multiboard = nullptr;
+		}
+		if (settings.naomi.multiboard)
+			multiboard = new Multiboard();
 		networkOutput.reset();
 	}
+	else if (multiboard != nullptr)
+		multiboard->reset();
 }
 
 static u8 aw_maple_devs;
 static u64 coin_chute_time[4];
 static u8 awDigitalOuput;
 
-u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
+u32 libExtDevice_ReadMem_A0_006(u32 addr, u32 size)
+{
 	addr &= 0x7ff;
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
@@ -646,7 +542,8 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	return 0xFF;
 }
 
-void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
+void libExtDevice_WriteMem_A0_006(u32 addr, u32 data, u32 size)
+{
 	addr &= 0x7ff;
 	//printf("libExtDevice_WriteMem_A0_006 %d@%08x: %x\n", size, addr, data);
 	switch (addr)
@@ -686,6 +583,8 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }
 
+static bool ffbCalibrating;
+
 void naomi_Serialize(Serializer& ser)
 {
 	ser << GSerialBuffer;
@@ -706,25 +605,16 @@ void naomi_Serialize(Serializer& ser)
 	ser << SerStep2;
 	ser.serialize(BSerial, 69);
 	ser.serialize(GSerial, 69);
-	ser << reg_dimm_command;
-	ser << reg_dimm_offsetl;
-	ser << reg_dimm_parameterl;
-	ser << reg_dimm_parameterh;
-	ser << reg_dimm_status;
 	ser << aw_maple_devs;
 	ser << coin_chute_time;
 	ser << aw_ram_test_skipped;
 	ser << midiTxBuf;
 	ser << midiTxBufIndex;
 	// TODO serialize m3comm?
+	ser << ffbCalibrating;
 }
 void naomi_Deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// naomi_updates
-		deser.skip<u32>();		// BoardID
-	}
 	deser >> GSerialBuffer;
 	deser >> BSerialBuffer;
 	deser >> GBufPos;
@@ -743,11 +633,14 @@ void naomi_Deserialize(Deserializer& deser)
 	deser >> SerStep2;
 	deser.deserialize(BSerial, 69);
 	deser.deserialize(GSerial, 69);
-	deser >> reg_dimm_command;
-	deser >> reg_dimm_offsetl;
-	deser >> reg_dimm_parameterl;
-	deser >> reg_dimm_parameterh;
-	deser >> reg_dimm_status;
+	if (deser.version() < Deserializer::V36)
+	{
+		deser.skip<u32>(); // reg_dimm_command;
+		deser.skip<u32>(); // reg_dimm_offsetl;
+		deser.skip<u32>(); // reg_dimm_parameterl;
+		deser.skip<u32>(); // reg_dimm_parameterh;
+		deser.skip<u32>(); // reg_dimm_status;
+	}
 	if (deser.version() < Deserializer::V11)
 		deser.skip<u8>();
 	else if (deser.version() >= Deserializer::V14)
@@ -766,14 +659,18 @@ void naomi_Deserialize(Deserializer& deser)
 	{
 		midiTxBufIndex = 0;
 	}
+	if (deser.version() >= Deserializer::V34)
+		deser >> ffbCalibrating;
+	else
+		ffbCalibrating = false;
 }
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
 {
-	aica_midiSend(b1);
-	aica_midiSend(b2);
-	aica_midiSend(b3);
-	aica_midiSend((b1 ^ b2 ^ b3) & 0x7f);
+	aica::midiSend(b1);
+	aica::midiSend(b2);
+	aica::midiSend(b3);
+	aica::midiSend((b1 ^ b2 ^ b3) & 0x7f);
 }
 
 static void forceFeedbackMidiReceiver(u8 data)
@@ -789,24 +686,131 @@ static void forceFeedbackMidiReceiver(u8 data)
 		if (midiTxBuf[0] == 0x84)
 			torque = ((midiTxBuf[1] << 7) | midiTxBuf[2]) - 0x80;
 		else if (midiTxBuf[0] == 0xff)
+			ffbCalibrating = true;
+		else if (midiTxBuf[0] == 0xf0)
+			ffbCalibrating = false;
+
+		if (!ffbCalibrating)
 		{
-			torque = 0;
-			position = 8192;
+			int direction = -1;
+			if (NaomiGameInputs != nullptr)
+				direction = NaomiGameInputs->axes[0].inverted ? 1 : -1;
+
+			position = std::clamp(mapleInputState[0].fullAxes[0] * direction * 64.f + 8192.f, 0.f, 16383.f);
 		}
 		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
 		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
 
 		// decoding from FFB Arcade Plugin (by Boomslangnz)
 		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
-		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
+		if (midiTxBuf[0] == 0x85)
 			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
 		if (midiTxBuf[0] != 0xfd)
 			networkOutput.output("midiffb", (midiTxBuf[0] << 16) | (midiTxBuf[1]) << 8 | midiTxBuf[2]);
 	}
-	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
+	midiTxBufIndex = (midiTxBufIndex + 1) % std::size(midiTxBuf);
 }
 
 void initMidiForceFeedback()
 {
-	aica_setMidiReceiver(forceFeedbackMidiReceiver);
+	aica::setMidiReceiver(forceFeedbackMidiReceiver);
 }
+
+struct DriveSimPipe : public SerialPipe
+{
+	void write(u8 data) override
+	{
+		if (buffer.empty() && data != 2)
+			return;
+		if (buffer.size() == 7)
+		{
+			u8 checksum = 0;
+			for (u8 b : buffer)
+				checksum += b;
+			if (checksum == data)
+			{
+				int newTacho = (buffer[2] - 1) * 100;
+				if (newTacho != tacho)
+				{
+					tacho = newTacho;
+					networkOutput.output("tachometer", tacho);
+				}
+				int newSpeed = buffer[3] - 1;
+				if (newSpeed != speed)
+				{
+					speed = newSpeed;
+					networkOutput.output("speedometer", speed);
+				}
+				if (!config::NetworkOutput)
+				{
+					char message[16];
+					sprintf(message, "Speed: %3d", speed);
+					gui_display_notification(message, 1000);
+				}
+			}
+			buffer.clear();
+		}
+		else
+		{
+			buffer.push_back(data);
+		}
+	}
+
+	void reset()
+	{
+		buffer.clear();
+		tacho = -1;
+		speed = -1;
+	}
+private:
+	std::vector<u8> buffer;
+	int tacho = -1;
+	int speed = -1;
+};
+
+void initDriveSimSerialPipe()
+{
+	static DriveSimPipe pipe;
+
+	pipe.reset();
+	serial_setPipe(&pipe);
+}
+
+G2PrinterConnection g2PrinterConnection;
+
+u32 G2PrinterConnection::read(u32 addr, u32 size)
+{
+	if (addr == STATUS_REG_ADDR)
+	{
+		u32 ret = printerStat;
+		printerStat |= 1;
+		DEBUG_LOG(NAOMI, "Printer status == %x", ret);
+		return ret;
+	}
+	else
+	{
+		INFO_LOG(NAOMI, "Unhandled G2 Ext read<%d> at %x", size, addr);
+		return 0;
+	}
+}
+
+void G2PrinterConnection::write(u32 addr, u32 size, u32 data)
+{
+	switch (addr)
+	{
+	case DATA_REG_ADDR:
+		for (u32 i = 0; i < size; i++)
+			printer::print((char)(data >> (i * 8)));
+		break;
+
+	case STATUS_REG_ADDR:
+		DEBUG_LOG(NAOMI, "Printer status = %x", data);
+		printerStat &= ~1;
+		break;
+
+	default:
+		INFO_LOG(NAOMI, "Unhandled G2 Ext write<%d> at %x: %x", size, addr, data);
+		break;
+	}
+}
+

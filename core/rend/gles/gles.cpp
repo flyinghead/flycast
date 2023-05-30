@@ -19,6 +19,7 @@
 #endif
 
 #include <cmath>
+#include <memory>
 
 #ifdef GLES
 #ifndef GL_RED
@@ -425,7 +426,6 @@ static void gl_delete_shaders()
 void termGLCommon()
 {
 	termQuad();
-	postProcessor.term();
 
 	// palette, fog
 	glcache.DeleteTextures(1, &fogTextureId);
@@ -446,16 +446,15 @@ void termGLCommon()
 	gl.ofbo2.framebuffer.reset();
 	gl.fbscaling.framebuffer.reset();
 #ifdef LIBRETRO
+	postProcessor.term();
 	termVmuLightgun();
 #endif
 }
 
 static void gles_term()
 {
-	deleteVertexArray(gl.vbo.mainVAO);
-	gl.vbo.mainVAO = 0;
-	deleteVertexArray(gl.vbo.modvolVAO);
-	gl.vbo.modvolVAO = 0;
+	gl.vbo.mainVAO.term();
+	gl.vbo.modvolVAO.term();
 	gl.vbo.geometry.reset();
 	gl.vbo.modvols.reset();
 	gl.vbo.idxs.reset();
@@ -625,7 +624,6 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 	GLint result;
 	glGetProgramiv(program, GL_LINK_STATUS, &result);
 
-
 	GLint compile_log_len;
 	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &compile_log_len);
 
@@ -645,7 +643,8 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
-
+	glDetachShader(program, vs);
+	glDetachShader(program, ps);
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
@@ -810,22 +809,8 @@ bool CompilePipelineShader(PipelineShader* s)
 	return true;
 }
 
-#ifdef __ANDROID__
-static void SetupOSDVBO()
+void OSDVertexArray::defineVtxAttribs()
 {
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-	{
-		glGenVertexArrays(1, &gl.OSD_SHADER.vao);
-		glBindVertexArray(gl.OSD_SHADER.vao);
-	}
-#endif
-	if (gl.OSD_SHADER.geometry == 0)
-		glGenBuffers(1, &gl.OSD_SHADER.geometry);
-	glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, x));
 
@@ -836,10 +821,9 @@ static void SetupOSDVBO()
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, u));
 
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glCheck();
-	bindVertexArray(0);
 }
 
+#ifdef __ANDROID__
 static void gl_load_osd_resources()
 {
 	OpenGlSource vertexSource;
@@ -865,7 +849,7 @@ static void gl_load_osd_resources()
 
 		delete[] image_data;
 	}
-	SetupOSDVBO();
+	gl.OSD_SHADER.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 }
 #endif
 
@@ -881,10 +865,8 @@ static void gl_free_osd_resources()
         glcache.DeleteTextures(1, &gl.OSD_SHADER.osd_tex);
         gl.OSD_SHADER.osd_tex = 0;
     }
-	glDeleteBuffers(1, &gl.OSD_SHADER.geometry);
-	gl.OSD_SHADER.geometry = 0;
-	deleteVertexArray(gl.OSD_SHADER.vao);
-	gl.OSD_SHADER.vao = 0;
+    gl.OSD_SHADER.geometry.reset();
+	gl.OSD_SHADER.vao.term();
 }
 
 static void create_modvol_shader()
@@ -918,11 +900,11 @@ static void create_modvol_shader()
 	}
 }
 
-static bool gl_create_resources()
+static void gl_create_resources()
 {
 	if (gl.vbo.geometry != nullptr)
 		// Assume the resources have already been created
-		return true;
+		return;
 
 	findGLVersion();
 
@@ -931,13 +913,11 @@ static bool gl_create_resources()
 		verify(glGenVertexArrays != nullptr);
 
 	//create vbos
-	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+	gl.vbo.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+	gl.vbo.modvols = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+	gl.vbo.idxs = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 
 	initQuad();
-
-	return true;
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
@@ -976,8 +956,7 @@ bool OpenGLRenderer::Init()
 {
 	glcache.EnableCache();
 
-	if (!gl_create_resources())
-		return false;
+	gl_create_resources();
 
 #if 0
 	glEnable(GL_DEBUG_OUTPUT);
@@ -1009,7 +988,6 @@ bool OpenGLRenderer::Init()
 
 	return true;
 }
-
 
 static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
 {
@@ -1061,18 +1039,18 @@ static void updatePaletteTexture(GLenum texture_slot)
 void OpenGLRenderer::DrawOSD(bool clear_screen)
 {
 #ifdef LIBRETRO
-	void DrawVmuTexture(u8 vmu_screen_number);
-	void DrawGunCrosshair(u8 port);
+	void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
+	void DrawGunCrosshair(u8 port, int width, int height);
 
 	if (settings.platform.isConsole())
 	{
 		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 			if (vmu_lcd_status[vmu_screen_number * 2])
-				DrawVmuTexture(vmu_screen_number);
+				DrawVmuTexture(vmu_screen_number, width, height);
 	}
 
 	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-		DrawGunCrosshair(lightgun_port);
+		DrawGunCrosshair(lightgun_port, width, height);
 
 #else
 	gui_display_osd();
@@ -1092,13 +1070,6 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
-#ifndef GLES2
-		if (gl.gl_major >= 3)
-			glBindVertexArray(gl.OSD_SHADER.vao);
-		else
-#endif
-			SetupOSDVBO();
-
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		float scale_h = settings.display.height / 480.f;
@@ -1115,11 +1086,9 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 
-		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
-		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
+		gl.OSD_SHADER.geometry->update(osdVertices.data(), osdVertices.size() * sizeof(OSDVertex));
+		gl.OSD_SHADER.vao.bind(gl.OSD_SHADER.geometry.get());
 
 		glcache.Enable(GL_BLEND);
 		glcache.Disable(GL_DEPTH_TEST);
@@ -1139,11 +1108,14 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 	}
 #endif
 #endif
-	bindVertexArray(0);
+	GlVertexArray::unbind();
 }
 
-bool OpenGLRenderer::Process(TA_context* ctx)
+void OpenGLRenderer::Process(TA_context* ctx)
 {
+	if (gl.gl_major < 3 && settings.platform.isNaomi2())
+		throw FlycastException("OpenGL ES 3.0+ required for Naomi 2");
+
 	if (KillTex)
 		TexCache.Clear();
 	TexCache.Cleanup();
@@ -1158,24 +1130,22 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		updatePaletteTexture(getPaletteTextureSlot());
 		palette_updated = false;
 	}
-	return ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
+	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 
 static void upload_vertex_indices()
 {
 	if (gl.index_type == GL_UNSIGNED_SHORT)
 	{
-		static bool overrun;
-		static List<u16> short_idx;
-		if (short_idx.daty != NULL)
-			short_idx.Free();
-		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
-		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
-			*(short_idx.Append()) = *p;
-		gl.vbo.idxs->update(short_idx.head(), short_idx.bytes());
+		static std::vector<u16> short_idx;
+		short_idx.clear();
+		short_idx.reserve(pvrrc.idx.size());
+		for (u32 i : pvrrc.idx)
+			short_idx.push_back(i);
+		gl.vbo.idxs->update(&short_idx[0], short_idx.size() * sizeof(u16));
 	}
 	else
-		gl.vbo.idxs->update(pvrrc.idx.head(), pvrrc.idx.bytes());
+		gl.vbo.idxs->update(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
 	glCheck();
 }
 
@@ -1263,13 +1233,18 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	}
 	else
 	{
+		this->width = width;
+		this->height = height;
+		getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter)
-			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
-		else if (config::EmulateFramebuffer)
+		if (config::EmulateFramebuffer)
 		{
 			if (init_output_framebuffer(width, height) == 0)
 				return false;
+		}
+		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
 		}
 		else
 		{
@@ -1306,13 +1281,13 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	{
 		//move vertex to gpu
 		//Main VBO
-		gl.vbo.geometry->update(pvrrc.verts.head(), pvrrc.verts.bytes());
+		gl.vbo.geometry->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
 
 		upload_vertex_indices();
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
-			gl.vbo.modvols->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		if (!pvrrc.modtrig.empty())
+			gl.vbo.modvols->update(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
 
 		if (!wide_screen_on)
 		{
@@ -1383,13 +1358,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 
 		DrawStrips();
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter && !is_rtt)
-		{
-			if (config::EmulateFramebuffer)
-				postProcessor.render(init_output_framebuffer(width, height));
-			else
-				postProcessor.render(glsm_get_current_framebuffer());
-		}
+		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}
 
@@ -1403,7 +1373,7 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		renderLastFrame();
 	}
 #endif
-	bindVertexArray(0);
+	GlVertexArray::unbind();
 
 	return !is_rtt;
 }

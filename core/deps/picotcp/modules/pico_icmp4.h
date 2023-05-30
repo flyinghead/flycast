@@ -152,6 +152,7 @@ int pico_icmp4_param_problem(struct pico_frame *f, uint8_t code);
 # define pico_icmp4_packet_filtered(f) (-1)
 # define pico_icmp4_param_problem(f, c) (-1)
 #endif /* PICO_SUPPORT_ICMP4 */
+void pico_icmp4_deinit(void);
 
 #define PICO_PING_ERR_REPLIED 0
 #define PICO_PING_ERR_TIMEOUT 1

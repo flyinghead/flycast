@@ -23,14 +23,17 @@
 
 #include <sstream>
 #include "arm7_rec.h"
-#include "hw/mem/_vmem.h"
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 //#include <aarch32/disasm-aarch32.h>
 #include "rec-ARM64/arm64_unwind.h"
-#include "stdclass.h"
+#include "oslib/virtmem.h"
 
-namespace aicaarm {
+namespace aica
+{
+
+namespace arm
+{
 
 static void (*arm_dispatch)();	// Not an executable address
 
@@ -44,9 +47,9 @@ static Arm64UnwindInfo unwinder;
 static void JITWriteProtect(bool enable)
 {
     if (enable)
-        mem_region_set_exec(recompiler::ICache, recompiler::ICacheSize);
+    	virtmem::region_set_exec(recompiler::ICache, recompiler::ICacheSize);
     else
-        mem_region_unlock(recompiler::ICache, recompiler::ICacheSize);
+    	virtmem::region_unlock(recompiler::ICache, recompiler::ICacheSize);
 }
 #endif
 
@@ -62,8 +65,8 @@ class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 		static const WRegister regs[] = {
 				w19, w20, w21, w22, w23, w24, w25, w27
 		};
-		static_assert(MAX_REGS == ARRAY_SIZE(regs), "MAX_REGS == ARRAY_SIZE(regs)");
-		verify(i >= 0 && (u32)i < ARRAY_SIZE(regs));
+		static_assert(MAX_REGS == std::size(regs), "MAX_REGS == std::size(regs)");
+		verify(i >= 0 && (u32)i < std::size(regs));
 		return regs[i];
 	}
 
@@ -624,7 +627,7 @@ public:
 
 		FinalizeCode();
 		verify((size_t)GetBuffer()->GetCursorOffset() <= GetBuffer()->GetCapacity());
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
@@ -728,7 +731,7 @@ public:
 		size_t unwindSize = unwinder.end(recompiler::spaceLeft() - 128, (ptrdiff_t)recompiler::writeToExec(nullptr));
 		verify(unwindSize <= 128);
 
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
@@ -759,5 +762,6 @@ void arm7backend_flush()
 	assembler.generateMainLoop();
 }
 
-}
+} // namespace arm
+} // namespace aica
 #endif // ARM64

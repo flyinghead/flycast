@@ -19,32 +19,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "vulkan_context.h"
+#include "vulkan.h"
 
 class CommandPool
 {
 public:
-	void Init()
-	{
-		if (commandPools.size() > chainSize)
-		{
-			commandPools.resize(chainSize);
-			fences.resize(chainSize);
-		}
-		else
-		{
-			while (commandPools.size() < chainSize)
-			{
-				commandPools.push_back(VulkanContext::Instance()->GetDevice().createCommandPoolUnique(
-						vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, VulkanContext::Instance()->GetGraphicsQueueFamilyIndex())));
-				fences.push_back(VulkanContext::Instance()->GetDevice().createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
-			}
-		}
-		if (freeBuffers.size() != chainSize)
-			freeBuffers.resize(chainSize);
-		if (inFlightBuffers.size() != chainSize)
-			inFlightBuffers.resize(chainSize);
-	}
+	void Init(size_t chainSize = 2);
 
 	void Term()
 	{
@@ -54,39 +34,9 @@ public:
 		commandPools.clear();
 	}
 
-	void EndFrame()
-	{
-		std::vector<vk::CommandBuffer> commandBuffers = vk::uniqueToRaw(inFlightBuffers[index]);
-		VulkanContext::Instance()->SubmitCommandBuffers(commandBuffers, *fences[index]);
-	}
-
-	void BeginFrame()
-	{
-		index = (index + 1) % chainSize;
-		VulkanContext::Instance()->GetDevice().waitForFences(fences[index].get(), true, UINT64_MAX);
-		VulkanContext::Instance()->GetDevice().resetFences(fences[index].get());
-		std::vector<vk::UniqueCommandBuffer>& inFlight = inFlightBuffers[index];
-		std::vector<vk::UniqueCommandBuffer>& freeBuf = freeBuffers[index];
-		std::move(inFlight.begin(), inFlight.end(), std::back_inserter(freeBuf));
-		inFlight.clear();
-		VulkanContext::Instance()->GetDevice().resetCommandPool(*commandPools[index], vk::CommandPoolResetFlagBits::eReleaseResources);
-	}
-
-	vk::CommandBuffer Allocate()
-	{
-		if (freeBuffers[index].empty())
-		{
-			inFlightBuffers[index].emplace_back(std::move(
-					VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools[index], vk::CommandBufferLevel::ePrimary, 1))
-					.front()));
-		}
-		else
-		{
-			inFlightBuffers[index].emplace_back(std::move(freeBuffers[index].back()));
-			freeBuffers[index].pop_back();
-		}
-		return *inFlightBuffers[index].back();
-	}
+	void BeginFrame();
+	void EndFrame();
+	vk::CommandBuffer Allocate();
 
 	vk::Fence GetCurrentFence()
 	{
@@ -105,5 +55,5 @@ private:
 	std::vector<vk::UniqueCommandPool> commandPools;
 	std::vector<vk::UniqueFence> fences;
 	// size should be the same as used by client: 2 for renderer (texCommandPool)
-	static constexpr size_t chainSize = 2;
+	size_t chainSize;
 };

@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "types.h"
-#include "_vmem.h"
+#include "addrspace.h"
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
@@ -100,17 +100,17 @@ class VramWatcher : public Watcher<VramWatcher>
 protected:
 	void protectMem(u32 addr, u32 size)
 	{
-		_vmem_protect_vram(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
+		addrspace::protectVram(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
 	}
 
 	void unprotectMem(u32 addr, u32 size)
 	{
-		_vmem_unprotect_vram(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
+		addrspace::unprotectVram(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
 	}
 
 	u32 getMemOffset(void *p)
 	{
-		return _vmem_get_vram_offset(p);
+		return addrspace::getVramOffset(p);
 	}
 
 public:
@@ -159,7 +159,7 @@ protected:
 public:
 	void *getMemPage(u32 addr)
 	{
-		return &aica_ram[addr];
+		return &aica::aica_ram[addr];
 	}
 };
 

@@ -15,7 +15,7 @@ static void asic_RL6Pending()
 	bool t3 = (SB_ISTEXT & SB_IML6EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML6NRM) != 0;
 
-	InterruptPend(sh4_IRL_9,t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_9, t1 || t2 || t3 || t4);
 }
 
 static void asic_RL4Pending()
@@ -25,7 +25,7 @@ static void asic_RL4Pending()
 	bool t3 = (SB_ISTEXT & SB_IML4EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML4NRM) != 0;
 
-	InterruptPend(sh4_IRL_11, t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_11, t1 || t2 || t3 || t4);
 }
 
 static void asic_RL2Pending()
@@ -35,7 +35,7 @@ static void asic_RL2Pending()
 	bool t3 = (SB_ISTEXT & SB_IML2EXT) != 0;
 	bool t4 = (SB_ISTNRM1 & SB_IML2NRM) != 0;
 
-	InterruptPend(sh4_IRL_13, t1 | t2 | t3 | t4);
+	InterruptPend(sh4_IRL_13, t1 || t2 || t3 || t4);
 }
 
 void asic_RaiseInterrupt(HollyInterruptID inter)
@@ -260,60 +260,60 @@ void asic_reg_Reset(bool hard)
 {
 	if (hard)
 	{
-		sb_rio_register(SB_ISTEXT_addr, RIO_WF, 0, &Write_SB_ISTEXT);
-		sb_rio_register(SB_ISTERR_addr, RIO_WF, 0, &Write_SB_ISTERR);
+		hollyRegs.setWriteHandler<SB_ISTEXT_addr>(Write_SB_ISTEXT);
+		hollyRegs.setWriteHandler<SB_ISTERR_addr>(Write_SB_ISTERR);
 
 		if (settings.platform.isNaomi2())
 		{
-			sb_rio_register(SB_ISTNRM_addr, RIO_FUNC, &Read_SB_ISTNRM<true>, &Write_SB_ISTNRM<true>);
+			hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<true>, Write_SB_ISTNRM<true>);
 
 			//NRM
 			//6
-			sb_rio_register(SB_IML6NRM_addr, RIO_WF, 0, &Write_SB_IML6NRM<true>);
+			hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<true>);
 			//4
-			sb_rio_register(SB_IML4NRM_addr, RIO_WF, 0, &Write_SB_IML4NRM<true>);
+			hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<true>);
 			//2
-			sb_rio_register(SB_IML2NRM_addr, RIO_WF, 0, &Write_SB_IML2NRM<true>);
+			hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<true>);
 			//EXT
 			//6
-			sb_rio_register(SB_IML6EXT_addr, RIO_WF, 0, &Write_SB_IML6EXT<true>);
+			hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<true>);
 			//4
-			sb_rio_register(SB_IML4EXT_addr, RIO_WF, 0, &Write_SB_IML4EXT<true>);
+			hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<true>);
 			//2
-			sb_rio_register(SB_IML2EXT_addr, RIO_WF, 0, &Write_SB_IML2EXT<true>);
+			hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<true>);
 			//ERR
 			//6
-			sb_rio_register(SB_IML6ERR_addr, RIO_WF, 0, &Write_SB_IML6ERR<true>);
+			hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<true>);
 			//4
-			sb_rio_register(SB_IML4ERR_addr, RIO_WF, 0, &Write_SB_IML4ERR<true>);
+			hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<true>);
 			//2
-			sb_rio_register(SB_IML2ERR_addr, RIO_WF, 0, &Write_SB_IML2ERR<true>);
+			hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<true>);
 		}
 		else
 		{
-			sb_rio_register(SB_ISTNRM_addr, RIO_FUNC, &Read_SB_ISTNRM<false>, &Write_SB_ISTNRM<false>);
+			hollyRegs.setHandlers<SB_ISTNRM_addr>(Read_SB_ISTNRM<false>, &Write_SB_ISTNRM<false>);
 
 			//NRM
 			//6
-			sb_rio_register(SB_IML6NRM_addr, RIO_WF, 0, &Write_SB_IML6NRM<false>);
+			hollyRegs.setWriteHandler<SB_IML6NRM_addr>(Write_SB_IML6NRM<false>);
 			//4
-			sb_rio_register(SB_IML4NRM_addr, RIO_WF, 0, &Write_SB_IML4NRM<false>);
+			hollyRegs.setWriteHandler<SB_IML4NRM_addr>(Write_SB_IML4NRM<false>);
 			//2
-			sb_rio_register(SB_IML2NRM_addr, RIO_WF, 0, &Write_SB_IML2NRM<false>);
+			hollyRegs.setWriteHandler<SB_IML2NRM_addr>(Write_SB_IML2NRM<false>);
 			//EXT
 			//6
-			sb_rio_register(SB_IML6EXT_addr, RIO_WF, 0, &Write_SB_IML6EXT<false>);
+			hollyRegs.setWriteHandler<SB_IML6EXT_addr>(Write_SB_IML6EXT<false>);
 			//4
-			sb_rio_register(SB_IML4EXT_addr, RIO_WF, 0, &Write_SB_IML4EXT<false>);
+			hollyRegs.setWriteHandler<SB_IML4EXT_addr>(Write_SB_IML4EXT<false>);
 			//2
-			sb_rio_register(SB_IML2EXT_addr, RIO_WF, 0, &Write_SB_IML2EXT<false>);
+			hollyRegs.setWriteHandler<SB_IML2EXT_addr>(Write_SB_IML2EXT<false>);
 			//ERR
 			//6
-			sb_rio_register(SB_IML6ERR_addr, RIO_WF, 0, &Write_SB_IML6ERR<false>);
+			hollyRegs.setWriteHandler<SB_IML6ERR_addr>(Write_SB_IML6ERR<false>);
 			//4
-			sb_rio_register(SB_IML4ERR_addr, RIO_WF, 0, &Write_SB_IML4ERR<false>);
+			hollyRegs.setWriteHandler<SB_IML4ERR_addr>(Write_SB_IML4ERR<false>);
 			//2
-			sb_rio_register(SB_IML2ERR_addr, RIO_WF, 0, &Write_SB_IML2ERR<false>);
+			hollyRegs.setWriteHandler<SB_IML2ERR_addr>(Write_SB_IML2ERR<false>);
 		}
 	}
 }

@@ -2,56 +2,40 @@
 
 #include "hw/hwreg.h"
 #include "hw/sh4/sh4_mmr.h"
+#include "modules.h"
 
-//Init term res
-void ubc_init()
+UBCRegisters ubc;
+
+void UBCRegisters::init()
 {
+	super::init();
+
 	//UBC BARA 0xFF200000 0x1F200000 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC, UBC_BARA_addr, RIO_DATA);
+	setRW<UBC_BARA_addr>();
 
 	//UBC BAMRA 0xFF200004 0x1F200004 8 Undefined Held Held Held Iclk
-	sh4_rio_reg_wmask<UBC, UBC_BAMRA_addr, 0x0f>();
+	setRW<UBC_BAMRA_addr, u8, 0x0f>();
 
 	//UBC BBRA 0xFF200008 0x1F200008 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg_wmask<UBC, UBC_BBRA_addr, 0x007f>();
+	setRW<UBC_BBRA_addr, u16, 0x007f>();
 
 	//UBC BARB 0xFF20000C 0x1F20000C 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC, UBC_BARB_addr, RIO_DATA);
+	setRW<UBC_BARB_addr>();
 
 	//UBC BAMRB 0xFF200010 0x1F200010 8 Undefined Held Held Held Iclk
-	sh4_rio_reg_wmask<UBC, UBC_BAMRB_addr, 0x0f>();
+	setRW<UBC_BAMRB_addr, u8, 0x0f>();
 
 	//UBC BBRB 0xFF200014 0x1F200014 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg_wmask<UBC, UBC_BBRB_addr, 0x007f>();
+	setRW<UBC_BBRB_addr, u16, 0x007f>();
 
 	//UBC BDRB 0xFF200018 0x1F200018 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC, UBC_BDRB_addr, RIO_DATA);
+	setRW<UBC_BDRB_addr>();
 
 	//UBC BDMRB 0xFF20001C 0x1F20001C 32 Undefined Held Held Held Iclk
-	sh4_rio_reg(UBC, UBC_BDMRB_addr, RIO_DATA);
+	setRW<UBC_BDMRB_addr>();
 
 	//UBC BRCR 0xFF200020 0x1F200020 16 0x0000 Held Held Held Iclk
-	sh4_rio_reg_wmask<UBC, UBC_BRCR_addr, 0xc4c9>();
-}
+	setRW<UBC_BRCR_addr, u16, 0xc4c9>();
 
-void ubc_reset()
-{
-	/*
-	BARA H'FF20 0000 H'1F20 0000 32 Undefined Held Held Held Iclk
-	UBC BAMRA H'FF20 0004 H'1F20 0004 8 Undefined Held Held Held Iclk
-	UBC BBRA H'FF20 0008 H'1F20 0008 16 H'0000 Held Held Held Iclk
-	UBC BARB H'FF20 000C H'1F20 000C 32 Undefined Held Held Held Iclk
-	UBC BAMRB H'FF20 0010 H'1F20 0010 8 Undefined Held Held Held Iclk
-	UBC BBRB H'FF20 0014 H'1F20 0014 16 H'0000 Held Held Held Iclk
-	UBC BDRB H'FF20 0018 H'1F20 0018 32 Undefined Held Held Held Iclk
-	UBC BDMRB H'FF20 001C H'1F20 001C 32 Undefined Held Held Held Iclk
-	UBC BRCR H'FF20 0020 H'1F20 0020 16 H'0000*2 Held Held Held Iclk
-	*/
-	UBC_BBRA = 0x0;
-	UBC_BBRB = 0x0;
-	UBC_BRCR = 0x0;
-}
-
-void ubc_term()
-{
+	reset();
 }

@@ -237,7 +237,7 @@ static void setupPath()
 {
 #ifndef TARGET_UWP
 	wchar_t fname[512];
-	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
+	GetModuleFileNameW(0, fname, std::size(fname));
 
 	std::string fn;
 	nowide::stackstring path;
@@ -448,7 +448,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					keycode = VK_NUMPAD_RETURN;
 				else
 					keycode = wParam & 0xff;
-				keyboard->keyboard_input(keycode, message == WM_KEYDOWN);
+				keyboard->input(keycode, message == WM_KEYDOWN);
 			}
 		}
 		break;
@@ -736,7 +736,7 @@ static bool dumpCallback(const wchar_t* dump_path,
 	if (succeeded)
 	{
 		wchar_t s[MAX_PATH + 32];
-		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
+		_snwprintf(s, std::size(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
 
 		nowide::stackstring path;
@@ -887,7 +887,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
 			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
 	};
-	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
+	google_breakpad::CustomClientInfo custom_info = { custom_entries, std::size(custom_entries) };
 
 	google_breakpad::ExceptionHandler handler(tempDir,
 		nullptr,
@@ -948,9 +948,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return 0;
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	__debugbreak();
+	std::abort();
 }
 
 void os_DoEvents()
@@ -972,4 +973,32 @@ void os_DoEvents()
 		DispatchMessage(&msg);
 	}
 #endif
+}
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	char exePath[MAX_PATH];
+	GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+	std::string cmdLine(exePath);
+	for (int i = 0; i < argc; i++)
+	{
+		cmdLine += ' ';
+		cmdLine += argv[i];
+	}
+
+	STARTUPINFOA startupInfo{};
+	startupInfo.cb = sizeof(startupInfo);
+
+	PROCESS_INFORMATION processInfo{};
+	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
+	if (rc)
+	{
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+	}
+	else
+	{
+		WARN_LOG(BOOT, "Cannot launch Flycast instance: error %d", GetLastError());
+	}
 }

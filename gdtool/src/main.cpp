@@ -142,7 +142,7 @@ bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 		fprintf(w,",\n\"tracks\": [");
 		{
 			for (int i=0; i<d->tracks.size(); i++) {
-				fprintf(w, "%s{ \"startFAD\":%d, \"endFAD\":%d, \"ctrl\":%d, \"addr\":%d }", i ==0 ? "\n":",\n", d->tracks[i].StartFAD, d->tracks[i].EndFAD, d->tracks[i].CTRL, d->tracks[i].ADDR);
+				fprintf(w, "%s{ \"startFAD\":%d, \"endFAD\":%d, \"ctrl\":%d, \"addr\":%d }", i ==0 ? "\n":",\n", d->tracks[i].StartFAD, d->tracks[i].EndFAD, d->tracks[i].CTRL, d->tracks[i].ADR);
 			}
 		}
 		fprintf(w,"\n]");

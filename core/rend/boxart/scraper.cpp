@@ -73,7 +73,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 	if (item.parsed)
 		return;
 	item.parsed = true;
-	int platform = getGamePlatform(item.gamePath.c_str());
+	int platform = getGamePlatform(item.fileName);
 	if (platform == DC_PLATFORM_DREAMCAST)
 	{
 		if (item.gamePath.empty())
@@ -83,20 +83,21 @@ void OfflineScraper::scrape(GameBoxart& item)
 			item.searchName.clear();
 			return;
 		}
-		Disc *disc;
+		Disc *disc = nullptr;
 		try {
 			disc = OpenDisc(item.gamePath.c_str());
+			if (disc == nullptr)
+				WARN_LOG(COMMON, "Can't open disk %s", item.gamePath.c_str());
 		} catch (const std::runtime_error& e) {
 			WARN_LOG(COMMON, "Can't open disk %s: %s", item.gamePath.c_str(), e.what());
-			// No need to retry if the disk is invalid/corrupted
-			item.scraped = true;
-			item.uniqueId.clear();
-			item.searchName.clear();
-			return;
 		} catch (const std::exception& e) {
 			// For some reason, this doesn't catch FlycastException on macOS/clang, so we need the
 			// previous catch block
 			WARN_LOG(COMMON, "Can't open disk %s: %s", item.gamePath.c_str(), e.what());
+		}
+		if (disc == nullptr)
+		{
+			// No need to retry if the disk is invalid/corrupted
 			item.scraped = true;
 			item.uniqueId.clear();
 			item.searchName.clear();
@@ -146,18 +147,18 @@ void OfflineScraper::scrape(GameBoxart& item)
 		delete disc;
 
 		item.uniqueId = trim_trailing_ws(std::string(diskId.product_number, sizeof(diskId.product_number)));
-		for (char& c : item.uniqueId)
-			if (!std::isprint(c))
-				c = ' ';
+		std::replace_if(item.uniqueId.begin(), item.uniqueId.end(), [](u8 c) {
+			return !std::isprint(c);
+		}, ' ');
 
 		item.searchName = trim_trailing_ws(std::string(diskId.software_name, sizeof(diskId.software_name)));
 		if (item.searchName.empty())
 			item.searchName = item.name;
 		else
 		{
-			for (char& c : item.searchName)
-				if (!std::isprint(c))
-					c = ' ';
+			std::replace_if(item.searchName.begin(), item.searchName.end(), [](u8 c) {
+				return !std::isprint(c);
+			}, ' ');
 		}
 
 		if (diskId.area_symbols[0] != '\0')
