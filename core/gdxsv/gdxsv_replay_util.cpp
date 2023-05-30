@@ -293,7 +293,10 @@ void gdxsv_replay_local_tab() {
 			}
 		}
 	}
+	scrollWhenDraggingOnVoid();
+	windowDragScroll();
 	ImGui::EndChild();
+	
 	ImGui::SameLine();
 	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_file_detail"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
 	{
@@ -340,6 +343,8 @@ void gdxsv_replay_local_tab() {
 			}
 		}
 	}
+	scrollWhenDraggingOnVoid();
+	windowDragScroll();
 	ImGui::EndChild();
 }
 
@@ -891,7 +896,10 @@ void gdxsv_replay_server_tab() {
 				}
 			}
 		}
+		scrollWhenDraggingOnVoid();
+		windowDragScroll();
 		ImGui::EndChild();
+		
 		static char page_buf[4] = "1";
 		{
 			DisabledScope loading_scope(!future_is_ready(fetch_replay_entry_future_));
@@ -922,7 +930,6 @@ void gdxsv_replay_server_tab() {
 	ImGui::EndChild();
 	
 	ImGui::SameLine();
-	
 	ImGui::BeginChild(ImGui::GetID("gdxsv_replay_server_detail"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
 	{
 		if (selected_replay_entry_index != -1) {
@@ -959,6 +966,8 @@ void gdxsv_replay_server_tab() {
 			}
 		}
 	}
+	scrollWhenDraggingOnVoid();
+	windowDragScroll();
 	ImGui::EndChild();
 }
 
