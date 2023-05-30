@@ -835,7 +835,11 @@ void gdxsv_replay_server_tab() {
 						char buf[128] = {0};
 						std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
 						
+#if defined(_WIN32)
+						setlocale(LC_CTYPE, ".1252");
+#else
 						setlocale(LC_CTYPE, "UTF-8");
+#endif
 						
 						wchar_t wide_char = entry.renpo_win + L'0' + 0xFEE0;
 						char renpo_win[4] = {0};
