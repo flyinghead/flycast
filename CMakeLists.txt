@@ -145,6 +145,10 @@ elseif(LIBRETRO)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
+	if(APPLE)
+		find_library(FOUNDATION Foundation)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${FOUNDATION})
+	endif()
 	if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
@@ -753,6 +757,9 @@ if(LIBRETRO)
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
 		shell/libretro/vmu_xhair.cpp)
+	if(APPLE)
+		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
