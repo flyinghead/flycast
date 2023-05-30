@@ -236,24 +236,29 @@ void gdxsv_replay_local_tab() {
 	if (ImGui::Button("Reload")) {
 		read_dir = false;
 	}
-	ImGui::SameLine();
+	
+	struct stat st;
+	if (flycast::stat(replay_dir.c_str(), &st) == 0) {
+		ImGui::SameLine();
 #if defined(__APPLE__) && TARGET_OS_OSX
-	if (ImGui::Button("Reveal in Finder")) {
-		char temp[512];
-		snprintf(temp, sizeof(temp), "open \"%s\"", get_writable_data_path("replays").c_str());
-		system(temp);
-	}
+		if (ImGui::Button("Reveal in Finder")) {
+			char temp[512];
+			snprintf(temp, sizeof(temp), "open \"%s\"", replay_dir.c_str());
+			system(temp);
+		}
 #elif defined(_WIN32) && !defined(TARGET_UWP)
-	if (ImGui::Button("Open folder")) {
-		SHELLEXECUTEINFOA sei = { 0 };
-		sei.cbSize = sizeof(sei);
-		sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-		sei.lpFile = "Explorer.exe";
-		sei.lpParameters = ("/root, " + get_writable_data_path("replays")).c_str();
-		sei.nShow = SW_SHOWDEFAULT;
-		ShellExecuteExA(&sei);
-	}
+		if (ImGui::Button("Open folder")) {
+			SHELLEXECUTEINFOA sei = { 0 };
+			sei.cbSize = sizeof(sei);
+			sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+			sei.lpFile = "Explorer.exe";
+			sei.lpParameters = ("/root, " + replay_dir).c_str();
+			sei.nShow = SW_SHOWDEFAULT;
+			ShellExecuteExA(&sei);
+		}
 #endif
+	}
+	
 	ImGui::SameLine();
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 	ImVec2 size;
