@@ -304,6 +304,9 @@ static void createDreamcastDevices()
 		case MDT_DenshaDeGoController:
 		case MDT_Dreameye:
 			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
+			if (config::MapleMainDevices[bus] == MDT_FishingController)
+				// integrated vibration pack
+				mcfg_Create(MDT_PurupuruPack, bus, 4);
 			break;
 
 		case MDT_LightGun:
