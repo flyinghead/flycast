@@ -577,6 +577,59 @@ const Game Games[] =
             { NULL, 0, 0 },
         }
     },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)
+    {
+        "mushikk",
+        "mushike",
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)",
+        0x04000000,
+        0x3892fb3a,
+        nullptr,
+        M1,
+        ROT0,
+        {
+            { "epr-24265.ic11",      0x0000000, 0x0400000,  0xdccb210b },
+            { "opr-24266.ic17s",     0x1000000, 0x0800000,  0x293e5350, InterleavedWord },
+            { "opr-24267.ic18",      0x1000002, 0x0800000,  0x80798f9a, InterleavedWord },
+            { "opr-24268.ic19s",     0x2000000, 0x0800000,  0xb512c772, InterleavedWord },
+            { "opr-24269.ic20",      0x2000002, 0x0800000,  0x25d4a162, InterleavedWord },
+            { "opr-24270.ic21s",     0x3000000, 0x0800000,  0x02a513ad, InterleavedWord },
+            { "opr-24271.ic22",      0x3000002, 0x0800000,  0x7e5c745c, InterleavedWord },
+            { "copy",                0x0400000, 0x0c00000,  0, Copy, 0x1000000 },
+        }
+    },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)
+    {
+        "mushikc",
+        "mushik2e",	// mame says mushike but the key pic is missing
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)",
+        0x04000000,
+        0x5501,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "ic8.bin", 0x00000000, 0x04000000, 0x5edc61fb },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
+        }
+    },
+	// Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)
+	// require rev.H Korea BIOS, not dumped
+    {
+        "mushik2k",
+        "mushik2e",
+        "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)",
+		0x08000000,
+        0x5502,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "fpr-24355.ic8", 0x00000000, 0x04000000, 0x8bd89229 },
+        	{ "fpr-24356.ic9", 0x04000000, 0x04000000, 0xed649c81 },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
+        }
+    },
     // Naomi M2/M3 Roms
     // 18 Wheeler (deluxe) (Rev A)
     {
