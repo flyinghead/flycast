@@ -215,6 +215,7 @@ void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& g
 		ImGui::Text("EndAt: %s", buf);
 	}
 	OptionCheckbox("Hide name", config::GdxReplayHideName, "Replace player names with generic names");
+	OptionCheckbox("Show Ally HP", config::GdxReplayShowAllyHP, "Hack the total HP field to display Ally HP");
 	ImGui::NewLine();
 	
 	gdxsv_replay_draw_players(users);
