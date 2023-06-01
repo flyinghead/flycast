@@ -24,7 +24,6 @@
 
 #ifdef FAST_MMU
 
-#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_mem.h"
 
 extern TLB_Entry UTLB[64];
@@ -57,7 +56,7 @@ static void cache_entry(const TLB_Entry &entry)
 {
 	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
 		return;
-	if (full_table_size >= ARRAY_SIZE(full_table))
+	if (full_table_size >= std::size(full_table))
 		return;
 
 	full_table[full_table_size].entry = entry;
@@ -134,7 +133,7 @@ int main(int argc, char *argv[])
 		perror(argv[1]);
 		return 1;
 	}
-	full_table_size = fread(full_table, sizeof(full_table[0]), ARRAY_SIZE(full_table), f);
+	full_table_size = fread(full_table, sizeof(full_table[0]), std::size(full_table), f);
 	fclose(f);
 	printf("Loaded %d entries\n", full_table_size);
 	std::vector<u32> addrs;
@@ -205,8 +204,7 @@ void ITLB_Sync(u32 entry)
 }
 
 //Do a full lookup on the UTLB entry's
-template<bool internal>
-u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
+MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	if (lru_entry != NULL)
 	{
@@ -221,7 +219,7 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 			if (tlb_entry_ret != nullptr)
 				*tlb_entry_ret = lru_entry;
 
-			return MMU_ERROR_NONE;
+			return MmuError::NONE;
 		}
 	}
 	const TLB_Entry *localEntry;
@@ -236,7 +234,7 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 		lru_mask = mask;
 		lru_address = ((*tlb_entry_ret)->Address.VPN << 10);
 
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
 #ifdef USE_WINCE_HACK
@@ -259,51 +257,52 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 		cache_entry(entry);
 
-		return MMU_ERROR_NONE;
+		p_sh4rcb->cntx.cycle_counter -= 164;
+
+		return MmuError::NONE;
 	}
 #endif
 
-	return MMU_ERROR_TLB_MISS;
+	return MmuError::TLB_MISS;
 }
-template u32 mmu_full_lookup<false>(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv);
 
 template<u32 translation_type>
-u32 mmu_full_SQ(u32 va, u32& rv)
+MmuError mmu_full_SQ(u32 va, u32& rv)
 {
-	u32 lookup = mmu_full_lookup(va, nullptr, rv);
+	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
 
-	if (lookup != MMU_ERROR_NONE)
+	if (lookup != MmuError::NONE)
 		return lookup;
 
 	rv &= ~31;//lower 5 bits are forced to 0
 
-	return MMU_ERROR_NONE;
+	return MmuError::NONE;
 }
-template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
-template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+template MmuError mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
-template<u32 translation_type, typename T>
-u32 mmu_data_translation(u32 va, u32& rv)
+template<u32 translation_type>
+MmuError mmu_data_translation(u32 va, u32& rv)
 {
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
 	if ((va & 0xFC000000) == 0x7C000000)
 	{
 		// On-chip RAM area isn't translated
 		rv = va;
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
-	u32 lookup = mmu_full_lookup(va, nullptr, rv);
-	if (lookup == MMU_ERROR_NONE && (rv & 0x1C000000) == 0x1C000000)
+	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	if (lookup == MmuError::NONE && (rv & 0x1C000000) == 0x1C000000)
 		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
 		rv |= 0xF0000000;
 #ifdef TRACE_WINCE_SYSCALLS
-	if (unresolved_unicode_string != 0 && lookup == MMU_ERROR_NONE)
+	if (unresolved_unicode_string != 0 && lookup == MmuError::NONE)
 	{
 		if (va == unresolved_unicode_string)
 		{
@@ -315,15 +314,8 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	return lookup;
 }
-template u32 mmu_data_translation<MMU_TT_DREAD, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DREAD, u64>(u32 va, u32& rv);
-
-template u32 mmu_data_translation<MMU_TT_DWRITE, u8>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u16>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u32>(u32 va, u32& rv);
-template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
+template MmuError mmu_data_translation<MMU_TT_DREAD>(u32 va, u32& rv);
+template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 void mmu_flush_table()
 {

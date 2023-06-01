@@ -53,13 +53,13 @@ void Mouse::setRelPos(float deltax, float deltay) {
 
 void Mouse::setWheel(int delta) {
 	std::lock_guard<std::mutex> lock(relPosMutex);
-	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_wheel_delta))
+	if (maple_port() >= 0 && maple_port() < (int)std::size(mo_wheel_delta))
 		mo_wheel_delta[maple_port()] += delta;
 }
 
 void Mouse::setButton(Button button, bool pressed)
 {
-	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_buttons))
+	if (maple_port() >= 0 && maple_port() < (int)std::size(mo_buttons))
 	{
 		if (pressed)
 			mo_buttons[maple_port()] &= ~(1 << (int)button);
@@ -116,7 +116,7 @@ static void screenToNative(int& x, int& y, int width, int height)
 
 void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 {
-	if (mouseId >= ARRAY_SIZE(mo_x_abs))
+	if (mouseId >= std::size(mo_x_abs))
 		return;
 	mo_width = width;
 	mo_height = height;
@@ -144,7 +144,7 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 
 void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId)
 {
-	if (mouseId >= ARRAY_SIZE(mo_x_delta))
+	if (mouseId >= std::size(mo_x_delta))
 		return;
 	int width = mo_width;
 	int height = mo_height;

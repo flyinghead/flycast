@@ -413,12 +413,12 @@ void  Naomi2Helper::init(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContex
 	resetCache();
 }
 
-void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber)
+void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber, const rend_context& ctx)
 {
 	N2PolyConstants polyConstants;
-	memcpy(polyConstants.mvMat, pp.mvMatrix, sizeof(polyConstants.mvMat));
-	memcpy(polyConstants.normalMat, pp.normalMatrix, sizeof(polyConstants.normalMat));
-	memcpy(polyConstants.projMat, pp.projMatrix, sizeof(polyConstants.projMat));
+	memcpy(polyConstants.mvMat, ctx.matrices[pp.mvMatrix].mat, sizeof(polyConstants.mvMat));
+	memcpy(polyConstants.normalMat, ctx.matrices[pp.normalMatrix].mat, sizeof(polyConstants.normalMat));
+	memcpy(polyConstants.projMat, ctx.matrices[pp.projMatrix].mat, sizeof(polyConstants.projMat));
 	polyConstants.envMapping[0] = pp.envMapping[0];
 	polyConstants.envMapping[1] = pp.envMapping[1];
 	polyConstants.bumpMapping = pp.pcw.Texture == 1 && pp.tcw.PixelFmt == PixelBumpMap;
@@ -434,13 +434,7 @@ void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber)
 	if (pp.lightModel != lastModel)
 	{
 		lastModel = pp.lightModel;
-		if (pp.lightModel != nullptr)
-			setConstBuffer(lightConstantsBuffer, *pp.lightModel);
-		else
-		{
-			N2LightModel lightModel{};
-			setConstBuffer(lightConstantsBuffer, lightModel);
-		}
+		setConstBuffer(lightConstantsBuffer, ctx.lightModels[pp.lightModel]);
 		deviceContext->VSSetConstantBuffers(2, 1, &lightConstantsBuffer.get());
 	}
 }

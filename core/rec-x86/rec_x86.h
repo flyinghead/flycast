@@ -72,6 +72,8 @@ public:
 	u32 relinkBlock(RuntimeBlockInfo *block);
 	bool rewriteMemAccess(host_context_t &context);
 
+	static void (*handleException)();
+
 private:
 	void genOpcode(RuntimeBlockInfo *block, bool optimise, shil_opcode& op);
 
@@ -79,6 +81,7 @@ private:
 	bool genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo *block);
 	void genMemHandlers();
 	void alignStack(int amount);
+	void genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write);
 
 	void checkBlock(bool smc_checks, RuntimeBlockInfo *block);
 	void freezeXMM();

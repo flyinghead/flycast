@@ -27,7 +27,7 @@ class NetworkOutput
 public:
 	void init()
 	{
-		if (!config::NetworkOutput)
+		if (!config::NetworkOutput || settings.naomi.slave || settings.naomi.drivingSimSlave == 1)
 			return;
 		server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -38,7 +38,7 @@ public:
 		socklen_t saddr_len = sizeof(saddr);
 		saddr.sin_family = AF_INET;
 		saddr.sin_addr.s_addr = INADDR_ANY;
-		saddr.sin_port = htons(8000);
+		saddr.sin_port = htons(8000 + settings.naomi.drivingSimSlave);
 		if (::bind(server, (sockaddr *)&saddr, saddr_len) < 0)
 		{
 			perror("bind");
@@ -75,7 +75,7 @@ public:
 
 	void output(const char *name, u32 value)
 	{
-		if (!config::NetworkOutput)
+		if (!config::NetworkOutput || clients.empty())
 			return;
 		if (!gameNameSent)
 		{

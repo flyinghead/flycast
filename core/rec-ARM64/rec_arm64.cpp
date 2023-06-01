@@ -38,8 +38,9 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
 #include "arm64_regalloc.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "arm64_unwind.h"
+#include "oslib/virtmem.h"
 
 #undef do_sqw_nommu
 
@@ -48,10 +49,6 @@ static void generate_mainloop();
 struct DynaRBI : RuntimeBlockInfo
 {
 	u32 Relink() override;
-
-	void Relocate(void* dst) override {
-		verify(false);
-	}
 };
 
 static u64 jmp_stack;
@@ -65,6 +62,8 @@ struct DynaCode;
 static DynaCode *arm64_intc_sched;
 static DynaCode *arm64_no_update;
 static DynaCode *blockCheckFail;
+static DynaCode *checkBlockNoFpu;
+static DynaCode *checkBlockFpu;
 static DynaCode *linkBlockGenericStub;
 static DynaCode *linkBlockBranchStub;
 static DynaCode *linkBlockNextStub;
@@ -94,9 +93,9 @@ void ngen_mainloop(void* v_cntx)
 static void JITWriteProtect(bool enable)
 {
     if (enable)
-        mem_region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    	virtmem::region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
     else
-        mem_region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    	virtmem::region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
 }
 #endif
 
@@ -131,7 +130,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -147,7 +146,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			AdjustDelaySlotException(ex);
 			pc--;
 		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
+		Do_Exception(pc, ex.expEvn);
 		handleException();
 	}
 }
@@ -297,26 +296,17 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		if (mmu_enabled())
-		{
-			Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-			Subs(w0, w0, block->guest_cycles);
-			Str(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-		}
-		else
-		{
-			Subs(w27, w27, block->guest_cycles);
-		}
+		Ldr(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Cmp(w1, 0);
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
+		Mov(w0, block->vaddr);
 		GenCall(arm64_intc_sched);
-		Label cpu_running;
-		Cbnz(w0, &cpu_running);
-		Mov(w29, block->vaddr);
-		Str(w29, sh4_context_mem_operand(&next_pc));
-		GenBranch(arm64_no_update);
-		Bind(&cpu_running);
+		Mov(w1, w0);
 		Bind(&cycles_remaining);
+
+		Sub(w1, w1, block->guest_cycles);
+		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
@@ -838,16 +828,9 @@ public:
 					}
 					else
 					{
-						if (CCN_MMUCR.AT)
-						{
-							Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-						}
-						else
-						{
-							Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-							Ldr(x9, MemOperand(x9));
-							Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-						}
+						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+						Ldr(x9, MemOperand(x9));
+						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 						Blr(x9);
 					}
 					Bind(&not_sqw);
@@ -1127,21 +1110,21 @@ public:
 		switch (size)
 		{
 		case 1:
-			GenCallRuntime(_vmem_ReadMem8);
+			GenCallRuntime(addrspace::read8);
 			Sxtb(w0, w0);
 			break;
 
 		case 2:
-			GenCallRuntime(_vmem_ReadMem16);
+			GenCallRuntime(addrspace::read16);
 			Sxth(w0, w0);
 			break;
 
 		case 4:
-			GenCallRuntime(_vmem_ReadMem32);
+			GenCallRuntime(addrspace::read32);
 			break;
 
 		case 8:
-			GenCallRuntime(_vmem_ReadMem64);
+			GenCallRuntime(addrspace::read64);
 			break;
 
 		default:
@@ -1158,19 +1141,19 @@ public:
 		switch (size)
 		{
 		case 1:
-			GenCallRuntime(_vmem_WriteMem8);
+			GenCallRuntime(addrspace::write8);
 			break;
 
 		case 2:
-			GenCallRuntime(_vmem_WriteMem16);
+			GenCallRuntime(addrspace::write16);
 			break;
 
 		case 4:
-			GenCallRuntime(_vmem_WriteMem32);
+			GenCallRuntime(addrspace::write32);
 			break;
 
 		case 8:
-			GenCallRuntime(_vmem_WriteMem64);
+			GenCallRuntime(addrspace::write64);
 			break;
 
 		default:
@@ -1358,7 +1341,7 @@ public:
 		}
 
 		// Flush and invalidate caches
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 #if 0
@@ -1388,7 +1371,7 @@ public:
 		Label intc_sched;
 		Label end_mainloop;
 
-		// int intc_sched()
+		// int intc_sched(int pc, int cycle_counter)
 		arm64_intc_sched = GetCursorAddress<DynaCode *>();
 		verify((void *)arm64_intc_sched == (void *)CodeCache);
 		B(&intc_sched);
@@ -1490,8 +1473,6 @@ public:
 		{
 			// Use x28 as sh4 context pointer
 			Mov(x28, x0);
-			// Use x27 as cycle_counter
-			Ldr(w27, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		}
 		Label do_interrupts;
 
@@ -1499,40 +1480,29 @@ public:
 		Ldr(w29, MemOperand(x28, offsetof(Sh4Context, pc)));
 		B(&no_update);
 
-		Bind(&intc_sched);
+		Bind(&intc_sched);	// w0 is pc, w1 is cycle_counter
 
+		Str(w0, sh4_context_mem_operand(&Sh4cntx.pc));
 		// Add timeslice to cycle counter
-		if (!mmu_enabled())
-		{
-			Add(w27, w27, SH4_TIMESLICE);
-		}
-		else
-		{
-			Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-			Add(w0, w0, SH4_TIMESLICE);
-			Str(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-		}
-		Mov(x29, lr);				// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
-		GenCallRuntime(UpdateSystem);
-		Mov(lr, x29);
+		Add(w1, w1, SH4_TIMESLICE);
+		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.CpuRunning));
+		Cbz(w0, &end_mainloop);
+		Mov(x29, lr);				// Save link register in case we return
+		GenCallRuntime(UpdateSystem_INTC);
 		Cbnz(w0, &do_interrupts);
-		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
+		Mov(lr, x29);
+		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		Ret();
 
 		Bind(&do_interrupts);
-		Mov(x0, x29);
-		GenCallRuntime(rdv_DoInterrupts);	// Updates next_pc based on host pc
-		Mov(w29, w0);
-
+		Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 		B(&no_update);
 
 		Bind(&end_mainloop);
 		if (mmu_enabled())
 			// Pop context
 			Add(sp, sp, 16);
-		else
-			// save cycle counter
-			Str(w27, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		// Restore registers
 		Ldp(x29, x30, MemOperand(sp, 144));
 		Ldp(d12, d13, MemOperand(sp, 128));
@@ -1557,8 +1527,33 @@ public:
 			B(&reenterLabel);
 		}
 
+		// MMU Block check (with fpu)
+		// w0: vaddr, w1: addr
+		checkBlockFpu = GetCursorAddress<DynaCode *>();
+		Label fpu_enabled;
+		Ldr(w10, sh4_context_mem_operand(&sr));
+		Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
+
+		Mov(w1, Sh4Ex_FpuDisabled);	// exception code
+		GenCallRuntime(Do_Exception);
+		Ldr(w29, sh4_context_mem_operand(&next_pc));
+		B(&no_update);
+		Bind(&fpu_enabled);
+		// fallthrough
+
+		Label blockCheckFailLabel;
+		// MMU Block check (no fpu)
+		// w0: vaddr, w1: addr
+		checkBlockNoFpu = GetCursorAddress<DynaCode *>();
+		Ldr(w2, sh4_context_mem_operand(&Sh4cntx.pc));
+		Cmp(w2, w0);
+		Mov(w0, w1);
+		B(&blockCheckFailLabel, ne);
+		Ret();
+
 		// Block check fail
-		blockCheckFail = GetCursorAddress<DynaCode *>();
+		// w0: addr
+		Bind(&blockCheckFailLabel);
 		GenCallRuntime(rdv_BlockCheckFail);
 		if (mmu_enabled())
 		{
@@ -1593,7 +1588,7 @@ public:
 		Bind(&writeStoreQueue32Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		GenBranchRuntime(_vmem_WriteMem32, Condition::ne);
+		GenBranchRuntime(addrspace::write32, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(w1, MemOperand(x28, x7));
@@ -1603,7 +1598,7 @@ public:
 		Bind(&writeStoreQueue64Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		GenBranchRuntime(_vmem_WriteMem64, Condition::ne);
+		GenBranchRuntime(addrspace::write64, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(x1, MemOperand(x28, x7));
@@ -1617,11 +1612,12 @@ public:
 
 		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
 		handleException = (void (*)())CC_RW2RX(GetLabelAddress<uintptr_t>(&handleExceptionLabel));
+		blockCheckFail = GetLabelAddress<DynaCode *>(&blockCheckFailLabel);
 		writeStoreQueue32 = GetLabelAddress<DynaCode *>(&writeStoreQueue32Label);
 		writeStoreQueue64 = GetLabelAddress<DynaCode *>(&writeStoreQueue64Label);
 
 		// Flush and invalidate caches
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
@@ -1758,38 +1754,11 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-				break;
-			default:
-				rv = 0;
-				die("Invalid immediate size");
-				break;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_readMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{
@@ -1913,7 +1882,7 @@ private:
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled())
+		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
@@ -1969,37 +1938,11 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated(addr, op.size))
-		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
-				// When full mmu is on, only consider addresses in the same 4k page
-				return false;
-			u32 paddr;
-			u32 rv;
-			switch (op.size)
-			{
-			case 1:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
-				break;
-			case 2:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
-				break;
-			case 4:
-			case 8:
-				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
-				break;
-			default:
-				rv = 0;
-				die("Invalid immediate size");
-				break;
-			}
-			if (rv != MMU_ERROR_NONE)
-				return false;
-			addr = paddr;
-		}
-		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, op.size > 4 ? 4 : op.size);
+		void *ptr;
+		bool isram;
+		u32 addr;
+		if (!rdv_writeMemImmediate(op.rs1._imm, op.size, ptr, isram, addr, block))
+			return false;
 
 		if (isram)
 		{
@@ -2077,7 +2020,7 @@ private:
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled())
+		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
@@ -2119,56 +2062,56 @@ private:
 
 	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
 	{
-		if (!mmu_enabled() && !force_checks)
+		if (mmu_enabled())
+		{
+			Mov(w0, block->vaddr);
+			Mov(w1, block->addr);
+			if (block->has_fpu_op)
+				GenCall(checkBlockFpu);
+			else
+				GenCall(checkBlockNoFpu);
+		}
+
+		if (!force_checks)
 			return;
 
 		Label blockcheck_fail;
+		s32 sz = block->sh4_code_size;
+		u8* ptr = GetMemPtr(block->addr, sz);
+		if (ptr != NULL)
+		{
+			Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
 
-		if (mmu_enabled())
-		{
-			Ldr(w10, sh4_context_mem_operand(&next_pc));
-			Ldr(w11, block->vaddr);
-			Cmp(w10, w11);
-			B(ne, &blockcheck_fail);
-		}
-		if (force_checks)
-		{
-			s32 sz = block->sh4_code_size;
-			u8* ptr = GetMemPtr(block->addr, sz);
-			if (ptr != NULL)
+			while (sz > 0)
 			{
-				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-				while (sz > 0)
+				if (sz >= 8)
 				{
-					if (sz >= 8)
-					{
-						Ldr(x10, MemOperand(x9, 8, PostIndex));
-						Ldr(x11, *(u64*)ptr);
-						Cmp(x10, x11);
-						sz -= 8;
-						ptr += 8;
-					}
-					else if (sz >= 4)
-					{
-						Ldr(w10, MemOperand(x9, 4, PostIndex));
-						Ldr(w11, *(u32*)ptr);
-						Cmp(w10, w11);
-						sz -= 4;
-						ptr += 4;
-					}
-					else
-					{
-						Ldrh(w10, MemOperand(x9, 2, PostIndex));
-						Mov(w11, *(u16*)ptr);
-						Cmp(w10, w11);
-						sz -= 2;
-						ptr += 2;
-					}
-					B(ne, &blockcheck_fail);
+					Ldr(x10, MemOperand(x9, 8, PostIndex));
+					Ldr(x11, *(u64*)ptr);
+					Cmp(x10, x11);
+					sz -= 8;
+					ptr += 8;
 				}
+				else if (sz >= 4)
+				{
+					Ldr(w10, MemOperand(x9, 4, PostIndex));
+					Ldr(w11, *(u32*)ptr);
+					Cmp(w10, w11);
+					sz -= 4;
+					ptr += 4;
+				}
+				else
+				{
+					Ldrh(w10, MemOperand(x9, 2, PostIndex));
+					Mov(w11, *(u16*)ptr);
+					Cmp(w10, w11);
+					sz -= 2;
+					ptr += 2;
+				}
+				B(ne, &blockcheck_fail);
 			}
 		}
+
 		Label blockcheck_success;
 		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
@@ -2176,22 +2119,6 @@ private:
 		GenBranch(blockCheckFail);
 
 		Bind(&blockcheck_success);
-
-		if (mmu_enabled() && block->has_fpu_op)
-		{
-			Label fpu_enabled;
-			Ldr(w10, sh4_context_mem_operand(&sr));
-			Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
-
-			Mov(w0, block->vaddr);	// pc
-			Mov(w1, 0x800);			// event
-			Mov(w2, 0x100);			// vector
-			CallRuntime(Do_Exception);
-			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(arm64_no_update);
-
-			Bind(&fpu_enabled);
-		}
 	}
 
 	void shil_param_to_host_reg(const shil_param& param, const Register& reg)
@@ -2359,7 +2286,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	u32 size = 0;
 	bool found = false;
 	u32 masked = armv8_op & STR_LDR_MASK;
-	for (u32 i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
+	for (u32 i = 0; i < std::size(armv8_mem_ops); i++)
 	{
 		if (masked == armv8_mem_ops[i])
 		{

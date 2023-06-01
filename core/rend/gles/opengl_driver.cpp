@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "opengl_driver.h"
-#include "imgui_impl_opengl3.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
 #include "wsi/gl_context.h"
 #include "rend/osd.h"
 #include "rend/gui.h"
@@ -60,7 +60,7 @@ OpenGLDriver::~OpenGLDriver()
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
 	std::vector<GLuint> texIds;
-	texIds.reserve(ARRAY_SIZE(vmu_lcd_tex_ids) + 1 + textures.size());
+	texIds.reserve(std::size(vmu_lcd_tex_ids) + 1 + textures.size());
 	for (ImTextureID texId : vmu_lcd_tex_ids)
 		if (texId != ImTextureID())
 			texIds.push_back((GLuint)(uintptr_t)texId);

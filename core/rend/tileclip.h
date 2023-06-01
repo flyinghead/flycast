@@ -50,11 +50,11 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 	float csy = (float)((val >> 12) & 31);
 	float cey = (float)((val >> 17) & 31);
 	csx = csx * 32;
-	cex = cex * 32 + 32;
+	cex = (cex + 1) * 32;
 	csy = csy * 32;
-	cey = cey * 32 + 32;
+	cey = (cey + 1) * 32;
 
-	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
+	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480 && tileClippingMode == TileClipping::Outside)
 		return TileClipping::Off;
 
 	if (!pvrrc.isRTT)

@@ -2,7 +2,9 @@ package com.reicast.emulator.emu;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Handler;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -430,8 +432,13 @@ public class VirtualJoystickDelegate {
                         vibrate = false;
                     }
                 }
-                if (doVibrate)
-                    vibrator.vibrate(Emulator.vibrationDuration);
+                if (doVibrate) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator.vibrate(VibrationEffect.createOneShot(Emulator.vibrationDuration, VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        vibrator.vibrate(Emulator.vibrationDuration);
+                    }
+                }
             }
         }
 

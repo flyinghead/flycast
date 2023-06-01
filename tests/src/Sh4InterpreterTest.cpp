@@ -22,9 +22,10 @@
 
 class Sh4InterpreterTest : public Sh4OpTest {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		mem_map_default();
 		dc_reset(true);
@@ -34,11 +35,11 @@ protected:
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{
 		ctx->pc = START_PC;
-		_vmem_WriteMem16(ctx->pc, op);
+		addrspace::write16(ctx->pc, op);
 		if (op2 != 0)
-			_vmem_WriteMem16(ctx->pc + 2, op2);
+			addrspace::write16(ctx->pc + 2, op2);
 		if (op3 != 0)
-			_vmem_WriteMem16(ctx->pc + 4, op3);
+			addrspace::write16(ctx->pc + 4, op3);
 	}
 	void RunOp(int numOp = 1) override
 	{
@@ -91,4 +92,12 @@ TEST_F(Sh4InterpreterTest, CmpTest)
 TEST_F(Sh4InterpreterTest, StatusRegTest)
 {
 	Sh4OpTest::StatusRegTest();
+}
+TEST_F(Sh4InterpreterTest, FloatingPointTest)
+{
+	Sh4OpTest::FloatingPointTest();
+}
+TEST_F(Sh4InterpreterTest, DoubleFloatingPointTest)
+{
+	Sh4OpTest::DoubleFloatingPointTest();
 }

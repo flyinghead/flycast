@@ -110,14 +110,6 @@ extern "C" int SDL_main(int argc, char *argv[])
 		if (!file_exists(config_dir))
 			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
 
-        /* Different config folder for multiple instances */
-        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
-		if (instanceNumber > 1)
-		{
-			config_dir += std::to_string(instanceNumber) + "/";
-			[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
-		}
-
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         add_system_data_dir(config_dir);
@@ -351,4 +343,21 @@ std::string os_GetConnectionMedium() {
     } else {
         return "Wired";
     }
+}
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	if (fork() == 0)
+	{
+		std::vector<char *> localArgs;
+		NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+		const char *selfPath = [[arguments objectAtIndex:0] UTF8String];
+		localArgs.push_back((char *)selfPath);
+		for (int i = 0; i < argc; i++)
+			localArgs.push_back((char *)argv[i]);
+		localArgs.push_back(nullptr);
+		execv(selfPath, &localArgs[0]);
+		ERROR_LOG(BOOT, "Error %d launching Flycast instance %s", errno, selfPath);
+		die("execv failed");
+	}
 }

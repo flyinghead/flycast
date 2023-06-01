@@ -81,7 +81,6 @@ bool mainui_rend_frame()
 			if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
 				gui_display_profiler();
 		} catch (const FlycastException& e) {
-			emu.unloadGame();
 			gui_stop_game(e.what());
 			return false;
 		}

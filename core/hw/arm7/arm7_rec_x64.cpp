@@ -27,9 +27,12 @@ using namespace Xbyak::util;
 
 #include "arm7_rec.h"
 #include "oslib/oslib.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
 
-namespace aicaarm {
+namespace aica
+{
+namespace arm
+{
 
 static void (*arm_dispatch)();
 
@@ -53,9 +56,9 @@ static const std::array<Xbyak::Reg32, 6> alloc_regs {
 };
 #endif
 
-class X64ArmRegAlloc : public ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>
+class X64ArmRegAlloc : public ArmRegAlloc<std::size(alloc_regs), X64ArmRegAlloc>
 {
-	using super = ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>;
+	using super = ArmRegAlloc<std::size(alloc_regs), X64ArmRegAlloc>;
 	Arm7Compiler& assembler;
 
 	void LoadReg(int host_reg, Arm7Reg armreg);
@@ -998,26 +1001,27 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	void* protStart = recompiler::currentCode();
 	size_t protSize = recompiler::spaceLeft();
-	vmem_platform_jit_set_exec(protStart, protSize, false);
+	virtmem::jit_set_exec(protStart, protSize, false);
 
 	Arm7Compiler assembler;
 	assembler.compile(block_ops, cycles);
 
-	vmem_platform_jit_set_exec(protStart, protSize, true);
+	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
 void arm7backend_flush()
 {
 	void* protStart = recompiler::currentCode();
 	size_t protSize = recompiler::spaceLeft();
-	vmem_platform_jit_set_exec(protStart, protSize, false);
+	virtmem::jit_set_exec(protStart, protSize, false);
 	unwinder.clear();
 
 	Arm7Compiler assembler;
 	assembler.generateMainLoop();
 
-	vmem_platform_jit_set_exec(protStart, protSize, true);
+	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
-}
+} // namespace arm
+} // namespace aica
 #endif // X64 && DYNAREC_JIT

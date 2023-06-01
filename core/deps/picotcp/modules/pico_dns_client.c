@@ -832,6 +832,18 @@ int pico_dns_client_init(void)
     return pico_dns_client_nameserver(&default_ns, PICO_DNS_NS_ADD);
 }
 
+static int deinit_cb(void **p)
+{
+	PICO_FREE(*p);
+	return 0;
+}
+
+void pico_dns_client_deinit(void)
+{
+	pico_tree_destroy(&NSTable, deinit_cb);
+	pico_tree_destroy(&DNSTable, deinit_cb);
+}
+
 #else
 
 int pico_dns_client_init(void)

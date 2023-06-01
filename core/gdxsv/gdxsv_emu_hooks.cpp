@@ -104,7 +104,7 @@ bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::Widescr
 
 static void gui_header(const char* title) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ScaledVec2(0.f, 0.5f));	// Left
-	ImGui::ButtonEx(title, ScaledVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::ButtonEx(title, ScaledVec2(-1, 0), ImGuiItemFlags_Disabled);
 	ImGui::PopStyleVar();
 }
 
@@ -179,7 +179,6 @@ void gdxsv_emu_gui_settings() {
 		config::AudioBufferSize = 706 * 4;
 		// Others
 		config::DynarecEnabled = true;
-		config::DynarecIdleSkip = true;
 		config::ThreadedRendering = false;
 		// Network
 		config::EnableUPnP = true;

@@ -8,10 +8,10 @@
 #import <GameController/GameController.h>
 #include "input/keyboard_device.h"
 
-class API_AVAILABLE(ios(14.0)) IOSKeyboard : public KeyboardDeviceTemplate<UInt16>
+class API_AVAILABLE(ios(14.0)) IOSKeyboard : public KeyboardDevice
 {
 public:
-    IOSKeyboard(int port, GCKeyboard *keyboard) : KeyboardDeviceTemplate(port, "iOS", false), gcKeyboard(keyboard)
+    IOSKeyboard(int port, GCKeyboard *keyboard) : KeyboardDevice(port, "iOS", false), gcKeyboard(keyboard)
     {
         set_maple_port(port);
         loadMapping();
@@ -181,7 +181,7 @@ public:
                 }
             }
 
-            keyboard_input(keyCode, pressed);
+            input(keyCode, pressed);
         }];
     }
     
@@ -209,10 +209,10 @@ public:
         keyboards.erase(it);
     }
 
-protected:
-    u8 convert_keycode(UInt16 keycode) override
+    void input(UInt16 code, bool pressed)
     {
-        return kb_map[keycode];
+        u8 keycode = kb_map[code];
+        KeyboardDevice::input(keycode, pressed, 0);
     }
 
 private:

@@ -652,8 +652,8 @@ bool checkTryDebug()
 		changeText = nil;
 		if (textField.markedTextRange == nil) {
 			// it wants to replace text with nothing, ie a delete
-			gui_keyboard_key(0x2A, true, 0); // backspace
-			gui_keyboard_key(0x2A, false, 0);
+			gui_keyboard_key(0x2A, true); // backspace
+			gui_keyboard_key(0x2A, false);
 		}
 		if (textField.text.length < 16) {
 			textField.text = obligateForBackspace;
@@ -667,8 +667,8 @@ bool checkTryDebug()
 // Terminates the editing session
 - (BOOL)textFieldShouldReturn:(UITextField*)_textField
 {
-	gui_keyboard_key(0x28, true, 0); // Return
-	gui_keyboard_key(0x28, false, 0);
+	gui_keyboard_key(0x28, true); // Return
+	gui_keyboard_key(0x28, false);
 	return YES;
 }
 

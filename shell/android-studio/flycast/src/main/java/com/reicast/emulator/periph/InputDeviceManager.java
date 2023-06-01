@@ -2,6 +2,8 @@ package com.reicast.emulator.periph;
 
 import android.content.Context;
 import android.hardware.input.InputManager;
+import android.os.Build;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.InputDevice;
 
@@ -92,11 +94,16 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
             if (!vibrator.hasVibrator())
                 return false;
         }
-        // TODO API >= 26 (Android 8.0)
-        if (power == 0)
+
+        if (power == 0) {
             vibrator.cancel();
-        else
-            vibrator.vibrate(duration_ms);
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(duration_ms, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(duration_ms);
+            }
+        }
 
         return true;
     }

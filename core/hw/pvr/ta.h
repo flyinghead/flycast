@@ -14,7 +14,7 @@ void ta_vtx_SoftReset();
 void DYNACALL ta_vtx_data32(const SQBuffer *data);
 void ta_vtx_data(const SQBuffer *data, u32 size);
 
-bool ta_parse(TA_context *ctx, bool primRestart);
+void ta_parse(TA_context *ctx, bool primRestart);
 
 class TaTypeLut
 {

@@ -62,6 +62,7 @@ struct pico_frame *pico_stack_recv_new_frame(struct pico_device *dev, uint8_t *b
 
 /* ----- Initialization ----- */
 int pico_stack_init(void);
+void pico_stack_deinit(void);
 
 /* ----- Loop Function. ----- */
 void pico_stack_tick(void);

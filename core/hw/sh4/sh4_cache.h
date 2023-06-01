@@ -23,6 +23,7 @@
 #include "modules/mmu.h"
 #include "hw/sh4/sh4_core.h"
 #include "serialize.h"
+#include "sh4_cycles.h"
 
 static bool cachedArea(u32 area)
 {
@@ -51,19 +52,20 @@ static bool translatedArea(u32 area)
 //
 // SH4 instruction cache
 //
-class sh4_icache
+class Sh4ICache
 {
 public:
 	u16 ReadMem(u32 address)
 	{
 		bool cacheOn = false;
 		u32 physAddr;
-		u32 err = translateAddress(address, physAddr, cacheOn);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress(address, physAddr, cacheOn);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_IREAD);
-
-		if (!cacheOn)
-			return _vmem_readt<u16, u16>(physAddr);
+		if (!cacheOn) {
+			sh4cycles.addReadAccessCycles(physAddr, 2);
+			return addrspace::readt<u16>(physAddr);
+		}
 
 		const u32 index = CCN_CCR.IIX ?
 				((address >> 5) & 0x7f) | ((address >> (25 - 7)) & 0x80)
@@ -83,8 +85,9 @@ public:
 			{
 				u32 *p = (u32 *)line.data;
 				for (int i = 0; i < 32; i += 4)
-					*p++ = _vmem_ReadMem32(line_addr + i);
+					*p++ = addrspace::read32(line_addr + i);
 			}
+			sh4cycles.addReadAccessCycles(physAddr, 32);
 		}
 
 		return *(u16*)&line.data[physAddr & 0x1f];
@@ -130,11 +133,11 @@ public:
 			const u32 vaddr = data & ~0x3ff;
 			bool cached;
 			u32 physAddr;
-			u32 err = translateAddress(vaddr, physAddr, cached);
-			if (err == MMU_ERROR_TLB_MISS)
+			MmuError err = translateAddress(vaddr, physAddr, cached);
+			if (err == MmuError::TLB_MISS)
 				// Ignore the write
 				return;
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				mmu_raise_exception(err, vaddr, MMU_TT_IREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
@@ -167,11 +170,11 @@ private:
 		u8 data[32];
 	};
 
-	u32 translateAddress(u32 address, u32& physAddr, bool& cached)
+	MmuError translateAddress(u32 address, u32& physAddr, bool& cached)
 	{
 		// Alignment errors
 		if (address & 1)
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 
 		const u32 area = address >> 29;
 		const bool userMode = sr.MD == 0;
@@ -179,15 +182,14 @@ private:
 		if (userMode)
 		{
 			// kernel mem protected in user mode
-			// FIXME this makes WinCE fail
-			//if (address & 0x80000000)
-			//	return MMU_ERROR_BADADDR;
+			if (address & 0x80000000)
+				return MmuError::BADADDR;
 		}
 		else
 		{
 			// P4 not executable
 			if (area == 7)
-				return MMU_ERROR_BADADDR;
+				return MmuError::BADADDR;
 		}
 		cached = CCN_CCR.ICE == 1 && cachedArea(area);
 
@@ -200,9 +202,9 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			u32 err = mmu_instruction_lookup(address, &entry, physAddr);
+			MmuError err = mmu_instruction_lookup(address, &entry, physAddr);
 
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				return err;
 
 			//0X  & User mode-> protection violation
@@ -211,22 +213,22 @@ private:
 			{
 				u32 md = entry->Data.PR >> 1;
 				if (md == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 			}
 			cached = cached && entry->Data.C == 1;
 		}
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
 	}
 
 	std::array<cache_line, 256> lines;
 };
 
-extern sh4_icache icache;
+extern Sh4ICache icache;
 
 //
 // SH4 operand cache
 //
-class sh4_ocache
+class Sh4OCache
 {
 public:
 	template<class T>
@@ -235,12 +237,14 @@ public:
 		u32 physAddr;
 		bool cacheOn = false;
 		bool copyBack;
-		u32 err = translateAddress<T, MMU_TT_DREAD>(address, physAddr, cacheOn, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<T, MMU_TT_DREAD>(address, physAddr, cacheOn, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DREAD);
 
-		if (!cacheOn)
-			return _vmem_readt<T, T>(physAddr);
+		if (!cacheOn) {
+			sh4cycles.addReadAccessCycles(physAddr, sizeof(T));
+			return addrspace::readt<T>(physAddr);
+		}
 
 		const u32 index = lineIndex(address);
 		cache_line& line = lines[index];
@@ -264,13 +268,14 @@ public:
 		u32 physAddr = 0;
 		bool cacheOn = false;
 		bool copyBack = false;
-		u32 err = translateAddress<T, MMU_TT_DWRITE>(address, physAddr, cacheOn, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<T, MMU_TT_DWRITE>(address, physAddr, cacheOn, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DWRITE);
 
 		if (!cacheOn)
 		{
-			_vmem_writet<T>(physAddr, data);
+			addWriteThroughCycles(physAddr, sizeof(T));
+			addrspace::writet<T>(physAddr, data);
 			return;
 		}
 
@@ -303,7 +308,8 @@ public:
 		else
 		{
 			// write-through => update main ram
-			_vmem_writet<T>(physAddr, data);
+			addrspace::writet<T>(physAddr, data);
+			addWriteThroughCycles(physAddr, sizeof(T));
 		}
 	}
 
@@ -312,8 +318,8 @@ public:
 		u32 physAddr;
 		bool cached = false;
 		bool copyBack;
-		u32 err = translateAddress<u8, MMU_TT_DWRITE>(address, physAddr, cached, copyBack);
-		if (err != MMU_ERROR_NONE)
+		MmuError err = translateAddress<u8, MMU_TT_DWRITE>(address, physAddr, cached, copyBack);
+		if (err != MmuError::NONE)
 			mmu_raise_exception(err, address, MMU_TT_DWRITE);
 
 		if (!cached)
@@ -336,8 +342,8 @@ public:
 		u32 physAddr;
 		bool cached;
 		bool copyBack;
-		u32 err = translateAddress<u8, MMU_TT_DREAD>(address, physAddr, cached, copyBack);
-		if (err != MMU_ERROR_NONE || !cached)
+		MmuError err = translateAddress<u8, MMU_TT_DREAD>(address, physAddr, cached, copyBack);
+		if (err != MmuError::NONE || !cached)
 			// ignore address translation errors
 			return;
 
@@ -396,11 +402,11 @@ public:
 			u32 physAddr;
 			bool cached = false;
 			bool copyBack;
-			u32 err = translateAddress<u8, MMU_TT_DREAD>(data & ~0x3ff, physAddr, cached, copyBack);
-			if (err == MMU_ERROR_TLB_MISS)
+			MmuError err = translateAddress<u8, MMU_TT_DREAD>(data & ~0x3ff, physAddr, cached, copyBack);
+			if (err == MmuError::TLB_MISS)
 				// Ignore the write
 				return;
-			if (err != MMU_ERROR_NONE)
+			if (err != MmuError::NONE)
 				mmu_raise_exception(err, data & ~0x3ff, MMU_TT_DREAD);
 
 			u32 tag = (physAddr >> 10) & 0x7ffff;
@@ -470,8 +476,9 @@ private:
 		{
 			u32 *p = (u32 *)line.data;
 			for (int i = 0; i < 32; i += 4)
-				*p++ = _vmem_ReadMem32(line_addr + i);
+				*p++ = addrspace::read32(line_addr + i);
 		}
+		sh4cycles.addReadAccessCycles(address, 32);
 	}
 
 	void doWriteBack(u32 index, cache_line& line)
@@ -486,21 +493,22 @@ private:
 		{
 			u32 *p = (u32 *)line.data;
 			for (int i = 0; i < 32; i += 4)
-				_vmem_WriteMem32(line_addr + i, *p++);
+				addrspace::write32(line_addr + i, *p++);
 		}
+		addWriteBackCycles(line_addr);
 	}
 
 	template<class T, u32 ACCESS>
-	u32 translateAddress(u32 address, u32& physAddr, bool& cached, bool& copyBack)
+	MmuError translateAddress(u32 address, u32& physAddr, bool& cached, bool& copyBack)
 	{
 		// Alignment errors
 		if (address & (sizeof(T) - 1))
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 		if (ACCESS == MMU_TT_DWRITE && (address & 0xFC000000) == 0xE0000000)
 		{
 			// Store queues
 			u32 rv;
-			u32 lookup = mmu_full_SQ<MMU_TT_DWRITE>(address, rv);
+			MmuError lookup = mmu_full_SQ<MMU_TT_DWRITE>(address, rv);
 
 			physAddr = address;
 			return lookup;
@@ -510,7 +518,7 @@ private:
 
 		// kernel mem protected in user mode
 		if (userMode && (address & 0x80000000))
-			return MMU_ERROR_BADADDR;
+			return MmuError::BADADDR;
 
 		cached = CCN_CCR.OCE == 1 && cachedArea(area);
 		if (ACCESS == MMU_TT_DWRITE)
@@ -526,9 +534,9 @@ private:
 		else
 		{
 			const TLB_Entry *entry;
-			u32 lookup = mmu_full_lookup(address, &entry, physAddr);
+			MmuError lookup = mmu_full_lookup(address, &entry, physAddr);
 
-			if (lookup != MMU_ERROR_NONE)
+			if (lookup != MmuError::NONE)
 				return lookup;
 
 			//0X  & User mode-> protection violation
@@ -537,16 +545,16 @@ private:
 			{
 				u32 md = entry->Data.PR >> 1;
 				if (md == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 			}
 			//X0 -> read only
 			//X1 -> read/write , can be FW
 			if (ACCESS == MMU_TT_DWRITE)
 			{
 				if ((entry->Data.PR & 1) == 0)
-					return MMU_ERROR_PROTECTED;
+					return MmuError::PROTECTED;
 				if (entry->Data.D == 0)
-					return MMU_ERROR_FIRSTWRITE;
+					return MmuError::FIRSTWRITE;
 				copyBack = copyBack && entry->Data.WT == 0;
 			}
 			cached = cached && entry->Data.C == 1;
@@ -555,13 +563,35 @@ private:
 				physAddr |= 0xF0000000;
 
 		}
-		return MMU_ERROR_NONE;
+		return MmuError::NONE;
+	}
+
+	void addWriteBackCycles(u32 addr)
+	{
+		u64 now = sh4cycles.now();
+		if (writeBackBufferCycles > now)
+			sh4cycles.addCycles(writeBackBufferCycles - now);
+		writeBackBufferCycles = now + sh4cycles.writeAccessCycles(addr, 32);
+	}
+
+	void addWriteThroughCycles(u32 addr, int size)
+	{
+		u64 now = sh4cycles.now();
+		if (writeThroughBufferCycles > now)
+			sh4cycles.addCycles(writeThroughBufferCycles - now);
+		int cycles = sh4cycles.writeAccessCycles(addr, std::min(size, 8));
+		if (size == 32)
+			sh4cycles.addCycles(cycles * 3);
+		writeThroughBufferCycles = now + cycles;
 	}
 
 	std::array<cache_line, 512> lines;
+	// TODO serialize
+	u64 writeBackBufferCycles = 0;
+	u64 writeThroughBufferCycles = 0;
 };
 
-extern sh4_ocache ocache;
+extern Sh4OCache ocache;
 
 template<class T>
 T ReadCachedMem(u32 address)

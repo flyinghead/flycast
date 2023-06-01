@@ -79,32 +79,19 @@ void serialize(Serializer& ser)
 	SerializeTAContext(ser);
 
 	if (!ser.rollback())
-		ser.serialize(vram.data, vram.size);
+		vram.serialize(ser);
 	elan::serialize(ser);
 }
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<u32>();		// FrameCount
-		deser.skip<bool>();		// pend_rend
-	}
-
 	YUV_deserialize(deser);
 
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() < Deserializer::V9_LIBRETRO)
-		deser.skip<bool>();	// fog_needs_update
 	deser >> pvr_regs;
 	fog_needs_update = true;
 
 	spg_Deserialize(deser);
 
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip(4 * 256);	// ta_type_lut
-		deser.skip(2048);		// ta_fsm
-	}
 	rend_deserialize(deser);
 
 	deser >> ta_fsm[2048];
@@ -113,41 +100,11 @@ void deserialize(Deserializer& deser)
 		deser >> taRenderPass;
 	else
 		taRenderPass = 0;
-	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip<bool>();		// pal_needs_update
-		deser.skip(4 * 4);		// _pal_rev_256
-		deser.skip(4 * 64);		// _pal_rev_16
-		deser.skip(4 * 4);		// pal_rev_256
-		deser.skip(4 * 64);		// pal_rev_16
-		deser.skip(4 * 65536 * 3); // decoded_colors
-		deser.skip(4);			// tileclip_val
-		deser.skip(65536);		// f32_su8_tbl
-		deser.skip(4);			// FaceBaseColor
-		deser.skip(4);			// FaceOffsColor
-		deser.skip(4);			// SFaceBaseColor
-		deser.skip(4);			// SFaceOffsColor
-
-		deser.skip(4);			// palette_index
-		deser.skip<bool>();		// KillTex
-		deser.skip(4 * 1024); 	// palette16_ram
-		deser.skip(4 * 1024); 	// palette32_ram
-		deser.skip(4 * 1024 * 8 * 2); // detwiddle
-	}
-	else if (deser.version() <= Deserializer::V4)
-	{
-		deser.skip(4);
-		deser.skip(65536);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-		deser.skip(4);
-	}
 	if (deser.version() >= Deserializer::V11 || (deser.version() >= Deserializer::V10_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
 		DeserializeTAContext(deser);
 
 	if (!deser.rollback())
-		deser.deserialize(vram.data, vram.size);
+		vram.deserialize(deser);
 	elan::deserialize(deser);
 	pal_needs_update = true;
 }

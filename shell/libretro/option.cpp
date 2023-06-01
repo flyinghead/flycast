@@ -24,7 +24,7 @@ namespace config {
 // Dynarec
 
 Option<bool> DynarecEnabled("", true);
-Option<bool> DynarecIdleSkip("", true);
+IntOption Sh4Clock(CORE_OPTION_NAME "_sh4clock", 200);
 
 // General
 
@@ -32,7 +32,6 @@ Option<int> Cable("", 3);									// TV Composite
 Option<int> Region(CORE_OPTION_NAME "_region", 1);			// USA
 Option<int> Broadcast(CORE_OPTION_NAME "_broadcast", 0);	// NTSC
 Option<int> Language(CORE_OPTION_NAME "_language", 1);		// English
-Option<bool> FullMMU("");
 Option<bool> ForceWindowsCE(CORE_OPTION_NAME "_force_wince");
 Option<bool> AutoLoadState("");
 Option<bool> AutoSaveState("");
@@ -50,6 +49,7 @@ Option<int> AudioBufferSize("", 2822);	// 64 ms
 Option<bool> AutoLatency("");
 
 OptionString AudioBackend("", "auto");
+Option<bool> VmuSound(CORE_OPTION_NAME "_vmu_sound", false);
 
 // Rendering
 
@@ -119,6 +119,7 @@ Option<int> GGPODelay("", 0);
 Option<bool> NetworkStats("", false);
 Option<int> GGPOAnalogAxes("", 0);
 Option<bool> NetworkOutput(CORE_OPTION_NAME "_network_output", false);
+Option<int> MultiboardSlaves("", 0);
 
 // Maple
 

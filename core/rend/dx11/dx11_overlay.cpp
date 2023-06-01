@@ -167,8 +167,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					&& config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
-			float x, y;
-			std::tie(x, y) = getCrosshairPosition(i);
+			auto [x, y] = getCrosshairPosition(i);
 #ifdef LIBRETRO
 			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f / config::ScreenStretching * 100.f;
 			float halfHeight = LIGHTGUN_CROSSHAIR_SIZE / 2.f;

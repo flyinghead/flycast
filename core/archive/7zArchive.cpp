@@ -27,15 +27,13 @@
 
 static bool crc_tables_generated;
 
-bool SzArchive::Open(const char* path)
+bool SzArchive::Open(FILE *file)
 {
 	SzArEx_Init(&szarchive);
 
 	File_Close(&archiveStream.file);
 	File_Construct(&archiveStream.file);
-	archiveStream.file.file = nowide::fopen(path, "rb");
-	if (archiveStream.file.file == nullptr)
-		return false;
+	archiveStream.file.file = file;
 
 	FileInStream_CreateVTable(&archiveStream);
 	LookToRead2_CreateVTable(&lookStream, 0);

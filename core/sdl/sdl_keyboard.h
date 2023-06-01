@@ -21,10 +21,10 @@ enum ActuatePattern { minimal = 3, weak = 5, medium = 4, strong = 6 };
 }
 #endif
 
-class SDLKeyboardDevice : public KeyboardDeviceTemplate<SDL_Scancode>
+class SDLKeyboardDevice : public KeyboardDevice
 {
 public:
-	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port, "SDL") {
+	SDLKeyboardDevice(int maple_port) : KeyboardDevice(maple_port, "SDL") {
 		_unique_id = "sdl_keyboard";
 		if (find_mapping())
 		{
@@ -123,13 +123,14 @@ public:
 	}
 #endif
 
-protected:
-	u8 convert_keycode(SDL_Scancode scancode) override
+	void input(SDL_Scancode scancode, bool pressed)
 	{
+		u8 keycode;
 		if (settings.input.keyboardLangId != KeyboardLayout::US && scancode == SDL_SCANCODE_BACKSLASH)
-			return (u8)SDL_SCANCODE_NONUSHASH;
+			keycode = (u8)SDL_SCANCODE_NONUSHASH;
 		else
-			return (u8)scancode;
+			keycode = (u8)scancode;
+		KeyboardDevice::input(keycode, pressed, 0);
 	}
 
 #ifdef __APPLE__

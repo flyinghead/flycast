@@ -408,6 +408,12 @@ int pico_dhcp_server_initiate(struct pico_dhcp_server_setting *setting)
     return 0;
 }
 
+static int free_nego_cb(void **p)
+{
+	PICO_FREE(*p);
+	return 0;
+}
+
 int pico_dhcp_server_destroy(struct pico_device *dev)
 {
     struct pico_dhcp_server_setting *found, test = {
@@ -422,8 +428,22 @@ int pico_dhcp_server_destroy(struct pico_device *dev)
 	pico_socket_close(found->s);
     pico_tree_delete(&DHCPSettings, found);
     PICO_FREE(found);
-    pico_tree_destroy(&DHCPNegotiations, NULL);
+    pico_tree_destroy(&DHCPNegotiations, free_nego_cb);
     return 0;
+}
+
+static int free_setting_cb(void **node)
+{
+	struct pico_dhcp_server_setting *setting = *node;
+	pico_socket_del_imm(setting->s);
+	PICO_FREE(setting);
+	return 0;
+}
+
+void pico_dhcp_server_deinit(void)
+{
+	pico_tree_destroy(&DHCPSettings, free_setting_cb);
+	pico_tree_destroy(&DHCPNegotiations, free_nego_cb);
 }
 
 #endif /* PICO_SUPPORT_DHCP */

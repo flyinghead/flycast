@@ -25,7 +25,8 @@
 
 #ifdef _MSC_VER
 #include <io.h>
-#define R_OK   4
+#define W_OK 2
+#define R_OK 4
 typedef unsigned short mode_t;
 #else
 #include <unistd.h>
@@ -69,8 +70,9 @@ inline dirent *readdir(DIR *dirstream)
 	d.d_off = wdirent->d_off;
 	d.d_type = wdirent->d_type;
 	d.d_reclen = sizeof(dirent);
-	d.d_namlen = wdirent->d_namlen;
-	strcpy(d.d_name, name.c_str());
+	strncpy(d.d_name, name.c_str(), sizeof(d.d_name) - 1);
+	d.d_name[sizeof(d.d_name) - 1] = '\0';
+	d.d_namlen = strlen(d.d_name);
 
 	return &d;
 }
@@ -179,137 +181,3 @@ inline int mkdir(const char *path, mode_t mode) {
 }
 #endif
 }
-
-// iterate depth-first over the files contained in a folder hierarchy
-class DirectoryTree
-{
-public:
-	struct item {
-		std::string name;
-		std::string parentPath;
-	};
-
-	class iterator
-	{
-	private:
-		iterator(DIR *dir, const std::string& pathname) {
-			if (dir != nullptr)
-			{
-				dirs.push_back(dir);
-				pathnames.push_back(pathname);
-				advance();
-			}
-		}
-
-	public:
-		~iterator() {
-			for (DIR *dir : dirs)
-				flycast::closedir(dir);
-		}
-
-		const item *operator->() {
-			if (direntry == nullptr)
-				throw std::runtime_error("null iterator");
-			return &currentItem;
-		}
-
-		const item& operator*() const {
-			if (direntry == nullptr)
-				throw std::runtime_error("null iterator");
-			return currentItem;
-		}
-
-		// Prefix increment
-		iterator& operator++() {
-			advance();
-			return *this;
-		}
-
-		// Basic (in)equality implementations, just intended to work when comparing with end() or this
-		friend bool operator==(const iterator& a, const iterator& b) {
-			return a.direntry == b.direntry;
-		}
-
-		friend bool operator!=(const iterator& a, const iterator& b) {
-			return a.direntry != b.direntry;
-		}
-
-	private:
-		void advance()
-		{
-			while (!dirs.empty())
-			{
-				direntry = flycast::readdir(dirs.back());
-				if (direntry == nullptr)
-				{
-					flycast::closedir(dirs.back());
-					dirs.pop_back();
-					pathnames.pop_back();
-					continue;
-				}
-				currentItem.name = direntry->d_name;
-				if (currentItem.name == "." || currentItem.name == "..")
-					continue;
-				std::string childPath = pathnames.back() + "/" + currentItem.name;
-				bool isDir = false;
-#ifndef _WIN32
-				if (direntry->d_type == DT_DIR)
-					isDir = true;
-				else if (direntry->d_type == DT_UNKNOWN || direntry->d_type == DT_LNK)
-#endif
-				{
-					struct stat st;
-					if (flycast::stat(childPath.c_str(), &st) != 0)
-					{
-						WARN_LOG(COMMON, "Cannot stat file '%s' errno 0x%x", childPath.c_str(), errno);
-						continue;
-					}
-					if (S_ISDIR(st.st_mode))
-						isDir = true;
-				}
-				if (!isDir)
-				{
-					currentItem.parentPath = pathnames.back();
-					break;
-				}
-
-				DIR *childDir = flycast::opendir(childPath.c_str());
-				if (childDir == nullptr)
-				{
-					WARN_LOG(COMMON, "Cannot read subdirectory '%s' errno 0x%x", childPath.c_str(), errno);
-				}
-				else
-				{
-					dirs.push_back(childDir);
-					pathnames.push_back(childPath);
-				}
-			}
-		}
-
-		std::vector<DIR *> dirs;
-		std::vector<std::string> pathnames;
-		dirent *direntry = nullptr;
-		item currentItem;
-
-		friend class DirectoryTree;
-	};
-
-	DirectoryTree(const std::string& root) : root(root) {
-	}
-
-	iterator begin()
-	{
-		DIR *dir = flycast::opendir(root.c_str());
-		if (dir == nullptr)
-			WARN_LOG(COMMON, "Cannot read directory '%s' errno 0x%x", root.c_str(), errno);
-
-		return {dir, root};
-	}
-	iterator end()
-	{
-		return {nullptr, root};
-	}
-
-private:
-	const std::string& root;
-};

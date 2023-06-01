@@ -1,23 +1,31 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "maple_helper.h"
+#include "maple_if.h"
 #include "hw/pvr/spg.h"
 #include "oslib/audiostream.h"
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
+#include "cfg/option.h"
 #include <zlib.h>
+#include <time.h>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
-const char* maple_sega_vmu_name = "Visual Memory";
-const char* maple_sega_kbd_name = "Emulated Dreamcast Keyboard";
-const char* maple_sega_mouse_name = "Emulated Dreamcast Mouse";
-const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
-const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
-const char* maple_sega_mic_name = "MicDevice for Dreameye";
-const char* maple_sega_purupuru_name = "Puru Puru Pack";
-const char* maple_sega_lightgun_name = "Dreamcast Gun";
-const char* maple_sega_twinstick_name = "Twin Stick";
-const char* maple_ascii_stick_name = "ASCII STICK";
+const char* maple_sega_vmu_name        = "Visual Memory";
+const char* maple_sega_kbd_name        = "Emulated Dreamcast Keyboard";
+const char* maple_sega_mouse_name      = "Emulated Dreamcast Mouse";
+const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Device";
+const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevice";
+const char* maple_sega_mic_name        = "MicDevice for Dreameye";
+const char* maple_sega_purupuru_name   = "Puru Puru Pack";
+const char* maple_sega_lightgun_name   = "Dreamcast Gun";
+const char* maple_sega_twinstick_name  = "Twin Stick";
+const char* maple_ascii_stick_name     = "ASCII STICK";
+const char* maple_maracas_controller_name   = "Maracas Controller";
+const char* maple_fishing_controller_name   = "Dreamcast Fishing Controller";
+const char* maple_popnmusic_controller_name = "pop'n music controller";
+const char* maple_racing_controller_name    = "Racing Controller";
+const char* maple_densha_controller_name    = "TAITO 001 Controller";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -58,14 +66,15 @@ struct maple_sega_controller: maple_base
 		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
 	}
 
-	virtual u32 transform_kcode(u32 kcode)
+	virtual u16 getButtonState(const PlainJoystickState &pjs)
 	{
+		u32 kcode = pjs.kcode;
 		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
 		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
-	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs)
+	virtual u32 getAnalogAxis(int index, const PlainJoystickState &pjs)
 	{
 		if (index == 2 || index == 3)
 		{
@@ -101,6 +110,11 @@ struct maple_sega_controller: maple_base
 		return maple_sega_brand;
 	}
 
+	virtual u32 get_device_current(int get_max_current)
+	{
+		return get_max_current ? 0x01F4 : 0x01AE; // Max. 50 mA, standby: 43 mA
+	}
+
 	u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
@@ -108,6 +122,8 @@ struct maple_sega_controller: maple_base
 		{
 		case MDC_DeviceRequest:
 		case MDC_AllStatusReq:
+			// Fixed Device Status
+			// (Device ID)
 			//caps
 			//4
 			w32(MFID_0_Input);
@@ -118,23 +134,23 @@ struct maple_sega_controller: maple_base
 			w32(0);
 			w32(0);
 
-			//1	area code
+			//1	area code (Country specification)
 			w8(0xFF);
 
-			//1	direction
+			//1	direction (Connection method)
 			w8(0);
 
-			//30
+			//30 (Model name)
 			wstr(get_device_name(), 30);
 
-			//60
+			//60 (License)
 			wstr(get_device_brand(), 60);
 
-			//2
-			w16(0x01AE);	// 43 mA
+			//2 (Standby current consumption)
+			w16(get_device_current(0));
 
-			//2
-			w16(0x01F4);	// 50 mA
+			//2 (Maximum current consumption)
+			w16(get_device_current(1));
 
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
@@ -149,26 +165,11 @@ struct maple_sega_controller: maple_base
 
 				//state data
 				//2 key code
-				w16(transform_kcode(pjs.kcode));
+				w16(getButtonState(pjs));
 
-				//triggers
-				//1 R
-				w8(get_analog_axis(0, pjs));
-				//1 L
-				w8(get_analog_axis(1, pjs));
-
-				//joyx
-				//1
-				w8(get_analog_axis(2, pjs));
-				//joyy
-				//1
-				w8(get_analog_axis(3, pjs));
-
-				//not used on dreamcast
-				//1
-				w8(get_analog_axis(4, pjs));
-				//1
-				w8(get_analog_axis(5, pjs));
+				// analog axes
+				for (int axis = 0; axis < 6; axis++)
+					w8(getAnalogAxis(axis, pjs));
 			}
 
 			return MDRS_DataTransfer;
@@ -197,14 +198,15 @@ struct maple_atomiswave_controller: maple_sega_controller
 		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
 	}
 
-	u32 transform_kcode(u32 kcode) override
+	u16 getButtonState(const PlainJoystickState &pjs) override
 	{
+		u32 kcode = pjs.kcode;
 		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
 		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
-	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
 		if (index < 2 || index > 5)
 			return 0x80;
 		index -= 2;
@@ -226,8 +228,9 @@ struct maple_sega_twinstick: maple_sega_controller
 		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
 	}
 
-	u32 transform_kcode(u32 kcode) override
+	u16 getButtonState(const PlainJoystickState &pjs) override
 	{
+		u32 kcode = pjs.kcode;
 		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
 		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		mutualExclusion(kcode, DC_DPAD2_UP | DC_DPAD2_DOWN);
@@ -239,12 +242,16 @@ struct maple_sega_twinstick: maple_sega_controller
 		return MDT_TwinStick;
 	}
 
-	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
 		return 0x80;
 	}
 
 	const char *get_device_name() override {
 		return maple_sega_twinstick_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x012C : 0x00DC; // Max. 30 mA, standby: 22 mA
 	}
 };
 
@@ -263,8 +270,9 @@ struct maple_ascii_stick: maple_sega_controller
 		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
 	}
 
-	u32 transform_kcode(u32 kcode) override
+	u16 getButtonState(const PlainJoystickState &pjs) override
 	{
+		u32 kcode = pjs.kcode;
 		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
 		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF800;
@@ -274,12 +282,16 @@ struct maple_ascii_stick: maple_sega_controller
 		return MDT_AsciiStick;
 	}
 
-	u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
 		return 0x80;
 	}
 
 	const char *get_device_name() override {
 		return maple_ascii_stick_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0172 : 0x010E; // Max. 37 mA, standby: 27 mA
 	}
 };
 
@@ -287,8 +299,6 @@ struct maple_ascii_stick: maple_sega_controller
 	Sega Dreamcast Visual Memory Unit
 	This is pretty much done (?)
 */
-
-
 u8 vmu_default[] = {
 		0x78,0x9c,0xed,0xd2,0x31,0x4e,0x02,0x61,0x10,0x06,0xd0,0x8f,0x04,0x28,0x4c,0x2c,
 		0x28,0x2d,0x0c,0xa5,0x57,0xe0,0x16,0x56,0x16,0x76,0x14,0x1e,0xc4,0x03,0x50,0x98,
@@ -679,11 +689,11 @@ struct maple_sega_vmu: maple_base
 				{
 				case MFID_3_Clock:
 					{
-						u8 on = r8();
-						u8 period = r8();
+						u8 alw = r8();
+						u8 ald = r8();
 						r16(); // Alarm 2
-						INFO_LOG(MAPLE, "BEEP: %d/%d", on, period);
-						vmuBeep(on, period);
+						INFO_LOG(MAPLE, "BEEP: %d/%d", alw, ald);
+						aica::sgc::vmuBeep(alw, ald);
 					}
 					return MDRS_DeviceReply;
 
@@ -695,11 +705,11 @@ struct maple_sega_vmu: maple_base
 			break;
 
 		case MDC_DeviceReset:
-			vmuBeep(0, 0);
+			aica::sgc::vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		case MDC_DeviceKill:
-			vmuBeep(0, 0);
+			aica::sgc::vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		default:
@@ -714,7 +724,6 @@ struct maple_sega_vmu: maple_base
 		return flash_data;
 	}
 };
-
 
 struct maple_microphone: maple_base
 {
@@ -892,7 +901,6 @@ struct maple_microphone: maple_base
 		}
 	}
 };
-
 
 struct maple_sega_purupuru : maple_base
 {
@@ -1104,7 +1112,7 @@ struct maple_keyboard : maple_base
 				//int8 led            ; leds currently lit			//1
 				w8(0);
 				//int8 key[6]         ; normal keys pressed			//6
-				for (int i = 0; i < 6; i++)
+				for (std::size_t i = 0; i < std::size(keys); i++)
 					w8(keys[i]);
 			}
 			return MDRS_DataTransfer;
@@ -1324,6 +1332,576 @@ struct atomiswave_lightgun : maple_lightgun
 	}
 };
 
+struct maple_maracas_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0x0f093c00;	// 4 analog axes (2-5) A B C D Z Start
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override {
+		return pjs.kcode | 0xf6f0;		// mask off DPad2, X, Y, DPad;
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_MaracasController;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
+		if (index < 2 || index > 5)
+			return 0;
+		return pjs.joy[index -2];
+		/* // This should be tested with real maracas to see if it is worth implementing or not
+		u8 maracas_saturation_reduction = 2;
+		s32 axis_val = (pjs.joy[index -2] - 0x80) / maracas_saturation_reduction + 0x80;
+		if      (axis_val <    0) axis_val = 0;
+		else if (axis_val > 0xff) axis_val = 0xFF;
+		return axis_val; */
+	}
+
+	const char *get_device_name() override {
+		return maple_maracas_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0546 : 0x044C; // Max. 130 mA, standby: 100 mA
+	}
+};
+
+struct maple_fishing_controller: maple_sega_controller
+{
+	u32 analogToDPad = ~0;
+
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0x0fe063f00;	// Ra,La,Da,Ua,A,B,X,Y,Start,A1,A2,A3,A4,A5,A6
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override
+	{
+		// Analog to DPad handling
+		if (pjs.joy[PJAI_X1] < 0x30) {
+			analogToDPad &= ~DC_DPAD_LEFT;
+			analogToDPad |= DC_DPAD_RIGHT;
+		}
+		else if (pjs.joy[PJAI_X1] > 0xd0) {
+			analogToDPad &= ~DC_DPAD_RIGHT;
+			analogToDPad |= DC_DPAD_LEFT;
+		}
+		else
+		{
+			if (pjs.joy[PJAI_X1] >= 0x40)
+				analogToDPad |= DC_DPAD_LEFT;
+			if (pjs.joy[PJAI_X1] <= 0xc0)
+				analogToDPad |= DC_DPAD_RIGHT;
+		}
+		if (pjs.joy[PJAI_Y1] < 0x30) {
+			analogToDPad &= ~DC_DPAD_UP;
+			analogToDPad |= DC_DPAD_DOWN;
+		}
+		else if (pjs.joy[PJAI_Y1] > 0xd0) {
+			analogToDPad &= ~DC_DPAD_DOWN;
+			analogToDPad |= DC_DPAD_UP;
+		}
+		else
+		{
+			if (pjs.joy[PJAI_Y1] >= 0x40)
+				analogToDPad |= DC_DPAD_UP;
+			if (pjs.joy[PJAI_Y1] <= 0xc0)
+				analogToDPad |= DC_DPAD_DOWN;
+		}
+		u32 kcode = pjs.kcode & analogToDPad;
+		mutualExclusion(kcode, DC_DPAD_UP   | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		return kcode | 0xf901;		// mask off DPad2, D, Z, C;
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_FishingController;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override
+	{
+		// In the XYZ axes, acceleration sensor outputs 80 ± 8H (home position)
+		//   in the static state (± 0G), F0h or greater for maximum force (+10G)
+		//   in the positive direction and 11h or less
+		//   for the maximum force (-10G) applied in the negative direction
+		// From the perspective of the player operating the controller:
+		//   X: Right is positive, left is negative
+		//   Y: Down is positive, up is negative
+		//   Z: Forward is positive, backward is negative
+		switch (index)
+		{
+		case 0:
+			return pjs.trigger[PJTI_R];		// A1: Reel handle output
+		case 1:
+			return pjs.joy[PJAI_X3];		// A2: acceleration sensor Z
+		case 2:
+			return pjs.joy[PJAI_X1];		// A3: analog stick X
+		case 3:
+			return pjs.joy[PJAI_Y1];		// A4: analog stick Y
+		case 4:
+			return pjs.joy[PJAI_X2];		// A5: acceleration sensor X
+		case 5:
+			return pjs.joy[PJAI_Y2];		// A6: acceleration sensor Y
+		default:
+			return 0x80;
+		}
+	}
+
+	const char *get_device_name() override {
+		return maple_fishing_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0960 : 0x0258; // Max. 240 mA, standby: 60 mA
+	}
+};
+
+struct maple_popnmusic_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff060000;	// no analog axes, X Y A B C Start U/D/L/R
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override {
+		return pjs.kcode | 0xf100; // mask off DPad2 and Z
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_PopnMusicController;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
+		if (index == 0 || index == 1)
+			return 0;		// Right and left triggers
+		return 0x80;
+	}
+
+	const char *get_device_name() override {
+		return maple_popnmusic_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x012C : 0x00AA; // Max. 30 mA, standby: 17 mA
+	}
+};
+
+struct maple_racing_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfe003700;	// Steering + accelerator/brake unit: Ra,La,Da,Ua,A,B,Start,A1,A2,A3,A5,A6
+							// (A5 & A6 only valid when the accelerator/brake unit is connected.)
+		//return 0xfe000700;	// Steering only
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override
+	{
+		// Ra, La are ON when A3 threshold values (La: 40h, Ra: BEh) are exceeded
+		u32 kcode = pjs.kcode;
+		if (pjs.joy[PJAI_X1] < 0x40)
+			kcode &= ~DC_DPAD_LEFT;
+		else if (pjs.joy[PJAI_X1] > 0xBE)
+			kcode &= ~DC_DPAD_RIGHT;
+		mutualExclusion(kcode, DC_DPAD_UP   | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		return kcode | 0xff01;	// mask off DPad2, D, X, Y, Z, C
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_RacingController;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override
+	{
+		switch (index)
+		{
+		case 0: return pjs.trigger[PJTI_R];	 // A1: lever, 0 at rest
+		case 1: return pjs.trigger[PJTI_L];	 // A2: lever, 0 at rest
+		case 2: return pjs.joy[PJAI_X1];	 // A3: 0-0xff, 0x80 at rest
+		// (A5 and A6 are only valid when the accelerator/brake unit is connected)
+		case 4:	return pjs.trigger[PJTI_R2]; // A5: lever, 0 at rest
+		case 5: return pjs.trigger[PJTI_L2]; // A6: lever, 0 at rest
+		default: return 0x80;				 // unused
+		}
+	}
+
+	const char *get_device_name() override {
+		return maple_racing_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x0226 : 0x01B8; // Max. 55 mA, standby: 44 mA
+	}
+};
+
+struct maple_densha_controller: maple_sega_controller
+{
+	u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff0f3f00;	// Ra,La,Da,Ua A,B,C,D,X,Y,Z,Start Xa,Ya,Xb,Yb Analog levers R,L
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override {
+		// Ra,La,Da,Ua are used together, corresponding to the brake lever.
+		return pjs.kcode | 0xF000; // mask off DPad2
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_DenshaDeGoController;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override {
+		if (index == 2 || index == 3)
+			return 0;
+		if (index == 0 || index == 1 || index == 4 || index == 5)
+			return 0xff;
+		return 0xff;
+	}
+
+	const char *get_device_name() override {
+		return maple_densha_controller_name;
+	}
+
+	u32 get_device_current(int get_max_current) override {
+		return get_max_current ? 0x01F4 : 0x00DC; // Max. 50 mA, standby: 22 mA
+	}
+};
+
+
+// Emulates a 838-14245-92 maple to RS232 converter
+// wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
+struct RFIDReaderWriter : maple_base
+{
+	u32 getStatus() const
+	{
+		// b0: !card switch
+		// b1: state=4	errors?
+		// b2: state=5
+		// b3: state=6
+		// b4: state=7
+		// b5: state=8
+		// b6: card lock
+		// when 0x40 trying to read the card
+		u32 status = 1;
+		if (cardInserted)
+			status &= ~1;
+		if (cardLocked)
+			status |= 0x40;
+		return status;
+	}
+
+	// Surprisingly recipient and sender aren't swapped in the response so we override RawDma for this reason
+	// vf4tuned and mushiking do care
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	{
+		u32 command=buffer_in[0] &0xFF;
+		//Recipient address
+		u32 reci = (buffer_in[0] >> 8) & 0xFF;
+		//Sender address
+		u32 send = (buffer_in[0] >> 16) & 0xFF;
+		u32 outlen = 0;
+		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+
+		if (reci & 0x20)
+			reci |= maple_GetAttachedDevices(maple_GetBusId(reci));
+
+		verify(u8(outlen / 4) * 4 == outlen);
+		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
+
+		return outlen + 4;
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
+			// custom function
+			w32(0x00100000);
+			// function flags
+			w32(0);
+			w32(0);
+			w32(0);
+			//1	area code
+			w8(0xff);				// FF: Worldwide, 01: North America
+			//1	direction
+			w8(0);
+			// Product name (totally made up)
+			wstr("MAPLE/232C CONVERT BD", 30);
+
+			// License (60)
+			wstr(maple_sega_brand, 60);
+
+			// Low-consumption standby current (2)
+			w16(0x0069);	// 10.5 mA
+
+			// Maximum current consumption (2)
+			w16(0x0120);	// 28.8 mA
+
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+
+		case MDCF_GetCondition:
+			w32(0x00100000); // custom function
+
+			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
+		// 90	get status
+		//
+		// read test:
+		// d0	?
+		// 91	get last cmd status?
+		// a0	?
+		// 91
+		// a1	read md5 in data
+		//			or data itself if after D4 xx xx xx xx
+		// d4	in=d2 03 aa db
+		// 91
+		//
+		// d9	lock
+		// da	unlock
+		//
+		// write test:
+		// D0
+		// 91
+		// B1 05 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 0b 06 00 00 00 00 c6 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 11 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 17 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+		// 91
+		// B1 1d 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (16 bytes)
+		// 91
+		// C1: 00 00 00 00
+		// 91
+
+		case 0xD0:
+			d4Seen = false;
+			[[fallthrough]];
+		case 0x90:
+		case 0x91:
+		case 0xA0:
+		case 0xD4:
+		case 0xC1:
+			w32(getStatus());
+			if (cmd == 0xd4)
+				d4Seen = true;
+			return (MapleDeviceRV)0xfe;
+
+		case 0xA1:	// read card data
+			DEBUG_LOG(MAPLE, "RFID card read (data? %d)", d4Seen);
+			w32(getStatus());
+			if (!d4Seen)
+				w32(0x12345678);	// arbitrary value (unknown)
+			else
+				wptr(cardData, sizeof(cardData));
+			return (MapleDeviceRV)0xfe;
+
+		case 0xD9:	// lock card
+			w32(getStatus());
+			cardLocked = true;
+			INFO_LOG(MAPLE, "RFID card %d locked", player_num);
+			return (MapleDeviceRV)0xfe;
+
+		case 0xDA:	// unlock card
+			w32(getStatus());
+			cardLocked = false;
+			cardInserted = false;
+			INFO_LOG(MAPLE, "RFID card %d unlocked", player_num);
+			return (MapleDeviceRV)0xfe;
+
+		case 0xB1:	// write to card
+			{
+				w32(getStatus());
+				u32 offset = r8() * 4;
+				size_t size = r8() * 4;
+				skip(2);
+				DEBUG_LOG(MAPLE, "RFID card write: offset 0x%x len %d", offset, (int)size);
+				rptr(cardData + offset, std::min(size, sizeof(cardData) - offset));
+				saveCard();
+				return (MapleDeviceRV)0xfe;
+			}
+
+		default:
+			INFO_LOG(MAPLE, "RFIDReaderWriter: unknown MAPLE COMMAND %d", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_RFIDReaderWriter;
+	}
+
+	void OnSetup() override
+	{
+		memset(cardData, 0, sizeof(cardData));
+		transientData = false;
+	}
+
+	std::string getCardPath() const
+	{
+		int playerNum;
+		if (config::GGPOEnable && !config::ActAsServer)
+			// Always load P1 card with GGPO to be consistent with P1 inputs being used
+			playerNum = 1;
+		else
+			playerNum = player_num + 1;
+		return hostfs::getArcadeFlashPath() + "-p" + std::to_string(playerNum) + ".card";
+	}
+
+	void loadCard()
+	{
+		if (transientData)
+			return;
+		std::string path = getCardPath();
+		FILE *fp = nowide::fopen(path.c_str(), "rb");
+		if (fp == nullptr)
+		{
+			static u8 blankCard[128] = {
+					0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
+			};
+			// Generate random bytes used by vf4 vanilla to make the card id
+			srand(time(0));
+			blankCard[2] = rand() & 0xff;
+			blankCard[4] = rand() & 0xff;
+			blankCard[5] = rand() & 0xff;
+			blankCard[6] = rand() & 0xff;
+			blankCard[7] = rand() & 0xff;
+			memcpy(cardData, blankCard, sizeof(blankCard));
+			INFO_LOG(NAOMI, "Card P%d initialized", player_num + 1);
+		}
+		else
+		{
+			INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
+			if (fread(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+				WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
+			fclose(fp);
+		}
+	}
+
+	void saveCard() const
+	{
+		if (transientData)
+			return;
+		std::string path = getCardPath();
+		FILE *fp = nowide::fopen(path.c_str(), "wb");
+		if (fp == nullptr)
+		{
+			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
+			return;
+		}
+		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
+		if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
+		fclose(fp);
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		maple_device::serialize(ser);
+		ser << cardData;
+		ser << d4Seen;
+		ser << cardInserted;
+		ser << cardLocked;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		maple_device::deserialize(deser);
+		deser >> cardData;
+		deser >> d4Seen;
+		deser >> cardInserted;
+		deser >> cardLocked;
+	}
+
+	void insertCard()
+	{
+		if (!cardInserted) {
+			cardInserted = true;
+			loadCard();
+		}
+		else if (!cardLocked) {
+			cardInserted = false;
+			if (!transientData)
+				memset(cardData, 0, sizeof(cardData));
+		}
+	}
+
+	const u8 *getCardData() {
+		loadCard();
+		return cardData;
+	}
+
+	void setCardData(u8 *data) {
+		memcpy(cardData, data, sizeof(cardData));
+		transientData = true;
+	}
+
+	u8 cardData[128];
+	bool d4Seen = false;
+	bool cardInserted = false;
+	bool cardLocked = false;
+	bool transientData = false;
+};
+
+void insertRfidCard(int playerNum)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		((RFIDReaderWriter *)mapleDev)->insertCard();
+}
+
+void setRfidCardData(int playerNum, u8 *data)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		((RFIDReaderWriter *)mapleDev)->setCardData(data);
+}
+
+const u8 *getRfidCardData(int playerNum)
+{
+	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		return ((RFIDReaderWriter *)mapleDev)->getCardData();
+	else
+		return nullptr;
+}
+
 maple_device* maple_Create(MapleDeviceType type)
 {
 	maple_device* rv=0;
@@ -1375,6 +1953,30 @@ maple_device* maple_Create(MapleDeviceType type)
 		rv = new maple_ascii_stick();
 		break;
 
+	case MDT_MaracasController:
+		rv = new maple_maracas_controller();
+		break;
+
+	case MDT_FishingController:
+		rv = new maple_fishing_controller();
+		break;
+
+	case MDT_PopnMusicController:
+		rv = new maple_popnmusic_controller();
+		break;
+
+	case MDT_RacingController:
+		rv = new maple_racing_controller();
+		break;
+
+	case MDT_DenshaDeGoController:
+		rv = new maple_densha_controller();
+		break;
+
+	case MDT_RFIDReaderWriter:
+		rv = new RFIDReaderWriter();
+		break;
+
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
 		die("Invalid maple device type");
@@ -1383,4 +1985,3 @@ maple_device* maple_Create(MapleDeviceType type)
 
 	return rv;
 }
-

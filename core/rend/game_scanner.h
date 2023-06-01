@@ -25,13 +25,14 @@
 #include "types.h"
 #include "stdclass.h"
 #include "hw/naomi/naomi_roms.h"
-#include "oslib/directory.h"
+#include "oslib/storage.h"
 #include "cfg/option.h"
 
 struct GameMedia {
-	std::string name;
-	std::string path;
-	std::string gameName;	// for arcade games, from the rom list
+	std::string name;		// Display name
+	std::string path;		// Full path to rom. May be an encoded uri
+	std::string fileName;	// Last component of the path, decoded
+	std::string gameName;	// for arcade games only, description from the rom list
 };
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
@@ -64,19 +65,26 @@ class GameScanner
 
 	void add_game_directory(const std::string& path)
 	{
-        DirectoryTree tree(path);
+        hostfs::DirectoryTree tree(path);
         std::string emptyParentPath;
-        for (const DirectoryTree::item& item : tree)
+        for (const hostfs::FileInfo& item : tree)
         {
             if (!running)
                 break;
             
             if (game_list.empty())
             {
-                if(item.parentPath.compare(emptyParentPath))
+            	// This won't work for android content uris
+            	size_t slash = get_last_slash_pos(item.path);
+            	std::string parentPath;
+            	if (slash != 0 && slash != std::string::npos)
+            		parentPath = item.path.substr(0, slash);
+            	else
+            		parentPath = item.path;
+                if (parentPath != emptyParentPath)
                 {
                     ++empty_folders_scanned;
-                    emptyParentPath = item.parentPath;
+                    emptyParentPath = parentPath;
                     if (empty_folders_scanned > 1000)
                         content_path_looks_incorrect = true;
                 }
@@ -90,42 +98,36 @@ class GameScanner
         		// Ignore Mac OS turds
         		continue;
         	std::string fileName(item.name);
-			std::string child_path = item.parentPath + "/" + fileName;
-#ifdef __APPLE__
-            extern std::string os_PrecomposedString(std::string string);
-            fileName = os_PrecomposedString(fileName);
-#endif
             std::string gameName(get_file_basename(item.name));
-			std::string extension = get_file_extension(fileName);
+			std::string extension = get_file_extension(item.name);
 			if (extension == "zip" || extension == "7z")
 			{
-				std::string basename = get_file_basename(fileName);
-				string_tolower(basename);
-				auto it = arcade_games.find(basename);
+				string_tolower(gameName);
+				auto it = arcade_games.find(gameName);
 				if (it == arcade_games.end())
 					continue;
 				gameName = it->second->description;
 				fileName = fileName + " (" + gameName + ")";
-				insert_arcade_game(GameMedia{ fileName, child_path, gameName });
+				insert_arcade_game(GameMedia{ fileName, item.path, item.name, gameName });
 				continue;
 			}
 			else if (extension == "bin" || extension == "lst" || extension == "dat")
 			{
 				if (!config::HideLegacyNaomiRoms)
-					insert_arcade_game(GameMedia{ fileName, child_path, gameName });
+					insert_arcade_game(GameMedia{ fileName, item.path, item.name, gameName });
 				continue;
 			}
 			else if (extension == "chd" || extension == "gdi")
 			{
 				// Hide arcade gdroms
-				std::string basename = get_file_basename(fileName);
+				std::string basename = gameName;
 				string_tolower(basename);
 				if (arcade_gdroms.count(basename) != 0)
 					continue;
 			}
 			else if (extension != "cdi" && extension != "cue")
 				continue;
-			insert_game(GameMedia{ fileName, child_path, gameName });
+			insert_game(GameMedia{ fileName, item.path, item.name, gameName });
 		}
 	}
 
@@ -176,7 +178,11 @@ public:
 				arcade_game_list.clear();
 				for (const auto& path : config::ContentPath.get())
 				{
-					add_game_directory(path);
+					try {
+						add_game_directory(path);
+					} catch (const hostfs::StorageException& e) {
+						// ignore
+					}
 					if (!running)
 						break;
 				}

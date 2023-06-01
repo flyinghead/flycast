@@ -27,6 +27,7 @@
 #include "cfg/ini.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/storage.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -368,7 +369,7 @@ void CheatManager::setActive(bool active)
 void CheatManager::loadCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
-	FILE* cheatfile = nowide::fopen(filename.c_str(), "r");
+	FILE* cheatfile = hostfs::storage().openFile(filename, "r");
 	if (cheatfile == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
@@ -429,13 +430,7 @@ void CheatManager::reset(const std::string& gameId)
 		if (!cheatFile.empty())
 			loadCheatFile(cheatFile);
 #endif
-		if (gameId == "VF4 FINAL TUNED JAPAN")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x0007f486, 0xe001); // mov #1, r0
-			cheats.back().builtIn = true;
-		}
-		else if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
+		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
 		{
 			setActive(true);
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0);
@@ -449,6 +444,40 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.back().builtIn = true;
 			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202);
 			cheats.back().builtIn = true;
+		}
+		else if (gameId == "THE KING OF ROUTE66")
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B); // rts, nop
+			cheats.back().builtIn = true;
+		}
+		else if (gameId.substr(0, 8) == "MKG TKOB")
+		{
+			const auto& setMushikingCheats = [this](u32 addr) {
+				setActive(true);
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0); // rfid[0].error = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0); // rfid[1].error = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0); // rfid[0].data18 = 0
+				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0); // rfid[1].data18 = 0
+				cheats.back().builtIn = true;
+			};
+			if (gameId == "MKG TKOB 2 EXP VER1.001-")		// mushi2eo
+				setMushikingCheats(0x6fe1bc);
+			else if (gameId == "MKG TKOB 2 JPN VER2.001-")	// mushik2e
+				setMushikingCheats(0x6ffe54);
+			else if (gameId == "MKG TKOB 2K3 2ND VER1.003-")// mushike
+				setMushikingCheats(0x4ad7ec);
+			else if (gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
+				setMushikingCheats(0xb0e538);
+			else if (gameId == "MKG TKOB 2K3 2ND VER1.002-")// mushikeo
+				setMushikingCheats(0x4ad56c);
+			else if (gameId == "MKG TKOB 2K3 2ND KOR VER1.000-") // mushikk
+				setMushikingCheats(0x4ac9b8);
+			else if (gameId == "MKG TKOB 2K3 2ND CHN VER1.000-") // mushikc
+				setMushikingCheats(0x4aa9b8);
 		}
 	}
 	if (config::WidescreenGameHacks)
@@ -471,10 +500,7 @@ void CheatManager::reset(const std::string& gameId)
 		}
 		else
 		{
-			std::string romName = get_file_basename(settings.content.path);
-			size_t folder_pos = get_last_slash_pos(romName);
-			if (folder_pos != std::string::npos)
-				romName = romName.substr(folder_pos + 1);
+			std::string romName = get_file_basename(settings.content.fileName);
 
 			for (int i = 0; naomi_widescreen_cheats[i].game_id != nullptr; i++)
 			{
@@ -489,7 +515,7 @@ void CheatManager::reset(const std::string& gameId)
 			}
 		}
 		if (widescreen_cheat != nullptr)
-			for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
+			for (size_t i = 0; i < std::size(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 				verify(widescreen_cheat->addresses[i] < RAM_SIZE);
 	}
 	setActive(active);
@@ -530,7 +556,7 @@ void CheatManager::apply()
 {
 	if (widescreen_cheat != nullptr)
 	{
-		for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
+		for (size_t i = 0; i < std::size(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 		{
 			u32 address = widescreen_cheat->addresses[i];
 			u32 curVal = readRam(address, 32);
@@ -898,7 +924,7 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		i++;
 	}
 	cfg.set_int("", "cheats", i);
-	FILE *fp = nowide::fopen(filename.c_str(), "w");
+	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
 		throw FlycastException("Can't save cheat file");
 	cfg.save(fp);

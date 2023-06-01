@@ -24,7 +24,7 @@
 #include "naomi_roms_eeprom.h"
 #include "naomi_roms_input.h"
 
-BIOS_t BIOS[] =
+const BIOS_t BIOS[] =
 {
 	{
 		"airlbios",
@@ -175,7 +175,7 @@ BIOS_t BIOS[] =
 	}
 };
 
-Game Games[] =
+const Game Games[] =
 {
     // Naomi M1 Roms
     // Giant Gram 2000 (JPN, USA, EXP, KOR, AUS)
@@ -481,7 +481,10 @@ Game Games[] =
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
 
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		tduno2_eeprom_dump,
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
@@ -572,6 +575,59 @@ Game Games[] =
             //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
 
             { NULL, 0, 0 },
+        }
+    },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)
+    {
+        "mushikk",
+        "mushike",
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)",
+        0x04000000,
+        0x3892fb3a,
+        nullptr,
+        M1,
+        ROT0,
+        {
+            { "epr-24265.ic11",      0x0000000, 0x0400000,  0xdccb210b },
+            { "opr-24266.ic17s",     0x1000000, 0x0800000,  0x293e5350, InterleavedWord },
+            { "opr-24267.ic18",      0x1000002, 0x0800000,  0x80798f9a, InterleavedWord },
+            { "opr-24268.ic19s",     0x2000000, 0x0800000,  0xb512c772, InterleavedWord },
+            { "opr-24269.ic20",      0x2000002, 0x0800000,  0x25d4a162, InterleavedWord },
+            { "opr-24270.ic21s",     0x3000000, 0x0800000,  0x02a513ad, InterleavedWord },
+            { "opr-24271.ic22",      0x3000002, 0x0800000,  0x7e5c745c, InterleavedWord },
+            { "copy",                0x0400000, 0x0c00000,  0, Copy, 0x1000000 },
+        }
+    },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)
+    {
+        "mushikc",
+        "mushik2e",	// mame says mushike but the key pic is missing
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)",
+        0x04000000,
+        0x5501,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "ic8.bin", 0x00000000, 0x04000000, 0x5edc61fb },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
+        }
+    },
+	// Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)
+	// require rev.H Korea BIOS, not dumped
+    {
+        "mushik2k",
+        "mushik2e",
+        "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)",
+		0x08000000,
+        0x5502,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "fpr-24355.ic8", 0x00000000, 0x04000000, 0x8bd89229 },
+        	{ "fpr-24356.ic9", 0x04000000, 0x04000000, 0xed649c81 },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
         }
     },
     // Naomi M2/M3 Roms
@@ -825,7 +881,7 @@ Game Games[] =
         "Airline Pilots (World, Rev B)",
         0x0b000000,
         0x28070e41,
-        "naomi",
+        "airlbios",
         M2,
         ROT0,
         {
@@ -859,7 +915,7 @@ Game Games[] =
         "Airline Pilots (Japan, Rev A)",
         0x0b000000,
         0x28070e41,
-        "naomi",
+        "airlbios",
         M2,
         ROT0,
         {
@@ -1357,10 +1413,10 @@ Game Games[] =
             { "mpr-22330.ic3",   0x2800000, 0x1000000, 0x6737cd62 },
             { "mpr-22331.ic4",   0x3800000, 0x1000000, 0x8fb5cbcf },
             { "mpr-22332.ic5",   0x4800000, 0x1000000, 0xc5e365a8 },
-            { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
-            { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
+            { "mpr-22337.ic6",   0x5800000, 0x1000000, 0x87ca3a2f },
+            { "mpr-22338.ic7",   0x6800000, 0x1000000, 0x4bda7303 },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
     },
     // Derby Owners Club World Edition (Rev A)
     {
@@ -1676,8 +1732,10 @@ Game Games[] =
 
             { NULL, 0, 0 },
         },
-		NULL,
-		&f355_inputs
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge (twin)
     {
@@ -1713,7 +1771,11 @@ Game Games[] =
             { "mpr-22846.ic20s", 0xa000000, 0x800000, 0xd4148f39 },
             { "mpr-22847.ic21s", 0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge (twin/deluxe, preview)
     {
@@ -1749,7 +1811,11 @@ Game Games[] =
             { "rom20.ic20s",     0xa000000, 0x800000, 0xd4148f39 },
             { "rom21.ic21s",     0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Ferrari F355 Challenge 2 (twin)
     {
@@ -1786,7 +1852,11 @@ Game Games[] =
             { "mpr-23397.ic20s", 0xa000000, 0x800000 },
             { "mpr-23398.ic21s", 0xa800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&f355_inputs,
+		nullptr,
+		3,
     },
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
     {
@@ -2630,7 +2700,6 @@ Game Games[] =
         },
 		nullptr,
 		&pstone_inputs,
-		pstone_eeprom_dump,
     },
     // Power Stone 2
     {
@@ -2657,7 +2726,6 @@ Game Games[] =
         },
 		nullptr,
 		&pstone2_inputs,
-        pstone2_eeprom_dump
     },
     // Power Stone 2 (bootleg)
     {
@@ -2684,7 +2752,6 @@ Game Games[] =
         },
 		nullptr,
 		&pstone2_inputs,
-        pstone2_eeprom_dump
     },
     // Puyo Puyo Da! (Japan)
     {
@@ -2747,7 +2814,6 @@ Game Games[] =
         },
         NULL,
 		&ringout_inputs,
-        ringout_eeprom_dump
     },
     // Ring Out 4x4
     {
@@ -2775,7 +2841,6 @@ Game Games[] =
         },
         NULL,
 		&ringout_inputs,
-        ringout_eeprom_dump
     },
     // Samba De Amigo (Rev B)
     {
@@ -3424,7 +3489,10 @@ Game Games[] =
             //ROM_LOAD( "x76f100.ic37", 0x000000, 0x000084, CRC(c79251d5) SHA1(3e70bbbb6d28bade7eec7e27d716463045656f98) )
 
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		tduno_eeprom_dump,
     },
 	// Tokyo Bus (Rev A)
 	{
@@ -4413,6 +4481,38 @@ Game Games[] =
             { NULL, 0, 0 },
         }
     },
+	{
+		"mushi2k61",
+		nullptr,
+		"Mushiking The King Of Beetles 2006 First (Japan)",
+		0x8000000,
+		0x5502,
+		"naomi",
+		M4,
+		ROT0,
+		{
+			{ "fpr-24340.ic8", 0x0000000, 0x4000000, 0xd348a3a7 },
+			{ "fpr-24341.ic9", 0x4000000, 0x4000000, 0xbde9547c },
+
+            { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
+		},
+	},
+	{
+		"mushi2k62",
+		nullptr,
+		"Mushiking The King Of Beetles 2006 Second (Japan)",
+		0x8000000,
+		0x5502,
+		"naomi",
+		M4,
+		ROT0,
+		{
+			{ "fpr-24360.ic8", 0x0000000, 0x4000000, 0x6e6c6633 },
+			{ "fpr-24361.ic9", 0x4000000, 0x4000000, 0xce2a9720 },
+
+            { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
+		},
+	},
     // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka",
@@ -6689,6 +6789,7 @@ Game Games[] =
         },
 		nullptr,
 		&kingrt66_inputs,
+		kingrt66_eeprom_dump,
     },
     {
     	"kingrt66p",
@@ -6783,7 +6884,10 @@ Game Games[] =
 			{ "mpr-23930.ic35",  0xa000000, 0x800000, 0x0e45e4c4, InterleavedWord },
 			{ "mpr-23931.ic36s", 0xa000002, 0x800000, 0x12ecd2f0, InterleavedWord },
             { "copy",            0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
-        }
+        },
+		nullptr,
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"clubkrto",
@@ -6810,6 +6914,7 @@ Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
 	{
     	"clubkrta",
@@ -6836,6 +6941,7 @@ Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrtc",
@@ -6862,6 +6968,7 @@ Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrt",
@@ -6888,6 +6995,7 @@ Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkprz",
@@ -6986,6 +7094,7 @@ Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubk2k3_eeprom_dump,
     },
     {
     	"clubk2kp",
@@ -7058,6 +7167,31 @@ Game Games[] =
 		nullptr,
 		&clubkart_inputs,
     },
+    {
+    	"sgdrvsim",
+		nullptr,
+		"Sega Driving Simulator",
+		0x20000000,
+		0x5508,
+		"naomi2",
+		M4,
+		ROT0,
+        {
+        	{ "ic8.bin",  0x00000000, 0x4000000, 0x3ef5e62f },
+        	{ "ic9.bin",  0x04000000, 0x4000000, 0x4edf67df },
+        	{ "ic10.bin", 0x08000000, 0x4000000, 0xa3b0f436 },
+        	{ "ic11.bin", 0x0c000000, 0x4000000, 0x200ad72c },
+        	{ "ic12.bin", 0x10000000, 0x4000000, 0x90d192a4 },
+        	{ "ic13.bin", 0x14000000, 0x4000000, 0xeed33acc },
+        	{ "ic14.bin", 0x18000000, 0x4000000, 0x349267e9 },
+        	{ "ic15.bin", 0x1c000000, 0x4000000, 0xacc0c039 },
+
+			{ "317-0502-jpn.ic3", 0, 0x800, 0x528ad9e7, Key },
+        },
+		nullptr,
+		&drvsim_inputs,
+		sgdrvsim_eeprom_dump,
+    },
 	//
 	// Naomi 2 GD-ROM
 	//
@@ -7088,6 +7222,8 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"vf4b",
@@ -7102,6 +7238,8 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012b",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"vf4",
@@ -7116,6 +7254,8 @@ Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012c",
+		nullptr,
+		vf4_eeprom_dump
     },
     {
     	"beachspi",
@@ -7174,6 +7314,8 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024c",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"vf4evob",
@@ -7188,6 +7330,8 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024b",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"vf4evoa",
@@ -7202,6 +7346,8 @@ Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024a",
+		nullptr,
+		vf4evo_eeprom_dump,
     },
     {
     	"initdexp",
@@ -7381,6 +7527,8 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036f",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"vf4tunedd",
@@ -7395,6 +7543,8 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036d",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"vf4tuneda",
@@ -7409,6 +7559,8 @@ Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036a",
+		nullptr,
+		vf4tuned_eeprom_dump,
     },
     {
     	"inidv3cy",

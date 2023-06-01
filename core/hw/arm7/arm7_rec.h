@@ -21,7 +21,11 @@
 #include "types.h"
 #include "arm7.h"
 
-namespace aicaarm {
+namespace aica
+{
+
+namespace arm
+{
 
 struct ArmOp
 {
@@ -421,6 +425,7 @@ protected:
 namespace recompiler {
 
 void init();
+void term();
 void flush();
 void compile();
 void *getMemOp(bool load, bool byte);
@@ -452,7 +457,7 @@ static inline void *execToWrite(void * addr) {
 	return (char *)addr - rx_offset;
 }
 
-}
+} // namespace recompiler
 
 void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles);
 void arm7backend_flush();
@@ -461,4 +466,5 @@ extern void (*arm_compilecode)();
 using arm_mainloop_t = void (*)(reg_pair *arm_regs, void (*entrypoints[])());
 extern arm_mainloop_t arm_mainloop;
 
-}
+} // namespace arm
+} // namespace aica

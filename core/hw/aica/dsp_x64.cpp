@@ -25,7 +25,10 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
+
+namespace aica
+{
 
 namespace dsp
 {
@@ -414,20 +417,32 @@ private:
 
 void recompile()
 {
-	vmem_platform_jit_set_exec(pCodeBuffer, CodeBufferSize, false);
+	virtmem::jit_set_exec(pCodeBuffer, CodeBufferSize, false);
 	X64DSPAssembler assembler(pCodeBuffer, CodeBufferSize);
 	assembler.Compile(&state);
-	vmem_platform_jit_set_exec(pCodeBuffer, CodeBufferSize, true);
+	virtmem::jit_set_exec(pCodeBuffer, CodeBufferSize, true);
 }
 
 void recInit()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer, &rx_offset))
+	if (!virtmem::prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer, &rx_offset))
 #else
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer))
+	if (!virtmem::prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer))
 #endif
-		die("vmem_platform_prepare_jit_block failed in x64 dsp");
+		die("virtmem::prepare_jit_block failed in x64 dsp");
+}
+
+void recTerm()
+{
+#ifdef FEAT_NO_RWX_PAGES
+	if (pCodeBuffer != nullptr)
+		virtmem::release_jit_block(CodeBuffer, pCodeBuffer, CodeBufferSize);
+#else
+	if (pCodeBuffer != nullptr && pCodeBuffer != CodeBuffer)
+		virtmem::release_jit_block(pCodeBuffer, CodeBufferSize);
+#endif
+	pCodeBuffer = nullptr;
 }
 
 void runStep()
@@ -435,5 +450,6 @@ void runStep()
 	((void (*)())&pCodeBuffer[0])();
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

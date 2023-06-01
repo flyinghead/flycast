@@ -459,8 +459,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
-		verify(pp_ShadInstr < ARRAY_SIZE(MacroValues));
-		verify(pp_FogCtrl < ARRAY_SIZE(MacroValues));
+		verify(pp_ShadInstr < std::size(MacroValues));
+		verify(pp_FogCtrl < std::size(MacroValues));
 		PixelMacros[MacroGouraud].Definition = MacroValues[gouraud];
 		PixelMacros[MacroTexture].Definition = MacroValues[pp_Texture];
 		PixelMacros[MacroUseAlpha].Definition = MacroValues[pp_UseAlpha];
@@ -698,7 +698,7 @@ void CachedDX11Shaders::loadCache(const std::string& filename)
 				break;
 			if (std::fread(&size, sizeof(size), 1, fp) != 1)
 				break;
-			std::unique_ptr<u8[]> blob = std::unique_ptr<u8[]>(new u8[size]);
+			std::unique_ptr<u8[]> blob = std::make_unique<u8[]>(size);
 			if (std::fread(&blob[0], 1, size, fp) != size)
 				break;
 			shaderCache[hash] = { size, std::move(blob) };
@@ -728,7 +728,7 @@ void CachedDX11Shaders::cacheShader(u64 hash, const ComPtr<ID3DBlob>& blob)
 	if (!enabled)
 		return;
 	u32 size = (u32)blob->GetBufferSize();
-	std::unique_ptr<u8[]> data = std::unique_ptr<u8[]>(new u8[size]);
+	std::unique_ptr<u8[]> data = std::make_unique<u8[]>(size);
 	memcpy(&data[0], blob->GetBufferPointer(), size);
 	shaderCache[hash] = { size, std::move(data) };
 }

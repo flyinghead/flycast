@@ -6,6 +6,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "network/ggpo.h"
+#include "hw/naomi/card_reader.h"
 
 enum MaplePattern
 {
@@ -135,6 +136,18 @@ static void maple_DoDma()
 #endif
 
 	ggpo::getInput(mapleInputState);
+	// TODO put this elsewhere and let the card readers handle being called multiple times
+	if (settings.platform.isNaomi())
+	{
+		static u32 last_kcode[std::size(mapleInputState)];
+		for (size_t i = 0; i < std::size(mapleInputState); i++)
+		{
+			if ((mapleInputState[i].kcode & DC_BTN_INSERT_CARD) == 0
+					&& (last_kcode[i] & DC_BTN_INSERT_CARD) != 0)
+				card_reader::insertCard(i);
+			last_kcode[i] = mapleInputState[i].kcode;
+		}
+	}
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count = 0;
@@ -301,12 +314,12 @@ static void maple_SB_MDAPRO_Write(u32 addr, u32 data)
 //Init registers :)
 void maple_Init()
 {
-	sb_rio_register(SB_MDST_addr, RIO_WF, nullptr, maple_SB_MDST_Write);
-	sb_rio_register(SB_MDEN_addr, RIO_WF, nullptr, maple_SB_MDEN_Write);
-	sb_rio_register(SB_MSHTCL_addr, RIO_WF, nullptr, maple_SB_MSHTCL_Write);
-	sb_rio_register(SB_MDAPRO_addr, RIO_WO_FUNC, nullptr, maple_SB_MDAPRO_Write);
+	hollyRegs.setWriteHandler<SB_MDST_addr>(maple_SB_MDST_Write);
+	hollyRegs.setWriteHandler<SB_MDEN_addr>(maple_SB_MDEN_Write);
+	hollyRegs.setWriteHandler<SB_MSHTCL_addr>(maple_SB_MSHTCL_Write);
+	hollyRegs.setWriteOnly<SB_MDAPRO_addr>(maple_SB_MDAPRO_Write);
 #ifdef STRICT_MODE
-	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, maple_SB_MDSTAR_Write);
+	hollyRegs.setWriteHandler<SB_MDSTAR_addr>(maple_SB_MDSTAR_Write);
 #endif
 
 	maple_schid = sh4_sched_register(0, maple_schd);

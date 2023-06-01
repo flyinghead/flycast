@@ -36,10 +36,13 @@ public:
 	virtual ArchiveFile *OpenFile(const char *name) = 0;
 	virtual ArchiveFile *OpenFileByCrc(u32 crc) = 0;
 
-	friend Archive *OpenArchive(const char *path);
+protected:
+	virtual bool Open(FILE *file) = 0;
 
 private:
-	virtual bool Open(const char *name) = 0;
+	bool Open(const char *name);
+
+	friend Archive *OpenArchive(const std::string& path);
 };
 
-Archive *OpenArchive(const char *path);
+Archive *OpenArchive(const std::string& path);

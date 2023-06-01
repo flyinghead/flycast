@@ -29,6 +29,16 @@ else()
 	project(flycast)
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(DetectArchitecture)
+if(NOT DEFINED ARCHITECTURE)
+	message(FATAL_ERROR "Unsupported architecture encountered. Ending CMake generation.")
+endif()
+message(STATUS "Target architecture: ${ARCHITECTURE}")
+
 set(USE_HOST_SDL_DEFAULT OFF)
 if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 	set(USE_HOST_SDL_DEFAULT ON)
@@ -61,6 +71,7 @@ if(IOS AND NOT LIBRETRO)
 endif()
 
 include(GNUInstallDirs)
+include(CMakeRC)
 
 if(ENABLE_CTEST)
 	include(CTest)
@@ -146,6 +157,10 @@ elseif(LIBRETRO)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
+	if(APPLE)
+		find_library(FOUNDATION Foundation)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${FOUNDATION})
+	endif()
 	if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
@@ -195,10 +210,8 @@ endif()
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
-	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
-else()
-	target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_14)
 endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
@@ -218,26 +231,25 @@ else()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-		$<$<BOOL:APPLE>:GL_SILENCE_DEPRECATION>
-		$<$<BOOL:MSVC>:_CRT_NONSTDC_NO_WARNINGS>
-		$<$<BOOL:MSVC>:_CRT_SECURE_NO_WARNINGS>
-		$<$<BOOL:MSVC>:_USE_MATH_DEFINES>
-		$<$<BOOL:MSVC>:NOMINMAX>
+		$<$<BOOL:${APPLE}>:GL_SILENCE_DEPRECATION>
+		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
+		$<$<BOOL:${IOS}>:TARGET_IPHONE>
+		$<$<BOOL:${IOS}>:GLES>
+		$<$<BOOL:${IOS}>:GLES3>
+		$<$<BOOL:${IOS}>:GLES_SILENCE_DEPRECATION>
+		$<$<BOOL:${MSVC}>:_CRT_NONSTDC_NO_WARNINGS>
+		$<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>
+		$<$<BOOL:${MSVC}>:_WINSOCK_DEPRECATED_NO_WARNING>
+		$<$<BOOL:${MSVC}>:NOMINMAX>
+		$<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
-		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
-if(IOS)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		TARGET_IPHONE
-		GLES
-		GLES3
-		GLES_SILENCE_DEPRECATION)
-endif()
+		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
 
 if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos core/deps/json)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/khronos core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -407,7 +419,7 @@ if(USE_VULKAN)
 	option(ENABLE_HLSL "Enables HLSL input support" OFF)
 	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
-	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+	target_link_libraries(${PROJECT_NAME} PRIVATE glslang-default-resource-limits SPIRV)
 endif()
 
 if(NOT LIBRETRO)
@@ -565,7 +577,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 
 	find_package(Threads REQUIRED)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*" AND NOT LIBRETRO)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND "x86_64" IN_LIST ARCHITECTURE AND NOT LIBRETRO)
 		set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
 		if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
@@ -601,6 +613,13 @@ if(ASAN)
 	endif()
 endif()
 
+if(ANDROID AND "arm" IN_LIST ARCHITECTURE)
+	enable_language(ASM)
+	option(LIBUNWIND_ENABLE_SHARED "Build libunwind as a shared library." OFF)
+	add_subdirectory(core/deps/libunwind/libunwind)
+	target_link_libraries(${PROJECT_NAME} PRIVATE unwind_static)
+endif()
+
 if(ANDROID AND NOT LIBRETRO)
 	set(BUILD_SHARED_LIBS OFF)
 	add_subdirectory(core/deps/oboe)
@@ -623,6 +642,9 @@ if(NOT MINIUPNP_FOUND)
 		option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
 		option(UPNPC_NO_INSTALL "Disable installation" ON)
 		add_subdirectory(core/deps/miniupnpc)
+		if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+			set_property(TARGET libminiupnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -D_NETBSD_SOURCE")
+		endif()
 		if(WINDOWS_STORE)
 			get_target_property(miniupnpc-private-defs miniupnpc-private INTERFACE_COMPILE_DEFINITIONS)
 			list(REMOVE_ITEM miniupnpc-private-defs "_WIN32_WINNT=0x0501")
@@ -721,10 +743,12 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7
 add_subdirectory(core/deps/libelf)
 target_link_libraries(${PROJECT_NAME} PRIVATE elf)
 if(NOT LIBRETRO)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_DISABLE_DEMO_WINDOWS)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_tables.cpp
 		core/deps/imgui/imgui_widgets.cpp)
 
 	if(ENABLE_FC_PROFILER)
@@ -737,6 +761,9 @@ if(NOT LIBRETRO)
 endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
+
+cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
+target_link_libraries(${PROJECT_NAME} PRIVATE flycast::res)
 
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
@@ -774,6 +801,9 @@ if(LIBRETRO)
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
 		shell/libretro/vmu_xhair.cpp)
+	if(APPLE)
+		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -830,6 +860,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/bba/rtl8139c.cpp
 		core/hw/flashrom/flashrom.cpp
 		core/hw/flashrom/flashrom.h
+		core/hw/flashrom/nvmem.cpp
+		core/hw/flashrom/nvmem.h
 		core/hw/gdrom/gdrom_if.h
 		core/hw/gdrom/gdrom_response.cpp
 		core/hw/gdrom/gdromv3.cpp
@@ -849,8 +881,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/maple/maple_if.cpp
 		core/hw/maple/maple_if.h
 		core/hw/maple/maple_jvs.cpp
-		core/hw/mem/_vmem.cpp
-		core/hw/mem/_vmem.h
+		core/hw/mem/addrspace.cpp
+		core/hw/mem/addrspace.h
 		core/hw/mem/mem_watch.cpp
 		core/hw/mem/mem_watch.h
 		core/hw/modem/modem.cpp
@@ -867,6 +899,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/m1cartridge.h
 		core/hw/naomi/m4cartridge.cpp
 		core/hw/naomi/m4cartridge.h
+		core/hw/naomi/multiboard.h
+		core/hw/naomi/multiboard.cpp
 		core/hw/naomi/naomi_cart.cpp
 		core/hw/naomi/naomi_cart.h
 		core/hw/naomi/naomi_flashrom.cpp
@@ -879,12 +913,17 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/naomi_roms.cpp
 		core/hw/naomi/naomi_roms.h
 		core/hw/naomi/naomi_roms_input.h
+		core/hw/naomi/netdimm.cpp
+		core/hw/naomi/netdimm.h
 		core/hw/naomi/card_reader.h
 		core/hw/naomi/card_reader.cpp
+		core/hw/naomi/touchscreen.h
+		core/hw/naomi/touchscreen.cpp
+		core/hw/naomi/printer.h
+		core/hw/naomi/printer.cpp
 		core/hw/pvr/elan.cpp
 		core/hw/pvr/elan.h
 		core/hw/pvr/elan_struct.h
-		core/hw/pvr/helper_classes.h
 		core/hw/pvr/pvr.cpp
 		core/hw/pvr/pvr.h
 		core/hw/pvr/pvr_mem.cpp
@@ -940,6 +979,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/modules/ubc.cpp
 		core/hw/sh4/modules/wince.h
 		core/hw/sh4/sh4_cache.h
+		core/hw/sh4/sh4_cycles.cpp
+		core/hw/sh4/sh4_cycles.h
 		core/hw/sh4/sh4_core.h
 		core/hw/sh4/sh4_core_regs.cpp
 		core/hw/sh4/sh4_if.h
@@ -955,7 +996,32 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/sh4_rom.cpp
 		core/hw/sh4/sh4_rom.h
 		core/hw/sh4/sh4_sched.cpp
-		core/hw/sh4/sh4_sched.h)
+		core/hw/sh4/sh4_sched.h
+		core/hw/sh4/storeq.cpp)
+
+cmrc_add_resources(flycast-resources
+		WHENCE resources
+		resources/flash/alienfnt.nvmem.zip	# network settings
+		resources/flash/gunsur2.nvmem.zip
+		resources/flash/mazan.nvmem.zip		# free play, calibrated
+		resources/flash/otrigger.nvmem.zip
+		resources/flash/wldkicks.nvmem.zip	# free play
+		resources/flash/wldkicksj.nvmem.zip	# free play
+		resources/flash/wldkicksu.nvmem.zip	# free play
+		resources/flash/f355.nvmem.zip		# printer on
+		resources/flash/f355twin.nvmem.zip
+		resources/flash/f355twn2.nvmem.zip
+		resources/flash/dirtypig.nvmem.zip	# 4 players
+		resources/flash/dirtypig.nvmem2.zip
+		resources/flash/vf4.nvmem.zip		# card all day, stage select
+		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
+		resources/flash/vf4tuned.nvmem.zip) # card all day, stage select, 45 sec time limit, 3 match
+
+cmrc_add_resources(flycast-resources
+		fonts/printer_ascii8x16.bin
+		fonts/printer_ascii12x24.bin
+		fonts/printer_kanji16x16.bin
+		fonts/printer_kanji24x24.bin)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp
@@ -1030,6 +1096,8 @@ if(NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
+		core/network/alienfnt_modem.cpp
+		core/network/alienfnt_modem.h
 		core/network/dns.cpp
 		core/network/ggpo.cpp
 		core/network/ggpo.h
@@ -1071,6 +1139,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/directory.h
 		core/oslib/host_context.h
 		core/oslib/oslib.h
+		core/oslib/storage.cpp
+		core/oslib/storage.h
+		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)
 
@@ -1091,18 +1162,15 @@ if (ENABLE_FC_PROFILER)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-		core/rec-cpp/rec_cpp.cpp)
-
-target_sources(${PROJECT_NAME} PRIVATE
 		core/reios/descrambl.cpp
 		core/reios/descrambl.h
-		core/reios/font.h
 		core/reios/gdrom_hle.cpp
 		core/reios/gdrom_hle.h
 		core/reios/reios.cpp
 		core/reios/reios.h
 		core/reios/reios_elf.cpp
 		core/reios/reios_elf.h)
+cmrc_add_resources(flycast-resources fonts/biosfont.bin)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h
@@ -1149,8 +1217,8 @@ if(USE_OPENGL)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
-				core/rend/gles/imgui_impl_opengl3.cpp
-				core/rend/gles/imgui_impl_opengl3.h
+				core/deps/imgui/backends/imgui_impl_opengl3.cpp
+				core/deps/imgui/backends/imgui_impl_opengl3.h
 				core/rend/gles/opengl_driver.cpp
 				core/rend/gles/opengl_driver.h)
 	endif()
@@ -1231,6 +1299,11 @@ if(USE_VULKAN)
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
+	if (APPLE)
+		# Only available on macOS 10.12+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE VMA_USE_STL_SHARED_MUTEX=0)
+	endif()
+	
 	add_library(VulkanMemoryAllocator INTERFACE)
 	target_compile_options(VulkanMemoryAllocator INTERFACE $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wno-nullability-completeness>)
 	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
@@ -1250,6 +1323,7 @@ if(USE_VULKAN)
 			core/rend/vulkan/oit/oit_shaders.h
 			core/rend/vulkan/buffer.cpp
 			core/rend/vulkan/buffer.h
+			core/rend/vulkan/commandpool.cpp
 			core/rend/vulkan/commandpool.h
 			core/rend/vulkan/compiler.cpp
 			core/rend/vulkan/compiler.h
@@ -1280,15 +1354,15 @@ if(USE_VULKAN)
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/vulkan/vulkan_driver.h
 				core/rend/vulkan/vulkan_context.cpp
-				core/rend/vulkan/imgui_impl_vulkan.cpp
-				core/rend/vulkan/imgui_impl_vulkan.h)
-	 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+				core/deps/imgui/backends/imgui_impl_vulkan.cpp
+				core/deps/imgui/backends/imgui_impl_vulkan.h)
+		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
 		endif()
 	endif()
 endif()
 
-if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))
 	set(REND_DX9_FILES
 		core/rend/dx9/d3d_overlay.h
 		core/rend/dx9/d3d_overlay.cpp
@@ -1301,8 +1375,8 @@ if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 		core/rend/dx9/dx9_driver.h
 		core/rend/dx9/dxcontext.cpp
 		core/rend/dx9/dxcontext.h
-		core/rend/dx9/imgui_impl_dx9.h
-		core/rend/dx9/imgui_impl_dx9.cpp)
+		core/deps/imgui/backends/imgui_impl_dx9.h
+		core/deps/imgui/backends/imgui_impl_dx9.cpp)
 	target_sources(${PROJECT_NAME} PRIVATE ${REND_DX9_FILES})
 
 	if(NOT MINGW)
@@ -1321,8 +1395,8 @@ endif()
 if(WIN32 AND USE_DX11)
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
-			core/rend/dx11/imgui_impl_dx11.cpp
-			core/rend/dx11/imgui_impl_dx11.h)
+			core/deps/imgui/backends/imgui_impl_dx11.cpp
+			core/deps/imgui/backends/imgui_impl_dx11.h)
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx11/dx11_driver.h
@@ -1360,7 +1434,7 @@ if(ENABLE_GDB_SERVER)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE GDB_SERVER)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
+if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1394,9 +1468,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 		core/deps/vixl/pool-manager-impl.h
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
-	 set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+if("arm64" IN_LIST ARCHITECTURE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h
@@ -1441,9 +1514,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
 	target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-	set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
 	add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -1459,10 +1531,6 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*"
 			core/rec-x64/rec_x64.cpp
 			core/rec-x64/x64_regalloc.h)
 	endif()
-	set(KNOWN_ARCHITECTURE_DETECTED ON)
-endif()
-if(NOT KNOWN_ARCHITECTURE_DETECTED)
-	message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(NOT LIBRETRO)
@@ -1715,7 +1783,8 @@ if(BUILD_TESTING)
 			tests/src/test_stubs.cpp
 			tests/src/serialize_test.cpp
 			tests/src/AicaArmTest.cpp
-			tests/src/Sh4InterpreterTest.cpp)
+			tests/src/Sh4InterpreterTest.cpp
+			tests/src/MmuTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)

@@ -48,9 +48,6 @@ private:
 	EGLDisplay display = EGL_NO_DISPLAY;
 	EGLSurface surface = EGL_NO_SURFACE;
 	EGLContext context = EGL_NO_CONTEXT;
-#ifdef TARGET_PANDORA
-	int fbdev = -1;
-#endif
 	bool swapOnVSync = false;
 };
 

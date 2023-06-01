@@ -308,19 +308,21 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	theDXContext.setFrameRendered();
 }
 
-bool D3DRenderer::Process(TA_context* ctx)
+void D3DRenderer::Process(TA_context* ctx)
 {
 	if (!theDXContext.isReady()) {
 		// force a Present
 		frameRendered = true;
-		return false;
+		return;
 	}
+	if (settings.platform.isNaomi2())
+		throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
 
 	if (KillTex)
 		texCache.Clear();
 	texCache.Cleanup();
 
-	return ta_parse(ctx, false);
+	ta_parse(ctx, false);
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)
@@ -477,9 +479,11 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 }
 
 template <u32 Type, bool SortingEnabled>
-void D3DRenderer::drawList(const List<PolyParam>& gply, int first, int count)
+void D3DRenderer::drawList(const std::vector<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params = &gply.head()[first];
+	if (count == 0)
+		return;
+	const PolyParam *params = &gply[first];
 
 	while (count-- > 0)
 	{
@@ -501,10 +505,12 @@ void D3DRenderer::drawList(const List<PolyParam>& gply, int first, int count)
 
 void D3DRenderer::drawSorted(int first, int count, bool multipass)
 {
+	if (count == 0)
+		return;
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+		const PolyParam *params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 		setGPState<ListType_Translucent, true>(params);
 		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, pvrrc.sortedTriangles[p].count, pvrrc.sortedTriangles[p].first, pvrrc.sortedTriangles[p].count / 3);
 	}
@@ -525,7 +531,7 @@ void D3DRenderer::drawSorted(int first, int count, bool multipass)
 
 		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = pvrrc.sortedTriangles[p].ppid;
+			const PolyParam *params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
 			if (!params->isp.ZWriteDis)
 			{
 				// FIXME no clipping in modvol shader
@@ -646,7 +652,7 @@ void D3DRenderer::setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 
 void D3DRenderer::drawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	device->SetVertexDeclaration(modVolVtxDecl);
@@ -662,7 +668,7 @@ void D3DRenderer::drawModVols(int first, int count)
 
 	devCache.SetPixelShader(shaders.getModVolShader());
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	devCache.SetRenderState(D3DRS_COLORWRITEENABLE, 0);
 
@@ -732,9 +738,9 @@ void D3DRenderer::drawModVols(int first, int count)
 void D3DRenderer::drawStrips()
 {
 	RenderPass previous_pass {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
         u32 op_count = current_pass.op_count - previous_pass.op_count;
         u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
         u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
@@ -776,7 +782,7 @@ void D3DRenderer::drawStrips()
 		{
 			if (!config::PerStripSorting)
 				drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count,
-						render_pass < pvrrc.render_passes.used() - 1);
+						render_pass < (int)pvrrc.render_passes.size() - 1);
 			else
 				drawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 		}
@@ -1003,27 +1009,30 @@ bool D3DRenderer::Render()
 	v[1] = -1.f;
 	device->SetClipPlane(3, v);
 
-	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes());
+	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, size);
 	verify(rc);
 	void *ptr;
-	rc = SUCCEEDED(vertexBuffer->Lock(0, pvrrc.verts.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = SUCCEEDED(vertexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, pvrrc.verts.head(), pvrrc.verts.bytes());
+	memcpy(ptr, &pvrrc.verts[0], size);
 	vertexBuffer->Unlock();
-	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, pvrrc.idx.bytes());
+	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, size);
 	verify(rc);
-	rc = SUCCEEDED(indexBuffer->Lock(0, pvrrc.idx.bytes(), &ptr, D3DLOCK_DISCARD));
+	rc = SUCCEEDED(indexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, pvrrc.idx.head(), pvrrc.idx.bytes());
+	memcpy(ptr, &pvrrc.idx[0], size);
 	indexBuffer->Unlock();
 
-	if (config::ModifierVolumes && pvrrc.modtrig.used())
+	if (config::ModifierVolumes && !pvrrc.modtrig.empty())
 	{
-		rc = ensureVertexBufferSize(modvolBuffer, modvolBufferSize, pvrrc.modtrig.bytes());
+		size = pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0]));
+		rc = ensureVertexBufferSize(modvolBuffer, modvolBufferSize, size);
 		verify(rc);
-		rc = SUCCEEDED(modvolBuffer->Lock(0, pvrrc.modtrig.bytes(), &ptr, D3DLOCK_DISCARD));
+		rc = SUCCEEDED(modvolBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 		verify(rc);
-		memcpy(ptr, pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		memcpy(ptr, &pvrrc.modtrig[0], size);
 		modvolBuffer->Unlock();
 	}
 
@@ -1138,7 +1147,9 @@ void D3DRenderer::displayFramebuffer()
 	else
 		dx = (int)roundf(settings.display.width * (1 - aspectRatio / screenAR) / 2.f);
 
-	if (!config::Rotate90)
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	if (!config::Rotate90 && shiftX == 0 && shiftY == 0)
 	{
 		RECT rs { 0, 0, (long)width, (long)height };
 		RECT rd { dx, dy, settings.display.width - dx, settings.display.height - dy };
@@ -1157,8 +1168,9 @@ void D3DRenderer::displayFramebuffer()
 		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
-		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))
-			* glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
+		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0));
+		if (config::Rotate90)
+			projection *= glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
 
 		device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
 		device->SetTransform(D3DTS_VIEW, (const D3DMATRIX *)&identity[0][0]);
@@ -1180,6 +1192,11 @@ void D3DRenderer::displayFramebuffer()
 			 1,  1, 0.5f,  1, 0,
 			 1, -1, 0.5f,  1, 1,
 		};
+		coords[0] = coords[5] = -1.f + shiftX * 2.f / width;
+		coords[10] = coords[15] = coords[0] + 2;
+		coords[1] = coords[11] = 1.f - shiftY * 2.f / height;
+		coords[6] = coords[16] = coords[1] - 2;
+
 		device->SetTexture(0, framebufferTexture);
 		device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, coords, sizeof(float) * 5);
 	}

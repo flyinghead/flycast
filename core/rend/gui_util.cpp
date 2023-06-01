@@ -24,291 +24,124 @@
 
 #include "types.h"
 #include "stdclass.h"
-#include "oslib/directory.h"
+#include "oslib/storage.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>
 
-static std::string select_current_directory;
-static std::vector<std::string> subfolders;
-static std::vector<std::string> folderFiles;
+static std::string select_current_directory = "**home**";
+static std::vector<hostfs::FileInfo> subfolders;
+static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
-#ifdef _WIN32
-static const std::string separators = "/\\";
-static const std::string native_separator = "\\";
-#else
-static const std::string separators = "/";
-static const std::string native_separator = "/";
-#endif
-#define PSEUDO_ROOT ":"
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
 void error_popup();
 
+namespace hostfs
+{
+	bool operator<(const FileInfo& a, const FileInfo& b)
+	{
+		return a.name < b.name;
+	}
+}
+
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
 {
-	if (select_current_directory.empty())
-	{
-#if defined(__ANDROID__)
-		const char *home = nowide::getenv("FLYCAST_HOME");
-		if (home != NULL)
-		{
-			const char *pcolon = strchr(home, ':');
-			if (pcolon != NULL)
-				select_current_directory = std::string(home, pcolon - home);
-			else
-				select_current_directory = home;
-		}
-#elif defined(__unix__) || defined(__APPLE__)
-		const char *home = nowide::getenv("HOME");
-		if (home != NULL)
-			select_current_directory = home;
-#elif defined(_WIN32)
-		if (nowide::getenv("HOMEPATH") != NULL)
-		{
-			const char *home_drive = nowide::getenv("HOMEDRIVE");
-			if (home_drive != NULL)
-				select_current_directory = home_drive;
-			select_current_directory += nowide::getenv("HOMEPATH");
-		}
-#elif defined(__SWITCH__)
-		select_current_directory = "/";
-#endif
-		if (select_current_directory.empty())
-		{
-			select_current_directory = get_writable_config_path("");
-			if (select_current_directory.empty())
-				select_current_directory = ".";
-		}
-	}
-
 	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
-		std::string path = select_current_directory;
-		std::string::size_type last_sep = path.find_last_of(separators);
-		if (last_sep == path.size() - 1)
-			path.pop_back();
-
 		static std::string error_message;
+
+		if (select_current_directory == "**home**")
+			select_current_directory = hostfs::storage().getDefaultDirectory();
 
 		if (!subfolders_read)
 		{
 			subfolders.clear();
             folderFiles.clear();
 			error_message.clear();
-#ifdef _WIN32
-			if (select_current_directory == PSEUDO_ROOT)
-			{
-				error_message = "Drives";
-				// List all the drives
-				u32 drives = GetLogicalDrives();
-				for (int i = 0; i < 32; i++)
-					if ((drives & (1 << i)) != 0)
-						subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
-#ifdef TARGET_UWP
-				// Add the home directory to the list of drives as it's not accessible from the root
-				std::string home;
-				const char *home_drive = nowide::getenv("HOMEDRIVE");
-				if (home_drive != NULL)
-					home = home_drive;
-				home += nowide::getenv("HOMEPATH");
-				subfolders.push_back(home);
-#endif
-			}
-			else
-#elif __ANDROID__
-			if (select_current_directory == PSEUDO_ROOT)
-			{
-				error_message = "Storage Locations";
-				const char *home = nowide::getenv("FLYCAST_HOME");
-				while (home != NULL)
+
+			try {
+				for (const hostfs::FileInfo& entry : hostfs::storage().listContent(select_current_directory))
 				{
-					const char *pcolon = strchr(home, ':');
-					if (pcolon != NULL)
+					if (entry.isDirectory)
 					{
-						subfolders.push_back(std::string(home, pcolon - home));
-						home = pcolon + 1;
+						subfolders.push_back(entry);
 					}
 					else
 					{
-						subfolders.push_back(home);
-						home = NULL;
+						std::string extension = get_file_extension(entry.name);
+						if (selectFile)
+						{
+							if (extension == selectExtension)
+								folderFiles.push_back(entry);
+						}
+						else if (extension == "zip" || extension == "7z" || extension == "chd"
+								|| extension == "gdi" || extension == "cdi" || extension == "cue"
+								|| (!config::HideLegacyNaomiRoms
+										&& (extension == "bin" || extension == "lst" || extension == "dat")))
+							folderFiles.push_back(entry);
 					}
 				}
-			}
-			else
-#endif
-			{
-				DIR *dir = flycast::opendir(select_current_directory.c_str());
-				if (dir == NULL)
-				{
-					error_message = "Cannot read " + select_current_directory;
-					subfolders.emplace_back("..");
-				}
-				else
-				{
-					bool dotdot_seen = false;
-					while (true)
-					{
-						struct dirent *entry = flycast::readdir(dir);
-						if (entry == NULL)
-							break;
-						std::string name(entry->d_name);
-#ifdef __APPLE__
-                        extern std::string os_PrecomposedString(std::string string);
-                        name = os_PrecomposedString(name);
-#endif
-						if (name == ".")
-							continue;
-						std::string child_path = path + "/" + name;
-						bool is_dir = false;
-#ifndef _WIN32
-						if (entry->d_type == DT_DIR)
-							is_dir = true;
-						if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-						{
-							struct stat st;
-							if (flycast::stat(child_path.c_str(), &st) != 0)
-								continue;
-							if (S_ISDIR(st.st_mode))
-								is_dir = true;
-						}
-#else // _WIN32
-						nowide::wstackstring wname;
-					    if (wname.convert(child_path.c_str()))
-					    {
-							DWORD attr = GetFileAttributesW(wname.c_str());
-							if (attr != INVALID_FILE_ATTRIBUTES)
-							{
-								if (attr & FILE_ATTRIBUTE_HIDDEN)
-									continue;
-								if (attr & FILE_ATTRIBUTE_DIRECTORY)
-									is_dir = true;
-							}
-					    }
-#endif
-						if (is_dir)
-						{
-							if (flycast::access(child_path.c_str(), R_OK) == 0)
-							{
-								if (name == "..")
-									dotdot_seen = true;
-								subfolders.push_back(name);
-							}
-						}
-                        else
-                        {
-                            std::string extension = get_file_extension(name);
-                            if (selectFile)
-                            {
-                            	if (extension == selectExtension)
-									folderFiles.push_back(name);
-                            }
-                            else if (extension == "zip" || extension == "7z" || extension == "chd"
-                            		|| extension == "gdi" || extension == "cdi" || extension == "cue"
-                            		|| (!config::HideLegacyNaomiRoms
-                            				&& (extension == "bin" || extension == "lst" || extension == "dat")))
-                            	folderFiles.push_back(name);
-                        }
-					}
-					flycast::closedir(dir);
-#if defined(_WIN32) || defined(__ANDROID__) || defined(__SWITCH__)
-					if (!dotdot_seen)
-						subfolders.emplace_back("..");
-#else
-					(void)dotdot_seen;
-#endif
-				}
+			} catch (const hostfs::StorageException& e) {
+				error_message = e.what();
 			}
 
-			std::stable_sort(subfolders.begin(), subfolders.end());
-			std::stable_sort(folderFiles.begin(), folderFiles.end());
+			std::sort(subfolders.begin(), subfolders.end());
+			std::sort(folderFiles.begin(), folderFiles.end());
 			subfolders_read = true;
 		}
+		std::string title;
+		if (!error_message.empty())
+			title = error_message;
+		else if (select_current_directory.empty())
+			title = "Storage";
+		else
+			title = select_current_directory;
 
-		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
+		ImGui::Text("%s", title.c_str());
 		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * settings.display.uiScale - ImGui::GetStyle().ItemSpacing.y),
 				true, ImGuiWindowFlags_DragScrolling);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
-
-		for (const auto& name : subfolders)
+		if (!select_current_directory.empty() && select_current_directory != "/")
 		{
-			std::string child_path;
-			if (name == "..")
-			{
-				std::string::size_type last_sep = path.find_last_of(separators);
-				if (last_sep == std::string::npos)
-				{
-					if (path.empty())
-						// Root folder
-						continue;
-#ifdef _WIN32
-					if (path.size() == 2 && path[1] == ':')
-						child_path = PSEUDO_ROOT;
-					else
-#endif
-					if (path == ".")
-						child_path = "..";
-					else if (path == "..")
-						child_path = ".." + native_separator + "..";
-					else
-						child_path = ".";
-				}
-				else if (last_sep == 0)
-					child_path = native_separator;
-				else if (path.size() >= 2 && path.substr(path.size() - 2) == "..")
-					child_path = path + native_separator + "..";
-				else
-				{
-					child_path = path.substr(0, last_sep);
-#ifdef _WIN32
-					if (child_path.size() == 2 && child_path[1] == ':')		// C: -> C:/
-						child_path += native_separator;
-#endif
-				}
-#ifdef __ANDROID__
-				if (access(child_path.c_str(), R_OK) != 0)
-					child_path = PSEUDO_ROOT;
-#endif
-			}
-			else
-			{
-#if defined(_WIN32) || defined(__ANDROID__)
-				if (path == PSEUDO_ROOT)
-					child_path = name;
-				else
-#endif
-					child_path = path + native_separator + name;
-			}
-			if (ImGui::Selectable(name == ".." ? ".. Up to Parent Directory" : name.c_str()))
+			if (ImGui::Selectable(".. Up to Parent Directory"))
 			{
 				subfolders_read = false;
-				select_current_directory = child_path;
+				select_current_directory = hostfs::storage().getParentPath(select_current_directory);
+			}
+		}
+
+		for (const auto& entry : subfolders)
+		{
+			if (ImGui::Selectable(entry.name.c_str()))
+			{
+				subfolders_read = false;
+				select_current_directory = entry.path;
 			}
 		}
         ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, selectFile ? 1.f : 0.3f });
-        for (const auto& name : folderFiles)
+        for (const auto& entry : folderFiles)
         {
         	if (selectFile)
         	{
-    			if (ImGui::Selectable(name.c_str()))
+    			if (ImGui::Selectable(entry.name.c_str()))
     			{
     				subfolders_read = false;
-    				if (callback(false, select_current_directory + native_separator + name))
+    				if (callback(false, entry.path))
     					ImGui::CloseCurrentPopup();
     			}
         	}
         	else
         	{
-        		ImGui::Text("%s", name.c_str());
+        		ImGui::Text("%s", entry.name.c_str());
         	}
         }
         ImGui::PopStyleColor();
@@ -359,8 +192,16 @@ void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
     bool held = false;
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
     		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
-    if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
-        ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
+    // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!) or item is disabled
+    if (g.HoveredId == 0 || g.HoveredIdDisabled)
+    {
+    	bool hoveredAllowOverlap = g.HoveredIdAllowOverlap;
+    	g.HoveredIdAllowOverlap = true;
+    	ImGuiID overlayId = window->GetID("##scrolldraggingoverlay");
+    	ImGui::ButtonBehavior(window->Rect(), overlayId, &hovered, &held, button_flags);
+    	ImGui::KeepAliveID(overlayId);
+    	g.HoveredIdAllowOverlap = hoveredAllowOverlap;
+    }
     const ImVec2& delta = ImGui::GetIO().MouseDelta;
     if (held && delta != ImVec2())
     {
@@ -773,14 +614,14 @@ bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& optio
 template bool OptionCheckbox(const char *name, config::Option<bool, true>& option, const char *help);
 template bool OptionCheckbox(const char *name, config::Option<bool, false>& option, const char *help);
 
-bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help)
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help, const char *format)
 {
 	bool valueChanged;
 	{
 		DisabledScope scope(option.isReadOnly());
 
 		int v = option;
-		valueChanged = ImGui::SliderInt(name, &v, min, max);
+		valueChanged = ImGui::SliderInt(name, &v, min, max, format);
 		if (valueChanged)
 			option.set(v);
 	}
@@ -799,7 +640,9 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
 	std::string id = "##" + std::string(name);
-	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
+	ImGui::BeginDisabled();
+	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0));
+	ImGui::EndDisabled();
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar();
 
