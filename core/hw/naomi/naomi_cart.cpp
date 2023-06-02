@@ -56,10 +56,10 @@ bool atomiswaveForceFeedback;
 static bool loadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
 	int biosid = 0;
-	for (; BIOS[biosid].name != NULL; biosid++)
+	for (; BIOS[biosid].name != nullptr; biosid++)
 		if (!stricmp(BIOS[biosid].name, filename))
 			break;
-	if (BIOS[biosid].name == NULL)
+	if (BIOS[biosid].name == nullptr)
 	{
 		WARN_LOG(NAOMI, "Unknown BIOS %s", filename);
 		return false;
@@ -74,94 +74,53 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path));
 
-	MD5Sum md5;
-
 	bool found_region = false;
 	u8 *biosData = nvmem::getBiosData();
 
-	for (int romid = 0; bios->blobs[romid].filename != NULL; romid++)
+	for (int romid = 0; bios->blobs[romid].filename != nullptr && !found_region; romid++)
 	{
 		if (region == -1)
 		{
 			region = bios->blobs[romid].region;
 			config::Region.override(region);
 		}
-		else
-		{
-			if (bios->blobs[romid].region != (u32)region)
-				continue;
+		else if (bios->blobs[romid].region != (u32)region)
+			continue;
+
+		std::unique_ptr<ArchiveFile> file;
+		// Find by CRC
+		if (child_archive != nullptr)
+			file.reset(child_archive->OpenFileByCrc(bios->blobs[romid].crc));
+		if (!file && parent_archive != nullptr)
+			file.reset(parent_archive->OpenFileByCrc(bios->blobs[romid].crc));
+		if (!file && bios_archive != nullptr)
+			file.reset(bios_archive->OpenFileByCrc(bios->blobs[romid].crc));
+		// Fallback to find by filename
+		if (!file && child_archive != nullptr)
+			file.reset(child_archive->OpenFile(bios->blobs[romid].filename));
+		if (!file && parent_archive != nullptr)
+			file.reset(parent_archive->OpenFile(bios->blobs[romid].filename));
+		if (!file && bios_archive != nullptr)
+			file.reset(bios_archive->OpenFile(bios->blobs[romid].filename));
+		if (!file) {
+			WARN_LOG(NAOMI, "%s: Cannot open %s", filename, bios->blobs[romid].filename);
+			continue;
 		}
+		verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+		u32 read = file->Read(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
+		if (config::GGPOEnable)
+		{
+			MD5Sum md5;
+			md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
+			md5.getDigest(settings.network.md5.bios);
+		}
+		DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 		found_region = true;
-		if (bios->blobs[romid].blob_type == Copy)
-		{
-			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
-			memcpy(biosData + bios->blobs[romid].offset, biosData + bios->blobs[romid].src_offset, bios->blobs[romid].length);
-			DEBUG_LOG(NAOMI, "Copied: %x bytes from %07x to %07x", bios->blobs[romid].length, bios->blobs[romid].src_offset, bios->blobs[romid].offset);
-		}
-		else
-		{
-			std::unique_ptr<ArchiveFile> file;
-			// Find by CRC
-			if (child_archive != NULL)
-				file.reset(child_archive->OpenFileByCrc(bios->blobs[romid].crc));
-			if (!file && parent_archive != NULL)
-				file.reset(parent_archive->OpenFileByCrc(bios->blobs[romid].crc));
-			if (!file && bios_archive != NULL)
-				file.reset(bios_archive->OpenFileByCrc(bios->blobs[romid].crc));
-			// Fallback to find by filename
-			if (!file && child_archive != NULL)
-				file.reset(child_archive->OpenFile(bios->blobs[romid].filename));
-			if (!file && parent_archive != NULL)
-				file.reset(parent_archive->OpenFile(bios->blobs[romid].filename));
-			if (!file && bios_archive != NULL)
-				file.reset(bios_archive->OpenFile(bios->blobs[romid].filename));
-			if (!file) {
-				WARN_LOG(NAOMI, "%s: Cannot open %s", filename, bios->blobs[romid].filename);
-				return false;
-			}
-			switch (bios->blobs[romid].blob_type)
-			{
-				case Normal:
-				{
-					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-					u32 read = file->Read(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
-					if (config::GGPOEnable)
-						md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
-					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
-				}
-				break;
-
-				case InterleavedWord:
-				{
-					u8 *buf = (u8 *)malloc(bios->blobs[romid].length);
-					if (buf == nullptr)
-						throw NaomiCartException("Memory allocation failed");
-
-					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-					u32 read = file->Read(buf, bios->blobs[romid].length);
-					u16 *to = (u16 *)(biosData + bios->blobs[romid].offset);
-					u16 *from = (u16 *)buf;
-					for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
-						*to++ = *from++;
-					free(buf);
-					if (config::GGPOEnable)
-						md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
-					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes (interleaved word) at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
-				}
-				break;
-
-			default:
-				die("Unknown blob type\n");
-				break;
-			}
-		}
 	}
-	if (config::GGPOEnable)
-		md5.getDigest(settings.network.md5.bios);
 
 	// Reload the writeable portion of the FlashROM
-	nvmem::reloadAWBios();
+	if (found_region)
+		nvmem::reloadAWBios();
 
 	return found_region;
 }

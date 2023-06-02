@@ -478,6 +478,8 @@ void CheatManager::reset(const std::string& gameId)
 				setMushikingCheats(0x4ac9b8);
 			else if (gameId == "MKG TKOB 2K3 2ND CHN VER1.000-") // mushikc
 				setMushikingCheats(0x4aa9b8);
+			else if (gameId == "MKG TKOB 2 KOR VER1.000-")	// mushik2k
+				setMushikingCheats(0x706084);
 		}
 	}
 	if (config::WidescreenGameHacks)
