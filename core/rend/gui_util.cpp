@@ -521,9 +521,11 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
 	std::string id = "##" + std::string(name);
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
 	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0));
 	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar();
 
