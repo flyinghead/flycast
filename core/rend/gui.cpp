@@ -650,9 +650,11 @@ static void gui_display_commands()
 inline static void header(const char *title)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
 	ImGui::ButtonEx(title, ImVec2(-1, 0));
 	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
 	ImGui::PopStyleVar();
 }
 
