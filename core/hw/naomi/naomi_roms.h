@@ -59,8 +59,6 @@ struct BIOS_t
 		u32 offset;
 		u32 length;
 		u32 crc;
-		BlobType blob_type;
-		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
 };
 extern const BIOS_t BIOS[];
