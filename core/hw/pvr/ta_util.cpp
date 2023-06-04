@@ -367,8 +367,10 @@ void fix_texture_bleeding(const std::vector<PolyParam>& polys, int first, int en
 //
 void makePrimRestartIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx)
 {
+	if (first >= (int)polys.size())
+		return;
 	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys[end];
+	const PolyParam *end_poly = polys.data() + end;
 	for (PolyParam *poly = &polys[first]; poly != end_poly; poly++)
 	{
 		int first_index;
@@ -447,8 +449,10 @@ void makePrimRestartIndex(std::vector<PolyParam>& polys, int first, int end, boo
 //
 void makeIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx)
 {
+	if (first >= (int)polys.size())
+		return;
 	PolyParam *last_poly = nullptr;
-	const PolyParam *end_poly = &polys[end];
+	const PolyParam *end_poly = polys.data() + end;
 	bool cullingReversed = false;
 	for (PolyParam *poly = &polys[first]; poly != end_poly; poly++)
 	{

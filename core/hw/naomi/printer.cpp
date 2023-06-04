@@ -308,6 +308,8 @@ public:
 	}
 	bool save(const std::string& filename)
 	{
+		if (page.empty())
+			return false;
 		for (u8& b : page)
 			b = 0xff - b;
 		stbi_write_png(filename.c_str(), printerWidth, lines, 1, &page[0], printerWidth);
@@ -318,7 +320,7 @@ public:
 	{
 		ser << printerWidth;
 		ser << (u32)page.size();
-		ser.serialize(&page[0], page.size());
+		ser.serialize(page.data(), page.size());
 		ser << lines;
 		ser << penx;
 		ser << peny;
@@ -342,11 +344,11 @@ public:
 			ser << cc.width;
 			ser << cc.height;
 			ser << (u32)cc.data.size();
-			ser.serialize(&cc.data[0], cc.data.size());
+			ser.serialize(cc.data.data(), cc.data.size());
 		}
 
 		ser << (u32)ruledLine.size();
-		ser.serialize(&ruledLine[0], ruledLine.size());
+		ser.serialize(ruledLine.data(), ruledLine.size());
 		ser << ruledLineMode;
 		ser << underline;
 		ser << maxUnderline;
@@ -357,7 +359,7 @@ public:
 		u32 size;
 		deser >> size;
 		page.resize(size);
-		deser.deserialize(&page[0], page.size());
+		deser.deserialize(page.data(), page.size());
 		deser >> lines;
 		deser >> penx;
 		deser >> peny;
@@ -383,12 +385,12 @@ public:
 			deser >> cc.height;
 			deser >> size;
 			cc.data.resize(size);
-			deser.deserialize(&cc.data[0], cc.data.size());
+			deser.deserialize(cc.data.data(), cc.data.size());
 		}
 
 		deser >> size;
 		ruledLine.resize(size);
-		deser.deserialize(&ruledLine[0], ruledLine.size());
+		deser.deserialize(ruledLine.data(), ruledLine.size());
 		deser >> ruledLineMode;
 		deser >> underline;
 		deser >> maxUnderline;
@@ -655,7 +657,7 @@ public:
 		ser << expectedDataBytes;
 
 		ser << (u32)dataBytes.size();
-		ser.serialize(&dataBytes[0], dataBytes.size());
+		ser.serialize(dataBytes.data(), dataBytes.size());
 
 		ser << kanji;
 		ser << kanjiByte0;
@@ -666,7 +668,7 @@ public:
 			ser << bm.width;
 			ser << bm.height;
 			ser << (u32)bm.data.size();
-			ser.serialize(&bm.data[0], bm.data.size());
+			ser.serialize(bm.data.data(), bm.data.size());
 		}
 
 		if (bitmapWriter == nullptr)
@@ -688,7 +690,7 @@ public:
 		u32 size;
 		deser >> size;
 		dataBytes.resize(size);
-		deser.deserialize(&dataBytes[0], dataBytes.size());
+		deser.deserialize(dataBytes.data(), dataBytes.size());
 
 		deser >> kanji;
 		deser >> kanjiByte0;
@@ -701,7 +703,7 @@ public:
 			deser >> bm.height;
 			deser >> size;
 			bm.data.resize(size);
-			deser.deserialize(&bm.data[0], bm.data.size());
+			deser.deserialize(bm.data.data(), bm.data.size());
 		}
 
 		bool b;

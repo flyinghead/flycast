@@ -174,7 +174,7 @@ public:
 
 	template<typename T>
 	MD5Sum& add(const std::vector<T>& v) {
-		MD5_Update(&ctx, &v[0], (unsigned long)(v.size() * sizeof(T)));
+		MD5_Update(&ctx, v.data(), (unsigned long)(v.size() * sizeof(T)));
 		return *this;
 	}
 
