@@ -1744,6 +1744,8 @@ if(NINTENDO_SWITCH)
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:elf>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
 			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
 			COMMAND rm *.obj
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
