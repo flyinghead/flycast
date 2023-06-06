@@ -116,7 +116,8 @@ public:
 
 	void upload(BufferData& bufferData, u32 bufOffset = 0)
 	{
-		bufferData.upload(chunks.size(), &chunkSizes[0], &chunks[0], bufOffset);
+		if (!chunks.empty())
+			bufferData.upload(chunks.size(), &chunkSizes[0], &chunks[0], bufOffset);
 	}
 
 	vk::DeviceSize size() const {

@@ -17,9 +17,11 @@
     along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <array>
 #include "types.h"
 #include "arm7.h"
+
+#include <array>
+#include <vector>
 
 namespace aica
 {

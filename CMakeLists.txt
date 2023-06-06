@@ -631,7 +631,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.cpp
 		core/deps/chdpsr/cdipsr.h)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
+add_subdirectory(core/deps/nowide)
+target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
+target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
 	if(NINTENDO_SWITCH)
@@ -1793,6 +1795,8 @@ if(NINTENDO_SWITCH)
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:elf>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
 			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
 			COMMAND rm *.obj
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}

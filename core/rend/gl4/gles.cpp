@@ -875,12 +875,12 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		//Main VBO
 		//move vertex to gpu
-		gl4.vbo.getVertexBuffer()->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
-		gl4.vbo.getIndexBuffer()->update(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
+		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
+		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 
 		//Modvol VBO
 		if (!pvrrc.modtrig.empty())
-			gl4.vbo.getModVolBuffer()->update(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
+			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 
 		// TR PolyParam data
 		if (!pvrrc.global_param_tr.empty())

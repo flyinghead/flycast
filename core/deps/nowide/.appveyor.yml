@@ -1,0 +1,211 @@
+# Copyright 2016, 2017 Peter Dimov
+# Copyright 2017 - 2019 James E. King III
+# Copyright 2019 - 2020 Alexander Grund
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
+
+version: 1.0.{build}-{branch}
+
+branches:
+  only:
+    - master
+    - develop
+    - /bugfix\/.*/
+    - /feature\/.*/
+    - /fix\/.*/
+    - /pr\/.*/
+
+matrix:
+  fast_finish: false
+
+environment:
+  global:
+    B2_CI_VERSION: 1
+    # see: http://www.boost.org/build/doc/html/bbv2/overview/invocation.html#bbv2.overview.invocation.properties
+    # to use the default for a given environment, comment it out; recommend you build debug and release however:
+    # on Windows it is important to exercise all the possibilities, especially shared vs static, however most
+    # libraries that care about this exercise it in their Jamfiles...
+    B2_ADDRESS_MODEL: 32,64
+    B2_LINK: shared,static
+    # B2_THREADING: threading=multi,single
+    B2_VARIANT: release,debug
+    # Include OpenCppCoverage and git bash (avoid WSL bash)
+    PATH: 'C:\Program Files\OpenCppCoverage;C:\Program Files\Git\bin;%PATH%'
+  matrix:
+    - FLAVOR: Visual Studio 2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      B2_CXXFLAGS: -permissive-
+      B2_CXXSTD: 14,17,latest # 2a
+      B2_TOOLSET: msvc-14.2
+
+    - FLAVOR: Visual Studio 2017 C++2a Strict
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      B2_CXXFLAGS: -permissive-
+      B2_CXXSTD: latest # 2a
+      B2_TOOLSET: msvc-14.1
+
+    - FLAVOR: Visual Studio 2017 C++14/17
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      B2_CXXSTD: 14,17
+      B2_TOOLSET: msvc-14.1
+
+    - FLAVOR: clang-cl
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      B2_ADDRESS_MODEL: 64
+      B2_CXXSTD: 11,14,17
+      B2_TOOLSET: clang-win
+
+    - FLAVOR: Visual Studio 2015, 2013
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      B2_TOOLSET: msvc-12.0,msvc-14.0
+
+    - FLAVOR: Visual Studio 2008, 2010, 2012
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      B2_TOOLSET: msvc-9.0,msvc-10.0,msvc-11.0
+      B2_ADDRESS_MODEL: 32 # No 64bit support
+
+    - FLAVOR: cygwin (32-bit)
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      ADDPATH: C:\cygwin\bin;
+      B2_ADDRESS_MODEL: 32
+      B2_CXXSTD: 03,11,14,1z
+      B2_TOOLSET: gcc
+
+    - FLAVOR: cygwin (64-bit)
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      ADDPATH: C:\cygwin64\bin;
+      B2_ADDRESS_MODEL: 64
+      B2_CXXSTD: 03,11,14,1z
+      B2_TOOLSET: gcc
+
+    - FLAVOR: mingw32
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      B2_ADDRESS_MODEL: 32
+      ADDPATH: C:\mingw\bin;
+      B2_TOOLSET: gcc
+      B2_CXXSTD: 03,11,14,1z
+
+    - FLAVOR: mingw64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      ADDPATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;
+      B2_ADDRESS_MODEL: 64
+      B2_TOOLSET: gcc
+      B2_CXXSTD: 03,11,14,1z
+
+    # CMake builds
+    - CMAKE: true
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      GENERATOR: Visual Studio 14 2015 Win64
+      configuration: Debug
+      BOOST_ROOT: C:\Libraries\boost_1_60_0
+    - CMAKE: true
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      GENERATOR: Visual Studio 16 2019
+      configuration: Debug
+      BOOST_ROOT: C:\Libraries\boost_1_71_0
+      COVERAGE: true
+      # Work around for https://community.codecov.io/t/bash-script-does-not-detect-appveyor/1094
+      APPVEYOR: true
+      CI: true
+    # Superproject CMake build
+    - FLAVOR: Superproject CMake build - VS 2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      BOOST_CMAKE: true
+    # Coverity
+    - COVERITY: true
+      # Coverity doesn't really support MSVC 2019 yet
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      GENERATOR: Visual Studio 15 2017
+      BOOST_ROOT: C:\Libraries\boost_1_69_0
+      COVERITY_SCAN_TOKEN:
+        secure: FzhGUr+AR/VOBGUta7dDLMDruolChnvyMSvsM/zLvPY=
+      COVERITY_SCAN_NOTIFICATION_EMAIL:
+        secure: Qq4PZ3QlpYtg3HEyn9r2Og==
+
+install:
+  - git clone https://github.com/boostorg/boost-ci.git C:\boost-ci-cloned
+  - xcopy /s /e /q /i /y C:\boost-ci-cloned\ci .\ci
+  - rmdir /s /q C:\boost-ci-cloned
+  - ci\appveyor\install.bat
+
+build: off
+
+test_script: ci\build.bat
+
+for:
+  - matrix:
+      only: [CMAKE: true]
+    install: true
+    before_build:
+      - if exist build\ (rmdir /S /Q build)
+      - set "INSTALL_DIR=%APPVEYOR_BUILD_FOLDER%\installed"
+      - if exist %INSTALL_DIR%\ (rmdir /S /Q %INSTALL_DIR%)
+      - mkdir build
+      - cd build
+      - cmake -G "%GENERATOR%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% ..
+    build_script: cmake --build . --config %configuration% --parallel 4
+    test_script:
+      - ctest --output-on-failure -C %configuration% --parallel 4
+      - ps: |
+            If ($env:COVERAGE -eq "true") {
+              choco install opencppcoverage
+              Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+              OpenCppCoverage.exe --quiet --export_type cobertura:cobertura.xml `
+              --sources ${env:APPVEYOR_BUILD_FOLDER} --modules "$PWD" `
+              --cover_children --working_dir "$PWD" -- ctest -C Debug
+              bash codecov.sh -f cobertura.xml -n Appveyor -e APPVEYOR_BUILD_WORKER_IMAGE -X gcov -X search -Z
+            }
+      # Build consumer example test
+      - cmake --build . --config %configuration% --target install
+      - del /F /S /Q *
+      - cmake ../test/exampleProject -G "%GENERATOR%" -DCMAKE_PREFIX_PATH=%APPVEYOR_BUILD_FOLDER%\installed
+      - cmake --build . --config %configuration%
+      - ctest --output-on-failure -C %configuration% --parallel 4
+  # Superproject CMake build
+  - matrix:
+      only: [BOOST_CMAKE: true]
+    branches:
+      only: [develop] # Doesn't work on master yet
+    test_script:
+      - ps: |
+            cd "$env:BOOST_ROOT"
+            mkdir __build_static | cd
+            cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 -DBOOST_INCLUDE_LIBRARIES=nowide ..
+            cmake --build . --config Debug --parallel 4
+            ctest --output-on-failure --build-config Debug
+            cmake --build . --config Release --parallel 4
+            ctest --output-on-failure --build-config Release
+            cd ..
+            mkdir __build_shared | cd
+            cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 -DBUILD_SHARED_LIBS=ON -DBOOST_INCLUDE_LIBRARIES=nowide ..
+            cmake --build . --config Debug --parallel 4
+            ctest --output-on-failure --build-config Debug
+            cmake --build . --config Release --parallel 4
+            ctest --output-on-failure --build-config Release
+  # Coverity build
+  - matrix:
+      only: [COVERITY: true]
+    branches:
+      only: [master, develop]
+    init:
+      - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -gt 0) {Exit-AppveyorBuild}
+    install: true
+    test_script:
+      - cd build
+      - cmake -G "%GENERATOR%" ..
+      - ps: |
+            nuget install -ExcludeVersion PublishCoverity
+            cov-build.exe --dir cov-int cmake --build . --config $env:configuration
+            If ($LastExitCode -ne 0) {
+              cat cov-int/build-log.txt
+              $host.SetShouldExit($LastExitCode)
+            }
+            PublishCoverity\tools\PublishCoverity.exe compress --nologo -i cov-int -o cov-int.zip --overwrite
+
+            PublishCoverity\tools\PublishCoverity.exe publish --nologo `
+              -t "$env:COVERITY_SCAN_TOKEN" `
+              -e "$env:COVERITY_SCAN_NOTIFICATION_EMAIL" `
+              -r "$env:APPVEYOR_REPO_NAME" `
+              -z "cov-int.zip" `
+              -d "Appveyor build for $env:APPVEYOR_REPO_BRANCH" `
+              --codeVersion "$env:APPVEYOR_REPO_BRANCH"

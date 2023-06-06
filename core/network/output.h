@@ -22,6 +22,9 @@
 #include "emulator.h"
 #include "cfg/option.h"
 
+#include <algorithm>
+#include <vector>
+
 class NetworkOutput
 {
 public:

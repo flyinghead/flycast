@@ -325,8 +325,8 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "SPAWN JAPAN")
 	{
-		write_naomi_eeprom(0x44, node == -1 ? 0 : 1);	// network on
-		write_naomi_eeprom(0x30, node <= 0 ? 1 : 2);	// node id
+		write_naomi_eeprom(0x44, node == -1 ? 0
+				: node == 0 ? 1 : 2);
 	}
 	else if (gameId == "SPIKERS BATTLE JAPAN VERSION")
 	{

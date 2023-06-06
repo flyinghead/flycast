@@ -262,7 +262,7 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 {
 	if (first == last)
 		return;
-	const PolyParam *pp_end = &polys[last];
+	const PolyParam *pp_end = polys.data() + last;
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, *pp, pp->first, pp->count);
@@ -328,11 +328,11 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
+	packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
+	offsets.modVolOffset = packer.add(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 	// Index
-	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
+	offsets.indexOffset = packer.add(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));

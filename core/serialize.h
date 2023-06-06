@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 
+#include <cstring>
 #include <limits>
 
 class SerializeBase

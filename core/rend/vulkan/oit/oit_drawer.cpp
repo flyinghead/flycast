@@ -125,7 +125,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 {
 	if (first == last)
 		return;
-	const PolyParam *pp_end = &polys[last];
+	const PolyParam *pp_end = polys.data() + last;
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, pass, *pp, pp->first, pp->count);
@@ -216,11 +216,11 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
+	packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
+	offsets.modVolOffset = packer.add(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 	// Index
-	offsets.indexOffset = packer.add(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
+	offsets.indexOffset = packer.add(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -354,7 +354,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
 			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, &pvrrc.global_param_mvo[0]);
+			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.data());
 
 			// Color subpass
 			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -403,9 +403,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 		{
 			if (current_pass.mv_op_tr_shared)
-				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, &pvrrc.global_param_mvo[0]);
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.data());
 			else
-				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, &pvrrc.global_param_mvo_tr[0]);
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
 		}
 
 		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();

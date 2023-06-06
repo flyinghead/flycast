@@ -116,7 +116,7 @@ int post(const std::string& url, const std::vector<PostField>& fields)
 				return 500;
 			}
 			fclose(f);
-			content += std::string(&data[0], size);
+			content += std::string(data.data(), size);
 		}
 		content += "\r\n";
 	}
