@@ -296,12 +296,12 @@ void gdxsv_replay_local_tab() {
 	ImVec2 size;
 	size.x = ImGui::GetContentRegionAvail().x;
 	size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f);
-	if (ImGui::ListBoxHeader("##Replay File Directory", size))
+	if (ImGui::BeginListBox("##Replay File Directory", size))
 	{
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("%s", get_writable_data_path("replays").c_str());
 		
-		ImGui::ListBoxFooter();
+		ImGui::EndListBox();
 	}
 	ImGui::PopStyleVar();
 	
