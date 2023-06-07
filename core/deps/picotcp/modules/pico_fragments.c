@@ -571,3 +571,13 @@ void pico_ipv4_process_frag(struct pico_ipv4_hdr *hdr, struct pico_frame *f, uin
     IGNORE_PARAMETER(proto);
 #endif
 }
+
+void pico_fragments_deinit(void)
+{
+#if defined(PICO_SUPPORT_IPV4) && defined(PICO_SUPPORT_IPV4FRAG)
+	pico_fragments_empty_tree(&ipv4_fragments);
+#endif
+#if defined(PICO_SUPPORT_IPV6) && defined(PICO_SUPPORT_IPV6FRAG)
+	pico_fragments_empty_tree(&ipv6_fragments);
+#endif
+}

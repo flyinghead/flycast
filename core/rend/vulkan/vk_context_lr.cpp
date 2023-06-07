@@ -22,6 +22,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "compiler.h"
 #include "oslib/oslib.h"
+#include "rend/transform_matrix.h"
+#include "texture.h"
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -293,14 +295,111 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	retro_image.create_info.subresourceRange.levelCount = 1;
 	retro_image.create_info.flags = 0;
 
+	int chainSize = GetSwapChainSize();
+	commandPool.Init(chainSize);
+	// Render pass
+	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+			vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference,
+			nullptr, nullptr);
+	renderPass = device.createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+			attachmentDescription,	subpass));
+
+	shaderManager = std::make_unique<ShaderManager>();
+	quadPipeline = std::make_unique<QuadPipeline>(true, false);
+	quadPipelineWithAlpha = std::make_unique<QuadPipeline>(false, false);
+	quadDrawer = std::make_unique<QuadDrawer>();
+	quadPipeline->Init(shaderManager.get(), *renderPass, 0);
+	quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass, 0);
+	quadDrawer->Init(quadPipeline.get());
+	overlay = std::make_unique<VulkanOverlay>();
+	overlay->Init(quadPipelineWithAlpha.get());
+	textureCache = std::make_unique<TextureCache>();
+
 	return true;
 }
 
 void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	retro_image.image_view = (VkImageView)imageView;
-	retro_image.create_info.image = (VkImage)image;
+	if (image == vk::Image())
+		return;
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+
+	beginFrame(extent);
+	QuadVertex vtx[] {
+		{ -1, -1, 0, 0, 0 },
+		{  1, -1, 0, 1, 0 },
+		{ -1,  1, 0, 0, 1 },
+		{  1,  1, 0, 1, 1 },
+	};
+	vtx[0].x = vtx[2].x = -1.f + shiftX * 2.f / extent.width;
+	vtx[1].x = vtx[3].x = vtx[0].x + 2;
+	vtx[0].y = vtx[1].y = -1.f + shiftY * 2.f / extent.height;
+	vtx[2].y = vtx[3].y = vtx[0].y + 2;
+
+	quadPipeline->BindPipeline(cmdBuffer);
+	vk::Viewport viewport(0, 0, extent.width, extent.height);
+	cmdBuffer.setViewport(0, viewport);
+	cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
+	quadDrawer->Draw(cmdBuffer, imageView, vtx, false);
+	overlay->Draw(cmdBuffer, extent, config::EmulateFramebuffer ? 1 : (int)config::RenderResolution / 480.f,
+			true, true);
+	endFrame();
+
+	retro_image.image_view = (VkImageView)colorAttachments[GetCurrentImageIndex()]->GetImageView();
+	retro_image.create_info.image = (VkImage)colorAttachments[GetCurrentImageIndex()]->GetImage();
 	retro_render_if->set_image(retro_render_if->handle, &retro_image, 0, nullptr, VK_QUEUE_FAMILY_IGNORED);
+}
+
+void VulkanContext::beginFrame(vk::Extent2D extent)
+{
+	int currentImage = GetCurrentImageIndex();
+	if (currentImage >= (int)framebuffers.size())
+	{
+		framebuffers.resize(currentImage + 1);
+		colorAttachments.resize(currentImage + 1);
+	}
+	if (colorAttachments[currentImage])
+	{
+		vk::Extent2D caExtent = colorAttachments[currentImage]->getExtent();
+		if (extent != caExtent)
+		{
+			colorAttachments[currentImage].reset();
+			framebuffers[currentImage].reset();
+		}
+	}
+	commandPool.BeginFrame();
+	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
+	cmdBuffer = commandPool.Allocate();
+	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	textureCache->SetCurrentIndex(currentImage);
+	overlay->Prepare(cmdBuffer, true, true, *textureCache);
+
+	if (colorAttachments[currentImage] == nullptr)
+	{
+		colorAttachments[currentImage] = std::make_unique<FramebufferAttachment>(physicalDevice, device);
+		colorAttachments[currentImage]->Init(extent.width, extent.height, vk::Format::eR8G8B8A8Unorm,
+				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+		vk::ImageView imageView = colorAttachments[currentImage]->GetImageView();
+		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
+				imageView, extent.width, extent.height, 1);
+		framebuffers[currentImage] = device.createFramebufferUnique(createInfo);
+		setImageLayout(cmdBuffer, colorAttachments[currentImage]->GetImage(), vk::Format::eR8G8B8A8Unorm,
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+	}
+	cmdBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, extent), clear_colors),
+			vk::SubpassContents::eInline);
+}
+
+void VulkanContext::endFrame()
+{
+	cmdBuffer.endRenderPass();
+	cmdBuffer.end();
+	cmdBuffer = nullptr;
+	commandPool.EndFrame();
 }
 
 void VulkanContext::term()
@@ -323,8 +422,31 @@ void VulkanContext::term()
 			}
 		}
 	}
+	overlay->Term();
+	overlay.reset();
+	textureCache.reset();
+	framebuffers.clear();
+	colorAttachments.clear();
+	commandPool.Term();
+	quadDrawer.reset();
+	quadPipeline.reset();
+	quadPipelineWithAlpha.reset();
+	renderPass.reset();
+	shaderManager.reset();
 	ShaderCompiler::Term();
 	descriptorPool.reset();
 	allocator.Term();
 	pipelineCache.reset();
+}
+
+VulkanContext::VulkanContext()
+{
+	verify(contextInstance == nullptr);
+	contextInstance = this;
+}
+
+VulkanContext::~VulkanContext()
+{
+	verify(contextInstance == this);
+	contextInstance = nullptr;
 }

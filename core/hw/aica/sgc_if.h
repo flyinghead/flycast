@@ -1,13 +1,18 @@
 #pragma once
 #include "types.h"
 
+namespace aica
+{
+
+namespace sgc
+{
+
 void AICA_Sample();
-void AICA_Sample32();
 
 void WriteChannelReg(u32 channel, u32 reg, int size);
 
-void sgc_Init();
-void sgc_Term();
+void init();
+void term();
 
 union fp_22_10
 {
@@ -53,6 +58,9 @@ struct DSP_OUT_VOL_REG
 typedef s32 SampleType;
 
 void ReadCommonReg(u32 reg, bool byte);
-void channel_serialize(Serializer& ctx);
-void channel_deserialize(Deserializer& ctx);
+void serialize(Serializer& ctx);
+void deserialize(Deserializer& ctx);
 void vmuBeep(int on, int period);
+
+} // namespace sgc
+} // namespace aica

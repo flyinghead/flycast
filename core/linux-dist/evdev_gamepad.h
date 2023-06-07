@@ -59,36 +59,7 @@ public:
 
 		if (!find_mapping())
 		{
-#if defined(TARGET_PANDORA)
-			mapping_file = "controller_pandora.cfg";
-#else
-			if (_name == "Microsoft X-Box 360 pad"
-				|| _name == "Xbox 360 Wireless Receiver"
-				|| _name == "Xbox 360 Wireless Receiver (XBOX)")
-			{
-				mapping_file = "controller_xpad.cfg";
-			}
-			else if (_name.find("Xbox Gamepad (userspace driver)") != std::string::npos)
-			{
-				mapping_file = "controller_xboxdrv.cfg";
-			}
-			else if (_name.find("keyboard") != std::string::npos
-						|| _name.find("Keyboard") != std::string::npos)
-			{
-				mapping_file = "keyboard.cfg";
-			}
-			else
-			{
-				mapping_file = "controller_generic.cfg";
-			}
-#endif
-			if (find_mapping())
-			{
-				INFO_LOG(INPUT, "using default mapping '%s'", input_mapper->name.c_str());
-				input_mapper = std::make_shared<InputMapping>(*input_mapper);
-			}
-			else
-				input_mapper = getDefaultMapping();
+			input_mapper = getDefaultMapping();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 		}

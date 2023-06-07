@@ -23,6 +23,7 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
+#include "hw/naomi/printer.h"
 
 #include <algorithm>
 #include <array>
@@ -58,7 +59,7 @@ extern u32 awavelg_button_mapping[32];
 
 const char *GetCurrentGameButtonName(DreamcastKey key)
 {
-	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_RELOAD)
+	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_BITMAPPED_LAST)
 		return nullptr;
 	u32 pos = 0;
 	u32 val = (u32)key;
@@ -70,13 +71,13 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 	u32 arcade_key;
 	if (settings.platform.isNaomi())
 	{
-		if (pos >= ARRAY_SIZE(naomi_button_mapping))
+		if (pos >= std::size(naomi_button_mapping))
 			return nullptr;
 		arcade_key = naomi_button_mapping[pos];
 	}
 	else
 	{
-		if (pos >= ARRAY_SIZE(awave_button_mapping))
+		if (pos >= std::size(awave_button_mapping))
 			return nullptr;
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		arcade_key = mapping[pos];
@@ -166,7 +167,12 @@ protected:
 			// always-on mapping
 			for (u32 i = 0; i < cur_mapping.size(); i++)
 				if (cur_mapping[i] == 0xffffffff)
-					v[player - first_player] |= 1 << i;
+				{
+					if (p2_mapping[i] == 0)
+						v[player - first_player] |= 1 << i;
+					else if (player == 0)
+						v[1] |= p2_mapping[i];
+				}
 			u32 keycode = buttons[player];
 			if (keycode == 0)
 				continue;
@@ -220,6 +226,20 @@ protected:
 		digOutput = newOutput;
 	}
 
+	virtual void read_lightgun(int playerNum, u32 buttons, u16& x, u16& y)
+	{
+		if ((buttons & NAOMI_RELOAD_KEY) != 0)
+		{
+			x = 0;
+			y = 0;
+		}
+		else
+		{
+			x = mapleInputState[playerNum].absPos.x;
+			y = mapleInputState[playerNum].absPos.y;
+		}
+	}
+
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
 	u32 coin_input_count = 0;
@@ -240,7 +260,7 @@ private:
 			// Use default mapping
 			return;
 
-		for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
+		for (size_t i = 0; i < std::size(NaomiGameInputs->buttons) && NaomiGameInputs->buttons[i].source != 0; i++)
 		{
 			u32 source = NaomiGameInputs->buttons[i].source;
 			int keyIdx = 0;
@@ -365,6 +385,19 @@ public:
 	{
 		light_gun_count = 1;
 	}
+
+	void read_lightgun(int playerNum, u32 buttons, u16& x, u16& y) override
+	{
+		jvs_837_13844::read_lightgun(playerNum, buttons, x, y);
+
+		if ((buttons & NAOMI_BTN0_KEY) != 0)
+		{
+			// any >= 0x1000 value works after calibration (tduno, tduno2)
+			// no value seems to fully work before :(
+			x |= 0xf000;
+			y |= 0xf000;
+		}
+	}
 };
 
 class jvs_837_13844_motor_board : public jvs_837_13844
@@ -473,34 +506,101 @@ protected:
 	}
 };
 
-// 18 Wheeler: fake the drive board and limit the wheel analog value
-class jvs_837_13844_18wheeler : public jvs_837_13844_motor_board
+// 837-13844 jvs board wired to force-feedback drive board
+// 838-13843: f355
+// 838-13992: 18 wheeler
+class jvs_837_13844_racing : public jvs_837_13844_motor_board
 {
 public:
-	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_racing(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
 		: jvs_837_13844_motor_board(node_id, parent, first_player)
 	{
 	}
 
 	void serialize(Serializer& ser) const override
 	{
-		ser << gear;
 		ser << testMode;
 		jvs_837_13844_motor_board::serialize(ser);
 	}
 	void deserialize(Deserializer& deser) override
 	{
-		if (deser.version() >= Deserializer::V31) {
-			deser >> gear;
+		if (deser.version() >= Deserializer::V31)
 			deser >> testMode;
-		}
 		jvs_837_13844_motor_board::deserialize(deser);
+	}
+
+protected:
+	u8 process(u8 in) override
+	{
+		in = ~in;
+		networkOutput.output("m3ffb", in);
+		// E0: stop motor
+		// E3: roll right
+		// EB: roll left
+
+		// Dn: set wheel high-order?
+		// Cn: set wheel low-order?
+		// 18 wheeler: ff, fe, 3f, 49, 67
+		//    d8, c0, e0, d0
+		//    4b, 4a, 9f, 4b, 4d, 4e, 4f, 45, 45, 4f, a3, 4d, ..., 9f, 4c,
+		u8 out = 0;
+		switch (in)
+		{
+		case 0xf0:
+			testMode = true;
+			break;
+
+		case 0xff:
+			testMode = false;
+			break;
+
+		case 0xf1:
+			out = 0x10;
+			break;
+
+		default:
+			break;
+		}
+		if (testMode)
+			out = in;
+
+		// reverse
+		out = (out & 0xF0) >> 4 | (out & 0x0F) << 4;
+		out = (out & 0xCC) >> 2 | (out & 0x33) << 2;
+		out = (out & 0xAA) >> 1 | (out & 0x55) << 1;
+
+		return out;
+	}
+
+private:
+	bool testMode = false;
+};
+
+// 18 Wheeler: fake the drive board and limit the wheel analog value
+class jvs_837_13844_18wheeler : public jvs_837_13844_racing
+{
+public:
+	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844_racing(node_id, parent, first_player)
+	{
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << gear;
+		jvs_837_13844_racing::serialize(ser);
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		if (deser.version() >= Deserializer::V31)
+			deser >> gear;
+		jvs_837_13844_racing::deserialize(deser);
 	}
 
 protected:
 	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
-		jvs_837_13844_motor_board::read_digital_in(buttons, v);
+		jvs_837_13844_racing::read_digital_in(buttons, v);
 		if (buttons[0] & NAOMI_BTN2_KEY)
 		{
 			gear = -1;
@@ -538,43 +638,14 @@ protected:
 
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override
 	{
-		u16 v = jvs_837_13844_motor_board::read_analog_axis(player_num, player_axis, inverted);
+		u16 v = jvs_837_13844_racing::read_analog_axis(player_num, player_axis, inverted);
 		if (player_axis == 0)
 			return std::min<u16>(0xefff, std::max<u16>(0x1000, v));
 		else
 			return v;
 	}
 
-	u8 process(u8 in) override
-	{
-		in = ~in;
-		switch (in)
-		{
-		case 0xf0:
-			testMode = true;
-			break;
-
-		case 0xff:
-			testMode = false;
-			break;
-
-		default:
-			break;
-		}
-		u8 out = 0;
-		if (testMode)
-			out = in;
-
-		// reverse
-		out = (out & 0xF0) >> 4 | (out & 0x0F) << 4;
-		out = (out & 0xCC) >> 2 | (out & 0x33) << 2;
-		out = (out & 0xAA) >> 1 | (out & 0x55) << 1;
-
-		return out;
-	}
-
 private:
-	bool testMode = false;
 	int8_t gear = 0;	// 0: low, 1: high, -1: reverse
 	bool transitionWait = false;
 };
@@ -617,7 +688,7 @@ protected:
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)ARRAY_SIZE(mapleInputState) - 1)];
+		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)std::size(mapleInputState) - 1)];
 		if (inputState.absPos.x < 0 || inputState.absPos.x > 639 || inputState.absPos.y < 0 || inputState.absPos.y > 479)
 			return 0;
 		else
@@ -786,74 +857,115 @@ private:
 	s8 axis_y = 0;
 };
 
+// Mushiking
+class jvs_837_13551_mushiking : public jvs_837_13551
+{
+public:
+	jvs_837_13551_mushiking(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13551(node_id, parent, first_player) { }
+
+protected:
+	void read_digital_in(const u32 *buttons, u16 *v) override
+	{
+		jvs_837_13551::read_digital_in(buttons, v);
+		if (!(v[0] & NAOMI_TEST_KEY))
+		{
+			v[0] |= NAOMI_START_KEY;	// Card dispenser OK
+			testDown = false;
+		}
+		else if (!testDown)
+		{
+			// Delay the TEST button being down until the next read,
+			// otherwise it can't be used in the BIOS menu
+			testDown = true;
+			v[0] &= ~NAOMI_TEST_KEY;
+		}
+		v[0] &= ~NAOMI_RIGHT_KEY;	// Cancel card dispenser empty signal
+		v[1] &= ~NAOMI_START_KEY;	// Cancel jammed card signal
+	}
+
+private:
+	bool testDown = false;
+};
+
 maple_naomi_jamma::maple_naomi_jamma()
 {
-	switch (settings.input.JammaSetup)
+	if (settings.naomi.drivingSimSlave == 0 && !settings.naomi.slave)
 	{
-	case JVS::Default:
-	default:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		break;
-	case JVS::FourPlayers:
-		io_boards.push_back(std::unique_ptr<jvs_837_13551_4P>(new jvs_837_13551_4P(1, this)));
-		break;
-	case JVS::RotaryEncoders:
-		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this)));
-		break;
-	case JVS::OutTrigger:
-		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_837_13551_noanalog>(new jvs_837_13551_noanalog(2, this)));
-		break;
-	case JVS::SegaMarineFishing:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
-		break;
-	case JVS::DualIOBoards4P:
-		if (settings.content.gameId == "VIRTUA ATHLETE")
+		switch (settings.input.JammaSetup)
 		{
-			// reverse the board order so that P1 is P1
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this, 2)));
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 0)));
+		case JVS::Default:
+		default:
+			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING")
+				io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
+			else
+				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+			break;
+		case JVS::FourPlayers:
+			io_boards.push_back(std::make_unique<jvs_837_13551_4P>(1, this));
+			break;
+		case JVS::RotaryEncoders:
+			io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
+			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
+			break;
+		case JVS::OutTrigger:
+			io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
+			io_boards.push_back(std::make_unique<jvs_837_13551_noanalog>(2, this));
+			break;
+		case JVS::SegaMarineFishing:
+			io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
+			break;
+		case JVS::DualIOBoards4P:
+			if (settings.content.gameId == "RINGOUT 4X4 JAPAN")
+			{
+				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 2));
+			}
+			else
+			{
+				// reverse the board order so that P1 is P1
+				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this, 2));
+				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 0));
+			}
+			break;
+		case JVS::LightGun:
+			io_boards.push_back(std::make_unique<jvs_namco_jyu>(1, this));
+			break;
+		case JVS::LightGunAsAnalog:
+			// Regular board sending lightgun coords as axis 0/1
+			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+			io_boards.back()->lightgun_as_analog = true;
+			break;
+		case JVS::Mazan:
+			io_boards.push_back(std::make_unique<jvs_namco_fcb>(1, this));
+			io_boards.push_back(std::make_unique<jvs_namco_fcb>(2, this));
+			break;
+		case JVS::GunSurvivor:
+			io_boards.push_back(std::make_unique<jvs_namco_fca>(1, this));
+			break;
+		case JVS::DogWalking:
+			io_boards.push_back(std::make_unique<jvs_837_13844_encoders>(1, this));
+			break;
+		case JVS::TouchDeUno:
+			io_boards.push_back(std::make_unique<jvs_837_13844_touch>(1, this));
+			break;
+		case JVS::WorldKicks:
+			io_boards.push_back(std::make_unique<jvs_namco_v226>(1, this));
+			break;
+		case JVS::WorldKicksPCB:
+			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(1, this, 2));
+			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(2, this));
+			break;
+		case JVS::WaveRunnerGP:
+			io_boards.push_back(std::make_unique<jvs_837_13844_wrungp>(1, this));
+			break;
+		case JVS::_18Wheeler:
+			io_boards.push_back(std::make_unique<jvs_837_13844_18wheeler>(1, this));
+			break;
+		case JVS::F355:
+			io_boards.push_back(std::make_unique<jvs_837_13844_racing>(1, this));
+			break;
 		}
-		else
-		{
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-			io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
-		}
-		break;
-	case JVS::LightGun:
-		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
-		break;
-	case JVS::LightGunAsAnalog:
-		// Regular board sending lightgun coords as axis 0/1
-		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
-		io_boards.back()->lightgun_as_analog = true;
-		break;
-	case JVS::Mazan:
-		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(1, this)));
-		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(2, this)));
-		break;
-	case JVS::GunSurvivor:
-		io_boards.push_back(std::unique_ptr<jvs_namco_fca>(new jvs_namco_fca(1, this)));
-		break;
-	case JVS::DogWalking:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_encoders>(new jvs_837_13844_encoders(1, this)));
-		break;
-	case JVS::TouchDeUno:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_touch>(new jvs_837_13844_touch(1, this)));
-		break;
-	case JVS::WorldKicks:
-		io_boards.push_back(std::unique_ptr<jvs_namco_v226>(new jvs_namco_v226(1, this)));
-		break;
-	case JVS::WorldKicksPCB:
-		io_boards.push_back(std::unique_ptr<jvs_namco_v226_pcb>(new jvs_namco_v226_pcb(1, this)));
-		break;
-	case JVS::WaveRunnerGP:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
-		break;
-	case JVS::_18Wheeler:
-		io_boards.push_back(std::unique_ptr<jvs_837_13844_18wheeler>(new jvs_837_13844_18wheeler(1, this)));
-		break;
 	}
 
 	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
@@ -1061,6 +1173,18 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x15:	// Receive JVS data
 			receive_jvs_messages(dma_buffer_in[1]);
+			if (hotd2p)
+			{
+				send_jvs_messages(node_id, channel, true, len, cmd, false);
+				w8(MDRS_JVSReply);
+				w8(0);
+				w8(0x20);
+				w8(0x01);
+				w8(0x18);	// always
+				w8(channel);
+				w8(sense_line(node_id));
+				w8(0);
+			}
 			break;
 
 		case 0x17:	// Transmit without repeat
@@ -1104,7 +1228,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x35:	// Receive then transmit with repeat (15 then 27)
 			receive_jvs_messages(channel);
-			// FALLTHROUGH
+			[[fallthrough]];
 
 		case 0x27:	// Transmit with repeat
 			{
@@ -1207,7 +1331,12 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 			w8(0x00);
 			w8(0xff);		// in(4)
-			w8(0xff);		// in(5) bit0: 1=VGA, 0=NTSCi
+			u8 v = 0xf9;
+			if (settings.naomi.drivingSimSlave == 1)
+				v |= 2;
+			else if (settings.naomi.drivingSimSlave == 2)
+				v |= 4;
+			w8(v);          // in(5) bit0: 1=VGA, 0=NTSCi
 			w8(0xff);		// in(6)
 
 			w32(0x00);
@@ -1283,8 +1412,10 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 			{
 				u32 hash = XXH32(ram, 0x10000, 0);
 				LOGJVS("JVS Firmware hash %08x\n", hash);
+				hotd2p = hash == 0xa6784e26;
 				if (hash == 0xa7c50459	// CT
-						|| hash == 0xae841e36)	// HOTD2
+						|| hash == 0xae841e36	// HOTD2
+						|| hotd2p)
 					crazy_mode = true;
 				else
 					crazy_mode = false;
@@ -1414,6 +1545,7 @@ void maple_naomi_jamma::serialize(Serializer& ser) const
 {
 	maple_base::serialize(ser);
 	ser << crazy_mode;
+	ser << hotd2p;
 	ser << jvs_repeat_request;
 	ser << jvs_receive_length;
 	ser << jvs_receive_buffer;
@@ -1427,6 +1559,10 @@ void maple_naomi_jamma::deserialize(Deserializer& deser)
 {
 	maple_base::deserialize(deser);
 	deser >> crazy_mode;
+	if (deser.version() >= Deserializer::V35)
+		deser >> hotd2p;
+	else
+		hotd2p = settings.content.gameId == "hotd2p";
 	deser >> jvs_repeat_request;
 	deser >> jvs_receive_length;
 	deser >> jvs_receive_buffer;
@@ -1578,7 +1714,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		break;
 
 	default:
-		if (jvs_cmd >= 0x20 && jvs_cmd <= 0x38) // Read inputs and more
+		if ((jvs_cmd >= 0x20 && jvs_cmd <= 0x38) || jvs_cmd == 0x74) // Read inputs and more
 		{
 			LOGJVS("JVS Node %d: ", node_id);
 			u32 buttons[4] {};
@@ -1586,7 +1722,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			for (int p = 0; p < 4; p++)
 				buttons[p] = ~mapleInputState[p].kcode;
 #else
-			for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
+			for (u32 i = 0; i < std::size(naomi_button_mapping); i++)
 				for (int p = 0; p < 4; p++)
 					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
@@ -1614,6 +1750,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
+							inputs[player] &= ~(NAOMI_TEST_KEY | NAOMI_COIN_KEY);
 							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);
 							JVS_OUT(inputs[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
@@ -1662,7 +1799,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
 								int playerNum = first_player + axis / 2;
-								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)ARRAY_SIZE(mapleInputState) - 1)];
+								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)std::size(mapleInputState) - 1)];
 								u16 x;
 								u16 y;
 								if (inputState.absPos.x < 0 || inputState.absPos.x > 639
@@ -1692,7 +1829,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							u16 axis_value;
 							if (NaomiGameInputs != NULL)
 							{
-								if (player_axis >= ARRAY_SIZE(NaomiGameInputs->axes)
+								if (player_axis >= std::size(NaomiGameInputs->axes)
 										|| NaomiGameInputs->axes[player_axis].name == NULL)
 								{
 									// Next player
@@ -1781,18 +1918,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						// Channel number (1-based) is in jvs_request[cmdi + 1]
 						int playerNum = first_player + buffer_in[cmdi + 1] - 1;
-						s16 x;
-						s16 y;
-						if ((buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
-						{
-							x = 0;
-							y = 0;
-						}
-						else
-						{
-							x = mapleInputState[playerNum].absPos.x;
-							y = mapleInputState[playerNum].absPos.y;
-						}
+						u16 x;
+						u16 y;
+						read_lightgun(playerNum, buttons[playerNum], x, y);
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB
@@ -1817,14 +1945,33 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)ARRAY_SIZE(coin_count))
+					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
 						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;
 
+				case 0x74:  // Custom: used to read and write the board serial port (touch de uno)
+					{
+						u32 len = buffer_in[cmdi + 1];
+						for (u32 i = 0; i < len; i++)
+							printer::print(buffer_in[cmdi + 2 + i]);
+
+						cmdi += len + 2;
+						JVS_STATUS1();	// report
+						// data
+						// 00 hardware error
+						// 01 head up error
+						// 02 Vp Volt error
+						// 03 auto cutter error
+						// 04 head temp error
+						// 3* paper end error
+						JVS_OUT(0xf); // printer ok
+					}
+					break;
+
 				default:
-					DEBUG_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
+					INFO_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
 					JVS_OUT(2);			// report byte: command error
 					cmdi = length_in;	// Ignore subsequent commands
 					break;

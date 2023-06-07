@@ -21,23 +21,13 @@
 #include "../game_scanner.h"
 #include <chrono>
 
-static std::string getGameFileName(const std::string& path)
-{
-	size_t slash = get_last_slash_pos(path);
-	if (slash != std::string::npos)
-		return path.substr(slash + 1);
-	else
-		return path;
-}
-
 GameBoxart Boxart::getBoxart(const GameMedia& media)
 {
 	loadDatabase();
-	std::string fileName = getGameFileName(media.path);
 	GameBoxart boxart;
 	{
 		std::lock_guard<std::mutex> guard(mutex);
-		auto it = games.find(fileName);
+		auto it = games.find(media.fileName);
 		if (it != games.end())
 		{
 			boxart = it->second;
@@ -50,7 +40,7 @@ GameBoxart Boxart::getBoxart(const GameMedia& media)
 		}
 		else
 		{
-			boxart.fileName = fileName;
+			boxart.fileName = media.fileName;
 			boxart.gamePath = media.path;
 			boxart.name = media.name;
 			boxart.searchName = media.gameName;	// for arcade games

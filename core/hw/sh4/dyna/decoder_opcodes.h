@@ -33,3 +33,5 @@ sh4dec(i0100_nnnn_0110_1010);
 sh4dec(i0100_nnnn_0110_0110);
 sh4dec(i0100_nnnn_0001_1011);
 sh4dec(i0100_nnnn_0000_0011);
+
+void dec_illegalOp(u32 op);

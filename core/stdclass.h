@@ -8,6 +8,7 @@
 #include <cstring>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>
@@ -17,7 +18,9 @@
 #else
 #define PAGE_SIZE 4096
 #endif
+#ifndef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
+#endif
 
 class cThread
 {
@@ -66,36 +69,36 @@ bool make_directory(const std::string& path);
 
 // returns a prefix for a game save file, for example: ~/.local/share/flycast/mvsc2.zip
 std::string get_game_save_prefix();
-// returns the full path of the game, without the file extension
-std::string get_game_basename();
-// returns the game directory
-std::string get_game_dir();
 // returns the position of the last path separator, or string::npos if none
 size_t get_last_slash_pos(const std::string& path);
 
-bool mem_region_lock(void *start, std::size_t len);
-bool mem_region_unlock(void *start, std::size_t len);
-bool mem_region_set_exec(void *start, std::size_t len);
+class RamRegion
+{
+	u8 *data;
+	size_t size;
+	bool ownsMemory = false;
 
-class VArray2 {
 public:
-	u8* data;
-	unsigned size;
+	void alloc(size_t size);
+	void free();
 
-	void Zero() {
+	void setRegion(u8 *data, size_t size)
+	{
+		this->data = data;
+		this->size = size;
+		ownsMemory = false;
+	}
+
+	void zero() {
 		std::memset(data, 0, size);
 	}
 
-	u8& operator [](unsigned i) {
-#ifdef MEM_BOUND_CHECK
-        if (i >= size)
-		{
-        	ERROR_LOG(COMMON, "Error: VArray2 , index out of range (%d > %d)\n", i, size - 1);
-			MEM_DO_BREAK;
-		}
-#endif
+	u8& operator [](size_t i) {
 		return data[i];
     }
+
+	void serialize(Serializer &ser) const;
+	void deserialize(Deserializer &deser);
 };
 
 static inline void string_tolower(std::string& s)
@@ -172,7 +175,7 @@ public:
 
 	template<typename T>
 	MD5Sum& add(const std::vector<T>& v) {
-		MD5_Update(&ctx, &v[0], (unsigned long)(v.size() * sizeof(T)));
+		MD5_Update(&ctx, v.data(), (unsigned long)(v.size() * sizeof(T)));
 		return *this;
 	}
 

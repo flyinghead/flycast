@@ -1,11 +1,13 @@
 #pragma once
-#include <memory>
 #include "types.h"
 #include "maple_cfg.h"
 #include "maple_helper.h"
 #include <cmath>
 #include "input/gamepad.h"
 #include "serialize.h"
+
+#include <memory>
+#include <vector>
 
 enum MapleFunctionID
 {
@@ -261,6 +263,7 @@ struct maple_naomi_jamma : maple_base
 
 	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
 	bool crazy_mode = false;
+	bool hotd2p = false;
 
 	u8 jvs_repeat_request[32][256];
 	u8 jvs_receive_buffer[32][258];

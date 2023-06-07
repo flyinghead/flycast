@@ -81,12 +81,6 @@ public:
 			}
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
-#ifdef LIBRETRO
-			if (!pvrrc.isRTT)
-				overlay->Draw(screenDrawer.GetCurrentCommandBuffer(), viewport,
-						config::EmulateFramebuffer ? 1 : (int)config::RenderResolution / 480.f, true, true);
-#endif
-
 			drawer->EndFrame();
 
 			return !pvrrc.isRTT;

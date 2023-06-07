@@ -19,6 +19,8 @@
 #include "isofs.h"
 #include "iso9660.h"
 
+#include <cstring>
+
 static u32 decode_iso733(iso733_t v)
 {
 	return ((v >> 56) & 0x000000FF)

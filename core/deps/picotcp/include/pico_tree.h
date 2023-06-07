@@ -55,6 +55,7 @@ void *pico_tree_findKey(struct pico_tree *tree, void *key);
 void    pico_tree_drop(struct pico_tree *tree);
 int     pico_tree_empty(struct pico_tree *tree);
 struct pico_tree_node *pico_tree_findNode(struct pico_tree *tree, void *key);
+int pico_tree_destroy(struct pico_tree *tree, int (*node_delete)(void **));
 
 void *pico_tree_first(struct pico_tree *tree);
 void *pico_tree_last(struct pico_tree *tree);

@@ -19,6 +19,7 @@
 #include "TexCache.h"
 #include "CustomTexture.h"
 #include "oslib/directory.h"
+#include "oslib/storage.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
 
@@ -287,8 +288,8 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 void CustomTexture::LoadMap()
 {
 	texture_map.clear();
-	DirectoryTree tree(textures_path);
-	for (const DirectoryTree::item& item : tree)
+	hostfs::DirectoryTree tree(textures_path);
+	for (const hostfs::FileInfo& item : tree)
 	{
 		std::string extension = get_file_extension(item.name);
 		if (extension != "jpg" && extension != "jpeg" && extension != "png")
@@ -302,7 +303,7 @@ void CustomTexture::LoadMap()
 			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
 			continue;
 		}
-		texture_map[hash] = item.parentPath + "/" + item.name;
+		texture_map[hash] = item.path;
 	}
 	custom_textures_available = !texture_map.empty();
 }

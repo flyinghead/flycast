@@ -30,7 +30,7 @@ static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup(addr, &entry, pa) != MmuError::NONE)
 		return false;
 	data = ReadMem32_nommu(pa);
 	return true;
@@ -40,7 +40,7 @@ static bool read_mem16(u32 addr, u16& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup(addr, &entry, pa) != MmuError::NONE)
 		return false;
 	data = ReadMem16_nommu(pa);
 	return true;
@@ -50,7 +50,7 @@ static bool read_mem8(u32 addr, u8& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup(addr, &entry, pa) != MmuError::NONE)
 		return false;
 	data = ReadMem8_nommu(pa);
 	return true;
@@ -289,7 +289,7 @@ static bool print_wince_syscall(u32 address)
 		const char *api;
 		char api_buf[128];
 
-		if (api_id < ARRAY_SIZE(wince_apis))
+		if (api_id < std::size(wince_apis))
 			api = wince_apis[api_id];
 		else
 		{
@@ -305,7 +305,7 @@ static bool print_wince_syscall(u32 address)
 		const char *method = NULL;
 		char method_buf[128];
 
-		if (api_id < ARRAY_SIZE(wince_methods) && meth_id < ARRAY_SIZE(wince_methods[api_id]))
+		if (api_id < std::size(wince_methods) && meth_id < std::size(wince_methods[api_id]))
 			method = wince_methods[api_id][meth_id];
 		if (method == NULL)
 		{

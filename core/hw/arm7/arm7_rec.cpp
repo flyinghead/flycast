@@ -24,7 +24,7 @@
 #include "arm7_rec.h"
 #include "arm7.h"
 #include "hw/aica/aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
 #include "arm_mem.h"
 
 #if 0
@@ -34,9 +34,11 @@
 #include <sstream>
 #endif
 
-extern bool Arm7Enabled;
+namespace aica
+{
 
-namespace aicaarm {
+namespace arm
+{
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
@@ -668,22 +670,20 @@ void flush()
 	icPtr = ICache;
 	arm7backend_flush();
 	verify(arm_compilecode != nullptr);
-	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
+	for (u32 i = 0; i < std::size(EntryPoints); i++)
 		EntryPoints[i] = arm_compilecode;
 }
 
 void init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
+	bool rc = virtmem::prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
+	bool rc = virtmem::prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache);
 #endif
 	verify(rc);
 
-	icPtr = ICache;
-
-	for (int i = 0; i < 256; i++)
+	for (std::size_t i = 0; i < std::size(cpuBitsSet); i++)
 	{
 		int count = 0;
 		for (int j = 0; j < 8; j++)
@@ -692,6 +692,19 @@ void init()
 
 		cpuBitsSet[i] = count;
 	}
+	flush();
+}
+
+void term()
+{
+#ifdef FEAT_NO_RWX_PAGES
+	if (ICache != nullptr)
+		virtmem::release_jit_block(ARM7_TCB, ICache, ICacheSize);
+#else
+	if (ICache != nullptr && ICache != ARM7_TCB)
+		virtmem::release_jit_block(ICache, ICacheSize);
+#endif
+	ICache = nullptr;
 }
 
 template <bool Load, bool Byte>
@@ -702,16 +715,16 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 	if (Load)
 	{
 		if (Byte)
-			rv=arm_ReadMem8(addr);
+			rv = readMem<u8>(addr);
 		else
-			rv=arm_ReadMem32(addr);
+			rv = readMem<u32>(addr);
 	}
 	else
 	{
 		if (Byte)
-			arm_WriteMem8(addr,data);
+			writeMem<u8>(addr,data);
 		else
-			arm_WriteMem32(addr,data);
+			writeMem<u32>(addr,data);
 	}
 
 	return rv;
@@ -735,7 +748,8 @@ void *getMemOp(bool Load, bool Byte)
 	}
 }
 
-} // recompiler ns
+} // namespace recompiler
+
 // Run a timeslice of arm7
 
 void run(u32 samples)
@@ -747,7 +761,7 @@ void run(u32 samples)
 			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
 			arm_mainloop(arm_Reg, recompiler::EntryPoints);
 		}
-		libAICA_TimeStep();
+		timeStep();
 	}
 }
 
@@ -756,5 +770,6 @@ void avoidRaceCondition()
 	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
-} // aicarm ns
+} // namespace arm
+} // namespace aica
 #endif // FEAT_AREC != DYNAREC_NONE

@@ -12,20 +12,28 @@
 #include "hw/sh4/sh4_sched.h"
 #include "profiler/dc_profiler.h"
 #include "hw/sh4/dyna/blockmanager.h"
-#include "hw/sh4/sh4_interpreter.h"
 #include "hw/arm7/arm7.h"
 #include "cfg/option.h"
 
+#include "serialize.h"
+#include "hw/arm7/arm_mem.h"
+#include "hw/arm7/arm7.h"
+#include "dsp.h"
+#include "sgc_if.h"
+#include "aica.h"
+
 #include <ctime>
 
-VArray2 aica_ram;
-u32 VREG;
-u32 ARMRST;
-u32 rtc_EN;
+namespace aica
+{
+
+RamRegion aica_ram;
+static u32 VREG;
+static u32 ARMRST;
+static u32 rtc_EN;
 int dma_sched_id = -1;
-u32 RealTimeClock;
+static u32 RealTimeClock;
 int rtc_schid = -1;
-u32 SB_ADST;
 
 u32 GetRTC_now()
 {
@@ -48,7 +56,7 @@ u32 GetRTC_now()
 }
 
 template<typename T>
-T ReadMem_aica_rtc(u32 addr)
+T readRtcReg(u32 addr)
 {
 	switch (addr & 0xFF)
 	{
@@ -60,15 +68,15 @@ T ReadMem_aica_rtc(u32 addr)
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, (int)sizeof(T));
+	WARN_LOG(AICA, "readRtcReg: invalid address %x sz %d", addr, (int)sizeof(T));
 	return 0;
 }
-template u8 ReadMem_aica_rtc<>(u32 addr);
-template u16 ReadMem_aica_rtc<>(u32 addr);
-template u32 ReadMem_aica_rtc<>(u32 addr);
+template u8 readRtcReg<>(u32 addr);
+template u16 readRtcReg<>(u32 addr);
+template u32 readRtcReg<>(u32 addr);
 
 template<typename T>
-void WriteMem_aica_rtc(u32 addr, T data)
+void writeRtcReg(u32 addr, T data)
 {
 	switch (addr & 0xFF)
 	{
@@ -93,16 +101,16 @@ void WriteMem_aica_rtc(u32 addr, T data)
 		break;
 
 	default:
-		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
+		WARN_LOG(AICA, "writeRtcReg: invalid address %x sz %d data %x", addr, (int)sizeof(T), data);
 		break;
 	}
 }
-template void WriteMem_aica_rtc<>(u32 addr, u8 data);
-template void WriteMem_aica_rtc<>(u32 addr, u16 data);
-template void WriteMem_aica_rtc<>(u32 addr, u32 data);
+template void writeRtcReg<>(u32 addr, u8 data);
+template void writeRtcReg<>(u32 addr, u16 data);
+template void writeRtcReg<>(u32 addr, u32 data);
 
 template<typename T>
-T ReadMem_aica_reg(u32 addr)
+T readAicaReg(u32 addr)
 {
 	addr &= 0x7FFF;
 	if (sizeof(T) == 1)
@@ -121,22 +129,22 @@ T ReadMem_aica_reg(u32 addr)
 		return (T)((VREG << 8) | ARMRST);
 
 	if (sizeof(T) == 4)
-		return aicaReadReg<u16>(addr);
+		return readRegInternal<u16>(addr);
 	else
-		return aicaReadReg<T>(addr);
+		return readRegInternal<T>(addr);
 }
-template u8 ReadMem_aica_reg<>(u32 addr);
-template u16 ReadMem_aica_reg<>(u32 addr);
-template u32 ReadMem_aica_reg<>(u32 addr);
+template u8 readAicaReg<>(u32 addr);
+template u16 readAicaReg<>(u32 addr);
+template u32 readAicaReg<>(u32 addr);
 
 static void ArmSetRST()
 {
 	ARMRST &= 1;
-	aicaarm::enable(ARMRST == 0);
+	arm::enable(ARMRST == 0);
 }
 
 template<typename T>
-void WriteMem_aica_reg(u32 addr, T data)
+void writeAicaReg(u32 addr, T data)
 {
 	addr &= 0x7FFF;
 
@@ -166,13 +174,13 @@ void WriteMem_aica_reg(u32 addr, T data)
 		return;
 	}
 	if (sizeof(T) == 4)
-		aicaWriteReg(addr, (u16)data);
+		writeRegInternal(addr, (u16)data);
 	else
-		aicaWriteReg(addr, data);
+		writeRegInternal(addr, data);
 }
-template void WriteMem_aica_reg<>(u32 addr, u8 data);
-template void WriteMem_aica_reg<>(u32 addr, u16 data);
-template void WriteMem_aica_reg<>(u32 addr, u32 data);
+template void writeAicaReg<>(u32 addr, u8 data);
+template void writeAicaReg<>(u32 addr, u16 data);
+template void writeAicaReg<>(u32 addr, u32 data);
 
 static int DreamcastSecond(int tag, int c, int j)
 {
@@ -188,25 +196,25 @@ static int DreamcastSecond(int tag, int c, int j)
 }
 
 //Init/res/term
-void aica_Init()
+void initRtc()
 {
 	RealTimeClock = GetRTC_now();
 	if (rtc_schid == -1)
 		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
 }
 
-void aica_Reset(bool hard)
+void resetRtc(bool hard)
 {
 	if (hard)
 	{
-		aica_Init();
+		initRtc();
 		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
 	}
 	VREG = 0;
 	ARMRST = 0;
 }
 
-void aica_Term()
+void termRtc()
 {
 	sh4_sched_unregister(rtc_schid);
 	rtc_schid = -1;
@@ -396,7 +404,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 
 			// Schedule the end of DMA transfer interrupt
 			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK);       // 16 bits @ 25 MHz
-			if (cycles < SH4_TIMESLICE / 2)
+			if (cycles <= 512)
 				dma_end_sched(0, 0, 0);
 			else
 				sh4_sched_request(dma_sched_id, cycles);
@@ -404,7 +412,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 	}
 }
 
-u32 Read_SB_ADST(u32 addr)
+static u32 Read_SB_ADST(u32 addr)
 {
 	// Le Mans and Looney Tunes sometimes send the same dma transfer twice after checking SB_ADST == 0.
 	// To avoid this, we pretend SB_ADST is still set when there is a pending aica-dma interrupt.
@@ -424,7 +432,7 @@ u32 Read_SB_ADST(u32 addr)
 template<u32 STAG, HollyInterruptID iainterrupt, const char *LogTag>
 void Write_SB_STAG(u32 addr, u32 data)
 {
-	u32& stagReg = sb_regs[(STAG - SB_BASE) / 4].data32;
+	u32& stagReg = sb_regs[(STAG - SB_BASE) / 4];
 	stagReg = data & 0x1FFFFFE0;
 
 	if (!check_STAG(data))
@@ -437,7 +445,7 @@ void Write_SB_STAG(u32 addr, u32 data)
 template<u32 STAR, HollyInterruptID iainterrupt, const char *LogTag>
 void Write_SB_STAR(u32 addr, u32 data)
 {
-	u32& starReg = sb_regs[(STAR - SB_BASE) / 4].data32;
+	u32& starReg = sb_regs[(STAR - SB_BASE) / 4];
 	starReg = data & 0x1FFFFFE0;
 
 	if (!check_STAR(data))
@@ -447,7 +455,7 @@ void Write_SB_STAR(u32 addr, u32 data)
 	}
 }
 
-void Write_SB_G2APRO(u32 addr, u32 data)
+static void Write_SB_G2APRO(u32 addr, u32 data)
 {
 	if ((data >> 16) == 0x4659)
 		SB_G2APRO = data & 0x00007f7f;
@@ -458,39 +466,39 @@ extern const char EXT1_TAG[] = "G2-EXT1 DMA";
 extern const char EXT2_TAG[] = "G2-EXT2 DMA";
 extern const char DDEV_TAG[] = "G2-DDev DMA";
 
-void aica_sb_Init()
+void sbInit()
 {
 	// G2-DMA registers
 
 	// AICA
-	sb_rio_register(SB_ADST_addr, RIO_FUNC, &Read_SB_ADST, &Write_SB_ADST);
-	sb_rio_register(SB_ADSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
-	sb_rio_register(SB_ADSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
+	hollyRegs.setHandlers<SB_ADST_addr>(Read_SB_ADST, Write_SB_ADST);
+	hollyRegs.setWriteHandler<SB_ADSTAR_addr>(Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
+	hollyRegs.setWriteHandler<SB_ADSTAG_addr>(Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
 
 	// G2 Ext device #1
-	sb_rio_register(SB_E1ST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,
+	hollyRegs.setWriteHandler<SB_E1ST_addr>(Write_DmaStart<SB_E1EN_addr, SB_E1ST_addr, SB_E1STAR_addr, SB_E1STAG_addr, SB_E1LEN_addr,
 			SB_E1DIR_addr, holly_EXT_DMA1, holly_EXT1_ILLADDR, holly_EXT1_OVERRUN, EXT1_TAG>);
-	sb_rio_register(SB_E1STAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_E1STAR_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
-	sb_rio_register(SB_E1STAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_E1STAG_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
+	hollyRegs.setWriteHandler<SB_E1STAR_addr>(Write_SB_STAR<SB_E1STAR_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
+	hollyRegs.setWriteHandler<SB_E1STAG_addr>(Write_SB_STAG<SB_E1STAG_addr, holly_EXT1_ILLADDR, EXT1_TAG>);
 
 	// G2 Ext device #2
-	sb_rio_register(SB_E2ST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_E2EN_addr, SB_E2ST_addr, SB_E2STAR_addr, SB_E2STAG_addr, SB_E2LEN_addr,
+	hollyRegs.setWriteHandler<SB_E2ST_addr>(Write_DmaStart<SB_E2EN_addr, SB_E2ST_addr, SB_E2STAR_addr, SB_E2STAG_addr, SB_E2LEN_addr,
 			SB_E2DIR_addr, holly_EXT_DMA2, holly_EXT2_ILLADDR, holly_EXT2_OVERRUN, EXT2_TAG>);
-	sb_rio_register(SB_E2STAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_E2STAR_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
-	sb_rio_register(SB_E2STAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_E2STAG_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
+	hollyRegs.setWriteHandler<SB_E2STAR_addr>(Write_SB_STAR<SB_E2STAR_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
+	hollyRegs.setWriteHandler<SB_E2STAG_addr>(Write_SB_STAG<SB_E2STAG_addr, holly_EXT2_ILLADDR, EXT2_TAG>);
 
 	// G2 Ext device #3
-	sb_rio_register(SB_DDST_addr, RIO_WF, nullptr, &Write_DmaStart<SB_DDEN_addr, SB_DDST_addr, SB_DDSTAR_addr, SB_DDSTAG_addr, SB_DDLEN_addr,
+	hollyRegs.setWriteHandler<SB_DDST_addr>(Write_DmaStart<SB_DDEN_addr, SB_DDST_addr, SB_DDSTAR_addr, SB_DDSTAG_addr, SB_DDLEN_addr,
 			SB_DDDIR_addr, holly_DEV_DMA, holly_DEV_ILLADDR, holly_DEV_OVERRUN, DDEV_TAG>);
-	sb_rio_register(SB_DDSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_DDSTAR_addr, holly_DEV_ILLADDR, DDEV_TAG>);
-	sb_rio_register(SB_DDSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_DDSTAG_addr, holly_DEV_ILLADDR, DDEV_TAG>);
+	hollyRegs.setWriteHandler<SB_DDSTAR_addr>(Write_SB_STAR<SB_DDSTAR_addr, holly_DEV_ILLADDR, DDEV_TAG>);
+	hollyRegs.setWriteHandler<SB_DDSTAG_addr>(Write_SB_STAG<SB_DDSTAG_addr, holly_DEV_ILLADDR, DDEV_TAG>);
 
-	sb_rio_register(SB_G2APRO_addr, RIO_WO_FUNC, nullptr, &Write_SB_G2APRO);
+	hollyRegs.setWriteOnly<SB_G2APRO_addr>(Write_SB_G2APRO);
 
 	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
 
-void aica_sb_Reset(bool hard)
+void sbReset(bool hard)
 {
 	if (hard) {
 		SB_ADST = 0;
@@ -498,8 +506,89 @@ void aica_sb_Reset(bool hard)
 	}
 }
 
-void aica_sb_Term()
+void sbTerm()
 {
 	sh4_sched_unregister(dma_sched_id);
 	dma_sched_id = -1;
 }
+
+void serialize(Serializer& ser)
+{
+	ser << arm::aica_interr;
+	ser << arm::aica_reg_L;
+	ser << arm::e68k_out;
+	ser << arm::e68k_reg_L;
+	ser << arm::e68k_reg_M;
+
+	ser.serialize(arm::arm_Reg, arm::RN_ARM_REG_COUNT - 1);	// Too lazy to create a new version and the scratch register is not used between blocks anyway
+	ser << arm::armIrqEnable;
+	ser << arm::armFiqEnable;
+	ser << arm::armMode;
+	ser << arm::Arm7Enabled;
+	ser << arm::arm7ClockTicks;
+
+	dsp::state.serialize(ser);
+
+	for (int i = 0 ; i < 3 ; i++)
+	{
+		ser << timers[i].c_step;
+		ser << timers[i].m_step;
+	}
+
+	if (!ser.rollback())
+		aica_ram.serialize(ser);
+	ser << VREG;
+	ser << ARMRST;
+	ser << rtc_EN;
+	ser << RealTimeClock;
+
+	ser << aica_reg;
+
+	sgc::serialize(ser);
+}
+
+void deserialize(Deserializer& deser)
+{
+	deser >> arm::aica_interr;
+	deser >> arm::aica_reg_L;
+	deser >> arm::e68k_out;
+	deser >> arm::e68k_reg_L;
+	deser >> arm::e68k_reg_M;
+
+	deser.deserialize(arm::arm_Reg, arm::RN_ARM_REG_COUNT - 1);
+	deser >> arm::armIrqEnable;
+	deser >> arm::armFiqEnable;
+	deser >> arm::armMode;
+	deser >> arm::Arm7Enabled;
+	if (deser.version() >= Deserializer::V19)
+		deser >> arm::arm7ClockTicks;
+	else
+		arm::arm7ClockTicks = 0;
+
+	dsp::state.deserialize(deser);
+
+	for (int i = 0 ; i < 3 ; i++)
+	{
+		deser >> timers[i].c_step;
+		deser >> timers[i].m_step;
+	}
+
+	if (!deser.rollback())
+	{
+		aica_ram.deserialize(deser);
+		if (settings.platform.isAtomiswave())
+			deser.skip(6 * 1024 * 1024, Deserializer::V30);
+	}
+	deser >> VREG;
+	deser >> ARMRST;
+	deser >> rtc_EN;
+	if (deser.version() >= Deserializer::V9)
+		deser >> RealTimeClock;
+
+	deser >> aica_reg;
+
+	sgc::deserialize(deser);
+}
+
+} // namespace aica
+

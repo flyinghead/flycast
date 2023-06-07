@@ -3366,4 +3366,14 @@ int pico_tcp_set_linger(struct pico_socket *s, uint32_t value)
     return 0;
 }
 
+void pico_tcp_deinit(void)
+{
+#ifdef PICO_SUPPORT_MUTEX
+	if (Mutex) {
+		PICOTCP_MUTEX_DEL(Mutex);
+		Mutex = NULL;
+	}
+#endif
+}
+
 #endif /* PICO_SUPPORT_TCP */

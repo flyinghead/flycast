@@ -2,7 +2,6 @@
 #include "types.h"
 #include "ta_structs.h"
 #include "pvr_regs.h"
-#include "helper_classes.h"
 #include "oslib/oslib.h"
 
 #include <algorithm>
@@ -49,11 +48,11 @@ struct PolyParam
 	TCW tcw1;
 	BaseTextureCacheData *texture1;
 
-	const float *mvMatrix;
-	const float *normalMatrix;
-	const float *projMatrix;
+	int mvMatrix;
+	int normalMatrix;
+	int projMatrix;
 	float glossCoef[2];
-	const N2LightModel *lightModel;
+	int lightModel;
 	bool envMapping[2];
 	bool constantColor[2];
 
@@ -72,12 +71,12 @@ struct PolyParam
 		tcw1.full = -1;
 		texture1 = nullptr;
 
-		mvMatrix = nullptr;
-		normalMatrix = nullptr;
-		projMatrix = nullptr;
+		mvMatrix = -1;
+		normalMatrix = -1;
+		projMatrix = -1;
 		glossCoef[0] = 0;
 		glossCoef[1] = 0;
-		lightModel = nullptr;
+		lightModel = -1;
 		envMapping[0] = false;
 		envMapping[1] = false;
 		constantColor[0] = false;
@@ -105,7 +104,7 @@ struct PolyParam
 			&& constantColor[1] == other.constantColor[1];
 	}
 
-	bool isNaomi2() const { return projMatrix != nullptr; }
+	bool isNaomi2() const { return projMatrix != -1; }
 };
 
 struct ModifierVolumeParam
@@ -114,19 +113,19 @@ struct ModifierVolumeParam
 	u32 count;
 	ISP_Modvol isp;
 
-	const float *mvMatrix;
-	const float *projMatrix;
+	int mvMatrix;
+	int projMatrix;
 
 	void init()
 	{
 		first = 0;
 		count = 0;
 		isp.full = 0;
-		mvMatrix = nullptr;
-		projMatrix = nullptr;
+		mvMatrix = -1;
+		projMatrix = -1;
 	}
 
-	bool isNaomi2() const { return projMatrix != nullptr; }
+	bool isNaomi2() const { return projMatrix != -1; }
 };
 
 struct ModTriangle
@@ -221,7 +220,7 @@ struct N2LightModel
 
 struct SortedTriangle
 {
-	const PolyParam* ppid;
+	u32 polyIndex;
 	u32 first;
 	u32 count;
 };
@@ -234,7 +233,6 @@ struct rend_context
 	f32 fZ_min;
 	f32 fZ_max;
 
-	bool Overrun;
 	bool isRTT;
 	
 	TA_GLOB_TILE_CLIP_type ta_GLOB_TILE_CLIP;
@@ -250,43 +248,42 @@ struct rend_context
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;
 
-	List<Vertex>      verts;
-	List<u32>         idx;
-	List<ModTriangle> modtrig;
-	List<ModifierVolumeParam>  global_param_mvo;
-	List<ModifierVolumeParam>  global_param_mvo_tr;
+	std::vector<Vertex> verts;
+	std::vector<u32> idx;
+	std::vector<ModTriangle> modtrig;
+	std::vector<ModifierVolumeParam> global_param_mvo;
+	std::vector<ModifierVolumeParam> global_param_mvo_tr;
 
-	List<PolyParam>   global_param_op;
-	List<PolyParam>   global_param_pt;
-	List<PolyParam>   global_param_tr;
-	List<RenderPass>  render_passes;
+	std::vector<PolyParam> global_param_op;
+	std::vector<PolyParam> global_param_pt;
+	std::vector<PolyParam> global_param_tr;
+	std::vector<RenderPass> render_passes;
 	std::vector<SortedTriangle> sortedTriangles;
 
-	List<N2Matrix> matrices;
-	List<N2LightModel> lightModels;
+	std::vector<N2Matrix> matrices;
+	std::vector<N2LightModel> lightModels;
 
 	void Clear()
 	{
-		verts.Clear();
-		idx.Clear();
-		global_param_op.Clear();
-		global_param_pt.Clear();
-		global_param_tr.Clear();
-		modtrig.Clear();
-		global_param_mvo.Clear();
-		global_param_mvo_tr.Clear();
-		render_passes.Clear();
+		idx.clear();
+		global_param_op.clear();
+		global_param_pt.clear();
+		global_param_tr.clear();
+		modtrig.clear();
+		global_param_mvo.clear();
+		global_param_mvo_tr.clear();
+		render_passes.clear();
 		sortedTriangles.clear();
 
 		// Reserve space for background poly
-		global_param_op.Append()->init();
-		verts.Append(4);
+		global_param_op.emplace_back();
+		global_param_op.back().init();
+		verts.resize(4);
 
-		Overrun = false;
 		fZ_min = 1000000.0f;
 		fZ_max = 1.0f;
-		matrices.Clear();
-		lightModels.Clear();
+		matrices.clear();
+		lightModels.clear();
 	}
 
 	void newRenderPass();
@@ -310,6 +307,7 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
+	u32 lastFrameUsed;
 
 	tad_context tad;
 	rend_context rend;
@@ -341,20 +339,20 @@ struct TA_context
 	{
 		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
-		rend.verts.Init(320 * 1024, &rend.Overrun, "verts");
-		rend.idx.Init(512 * 1024, &rend.Overrun, "idx");
-		rend.global_param_op.Init(16384, &rend.Overrun, "global_param_op");
-		rend.global_param_pt.Init(5120, &rend.Overrun, "global_param_pt");
-		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
-		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
-		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
+		rend.verts.reserve(32768);
+		rend.idx.reserve(32768);
+		rend.global_param_op.reserve(4096);
+		rend.global_param_pt.reserve(4096);
+		rend.global_param_tr.reserve(4096);
+		rend.global_param_mvo.reserve(4096);
+		rend.global_param_mvo_tr.reserve(4096);
+		rend.modtrig.reserve(16384);
 
-		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
-		
-		rend.render_passes.Init(sizeof(RenderPass) * MAX_PASSES, &rend.Overrun, "render_passes");	// 10 render passes
-		rend.matrices.Init(2000, &rend.Overrun, "matrices");
-		rend.lightModels.Init(150, &rend.Overrun, "lightModels");
-
+		if (settings.platform.isNaomi2())
+		{
+			rend.matrices.reserve(2000);
+			rend.lightModels.reserve(150);
+		}
 		Reset();
 	}
 
@@ -371,17 +369,6 @@ struct TA_context
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		freeAligned(tad.thd_root);
-		rend.verts.Free();
-		rend.idx.Free();
-		rend.global_param_op.Free();
-		rend.global_param_pt.Free();
-		rend.global_param_tr.Free();
-		rend.modtrig.Free();
-		rend.global_param_mvo.Free();
-		rend.global_param_mvo_tr.Free();
-		rend.render_passes.Free();
-		rend.matrices.Free();
-		rend.lightModels.Free();
 	}
 };
 
@@ -414,8 +401,8 @@ void ta_add_poly(const PolyParam& pp);
 void ta_add_poly(int listType, const ModifierVolumeParam& mvp);
 void ta_add_vertex(const Vertex& vtx);
 void ta_add_triangle(const ModTriangle& tri);
-float* ta_add_matrix(const float *matrix);
-N2LightModel *ta_add_light(const N2LightModel& light);
+int ta_add_matrix(const float *matrix);
+int ta_add_light(const N2LightModel& light);
 u32 ta_add_ta_data(u32 *data, u32 size);
 int getTAContextAddresses(u32 *addresses);
 u32 ta_get_tileclip();
@@ -424,12 +411,12 @@ u32 ta_get_list_type();
 void ta_set_list_type(u32 listType);
 void ta_parse_reset();
 void getRegionTileAddrAndSize(u32& address, u32& size);
-//void sortTriangles(rend_context& ctx, int pass);
+
 void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previousPass);
-void sortPolyParams(List<PolyParam> *polys, int first, int end, rend_context& ctx);
-void fix_texture_bleeding(const List<PolyParam> *polys, int first, int end, rend_context& ctx);
-void makeIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
-void makePrimRestartIndex(const List<PolyParam> *polys, int first, int end, bool merge, rend_context& ctx);
+void sortPolyParams(std::vector<PolyParam>& polys, int first, int end, rend_context& ctx);
+void fix_texture_bleeding(const std::vector<PolyParam>& polys, int first, int end, rend_context& ctx);
+void makeIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx);
+void makePrimRestartIndex(std::vector<PolyParam>& polys, int first, int end, bool merge, rend_context& ctx);
 
 class TAParserException : public FlycastException
 {

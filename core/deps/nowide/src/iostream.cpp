@@ -1,265 +1,150 @@
+// Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2020-2021 Alexander Grund
 //
-//  Copyright (c) 2012 Artyom Beilis (Tonkikh)
-//
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
-// Note: does all pointer-math in DWORD, assumes no overflows.
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
 
 #define NOWIDE_SOURCE
 #include <nowide/iostream.hpp>
-#include <nowide/convert.hpp>
-#include <stdio.h>
-#include <vector>
 
-#ifdef NOWIDE_WINDOWS
+#ifndef NOWIDE_WINDOWS
+
+namespace nowide {
+    // LCOV_EXCL_START
+    /// Avoid empty compilation unit warnings
+    /// \internal
+    NOWIDE_DECL void dummy_exported_function()
+    {}
+    // LCOV_EXCL_STOP
+} // namespace nowide
+
+#else
+
+#include "console_buffer.hpp"
+#include <cassert>
+#include <iostream>
 
 #ifndef NOMINMAX
-# define NOMINMAX
+#define NOMINMAX
 #endif
-
-#ifndef WIN32_LEAN_AND_MEAN
-#	define WIN32_LEAN_AND_MEAN 1
-#endif
-
 #include <windows.h>
 
 namespace nowide {
-namespace details {
-    class console_output_buffer : public std::streambuf {
-    public:
-        console_output_buffer(HANDLE h) :
-            handle_(h),
-            isatty_(false)
-        {
-            if(handle_) {
+    namespace detail {
+
+        namespace {
+            bool is_atty_handle(HANDLE h)
+            {
                 DWORD dummy;
-                isatty_ = GetConsoleMode(handle_,&dummy) == TRUE;
+                return h && GetConsoleMode(h, &dummy) != FALSE;
+            }
+        } // namespace
+
+        class console_output_buffer final : public console_output_buffer_base
+        {
+            HANDLE handle_;
+
+        public:
+            explicit console_output_buffer(HANDLE handle) : handle_(handle)
+            {}
+
+        protected:
+            bool
+            do_write(const wchar_t* buffer, std::size_t num_chars_to_write, std::size_t& num_chars_written) override
+            {
+                DWORD size = 0;
+                const bool result =
+                  WriteConsoleW(handle_, buffer, static_cast<DWORD>(num_chars_to_write), &size, 0) != 0;
+                num_chars_written = size;
+                return result;
+            }
+        };
+
+        class console_input_buffer final : public console_input_buffer_base
+        {
+            HANDLE handle_;
+
+        public:
+            explicit console_input_buffer(HANDLE handle) : handle_(handle)
+            {}
+
+        protected:
+            bool do_read(wchar_t* buffer, std::size_t num_chars_to_read, std::size_t& num_chars_read) override
+            {
+                DWORD size = 0;
+                const auto to_read_size = static_cast<DWORD>(num_chars_to_read);
+                const bool result = ReadConsoleW(handle_, buffer, to_read_size, &size, 0) != 0;
+                num_chars_read = size;
+                return result;
+            }
+        };
+
+        winconsole_ostream::winconsole_ostream(const bool isBuffered, winconsole_ostream* tieStream) : std::ostream(0)
+        {
+            HANDLE h;
+            if(isBuffered)
+                h = GetStdHandle(STD_OUTPUT_HANDLE);
+            else
+                h = GetStdHandle(STD_ERROR_HANDLE);
+            if(is_atty_handle(h))
+            {
+                d.reset(new console_output_buffer(h));
+                std::ostream::rdbuf(d.get());
+            } else
+            {
+                std::ostream::rdbuf(isBuffered ? std::cout.rdbuf() : std::cerr.rdbuf());
+                assert(rdbuf());
+            }
+            if(tieStream)
+            {
+                tie(tieStream);
+                setf(ios_base::unitbuf); // If tieStream is set, this is cerr -> set unbuffered
             }
         }
-    protected:
-        int sync()
+        winconsole_ostream::~winconsole_ostream()
         {
-            return overflow(EOF);
-        }
-        int overflow(int c)
-        {
-            if(!handle_)
-                return -1;
-            DWORD n = static_cast<DWORD>(pptr() - pbase());
-            DWORD r = 0;
-            
-            if(n > 0 && (r=write(pbase(),n)) < 0)
-                    return -1;
-            if(r < n) {
-                memmove(pbase(),pbase() + r,n-r);
-            }
-            setp(buffer_, buffer_ + buffer_size);
-            pbump(n-r);
-            if(c!=EOF)
-                sputc(c);
-            return 0;
-        }
-    private:
-        
-        DWORD write(char const *p, DWORD n)
-        {
-            namespace uf = nowide::utf;
-            char const *b = p;
-            char const *e = p+n;
-            DWORD size=0;
-            if(!isatty_) {
-                if(!WriteFile(handle_,p,n,&size,0) || size != n)
-                    return -1;
-                return n;
-            }
-            if(n > buffer_size)
-                return -1;
-            wchar_t *out = wbuffer_;
-            uf::code_point c;
-            DWORD decoded = 0;
-            while(p < e && (c = uf::utf_traits<char>::decode(p,e))!=uf::illegal && c!=uf::incomplete) {
-                out = uf::utf_traits<wchar_t>::encode(c,out);
-                decoded = static_cast<DWORD>(p-b);
-            }
-            if(c==uf::illegal)
-                return -1;
-            if(!WriteConsoleW(handle_,wbuffer_, static_cast<DWORD>(out - wbuffer_),&size,0))
-                return -1;
-            return decoded;
-        }
-        
-        static const int buffer_size = 1024;
-        char buffer_[buffer_size];
-        wchar_t wbuffer_[buffer_size]; // for null
-        HANDLE handle_;
-        bool isatty_;
-    };
-    
-    class console_input_buffer: public std::streambuf {
-    public:
-        console_input_buffer(HANDLE h) :
-            handle_(h),
-            isatty_(false),
-            wsize_(0)
-        {
-            if(handle_) {
-                DWORD dummy;
-                isatty_ = GetConsoleMode(handle_,&dummy) == TRUE;
-            }
-        } 
-        
-    protected:
-        int pbackfail(int c)
-        {
-            if(c==EOF)
-                return EOF;
-            
-            if(gptr()!=eback()) {
-                gbump(-1);
-                *gptr() = c;
-                return 0;
-            }
-            
-            if(pback_buffer_.empty()) {
-                pback_buffer_.resize(4);
-                char *b = &pback_buffer_[0];
-                char *e = b + pback_buffer_.size();
-                setg(b,e-1,e);
-                *gptr() = c;
-            }
-            else {
-                size_t n = pback_buffer_.size();
-                std::vector<char> tmp;
-                tmp.resize(n*2);
-                memcpy(&tmp[n],&pback_buffer_[0],n);
-                tmp.swap(pback_buffer_);
-                char *b = &pback_buffer_[0];
-                char *e = b + n * 2;
-                char *p = b+n-1;
-                *p = c;
-                setg(b,p,e);
-            }
-          
-            return 0;
+            try
+            {
+                flush();
+            } catch(...)
+            {} // LCOV_EXCL_LINE
         }
 
-        int underflow()
+        winconsole_istream::winconsole_istream(winconsole_ostream* tieStream) : std::istream(0)
         {
-            if(!handle_)
-                return -1;
-            if(!pback_buffer_.empty())
-                pback_buffer_.clear();
-            
-            size_t n = read();
-            setg(buffer_,buffer_,buffer_+n);
-            if(n == 0)
-                return EOF;
-            return std::char_traits<char>::to_int_type(*gptr());
-        }
-        
-    private:
-        
-        size_t read()
-        {
-            namespace uf = nowide::utf;
-            if(!isatty_) {
-                DWORD read_bytes = 0;
-                if(!ReadFile(handle_,buffer_,buffer_size,&read_bytes,0))
-                    return 0;
-                return read_bytes;
+            HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+            if(is_atty_handle(h))
+            {
+                d.reset(new console_input_buffer(h));
+                std::istream::rdbuf(d.get());
+            } else
+            {
+                std::istream::rdbuf(std::cin.rdbuf());
+                assert(rdbuf());
             }
-            DWORD read_wchars = 0;
-            DWORD n = wbuffer_size - wsize_;
-            if(!ReadConsoleW(handle_,wbuffer_, n, &read_wchars,0))
-                return 0;
-            wsize_ += read_wchars;
-            char *out = buffer_;
-            wchar_t *b = wbuffer_;
-            wchar_t *e = b + wsize_;
-            wchar_t *p = b;
-            uf::code_point c;
-            wsize_ = static_cast<DWORD>(e-p);
-            while(p < e && (c = uf::utf_traits<wchar_t>::decode(p,e))!=uf::illegal && c!=uf::incomplete) {
-                out = uf::utf_traits<char>::encode(c,out);
-                wsize_ = static_cast<DWORD>(e-p);
-            }
-            
-            if(c==uf::illegal)
-                return -1;
-            
-            
-            if(c==uf::incomplete) {
-                memmove(b,e-wsize_,sizeof(wchar_t)*wsize_);
-            }
-            
-            return out - buffer_;
+            if(tieStream)
+                tie(tieStream);
         }
-        
-        static const DWORD buffer_size = 1024 * 3;
-        static const DWORD wbuffer_size = 1024;
-        char buffer_[buffer_size];
-        wchar_t wbuffer_[buffer_size]; // for null
-        HANDLE handle_;
-        bool isatty_;
-        DWORD wsize_;
-        std::vector<char> pback_buffer_;
-    };
 
-    winconsole_ostream::winconsole_ostream(int fd) : std::ostream(0)
-    {
-        HANDLE h = 0;
-        switch(fd) {
-        case 1:
-            h = GetStdHandle(STD_OUTPUT_HANDLE);
-            break;
-        case 2:
-            h = GetStdHandle(STD_ERROR_HANDLE);
-            break;
-        }
-        d.reset(new console_output_buffer(h));
-        std::ostream::rdbuf(d.get());
-    }
-    
-    winconsole_ostream::~winconsole_ostream()
-    {
-    }
+        winconsole_istream::~winconsole_istream()
+        {}
 
-    winconsole_istream::winconsole_istream() : std::istream(0)
-    {
-        HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-        d.reset(new console_input_buffer(h));
-        std::istream::rdbuf(d.get());
-    }
-    
-    winconsole_istream::~winconsole_istream()
-    {
-    }
-    
-} // details
-    
-NOWIDE_DECL details::winconsole_istream cin;
-NOWIDE_DECL details::winconsole_ostream cout(1);
-NOWIDE_DECL details::winconsole_ostream cerr(2);
-NOWIDE_DECL details::winconsole_ostream clog(2);
-    
-namespace {
-    struct initialize {
-        initialize()
-        {
-            nowide::cin.tie(&nowide::cout);
-            nowide::cerr.tie(&nowide::cout);
-            nowide::clog.tie(&nowide::cout);
-        }
-    } inst;
-}
+    } // namespace detail
 
-
-    
-} // nowide
-
+    // Make sure those are initialized as early as possible
+#ifdef NOWIDE_MSVC
+#pragma warning(disable : 4073)
+#pragma init_seg(lib)
+#endif
+#ifdef NOWIDE_HAS_INIT_PRIORITY
+#define NOWIDE_INIT_PRIORITY __attribute__((init_priority(101)))
+#else
+#define NOWIDE_INIT_PRIORITY
+#endif
+    detail::winconsole_ostream cout NOWIDE_INIT_PRIORITY(true, nullptr);
+    detail::winconsole_istream cin NOWIDE_INIT_PRIORITY(&cout);
+    detail::winconsole_ostream cerr NOWIDE_INIT_PRIORITY(false, &cout);
+    detail::winconsole_ostream clog NOWIDE_INIT_PRIORITY(false, nullptr);
+} // namespace nowide
 
 #endif
-///
-// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

@@ -6,10 +6,10 @@
 // Used to differentiate between main enter key and num keypad one
 #define VK_NUMPAD_RETURN 0x0E
 
-class Win32KeyboardDevice : public KeyboardDeviceTemplate<u8>
+class Win32KeyboardDevice : public KeyboardDevice
 {
 public:
-	Win32KeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port, "win32")
+	Win32KeyboardDevice(int maple_port) : KeyboardDevice(maple_port, "win32")
 	{
 		kb_map['A'] = 0x04;
 		kb_map['B'] = 0x05;
@@ -142,10 +142,8 @@ public:
 
 	}
 
-protected:
-	u8 convert_keycode(u8 keycode) override
-	{
-		return kb_map[keycode];
+	void input(u8 keycode, bool pressed) {
+		KeyboardDevice::input(kb_map[keycode], pressed, 0);
 	}
 
 private:

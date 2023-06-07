@@ -175,12 +175,9 @@ void TermDrive()
 
 static u32 createTrackInfo(const Track& track, u32 fad)
 {
-	u32 addr = track.ADDR;
-	if (!track.isDataTrack())
-		// audio tracks: sub-q channel indicates current position
-		addr |= 1;
+	const u32 adr = 1; // force sub-q channel
 	u8 p[4];
-	p[0] = (track.CTRL << 4) | addr;
+	p[0] = (track.CTRL << 4) | adr;
 	p[1] = fad >> 16;
 	p[2] = fad >> 8;
 	p[3] = fad >> 0;

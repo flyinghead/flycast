@@ -19,31 +19,21 @@
 #pragma once
 #include "types.h"
 
+#include <cstring>
 #include <limits>
 
 class SerializeBase
 {
 public:
 	enum Version : int32_t {
-		V1,
-		V2,
-		V3,
-		V4,
-		V5_LIBRETRO,
-		V6_LIBRETRO,
-		V7_LIBRETRO,
-		V8_LIBRETRO,
-		V9_LIBRETRO,
+		V9_LIBRETRO = 8,
 		V10_LIBRETRO,
 		V11_LIBRETRO,
 		V12_LIBRETRO,
 		V13_LIBRETRO,
 		VLAST_LIBRETRO = V13_LIBRETRO,
 
-		V5 = 800,
-		V6,
-		V7,
-		V8,
+		V8 = 803,
 		V9,
 		V10,
 		V11,
@@ -67,7 +57,13 @@ public:
 		V29,
 		V30,
 		V31,
-		Current = V31,
+		V32,
+		V33,
+		V34,
+		V35,
+		V36,
+		V37,
+		Current = V37,
 
 		Next = Current + 1,
 	};
@@ -97,7 +93,7 @@ public:
 		: SerializeBase(limit, rollback), data((const u8 *)data)
 	{
 		deserialize(_version);
-		if (_version > V13_LIBRETRO && _version < V5)
+		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
 			throw Exception("Unsupported version");
 		if (_version > Current)
 			throw Exception("Version too recent");

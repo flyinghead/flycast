@@ -213,15 +213,15 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			{
 			case ListType_Opaque:
 				offset = offsets.naomi2OpaqueOffset;
-				index = &poly - pvrrc.global_param_op.head();
+				index = &poly - &pvrrc.global_param_op[0];
 				break;
 			case ListType_Punch_Through:
 				offset = offsets.naomi2PunchThroughOffset;
-				index = &poly - pvrrc.global_param_pt.head();
+				index = &poly - &pvrrc.global_param_pt[0];
 				break;
 			case ListType_Translucent:
 				offset = offsets.naomi2TranslucentOffset;
-				index = &poly - pvrrc.global_param_tr.head();
+				index = &poly - &pvrrc.global_param_tr[0];
 				break;
 			}
 		}
@@ -232,47 +232,52 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass)
 {
+	if (first == last)
+		return;
 	for (u32 idx = first; idx < last; idx++)
-		DrawPoly(cmdBuffer, ListType_Translucent, true, *polys[idx].ppid, polys[idx].first, polys[idx].count);
+		DrawPoly(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr[polys[idx].polyIndex], polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 		for (u32 idx = first; idx < last; idx++)
 		{
 			const SortedTriangle& param = polys[idx];
-			if (param.ppid->isp.ZWriteDis)
+			const PolyParam& polyParam = pvrrc.global_param_tr[param.polyIndex];
+			if (polyParam.isp.ZWriteDis)
 				continue;
-			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode, param.ppid->isNaomi2());
+			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
-			TileClipping tileClip = SetTileClip(param.ppid->tileclip, scissorRect);
+			TileClipping tileClip = SetTileClip(polyParam.tileclip, scissorRect);
 			if (tileClip == TileClipping::Outside)
 				SetScissor(cmdBuffer, scissorRect);
 			else
 				SetScissor(cmdBuffer, baseScissor);
-			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.used() + param.first, 0, 0);
+			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.size() + param.first, 0, 0);
 		}
 	}
 }
 
-void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
+void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last)
 {
-	const PolyParam *pp_end = polys.head() + last;
-	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+	if (first == last)
+		return;
+	const PolyParam *pp_end = polys.data() + last;
+	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
 			DrawPoly(cmdBuffer, listType, sortTriangles, *pp, pp->first, pp->count);
 }
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, buffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
@@ -323,11 +328,11 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(pvrrc.verts.head(), pvrrc.verts.bytes());
+	packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+	offsets.modVolOffset = packer.add(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 	// Index
-	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
+	offsets.indexOffset = packer.add(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -379,9 +384,9 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	RenderPass previous_pass{};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -394,7 +399,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < pvrrc.render_passes.used());
+				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
 			else
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }
@@ -409,7 +414,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache)
 {
 	if (!rttPipelineManager)
-		rttPipelineManager = std::unique_ptr<RttPipelineManager>(new RttPipelineManager());
+		rttPipelineManager = std::make_unique<RttPipelineManager>();
 	rttPipelineManager->Init(shaderManager);
 	Drawer::Init(samplerManager, rttPipelineManager.get());
 
@@ -442,7 +447,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (!depthAttachment || widthPow2 > depthAttachment->getExtent().width || heightPow2 > depthAttachment->getExtent().height)
 	{
 		if (!depthAttachment)
-			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+			depthAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 		else
 			GetContext()->WaitIdle();
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat(),
@@ -483,7 +488,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
@@ -589,8 +594,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	this->viewport = viewport;
 	if (!depthAttachment)
 	{
-		depthAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		depthAttachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
 	}
@@ -649,8 +654,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		};
 		while (colorAttachments.size() < size)
 		{
-			colorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
-					new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
+			colorAttachments.push_back(std::make_unique<FramebufferAttachment>(
+					GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
 			if (config::EmulateFramebuffer)
 				usage |= vk::ImageUsageFlagBits::eTransferSrc;
@@ -668,7 +673,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	frameRendered = false;
 
 	if (!screenPipelineManager)
-		screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
+		screenPipelineManager = std::make_unique<PipelineManager>();
 	screenPipelineManager->Init(shaderManager, *renderPassLoad);
 	Drawer::Init(samplerManager, screenPipelineManager.get());
 }

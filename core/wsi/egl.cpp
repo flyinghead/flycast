@@ -27,16 +27,6 @@
 #ifdef __ANDROID__
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
-#ifdef TARGET_PANDORA
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/fb.h>
-
-#ifndef FBIO_WAITFORVSYNC
-#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
-#endif
-#endif
 
 EGLGraphicsContext theGLContext;
 
@@ -170,11 +160,7 @@ bool EGLGraphicsContext::init()
 	settings.display.width = w;
 	settings.display.height = h;
 
-#ifdef TARGET_PANDORA
-	fbdev = open("/dev/fb0", O_RDONLY);
-#else
 	setSwapInterval();
-#endif
 
 	postInit();
 
@@ -192,11 +178,6 @@ void EGLGraphicsContext::term()
 		eglDestroySurface(display, surface);
 	if (display != EGL_NO_DISPLAY)
 		eglTerminate(display);
-#ifdef TARGET_PANDORA
-	if (fbdev >= 0)
-		close(fbdev);
-	fbdev = -1;
-#endif
 
 	context = EGL_NO_CONTEXT;
 	surface = EGL_NO_SURFACE;

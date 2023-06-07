@@ -49,7 +49,7 @@
  * 0A000000 - 0bfffffff elan RAM
  */
 #include "elan.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "pvr_mem.h"
 #include "ta.h"
 #include "ta_ctx.h"
@@ -69,9 +69,9 @@ namespace elan {
 
 constexpr u32 ELAN_RAM_MASK = ERAM_SIZE_MAX - 1;
 
-static _vmem_handler elanRegHandler;
-static _vmem_handler elanCmdHandler;
-static _vmem_handler elanRamHandler;
+static addrspace::handler elanRegHandler;
+static addrspace::handler elanCmdHandler;
+static addrspace::handler elanRamHandler;
 
 u8 *RAM;
 u32 ERAM_SIZE;
@@ -249,10 +249,10 @@ static u32 (*packColor)(const glm::vec4& color) = packColorRGBA;
 
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
-static float *taMVMatrix;
-static float *taNormalMatrix;
+static int taMVMatrix = -1;
+static int taNormalMatrix = -1;
 static glm::mat4 projectionMatrix;
-static float *taProjMatrix;
+static int taProjMatrix = -1;
 static LightModel *curLightModel;
 static ElanBase *curLights[MAX_LIGHTS];
 static float nearPlane = 0.001f;
@@ -307,8 +307,8 @@ struct State
 	{
 		if (instance == Null)
 		{
-			taMVMatrix = nullptr;
-			taNormalMatrix = nullptr;
+			taMVMatrix = -1;
+			taNormalMatrix = -1;
 			envMapUOffset = 0.f;
 			envMapVOffset = 0.f;
 			return;
@@ -355,7 +355,7 @@ struct State
 	{
 		if (projMatrix == Null)
 		{
-			taProjMatrix = nullptr;
+			taProjMatrix = -1;
 			return;
 		}
 		ProjMatrix *pm = (ProjMatrix *)&RAM[projMatrix];
@@ -859,7 +859,7 @@ private:
 		v.u1 = v1.u1 * a1 + v2.u1 * a2;
 		v.v1 = v1.v1 * a1 + v2.v1 * a2;
 
-		for (size_t i = 0; i < ARRAY_SIZE(v1.col); i++)
+		for (size_t i = 0; i < std::size(v1.col); i++)
 		{
 			v.col[i] = (u8)std::round(v1.col[i] * a1 + v2.col[i] * a2);
 			v.spc[i] = (u8)std::round(v1.spc[i] * a1 + v2.spc[i] * a2);
@@ -1137,7 +1137,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx, bool needClipping)
 	}
 }
 
-static N2LightModel *taLightModel;
+static int taLightModel = -1;
 
 static void sendLights()
 {
@@ -1157,7 +1157,7 @@ static void sendLights()
 			model.ambientBase[i][0] = model.ambientBase[i][1] = model.ambientBase[i][2] = model.ambientBase[i][3] = 1.f;
 		}
 		memset(model.ambientOffset, 0, sizeof(model.ambientOffset));
-		taLightModel = nullptr;
+		taLightModel = -1;
 		return;
 	}
 	model.ambientMaterialBase[0] = curLightModel->useAmbientBase0;
@@ -1279,7 +1279,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 	pp.tsp1.full ^= modelTSP.full;
 
 	// projFlip is for left-handed projection matrices (initd rear view mirror)
-	bool projFlip = taProjMatrix != nullptr && std::signbit(taProjMatrix[0]) == std::signbit(taProjMatrix[5]);
+	bool projFlip = taProjMatrix != -1 && std::signbit(projectionMatrix[0][0]) == std::signbit(projectionMatrix[1][1]);
 	pp.isp.CullMode ^= (u32)cullingReversed ^ (u32)projFlip;
 	pp.pcw.Shadow ^= shadowedVolume;
 	if (pp.pcw.Shadow == 0 || pp.pcw.Volume == 0)
@@ -1760,19 +1760,19 @@ void term()
 
 void vmem_init()
 {
-	elanRegHandler = _vmem_register_handler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
-	elanCmdHandler = _vmem_register_handler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
-	elanRamHandler = _vmem_register_handler_Template(read_elanram, write_elanram);
+	elanRegHandler = addrspace::registerHandler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
+	elanCmdHandler = addrspace::registerHandler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
+	elanRamHandler = addrspaceRegisterHandlerTemplate(read_elanram, write_elanram);
 }
 
 void vmem_map(u32 base)
 {
 	if (!settings.platform.isNaomi2())
 		return;
-	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
-	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
-	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
-	_vmem_map_block(RAM, base | 0xA, base | 0xB, ELAN_RAM_MASK);
+	addrspace::mapHandler(elanRegHandler, base | 8, base | 8);
+	addrspace::mapHandler(elanCmdHandler, base | 9, base | 9);
+	addrspace::mapHandler(elanRamHandler, base | 0xA, base | 0xB);
+	addrspace::mapBlock(RAM, base | 0xA, base | 0xB, ELAN_RAM_MASK);
 }
 
 void serialize(Serializer& ser)

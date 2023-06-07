@@ -32,6 +32,9 @@
 #include "pico_tcp.h"
 #include "pico_socket.h"
 #include "heap.h"
+#include "pico_dhcp_server.h"
+#include "pico_fragments.h"
+#include "pico_dev_ppp.h"
 
 /* Mockables */
 #if defined UNIT_TEST
@@ -651,10 +654,25 @@ void pico_timer_cancel_hashed(uint32_t hash)
             {
                 PICO_FREE(tref->tmr);
                 tref->tmr = NULL;
-                tref[i].id = 0;
+                tref->id = 0;
             }
         }
     }
+}
+
+static void pico_timer_cancel_all(void)
+{
+	uint32_t i;
+	for (i = 1; i <= Timers->n; i++)
+	{
+		struct pico_timer_ref *tref = heap_get_element(Timers, i);
+        if (tref->tmr)
+        {
+            PICO_FREE(tref->tmr);
+            tref->tmr = NULL;
+            tref->id = 0;
+        }
+	}
 }
 
 #define PROTO_DEF_NR      11
@@ -966,3 +984,24 @@ int MOCKABLE pico_stack_init(void)
     return 0;
 }
 
+void pico_stack_deinit(void)
+{
+#if ((defined PICO_SUPPORT_IPV4) && (defined PICO_SUPPORT_ETH))
+    pico_arp_deinit();
+#endif
+    pico_dhcp_server_deinit();
+
+	pico_timer_cancel_all();
+    heap_deinit(Timers);
+	Timers = NULL;
+
+#ifdef PICO_SUPPORT_DNS_CLIENT
+    pico_dns_client_deinit();
+#endif
+    pico_ppp_deinit();
+    pico_icmp4_deinit();
+    pico_fragments_deinit();
+    pico_socket_deinit();
+    pico_tcp_deinit();
+	pico_protocol_deinit();
+}

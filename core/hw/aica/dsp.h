@@ -2,6 +2,9 @@
 #include "types.h"
 #include "serialize.h"
 
+namespace aica
+{
+
 namespace dsp
 {
 
@@ -62,6 +65,7 @@ void step();
 void writeProg(u32 addr);
 
 void recInit();
+void recTerm();
 void runStep();
 void recompile();
 
@@ -100,4 +104,5 @@ void DecodeInst(const u32 *IPtr, Instruction *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);
 
-}
+} // namespace dsp
+} // namespace aica

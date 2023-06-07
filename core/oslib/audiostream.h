@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <string>
 #include <vector>
 

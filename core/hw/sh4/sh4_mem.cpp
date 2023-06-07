@@ -10,7 +10,7 @@
 #include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
 #include "cfg/option.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/sh4/modules/mmu.h"
 
 #ifdef STRICT_MODE
@@ -18,7 +18,7 @@
 #endif
 
 //main system mem
-VArray2 mem_b;
+RamRegion mem_b;
 
 // Memory handlers
 ReadMem8Func ReadMem8;
@@ -33,11 +33,11 @@ WriteMem32Func WriteMem32;
 WriteMem64Func WriteMem64;
 
 //AREA 1
-static _vmem_handler area1_32b;
+static addrspace::handler area1_32b;
 
 static void map_area1_init()
 {
-	area1_32b = _vmem_register_handler_Template(pvr_read32p, pvr_write32p);
+	area1_32b = addrspaceRegisterHandlerTemplate(pvr_read32p, pvr_write32p);
 }
 
 static void map_area1(u32 base)
@@ -46,13 +46,13 @@ static void map_area1(u32 base)
 	
 	//Lower 32 mb map
 	//64b interface
-	_vmem_map_block(vram.data, 0x04 | base, 0x04 | base, VRAM_MASK);
+	addrspace::mapBlock(&vram[0], 0x04 | base, 0x04 | base, VRAM_MASK);
 	//32b interface
-	_vmem_map_handler(area1_32b, 0x05 | base, 0x05 | base);
+	addrspace::mapHandler(area1_32b, 0x05 | base, 0x05 | base);
 	
 	//Upper 32 mb mirror
 	//0x0600 to 0x07FF
-	_vmem_mirror_mapping(0x06 | base, 0x04 | base, 0x02);
+	addrspace::mirrorMapping(0x06 | base, 0x04 | base, 0x02);
 }
 
 //AREA 2: Naomi2 elan
@@ -65,27 +65,27 @@ static void map_area3_init()
 static void map_area3(u32 base)
 {
 	// System RAM
-	_vmem_map_block_mirror(mem_b.data, 0x0C | base,0x0F | base, RAM_SIZE);
+	addrspace::mapBlockMirror(&mem_b[0], 0x0C | base,0x0F | base, RAM_SIZE);
 }
 
 //AREA 4
-static _vmem_handler area4_handler_lower;
-static _vmem_handler area4_handler_upper;
+static addrspace::handler area4_handler_lower;
+static addrspace::handler area4_handler_upper;
 
 static void map_area4_init()
 {
-	area4_handler_lower = _vmem_register_handler(pvr_read_area4<u8, false>, pvr_read_area4<u16, false>, pvr_read_area4<u32, false>,
+	area4_handler_lower = addrspace::registerHandler(pvr_read_area4<u8, false>, pvr_read_area4<u16, false>, pvr_read_area4<u32, false>,
 									pvr_write_area4<u8, false>, pvr_write_area4<u16, false>, pvr_write_area4<u32, false>);
-	area4_handler_upper = _vmem_register_handler(pvr_read_area4<u8, true>, pvr_read_area4<u16, true>, pvr_read_area4<u32, true>,
+	area4_handler_upper = addrspace::registerHandler(pvr_read_area4<u8, true>, pvr_read_area4<u16, true>, pvr_read_area4<u32, true>,
 									pvr_write_area4<u8, true>, pvr_write_area4<u16, true>, pvr_write_area4<u32, true>);
 }
 
 static void map_area4(u32 base)
 {
 	// VRAM 64b/32b interface
-	_vmem_map_handler(area4_handler_lower, 0x11 | base, 0x11 | base);
+	addrspace::mapHandler(area4_handler_lower, 0x11 | base, 0x11 | base);
 	// upper mirror
-	_vmem_map_handler(area4_handler_upper, 0x13 | base, 0x13 | base);
+	addrspace::mapHandler(area4_handler_upper, 0x13 | base, 0x13 | base);
 }
 
 
@@ -105,16 +105,16 @@ void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 	INFO_LOG(SH4, "Write ext. device (Area 5) undefined @ %08x: %x", addr, (u32)data);
 }
 
-_vmem_handler area5_handler;
+addrspace::handler area5_handler;
 static void map_area5_init()
 {
-	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
+	area5_handler = addrspaceRegisterHandlerTemplate(ReadMem_extdev_T, WriteMem_extdev_T);
 }
 
 static void map_area5(u32 base)
 {
 	//map whole region to plugin handler
-	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
+	addrspace::mapHandler(area5_handler, base | 0x14, base | 0x17);
 }
 
 //AREA 6	--	Unassigned 
@@ -128,7 +128,7 @@ static void map_area6(u32 base)
 //set vmem to default values
 void mem_map_default()
 {
-	_vmem_init();
+	addrspace::init();
 
 	//U0/P0
 	//0x0xxx xxxx	-> normal memmap
@@ -187,10 +187,7 @@ void mem_Reset(bool hard)
 {
 	//mem is reset on hard restart (power on), not soft reset
 	if (hard)
-	{
-		//fill mem w/ 0's
-		mem_b.Zero();
-	}
+		mem_b.zero();
 
 	//Reset registers
 	sh4_area0_Reset(hard);
@@ -202,14 +199,14 @@ void mem_Term()
 	sh4_mmr_term();
 	sh4_area0_Term();
 
-	_vmem_term();
+	addrspace::term();
 }
 
 void WriteMemBlock_nommu_dma(u32 dst, u32 src, u32 size)
 {
 	bool dst_ismem, src_ismem;
-	void* dst_ptr = _vmem_write_const(dst, dst_ismem, 4);
-	void* src_ptr = _vmem_read_const(src, src_ismem, 4);
+	void* dst_ptr = addrspace::writeConst(dst, dst_ismem, 4);
+	void* src_ptr = addrspace::readConst(src, src_ismem, 4);
 
 	if (dst_ismem && src_ismem)
 	{
@@ -231,7 +228,7 @@ void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size)
 {
 	bool dst_ismem;
 
-	void* dst_ptr = _vmem_write_const(dst, dst_ismem, 4);
+	void* dst_ptr = addrspace::writeConst(dst, dst_ismem, 4);
 
 	if (dst_ismem)
 	{
@@ -264,12 +261,10 @@ void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size)
 void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 {
 	// destination address is 32-byte aligned
-	bool dst_ismem;
-	SQBuffer *dst_ptr = (SQBuffer *)_vmem_write_const(dst, dst_ismem, 4);
-
-	if (dst_ismem)
+	SQBuffer *pdst = (SQBuffer *)GetMemPtr(dst, sizeof(SQBuffer));
+	if (pdst != nullptr)
 	{
-		*dst_ptr = *src;
+		*pdst = *src;
 	}
 	else
 	{
@@ -278,24 +273,29 @@ void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 	}
 }
 
-//Get pointer to ram area , 0 if error
+//Get pointer to ram area , nullptr if error
 //For debugger(gdb) - dynarec
-u8* GetMemPtr(u32 Addr, u32 size)
+u8* GetMemPtr(u32 addr, u32 size)
 {
-	if (((Addr >> 29) & 7) == 7)
+	if (((addr >> 29) & 7) == 7)
 		// P4
 		return nullptr;
-	if (((Addr >> 26) & 7) == 3)
+	if (((addr >> 26) & 7) == 3)
+	{
 		// Area 3
-		return &mem_b[Addr & RAM_MASK];
+		if ((addr & RAM_MASK) + size > RAM_SIZE)
+			return nullptr;
+		else
+			return &mem_b[addr & RAM_MASK];
+	}
 	return nullptr;
 }
-
-static bool interpreterRunning = false;
 
 void SetMemoryHandlers()
 {
 #ifdef STRICT_MODE
+	static bool interpreterRunning;
+
 	if (config::DynarecEnabled && interpreterRunning)
 	{
 		// Flush caches when interp -> dynarec
@@ -320,10 +320,8 @@ void SetMemoryHandlers()
 		return;
 	}
 	interpreterRunning = false;
-#else
-	(void)interpreterRunning;
 #endif
-	if (CCN_MMUCR.AT == 1 && config::FullMMU)
+	if (mmu_enabled())
 	{
 		IReadMem16 = &mmu_IReadMem16;
 		ReadMem8 = &mmu_ReadMem<u8>;
@@ -338,15 +336,15 @@ void SetMemoryHandlers()
 	}
 	else
 	{
-		ReadMem8 = &_vmem_ReadMem8;
-		ReadMem16 = &_vmem_ReadMem16;
-		IReadMem16 = &_vmem_ReadMem16;
-		ReadMem32 = &_vmem_ReadMem32;
-		ReadMem64 = &_vmem_ReadMem64;
+		ReadMem8 = &addrspace::read8;
+		ReadMem16 = &addrspace::read16;
+		IReadMem16 = &addrspace::read16;
+		ReadMem32 = &addrspace::read32;
+		ReadMem64 = &addrspace::read64;
 
-		WriteMem8 = &_vmem_WriteMem8;
-		WriteMem16 = &_vmem_WriteMem16;
-		WriteMem32 = &_vmem_WriteMem32;
-		WriteMem64 = &_vmem_WriteMem64;
+		WriteMem8 = &addrspace::write8;
+		WriteMem16 = &addrspace::write16;
+		WriteMem32 = &addrspace::write32;
+		WriteMem64 = &addrspace::write64;
 	}
 }

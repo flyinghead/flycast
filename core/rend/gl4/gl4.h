@@ -80,10 +80,10 @@ struct gl4PipelineShader
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
 
-	const float *lastMvMat;
-	const float *lastNormalMat;
-	const float *lastProjMat;
-	const N2LightModel *lastLightModel;
+	int lastMvMat;
+	int lastNormalMat;
+	int lastProjMat;
+	int lastLightModel;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;
@@ -103,6 +103,17 @@ struct gl4PipelineShader
 	bool divPosZ;
 };
 
+class Gl4MainVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override;
+};
+
+class Gl4ModvolVertexArray final : public GlVertexArray
+{
+protected:
+	void defineVtxAttribs() override;
+};
 
 struct gl4_ctx
 {
@@ -129,8 +140,8 @@ struct gl4_ctx
 		std::unique_ptr<GlBuffer> geometry[2];
 		std::unique_ptr<GlBuffer> modvols[2];
 		std::unique_ptr<GlBuffer> idxs[2];
-		GLuint main_vao[2];
-		GLuint modvol_vao[2];
+		Gl4MainVertexArray main_vao[2];
+		Gl4ModvolVertexArray modvol_vao[2];
 		std::unique_ptr<GlBuffer> tr_poly_params[2];
 		int bufferIndex = 0;
 
@@ -146,14 +157,14 @@ struct gl4_ctx
 		GlBuffer *getPolyParamBuffer() {
 			return tr_poly_params[bufferIndex].get();
 		}
-		GLuint getMainVAO() {
+		Gl4MainVertexArray& getMainVAO() {
 			return main_vao[bufferIndex];
 		}
-		GLuint getModVolVAO() {
+		Gl4ModvolVertexArray& getModVolVAO() {
 			return modvol_vao[bufferIndex];
 		}
 		void nextBuffer() {
-			bufferIndex = (bufferIndex + 1) % ARRAY_SIZE(geometry);
+			bufferIndex = (bufferIndex + 1) % std::size(geometry);
 		}
 	} vbo;
 };
@@ -192,7 +203,6 @@ public:
 void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
 void gl4CreateTextures(int width, int height);
-void gl4TermVmuLightgun();
 
 extern struct gl4ShaderUniforms_t
 {

@@ -103,5 +103,6 @@ int pico_tcp_set_keepalive_time(struct pico_socket *s, uint32_t value);
 int pico_tcp_set_linger(struct pico_socket *s, uint32_t value);
 uint16_t pico_tcp_get_socket_mss(struct pico_socket *s);
 int pico_tcp_check_listen_close(struct pico_socket *s);
+void pico_tcp_deinit(void);
 
 #endif

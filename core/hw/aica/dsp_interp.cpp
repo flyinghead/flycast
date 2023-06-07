@@ -13,6 +13,9 @@
 #include "aica.h"
 #include "aica_if.h"
 
+namespace aica
+{
+
 namespace dsp
 {
 
@@ -214,5 +217,6 @@ void runStep()
 		state.MDEC_CT = state.RBL + 1;		// RBL is ring buffer length - 1
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

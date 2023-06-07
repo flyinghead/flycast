@@ -189,28 +189,24 @@ private:
 			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
 					getOutputFramebufferAspectRatio());
 #endif
-		bool proc;
 		{
 			FC_PROFILE_SCOPE_NAMED("Renderer::Process");
-			proc = renderer->Process(_pvrrc);
+			renderer->Process(_pvrrc);
 		}
 
-		if (!proc || renderToScreen)
+		if (renderToScreen)
 			// If rendering to texture or in full framebuffer emulation, continue locking until the frame is rendered
 			renderEnd.Set();
 		rend_allow_rollback();
-		if (proc)
 		{
-			{
-				FC_PROFILE_SCOPE_NAMED("Renderer::Render");
-				renderer->Render();
-			}
-
-			if (!renderToScreen)
-				renderEnd.Set();
-			else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
-				present();
+			FC_PROFILE_SCOPE_NAMED("Renderer::Render");
+			renderer->Render();
 		}
+
+		if (!renderToScreen)
+			renderEnd.Set();
+		else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
+			present();
 
 		//clear up & free data ..
 		FinishRender(_pvrrc);
@@ -523,7 +519,8 @@ void rend_serialize(Serializer& ser)
 }
 void rend_deserialize(Deserializer& deser)
 {
-	if ((deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5) || deser.version() >= Deserializer::V12)
+	if ((deser.version() >= Deserializer::V12_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+			|| deser.version() >= Deserializer::V12)
 		deser >> fb_w_cur;
 	else
 		fb_w_cur = 1;

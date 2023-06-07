@@ -226,7 +226,7 @@ void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& g
 	DisabledScope scope(pov_selected);
 	
 	if (ImGui::ButtonEx(pov_selected ? "Select a player" : "Replay", ScaledVec2(240, 50),
-						playable ? 0 : ImGuiButtonFlags_Disabled) &&
+						playable ? 0 : ImGuiItemFlags_Disabled) &&
 		!scope.isDisabled()) {
 		gdxsv_start_replay(replay_dst, pov_index);
 	}

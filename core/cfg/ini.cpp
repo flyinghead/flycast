@@ -260,18 +260,13 @@ void ConfigFile::parse(FILE* file)
 
 void ConfigFile::save(FILE* file)
 {
-	for (const auto& section_it : this->sections)
+	for (const auto& [section_name, section] : this->sections)
 	{
-		const std::string& section_name = section_it.first;
-		const ConfigSection& section = section_it.second;
-
 		if (!section_name.empty())
 			std::fprintf(file, "[%s]\n", section_name.c_str());
 
-		for (const auto& entry_it : section.entries)
+		for (const auto& [entry_name, entry] : section.entries)
 		{
-			const std::string& entry_name = entry_it.first;
-			const ConfigEntry& entry = entry_it.second;
 			std::fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
 		if (!section_name.empty())

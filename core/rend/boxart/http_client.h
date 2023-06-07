@@ -63,8 +63,9 @@ static inline std::string urlEncode(const std::string& value)
 
 	for (char c : value)
 	{
-		if (std::isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+		if (std::isalnum(static_cast<u8>(c)) || c == '-' || c == '_' || c == '.' || c == '~') {
 			// Keep alphanumeric and other accepted characters intact
+			// https://www.rfc-editor.org/rfc/rfc3986#section-2.3
 			escaped << c;
 		}
 		else

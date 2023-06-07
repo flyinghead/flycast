@@ -45,6 +45,11 @@
 #define clip_verify(x)
 #endif
 
+namespace aica
+{
+
+namespace sgc
+{
 //Sound generation, mixin, and channel regs emulation
 //x.15
 static s32 volume_lut[16];
@@ -154,20 +159,11 @@ static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, Samp
 	}
 }
 
-template<typename T>
-static void clip(T& v, T min, T max) {
-	v = std::min(max, std::max(min, v));
-}
-
-template<typename T>
-static void clip16(T& v) {
-	clip<T>(v, -32768, 32767);
-}
-
 const DSP_OUT_VOL_REG *dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
 static int beepOn;
 static int beepPeriod;
 static int beepCounter;
+static SampleType beepValue;
 
 #pragma pack(push, 1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -499,7 +495,7 @@ struct ChannelEx
 				f = std::max(1, f);
 				sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
 				sample >>= 13;
-				clip16(sample);
+				sample = std::clamp(sample, -32768, 32767);
 				FEG.prev2 = FEG.prev1;
 				FEG.prev1 = sample;
 			}
@@ -672,10 +668,7 @@ struct ChannelEx
 	u32 EG_EffRate(s32 base_rate, u32 rate)
 	{
 		s32 rv = base_rate + rate * 2;
-
-		clip(rv, 0, 0x3f);
-
-		return rv;
+		return std::clamp(rv, 0, 0x3f);
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
@@ -785,13 +778,14 @@ struct ChannelEx
 	
 	void RegWrite(u32 offset, int size)
 	{
-		switch(offset)
+		switch (offset)
 		{
 		case 0x00:
 		case 0x01:
 			UpdateStreamStep();
-			UpdateSA();
-			if ((offset == 0x01 || size == 2) && ccd->KYONEX)
+			if (offset == 0 || size == 2)
+				UpdateSA();
+			if ((offset == 1 || size == 2) && ccd->KYONEX)
 			{
 				ccd->KYONEX=0;
 				for (ChannelEx& channel : Chans)
@@ -891,10 +885,9 @@ static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 	rv = sign * rv + prev;
 
 	quant = (quant * adpcm_qs[data])>>8;
+	quant = std::clamp(quant, 127, 24576);
 
-	clip(quant,127,24576);
-	clip16(rv);
-	return rv;
+	return std::clamp(rv, -32768, 32767);
 }
 
 template<s32 PCMS,bool last>
@@ -1285,11 +1278,11 @@ static u32 CalcAttackEgSteps(float t)
 	return (u32)lround(factor);
 }
 
-void sgc_Init()
+void init()
 {
 	staticinitialise();
 
-	for (int i = 0; i < 16; i++)
+	for (std::size_t i = 0; i < std::size(volume_lut); i++)
 	{
 		volume_lut[i]=(s32)((1<<15)/pow(2.0,(15-i)/2.0));
 		if (i==0)
@@ -1310,7 +1303,7 @@ void sgc_Init()
 		FEG_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
 		//FEG_SPS[i] = CalcEgSteps(FEG_Time[i]);
 	}
-	for (int i=0;i<64;i++)
+	for (std::size_t i = 0; i < std::size(Chans); i++)
 		Chans[i].Init(i,aica_reg);
 
 	for (int s = 0; s < 8; s++)
@@ -1322,11 +1315,12 @@ void sgc_Init()
 	beepOn = 0;
 	beepPeriod = 0;
 	beepCounter = 0;
+	beepValue = 0;
 
 	dsp::init();
 }
 
-void sgc_Term()
+void term()
 {
 	dsp::term();
 }
@@ -1367,7 +1361,8 @@ void ReadCommonReg(u32 reg,bool byte)
 			u32 chan=CommonData->MSLC;
 			
 			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSEL == 0);
+			if (CommonData->AFSEL == 1)
+				WARN_LOG(AICA, "FEG monitor (AFSEL=1) not supported");
 			s32 aeg = Chans[chan].AEG.GetValue();
 			if (aeg > 0x3BF)
 				CommonData->EG = 0x1FFF;
@@ -1401,8 +1396,8 @@ void vmuBeep(int on, int period)
 	{
 		// The maple doc may be wrong on this. It looks like the raw values of T1LR and T1LC are set.
 		// So the period is (256 - T1LR) / (32768 / 6)
-		// and the duty cycle is (T1LC - T1LR) / (32768 / 6)
-		beepOn = (on - period) * 8;
+		// and the duty cycle is (256 - T1LC) / (32768 / 6)
+		beepOn = (256 - on) * 8;
 		beepPeriod = (256 - period) * 8;
 		beepCounter = 0;
 	}
@@ -1410,16 +1405,24 @@ void vmuBeep(int on, int period)
 
 static SampleType vmuBeepSample()
 {
+	constexpr int Slope = 500;
 	if (beepPeriod == 0)
-		return 0;
-	SampleType s;
-	if (beepCounter <= beepOn)
-		s = 16383;
+	{
+		if (beepValue > 0)
+			beepValue = std::max(0, beepValue - Slope);
+		else if (beepValue < 0)
+			beepValue = std::min(0, beepValue + Slope);
+	}
 	else
-		s = -16384;
-	beepCounter = (beepCounter + 1) % beepPeriod;
+	{
+		if (beepCounter <= beepOn)
+			beepValue = std::min(16383, beepValue + Slope);
+		else
+			beepValue = std::max(-16384, beepValue - Slope);
+		beepCounter = (beepCounter + 1) % beepPeriod;
+	}
 
-	return s;
+	return beepValue;
 }
 
 constexpr int CDDA_SIZE = 2352 / 2;
@@ -1468,9 +1471,12 @@ void AICA_Sample()
 	if (settings.input.fastForwardMode || settings.aica.muteAudio)
 		return;
 
-	SampleType beep = vmuBeepSample();
-	mixl += beep;
-	mixr += beep;
+	if (config::VmuSound)
+	{
+		SampleType beep = vmuBeepSample();
+		mixl += beep;
+		mixr += beep;
+	}
 
 	//Mono !
 	if (CommonData->Mono)
@@ -1501,13 +1507,13 @@ void AICA_Sample()
 		printf("Clipped mixl %d mixr %d\n", mixl, mixr);
 #endif
 
-	clip16(mixl);
-	clip16(mixr);
+	mixl = std::clamp(mixl, -32768, 32767);
+	mixr = std::clamp(mixr, -32768, 32767);
 
 	WriteSample(mixr,mixl);
 }
 
-void channel_serialize(Serializer& ser)
+void serialize(Serializer& ser)
 {
 	for (const ChannelEx& channel : Chans)
 	{
@@ -1546,20 +1552,8 @@ void channel_serialize(Serializer& ser)
 		ser << b;
 }
 
-void channel_deserialize(Deserializer& deser)
+void deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V7_LIBRETRO)
-	{
-		deser.skip(4 * 16); 		// volume_lut
-		deser.skip(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
-		deser.skip(4 * 64);			// AEG_ATT_SPS
-		deser.skip(4 * 64);			// AEG_DSR_SPS
-		deser.skip(2);				// pl
-		deser.skip(2);				// pr
-	}
-
-	bool old_format = (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V7) || deser.version() < Deserializer::V8_LIBRETRO;
-
 	for (ChannelEx& channel : Chans)
 	{
 		channel.quiet = true;
@@ -1569,94 +1563,35 @@ void channel_deserialize(Deserializer& deser)
 
 		deser >> channel.CA;
 		deser >> channel.step;
-		if (old_format)
-			deser.skip<u32>(); // channel.update_rate
 		channel.UpdatePitch();
 		deser >> channel.s0;
 		deser >> channel.s1;
 		deser >> channel.loop.looped;
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.loop.LSA
-			deser.skip<u32>(); // channel.loop.LEA
-		}
 		channel.UpdateLoop();
 		deser >> channel.adpcm.last_quant;
-		if (!old_format)
-		{
-			deser >> channel.adpcm.loopstart_quant;
-			deser >> channel.adpcm.loopstart_prev_sample;
-			deser >> channel.adpcm.in_loop;
-		}
-		else
-		{
-			channel.adpcm.in_loop = true;
-			channel.adpcm.loopstart_quant = 0;
-			channel.adpcm.loopstart_prev_sample = 0;
-		}
+		deser >> channel.adpcm.loopstart_quant;
+		deser >> channel.adpcm.loopstart_prev_sample;
+		deser >> channel.adpcm.in_loop;
 		deser >> channel.noise_state;
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.VolMix.DLAtt
-			deser.skip<u32>(); // channel.VolMix.DRAtt
-			deser.skip<u32>(); // channel.VolMix.DSPAtt
-		}
 		channel.UpdateAtts();
-		if (old_format)
-			deser.skip<u32>(); // channel.VolMix.DSPOut
 		channel.UpdateDSPMIX();
 
 		deser >> channel.AEG.val;
 		deser >> channel.AEG.state;
 		channel.SetAegState(channel.AEG.state);
-		if (old_format)
-		{
-			deser.skip<u32>(); // channel.AEG.AttackRate
-			deser.skip<u32>(); // channel.AEG.Decay1Rate
-			deser.skip<u32>(); // channel.AEG.Decay2Rate
-			deser.skip<u32>(); // channel.AEG.Decay2Value
-			deser.skip<u32>(); // channel.AEG.ReleaseRate
-		}
 		channel.UpdateAEG();
 		deser >> channel.FEG.value;
 		deser >> channel.FEG.state;
-		if (!old_format)
-		{
-			deser >> channel.FEG.prev1;
-			deser >> channel.FEG.prev2;
-		}
-		else
-		{
-			channel.FEG.prev1 = 0;
-			channel.FEG.prev2 = 0;
-		}
+		deser >> channel.FEG.prev1;
+		deser >> channel.FEG.prev2;
 		channel.SetFegState(channel.FEG.state);
 		channel.UpdateFEG();
-		if (old_format)
-		{
-			deser.skip<u8>();   // channel.step_stream_lut1
-			deser.skip<u8>();   // channel.step_stream_lut2
-			deser.skip<u8>();   // channel.step_stream_lut3
-		}
 		channel.UpdateStreamStep();
 
 		deser >> channel.lfo.counter;
-		if (old_format)
-			deser.skip<u32>();     // channel.lfo.start_value
 		deser >> channel.lfo.state;
-		if (old_format)
-		{
-			deser.skip<u8>();   // channel.lfo.alfo
-			deser.skip<u8>();   // channel.lfo.alfo_shft
-			deser.skip<u8>();   // channel.lfo.plfo
-			deser.skip<u8>();   // channel.lfo.plfo_shft
-			deser.skip<u8>();   // channel.lfo.alfo_calc_lut
-			deser.skip<u8>();   // channel.lfo.plfo_calc_lut
-		}
 		channel.UpdateLFO(true);
 		deser >> channel.enabled;
-		if (old_format)
-			deser.skip<u32>(); // channel.ChannelNumber
 		channel.quiet = false;
 	}
 	if (deser.version() >= Deserializer::V22)
@@ -1673,11 +1608,6 @@ void channel_deserialize(Deserializer& deser)
 	}
 	deser >> cdda_sector;
 	deser >> cdda_index;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser.skip(4 * 64); 		// mxlr
-		deser.skip(4);			// samples_gen
-	}
 	midiSendBuffer.clear();
 	if (deser.version() >= Deserializer::V28)
 	{
@@ -1691,3 +1621,6 @@ void channel_deserialize(Deserializer& deser)
 		}
 	}
 }
+
+} // namespace sgc
+} // namespace aica

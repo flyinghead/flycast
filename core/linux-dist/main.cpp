@@ -315,6 +315,21 @@ std::vector<std::string> find_system_data_dirs()
 	return dirs;
 }
 
+static const char *selfPath;
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	if (fork() == 0)
+	{
+		std::vector<char *> localArgs;
+		localArgs.push_back((char *)selfPath);
+		for (int i = 0; i < argc; i++)
+			localArgs.push_back((char *)argv[i]);
+		localArgs.push_back(nullptr);
+		execv(selfPath, &localArgs[0]);
+	}
+}
+
 #if defined(USE_BREAKPAD)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
@@ -327,6 +342,7 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 
 int main(int argc, char* argv[])
 {
+	selfPath = argv[0];
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
@@ -388,9 +404,10 @@ int main(int argc, char* argv[])
 }
 
 #if defined(__unix__)
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	raise(SIGTRAP);
+	std::abort();
 }
 #endif
 

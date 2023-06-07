@@ -96,30 +96,26 @@ static inline void SetXD(u32 n,f64 val)
 	xf[(n<<1) | 0]=t.sgl[1];
 }
 
-bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
+struct SH4ThrownException
+{
+	SH4ThrownException(u32 epc, Sh4ExceptionCode expEvn) : epc(epc), expEvn(expEvn) { }
 
-struct SH4ThrownException {
 	u32 epc;
-	u32 expEvn;
-	u32 callVect;
+	Sh4ExceptionCode expEvn;
 };
 
 static inline void RaiseFPUDisableException()
 {
-	if (config::FullMMU)
-	{
-		SH4ThrownException ex { next_pc - 2, 0x800, 0x100 };
-		throw ex;
-	}
+	throw SH4ThrownException(next_pc - 2, Sh4Ex_FpuDisabled);
 }
 
 static inline void AdjustDelaySlotException(SH4ThrownException& ex)
 {
 	ex.epc -= 2;
-	if (ex.expEvn == 0x800)	// FPU disable exception
-		ex.expEvn = 0x820;	// Slot FPU disable exception
-	else if (ex.expEvn == 0x180)	// Illegal instruction exception
-		ex.expEvn = 0x1A0;			// Slot illegal instruction exception
+	if (ex.expEvn == Sh4Ex_FpuDisabled)
+		ex.expEvn = Sh4Ex_SlotFpuDisabled;
+	else if (ex.expEvn == Sh4Ex_IllegalInstr)
+		ex.expEvn = Sh4Ex_SlotIllegalInstr;
 }
 
 // The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games rely on this.
