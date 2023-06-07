@@ -54,6 +54,7 @@ struct UploadField {
 	std::string content_type;
 	std::string field_value;
 };
+#include <vector>
 int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
 {
 	//Not implemented

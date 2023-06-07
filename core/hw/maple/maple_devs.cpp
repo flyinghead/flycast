@@ -7,6 +7,7 @@
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
+#include <errno.h>
 #include <zlib.h>
 #include <time.h>
 
