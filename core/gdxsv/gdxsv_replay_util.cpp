@@ -440,6 +440,14 @@ void FetchReplayJSON() {
 		std::string content_type;
 		http::init();
 		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/replay?";
+		
+		static char* old_locale = setlocale(LC_CTYPE, NULL);
+#if defined(_WIN32)
+		setlocale(LC_CTYPE, ".1252");
+#else
+		setlocale(LC_CTYPE, "en_US.US-ASCII");
+#endif
+		
 		url += "page=" + http::urlEncode(std::to_string(entry_paging));
 		if (search_user_id != "") {
 			url += "&user_id=" + http::urlEncode(search_user_id);
@@ -468,6 +476,7 @@ void FetchReplayJSON() {
 		if (search_reverse) {
 			url += "&reverse=" + http::urlEncode(std::to_string(1));
 		}
+		setlocale(LC_CTYPE, old_locale);
 		
 		fetch_replay_entry_http_status = http::get(url, dl, content_type);
 		if (fetch_replay_entry_http_status != 200) {
@@ -853,10 +862,11 @@ void gdxsv_replay_server_tab() {
 						char buf[128] = {0};
 						std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
 						
+						static char* old_locale = setlocale(LC_CTYPE, NULL);
 #if defined(_WIN32)
 						setlocale(LC_CTYPE, ".1252");
 #else
-						setlocale(LC_CTYPE, "UTF-8");
+						setlocale(LC_CTYPE, "en_US.UTF-8");
 #endif
 						
 						wchar_t wide_char = entry.renpo_win + L'0' + 0xFEE0;
@@ -866,6 +876,8 @@ void gdxsv_replay_server_tab() {
 						wide_char = entry.zeon_win + L'0' + 0xFEE0;
 						char zeon_win[4] = {0};
 						std::wctomb(zeon_win, wide_char);
+						
+						setlocale(LC_CTYPE, old_locale);
 						
 						snprintf(buf, sizeof(buf), "%s ― Result: %s：%s\n\n", buf, renpo_win, zeon_win);
 
