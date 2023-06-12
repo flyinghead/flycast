@@ -1,7 +1,7 @@
-/* $Id: upnpc.c,v 1.131 2022/02/19 23:22:54 nanard Exp $ */
+/* $Id: upnpc.c,v 1.134 2023/06/11 23:23:10 nanard Exp $ */
 /* Project : miniupnp
  * Author : Thomas Bernard
- * Copyright (c) 2005-2022 Thomas Bernard
+ * Copyright (c) 2005-2023 Thomas Bernard
  * This software is subject to the conditions detailed in the
  * LICENCE file provided in this distribution. */
 
@@ -135,7 +135,7 @@ static void ListRedirections(struct UPNPUrls * urls,
                              struct IGDdatas * data)
 {
 	int r;
-	int i = 0;
+	unsigned short i = 0;
 	char index[6];
 	char intClient[40];
 	char intPort[6];
@@ -150,7 +150,7 @@ static void ListRedirections(struct UPNPUrls * urls,
 	printf("PortMappingNumberOfEntries : %u\n", num);*/
 	printf(" i protocol exPort->inAddr:inPort description remoteHost leaseTime\n");
 	do {
-		snprintf(index, 6, "%d", i);
+		snprintf(index, 6, "%hu", i);
 		rHost[0] = '\0'; enabled[0] = '\0';
 		duration[0] = '\0'; desc[0] = '\0';
 		extPort[0] = '\0'; intPort[0] = '\0'; intClient[0] = '\0';
@@ -162,20 +162,19 @@ static void ListRedirections(struct UPNPUrls * urls,
 									   rHost, duration);
 		if(r==0)
 		/*
-			printf("%02d - %s %s->%s:%s\tenabled=%s leaseDuration=%s\n"
+			printf("%02hu - %s %s->%s:%s\tenabled=%s leaseDuration=%s\n"
 			       "     desc='%s' rHost='%s'\n",
 			       i, protocol, extPort, intClient, intPort,
 				   enabled, duration,
 				   desc, rHost);
 				   */
-			printf("%2d %s %5s->%s:%-5s '%s' '%s' %s\n",
+			printf("%2hu %s %5s->%s:%-5s '%s' '%s' %s\n",
 			       i, protocol, extPort, intClient, intPort,
 			       desc, rHost, duration);
 		else
 			printf("GetGenericPortMappingEntry() returned %d (%s)\n",
 			       r, strupnperror(r));
-		i++;
-	} while(r == 0 && i < 65536);
+	} while(r == 0 && i++ < 65535);
 }
 
 static void NewListRedirections(struct UPNPUrls * urls,
@@ -189,7 +188,7 @@ static void NewListRedirections(struct UPNPUrls * urls,
 	memset(&pdata, 0, sizeof(struct PortMappingParserData));
 	r = UPNP_GetListOfPortMappings(urls->controlURL,
                                    data->first.servicetype,
-	                               "0",
+	                               "1",
 	                               "65535",
 	                               "TCP",
 	                               "1000",
@@ -215,7 +214,7 @@ static void NewListRedirections(struct UPNPUrls * urls,
 	}
 	r = UPNP_GetListOfPortMappings(urls->controlURL,
                                    data->first.servicetype,
-	                               "0",
+	                               "1",
 	                               "65535",
 	                               "UDP",
 	                               "1000",
@@ -466,11 +465,20 @@ static void GetPinholeAndUpdate(struct UPNPUrls * urls, struct IGDdatas * data,
 		fprintf(stderr, "Wrong arguments\n");
 		return;
 	}
+	/* CheckPinholeWorking is an Optional Action, error 602 should be
+	 * returned if it is not implemented */
 	r = UPNP_CheckPinholeWorking(urls->controlURL_6FC, data->IPv6FC.servicetype, uniqueID, &isWorking);
-	printf("CheckPinholeWorking: Pinhole ID = %s / IsWorking = %s\n", uniqueID, (isWorking)? "Yes":"No");
-	if(r!=UPNPCOMMAND_SUCCESS)
-		printf("CheckPinholeWorking() failed with code %d (%s)\n", r, strupnperror(r));
-	if(isWorking || r==709)
+	if(r==UPNPCOMMAND_SUCCESS)
+		printf("CheckPinholeWorking: Pinhole ID = %s / IsWorking = %s\n", uniqueID, (isWorking)? "Yes":"No");
+	else
+		printf("CheckPinholeWorking(%s) failed with code %d (%s)\n", uniqueID, r, strupnperror(r));
+	/* 702 FirewallDisabled Firewall is disabled and this action is disabled
+	 * 703 InboundPinholeNotAllowed Creation of inbound pinholes by UPnP CPs
+	 *                              are not allowed and this action is disabled
+	 * 704 NoSuchEntry There is no pinhole with the specified UniqueID.
+	 * 709 NoTrafficReceived No traffic corresponding to this pinhole has
+	 *                       been received by the gateway. */
+	if(isWorking || (r!=702 && r!=703 && r!=704))
 	{
 		r = UPNP_UpdatePinhole(urls->controlURL_6FC, data->IPv6FC.servicetype, uniqueID, lease_time);
 		printf("UpdatePinhole: Pinhole ID = %s with Lease Time: %s\n", uniqueID, lease_time);
@@ -583,7 +591,7 @@ int main(int argc, char ** argv)
 	}
 #endif
     printf("upnpc : miniupnpc library test client, version %s.\n", MINIUPNPC_VERSION_STRING);
-	printf(" (c) 2005-2022 Thomas Bernard.\n");
+	printf(" (c) 2005-2023 Thomas Bernard.\n");
     printf("Go to http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/\n"
 	       "for more information.\n");
 	/* command line processing */

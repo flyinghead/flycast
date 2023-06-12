@@ -1,8 +1,8 @@
-/* $Id: upnperrors.c,v 1.10 2019/08/24 08:49:53 nanard Exp $ */
+/* $Id: upnperrors.c,v 1.11 2023/05/29 21:59:15 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * Project : miniupnp
  * Author : Thomas BERNARD
- * copyright (c) 2007-2019 Thomas Bernard
+ * copyright (c) 2007-2023 Thomas Bernard
  * All Right reserved.
  * http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * This software is subjet to the conditions detailed in the
@@ -46,6 +46,24 @@ const char * strupnperror(int err)
 		break;
 	case 501:
 		s = "Action Failed";
+		break;
+	case 600:
+		s = "Argument Value Invalid";
+		break;
+	case 601:
+		s = "Argument Value Out of Range";
+		break;
+	case 602:
+		s = "Optional Action Not Implemented";
+		break;
+	case 603:
+		s = "Out of Memory";
+		break;
+	case 604:
+		s = "Human Intervention Required";
+		break;
+	case 605:
+		s = "String Argument Too Long";
 		break;
 	case 606:
 		s = "Action not authorized";
