@@ -1,5 +1,19 @@
-$Id: Changelog.txt,v 1.253 2022/02/19 23:21:56 nanard Exp $
+$Id: Changelog.txt,v 1.257 2023/06/11 23:25:45 nanard Exp $
 miniUPnP client Changelog.
+
+VERSION 2.2.5 : released 2023/06/12
+
+2023/06/05:
+  GetListOfPortMappings NewStartPort 0 => 1
+
+2023/05/30:
+  CheckPinholeWorking is optional
+  add 60x errors from UPnP Device Architecture
+
+2023/01/04:
+  cmake: install binaries, man pages and external-ip.sh
+
+VERSION 2.2.4 : released 2022/10/21
 
 2022/02/20:
   upnpc: use of @ to replace local lan address

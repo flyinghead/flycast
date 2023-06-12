@@ -3,7 +3,7 @@
 # http://miniupnp.free.fr/
 # https://miniupnp.tuxfamily.org/
 # https://github.com/miniupnp/miniupnp
-# (c) 2005-2021 Thomas Bernard
+# (c) 2005-2022 Thomas Bernard
 # to install use :
 # $ make DESTDIR=/tmp/dummylocation install
 # or
@@ -293,6 +293,7 @@ $(BUILD)/miniupnpc.pc:	VERSION
 	echo "" >> $@
 	echo "Name: miniUPnPc" >> $@
 	echo "Description: UPnP IGD client lightweight library" >> $@
+	echo "URL: https://miniupnp.tuxfamily.org/" >> $@
 	echo "Version: $(VERSION)" >> $@
 	echo "Libs: -L\$${libdir} -lminiupnpc" >> $@
 	echo "Cflags: -I\$${includedir}" >> $@

@@ -2,7 +2,8 @@
 # $Id: testminiwget.sh,v 1.18 2020/05/29 21:14:22 nanard Exp $
 # vim: tabstop=4 shiftwidth=4 noexpandtab
 # project miniupnp : http://miniupnp.free.fr/
-# (c) 2011-2019 Thomas Bernard
+#                    or https://miniupnp.tuxfamily.org/
+# (c) 2011-2022 Thomas Bernard
 #
 # test program for miniwget.c
 # is usually invoked by "make check"
@@ -17,8 +18,12 @@
 # it should now also run with dash
 
 TMPD=`mktemp -d -t miniwgetXXXXXXXXXX`
-TESTSERVER=./build/minihttptestserver
-TESTMINIWGET=./build/testminiwget
+if [ -z "$TESTSERVER" ] ; then
+  TESTSERVER=./build/minihttptestserver
+fi
+if [ -z "$TESTMINIWGET" ] ; then
+  TESTMINIWGET=./build/testminiwget
+fi
 HTTPSERVEROUT="${TMPD}/httpserverout"
 EXPECTEDFILE="${TMPD}/expectedfile"
 DOWNLOADEDFILE="${TMPD}/downloadedfile"
