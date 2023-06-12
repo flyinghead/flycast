@@ -1593,7 +1593,7 @@ static void gui_display_settings()
 #endif // !TARGET_IPHONE
 
 			OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-					"Display game covert art in the game list.");
+					"Display game cover art in the game list.");
 			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 					"Fetch cover images from TheGamesDB.net.");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
