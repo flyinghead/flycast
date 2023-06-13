@@ -221,7 +221,7 @@ void gui_debugger_disasm()
 	ImGui::End();
 }
 
-u32 memoryDumpAddr = 0x8c010000;
+u32 memoryDumpAddr = 0x0c010000;
 
 void gui_debugger_memdump()
 {
@@ -313,6 +313,14 @@ void gui_debugger_memdump()
 		ImGui::Text("%s", hexbuf);
 	}
 
+	if (memoryDumpAddr < 0x8c000000)
+	{
+		memoryDumpAddr = 0x8c000000;
+	}
+	else if (memoryDumpAddr > 0x8c000000 + RAM_SIZE)
+	{
+		memoryDumpAddr = 0x8c000000 + RAM_SIZE;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleVar();
 	ImGui::End();
