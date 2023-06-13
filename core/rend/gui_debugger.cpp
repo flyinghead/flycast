@@ -286,8 +286,9 @@ void gui_debugger_memdump()
 	ImGui::PushFont(defaultFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
+	ImGui::BeginChild("##content", ImVec2(-FLT_MIN, 360));
 	char hexbuf[256];
-	for (size_t i = 0; i < 16; i++) {
+	for (size_t i = 0; i < 24; i++) {
 		memset(hexbuf, 0, sizeof(hexbuf));
 		size_t hexbuflen = 0;
 
@@ -313,6 +314,11 @@ void gui_debugger_memdump()
 		ImGui::Text("%s", hexbuf);
 	}
 
+	if (ImGui::IsWindowHovered())
+	{
+		memoryDumpAddr -= (int) io.MouseWheel * 16;
+	}
+
 	if (memoryDumpAddr < 0x8c000000)
 	{
 		memoryDumpAddr = 0x8c000000;
@@ -321,6 +327,8 @@ void gui_debugger_memdump()
 	{
 		memoryDumpAddr = 0x8c000000 + RAM_SIZE;
 	}
+	ImGui::EndChild();
+
 	ImGui::PopFont();
 	ImGui::PopStyleVar();
 	ImGui::End();
