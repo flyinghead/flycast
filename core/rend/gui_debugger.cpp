@@ -46,7 +46,6 @@ static void disas_emit(char ch) {
 void gui_debugger_control()
 {
 	ImGui::SetNextWindowPos(ScaledVec2(16, 16), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(360, 0), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Control", NULL, ImGuiWindowFlags_NoResize);
 
 	bool running = emu.running();
@@ -102,20 +101,16 @@ void gui_debugger_control()
 			emu.start();
 	}
 
-	if (ImGui::Button("Disassembly"))
-		disasm_window_open = !disasm_window_open;
+	ImGui::Checkbox("Disassembly", &disasm_window_open);
 
 	ImGui::SameLine();
-	if (ImGui::Button("Memory Dump"))
-		memdump_window_open = !memdump_window_open;
+	ImGui::Checkbox("Memory Dump", &memdump_window_open);
 
 	ImGui::SameLine();
-	if (ImGui::Button("SH4"))
-		sh4_window_open = !sh4_window_open;
+	ImGui::Checkbox("SH4", &sh4_window_open);
 
 	ImGui::SameLine();
-	if (ImGui::Button("Breakpoints"))
-		breakpoints_window_open = !breakpoints_window_open;
+	ImGui::Checkbox("Breakpoints", &breakpoints_window_open);
 
 	ImGui::End();
 }
