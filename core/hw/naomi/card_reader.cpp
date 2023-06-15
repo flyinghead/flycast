@@ -22,6 +22,7 @@
 #include "hw/maple/maple_cfg.h"
 #include <deque>
 #include <memory>
+#include <errno.h>
 
 namespace card_reader {
 
