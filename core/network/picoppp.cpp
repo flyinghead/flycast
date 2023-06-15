@@ -25,6 +25,7 @@
 
 #include "stdclass.h"
 
+//#define BBA_PCAPNG_DUMP
 #ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
 #endif
@@ -492,6 +493,16 @@ static sock_t find_udp_socket(uint16_t src_port)
 	int broadcastEnable = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
 
+	// bind to same port if possible (Toy Racer)
+	sockaddr_in saddr;
+	socklen_t saddr_len = sizeof(saddr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = src_port;
+	if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
+		perror("bind");
+
 	// FIXME Need to clean up at some point?
 	udp_sockets[src_port] = sockfd;
 
@@ -819,7 +830,6 @@ static pico_device *pico_eth_create()
     return eth;
 }
 
-//#define BBA_PCAPNG_DUMP
 static FILE *pcapngDump;
 
 static void dumpFrame(const u8 *frame, u32 size)
