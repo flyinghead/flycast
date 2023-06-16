@@ -138,12 +138,6 @@ struct socket_pair
 			len = r;
 			data = buf;
 		}
-		if (pico_sock->remote_port == short_be(5011) && len >= 5)
-		{
-			// Visual Concepts sport games
-			if (buf[0] == 1)
-				memcpy(&buf[1], &pico_sock->local_addr.ip4.addr, 4);
-		}
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
 		if (r2 < 0)
@@ -332,6 +326,9 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
 	if (r > 0)
 	{
+		if (pico_sock->local_port == short_be(5011) && r >= 5 && buf[0] == 1)
+			// Visual Concepts sport games
+			memcpy(&buf[1], &public_ip.addr, 4);
 		if (send(nat_sock, buf, r, 0) < r)
 		{
 			perror("tcp_callback send");
