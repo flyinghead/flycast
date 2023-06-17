@@ -25,6 +25,7 @@
 
 #include "stdclass.h"
 
+//#define BBA_PCAPNG_DUMP
 #ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
 #endif
@@ -136,12 +137,6 @@ struct socket_pair
 			}
 			len = r;
 			data = buf;
-		}
-		if (pico_sock->remote_port == short_be(5011) && len >= 5)
-		{
-			// Visual Concepts sport games
-			if (buf[0] == 1)
-				memcpy(&buf[1], &pico_sock->local_addr.ip4.addr, 4);
 		}
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
@@ -331,6 +326,9 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
 	if (r > 0)
 	{
+		if (pico_sock->local_port == short_be(5011) && r >= 5 && buf[0] == 1)
+			// Visual Concepts sport games
+			memcpy(&buf[1], &public_ip.addr, 4);
 		if (send(nat_sock, buf, r, 0) < r)
 		{
 			perror("tcp_callback send");
@@ -491,6 +489,16 @@ static sock_t find_udp_socket(uint16_t src_port)
 #endif
 	int broadcastEnable = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
+
+	// bind to same port if possible (Toy Racer)
+	sockaddr_in saddr;
+	socklen_t saddr_len = sizeof(saddr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = src_port;
+	if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
+		perror("bind");
 
 	// FIXME Need to clean up at some point?
 	udp_sockets[src_port] = sockfd;
@@ -819,7 +827,6 @@ static pico_device *pico_eth_create()
     return eth;
 }
 
-//#define BBA_PCAPNG_DUMP
 static FILE *pcapngDump;
 
 static void dumpFrame(const u8 *frame, u32 size)
