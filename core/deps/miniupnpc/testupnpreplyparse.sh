@@ -1,6 +1,8 @@
 #!/bin/sh
 
-TESTUPNPREPLYPARSE=./build/testupnpreplyparse
+if [ -z "$TESTUPNPREPLYPARSE" ] ; then
+	TESTUPNPREPLYPARSE=./build/testupnpreplyparse
+fi
 
 for f in testreplyparse/*.xml ; do
 	bf="`dirname $f`/`basename $f .xml`"
@@ -13,4 +15,3 @@ for f in testreplyparse/*.xml ; do
 done
 
 exit 0
-

@@ -20,9 +20,9 @@
 #include "oslib/oslib.h"
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
-#include <errno.h>
 #include <deque>
 #include <memory>
+#include <errno.h>
 
 namespace card_reader {
 
