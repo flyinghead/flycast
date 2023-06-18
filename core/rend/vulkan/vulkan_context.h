@@ -61,6 +61,9 @@ public:
 	void Present() noexcept;
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
+#ifdef TARGET_MAC
+	void initVideoRouting() override;
+#endif
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return *device; }

@@ -202,3 +202,59 @@ void os_RunInstance(int argc, const char *argv[])
 		die("execv failed");
 	}
 }
+
+#import <Syphon/Syphon.h>
+#import <cfg/cfg.h>
+#include "rend/vulkan/vulkan.h"
+static SyphonOpenGLServer* syphonGLServer;
+static SyphonMetalServer* syphonMtlServer;
+
+void os_SyphonInitGLWithContext(void* glContext)
+{
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[(__bridge NSOpenGLContext*)glContext CGLContextObj] options:nil];
+}
+
+void os_SyphonPublishFrameTexture(GLuint texID, float x, float y, float w, float h)
+{
+	CGLLockContext([syphonGLServer context]);
+	[syphonGLServer publishFrameTexture:texID textureTarget:0x0DE1 imageRegion:NSMakeRect(x, y, w, h) textureDimensions:NSMakeSize(w, h) flipped:NO];
+	CGLUnlockContext([syphonGLServer context]);
+}
+
+void os_SyphonTermGLServer()
+{
+	[syphonGLServer stop];
+	[syphonGLServer release];
+	syphonGLServer = NULL;
+}
+
+void os_SyphonInitMtlWithDevice(const vk::UniqueDevice& device)
+{
+	vk::ExportMetalDeviceInfoEXT deviceInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
+	device->exportMetalObjectsEXT(&objectsInfo);
+	
+	int boardID = cfgLoadInt("naomi", "BoardId",0);
+	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
+}
+
+void os_SyphonPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
+{
+	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
+	auto commandInfo = vk::ExportMetalCommandQueueInfoEXT(queue);
+	commandInfo.pNext = &textureInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&commandInfo);
+	device->exportMetalObjectsEXT(&objectsInfo);
+	
+	auto commandBuffer = [commandInfo.mtlCommandQueue commandBufferWithUnretainedReferences];
+	[syphonMtlServer publishFrameTexture:textureInfo.mtlTexture onCommandBuffer:commandBuffer imageRegion:NSMakeRect(x, y, w, h) flipped:YES];
+	[commandBuffer commit];
+}
+
+void os_SyphonTermMtlServer()
+{
+	[syphonMtlServer stop];
+	[syphonMtlServer release];
+	syphonMtlServer = NULL;
+}

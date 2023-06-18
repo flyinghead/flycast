@@ -42,6 +42,9 @@ public:
 	bool init();
 	void term() override;
 	void swap();
+#ifdef TARGET_MAC
+	void initVideoRouting() override;
+#endif
 
 private:
 	SDL_GLContext glcontext = nullptr;

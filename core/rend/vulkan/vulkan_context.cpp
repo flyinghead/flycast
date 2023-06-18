@@ -413,6 +413,8 @@ bool VulkanContext::InitDevice()
 			}
 			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
 				deviceExtensions.push_back("VK_KHR_portability_subset");
+			else if (!strcmp(property.extensionName, "VK_EXT_metal_objects"))
+				deviceExtensions.push_back("VK_EXT_metal_objects");
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
@@ -514,6 +516,10 @@ bool VulkanContext::InitDevice()
 				+ std::to_string(props.driverVersion / 10000) + "."
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
+		
+#if TARGET_MAC
+		initVideoRouting();
+#endif
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -537,6 +543,19 @@ bool VulkanContext::InitDevice()
 	}
 	return false;
 }
+
+#ifdef TARGET_MAC
+void VulkanContext::initVideoRouting()
+{
+	extern void os_SyphonTermMtlServer();
+	extern void os_SyphonInitMtlWithDevice(const vk::UniqueDevice& device);
+	os_SyphonTermMtlServer();
+	if (config::VideoRouting)
+	{
+		os_SyphonInitMtlWithDevice(device);
+	}
+}
+#endif
 
 void VulkanContext::CreateSwapChain()
 {
@@ -626,8 +645,8 @@ void VulkanContext::CreateSwapChain()
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#ifdef TEST_AUTOMATION
-			// for final screenshot
+#if defined(TEST_AUTOMATION) || defined(TARGET_MAC)
+			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
 			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
@@ -967,6 +986,18 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
+			
+#ifdef TARGET_MAC
+			if (config::VideoRouting)
+			{
+				vk::Image srcImage = device->getSwapchainImagesKHR(*swapChain)[currentImage];
+				extern void os_SyphonPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
+				int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * getOutputFramebufferAspectRatio() : settings.display.width);
+				int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+				os_SyphonPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
+			}
+#endif
+			
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1020,6 +1051,10 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
+#ifdef TARGET_MAC
+	extern void os_SyphonTermMtlServer();
+	os_SyphonTermMtlServer();
+#endif
 #ifndef USE_SDL
 	surface.reset();
 #else

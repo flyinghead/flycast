@@ -1576,7 +1576,7 @@ static void gui_display_settings()
                 if (ImGui::Button("Change"))
                 	gui_state = GuiState::Onboarding;
 #endif
-#if defined(__APPLE__) && TARGET_OS_OSX
+#ifdef TARGET_MAC
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Reveal in Finder"))
                 {
@@ -2143,6 +2143,28 @@ static void gui_display_settings()
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
+#ifdef TARGET_MAC
+			header("Video Routing (Syphon)");
+			{
+				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
+							   "e.g. Route GPU texture to OBS Studio directly instead of using Display/Window Capture"))
+				{
+					GraphicsContext::Instance()->initVideoRouting();
+				}
+				if (config::VideoRouting)
+				{
+					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture");
+					if (config::VideoRoutingScale)
+					{
+						static int vres = config::VideoRoutingVRes;
+						if( ImGui::InputInt("Output vertical resolution", &vres, ImGuiInputTextFlags_EnterReturnsTrue) )
+						{
+							config::VideoRoutingVRes = vres;
+						}
+					}
+				}
+			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 
