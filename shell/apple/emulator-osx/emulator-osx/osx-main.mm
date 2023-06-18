@@ -33,7 +33,8 @@ int darw_printf(const char* text, ...)
     va_end(args);
     
     NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
-    if (getenv("TERM") == NULL) //Xcode console does not support colors
+	static bool isXcode = [[[NSProcessInfo processInfo] environment][@"OS_ACTIVITY_DT_MODE"] boolValue];
+    if (isXcode) // Xcode console does not support colors
     {
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[0m" withString:@""];
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[92m" withString:@"ℹ️ "];
