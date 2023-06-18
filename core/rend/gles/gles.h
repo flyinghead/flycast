@@ -305,6 +305,13 @@ struct gl_ctx
 		bool ready = false;
 	} ofbo2;
 
+#ifdef TARGET_MAC
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+	} syphon;
+#endif
+
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;

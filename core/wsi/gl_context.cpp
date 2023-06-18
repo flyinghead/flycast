@@ -56,6 +56,11 @@ void GLGraphicsContext::preTerm()
 #ifndef LIBRETRO
 	imguiDriver.reset();
 #endif
+#ifdef TARGET_MAC
+	extern void os_SyphonTermGLServer();
+	os_SyphonTermGLServer();
+#endif
+	
 	instance = nullptr;
 }
 

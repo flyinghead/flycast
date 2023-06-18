@@ -466,6 +466,11 @@ extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
 extern Option<int> FixedFrequency;
+#if TARGET_MAC
+extern Option<bool> VideoRouting;
+extern Option<bool> VideoRoutingScale;
+extern Option<int> VideoRoutingVRes;
+#endif
 
 // Misc
 
