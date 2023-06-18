@@ -138,6 +138,9 @@ struct socket_pair
 			len = r;
 			data = buf;
 		}
+		if (pico_sock->remote_port == short_be(5011) && len >= 5 && data[0] == 1)
+			// Visual Concepts sport games
+			memcpy((void *)&data[1], &pico_sock->local_addr.ip4.addr, 4);
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
 		if (r2 < 0)
