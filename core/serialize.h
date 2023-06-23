@@ -63,7 +63,8 @@ public:
 		V35,
 		V36,
 		V37,
-		Current = V37,
+		V38,
+		Current = V38,
 
 		Next = Current + 1,
 	};

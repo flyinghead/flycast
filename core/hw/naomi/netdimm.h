@@ -38,7 +38,7 @@ public:
 
 private:
 	void returnToNaomi(bool failed, u16 offsetl, u32 parameter);
-	static int schedCallback(int tag, int sch_cycl, int jitter);
+	static int schedCallback(int tag, int sch_cycl, int jitter, void *arg);
 	int schedCallback();
 	void process();
 	void systemCmd(int cmd);

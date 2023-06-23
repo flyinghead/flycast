@@ -1776,7 +1776,8 @@ static const struct pico_ppp_fsm ppp_lcp_fsm[PPP_LCP_STATE_MAX][PPP_LCP_EVENT_MA
                                     { lcp_this_layer_down, lcp_send_terminate_request, lcp_send_configure_ack }},
         [PPP_LCP_EVENT_RCR_NEG] = { PPP_LCP_STATE_REQ_SENT,
                                     { lcp_this_layer_down, lcp_send_configure_request, lcp_send_configure_nack }},
-        [PPP_LCP_EVENT_RCA]     = { PPP_LCP_STATE_REQ_SENT, { lcp_this_layer_down, lcp_send_terminate_request } },
+        /* ignore conf acks received after auth/ipcp layer is up (kos) */
+        [PPP_LCP_EVENT_RCA]     = { PPP_LCP_STATE_OPENED },
         [PPP_LCP_EVENT_RCN]     = { PPP_LCP_STATE_REQ_SENT, { lcp_this_layer_down, lcp_send_terminate_request } },
         [PPP_LCP_EVENT_RTR]     = { PPP_LCP_STATE_STOPPING, { lcp_this_layer_down, lcp_zero_restart_count, lcp_send_terminate_ack} },
         [PPP_LCP_EVENT_RTA]     = { PPP_LCP_STATE_REQ_SENT, { lcp_this_layer_down, lcp_send_terminate_request} },

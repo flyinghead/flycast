@@ -8,13 +8,13 @@
 	sch_cycles, the cycle duration that the callback requested (sh4_sched_request)
 	jitter, the number of cycles that the callback was delayed, [0... 448]
 */
-typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter);
+typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter, void *arg);
 
 /*
 	Register a callback to the scheduler. The returned id
 	is used for sh4_sched_request and sh4_sched_unregister calls
 */
-int sh4_sched_register(int tag, sh4_sched_callback* ssc);
+int sh4_sched_register(int tag, sh4_sched_callback* ssc, void *arg = nullptr);
 
 /***
  * Unregister a callback from the scheduler.

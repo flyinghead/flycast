@@ -31,12 +31,9 @@
 
 const char *SERVER_NAME = "vfnet.duckdns.org";
 
-NetDimm *NetDimm::Instance;
-
 NetDimm::NetDimm(u32 size) : GDCartridge(size)
 {
-	schedId = sh4_sched_register(0, schedCallback);
-	Instance = this;
+	schedId = sh4_sched_register(0, schedCallback, this);
 	if (serverIp == 0)
 	{
 		hostent *hp = gethostbyname(SERVER_NAME);
@@ -50,7 +47,6 @@ NetDimm::NetDimm(u32 size) : GDCartridge(size)
 NetDimm::~NetDimm()
 {
 	sh4_sched_unregister(schedId);
-	Instance = nullptr;
 }
 
 void NetDimm::Init(LoadProgress *progress, std::vector<u8> *digest)
@@ -141,9 +137,9 @@ bool NetDimm::Write(u32 offset, u32 size, u32 data)
 	return true;
 }
 
-int NetDimm::schedCallback(int tag, int sch_cycl, int jitter)
+int NetDimm::schedCallback(int tag, int sch_cycl, int jitter, void *arg)
 {
-	return Instance->schedCallback();
+	return ((NetDimm *)arg)->schedCallback();
 }
 
 int NetDimm::schedCallback()

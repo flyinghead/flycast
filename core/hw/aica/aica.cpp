@@ -94,7 +94,7 @@ AicaTimer timers[3];
 int aica_schid = -1;
 const int AICA_TICK = 145125;	// 44.1 KHz / 32
 
-static int AicaUpdate(int tag, int c, int j)
+static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
 {
 	arm::run(32);
 

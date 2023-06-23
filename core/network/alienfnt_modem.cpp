@@ -135,7 +135,7 @@ private:
 		serial_updateStatusRegister();
 	}
 
-	static int schedCallback(int tag, int cycles, int lag)
+	static int schedCallback(int tag, int cycles, int lag, void *arg)
 	{
 		serial_updateStatusRegister();
 		return SH4_MAIN_CLOCK / 60;

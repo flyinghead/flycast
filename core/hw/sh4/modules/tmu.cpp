@@ -218,7 +218,7 @@ static void write_TMU_TSTR(u32 addr, u8 data)
 		turn_on_off_ch(i, data & (1 << i));
 }
 
-static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
+static int sched_tmu_cb(int ch, int sch_cycl, int jitter, void *arg)
 {
 	if (tmu_mask[ch]) {
 		

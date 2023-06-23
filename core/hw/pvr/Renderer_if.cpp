@@ -406,7 +406,7 @@ void rend_start_render()
 	}
 }
 
-int rend_end_render(int tag, int cycles, int jitter)
+int rend_end_render(int tag, int cycles, int jitter, void *arg)
 {
 	if (settings.platform.isNaomi2())
 	{

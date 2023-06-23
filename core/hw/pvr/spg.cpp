@@ -96,7 +96,7 @@ void rescheduleSPG()
 	sh4_sched_request(vblank_schid, getNextSpgInterrupt());
 }
 
-static int spg_line_sched(int tag, int cycles, int jitter)
+static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 {
 	clc_pvr_scanline += cycles + jitter;
 
