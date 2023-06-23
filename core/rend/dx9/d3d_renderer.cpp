@@ -1009,20 +1009,20 @@ bool D3DRenderer::Render()
 	v[1] = -1.f;
 	device->SetClipPlane(3, v);
 
-	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	size_t size = pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data()));
 	rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, size);
 	verify(rc);
 	void *ptr;
 	rc = SUCCEEDED(vertexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, &pvrrc.verts[0], size);
+	memcpy(ptr, pvrrc.verts.data(), size);
 	vertexBuffer->Unlock();
-	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	size = pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data()));
 	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, size);
 	verify(rc);
 	rc = SUCCEEDED(indexBuffer->Lock(0, size, &ptr, D3DLOCK_DISCARD));
 	verify(rc);
-	memcpy(ptr, &pvrrc.idx[0], size);
+	memcpy(ptr, pvrrc.idx.data(), size);
 	indexBuffer->Unlock();
 
 	if (config::ModifierVolumes && !pvrrc.modtrig.empty())

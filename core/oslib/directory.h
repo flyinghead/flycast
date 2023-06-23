@@ -49,7 +49,7 @@ inline DIR *opendir(char const *dirname)
         errno = EINVAL;
         return nullptr;
     }
-    return (DIR *)::_wopendir(wname.c_str());
+    return (DIR *)::_wopendir(wname.get());
 }
 
 inline dirent *readdir(DIR *dirstream)
@@ -70,7 +70,7 @@ inline dirent *readdir(DIR *dirstream)
 	d.d_off = wdirent->d_off;
 	d.d_type = wdirent->d_type;
 	d.d_reclen = sizeof(dirent);
-	strncpy(d.d_name, name.c_str(), sizeof(d.d_name) - 1);
+	strncpy(d.d_name, name.get(), sizeof(d.d_name) - 1);
 	d.d_name[sizeof(d.d_name) - 1] = '\0';
 	d.d_namlen = strlen(d.d_name);
 
@@ -100,7 +100,7 @@ inline int stat(const char *filename, struct stat *buf)
     }
 #ifdef TARGET_UWP
     WIN32_FILE_ATTRIBUTE_DATA attrs;
-	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
+	bool rc = GetFileAttributesExFromAppW(wname.get(),  GetFileExInfoStandard, &attrs);
 	if (!rc)
 	{
 		_set_errno(GetLastError());
@@ -122,7 +122,7 @@ inline int stat(const char *filename, struct stat *buf)
     return 0;
 #else
     struct _stat _st;
-    int rc = _wstat(wname.c_str(), &_st);
+    int rc = _wstat(wname.get(), &_st);
     buf->st_ctime = _st.st_ctime;
     buf->st_mtime = _st.st_mtime;
     buf->st_atime = _st.st_atime;
@@ -148,7 +148,7 @@ inline int access(const char *filename, int how)
     }
 #ifdef TARGET_UWP
     WIN32_FILE_ATTRIBUTE_DATA attrs;
-	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
+	bool rc = GetFileAttributesExFromAppW(wname.get(),  GetFileExInfoStandard, &attrs);
 	if (!rc)
 	{
 		if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)
@@ -167,7 +167,7 @@ inline int access(const char *filename, int how)
 	else
 		return 0;
 #else
-    return ::_waccess(wname.c_str(), how);
+    return ::_waccess(wname.get(), how);
 #endif
 }
 
@@ -177,7 +177,7 @@ inline int mkdir(const char *path, mode_t mode) {
     	errno = EINVAL;
     	return -1;
     }
-    return ::_wmkdir(wpath.c_str());
+    return ::_wmkdir(wpath.get());
 }
 #endif
 }

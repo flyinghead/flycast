@@ -650,9 +650,11 @@ static void gui_display_commands()
 inline static void header(const char *title)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
 	ImGui::ButtonEx(title, ImVec2(-1, 0));
 	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
 	ImGui::PopStyleVar();
 }
 
@@ -1461,21 +1463,27 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("General"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
-			OptionComboBox("Language", config::Language, languages, std::size(languages),
-				"The language as configured in the Dreamcast BIOS");
+			{
+				DisabledScope scope(settings.platform.isArcade());
 
-			const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
-			OptionComboBox("Broadcast", config::Broadcast, broadcast, std::size(broadcast),
-					"TV broadcasting standard for non-VGA modes");
+				const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
+				OptionComboBox("Language", config::Language, languages, std::size(languages),
+					"The language as configured in the Dreamcast BIOS");
 
-			const char *region[] = { "Japan", "USA", "Europe", "Default" };
-			OptionComboBox("Region", config::Region, region, std::size(region),
+				const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
+				OptionComboBox("Broadcast", config::Broadcast, broadcast, std::size(broadcast),
+						"TV broadcasting standard for non-VGA modes");
+			}
+
+			const char *consoleRegion[] = { "Japan", "USA", "Europe", "Default" };
+			const char *arcadeRegion[] = { "Japan", "USA", "Export", "Korea" };
+			const char **region = settings.platform.isArcade() ? arcadeRegion : consoleRegion;
+			OptionComboBox("Region", config::Region, region, std::size(consoleRegion),
 						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
 			{
-				DisabledScope scope(config::Cable.isReadOnly());
+				DisabledScope scope(config::Cable.isReadOnly() || settings.platform.isArcade());
 
 				const char *value = config::Cable == 0 ? cable[0]
 						: config::Cable > 0 && config::Cable <= (int)std::size(cable) ? cable[config::Cable - 1]
@@ -1492,9 +1500,9 @@ static void gui_display_settings()
 					}
 					ImGui::EndCombo();
 				}
+	            ImGui::SameLine();
+	            ShowHelpMarker("Video connection type");
 			}
-            ImGui::SameLine();
-            ShowHelpMarker("Video connection type");
 
 #if !defined(TARGET_IPHONE)
             ImVec2 size;
@@ -1585,7 +1593,7 @@ static void gui_display_settings()
 #endif // !TARGET_IPHONE
 
 			OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-					"Display game covert art in the game list.");
+					"Display game cover art in the game list.");
 			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 					"Fetch cover images from TheGamesDB.net.");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,

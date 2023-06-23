@@ -29,9 +29,10 @@ const BIOS_t BIOS[] =
 	{
 		"airlbios",
 		{
-			{ 2, "epr-21802.ic27", 0x000000, 0x200000 },
-			{ 1, "epr-21801.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
+			// Airline Pilots Deluxe (Export)
+			{ 2, "epr-21802.ic27", 0x000000, 0x200000, 0xa77c6b1c },
+			// Airline Pilots Deluxe (USA)
+			{ 1, "epr-21801.ic27", 0x000000, 0x200000, 0xa21bef24 },
 		}
 	},
 	{
@@ -40,53 +41,52 @@ const BIOS_t BIOS[] =
 			{ 0, "bios0.ic23", 0x000000, 0x020000 },
 			//or
 			//{ "bios1.ic23", 0x000000, 0x020000 },
-			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"f355bios",
 		{
-			{ 2, "epr-22851.ic27", 0x000000, 0x200000 },
-			{ 1, "epr-22850.ic27", 0x000000, 0x200000 },
-			{ 0, "epr-22849.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
+			// Ferrari F355 (Export)
+			{ 2, "epr-22851.ic27", 0x000000, 0x200000, 0x62483677 },
+			// Ferrari F355 (USA)
+			{ 1, "epr-22850.ic27", 0x000000, 0x200000, 0x28aa539d },
+			// Ferrari F355 (Japan)
+			{ 0, "epr-22849.ic27", 0x000000, 0x200000, 0x121e009c },
 		}
 	},
 	{
 		"f355dlx",
 		{
 			// Ferrari F355 Deluxe (Export)
-			{ 2, "epr-21864.ic27", 0x000000, 0x200000 },
+			{ 2, "epr-21864.ic27", 0x000000, 0x200000, 0x12ed7c66 },
 			// Ferrari F355 Deluxe (USA)
-			{ 1, "epr-21863.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-21863.ic27", 0x000000, 0x200000, 0x0615a4d1 },
 			// Ferrari F355 Deluxe (Japan)
-			{ 0, "epr-21862.ic27", 0x000000, 0x200000 },
+			{ 0, "epr-21862.ic27", 0x000000, 0x200000, 0x1f630716 },
 			// Ferrari F355 Deluxe (Export, prototype)
 			//{ 2, "epr-21864p.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (Japan, prototype)
 			//{ 0, "epr-21862p.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"hod2bios",
 		{
-            //export
-            { 2, "epr-21331.ic27", 0x000000, 0x200000 },
-            //usa
-            { 1, "epr-21330.ic27", 0x000000, 0x200000 },
-            //japan
-            { 0, "epr-21329.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
+            // HOTD2 (Export)
+            { 2, "epr-21331.ic27", 0x000000, 0x200000, 0x065f8500 },
+            // HOTD2 (USA)
+            { 1, "epr-21330.ic27", 0x000000, 0x200000, 0x9e3bfa1b },
+            // HOTD2 (Japan)
+            { 0, "epr-21329.ic27", 0x000000, 0x200000, 0xd99e5b9b },
 		}
 	},
 	{
 		"naomi",
 		{
 			//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
-			{ 0, "epr-21576h.ic27", 0x000000, 0x200000 },
+			{ 0, "epr-21576h.ic27", 0x000000, 0x200000, 0xd4895685 },
 			//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
-			//{ 0, "epr-21576g.ic27", 0x000000, 0x200000 },
+			{ 0, "epr-21576g.ic27", 0x000000, 0x200000, 0xd2a1c6bf },
 			//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
 			//{ 0, "epr-21576e.ic27", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
@@ -100,9 +100,9 @@ const BIOS_t BIOS[] =
 			//ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" )
 			//{ 0, "epr-21576.ic27",  0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" )
-			{ 2, "epr-21578h.ic27", 0x000000, 0x200000 },
+			{ 2, "epr-21578h.ic27", 0x000000, 0x200000, 0x7b452946 },
 			//ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" )
-			//{ 2, "epr-21578g.ic27", 0x000000, 0x200000 },
+			{ 2, "epr-21578g.ic27", 0x000000, 0x200000, 0x55413214 },
 			//ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" )
 			//{ 2, "epr-21578f.ic27", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" )
@@ -112,9 +112,9 @@ const BIOS_t BIOS[] =
 			//ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" )
 			//{ 2, "epr-21578a.ic27", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
-			{ 1, "epr-21577h.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-21577h.ic27", 0x000000, 0x200000, 0xfdf17452 },
 			//ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" )
-			//{ 1, "epr-21577g.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-21577g.ic27", 0x000000, 0x200000, 0x25f64af7 },
 			//ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" )
 			//{ 1, "epr-21577e.ic27", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" )
@@ -122,7 +122,7 @@ const BIOS_t BIOS[] =
 			//ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" )
 			//{ 1, "epr-21577a.ic27", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" )
-			{ 3, "epr-21579d.ic27", 0x000000, 0x200000 },
+			{ 3, "epr-21579d.ic27", 0x000000, 0x200000, 0x33513691 },
 			//ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" )
 			//{ 3, "epr-21579.ic27",  0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
@@ -134,40 +134,30 @@ const BIOS_t BIOS[] =
 			//ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" )
 			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
-			//{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"naomigd",
-		{
-			//ROM_SYSTEM_BIOS( 0, "bios0", "epr-21576e (Japan)" )
-			//{ 0, "epr-21576e.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 1, "bios1", "epr-21576g (Japan)" )
-			//{ 0, "epr-21576g.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 2, "bios2", "epr-21576h (Japan)" )
-			{ 0, "epr-21576h.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 3, "bios3", "epr-21578h (Export)" )
-			{ 2, "epr-21578h.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 4, "bios4", "epr-21578g (Export)" )
-			//{ 0, "epr-21578g.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 5, "bios5", "epr-21578e (Export)" )
-			//{ 0, "epr-21578e.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 6, "bios6", "epr-21577h (USA)" )
-			{ 1, "epr-21577h.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 7, "bios7", "epr-21577g (USA)" )
-			//{ 0, "epr-21577g.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 8, "bios8", "epr-21577e (USA)" )
-			//{ 0, "epr-21577e.ic27",  0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
+			// The default dipswitch configuration selects Korea for the multiregion hacked BIOS
+			// See hw/maple/maple_jvs.cpp
+			{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000, 0xcce01f1f },
 		}
 	},
 	{
 		"naomi2",
 		{
-			{ 0, "epr-23605c.ic27", 0x000000, 0x200000 },
-			{ 1, "epr-23607c.ic27", 0x000000, 0x200000 },
-			{ 2, "epr-23608c.ic27", 0x000000, 0x200000 },
+			// epr-23605c (Japan)
+			{ 0, "epr-23605c.ic27", 0x000000, 0x200000, 0x297ea6ed },
+			// epr-23605b (Japan)
+			{ 0, "epr-23605b.ic27", 0x000000, 0x200000, 0x3a3242d4 },
+			// epr-23607c (USA)
+			{ 1, "epr-23607c.ic27", 0x000000, 0x200000, 0x750e254b },
+			// epr-23607b (USA)
+			{ 1, "epr-23607b.ic27", 0x000000, 0x200000, 0xf308c5e9 },
+			// epr-23608c (Export)
+			{ 2, "epr-23608c.ic27", 0x000000, 0x200000, 0x6ef1dd8e },
+			// epr-23608b (Export)
+			{ 2, "epr-23608b.ic27", 0x000000, 0x200000, 0xa554b1e3 },
+			// epr-23609b (Korea)
+			{ 3, "epr-23609b.ic27", 0x000000, 0x200000, 0x99e3751f },
+			// epr-23605c (multi-region hack)
+			{ 3, "epr-23605c_multi.ic27", 0x000000, 0x200000, 0x353fdbcd },
 		}
 	},
 	{
@@ -575,6 +565,59 @@ const Game Games[] =
             //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
 
             { NULL, 0, 0 },
+        }
+    },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)
+    {
+        "mushikk",
+        "mushike",
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)",
+        0x04000000,
+        0x3892fb3a,
+        nullptr,
+        M1,
+        ROT0,
+        {
+            { "epr-24265.ic11",      0x0000000, 0x0400000,  0xdccb210b },
+            { "opr-24266.ic17s",     0x1000000, 0x0800000,  0x293e5350, InterleavedWord },
+            { "opr-24267.ic18",      0x1000002, 0x0800000,  0x80798f9a, InterleavedWord },
+            { "opr-24268.ic19s",     0x2000000, 0x0800000,  0xb512c772, InterleavedWord },
+            { "opr-24269.ic20",      0x2000002, 0x0800000,  0x25d4a162, InterleavedWord },
+            { "opr-24270.ic21s",     0x3000000, 0x0800000,  0x02a513ad, InterleavedWord },
+            { "opr-24271.ic22",      0x3000002, 0x0800000,  0x7e5c745c, InterleavedWord },
+            { "copy",                0x0400000, 0x0c00000,  0, Copy, 0x1000000 },
+        }
+    },
+	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)
+    {
+        "mushikc",
+        "mushik2e",	// mame says mushike but the key pic is missing
+        "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)",
+        0x04000000,
+        0x5501,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "ic8.bin", 0x00000000, 0x04000000, 0x5edc61fb },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
+        }
+    },
+	// Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)
+	// require rev.H Korea BIOS, not dumped
+    {
+        "mushik2k",
+        "mushik2e",
+        "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)",
+		0x08000000,
+        0x5502,
+        nullptr,
+        M4,
+        ROT0,
+        {
+        	{ "fpr-24355.ic8", 0x00000000, 0x04000000, 0x8bd89229 },
+        	{ "fpr-24356.ic9", 0x04000000, 0x04000000, 0xed649c81 },
+            { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
         }
     },
     // Naomi M2/M3 Roms

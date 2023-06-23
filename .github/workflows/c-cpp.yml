@@ -33,7 +33,7 @@ jobs:
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update
           brew install libao ldid ninja pulseaudio
-          VULKAN_VER=1.3.243.0 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
+          VULKAN_VER=1.3.250.0 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
           hdiutil attach ./vulkansdk-macos-*.dmg
           sudo /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/VulkanSDK

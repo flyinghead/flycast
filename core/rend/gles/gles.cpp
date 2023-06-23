@@ -1142,10 +1142,10 @@ static void upload_vertex_indices()
 		short_idx.reserve(pvrrc.idx.size());
 		for (u32 i : pvrrc.idx)
 			short_idx.push_back(i);
-		gl.vbo.idxs->update(&short_idx[0], short_idx.size() * sizeof(u16));
+		gl.vbo.idxs->update(short_idx.data(), short_idx.size() * sizeof(u16));
 	}
 	else
-		gl.vbo.idxs->update(&pvrrc.idx[0], pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0])));
+		gl.vbo.idxs->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 	glCheck();
 }
 

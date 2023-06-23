@@ -466,6 +466,9 @@ bool BaseTextureCacheData::Delete()
 
 BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 {
+	if (tcw.VQ_Comp == 1 && tcw.MipMapped == 1)
+		// Star Wars Demolition
+		tcw.ScanOrder = 0;
 	this->tsp = tsp;
 	this->tcw = tcw;
 
@@ -490,16 +493,15 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	if (tcw.ScanOrder && (tex->PL || tex->PL32))
 	{
 		//Texture is stored 'planar' in memory, no deswizzle is needed
-		//verify(tcw.VQ_Comp==0);
 		if (tcw.VQ_Comp != 0)
 		{
 			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
-			tcw.VQ_Comp = 0;
+			this->tcw.VQ_Comp = 0;
 		}
 		if (tcw.MipMapped != 0)
 		{
 			WARN_LOG(RENDERER, "Warning: planar texture with mipmaps (invalid)");
-			tcw.MipMapped = 0;
+			this->tcw.MipMapped = 0;
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
@@ -521,8 +523,8 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	{
 		if (!IsPaletted())
 		{
-			tcw.ScanOrder = 0;
-			tcw.StrideSel = 0;
+			this->tcw.ScanOrder = 0;
+			this->tcw.StrideSel = 0;
 		}
 		// Quake 3 Arena uses one
 		if (tcw.MipMapped)

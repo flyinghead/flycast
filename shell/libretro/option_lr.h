@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <cstring>
+
 class Settings {
 public:
 	void reset() {}

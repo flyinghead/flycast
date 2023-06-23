@@ -539,7 +539,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
-			drawModVols<false>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
+			drawModVols<false>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
 
 			//
 			// PASS 2: Render OP and PT to opaque render target
@@ -575,9 +575,9 @@ struct DX11OITRenderer : public DX11Renderer
 			    {
 			    	// Intel Iris Plus 640 just crashes
 			    	if (current_pass.mv_op_tr_shared)
-			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
+			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
 			    	else
-			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, &pvrrc.global_param_mvo_tr[0]);
+			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
 			    }
 			}
 			else

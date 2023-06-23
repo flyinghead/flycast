@@ -2,7 +2,7 @@ Project: miniupnp
 Project web page: http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
 github: https://github.com/miniupnp/miniupnp
 Author: Thomas Bernard
-Copyright (c) 2005-2021 Thomas Bernard
+Copyright (c) 2005-2023 Thomas Bernard
 This software is subject to the conditions detailed in the
 LICENSE file provided within this distribution.
 
@@ -61,7 +61,7 @@ send me an email !
 For any question, you can use the web forum :
 https://miniupnp.tuxfamily.org/forum/
 
-Bugs should be reported on github :
+Bugs should be reported on GitHub :
 https://github.com/miniupnp/miniupnp/issues
 
 * Linux firewall configuration for UPnP clients *

@@ -361,19 +361,19 @@ void DX11Renderer::uploadGeometryBuffers()
 {
 	setFirstProvokingVertex(pvrrc);
 
-	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	size_t size = pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data()));
 	bool rc = ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, size);
 	verify(rc);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &pvrrc.verts[0], size);
+	memcpy(mappedSubres.pData, pvrrc.verts.data(), size);
 	deviceContext->Unmap(vertexBuffer, 0);
 
-	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	size = pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data()));
 	rc = ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, size);
 	verify(rc);
 	deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &pvrrc.idx[0], size);
+	memcpy(mappedSubres.pData, pvrrc.idx.data(), size);
 	deviceContext->Unmap(indexBuffer, 0);
 
 	if (config::ModifierVolumes && !pvrrc.modtrig.empty())

@@ -105,6 +105,17 @@ extern "C" int SDL_main(int argc, char *argv[])
         std::string config_dir = std::string(home) + "/.flycast/";
 		if (!file_exists(config_dir))
 			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
+		
+		/* Different config folder for multiple instances */
+		if (getppid() == 1)
+		{
+			int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] count];
+			if (instanceNumber > 1)
+			{
+				config_dir += std::to_string(instanceNumber) + "/";
+				[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+			}
+		}
 
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);

@@ -19,6 +19,8 @@
 #include "rzip.h"
 #include <zlib.h>
 
+#include <cstring>
+
 const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
 
 bool RZipFile::Open(const std::string& path, bool write)

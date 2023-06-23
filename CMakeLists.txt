@@ -145,6 +145,10 @@ elseif(LIBRETRO)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
+	if(APPLE)
+		find_library(FOUNDATION Foundation)
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${FOUNDATION})
+	endif()
 	if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
@@ -583,7 +587,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.cpp
 		core/deps/chdpsr/cdipsr.h)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
+add_subdirectory(core/deps/nowide)
+target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
+target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
 	if(NINTENDO_SWITCH)
@@ -594,9 +600,6 @@ if(NOT MINIUPNP_FOUND)
 		option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
 		option(UPNPC_NO_INSTALL "Disable installation" ON)
 		add_subdirectory(core/deps/miniupnpc)
-		if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-			set_property(TARGET libminiupnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -D_NETBSD_SOURCE")
-		endif()
 		if(WINDOWS_STORE)
 			get_target_property(miniupnpc-private-defs miniupnpc-private INTERFACE_COMPILE_DEFINITIONS)
 			list(REMOVE_ITEM miniupnpc-private-defs "_WIN32_WINNT=0x0501")
@@ -753,6 +756,9 @@ if(LIBRETRO)
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
 		shell/libretro/vmu_xhair.cpp)
+	if(APPLE)
+		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1735,6 +1741,8 @@ if(NINTENDO_SWITCH)
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:elf>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
 			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
 			COMMAND rm *.obj
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}

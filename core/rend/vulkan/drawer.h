@@ -146,7 +146,7 @@ protected:
 		vk::DeviceSize offset = -1;
 
 		size_t n2LightSize = sizeof(N2LightModel) + align(sizeof(N2LightModel), GetContext()->GetUniformBufferAlignment());
-		if (n2LightSize == sizeof(N2LightModel))
+		if (n2LightSize == sizeof(N2LightModel) && !pvrrc.lightModels.empty())
 		{
 			offset = packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
 		}

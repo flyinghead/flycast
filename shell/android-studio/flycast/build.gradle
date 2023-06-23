@@ -18,6 +18,7 @@ def getSentryUrl = { ->
 
 android {
     namespace 'com.reicast.emulator'
+    ndkVersion '23.1.7779620'
     compileSdk 29
 
     defaultConfig {

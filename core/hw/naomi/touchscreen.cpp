@@ -22,6 +22,8 @@
 #include "hw/maple/maple_cfg.h"
 #include "input/gamepad.h"
 #include "serialize.h"
+
+#include <algorithm>
 #include <deque>
 #include <memory>
 
