@@ -154,6 +154,13 @@ private:
 	ComPtr<ID3D11Texture2D> fbScaledTexture;
 	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
 	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
+#ifdef VIDEO_ROUTING
+	void RenderVideoRouting();
+	ComPtr<ID3D11Texture2D> vrStagingTexture;
+	ComPtr<ID3D11ShaderResourceView> vrStagingTextureSRV;
+	ComPtr<ID3D11Texture2D> vrScaledTexture;
+	ComPtr<ID3D11RenderTargetView> vrScaledRenderTarget;
+#endif
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 

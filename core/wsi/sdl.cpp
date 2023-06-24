@@ -134,6 +134,9 @@ void SDLGLGraphicsContext::initVideoRouting()
 #ifdef TARGET_MAC
 		extern void os_VideoRoutingInitSyphonWithGLContext(void* glContext);
 		os_VideoRoutingInitSyphonWithGLContext(glcontext);
+#elif defined(_WIN32)
+		extern void os_VideoRoutingInitSpout();
+		os_VideoRoutingInitSpout();
 #endif
 	}
 }

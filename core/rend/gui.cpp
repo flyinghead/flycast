@@ -2146,11 +2146,18 @@ static void gui_display_settings()
 #ifdef VIDEO_ROUTING
 #ifdef __APPLE__
 			header("Video Routing (Syphon)");
+#elif defined(_WIN32)
+			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
 #endif
 			{
 #ifdef __APPLE__
 				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
 								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#elif defined(_WIN32)
+				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
+				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#endif
 				{
 					GraphicsContext::Instance()->initVideoRouting();
 				}
