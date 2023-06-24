@@ -42,7 +42,7 @@ public:
 	bool init();
 	void term() override;
 	void swap();
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
 	void initVideoRouting() override;
 #endif
 

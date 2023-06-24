@@ -106,7 +106,7 @@ Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
-#if TARGET_MAC
+#ifdef VIDEO_ROUTING
 Option<bool> VideoRouting("rend.VideoRouting", false);
 Option<bool> VideoRoutingScale("rend.VideoRoutingScale", false);
 Option<int> VideoRoutingVRes("rend.VideoRoutingVRes", 720);

@@ -117,22 +117,24 @@ bool SDLGLGraphicsContext::init()
 	eglGetError();
 #endif
 	
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
 	initVideoRouting();
 #endif
 
 	return true;
 }
 
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
 void SDLGLGraphicsContext::initVideoRouting()
 {
-	extern void os_SyphonTermGLServer();
-	extern void os_SyphonInitGLWithContext(void* glContext);
-	os_SyphonTermGLServer();
+	extern void os_VideoRoutingTermGL();
+	os_VideoRoutingTermGL();
 	if (config::VideoRouting)
 	{
-		os_SyphonInitGLWithContext(glcontext);
+#ifdef TARGET_MAC
+		extern void os_VideoRoutingInitSyphonWithGLContext(void* glContext);
+		os_VideoRoutingInitSyphonWithGLContext(glcontext);
+#endif
 	}
 }
 #endif

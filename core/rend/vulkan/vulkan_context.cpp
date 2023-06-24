@@ -544,15 +544,15 @@ bool VulkanContext::InitDevice()
 	return false;
 }
 
-#ifdef TARGET_MAC
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 void VulkanContext::initVideoRouting()
 {
-	extern void os_SyphonTermMtlServer();
-	extern void os_SyphonInitMtlWithDevice(const vk::UniqueDevice& device);
-	os_SyphonTermMtlServer();
+	extern void os_VideoRoutingTermVk();
+	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
+	os_VideoRoutingTermVk();
 	if (config::VideoRouting)
 	{
-		os_SyphonInitMtlWithDevice(device);
+		os_VideoRoutingInitSyphonWithVkDevice(device);
 	}
 }
 #endif
@@ -987,14 +987,14 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
 			
-#ifdef TARGET_MAC
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 			if (config::VideoRouting)
 			{
 				vk::Image srcImage = device->getSwapchainImagesKHR(*swapChain)[currentImage];
-				extern void os_SyphonPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
-				int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * getOutputFramebufferAspectRatio() : settings.display.width);
+				int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
 				int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
-				os_SyphonPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
+				extern void os_VideoRoutingPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
+				os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
 			}
 #endif
 			
@@ -1051,9 +1051,9 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
-#ifdef TARGET_MAC
-	extern void os_SyphonTermMtlServer();
-	os_SyphonTermMtlServer();
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	os_VideoRoutingTermVk();
 #endif
 #ifndef USE_SDL
 	surface.reset();

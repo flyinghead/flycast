@@ -2143,25 +2143,29 @@ static void gui_display_settings()
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
+#ifdef __APPLE__
 			header("Video Routing (Syphon)");
+#endif
 			{
+#ifdef __APPLE__
 				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
-							   "e.g. Route GPU texture to OBS Studio directly instead of using Display/Window Capture"))
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
 				{
 					GraphicsContext::Instance()->initVideoRouting();
 				}
-				if (config::VideoRouting)
 				{
-					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture");
-					if (config::VideoRoutingScale)
+					DisabledScope scope(!config::VideoRouting);
+					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
 					{
+						DisabledScope scope(!config::VideoRoutingScale);
 						static int vres = config::VideoRoutingVRes;
-						if( ImGui::InputInt("Output vertical resolution", &vres, ImGuiInputTextFlags_EnterReturnsTrue) )
+						if( ImGui::InputInt("Output vertical resolution", &vres) )
 						{
 							config::VideoRoutingVRes = vres;
 						}
 					}
+					ImGui::Text("Output texture size: %d x %d", config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
 				}
 			}
 #endif

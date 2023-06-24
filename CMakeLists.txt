@@ -1641,6 +1641,7 @@ if(NOT LIBRETRO)
 					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
 					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Resources/)
 			endif()
+			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
 
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm

@@ -56,9 +56,9 @@ void GLGraphicsContext::preTerm()
 #ifndef LIBRETRO
 	imguiDriver.reset();
 #endif
-#ifdef TARGET_MAC
-	extern void os_SyphonTermGLServer();
-	os_SyphonTermGLServer();
+#ifdef VIDEO_ROUTING
+	extern void os_VideoRoutingTermGL();
+	os_VideoRoutingTermGL();
 #endif
 	
 	instance = nullptr;

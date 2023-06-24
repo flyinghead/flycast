@@ -305,11 +305,11 @@ struct gl_ctx
 		bool ready = false;
 	} ofbo2;
 
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
 	struct
 	{
 		std::unique_ptr<GlFramebuffer> framebuffer;
-	} syphon;
+	} videorouting;
 #endif
 
 	const char *gl_version;

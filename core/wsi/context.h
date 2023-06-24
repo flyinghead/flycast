@@ -34,7 +34,7 @@ public:
 	virtual std::string getDriverName() = 0;
 	virtual std::string getDriverVersion() = 0;
 	virtual bool hasPerPixel() { return false; }
-#ifdef TARGET_MAC
+#ifdef VIDEO_ROUTING
 	virtual void initVideoRouting() {}
 #endif
 
