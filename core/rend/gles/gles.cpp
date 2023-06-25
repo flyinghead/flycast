@@ -1414,7 +1414,15 @@ bool OpenGLRenderer::Render()
 		gl.ofbo2.ready = false;
 	}
 	
+	RenderVideoRouting();
+	restoreCurrentFramebuffer();
+
+	return true;
+}
+
 #ifdef VIDEO_ROUTING
+void OpenGLRenderer::RenderVideoRouting()
+{
 	if (config::VideoRouting)
 	{
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.origFbo);
@@ -1428,12 +1436,8 @@ bool OpenGLRenderer::Render()
 		extern void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h);
 		os_VideoRoutingPublishFrameTexture(gl.videorouting.framebuffer->getTexture(), GL_TEXTURE_2D, targetWidth, targetHeight);
 	}
-#endif
-	
-	restoreCurrentFramebuffer();
-
-	return true;
 }
+#endif
 
 Renderer* rend_GLES2()
 {
