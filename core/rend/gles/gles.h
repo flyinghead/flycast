@@ -561,6 +561,7 @@ protected:
 	bool frameRendered = false;
 	int width = 640;
 	int height = 480;
+	void initVideoRoutingFrameBuffer();
 };
 
 void initQuad();

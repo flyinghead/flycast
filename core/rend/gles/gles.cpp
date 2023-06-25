@@ -1152,18 +1152,7 @@ static void upload_vertex_indices()
 
 bool OpenGLRenderer::renderFrame(int width, int height)
 {
-#ifdef VIDEO_ROUTING
-	if (config::VideoRouting)
-	{
-		int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
-		int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
-		if (gl.videorouting.framebuffer != nullptr
-			&& (gl.videorouting.framebuffer->getWidth() != targetWidth || gl.videorouting.framebuffer->getHeight() != targetHeight))
-			gl.videorouting.framebuffer.reset();
-		if (gl.videorouting.framebuffer == nullptr)
-			gl.videorouting.framebuffer = std::make_unique<GlFramebuffer>(targetWidth, targetHeight, true, true);
-	}
-#endif
+	initVideoRoutingFrameBuffer();
 	
 	bool is_rtt = pvrrc.isRTT;
 
@@ -1390,6 +1379,22 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	GlVertexArray::unbind();
 
 	return !is_rtt;
+}
+
+void OpenGLRenderer::initVideoRoutingFrameBuffer()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
+		int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+		if (gl.videorouting.framebuffer != nullptr
+			&& (gl.videorouting.framebuffer->getWidth() != targetWidth || gl.videorouting.framebuffer->getHeight() != targetHeight))
+			gl.videorouting.framebuffer.reset();
+		if (gl.videorouting.framebuffer == nullptr)
+			gl.videorouting.framebuffer = std::make_unique<GlFramebuffer>(targetWidth, targetHeight, true, true);
+	}
+#endif
 }
 
 void OpenGLRenderer::Term()
