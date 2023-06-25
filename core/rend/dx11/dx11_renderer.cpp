@@ -1312,16 +1312,8 @@ void DX11Renderer::RenderVideoRouting()
 		// Backbuffer texture would be different after reszing, fetching new address everytime
 		ID3D11Resource* pResource = nullptr;
 		pRenderTargetView->GetResource(&pResource);
-		ID3D11Texture2D* pTexture = nullptr;
-		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&pTexture);
-
-		static ID3D11Texture2D* backBufferTexture = nullptr;
-		if (backBufferTexture != pTexture)
-		{
-			backBufferTexture = pTexture;
-		}
-		pTexture->Release();
-		pResource->Release();
+		ID3D11Texture2D* backBufferTexture = nullptr;
+		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&backBufferTexture);		
 		
 		if (config::VideoRoutingScale)
 		{
@@ -1383,6 +1375,9 @@ void DX11Renderer::RenderVideoRouting()
 		} else {
 			os_VideoRoutingPublishFrameTexture(backBufferTexture);
 		}
+
+		backBufferTexture->Release();
+		pResource->Release();
 	}
 }
 #endif
