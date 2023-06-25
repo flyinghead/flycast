@@ -517,7 +517,7 @@ bool VulkanContext::InitDevice()
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
 		
-#if TARGET_MAC
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 		initVideoRouting();
 #endif
 #else
@@ -645,7 +645,7 @@ void VulkanContext::CreateSwapChain()
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#if defined(TEST_AUTOMATION) || defined(TARGET_MAC)
+#if defined(TEST_AUTOMATION) || (defined(VIDEO_ROUTING) && defined(TARGET_MAC))
 			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif

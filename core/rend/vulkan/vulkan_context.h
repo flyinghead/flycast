@@ -61,7 +61,7 @@ public:
 	void Present() noexcept;
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
-#ifdef TARGET_MAC
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 	void initVideoRouting() override;
 #endif
 
