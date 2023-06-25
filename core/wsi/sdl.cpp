@@ -117,10 +117,8 @@ bool SDLGLGraphicsContext::init()
 	eglGetError();
 #endif
 	
-#ifdef VIDEO_ROUTING
 	initVideoRouting();
-#endif
-
+	
 	return true;
 }
 

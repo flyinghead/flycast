@@ -33,13 +33,7 @@ class DX11Context : public GraphicsContext
 {
 public:
 	bool init(bool keepCurrentWindow = false);
-#ifdef VIDEO_ROUTING
 	void initVideoRouting() override;
-	ComPtr<ID3D11Texture2D> vrStagingTexture;
-	ComPtr<ID3D11ShaderResourceView> vrStagingTextureSRV;
-	ComPtr<ID3D11Texture2D> vrScaledTexture;
-	ComPtr<ID3D11RenderTargetView> vrScaledRenderTarget;
-#endif
 	void term() override;
 	void EndImGuiFrame();
 	void Present();

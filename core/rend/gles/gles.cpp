@@ -445,9 +445,7 @@ void termGLCommon()
 	gl.dcfb.tex = 0;
 	gl.ofbo2.framebuffer.reset();
 	gl.fbscaling.framebuffer.reset();
-#ifdef VIDEO_ROUTING
 	gl.videorouting.framebuffer.reset();
-#endif
 #ifdef LIBRETRO
 	postProcessor.term();
 	termVmuLightgun();

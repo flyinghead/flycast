@@ -161,9 +161,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 			NOTICE_LOG(RENDERER, "No system-provided shader cache");
 	}
 
-#ifdef VIDEO_ROUTING
 	initVideoRouting();
-#endif
 
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver(pDevice, pDeviceContext));
 	resize();

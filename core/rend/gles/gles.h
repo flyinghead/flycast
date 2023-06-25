@@ -305,12 +305,10 @@ struct gl_ctx
 		bool ready = false;
 	} ofbo2;
 
-#ifdef VIDEO_ROUTING
 	struct
 	{
 		std::unique_ptr<GlFramebuffer> framebuffer;
 	} videorouting;
-#endif
 
 	const char *gl_version;
 	const char *glsl_version_header;

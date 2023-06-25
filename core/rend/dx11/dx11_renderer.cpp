@@ -185,12 +185,10 @@ void DX11Renderer::Term()
 	quad.reset();
 	deviceContext.reset();
 	device.reset();
-#ifdef VIDEO_ROUTING
 	vrStagingTexture.reset();
 	vrStagingTextureSRV.reset();
 	vrScaledTexture.reset();
 	vrScaledRenderTarget.reset();
-#endif
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
@@ -466,9 +464,7 @@ bool DX11Renderer::Render()
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
 		DrawOSD(false);
-#ifdef VIDEO_ROUTING
 		RenderVideoRouting();
-#endif
 		theDX11Context.setFrameRendered();
 #else
 		ID3D11RenderTargetView *nullView = nullptr;
@@ -969,9 +965,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
-#ifdef VIDEO_ROUTING
 	RenderVideoRouting();
-#endif
 	theDX11Context.setFrameRendered();
 #else
 	ID3D11RenderTargetView *nullView = nullptr;

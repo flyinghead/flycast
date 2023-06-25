@@ -62,6 +62,7 @@ struct Renderer
 	virtual bool Render() = 0;
 	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
 	virtual bool RenderLastFrame() { return false; }
+	virtual void RenderVideoRouting() {}
 
 	virtual bool Present() { return true; }
 
