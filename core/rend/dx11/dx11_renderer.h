@@ -38,9 +38,6 @@ struct DX11Renderer : public Renderer
 	void Process(TA_context* ctx) override;
 	bool Render() override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
-#ifdef VIDEO_ROUTING
-	void RenderVideoRouting() override;
-#endif
 
 	bool Present() override
 	{
@@ -99,6 +96,7 @@ protected:
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
+	void renderVideoRouting();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;

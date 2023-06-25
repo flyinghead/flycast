@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "vulkan_context.h"
+#include "vulkan_renderer.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
@@ -542,9 +543,9 @@ bool VulkanContext::InitDevice()
 	return false;
 }
 
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 void VulkanContext::initVideoRouting()
 {
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 	extern void os_VideoRoutingTermVk();
 	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
 	os_VideoRoutingTermVk();
@@ -552,8 +553,8 @@ void VulkanContext::initVideoRouting()
 	{
 		os_VideoRoutingInitSyphonWithVkDevice(device);
 	}
-}
 #endif
+}
 
 void VulkanContext::CreateSwapChain()
 {
@@ -984,7 +985,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
-			renderer->RenderVideoRouting();
+			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
 			
 		} catch (const InvalidVulkanContext& err) {
 		}

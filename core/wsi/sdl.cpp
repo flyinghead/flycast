@@ -122,9 +122,9 @@ bool SDLGLGraphicsContext::init()
 	return true;
 }
 
-#ifdef VIDEO_ROUTING
 void SDLGLGraphicsContext::initVideoRouting()
 {
+#ifdef VIDEO_ROUTING
 	extern void os_VideoRoutingTermGL();
 	os_VideoRoutingTermGL();
 	if (config::VideoRouting)
@@ -137,8 +137,8 @@ void SDLGLGraphicsContext::initVideoRouting()
 		os_VideoRoutingInitSpout();
 #endif
 	}
-}
 #endif
+}
 
 void SDLGLGraphicsContext::swap()
 {

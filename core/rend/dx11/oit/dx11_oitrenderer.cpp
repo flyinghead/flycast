@@ -667,7 +667,7 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 			displayFramebuffer();
 			DrawOSD(false);
-			RenderVideoRouting();
+			renderVideoRouting();
 			theDX11Context.setFrameRendered();
 #else
 			ID3D11RenderTargetView *nullView = nullptr;

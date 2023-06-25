@@ -173,9 +173,9 @@ bool DX11Context::init(bool keepCurrentWindow)
 	return success;
 }
 
-#ifdef VIDEO_ROUTING
 void DX11Context::initVideoRouting()
 {
+	#ifdef VIDEO_ROUTING
 	extern void os_VideoRoutingTermDX();
 	extern void os_VideoRoutingInitSpoutDXWithDevice(ID3D11Device* pDevice);
 	os_VideoRoutingTermDX();
@@ -183,8 +183,8 @@ void DX11Context::initVideoRouting()
 	{
 		os_VideoRoutingInitSpoutDXWithDevice(pDevice.get());
 	}
+	#endif
 }
-#endif
 
 void DX11Context::term()
 {

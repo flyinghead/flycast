@@ -671,7 +671,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 			gl.ofbo2.ready = false;
 			frameRendered = true;
 		}
-		RenderVideoRouting();
+		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;

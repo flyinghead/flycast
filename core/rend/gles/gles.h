@@ -513,9 +513,6 @@ struct OpenGLRenderer : Renderer
 
 		return ret;
 	}
-#ifdef VIDEO_ROUTING
-	void RenderVideoRouting() override;
-#endif
 
 	void DrawOSD(bool clear_screen) override;
 
@@ -553,6 +550,7 @@ protected:
 	}
 
 	bool renderLastFrame();
+	void renderVideoRouting();
 
 private:
 	bool renderFrame(int width, int height);

@@ -464,7 +464,7 @@ bool DX11Renderer::Render()
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
 		DrawOSD(false);
-		RenderVideoRouting();
+		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
 		ID3D11RenderTargetView *nullView = nullptr;
@@ -965,7 +965,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
-	RenderVideoRouting();
+	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
 	ID3D11RenderTargetView *nullView = nullptr;
@@ -1300,9 +1300,9 @@ void DX11Renderer::writeFramebufferToVRAM()
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
 }
 
-#ifdef VIDEO_ROUTING
-void DX11Renderer::RenderVideoRouting()
+void DX11Renderer::renderVideoRouting()
 {
+#ifdef VIDEO_ROUTING
 	if (config::VideoRouting)
 	{
 		extern void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture);
@@ -1379,8 +1379,8 @@ void DX11Renderer::RenderVideoRouting()
 		backBufferTexture->Release();
 		pResource->Release();
 	}
-}
 #endif
+}
 
 Renderer *rend_DirectX11()
 {

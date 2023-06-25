@@ -232,10 +232,10 @@ public:
 		fbCommandPool.EndFrame();
 		framebufferRendered = true;
 	}
-
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
-	void RenderVideoRouting() override
+	
+	void RenderVideoRouting()
 	{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 		if (config::VideoRouting)
 		{
 			auto device = GetContext()->GetDevice();
@@ -248,8 +248,9 @@ public:
 			extern void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
 			os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
 		}
-	}
 #endif
+	}
+
 
 protected:
 	BaseVulkanRenderer() : viewport(640, 480) {}
