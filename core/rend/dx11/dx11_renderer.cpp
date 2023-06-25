@@ -1314,15 +1314,14 @@ void DX11Renderer::RenderVideoRouting()
 		pRenderTargetView->GetResource(&pResource);
 		ID3D11Texture2D* pTexture = nullptr;
 		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&pTexture);
-		pResource->Release();
-		pTexture->Release();
 
 		static ID3D11Texture2D* backBufferTexture = nullptr;
-
 		if (backBufferTexture != pTexture)
 		{
 			backBufferTexture = pTexture;
 		}
+		pTexture->Release();
+		pResource->Release();
 		
 		if (config::VideoRoutingScale)
 		{
