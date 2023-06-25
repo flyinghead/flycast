@@ -517,9 +517,7 @@ bool VulkanContext::InitDevice()
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
 		
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
 		initVideoRouting();
-#endif
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -986,17 +984,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
-			
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
-			if (config::VideoRouting)
-			{
-				vk::Image srcImage = device->getSwapchainImagesKHR(*swapChain)[currentImage];
-				int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
-				int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
-				extern void os_VideoRoutingPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
-				os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
-			}
-#endif
+			renderer->RenderVideoRouting();
 			
 		} catch (const InvalidVulkanContext& err) {
 		}

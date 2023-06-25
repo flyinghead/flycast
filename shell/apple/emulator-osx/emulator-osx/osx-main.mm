@@ -240,13 +240,13 @@ void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device)
 	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
 }
 
-void os_VideoRoutingPublishFrameTexture(const vk::UniqueDevice& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
+void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
 {
 	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
 	auto commandInfo = vk::ExportMetalCommandQueueInfoEXT(queue);
 	commandInfo.pNext = &textureInfo;
 	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&commandInfo);
-	device->exportMetalObjectsEXT(&objectsInfo);
+	device.exportMetalObjectsEXT(&objectsInfo);
 	
 	auto commandBuffer = [commandInfo.mtlCommandQueue commandBufferWithUnretainedReferences];
 	[syphonMtlServer publishFrameTexture:textureInfo.mtlTexture onCommandBuffer:commandBuffer imageRegion:NSMakeRect(x, y, w, h) flipped:YES];
