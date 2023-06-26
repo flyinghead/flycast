@@ -940,26 +940,31 @@ void gdxsv_replay_server_tab() {
 		{
 			DisabledScope loading_scope(!future_is_ready(fetch_replay_entry_future_));
 			{
-				DisabledScope scope(entry_paging == 0);
-				if (ImGui::Button("Prev Page") && !scope.isDisabled()){
-					entry_paging--;
-					snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-					FetchTargetPage();
+				{
+					DisabledScope scope(entry_paging == 0);
+					if (ImGui::Button("Prev Page") && !scope.isDisabled()){
+						entry_paging--;
+						snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
+						FetchTargetPage();
+					}
 				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Next Page")) {
-				entry_paging++;
-				snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-				FetchTargetPage();
-			}
-			
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(60.f * scaling);
-			if (ImGui::InputText("##page_input", page_buf, IM_ARRAYSIZE(page_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterNumber)) {
-				entry_paging = atoi(page_buf) - 1;
-				if (entry_paging < 0) entry_paging = 0;
-				FetchTargetPage();
+				{
+					ImGui::SameLine();
+					DisabledScope scope(future_is_ready(fetch_replay_entry_future_) && fetch_replay_entry_future_.get().size() < 100);
+					if (ImGui::Button("Next Page")) {
+						entry_paging++;
+						snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
+						FetchTargetPage();
+					}
+					
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f * scaling);
+					if (ImGui::InputText("##page_input", page_buf, IM_ARRAYSIZE(page_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterNumber)) {
+						entry_paging = atoi(page_buf) - 1;
+						if (entry_paging < 0) entry_paging = 0;
+						FetchTargetPage();
+					}
+				}
 			}
 		}
 	}
