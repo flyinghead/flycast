@@ -533,9 +533,21 @@ void FetchUserJSON() {
 	fetch_user_entry_future_ = std::async(std::launch::async, future_fn).share();
 }
 
-void FetchNewResults(){
+static char page_buf[4] = "1";
+void FetchNewResults(bool reset_page = true)
+{
+	if (reset_page)
+	{
+		entry_paging = 0;
+		snprintf(page_buf, sizeof(page_buf), "%d", 1);
+	}
 	selected_replay_entry_index = -1;
 	fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
+}
+
+void FetchTargetPage()
+{
+	FetchNewResults(false);
 }
 
 template<typename Callable>
@@ -925,7 +937,6 @@ void gdxsv_replay_server_tab() {
 		windowDragScroll();
 		ImGui::EndChild();
 		
-		static char page_buf[4] = "1";
 		{
 			DisabledScope loading_scope(!future_is_ready(fetch_replay_entry_future_));
 			{
@@ -933,14 +944,14 @@ void gdxsv_replay_server_tab() {
 				if (ImGui::Button("Prev Page") && !scope.isDisabled()){
 					entry_paging--;
 					snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-					FetchNewResults();
+					FetchTargetPage();
 				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Next Page")) {
 				entry_paging++;
 				snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-				FetchNewResults();
+				FetchTargetPage();
 			}
 			
 			ImGui::SameLine();
@@ -948,7 +959,7 @@ void gdxsv_replay_server_tab() {
 			if (ImGui::InputText("##page_input", page_buf, IM_ARRAYSIZE(page_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterNumber)) {
 				entry_paging = atoi(page_buf) - 1;
 				if (entry_paging < 0) entry_paging = 0;
-				FetchNewResults();
+				FetchTargetPage();
 			}
 		}
 	}
