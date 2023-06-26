@@ -3,6 +3,7 @@
 */
 #include "types.h"
 
+#include "emulator.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -11,7 +12,6 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
 #include "hw/sh4/dyna/decoder.h"
-#include "debug/debug_agent.h"
 
 
 #ifdef STRICT_MODE
