@@ -754,6 +754,7 @@ void gdxsv_replay_server_tab() {
 						if (ImGui::Selectable(lobby_data[i][language].c_str(), is_selected)) {
 							lobby_selected = i;
 							search_lobby_id = lobby_data[i][3];
+							FetchNewResults();
 						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
