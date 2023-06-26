@@ -37,11 +37,11 @@ public:
 		deviceContext.reset();
 	}
 
-	void setConstants(const PolyParam& pp, u32 polyNumber);
+	void setConstants(const PolyParam& pp, u32 polyNumber, const rend_context& ctx);
 	void setConstants(const float *mvMatrix, const float *projMatrix);
 
 	void resetCache() {
-		lastModel = (N2LightModel *)1;
+		lastModel = -1;
 	}
 
 private:
@@ -57,5 +57,5 @@ private:
 	ComPtr<ID3D11DeviceContext> deviceContext;
 	ComPtr<ID3D11Buffer> polyConstantsBuffer;
 	ComPtr<ID3D11Buffer> lightConstantsBuffer;
-	const N2LightModel *lastModel;
+	int lastModel;
 };

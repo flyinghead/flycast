@@ -20,7 +20,7 @@
 */
 #include "vulkan_context.h"
 #include "imgui/imgui.h"
-#include "imgui_impl_vulkan.h"
+#include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
@@ -37,6 +37,8 @@
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
+
+#include <memory>
 
 void ReInitOSD();
 
@@ -494,12 +496,12 @@ bool VulkanContext::InitDevice()
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
-	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
-	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, false));
-	    quadPipelineWithAlpha = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
-	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
-	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	    shaderManager = std::make_unique<ShaderManager>();
+	    quadPipeline = std::make_unique<QuadPipeline>(true, false);
+	    quadPipelineWithAlpha = std::make_unique<QuadPipeline>(false, false);
+	    quadDrawer = std::make_unique<QuadDrawer>();
+	    quadRotatePipeline = std::make_unique<QuadPipeline>(true, true);
+	    quadRotateDrawer = std::make_unique<QuadDrawer>();
 
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
@@ -786,8 +788,8 @@ bool VulkanContext::init()
 #else
 #error "Unknown Vulkan platform"
 #endif
-	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
-	textureCache = std::unique_ptr<TextureCache>(new TextureCache());
+	overlay = std::make_unique<VulkanOverlay>();
+	textureCache = std::make_unique<TextureCache>();
 
 	return InitDevice();
 }
@@ -887,12 +889,18 @@ void VulkanContext::Present() noexcept
 
 void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	QuadVertex vtx[] = {
-		{ { -1, -1, 0 }, { 0, 0 } },
-		{ {  1, -1, 0 }, { 1, 0 } },
-		{ { -1,  1, 0 }, { 0, 1 } },
-		{ {  1,  1, 0 }, { 1, 1 } },
+	QuadVertex vtx[] {
+		{ -1, -1, 0, 0, 0 },
+		{  1, -1, 0, 1, 0 },
+		{ -1,  1, 0, 0, 1 },
+		{  1,  1, 0, 1, 1 },
 	};
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	vtx[0].x = vtx[2].x = -1.f + shiftX * 2.f / extent.width;
+	vtx[1].x = vtx[3].x = vtx[0].x + 2;
+	vtx[0].y = vtx[1].y = -1.f + shiftY * 2.f / extent.height;
+	vtx[2].y = vtx[3].y = vtx[0].y + 2;
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
 	if (config::Rotate90)

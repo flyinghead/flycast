@@ -1,8 +1,11 @@
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
-project (miniupnpc C)
+project (miniupnpc
+         VERSION 2.2.5
+         DESCRIPTION "UPnP IGD client lightweight library"
+         HOMEPAGE_URL https://miniupnp.tuxfamily.org/
+         LANGUAGES C)
 
-set (MINIUPNPC_VERSION 2.2.3)
 set (MINIUPNPC_API_VERSION 17)
 
 option (UPNPC_BUILD_STATIC "Build static library" TRUE)
@@ -29,9 +32,12 @@ if (NOT WIN32)
   target_compile_definitions(miniupnpc-private INTERFACE
     MINIUPNPC_SET_SOCKET_TIMEOUT
     _BSD_SOURCE _DEFAULT_SOURCE)
-  if (NOT APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  if (NOT APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES ".*BSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     # add_definitions (-D_POSIX_C_SOURCE=200112L)
     target_compile_definitions(miniupnpc-private INTERFACE _XOPEN_SOURCE=600)
+  endif ()
+  if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+    target_compile_definitions(miniupnpc-private INTERFACE _NETBSD_SOURCE)
   endif ()
 else ()
   target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
@@ -99,7 +105,7 @@ if (UPNPC_BUILD_STATIC)
     add_library (miniupnpc::miniupnpc ALIAS libminiupnpc-static)
   endif()
   set_target_properties (libminiupnpc-static PROPERTIES EXPORT_NAME miniupnpc)
-  if (WIN32)
+  if (WIN32 AND NOT MINGW)
     set_target_properties (libminiupnpc-static PROPERTIES OUTPUT_NAME "libminiupnpc")
   else()
     set_target_properties (libminiupnpc-static PROPERTIES OUTPUT_NAME "miniupnpc")
@@ -130,6 +136,10 @@ if (UPNPC_BUILD_STATIC)
     add_executable (upnpc-static src/upnpc.c)
     target_link_libraries (upnpc-static PRIVATE libminiupnpc-static)
     target_include_directories(upnpc-static PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    if (NOT UPNPC_NO_INSTALL)
+      install (TARGETS upnpc-static
+               RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
   endif ()
 endif ()
 
@@ -141,7 +151,7 @@ if (UPNPC_BUILD_SHARED)
   add_library (miniupnpc::miniupnpc ALIAS libminiupnpc-shared)
   set_target_properties (libminiupnpc-shared PROPERTIES EXPORT_NAME miniupnpc)
   set_target_properties (libminiupnpc-shared PROPERTIES OUTPUT_NAME "miniupnpc")
-  set_target_properties (libminiupnpc-shared PROPERTIES VERSION ${MINIUPNPC_VERSION})
+  set_target_properties (libminiupnpc-shared PROPERTIES VERSION ${PROJECT_VERSION})
   set_target_properties (libminiupnpc-shared PROPERTIES SOVERSION ${MINIUPNPC_API_VERSION})
   target_link_libraries (libminiupnpc-shared PRIVATE miniupnpc-private)
   target_compile_definitions(libminiupnpc-shared PRIVATE MINIUPNP_EXPORTS)
@@ -167,11 +177,19 @@ if (UPNPC_BUILD_SHARED)
     add_executable (upnpc-shared src/upnpc.c)
     target_link_libraries (upnpc-shared PRIVATE libminiupnpc-shared)
     target_include_directories(upnpc-shared PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    if (NOT UPNPC_NO_INSTALL)
+      install (TARGETS upnpc-shared
+               RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
   endif ()
 
   add_executable (listdevices src/listdevices.c)
   target_link_libraries (listdevices PRIVATE libminiupnpc-shared)
   target_include_directories(listdevices PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  if (NOT UPNPC_NO_INSTALL)
+    install (TARGETS listdevices
+             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endif ()
 
 if (UPNPC_BUILD_TESTS)
@@ -216,8 +234,44 @@ if (UPNPC_BUILD_TESTS)
   )
   target_link_libraries (testaddr_is_reserved PRIVATE miniupnpc-tests)
 
+  add_executable (testportlistingparse src/testportlistingparse.c
+                                       src/minixml.c src/portlistingparse.c)
+  target_include_directories (testportlistingparse PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+  target_link_libraries (testportlistingparse PRIVATE miniupnpc-tests)
+
+  add_executable (minihttptestserver src/minihttptestserver.c)
+
 # set (UPNPC_INSTALL_TARGETS ${UPNPC_INSTALL_TARGETS} testminixml minixmlvalid testupnpreplyparse testigddescparse testminiwget)
+  include(CTest)
+  add_test(NAME validateminixml
+           COMMAND minixmlvalid)
+  add_test(NAME validateminiwget
+           COMMAND ${CMAKE_SOURCE_DIR}/testminiwget.sh)
+  set_property(TEST validateminiwget
+               PROPERTY ENVIRONMENT
+               TESTSERVER=${CMAKE_BINARY_DIR}/minihttptestserver
+               TESTMINIWGET=${CMAKE_BINARY_DIR}/testminiwget)
+  add_test(NAME validateupnpreplyparse
+           COMMAND ${CMAKE_SOURCE_DIR}/testupnpreplyparse.sh
+           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  set_property(TEST validateupnpreplyparse
+               PROPERTY ENVIRONMENT
+               TESTUPNPREPLYPARSE=${CMAKE_BINARY_DIR}/testupnpreplyparse)
+  add_test(NAME validateportlistingparse
+           COMMAND testportlistingparse)
+  add_test(NAME validateigddescparse1
+           COMMAND testigddescparse new_LiveBox_desc.xml new_LiveBox_desc.values
+           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/testdesc)
+  add_test(NAME validateigddescparse2
+           COMMAND testigddescparse linksys_WAG200G_desc.xml linksys_WAG200G_desc.values
+           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/testdesc)
+  add_test(NAME validateaddr_is_reserved
+           COMMAND testaddr_is_reserved)
+
 endif ()
+
+configure_file(miniupnpc.pc.in miniupnpc.pc @ONLY)
 
 if (NOT UPNPC_NO_INSTALL)
   install (FILES
@@ -231,11 +285,23 @@ if (NOT UPNPC_NO_INSTALL)
     include/miniupnpctypes.h
     include/portlistingparse.h
     include/miniupnpc_declspec.h
-    DESTINATION include/miniupnpc
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/miniupnpc
   )
 
   install(FILES miniupnpc-config.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/miniupnpc
+  )
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/miniupnpc.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  )
+
+  install(FILES man3/miniupnpc.3
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man3
+  )
+
+  install(FILES external-ip.sh
+    TYPE BIN
   )
 endif()
 

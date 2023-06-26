@@ -25,7 +25,10 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
+
+namespace aica
+{
 
 namespace dsp
 {
@@ -379,8 +382,13 @@ void recompile()
 
 void recInit()
 {
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
+	if (!virtmem::prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
 		die("mprotect failed in x86 dsp");
+}
+
+void recTerm()
+{
+	pCodeBuffer = nullptr;
 }
 
 void runStep()
@@ -388,5 +396,6 @@ void runStep()
 	((void (*)())&CodeBuffer[0])();
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

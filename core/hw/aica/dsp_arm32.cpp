@@ -23,9 +23,12 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
-#include "hw/mem/_vmem.h"
+#include "oslib/virtmem.h"
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
+
+namespace aica
+{
 
 namespace dsp
 {
@@ -295,7 +298,7 @@ public:
 
 		FinalizeCode();
 
-		vmem_platform_flush_cache(
+		virtmem::flush_cache(
 			GetBuffer()->GetStartAddress<char*>(), GetBuffer()->GetEndAddress<char*>(),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
@@ -407,8 +410,12 @@ void recompile()
 void recInit()
 {
 	u8 *pCodeBuffer;
-	bool rc = vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
+	bool rc = virtmem::prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer);
 	verify(rc);
+}
+
+void recTerm()
+{
 }
 
 void runStep()
@@ -416,5 +423,6 @@ void runStep()
 	((void (*)())DynCode)();
 }
 
-}
+} // namespace dsp
+} // namespace aica
 #endif

@@ -3,13 +3,9 @@
 #include "types.h"
 
 #ifndef __ANDROID__
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
-#ifdef __linux__
-	raise(SIGTRAP);
-#elif defined(_WIN32)
-	__debugbreak();
-#endif
+	std::abort();
 }
 
 #ifdef _WIN32
@@ -37,6 +33,10 @@ void os_DoEvents()
 void os_CreateWindow()
 {
 }
+
+void os_RunInstance(int argc, const char *argv[])
+{
+}
 #endif
 
 void os_LaunchFromURL(const std::string& url)
@@ -54,6 +54,7 @@ struct UploadField {
 	std::string content_type;
 	std::string field_value;
 };
+#include <vector>
 int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
 {
 	//Not implemented

@@ -9,12 +9,13 @@
 #include "blockmanager.h"
 #include "ngen.h"
 
-#include "../sh4_core.h"
+#include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/mmu.h"
-
+#include "oslib/virtmem.h"
 
 #if defined(__unix__) && defined(DYNA_OPROF)
 #include <opagent.h>
@@ -66,35 +67,39 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 			// This should make this syscall faster
 			r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
 			next_pc = pr;
+			Sh4cntx.cycle_counter -= 100;
 			break;
 
 		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
 			{
+				bool isRam;
+				u64 *ptr;
 				u32 paddr;
-				if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
+				if (rdv_writeMemImmediate(r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
 				{
-					_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
+					*ptr = sh4_sched_now64() >> 4;
 					r[0] = 1;
 					next_pc = pr;
+					Sh4cntx.cycle_counter -= 100;
 				}
 				else
 				{
-					Do_Exception(addr, 0xE0, 0x100);
+					Do_Exception(addr, Sh4Ex_AddressErrorRead);
 				}
 			}
 			break;
 #endif
 
 		default:
-			Do_Exception(addr, 0xE0, 0x100);
+			Do_Exception(addr, Sh4Ex_AddressErrorRead);
 			break;
 		}
 		addr = next_pc;
 	}
 
 	u32 paddr;
-	u32 rv = mmu_instruction_translation(addr, paddr);
-	if (rv != MMU_ERROR_NONE)
+	MmuError rv = mmu_instruction_translation(addr, paddr);
+	if (rv != MmuError::NONE)
 	{
 		DoMMUException(addr, rv, MMU_TT_IREAD);
 		mmu_instruction_translation(next_pc, paddr);
@@ -232,51 +237,51 @@ void bm_Reset()
 	protected_blocks = 0;
 	unprotected_blocks = 0;
 
-	if (_nvmem_enabled())
+	if (addrspace::virtmemEnabled())
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
 		// so we have to unlock each region individually
 		if (settings.platform.ram_size == 16 * 1024 * 1024)
 		{
-			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-			mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
-			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-			mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0C000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0D000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0E000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0F000000, RAM_SIZE);
 		}
 		else
 		{
-			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0C000000, RAM_SIZE);
+			virtmem::region_unlock(addrspace::ram_base + 0x0E000000, RAM_SIZE);
 		}
 	}
 	else
 	{
-		mem_region_unlock(&mem_b[0], RAM_SIZE);
+		virtmem::region_unlock(&mem_b[0], RAM_SIZE);
 	}
 }
 
 void bm_LockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (_nvmem_enabled())
-		mem_region_lock(virt_ram_base + 0x0C000000 + addr, size);
+	if (addrspace::virtmemEnabled())
+		virtmem::region_lock(addrspace::ram_base + 0x0C000000 + addr, size);
 	else
-		mem_region_lock(&mem_b[addr], size);
+		virtmem::region_lock(&mem_b[addr], size);
 }
 
 void bm_UnlockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (_nvmem_enabled())
-		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, size);
+	if (addrspace::virtmemEnabled())
+		virtmem::region_unlock(addrspace::ram_base + 0x0C000000 + addr, size);
 	else
-		mem_region_unlock(&mem_b[addr], size);
+		virtmem::region_unlock(&mem_b[addr], size);
 }
 
 void bm_ResetCache()
 {
 	ngen_ResetBlocks();
-	_vmem_bm_reset();
+	addrspace::bm_reset();
 
 	for (const auto& it : blkmap)
 	{
@@ -500,7 +505,7 @@ void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
 
 void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
 {
-	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
+	auto it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())
 		pre_refs.erase(it);
 }
@@ -567,11 +572,8 @@ void bm_RamWriteAccess(u32 addr)
 {
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
-	{
-		//ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
-		//die("Fatal error");
 		return;
-	}
+
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
 	std::set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
@@ -582,20 +584,18 @@ void bm_RamWriteAccess(u32 addr)
 		if (!list_copy.empty())
 			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
 		for (auto& block : list_copy)
-		{
 			bm_DiscardBlock(block);
-		}
 		verify(block_list.empty());
 	}
 }
 
 u32 bm_getRamOffset(void *p)
 {
-	if (_nvmem_enabled())
+	if (addrspace::virtmemEnabled())
 	{
-		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
+		if ((u8 *)p < addrspace::ram_base || (u8 *)p >= addrspace::ram_base + 0x20000000)
 			return -1;
-		u32 addr = (u8*)p - virt_ram_base;
+		u32 addr = (u8*)p - addrspace::ram_base;
 		if (!IsOnRam(addr))
 			return -1;
 		return addr & RAM_MASK;
@@ -662,8 +662,6 @@ void print_blocks()
 			fprintf(f,"block: %p\n",blk.get());
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
-			fprintf(f,"hash: %s\n",blk->hash());
-			fprintf(f,"hash_rloc: %s\n",blk->hash());
 			fprintf(f,"code: %p\n",blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);

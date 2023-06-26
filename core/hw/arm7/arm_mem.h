@@ -2,11 +2,17 @@
 #include "types.h"
 #include "hw/aica/aica_if.h"
 
-template <typename T> T arm_ReadReg(u32 addr);
-template <typename T> void arm_WriteReg(u32 addr, T data);
+namespace aica
+{
+
+namespace arm
+{
+
+template <typename T> T readReg(u32 addr);
+template <typename T> void writeReg(u32 addr, T data);
 
 template<typename T>
-static inline T DYNACALL ReadMemArm(u32 addr)
+static inline T DYNACALL readMem(u32 addr)
 {
 	addr &= 0x00FFFFFF;
 	if (addr < 0x800000)
@@ -23,12 +29,12 @@ static inline T DYNACALL ReadMemArm(u32 addr)
 	}
 	else
 	{
-		return arm_ReadReg<T>(addr);
+		return readReg<T>(addr);
 	}
 }
 
 template<typename T>
-static inline void DYNACALL WriteMemArm(u32 addr, T data)
+static inline void DYNACALL writeMem(u32 addr, T data)
 {
 	addr &= 0x00FFFFFF;
 	if (addr < 0x800000)
@@ -37,17 +43,9 @@ static inline void DYNACALL WriteMemArm(u32 addr, T data)
 	}
 	else
 	{
-		arm_WriteReg(addr, data);
+		writeReg(addr, data);
 	}
 }
-
-#define arm_ReadMem8 ReadMemArm<u8>
-#define arm_ReadMem16 ReadMemArm<u16>
-#define arm_ReadMem32 ReadMemArm<u32>
-
-#define arm_WriteMem8 WriteMemArm<u8>
-#define arm_WriteMem16 WriteMemArm<u16>
-#define arm_WriteMem32 WriteMemArm<u32>
 
 extern bool aica_interr;
 extern u32 aica_reg_L;
@@ -56,4 +54,7 @@ extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
 void update_armintc();
-void libARM_InterruptChange(u32 bits, u32 L);
+void interruptChange(u32 bits, u32 L);
+
+} // namespace arm
+} // namespace aica

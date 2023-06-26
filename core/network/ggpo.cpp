@@ -45,10 +45,14 @@ static void getLocalInput(MapleInputState inputState[4])
 		state.kcode = kcode[player];
 		state.halfAxes[PJTI_L] = lt[player];
 		state.halfAxes[PJTI_R] = rt[player];
+		state.halfAxes[PJTI_L2] = lt2[player];
+		state.halfAxes[PJTI_R2] = rt2[player];
 		state.fullAxes[PJAI_X1] = joyx[player];
 		state.fullAxes[PJAI_Y1] = joyy[player];
 		state.fullAxes[PJAI_X2] = joyrx[player];
 		state.fullAxes[PJAI_Y2] = joyry[player];
+		state.fullAxes[PJAI_X3] = joy3x[player];
+		state.fullAxes[PJAI_Y3] = joy3y[player];
 		state.mouseButtons = mo_buttons[player];
 		state.absPos.x = mo_x_abs[player];
 		state.absPos.y = mo_y_abs[player];
@@ -97,8 +101,8 @@ using namespace std::chrono;
 constexpr int MAX_PLAYERS = 4;
 constexpr int SERVER_PORT = 19713;
 
-constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
-constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
+constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_BITMAPPED_LAST << 1;
+constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_BITMAPPED_LAST << 2;
 
 #pragma pack(push, 1)
 struct VerificationData
@@ -182,17 +186,23 @@ struct Inputs
 	} u;
 };
 static_assert(sizeof(Inputs) == 12, "wrong Inputs size");
+static_assert(BTN_TRIGGER_RIGHT < (1 << 20));
 
 struct GameEvent
 {
 	enum : char {
 		Chat,
+		VF4Card
 	} type;
 	union {
 		struct {
 			u8 playerNum;
 			char message[512 - sizeof(playerNum) - sizeof(type)];
 		} chat;
+		struct {
+			u8 playerNum;
+			u8 data[128];
+		} card;
 	} u;
 
 	constexpr static int chatMessageLen(int len) { return len - sizeof(u.chat.playerNum) - sizeof(type); }
@@ -469,6 +479,10 @@ static void on_message(u8 *msg, int len)
 			chatCallback(event->u.chat.playerNum, std::string(event->u.chat.message, GameEvent::chatMessageLen(len)));
 		break;
 
+	case GameEvent::VF4Card:
+		setRfidCardData(event->u.card.playerNum, event->u.card.data);
+		break;
+
 	default:
 		WARN_LOG(NETWORK, "Unknown app message type %d", event->type);
 		break;
@@ -527,7 +541,7 @@ void startSession(int localPort, int localPlayerNum)
 		absPointerPos = false;
 		keyboardGame = false;
 		mouseGame = false;
-		if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+		if (settings.input.lightgunGame)
 			absPointerPos = true;
 		else if (settings.input.JammaSetup == JVS::Keyboard)
 			keyboardGame = true;
@@ -877,6 +891,21 @@ std::future<bool> startNetwork()
 			getInput(state);
 		}
 #endif
+		if (active() && (settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN"
+				|| settings.content.gameId == "VF4 EVOLUTION JAPAN"
+				|| settings.content.gameId == "VF4 FINAL TUNED JAPAN"))
+		{
+			// Send the local P1 card
+			const u8 *cardData = getRfidCardData(0);
+			if (cardData != nullptr)
+			{
+				GameEvent event;
+				event.type = GameEvent::VF4Card;
+				event.u.card.playerNum = config::ActAsServer ? 0 : 1;
+				memcpy(event.u.card.data, cardData, sizeof(event.u.card.data));
+				ggpo_send_message(ggpoSession, &event, sizeof(event.type) + sizeof(event.u.card), true);
+			}
+		}
 		emu.setNetworkState(active());
 		return active();
 	});

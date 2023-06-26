@@ -5,10 +5,12 @@
 
 #include "hw/naomi/naomi.h"
 #include "cfg/option.h"
+#include "modules.h"
 
-BSC_PDTRA_type BSC_PDTRA;
+BSCRegisters bsc;
 
-static void write_BSC_PCTRA(u32 addr, u32 data)
+template<typename T>
+static void write_BSC_PCTRA(u32 addr, T data)
 {
 	BSC_PCTRA.full = data;
 	if (settings.platform.isNaomi())
@@ -18,16 +20,16 @@ static void write_BSC_PCTRA(u32 addr, u32 data)
 }
 
 //u32 port_out_data;
-static void write_BSC_PDTRA(u32 addr, u32 data)
+static void write_BSC_PDTRA(u32 addr, u16 data)
 {
-	BSC_PDTRA.full = (u16)data;
-	//printf("D:BSC_PDTRA = %04x\n", (u16)data);
+	BSC_PDTRA.full = data;
+	//printf("D:BSC_PDTRA = %04x\n", data);
 
 	if (settings.platform.isNaomi())
-		NaomiBoardIDWrite((u16)data);
+		NaomiBoardIDWrite(data);
 }
 
-static u32 read_BSC_PDTRA(u32 addr)
+static u16 read_BSC_PDTRA(u32 addr)
 {
 	if (settings.platform.isNaomi())
 	{
@@ -38,20 +40,20 @@ static u32 read_BSC_PDTRA(u32 addr)
 		/* as seen on chankast */
 		u32 tpctra = BSC_PCTRA.full;
 		u32 tpdtra = BSC_PDTRA.full;
-		
-		u32 tfinal=0;
+
+		u16 tfinal = 0;
 		// magic values
 		if ((tpctra & 0xf) == 0x8)
 			tfinal = 3;
 		else if ((tpctra & 0xf) == 0xB)
 			tfinal = 3;
-		else			
+		else
 			tfinal = 0;
 
 		if ((tpctra & 0xf) == 0xB && (tpdtra & 0xf) == 2)
 			tfinal = 0;
 		else if ((tpctra & 0xf) == 0xC && (tpdtra & 0xf) == 2)
-			tfinal = 3;      
+			tfinal = 3;
 
 		tfinal |= config::Cable << 8;
 
@@ -59,61 +61,67 @@ static u32 read_BSC_PDTRA(u32 addr)
 	}
 }
 
-//Init term res
-void bsc_init()
+void BSCRegisters::init()
 {
+	super::init();
+
 	//BSC BCR1 0xFF800000 0x1F800000 32 0x00000000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_BCR1_addr, 0x033efffd>();
+	setRW<BSC_BCR1_addr, u32, 0x033efffd>();
 
 	//BSC BCR2 0xFF800004 0x1F800004 16 0x3FFC Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_BCR2_addr, 0x3ffd>();
+	setRW<BSC_BCR2_addr, u16, 0x3ffd>();
 
 	//BSC WCR1 0xFF800008 0x1F800008 32 0x77777777 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_WCR1_addr, 0x77777777>();
+	setRW<BSC_WCR1_addr, u32, 0x77777777>();
 
 	//BSC WCR2 0xFF80000C 0x1F80000C 32 0xFFFEEFFF Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_WCR2_addr, 0xfffeefff>();
+	setRW<BSC_WCR2_addr, u32, 0xfffeefff>();
 
 	//BSC WCR3 0xFF800010 0x1F800010 32 0x07777777 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_WCR3_addr, 0x07777777>();
+	setRW<BSC_WCR3_addr, u32, 0x07777777>();
 
 	//BSC MCR 0xFF800014 0x1F800014 32 0x00000000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_MCR_addr, 0xf8bbffff>();
+	setRW<BSC_MCR_addr, u32, 0xf8bbffff>();
 
 	//BSC PCR 0xFF800018 0x1F800018 16 0x0000 Held Held Held Bclk
-	sh4_rio_reg16<BSC, BSC_PCR_addr>();
+	setRW<BSC_PCR_addr, u16>();
 
 	//BSC RTCSR 0xFF80001C 0x1F80001C 16 0x0000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_RTCSR_addr, 0x00ff>();
+	setRW<BSC_RTCSR_addr, u16, 0x00ff>();
 
 	//BSC RTCNT 0xFF800020 0x1F800020 16 0x0000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_RTCNT_addr, 0x00ff>();
+	setRW<BSC_RTCNT_addr, u16, 0x00ff>();
 
 	//BSC RTCOR 0xFF800024 0x1F800024 16 0x0000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_RTCOR_addr, 0x00ff>();
+	setRW<BSC_RTCOR_addr, u16, 0x00ff>();
 
 	//BSC RFCR 0xFF800028 0x1F800028 16 0x0000 Held Held Held Bclk
-	// forced to 0x17 to help naomi/aw boot
-	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO);
+	// forced to 17 to help naomi/aw boot
+	setReadOnly<BSC_RFCR_addr, u16>();
 
 	//BSC PCTRA 0xFF80002C 0x1F80002C 32 0x00000000 Held Held Held Bclk
-	sh4_rio_reg(BSC, BSC_PCTRA_addr, RIO_WF, nullptr, write_BSC_PCTRA);
+	// Naomi BIOS writes u16 in this register but ignoring them doesn't seem to hurt
+	setWriteHandler<BSC_PCTRA_addr>(write_BSC_PCTRA<u32>);
 
 	//BSC PDTRA 0xFF800030 0x1F800030 16 Undefined Held Held Held Bclk
-	sh4_rio_reg(BSC, BSC_PDTRA_addr, RIO_FUNC, read_BSC_PDTRA, write_BSC_PDTRA);
+	setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA, write_BSC_PDTRA);
 
 	//BSC PCTRB 0xFF800040 0x1F800040 32 0x00000000 Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_PCTRB_addr, 0x000000ff>();
+	setRW<BSC_PCTRB_addr, u32, 0x000000ff>();
 
 	//BSC PDTRB 0xFF800044 0x1F800044 16 Undefined Held Held Held Bclk
-	sh4_rio_reg_wmask<BSC, BSC_PDTRB_addr, 0x000f>();
+	setRW<BSC_PDTRB_addr, u16, 0x000f>();
 
 	//BSC GPIOIC 0xFF800048 0x1F800048 16 0x00000000 Held Held Held Bclk
-	sh4_rio_reg16<BSC, BSC_GPIOIC_addr>();
+	setRW<BSC_GPIOIC_addr, u16>();
+
+	reset();
 }
 
-void bsc_reset(bool hard)
+void BSCRegisters::reset()
 {
+	super::reset();
+
 	/*
 	BSC BCR1 H'FF80 0000 H'1F80 0000 32 H'0000 0000*2 Held Held Held Bclk
 	BSC BCR2 H'FF80 0004 H'1F80 0004 16 H'3FFC*2 Held Held Held Bclk
@@ -135,28 +143,10 @@ void bsc_reset(bool hard)
 	BSC SDMR2 H'FF90 xxxx H'1F90 xxxx 8 Write-only Bclk
 	BSC SDMR3 H'FF94 xxxx H'1F94 xxxx 8 Bclk
 	*/
-	BSC_BCR1.full = 0;
 	BSC_BCR2.full = 0x3FFC;
 	BSC_WCR1.full = 0x77777777;
 	BSC_WCR2.full = 0xFFFEEFFF;
 	BSC_WCR3.full = 0x07777777;
 
-	BSC_MCR.full = 0;
-	BSC_PCR.full = 0;
-	BSC_RTCSR.full = 0;
-	BSC_RTCNT.full = 0;
-	BSC_RTCOR.full = 0;
-	BSC_PCTRA.full = 0;
-	if (hard)
-		BSC_PDTRA.full = 0;
-	BSC_PCTRB.full = 0;
-	if (hard)
-		BSC_PDTRB.full = 0;
-	BSC_GPIOIC.full = 0;
-
 	BSC_RFCR.full = 17;
-}
-
-void bsc_term()
-{
 }

@@ -4,7 +4,7 @@
 #include "hw/sh4/sh4_if.h"
 
 //vram 32-64b
-extern VArray2 vram;
+extern RamRegion vram;
 
 //regs
 u32 pvr_ReadReg(u32 addr);

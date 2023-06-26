@@ -166,20 +166,8 @@ ROM board internal layouts:
 
 u32 AWCartridge::ReadMem(u32 address, u32 size) {
 	verify(size != 1);
-	switch(address & 255)
+	switch (address)
 	{
-//	case AW_EPR_OFFSETH_addr:
-//		break;
-//	case AW_EPR_OFFSETL_addr:
-//		break;
-//	case AW_MPR_RECORD_INDEX_addr:
-//		break;
-//	case AW_MPR_FIRST_FILE_INDEX_addr:
-//		break;
-//	case AW_MPR_FILE_OFFSETH_addr:
-//		break;
-//	case AW_MPR_FILE_OFFSETL_addr:
-//		break;
 	case AW_PIO_DATA_addr:
 		{
 			u32 roffset = epr_offset & 0x3ffffff;
@@ -197,7 +185,7 @@ u32 AWCartridge::ReadMem(u32 address, u32 size) {
 
 void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 {
-	switch(address & 255)
+	switch (address)
 	{
 	case AW_EPR_OFFSETH_addr:
 		epr_offset = (epr_offset & 0x0000ffff) | (data << 16);

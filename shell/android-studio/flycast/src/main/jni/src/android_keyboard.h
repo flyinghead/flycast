@@ -560,22 +560,21 @@ const u8 AndroidKeycodes[] {
         0,
 };
 
-class AndroidKeyboard : public KeyboardDeviceTemplate<int>
+class AndroidKeyboard : public KeyboardDevice
 {
 public:
-    AndroidKeyboard(int maple_port = 0) : KeyboardDeviceTemplate(maple_port, "Android")
+    AndroidKeyboard(int maple_port = 0) : KeyboardDevice(maple_port, "Android")
     {
         _unique_id = "android_keyboard";
         if (!find_mapping())
             input_mapper = getDefaultMapping();
     }
 
-protected:
-    u8 convert_keycode(int keycode) override
-    {
-        if (keycode < 0 || keycode >= ARRAY_SIZE(AndroidKeycodes))
-            return 0;
-        else
-            return AndroidKeycodes[keycode];
+	void input(int androidKeycode, bool pressed)
+	{
+		u8 keycode = 0;
+		if (androidKeycode >= 0 && androidKeycode < std::size(AndroidKeycodes))
+			keycode = AndroidKeycodes[androidKeycode];
+		KeyboardDevice::input(keycode, pressed, 0);
     }
 };

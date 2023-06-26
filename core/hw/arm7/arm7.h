@@ -1,15 +1,19 @@
 #pragma once
 #include "types.h"
 
-namespace aicaarm {
+namespace aica
+{
+
+namespace arm
+{
 
 void init();
+void term();
 void reset();
 void run(u32 samples);
 void enable(bool enabled);
 // Called when the arm interrupts the SH4 to make sure it has enough cycles to finish what it's doing.
 void avoidRaceCondition();
-}
 
 enum Arm7Reg
 {
@@ -102,5 +106,13 @@ alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 #define ARM_CYCLES_PER_SAMPLE (AICA_ARM_CLOCK / 44100)
 extern int arm7ClockTicks;
 
+extern bool armIrqEnable;
+extern bool armFiqEnable;
+extern int armMode;
+extern bool Arm7Enabled;
+
 void CPUFiq();
 void CPUUpdateCPSR();
+
+} // namespace arm
+} // namespace aica

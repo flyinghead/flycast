@@ -1,7 +1,7 @@
 #ifndef LIBRETRO
 #include "types.h"
 #include "emulator.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "cfg/cfg.h"
 #include "cfg/option.h"
 #include "log/LogManager.h"
@@ -24,15 +24,19 @@ int flycast_init(int argc, char* argv[])
 	setbuf(stderr, 0);
 	settings.aica.muteAudio = true;
 #endif
-	if (!_vmem_reserve())
+	if (!addrspace::reserve())
 	{
 		ERROR_LOG(VMEM, "Failed to alloc mem");
 		return -1;
 	}
-	if (ParseCommandLine(argc, argv))
+	ParseCommandLine(argc, argv);
+	if (cfgLoadInt("naomi", "BoardId", 0) != 0)
 	{
-        return 69;
+		settings.naomi.multiboard = true;
+		settings.naomi.slave = true;
 	}
+	settings.naomi.drivingSimSlave = cfgLoadInt("naomi", "DrivingSimSlave", 0);
+
 	config::Settings::instance().reset();
 	LogManager::Shutdown();
 	if (!cfgOpen())
@@ -67,7 +71,9 @@ int flycast_init(int argc, char* argv[])
 
 void dc_exit()
 {
-	emu.stop();
+	try {
+		emu.stop();
+	} catch (...) { }
 	mainui_stop();
 }
 
@@ -155,8 +161,6 @@ void dc_loadstate(int index)
 {
 	u32 total_size = 0;
 	FILE *f = nullptr;
-
-	emu.stop();
 
 	std::string filename = hostfs::getSavestatePath(index, false);
 	RZipFile zipFile;

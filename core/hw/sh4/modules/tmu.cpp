@@ -6,16 +6,17 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mmr.h"
-
+#include "serialize.h"
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
 
-u32 tmu_shift[3];
-u32 tmu_mask[3];
-u64 tmu_mask64[3];
+TMURegisters tmu;
+static u32 tmu_shift[3];
+static u32 tmu_mask[3];
+static u64 tmu_mask64[3];
 
-u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
+static u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
 
 static const InterruptID tmu_intID[3] = { sh4_TMU0_TUNI0, sh4_TMU1_TUNI1, sh4_TMU2_TUNI2 };
 int tmu_sched[3];
@@ -49,7 +50,7 @@ void UpdateTMU_chan(u32 clc)
 			TMU_TCNT(ch) = TMU_TCOR(ch);
 			//raise the interrupt
 			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch],1);
+			InterruptPend(tmu_intID[ch], true);
 			
 			//remove the full underflows (possible because we only check every 448 cycles)
 			//this can be done with a div, but its very very very rare so this is probably faster
@@ -73,8 +74,8 @@ void UpdateTMU_i(u32 Cycles)
 }
 #endif
 
-u32 tmu_ch_base[3];
-u64 tmu_ch_base64[3];
+static u32 tmu_ch_base[3];
+static u64 tmu_ch_base64[3];
 
 static u32 read_TMU_TCNTch(u32 ch)
 {
@@ -188,7 +189,7 @@ static void UpdateTMUCounts(u32 reg)
 
 //Write to status registers
 template<int ch>
-static void TMU_TCR_write(u32 addr, u32 data)
+static void TMU_TCR_write(u32 addr, u16 data)
 {
 	if (ch == 2)
 		TMU_TCR(ch) = data & 0x03ff;
@@ -209,7 +210,7 @@ static void TMU_TCPR2_write(u32 addr, u32 data)
 	INFO_LOG(SH4, "Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d", data);
 }
 
-static void write_TMU_TSTR(u32 addr, u32 data)
+static void write_TMU_TSTR(u32 addr, u8 data)
 {
 	TMU_TSTR = data & 7;
 
@@ -229,7 +230,7 @@ static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 		if (tcnt64 <= jitter) {
 			//raise interrupt, timer counted down
 			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch], 1);
+			InterruptPend(tmu_intID[ch], true);
 			
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
@@ -252,63 +253,65 @@ static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 }
 
 //Init/Res/Term
-void tmu_init()
+void TMURegisters::init()
 {
+	super::init();
+
 	//TMU TOCR 0xFFD80000 0x1FD80000 8 0x00 0x00 Held Held Pclk
-	sh4_rio_reg_wmask<TMU, TMU_TOCR_addr, 1>();
+	setRW<TMU_TOCR_addr, u8, 1>();
 
 	//TMU TSTR 0xFFD80004 0x1FD80004 8 0x00 0x00 Held 0x00 Pclk
-	sh4_rio_reg(TMU, TMU_TSTR_addr, RIO_WF, nullptr, write_TMU_TSTR);
+	setWriteHandler<TMU_TSTR_addr>(write_TMU_TSTR);
 
 	//TMU TCOR0 0xFFD80008 0x1FD80008 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCOR0_addr, RIO_DATA);
+	setRW<TMU_TCOR0_addr>();
 
 	//TMU TCNT0 0xFFD8000C 0x1FD8000C 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCNT0_addr, RIO_FUNC, read_TMU_TCNT<0>, write_TMU_TCNT<0>);
+	setHandlers<TMU_TCNT0_addr>(read_TMU_TCNT<0>, write_TMU_TCNT<0>);
 
 	//TMU TCR0 0xFFD80010 0x1FD80010 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCR0_addr, RIO_WF, nullptr, TMU_TCR_write<0>);
+	setWriteHandler<TMU_TCR0_addr>(TMU_TCR_write<0>);
 
 	//TMU TCOR1 0xFFD80014 0x1FD80014 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCOR1_addr, RIO_DATA);
+	setRW<TMU_TCOR1_addr>();
 
 	//TMU TCNT1 0xFFD80018 0x1FD80018 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCNT1_addr, RIO_FUNC, read_TMU_TCNT<1>, write_TMU_TCNT<1>);
+	setHandlers<TMU_TCNT1_addr>(read_TMU_TCNT<1>, write_TMU_TCNT<1>);
 
 	//TMU TCR1 0xFFD8001C 0x1FD8001C 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCR1_addr, RIO_WF, nullptr, TMU_TCR_write<1>);
+	setWriteHandler<TMU_TCR1_addr>(TMU_TCR_write<1>);
 
 	//TMU TCOR2 0xFFD80020 0x1FD80020 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCOR2_addr, RIO_DATA);
+	setRW<TMU_TCOR2_addr>();
 
 	//TMU TCNT2 0xFFD80024 0x1FD80024 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCNT2_addr, RIO_FUNC, read_TMU_TCNT<2>, write_TMU_TCNT<2>);
+	setHandlers<TMU_TCNT2_addr>(read_TMU_TCNT<2>, write_TMU_TCNT<2>);
 	
 	//TMU TCR2 0xFFD80028 0x1FD80028 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCR2_addr, RIO_WF, nullptr, TMU_TCR_write<2>);
+	setWriteHandler<TMU_TCR2_addr>(TMU_TCR_write<2>);
 
 	//TMU TCPR2 0xFFD8002C 0x1FD8002C 32 Held Held Held Held Pclk
-	sh4_rio_reg(TMU, TMU_TCPR2_addr, RIO_FUNC, &TMU_TCPR2_read, &TMU_TCPR2_write);
+	setHandlers<TMU_TCPR2_addr>(TMU_TCPR2_read, TMU_TCPR2_write);
 
-	for (int i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < std::size(tmu_sched); i++)
 		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
+
+	reset();
 }
 
 
-void tmu_reset(bool hard)
+void TMURegisters::reset()
 {
-	if (hard)
-	{
-		memset(tmu_shift, 0, sizeof(tmu_shift));
-		memset(tmu_mask, 0, sizeof(tmu_mask));
-		memset(tmu_mask64, 0, sizeof(tmu_mask64));
-		memset(old_mode, 0xFF, sizeof(old_mode));
-		memset(tmu_ch_base, 0, sizeof(tmu_ch_base));
-		memset(tmu_ch_base64, 0, sizeof(tmu_ch_base64));
-	}
-	TMU_TOCR = TMU_TSTR = 0;
+	super::reset();
+
+	memset(tmu_shift, 0, sizeof(tmu_shift));
+	memset(tmu_mask, 0, sizeof(tmu_mask));
+	memset(tmu_mask64, 0, sizeof(tmu_mask64));
+	memset(old_mode, 0xFF, sizeof(old_mode));
+	memset(tmu_ch_base, 0, sizeof(tmu_ch_base));
+	memset(tmu_ch_base64, 0, sizeof(tmu_ch_base64));
+
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
-	TMU_TCR(0) = TMU_TCR(1) = TMU_TCR(2) = 0;
 
 	UpdateTMUCounts(0);
 	UpdateTMUCounts(1);
@@ -320,11 +323,32 @@ void tmu_reset(bool hard)
 		write_TMU_TCNTch(i, 0xffffffff);
 }
 
-void tmu_term()
+void TMURegisters::term()
 {
+	super::term();
 	for (int& sched_id : tmu_sched)
 	{
 		sh4_sched_unregister(sched_id);
 		sched_id = -1;
 	}
+}
+
+void TMURegisters::serialize(Serializer& ser)
+{
+	ser << tmu_shift;
+	ser << tmu_mask;
+	ser << tmu_mask64;
+	ser << old_mode;
+	ser << tmu_ch_base;
+	ser << tmu_ch_base64;
+}
+
+void TMURegisters::deserialize(Deserializer& deser)
+{
+	deser >> tmu_shift;
+	deser >> tmu_mask;
+	deser >> tmu_mask64;
+	deser >> old_mode;
+	deser >> tmu_ch_base;
+	deser >> tmu_ch_base64;
 }

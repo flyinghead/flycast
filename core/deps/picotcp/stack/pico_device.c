@@ -270,7 +270,8 @@ static void pico_queue_destroy(struct pico_queue *q)
 
 void pico_device_destroy(struct pico_device *dev)
 {
-
+	pico_queue_deinit(dev->q_in);
+	pico_queue_deinit(dev->q_out);
     pico_queue_destroy(dev->q_in);
     pico_queue_destroy(dev->q_out);
 

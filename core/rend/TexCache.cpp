@@ -3,7 +3,7 @@
 #include "../gdxsv/gdxsv_CustomTexture.h"
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 
 #include <algorithm>
 #include <mutex>
@@ -159,9 +159,9 @@ void palette_update()
 			break;
 		}
 	}
-	for (int i = 0; i < 64; i++)
+	for (std::size_t i = 0; i < std::size(pal_hash_16); i++)
 		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
-	for (int i = 0; i < 4; i++)
+	for (std::size_t i = 0; i < std::size(pal_hash_256); i++)
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
@@ -201,7 +201,7 @@ static void vramlock_list_add(vram_block* block)
 		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
 		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
-			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
+			addrspace::protectVram(i * PAGE_SIZE, PAGE_SIZE);
 		auto it = std::find(list.begin(), list.end(), nullptr);
 		if (it != list.end())
 			*it = block;
@@ -238,7 +238,7 @@ bool VramLockedWriteOffset(size_t offset)
 		}
 		list.clear();
 
-		_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
+		addrspace::unprotectVram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
 	}
 
 	return true;
@@ -246,7 +246,7 @@ bool VramLockedWriteOffset(size_t offset)
 
 bool VramLockedWrite(u8* address)
 {
-	u32 offset = _vmem_get_vram_offset(address);
+	u32 offset = addrspace::getVramOffset(address);
 	if (offset == (u32)-1)
 		return false;
 	return VramLockedWriteOffset(offset);
@@ -467,6 +467,9 @@ bool BaseTextureCacheData::Delete()
 
 BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 {
+	if (tcw.VQ_Comp == 1 && tcw.MipMapped == 1)
+		// Star Wars Demolition
+		tcw.ScanOrder = 0;
 	this->tsp = tsp;
 	this->tcw = tcw;
 
@@ -491,16 +494,15 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	if (tcw.ScanOrder && (tex->PL || tex->PL32))
 	{
 		//Texture is stored 'planar' in memory, no deswizzle is needed
-		//verify(tcw.VQ_Comp==0);
 		if (tcw.VQ_Comp != 0)
 		{
 			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
-			tcw.VQ_Comp = 0;
+			this->tcw.VQ_Comp = 0;
 		}
 		if (tcw.MipMapped != 0)
 		{
 			WARN_LOG(RENDERER, "Warning: planar texture with mipmaps (invalid)");
-			tcw.MipMapped = 0;
+			this->tcw.MipMapped = 0;
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
@@ -522,8 +524,8 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	{
 		if (!IsPaletted())
 		{
-			tcw.ScanOrder = 0;
-			tcw.StrideSel = 0;
+			this->tcw.ScanOrder = 0;
+			this->tcw.StrideSel = 0;
 		}
 		// Quake 3 Arena uses one
 		if (tcw.MipMapped)
@@ -992,7 +994,7 @@ void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CT
 			break;
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0);
+				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0);
 				p += 4;
 			}
 			break;
@@ -1090,7 +1092,7 @@ void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_C
 				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
 						| (roundColor<5>(p[Green]) << 5)
 						| roundColor<5>(p[Blue])
-						| (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0)));
+						| (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0)));
 				p += 4;
 				dstAddr += bpp;
 			}

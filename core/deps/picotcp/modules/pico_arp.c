@@ -566,3 +566,25 @@ void pico_arp_register_ipconflict(struct pico_ip4 *ip, struct pico_eth *mac, voi
         memcpy(conflict_ipv4.mac.addr, mac, 6);
 }
 
+static int arp_deinit_cb(void **p)
+{
+	PICO_FREE(*p);
+	return 0;
+}
+
+void pico_arp_deinit(void)
+{
+    int i;
+
+    for (i = 0; i < PICO_ARP_MAX_PENDING; i++)
+    {
+    	struct pico_frame *f = frames_queued[i];
+        if (f) {
+        	pico_frame_discard(f);
+        	frames_queued[i] = NULL;
+        }
+    }
+	pico_tree_destroy(&arp_tree, arp_deinit_cb);
+	memset(&conflict_ipv4, 0, sizeof(conflict_ipv4));
+	max_arp_reqs = PICO_ARP_MAX_RATE;
+}

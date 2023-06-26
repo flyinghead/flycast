@@ -16,20 +16,18 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+          
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
 
       - uses: actions/cache@v3
         with:
           path: ~/.ccache
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: android-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: android-gradle-
 
       - name: Gradle
         working-directory: shell/android-studio
@@ -52,7 +50,7 @@ jobs:
       - name: Extract symbols
         run: |
           DUMP_SYMS=./core/deps/breakpad/bin/dump_syms
-          SO_DIR=shell/android-studio/flycast/build/intermediates/cmake/release/obj
+          SO_DIR=shell/android-studio/flycast/build/intermediates/merged_native_libs/release/out/lib
           for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
             $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
             BUILD_ID=`head -1 libflycast.so.sym | awk '{ print $4 }'`
@@ -62,7 +60,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}

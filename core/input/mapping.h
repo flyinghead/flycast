@@ -116,9 +116,15 @@ public:
 		set_axis(0, DC_AXIS_DOWN, DC_AXIS_DOWN, true);
 		set_axis(0, DC_AXIS_LT, DC_AXIS_LT, true);
 		set_axis(0, DC_AXIS_RT, DC_AXIS_RT, true);
+		set_axis(0, DC_AXIS_LT2, DC_AXIS_LT2, true);
+		set_axis(0, DC_AXIS_RT2, DC_AXIS_RT2, true);
 		set_axis(0, DC_AXIS2_LEFT, DC_AXIS2_LEFT, true);
 		set_axis(0, DC_AXIS2_RIGHT, DC_AXIS2_RIGHT, true);
 		set_axis(0, DC_AXIS2_UP, DC_AXIS2_UP, true);
 		set_axis(0, DC_AXIS2_DOWN, DC_AXIS2_DOWN, true);
+		set_axis(0, DC_AXIS3_LEFT, DC_AXIS3_LEFT, true);
+		set_axis(0, DC_AXIS3_RIGHT, DC_AXIS3_RIGHT, true);
+		set_axis(0, DC_AXIS3_UP, DC_AXIS3_UP, true);
+		set_axis(0, DC_AXIS3_DOWN, DC_AXIS3_DOWN, true);
 	}
 };

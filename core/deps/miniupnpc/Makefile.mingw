@@ -21,15 +21,18 @@ RM = del
 else
 RM = rm -f
 endif
-#CFLAGS = -Wall -g
-#CPPFLAGS = -DDEBUG -D_WIN32_WINNT=0X501
-CFLAGS = -Wall -W -Wstrict-prototypes -Os
-CPPFLAGS = -DNDEBUG -D_WIN32_WINNT=0X501
+
+CFLAGS ?= -Os
+CFLAGS += -Wall
+CFLAGS += -W -Wstrict-prototypes
+
+CPPFLAGS += -DNDEBUG -D_WIN32_WINNT=0x501
 CPPFLAGS += -Iinclude
 CPPFLAGS += -I.
-LDLIBS = -lws2_32 -liphlpapi
-# -lwsock32
+
 # -liphlpapi is needed for GetBestRoute() and GetIpAddrTable()
+LDLIBS = -lws2_32 -liphlpapi
+
 PYTHON=\utils\python25\python
 OBJS=miniwget.o minixml.o igd_desc_parse.o minisoap.o \
      minissdpc.o \
@@ -72,6 +75,7 @@ clean:
 	$(RM) *.exe
 	$(RM) miniupnpc.dll miniupnpc.lib miniupnpc.dll.def
 	$(RM) libminiupnpc.a
+	$(RM) $(DISTFILE)
 
 $(DISTFILE):	$(BINARIES)
 	$(ZIP) $@ *.exe *.dll *.lib *.def *.a LICENSE README Changelog.txt

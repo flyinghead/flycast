@@ -21,7 +21,6 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
-#include <cctype>
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
 
@@ -339,7 +338,7 @@ void TheGamesDb::fetchByName(GameBoxart& item)
 {
 	if (item.searchName.empty())
 		return;
-	int platform = getGamePlatform(item.gamePath.c_str());
+	int platform = getGamePlatform(item.fileName);
 	std::string url = makeUrl("Games/ByGameName") + "&fields=overview&include=boxart&filter%5Bplatform%5D=";
 	if (platform == DC_PLATFORM_DREAMCAST)
 		url += std::to_string(dreamcastPlatformId);

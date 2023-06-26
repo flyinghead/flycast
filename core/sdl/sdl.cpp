@@ -3,7 +3,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include <SDL_syswm.h>
 #endif
 #include <SDL_video.h>
@@ -31,11 +31,7 @@
 static SDL_Window* window = NULL;
 static u32 windowFlags;
 
-#ifdef TARGET_PANDORA
-	#define WINDOW_WIDTH  800
-#else
-	#define WINDOW_WIDTH  640
-#endif
+#define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
 static std::shared_ptr<SDLMouse> sdl_mouse;
@@ -258,7 +254,9 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
-					if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
+					if (event.type == SDL_KEYDOWN
+							&& ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
+									|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0)))
 					{
 						if (window_fullscreen)
 						{
@@ -280,7 +278,7 @@ void input_sdl_handle()
 					}
 					else if (!config::UseRawInput)
 					{
-						sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+						sdl_keyboard->input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 					}
 				}
 				break;
@@ -636,13 +634,15 @@ static int suspendEventFilter(void *userdata, SDL_Event *event)
 	if (event->type == SDL_APP_WILLENTERBACKGROUND)
 	{
 		gui_save();
-	    if (gameRunning)
-	    {
-	        emu.stop();
-	        if (config::AutoSaveState)
-	            dc_savestate(config::SavestateSlot);
-	    }
-	    return 0;
+		if (gameRunning)
+		{
+			try {
+				emu.stop();
+				if (config::AutoSaveState)
+					dc_savestate(config::SavestateSlot);
+			} catch (const FlycastException& e) { }
+		}
+		return 0;
 	}
 	return 1;
 }
@@ -675,13 +675,16 @@ void sdl_window_create()
 void sdl_window_destroy()
 {
 #ifndef __SWITCH__
-	get_window_state();
-	cfgSaveInt("window", "left", windowPos.x);
-	cfgSaveInt("window", "top", windowPos.y);
-	cfgSaveInt("window", "width", windowPos.w);
-	cfgSaveInt("window", "height", windowPos.h);
-	cfgSaveBool("window", "maximized", window_maximized);
-	cfgSaveBool("window", "fullscreen", window_fullscreen);
+	if (!settings.naomi.slave && settings.naomi.drivingSimSlave == 0)
+	{
+		get_window_state();
+		cfgSaveInt("window", "left", windowPos.x);
+		cfgSaveInt("window", "top", windowPos.y);
+		cfgSaveInt("window", "width", windowPos.w);
+		cfgSaveInt("window", "height", windowPos.h);
+		cfgSaveBool("window", "maximized", window_maximized);
+		cfgSaveBool("window", "fullscreen", window_fullscreen);
+	}
 #endif
 	termRenderApi();
 	SDL_DestroyWindow(window);

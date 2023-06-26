@@ -1,0 +1,151 @@
+# Copyright 2016 - 2019 Peter Dimov
+# Copyright 2017 - 2019 James E. King III
+# Copyright 2019 - 2020 Alexander Grund
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
+
+language: cpp
+os: linux
+dist: xenial
+
+branches:
+  only:
+    - master
+    - develop
+    - /bugfix\/.*/
+    - /feature\/.*/
+    - /fix\/.*/
+    - /pr\/.*/
+
+env:
+  global:
+    - B2_LINK=shared,static
+    - B2_VARIANT=debug,release
+
+install:
+  - |
+    if [[ "$SANITIZERS" == "1" ]]; then
+      export B2_ABSAN=1
+      export B2_UBSAN=1
+    fi
+    which $TRAVIS_COMPILER
+    if [[ "$TRAVIS_COMPILER" =~ clang ]]; then
+        export B2_TOOLSET=clang
+    elif [[ "$TRAVIS_COMPILER" =~ g\+\+ ]]; then
+        export B2_TOOLSET=gcc
+    else
+        false
+    fi
+  - git clone https://github.com/boostorg/boost-ci.git boost-ci-cloned
+  - cp -prf boost-ci-cloned/ci .
+  - rm -rf boost-ci-cloned
+  - source ci/travis/install.sh
+  - |
+    echo "using $B2_TOOLSET : : $TRAVIS_COMPILER ;" > ~/user-config.jam
+
+script: $BOOST_ROOT/libs/$SELF/ci/travis/build.sh
+
+# Default toolsets in Ubuntu
+#
+#       trusty xenial bionic
+#        14.04  16.04  18.04
+#       ------ ------ ------
+# clang    3.4    3.8    6.0
+#   gcc  4.8.2  5.3.1  7.3.0
+
+anchors:
+  libcpp: &libcpp { apt: { packages: [libc++-dev, libc++-helpers] } }
+  # More reliable way to add this as "ubuntu-toolchain-r-test" may fail on travis whitelisting
+  ubuntu-toolchain-r-test:
+    - &ubuntu-toolchain-r-test
+      sourceline: "ppa:ubuntu-toolchain-r/test"
+  llvm-toolchain-xenial-9: &llvm-toolchain-xenial-9
+    sourceline: 'deb https://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
+    key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+  clang-33: &clang-33 { apt: { packages: [ "clang-3.3"]                                          } }
+  clang-34: &clang-34 { apt: { packages: [ "clang-3.4"]                                          } }
+  clang-35: &clang-35 { apt: { packages: [ "clang-3.5"], sources: [ *ubuntu-toolchain-r-test ]   } }
+  clang-36: &clang-36 { apt: { packages: [ "clang-3.6"], sources: [ *ubuntu-toolchain-r-test ]   } }
+  clang-37: &clang-37 { apt: { packages: [ "clang-3.7"], sources: [ *ubuntu-toolchain-r-test ]   } }
+  clang-38: &clang-38 { apt: { packages: [ "clang-3.8"], sources: [ *ubuntu-toolchain-r-test ]   } }
+  clang-39: &clang-39 { apt: { packages: [ "clang-3.9"], sources: [ *ubuntu-toolchain-r-test ]   } }
+  clang-4:  &clang-4  { apt: { packages: [ "clang-4.0",
+                                          "libstdc++-6-dev" ], sources: [ "llvm-toolchain-xenial-4.0",
+                                                                          *ubuntu-toolchain-r-test   ] } }
+  clang-5:  &clang-5  { apt: { packages: [ "clang-5.0",
+                                          "libstdc++-7-dev" ], sources: [ "llvm-toolchain-xenial-5.0",
+                                                                          *ubuntu-toolchain-r-test   ] } }
+  clang-6:  &clang-6  { apt: { packages: [ "clang-6.0",
+                                          "libc6-dbg",
+                                          "libc++-dev",
+                                          "libstdc++-8-dev" ], sources: [ "llvm-toolchain-xenial-6.0",
+                                                                          *ubuntu-toolchain-r-test   ] } }
+  clang-7:  &clang-7  { apt: { packages: [ "clang-7",
+                                          "libc6-dbg",
+                                          "libc++-dev",
+                                          "libstdc++-8-dev" ], sources: [ "llvm-toolchain-xenial-7",
+                                                                          *ubuntu-toolchain-r-test   ] } }
+  clang-8:  &clang-8  { apt: { packages: [ "clang-8",
+                                          "libc6-dbg",
+                                          "libc++-dev",
+                                          "libstdc++-8-dev" ], sources: [ "llvm-toolchain-xenial-8",
+                                                                          *ubuntu-toolchain-r-test   ] } }
+  clang-9:  &clang-9  { apt: { packages: [ "clang-9" ],        sources: [ *llvm-toolchain-xenial-9,
+                                                                        *ubuntu-toolchain-r-test    ] } }
+
+  gcc-44: &gcc-44 { apt: { packages: [ "g++-4.4" ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-46: &gcc-46 { apt: { packages: [ "g++-4.6" ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-47: &gcc-47 { apt: { packages: [ "g++-4.7" ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-48: &gcc-48 { apt: { packages: [ "g++-4.8" ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-49: &gcc-49 { apt: { packages: [ "g++-4.9" ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-5:  &gcc-5  { apt: { packages: [ "g++-5"   ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-6:  &gcc-6  { apt: { packages: [ "g++-6"   ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-7:  &gcc-7  { apt: { packages: [ "g++-7"   ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-8:  &gcc-8  { apt: { packages: [ "g++-8"   ], sources: [ *ubuntu-toolchain-r-test ] } }
+  gcc-9:  &gcc-9  { apt: { packages: [ "g++-9"   ], sources: [ *ubuntu-toolchain-r-test ] } }
+
+jobs:
+  include:
+    - { compiler: g++-4.4,        env: 'B2_CXXSTD=98,0x', addons: *gcc-44, stage: essential }
+    - { compiler: g++-9,          env: 'SANITIZERS=1 B2_CXXSTD=03,11,14,17,2a B2_LINKFLAGS="-fuse-ld=gold"', addons: *gcc-9 }
+    - { compiler: clang++,        env: 'B2_CXXSTD=03,11', addons: *clang-33, dist: trusty }
+    - { compiler: clang++-9,      env: 'SANITIZERS=1 B2_CXXSTD=03,11,14,17,2a', addons: *clang-9 }
+    - { compiler: clang++-libc++, env: 'SANITIZERS=1 B2_CXXSTD=03,11,14', addons: *libcpp, dist: trusty }
+    - os: osx
+      compiler: clang++
+      env: SANITIZERS=1 B2_CXXSTD=03,11,14,1z
+    # Codecov
+    - compiler: g++-8
+      env: COMMENT=codecov.io B2_CXXSTD=03,11 GCOV=gcov-8
+      addons: *gcc-8
+      script: $BOOST_ROOT/libs/$SELF/ci/travis/codecov.sh
+
+    # Additional compiler versions tested for completenes
+    - { compiler: g++,            env: 'B2_CXXSTD=03,11',          stage: additional }
+    - { compiler: g++-4.6,        env: 'B2_CXXSTD=03,0x',          addons: *gcc-46 }
+    - { compiler: g++-4.7,        env: 'B2_CXXSTD=03,11',          addons: *gcc-47 }
+    - { compiler: g++-4.8,        env: 'B2_CXXSTD=03,11',          addons: *gcc-48 }
+    - { compiler: g++-4.9,        env: 'B2_CXXSTD=03,11',          addons: *gcc-49 }
+    - { compiler: g++-5,          env: 'B2_CXXSTD=03,11,14,1z',    addons: *gcc-5  }
+    - { compiler: g++-6,          env: 'B2_CXXSTD=03,11,14,1z',    addons: *gcc-6  }
+    - { compiler: g++-7,          env: 'B2_CXXSTD=03,11,14,17',    addons: *gcc-7  }
+    - { compiler: g++-8,          env: 'B2_CXXSTD=03,11,14,17,2a', addons: *gcc-8  }
+    - { compiler: g++-9,          env: 'B2_CXXSTD=03,11,14,17,2a', addons: *gcc-9  }
+    - { compiler: clang++,        env: 'B2_CXXSTD=03,11',          addons: *clang-34, dist: trusty }
+    - { compiler: clang++-3.5,    env: 'B2_CXXSTD=03,11',          addons: *clang-35 }
+    - { compiler: clang++-3.6,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-36 }
+    - { compiler: clang++-3.7,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-37 }
+    - { compiler: clang++-3.8,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-38 }
+    - { compiler: clang++-3.9,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-39 }
+    - { compiler: clang++-4.0,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-4  }
+    - { compiler: clang++-5.0,    env: 'B2_CXXSTD=03,11,14,1z',    addons: *clang-5  }
+    - { compiler: clang++-6.0,    env: 'B2_CXXSTD=03,11,14,17',    addons: *clang-6  }
+    - { compiler: clang++-7,      env: 'B2_CXXSTD=03,11,14,17,2a', addons: *clang-7  }
+    - { compiler: clang++-8,      env: 'B2_CXXSTD=03,11,14,17,2a', addons: *clang-8  }
+    - { compiler: clang++-9,      env: 'B2_CXXSTD=03,11,14,17,2a', addons: *clang-9  }
+    - { compiler: clang++-libc++, env: 'B2_CXXSTD=03,11,14',       addons: *libcpp   }
+
+stages:
+  - essential
+  - name: additional
+    if: type != "pull_request"

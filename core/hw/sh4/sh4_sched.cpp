@@ -1,6 +1,7 @@
 #include "types.h"
 #include "sh4_if.h"
 #include "sh4_sched.h"
+#include "serialize.h"
 
 #include <algorithm>
 #include <vector>
@@ -20,10 +21,17 @@
 	sh4_sched_now()
 
 */
+struct sched_list
+{
+	sh4_sched_callback* cb;
+	int tag;
+	int start;
+	int end;
+};
 
-u64 sh4_sched_ffb;
-std::vector<sched_list> sch_list;
-int sh4_sched_next_id = -1;
+static u64 sh4_sched_ffb;
+static std::vector<sched_list> sch_list;
+static int sh4_sched_next_id = -1;
 
 static u32 sh4_sched_now();
 
@@ -183,4 +191,70 @@ void sh4_sched_reset(bool hard)
 			sched.start = sched.end = -1;
 		Sh4cntx.sh4_sched_next = 0;
 	}
+}
+
+void sh4_sched_serialize(Serializer& ser, int id)
+{
+	ser << sch_list[id].tag;
+	ser << sch_list[id].start;
+	ser << sch_list[id].end;
+}
+
+void sh4_sched_deserialize(Deserializer& deser, int id)
+{
+	deser >> sch_list[id].tag;
+	deser >> sch_list[id].start;
+	deser >> sch_list[id].end;
+}
+
+// FIXME modules should save their scheduling data so that it doesn't depend on their scheduler id
+namespace aica
+{
+// hw/aica/aica.cpp
+extern int aica_schid;
+extern int rtc_schid;
+// hw/aica/aica_if.cpp
+extern int dma_sched_id;
+}
+// hw/gdrom/gdromv3.cpp
+extern int gdrom_schid;
+// hw/maple/maple_if.cpp
+extern int maple_schid;
+// hw/pvr/spg.cpp
+extern int render_end_schid;
+extern int vblank_schid;
+// hw/sh4/modules/tmu.cpp
+extern int tmu_sched[3];
+
+void sh4_sched_serialize(Serializer& ser)
+{
+	ser << sh4_sched_ffb;
+
+	sh4_sched_serialize(ser, aica::aica_schid);
+	sh4_sched_serialize(ser, aica::rtc_schid);
+	sh4_sched_serialize(ser, gdrom_schid);
+	sh4_sched_serialize(ser, maple_schid);
+	sh4_sched_serialize(ser, aica::dma_sched_id);
+	for (int id : tmu_sched)
+		sh4_sched_serialize(ser, id);
+	sh4_sched_serialize(ser, render_end_schid);
+	sh4_sched_serialize(ser, vblank_schid);
+}
+
+void sh4_sched_deserialize(Deserializer& deser)
+{
+	deser >> sh4_sched_ffb;
+
+	if (deser.version() >= Deserializer::V19 && deser.version() <= Deserializer::V31)
+		deser.skip<u32>();		// sh4_sched_next_id
+
+	sh4_sched_deserialize(deser, aica::aica_schid);
+	sh4_sched_deserialize(deser, aica::rtc_schid);
+	sh4_sched_deserialize(deser, gdrom_schid);
+	sh4_sched_deserialize(deser, maple_schid);
+	sh4_sched_deserialize(deser, aica::dma_sched_id);
+	for (int id : tmu_sched)
+		sh4_sched_deserialize(deser, id);
+	sh4_sched_deserialize(deser, render_end_schid);
+	sh4_sched_deserialize(deser, vblank_schid);
 }

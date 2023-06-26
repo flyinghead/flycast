@@ -4,113 +4,35 @@
 #include "types.h"
 #include "sh4_mmr.h"
 
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "modules/mmu.h"
 #include "modules/ccn.h"
 #include "modules/modules.h"
 #include "sh4_cache.h"
+#include "serialize.h"
+#include "sh4_interrupts.h"
+#include "sh4_sched.h"
+#include "sh4_interpreter.h"
 
 #include <array>
 #include <map>
 
 //64bytes of sq // now on context ~
 
-std::array<u8, OnChipRAM_SIZE> OnChipRAM;
+static std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //All registers are 4 byte aligned
 
-RegisterStruct CCN[18];
-RegisterStruct UBC[9];
-RegisterStruct BSC[19];
-RegisterStruct DMAC[17];
-RegisterStruct CPG[5];
-RegisterStruct RTC[16];
-RegisterStruct INTC[5];
-RegisterStruct TMU[12];
-RegisterStruct SCI[8];
-RegisterStruct SCIF[10];
-
-static u32 sh4io_read_noacc(u32 addr)
-{ 
-	INFO_LOG(SH4, "sh4io: Invalid read access @ %08X", addr);
-	return 0; 
-} 
-
-static void sh4io_write_noacc(u32 addr, u32 data)
-{ 
-	INFO_LOG(SH4, "sh4io: Invalid write access @ %08X %08X", addr, data);
-}
-
-static void sh4io_write_const(u32 addr, u32 data)
-{ 
-	INFO_LOG(SH4, "sh4io: Const write ignored @ %08X <- %08X", addr, data);
-}
-
-void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
-{
-	u32 idx = (addr & 255) / 4;
-
-	arr[idx].flags = flags;
-
-	if (flags == RIO_NO_ACCESS)
-	{
-		arr[idx].readFunctionAddr = sh4io_read_noacc;
-		arr[idx].writeFunctionAddr = sh4io_write_noacc;
-	}
-	else if (flags == RIO_RO)
-	{
-		arr[idx].writeFunctionAddr = sh4io_write_const;
-		arr[idx].data32 = 0;
-	}
-	else
-	{
-		verify(!(flags & REG_WO)); // not supported here
-		if (flags & REG_RF)
-			arr[idx].readFunctionAddr = rf;
-		else
-			arr[idx].data32 = 0;
-
-		if (flags & REG_WF)
-			arr[idx].writeFunctionAddr = wf == nullptr ? &sh4io_write_noacc : wf;
-	}
-}
-
-template<typename T>
-T sh4_rio_read(RegisterStruct *regs, u32 addr)
-{	
-	u32 offset = addr & 255;
-#ifdef TRACE
-	if (offset & 3) //4 is min align size
-	{
-		WARN_LOG(SH4, "Unaligned System Bus register read @ %x", addr);
-	}
-#endif
-
-	offset >>= 2;
-
-	if (!(regs[offset].flags & REG_RF))
-		return (T)regs[offset].data32;
-	else
-		return (T)regs[offset].readFunctionAddr(addr);
-}
-
-template<typename T>
-void sh4_rio_write(RegisterStruct *regs, u32 addr, T data)
-{
-	u32 offset = addr & 255;
-#ifdef TRACE
-	if (offset & 3) //4 is min align size
-	{
-		WARN_LOG(SH4, "Unaligned System bus register write @ %x", addr);
-	}
-#endif
-	offset >>= 2;
-
-	if (!(regs[offset].flags & REG_WF))
-		regs[offset].data32 = data;
-	else
-		regs[offset].writeFunctionAddr(addr, data);
-}
+u32 CCN[18];
+u32 UBC[9];
+u32 BSC[19];
+u32 DMAC[17];
+u32 CPG[5];
+u32 RTC[16];
+u32 INTC[5];
+u32 TMU[12];
+u32 SCI[8];
+u32 SCIF[10];
 
 #define SH4_REG_NAME(r) { r##_addr, #r },
 const std::map<u32, const char *> sh4_reg_names = {
@@ -118,6 +40,7 @@ const std::map<u32, const char *> sh4_reg_names = {
 		SH4_REG_NAME(CCN_PTEL)
 		SH4_REG_NAME(CCN_TTB)
 		SH4_REG_NAME(CCN_TEA)
+		SH4_REG_NAME(CCN_MMUCR)
 		SH4_REG_NAME(CCN_CCR)
 		SH4_REG_NAME(CCN_TRA)
 		SH4_REG_NAME(CCN_EXPEVT)
@@ -273,14 +196,14 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF0:
 		DEBUG_LOG(SH4, "IC Address read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return icache.ReadAddressArray(addr);
 		else
 			return 0;
 
 	case 0xF1:
 		DEBUG_LOG(SH4, "IC Data read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return icache.ReadDataArray(addr);
 		else
 			return 0;
@@ -299,14 +222,14 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF4:
 		DEBUG_LOG(SH4, "OC Address read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return ocache.ReadAddressArray(addr);
 		else
 			return 0;
 
 	case 0xF5:
 		DEBUG_LOG(SH4, "OC Data read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return ocache.ReadDataArray(addr);
 		else
 			return 0;
@@ -355,13 +278,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF0:
 		DEBUG_LOG(SH4, "IC Address write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			icache.WriteAddressArray(addr, data);
 		return;
 
 	case 0xF1:
 		DEBUG_LOG(SH4, "IC Data write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			icache.WriteDataArray(addr, data);
 		return;
 
@@ -387,13 +310,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF4:
 //		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			ocache.WriteAddressArray(addr, data);
 		return;
 
 	case 0xF5:
 		DEBUG_LOG(SH4, "OC Data write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			ocache.WriteDataArray(addr, data);
 		return;
 
@@ -405,7 +328,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 			u32 va = t.VPN << 10;
 
-			for (int i = 0; i < 64; i++)
+			for (std::size_t i = 0; i < std::size(UTLB); i++)
 			{
 				if (mmu_match(va, UTLB[i].Address, UTLB[i].Data))
 				{
@@ -415,7 +338,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 				}
 			}
 
-			for (int i = 0; i < 4; i++)
+			for (std::size_t i = 0; i < std::size(ITLB); i++)
 			{
 				if (mmu_match(va, ITLB[i].Address, ITLB[i].Data))
 				{
@@ -485,40 +408,13 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 	switch (expected(map_base, A7_REG_HASH(TMU_BASE_addr)))
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr <= 0x1F000044)
-		{
-			return sh4_rio_read<T>(CCN, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("CCN");
-			return 0;
-		}
-		break;
+		return ccn.read<T>(addr);
 
 	case A7_REG_HASH(UBC_BASE_addr):
-		if (addr <= 0x1F200020)
-		{
-			return sh4_rio_read<T>(UBC, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("UBC");
-			return 0;
-		}
-		break;
+		return ubc.read<T>(addr);
 
 	case A7_REG_HASH(BSC_BASE_addr):
-		if (addr <= 0x1F800048)
-		{
-			return sh4_rio_read<T>(BSC, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("BSC");
-			return 0;
-		}
-		break;
+		return bsc.read<T>(addr);
 
 	case A7_REG_HASH(BSC_SDMR2_addr):
 		//dram settings 2 / write only
@@ -530,88 +426,25 @@ T DYNACALL ReadMem_p4mmr(u32 addr)
 		return 0;
 
 	case A7_REG_HASH(DMAC_BASE_addr):
-		if (addr <= 0x1FA00040)
-		{
-			return sh4_rio_read<T>(DMAC, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("DMAC");
-			return 0;
-		}
-		break;
+		return dmac.read<T>(addr);
 
 	case A7_REG_HASH(CPG_BASE_addr):
-		if (addr <= 0x1FC00010)
-		{
-			return sh4_rio_read<T>(CPG, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("CPG");
-			return 0;
-		}
-		break;
+		return cpg.read<T>(addr);
 
 	case A7_REG_HASH(RTC_BASE_addr):
-		if (addr <= 0x1FC8003C)
-		{
-			return sh4_rio_read<T>(RTC, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("RTC");
-			return 0;
-		}
-		break;
+		return rtc.read<T>(addr);
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr <= 0x1FD00010)
-		{
-			return sh4_rio_read<T>(INTC, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("INTC");
-			return 0;
-		}
-		break;
+		return intc.read<T>(addr);
 
 	case A7_REG_HASH(TMU_BASE_addr):
-		if (addr <= 0x1FD8002C)
-		{
-			return sh4_rio_read<T>(TMU, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("TMU");
-			return 0;
-		}
-		break;
+		return tmu.read<T>(addr);
 
 	case A7_REG_HASH(SCI_BASE_addr):
-		if (addr <= 0x1FE0001C)
-		{
-			return sh4_rio_read<T>(SCI, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("SCI");
-			return 0;
-		}
-		break;
+		return sci.read<T>(addr);
 
 	case A7_REG_HASH(SCIF_BASE_addr):
-		if (addr <= 0x1FE80024)
-		{
-			return sh4_rio_read<T>(SCIF, addr);
-		}
-		else
-		{
-			OUT_OF_RANGE("SCIF");
-			return 0;
-		}
-		break;
+		return scif.read<T>(addr);
 
 		// Who really cares about ht-UDI? it's not existent on the Dreamcast IIRC
 	case A7_REG_HASH(UDI_BASE_addr):
@@ -648,7 +481,7 @@ void DYNACALL WriteMem_p4mmr(u32 addr, T data)
 	{
 		CCN_QACR_write<1>(addr, data);
 		return;
-	}	
+	}
 
 	addr &= 0x1FFFFFFF;
 	u32 map_base = addr >> 16;
@@ -656,24 +489,15 @@ void DYNACALL WriteMem_p4mmr(u32 addr, T data)
 	{
 
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr <= 0x1F00003C)
-			sh4_rio_write(CCN, addr, data);
-		else
-			OUT_OF_RANGE("CCN");
+		ccn.write(addr, data);
 		return;
 
 	case A7_REG_HASH(UBC_BASE_addr):
-		if (addr <= 0x1F200020)
-			sh4_rio_write(UBC, addr, data);
-		else
-			OUT_OF_RANGE("UBC");
+		ubc.write(addr, data);
 		return;
 
 	case A7_REG_HASH(BSC_BASE_addr):
-		if (addr <= 0x1F800048)
-			sh4_rio_write(BSC, addr, data);
-		else
-			OUT_OF_RANGE("BSC");
+		bsc.write(addr, data);
 		return;
 	case A7_REG_HASH(BSC_SDMR2_addr):
 		//dram settings 2 / write only
@@ -684,52 +508,31 @@ void DYNACALL WriteMem_p4mmr(u32 addr, T data)
 		return;
 
 	case A7_REG_HASH(DMAC_BASE_addr):
-		if (addr <= 0x1FA00040)
-			sh4_rio_write(DMAC, addr, data);
-		else
-			OUT_OF_RANGE("DMAC");
+		dmac.write(addr, data);
 		return;
 
 	case A7_REG_HASH(CPG_BASE_addr):
-		if (addr <= 0x1FC00010)
-			sh4_rio_write(CPG, addr, data);
-		else
-			OUT_OF_RANGE("CPG");
+		cpg.write(addr, data);
 		return;
 
 	case A7_REG_HASH(RTC_BASE_addr):
-		if (addr <= 0x1FC8003C)
-			sh4_rio_write(RTC, addr, data);
-		else
-			OUT_OF_RANGE("RTC");
+		rtc.write(addr, data);
 		return;
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr <= 0x1FD00010)
-			sh4_rio_write(INTC, addr, data);
-		else
-			OUT_OF_RANGE("INTC");
+		intc.write(addr, data);
 		return;
 
 	case A7_REG_HASH(TMU_BASE_addr):
-		if (addr <= 0x1FD8002C)
-			sh4_rio_write(TMU, addr, data);
-		else
-			OUT_OF_RANGE("TMU");
+		tmu.write(addr, data);
 		return;
 
 	case A7_REG_HASH(SCI_BASE_addr):
-		if (addr <= 0x1FE0001C)
-			sh4_rio_write(SCI, addr, data);
-		else
-			OUT_OF_RANGE("SCI");
+		sci.write(addr, data);
 		return;
 
 	case A7_REG_HASH(SCIF_BASE_addr):
-		if (addr <= 0x1FE80024)
-			sh4_rio_write(SCIF, addr, data);
-		else
-			OUT_OF_RANGE("SCIF");
+		scif.write(addr, data);
 		return;
 
 		//who really cares about ht-udi ? it's not existent on dc iirc ..
@@ -774,79 +577,38 @@ void DYNACALL WriteMem_area7_OCR(u32 addr, T data)
 		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled. addr %x", addr);
 }
 
-template <class T>
-static void init_regs(T& regs)
-{
-	for (auto& reg : regs)
-	{
-		reg.flags = RIO_NO_ACCESS;
-		reg.readFunctionAddr = &sh4io_read_noacc;
-		reg.writeFunctionAddr = &sh4io_write_noacc;
-	}
-}
-
 //Init/Res/Term
 void sh4_mmr_init()
 {
-	init_regs(CCN);
-	init_regs(UBC);
-	init_regs(BSC);
-	init_regs(DMAC);
-	init_regs(CPG);
-	init_regs(RTC);
-	init_regs(INTC);
-	init_regs(TMU);
-	init_regs(SCI);
-	init_regs(SCIF);
-
 	//initialise Register structs
-	bsc_init();
-	ccn_init();
-	cpg_init();
-	dmac_init();
-	intc_init();
-	rtc_init();
-	serial_init();
-	tmu_init();
-	ubc_init();
+	bsc.init();
+	ccn.init();
+	cpg.init();
+	dmac.init();
+	intc.init();
+	rtc.init();
+	scif.init();
+	sci.init();
+	tmu.init();
+	ubc.init();
 
 	MMU_init();
 }
 
 void sh4_mmr_reset(bool hard)
 {
-	for (auto& reg : CCN)
-		reg.reset();
-	for (auto& reg : UBC)
-		reg.reset();
-	for (auto& reg : BSC)
-		reg.reset();
-	for (auto& reg : DMAC)
-		reg.reset();
-	for (auto& reg : CPG)
-		reg.reset();
-	for (auto& reg : RTC)
-		reg.reset();
-	for (auto& reg : INTC)
-		reg.reset();
-	for (auto& reg : TMU)
-		reg.reset();
-	for (auto& reg : SCI)
-		reg.reset();
-	for (auto& reg : SCIF)
-		reg.reset();
-
 	OnChipRAM = {};
 	//Reset register values
-	bsc_reset(true);
-	ccn_reset(true);
-	cpg_reset();
-	dmac_reset();
-	intc_reset();
-	rtc_reset();
-	serial_reset(hard);
-	tmu_reset(true);
-	ubc_reset();
+	bsc.reset();
+	ccn.reset();
+	cpg.reset();
+	dmac.reset();
+	intc.reset();
+	rtc.reset();
+	scif.reset(hard);
+	sci.reset();
+	tmu.reset();
+	ubc.reset();
 
 	MMU_reset();
 }
@@ -855,50 +617,182 @@ void sh4_mmr_term()
 {
 	MMU_term();
 
-	ubc_term();
-	tmu_term();
-	serial_term();
-	rtc_term();
-	intc_term();
-	dmac_term();
-	cpg_term();
-	ccn_term();
-	bsc_term();
+	ubc.term();
+	tmu.term();
+	scif.term();
+	sci.term();
+	rtc.term();
+	intc.term();
+	dmac.term();
+	cpg.term();
+	ccn.term();
+	bsc.term();
 }
 
 // AREA 7--Sh4 Regs
-static _vmem_handler p4mmr_handler;
-static _vmem_handler area7_ocr_handler;
+static addrspace::handler p4mmr_handler;
+static addrspace::handler area7_ocr_handler;
 
 void map_area7_init()
 {
-	p4mmr_handler = _vmem_register_handler_Template(ReadMem_p4mmr, WriteMem_p4mmr);
-	area7_ocr_handler = _vmem_register_handler_Template(ReadMem_area7_OCR, WriteMem_area7_OCR);
+	p4mmr_handler = addrspaceRegisterHandlerTemplate(ReadMem_p4mmr, WriteMem_p4mmr);
+	area7_ocr_handler = addrspaceRegisterHandlerTemplate(ReadMem_area7_OCR, WriteMem_area7_OCR);
 }
 
 void map_area7(u32 base)
 {
 	// on-chip RAM: 7C000000-7FFFFFFF
 	if (base == 0x60)
-		_vmem_map_handler(area7_ocr_handler, 0x7C, 0x7F);
+		addrspace::mapHandler(area7_ocr_handler, 0x7C, 0x7F);
 }
 
 //P4
 void map_p4()
 {
 	//P4 Region :
-	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4, WriteMem_P4);
+	addrspace::handler p4_handler = addrspaceRegisterHandlerTemplate(ReadMem_P4, WriteMem_P4);
 
 	//register this before mmr and SQ so they overwrite it and handle em
 	//default P4 handler
 	//0xE0000000-0xFFFFFFFF
-	_vmem_map_handler(p4_handler, 0xE0, 0xFF);
+	addrspace::mapHandler(p4_handler, 0xE0, 0xFF);
 
 	//Store Queues -- Write only 32bit
-	_vmem_map_block(sq_both, 0xE0, 0xE0, 63);
-	_vmem_map_block(sq_both, 0xE1, 0xE1, 63);
-	_vmem_map_block(sq_both, 0xE2, 0xE2, 63);
-	_vmem_map_block(sq_both, 0xE3, 0xE3, 63);
+	addrspace::mapBlock(sq_both, 0xE0, 0xE0, 63);
+	addrspace::mapBlock(sq_both, 0xE1, 0xE1, 63);
+	addrspace::mapBlock(sq_both, 0xE2, 0xE2, 63);
+	addrspace::mapBlock(sq_both, 0xE3, 0xE3, 63);
 
-	_vmem_map_handler(p4mmr_handler, 0xFF, 0xFF);
+	addrspace::mapHandler(p4mmr_handler, 0xFF, 0xFF);
 }
+
+namespace sh4
+{
+
+void serialize(Serializer& ser)
+{
+	ser << OnChipRAM;
+
+	ser << CCN;
+	ser << UBC;
+	ser << BSC;
+	ser << DMAC;
+	ser << CPG;
+	ser << RTC;
+	ser << INTC;
+	ser << TMU;
+	ser << SCI;
+	ser << SCIF;
+	icache.Serialize(ser);
+	ocache.Serialize(ser);
+
+	if (!ser.rollback())
+		mem_b.serialize(ser);
+
+	interrupts_serialize(ser);
+
+	ser << (*p_sh4rcb).sq_buffer;
+
+	ser << (*p_sh4rcb).cntx;
+
+	sh4_sched_serialize(ser);
+}
+
+template<typename T>
+static void register_deserialize_libretro(T& regs, Deserializer& deser)
+{
+	for (auto& reg : regs)
+	{
+		deser.skip<u32>(); // regs.data[i].flags
+		deser >> reg;
+	}
+}
+
+void deserialize(Deserializer& deser)
+{
+	deser >> OnChipRAM;
+
+	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
+	{
+		register_deserialize_libretro(CCN, deser);
+		register_deserialize_libretro(UBC, deser);
+		register_deserialize_libretro(BSC, deser);
+		register_deserialize_libretro(DMAC, deser);
+		register_deserialize_libretro(CPG, deser);
+		register_deserialize_libretro(RTC, deser);
+		register_deserialize_libretro(INTC, deser);
+		register_deserialize_libretro(TMU, deser);
+		register_deserialize_libretro(SCI, deser);
+		register_deserialize_libretro(SCIF, deser);
+	}
+	else
+	{
+		deser >> CCN;
+		deser >> UBC;
+		deser >> BSC;
+		deser >> DMAC;
+		deser >> CPG;
+		deser >> RTC;
+		deser >> INTC;
+		deser >> TMU;
+		deser >> SCI;
+		deser >> SCIF;
+	}
+	if (deser.version() >= Deserializer::V9
+			// Note (lr): was added in V11 fa49de29 24/12/2020 but ver not updated until V12 (13/4/2021)
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		icache.Deserialize(deser);
+	else
+		icache.Reset(true);
+	if (deser.version() >= Deserializer::V10
+			// Note (lr): was added in V11 2eb66879 27/12/2020 but ver not updated until V12 (13/4/2021)
+			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+		ocache.Deserialize(deser);
+	else
+		ocache.Reset(true);
+
+	if (!deser.rollback())
+		mem_b.deserialize(deser);
+
+	interrupts_deserialize(deser);
+
+	if (deser.version() <= Deserializer::V31)
+		deser.skip<int>();		// do_sqw index
+	CCN_QACR_write<0>(0, CCN_QACR0.reg_data);
+	CCN_QACR_write<1>(0, CCN_QACR1.reg_data);
+
+	deser >> (*p_sh4rcb).sq_buffer;
+
+	deser >> (*p_sh4rcb).cntx;
+	if (deser.version() >= Deserializer::V19 && deser.version() < Deserializer::V21)
+		deser.skip<u32>(); // sh4InterpCycles
+	if (deser.version() < Deserializer::V21)
+		p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
+
+	sh4_sched_deserialize(deser);
+}
+
+void serialize2(Serializer& ser)
+{
+	tmu.serialize(ser);
+	mmu_serialize(ser);
+}
+
+void deserialize2(Deserializer& deser)
+{
+	if (deser.version() <= Deserializer::V32)
+	{
+		deser >> SCIF_SCFSR2;
+		if (deser.version() >= Deserializer::V11
+				|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+			deser >> SCIF_SCSCR2;
+		else 
+			SCIF_SCSCR2.full = 0;
+		deser >> BSC_PDTRA;
+	}
+
+	tmu.deserialize(deser);
+	mmu_deserialize(deser);
+}
+
+} //namespace sh4

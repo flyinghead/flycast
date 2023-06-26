@@ -27,7 +27,6 @@
 #include <fcntl.h>
 #include <nowide/config.hpp>
 #include <nowide/convert.hpp>
-#include <nowide/stackstring.hpp>
 #endif
 #include "oslib/oslib.h"
 #include "imgread/common.h"
@@ -59,6 +58,7 @@
 #if defined(USE_SDL) || defined(DEF_CONSOLE)
 #include <nowide/args.hpp>
 #endif
+#include <nowide/stackstring.hpp>
 
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
@@ -252,14 +252,14 @@ static void setupPath()
 {
 #ifndef TARGET_UWP
 	wchar_t fname[512];
-	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
+	GetModuleFileNameW(0, fname, std::size(fname));
 
 	std::string fn;
 	nowide::stackstring path;
 	if (!path.convert(fname))
 		fn = ".\\";
 	else
-		fn = path.c_str();
+		fn = path.get();
 	size_t pos = get_last_slash_pos(fn);
 	if (pos != std::string::npos)
 		fn = fn.substr(0, pos) + "\\";
@@ -276,7 +276,7 @@ static void setupPath()
 	StorageFolder^ localFolder = Windows::Storage::ApplicationData::Current->LocalFolder;
 	nowide::stackstring path;
 	path.convert(localFolder->Path->Data());
-	std::string homePath(path.c_str());
+	std::string homePath(path.get());
 	homePath += '\\';
 	set_user_config_dir(homePath);
 	homePath += "data\\";
@@ -463,7 +463,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					keycode = VK_NUMPAD_RETURN;
 				else
 					keycode = wParam & 0xff;
-				keyboard->keyboard_input(keycode, message == WM_KEYDOWN);
+				keyboard->input(keycode, message == WM_KEYDOWN);
 			}
 		}
 		break;
@@ -757,16 +757,16 @@ static bool dumpCallback(const wchar_t* dump_path,
 	if (succeeded)
 	{
 		wchar_t s[MAX_PATH + 32];
-		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
+		_snwprintf(s, std::size(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
 
 		nowide::stackstring path;
 		if (path.convert(dump_path))
 		{
-			std::string directory = path.c_str();
+			std::string directory = path.get();
 			if (path.convert(minidump_id))
 			{
-				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
+				std::string fullPath = directory + '\\' + std::string(path.get()) + ".dmp";
 				registerCrash(directory.c_str(), fullPath.c_str());
 			}
 		}
@@ -806,7 +806,7 @@ void gui_load_game()
 			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
 			nowide::stackstring path;
 			if (path.convert(file->Path->Data()))
-				gui_start_game(path.c_str());
+				gui_start_game(path.get());
 		}
 	});
 }
@@ -845,7 +845,7 @@ FILE *fopen(char const *file_name, char const *mode)
 	if (strchr(mode, 'b') == nullptr)
 		openFlags |= _O_TEXT;
 
-	HANDLE fileh = CreateFile2FromAppW(wname.c_str(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
+	HANDLE fileh = CreateFile2FromAppW(wname.get(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
 	if (fileh == INVALID_HANDLE_VALUE)
 		return nullptr;
 
@@ -867,7 +867,7 @@ int remove(char const *name)
         errno = EINVAL;
         return -1;
     }
-    return _wremove(wname.c_str());
+    return _wremove(wname.get());
 }
 
 }
@@ -897,7 +897,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int argc = 0;
 	char **argv = nullptr;
 	if (converter.convert(cmd_line))
-		argv = commandLineToArgvA(converter.c_str(), &argc);
+		argv = commandLineToArgvA(converter.get(), &argc);
 #endif
 
 #ifdef USE_BREAKPAD
@@ -908,7 +908,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
 			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
 	};
-	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
+	google_breakpad::CustomClientInfo custom_info = { custom_entries, std::size(custom_entries) };
 
 	google_breakpad::ExceptionHandler handler(tempDir,
 		nullptr,
@@ -938,7 +938,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	nowide::stackstring nws;
 	static std::string tempDir8;
 	if (nws.convert(tempDir))
-		tempDir8 = nws.c_str();
+		tempDir8 = nws.get();
 	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
 #endif
 
@@ -969,9 +969,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return 0;
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	__debugbreak();
+	std::abort();
 }
 
 void os_DoEvents()
@@ -1213,4 +1214,32 @@ std::string os_GetConnectionMedium(){
     FreeMibTable(table);
 
     return result;
+}
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	char exePath[MAX_PATH];
+	GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+	std::string cmdLine(exePath);
+	for (int i = 0; i < argc; i++)
+	{
+		cmdLine += ' ';
+		cmdLine += argv[i];
+	}
+
+	STARTUPINFOA startupInfo{};
+	startupInfo.cb = sizeof(startupInfo);
+
+	PROCESS_INFORMATION processInfo{};
+	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
+	if (rc)
+	{
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+	}
+	else
+	{
+		WARN_LOG(BOOT, "Cannot launch Flycast instance: error %d", GetLastError());
+	}
 }

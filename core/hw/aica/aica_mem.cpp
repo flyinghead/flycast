@@ -5,24 +5,27 @@
 #include "sgc_if.h"
 #include "hw/hwreg.h"
 
+namespace aica
+{
+
 alignas(4) u8 aica_reg[0x8000];
 
 static void (*midiReceiver)(u8 data);
 
 //Aica read/write (both sh4 & arm)
 
-//00000000~007FFFFF @DRAM_AREA* 
+//00000000~007FFFFF @DRAM_AREA*
 //00800000~008027FF @CHANNEL_DATA 
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 template<typename T>
-T aicaReadReg(u32 addr)
+T readRegInternal(u32 addr)
 {
 	addr &= 0x7FFF;
 
 	if (addr >= 0x2800 && addr < 0x2818)
 	{
-		ReadCommonReg(addr, sizeof(T) == 1);
+		sgc::ReadCommonReg(addr, sizeof(T) == 1);
 	}
 	else if (addr >= 0x4000 && addr < 0x4580)
 	{
@@ -51,7 +54,7 @@ T aicaReadReg(u32 addr)
 			else
 				v &= 0xf;
 		}
-		if (sizeof(T) == 1)
+		if constexpr (sizeof(T) == 1)
 		{
 			if (addr & 1)
 				v >>= 8;
@@ -62,9 +65,9 @@ T aicaReadReg(u32 addr)
 	}
 	return ReadMemArr<T>(aica_reg, addr);
 }
-template u8 aicaReadReg<u8>(u32 addr);
-template u16 aicaReadReg<u16>(u32 addr);
-template u32 aicaReadReg<u32>(u32 addr);
+template u8 readRegInternal<u8>(u32 addr);
+template u16 readRegInternal<u16>(u32 addr);
+template u32 readRegInternal<u32>(u32 addr);
 
 static void writeCommonReg8(u32 reg, u8 data)
 {
@@ -83,7 +86,7 @@ static void writeCommonReg8(u32 reg, u8 data)
 }
 
 template<typename T>
-void aicaWriteReg(u32 addr, T data)
+void writeRegInternal(u32 addr, T data)
 {
 	constexpr size_t sz = sizeof(T);
 	addr &= 0x7FFF;
@@ -94,7 +97,7 @@ void aicaWriteReg(u32 addr, T data)
 		u32 chan = addr >> 7;
 		u32 reg = addr & 0x7F;
 		WriteMemArr(aica_reg, addr, data);
-		WriteChannelReg(chan, reg, sz);
+		sgc::WriteChannelReg(chan, reg, sz);
 		return;
 	}
 
@@ -107,7 +110,7 @@ void aicaWriteReg(u32 addr, T data)
 	if (addr < 0x2818)
 	{
 		writeCommonReg8(addr, data & 0xFF);
-		if (sz == 2)
+		if constexpr (sz == 2)
 			writeCommonReg8(addr + 1, data >> 8);
 		return;
 	}
@@ -127,7 +130,7 @@ void aicaWriteReg(u32 addr, T data)
 				s32 &v = addr < 0x4400 ? dsp::state.TEMP[(addr - 0x4000) / 8] : dsp::state.MEMS[(addr - 0x4400) / 8];
 				if (addr & 4)
 				{
-					if (sz == 1)
+					if constexpr (sz == 1)
 					{
 						if (addr & 1)
 							v = (v & 0x0000ffff) | (((s32)data << 24) >> 8);
@@ -178,28 +181,30 @@ void aicaWriteReg(u32 addr, T data)
 
 		WriteMemArr(aica_reg, addr, data);
 		dsp::writeProg(addr);
-		if (sz == 2)
+		if constexpr (sz == 2)
 			dsp::writeProg(addr + 1);
 		return;
 	}
-	WriteAicaReg(addr, data);
+	writeTimerAndIntReg(addr, data);
 }
-template void aicaWriteReg<>(u32 addr, u8 data);
-template void aicaWriteReg<>(u32 addr, u16 data);
-template void aicaWriteReg<>(u32 addr, u32 data);
+template void writeRegInternal<>(u32 addr, u8 data);
+template void writeRegInternal<>(u32 addr, u16 data);
+template void writeRegInternal<>(u32 addr, u32 data);
 
-void init_mem()
+void initMem()
 {
 	memset(aica_reg, 0, sizeof(aica_reg));
-	aica_ram.data[ARAM_SIZE - 1] = 1;
-	aica_ram.Zero();
+	aica_ram[ARAM_SIZE - 1] = 1;
+	aica_ram.zero();
 	midiReceiver = nullptr;
 }
 
-void term_mem()
+void termMem()
 {
 }
 
-void aica_setMidiReceiver(void (*handler)(u8 data)) {
+void setMidiReceiver(void (*handler)(u8 data)) {
 	midiReceiver = handler;
 }
+
+} // namespace aica

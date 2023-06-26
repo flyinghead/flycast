@@ -224,3 +224,25 @@ void pico_protocol_init(struct pico_protocol *p)
     dbg("Protocol %s registered (layer: %d).\n", p->name, p->layer);
 }
 
+static int proto_deinit_cb(void **p)
+{
+	struct pico_protocol *proto = *p;
+	pico_queue_empty(proto->q_in);
+	pico_queue_deinit(proto->q_in);
+	pico_queue_empty(proto->q_out);
+	pico_queue_deinit(proto->q_out);
+
+	return 0;
+}
+
+void pico_protocol_deinit(void)
+{
+	pico_tree_destroy(&Datalink_proto_tree, proto_deinit_cb);
+	proto_layer_rr_reset(&proto_rr_datalink);
+	pico_tree_destroy(&Network_proto_tree, proto_deinit_cb);
+	proto_layer_rr_reset(&proto_rr_network);
+	pico_tree_destroy(&Transport_proto_tree, proto_deinit_cb);
+	proto_layer_rr_reset(&proto_rr_transport);
+	pico_tree_destroy(&Socket_proto_tree, proto_deinit_cb);
+	proto_layer_rr_reset(&proto_rr_socket);
+}

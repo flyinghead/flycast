@@ -25,11 +25,8 @@ ZipArchive::~ZipArchive()
 	zip_close(zip);
 }
 
-bool ZipArchive::Open(const char* path)
+bool ZipArchive::Open(FILE *file)
 {
-	FILE *file = nowide::fopen(path, "rb");
-	if (file == nullptr)
-		return false;
 	zip_error_t error;
 	zip_source_t *source = zip_source_filep_create(file, 0, -1, &error);
 	if (source == nullptr)
@@ -87,4 +84,24 @@ ArchiveFile* ZipArchive::OpenFileByCrc(u32 crc)
 u32 ZipArchiveFile::Read(void* buffer, u32 length)
 {
 	return zip_fread(zip_file, buffer, length);
+}
+
+bool ZipArchive::Open(const void *data, size_t size)
+{
+	zip_error_t error;
+	zip_source_t *source = zip_source_buffer_create(data, size, 0, &error);
+	if (source == nullptr)
+		return false;
+	zip = zip_open_from_source(source, 0, NULL);
+	if (zip == nullptr)
+		zip_source_free(source);
+	return zip != nullptr;
+}
+
+ArchiveFile *ZipArchive::OpenFirstFile()
+{
+	zip_file *zipFile = zip_fopen_index(zip, 0, 0);
+	if (zipFile == nullptr)
+		return nullptr;
+	return new ZipArchiveFile(zipFile);
 }

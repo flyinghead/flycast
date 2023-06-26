@@ -19,10 +19,8 @@
 
 #include "common.h"
 #include "stdclass.h"
+#include "oslib/storage.h"
 #include <sstream>
-
-extern std::string OS_dirname(std::string file);
-extern std::string normalize_path_separator(std::string path);
 
 static u32 getSectorSize(const std::string& type) {
 		if (type == "AUDIO")
@@ -50,7 +48,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (get_file_extension(file) != "cue")
 		return nullptr;
 
-	FILE *fsource = nowide::fopen(file, "rb");
+	FILE *fsource = hostfs::storage().openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -58,7 +56,8 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		throw FlycastException(std::string("Cannot open CUE file ") + file);
 	}
 
-	size_t cue_len = flycast::fsize(fsource);
+	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
+	size_t cue_len = fileInfo.size;
 
 	char cue_data[64 * 1024] = { 0 };
 
@@ -74,7 +73,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 
 	std::istringstream istream(cue_data);
 
-	std::string basepath = OS_dirname(file);
+	std::string basepath = hostfs::storage().getParentPath(file);
 
 	MD5Sum md5;
 
@@ -85,6 +84,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	std::string track_type;
 	u32 session_number = 0;
 	std::string line;
+	std::string track_isrc;
 
 	while (std::getline(istream, line))
 	{
@@ -173,8 +173,8 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				Track t;
 				t.StartFAD = current_fad;
 				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
-				std::string path = basepath + normalize_path_separator(track_filename);
-				FILE *track_file = nowide::fopen(path.c_str(), "rb");
+				std::string path = hostfs::storage().getSubPath(basepath, track_filename);
+				FILE *track_file = hostfs::storage().openFile(path, "rb");
 				if (track_file == nullptr)
 				{
 					delete disc;
@@ -187,12 +187,14 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 					delete disc;
 					throw FlycastException("CUE file: track has unknown sector type: " + track_type);
 				}
-				if (flycast::fsize(track_file) % sector_size != 0)
+				fileInfo = hostfs::storage().getFileInfo(path);
+				if (fileInfo.size % sector_size != 0)
 					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
-				current_fad = t.StartFAD + (u32)flycast::fsize(track_file) / sector_size;
+				current_fad = t.StartFAD + (u32)fileInfo.size / sector_size;
 				t.EndFAD = current_fad - 1;
-				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
-				
+				t.isrc = track_isrc;
+				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d %s", disc->tracks.size() + 1, track_filename.c_str(),
+						session_number, track_type.c_str(), t.StartFAD, t.EndFAD, t.isrc.empty() ? "" : ("ISRC " + t.isrc).c_str());
 				if (digest != nullptr)
 					md5.add(track_file);
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
@@ -201,7 +203,16 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				track_number = -1;
 				track_type.clear();
 				track_filename.clear();
+				track_isrc.clear();
 			}
+		}
+		else if (token == "CATALOG")
+		{
+			cuesheet >> disc->catalog;
+		}
+		else if (token == "ISRC")
+		{
+			cuesheet >> track_isrc;
 		}
 	}
 	if (disc->tracks.empty())
@@ -221,8 +232,8 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	else
 	{
 		disc->type = CdRom_XA;
-		disc->LeadOut.ADDR = 0;
-		disc->LeadOut.CTRL = 0;
+		disc->LeadOut.ADR = 1;
+		disc->LeadOut.CTRL = 4;
 		disc->EndFAD = disc->LeadOut.StartFAD = current_fad;
 	}
 

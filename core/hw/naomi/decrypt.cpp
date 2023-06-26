@@ -3,8 +3,8 @@
 /* Borrowed from yabause */
 /* Based on mame 315-5881_crypt.cpp and stvprot.cpp */
 
-#include <cstdlib>
 #include "naomi_cart.h"
+#include <cstring>
 
 typedef struct sbox_s {
   u8 table[64];
