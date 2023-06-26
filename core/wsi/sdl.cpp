@@ -116,8 +116,28 @@ bool SDLGLGraphicsContext::init()
 	glGetError();
 	eglGetError();
 #endif
-
+	
+	initVideoRouting();
+	
 	return true;
+}
+
+void SDLGLGraphicsContext::initVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	extern void os_VideoRoutingTermGL();
+	os_VideoRoutingTermGL();
+	if (config::VideoRouting)
+	{
+#ifdef TARGET_MAC
+		extern void os_VideoRoutingInitSyphonWithGLContext(void* glContext);
+		os_VideoRoutingInitSyphonWithGLContext(glcontext);
+#elif defined(_WIN32)
+		extern void os_VideoRoutingInitSpout();
+		os_VideoRoutingInitSpout();
+#endif
+	}
+#endif
 }
 
 void SDLGLGraphicsContext::swap()
