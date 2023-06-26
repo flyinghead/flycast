@@ -710,7 +710,7 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
+	if ( (InGame() || (IsReplaying() && config::GdxReplayShowAllyHP)) && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c2f6652);
 		if (1 <= player_index && player_index <= 4) {
 			player_index--;
@@ -791,7 +791,7 @@ void Gdxsv::WritePatchDisk2() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	if (InGame() && gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) {
+	if ( (InGame() || (IsReplaying() && config::GdxReplayShowAllyHP)) && gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c391d92);
 		if (1 <= player_index && player_index <= 4) {
 			player_index--;
