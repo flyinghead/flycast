@@ -138,6 +138,9 @@ struct socket_pair
 			len = r;
 			data = buf;
 		}
+		if (pico_sock->remote_port == short_be(5011) && len >= 5 && data[0] == 1)
+			// Visual Concepts sport games
+			memcpy((void *)&data[1], &pico_sock->local_addr.ip4.addr, 4);
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
 		if (r2 < 0)
@@ -228,6 +231,10 @@ static GamePortList GamesPorts[] = {
 		{ "T22904N", "T7016D  50" },
 		{ },
 		{ 17219 },
+	},
+	{ // Driving Strikers online demo
+		{ "IND-161053" },
+		{ 30099 },
 	},
 
 	{ // Atomiswave
@@ -1075,18 +1082,8 @@ static void *pico_thread_func(void *)
 		for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->udpPorts[i]);
-			sock_t sockfd = find_udp_socket(port);
-			saddr.sin_port = port;
-
-			if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
-			{
-				perror("bind");
-				closesocket(sockfd);
-				auto it = udp_sockets.find(port);
-				if (it != udp_sockets.end())
-					it->second = INVALID_SOCKET;
-				continue;
-			}
+			find_udp_socket(port);
+			// bind is done in find_udp_socket
 		}
 
 		for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
