@@ -185,6 +185,10 @@ void DX11Renderer::Term()
 	quad.reset();
 	deviceContext.reset();
 	device.reset();
+	vrStagingTexture.reset();
+	vrStagingTextureSRV.reset();
+	vrScaledTexture.reset();
+	vrScaledRenderTarget.reset();
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
@@ -460,6 +464,7 @@ bool DX11Renderer::Render()
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
 		DrawOSD(false);
+		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
 		ID3D11RenderTargetView *nullView = nullptr;
@@ -960,6 +965,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
+	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
 	ID3D11RenderTargetView *nullView = nullptr;
@@ -1292,6 +1298,88 @@ void DX11Renderer::writeFramebufferToVRAM()
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
+}
+
+void DX11Renderer::renderVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		extern void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture);
+		
+		ID3D11RenderTargetView* pRenderTargetView = theDX11Context.getRenderTarget().get();
+
+		// Backbuffer texture would be different after reszing, fetching new address everytime
+		ID3D11Resource* pResource = nullptr;
+		pRenderTargetView->GetResource(&pResource);
+		ID3D11Texture2D* backBufferTexture = nullptr;
+		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&backBufferTexture);		
+		
+		if (config::VideoRoutingScale)
+		{
+			static int targetWidth, targetHeight, vrStagingWidth, vrStagingHeight;
+			static D3D11_VIEWPORT scaledViewPort{};
+
+			auto updateScaledTexture = [this]() -> void {
+				targetWidth = config::VideoRoutingVRes * settings.display.width / settings.display.height;
+				targetHeight = config::VideoRoutingVRes;
+
+				vrScaledTexture.reset();
+				vrScaledRenderTarget.reset();
+				createTexAndRenderTarget(vrScaledTexture, vrScaledRenderTarget, targetWidth, targetHeight);
+
+				scaledViewPort.Width = targetWidth;
+				scaledViewPort.Height = targetHeight;
+				scaledViewPort.MinDepth = 0.f;
+				scaledViewPort.MaxDepth = 1.f;
+			};
+
+			D3D11_TEXTURE2D_DESC bbDesc = {};
+			backBufferTexture->GetDesc(&bbDesc);
+
+			// Window resized
+			if (bbDesc.Width != vrStagingWidth || bbDesc.Height != vrStagingHeight)
+			{
+				vrStagingTexture.reset();
+				vrStagingTextureSRV.reset();
+
+				D3D11_TEXTURE2D_DESC srvDesc = bbDesc;
+				srvDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				srvDesc.Usage = D3D11_USAGE_DEFAULT;
+				device->CreateTexture2D(&srvDesc, nullptr, &vrStagingTexture.get());
+
+				D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+				viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				viewDesc.Texture2D.MipLevels = 1;
+				
+				device->CreateShaderResourceView(vrStagingTexture.get(), &viewDesc, &vrStagingTextureSRV.get());
+
+				updateScaledTexture();
+			}
+
+			// Scale down value changed
+			if (targetHeight != config::VideoRoutingVRes)
+			{
+				updateScaledTexture();	
+			}
+
+			deviceContext->OMSetRenderTargets(1, &vrScaledRenderTarget.get(), nullptr);
+			deviceContext->RSSetViewports(1, &scaledViewPort);
+			deviceContext->CopyResource(vrStagingTexture.get(), backBufferTexture);
+			quad->draw(vrStagingTextureSRV, samplers->getSampler(true));
+			os_VideoRoutingPublishFrameTexture(vrScaledTexture);
+
+			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+
+		} else {
+			os_VideoRoutingPublishFrameTexture(backBufferTexture);
+		}
+
+		backBufferTexture->Release();
+		pResource->Release();
+	}
+#endif
 }
 
 Renderer *rend_DirectX11()

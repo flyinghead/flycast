@@ -671,6 +671,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 			gl.ofbo2.ready = false;
 			frameRendered = true;
 		}
+		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;
@@ -779,6 +780,8 @@ static void resize(int w, int h)
 
 bool OpenGL4Renderer::renderFrame(int width, int height)
 {
+	initVideoRoutingFrameBuffer();
+	
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,

@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "vulkan_context.h"
+#include "vulkan_renderer.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
@@ -413,6 +414,8 @@ bool VulkanContext::InitDevice()
 			}
 			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
 				deviceExtensions.push_back("VK_KHR_portability_subset");
+			else if (!strcmp(property.extensionName, "VK_EXT_metal_objects"))
+				deviceExtensions.push_back("VK_EXT_metal_objects");
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
@@ -514,6 +517,8 @@ bool VulkanContext::InitDevice()
 				+ std::to_string(props.driverVersion / 10000) + "."
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
+		
+		initVideoRouting();
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -536,6 +541,19 @@ bool VulkanContext::InitDevice()
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
 	return false;
+}
+
+void VulkanContext::initVideoRouting()
+{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
+	os_VideoRoutingTermVk();
+	if (config::VideoRouting)
+	{
+		os_VideoRoutingInitSyphonWithVkDevice(device);
+	}
+#endif
 }
 
 void VulkanContext::CreateSwapChain()
@@ -626,8 +644,8 @@ void VulkanContext::CreateSwapChain()
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#ifdef TEST_AUTOMATION
-			// for final screenshot
+#if defined(TEST_AUTOMATION) || (defined(VIDEO_ROUTING) && defined(TARGET_MAC))
+			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
 			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
@@ -967,6 +985,8 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
+			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
+			
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1020,6 +1040,10 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	os_VideoRoutingTermVk();
+#endif
 #ifndef USE_SDL
 	surface.reset();
 #else

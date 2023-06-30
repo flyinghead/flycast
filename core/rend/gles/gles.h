@@ -305,6 +305,11 @@ struct gl_ctx
 		bool ready = false;
 	} ofbo2;
 
+	struct
+	{
+		std::unique_ptr<GlFramebuffer> framebuffer;
+	} videorouting;
+
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
@@ -545,6 +550,7 @@ protected:
 	}
 
 	bool renderLastFrame();
+	void renderVideoRouting();
 
 private:
 	bool renderFrame(int width, int height);
@@ -553,6 +559,7 @@ protected:
 	bool frameRendered = false;
 	int width = 640;
 	int height = 480;
+	void initVideoRoutingFrameBuffer();
 };
 
 void initQuad();
