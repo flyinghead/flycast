@@ -5,6 +5,7 @@
 #include "gdxsv_replay_util.h"
 #include "input/gamepad_device.h"
 #include "libs.h"
+#include "cfg/option.h"
 
 void GdxsvBackendReplay::Reset() {
 	RestorePatch();
@@ -55,12 +56,19 @@ bool GdxsvBackendReplay::StartFile(const char *path, int pov) {
 	return Start();
 }
 
-bool GdxsvBackendReplay::StartBuffer(const char *buf, int size) {
-	bool ok = log_file_.ParseFromArray(buf, size);
+bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
+	bool ok = log_file_.ParseFromArray(buf.data(), buf.size());
 	if (!ok) {
 		NOTICE_LOG(COMMON, "ParseFromArray failed");
 		return false;
 	}
+	
+	if (log_file_.users_size() <= pov) {
+		return false;
+	}
+
+	me_ = pov;
+	
 	return Start();
 }
 
@@ -290,7 +298,18 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 
 		if (msg.command == LbsMessage::lbsAskPlayerInfo) {
 			int pos = msg.Read8();
-			const auto &user = log_file_.users(pos - 1);
+			auto user = log_file_.users(pos - 1);
+			
+			if (config::GdxReplayHideName) {
+				user.set_user_id("USER0" + std::to_string(pos));
+				user.set_user_name_sjis("USER0" + std::to_string(pos));
+				auto game_param = user.game_param();
+				user.set_game_param(game_param.replace(16, 17, "\x82\x6F\x82\x68\x82\x6B\x82\x6E\x82\x73\x82\x4F\x82" + std::string(1,static_cast<char>(0x4F + pos)) + "\x01\x01\x07")); // ＰＩＬＯＴ０１~０４
+				user.set_battle_count(0);
+				user.set_win_count(0);
+				user.set_lose_count(0);
+			}
+			
 			LbsMessage::SvAnswer(msg)
 				.Write8(pos)
 				->WriteString(user.user_id())

@@ -496,6 +496,8 @@ extern Option<int> GdxLocalPort;
 extern Option<int> GdxMinDelay;
 extern Option<bool> GdxSaveReplay;
 extern Option<bool> GdxUploadReplay;
+extern Option<bool> GdxReplayHideName;
+extern Option<bool> GdxReplayShowAllyHP;
 
 // Network
 
