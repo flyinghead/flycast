@@ -64,7 +64,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, (DWORD)ramSize, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
-	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
+	unsigned memsize = 512_MB + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
 	base_alloc = (char*)mem_region_reserve(NULL, memsize);
 
 	// Calculate pointers now
@@ -162,7 +162,7 @@ static void *prepare_jit_block_template(size_t size, Mapper mapper)
 	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&init) & ~0xFFFFF;
 
 	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
-	for (uintptr_t i = 0; i < 1800 * 1024 * 1024; i += 1024 * 1024) {  // Some arbitrary step size.
+	for (uintptr_t i = 0; i < 1800_MB; i += 1_MB) {  // Some arbitrary step size.
 		uintptr_t try_addr_above = base_addr + i;
 		uintptr_t try_addr_below = base_addr - i;
 

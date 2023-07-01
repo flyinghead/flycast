@@ -33,7 +33,7 @@ namespace aica
 namespace dsp
 {
 
-constexpr size_t CodeBufferSize = 32 * 1024;
+constexpr size_t CodeBufferSize = 32_KB;
 #if defined(_WIN32)
 static u8 *CodeBuffer;
 #else

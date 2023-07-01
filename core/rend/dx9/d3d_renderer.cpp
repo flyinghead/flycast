@@ -130,7 +130,7 @@ bool D3DRenderer::Init()
 	device = theDXContext.getDevice();
 	devCache.setDevice(device);
 
-	bool success = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024);
+	bool success = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4_MB);
 	success &= ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
 
 	success &= SUCCEEDED(device->CreateVertexDeclaration(MainVtxElement, &mainVtxDecl.get()));
@@ -189,7 +189,7 @@ void D3DRenderer::postReset()
 	width = 0;
 	height = 0;
 	resize(w, h);
-	bool rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024);
+	bool rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4_MB);
 	verify(rc);
 	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
 	verify(rc);

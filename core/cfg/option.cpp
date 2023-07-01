@@ -98,7 +98,7 @@ Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
-Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512_MB);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);

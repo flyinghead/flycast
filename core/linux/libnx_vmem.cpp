@@ -146,7 +146,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	// Now try to allocate a contiguous piece of memory.
 	if (reserved_base == NULL)
 	{
-		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
+		reserved_size = 512_MB + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 		reserved_base = region_reserve(NULL, reserved_size);
 		if (!reserved_base)
 			return false;

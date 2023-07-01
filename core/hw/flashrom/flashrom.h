@@ -269,23 +269,23 @@ struct DCFlashChip : WritableChip
 		{
 		case FLASH_PT_FACTORY:
 			*offset = 0x1a000;
-			*size = 8 * 1024;
+			*size = 8_KB;
 			break;
 		case FLASH_PT_RESERVED:
 			*offset = 0x18000;
-			*size = 8 * 1024;
+			*size = 8_KB;
 			break;
 		case FLASH_PT_USER:
 			*offset = 0x1c000;
-			*size = 16 * 1024;
+			*size = 16_KB;
 			break;
 		case FLASH_PT_GAME:
 			*offset = 0x10000;
-			*size = 32 * 1024;
+			*size = 32_KB;
 			break;
 		case FLASH_PT_UNKNOWN:
 			*offset = 0x00000;
-			*size = 64 * 1024;
+			*size = 64_KB;
 			break;
 		default:
 			*offset = 0;

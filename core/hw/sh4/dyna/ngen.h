@@ -44,8 +44,8 @@
 #include "blockmanager.h"
 #include "oslib/host_context.h"
 
-#define CODE_SIZE   (10*1024*1024)
-#define TEMP_CODE_SIZE (1024*1024)
+#define CODE_SIZE 10_MB
+#define TEMP_CODE_SIZE 1_MB
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with

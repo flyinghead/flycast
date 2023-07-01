@@ -241,7 +241,7 @@ void bm_Reset()
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
 		// so we have to unlock each region individually
-		if (settings.platform.ram_size == 16 * 1024 * 1024)
+		if (settings.platform.ram_size == 16_MB)
 		{
 			virtmem::region_unlock(addrspace::ram_base + 0x0C000000, RAM_SIZE);
 			virtmem::region_unlock(addrspace::ram_base + 0x0D000000, RAM_SIZE);

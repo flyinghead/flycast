@@ -620,7 +620,7 @@ static void reios_boot()
 	//find boot file
 	//boot it
 
-	memset(GetMemPtr(0x8C000000, 0), 0xFF, 64 * 1024);
+	memset(GetMemPtr(0x8C000000, 0), 0xFF, 64_KB);
 
 	setup_syscall(0x8C001000, dc_bios_syscall_system);
 	setup_syscall(0x8C001002, dc_bios_syscall_font);

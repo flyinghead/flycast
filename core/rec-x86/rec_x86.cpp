@@ -903,8 +903,6 @@ void ngen_mainloop(void* v_cntx)
 
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool, bool, bool optimise)
 {
-	verify(emit_FreeSpace() >= 16 * 1024);
-
 	compiler = new X86Compiler();
 
 	try {

@@ -436,7 +436,7 @@ void DYNACALL interpret(u32 opcode);
 
 extern u8* icPtr;
 extern u8* ICache;
-const u32 ICacheSize = 1024 * 1024 * 4;
+const u32 ICacheSize = 4_MB;
 
 static inline void *currentCode() {
 	return icPtr;

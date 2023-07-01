@@ -1300,7 +1300,6 @@ static BlockCompiler* ccCompiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
-	verify(emit_FreeSpace() >= 16 * 1024);
 	void* protStart = emit_GetCCPtr();
 	size_t protSize = emit_FreeSpace();
 	virtmem::jit_set_exec(protStart, protSize, false);

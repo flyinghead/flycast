@@ -616,8 +616,7 @@ static void reserveBottomMemory()
     size_t totalReservation = 0;
     size_t numVAllocs = 0;
     size_t numHeapAllocs = 0;
-    size_t oneMB = 1024 * 1024;
-    for (size_t size = 256 * oneMB; size >= oneMB; size /= 2)
+    for (size_t size = 256_MB; size >= 1_MB; size /= 2)
     {
         for (;;)
         {
@@ -640,7 +639,7 @@ static void reserveBottomMemory()
     // Now repeat the same process but making heap allocations, to use up
     // the already reserved heap blocks that are below the 4 GB line.
     HANDLE heap = GetProcessHeap();
-    for (size_t blockSize = 64 * 1024; blockSize >= 16; blockSize /= 2)
+    for (size_t blockSize = 64_KB; blockSize >= 16; blockSize /= 2)
     {
         for (;;)
         {
@@ -662,7 +661,7 @@ static void reserveBottomMemory()
 
     // Perversely enough the CRT doesn't use the process heap. Suck up
     // the memory the CRT heap has already reserved.
-    for (size_t blockSize = 64 * 1024; blockSize >= 16; blockSize /= 2)
+    for (size_t blockSize = 64_KB; blockSize >= 16; blockSize /= 2)
     {
         for (;;)
         {

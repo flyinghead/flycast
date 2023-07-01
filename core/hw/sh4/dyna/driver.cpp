@@ -151,7 +151,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	u32 pc=next_pc;
 
-	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
+	if (emit_FreeSpace() < 16_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
 		recSh4_ClearCache();
 
 	RuntimeBlockInfo* rbi = ngen_AllocateBlock();
@@ -164,7 +164,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	rbi->blockcheck_failures = blockcheck_failures;
 	if (smc_hotspots.find(rbi->addr) != smc_hotspots.end())
 	{
-		if (TEMP_CODE_SIZE - TempLastAddr < 16 * 1024)
+		if (TEMP_CODE_SIZE - TempLastAddr < 16_KB)
 			clear_temp_cache(false);
 		emit_ptr = (u32 *)(TempCodeCache + TempLastAddr);
 		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);

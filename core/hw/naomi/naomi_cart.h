@@ -123,7 +123,7 @@ public:
 	bool GetBootId(RomBootID *bootId) override;
 
 private:
-	u8 naomi_cart_ram[64 * 1024];
+	u8 naomi_cart_ram[64_KB];
 };
 
 class NaomiCartException : public FlycastException

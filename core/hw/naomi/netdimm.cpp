@@ -52,7 +52,7 @@ NetDimm::~NetDimm()
 void NetDimm::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
 	GDCartridge::Init(progress, digest);
-	dimmBufferOffset = dimm_data_size - 16 * 1024 * 1024;
+	dimmBufferOffset = dimm_data_size - 16_MB;
 	finalTuned = strcmp(game->name, "vf4tuned") == 0;
 }
 
@@ -382,9 +382,9 @@ void NetDimm::systemCmd(int cmd)
 		// | offset >> 20 (dimm buffers offset @ size - 16MB)
 		// offset = (64MB << 0-5) - 16MB
 		// vf4 forces this value to 0f000000 (256MB) if != 1f000000 (512MB)
-		if (dimm_data_size == 512 * 1024 * 1024)
+		if (dimm_data_size == 512_MB)
 			addrspace::write32(0xc01fc04, (3 << 16) | 0x70000000 | (dimmBufferOffset >> 20));	// dimm board config 1 x 512 MB
-		else if (dimm_data_size == 256 * 1024 * 1024)
+		else if (dimm_data_size == 256_MB)
 			addrspace::write32(0xc01fc04, (2 << 16) | 0x70000000 | (dimmBufferOffset >> 20));	// dimm board config 1 x 256 MB
 		else
 			die("Unsupported dimm mem size");

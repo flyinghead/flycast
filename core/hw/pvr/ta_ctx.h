@@ -301,7 +301,7 @@ struct rend_context
 	}
 };
 
-#define TA_DATA_SIZE (8 * 1024 * 1024)
+#define TA_DATA_SIZE 8_MB
 
 //vertex lists
 struct TA_context
@@ -358,7 +358,7 @@ struct TA_context
 
 	void Reset()
 	{
-		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
+		verify(tad.End() - tad.thd_root <= (ptrdiff_t)TA_DATA_SIZE);
 		tad.Clear();
 		nextContext = nullptr;
 		rend.Clear();
@@ -367,7 +367,7 @@ struct TA_context
 
 	~TA_context()
 	{
-		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
+		verify(tad.End() - tad.thd_root <= (ptrdiff_t)TA_DATA_SIZE);
 		freeAligned(tad.thd_root);
 	}
 };

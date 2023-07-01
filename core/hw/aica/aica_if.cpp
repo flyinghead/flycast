@@ -577,7 +577,7 @@ void deserialize(Deserializer& deser)
 	{
 		aica_ram.deserialize(deser);
 		if (settings.platform.isAtomiswave())
-			deser.skip(6 * 1024 * 1024, Deserializer::V30);
+			deser.skip(6_MB, Deserializer::V30);
 	}
 	deser >> VREG;
 	deser >> ARMRST;

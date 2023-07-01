@@ -2077,7 +2077,7 @@ static void gui_display_settings()
 				ImGui::Spacing();
 				header("Per Pixel Settings");
 
-				const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
+				const std::array<int64_t, 4> bufSizes{ 512_MB, 1_GB, 2_GB, 4_GB };
 				const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
 				u32 selected = 0;

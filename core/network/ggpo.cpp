@@ -333,7 +333,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 	verify(!sh4_cpu.IsCpuRunning());
 	lastSavedFrame = frame;
 	// TODO this is way too much memory
-	size_t allocSize = (settings.platform.isNaomi() ? 20 : 10) * 1024 * 1024;
+	size_t allocSize = settings.platform.isNaomi() ? 20_MB : 10_MB;
 	*buffer = (unsigned char *)malloc(allocSize);
 	if (*buffer == nullptr)
 	{
@@ -440,7 +440,7 @@ static void free_buffer(void *buffer)
 {
 	if (buffer != nullptr)
 	{
-		Deserializer deser(buffer, 1024 * 1024, true);
+		Deserializer deser(buffer, 1_MB, true);
 		int frame;
 		deser >> frame;
 		deltaStates.erase(frame);
