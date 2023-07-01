@@ -27,7 +27,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/mem/addrspace.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 
 extern UnwindInfo unwinder;
 

@@ -26,7 +26,7 @@
 using namespace Xbyak::util;
 
 #include "arm7_rec.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
 
 namespace aica::arm

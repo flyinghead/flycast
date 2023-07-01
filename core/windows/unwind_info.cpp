@@ -19,8 +19,8 @@
 */
 // Based on Asmjit unwind info registration and stack walking code for Windows, Linux and macOS
 // https://gist.github.com/dpjudas/925d5c4ffef90bd8114be3b465069fff
-#ifdef _WIN64
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
+#ifdef _M_X64
 #include <windows.h>
 #include <dbghelp.h>
 #include <algorithm>

@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
 #include <map>

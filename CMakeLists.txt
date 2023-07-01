@@ -232,6 +232,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${MSVC}>:NOMINMAX>
 		$<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
 
 if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
@@ -1104,6 +1105,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/oslib.h
 		core/oslib/storage.cpp
 		core/oslib/storage.h
+		core/oslib/unwind_info.h
 		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)
@@ -1432,6 +1434,9 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/utils-vixl.h)
 endif()
 if("arm64" IN_LIST ARCHITECTURE)
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h
@@ -1439,17 +1444,8 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/aarch64/assembler-aarch64.h
 		core/deps/vixl/aarch64/assembler-sve-aarch64.cc
 		core/deps/vixl/aarch64/constants-aarch64.h
-		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
-		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
-		core/deps/vixl/aarch64/decoder-aarch64.cc
-		core/deps/vixl/aarch64/decoder-aarch64.h
-		core/deps/vixl/aarch64/decoder-constants-aarch64.h
-		core/deps/vixl/aarch64/decoder-visitor-map-aarch64.h
-		core/deps/vixl/aarch64/disasm-aarch64.cc
-		core/deps/vixl/aarch64/disasm-aarch64.h
 		core/deps/vixl/aarch64/instructions-aarch64.cc
 		core/deps/vixl/aarch64/instructions-aarch64.h
-		core/deps/vixl/aarch64/logic-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.h
 		core/deps/vixl/aarch64/macro-assembler-sve-aarch64.cc
@@ -1458,8 +1454,6 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/aarch64/registers-aarch64.cc
 		core/deps/vixl/aarch64/registers-aarch64.h
 		core/deps/vixl/aarch64/pointer-auth-aarch64.cc
-		core/deps/vixl/aarch64/simulator-aarch64.cc
-		core/deps/vixl/aarch64/simulator-aarch64.h
 		core/deps/vixl/aarch64/simulator-constants-aarch64.h
 		core/deps/vixl/assembler-base-vixl.h
 		core/deps/vixl/code-buffer-vixl.cc
@@ -1741,15 +1735,17 @@ if(NOT LIBRETRO)
 				shell/uwp/http_client.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
-			target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutGL)
-			target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutDirectX/SpoutDX)
-			SET(SPOUT_BUILD_CMT OFF CACHE BOOL "For Visual Studio - build /MT to link runtime libraries" FORCE)
-			SET(SPOUT_BUILD_SPOUTDX ON CACHE BOOL "Build SpoutDX DirectX11 support library" FORCE)
-			SET(SPOUT_BUILD_LIBRARY OFF CACHE BOOL "Build C-compatible cross compiler library" FORCE)
-			SET(SKIP_INSTALL_ALL ON CACHE BOOL "Install headers and libraries" FORCE)
-			add_subdirectory(core/deps/Spout)
-			target_link_libraries(${PROJECT_NAME} PRIVATE Spout_static SpoutDX_static)
-			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+			if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
+				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutGL)
+				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutDirectX/SpoutDX)
+				SET(SPOUT_BUILD_CMT OFF CACHE BOOL "For Visual Studio - build /MT to link runtime libraries" FORCE)
+				SET(SPOUT_BUILD_SPOUTDX ON CACHE BOOL "Build SpoutDX DirectX11 support library" FORCE)
+				SET(SPOUT_BUILD_LIBRARY OFF CACHE BOOL "Build C-compatible cross compiler library" FORCE)
+				SET(SKIP_INSTALL_ALL ON CACHE BOOL "Install headers and libraries" FORCE)
+				add_subdirectory(core/deps/Spout)
+				target_link_libraries(${PROJECT_NAME} PRIVATE Spout_static SpoutDX_static)
+				target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+			endif()
 
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
