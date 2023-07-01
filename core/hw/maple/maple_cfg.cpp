@@ -361,6 +361,8 @@ void mcfg_CreateDevices()
 	case DC_PLATFORM_ATOMISWAVE:
 		createAtomiswaveDevices();
 		break;
+	case DC_PLATFORM_SYSTEMSP:
+		return;
 	default:
 		die("Unknown system");
 		break;

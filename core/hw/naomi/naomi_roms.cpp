@@ -161,6 +161,22 @@ const BIOS_t BIOS[] =
 		}
 	},
 	{
+		"segasp",
+		{
+			// BOOT VER 2.01
+			{ 0, "epr-24328a.ic50", 0x000000, 0x200000, 0x03ec3805 },
+			{ 1, "epr-24328a.ic50", 0x000000, 0x200000, 0x03ec3805 },
+			{ 2, "epr-24328a.ic50", 0x000000, 0x200000, 0x03ec3805 },
+			// BOOT VER 2.00
+			//{ 0, "epr-24328.ic50", 0x000000, 0x200000, 0x25f2ef00 },
+			// BOOT VER 1.01
+			//{ 0, "epr-24236a.ic50", 0x000000, 0x200000, 0xca7df0de },
+
+			{ 1, "mb_eeprom_us.ic54s", 0x000, 0x800, 0x4186d7ab, EepromBE16 },
+			{ 2, "mb_eeprom_exp.ic54s", 0x000, 0x800, 0x947ddfad, EepromBE16 },
+		},
+	},
+	{
 		nullptr
 	}
 };
@@ -532,6 +548,50 @@ const Game Games[] =
             { "opr-23970.ic22",  0x3000002, 0x800000,  0x0000000, InterleavedWord },
             { NULL, 0, 0 },
         }
+    },
+	// Soreike! Anpanman Popcorn Koujou 2 (Rev C)
+    {
+        "anpanman2",
+        nullptr,
+        "Soreike! Anpanman Popcorn Koujou 2",
+		0x03000000,
+        0x2f68b225,
+		nullptr,
+        M1,
+        ROT0,
+        {
+            { "epr-24049b.ic11", 0x0000000, 0x0400000, 0x7c810603 },
+            { "opr-24038.ic17s", 0x1000000, 0x0800000, 0x7addc59b, InterleavedWord },
+            { "opr-24039.ic18",  0x1000002, 0x0800000, 0x97e16543, InterleavedWord },
+            { "opr-24040.ic19s", 0x2000000, 0x0800000, 0x59a8d850, InterleavedWord },
+            { "opr-24041.ic20",  0x2000002, 0x0800000, 0xd0e6dfd0, InterleavedWord },
+            { "copy",            0x0400000, 0x0c00000, 0x0000000, Copy, 0x1000000 },
+
+			// some eeprom
+			//{ "at25010.ic13s", 0, 0x84, 0xbd5d61f3, Eeprom },
+        },
+    },
+	// Soreike! Anpanman Popcorn Koujou 2 (Rev A)
+    {
+        "anpanman2a",
+		"anpanman2",
+        "Soreike! Anpanman Popcorn Koujou 2 (Rev A)",
+		0x03000000,
+        0x2f68b225,
+		nullptr,
+        M1,
+        ROT0,
+        {
+            { "epr-24049a.ic11", 0x0000000, 0x0400000, 0xef7fe4ba },
+            { "opr-24038.ic17s", 0x1000000, 0x0800000, 0x7addc59b, InterleavedWord },
+            { "opr-24039.ic18",  0x1000002, 0x0800000, 0x97e16543, InterleavedWord },
+            { "opr-24040.ic19s", 0x2000000, 0x0800000, 0x59a8d850, InterleavedWord },
+            { "opr-24041.ic20",  0x2000002, 0x0800000, 0xd0e6dfd0, InterleavedWord },
+            { "copy",            0x0400000, 0x0c00000, 0x0000000, Copy, 0x1000000 },
+
+			// some eeprom
+			//{ "at25010.ic13s", 0, 0x84, 0xbd5d61f3, Eeprom },
+        },
     },
     // Mushiking The King Of Beetle (2K3 2ND Ver. 1.002-, World)
     {
@@ -1473,6 +1533,27 @@ const Game Games[] =
             { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
             { NULL, 0, 0, 0x00000000 },
         }
+    },
+    // Derby Owners Club World Edition (Rev T)
+    {
+        "drbyocwt",
+        "derbyocw",
+        "Derby Owners Club World Edition (Rev T)",
+        0x7800000,
+        0xffffffff, // not populated
+		nullptr,
+        M2,
+        ROT0,
+        {
+            { "epr-22336t.ic22", 0x0000000, 0x0400000, 0x18dc46b7 },
+            { "mpr-22328.ic1",   0x0800000, 0x1000000, 0x179cec02 },
+            { "mpr-22329.ic2",   0x1800000, 0x1000000, 0xe0d5b98c },
+            { "mpr-22330.ic3",   0x2800000, 0x1000000, 0x6737cd62 },
+            { "mpr-22331.ic4",   0x3800000, 0x1000000, 0x8fb5cbcf },
+            { "mpr-22332.ic5",   0x4800000, 0x1000000, 0xc5e365a8 },
+            { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
+            { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
+        },
     },
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
     {
@@ -7052,6 +7133,37 @@ const Game Games[] =
 		&clubkart_inputs,
     },
     {
+    	"clubkpzbp",
+		"clubkpzb",
+		"Club Kart Prize (Ver. B prototype)",
+		0xa000000,
+		0xffffffff,
+		"naomi2",
+		M2,
+		ROT0,
+        {
+			{ "rom0.ic22",   0x0000000, 0x400000, 0xe958f9e0 },
+			{ "rom2.ic2s",   0x1000000, 0x800000, 0xd4ef582c },
+			{ "rom3.ic3s",   0x1800000, 0x800000, 0x6302239e },
+			{ "rom4.ic4s",   0x2000000, 0x800000, 0x4f5e9426 },
+			{ "rom5.ic5s",   0x2800000, 0x800000, 0x7bb189ea },
+			{ "rom6.ic6s",   0x3000000, 0x800000, 0x5a256041 },
+			{ "rom7.ic7s",   0x3800000, 0x800000, 0x82bc57c3 },
+			{ "rom8.ic8s",   0x4000000, 0x800000, 0x71d7259a },
+			{ "rom9.ic9s",   0x4800000, 0x800000, 0x98663de6 },
+			{ "rom10.ic10s", 0x5000000, 0x800000, 0x0786f88e },
+			{ "rom11.ic11s", 0x5800000, 0x800000, 0x259b7dd5 },
+			{ "rom12.ic12s", 0x6000000, 0x800000, 0xf2de41b8 },
+			{ "rom13.ic13s", 0x6800000, 0x800000, 0x2e00966e },
+			{ "rom14.ic14s", 0x7000000, 0x800000, 0xc428e593 },
+			{ "rom15.ic15s", 0x7800000, 0x800000, 0xc196ac29 },
+			{ "rom16.ic16s", 0x8000000, 0x800000, 0x538827ca },
+			{ "rom17.ic17s", 0x8800000, 0x800000, 0xfbff0538 },
+        },
+		nullptr,
+		&clubkart_inputs,
+    },
+    {
     	"clubk2k3",
 		nullptr,
 		"Club Kart: European Session (2003, Rev A)",
@@ -7581,6 +7693,418 @@ const Game Games[] =
 		},
 		"gds-0039a",
 		&initd_inputs,
+    },
+	//
+	// System SP Games
+	//
+	{
+		// Brick People / Block PeePoo (Ver 1.002)
+		"brickppl",
+		nullptr,
+		"Brick People / Block PeePoo",
+		0x20000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x4000000, 0xd79afdb6 },
+	        { "ic63",  0x04000000, 0x4000000, 0x4f3c0937 },
+			{ "ic64",  0x08000000, 0x4000000, 0x383e90d9 },
+	        { "ic65",  0x0c000000, 0x4000000, 0x4c29b5ac },
+			{ "317-0558-com.ic15", 0, 0x800, 0x7592d004, Key },
+		},
+	},
+	{
+		"bingogal",
+		nullptr,
+		"Bingo Galaxy (main)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x01000000, 0xc07d9870 },
+	        { "ic63",  0x01000000, 0x01000000, 0x5d85e6c0 },
+			{ "ic64",  0x02000000, 0x01000000, 0x73134f52 },
+	        { "ic65",  0x03000000, 0x01000000, 0x1e4ae511 },
+	        { "ic66s", 0x04000000, 0x01000000, 0x810d5dfc },
+	        { "ic67s", 0x05000000, 0x01000000, 0x92014e31 },
+	        { "ic68s", 0x06000000, 0x01000000, 0x0640172c },
+	        { "ic69s", 0x07000000, 0x01000000, 0xca26fbf9 },
+			{ "317-0513-jpn.ic15", 0, 0x800, 0x778dc297, Key },
+		},
+	},
+	{
+		"bingogals",
+		nullptr,
+		"Bingo Galaxy (satellite)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x01000000, 0x880eb905 },
+	        { "ic63",  0x01000000, 0x01000000, 0x41dab407 },
+			{ "ic64",  0x02000000, 0x01000000, 0x97dfb2ab },
+		},
+	},
+	{
+		"dinoking",
+		nullptr,
+		"Dinosaur King (USA)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x01000000, 0x8bd18bf7 },
+			{ "ic63",  0x01000000, 0x01000000, 0x8e8c8d1b },
+			{ "ic64",  0x02000000, 0x01000000, 0x01b32ff7 },
+			{ "ic65",  0x03000000, 0x01000000, 0x4b60cdb3 },
+			{ "ic66s", 0x04000000, 0x01000000, 0xee3c278e },
+			{ "ic67s", 0x05000000, 0x01000000, 0x42441393 },
+			{ "ic68s", 0x06000000, 0x01000000, 0x4a787a44 },
+			{ "ic69s", 0x07000000, 0x01000000, 0xc78e46c2 },
+			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
+		},
+	},
+	{
+		"isshoni",
+		nullptr,
+		"Isshoni Wanwan Waiwai Puppy 2008",
+		0x20000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x4000000, 0x82a71af8 },
+			{ "ic63",  0x04000000, 0x4000000, 0xd4f65679 },
+			{ "ic64",  0x08000000, 0x4000000, 0x28c764c8 },
+			{ "ic65",  0x0c000000, 0x4000000, 0x906e7df8 },
+			{ "ic66s", 0x10000000, 0x4000000, 0x7815e178 },
+			{ "ic67s", 0x14000000, 0x4000000, 0x8d2c6567 },
+			{ "ic68s", 0x18000000, 0x4000000, 0xd8213da3 },
+			{ "317-0496-jpn.ic15", 0, 0x800, 0x7bca4250, Key },
+		},
+	},
+	{
+		// Yataimura Kingyosukui (1-player, Japan, Ver 1.005)
+		"kingyo",
+		nullptr,
+		"Yataimura Kingyosukui",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x01000000, 0x02f8ee37 },
+			{ "ic63",  0x01000000, 0x01000000, 0x98b1738a },
+			{ "ic64",  0x02000000, 0x01000000, 0x27998de0 },
+			{ "ic65",  0x03000000, 0x01000000, 0x548b3a81 },
+			{ "317-5151-jpn.ic15", 0, 0x800, 0xd29c911a, Key },
+		},
+	},
+	{
+		// Love And Berry - 1st-2nd Collection (Export, v2.000)
+		"lovebery",
+		nullptr,
+		"Love And Berry - 1st-2nd Collection (Export)",
+		0x20000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x4000000, 0x1bd80ed0 },
+			{ "ic63",  0x04000000, 0x4000000, 0xd3870287 },
+			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
+		},
+	},
+	{
+		"lovebero",
+		"lovebery",
+		"Love And Berry - 1st-2nd Collection (Export, v1.003)",
+		0x20000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x4000000, 0X0a23cea3 },
+			{ "ic63",  0x04000000, 0x4000000, 0xd3870287 },
+			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
+		},
+	},
+    {
+    	"magicpop",
+		nullptr,
+		"Magical Poppins",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x4000000, 0xf52306db },
+			{ "ic63",  0x04000000, 0x4000000, 0x1e5bad78 },
+			{ "317-0474-jpn.ic15", 0, 0x800, 0x711ba0aa, Key },
+        },
+    },
+    {
+    	"manpuku",
+		nullptr,
+		"Manpuku Suizokukan",
+		0x08000000,
+		0x5502, // mame has 5508
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x04000000, 0xa6712d70 },
+			{ "317-0640-jpn.ic15", 0, 0x800, 0x2fe1e48c, Key },
+        },
+    },
+    {
+    	"ochaken",
+		nullptr,
+		"Ocha-Ken Hot Medal",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x4000000, 0x7eb89b69 },
+			{ "ic63",  0x04000000, 0x4000000, 0xe52d7885 },
+			{ "317-unknown.ic15", 0, 0x800, 0x0a6e8627, Key },
+        },
+    },
+    {
+    	"puyomedal",
+		nullptr,
+		"Puyo Puyo! The Medal Edition",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x4000000, 0x4fcfb8c7 },
+			{ "ic63",  0x04000000, 0x4000000, 0x0db8a64a },
+			{ "317-0568-jpn.ic15", 0, 0x800, 0x313e6987, Key },
+        },
+    },
+    {
+    	// Yataimura Shateki (1-player, Japan, Ver 1.000)
+    	"shateki",
+		nullptr,
+		"Yataimura Shateki",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x01000000, 0xc463ae32 },
+			{ "ic63",  0x01000000, 0x01000000, 0x2acf1456 },
+			{ "ic64",  0x02000000, 0x01000000, 0xfd04ebf8 },
+			{ "ic65",  0x03000000, 0x01000000, 0x0c0ed06b },
+			{ "ic66s", 0x04000000, 0x01000000, 0x3a9f33cc },
+			{ "ic67s", 0x05000000, 0x01000000, 0x8e08cf8b },
+			{ "ic68s", 0x06000000, 0x01000000, 0x14734999 },
+			{ "ic69s", 0x07000000, 0x01000000, 0x6c0cd4c5 },
+			{ "317-0628-jpn.ic15", 0, 0x800, 0xc02f7424, Key },
+        },
+    },
+    {
+    	// Tetris Giant / Tetris Dekaris (Ver.2.000)
+    	"tetgiant",
+		nullptr,
+		"Tetris Giant / Tetris Dekaris",
+		0x20000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62", 0x00000000, 0x4000000, 0x31ba1938 },
+			{ "ic63", 0x04000000, 0x4000000, 0xcb946213 },
+			{ "317-0604-com.ic15", 0, 0x800, 0xa46dfd47, Key },
+        },
+    },
+    {
+    	"unomedal",
+		nullptr,
+		"UNO the Medal",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x4000000, 0x2af0cfb3 },
+			{ "ic63",  0x04000000, 0x4000000, 0xfe375da9 },
+			{ "317-0526-jpn.ic15", 0, 0x800, 0x14232fb7, Key },
+        },
+    },
+    {
+    	"westdrmg",
+		nullptr,
+		"Western Dream Gold",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "ic62",  0x00000000, 0x4000000, 0x67bde24c },
+			{ "ic63",  0x04000000, 0x4000000, 0xf5901eab },
+			{ "317-0473-jpn.ic15", 0, 0x800, 0x8ec686b0, Key },
+        },
+    },
+	// Compact Flash roms
+	{
+		// Dinosaur King - Operation: Dinosaur Rescue (USA, Export)
+		"dinokior",
+		nullptr,
+		"Dinosaur King - Operation: Dinosaur Rescue (USA, Export)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
+		},
+		"mda-c0021",
+	},
+	{
+		// Dinosaur King - D-Team VS. the Alpha Fortress (Export, Ver 2.500)
+		"dinoki25",
+		nullptr,
+		"Dinosaur King - D-Team VS. the Alpha Fortress (Export)",
+		0x08000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
+		},
+		"mda-c0047",
+	},
+	{
+		// Konglongwang - D-Kids VS Alpha Yaosai (China, Ver 2.501)
+		// This game's protection uses contact IC card reader made by Hirocon, with 2 IC card slots, cards probably SLE4428 or SLE5528.
+		"dinokich",
+		"dinoki25",
+		"Konglongwang - D-Kids VS Alpha Yaosai (China)",
+		0x08000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
+		},
+		"mda-c0081",
+	},
+	{
+		// Kodai Ouja Kyouryuu King - Mezame yo! Arata-naru Chikara!! (Japan, Ver 4.000)
+		// This version does not use RFID readers and Management chips.
+		"dinoki4",
+		nullptr,
+		"Kodai Ouja Kyouryuu King - Mezame yo! Arata-naru Chikara!! (Japan)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
+		},
+		"mda-c0061",
+	},
+    {
+    	// Heat Up Hockey Image (Ver.1.003R)
+    	"huhimage",
+		nullptr,
+		"Heat Up Hockey Image",
+		0x08000000,
+		0x5502, // mame has 5508 (8 * 512 Mb) but size is 128 MB
+		"segasp",
+		M4,
+		ROT270,
+        {
+			{ "317-unknown-jpn.ic15", 0, 0x800, 0x634e1994, Key },
+        },
+		"tsb0-sega00001",
+    },
+    {
+    	// Yataimura Kingyosukui (4-player, China, Ver 1.000)
+    	"kingyoch",
+		nullptr,
+		"Yataimura Kingyosukui (China)",
+		0x08000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "317-0563-jpn.ic15", 0, 0x800, 0x8af67833, Key },
+        },
+		"kingyo",
+    },
+    {
+    	// Love And Berry - 3rd-5th Collection (USA, Export, Ver 1.002)
+    	"loveber3",
+		nullptr,
+		"Love And Berry - 3rd-5th Collection (USA, Export)",
+		0x08000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
+        },
+		"mda-c0042",
+    },
+    {
+    	// Love And Berry - 3rd-5th Collection (China, Ver 1.001)
+    	// This game's protection uses contact IC card reader made by Hirocon, with 2 IC card slots, cards probably SLE4428 or SLE5528.
+    	"loveber3cn",
+		"loveber3",
+		"Love And Berry - 3rd-5th Collection (China)",
+		0x08000000,
+		0x5508,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
+        },
+		"mda-c0071",
+    },
+    {
+    	"tetgiano",
+		"tetgiant",
+		"Tetris Giant / Tetris Dekaris",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "317-0604-com.ic15", 0, 0x800, 0xa46dfd47, Key },
+        },
+		"mda-c0076",
     },
 	{
 		nullptr

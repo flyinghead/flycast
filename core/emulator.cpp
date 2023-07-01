@@ -448,6 +448,13 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 128_KB;
 		settings.platform.flash_size = 128_KB;	// sram
 		break;
+	case DC_PLATFORM_SYSTEMSP:
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB;
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 128_KB;	// sram
+		break;
 	default:
 		die("Unsupported platform");
 		break;

@@ -158,7 +158,8 @@ protected:
 				|| port == (int)std::size(kb_key)
 				|| (settings.platform.isConsole() && config::MapleMainDevices[port] != MDT_Keyboard)
 				|| (settings.platform.isNaomi() && settings.input.JammaSetup != JVS::Keyboard)
-				|| settings.platform.isAtomiswave())
+				|| settings.platform.isAtomiswave()
+				|| settings.platform.isSystemSP())
 			gamepad_btn_input(keycode, pressed);
 	}
 

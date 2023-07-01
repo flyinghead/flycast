@@ -44,6 +44,7 @@
 #include "oslib/storage.h"
 #include "network/alienfnt_modem.h"
 #include "netdimm.h"
+#include "systemsp.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -76,8 +77,9 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	bool found_region = false;
 	u8 *biosData = nvmem::getBiosData();
+	MD5Sum md5;
 
-	for (int romid = 0; bios->blobs[romid].filename != nullptr && !found_region; romid++)
+	for (int romid = 0; bios->blobs[romid].filename != nullptr; romid++)
 	{
 		if (region == -1)
 		{
@@ -106,21 +108,44 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 			WARN_LOG(NAOMI, "%s: Cannot open %s", filename, bios->blobs[romid].filename);
 			continue;
 		}
-		verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-		u32 read = file->Read(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
-		if (config::GGPOEnable)
+		switch (bios->blobs[romid].blob_type)
 		{
-			MD5Sum md5;
-			md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
-			md5.getDigest(settings.network.md5.bios);
+		case Normal:
+			if (!found_region)
+			{
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				u32 read = file->Read(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
+				if (config::GGPOEnable)
+					md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
+				DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+				found_region = true;
+			}
+			break;
+		case EepromBE16:
+			{
+				naomi_default_eeprom = (u8 *)malloc(bios->blobs[romid].length);
+				if (naomi_default_eeprom == nullptr)
+					throw NaomiCartException("Memory allocation failed");
+
+				u32 read = file->Read(naomi_default_eeprom, bios->blobs[romid].length);
+				for (unsigned i = 0; i < bios->blobs[romid].length; i += 2)
+					std::swap(naomi_default_eeprom[i], naomi_default_eeprom[i + 1]);
+				if (config::GGPOEnable)
+					md5.add(naomi_default_eeprom, bios->blobs[romid].length);
+				DEBUG_LOG(NAOMI, "Loaded %s: %x bytes default eeprom", bios->blobs[romid].filename, read);
+			}
+			break;
+		default:
+			die("Unsupported BIOS blob type");
+			break;
 		}
-		DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
-		found_region = true;
 	}
 
 	// Reload the writeable portion of the FlashROM
 	if (found_region)
 		nvmem::reloadAWBios();
+	if (config::GGPOEnable)
+		md5.getDigest(settings.network.md5.bios);
 
 	return found_region;
 }
@@ -200,6 +225,9 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 		parent_archive.reset(OpenArchive(parentPath));
 		if (parent_archive != nullptr)
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
+		else
+			WARN_LOG(NAOMI, "Parent not found: %s", parentPath.c_str());
+
 	}
 
 	if (archive == nullptr && parent_archive == nullptr)
@@ -224,7 +252,16 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 			CurrentCartridge = new M2Cartridge(game->size);
 			break;
 		case M4:
-			CurrentCartridge = new M4Cartridge(game->size);
+			if (game->bios != nullptr && !strcmp(game->bios, "segasp"))
+			{
+				systemsp::SystemSpCart *spcart = new systemsp::SystemSpCart(game->size);
+				if (game->gdrom_name != nullptr)
+					spcart->setMediaName(game->gdrom_name, game->parent_name);
+				CurrentCartridge = spcart;
+			}
+			else {
+				CurrentCartridge = new M4Cartridge(game->size);
+			}
 			break;
 		case AW:
 			CurrentCartridge = new AWCartridge(game->size);
@@ -571,9 +608,11 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 	if (CurrentCartridge->GetBootId(&bootId)
 			&& (!memcmp(bootId.boardName, "NAOMI", 5)
 					|| !memcmp(bootId.boardName, "Naomi2", 6)
-					|| !memcmp(bootId.boardName, "SYSTEM_X_APP", 12))) // Atomiswave
+					|| !memcmp(bootId.boardName, "SYSTEM_X_APP", 12) // Atomiswave
+					|| !memcmp(bootId.boardName, "SystemSP", 8)))	 // System SP
 	{
-		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[0], &bootId.gameTitle[0][32]));
+		bool systemSP = memcmp(bootId.boardName, "SystemSP", 8) == 0;
+		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[systemSP ? 1 : 0], &bootId.gameTitle[systemSP ? 1 : 0][32]));
 		if (gameId == "SAMPLE GAME MAX LONG NAME-")
 		{
 			// Use better game names
@@ -611,7 +650,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 			touchscreen::init();
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB"
-				|| gameId.substr(0, 9) == "MUSHIKING")
+				|| gameId.substr(0, 9) == "MUSHIKING"
+				|| gameId == "DINOSAUR KING")
 		{
 			card_reader::barcodeInit();
 		}
@@ -661,6 +701,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 	else
 	{
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", settings.content.gameId.c_str());
+		if (settings.content.gameId.substr(0, 6) == "dinoki")
+			card_reader::barcodeInit();
 	}
 }
 
@@ -716,6 +758,8 @@ int naomi_cart_GetPlatform(const char *path)
 		return DC_PLATFORM_ATOMISWAVE;
 	else if (game->bios != nullptr && !strcmp("naomi2", game->bios))
 		return DC_PLATFORM_NAOMI2;
+	else if (game->bios != nullptr && !strcmp("segasp", game->bios))
+		return DC_PLATFORM_SYSTEMSP;
 	else
 	{
 #ifdef NAOMI_MULTIBOARD
@@ -750,7 +794,7 @@ bool Cartridge::Read(u32 offset, u32 size, void* dst)
 		static u32 ones = 0xffffffff;
 
 		// Makes Outtrigger boot
-		INFO_LOG(NAOMI, "offset %d > %d", offset, RomSize);
+		INFO_LOG(NAOMI, "offset %x > %x", offset, RomSize);
 		memcpy(dst, &ones, size);
 	}
 	else
@@ -834,7 +878,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		return 0xffff;
 	case NAOMI_DIMM_STATUS:
 		DEBUG_LOG(NAOMI, "DIMM STATUS read");
-		return 0xffff;
+		return 0x7fff;
 
 	case NAOMI_ROM_OFFSETH_addr:
 		return RomPioOffset >> 16 | (RomPioAutoIncrement << 15);

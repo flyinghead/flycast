@@ -252,6 +252,7 @@ struct settings_t
 		bool isAtomiswave() const { return system == DC_PLATFORM_ATOMISWAVE; }
 		bool isArcade() const { return !isConsole(); }
 		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
+		bool isSystemSP() const { return system == DC_PLATFORM_SYSTEMSP; }
 	} platform;
 
 	struct {

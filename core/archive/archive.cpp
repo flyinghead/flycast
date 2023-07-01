@@ -26,7 +26,14 @@
 
 Archive *OpenArchive(const std::string& path)
 {
-	FILE *file = hostfs::storage().openFile(path, "rb");
+	FILE *file = nullptr;
+	hostfs::FileInfo fileInfo;
+	try {
+		fileInfo = hostfs::storage().getFileInfo(path);
+		if (!fileInfo.isDirectory)
+			file = hostfs::storage().openFile(path, "rb");
+	} catch (const hostfs::StorageException& e) {
+	}
 	if (file == nullptr)
 	{
 		file = hostfs::storage().openFile(path + ".7z", "rb");
@@ -39,8 +46,14 @@ Archive *OpenArchive(const std::string& path)
 		if (sz_archive->Open(file))
 			return sz_archive;
 		delete sz_archive;
+		file = nullptr;
 	}
-	file = hostfs::storage().openFile(path, "rb");
+	// Retry as a zip file
+	try {
+		if (!fileInfo.isDirectory)
+			file = hostfs::storage().openFile(path, "rb");
+	} catch (const hostfs::StorageException& e) {
+	}
 	if (file == nullptr)
 	{
 		file = hostfs::storage().openFile(path + ".zip", "rb");

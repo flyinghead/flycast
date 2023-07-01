@@ -54,6 +54,7 @@ public:
 protected:
 	void DmaOffsetChanged(u32 dma_offset) override;
 	void PioOffsetChanged(u32 pio_offset) override;
+	u16 decrypt(u16 w);
 
 private:
 	void device_start();
