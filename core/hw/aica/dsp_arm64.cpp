@@ -36,7 +36,9 @@ namespace dsp
 
 constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
 
-#if defined(__unix__) || defined(__SWITCH__)
+#if defined(_M_ARM64)
+static u8 *DynCode;
+#elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 #if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)

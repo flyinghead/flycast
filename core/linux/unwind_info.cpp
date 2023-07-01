@@ -20,7 +20,7 @@
 // Based on Asmjit unwind info registration and stack walking code for Windows, Linux and macOS
 // https://gist.github.com/dpjudas/925d5c4ffef90bd8114be3b465069fff
 #include "build.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 
 extern "C"
 {

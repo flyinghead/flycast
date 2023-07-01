@@ -18,7 +18,7 @@ using namespace Xbyak::util;
 #include "hw/sh4/sh4_mem.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
 
 struct DynaRBI : RuntimeBlockInfo

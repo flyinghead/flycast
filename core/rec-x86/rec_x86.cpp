@@ -26,7 +26,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/addrspace.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 
 static void (*mainloop)();
 static void (*ngen_FailedToFindBlock_)();

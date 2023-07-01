@@ -21,7 +21,9 @@
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
 
+#ifndef _M_ARM64
 #include <unistd.h>
+#endif
 #include <map>
 
 #include <aarch64/macro-assembler-aarch64.h>
