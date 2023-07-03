@@ -151,7 +151,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					for (int j = 0; j < matching_.player_count(); j++) {
 						if (j == i) continue;
 						if (j == matching_.peer_id()) continue;
-						if (rtt_matrix[matching_.peer_id()][j] && rtt_matrix[j][i]) {
+						if (rtt_matrix[matching_.peer_id()][j] && 0 < rtt_matrix[j][i] && rtt_matrix[j][i] < 255) {
 							int rtt = rtt_matrix[matching_.peer_id()][j] + rtt_matrix[j][i];
 							if (rtt < relay_rtt) {
 								relay_rtt = rtt;
@@ -191,8 +191,9 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			session_start_time = std::chrono::high_resolution_clock::now();
 			state_ = State::WaitGGPOSession;
 		} else {
-			emu.start();
+			SetCloseReason("unreachable");
 			state_ = State::End;
+			emu.start();
 		}
 	}
 
