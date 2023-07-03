@@ -44,7 +44,7 @@ jobs:
         run: |
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
-          brew update
+          brew update || :
           brew install libao ldid ninja pulseaudio
           [ -f $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool ] && sudo $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool --confirm-command purge
           VULKAN_VER=1.3.250.1 && aria2c --parameterized-uri=true --conditional-get=true --allow-overwrite="true" --auto-file-renaming="false" https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
