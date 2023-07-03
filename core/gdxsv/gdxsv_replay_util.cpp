@@ -1,4 +1,4 @@
-#include "gdxsv_replay_util.h"
+﻿#include "gdxsv_replay_util.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -553,7 +553,7 @@ void FetchTargetPage()
 template<typename Callable>
 void draw_filter_label(const std::string &label, const std::string &value, Callable DidClickButton){
 	static char filter_user_id_buf[100] = {0};
-	snprintf(filter_user_id_buf, sizeof(filter_user_id_buf), "%s = %s  ×", label.c_str(), value.c_str());
+	snprintf(filter_user_id_buf, sizeof(filter_user_id_buf), u8"%s = %s  ×", label.c_str(), value.c_str());
 	
 	ImGui::SameLine();
 	ImGui::GetStyle().FrameRounding = 5.0f * scaling;
@@ -718,23 +718,23 @@ void gdxsv_replay_server_tab() {
 			case 3: // Lobby ID
 			{
 				const static std::array<std::array<std::string, 4>, 17> lobby_data { {
-					{ "タクラマカン砂漠", "塔克拉瑪干沙漠", "Taklamakan Desert", "2" },
-					{ "黒海南岸森林地帯", "黒海南岸森林地帶", "Black Sea Forest", "4" },
-					{ "オデッサ", "奧迪沙", "Odessa", "5" },
-					{ "ベルファスト", "貝爾法斯特", "Belfast", "6" },
-					{ "ニューヤーク", "紐約", "New York", "9" },
-					{ "グレートキャニオン", "大峽谷", "Grand Canyon", "10" },
-					{ "ジャブロー", "査布羅", "Jaburo", "11" },
-					{ "地下基地", "地下基地", "UG Complex", "12" },
-					{ "ソロモン", "所羅門", "Solomon", "13" },
-					{ "ソロモン宙域", "所羅門宙域", "Solomon (Space)", "14" },
-					{ "ア・バオア・クー宙域", "阿・巴瓦・庫 宙域", "A Baoa Qu (Space)", "15" },
-					{ "ア・バオア・クー外部", "阿・巴瓦・庫 外部", "A Baoa Qu (Outter)", "16" },
-					{ "ア・バオア・クー内部", "阿・巴瓦・庫 内部", "A Baoa Qu (Inner)", "17" },
-					{ "衛星軌道１", "衛星軌道１", "Sat.Orbit 1", "19" },
-					{ "衛星軌道2", "衛星軌道２", "Sat.Orbit 2", "20" },
-					{ "サイド６宙域", "SIDE 6 宙域", "SIDE 6 (Space)", "21" },
-					{ "サイド７内部", "SIDE 7 内部", "	SIDE 7 (Inner)", "22" }
+					{ u8"タクラマカン砂漠", u8"塔克拉瑪干沙漠", "Taklamakan Desert", "2" },
+					{ u8"黒海南岸森林地帯", u8"黒海南岸森林地帶", "Black Sea Forest", "4" },
+					{ u8"オデッサ", u8"奧迪沙", "Odessa", "5" },
+					{ u8"ベルファスト", u8"貝爾法斯特", "Belfast", "6" },
+					{ u8"ニューヤーク", u8"紐約", "New York", "9" },
+					{ u8"グレートキャニオン", u8"大峽谷", "Grand Canyon", "10" },
+					{ u8"ジャブロー", u8"査布羅", "Jaburo", "11" },
+					{ u8"地下基地", u8"地下基地", "UG Complex", "12" },
+					{ u8"ソロモン", u8"所羅門", "Solomon", "13" },
+					{ u8"ソロモン宙域", u8"所羅門宙域", "Solomon (Space)", "14" },
+					{ u8"ア・バオア・クー宙域", u8"阿・巴瓦・庫 宙域", "A Baoa Qu (Space)", "15" },
+					{ u8"ア・バオア・クー外部", u8"阿・巴瓦・庫 外部", "A Baoa Qu (Outter)", "16" },
+					{ u8"ア・バオア・クー内部", u8"阿・巴瓦・庫 内部", "A Baoa Qu (Inner)", "17" },
+					{ u8"衛星軌道１", u8"衛星軌道１", "Sat.Orbit 1", "19" },
+					{ u8"衛星軌道2", u8"衛星軌道２", "Sat.Orbit 2", "20" },
+					{ u8"サイド６宙域", u8"SIDE 6 宙域", "SIDE 6 (Space)", "21" },
+					{ u8"サイド７内部", u8"SIDE 7 内部", "	SIDE 7 (Inner)", "22" }
 				} };
 				
 				static unsigned int lobby_selected = 0;
@@ -874,25 +874,8 @@ void gdxsv_replay_server_tab() {
 						time_t t = entry.start_unix;
 						char buf[128] = {0};
 						std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
-						
-						static char* old_locale = setlocale(LC_CTYPE, NULL);
-#if defined(_WIN32)
-						setlocale(LC_CTYPE, ".1252");
-#else
-						setlocale(LC_CTYPE, "en_US.UTF-8");
-#endif
-						
-						wchar_t wide_char = entry.renpo_win + L'0' + 0xFEE0;
-						char renpo_win[4] = {0};
-						std::wctomb(renpo_win, wide_char);
-						
-						wide_char = entry.zeon_win + L'0' + 0xFEE0;
-						char zeon_win[4] = {0};
-						std::wctomb(zeon_win, wide_char);
-						
-						setlocale(LC_CTYPE, old_locale);
-						
-						snprintf(buf, sizeof(buf), "%s ― Result: %s：%s\n\n", buf, renpo_win, zeon_win);
+
+						snprintf(buf, sizeof(buf), u8"%s ― Result: %d：%d\n\n", buf, entry.renpo_win, entry.zeon_win);
 
 						for ( int i = 0; i < entry.users.size() ; i++) {
 							const auto& user = entry.users[i];
