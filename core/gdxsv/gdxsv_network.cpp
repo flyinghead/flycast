@@ -212,23 +212,49 @@ void TcpClient::Close() {
 }
 
 bool UdpRemote::Open(const char *host, int port) {
-	auto host_entry = gethostbyname(host);
-	if (host_entry == nullptr) {
-		WARN_LOG(COMMON, "UDP Remote::Initialize failed. gethostbyname %s", host);
+	verify(0 < port && port < 65536);
+	addrinfo* res = nullptr;
+	addrinfo hints{};
+	hints.ai_family = AF_UNSPEC; //  IPv4 or IPv6
+	hints.ai_socktype = SOCK_DGRAM; // UDP
+	hints.ai_flags = AI_NUMERICSERV; // service is port no
+	char service[10] = {};
+	snprintf(service, sizeof(service),"%d", port);
+	const auto err = getaddrinfo(host, service, &hints, &res);
+	if (err != 0) {
+		WARN_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
 		return false;
 	}
 
-	is_open_ = true;
-	str_addr_ = std::string(host) + ":" + std::to_string(port);
-	masked_addr_ = str_addr_;
-	for (int i = masked_addr_.find_first_of('.'); i < masked_addr_.size(); i++) {
-		if ('0' <= masked_addr_[i] && masked_addr_[i] <= '9') masked_addr_[i] = 'x';
-		if (masked_addr_[i] == ':') break;
+	if (res == nullptr) {
+		WARN_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo result is null");
+		return false;
 	}
 
-	net_addr_.sin_family = AF_INET;
-	memcpy(&(net_addr_.sin_addr.s_addr), host_entry->h_addr, host_entry->h_length);
-	net_addr_.sin_port = htons(port);
+	if (res->ai_family == AF_INET) {
+		is_v6_ = false;
+		memcpy(&net_addr_v4_, res->ai_addr, res->ai_addrlen);
+	}
+	else if (res->ai_family == AF_INET6) {
+		is_v6_ = true;
+		memcpy(&net_addr_v6_, res->ai_addr, res->ai_addrlen);
+	} else {
+		WARN_LOG(COMMON, "UDP Remote::Open. unknown ai_family");
+		freeaddrinfo(res);
+		return false;
+	}
+
+	freeaddrinfo(res);
+
+	is_open_ = true;
+	str_addr_ = std::string(host) + ":" + std::to_string(port);
+
+	masked_addr_ = std::string(host);
+	for (auto i = masked_addr_.find_first_of(is_v6_ ? ':' : '.'); i < masked_addr_.size(); i++) {
+		if ('0' <= masked_addr_[i] && masked_addr_[i] <= is_v6_ ? 'f' : '9') masked_addr_[i] = 'x';
+	}
+	masked_addr_ += ":" + std::to_string(port);
+
 	return true;
 }
 
@@ -245,7 +271,9 @@ bool UdpRemote::Open(const std::string &addr) {
 void UdpRemote::Close() {
 	is_open_ = false;
 	str_addr_.clear();
-	memset(&net_addr_, 0, sizeof(net_addr_));
+	masked_addr_.clear();
+	memset(&net_addr_v4_, 0, sizeof(net_addr_v4_));
+	memset(&net_addr_v6_, 0, sizeof(net_addr_v6_));
 }
 
 bool UdpClient::Bind(int port) {

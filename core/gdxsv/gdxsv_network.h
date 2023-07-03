@@ -1,6 +1,5 @@
 #pragma once
 
-#include <deque>
 #include <future>
 #include <mutex>
 #include <string>
@@ -68,13 +67,15 @@ class UdpRemote {
 	bool is_open() const { return is_open_; }
 	const std::string &str_addr() const { return str_addr_; }
 	const std::string &masked_addr() const { return masked_addr_; }
-	const sockaddr_in &net_addr() const { return net_addr_; }
+	const sockaddr* net_addr() const { return is_v6_ ? &net_addr_v6_ : &net_addr_v4_; }
 
    private:
-	bool is_open_;
+	sockaddr_in net_addr_v4_{};
+	sockaddr_in6 net_addr_v6_{};
+	bool is_open_ = false;
+	bool is_v6_ = false;
 	std::string str_addr_;
 	std::string masked_addr_;
-	sockaddr_in net_addr_;
 };
 
 class UdpClient {
