@@ -243,8 +243,10 @@ void SerialPort::writeReg(u32 addr, u8 v)
 				}
 				else if (recvBuffer[0] == 0x6e) // COUNT
 				{
-					toSend.push_back(0); // count of what?
-					SERIAL_LOG("UART%d COUNT", index);
+					// receives card type? (0-3+)
+					// TODO must decrement counter by 1 and return it
+					toSend.push_back(1);
+					SERIAL_LOG("UART%d COUNT %x", index, recvBuffer[1]);
 				}
 				asic_RaiseInterrupt(holly_EXP_PCI);
 				expectedBytes = 0;
@@ -294,14 +296,14 @@ void SerialPort::writeReg(u32 addr, u8 v)
 			break;
 		case 0x2e:	// SEL
 			SERIAL_LOG("UART%d cmd SEL", index);
-			expectedBytes = 8 + 1;	// ser0 key?
+			expectedBytes = 8 + 1;	// ser0 key (key is calc'ed from ser1)
 			recvBuffer.clear();
 			recvBuffer.push_back(v);
 			break;
 		case 0x4e: // REQ
 			SERIAL_LOG("UART%d cmd REQ", index);
 			toSend.push_back(0xa); // ok
-			toSend.insert(toSend.end(), &cardData[0], &cardData[4]);
+			toSend.insert(toSend.end(), &cardData[0], &cardData[4]);	// ser0
 			break;
 		case 0x6e: // COUNT
 			SERIAL_LOG("UART%d cmd COUNT", index);
@@ -325,6 +327,7 @@ void SerialPort::writeReg(u32 addr, u8 v)
 		default:
 			INFO_LOG(NAOMI, "UART%d write data out: unknown cmd %x", index, v);
 			toSend.push_back(0x3a); // ng
+			break;
 		}
 		if (toSend.empty())
 			asic_CancelInterrupt(holly_EXP_PCI);
@@ -405,7 +408,18 @@ T SystemSpCart::readMemArea0(u32 addr)
 			// SRAM
 			FLASH_LOG("systemsp::read(%x) SRAM. offset %x", addr, offset);
 			verify(!(bank & 0x4000));
-			return nvmem::readFlash(offset, sizeof(T));
+			// 8-bit device on 16-bit bus
+			if constexpr (sizeof(T) == 1)
+			{
+				if (offset & 1)
+					return 0xff;
+				else
+					return nvmem::readFlash(offset / 2, 1);
+			}
+			else if constexpr (sizeof(T) == 2)
+				return 0xff00 | nvmem::readFlash(offset / 2, 1);
+			else
+				return 0xff00ff00 | nvmem::readFlash(offset / 2, 1) | (nvmem::readFlash(offset / 2 + 1, 1) << 16);
 		}
 		else if ((bank & 0x3f00) == 0x3a00)
 		{
@@ -413,7 +427,7 @@ T SystemSpCart::readMemArea0(u32 addr)
 			switch (addr & 0xffff)
 			{
 			case 0x00: // RD data
-				if (sizeof(T) == 2)
+				if constexpr (sizeof(T) == 2)
 				{
 					addr &= ~1;
 					T ret = readMemArea0<u8>(addr);
@@ -639,9 +653,9 @@ T SystemSpCart::readMemArea0(u32 addr)
 				IO_LOG("systemsp::read(%x) IN_PORT3 %x", addr, v);
 				return v;
 			}
-		case 0xc: // IN CN9 33-40?
-			IO_LOG("systemsp::read(%x) IN CN9 33-40?", addr);
- 			// dinosaur king:
+		case 0xc: // IN CN9 33-40
+			IO_LOG("systemsp::read(%x) IN CN9 33-40", addr);
+ 			// dinosaur king, love & berry:
  			// 0: P1 card set (not used)
  			// 2: CD1 input ok (active low)
  			// 4: CD1 card jam (active low)
@@ -677,7 +691,7 @@ T SystemSpCart::readMemArea0(u32 addr)
 			}
 		case 0x20: // IN G_PORT CN10 9-16
 			IO_LOG("systemsp::read(%x) IN CN10 9-16", addr);
- 			// dinosaur king:
+ 			// dinosaur king, love & berry:
  			// 0: 232c sel status 1 (not used)
  			// 1: 232c sel status 2 (not used)
  			// 2: card status1 (not used)
@@ -685,23 +699,10 @@ T SystemSpCart::readMemArea0(u32 addr)
  			// 4: card status3 (not used)
 			// FIXME read sequentially after reading/writing reg24 (c0?), gives 4 shorts (8 reads)
 			return 0;
-			// 00 card jam
-			// 01 card jam
-			// 02 card jam
-			// 04 card jam
-			// 08 card jam
-			// 10 card jam
-			// 20 card jam
-			// 40 card jam
-			// 80 card jam
 
 		case 0x24: // bios, write too
 			IO_LOG("systemsp::read(24) ??");
 			return 0;
-			// 0 card jam
-			// ff (8 reg20 reads)
-			// 2 (1 reg20 read)
-			// c0 (8 reg20 reads)
 		default:
 			IO_LOG("systemsp::read(%x) inputs??", addr);
 			return 0;
@@ -759,7 +760,14 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 		if ((bank & 0x3f00) == 0x3900)
 		{
 			FLASH_LOG("systemsp::write(%x) SRAM. offset %x data %x", addr, offset, (u32)v);
-			nvmem::writeFlash(offset, (u32)v, sizeof(T));
+			// 8-bit device on 16-bit bus
+			if constexpr (sizeof(T) == 1) {
+				if (offset & 1)
+					return;
+			}
+			if constexpr (sizeof(T) == 4)
+				nvmem::writeFlash(offset / 2 + 1, (u8)(v >> 16), 1);
+			nvmem::writeFlash(offset / 2, (u8)v, 1);
 			return;
 		}
 		else if ((bank & 0x3f00) == 0x3a00)
@@ -883,7 +891,7 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 		case 0x8: // OUT_PORT3 (CN9 25-32)?
 			IO_LOG("systemsp::write(%x) OUT CN9 25-32? %x", addr, v);
 			break;
-		case 0xc: // OUT CN10 9-16? CN9 33-40?
+		case 0xc: // OUT CN9 33-40
 			IO_LOG("systemsp::write(%x) OUT CN10 9-16? %x", addr, v);
 			break;
 		case 0x10: // OUT_PORT4 (CN9 49-56)
@@ -896,7 +904,7 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 			// 5: P2 button 1 lamp
 			// 6: P1 button 2 lamp
 			// 7: P2 button 2 lamp
-			// dinosaur king:
+			// dinosaur king, love & berry:
 			// 2: coin blocker 1 (not used)
 			// 3: coin blocker 2 (not used)
 			// 4: cd1 card pickout
@@ -906,11 +914,11 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 			IO_LOG("systemsp::write(%x) OUT_PORT4 %x", addr, v & 0xfc);
 			break;
 		case 0x14: // OUT CN10 17-24
-			// dinosaur king:
+			// dinosaur king, love & berry:
 			// 0: 232c select1 (not used)
 			// 1: 232c select2 (not used)
 			// 2: 232c reset (not used)
-			// 3: card tor/ger (not used)
+			// 3: card trigger (not used)
 			// 4: rfid chip1 reset
 			// 5: rfid chip2 reset
 			// 6: rfid chip1 empty lamp

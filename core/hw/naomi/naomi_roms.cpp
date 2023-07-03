@@ -8020,7 +8020,7 @@ const Game Games[] =
 		// This version does not use RFID readers and Management chips.
 		"dinoki4",
 		nullptr,
-		"Kodai Ouja Kyouryuu King - Mezame yo! Arata-naru Chikara!! (Japan)",
+		"Ancient Ruler Dinosaur King - Wake up! New Power!! (Japan)",
 		0x08000000,
 		0x5502,
 		"segasp",
