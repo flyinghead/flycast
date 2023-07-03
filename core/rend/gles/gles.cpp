@@ -445,6 +445,7 @@ void termGLCommon()
 	gl.dcfb.tex = 0;
 	gl.ofbo2.framebuffer.reset();
 	gl.fbscaling.framebuffer.reset();
+	gl.videorouting.framebuffer.reset();
 #ifdef LIBRETRO
 	postProcessor.term();
 	termVmuLightgun();
@@ -1151,6 +1152,8 @@ static void upload_vertex_indices()
 
 bool OpenGLRenderer::renderFrame(int width, int height)
 {
+	initVideoRoutingFrameBuffer();
+	
 	bool is_rtt = pvrrc.isRTT;
 
 	float vtx_min_fZ = 0.f;	//pvrrc.fZ_min;
@@ -1378,6 +1381,22 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	return !is_rtt;
 }
 
+void OpenGLRenderer::initVideoRoutingFrameBuffer()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
+		int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+		if (gl.videorouting.framebuffer != nullptr
+			&& (gl.videorouting.framebuffer->getWidth() != targetWidth || gl.videorouting.framebuffer->getHeight() != targetHeight))
+			gl.videorouting.framebuffer.reset();
+		if (gl.videorouting.framebuffer == nullptr)
+			gl.videorouting.framebuffer = std::make_unique<GlFramebuffer>(targetWidth, targetHeight, true, true);
+	}
+#endif
+}
+
 void OpenGLRenderer::Term()
 {
 	TexCache.Clear();
@@ -1399,9 +1418,30 @@ bool OpenGLRenderer::Render()
 		frameRendered = true;
 		gl.ofbo2.ready = false;
 	}
+	
+	renderVideoRouting();
 	restoreCurrentFramebuffer();
 
 	return true;
+}
+
+void OpenGLRenderer::renderVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.origFbo);
+		gl.videorouting.framebuffer->bind(GL_DRAW_FRAMEBUFFER);
+		glcache.Disable(GL_SCISSOR_TEST);
+		int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
+		int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+		glBlitFramebuffer(0, 0, settings.display.width, settings.display.height,
+						  0, 0, targetWidth, targetHeight,
+						  GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		extern void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h);
+		os_VideoRoutingPublishFrameTexture(gl.videorouting.framebuffer->getTexture(), GL_TEXTURE_2D, targetWidth, targetHeight);
+	}
+#endif
 }
 
 Renderer* rend_GLES2()

@@ -230,10 +230,15 @@ else()
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
+if(${CMAKE_OSX_SYSROOT} MATCHES "\/MacOSX.platform\/Developer\/SDKs")
+	set(TARGET_MAC ON)
+endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${APPLE}>:GL_SILENCE_DEPRECATION>
 		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
 		$<$<BOOL:${IOS}>:TARGET_IPHONE>
+		$<$<BOOL:${TARGET_MAC}>:TARGET_MAC>
 		$<$<BOOL:${IOS}>:GLES>
 		$<$<BOOL:${IOS}>:GLES3>
 		$<$<BOOL:${IOS}>:GLES_SILENCE_DEPRECATION>
@@ -1294,6 +1299,7 @@ if(USE_VULKAN)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
 	elseif(APPLE)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_MACOS_MVK)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_METAL_EXT)
 	endif()
 
 	add_subdirectory(core/deps/Vulkan-Headers)
@@ -1671,6 +1677,20 @@ if(NOT LIBRETRO)
 				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Flycast
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
+
+			add_subdirectory(core/deps/Syphon)
+			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
+			if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Resources/)
+			else()
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Resources/)
+			endif()
+			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
@@ -1707,6 +1727,7 @@ if(NOT LIBRETRO)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(OPENGL_LIBRARY OpenGL)
+			find_library(METAL_LIBRARY Metal)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 
@@ -1715,6 +1736,7 @@ if(NOT LIBRETRO)
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
 				${OPENGL_LIBRARY}
+				${METAL_LIBRARY}
 				${IOSURFACE_LIBRARY}
 				${MULTITOUCH_SUPPORT_LIBRARY})
 
@@ -1764,6 +1786,16 @@ if(NOT LIBRETRO)
 				shell/uwp/http_client.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
+			target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutGL)
+			target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutDirectX/SpoutDX)
+			SET(SPOUT_BUILD_CMT OFF CACHE BOOL "For Visual Studio - build /MT to link runtime libraries" FORCE)
+			SET(SPOUT_BUILD_SPOUTDX ON CACHE BOOL "Build SpoutDX DirectX11 support library" FORCE)
+			SET(SPOUT_BUILD_LIBRARY OFF CACHE BOOL "Build C-compatible cross compiler library" FORCE)
+			SET(SKIP_INSTALL_ALL ON CACHE BOOL "Install headers and libraries" FORCE)
+			add_subdirectory(core/deps/Spout)
+			target_link_libraries(${PROJECT_NAME} PRIVATE Spout_static SpoutDX_static)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
 			target_link_libraries(${PROJECT_NAME} PRIVATE iphlpapi.lib) #gdxsv

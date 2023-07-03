@@ -96,6 +96,7 @@ protected:
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
+	void renderVideoRouting();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -154,6 +155,10 @@ private:
 	ComPtr<ID3D11Texture2D> fbScaledTexture;
 	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
 	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
+	ComPtr<ID3D11Texture2D> vrStagingTexture;
+	ComPtr<ID3D11ShaderResourceView> vrStagingTextureSRV;
+	ComPtr<ID3D11Texture2D> vrScaledTexture;
+	ComPtr<ID3D11RenderTargetView> vrScaledRenderTarget;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 

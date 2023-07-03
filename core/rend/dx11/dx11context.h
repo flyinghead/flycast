@@ -33,6 +33,7 @@ class DX11Context : public GraphicsContext
 {
 public:
 	bool init(bool keepCurrentWindow = false);
+	void initVideoRouting() override;
 	void term() override;
 	void EndImGuiFrame();
 	void Present();

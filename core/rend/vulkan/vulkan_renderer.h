@@ -232,6 +232,25 @@ public:
 		fbCommandPool.EndFrame();
 		framebufferRendered = true;
 	}
+	
+	void RenderVideoRouting()
+	{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+		if (config::VideoRouting)
+		{
+			auto device = GetContext()->GetDevice();
+			auto srcImage = device.getSwapchainImagesKHR(GetContext()->GetSwapChain())[GetContext()->GetCurrentImageIndex()];
+			auto graphicsQueue = device.getQueue(GetContext()->GetGraphicsQueueFamilyIndex(), 0);
+			
+			int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
+			int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+			
+			extern void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
+			os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
+		}
+#endif
+	}
+
 
 protected:
 	BaseVulkanRenderer() : viewport(640, 480) {}

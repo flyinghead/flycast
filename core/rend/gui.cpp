@@ -1635,7 +1635,7 @@ static void gui_display_settings()
                 if (ImGui::Button("Change"))
                 	gui_state = GuiState::Onboarding;
 #endif
-#if defined(__APPLE__) && TARGET_OS_OSX
+#ifdef TARGET_MAC
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Reveal in Finder"))
                 {
@@ -2199,6 +2199,39 @@ static void gui_display_settings()
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
+#ifdef VIDEO_ROUTING
+#ifdef __APPLE__
+			header("Video Routing (Syphon)");
+#elif defined(_WIN32)
+			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
+#endif
+			{
+#ifdef __APPLE__
+				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#elif defined(_WIN32)
+				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
+				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#endif
+				{
+					GraphicsContext::Instance()->initVideoRouting();
+				}
+				{
+					DisabledScope scope(!config::VideoRouting);
+					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
+					{
+						DisabledScope scope(!config::VideoRoutingScale);
+						static int vres = config::VideoRoutingVRes;
+						if( ImGui::InputInt("Output vertical resolution", &vres) )
+						{
+							config::VideoRoutingVRes = vres;
+						}
+					}
+					ImGui::Text("Output texture size: %d x %d", config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+				}
+			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 

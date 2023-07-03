@@ -61,6 +61,7 @@ public:
 	void Present() noexcept;
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
+	void initVideoRouting() override;
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return *device; }
@@ -69,6 +70,7 @@ public:
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { (u32)settings.display.width, (u32)settings.display.height }; }
+	vk::SwapchainKHR GetSwapChain() const { return *swapChain; }
 	u32 GetSwapChainSize() const { return (u32)imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;
