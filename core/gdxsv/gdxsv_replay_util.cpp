@@ -495,18 +495,12 @@ void FetchUserJSON() {
 		http::init();
 		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/user?";
 		
-		std::string loginkey_ = cfgLoadStr("gdxsv", "loginkey", "");
-		std::vector<u8> e_loginkey(loginkey_.size());
-		static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
-		for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey_[i] ^ magic[i & 3];
-		const unsigned _FNV_offset_basis = 2166136261U;
-		const unsigned _FNV_prime = 16777619U;
-		unsigned hash = _FNV_offset_basis;
-		for (size_t i = 0; i < e_loginkey.size(); ++i)
-		{
-			hash *= _FNV_prime;
-			hash ^= (unsigned)e_loginkey[i];
-		}
+		std::string loginkey = cfgLoadStr("gdxsv", "loginkey", "");
+		std::vector<u8> e_loginkey(loginkey.size());
+		static constexpr int magic[] = {0x46, 0xcf, 0x2d, 0x55};
+		for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey[i] ^ magic[i & 3];
+		unsigned hash = 2166136261U;
+		for (const unsigned char e : e_loginkey) hash = hash * 16777619U ^ static_cast<unsigned>(e);
 		std::ostringstream hashed_loginkey_s;
 		hashed_loginkey_s << std::setfill('0') << std::setw(8) << std::hex << hash;
 		
