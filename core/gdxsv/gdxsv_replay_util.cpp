@@ -57,6 +57,7 @@ static bool read_dir = false;
 static std::vector<std::pair<std::string, uint64_t>> files;
 static std::string selected_replay_file;
 static std::string battle_log_file_name;
+static std::string broken_replay_path;
 static proto::BattleLogFile battle_log;
 
 static std::string search_user_id;
@@ -124,8 +125,12 @@ void gdxsv_start_replay(const std::string& replay_file, int pov) {
 
 	if (ok) {
 		dc_loadstate(99);
-		gui_state = GuiState::Closed;
-		gdxsv.StartReplayFile(replay_file.c_str(), pov);
+		if (gdxsv.StartReplayFile(replay_file.c_str(), pov)) {
+			gui_state = GuiState::Closed;
+		} else {
+			dc_loadstate(90);
+			broken_replay_path = replay_file;
+		}
 	}
 }
 
@@ -229,6 +234,10 @@ void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& g
 						playable ? 0 : ImGuiItemFlags_Disabled) &&
 		!scope.isDisabled()) {
 		gdxsv_start_replay(replay_dst, pov_index);
+	}
+
+	if (!broken_replay_path.empty() && broken_replay_path == replay_dst) {
+		ImGui::Text("Failed to start replay. The replay file is corrupted or outdated.");
 	}
 }
 
