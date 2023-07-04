@@ -57,6 +57,7 @@ static bool read_dir = false;
 static std::vector<std::pair<std::string, uint64_t>> files;
 static std::string selected_replay_file;
 static std::string battle_log_file_name;
+static std::string broken_replay_path;
 static proto::BattleLogFile battle_log;
 
 static std::string search_user_id;
@@ -124,8 +125,12 @@ void gdxsv_start_replay(const std::string& replay_file, int pov) {
 
 	if (ok) {
 		dc_loadstate(99);
-		gui_state = GuiState::Closed;
-		gdxsv.StartReplayFile(replay_file.c_str(), pov);
+		if (gdxsv.StartReplayFile(replay_file.c_str(), pov)) {
+			gui_state = GuiState::Closed;
+		} else {
+			dc_loadstate(90);
+			broken_replay_path = replay_file;
+		}
 	}
 }
 
@@ -229,6 +234,10 @@ void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& g
 						playable ? 0 : ImGuiItemFlags_Disabled) &&
 		!scope.isDisabled()) {
 		gdxsv_start_replay(replay_dst, pov_index);
+	}
+
+	if (!broken_replay_path.empty() && broken_replay_path == replay_dst) {
+		ImGui::Text("Failed to start replay. The replay file is corrupted or outdated.");
 	}
 }
 
@@ -441,43 +450,35 @@ void FetchReplayJSON() {
 		http::init();
 		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/replay?";
 		
-		static char* old_locale = setlocale(LC_CTYPE, NULL);
-#if defined(_WIN32)
-		setlocale(LC_CTYPE, ".1252");
-#else
-		setlocale(LC_CTYPE, "en_US.US-ASCII");
-#endif
-		
 		url += "page=" + http::urlEncode(std::to_string(entry_paging));
-		if (search_user_id != "") {
+		if (!search_user_id.empty()) {
 			url += "&user_id=" + http::urlEncode(search_user_id);
 		}
-		if (search_user_name != "") {
+		if (!search_user_name.empty()) {
 			url += "&user_name=" + http::urlEncode("%" + search_user_name + "%");
 		}
-		if (search_pilot_name != "") {
+		if (!search_pilot_name.empty()) {
 			url += "&pilot_name=" + http::urlEncode("%" + search_pilot_name + "%");
 		}
-		if (search_lobby_id != "") {
+		if (!search_lobby_id.empty()) {
 			url += "&lobby_id=" + http::urlEncode(search_lobby_id);
 		}
 		if (search_no_of_players != 0) {
 			url += "&players=" + http::urlEncode(std::to_string(search_no_of_players));
 		}
-		if (search_battle_code != "") {
+		if (!search_battle_code.empty()) {
 			url += "&battle_code=" + http::urlEncode(search_battle_code);
 		}
 		if (search_ranking != -1) {
 			url += "&aggregate=" + http::urlEncode(std::to_string(search_ranking));
 		}
-		if (search_disk != "") {
+		if (!search_disk.empty()) {
 			url += "&disk=" + http::urlEncode(search_disk);
 		}
 		if (search_reverse) {
 			url += "&reverse=" + http::urlEncode(std::to_string(1));
 		}
-		setlocale(LC_CTYPE, old_locale);
-		
+
 		fetch_replay_entry_http_status = http::get(url, dl, content_type);
 		if (fetch_replay_entry_http_status != 200) {
 			ERROR_LOG(COMMON, "version check failure: %s", url.c_str());
@@ -503,18 +504,12 @@ void FetchUserJSON() {
 		http::init();
 		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/user?";
 		
-		std::string loginkey_ = cfgLoadStr("gdxsv", "loginkey", "");
-		std::vector<u8> e_loginkey(loginkey_.size());
-		static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
-		for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey_[i] ^ magic[i & 3];
-		const unsigned _FNV_offset_basis = 2166136261U;
-		const unsigned _FNV_prime = 16777619U;
-		unsigned hash = _FNV_offset_basis;
-		for (size_t i = 0; i < e_loginkey.size(); ++i)
-		{
-			hash *= _FNV_prime;
-			hash ^= (unsigned)e_loginkey[i];
-		}
+		std::string loginkey = cfgLoadStr("gdxsv", "loginkey", "");
+		std::vector<u8> e_loginkey(loginkey.size());
+		static constexpr int magic[] = {0x46, 0xcf, 0x2d, 0x55};
+		for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey[i] ^ magic[i & 3];
+		unsigned hash = 2166136261U;
+		for (const unsigned char e : e_loginkey) hash = hash * 16777619U ^ static_cast<unsigned>(e);
 		std::ostringstream hashed_loginkey_s;
 		hashed_loginkey_s << std::setfill('0') << std::setw(8) << std::hex << hash;
 		
@@ -590,23 +585,20 @@ void gdxsv_replay_server_tab() {
 	struct TextFilters
 	{
 		// Return 0 (pass) if the character is number
-		static int FilterNumber(ImGuiInputTextCallbackData* data)
-		{
+		static int FilterNumber(ImGuiInputTextCallbackData* data) {
 			if (data->EventChar < 256 && strchr("0123456789", (char)data->EventChar))
 				return 0;
 			return 1;
 		}
 		
-		static int FullWidthAlphaNum(ImGuiInputTextCallbackData* data)
-		{
+		static int FullWidthAlphaNum(ImGuiInputTextCallbackData* data) {
 			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
 				data->EventChar = ((char)data->EventChar + 0xFEE0);
-			
+
 			return 0;
 		}
 		
-		static int UppercaseAlpha(ImGuiInputTextCallbackData* data)
-		{
+		static int UppercaseAlpha(ImGuiInputTextCallbackData* data) {
 			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
 				data->EventChar = toupper(data->EventChar);
 			
@@ -683,12 +675,17 @@ void gdxsv_replay_server_tab() {
 			}
 			case 1: // User Name
 			{
+				static bool auto_wide = false;
 				static char user_name_buf[100] = {0};
 				ImGui::SameLine();
-				if ( ImGui::InputText("##user_name_input", user_name_buf, IM_ARRAYSIZE(user_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
+				if (ImGui::InputText("##user_name_input", user_name_buf, IM_ARRAYSIZE(user_name_buf),
+					ImGuiInputTextFlags_EnterReturnsTrue | (auto_wide ? ImGuiInputTextFlags_CallbackCharFilter : 0), TextFilters::FullWidthAlphaNum)) {
 					search_user_name = std::string(user_name_buf);
 					FetchNewResults();
 				}
+
+				ImGui::SameLine();
+				ImGui::Checkbox("WideInput", &auto_wide);
 				
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
@@ -700,12 +697,18 @@ void gdxsv_replay_server_tab() {
 			}
 			case 2: // Pilot Name
 			{
+				static bool auto_wide = false;
 				static char pilot_name_buf[100] = {0};
 				ImGui::SameLine();
-				if ( ImGui::InputText("##user_name_input", pilot_name_buf, IM_ARRAYSIZE(pilot_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
+
+				if (ImGui::InputText("##pilot_name_input", pilot_name_buf, IM_ARRAYSIZE(pilot_name_buf),
+					ImGuiInputTextFlags_EnterReturnsTrue | (auto_wide ? ImGuiInputTextFlags_CallbackCharFilter : 0), TextFilters::FullWidthAlphaNum)) {
 					search_pilot_name = std::string(pilot_name_buf);
 					FetchNewResults();
 				}
+
+				ImGui::SameLine();
+				ImGui::Checkbox("WideInput", &auto_wide);
 				
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
