@@ -592,14 +592,14 @@ void gdxsv_replay_server_tab() {
 		}
 		
 		static int FullWidthAlphaNum(ImGuiInputTextCallbackData* data) {
-			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
-				data->EventChar = ((char)data->EventChar + 0xFEE0);
+			if (data->EventChar >= 0x21 && data->EventChar <= 0x7E)
+				data->EventChar = (data->EventChar + 0xFEE0);
 
 			return 0;
 		}
 		
 		static int UppercaseAlpha(ImGuiInputTextCallbackData* data) {
-			if ((char)data->EventChar >= 0x21 && (char)data->EventChar <= 0x7E)
+			if (data->EventChar >= 0x21 && data->EventChar <= 0x7E)
 				data->EventChar = toupper(data->EventChar);
 			
 			return 0;
@@ -675,17 +675,12 @@ void gdxsv_replay_server_tab() {
 			}
 			case 1: // User Name
 			{
-				static bool auto_wide = false;
 				static char user_name_buf[100] = {0};
 				ImGui::SameLine();
-				if (ImGui::InputText("##user_name_input", user_name_buf, IM_ARRAYSIZE(user_name_buf),
-					ImGuiInputTextFlags_EnterReturnsTrue | (auto_wide ? ImGuiInputTextFlags_CallbackCharFilter : 0), TextFilters::FullWidthAlphaNum)) {
+				if ( ImGui::InputText("##user_name_input", user_name_buf, IM_ARRAYSIZE(user_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
 					search_user_name = std::string(user_name_buf);
 					FetchNewResults();
 				}
-
-				ImGui::SameLine();
-				ImGui::Checkbox("WideInput", &auto_wide);
 				
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
@@ -697,18 +692,12 @@ void gdxsv_replay_server_tab() {
 			}
 			case 2: // Pilot Name
 			{
-				static bool auto_wide = false;
 				static char pilot_name_buf[100] = {0};
 				ImGui::SameLine();
-
-				if (ImGui::InputText("##pilot_name_input", pilot_name_buf, IM_ARRAYSIZE(pilot_name_buf),
-					ImGuiInputTextFlags_EnterReturnsTrue | (auto_wide ? ImGuiInputTextFlags_CallbackCharFilter : 0), TextFilters::FullWidthAlphaNum)) {
+				if ( ImGui::InputText("##user_name_input", pilot_name_buf, IM_ARRAYSIZE(pilot_name_buf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FullWidthAlphaNum) ) {
 					search_pilot_name = std::string(pilot_name_buf);
 					FetchNewResults();
 				}
-
-				ImGui::SameLine();
-				ImGui::Checkbox("WideInput", &auto_wide);
 				
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
