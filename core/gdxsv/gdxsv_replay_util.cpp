@@ -441,43 +441,35 @@ void FetchReplayJSON() {
 		http::init();
 		std::string url = "https://asia-northeast1-gdxsv-274515.cloudfunctions.net/lbsapi/replay?";
 		
-		static char* old_locale = setlocale(LC_CTYPE, NULL);
-#if defined(_WIN32)
-		setlocale(LC_CTYPE, ".1252");
-#else
-		setlocale(LC_CTYPE, "en_US.US-ASCII");
-#endif
-		
 		url += "page=" + http::urlEncode(std::to_string(entry_paging));
-		if (search_user_id != "") {
+		if (!search_user_id.empty()) {
 			url += "&user_id=" + http::urlEncode(search_user_id);
 		}
-		if (search_user_name != "") {
+		if (!search_user_name.empty()) {
 			url += "&user_name=" + http::urlEncode("%" + search_user_name + "%");
 		}
-		if (search_pilot_name != "") {
+		if (!search_pilot_name.empty()) {
 			url += "&pilot_name=" + http::urlEncode("%" + search_pilot_name + "%");
 		}
-		if (search_lobby_id != "") {
+		if (!search_lobby_id.empty()) {
 			url += "&lobby_id=" + http::urlEncode(search_lobby_id);
 		}
 		if (search_no_of_players != 0) {
 			url += "&players=" + http::urlEncode(std::to_string(search_no_of_players));
 		}
-		if (search_battle_code != "") {
+		if (!search_battle_code.empty()) {
 			url += "&battle_code=" + http::urlEncode(search_battle_code);
 		}
 		if (search_ranking != -1) {
 			url += "&aggregate=" + http::urlEncode(std::to_string(search_ranking));
 		}
-		if (search_disk != "") {
+		if (!search_disk.empty()) {
 			url += "&disk=" + http::urlEncode(search_disk);
 		}
 		if (search_reverse) {
 			url += "&reverse=" + http::urlEncode(std::to_string(1));
 		}
-		setlocale(LC_CTYPE, old_locale);
-		
+
 		fetch_replay_entry_http_status = http::get(url, dl, content_type);
 		if (fetch_replay_entry_http_status != 200) {
 			ERROR_LOG(COMMON, "version check failure: %s", url.c_str());
