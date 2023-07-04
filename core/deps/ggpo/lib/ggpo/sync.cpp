@@ -258,6 +258,7 @@ Sync::CheckSimulationConsistency(int *seekTo)
 {
    int first_incorrect = GameInput::NullFrame;
    for (int i = 0; i < _config.num_players; i++) {
+      if (_local_connect_status[i].disconnected) continue; // NOTE: Testing fix disconnection crash
       int incorrect = _input_queues[i].GetFirstIncorrectFrame();
       Log("considering incorrect frame %d reported by queue %d.", incorrect, i);
 
