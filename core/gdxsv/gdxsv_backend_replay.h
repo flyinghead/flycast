@@ -40,6 +40,7 @@ class GdxsvBackendReplay {
 	State state_;
 	LbsMessageReader lbs_tx_reader_;
 	proto::BattleLogFile log_file_;
+	std::vector<int> start_msg_index_;
 	std::deque<u8> recv_buf_;
 	int recv_delay_;
 	int me_;
