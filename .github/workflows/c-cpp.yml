@@ -28,6 +28,7 @@ jobs:
       id-token: write
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           # - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}

@@ -109,7 +109,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 
 static void GDROM_HLE_ReadDMA()
 {
-	u32 fad = gd_hle_state.params[0];
+	u32 fad = gd_hle_state.params[0] & 0xffffff;
 	u32 nsect = gd_hle_state.params[1];
 	u32 buffer = gd_hle_state.params[2];
 	// params[3] 0
@@ -123,7 +123,7 @@ static void GDROM_HLE_ReadDMA()
 
 static void GDROM_HLE_ReadPIO()
 {
-	u32 fad = gd_hle_state.params[0];
+	u32 fad = gd_hle_state.params[0] & 0xffffff;
 	u32 nsect = gd_hle_state.params[1];
 	u32 buffer = gd_hle_state.params[2];
 	// params[3] seekAhead (wince) or 0
@@ -309,8 +309,8 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_PLAY2:
 		{
-			cdda.StartAddr.FAD = gd_hle_state.params[0];
-			cdda.EndAddr.FAD = gd_hle_state.params[1];
+			cdda.StartAddr.FAD = gd_hle_state.params[0] & 0xffffff;
+			cdda.EndAddr.FAD = gd_hle_state.params[1] & 0xffffff;
 			cdda.repeats = gd_hle_state.params[2];
 			// params[3] debug (0)
 			DEBUG_LOG(REIOS, "GDROM: CMD PLAYSEC from %d to %d repeats %d", cdda.StartAddr.FAD, cdda.EndAddr.FAD, cdda.repeats);
@@ -337,7 +337,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_SEEK:
 		DEBUG_LOG(REIOS, "GDROM: CMD SEEK");
-		cdda.CurrAddr.FAD = cdda.StartAddr.FAD = gd_hle_state.params[0];
+		cdda.CurrAddr.FAD = cdda.StartAddr.FAD = gd_hle_state.params[0] & 0xffffff;
 		// params[1] debug (0)
 		cdda.status = cdda_t::Paused;
 		SecNumber.Status = GD_PAUSE;
@@ -382,7 +382,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_DMA_READ_REQ:
 		{
-			u32 sector = gd_hle_state.params[0];
+			u32 sector = gd_hle_state.params[0] & 0xffffff;
 			u32 num = gd_hle_state.params[1];
 
 			DEBUG_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d", sector, num);
@@ -509,7 +509,7 @@ static void GD_HLE_Command(gd_command cc)
 	case GDCC_MULTI_DMAREAD:
 	case GDCC_MULTI_PIOREAD:
 		{
-			u32 sector = gd_hle_state.params[0];
+			u32 sector = gd_hle_state.params[0] & 0xffffff;
 			u32 num = gd_hle_state.params[1];
 			// params[2] seekAhead (wince)
 			bool dma = cc == GDCC_MULTI_DMAREAD;
