@@ -273,6 +273,7 @@ class P2PMatchingReport PROTOBUF_FINAL :
     kPlayerCountFieldNumber = 3,
     kPeerIdFieldNumber = 4,
     kFrameCountFieldNumber = 6,
+    kDisconnectedPeerIdFieldNumber = 7,
   };
   // repeated string logs = 10;
   int logs_size() const;
@@ -366,6 +367,15 @@ class P2PMatchingReport PROTOBUF_FINAL :
   void _internal_set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 disconnected_peer_id = 7;
+  void clear_disconnected_peer_id();
+  ::PROTOBUF_NAMESPACE_ID::int32 disconnected_peer_id() const;
+  void set_disconnected_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_disconnected_peer_id() const;
+  void _internal_set_disconnected_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proto.P2PMatchingReport)
  private:
   class _Internal;
@@ -380,6 +390,7 @@ class P2PMatchingReport PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::int32 player_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 peer_id_;
   ::PROTOBUF_NAMESPACE_ID::int32 frame_count_;
+  ::PROTOBUF_NAMESPACE_ID::int32 disconnected_peer_id_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_gdxsv_2eproto;
 };
@@ -3432,6 +3443,26 @@ inline void P2PMatchingReport::_internal_set_frame_count(::PROTOBUF_NAMESPACE_ID
 inline void P2PMatchingReport::set_frame_count(::PROTOBUF_NAMESPACE_ID::int32 value) {
   _internal_set_frame_count(value);
   // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.frame_count)
+}
+
+// int32 disconnected_peer_id = 7;
+inline void P2PMatchingReport::clear_disconnected_peer_id() {
+  disconnected_peer_id_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::_internal_disconnected_peer_id() const {
+  return disconnected_peer_id_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 P2PMatchingReport::disconnected_peer_id() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.disconnected_peer_id)
+  return _internal_disconnected_peer_id();
+}
+inline void P2PMatchingReport::_internal_set_disconnected_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  disconnected_peer_id_ = value;
+}
+inline void P2PMatchingReport::set_disconnected_peer_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_disconnected_peer_id(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.disconnected_peer_id)
 }
 
 // repeated string logs = 10;

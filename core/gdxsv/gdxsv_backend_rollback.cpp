@@ -416,7 +416,13 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
 		for (int i = 0; i < matching_.player_count(); ++i) {
 			if (!ggpo::isConnected(i)) {
-				SetCloseReason("player_disconnected");
+				char buf[256] = { 0 };
+				const auto& user = matching_.users(i);
+				snprintf(buf, sizeof(buf), "player_disconnect peer=%d fr=%d ID=%s HN=%s PN=%s",
+					i, frame, user.user_id().c_str(), user.user_name().c_str(), user.pilot_name().c_str());
+				if (SetCloseReason(buf)) {
+					report_.set_disconnected_peer_id(i);
+				}
 				osd_network_stat_countdown_ = 60 * 10;
 				gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
 				ggpo::setExInput(ExInputNone);
@@ -647,10 +653,12 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 	}
 }
 
-void GdxsvBackendRollback::SetCloseReason(const char* reason) {
-	if (!report_.close_reason().empty()) {
+bool GdxsvBackendRollback::SetCloseReason(const char* reason) {
+	if (report_.close_reason().empty()) {
 		report_.set_close_reason(reason);
+		return true;
 	}
+	return false;
 }
 
 void GdxsvBackendRollback::SaveReplay() {
