@@ -95,13 +95,21 @@ void GdxsvBackendRollback::Reset() {
 	input_logs_.clear();
 	osd_network_stat_ = false;
 	ggpo::stopSession();
+	config::GGPOEnable.reset();
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
 	const int disk = gdxsv.Disk();
 	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
-	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
-	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+
+	/*
+	if (emu.running()) {
+		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
+		const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+		const int DataStopCounter = 0x0c3ab51a;
+		NOTICE_LOG(COMMON, "DataStopCounter=%d ConnectionStatus=%d %d %d NetCountDown=%d", gdxsv_ReadMem16(DataStopCounter), gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 2), gdxsv_ReadMem16(ConnectionStatus + 4), gdxsv_ReadMem16(NetCountDown));
+	}
+	*/
 
 	if (state_ == State::StartLocalTest) {
 		kcode[0] = ~0x0004;
@@ -191,8 +199,9 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			session_start_time = std::chrono::high_resolution_clock::now();
 			state_ = State::WaitGGPOSession;
 		} else {
+			NOTICE_LOG(COMMON, "Network unreachable");
 			SetCloseReason("unreachable");
-			state_ = State::End;
+			error_fast_return_ = true;
 			emu.start();
 		}
 	}
@@ -209,15 +218,13 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			} else {
 				NOTICE_LOG(COMMON, "StartNetwork failure");
 				SetCloseReason("ggpo_start_failure");
-				state_ = State::End;
+				error_fast_return_ = true;
 				emu.start();
 			}
 		} else if (timeout) {
 			NOTICE_LOG(COMMON, "StartNetwork timeout");
 			SetCloseReason("ggpo_start_timeout");
 			error_fast_return_ = true;
-			ggpo::stopSession();
-			state_ = State::End;
 			emu.start();
 		}
 	}
@@ -227,6 +234,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	// Rebattle end
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
 		if (state_ != State::CloseWait) {
+			SetCloseReason("game_end");
 			ggpo::getCurrentFrame(&disconnect_frame);
 			for (int i = 0; i < matching_.users_size(); i++) {
 				ggpo::disconnect(matching_.peer_id());
@@ -237,7 +245,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	// Friend save scene
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
-		SetCloseReason("game_end");
 		int frame = 0;
 		ggpo::getCurrentFrame(&frame);
 
@@ -248,13 +255,14 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		}
 	}
 
-	// Fast return to lobby on error
-	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
+	// Close session on error
+	if (error_fast_return_) {
 		SetCloseReason("error_fast_return");
-		error_fast_return_ = true;
 		ggpo::stopSession();
 		config::GGPOEnable.reset();
-		state_ = State::End;
+		if (state_ < State::End) {
+			state_ = State::End;
+		}
 	}
 
 	if (is_local_test_ && State::End <= state_) {
@@ -356,9 +364,12 @@ void GdxsvBackendRollback::Open() {
 }
 
 void GdxsvBackendRollback::Close() {
-	if (state_ < State::McsWaitJoin) return;
-	if (state_ == State::Closed) return;
+	if (state_ < State::McsWaitJoin || state_ == State::Closed) {
+		NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close Skipped");
+		return;
+	}
 
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
@@ -369,8 +380,10 @@ void GdxsvBackendRollback::Close() {
 	RestorePatch();
 	KillTex = true;
 	osd_network_stat_ = false;
+	error_fast_return_ = false;
 	SaveReplay();
 	state_ = State::Closed;
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close Done");
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -405,24 +418,35 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	ggpo::getCurrentFrame(&frame);
 
 	const int disk = gdxsv.Disk();
-	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
-	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 	const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
 	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+	const int DataStopCounter = disk == 1 ? 0x0c30fdda : 0x0c3ab51a;
 	const auto inputState = mapleInputState;
 	const auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
 
-	// Notify disconnect in game part if other player is disconnect on ggpo
-	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+	// Disconnect check
+	if (ggpo::active()) {
 		for (int i = 0; i < matching_.player_count(); ++i) {
 			if (!ggpo::isConnected(i)) {
-				SetCloseReason("player_disconnected");
+				char buf[256] = { 0 };
+				const auto& user = matching_.users(i);
+				snprintf(buf, sizeof(buf), "player_disconnect peer=%d fr=%d ID=%s HN=%s PN=%s",
+					i, frame, user.user_id().c_str(), user.user_name().c_str(), user.pilot_name().c_str());
+				if (SetCloseReason(buf)) {
+					report_.set_disconnected_peer_id(i);
+				}
 				osd_network_stat_countdown_ = 60 * 10;
-				gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
-				ggpo::setExInput(ExInputNone);
+				error_fast_return_ = true;
 				break;
 			}
 		}
+	}
+
+	// Fast disconnect dialog appear
+	if (error_fast_return_) {
+		gdxsv_WriteMem16(DataStopCounter, 1800);
+		gdxsv_WriteMem16(NetCountDown, 0);
+		return 0;
 	}
 
 	int msg_len = gdxsv_ReadMem8(InetBuf);
@@ -547,11 +571,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		report_.set_frame_count(frame);
 	}
 
-	if (error_fast_return_) {
-		gdxsv_WriteMem16(NetCountDown, 60 * 3);
-		error_fast_return_ = false;
-	}
-
 	verify(recv_buf_.size() <= size);
 
 	int n = std::min<int>(recv_buf_.size(), size);
@@ -647,10 +666,12 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 	}
 }
 
-void GdxsvBackendRollback::SetCloseReason(const char* reason) {
-	if (!report_.close_reason().empty()) {
+bool GdxsvBackendRollback::SetCloseReason(const char* reason) {
+	if (report_.close_reason().empty()) {
 		report_.set_close_reason(reason);
+		return true;
 	}
+	return false;
 }
 
 void GdxsvBackendRollback::SaveReplay() {
