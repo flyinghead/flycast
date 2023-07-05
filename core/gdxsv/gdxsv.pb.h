@@ -266,39 +266,15 @@ class P2PMatchingReport PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kLogsFieldNumber = 10,
     kBattleCodeFieldNumber = 1,
     kCloseReasonFieldNumber = 5,
+    kLogFieldNumber = 11,
     kSessionIdFieldNumber = 2,
     kPlayerCountFieldNumber = 3,
     kPeerIdFieldNumber = 4,
     kFrameCountFieldNumber = 6,
     kDisconnectedPeerIdFieldNumber = 7,
   };
-  // repeated string logs = 10;
-  int logs_size() const;
-  private:
-  int _internal_logs_size() const;
-  public:
-  void clear_logs();
-  const std::string& logs(int index) const;
-  std::string* mutable_logs(int index);
-  void set_logs(int index, const std::string& value);
-  void set_logs(int index, std::string&& value);
-  void set_logs(int index, const char* value);
-  void set_logs(int index, const char* value, size_t size);
-  std::string* add_logs();
-  void add_logs(const std::string& value);
-  void add_logs(std::string&& value);
-  void add_logs(const char* value);
-  void add_logs(const char* value, size_t size);
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& logs() const;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_logs();
-  private:
-  const std::string& _internal_logs(int index) const;
-  std::string* _internal_add_logs();
-  public:
-
   // string battle_code = 1;
   void clear_battle_code();
   const std::string& battle_code() const;
@@ -329,6 +305,22 @@ class P2PMatchingReport PROTOBUF_FINAL :
   const std::string& _internal_close_reason() const;
   void _internal_set_close_reason(const std::string& value);
   std::string* _internal_mutable_close_reason();
+  public:
+
+  // string log = 11;
+  void clear_log();
+  const std::string& log() const;
+  void set_log(const std::string& value);
+  void set_log(std::string&& value);
+  void set_log(const char* value);
+  void set_log(const char* value, size_t size);
+  std::string* mutable_log();
+  std::string* release_log();
+  void set_allocated_log(std::string* log);
+  private:
+  const std::string& _internal_log() const;
+  void _internal_set_log(const std::string& value);
+  std::string* _internal_mutable_log();
   public:
 
   // int32 session_id = 2;
@@ -383,9 +375,9 @@ class P2PMatchingReport PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> logs_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr close_reason_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr log_;
   ::PROTOBUF_NAMESPACE_ID::int32 session_id_;
   ::PROTOBUF_NAMESPACE_ID::int32 player_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 peer_id_;
@@ -3465,78 +3457,66 @@ inline void P2PMatchingReport::set_disconnected_peer_id(::PROTOBUF_NAMESPACE_ID:
   // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.disconnected_peer_id)
 }
 
-// repeated string logs = 10;
-inline int P2PMatchingReport::_internal_logs_size() const {
-  return logs_.size();
+// string log = 11;
+inline void P2PMatchingReport::clear_log() {
+  log_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline int P2PMatchingReport::logs_size() const {
-  return _internal_logs_size();
+inline const std::string& P2PMatchingReport::log() const {
+  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.log)
+  return _internal_log();
 }
-inline void P2PMatchingReport::clear_logs() {
-  logs_.Clear();
+inline void P2PMatchingReport::set_log(const std::string& value) {
+  _internal_set_log(value);
+  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.log)
 }
-inline std::string* P2PMatchingReport::add_logs() {
-  // @@protoc_insertion_point(field_add_mutable:proto.P2PMatchingReport.logs)
-  return _internal_add_logs();
+inline std::string* P2PMatchingReport::mutable_log() {
+  // @@protoc_insertion_point(field_mutable:proto.P2PMatchingReport.log)
+  return _internal_mutable_log();
 }
-inline const std::string& P2PMatchingReport::_internal_logs(int index) const {
-  return logs_.Get(index);
+inline const std::string& P2PMatchingReport::_internal_log() const {
+  return log_.Get();
 }
-inline const std::string& P2PMatchingReport::logs(int index) const {
-  // @@protoc_insertion_point(field_get:proto.P2PMatchingReport.logs)
-  return _internal_logs(index);
+inline void P2PMatchingReport::_internal_set_log(const std::string& value) {
+  
+  log_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline std::string* P2PMatchingReport::mutable_logs(int index) {
-  // @@protoc_insertion_point(field_mutable:proto.P2PMatchingReport.logs)
-  return logs_.Mutable(index);
+inline void P2PMatchingReport::set_log(std::string&& value) {
+  
+  log_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.P2PMatchingReport.log)
 }
-inline void P2PMatchingReport::set_logs(int index, const std::string& value) {
-  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.logs)
-  logs_.Mutable(index)->assign(value);
-}
-inline void P2PMatchingReport::set_logs(int index, std::string&& value) {
-  // @@protoc_insertion_point(field_set:proto.P2PMatchingReport.logs)
-  logs_.Mutable(index)->assign(std::move(value));
-}
-inline void P2PMatchingReport::set_logs(int index, const char* value) {
+inline void P2PMatchingReport::set_log(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
-  logs_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:proto.P2PMatchingReport.logs)
+  
+  log_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.P2PMatchingReport.log)
 }
-inline void P2PMatchingReport::set_logs(int index, const char* value, size_t size) {
-  logs_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatchingReport.logs)
+inline void P2PMatchingReport::set_log(const char* value,
+    size_t size) {
+  
+  log_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.P2PMatchingReport.log)
 }
-inline std::string* P2PMatchingReport::_internal_add_logs() {
-  return logs_.Add();
+inline std::string* P2PMatchingReport::_internal_mutable_log() {
+  
+  return log_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void P2PMatchingReport::add_logs(const std::string& value) {
-  logs_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:proto.P2PMatchingReport.logs)
+inline std::string* P2PMatchingReport::release_log() {
+  // @@protoc_insertion_point(field_release:proto.P2PMatchingReport.log)
+  return log_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void P2PMatchingReport::add_logs(std::string&& value) {
-  logs_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:proto.P2PMatchingReport.logs)
-}
-inline void P2PMatchingReport::add_logs(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  logs_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:proto.P2PMatchingReport.logs)
-}
-inline void P2PMatchingReport::add_logs(const char* value, size_t size) {
-  logs_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:proto.P2PMatchingReport.logs)
-}
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
-P2PMatchingReport::logs() const {
-  // @@protoc_insertion_point(field_list:proto.P2PMatchingReport.logs)
-  return logs_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
-P2PMatchingReport::mutable_logs() {
-  // @@protoc_insertion_point(field_mutable_list:proto.P2PMatchingReport.logs)
-  return &logs_;
+inline void P2PMatchingReport::set_allocated_log(std::string* log) {
+  if (log != nullptr) {
+    
+  } else {
+    
+  }
+  log_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), log,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.P2PMatchingReport.log)
 }
 
 // -------------------------------------------------------------------

@@ -318,9 +318,11 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
 	auto lines = InMemoryListener::getInstance()->getLog();
 
+	std::ostringstream ss;
 	for (const auto &line : lines) {
-		*rbk_report.mutable_logs()->Add() = line;
+		ss << line;
 	}
+	rbk_report.set_log(ss.str());
 
 	std::string data;
 	if (rbk_report.SerializeToString(&data)) {
