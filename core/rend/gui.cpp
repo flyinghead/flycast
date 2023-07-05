@@ -504,10 +504,10 @@ void gui_open_settings()
 					gui_stop_game(e.what());
 				}
 			}
-		}
-		else
-		{
-			chat.toggle();
+			else
+			{
+				chat.toggle();
+			}
 		}
 	}
 	else if (gui_state == GuiState::VJoyEdit)
