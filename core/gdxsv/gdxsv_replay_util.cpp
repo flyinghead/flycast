@@ -205,7 +205,7 @@ void gdxsv_replay_draw_players(const std::vector<proto::BattleLogUser>& users) {
 	gdxsv_replay_draw_forces(false, zeon_index, user_index, users);
 }
 
-void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& game_disk, const int& users_size, const time_t& start_time, const time_t& end_time, const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
+void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& game_disk, const int& users_size, const std::string& close_reason, const time_t& start_time, const time_t& end_time, const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
 	const bool playable = "dc" + std::to_string(gdxsv.Disk()) == game_disk;
 	
 	ImGui::Text("BattleCode: %s", battle_code.c_str());
@@ -218,6 +218,9 @@ void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& g
 	if (end_time != 0) {
 		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&end_time));
 		ImGui::Text("EndAt: %s", buf);
+	}
+	if (!close_reason.empty()) {
+		ImGui::Text("CloseReason: %s", close_reason.c_str());
 	}
 	OptionCheckbox("Hide name", config::GdxReplayHideName, "Replace player names with generic names");
 	OptionCheckbox("Show Ally HP", config::GdxReplayShowAllyHP, "Hack the total HP field to display Ally HP");
@@ -358,6 +361,7 @@ void gdxsv_replay_local_tab() {
 				battle_log.battle_code(),
 				battle_log.game_disk(),
 				battle_log.users_size(),
+				battle_log.close_reason(),
 				battle_log.start_at(),
 				battle_log.end_at(),
 				std::vector<proto::BattleLogUser>(battle_log.users().begin(), battle_log.users().end()),
@@ -959,6 +963,7 @@ void gdxsv_replay_server_tab() {
 				battle_code,
 				entry.disk,
 				(int)entry.users.size(),
+				"",
 				entry.start_unix,
 				0,
 				entry.users,

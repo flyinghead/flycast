@@ -1770,7 +1770,9 @@ class BattleLogFile PROTOBUF_FINAL :
     kBattleCodeFieldNumber = 3,
     kGameDiskFieldNumber = 5,
     kRuleBinFieldNumber = 10,
+    kCloseReasonFieldNumber = 24,
     kLogFileVersionFieldNumber = 4,
+    kDisconnectUserIndexFieldNumber = 25,
     kStartAtFieldNumber = 20,
     kEndAtFieldNumber = 21,
   };
@@ -1914,6 +1916,22 @@ class BattleLogFile PROTOBUF_FINAL :
   std::string* _internal_mutable_rule_bin();
   public:
 
+  // string close_reason = 24;
+  void clear_close_reason();
+  const std::string& close_reason() const;
+  void set_close_reason(const std::string& value);
+  void set_close_reason(std::string&& value);
+  void set_close_reason(const char* value);
+  void set_close_reason(const char* value, size_t size);
+  std::string* mutable_close_reason();
+  std::string* release_close_reason();
+  void set_allocated_close_reason(std::string* close_reason);
+  private:
+  const std::string& _internal_close_reason() const;
+  void _internal_set_close_reason(const std::string& value);
+  std::string* _internal_mutable_close_reason();
+  public:
+
   // int32 log_file_version = 4;
   void clear_log_file_version();
   ::PROTOBUF_NAMESPACE_ID::int32 log_file_version() const;
@@ -1921,6 +1939,15 @@ class BattleLogFile PROTOBUF_FINAL :
   private:
   ::PROTOBUF_NAMESPACE_ID::int32 _internal_log_file_version() const;
   void _internal_set_log_file_version(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 disconnect_user_index = 25;
+  void clear_disconnect_user_index();
+  ::PROTOBUF_NAMESPACE_ID::int32 disconnect_user_index() const;
+  void set_disconnect_user_index(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_disconnect_user_index() const;
+  void _internal_set_disconnect_user_index(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
   // int64 start_at = 20;
@@ -1957,7 +1984,9 @@ class BattleLogFile PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr game_disk_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr rule_bin_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr close_reason_;
   ::PROTOBUF_NAMESPACE_ID::int32 log_file_version_;
+  ::PROTOBUF_NAMESPACE_ID::int32 disconnect_user_index_;
   ::PROTOBUF_NAMESPACE_ID::int64 start_at_;
   ::PROTOBUF_NAMESPACE_ID::int64 end_at_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -5297,6 +5326,88 @@ inline void BattleLogFile::_internal_set_end_at(::PROTOBUF_NAMESPACE_ID::int64 v
 inline void BattleLogFile::set_end_at(::PROTOBUF_NAMESPACE_ID::int64 value) {
   _internal_set_end_at(value);
   // @@protoc_insertion_point(field_set:proto.BattleLogFile.end_at)
+}
+
+// string close_reason = 24;
+inline void BattleLogFile::clear_close_reason() {
+  close_reason_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& BattleLogFile::close_reason() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogFile.close_reason)
+  return _internal_close_reason();
+}
+inline void BattleLogFile::set_close_reason(const std::string& value) {
+  _internal_set_close_reason(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogFile.close_reason)
+}
+inline std::string* BattleLogFile::mutable_close_reason() {
+  // @@protoc_insertion_point(field_mutable:proto.BattleLogFile.close_reason)
+  return _internal_mutable_close_reason();
+}
+inline const std::string& BattleLogFile::_internal_close_reason() const {
+  return close_reason_.Get();
+}
+inline void BattleLogFile::_internal_set_close_reason(const std::string& value) {
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void BattleLogFile::set_close_reason(std::string&& value) {
+  
+  close_reason_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogFile.close_reason)
+}
+inline void BattleLogFile::set_close_reason(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.BattleLogFile.close_reason)
+}
+inline void BattleLogFile::set_close_reason(const char* value,
+    size_t size) {
+  
+  close_reason_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogFile.close_reason)
+}
+inline std::string* BattleLogFile::_internal_mutable_close_reason() {
+  
+  return close_reason_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* BattleLogFile::release_close_reason() {
+  // @@protoc_insertion_point(field_release:proto.BattleLogFile.close_reason)
+  return close_reason_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void BattleLogFile::set_allocated_close_reason(std::string* close_reason) {
+  if (close_reason != nullptr) {
+    
+  } else {
+    
+  }
+  close_reason_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), close_reason,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogFile.close_reason)
+}
+
+// int32 disconnect_user_index = 25;
+inline void BattleLogFile::clear_disconnect_user_index() {
+  disconnect_user_index_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogFile::_internal_disconnect_user_index() const {
+  return disconnect_user_index_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogFile::disconnect_user_index() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogFile.disconnect_user_index)
+  return _internal_disconnect_user_index();
+}
+inline void BattleLogFile::_internal_set_disconnect_user_index(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  disconnect_user_index_ = value;
+}
+inline void BattleLogFile::set_disconnect_user_index(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_disconnect_user_index(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogFile.disconnect_user_index)
 }
 
 // -------------------------------------------------------------------

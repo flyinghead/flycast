@@ -701,6 +701,9 @@ void GdxsvBackendRollback::SaveReplay() {
 	const auto now = std::chrono::system_clock::now();
 	log->set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
 
+	log->set_close_reason(report_.close_reason());
+	log->set_disconnect_user_index(report_.disconnected_peer_id());
+
 	std::thread([log = std::move(log)]() {
 		auto replay_dir = get_writable_data_path("replays");
 		if (!file_exists(replay_dir)) {
