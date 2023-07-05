@@ -569,7 +569,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 					}
 				}
 
-				if (matrix_ok && timeout_min_ms < ms && last_updated + 1000 < loop_count) {
+				if (matrix_ok && timeout_min_ms < ms && last_updated + 500 < loop_count) {
 					NOTICE_LOG(COMMON, "UdpPingTest Finish ok");
 					client_.Close();
 					running_ = false;
