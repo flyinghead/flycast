@@ -24,6 +24,9 @@
 #include "rend/gui_util.h"
 #include "stdclass.h"
 
+// For macOS
+std::string os_PrecomposedString(std::string string);
+
 namespace {
 struct UserEntry {
 	std::string user_id;
@@ -221,7 +224,6 @@ void gdxsv_replay_local_tab() {
 				if (entry == nullptr) break;
 				std::string name(entry->d_name);
 #ifdef __APPLE__
-				extern std::string os_PrecomposedString(std::string string);
 				name = os_PrecomposedString(name);
 #endif
 				if (name == ".") continue;
@@ -246,7 +248,7 @@ void gdxsv_replay_local_tab() {
 	struct stat st {};
 	if (flycast::stat(replay_dir.c_str(), &st) == 0) {
 		ImGui::SameLine();
-#if defined(__APPLE__) && TARGET_OS_OSX
+#if defined(TARGET_MAC)
 		if (ImGui::Button("Reveal in Finder")) {
 			char temp[512];
 			snprintf(temp, sizeof(temp), "open \"%s\"", replay_dir.c_str());
