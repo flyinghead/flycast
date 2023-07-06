@@ -820,7 +820,7 @@ void gdxsv_replay_server_tab() {
 						for (int i = 0; i < entry.users.size(); i++) {
 							const auto& user = entry.users[i];
 
-							if (i == entry.users.size() - 1) {
+							if (i + 1 == entry.users.size()) {
 								snprintf(buf, sizeof(buf), "%s%s", buf, user.user_name().c_str());
 							} else {
 								snprintf(buf, sizeof(buf), "%s%s%s ", buf, user.user_name().c_str(),
