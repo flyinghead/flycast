@@ -51,6 +51,10 @@ void os_SetWindowText(const char * text) {
 }
 
 void os_DoEvents() {
+#if defined(USE_SDL)
+	NSMenuItem *editMenuItem = [[NSApp mainMenu] itemAtIndex:1];
+	[editMenuItem setEnabled:SDL_IsTextInputActive()];
+#endif
 }
 
 void UpdateInputState() {
