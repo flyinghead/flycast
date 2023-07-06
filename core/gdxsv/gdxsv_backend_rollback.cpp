@@ -423,11 +423,12 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
 	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
 	const int DataStopCounter = disk == 1 ? 0x0c30fdda : 0x0c3ab51a;
+	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 	const auto inputState = mapleInputState;
 	const auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
 
-	// Disconnect check
-	if (ggpo::active()) {
+	// Disconnect check (ignore rebattle end scene)
+	if (ggpo::active() && !(gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 2)) {
 		for (int i = 0; i < matching_.player_count(); ++i) {
 			if (!ggpo::isConnected(i)) {
 				char buf[256] = {0};
