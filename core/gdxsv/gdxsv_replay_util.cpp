@@ -118,7 +118,7 @@ void textCentered(const std::string& text) {
 };
 
 void gdxsv_replay_draw_forces(const bool is_renpo, const std::vector<int>& force_index, int& user_index,
-									 const std::vector<proto::BattleLogUser>& users) {
+							  const std::vector<proto::BattleLogUser>& users) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f * scaling);
 
 	if (is_renpo) {
@@ -167,8 +167,8 @@ void gdxsv_replay_draw_players(const std::vector<proto::BattleLogUser>& users) {
 }
 
 void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& game_disk, const int& users_size,
-								   const std::string& close_reason, const time_t& start_time, const time_t& end_time,
-								   const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
+							const std::string& close_reason, const time_t& start_time, const time_t& end_time,
+							const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
 	const bool playable = "dc" + std::to_string(gdxsv.Disk()) == game_disk;
 
 	ImGui::Text("BattleCode: %s", battle_code.c_str());
@@ -675,13 +675,13 @@ void gdxsv_replay_server_tab() {
 					 {u8"衛星軌道１", u8"衛星軌道１", "Sat.Orbit 1", "19"},
 					 {u8"衛星軌道2", u8"衛星軌道２", "Sat.Orbit 2", "20"},
 					 {u8"サイド６宙域", u8"SIDE 6 宙域", "SIDE 6 (Space)", "21"},
-					 {u8"サイド７内部", u8"SIDE 7 内部", "	SIDE 7 (Inner)", "22"}}};
+					 {u8"サイド７内部", u8"SIDE 7 内部", "SIDE 7 (Inner)", "22"}}};
 
 				static unsigned int lobby_selected = 0;
 
 				static int language = config::GdxLanguage.get();
-				if (language == 3) {
-					language = 1;
+				if (language < 0 || 3 <= language) {
+					language = 0;
 				}
 
 				ImGui::SameLine();
