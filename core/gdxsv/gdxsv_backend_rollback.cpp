@@ -46,10 +46,10 @@ u16 convertInput(MapleInputState input) {
 	if (~input.kcode & DC_BTN_START) r |= 0x0080;
 	if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 1)) r |= 0x8000;  // LT
 	if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 2)) r |= 0x1000;  // RT
-	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
-	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
-	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
-	if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;	 // down
+	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;		   // left
+	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;		   // right
+	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;		   // up
+	if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;		   // down
 	return r;
 }
 
@@ -107,7 +107,9 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 		const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
 		const int DataStopCounter = 0x0c3ab51a;
-		NOTICE_LOG(COMMON, "DataStopCounter=%d ConnectionStatus=%d %d %d NetCountDown=%d", gdxsv_ReadMem16(DataStopCounter), gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 2), gdxsv_ReadMem16(ConnectionStatus + 4), gdxsv_ReadMem16(NetCountDown));
+		NOTICE_LOG(COMMON, "DataStopCounter=%d ConnectionStatus=%d %d %d NetCountDown=%d", gdxsv_ReadMem16(DataStopCounter),
+	gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 2), gdxsv_ReadMem16(ConnectionStatus + 4),
+	gdxsv_ReadMem16(NetCountDown));
 	}
 	*/
 
@@ -428,10 +430,10 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	if (ggpo::active()) {
 		for (int i = 0; i < matching_.player_count(); ++i) {
 			if (!ggpo::isConnected(i)) {
-				char buf[256] = { 0 };
+				char buf[256] = {0};
 				const auto& user = matching_.users(i);
-				snprintf(buf, sizeof(buf), "player_disconnect peer=%d fr=%d ID=%s HN=%s PN=%s",
-					i, frame, user.user_id().c_str(), user.user_name().c_str(), user.pilot_name().c_str());
+				snprintf(buf, sizeof(buf), "player_disconnect peer=%d fr=%d ID=%s HN=%s PN=%s", i, frame, user.user_id().c_str(),
+						 user.user_name().c_str(), user.pilot_name().c_str());
 				if (SetCloseReason(buf)) {
 					report_.set_disconnected_peer_id(i);
 				}
