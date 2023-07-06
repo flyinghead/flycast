@@ -24,6 +24,7 @@
 #include "rend/gui_util.h"
 #include "stdclass.h"
 
+namespace {
 struct UserEntry {
 	std::string user_id;
 	std::string name;
@@ -42,7 +43,6 @@ struct UserEntry {
 	int daily_battle_count;
 	int daily_win_count;
 	int daily_lose_count;
-	//	std::string created;
 };
 
 struct ReplayEntry {
@@ -55,38 +55,37 @@ struct ReplayEntry {
 	std::string replay_url;
 };
 
-static bool read_dir = false;
-static std::vector<std::pair<std::string, uint64_t>> files;
-static std::string selected_replay_file;
-static std::string battle_log_file_name;
-static std::string broken_replay_path;
-static proto::BattleLogFile battle_log;
+bool read_dir = false;
+std::vector<std::pair<std::string, uint64_t>> files;
+std::string selected_replay_file;
+std::string battle_log_file_name;
+std::string broken_replay_path;
+proto::BattleLogFile battle_log;
 
-static std::string search_user_id;
-static std::string search_user_name;
-static std::string search_pilot_name;
-static std::string search_lobby_id;
-static unsigned int search_no_of_players;
-static std::string search_battle_code;
-static int search_ranking = -1;
-static std::string search_disk;
-static bool search_reverse;
+std::string search_user_id;
+std::string search_user_name;
+std::string search_pilot_name;
+std::string search_lobby_id;
+unsigned int search_no_of_players;
+std::string search_battle_code;
+int search_ranking = -1;
+std::string search_disk;
+bool search_reverse;
 
-static std::shared_future<std::vector<UserEntry>> fetch_user_entry_future_;
-static int fetch_user_entry_http_status;
+std::shared_future<std::vector<UserEntry>> fetch_user_entry_future_;
+int fetch_user_entry_http_status;
 
-static std::shared_future<std::vector<ReplayEntry>> fetch_replay_entry_future_;
-static int fetch_replay_entry_http_status;
-static int selected_replay_entry_index = -1;
+std::shared_future<std::vector<ReplayEntry>> fetch_replay_entry_future_;
+int fetch_replay_entry_http_status;
+int selected_replay_entry_index = -1;
 
-static int entry_paging = 0;
+int entry_paging = 0;
+char page_buf[4] = "1";
+int pov_index = -1;
+ImVec2 normal_padding;
+float scaling;
 
-static int pov_index = -1;
-
-static ImVec2 normal_padding;
-static float scaling;
-
-static bool download_replay_savestate(int disk, const std::string& save_path) {
+bool download_replay_savestate(int disk, const std::string& save_path) {
 	std::string content_type;
 	http::init();
 	std::vector<u8> downloaded;
@@ -111,47 +110,7 @@ static bool download_replay_savestate(int disk, const std::string& save_path) {
 	return written == downloaded.size();
 }
 
-void gdxsv_start_replay(const std::string& replay_file, int pov) {
-	if (gdxsv.IsSaveStateAllowed()) {
-		dc_savestate(90);
-	}
-
-	bool ok = true;
-	auto savestate_path = hostfs::getSavestatePath(99, false);
-	if (!file_exists(savestate_path)) {
-		ok = false;
-		if (download_replay_savestate(2, savestate_path)) {
-			ok = true;
-		}
-	}
-
-	if (ok) {
-		dc_loadstate(99);
-		if (gdxsv.StartReplayFile(replay_file.c_str(), pov)) {
-			gui_state = GuiState::Closed;
-		} else {
-			dc_loadstate(90);
-			broken_replay_path = replay_file;
-		}
-	}
-}
-
-void gdxsv_end_replay() {
-	dc_loadstate(90);
-	settings.input.fastForwardMode = false;
-
-	emu.start();
-	emu.render();
-	emu.stop();
-	if (!selected_replay_file.empty() || selected_replay_entry_index != -1) {
-		gui_state = GuiState::GdxsvReplay;
-	} else {
-		// Replay from command-line, resume game when end replaying
-		emu.start();
-	}
-}
-
-auto textCentered = [](const std::string& text) {
+void textCentered(const std::string& text) {
 	auto windowWidth = ImGui::GetWindowSize().x;
 	auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
 	ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
@@ -159,7 +118,7 @@ auto textCentered = [](const std::string& text) {
 };
 
 void gdxsv_replay_draw_forces(const bool is_renpo, const std::vector<int>& force_index, int& user_index,
-							  const std::vector<proto::BattleLogUser>& users) {
+									 const std::vector<proto::BattleLogUser>& users) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f * scaling);
 
 	if (is_renpo) {
@@ -208,8 +167,8 @@ void gdxsv_replay_draw_players(const std::vector<proto::BattleLogUser>& users) {
 }
 
 void gdxsv_replay_draw_info(const std::string& battle_code, const std::string& game_disk, const int& users_size,
-							const std::string& close_reason, const time_t& start_time, const time_t& end_time,
-							const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
+								   const std::string& close_reason, const time_t& start_time, const time_t& end_time,
+								   const std::vector<proto::BattleLogUser>& users, const std::string& replay_dst) {
 	const bool playable = "dc" + std::to_string(gdxsv.Disk()) == game_disk;
 
 	ImGui::Text("BattleCode: %s", battle_code.c_str());
@@ -268,7 +227,7 @@ void gdxsv_replay_local_tab() {
 				if (name == ".") continue;
 				std::string extension = get_file_extension(name);
 				if (extension == "pb") {
-					struct stat result;
+					struct stat result {};
 					if (flycast::stat((replay_dir + "/" + name).c_str(), &result) == 0) {
 						files.emplace_back(name, result.st_mtime);
 					}
@@ -284,7 +243,7 @@ void gdxsv_replay_local_tab() {
 		read_dir = false;
 	}
 
-	struct stat st;
+	struct stat st {};
 	if (flycast::stat(replay_dir.c_str(), &st) == 0) {
 		ImGui::SameLine();
 #if defined(__APPLE__) && TARGET_OS_OSX
@@ -295,7 +254,7 @@ void gdxsv_replay_local_tab() {
 		}
 #elif defined(_WIN32) && !defined(TARGET_UWP)
 		if (ImGui::Button("Open folder")) {
-			SHELLEXECUTEINFOA sei = {0};
+			SHELLEXECUTEINFOA sei{};
 			sei.cbSize = sizeof(sei);
 			sei.fMask = SEE_MASK_NOCLOSEPROCESS;
 			sei.lpFile = "Explorer.exe";
@@ -370,7 +329,7 @@ void gdxsv_replay_local_tab() {
 	ImGui::EndChild();
 }
 
-void HandleReplayJSON(const std::string& json_string, std::vector<ReplayEntry>& out) {
+void parse_replay_json(const std::vector<u8>& json_string, std::vector<ReplayEntry>& out) {
 	try {
 		nlohmann::json j = nlohmann::json::parse(json_string);
 
@@ -401,7 +360,7 @@ void HandleReplayJSON(const std::string& json_string, std::vector<ReplayEntry>& 
 	}
 }
 
-void HandleUserJSON(const std::string& json_string, std::vector<UserEntry>& out) {
+void parse_user_json(const std::vector<u8>& json_string, std::vector<UserEntry>& out) {
 	try {
 		nlohmann::json j = nlohmann::json::parse(json_string);
 
@@ -432,11 +391,11 @@ void HandleUserJSON(const std::string& json_string, std::vector<UserEntry>& out)
 }
 
 template <typename T>
-static bool future_is_ready(const T& future) {
+bool future_is_ready(const T& future) {
 	return future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
 }
 
-void FetchReplayJSON() {
+void fetch_replay_json() {
 	if (fetch_replay_entry_future_.valid()) {
 		return;
 	}
@@ -483,14 +442,14 @@ void FetchReplayJSON() {
 			return entries;
 		}
 
-		HandleReplayJSON(std::string(dl.begin(), dl.end()), entries);
+		parse_replay_json(dl, entries);
 		return entries;
 	};
 
 	fetch_replay_entry_future_ = std::async(std::launch::async, future_fn).share();
 }
 
-void FetchUserJSON() {
+void fetch_user_json() {
 	if (fetch_user_entry_future_.valid()) {
 		return;
 	}
@@ -519,15 +478,14 @@ void FetchUserJSON() {
 			return entries;
 		}
 
-		HandleUserJSON(std::string(dl.begin(), dl.end()), entries);
+		parse_user_json(dl, entries);
 		return entries;
 	};
 
 	fetch_user_entry_future_ = std::async(std::launch::async, future_fn).share();
 }
 
-static char page_buf[4] = "1";
-void FetchNewResults(bool reset_page = true) {
+void fetch_new_results(bool reset_page = true) {
 	if (reset_page) {
 		entry_paging = 0;
 		snprintf(page_buf, sizeof(page_buf), "%d", 1);
@@ -536,10 +494,10 @@ void FetchNewResults(bool reset_page = true) {
 	fetch_replay_entry_future_ = std::shared_future<std::vector<ReplayEntry>>();
 }
 
-void FetchTargetPage() { FetchNewResults(false); }
+void fetch_target_page() { fetch_new_results(false); }
 
 template <typename Callable>
-void draw_filter_label(const std::string& label, const std::string& value, Callable DidClickButton) {
+void draw_filter_label(const std::string& label, const std::string& value, Callable on_click) {
 	static char filter_user_id_buf[100] = {0};
 	snprintf(filter_user_id_buf, sizeof(filter_user_id_buf), u8"%s = %s  ×", label.c_str(), value.c_str());
 
@@ -548,14 +506,14 @@ void draw_filter_label(const std::string& label, const std::string& value, Calla
 	if (ImGui::Button(
 			filter_user_id_buf,
 			ImVec2(ImGui::CalcTextSize(filter_user_id_buf, NULL, true).x + ImGui::GetStyle().FramePadding.x * 2 - 5.0f * scaling, 0))) {
-		DidClickButton();
-		FetchNewResults();
+		on_click();
+		fetch_new_results();
 	}
 	ImGui::GetStyle().FrameRounding = 0.0f;
 };
 
 void draw_filter_label_string(const std::string& label, std::string& value) {
-	if (value != "") {
+	if (!value.empty()) {
 		draw_filter_label(label, value, [&value]() { value = ""; });
 	}
 };
@@ -624,7 +582,7 @@ void gdxsv_replay_server_tab() {
 			case 0:	 // User ID
 			{
 				if (!fetch_user_entry_future_.valid()) {
-					FetchUserJSON();
+					fetch_user_json();
 				}
 				static char user_id_buf[7] = {0};
 				{
@@ -649,13 +607,13 @@ void gdxsv_replay_server_tab() {
 									 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter,
 									 TextFilters::UppercaseAlpha)) {
 					search_user_id = std::string(user_id_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_user_id = std::string(user_id_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				break;
@@ -668,13 +626,13 @@ void gdxsv_replay_server_tab() {
 									 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter,
 									 TextFilters::FullWidthAlphaNum)) {
 					search_user_name = std::string(user_name_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_user_name = std::string(user_name_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				break;
@@ -687,13 +645,13 @@ void gdxsv_replay_server_tab() {
 									 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter,
 									 TextFilters::FullWidthAlphaNum)) {
 					search_pilot_name = std::string(pilot_name_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_pilot_name = std::string(pilot_name_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				break;
@@ -734,7 +692,7 @@ void gdxsv_replay_server_tab() {
 						if (ImGui::Selectable(lobby_data[i][language].c_str(), is_selected)) {
 							lobby_selected = i;
 							search_lobby_id = lobby_data[i][3];
-							FetchNewResults();
+							fetch_new_results();
 						}
 						if (is_selected) ImGui::SetItemDefaultFocus();
 					}
@@ -753,7 +711,7 @@ void gdxsv_replay_server_tab() {
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_no_of_players = no_of_players_input;
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				break;
@@ -766,13 +724,13 @@ void gdxsv_replay_server_tab() {
 									 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter,
 									 TextFilters::FilterNumber)) {
 					search_battle_code = std::string(battle_code_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_battle_code = std::string(battle_code_buf);
-					FetchNewResults();
+					fetch_new_results();
 				}
 
 				break;
@@ -782,12 +740,12 @@ void gdxsv_replay_server_tab() {
 				ImGui::SameLine();
 				if (ImGui::Button("Yes")) {
 					search_ranking = 1;
-					FetchNewResults();
+					fetch_new_results();
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("No")) {
 					search_ranking = 0;
-					FetchNewResults();
+					fetch_new_results();
 				}
 				break;
 			}
@@ -796,12 +754,12 @@ void gdxsv_replay_server_tab() {
 				ImGui::SameLine();
 				if (ImGui::Button("MUJI")) {
 					search_disk = "dc1";
-					FetchNewResults();
+					fetch_new_results();
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("DX")) {
 					search_disk = "dc2";
-					FetchNewResults();
+					fetch_new_results();
 				}
 				break;
 			}
@@ -810,7 +768,7 @@ void gdxsv_replay_server_tab() {
 				ImGui::SameLine();
 				if (ImGui::Button("Add Filter")) {
 					search_reverse = true;
-					FetchNewResults();
+					fetch_new_results();
 				}
 				break;
 			}
@@ -837,7 +795,7 @@ void gdxsv_replay_server_tab() {
 						  ImGuiWindowFlags_DragScrolling);
 		{
 			if (!fetch_replay_entry_future_.valid()) {
-				FetchReplayJSON();
+				fetch_replay_json();
 			} else if (!future_is_ready(fetch_replay_entry_future_)) {
 				ImGui::Text("Loading...");
 			} else {
@@ -909,7 +867,7 @@ void gdxsv_replay_server_tab() {
 					if (ImGui::Button("Prev Page") && !scope.isDisabled()) {
 						entry_paging--;
 						snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-						FetchTargetPage();
+						fetch_target_page();
 					}
 				}
 				{
@@ -918,7 +876,7 @@ void gdxsv_replay_server_tab() {
 					if (ImGui::Button("Next Page")) {
 						entry_paging++;
 						snprintf(page_buf, sizeof(page_buf), "%d", entry_paging + 1);
-						FetchTargetPage();
+						fetch_target_page();
 					}
 
 					ImGui::SameLine();
@@ -928,7 +886,7 @@ void gdxsv_replay_server_tab() {
 										 TextFilters::FilterNumber)) {
 						entry_paging = atoi(page_buf) - 1;
 						if (entry_paging < 0) entry_paging = 0;
-						FetchTargetPage();
+						fetch_target_page();
 					}
 				}
 			}
@@ -952,6 +910,48 @@ void gdxsv_replay_server_tab() {
 	scrollWhenDraggingOnVoid();
 	windowDragScroll();
 	ImGui::EndChild();
+}
+
+}  // namespace
+
+void gdxsv_start_replay(const std::string& replay_file, int pov) {
+	if (gdxsv.IsSaveStateAllowed()) {
+		dc_savestate(90);
+	}
+
+	bool ok = true;
+	auto savestate_path = hostfs::getSavestatePath(99, false);
+	if (!file_exists(savestate_path)) {
+		ok = false;
+		if (download_replay_savestate(2, savestate_path)) {
+			ok = true;
+		}
+	}
+
+	if (ok) {
+		dc_loadstate(99);
+		if (gdxsv.StartReplayFile(replay_file.c_str(), pov)) {
+			gui_state = GuiState::Closed;
+		} else {
+			dc_loadstate(90);
+			broken_replay_path = replay_file;
+		}
+	}
+}
+
+void gdxsv_end_replay() {
+	dc_loadstate(90);
+	settings.input.fastForwardMode = false;
+
+	emu.start();
+	emu.render();
+	emu.stop();
+	if (!selected_replay_file.empty() || selected_replay_entry_index != -1) {
+		gui_state = GuiState::GdxsvReplay;
+	} else {
+		// Replay from command-line, resume game when end replaying
+		emu.start();
+	}
 }
 
 void gdxsv_replay_select_dialog() {
