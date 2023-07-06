@@ -33,7 +33,7 @@ class GdxsvBackendRollback {
 	u32 OnSockWrite(u32 addr, u32 size);
 	u32 OnSockRead(u32 addr, u32 size);
 	u32 OnSockPoll();
-	bool SetCloseReason(const char* reason);
+	bool SetCloseReason(const char *reason);
 	void SaveReplay();
 	proto::P2PMatchingReport &GetReport() { return report_; }
 	void ClearReport() { report_.Clear(); }

@@ -2,12 +2,12 @@
 
 #include <sstream>
 
+#include "cfg/option.h"
 #include "gdx_rpc.h"
 #include "gdxsv.h"
 #include "gdxsv_replay_util.h"
 #include "input/gamepad_device.h"
 #include "libs.h"
-#include "cfg/option.h"
 
 void GdxsvBackendReplay::Reset() {
 	RestorePatch();
@@ -73,13 +73,13 @@ bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
 		NOTICE_LOG(COMMON, "ParseFromArray failed");
 		return false;
 	}
-	
+
 	if (log_file_.users_size() <= pov) {
 		return false;
 	}
 
 	me_ = pov;
-	
+
 	return Start();
 }
 
@@ -167,12 +167,12 @@ bool GdxsvBackendReplay::Start() {
 		// proto2 required fields was moved to UnknownFields
 		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
 			auto data = log_file_.mutable_battle_data(i);
-			const auto& fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
+			const auto &fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
 			if (!fields.empty()) {
 				for (int j = 0; j < fields.field_count(); ++j) {
-					const auto& field = fields.field(j);
+					const auto &field = fields.field(j);
 					if (j == 0 && field.type() == google::protobuf::UnknownField::TYPE_LENGTH_DELIMITED) {
-						const auto& body = field.length_delimited();
+						const auto &body = field.length_delimited();
 						data->set_body(body.data(), body.size());
 					}
 					if (j == 1 && field.type() == google::protobuf::UnknownField::TYPE_VARINT) {
@@ -187,7 +187,7 @@ bool GdxsvBackendReplay::Start() {
 		McsMessageReader r;
 		McsMessage msg;
 		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-			const auto& data = log_file_.battle_data(i);
+			const auto &data = log_file_.battle_data(i);
 			if (player_position.find(data.user_id()) == player_position.end()) {
 				r.Write(data.body().data(), data.body().size());
 				while (r.Read(msg)) {
@@ -212,7 +212,7 @@ bool GdxsvBackendReplay::Start() {
 		}
 
 		std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
-			[](const proto::BattleLogUser& a, const proto::BattleLogUser& b) { return a.pos() < b.pos(); });
+				  [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
 	}
 
 	if (log_file_.inputs_size() == 0 && log_file_.battle_data_size() != 0) {
@@ -363,17 +363,20 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 		if (msg.command == LbsMessage::lbsAskPlayerInfo) {
 			int pos = msg.Read8();
 			auto user = log_file_.users(pos - 1);
-			
+
 			if (config::GdxReplayHideName) {
 				user.set_user_id("USER0" + std::to_string(pos));
 				user.set_user_name_sjis("USER0" + std::to_string(pos));
 				auto game_param = user.game_param();
-				user.set_game_param(game_param.replace(16, 17, "\x82\x6F\x82\x68\x82\x6B\x82\x6E\x82\x73\x82\x4F\x82" + std::string(1,static_cast<char>(0x4F + pos)) + "\x01\x01\x07")); // ＰＩＬＯＴ０１~０４
+				user.set_game_param(game_param.replace(16, 17,
+													   "\x82\x6F\x82\x68\x82\x6B\x82\x6E\x82\x73\x82\x4F\x82" +
+														   std::string(1, static_cast<char>(0x4F + pos)) +
+														   "\x01\x01\x07"));  // ＰＩＬＯＴ０１~０４
 				user.set_battle_count(0);
 				user.set_win_count(0);
 				user.set_lose_count(0);
 			}
-			
+
 			LbsMessage::SvAnswer(msg)
 				.Write8(pos)
 				->WriteString(user.user_id())

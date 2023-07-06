@@ -14,6 +14,7 @@
 
 #if defined(_WIN32)
 #include <Windows.h>
+
 #include <nowide/stackstring.hpp>
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 #include <libproc.h>
