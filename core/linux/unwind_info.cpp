@@ -24,8 +24,15 @@
 
 extern "C"
 {
+#if HOST_CPU != CPU_ARM
 	void __register_frame(const void*);
 	void __deregister_frame(const void*);
+#else
+	void __register_frame(const void *) {
+	}
+	void __deregister_frame(const void *) {
+	}
+#endif
 }
 
 #if HOST_CPU == CPU_X64
@@ -77,9 +84,20 @@ inline static int registerId(int armId) {
 constexpr int dwarfRegRAId = 30;
 constexpr int dwarfRegSP = 31;
 
+#elif HOST_CPU == CPU_ARM
+
+inline static int registerId(int armId) {
+	return armId;
+}
+constexpr int dwarfRegRAId = 14;
+constexpr int dwarfRegSP = 13;
+
 #endif
 
-#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || (HOST_CPU == CPU_ARM && defined(__ANDROID__))
+
+#include <cstring>
+#include <vector>
 
 using ByteStream = std::vector<u8>;
 
@@ -302,7 +320,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 		unwindfuncaddr[1] = (ptrdiff_t)(endAddr - startAddr);
 
 // Android NDK 23 switched to using clang's unwind instead of gcc
-#if defined(__llvm__) && (!defined(__NDK_MAJOR__) || __NDK_MAJOR__ >= 23)
+#if defined(__llvm__) && (!defined(__NDK_MAJOR__) || __NDK_MAJOR__ >= 23 || HOST_CPU == CPU_ARM)
 		// With clang __register_frame takes a single FDE as an argument
 		u8 *entry = unwindInfoDest;
 		while (true)
@@ -320,7 +338,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 				u64 offset = *((u64 *)(entry + 12));
 				if (offset != 0)
 				{
-					__register_frame(entry);
+					registerFrame(entry);
 					registeredFrames.push_back(entry);
 				}
 				entry += length64 + 12;
@@ -330,7 +348,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 				u32 offset = *((u32 *)(entry + 4));
 				if (offset != 0)
 				{
-					__register_frame(entry);
+					registerFrame(entry);
 					registeredFrames.push_back(entry);
 				}
 				entry += length + 4;
@@ -338,7 +356,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 		}
 #else
 		// With gcc it takes a pointer to the entire .eh_frame
-		__register_frame(unwindInfoDest);
+		registerFrame(unwindInfoDest);
 		registeredFrames.push_back(unwindInfoDest);
 #endif
 	}
@@ -351,8 +369,27 @@ void UnwindInfo::clear()
 {
 	DEBUG_LOG(DYNAREC, "UnwindInfo::clear");
 	for (u8 *frame : registeredFrames)
-		__deregister_frame(frame);
+		deregisterFrame(frame);
 	registeredFrames.clear();
 }
+
+void UnwindInfo::registerFrame(void *frame)
+{
+	__register_frame(frame);
+}
+
+void UnwindInfo::deregisterFrame(void *frame)
+{
+	__deregister_frame(frame);
+}
+
+#if HOST_CPU == CPU_ARM
+#include "rec-ARM/arm_unwind.h"
+
+bool flycastFindDynarecFDE(uintptr_t targetAddr, uintptr_t &fde)
+{
+	return ArmUnwindInfo::findFDE(targetAddr, fde);
+}
+#endif
 
 #endif

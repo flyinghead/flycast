@@ -36,6 +36,8 @@ enum DreamcastKey
 	DC_DPAD2_LEFT      = 1 << 14,
 	DC_DPAD2_RIGHT     = 1 << 15,
 	DC_BTN_RELOAD      = 1 << 16,	// Not a real button but handled like one
+	DC_BTN_INSERT_CARD = 1 << 17,   // Not a real button but handled like one
+	DC_BTN_BITMAPPED_LAST = DC_BTN_INSERT_CARD,
 
 	// System buttons
 	EMU_BTN_NONE			= 0,
@@ -46,12 +48,15 @@ enum DreamcastKey
 	EMU_BTN_MENU,
 	EMU_BTN_FFORWARD,
 	EMU_BTN_ESCAPE,
-	EMU_BTN_INSERT_CARD,
+	EMU_BTN_LOADSTATE,
+	EMU_BTN_SAVESTATE,
 
 	// Real axes
 	DC_AXIS_TRIGGERS	= 0x1000000,
 	DC_AXIS_LT,
 	DC_AXIS_RT,
+	DC_AXIS_LT2,
+	DC_AXIS_RT2,
 	DC_AXIS_STICKS		= 0x2000000,
 	DC_AXIS_LEFT,
 	DC_AXIS_RIGHT,
@@ -61,6 +66,10 @@ enum DreamcastKey
 	DC_AXIS2_RIGHT,
 	DC_AXIS2_UP,
 	DC_AXIS2_DOWN,
+	DC_AXIS3_LEFT,
+	DC_AXIS3_RIGHT,
+	DC_AXIS3_UP,
+	DC_AXIS3_DOWN,
 
 	// System axes
 	EMU_AXIS_NONE        = 0,

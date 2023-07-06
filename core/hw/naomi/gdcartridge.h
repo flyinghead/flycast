@@ -36,6 +36,10 @@ public:
 
 	void SetGDRomName(const char *name, const char *parentName) { this->gdrom_name = name; this->gdrom_parent_name = parentName; }
 
+protected:
+	u8 *dimm_data = nullptr;
+	u32 dimm_data_size = 0;
+
 private:
 	enum { FILENAME_LENGTH=24 };
 
@@ -43,9 +47,6 @@ private:
 	const char *gdrom_parent_name = nullptr;
 
 	u32 dimm_cur_address = 0;
-
-	u8 *dimm_data = nullptr;
-	u32 dimm_data_size = 0;
 
 	static const u32 DES_LEFTSWAP[];
 	static const u32 DES_RIGHTSWAP[];

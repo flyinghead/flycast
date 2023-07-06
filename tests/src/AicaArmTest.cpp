@@ -1,12 +1,10 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/arm7/arm7.h"
 #include "hw/aica/aica_if.h"
 #include "hw/arm7/arm7_rec.h"
 #include "emulator.h"
-
-extern bool Arm7Enabled;
 
 static const u32 N_FLAG = 1 << 31;
 static const u32 Z_FLAG = 1 << 30;
@@ -15,15 +13,16 @@ static const u32 V_FLAG = 1 << 28;
 static const u32 NZCV_MASK = N_FLAG | Z_FLAG | C_FLAG | V_FLAG;
 
 
-namespace aicaarm::recompiler {
+namespace aica::arm::recompiler {
 
 extern void (*EntryPoints[])();
 
 class AicaArmTest : public ::testing::Test {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
 		Arm7Enabled = true;
@@ -1036,7 +1035,7 @@ TEST_F(AicaArmTest, RegAllocTest)
 			0xe0855006,	// add r5, r5, r6
 			0xe0866000,	// add r6, r6, r0
 	};
-	PrepareOps(ARRAY_SIZE(ops), ops);
+	PrepareOps(std::size(ops), ops);
 	for (int i = 0; i < 15; i++)
 		arm_Reg[i].I = 0;
 
@@ -1057,7 +1056,7 @@ TEST_F(AicaArmTest, ConditionRegAllocTest)
 			0x03a0004d,	// moveq r0, #77
 			0xe1a01000	// mov r1, r0
 	};
-	PrepareOps(ARRAY_SIZE(ops1), ops1);
+	PrepareOps(std::size(ops1), ops1);
 	arm_Reg[0].I = 22;
 	arm_Reg[1].I = 22;
 	ResetNZCV();
@@ -1071,7 +1070,7 @@ TEST_F(AicaArmTest, ConditionRegAllocTest)
 			0x01a01000,	// moveq r1, r0
 			0xe1a02000	// mov r2, r0
 	};
-	PrepareOps(ARRAY_SIZE(ops2), ops2);
+	PrepareOps(std::size(ops2), ops2);
 	arm_Reg[0].I = 22;
 	arm_Reg[1].I = 0;
 	arm_Reg[2].I = 0;

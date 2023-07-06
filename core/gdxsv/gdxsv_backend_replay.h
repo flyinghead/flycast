@@ -21,7 +21,7 @@ class GdxsvBackendReplay {
 	void Reset();
 	void OnMainUiLoop();
 	bool StartFile(const char *path, int pov);
-	bool StartBuffer(const char *buf, int size);
+	bool StartBuffer(const std::vector<u8> &buf, int pov);
 	bool isReplaying();
 	void Open();
 	void Close(bool by_user = false);
@@ -40,6 +40,7 @@ class GdxsvBackendReplay {
 	State state_;
 	LbsMessageReader lbs_tx_reader_;
 	proto::BattleLogFile log_file_;
+	std::vector<int> start_msg_index_;
 	std::deque<u8> recv_buf_;
 	int recv_delay_;
 	int me_;

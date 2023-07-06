@@ -3,13 +3,9 @@
 #include "types.h"
 
 #ifndef __ANDROID__
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
-#ifdef __linux__
-	raise(SIGTRAP);
-#elif defined(_WIN32)
-	__debugbreak();
-#endif
+	std::abort();
 }
 
 #ifdef _WIN32
@@ -37,27 +33,14 @@ void os_DoEvents()
 void os_CreateWindow()
 {
 }
+
+void os_RunInstance(int argc, const char *argv[])
+{
+}
 #endif
 
 void os_LaunchFromURL(const std::string& url)
 {
-}
-
-std::string os_FetchStringFromURL(const std::string& url)
-{
-    std::string empty;
-    return empty;
-}
-struct UploadField {
-	std::string field_name;
-	std::string file_path;
-	std::string content_type;
-	std::string field_value;
-};
-int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
-{
-	//Not implemented
-	return 501;
 }
 
 std::string os_GetMachineID()

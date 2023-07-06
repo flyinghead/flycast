@@ -194,6 +194,29 @@ extern "C" {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_AR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_AR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_AR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_AR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_AR NULL
+#define OPTION_VAL_100_AR "100%"
+#define OPTION_VAL_110_AR NULL
+#define OPTION_VAL_120_AR NULL
+#define OPTION_VAL_130_AR NULL
+#define OPTION_VAL_140_AR NULL
+#define OPTION_VAL_150_AR NULL
+#define OPTION_VAL_160_AR NULL
+#define OPTION_VAL_170_AR NULL
+#define OPTION_VAL_180_AR NULL
+#define OPTION_VAL_190_AR NULL
+#define OPTION_VAL_200_AR NULL
+#define OPTION_VAL_210_AR NULL
+#define OPTION_VAL_220_AR NULL
+#define OPTION_VAL_230_AR NULL
+#define OPTION_VAL_240_AR NULL
+#define OPTION_VAL_250_AR NULL
+#define OPTION_VAL_260_AR NULL
+#define OPTION_VAL_270_AR NULL
+#define OPTION_VAL_280_AR NULL
+#define OPTION_VAL_290_AR NULL
+#define OPTION_VAL_300_AR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_AR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_AR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_AR NULL
@@ -225,6 +248,9 @@ extern "C" {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_AR NULL
 #define OPTION_VAL_VMU_A1_AR NULL
 #define OPTION_VAL_ALL_VMUS_AR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_AR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_AR NULL
@@ -272,7 +298,7 @@ extern "C" {
 #define OPTION_VAL_70_AR NULL
 #define OPTION_VAL_80_AR NULL
 #define OPTION_VAL_90_AR NULL
-#define OPTION_VAL_100_AR NULL
+#define OPTION_VAL_100_O57_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AR NULL
@@ -340,7 +366,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "Default", OPTION_VAL_DEFAULT_AR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -359,7 +385,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "Default",  OPTION_VAL_DEFAULT_AR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -913,6 +939,39 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_AR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_AR },
+         { "110", OPTION_VAL_110_AR },
+         { "120", OPTION_VAL_120_AR },
+         { "130", OPTION_VAL_130_AR },
+         { "140", OPTION_VAL_140_AR },
+         { "150", OPTION_VAL_150_AR },
+         { "160", OPTION_VAL_160_AR },
+         { "170", OPTION_VAL_170_AR },
+         { "180", OPTION_VAL_180_AR },
+         { "190", OPTION_VAL_190_AR },
+         { "200", OPTION_VAL_200_AR },
+         { "210", OPTION_VAL_210_AR },
+         { "220", OPTION_VAL_220_AR },
+         { "230", OPTION_VAL_230_AR },
+         { "240", OPTION_VAL_240_AR },
+         { "250", OPTION_VAL_250_AR },
+         { "260", OPTION_VAL_260_AR },
+         { "270", OPTION_VAL_270_AR },
+         { "280", OPTION_VAL_280_AR },
+         { "290", OPTION_VAL_290_AR },
+         { "300", OPTION_VAL_300_AR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_AR,
       NULL,
@@ -1118,6 +1177,19 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_AR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_AR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AR,
@@ -1277,7 +1349,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_AR },
+         { "100%", OPTION_VAL_100_O57_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1428,7 +1500,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_AR },
+         { "100%", OPTION_VAL_100_O57_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1579,7 +1651,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_AR },
+         { "100%", OPTION_VAL_100_O57_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1730,7 +1802,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_AR },
+         { "100%", OPTION_VAL_100_O57_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1881,6 +1953,29 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_AST NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_AST NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_AST "Aumenta la velocidá de carga de los GD-ROMs."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_AST NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_AST NULL
+#define OPTION_VAL_100_AST "100%"
+#define OPTION_VAL_110_AST NULL
+#define OPTION_VAL_120_AST NULL
+#define OPTION_VAL_130_AST NULL
+#define OPTION_VAL_140_AST NULL
+#define OPTION_VAL_150_AST NULL
+#define OPTION_VAL_160_AST NULL
+#define OPTION_VAL_170_AST NULL
+#define OPTION_VAL_180_AST NULL
+#define OPTION_VAL_190_AST NULL
+#define OPTION_VAL_200_AST NULL
+#define OPTION_VAL_210_AST NULL
+#define OPTION_VAL_220_AST NULL
+#define OPTION_VAL_230_AST NULL
+#define OPTION_VAL_240_AST NULL
+#define OPTION_VAL_250_AST NULL
+#define OPTION_VAL_260_AST NULL
+#define OPTION_VAL_270_AST NULL
+#define OPTION_VAL_280_AST NULL
+#define OPTION_VAL_290_AST NULL
+#define OPTION_VAL_300_AST NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_AST NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_AST NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_AST NULL
@@ -1912,6 +2007,9 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_AST NULL
 #define OPTION_VAL_VMU_A1_AST NULL
 #define OPTION_VAL_ALL_VMUS_AST "Toles VMUs"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_AST NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_AST NULL
@@ -1959,7 +2057,7 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_70_AST NULL
 #define OPTION_VAL_80_AST NULL
 #define OPTION_VAL_90_AST NULL
-#define OPTION_VAL_100_AST NULL
+#define OPTION_VAL_100_O57_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AST NULL
@@ -2027,7 +2125,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "Default", OPTION_VAL_DEFAULT_AST },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -2046,7 +2144,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "Default",  OPTION_VAL_DEFAULT_AST },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -2600,6 +2698,39 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_AST,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_AST },
+         { "110", OPTION_VAL_110_AST },
+         { "120", OPTION_VAL_120_AST },
+         { "130", OPTION_VAL_130_AST },
+         { "140", OPTION_VAL_140_AST },
+         { "150", OPTION_VAL_150_AST },
+         { "160", OPTION_VAL_160_AST },
+         { "170", OPTION_VAL_170_AST },
+         { "180", OPTION_VAL_180_AST },
+         { "190", OPTION_VAL_190_AST },
+         { "200", OPTION_VAL_200_AST },
+         { "210", OPTION_VAL_210_AST },
+         { "220", OPTION_VAL_220_AST },
+         { "230", OPTION_VAL_230_AST },
+         { "240", OPTION_VAL_240_AST },
+         { "250", OPTION_VAL_250_AST },
+         { "260", OPTION_VAL_260_AST },
+         { "270", OPTION_VAL_270_AST },
+         { "280", OPTION_VAL_280_AST },
+         { "290", OPTION_VAL_290_AST },
+         { "300", OPTION_VAL_300_AST },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_AST,
       NULL,
@@ -2805,6 +2936,19 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_AST,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AST,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AST,
@@ -2964,7 +3108,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_AST },
+         { "100%", OPTION_VAL_100_O57_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3115,7 +3259,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_AST },
+         { "100%", OPTION_VAL_100_O57_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3266,7 +3410,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_AST },
+         { "100%", OPTION_VAL_100_O57_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3417,7 +3561,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_AST },
+         { "100%", OPTION_VAL_100_O57_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3433,22 +3577,22 @@ struct retro_core_options_v2 options_ast = {
 
 #define CATEGORY_SYSTEM_LABEL_BE NULL
 #define CATEGORY_SYSTEM_INFO_0_BE NULL
-#define CATEGORY_VIDEO_LABEL_BE NULL
+#define CATEGORY_VIDEO_LABEL_BE "Відэа"
 #define CATEGORY_VIDEO_INFO_0_BE NULL
 #define CATEGORY_PERFORMANCE_LABEL_BE NULL
 #define CATEGORY_PERFORMANCE_INFO_0_BE NULL
 #define CATEGORY_HACKS_LABEL_BE NULL
 #define CATEGORY_HACKS_INFO_0_BE NULL
-#define CATEGORY_INPUT_LABEL_BE NULL
+#define CATEGORY_INPUT_LABEL_BE "Увод"
 #define CATEGORY_INPUT_INFO_0_BE NULL
 #define CATEGORY_VMU_LABEL_BE NULL
 #define CATEGORY_VMU_INFO_0_BE NULL
-#define CORE_OPTION_NAME_REGION_LABEL_BE NULL
+#define CORE_OPTION_NAME_REGION_LABEL_BE "Рэгіён"
 #define OPTION_VAL_JAPAN_BE NULL
 #define OPTION_VAL_USA_BE NULL
 #define OPTION_VAL_EUROPE_BE NULL
 #define OPTION_VAL_DEFAULT_BE NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_BE NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_BE "Мова"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_BE NULL
 #define OPTION_VAL_JAPANESE_BE NULL
 #define OPTION_VAL_ENGLISH_BE NULL
@@ -3511,7 +3655,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_PAL_BE NULL
 #define OPTION_VAL_PAL_N_BE NULL
 #define OPTION_VAL_PAL_M_BE NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE "Арыентацыя экрана"
 #define OPTION_VAL_HORIZONTAL_BE NULL
 #define OPTION_VAL_VERTICAL_BE NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_BE NULL
@@ -3568,6 +3712,29 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_BE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_BE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_BE NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_BE NULL
+#define OPTION_VAL_100_BE "100%"
+#define OPTION_VAL_110_BE NULL
+#define OPTION_VAL_120_BE NULL
+#define OPTION_VAL_130_BE NULL
+#define OPTION_VAL_140_BE NULL
+#define OPTION_VAL_150_BE NULL
+#define OPTION_VAL_160_BE NULL
+#define OPTION_VAL_170_BE NULL
+#define OPTION_VAL_180_BE NULL
+#define OPTION_VAL_190_BE NULL
+#define OPTION_VAL_200_BE NULL
+#define OPTION_VAL_210_BE NULL
+#define OPTION_VAL_220_BE NULL
+#define OPTION_VAL_230_BE NULL
+#define OPTION_VAL_240_BE NULL
+#define OPTION_VAL_250_BE NULL
+#define OPTION_VAL_260_BE NULL
+#define OPTION_VAL_270_BE NULL
+#define OPTION_VAL_280_BE NULL
+#define OPTION_VAL_290_BE NULL
+#define OPTION_VAL_300_BE NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE NULL
@@ -3588,9 +3755,9 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE NULL
 #define OPTION_VAL_WHITE_BE NULL
-#define OPTION_VAL_RED_BE NULL
-#define OPTION_VAL_GREEN_BE NULL
-#define OPTION_VAL_BLUE_BE NULL
+#define OPTION_VAL_RED_BE "Чырвоная"
+#define OPTION_VAL_GREEN_BE "Зялёная"
+#define OPTION_VAL_BLUE_BE "Блакітная"
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_BE NULL
@@ -3599,6 +3766,9 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE NULL
 #define OPTION_VAL_VMU_A1_BE NULL
 #define OPTION_VAL_ALL_VMUS_BE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_BE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_BE NULL
@@ -3624,7 +3794,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_LIGHT_CYAN_10_BE NULL
 #define OPTION_VAL_PURPLE_12_BE NULL
 #define OPTION_VAL_LIGHT_PURPLE_13_BE NULL
-#define OPTION_VAL_YELLOW_14_BE NULL
+#define OPTION_VAL_YELLOW_14_BE "Жоўтая"
 #define OPTION_VAL_GRAY_15_BE NULL
 #define OPTION_VAL_LIGHT_PURPLE_2_16_BE NULL
 #define OPTION_VAL_LIGHT_GREEN_2_17_BE NULL
@@ -3646,7 +3816,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_70_BE NULL
 #define OPTION_VAL_80_BE NULL
 #define OPTION_VAL_90_BE NULL
-#define OPTION_VAL_100_BE NULL
+#define OPTION_VAL_100_O57_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
@@ -3714,7 +3884,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "Default", OPTION_VAL_DEFAULT_BE },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -3733,7 +3903,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "Default",  OPTION_VAL_DEFAULT_BE },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -4287,6 +4457,39 @@ struct retro_core_option_v2_definition option_defs_be[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_BE },
+         { "110", OPTION_VAL_110_BE },
+         { "120", OPTION_VAL_120_BE },
+         { "130", OPTION_VAL_130_BE },
+         { "140", OPTION_VAL_140_BE },
+         { "150", OPTION_VAL_150_BE },
+         { "160", OPTION_VAL_160_BE },
+         { "170", OPTION_VAL_170_BE },
+         { "180", OPTION_VAL_180_BE },
+         { "190", OPTION_VAL_190_BE },
+         { "200", OPTION_VAL_200_BE },
+         { "210", OPTION_VAL_210_BE },
+         { "220", OPTION_VAL_220_BE },
+         { "230", OPTION_VAL_230_BE },
+         { "240", OPTION_VAL_240_BE },
+         { "250", OPTION_VAL_250_BE },
+         { "260", OPTION_VAL_260_BE },
+         { "270", OPTION_VAL_270_BE },
+         { "280", OPTION_VAL_280_BE },
+         { "290", OPTION_VAL_290_BE },
+         { "300", OPTION_VAL_300_BE },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE,
       NULL,
@@ -4492,6 +4695,19 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_BE,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BE,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_BE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BE,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BE,
@@ -4651,7 +4867,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_BE },
+         { "100%", OPTION_VAL_100_O57_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -4802,7 +5018,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_BE },
+         { "100%", OPTION_VAL_100_O57_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -4953,7 +5169,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_BE },
+         { "100%", OPTION_VAL_100_O57_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5104,7 +5320,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_BE },
+         { "100%", OPTION_VAL_100_O57_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5255,6 +5471,29 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_CA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CA NULL
+#define OPTION_VAL_100_CA "100%"
+#define OPTION_VAL_110_CA NULL
+#define OPTION_VAL_120_CA NULL
+#define OPTION_VAL_130_CA NULL
+#define OPTION_VAL_140_CA NULL
+#define OPTION_VAL_150_CA NULL
+#define OPTION_VAL_160_CA NULL
+#define OPTION_VAL_170_CA NULL
+#define OPTION_VAL_180_CA NULL
+#define OPTION_VAL_190_CA NULL
+#define OPTION_VAL_200_CA NULL
+#define OPTION_VAL_210_CA NULL
+#define OPTION_VAL_220_CA NULL
+#define OPTION_VAL_230_CA NULL
+#define OPTION_VAL_240_CA NULL
+#define OPTION_VAL_250_CA NULL
+#define OPTION_VAL_260_CA NULL
+#define OPTION_VAL_270_CA NULL
+#define OPTION_VAL_280_CA NULL
+#define OPTION_VAL_290_CA NULL
+#define OPTION_VAL_300_CA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CA NULL
@@ -5286,6 +5525,9 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CA NULL
 #define OPTION_VAL_VMU_A1_CA NULL
 #define OPTION_VAL_ALL_VMUS_CA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CA NULL
@@ -5333,7 +5575,7 @@ struct retro_core_options_v2 options_be = {
 #define OPTION_VAL_70_CA NULL
 #define OPTION_VAL_80_CA NULL
 #define OPTION_VAL_90_CA NULL
-#define OPTION_VAL_100_CA NULL
+#define OPTION_VAL_100_O57_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CA NULL
@@ -5401,7 +5643,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "Default", OPTION_VAL_DEFAULT_CA },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -5420,7 +5662,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "Default",  OPTION_VAL_DEFAULT_CA },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -5974,6 +6216,39 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_CA,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_CA },
+         { "110", OPTION_VAL_110_CA },
+         { "120", OPTION_VAL_120_CA },
+         { "130", OPTION_VAL_130_CA },
+         { "140", OPTION_VAL_140_CA },
+         { "150", OPTION_VAL_150_CA },
+         { "160", OPTION_VAL_160_CA },
+         { "170", OPTION_VAL_170_CA },
+         { "180", OPTION_VAL_180_CA },
+         { "190", OPTION_VAL_190_CA },
+         { "200", OPTION_VAL_200_CA },
+         { "210", OPTION_VAL_210_CA },
+         { "220", OPTION_VAL_220_CA },
+         { "230", OPTION_VAL_230_CA },
+         { "240", OPTION_VAL_240_CA },
+         { "250", OPTION_VAL_250_CA },
+         { "260", OPTION_VAL_260_CA },
+         { "270", OPTION_VAL_270_CA },
+         { "280", OPTION_VAL_280_CA },
+         { "290", OPTION_VAL_290_CA },
+         { "300", OPTION_VAL_300_CA },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CA,
       NULL,
@@ -6179,6 +6454,19 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CA,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CA,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_CA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CA,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CA,
@@ -6338,7 +6626,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_CA },
+         { "100%", OPTION_VAL_100_O57_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -6489,7 +6777,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_CA },
+         { "100%", OPTION_VAL_100_O57_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -6640,7 +6928,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_CA },
+         { "100%", OPTION_VAL_100_O57_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -6791,7 +7079,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_CA },
+         { "100%", OPTION_VAL_100_O57_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -6942,6 +7230,29 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_CHS NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHS NULL
+#define OPTION_VAL_100_CHS "100%"
+#define OPTION_VAL_110_CHS NULL
+#define OPTION_VAL_120_CHS NULL
+#define OPTION_VAL_130_CHS NULL
+#define OPTION_VAL_140_CHS NULL
+#define OPTION_VAL_150_CHS NULL
+#define OPTION_VAL_160_CHS NULL
+#define OPTION_VAL_170_CHS NULL
+#define OPTION_VAL_180_CHS NULL
+#define OPTION_VAL_190_CHS NULL
+#define OPTION_VAL_200_CHS NULL
+#define OPTION_VAL_210_CHS NULL
+#define OPTION_VAL_220_CHS NULL
+#define OPTION_VAL_230_CHS NULL
+#define OPTION_VAL_240_CHS NULL
+#define OPTION_VAL_250_CHS NULL
+#define OPTION_VAL_260_CHS NULL
+#define OPTION_VAL_270_CHS NULL
+#define OPTION_VAL_280_CHS NULL
+#define OPTION_VAL_290_CHS NULL
+#define OPTION_VAL_300_CHS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHS NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHS NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHS NULL
@@ -6973,6 +7284,9 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHS NULL
 #define OPTION_VAL_VMU_A1_CHS NULL
 #define OPTION_VAL_ALL_VMUS_CHS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHS NULL
@@ -7020,7 +7334,7 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_70_CHS NULL
 #define OPTION_VAL_80_CHS NULL
 #define OPTION_VAL_90_CHS NULL
-#define OPTION_VAL_100_CHS NULL
+#define OPTION_VAL_100_O57_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHS NULL
@@ -7088,7 +7402,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "Default", OPTION_VAL_DEFAULT_CHS },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -7107,7 +7421,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "Default",  OPTION_VAL_DEFAULT_CHS },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -7661,6 +7975,39 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHS,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_CHS },
+         { "110", OPTION_VAL_110_CHS },
+         { "120", OPTION_VAL_120_CHS },
+         { "130", OPTION_VAL_130_CHS },
+         { "140", OPTION_VAL_140_CHS },
+         { "150", OPTION_VAL_150_CHS },
+         { "160", OPTION_VAL_160_CHS },
+         { "170", OPTION_VAL_170_CHS },
+         { "180", OPTION_VAL_180_CHS },
+         { "190", OPTION_VAL_190_CHS },
+         { "200", OPTION_VAL_200_CHS },
+         { "210", OPTION_VAL_210_CHS },
+         { "220", OPTION_VAL_220_CHS },
+         { "230", OPTION_VAL_230_CHS },
+         { "240", OPTION_VAL_240_CHS },
+         { "250", OPTION_VAL_250_CHS },
+         { "260", OPTION_VAL_260_CHS },
+         { "270", OPTION_VAL_270_CHS },
+         { "280", OPTION_VAL_280_CHS },
+         { "290", OPTION_VAL_290_CHS },
+         { "300", OPTION_VAL_300_CHS },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHS,
       NULL,
@@ -7866,6 +8213,19 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHS,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHS,
@@ -8025,7 +8385,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_CHS },
+         { "100%", OPTION_VAL_100_O57_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8176,7 +8536,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_CHS },
+         { "100%", OPTION_VAL_100_O57_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8327,7 +8687,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_CHS },
+         { "100%", OPTION_VAL_100_O57_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8478,7 +8838,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_CHS },
+         { "100%", OPTION_VAL_100_O57_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8629,6 +8989,29 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_CHT NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHT NULL
+#define OPTION_VAL_100_CHT "100%"
+#define OPTION_VAL_110_CHT NULL
+#define OPTION_VAL_120_CHT NULL
+#define OPTION_VAL_130_CHT NULL
+#define OPTION_VAL_140_CHT NULL
+#define OPTION_VAL_150_CHT NULL
+#define OPTION_VAL_160_CHT NULL
+#define OPTION_VAL_170_CHT NULL
+#define OPTION_VAL_180_CHT NULL
+#define OPTION_VAL_190_CHT NULL
+#define OPTION_VAL_200_CHT NULL
+#define OPTION_VAL_210_CHT NULL
+#define OPTION_VAL_220_CHT NULL
+#define OPTION_VAL_230_CHT NULL
+#define OPTION_VAL_240_CHT NULL
+#define OPTION_VAL_250_CHT NULL
+#define OPTION_VAL_260_CHT NULL
+#define OPTION_VAL_270_CHT NULL
+#define OPTION_VAL_280_CHT NULL
+#define OPTION_VAL_290_CHT NULL
+#define OPTION_VAL_300_CHT NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CHT NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CHT NULL
@@ -8660,6 +9043,9 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHT NULL
 #define OPTION_VAL_VMU_A1_CHT NULL
 #define OPTION_VAL_ALL_VMUS_CHT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHT NULL
@@ -8707,7 +9093,7 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_70_CHT NULL
 #define OPTION_VAL_80_CHT NULL
 #define OPTION_VAL_90_CHT NULL
-#define OPTION_VAL_100_CHT NULL
+#define OPTION_VAL_100_O57_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHT NULL
@@ -8775,7 +9161,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "Default", OPTION_VAL_DEFAULT_CHT },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -8794,7 +9180,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "Default",  OPTION_VAL_DEFAULT_CHT },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -9348,6 +9734,39 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHT,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_CHT },
+         { "110", OPTION_VAL_110_CHT },
+         { "120", OPTION_VAL_120_CHT },
+         { "130", OPTION_VAL_130_CHT },
+         { "140", OPTION_VAL_140_CHT },
+         { "150", OPTION_VAL_150_CHT },
+         { "160", OPTION_VAL_160_CHT },
+         { "170", OPTION_VAL_170_CHT },
+         { "180", OPTION_VAL_180_CHT },
+         { "190", OPTION_VAL_190_CHT },
+         { "200", OPTION_VAL_200_CHT },
+         { "210", OPTION_VAL_210_CHT },
+         { "220", OPTION_VAL_220_CHT },
+         { "230", OPTION_VAL_230_CHT },
+         { "240", OPTION_VAL_240_CHT },
+         { "250", OPTION_VAL_250_CHT },
+         { "260", OPTION_VAL_260_CHT },
+         { "270", OPTION_VAL_270_CHT },
+         { "280", OPTION_VAL_280_CHT },
+         { "290", OPTION_VAL_290_CHT },
+         { "300", OPTION_VAL_300_CHT },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CHT,
       NULL,
@@ -9553,6 +9972,19 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CHT,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHT,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHT,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHT,
@@ -9712,7 +10144,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_CHT },
+         { "100%", OPTION_VAL_100_O57_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -9863,7 +10295,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_CHT },
+         { "100%", OPTION_VAL_100_O57_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10014,7 +10446,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_CHT },
+         { "100%", OPTION_VAL_100_O57_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10165,7 +10597,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_CHT },
+         { "100%", OPTION_VAL_100_O57_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10316,6 +10748,29 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CS "Kreslení geometrie mimo běžný poměr stran 4:3. Může způsobit grafické závady v odhalených oblastech."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CS "Rychlé Načítání GD-ROM (nepřesné)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CS "Zrychluje načítání GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_CS NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CS NULL
+#define OPTION_VAL_100_CS "100%"
+#define OPTION_VAL_110_CS NULL
+#define OPTION_VAL_120_CS NULL
+#define OPTION_VAL_130_CS NULL
+#define OPTION_VAL_140_CS NULL
+#define OPTION_VAL_150_CS NULL
+#define OPTION_VAL_160_CS NULL
+#define OPTION_VAL_170_CS NULL
+#define OPTION_VAL_180_CS NULL
+#define OPTION_VAL_190_CS NULL
+#define OPTION_VAL_200_CS NULL
+#define OPTION_VAL_210_CS NULL
+#define OPTION_VAL_220_CS NULL
+#define OPTION_VAL_230_CS NULL
+#define OPTION_VAL_240_CS NULL
+#define OPTION_VAL_250_CS NULL
+#define OPTION_VAL_260_CS NULL
+#define OPTION_VAL_270_CS NULL
+#define OPTION_VAL_280_CS NULL
+#define OPTION_VAL_290_CS NULL
+#define OPTION_VAL_300_CS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS "Načíst Vlastní Textury"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS "Skladiště Textur"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS "Analogova Páčka Mrtvé Zóny"
@@ -10347,6 +10802,9 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CS "Pokud je tato funkce vypnuta, všechny hry sdílejí 4 ukládací soubory VMU (A1, B1, C1, D1) umístěné v systémovém adresáři aplikace RetroArch. Nastavení 'VMU A1' vytvoří v adresáři ukládání aplikace RetroArch pro každou spuštěnou hru jedinečný soubor VMU 'A1'. Nastavení 'All VMUs' Všechny VMU vytvoří 4 jedinečné soubory VMU (A1, B1, C1, D1) pro každou spuštěnou hru."
 #define OPTION_VAL_VMU_A1_CS NULL
 #define OPTION_VAL_ALL_VMUS_CS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS "Zobrazit Nastavení Displeje Vizuální Paměťové Jednotky/Systému (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS "Zobrazit Nastavení VMU Displeje"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS "Umožňuje konfiguraci viditelnosti, velikosti, polohy a barvy obrazovky LCD emulovaného VMU. POZNÁMKA: Může být nutné přepnout Rychlé Menu, aby se toto nastavení projevilo."
@@ -10394,7 +10852,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_70_CS NULL
 #define OPTION_VAL_80_CS NULL
 #define OPTION_VAL_90_CS NULL
-#define OPTION_VAL_100_CS NULL
+#define OPTION_VAL_100_O57_CS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 2"
@@ -10462,7 +10920,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "Default", OPTION_VAL_DEFAULT_CS },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -10481,7 +10939,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "Default",  OPTION_VAL_DEFAULT_CS },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -11035,6 +11493,39 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_CS,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_CS },
+         { "110", OPTION_VAL_110_CS },
+         { "120", OPTION_VAL_120_CS },
+         { "130", OPTION_VAL_130_CS },
+         { "140", OPTION_VAL_140_CS },
+         { "150", OPTION_VAL_150_CS },
+         { "160", OPTION_VAL_160_CS },
+         { "170", OPTION_VAL_170_CS },
+         { "180", OPTION_VAL_180_CS },
+         { "190", OPTION_VAL_190_CS },
+         { "200", OPTION_VAL_200_CS },
+         { "210", OPTION_VAL_210_CS },
+         { "220", OPTION_VAL_220_CS },
+         { "230", OPTION_VAL_230_CS },
+         { "240", OPTION_VAL_240_CS },
+         { "250", OPTION_VAL_250_CS },
+         { "260", OPTION_VAL_260_CS },
+         { "270", OPTION_VAL_270_CS },
+         { "280", OPTION_VAL_280_CS },
+         { "290", OPTION_VAL_290_CS },
+         { "300", OPTION_VAL_300_CS },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS,
       NULL,
@@ -11240,6 +11731,19 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CS,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS,
@@ -11399,7 +11903,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_CS },
+         { "100%", OPTION_VAL_100_O57_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -11550,7 +12054,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_CS },
+         { "100%", OPTION_VAL_100_O57_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -11701,7 +12205,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_CS },
+         { "100%", OPTION_VAL_100_O57_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -11852,7 +12356,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_CS },
+         { "100%", OPTION_VAL_100_O57_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12003,6 +12507,29 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CY NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CY NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CY NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_CY NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CY NULL
+#define OPTION_VAL_100_CY "100%"
+#define OPTION_VAL_110_CY NULL
+#define OPTION_VAL_120_CY NULL
+#define OPTION_VAL_130_CY NULL
+#define OPTION_VAL_140_CY NULL
+#define OPTION_VAL_150_CY NULL
+#define OPTION_VAL_160_CY NULL
+#define OPTION_VAL_170_CY NULL
+#define OPTION_VAL_180_CY NULL
+#define OPTION_VAL_190_CY NULL
+#define OPTION_VAL_200_CY NULL
+#define OPTION_VAL_210_CY NULL
+#define OPTION_VAL_220_CY NULL
+#define OPTION_VAL_230_CY NULL
+#define OPTION_VAL_240_CY NULL
+#define OPTION_VAL_250_CY NULL
+#define OPTION_VAL_260_CY NULL
+#define OPTION_VAL_270_CY NULL
+#define OPTION_VAL_280_CY NULL
+#define OPTION_VAL_290_CY NULL
+#define OPTION_VAL_300_CY NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CY NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CY NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CY NULL
@@ -12034,6 +12561,9 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CY NULL
 #define OPTION_VAL_VMU_A1_CY NULL
 #define OPTION_VAL_ALL_VMUS_CY NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CY NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CY NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CY NULL
@@ -12081,7 +12611,7 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_70_CY NULL
 #define OPTION_VAL_80_CY NULL
 #define OPTION_VAL_90_CY NULL
-#define OPTION_VAL_100_CY NULL
+#define OPTION_VAL_100_O57_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CY NULL
@@ -12149,7 +12679,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "Default", OPTION_VAL_DEFAULT_CY },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -12168,7 +12698,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "Default",  OPTION_VAL_DEFAULT_CY },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -12722,6 +13252,39 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_CY,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_CY },
+         { "110", OPTION_VAL_110_CY },
+         { "120", OPTION_VAL_120_CY },
+         { "130", OPTION_VAL_130_CY },
+         { "140", OPTION_VAL_140_CY },
+         { "150", OPTION_VAL_150_CY },
+         { "160", OPTION_VAL_160_CY },
+         { "170", OPTION_VAL_170_CY },
+         { "180", OPTION_VAL_180_CY },
+         { "190", OPTION_VAL_190_CY },
+         { "200", OPTION_VAL_200_CY },
+         { "210", OPTION_VAL_210_CY },
+         { "220", OPTION_VAL_220_CY },
+         { "230", OPTION_VAL_230_CY },
+         { "240", OPTION_VAL_240_CY },
+         { "250", OPTION_VAL_250_CY },
+         { "260", OPTION_VAL_260_CY },
+         { "270", OPTION_VAL_270_CY },
+         { "280", OPTION_VAL_280_CY },
+         { "290", OPTION_VAL_290_CY },
+         { "300", OPTION_VAL_300_CY },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CY,
       NULL,
@@ -12927,6 +13490,19 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CY,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CY,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_CY,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CY,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CY,
@@ -13086,7 +13662,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_CY },
+         { "100%", OPTION_VAL_100_O57_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -13237,7 +13813,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_CY },
+         { "100%", OPTION_VAL_100_O57_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -13388,7 +13964,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_CY },
+         { "100%", OPTION_VAL_100_O57_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -13539,7 +14115,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_CY },
+         { "100%", OPTION_VAL_100_O57_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -13690,6 +14266,29 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_DA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_DA NULL
+#define OPTION_VAL_100_DA "100%"
+#define OPTION_VAL_110_DA NULL
+#define OPTION_VAL_120_DA NULL
+#define OPTION_VAL_130_DA NULL
+#define OPTION_VAL_140_DA NULL
+#define OPTION_VAL_150_DA NULL
+#define OPTION_VAL_160_DA NULL
+#define OPTION_VAL_170_DA NULL
+#define OPTION_VAL_180_DA NULL
+#define OPTION_VAL_190_DA NULL
+#define OPTION_VAL_200_DA NULL
+#define OPTION_VAL_210_DA NULL
+#define OPTION_VAL_220_DA NULL
+#define OPTION_VAL_230_DA NULL
+#define OPTION_VAL_240_DA NULL
+#define OPTION_VAL_250_DA NULL
+#define OPTION_VAL_260_DA NULL
+#define OPTION_VAL_270_DA NULL
+#define OPTION_VAL_280_DA NULL
+#define OPTION_VAL_290_DA NULL
+#define OPTION_VAL_300_DA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DA NULL
@@ -13721,6 +14320,9 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DA NULL
 #define OPTION_VAL_VMU_A1_DA NULL
 #define OPTION_VAL_ALL_VMUS_DA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_DA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DA NULL
@@ -13768,7 +14370,7 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_70_DA NULL
 #define OPTION_VAL_80_DA NULL
 #define OPTION_VAL_90_DA NULL
-#define OPTION_VAL_100_DA NULL
+#define OPTION_VAL_100_O57_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DA NULL
@@ -13836,7 +14438,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "Default", OPTION_VAL_DEFAULT_DA },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -13855,7 +14457,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "Default",  OPTION_VAL_DEFAULT_DA },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -14409,6 +15011,39 @@ struct retro_core_option_v2_definition option_defs_da[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_DA,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_DA },
+         { "110", OPTION_VAL_110_DA },
+         { "120", OPTION_VAL_120_DA },
+         { "130", OPTION_VAL_130_DA },
+         { "140", OPTION_VAL_140_DA },
+         { "150", OPTION_VAL_150_DA },
+         { "160", OPTION_VAL_160_DA },
+         { "170", OPTION_VAL_170_DA },
+         { "180", OPTION_VAL_180_DA },
+         { "190", OPTION_VAL_190_DA },
+         { "200", OPTION_VAL_200_DA },
+         { "210", OPTION_VAL_210_DA },
+         { "220", OPTION_VAL_220_DA },
+         { "230", OPTION_VAL_230_DA },
+         { "240", OPTION_VAL_240_DA },
+         { "250", OPTION_VAL_250_DA },
+         { "260", OPTION_VAL_260_DA },
+         { "270", OPTION_VAL_270_DA },
+         { "280", OPTION_VAL_280_DA },
+         { "290", OPTION_VAL_290_DA },
+         { "300", OPTION_VAL_300_DA },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DA,
       NULL,
@@ -14614,6 +15249,19 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_DA,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DA,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_DA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DA,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DA,
@@ -14773,7 +15421,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_DA },
+         { "100%", OPTION_VAL_100_O57_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -14924,7 +15572,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_DA },
+         { "100%", OPTION_VAL_100_O57_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -15075,7 +15723,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_DA },
+         { "100%", OPTION_VAL_100_O57_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -15226,7 +15874,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_DA },
+         { "100%", OPTION_VAL_100_O57_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -15377,6 +16025,29 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DE "Zeichnet Geometrie außerhalb des normalen 4:3 Seitenverhältnisses. Kann grafische Fehler in den aufgedeckten Bereichen erzeugen."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DE "GD-ROM schnelles Laden (ungenau)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DE "Beschleunigt das Laden von GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_DE NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_DE NULL
+#define OPTION_VAL_100_DE "100 %"
+#define OPTION_VAL_110_DE NULL
+#define OPTION_VAL_120_DE NULL
+#define OPTION_VAL_130_DE NULL
+#define OPTION_VAL_140_DE NULL
+#define OPTION_VAL_150_DE NULL
+#define OPTION_VAL_160_DE NULL
+#define OPTION_VAL_170_DE NULL
+#define OPTION_VAL_180_DE NULL
+#define OPTION_VAL_190_DE NULL
+#define OPTION_VAL_200_DE NULL
+#define OPTION_VAL_210_DE NULL
+#define OPTION_VAL_220_DE NULL
+#define OPTION_VAL_230_DE NULL
+#define OPTION_VAL_240_DE NULL
+#define OPTION_VAL_250_DE NULL
+#define OPTION_VAL_260_DE NULL
+#define OPTION_VAL_270_DE NULL
+#define OPTION_VAL_280_DE NULL
+#define OPTION_VAL_290_DE NULL
+#define OPTION_VAL_300_DE NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DE "Eigene Texturen laden"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_DE "Texturen dumpen"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_DE "Analog-Stick Totzone"
@@ -15408,6 +16079,9 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE "Wenn deaktiviert, teilen alle Spiele 4 VMU Speicherdateien (A1, B1, C1, D1) im Systemverzeichnis von RetroArch. Die Einstellung 'VMU A1' erzeugt für jedes Spiel, das gestartet wird, eine einzigartige VMU 'A1' Datei im Speicherverzeichnis von RetroArch. Die Einstellung 'Alle VMUs' erzeugt 4 einzigartige VMU-Dateien (A1, B1, C1, D1) für jedes Spiel, das gestartet wird."
 #define OPTION_VAL_VMU_A1_DE NULL
 #define OPTION_VAL_ALL_VMUS_DE "Alle VMUs"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_DE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_DE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DE "Visual Memory Unit/System (VMU) Anzeigeeinstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DE "VMU Bildschirmeinstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DE "Konfiguration von emulierten VMU LCD-Bildschirmen über Sichtbarkeit, Größe, Position und Farbe aktivieren. HINWEIS: Das Schnellmenü muss aktiviert sein, damit diese Einstellung wirksam wird."
@@ -15455,7 +16129,7 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_70_DE "70 %"
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_DE "100 %"
+#define OPTION_VAL_100_O57_DE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DE "VMU Bildschirm 2 anzeigen"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DE "VMU Bildschirm 2 Position"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DE "VMU Bildschirm 2 Grösse"
@@ -15523,7 +16197,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "Default", OPTION_VAL_DEFAULT_DE },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -15542,7 +16216,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "Default",  OPTION_VAL_DEFAULT_DE },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -16096,6 +16770,39 @@ struct retro_core_option_v2_definition option_defs_de[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_DE,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_DE },
+         { "110", OPTION_VAL_110_DE },
+         { "120", OPTION_VAL_120_DE },
+         { "130", OPTION_VAL_130_DE },
+         { "140", OPTION_VAL_140_DE },
+         { "150", OPTION_VAL_150_DE },
+         { "160", OPTION_VAL_160_DE },
+         { "170", OPTION_VAL_170_DE },
+         { "180", OPTION_VAL_180_DE },
+         { "190", OPTION_VAL_190_DE },
+         { "200", OPTION_VAL_200_DE },
+         { "210", OPTION_VAL_210_DE },
+         { "220", OPTION_VAL_220_DE },
+         { "230", OPTION_VAL_230_DE },
+         { "240", OPTION_VAL_240_DE },
+         { "250", OPTION_VAL_250_DE },
+         { "260", OPTION_VAL_260_DE },
+         { "270", OPTION_VAL_270_DE },
+         { "280", OPTION_VAL_280_DE },
+         { "290", OPTION_VAL_290_DE },
+         { "300", OPTION_VAL_300_DE },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_DE,
       NULL,
@@ -16301,6 +17008,19 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_DE,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DE,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_DE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DE,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DE,
@@ -16460,7 +17180,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_DE },
+         { "100%", OPTION_VAL_100_O57_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -16611,7 +17331,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_DE },
+         { "100%", OPTION_VAL_100_O57_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -16762,7 +17482,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_DE },
+         { "100%", OPTION_VAL_100_O57_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -16913,7 +17633,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_DE },
+         { "100%", OPTION_VAL_100_O57_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -17064,6 +17784,29 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_EL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EL NULL
+#define OPTION_VAL_100_EL "100%"
+#define OPTION_VAL_110_EL NULL
+#define OPTION_VAL_120_EL NULL
+#define OPTION_VAL_130_EL NULL
+#define OPTION_VAL_140_EL NULL
+#define OPTION_VAL_150_EL NULL
+#define OPTION_VAL_160_EL NULL
+#define OPTION_VAL_170_EL NULL
+#define OPTION_VAL_180_EL NULL
+#define OPTION_VAL_190_EL NULL
+#define OPTION_VAL_200_EL NULL
+#define OPTION_VAL_210_EL NULL
+#define OPTION_VAL_220_EL NULL
+#define OPTION_VAL_230_EL NULL
+#define OPTION_VAL_240_EL NULL
+#define OPTION_VAL_250_EL NULL
+#define OPTION_VAL_260_EL NULL
+#define OPTION_VAL_270_EL NULL
+#define OPTION_VAL_280_EL NULL
+#define OPTION_VAL_290_EL NULL
+#define OPTION_VAL_300_EL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EL NULL
@@ -17095,6 +17838,9 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_EL NULL
 #define OPTION_VAL_VMU_A1_EL NULL
 #define OPTION_VAL_ALL_VMUS_EL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_EL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EL NULL
@@ -17142,7 +17888,7 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_70_EL NULL
 #define OPTION_VAL_80_EL "το 80%"
 #define OPTION_VAL_90_EL NULL
-#define OPTION_VAL_100_EL NULL
+#define OPTION_VAL_100_O57_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EL NULL
@@ -17210,7 +17956,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "Default", OPTION_VAL_DEFAULT_EL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -17229,7 +17975,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "Default",  OPTION_VAL_DEFAULT_EL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -17783,6 +18529,39 @@ struct retro_core_option_v2_definition option_defs_el[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_EL,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_EL },
+         { "110", OPTION_VAL_110_EL },
+         { "120", OPTION_VAL_120_EL },
+         { "130", OPTION_VAL_130_EL },
+         { "140", OPTION_VAL_140_EL },
+         { "150", OPTION_VAL_150_EL },
+         { "160", OPTION_VAL_160_EL },
+         { "170", OPTION_VAL_170_EL },
+         { "180", OPTION_VAL_180_EL },
+         { "190", OPTION_VAL_190_EL },
+         { "200", OPTION_VAL_200_EL },
+         { "210", OPTION_VAL_210_EL },
+         { "220", OPTION_VAL_220_EL },
+         { "230", OPTION_VAL_230_EL },
+         { "240", OPTION_VAL_240_EL },
+         { "250", OPTION_VAL_250_EL },
+         { "260", OPTION_VAL_260_EL },
+         { "270", OPTION_VAL_270_EL },
+         { "280", OPTION_VAL_280_EL },
+         { "290", OPTION_VAL_290_EL },
+         { "300", OPTION_VAL_300_EL },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EL,
       NULL,
@@ -17988,6 +18767,19 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_EL,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EL,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_EL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EL,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EL,
@@ -18147,7 +18939,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_EL },
+         { "100%", OPTION_VAL_100_O57_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -18298,7 +19090,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_EL },
+         { "100%", OPTION_VAL_100_O57_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -18449,7 +19241,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_EL },
+         { "100%", OPTION_VAL_100_O57_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -18600,7 +19392,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_EL },
+         { "100%", OPTION_VAL_100_O57_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -18652,7 +19444,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EN NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN "Emulate the Ethernet broadband adapter instead of the modem. (Restart Required)"
 #define CORE_OPTION_NAME_UPNP_LABEL_EN NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_EN NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_EN NULL
@@ -18751,6 +19543,29 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_EN NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EN NULL
+#define OPTION_VAL_100_EN "100%"
+#define OPTION_VAL_110_EN NULL
+#define OPTION_VAL_120_EN NULL
+#define OPTION_VAL_130_EN NULL
+#define OPTION_VAL_140_EN NULL
+#define OPTION_VAL_150_EN NULL
+#define OPTION_VAL_160_EN NULL
+#define OPTION_VAL_170_EN NULL
+#define OPTION_VAL_180_EN NULL
+#define OPTION_VAL_190_EN NULL
+#define OPTION_VAL_200_EN NULL
+#define OPTION_VAL_210_EN NULL
+#define OPTION_VAL_220_EN NULL
+#define OPTION_VAL_230_EN NULL
+#define OPTION_VAL_240_EN NULL
+#define OPTION_VAL_250_EN NULL
+#define OPTION_VAL_260_EN NULL
+#define OPTION_VAL_270_EN NULL
+#define OPTION_VAL_280_EN NULL
+#define OPTION_VAL_290_EN NULL
+#define OPTION_VAL_300_EN NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EN NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EN NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EN "Analogue Stick Dead-zone"
@@ -18782,6 +19597,9 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_EN NULL
 #define OPTION_VAL_VMU_A1_EN NULL
 #define OPTION_VAL_ALL_VMUS_EN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_EN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EN "Enable configuration of emulated VMU LCD screen visibility, size, position and colour. NOTE: Quick Menu may need to be toggled for this setting to take effect."
@@ -18829,7 +19647,7 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_70_EN NULL
 #define OPTION_VAL_80_EN NULL
 #define OPTION_VAL_90_EN NULL
-#define OPTION_VAL_100_EN NULL
+#define OPTION_VAL_100_O57_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EN NULL
@@ -18897,7 +19715,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "Default", OPTION_VAL_DEFAULT_EN },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -18916,7 +19734,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "Default",  OPTION_VAL_DEFAULT_EN },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -19470,6 +20288,39 @@ struct retro_core_option_v2_definition option_defs_en[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_EN },
+         { "110", OPTION_VAL_110_EN },
+         { "120", OPTION_VAL_120_EN },
+         { "130", OPTION_VAL_130_EN },
+         { "140", OPTION_VAL_140_EN },
+         { "150", OPTION_VAL_150_EN },
+         { "160", OPTION_VAL_160_EN },
+         { "170", OPTION_VAL_170_EN },
+         { "180", OPTION_VAL_180_EN },
+         { "190", OPTION_VAL_190_EN },
+         { "200", OPTION_VAL_200_EN },
+         { "210", OPTION_VAL_210_EN },
+         { "220", OPTION_VAL_220_EN },
+         { "230", OPTION_VAL_230_EN },
+         { "240", OPTION_VAL_240_EN },
+         { "250", OPTION_VAL_250_EN },
+         { "260", OPTION_VAL_260_EN },
+         { "270", OPTION_VAL_270_EN },
+         { "280", OPTION_VAL_280_EN },
+         { "290", OPTION_VAL_290_EN },
+         { "300", OPTION_VAL_300_EN },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EN,
       NULL,
@@ -19675,6 +20526,19 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_EN,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EN,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_EN,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EN,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EN,
@@ -19834,7 +20698,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_EN },
+         { "100%", OPTION_VAL_100_O57_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -19985,7 +20849,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_EN },
+         { "100%", OPTION_VAL_100_O57_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -20136,7 +21000,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_EN },
+         { "100%", OPTION_VAL_100_O57_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -20287,7 +21151,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_EN },
+         { "100%", OPTION_VAL_100_O57_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -20438,6 +21302,29 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_EO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EO NULL
+#define OPTION_VAL_100_EO "100%"
+#define OPTION_VAL_110_EO NULL
+#define OPTION_VAL_120_EO NULL
+#define OPTION_VAL_130_EO NULL
+#define OPTION_VAL_140_EO NULL
+#define OPTION_VAL_150_EO NULL
+#define OPTION_VAL_160_EO NULL
+#define OPTION_VAL_170_EO NULL
+#define OPTION_VAL_180_EO NULL
+#define OPTION_VAL_190_EO NULL
+#define OPTION_VAL_200_EO NULL
+#define OPTION_VAL_210_EO NULL
+#define OPTION_VAL_220_EO NULL
+#define OPTION_VAL_230_EO NULL
+#define OPTION_VAL_240_EO NULL
+#define OPTION_VAL_250_EO NULL
+#define OPTION_VAL_260_EO NULL
+#define OPTION_VAL_270_EO NULL
+#define OPTION_VAL_280_EO NULL
+#define OPTION_VAL_290_EO NULL
+#define OPTION_VAL_300_EO NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EO NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EO NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EO NULL
@@ -20469,6 +21356,9 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_EO NULL
 #define OPTION_VAL_VMU_A1_EO NULL
 #define OPTION_VAL_ALL_VMUS_EO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_EO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EO NULL
@@ -20516,7 +21406,7 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_70_EO NULL
 #define OPTION_VAL_80_EO NULL
 #define OPTION_VAL_90_EO NULL
-#define OPTION_VAL_100_EO NULL
+#define OPTION_VAL_100_O57_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EO NULL
@@ -20584,7 +21474,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "Default", OPTION_VAL_DEFAULT_EO },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -20603,7 +21493,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "Default",  OPTION_VAL_DEFAULT_EO },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -21157,6 +22047,39 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_EO,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_EO },
+         { "110", OPTION_VAL_110_EO },
+         { "120", OPTION_VAL_120_EO },
+         { "130", OPTION_VAL_130_EO },
+         { "140", OPTION_VAL_140_EO },
+         { "150", OPTION_VAL_150_EO },
+         { "160", OPTION_VAL_160_EO },
+         { "170", OPTION_VAL_170_EO },
+         { "180", OPTION_VAL_180_EO },
+         { "190", OPTION_VAL_190_EO },
+         { "200", OPTION_VAL_200_EO },
+         { "210", OPTION_VAL_210_EO },
+         { "220", OPTION_VAL_220_EO },
+         { "230", OPTION_VAL_230_EO },
+         { "240", OPTION_VAL_240_EO },
+         { "250", OPTION_VAL_250_EO },
+         { "260", OPTION_VAL_260_EO },
+         { "270", OPTION_VAL_270_EO },
+         { "280", OPTION_VAL_280_EO },
+         { "290", OPTION_VAL_290_EO },
+         { "300", OPTION_VAL_300_EO },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_EO,
       NULL,
@@ -21362,6 +22285,19 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_EO,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EO,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_EO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EO,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EO,
@@ -21521,7 +22457,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_EO },
+         { "100%", OPTION_VAL_100_O57_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -21672,7 +22608,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_EO },
+         { "100%", OPTION_VAL_100_O57_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -21823,7 +22759,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_EO },
+         { "100%", OPTION_VAL_100_O57_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -21974,7 +22910,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_EO },
+         { "100%", OPTION_VAL_100_O57_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -22125,6 +23061,29 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ES "Dibuja la geometría más allá de la relación de aspecto normal de 4:3. Puede producir fallos gráficos en las zonas reveladas."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_ES "Lectura rápida de GD-ROM (inexacta)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_ES "Acelera la carga de los GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_ES NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_ES NULL
+#define OPTION_VAL_100_ES "100 %"
+#define OPTION_VAL_110_ES NULL
+#define OPTION_VAL_120_ES NULL
+#define OPTION_VAL_130_ES NULL
+#define OPTION_VAL_140_ES NULL
+#define OPTION_VAL_150_ES NULL
+#define OPTION_VAL_160_ES NULL
+#define OPTION_VAL_170_ES NULL
+#define OPTION_VAL_180_ES NULL
+#define OPTION_VAL_190_ES NULL
+#define OPTION_VAL_200_ES NULL
+#define OPTION_VAL_210_ES NULL
+#define OPTION_VAL_220_ES NULL
+#define OPTION_VAL_230_ES NULL
+#define OPTION_VAL_240_ES NULL
+#define OPTION_VAL_250_ES NULL
+#define OPTION_VAL_260_ES NULL
+#define OPTION_VAL_270_ES NULL
+#define OPTION_VAL_280_ES NULL
+#define OPTION_VAL_290_ES NULL
+#define OPTION_VAL_300_ES NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_ES "Cargar texturas personalizadas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ES "Volcar texturas"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_ES "Zona muerta del stick analógico"
@@ -22156,6 +23115,9 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_ES "Al desactivar esta opción, todos los juegos compartirán cuatro archivos de guardado de VMU (A1, B1, C1 y D1) que se encontrarán en el directorio del sistema de RetroArch. El ajuste «VMU A1» creará un archivo único de la VMU A1 en el directorio de guardados de RetroArch para cada juego que se ejecute. «Todas las VMU» creará cuatro archivos VMU únicos (A1, B1, C1 y D1) para cada juego que se ejecute."
 #define OPTION_VAL_VMU_A1_ES NULL
 #define OPTION_VAL_ALL_VMUS_ES "Todas las VMUs"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_ES NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ES NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_ES NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ES "Mostrar ajustes de visualización de las Visual Memory (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ES "Mostrar ajustes de visualización de las VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ES "Permite configurar la visibilidad, tamaño, posición y color de las pantallas LCD emuladas de las VMU. NOTA: es necesario salir y volver a entrar del menú rápido para que el cambio surta efecto."
@@ -22203,7 +23165,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_70_ES "70 %"
 #define OPTION_VAL_80_ES "80 %"
 #define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_ES "100 %"
+#define OPTION_VAL_100_O57_ES NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ES "Pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ES "Posición de la pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ES "Tamaño de la pantalla de la VMU 2"
@@ -22271,7 +23233,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "Default", OPTION_VAL_DEFAULT_ES },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -22290,7 +23252,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "Default",  OPTION_VAL_DEFAULT_ES },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -22844,6 +23806,39 @@ struct retro_core_option_v2_definition option_defs_es[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_ES,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_ES },
+         { "110", OPTION_VAL_110_ES },
+         { "120", OPTION_VAL_120_ES },
+         { "130", OPTION_VAL_130_ES },
+         { "140", OPTION_VAL_140_ES },
+         { "150", OPTION_VAL_150_ES },
+         { "160", OPTION_VAL_160_ES },
+         { "170", OPTION_VAL_170_ES },
+         { "180", OPTION_VAL_180_ES },
+         { "190", OPTION_VAL_190_ES },
+         { "200", OPTION_VAL_200_ES },
+         { "210", OPTION_VAL_210_ES },
+         { "220", OPTION_VAL_220_ES },
+         { "230", OPTION_VAL_230_ES },
+         { "240", OPTION_VAL_240_ES },
+         { "250", OPTION_VAL_250_ES },
+         { "260", OPTION_VAL_260_ES },
+         { "270", OPTION_VAL_270_ES },
+         { "280", OPTION_VAL_280_ES },
+         { "290", OPTION_VAL_290_ES },
+         { "300", OPTION_VAL_300_ES },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_ES,
       NULL,
@@ -23049,6 +24044,19 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_ES,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ES,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_ES,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ES,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ES,
@@ -23208,7 +24216,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_ES },
+         { "100%", OPTION_VAL_100_O57_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -23359,7 +24367,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_ES },
+         { "100%", OPTION_VAL_100_O57_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -23510,7 +24518,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_ES },
+         { "100%", OPTION_VAL_100_O57_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -23661,7 +24669,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_ES },
+         { "100%", OPTION_VAL_100_O57_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -23812,6 +24820,29 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_FA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FA NULL
+#define OPTION_VAL_100_FA "100%"
+#define OPTION_VAL_110_FA NULL
+#define OPTION_VAL_120_FA NULL
+#define OPTION_VAL_130_FA NULL
+#define OPTION_VAL_140_FA NULL
+#define OPTION_VAL_150_FA NULL
+#define OPTION_VAL_160_FA NULL
+#define OPTION_VAL_170_FA NULL
+#define OPTION_VAL_180_FA NULL
+#define OPTION_VAL_190_FA NULL
+#define OPTION_VAL_200_FA NULL
+#define OPTION_VAL_210_FA NULL
+#define OPTION_VAL_220_FA NULL
+#define OPTION_VAL_230_FA NULL
+#define OPTION_VAL_240_FA NULL
+#define OPTION_VAL_250_FA NULL
+#define OPTION_VAL_260_FA NULL
+#define OPTION_VAL_270_FA NULL
+#define OPTION_VAL_280_FA NULL
+#define OPTION_VAL_290_FA NULL
+#define OPTION_VAL_300_FA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FA NULL
@@ -23843,6 +24874,9 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FA NULL
 #define OPTION_VAL_VMU_A1_FA NULL
 #define OPTION_VAL_ALL_VMUS_FA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_FA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FA NULL
@@ -23890,7 +24924,7 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_70_FA NULL
 #define OPTION_VAL_80_FA NULL
 #define OPTION_VAL_90_FA NULL
-#define OPTION_VAL_100_FA NULL
+#define OPTION_VAL_100_O57_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FA NULL
@@ -23958,7 +24992,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "Default", OPTION_VAL_DEFAULT_FA },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -23977,7 +25011,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "Default",  OPTION_VAL_DEFAULT_FA },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -24531,6 +25565,39 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_FA,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_FA },
+         { "110", OPTION_VAL_110_FA },
+         { "120", OPTION_VAL_120_FA },
+         { "130", OPTION_VAL_130_FA },
+         { "140", OPTION_VAL_140_FA },
+         { "150", OPTION_VAL_150_FA },
+         { "160", OPTION_VAL_160_FA },
+         { "170", OPTION_VAL_170_FA },
+         { "180", OPTION_VAL_180_FA },
+         { "190", OPTION_VAL_190_FA },
+         { "200", OPTION_VAL_200_FA },
+         { "210", OPTION_VAL_210_FA },
+         { "220", OPTION_VAL_220_FA },
+         { "230", OPTION_VAL_230_FA },
+         { "240", OPTION_VAL_240_FA },
+         { "250", OPTION_VAL_250_FA },
+         { "260", OPTION_VAL_260_FA },
+         { "270", OPTION_VAL_270_FA },
+         { "280", OPTION_VAL_280_FA },
+         { "290", OPTION_VAL_290_FA },
+         { "300", OPTION_VAL_300_FA },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FA,
       NULL,
@@ -24736,6 +25803,19 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_FA,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FA,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_FA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FA,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FA,
@@ -24895,7 +25975,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_FA },
+         { "100%", OPTION_VAL_100_O57_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -25046,7 +26126,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_FA },
+         { "100%", OPTION_VAL_100_O57_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -25197,7 +26277,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_FA },
+         { "100%", OPTION_VAL_100_O57_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -25348,7 +26428,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_FA },
+         { "100%", OPTION_VAL_100_O57_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -25499,6 +26579,29 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FI NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FI NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FI NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_FI NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FI NULL
+#define OPTION_VAL_100_FI "100 %"
+#define OPTION_VAL_110_FI NULL
+#define OPTION_VAL_120_FI NULL
+#define OPTION_VAL_130_FI NULL
+#define OPTION_VAL_140_FI NULL
+#define OPTION_VAL_150_FI NULL
+#define OPTION_VAL_160_FI NULL
+#define OPTION_VAL_170_FI NULL
+#define OPTION_VAL_180_FI NULL
+#define OPTION_VAL_190_FI NULL
+#define OPTION_VAL_200_FI NULL
+#define OPTION_VAL_210_FI NULL
+#define OPTION_VAL_220_FI NULL
+#define OPTION_VAL_230_FI NULL
+#define OPTION_VAL_240_FI NULL
+#define OPTION_VAL_250_FI NULL
+#define OPTION_VAL_260_FI NULL
+#define OPTION_VAL_270_FI NULL
+#define OPTION_VAL_280_FI NULL
+#define OPTION_VAL_290_FI NULL
+#define OPTION_VAL_300_FI NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FI NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FI NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FI NULL
@@ -25530,6 +26633,9 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FI NULL
 #define OPTION_VAL_VMU_A1_FI NULL
 #define OPTION_VAL_ALL_VMUS_FI NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_FI NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FI NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FI NULL
@@ -25577,7 +26683,7 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_70_FI "70 %"
 #define OPTION_VAL_80_FI "80 %"
 #define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_FI "100 %"
+#define OPTION_VAL_100_O57_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FI NULL
@@ -25645,7 +26751,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "Default", OPTION_VAL_DEFAULT_FI },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -25664,7 +26770,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "Default",  OPTION_VAL_DEFAULT_FI },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -26218,6 +27324,39 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_FI,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_FI },
+         { "110", OPTION_VAL_110_FI },
+         { "120", OPTION_VAL_120_FI },
+         { "130", OPTION_VAL_130_FI },
+         { "140", OPTION_VAL_140_FI },
+         { "150", OPTION_VAL_150_FI },
+         { "160", OPTION_VAL_160_FI },
+         { "170", OPTION_VAL_170_FI },
+         { "180", OPTION_VAL_180_FI },
+         { "190", OPTION_VAL_190_FI },
+         { "200", OPTION_VAL_200_FI },
+         { "210", OPTION_VAL_210_FI },
+         { "220", OPTION_VAL_220_FI },
+         { "230", OPTION_VAL_230_FI },
+         { "240", OPTION_VAL_240_FI },
+         { "250", OPTION_VAL_250_FI },
+         { "260", OPTION_VAL_260_FI },
+         { "270", OPTION_VAL_270_FI },
+         { "280", OPTION_VAL_280_FI },
+         { "290", OPTION_VAL_290_FI },
+         { "300", OPTION_VAL_300_FI },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FI,
       NULL,
@@ -26423,6 +27562,19 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_FI,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FI,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_FI,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FI,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FI,
@@ -26582,7 +27734,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_FI },
+         { "100%", OPTION_VAL_100_O57_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -26733,7 +27885,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_FI },
+         { "100%", OPTION_VAL_100_O57_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -26884,7 +28036,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_FI },
+         { "100%", OPTION_VAL_100_O57_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -27035,7 +28187,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_FI },
+         { "100%", OPTION_VAL_100_O57_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -27186,6 +28338,29 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FR "Afficher un rendu de la géométrie en dehors du rapport d'aspect normal de 4:3. Peut produire des bugs graphiques dans les zones révélées."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FR "Chargement rapide des GD-ROM (inexact)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FR "Accélère le chargement des GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_FR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FR NULL
+#define OPTION_VAL_100_FR "100%"
+#define OPTION_VAL_110_FR NULL
+#define OPTION_VAL_120_FR NULL
+#define OPTION_VAL_130_FR NULL
+#define OPTION_VAL_140_FR NULL
+#define OPTION_VAL_150_FR NULL
+#define OPTION_VAL_160_FR NULL
+#define OPTION_VAL_170_FR NULL
+#define OPTION_VAL_180_FR NULL
+#define OPTION_VAL_190_FR NULL
+#define OPTION_VAL_200_FR NULL
+#define OPTION_VAL_210_FR NULL
+#define OPTION_VAL_220_FR NULL
+#define OPTION_VAL_230_FR NULL
+#define OPTION_VAL_240_FR NULL
+#define OPTION_VAL_250_FR NULL
+#define OPTION_VAL_260_FR NULL
+#define OPTION_VAL_270_FR NULL
+#define OPTION_VAL_280_FR NULL
+#define OPTION_VAL_290_FR NULL
+#define OPTION_VAL_300_FR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FR "Charger les textures personnalisées"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_FR "Importer les textures"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_FR "Deadzone du stick analogique"
@@ -27217,6 +28392,9 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FR "Lorsque cette option est désactivée, tous les jeux partagent 4 fichiers de sauvegarde VMU (A1, B1, C1, D1) situés dans le dossier system de RetroArch. Le réglage 'VMU A1' crée un fichier VMU 'A1' unique dans le dossier de sauvegarde de RetroArch pour chaque jeu qui est lancé. Le paramètre 'Toutes les VMU' crée 4 fichiers VMU uniques (A1, B1, C1, D1) pour chaque jeu qui est lancé."
 #define OPTION_VAL_VMU_A1_FR NULL
 #define OPTION_VAL_ALL_VMUS_FR "Tous les VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_FR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FR "Afficher les réglage d'affichage de l'unité/système de mémoire visuelle (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FR "Afficher les réglages d'affichage du VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FR "Activer la configuration de la visibilité, de la taille, de la position et de la couleur de l'écran du VMU émulé. REMARQUE : Le menu rapide devrait être réouvert pour que ce réglage prenne effet."
@@ -27264,7 +28442,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_70_FR NULL
 #define OPTION_VAL_80_FR NULL
 #define OPTION_VAL_90_FR NULL
-#define OPTION_VAL_100_FR NULL
+#define OPTION_VAL_100_O57_FR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FR "Affichage de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FR "Position de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FR "Taille de l'écran du VMU 2"
@@ -27332,7 +28510,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "Default", OPTION_VAL_DEFAULT_FR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -27351,7 +28529,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "Default",  OPTION_VAL_DEFAULT_FR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -27905,6 +29083,39 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_FR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_FR },
+         { "110", OPTION_VAL_110_FR },
+         { "120", OPTION_VAL_120_FR },
+         { "130", OPTION_VAL_130_FR },
+         { "140", OPTION_VAL_140_FR },
+         { "150", OPTION_VAL_150_FR },
+         { "160", OPTION_VAL_160_FR },
+         { "170", OPTION_VAL_170_FR },
+         { "180", OPTION_VAL_180_FR },
+         { "190", OPTION_VAL_190_FR },
+         { "200", OPTION_VAL_200_FR },
+         { "210", OPTION_VAL_210_FR },
+         { "220", OPTION_VAL_220_FR },
+         { "230", OPTION_VAL_230_FR },
+         { "240", OPTION_VAL_240_FR },
+         { "250", OPTION_VAL_250_FR },
+         { "260", OPTION_VAL_260_FR },
+         { "270", OPTION_VAL_270_FR },
+         { "280", OPTION_VAL_280_FR },
+         { "290", OPTION_VAL_290_FR },
+         { "300", OPTION_VAL_300_FR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_FR,
       NULL,
@@ -28110,6 +29321,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_FR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_FR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FR,
@@ -28269,7 +29493,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_FR },
+         { "100%", OPTION_VAL_100_O57_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -28420,7 +29644,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_FR },
+         { "100%", OPTION_VAL_100_O57_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -28571,7 +29795,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_FR },
+         { "100%", OPTION_VAL_100_O57_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -28722,7 +29946,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_FR },
+         { "100%", OPTION_VAL_100_O57_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -28873,6 +30097,29 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL NULL
+#define OPTION_VAL_100_GL "100%"
+#define OPTION_VAL_110_GL NULL
+#define OPTION_VAL_120_GL NULL
+#define OPTION_VAL_130_GL NULL
+#define OPTION_VAL_140_GL NULL
+#define OPTION_VAL_150_GL NULL
+#define OPTION_VAL_160_GL NULL
+#define OPTION_VAL_170_GL NULL
+#define OPTION_VAL_180_GL NULL
+#define OPTION_VAL_190_GL NULL
+#define OPTION_VAL_200_GL NULL
+#define OPTION_VAL_210_GL NULL
+#define OPTION_VAL_220_GL NULL
+#define OPTION_VAL_230_GL NULL
+#define OPTION_VAL_240_GL NULL
+#define OPTION_VAL_250_GL NULL
+#define OPTION_VAL_260_GL NULL
+#define OPTION_VAL_270_GL NULL
+#define OPTION_VAL_280_GL NULL
+#define OPTION_VAL_290_GL NULL
+#define OPTION_VAL_300_GL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL "Carga as texturas personalizadas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL NULL
@@ -28904,6 +30151,9 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL "Cando se desactiva, todos os xogos comparten 4 arquivos de gardado VMU (A1, B1, C1, D1) localizados no directorio do sistema de RetroArch. O axuste \"VMU A1\" crea un único arquivo VMU \"A1\" no directorio de gardado de RetroArch para cada xogo que se inicie. A opción \"Todas as VMU\" crea 4 arquivos VMU únicos (A1, B1, C1, D1) para cada xogo que se inicie."
 #define OPTION_VAL_VMU_A1_GL NULL
 #define OPTION_VAL_ALL_VMUS_GL "Todas as VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL "Amosa as opcións de pantalla da Unidade/Sistema de Memoria visual (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL "Amosa as opcións de pantalla da VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL NULL
@@ -28951,7 +30201,7 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_70_GL NULL
 #define OPTION_VAL_80_GL NULL
 #define OPTION_VAL_90_GL NULL
-#define OPTION_VAL_100_GL NULL
+#define OPTION_VAL_100_O57_GL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_GL "Pantalla 2 da VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_GL "Posición da pantalla 2 VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_GL "Tamaño da pantalla 2 VMU"
@@ -29019,7 +30269,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "Default", OPTION_VAL_DEFAULT_GL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -29038,7 +30288,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "Default",  OPTION_VAL_DEFAULT_GL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -29592,6 +30842,39 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_GL },
+         { "110", OPTION_VAL_110_GL },
+         { "120", OPTION_VAL_120_GL },
+         { "130", OPTION_VAL_130_GL },
+         { "140", OPTION_VAL_140_GL },
+         { "150", OPTION_VAL_150_GL },
+         { "160", OPTION_VAL_160_GL },
+         { "170", OPTION_VAL_170_GL },
+         { "180", OPTION_VAL_180_GL },
+         { "190", OPTION_VAL_190_GL },
+         { "200", OPTION_VAL_200_GL },
+         { "210", OPTION_VAL_210_GL },
+         { "220", OPTION_VAL_220_GL },
+         { "230", OPTION_VAL_230_GL },
+         { "240", OPTION_VAL_240_GL },
+         { "250", OPTION_VAL_250_GL },
+         { "260", OPTION_VAL_260_GL },
+         { "270", OPTION_VAL_270_GL },
+         { "280", OPTION_VAL_280_GL },
+         { "290", OPTION_VAL_290_GL },
+         { "300", OPTION_VAL_300_GL },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL,
       NULL,
@@ -29797,6 +31080,19 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_GL,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL,
@@ -29956,7 +31252,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_GL },
+         { "100%", OPTION_VAL_100_O57_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -30107,7 +31403,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_GL },
+         { "100%", OPTION_VAL_100_O57_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -30258,7 +31554,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_GL },
+         { "100%", OPTION_VAL_100_O57_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -30409,7 +31705,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_GL },
+         { "100%", OPTION_VAL_100_O57_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -30560,6 +31856,29 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HE NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_HE NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HE NULL
+#define OPTION_VAL_100_HE "100%"
+#define OPTION_VAL_110_HE NULL
+#define OPTION_VAL_120_HE NULL
+#define OPTION_VAL_130_HE NULL
+#define OPTION_VAL_140_HE NULL
+#define OPTION_VAL_150_HE NULL
+#define OPTION_VAL_160_HE NULL
+#define OPTION_VAL_170_HE NULL
+#define OPTION_VAL_180_HE NULL
+#define OPTION_VAL_190_HE NULL
+#define OPTION_VAL_200_HE NULL
+#define OPTION_VAL_210_HE NULL
+#define OPTION_VAL_220_HE NULL
+#define OPTION_VAL_230_HE NULL
+#define OPTION_VAL_240_HE NULL
+#define OPTION_VAL_250_HE NULL
+#define OPTION_VAL_260_HE NULL
+#define OPTION_VAL_270_HE NULL
+#define OPTION_VAL_280_HE NULL
+#define OPTION_VAL_290_HE NULL
+#define OPTION_VAL_300_HE NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HE NULL
@@ -30591,6 +31910,9 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HE NULL
 #define OPTION_VAL_VMU_A1_HE NULL
 #define OPTION_VAL_ALL_VMUS_HE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_HE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HE NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HE NULL
@@ -30638,7 +31960,7 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_70_HE NULL
 #define OPTION_VAL_80_HE NULL
 #define OPTION_VAL_90_HE NULL
-#define OPTION_VAL_100_HE NULL
+#define OPTION_VAL_100_O57_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HE NULL
@@ -30706,7 +32028,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "Default", OPTION_VAL_DEFAULT_HE },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -30725,7 +32047,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "Default",  OPTION_VAL_DEFAULT_HE },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -31279,6 +32601,39 @@ struct retro_core_option_v2_definition option_defs_he[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_HE,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_HE },
+         { "110", OPTION_VAL_110_HE },
+         { "120", OPTION_VAL_120_HE },
+         { "130", OPTION_VAL_130_HE },
+         { "140", OPTION_VAL_140_HE },
+         { "150", OPTION_VAL_150_HE },
+         { "160", OPTION_VAL_160_HE },
+         { "170", OPTION_VAL_170_HE },
+         { "180", OPTION_VAL_180_HE },
+         { "190", OPTION_VAL_190_HE },
+         { "200", OPTION_VAL_200_HE },
+         { "210", OPTION_VAL_210_HE },
+         { "220", OPTION_VAL_220_HE },
+         { "230", OPTION_VAL_230_HE },
+         { "240", OPTION_VAL_240_HE },
+         { "250", OPTION_VAL_250_HE },
+         { "260", OPTION_VAL_260_HE },
+         { "270", OPTION_VAL_270_HE },
+         { "280", OPTION_VAL_280_HE },
+         { "290", OPTION_VAL_290_HE },
+         { "300", OPTION_VAL_300_HE },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HE,
       NULL,
@@ -31484,6 +32839,19 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_HE,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HE,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_HE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HE,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HE,
@@ -31643,7 +33011,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_HE },
+         { "100%", OPTION_VAL_100_O57_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -31794,7 +33162,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_HE },
+         { "100%", OPTION_VAL_100_O57_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -31945,7 +33313,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_HE },
+         { "100%", OPTION_VAL_100_O57_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -32096,7 +33464,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_HE },
+         { "100%", OPTION_VAL_100_O57_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -32247,6 +33615,29 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_HR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HR NULL
+#define OPTION_VAL_100_HR "100%"
+#define OPTION_VAL_110_HR NULL
+#define OPTION_VAL_120_HR NULL
+#define OPTION_VAL_130_HR NULL
+#define OPTION_VAL_140_HR NULL
+#define OPTION_VAL_150_HR NULL
+#define OPTION_VAL_160_HR NULL
+#define OPTION_VAL_170_HR NULL
+#define OPTION_VAL_180_HR NULL
+#define OPTION_VAL_190_HR NULL
+#define OPTION_VAL_200_HR NULL
+#define OPTION_VAL_210_HR NULL
+#define OPTION_VAL_220_HR NULL
+#define OPTION_VAL_230_HR NULL
+#define OPTION_VAL_240_HR NULL
+#define OPTION_VAL_250_HR NULL
+#define OPTION_VAL_260_HR NULL
+#define OPTION_VAL_270_HR NULL
+#define OPTION_VAL_280_HR NULL
+#define OPTION_VAL_290_HR NULL
+#define OPTION_VAL_300_HR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HR NULL
@@ -32278,6 +33669,9 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HR NULL
 #define OPTION_VAL_VMU_A1_HR NULL
 #define OPTION_VAL_ALL_VMUS_HR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_HR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HR NULL
@@ -32325,7 +33719,7 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_70_HR NULL
 #define OPTION_VAL_80_HR NULL
 #define OPTION_VAL_90_HR NULL
-#define OPTION_VAL_100_HR NULL
+#define OPTION_VAL_100_O57_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HR NULL
@@ -32393,7 +33787,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "Default", OPTION_VAL_DEFAULT_HR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -32412,7 +33806,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "Default",  OPTION_VAL_DEFAULT_HR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -32966,6 +34360,39 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_HR },
+         { "110", OPTION_VAL_110_HR },
+         { "120", OPTION_VAL_120_HR },
+         { "130", OPTION_VAL_130_HR },
+         { "140", OPTION_VAL_140_HR },
+         { "150", OPTION_VAL_150_HR },
+         { "160", OPTION_VAL_160_HR },
+         { "170", OPTION_VAL_170_HR },
+         { "180", OPTION_VAL_180_HR },
+         { "190", OPTION_VAL_190_HR },
+         { "200", OPTION_VAL_200_HR },
+         { "210", OPTION_VAL_210_HR },
+         { "220", OPTION_VAL_220_HR },
+         { "230", OPTION_VAL_230_HR },
+         { "240", OPTION_VAL_240_HR },
+         { "250", OPTION_VAL_250_HR },
+         { "260", OPTION_VAL_260_HR },
+         { "270", OPTION_VAL_270_HR },
+         { "280", OPTION_VAL_280_HR },
+         { "290", OPTION_VAL_290_HR },
+         { "300", OPTION_VAL_300_HR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HR,
       NULL,
@@ -33171,6 +34598,19 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_HR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_HR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HR,
@@ -33330,7 +34770,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_HR },
+         { "100%", OPTION_VAL_100_O57_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -33481,7 +34921,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_HR },
+         { "100%", OPTION_VAL_100_O57_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -33632,7 +35072,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_HR },
+         { "100%", OPTION_VAL_100_O57_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -33783,7 +35223,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_HR },
+         { "100%", OPTION_VAL_100_O57_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -33934,6 +35374,29 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HU "A normál 4:3-as képarányon kívüli geometria felrajzolása. Grafikai hibákat tartalmazhat az így megjelenített területeken."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HU "GD-ROM gyorstöltés (pontatlan)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HU "A GD-ROM betöltésének felgyorsítása."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_HU NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HU NULL
+#define OPTION_VAL_100_HU "100%"
+#define OPTION_VAL_110_HU NULL
+#define OPTION_VAL_120_HU NULL
+#define OPTION_VAL_130_HU NULL
+#define OPTION_VAL_140_HU NULL
+#define OPTION_VAL_150_HU NULL
+#define OPTION_VAL_160_HU NULL
+#define OPTION_VAL_170_HU NULL
+#define OPTION_VAL_180_HU NULL
+#define OPTION_VAL_190_HU NULL
+#define OPTION_VAL_200_HU NULL
+#define OPTION_VAL_210_HU NULL
+#define OPTION_VAL_220_HU NULL
+#define OPTION_VAL_230_HU NULL
+#define OPTION_VAL_240_HU NULL
+#define OPTION_VAL_250_HU NULL
+#define OPTION_VAL_260_HU NULL
+#define OPTION_VAL_270_HU NULL
+#define OPTION_VAL_280_HU NULL
+#define OPTION_VAL_290_HU NULL
+#define OPTION_VAL_300_HU NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU "Egyedi textúrák betöltése"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
@@ -33965,6 +35428,9 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a 4 VMU mentés fájlt (A1, B1, C1, D1) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak négy külön VMU fájlt (A1, B1, C1, D1) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU "Visual Memory Unit/System (VMU) megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU "VMU megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU "Az emulált VMU LCD képernyő láthatósági, méret, helyzet, és szín beállításainak engedélyezése. Figyelem: a gyorsmenüt ki-be kell kapcsolni, hogy ez a beállítás érvényre jusson."
@@ -34012,7 +35478,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_70_HU NULL
 #define OPTION_VAL_80_HU NULL
 #define OPTION_VAL_90_HU NULL
-#define OPTION_VAL_100_HU NULL
+#define OPTION_VAL_100_O57_HU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU "VMU 2 képernyő megjelenítése"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU "VMU 2 képernyő helyzete"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU "VMU 2 képernyő mérete"
@@ -34080,7 +35546,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "Default", OPTION_VAL_DEFAULT_HU },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -34099,7 +35565,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "Default",  OPTION_VAL_DEFAULT_HU },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -34653,6 +36119,39 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_HU,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_HU },
+         { "110", OPTION_VAL_110_HU },
+         { "120", OPTION_VAL_120_HU },
+         { "130", OPTION_VAL_130_HU },
+         { "140", OPTION_VAL_140_HU },
+         { "150", OPTION_VAL_150_HU },
+         { "160", OPTION_VAL_160_HU },
+         { "170", OPTION_VAL_170_HU },
+         { "180", OPTION_VAL_180_HU },
+         { "190", OPTION_VAL_190_HU },
+         { "200", OPTION_VAL_200_HU },
+         { "210", OPTION_VAL_210_HU },
+         { "220", OPTION_VAL_220_HU },
+         { "230", OPTION_VAL_230_HU },
+         { "240", OPTION_VAL_240_HU },
+         { "250", OPTION_VAL_250_HU },
+         { "260", OPTION_VAL_260_HU },
+         { "270", OPTION_VAL_270_HU },
+         { "280", OPTION_VAL_280_HU },
+         { "290", OPTION_VAL_290_HU },
+         { "300", OPTION_VAL_300_HU },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU,
       NULL,
@@ -34858,6 +36357,19 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_HU,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU,
@@ -35017,7 +36529,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_HU },
+         { "100%", OPTION_VAL_100_O57_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -35168,7 +36680,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_HU },
+         { "100%", OPTION_VAL_100_O57_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -35319,7 +36831,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_HU },
+         { "100%", OPTION_VAL_100_O57_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -35470,7 +36982,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_HU },
+         { "100%", OPTION_VAL_100_O57_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -35621,6 +37133,29 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ID NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_ID NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_ID NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_ID NULL
+#define OPTION_VAL_100_ID "100%"
+#define OPTION_VAL_110_ID NULL
+#define OPTION_VAL_120_ID NULL
+#define OPTION_VAL_130_ID NULL
+#define OPTION_VAL_140_ID NULL
+#define OPTION_VAL_150_ID NULL
+#define OPTION_VAL_160_ID NULL
+#define OPTION_VAL_170_ID NULL
+#define OPTION_VAL_180_ID NULL
+#define OPTION_VAL_190_ID NULL
+#define OPTION_VAL_200_ID NULL
+#define OPTION_VAL_210_ID NULL
+#define OPTION_VAL_220_ID NULL
+#define OPTION_VAL_230_ID NULL
+#define OPTION_VAL_240_ID NULL
+#define OPTION_VAL_250_ID NULL
+#define OPTION_VAL_260_ID NULL
+#define OPTION_VAL_270_ID NULL
+#define OPTION_VAL_280_ID NULL
+#define OPTION_VAL_290_ID NULL
+#define OPTION_VAL_300_ID NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_ID NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ID NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_ID NULL
@@ -35652,6 +37187,9 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_ID NULL
 #define OPTION_VAL_VMU_A1_ID NULL
 #define OPTION_VAL_ALL_VMUS_ID NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_ID NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ID NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ID NULL
@@ -35699,7 +37237,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_70_ID NULL
 #define OPTION_VAL_80_ID NULL
 #define OPTION_VAL_90_ID NULL
-#define OPTION_VAL_100_ID NULL
+#define OPTION_VAL_100_O57_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ID NULL
@@ -35767,7 +37305,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "Default", OPTION_VAL_DEFAULT_ID },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -35786,7 +37324,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "Default",  OPTION_VAL_DEFAULT_ID },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -36340,6 +37878,39 @@ struct retro_core_option_v2_definition option_defs_id[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_ID,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_ID },
+         { "110", OPTION_VAL_110_ID },
+         { "120", OPTION_VAL_120_ID },
+         { "130", OPTION_VAL_130_ID },
+         { "140", OPTION_VAL_140_ID },
+         { "150", OPTION_VAL_150_ID },
+         { "160", OPTION_VAL_160_ID },
+         { "170", OPTION_VAL_170_ID },
+         { "180", OPTION_VAL_180_ID },
+         { "190", OPTION_VAL_190_ID },
+         { "200", OPTION_VAL_200_ID },
+         { "210", OPTION_VAL_210_ID },
+         { "220", OPTION_VAL_220_ID },
+         { "230", OPTION_VAL_230_ID },
+         { "240", OPTION_VAL_240_ID },
+         { "250", OPTION_VAL_250_ID },
+         { "260", OPTION_VAL_260_ID },
+         { "270", OPTION_VAL_270_ID },
+         { "280", OPTION_VAL_280_ID },
+         { "290", OPTION_VAL_290_ID },
+         { "300", OPTION_VAL_300_ID },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_ID,
       NULL,
@@ -36545,6 +38116,19 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_ID,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ID,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_ID,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ID,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ID,
@@ -36704,7 +38288,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_ID },
+         { "100%", OPTION_VAL_100_O57_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -36855,7 +38439,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_ID },
+         { "100%", OPTION_VAL_100_O57_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -37006,7 +38590,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_ID },
+         { "100%", OPTION_VAL_100_O57_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -37157,7 +38741,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_ID },
+         { "100%", OPTION_VAL_100_O57_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -37308,6 +38892,29 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_IT "Disegnare la geometria al di fuori del normale rapporto di aspetto 4:3. Può produrre difetti grafici nelle aree rivelate."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_IT "Caricamento Veloce GD-ROM (inaccurato)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_IT "Accelera il caricamento di GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_IT NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_IT NULL
+#define OPTION_VAL_100_IT "100%"
+#define OPTION_VAL_110_IT NULL
+#define OPTION_VAL_120_IT NULL
+#define OPTION_VAL_130_IT NULL
+#define OPTION_VAL_140_IT NULL
+#define OPTION_VAL_150_IT NULL
+#define OPTION_VAL_160_IT NULL
+#define OPTION_VAL_170_IT NULL
+#define OPTION_VAL_180_IT NULL
+#define OPTION_VAL_190_IT NULL
+#define OPTION_VAL_200_IT NULL
+#define OPTION_VAL_210_IT NULL
+#define OPTION_VAL_220_IT NULL
+#define OPTION_VAL_230_IT NULL
+#define OPTION_VAL_240_IT NULL
+#define OPTION_VAL_250_IT NULL
+#define OPTION_VAL_260_IT NULL
+#define OPTION_VAL_270_IT NULL
+#define OPTION_VAL_280_IT NULL
+#define OPTION_VAL_290_IT NULL
+#define OPTION_VAL_300_IT NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_IT "Carica Texture Personalizzate"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_IT "Scarica Texture"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_IT "Zona morta dello sticl analogico"
@@ -37339,6 +38946,9 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT "Quando disabilitato, tutti i giochi condividono 4 file VMU salvati (A1, B1, C1, D1) situati nella directory di sistema di RetroArch. L'impostazione 'VMU A1' crea un unico file VMU 'A1' nella directory di salvataggio di RetroArch, per ogni gioco che viene lanciato. L'impostazione 'All VMUs' crea 4 file VMU unici (A1, B1, C1, D1) per ogni gioco che viene lanciato."
 #define OPTION_VAL_VMU_A1_IT NULL
 #define OPTION_VAL_ALL_VMUS_IT "Tutte Le VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_IT "Mostra Le Impostazioni Di Visualizzazione della Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_IT "Mostra Impostazioni Di Visualizzazione VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_IT "Abilita la configurazione dello schermo LCD VMU emulato, la dimensione, la posizione e il colore. NOTA: potrebbe essere necessario attivare il menu rapido affinché questa impostazione abbia effetto."
@@ -37386,7 +38996,7 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_70_IT NULL
 #define OPTION_VAL_80_IT NULL
 #define OPTION_VAL_90_IT NULL
-#define OPTION_VAL_100_IT NULL
+#define OPTION_VAL_100_O57_IT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_IT "Visualizzazione Schermo VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_IT "Posizione VMU Schermo 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_IT "Dimensione VMU Schermo 2"
@@ -37454,7 +39064,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "Default", OPTION_VAL_DEFAULT_IT },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -37473,7 +39083,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "Default",  OPTION_VAL_DEFAULT_IT },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -38027,6 +39637,39 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_IT,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_IT },
+         { "110", OPTION_VAL_110_IT },
+         { "120", OPTION_VAL_120_IT },
+         { "130", OPTION_VAL_130_IT },
+         { "140", OPTION_VAL_140_IT },
+         { "150", OPTION_VAL_150_IT },
+         { "160", OPTION_VAL_160_IT },
+         { "170", OPTION_VAL_170_IT },
+         { "180", OPTION_VAL_180_IT },
+         { "190", OPTION_VAL_190_IT },
+         { "200", OPTION_VAL_200_IT },
+         { "210", OPTION_VAL_210_IT },
+         { "220", OPTION_VAL_220_IT },
+         { "230", OPTION_VAL_230_IT },
+         { "240", OPTION_VAL_240_IT },
+         { "250", OPTION_VAL_250_IT },
+         { "260", OPTION_VAL_260_IT },
+         { "270", OPTION_VAL_270_IT },
+         { "280", OPTION_VAL_280_IT },
+         { "290", OPTION_VAL_290_IT },
+         { "300", OPTION_VAL_300_IT },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_IT,
       NULL,
@@ -38232,6 +39875,19 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_IT,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_IT,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_IT,
@@ -38391,7 +40047,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_IT },
+         { "100%", OPTION_VAL_100_O57_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -38542,7 +40198,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_IT },
+         { "100%", OPTION_VAL_100_O57_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -38693,7 +40349,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_IT },
+         { "100%", OPTION_VAL_100_O57_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -38844,7 +40500,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_IT },
+         { "100%", OPTION_VAL_100_O57_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -38995,6 +40651,29 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_JA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_JA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_JA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_JA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_JA NULL
+#define OPTION_VAL_100_JA "100%"
+#define OPTION_VAL_110_JA NULL
+#define OPTION_VAL_120_JA NULL
+#define OPTION_VAL_130_JA NULL
+#define OPTION_VAL_140_JA NULL
+#define OPTION_VAL_150_JA NULL
+#define OPTION_VAL_160_JA NULL
+#define OPTION_VAL_170_JA NULL
+#define OPTION_VAL_180_JA NULL
+#define OPTION_VAL_190_JA NULL
+#define OPTION_VAL_200_JA NULL
+#define OPTION_VAL_210_JA NULL
+#define OPTION_VAL_220_JA NULL
+#define OPTION_VAL_230_JA NULL
+#define OPTION_VAL_240_JA NULL
+#define OPTION_VAL_250_JA NULL
+#define OPTION_VAL_260_JA NULL
+#define OPTION_VAL_270_JA NULL
+#define OPTION_VAL_280_JA NULL
+#define OPTION_VAL_290_JA NULL
+#define OPTION_VAL_300_JA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_JA NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_JA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_JA NULL
@@ -39026,6 +40705,9 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_JA NULL
 #define OPTION_VAL_VMU_A1_JA NULL
 #define OPTION_VAL_ALL_VMUS_JA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_JA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_JA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_JA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_JA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_JA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_JA NULL
@@ -39073,7 +40755,7 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_70_JA NULL
 #define OPTION_VAL_80_JA NULL
 #define OPTION_VAL_90_JA NULL
-#define OPTION_VAL_100_JA NULL
+#define OPTION_VAL_100_O57_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_JA NULL
@@ -39141,7 +40823,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "Default", OPTION_VAL_DEFAULT_JA },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -39160,7 +40842,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "Default",  OPTION_VAL_DEFAULT_JA },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -39714,6 +41396,39 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_JA,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_JA },
+         { "110", OPTION_VAL_110_JA },
+         { "120", OPTION_VAL_120_JA },
+         { "130", OPTION_VAL_130_JA },
+         { "140", OPTION_VAL_140_JA },
+         { "150", OPTION_VAL_150_JA },
+         { "160", OPTION_VAL_160_JA },
+         { "170", OPTION_VAL_170_JA },
+         { "180", OPTION_VAL_180_JA },
+         { "190", OPTION_VAL_190_JA },
+         { "200", OPTION_VAL_200_JA },
+         { "210", OPTION_VAL_210_JA },
+         { "220", OPTION_VAL_220_JA },
+         { "230", OPTION_VAL_230_JA },
+         { "240", OPTION_VAL_240_JA },
+         { "250", OPTION_VAL_250_JA },
+         { "260", OPTION_VAL_260_JA },
+         { "270", OPTION_VAL_270_JA },
+         { "280", OPTION_VAL_280_JA },
+         { "290", OPTION_VAL_290_JA },
+         { "300", OPTION_VAL_300_JA },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_JA,
       NULL,
@@ -39919,6 +41634,19 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_JA,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_JA,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_JA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_JA,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_JA,
@@ -40078,7 +41806,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_JA },
+         { "100%", OPTION_VAL_100_O57_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -40229,7 +41957,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_JA },
+         { "100%", OPTION_VAL_100_O57_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -40380,7 +42108,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_JA },
+         { "100%", OPTION_VAL_100_O57_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -40531,7 +42259,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_JA },
+         { "100%", OPTION_VAL_100_O57_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -40682,6 +42410,29 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO "일반적인 4:3 화면비 밖에도 개체를 그립니다. 드러난 부분에서 그래픽 오류가 발생할 수도 있습니다."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO "GD-ROM 빠른 로딩 (정확하지 않음)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO "GD-ROM 로딩 속도를 높입니다."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_KO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO NULL
+#define OPTION_VAL_100_KO "100%"
+#define OPTION_VAL_110_KO NULL
+#define OPTION_VAL_120_KO NULL
+#define OPTION_VAL_130_KO NULL
+#define OPTION_VAL_140_KO NULL
+#define OPTION_VAL_150_KO NULL
+#define OPTION_VAL_160_KO NULL
+#define OPTION_VAL_170_KO NULL
+#define OPTION_VAL_180_KO NULL
+#define OPTION_VAL_190_KO NULL
+#define OPTION_VAL_200_KO NULL
+#define OPTION_VAL_210_KO NULL
+#define OPTION_VAL_220_KO NULL
+#define OPTION_VAL_230_KO NULL
+#define OPTION_VAL_240_KO NULL
+#define OPTION_VAL_250_KO NULL
+#define OPTION_VAL_260_KO NULL
+#define OPTION_VAL_270_KO NULL
+#define OPTION_VAL_280_KO NULL
+#define OPTION_VAL_290_KO NULL
+#define OPTION_VAL_300_KO NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO "사용자 텍스처 불러오기"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_KO "텍스쳐 덤프하기"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO "아날로그 스틱 데드존"
@@ -40713,6 +42464,9 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 4개의 VMU 저장 파일(A1, B1, C1, D1)을 공유합니다. 'VMU A1' 설정은 RetroArch의 세이브 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다. '모든 VMU'는 게임 하나 당 4개의 VMU 파일(A1, B1, C1, D1)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO "Visual Memory Unit/System(VMU) 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO "VMU 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_KO "에뮬레이트되는 VMU LCD 화면의 표시 여부, 크기, 위치, 색상 설정을 표시합니다. 주의: 변경 사항이 적용되려면 빠른 메뉴를 껐다 켜야 할 수도 있습니다."
@@ -40760,7 +42514,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_70_KO NULL
 #define OPTION_VAL_80_KO NULL
 #define OPTION_VAL_90_KO NULL
-#define OPTION_VAL_100_KO NULL
+#define OPTION_VAL_100_O57_KO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_KO "VMU 화면 2 표시"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_KO "VMU 화면 2 위치"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 2 크기"
@@ -40828,7 +42582,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "Default", OPTION_VAL_DEFAULT_KO },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -40847,7 +42601,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "Default",  OPTION_VAL_DEFAULT_KO },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -41401,6 +43155,39 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_KO },
+         { "110", OPTION_VAL_110_KO },
+         { "120", OPTION_VAL_120_KO },
+         { "130", OPTION_VAL_130_KO },
+         { "140", OPTION_VAL_140_KO },
+         { "150", OPTION_VAL_150_KO },
+         { "160", OPTION_VAL_160_KO },
+         { "170", OPTION_VAL_170_KO },
+         { "180", OPTION_VAL_180_KO },
+         { "190", OPTION_VAL_190_KO },
+         { "200", OPTION_VAL_200_KO },
+         { "210", OPTION_VAL_210_KO },
+         { "220", OPTION_VAL_220_KO },
+         { "230", OPTION_VAL_230_KO },
+         { "240", OPTION_VAL_240_KO },
+         { "250", OPTION_VAL_250_KO },
+         { "260", OPTION_VAL_260_KO },
+         { "270", OPTION_VAL_270_KO },
+         { "280", OPTION_VAL_280_KO },
+         { "290", OPTION_VAL_290_KO },
+         { "300", OPTION_VAL_300_KO },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO,
       NULL,
@@ -41606,6 +43393,19 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_KO,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO,
@@ -41765,7 +43565,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_KO },
+         { "100%", OPTION_VAL_100_O57_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -41916,7 +43716,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_KO },
+         { "100%", OPTION_VAL_100_O57_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -42067,7 +43867,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_KO },
+         { "100%", OPTION_VAL_100_O57_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -42218,7 +44018,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_KO },
+         { "100%", OPTION_VAL_100_O57_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -42369,6 +44169,29 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_NL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_NL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_NL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_NL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_NL NULL
+#define OPTION_VAL_100_NL "100%"
+#define OPTION_VAL_110_NL NULL
+#define OPTION_VAL_120_NL NULL
+#define OPTION_VAL_130_NL NULL
+#define OPTION_VAL_140_NL NULL
+#define OPTION_VAL_150_NL NULL
+#define OPTION_VAL_160_NL NULL
+#define OPTION_VAL_170_NL NULL
+#define OPTION_VAL_180_NL NULL
+#define OPTION_VAL_190_NL NULL
+#define OPTION_VAL_200_NL NULL
+#define OPTION_VAL_210_NL NULL
+#define OPTION_VAL_220_NL NULL
+#define OPTION_VAL_230_NL NULL
+#define OPTION_VAL_240_NL NULL
+#define OPTION_VAL_250_NL NULL
+#define OPTION_VAL_260_NL NULL
+#define OPTION_VAL_270_NL NULL
+#define OPTION_VAL_280_NL NULL
+#define OPTION_VAL_290_NL NULL
+#define OPTION_VAL_300_NL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_NL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_NL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_NL NULL
@@ -42400,6 +44223,9 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_NL NULL
 #define OPTION_VAL_VMU_A1_NL NULL
 #define OPTION_VAL_ALL_VMUS_NL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_NL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_NL NULL
@@ -42447,7 +44273,7 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_70_NL NULL
 #define OPTION_VAL_80_NL NULL
 #define OPTION_VAL_90_NL NULL
-#define OPTION_VAL_100_NL NULL
+#define OPTION_VAL_100_O57_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NL NULL
@@ -42515,7 +44341,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "Default", OPTION_VAL_DEFAULT_NL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -42534,7 +44360,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "Default",  OPTION_VAL_DEFAULT_NL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -43088,6 +44914,39 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_NL,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_NL },
+         { "110", OPTION_VAL_110_NL },
+         { "120", OPTION_VAL_120_NL },
+         { "130", OPTION_VAL_130_NL },
+         { "140", OPTION_VAL_140_NL },
+         { "150", OPTION_VAL_150_NL },
+         { "160", OPTION_VAL_160_NL },
+         { "170", OPTION_VAL_170_NL },
+         { "180", OPTION_VAL_180_NL },
+         { "190", OPTION_VAL_190_NL },
+         { "200", OPTION_VAL_200_NL },
+         { "210", OPTION_VAL_210_NL },
+         { "220", OPTION_VAL_220_NL },
+         { "230", OPTION_VAL_230_NL },
+         { "240", OPTION_VAL_240_NL },
+         { "250", OPTION_VAL_250_NL },
+         { "260", OPTION_VAL_260_NL },
+         { "270", OPTION_VAL_270_NL },
+         { "280", OPTION_VAL_280_NL },
+         { "290", OPTION_VAL_290_NL },
+         { "300", OPTION_VAL_300_NL },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_NL,
       NULL,
@@ -43293,6 +45152,19 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_NL,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NL,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_NL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NL,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NL,
@@ -43452,7 +45324,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_NL },
+         { "100%", OPTION_VAL_100_O57_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -43603,7 +45475,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_NL },
+         { "100%", OPTION_VAL_100_O57_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -43754,7 +45626,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_NL },
+         { "100%", OPTION_VAL_100_O57_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -43905,7 +45777,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_NL },
+         { "100%", OPTION_VAL_100_O57_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -44056,6 +45928,29 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_NO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_NO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_NO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_NO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_NO NULL
+#define OPTION_VAL_100_NO "100%"
+#define OPTION_VAL_110_NO NULL
+#define OPTION_VAL_120_NO NULL
+#define OPTION_VAL_130_NO NULL
+#define OPTION_VAL_140_NO NULL
+#define OPTION_VAL_150_NO NULL
+#define OPTION_VAL_160_NO NULL
+#define OPTION_VAL_170_NO NULL
+#define OPTION_VAL_180_NO NULL
+#define OPTION_VAL_190_NO NULL
+#define OPTION_VAL_200_NO NULL
+#define OPTION_VAL_210_NO NULL
+#define OPTION_VAL_220_NO NULL
+#define OPTION_VAL_230_NO NULL
+#define OPTION_VAL_240_NO NULL
+#define OPTION_VAL_250_NO NULL
+#define OPTION_VAL_260_NO NULL
+#define OPTION_VAL_270_NO NULL
+#define OPTION_VAL_280_NO NULL
+#define OPTION_VAL_290_NO NULL
+#define OPTION_VAL_300_NO NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_NO NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_NO NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_NO NULL
@@ -44087,6 +45982,9 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_NO NULL
 #define OPTION_VAL_VMU_A1_NO NULL
 #define OPTION_VAL_ALL_VMUS_NO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_NO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_NO NULL
@@ -44134,7 +46032,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_70_NO NULL
 #define OPTION_VAL_80_NO NULL
 #define OPTION_VAL_90_NO NULL
-#define OPTION_VAL_100_NO NULL
+#define OPTION_VAL_100_O57_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NO NULL
@@ -44202,7 +46100,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "Default", OPTION_VAL_DEFAULT_NO },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -44221,7 +46119,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "Default",  OPTION_VAL_DEFAULT_NO },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -44775,6 +46673,39 @@ struct retro_core_option_v2_definition option_defs_no[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_NO,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_NO },
+         { "110", OPTION_VAL_110_NO },
+         { "120", OPTION_VAL_120_NO },
+         { "130", OPTION_VAL_130_NO },
+         { "140", OPTION_VAL_140_NO },
+         { "150", OPTION_VAL_150_NO },
+         { "160", OPTION_VAL_160_NO },
+         { "170", OPTION_VAL_170_NO },
+         { "180", OPTION_VAL_180_NO },
+         { "190", OPTION_VAL_190_NO },
+         { "200", OPTION_VAL_200_NO },
+         { "210", OPTION_VAL_210_NO },
+         { "220", OPTION_VAL_220_NO },
+         { "230", OPTION_VAL_230_NO },
+         { "240", OPTION_VAL_240_NO },
+         { "250", OPTION_VAL_250_NO },
+         { "260", OPTION_VAL_260_NO },
+         { "270", OPTION_VAL_270_NO },
+         { "280", OPTION_VAL_280_NO },
+         { "290", OPTION_VAL_290_NO },
+         { "300", OPTION_VAL_300_NO },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_NO,
       NULL,
@@ -44980,6 +46911,19 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_NO,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NO,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_NO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NO,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NO,
@@ -45139,7 +47083,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_NO },
+         { "100%", OPTION_VAL_100_O57_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -45290,7 +47234,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_NO },
+         { "100%", OPTION_VAL_100_O57_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -45441,7 +47385,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_NO },
+         { "100%", OPTION_VAL_100_O57_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -45592,7 +47536,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_NO },
+         { "100%", OPTION_VAL_100_O57_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -45602,6 +47546,1765 @@ struct retro_core_option_v2_definition option_defs_no[] = {
 struct retro_core_options_v2 options_no = {
    option_cats_no,
    option_defs_no
+};
+
+/* RETRO_LANGUAGE_OR */
+
+#define CATEGORY_SYSTEM_LABEL_OR NULL
+#define CATEGORY_SYSTEM_INFO_0_OR NULL
+#define CATEGORY_VIDEO_LABEL_OR "ଵିଡ଼ିଓ"
+#define CATEGORY_VIDEO_INFO_0_OR NULL
+#define CATEGORY_PERFORMANCE_LABEL_OR NULL
+#define CATEGORY_PERFORMANCE_INFO_0_OR NULL
+#define CATEGORY_HACKS_LABEL_OR NULL
+#define CATEGORY_HACKS_INFO_0_OR NULL
+#define CATEGORY_INPUT_LABEL_OR NULL
+#define CATEGORY_INPUT_INFO_0_OR NULL
+#define CATEGORY_VMU_LABEL_OR NULL
+#define CATEGORY_VMU_INFO_0_OR NULL
+#define CORE_OPTION_NAME_REGION_LABEL_OR "ଅଞ୍ଚଳ"
+#define OPTION_VAL_JAPAN_OR NULL
+#define OPTION_VAL_USA_OR NULL
+#define OPTION_VAL_EUROPE_OR NULL
+#define OPTION_VAL_DEFAULT_OR NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_OR "ଭାଷା"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_OR NULL
+#define OPTION_VAL_JAPANESE_OR NULL
+#define OPTION_VAL_ENGLISH_OR NULL
+#define OPTION_VAL_GERMAN_OR NULL
+#define OPTION_VAL_FRENCH_OR NULL
+#define OPTION_VAL_SPANISH_OR NULL
+#define OPTION_VAL_ITALIAN_OR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_OR NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_OR NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_OR NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_OR NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_OR NULL
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_OR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_OR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_OR NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_OR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_OR NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_OR NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_OR NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_OR NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_OR NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_OR NULL
+#define OPTION_VAL_320X240_OR NULL
+#define OPTION_VAL_640X480_OR NULL
+#define OPTION_VAL_800X600_OR NULL
+#define OPTION_VAL_960X720_OR NULL
+#define OPTION_VAL_1024X768_OR NULL
+#define OPTION_VAL_1280X960_OR NULL
+#define OPTION_VAL_1440X1080_OR NULL
+#define OPTION_VAL_1600X1200_OR NULL
+#define OPTION_VAL_1920X1440_OR NULL
+#define OPTION_VAL_2560X1920_OR NULL
+#define OPTION_VAL_2880X2160_OR NULL
+#define OPTION_VAL_3200X2400_OR NULL
+#define OPTION_VAL_3840X2880_OR NULL
+#define OPTION_VAL_4480X3360_OR NULL
+#define OPTION_VAL_5120X3840_OR NULL
+#define OPTION_VAL_5760X4320_OR NULL
+#define OPTION_VAL_6400X4800_OR NULL
+#define OPTION_VAL_7040X5280_OR NULL
+#define OPTION_VAL_7680X5760_OR NULL
+#define OPTION_VAL_8320X6240_OR NULL
+#define OPTION_VAL_8960X6720_OR NULL
+#define OPTION_VAL_9600X7200_OR NULL
+#define OPTION_VAL_10240X7680_OR NULL
+#define OPTION_VAL_10880X8160_OR NULL
+#define OPTION_VAL_11520X8640_OR NULL
+#define OPTION_VAL_12160X9120_OR NULL
+#define OPTION_VAL_12800X9600_OR NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_OR NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_OR NULL
+#define OPTION_VAL_VGA_OR NULL
+#define OPTION_VAL_TV_RGB_OR NULL
+#define OPTION_VAL_TV_COMPOSITE_OR NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_OR NULL
+#define OPTION_VAL_NTSC_OR NULL
+#define OPTION_VAL_PAL_OR NULL
+#define OPTION_VAL_PAL_N_OR NULL
+#define OPTION_VAL_PAL_M_OR NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_OR NULL
+#define OPTION_VAL_HORIZONTAL_OR NULL
+#define OPTION_VAL_VERTICAL_OR NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_OR NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_OR NULL
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_OR NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_OR NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_OR NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_OR NULL
+#define OPTION_VAL_512MB_OR NULL
+#define OPTION_VAL_1GB_OR NULL
+#define OPTION_VAL_2GB_OR NULL
+#define OPTION_VAL_4GB_OR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_OR NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_OR NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_OR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_OR NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_OR NULL
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_OR NULL
+#define CORE_OPTION_NAME_FOG_LABEL_OR NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_OR NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_OR NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_OR NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_OR NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_OR NULL
+#define OPTION_VAL_1_OR NULL
+#define OPTION_VAL_2_OR NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_OR NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_OR NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_OR NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_OR NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_OR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_OR NULL
+#define OPTION_VAL_2_O27_OR NULL
+#define OPTION_VAL_4_OR NULL
+#define OPTION_VAL_6_OR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_OR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_OR NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_OR NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_OR NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_OR NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_OR NULL
+#define OPTION_VAL_SOME_OR NULL
+#define OPTION_VAL_MORE_OR NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_OR NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_OR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_OR NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_OR NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_OR NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_OR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_OR NULL
+#define OPTION_VAL_100_OR "100%"
+#define OPTION_VAL_110_OR NULL
+#define OPTION_VAL_120_OR NULL
+#define OPTION_VAL_130_OR NULL
+#define OPTION_VAL_140_OR NULL
+#define OPTION_VAL_150_OR NULL
+#define OPTION_VAL_160_OR NULL
+#define OPTION_VAL_170_OR NULL
+#define OPTION_VAL_180_OR NULL
+#define OPTION_VAL_190_OR NULL
+#define OPTION_VAL_200_OR NULL
+#define OPTION_VAL_210_OR NULL
+#define OPTION_VAL_220_OR NULL
+#define OPTION_VAL_230_OR NULL
+#define OPTION_VAL_240_OR NULL
+#define OPTION_VAL_250_OR NULL
+#define OPTION_VAL_260_OR NULL
+#define OPTION_VAL_270_OR NULL
+#define OPTION_VAL_280_OR NULL
+#define OPTION_VAL_290_OR NULL
+#define OPTION_VAL_300_OR NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_OR NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_OR NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_OR NULL
+#define OPTION_VAL_0_OR NULL
+#define OPTION_VAL_5_OR NULL
+#define OPTION_VAL_10_OR NULL
+#define OPTION_VAL_15_OR NULL
+#define OPTION_VAL_20_OR NULL
+#define OPTION_VAL_25_OR NULL
+#define OPTION_VAL_30_OR NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_OR NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_OR NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_OR NULL
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_OR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_OR NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_OR NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_OR NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OR NULL
+#define OPTION_VAL_WHITE_OR NULL
+#define OPTION_VAL_RED_OR NULL
+#define OPTION_VAL_GREEN_OR NULL
+#define OPTION_VAL_BLUE_OR NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_OR NULL
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_OR NULL
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_OR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_OR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_OR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_OR NULL
+#define OPTION_VAL_VMU_A1_OR NULL
+#define OPTION_VAL_ALL_VMUS_OR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_OR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_OR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_OR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_OR NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_OR NULL
+#define OPTION_VAL_UPPER_LEFT_OR NULL
+#define OPTION_VAL_UPPER_RIGHT_OR NULL
+#define OPTION_VAL_LOWER_LEFT_OR NULL
+#define OPTION_VAL_LOWER_RIGHT_OR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_OR NULL
+#define OPTION_VAL_1X_OR NULL
+#define OPTION_VAL_3X_OR NULL
+#define OPTION_VAL_5X_OR NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_OR NULL
+#define OPTION_VAL_DEFAULT_ON_00_OR NULL
+#define OPTION_VAL_DEFAULT_OFF_01_OR NULL
+#define OPTION_VAL_BLACK_02_OR NULL
+#define OPTION_VAL_LIGHT_BLUE_04_OR NULL
+#define OPTION_VAL_CYAN_06_OR NULL
+#define OPTION_VAL_CYAN_BLUE_07_OR NULL
+#define OPTION_VAL_LIGHT_GREEN_08_OR NULL
+#define OPTION_VAL_CYAN_GREEN_09_OR NULL
+#define OPTION_VAL_LIGHT_CYAN_10_OR NULL
+#define OPTION_VAL_PURPLE_12_OR NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_OR NULL
+#define OPTION_VAL_YELLOW_14_OR NULL
+#define OPTION_VAL_GRAY_15_OR NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_OR NULL
+#define OPTION_VAL_LIGHT_GREEN_2_17_OR NULL
+#define OPTION_VAL_LIGHT_GREEN_3_18_OR NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_OR NULL
+#define OPTION_VAL_LIGHT_RED_2_20_OR NULL
+#define OPTION_VAL_MAGENTA_21_OR NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_OR NULL
+#define OPTION_VAL_LIGHT_ORANGE_23_OR NULL
+#define OPTION_VAL_ORANGE_24_OR NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_OR NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_OR NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_OR NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_OR NULL
+#define OPTION_VAL_40_OR NULL
+#define OPTION_VAL_50_OR NULL
+#define OPTION_VAL_60_OR NULL
+#define OPTION_VAL_70_OR NULL
+#define OPTION_VAL_80_OR NULL
+#define OPTION_VAL_90_OR NULL
+#define OPTION_VAL_100_O57_OR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_OR NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_OR NULL
+
+struct retro_core_option_v2_category option_cats_or[] = {
+   {
+      "system",
+      CATEGORY_SYSTEM_LABEL_OR,
+      CATEGORY_SYSTEM_INFO_0_OR
+   },
+   {
+      "video",
+      CATEGORY_VIDEO_LABEL_OR,
+      CATEGORY_VIDEO_INFO_0_OR
+   },
+   {
+      "performance",
+      CATEGORY_PERFORMANCE_LABEL_OR,
+      CATEGORY_PERFORMANCE_INFO_0_OR
+   },
+   {
+      "hacks",
+      CATEGORY_HACKS_LABEL_OR,
+      CATEGORY_HACKS_INFO_0_OR
+   },
+   {
+      "input",
+      CATEGORY_INPUT_LABEL_OR,
+      CATEGORY_INPUT_INFO_0_OR
+   },
+   {
+      "vmu",
+      CATEGORY_VMU_LABEL_OR,
+      CATEGORY_VMU_INFO_0_OR
+   },
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_or[] = {
+   {
+      CORE_OPTION_NAME "_region",
+      CORE_OPTION_NAME_REGION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "system",
+      {
+         { "Japan",   OPTION_VAL_JAPAN_OR },
+         { "USA",     OPTION_VAL_USA_OR },
+         { "Europe",  OPTION_VAL_EUROPE_OR },
+         { "Default", OPTION_VAL_DEFAULT_OR },
+         { NULL, NULL },
+      },
+      "USA",
+   },
+   {
+      CORE_OPTION_NAME "_language",
+      CORE_OPTION_NAME_LANGUAGE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_LANGUAGE_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "Japanese", OPTION_VAL_JAPANESE_OR },
+         { "English",  OPTION_VAL_ENGLISH_OR },
+         { "German",   OPTION_VAL_GERMAN_OR },
+         { "French",   OPTION_VAL_FRENCH_OR },
+         { "Spanish",  OPTION_VAL_SPANISH_OR },
+         { "Italian",  OPTION_VAL_ITALIAN_OR },
+         { "Default",  OPTION_VAL_DEFAULT_OR },
+         { NULL, NULL },
+      },
+      "English",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      CORE_OPTION_NAME_HLE_BIOS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_HLE_BIOS_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_boot_to_bios",
+      CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_dsp",
+      CORE_OPTION_NAME_ENABLE_DSP_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "disabled",
+#else
+      "enabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_force_wince",
+      CORE_OPTION_NAME_FORCE_WINCE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_WINCE_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_allow_service_buttons",
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_OR,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
+      CORE_OPTION_NAME "_internal_resolution",
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "320x240",    OPTION_VAL_320X240_OR },
+         { "640x480",    OPTION_VAL_640X480_OR },
+         { "800x600",    OPTION_VAL_800X600_OR },
+         { "960x720",    OPTION_VAL_960X720_OR },
+         { "1024x768",   OPTION_VAL_1024X768_OR },
+         { "1280x960",   OPTION_VAL_1280X960_OR },
+         { "1440x1080",  OPTION_VAL_1440X1080_OR },
+         { "1600x1200",  OPTION_VAL_1600X1200_OR },
+         { "1920x1440",  OPTION_VAL_1920X1440_OR },
+         { "2560x1920",  OPTION_VAL_2560X1920_OR },
+         { "2880x2160",  OPTION_VAL_2880X2160_OR },
+         { "3200x2400",  OPTION_VAL_3200X2400_OR },
+         { "3840x2880",  OPTION_VAL_3840X2880_OR },
+         { "4480x3360",  OPTION_VAL_4480X3360_OR },
+         { "5120x3840",  OPTION_VAL_5120X3840_OR },
+         { "5760x4320",  OPTION_VAL_5760X4320_OR },
+         { "6400x4800",  OPTION_VAL_6400X4800_OR },
+         { "7040x5280",  OPTION_VAL_7040X5280_OR },
+         { "7680x5760",  OPTION_VAL_7680X5760_OR },
+         { "8320x6240",  OPTION_VAL_8320X6240_OR },
+         { "8960x6720",  OPTION_VAL_8960X6720_OR },
+         { "9600x7200",  OPTION_VAL_9600X7200_OR },
+         { "10240x7680", OPTION_VAL_10240X7680_OR },
+         { "10880x8160", OPTION_VAL_10880X8160_OR },
+         { "11520x8640", OPTION_VAL_11520X8640_OR },
+         { "12160x9120", OPTION_VAL_12160X9120_OR },
+         { "12800x9600", OPTION_VAL_12800X9600_OR },
+         { NULL, NULL },
+      },
+#ifdef LOW_RES
+      "320x240",
+#else
+      "640x480",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_cable_type",
+      CORE_OPTION_NAME_CABLE_TYPE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "VGA",	    	 OPTION_VAL_VGA_OR },
+         { "TV (RGB)",       OPTION_VAL_TV_RGB_OR },
+         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_OR },
+         { NULL, NULL },
+      },
+      "TV (Composite)",
+   },
+   {
+      CORE_OPTION_NAME "_broadcast",
+      CORE_OPTION_NAME_BROADCAST_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "NTSC",    OPTION_VAL_NTSC_OR },
+         { "PAL",     OPTION_VAL_PAL_OR },
+         { "PAL_N",   OPTION_VAL_PAL_N_OR },
+         { "PAL_M",   OPTION_VAL_PAL_M_OR },
+         { "Default", OPTION_VAL_DEFAULT_OR },
+         { NULL, NULL },
+      },
+      "NTSC",
+   },
+   {
+      CORE_OPTION_NAME "_screen_rotation",
+      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "horizontal", OPTION_VAL_HORIZONTAL_OR },
+         { "vertical",   OPTION_VAL_VERTICAL_OR },
+         { NULL, NULL },
+      },
+      "horizontal",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_alpha_sorting",
+      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_OR },
+         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_OR },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_OR },
+#endif
+         { NULL, NULL },
+      },
+#if defined(LOW_END)
+      "per-strip (fast, least accurate)",
+#else
+      "per-triangle (normal)",
+#endif
+   },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+   {
+      CORE_OPTION_NAME "_oit_abuffer_size",
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "512MB", OPTION_VAL_512MB_OR },
+         { "1GB",   OPTION_VAL_1GB_OR },
+         { "2GB",   OPTION_VAL_2GB_OR },
+         { "4GB",   OPTION_VAL_4GB_OR },
+         { NULL, NULL },
+      },
+      "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_enable_rttb",
+      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_mipmapping",
+      CORE_OPTION_NAME_MIPMAPPING_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_fog",
+      CORE_OPTION_NAME_FOG_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_volume_modifier_enable",
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_OR },
+         { "1",  OPTION_VAL_1_OR },
+         { "2",  OPTION_VAL_2_OR },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+#ifdef _OPENMP
+   {
+      CORE_OPTION_NAME "_texupscale",
+      CORE_OPTION_NAME_TEXUPSCALE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_OR,
+      NULL,
+      "video",
+      {
+         { "1", "disabled" },
+         { "2",  OPTION_VAL_2_O27_OR },
+         { "4",  OPTION_VAL_4_OR },
+         { "6",  OPTION_VAL_6_OR },
+         { NULL, NULL },
+      },
+      "1",
+   },
+   {/* TODO: needs clarification */
+      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "256",  NULL },
+         { "512",  NULL },
+         { "1024", NULL },
+         { NULL, NULL },
+      },
+      "256",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_OR,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_OR,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_threaded_rendering",
+      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_OR,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_OR,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "some", OPTION_VAL_SOME_OR },
+         { "more", OPTION_VAL_MORE_OR },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_frame_skipping",
+      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_OR,
+      NULL,
+      "performance",
+      {
+         { "disabled",  NULL },
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_hack",
+      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_gdrom_fast_loading",
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "enabled",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_OR },
+         { "110", OPTION_VAL_110_OR },
+         { "120", OPTION_VAL_120_OR },
+         { "130", OPTION_VAL_130_OR },
+         { "140", OPTION_VAL_140_OR },
+         { "150", OPTION_VAL_150_OR },
+         { "160", OPTION_VAL_160_OR },
+         { "170", OPTION_VAL_170_OR },
+         { "180", OPTION_VAL_180_OR },
+         { "190", OPTION_VAL_190_OR },
+         { "200", OPTION_VAL_200_OR },
+         { "210", OPTION_VAL_210_OR },
+         { "220", OPTION_VAL_220_OR },
+         { "230", OPTION_VAL_230_OR },
+         { "240", OPTION_VAL_240_OR },
+         { "250", OPTION_VAL_250_OR },
+         { "260", OPTION_VAL_260_OR },
+         { "270", OPTION_VAL_270_OR },
+         { "280", OPTION_VAL_280_OR },
+         { "290", OPTION_VAL_290_OR },
+         { "300", OPTION_VAL_300_OR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
+      CORE_OPTION_NAME "_custom_textures",
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: probably needs explanation */
+      CORE_OPTION_NAME "_dump_textures",
+      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_analog_stick_deadzone",
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_OR },
+         { "5%",  OPTION_VAL_5_OR },
+         { "10%", OPTION_VAL_10_OR },
+         { "15%", OPTION_VAL_15_OR },
+         { "20%", OPTION_VAL_20_OR },
+         { "25%", OPTION_VAL_25_OR },
+         { "30%", OPTION_VAL_30_OR },
+         { NULL, NULL },
+      },
+      "15%",
+   },
+   {
+      CORE_OPTION_NAME "_trigger_deadzone",
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_OR },
+         { "5%",  OPTION_VAL_5_OR },
+         { "10%", OPTION_VAL_10_OR },
+         { "15%", OPTION_VAL_15_OR },
+         { "20%", OPTION_VAL_20_OR },
+         { "25%", OPTION_VAL_25_OR },
+         { "30%", OPTION_VAL_30_OR },
+         { NULL, NULL },
+      },
+      "0%",
+   },
+   {
+      CORE_OPTION_NAME "_digital_triggers",
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_purupuru",
+      CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_OR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_OR,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_OR,
+      NULL,
+      "input",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_lightgun1_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_OR },
+         { "Red",      OPTION_VAL_RED_OR },
+         { "Green",    OPTION_VAL_GREEN_OR },
+         { "Blue",     OPTION_VAL_BLUE_OR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun2_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_OR },
+         { "Red",      OPTION_VAL_RED_OR },
+         { "Green",    OPTION_VAL_GREEN_OR },
+         { "Blue",     OPTION_VAL_BLUE_OR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun3_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_OR },
+         { "Red",      OPTION_VAL_RED_OR },
+         { "Green",    OPTION_VAL_GREEN_OR },
+         { "Blue",     OPTION_VAL_BLUE_OR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun4_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_OR },
+         { "Red",      OPTION_VAL_RED_OR },
+         { "Green",    OPTION_VAL_GREEN_OR },
+         { "Blue",     OPTION_VAL_BLUE_OR },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_per_content_vmus",
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_OR,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_OR,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_OR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "VMU A1",   OPTION_VAL_VMU_A1_OR },
+         { "All VMUs", OPTION_VAL_ALL_VMUS_OR },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_OR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_OR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_OR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_OR,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_OR,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_OR,
+      NULL,
+      "vmu",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_display",
+      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_position",
+      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_size_mult",
+      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_OR },
+         { "2x", OPTION_VAL_2_O27_OR },
+         { "3x", OPTION_VAL_3X_OR },
+         { "4x", OPTION_VAL_4_OR },
+         { "5x", OPTION_VAL_5X_OR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_on_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_off_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_opacity",
+      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_OR },
+         { "20%",  OPTION_VAL_20_OR },
+         { "30%",  OPTION_VAL_30_OR },
+         { "40%",  OPTION_VAL_40_OR },
+         { "50%",  OPTION_VAL_50_OR },
+         { "60%",  OPTION_VAL_60_OR },
+         { "70%",  OPTION_VAL_70_OR },
+         { "80%",  OPTION_VAL_80_OR },
+         { "90%",  OPTION_VAL_90_OR },
+         { "100%", OPTION_VAL_100_O57_OR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_display",
+      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_position",
+      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_size_mult",
+      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_OR },
+         { "2x", OPTION_VAL_2_O27_OR },
+         { "3x", OPTION_VAL_3X_OR },
+         { "4x", OPTION_VAL_4_OR },
+         { "5x", OPTION_VAL_5X_OR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_on_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_off_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_opacity",
+      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_OR },
+         { "20%",  OPTION_VAL_20_OR },
+         { "30%",  OPTION_VAL_30_OR },
+         { "40%",  OPTION_VAL_40_OR },
+         { "50%",  OPTION_VAL_50_OR },
+         { "60%",  OPTION_VAL_60_OR },
+         { "70%",  OPTION_VAL_70_OR },
+         { "80%",  OPTION_VAL_80_OR },
+         { "90%",  OPTION_VAL_90_OR },
+         { "100%", OPTION_VAL_100_O57_OR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_display",
+      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_position",
+      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_size_mult",
+      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_OR },
+         { "2x", OPTION_VAL_2_O27_OR },
+         { "3x", OPTION_VAL_3X_OR },
+         { "4x", OPTION_VAL_4_OR },
+         { "5x", OPTION_VAL_5X_OR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_on_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_off_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_opacity",
+      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_OR },
+         { "20%",  OPTION_VAL_20_OR },
+         { "30%",  OPTION_VAL_30_OR },
+         { "40%",  OPTION_VAL_40_OR },
+         { "50%",  OPTION_VAL_50_OR },
+         { "60%",  OPTION_VAL_60_OR },
+         { "70%",  OPTION_VAL_70_OR },
+         { "80%",  OPTION_VAL_80_OR },
+         { "90%",  OPTION_VAL_90_OR },
+         { "100%", OPTION_VAL_100_O57_OR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_display",
+      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_position",
+      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_OR },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_OR },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_OR },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_OR },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_size_mult",
+      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_OR },
+         { "2x", OPTION_VAL_2_O27_OR },
+         { "3x", OPTION_VAL_3X_OR },
+         { "4x", OPTION_VAL_4_OR },
+         { "5x", OPTION_VAL_5X_OR },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_on_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_off_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_OR },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_OR },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_OR },
+         { "BLUE 03",           OPTION_VAL_BLUE_OR },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_OR },
+         { "GREEN 05",          OPTION_VAL_GREEN_OR },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_OR },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_OR },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_OR },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_OR },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_OR },
+         { "RED 11",            OPTION_VAL_RED_OR },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_OR },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_OR },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_OR },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_OR },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_OR },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_OR },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_OR },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_OR },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_OR },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_OR },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_OR },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_OR },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_OR },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_OR },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_OR },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_OR },
+         { "WHITE 28",          OPTION_VAL_WHITE_OR },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_opacity",
+      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_OR },
+         { "20%",  OPTION_VAL_20_OR },
+         { "30%",  OPTION_VAL_30_OR },
+         { "40%",  OPTION_VAL_40_OR },
+         { "50%",  OPTION_VAL_50_OR },
+         { "60%",  OPTION_VAL_60_OR },
+         { "70%",  OPTION_VAL_70_OR },
+         { "80%",  OPTION_VAL_80_OR },
+         { "90%",  OPTION_VAL_90_OR },
+         { "100%", OPTION_VAL_100_O57_OR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_or = {
+   option_cats_or,
+   option_defs_or
 };
 
 /* RETRO_LANGUAGE_PL */
@@ -45743,6 +49446,29 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_PL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PL NULL
+#define OPTION_VAL_100_PL "100%"
+#define OPTION_VAL_110_PL NULL
+#define OPTION_VAL_120_PL NULL
+#define OPTION_VAL_130_PL NULL
+#define OPTION_VAL_140_PL NULL
+#define OPTION_VAL_150_PL NULL
+#define OPTION_VAL_160_PL NULL
+#define OPTION_VAL_170_PL NULL
+#define OPTION_VAL_180_PL NULL
+#define OPTION_VAL_190_PL NULL
+#define OPTION_VAL_200_PL NULL
+#define OPTION_VAL_210_PL NULL
+#define OPTION_VAL_220_PL NULL
+#define OPTION_VAL_230_PL NULL
+#define OPTION_VAL_240_PL NULL
+#define OPTION_VAL_250_PL NULL
+#define OPTION_VAL_260_PL NULL
+#define OPTION_VAL_270_PL NULL
+#define OPTION_VAL_280_PL NULL
+#define OPTION_VAL_290_PL NULL
+#define OPTION_VAL_300_PL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PL NULL
@@ -45774,6 +49500,9 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL NULL
 #define OPTION_VAL_VMU_A1_PL NULL
 #define OPTION_VAL_ALL_VMUS_PL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_PL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PL NULL
@@ -45821,7 +49550,7 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_70_PL NULL
 #define OPTION_VAL_80_PL "80 %"
 #define OPTION_VAL_90_PL NULL
-#define OPTION_VAL_100_PL NULL
+#define OPTION_VAL_100_O57_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PL NULL
@@ -45889,7 +49618,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "Default", OPTION_VAL_DEFAULT_PL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -45908,7 +49637,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "Default",  OPTION_VAL_DEFAULT_PL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -46462,6 +50191,39 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_PL,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_PL },
+         { "110", OPTION_VAL_110_PL },
+         { "120", OPTION_VAL_120_PL },
+         { "130", OPTION_VAL_130_PL },
+         { "140", OPTION_VAL_140_PL },
+         { "150", OPTION_VAL_150_PL },
+         { "160", OPTION_VAL_160_PL },
+         { "170", OPTION_VAL_170_PL },
+         { "180", OPTION_VAL_180_PL },
+         { "190", OPTION_VAL_190_PL },
+         { "200", OPTION_VAL_200_PL },
+         { "210", OPTION_VAL_210_PL },
+         { "220", OPTION_VAL_220_PL },
+         { "230", OPTION_VAL_230_PL },
+         { "240", OPTION_VAL_240_PL },
+         { "250", OPTION_VAL_250_PL },
+         { "260", OPTION_VAL_260_PL },
+         { "270", OPTION_VAL_270_PL },
+         { "280", OPTION_VAL_280_PL },
+         { "290", OPTION_VAL_290_PL },
+         { "300", OPTION_VAL_300_PL },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PL,
       NULL,
@@ -46667,6 +50429,19 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_PL,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PL,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_PL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PL,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PL,
@@ -46826,7 +50601,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_PL },
+         { "100%", OPTION_VAL_100_O57_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -46977,7 +50752,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_PL },
+         { "100%", OPTION_VAL_100_O57_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -47128,7 +50903,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_PL },
+         { "100%", OPTION_VAL_100_O57_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -47279,7 +51054,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_PL },
+         { "100%", OPTION_VAL_100_O57_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -47430,6 +51205,29 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PT_BR "Desenha a geometria além da proporção de tela normal de 4:3. Pode produzir falhas gráficas em áreas reveladas."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PT_BR "Carregamento rápido do GD-ROM (impreciso)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PT_BR "Acelera o carregamento do GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_BR NULL
+#define OPTION_VAL_100_PT_BR "100%"
+#define OPTION_VAL_110_PT_BR NULL
+#define OPTION_VAL_120_PT_BR NULL
+#define OPTION_VAL_130_PT_BR NULL
+#define OPTION_VAL_140_PT_BR NULL
+#define OPTION_VAL_150_PT_BR NULL
+#define OPTION_VAL_160_PT_BR NULL
+#define OPTION_VAL_170_PT_BR NULL
+#define OPTION_VAL_180_PT_BR NULL
+#define OPTION_VAL_190_PT_BR NULL
+#define OPTION_VAL_200_PT_BR NULL
+#define OPTION_VAL_210_PT_BR NULL
+#define OPTION_VAL_220_PT_BR NULL
+#define OPTION_VAL_230_PT_BR NULL
+#define OPTION_VAL_240_PT_BR NULL
+#define OPTION_VAL_250_PT_BR NULL
+#define OPTION_VAL_260_PT_BR NULL
+#define OPTION_VAL_270_PT_BR NULL
+#define OPTION_VAL_280_PT_BR NULL
+#define OPTION_VAL_290_PT_BR NULL
+#define OPTION_VAL_300_PT_BR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PT_BR "Carregar texturas personalizadas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PT_BR "Despejo de texturas"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PT_BR "Zona morta do direcional analógico"
@@ -47461,6 +51259,9 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR "Ao desativar esta opção, todos os jogos compartilharão quatro arquivos de salvamento da VMU (A1, B1, C1, D1) que serão localizados no diretório de sistema do RetroArch. A configuração 'VMU A1' criará um arquivo único da VMU A1 no diretório de salvamento do RetroArch para cada jogo que for executado. A configuração 'Todas as VMUs' criará quatro arquivos únicos VMU (A1, B1, C1, D1) para cada jogo que for executado."
 #define OPTION_VAL_VMU_A1_PT_BR NULL
 #define OPTION_VAL_ALL_VMUS_PT_BR "Todas as VMUs"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_BR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_BR "Mostrar configurações de visualização das Visual Memory (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_BR "Mostrar configurações da exibição da VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PT_BR "Ativa a configuração da visibilidade, do tamanho, da posição e da cor das telas de LCD emulados da VMU. OBSERVAÇÃO: O menu rápido pode precisar ser alternado para que esta configuração surta efeito."
@@ -47508,7 +51309,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_70_PT_BR NULL
 #define OPTION_VAL_80_PT_BR NULL
 #define OPTION_VAL_90_PT_BR NULL
-#define OPTION_VAL_100_PT_BR NULL
+#define OPTION_VAL_100_O57_PT_BR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_BR "Tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_BR "Posição da tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_BR "Tamanho da tela da VMU 2"
@@ -47576,7 +51377,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "Default", OPTION_VAL_DEFAULT_PT_BR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -47595,7 +51396,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "Default",  OPTION_VAL_DEFAULT_PT_BR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -48149,6 +51950,39 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_BR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_PT_BR },
+         { "110", OPTION_VAL_110_PT_BR },
+         { "120", OPTION_VAL_120_PT_BR },
+         { "130", OPTION_VAL_130_PT_BR },
+         { "140", OPTION_VAL_140_PT_BR },
+         { "150", OPTION_VAL_150_PT_BR },
+         { "160", OPTION_VAL_160_PT_BR },
+         { "170", OPTION_VAL_170_PT_BR },
+         { "180", OPTION_VAL_180_PT_BR },
+         { "190", OPTION_VAL_190_PT_BR },
+         { "200", OPTION_VAL_200_PT_BR },
+         { "210", OPTION_VAL_210_PT_BR },
+         { "220", OPTION_VAL_220_PT_BR },
+         { "230", OPTION_VAL_230_PT_BR },
+         { "240", OPTION_VAL_240_PT_BR },
+         { "250", OPTION_VAL_250_PT_BR },
+         { "260", OPTION_VAL_260_PT_BR },
+         { "270", OPTION_VAL_270_PT_BR },
+         { "280", OPTION_VAL_280_PT_BR },
+         { "290", OPTION_VAL_290_PT_BR },
+         { "300", OPTION_VAL_300_PT_BR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PT_BR,
       NULL,
@@ -48354,6 +52188,19 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_BR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_BR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_BR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_BR,
@@ -48513,7 +52360,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_PT_BR },
+         { "100%", OPTION_VAL_100_O57_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -48664,7 +52511,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_PT_BR },
+         { "100%", OPTION_VAL_100_O57_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -48815,7 +52662,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_PT_BR },
+         { "100%", OPTION_VAL_100_O57_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -48966,7 +52813,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_PT_BR },
+         { "100%", OPTION_VAL_100_O57_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -49117,6 +52964,29 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_PT NULL
+#define OPTION_VAL_100_PT_PT "100%"
+#define OPTION_VAL_110_PT_PT NULL
+#define OPTION_VAL_120_PT_PT NULL
+#define OPTION_VAL_130_PT_PT NULL
+#define OPTION_VAL_140_PT_PT NULL
+#define OPTION_VAL_150_PT_PT NULL
+#define OPTION_VAL_160_PT_PT NULL
+#define OPTION_VAL_170_PT_PT NULL
+#define OPTION_VAL_180_PT_PT NULL
+#define OPTION_VAL_190_PT_PT NULL
+#define OPTION_VAL_200_PT_PT NULL
+#define OPTION_VAL_210_PT_PT NULL
+#define OPTION_VAL_220_PT_PT NULL
+#define OPTION_VAL_230_PT_PT NULL
+#define OPTION_VAL_240_PT_PT NULL
+#define OPTION_VAL_250_PT_PT NULL
+#define OPTION_VAL_260_PT_PT NULL
+#define OPTION_VAL_270_PT_PT NULL
+#define OPTION_VAL_280_PT_PT NULL
+#define OPTION_VAL_290_PT_PT NULL
+#define OPTION_VAL_300_PT_PT NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PT_PT NULL
@@ -49148,6 +53018,9 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_PT NULL
 #define OPTION_VAL_VMU_A1_PT_PT NULL
 #define OPTION_VAL_ALL_VMUS_PT_PT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_PT NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PT_PT NULL
@@ -49195,7 +53068,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_70_PT_PT NULL
 #define OPTION_VAL_80_PT_PT NULL
 #define OPTION_VAL_90_PT_PT NULL
-#define OPTION_VAL_100_PT_PT NULL
+#define OPTION_VAL_100_O57_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_PT NULL
@@ -49263,7 +53136,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "Default", OPTION_VAL_DEFAULT_PT_PT },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -49282,7 +53155,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "Default",  OPTION_VAL_DEFAULT_PT_PT },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -49836,6 +53709,39 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_PT,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_PT_PT },
+         { "110", OPTION_VAL_110_PT_PT },
+         { "120", OPTION_VAL_120_PT_PT },
+         { "130", OPTION_VAL_130_PT_PT },
+         { "140", OPTION_VAL_140_PT_PT },
+         { "150", OPTION_VAL_150_PT_PT },
+         { "160", OPTION_VAL_160_PT_PT },
+         { "170", OPTION_VAL_170_PT_PT },
+         { "180", OPTION_VAL_180_PT_PT },
+         { "190", OPTION_VAL_190_PT_PT },
+         { "200", OPTION_VAL_200_PT_PT },
+         { "210", OPTION_VAL_210_PT_PT },
+         { "220", OPTION_VAL_220_PT_PT },
+         { "230", OPTION_VAL_230_PT_PT },
+         { "240", OPTION_VAL_240_PT_PT },
+         { "250", OPTION_VAL_250_PT_PT },
+         { "260", OPTION_VAL_260_PT_PT },
+         { "270", OPTION_VAL_270_PT_PT },
+         { "280", OPTION_VAL_280_PT_PT },
+         { "290", OPTION_VAL_290_PT_PT },
+         { "300", OPTION_VAL_300_PT_PT },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PT_PT,
       NULL,
@@ -50041,6 +53947,19 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_PT,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_PT,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_PT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_PT,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_PT,
@@ -50200,7 +54119,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_PT_PT },
+         { "100%", OPTION_VAL_100_O57_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -50351,7 +54270,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_PT_PT },
+         { "100%", OPTION_VAL_100_O57_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -50502,7 +54421,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_PT_PT },
+         { "100%", OPTION_VAL_100_O57_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -50653,7 +54572,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_PT_PT },
+         { "100%", OPTION_VAL_100_O57_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -50804,6 +54723,29 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RU "Отрисовывать геометрию вне нормального соотношения 4:3. Может вызвать графические артефакты в показываемых областях."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_RU "Быстрая загрузка GD-ROM (неточно)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_RU "Ускоряет загрузку GD-ROM."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_RU NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_RU NULL
+#define OPTION_VAL_100_RU "100%"
+#define OPTION_VAL_110_RU NULL
+#define OPTION_VAL_120_RU NULL
+#define OPTION_VAL_130_RU NULL
+#define OPTION_VAL_140_RU NULL
+#define OPTION_VAL_150_RU NULL
+#define OPTION_VAL_160_RU NULL
+#define OPTION_VAL_170_RU NULL
+#define OPTION_VAL_180_RU NULL
+#define OPTION_VAL_190_RU NULL
+#define OPTION_VAL_200_RU NULL
+#define OPTION_VAL_210_RU NULL
+#define OPTION_VAL_220_RU NULL
+#define OPTION_VAL_230_RU NULL
+#define OPTION_VAL_240_RU NULL
+#define OPTION_VAL_250_RU NULL
+#define OPTION_VAL_260_RU NULL
+#define OPTION_VAL_270_RU NULL
+#define OPTION_VAL_280_RU NULL
+#define OPTION_VAL_290_RU NULL
+#define OPTION_VAL_300_RU NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать пользовательские текстуры"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RU "Мёртвая зона аналогового стика"
@@ -50835,6 +54777,9 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если выключено, для всех игр используются 4 общие файла сохранений VMU (A1, B1, C1, D1), расположенные в системном каталоге RetroArch. В режиме 'VMU A1' для каждой загруженной игры в каталоге сохранений RetroArch создаётся уникальный файл VMU 'A1'. В режиме 'Все VMU' для каждой запускаемой игры создаётся по 4 уникальных файла VMU (A1, B1, C1, D1)."
 #define OPTION_VAL_VMU_A1_RU NULL
 #define OPTION_VAL_ALL_VMUS_RU "Все VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения блока визуальной памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
@@ -50882,7 +54827,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_70_RU NULL
 #define OPTION_VAL_80_RU NULL
 #define OPTION_VAL_90_RU NULL
-#define OPTION_VAL_100_RU NULL
+#define OPTION_VAL_100_O57_RU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_RU "Положение экрана VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_RU "Размер экрана VMU 2"
@@ -50950,7 +54895,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "Default", OPTION_VAL_DEFAULT_RU },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -50969,7 +54914,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "Default",  OPTION_VAL_DEFAULT_RU },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -51523,6 +55468,39 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_RU,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_RU },
+         { "110", OPTION_VAL_110_RU },
+         { "120", OPTION_VAL_120_RU },
+         { "130", OPTION_VAL_130_RU },
+         { "140", OPTION_VAL_140_RU },
+         { "150", OPTION_VAL_150_RU },
+         { "160", OPTION_VAL_160_RU },
+         { "170", OPTION_VAL_170_RU },
+         { "180", OPTION_VAL_180_RU },
+         { "190", OPTION_VAL_190_RU },
+         { "200", OPTION_VAL_200_RU },
+         { "210", OPTION_VAL_210_RU },
+         { "220", OPTION_VAL_220_RU },
+         { "230", OPTION_VAL_230_RU },
+         { "240", OPTION_VAL_240_RU },
+         { "250", OPTION_VAL_250_RU },
+         { "260", OPTION_VAL_260_RU },
+         { "270", OPTION_VAL_270_RU },
+         { "280", OPTION_VAL_280_RU },
+         { "290", OPTION_VAL_290_RU },
+         { "300", OPTION_VAL_300_RU },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU,
       NULL,
@@ -51728,6 +55706,19 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_RU,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU,
@@ -51887,7 +55878,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_RU },
+         { "100%", OPTION_VAL_100_O57_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -52038,7 +56029,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_RU },
+         { "100%", OPTION_VAL_100_O57_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -52189,7 +56180,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_RU },
+         { "100%", OPTION_VAL_100_O57_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -52340,7 +56331,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_RU },
+         { "100%", OPTION_VAL_100_O57_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -52491,6 +56482,29 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SK NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SK NULL
+#define OPTION_VAL_100_SK "100%"
+#define OPTION_VAL_110_SK NULL
+#define OPTION_VAL_120_SK NULL
+#define OPTION_VAL_130_SK NULL
+#define OPTION_VAL_140_SK NULL
+#define OPTION_VAL_150_SK NULL
+#define OPTION_VAL_160_SK NULL
+#define OPTION_VAL_170_SK NULL
+#define OPTION_VAL_180_SK NULL
+#define OPTION_VAL_190_SK NULL
+#define OPTION_VAL_200_SK NULL
+#define OPTION_VAL_210_SK NULL
+#define OPTION_VAL_220_SK NULL
+#define OPTION_VAL_230_SK NULL
+#define OPTION_VAL_240_SK NULL
+#define OPTION_VAL_250_SK NULL
+#define OPTION_VAL_260_SK NULL
+#define OPTION_VAL_270_SK NULL
+#define OPTION_VAL_280_SK NULL
+#define OPTION_VAL_290_SK NULL
+#define OPTION_VAL_300_SK NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SK NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SK NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SK NULL
@@ -52522,6 +56536,9 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SK NULL
 #define OPTION_VAL_VMU_A1_SK NULL
 #define OPTION_VAL_ALL_VMUS_SK "Všetky VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SK NULL
@@ -52569,7 +56586,7 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_70_SK NULL
 #define OPTION_VAL_80_SK NULL
 #define OPTION_VAL_90_SK NULL
-#define OPTION_VAL_100_SK NULL
+#define OPTION_VAL_100_O57_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SK NULL
@@ -52637,7 +56654,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "Default", OPTION_VAL_DEFAULT_SK },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -52656,7 +56673,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "Default",  OPTION_VAL_DEFAULT_SK },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -53210,6 +57227,39 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_SK,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_SK },
+         { "110", OPTION_VAL_110_SK },
+         { "120", OPTION_VAL_120_SK },
+         { "130", OPTION_VAL_130_SK },
+         { "140", OPTION_VAL_140_SK },
+         { "150", OPTION_VAL_150_SK },
+         { "160", OPTION_VAL_160_SK },
+         { "170", OPTION_VAL_170_SK },
+         { "180", OPTION_VAL_180_SK },
+         { "190", OPTION_VAL_190_SK },
+         { "200", OPTION_VAL_200_SK },
+         { "210", OPTION_VAL_210_SK },
+         { "220", OPTION_VAL_220_SK },
+         { "230", OPTION_VAL_230_SK },
+         { "240", OPTION_VAL_240_SK },
+         { "250", OPTION_VAL_250_SK },
+         { "260", OPTION_VAL_260_SK },
+         { "270", OPTION_VAL_270_SK },
+         { "280", OPTION_VAL_280_SK },
+         { "290", OPTION_VAL_290_SK },
+         { "300", OPTION_VAL_300_SK },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SK,
       NULL,
@@ -53415,6 +57465,19 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_SK,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK,
@@ -53574,7 +57637,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_SK },
+         { "100%", OPTION_VAL_100_O57_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -53725,7 +57788,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_SK },
+         { "100%", OPTION_VAL_100_O57_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -53876,7 +57939,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_SK },
+         { "100%", OPTION_VAL_100_O57_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -54027,7 +58090,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_SK },
+         { "100%", OPTION_VAL_100_O57_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -54178,6 +58241,29 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SR NULL
+#define OPTION_VAL_100_SR "100%"
+#define OPTION_VAL_110_SR NULL
+#define OPTION_VAL_120_SR NULL
+#define OPTION_VAL_130_SR NULL
+#define OPTION_VAL_140_SR NULL
+#define OPTION_VAL_150_SR NULL
+#define OPTION_VAL_160_SR NULL
+#define OPTION_VAL_170_SR NULL
+#define OPTION_VAL_180_SR NULL
+#define OPTION_VAL_190_SR NULL
+#define OPTION_VAL_200_SR NULL
+#define OPTION_VAL_210_SR NULL
+#define OPTION_VAL_220_SR NULL
+#define OPTION_VAL_230_SR NULL
+#define OPTION_VAL_240_SR NULL
+#define OPTION_VAL_250_SR NULL
+#define OPTION_VAL_260_SR NULL
+#define OPTION_VAL_270_SR NULL
+#define OPTION_VAL_280_SR NULL
+#define OPTION_VAL_290_SR NULL
+#define OPTION_VAL_300_SR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SR NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SR NULL
@@ -54209,6 +58295,9 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SR NULL
 #define OPTION_VAL_VMU_A1_SR NULL
 #define OPTION_VAL_ALL_VMUS_SR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SR NULL
@@ -54256,7 +58345,7 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_70_SR NULL
 #define OPTION_VAL_80_SR NULL
 #define OPTION_VAL_90_SR NULL
-#define OPTION_VAL_100_SR NULL
+#define OPTION_VAL_100_O57_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SR NULL
@@ -54324,7 +58413,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "Default", OPTION_VAL_DEFAULT_SR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -54343,7 +58432,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "Default",  OPTION_VAL_DEFAULT_SR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -54897,6 +58986,39 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_SR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_SR },
+         { "110", OPTION_VAL_110_SR },
+         { "120", OPTION_VAL_120_SR },
+         { "130", OPTION_VAL_130_SR },
+         { "140", OPTION_VAL_140_SR },
+         { "150", OPTION_VAL_150_SR },
+         { "160", OPTION_VAL_160_SR },
+         { "170", OPTION_VAL_170_SR },
+         { "180", OPTION_VAL_180_SR },
+         { "190", OPTION_VAL_190_SR },
+         { "200", OPTION_VAL_200_SR },
+         { "210", OPTION_VAL_210_SR },
+         { "220", OPTION_VAL_220_SR },
+         { "230", OPTION_VAL_230_SR },
+         { "240", OPTION_VAL_240_SR },
+         { "250", OPTION_VAL_250_SR },
+         { "260", OPTION_VAL_260_SR },
+         { "270", OPTION_VAL_270_SR },
+         { "280", OPTION_VAL_280_SR },
+         { "290", OPTION_VAL_290_SR },
+         { "300", OPTION_VAL_300_SR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SR,
       NULL,
@@ -55102,6 +59224,19 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_SR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_SR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SR,
@@ -55261,7 +59396,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_SR },
+         { "100%", OPTION_VAL_100_O57_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -55412,7 +59547,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_SR },
+         { "100%", OPTION_VAL_100_O57_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -55563,7 +59698,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_SR },
+         { "100%", OPTION_VAL_100_O57_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -55714,7 +59849,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_SR },
+         { "100%", OPTION_VAL_100_O57_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -55865,6 +60000,29 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SV NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SV NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SV NULL
+#define OPTION_VAL_100_SV "100 %"
+#define OPTION_VAL_110_SV NULL
+#define OPTION_VAL_120_SV NULL
+#define OPTION_VAL_130_SV NULL
+#define OPTION_VAL_140_SV NULL
+#define OPTION_VAL_150_SV NULL
+#define OPTION_VAL_160_SV NULL
+#define OPTION_VAL_170_SV NULL
+#define OPTION_VAL_180_SV NULL
+#define OPTION_VAL_190_SV NULL
+#define OPTION_VAL_200_SV NULL
+#define OPTION_VAL_210_SV NULL
+#define OPTION_VAL_220_SV NULL
+#define OPTION_VAL_230_SV NULL
+#define OPTION_VAL_240_SV NULL
+#define OPTION_VAL_250_SV NULL
+#define OPTION_VAL_260_SV NULL
+#define OPTION_VAL_270_SV NULL
+#define OPTION_VAL_280_SV NULL
+#define OPTION_VAL_290_SV NULL
+#define OPTION_VAL_300_SV NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV NULL
@@ -55896,6 +60054,9 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV NULL
 #define OPTION_VAL_VMU_A1_SV NULL
 #define OPTION_VAL_ALL_VMUS_SV "Alla VMU:er"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV NULL
@@ -55943,7 +60104,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_70_SV "70 %"
 #define OPTION_VAL_80_SV "80 %"
 #define OPTION_VAL_90_SV "90 %"
-#define OPTION_VAL_100_SV "100 %"
+#define OPTION_VAL_100_O57_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV NULL
@@ -56011,7 +60172,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "Default", OPTION_VAL_DEFAULT_SV },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -56030,7 +60191,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "Default",  OPTION_VAL_DEFAULT_SV },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -56584,6 +60745,39 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_SV,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_SV },
+         { "110", OPTION_VAL_110_SV },
+         { "120", OPTION_VAL_120_SV },
+         { "130", OPTION_VAL_130_SV },
+         { "140", OPTION_VAL_140_SV },
+         { "150", OPTION_VAL_150_SV },
+         { "160", OPTION_VAL_160_SV },
+         { "170", OPTION_VAL_170_SV },
+         { "180", OPTION_VAL_180_SV },
+         { "190", OPTION_VAL_190_SV },
+         { "200", OPTION_VAL_200_SV },
+         { "210", OPTION_VAL_210_SV },
+         { "220", OPTION_VAL_220_SV },
+         { "230", OPTION_VAL_230_SV },
+         { "240", OPTION_VAL_240_SV },
+         { "250", OPTION_VAL_250_SV },
+         { "260", OPTION_VAL_260_SV },
+         { "270", OPTION_VAL_270_SV },
+         { "280", OPTION_VAL_280_SV },
+         { "290", OPTION_VAL_290_SV },
+         { "300", OPTION_VAL_300_SV },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV,
       NULL,
@@ -56789,6 +60983,19 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_SV,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV,
@@ -56948,7 +61155,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_SV },
+         { "100%", OPTION_VAL_100_O57_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -57099,7 +61306,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_SV },
+         { "100%", OPTION_VAL_100_O57_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -57250,7 +61457,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_SV },
+         { "100%", OPTION_VAL_100_O57_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -57401,7 +61608,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_SV },
+         { "100%", OPTION_VAL_100_O57_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -57552,6 +61759,29 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TR "Normal 4:3 en boy oranının dışına geometri çizin. Ortaya çıkan alanlarda grafiksel hatalara neden olabilir."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TR "GDROM Hızlı Yükleme (kusurlu)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TR "GD-ROM yüklemesini hızlandırır."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_TR NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_TR NULL
+#define OPTION_VAL_100_TR "%100"
+#define OPTION_VAL_110_TR NULL
+#define OPTION_VAL_120_TR NULL
+#define OPTION_VAL_130_TR NULL
+#define OPTION_VAL_140_TR NULL
+#define OPTION_VAL_150_TR NULL
+#define OPTION_VAL_160_TR NULL
+#define OPTION_VAL_170_TR NULL
+#define OPTION_VAL_180_TR NULL
+#define OPTION_VAL_190_TR NULL
+#define OPTION_VAL_200_TR NULL
+#define OPTION_VAL_210_TR NULL
+#define OPTION_VAL_220_TR NULL
+#define OPTION_VAL_230_TR NULL
+#define OPTION_VAL_240_TR NULL
+#define OPTION_VAL_250_TR NULL
+#define OPTION_VAL_260_TR NULL
+#define OPTION_VAL_270_TR NULL
+#define OPTION_VAL_280_TR NULL
+#define OPTION_VAL_290_TR NULL
+#define OPTION_VAL_300_TR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
@@ -57583,6 +61813,9 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem dizininde bulunan 4 VMU kayıt dosyasını (A1, B1, C1, D1) paylaşır. 'VMU A1' ayarı, başlatılan her oyun için RetroArch kayıt dizininde benzersiz bir VMU 'A1' dosyası oluşturur. 'Tüm VMU'' ayarı, başlatılan her oyun için 4 benzersiz VMU dosyası (A1, B1, C1, D1) oluşturur."
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TR NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TR "Görsel Bellek Birimi/Sistem (VMU) Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TR "VMU Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TR "Taklit edilmiş VMU LCD ekran görünürlüğünün, boyutunun, konumunun ve renginin yapılandırılmasını etkinleştirin. NOT: Bu ayarın etkili olması için Hızlı Menü'nün değiştirilmesi gerekebilir."
@@ -57630,7 +61863,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_70_TR "%70"
 #define OPTION_VAL_80_TR "%80"
 #define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_TR "%100"
+#define OPTION_VAL_100_O57_TR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TR "VMU Ekranı 2 Görüntüle"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TR "VMU Ekranı 2 Pozisyon"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TR "VMU Ekranı 2 Boyut"
@@ -57698,7 +61931,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "Default", OPTION_VAL_DEFAULT_TR },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -57717,7 +61950,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "Default",  OPTION_VAL_DEFAULT_TR },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -58271,6 +62504,39 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_TR,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_TR },
+         { "110", OPTION_VAL_110_TR },
+         { "120", OPTION_VAL_120_TR },
+         { "130", OPTION_VAL_130_TR },
+         { "140", OPTION_VAL_140_TR },
+         { "150", OPTION_VAL_150_TR },
+         { "160", OPTION_VAL_160_TR },
+         { "170", OPTION_VAL_170_TR },
+         { "180", OPTION_VAL_180_TR },
+         { "190", OPTION_VAL_190_TR },
+         { "200", OPTION_VAL_200_TR },
+         { "210", OPTION_VAL_210_TR },
+         { "220", OPTION_VAL_220_TR },
+         { "230", OPTION_VAL_230_TR },
+         { "240", OPTION_VAL_240_TR },
+         { "250", OPTION_VAL_250_TR },
+         { "260", OPTION_VAL_260_TR },
+         { "270", OPTION_VAL_270_TR },
+         { "280", OPTION_VAL_280_TR },
+         { "290", OPTION_VAL_290_TR },
+         { "300", OPTION_VAL_300_TR },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR,
       NULL,
@@ -58476,6 +62742,19 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_TR,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TR,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_TR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TR,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TR,
@@ -58635,7 +62914,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_TR },
+         { "100%", OPTION_VAL_100_O57_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -58786,7 +63065,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_TR },
+         { "100%", OPTION_VAL_100_O57_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -58937,7 +63216,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_TR },
+         { "100%", OPTION_VAL_100_O57_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -59088,7 +63367,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_TR },
+         { "100%", OPTION_VAL_100_O57_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -59239,6 +63518,29 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_UK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_UK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_UK NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_UK NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_UK NULL
+#define OPTION_VAL_100_UK "100%"
+#define OPTION_VAL_110_UK NULL
+#define OPTION_VAL_120_UK NULL
+#define OPTION_VAL_130_UK NULL
+#define OPTION_VAL_140_UK NULL
+#define OPTION_VAL_150_UK NULL
+#define OPTION_VAL_160_UK NULL
+#define OPTION_VAL_170_UK NULL
+#define OPTION_VAL_180_UK NULL
+#define OPTION_VAL_190_UK NULL
+#define OPTION_VAL_200_UK NULL
+#define OPTION_VAL_210_UK NULL
+#define OPTION_VAL_220_UK NULL
+#define OPTION_VAL_230_UK NULL
+#define OPTION_VAL_240_UK NULL
+#define OPTION_VAL_250_UK NULL
+#define OPTION_VAL_260_UK NULL
+#define OPTION_VAL_270_UK NULL
+#define OPTION_VAL_280_UK NULL
+#define OPTION_VAL_290_UK NULL
+#define OPTION_VAL_300_UK NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_UK NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_UK NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_UK NULL
@@ -59270,6 +63572,9 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_UK NULL
 #define OPTION_VAL_VMU_A1_UK NULL
 #define OPTION_VAL_ALL_VMUS_UK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_UK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_UK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_UK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_UK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_UK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_UK NULL
@@ -59317,7 +63622,7 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_70_UK NULL
 #define OPTION_VAL_80_UK NULL
 #define OPTION_VAL_90_UK NULL
-#define OPTION_VAL_100_UK NULL
+#define OPTION_VAL_100_O57_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_UK NULL
@@ -59385,7 +63690,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "Default", OPTION_VAL_DEFAULT_UK },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -59404,7 +63709,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "Default",  OPTION_VAL_DEFAULT_UK },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -59958,6 +64263,39 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_UK,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_UK },
+         { "110", OPTION_VAL_110_UK },
+         { "120", OPTION_VAL_120_UK },
+         { "130", OPTION_VAL_130_UK },
+         { "140", OPTION_VAL_140_UK },
+         { "150", OPTION_VAL_150_UK },
+         { "160", OPTION_VAL_160_UK },
+         { "170", OPTION_VAL_170_UK },
+         { "180", OPTION_VAL_180_UK },
+         { "190", OPTION_VAL_190_UK },
+         { "200", OPTION_VAL_200_UK },
+         { "210", OPTION_VAL_210_UK },
+         { "220", OPTION_VAL_220_UK },
+         { "230", OPTION_VAL_230_UK },
+         { "240", OPTION_VAL_240_UK },
+         { "250", OPTION_VAL_250_UK },
+         { "260", OPTION_VAL_260_UK },
+         { "270", OPTION_VAL_270_UK },
+         { "280", OPTION_VAL_280_UK },
+         { "290", OPTION_VAL_290_UK },
+         { "300", OPTION_VAL_300_UK },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_UK,
       NULL,
@@ -60163,6 +64501,19 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_UK,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_UK,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_UK,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_UK,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_UK,
@@ -60322,7 +64673,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_UK },
+         { "100%", OPTION_VAL_100_O57_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -60473,7 +64824,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_UK },
+         { "100%", OPTION_VAL_100_O57_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -60624,7 +64975,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_UK },
+         { "100%", OPTION_VAL_100_O57_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -60775,7 +65126,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_UK },
+         { "100%", OPTION_VAL_100_O57_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -60926,6 +65277,29 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_VAL NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VAL NULL
+#define OPTION_VAL_100_VAL "100%"
+#define OPTION_VAL_110_VAL NULL
+#define OPTION_VAL_120_VAL NULL
+#define OPTION_VAL_130_VAL NULL
+#define OPTION_VAL_140_VAL NULL
+#define OPTION_VAL_150_VAL NULL
+#define OPTION_VAL_160_VAL NULL
+#define OPTION_VAL_170_VAL NULL
+#define OPTION_VAL_180_VAL NULL
+#define OPTION_VAL_190_VAL NULL
+#define OPTION_VAL_200_VAL NULL
+#define OPTION_VAL_210_VAL NULL
+#define OPTION_VAL_220_VAL NULL
+#define OPTION_VAL_230_VAL NULL
+#define OPTION_VAL_240_VAL NULL
+#define OPTION_VAL_250_VAL NULL
+#define OPTION_VAL_260_VAL NULL
+#define OPTION_VAL_270_VAL NULL
+#define OPTION_VAL_280_VAL NULL
+#define OPTION_VAL_290_VAL NULL
+#define OPTION_VAL_300_VAL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_VAL NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VAL NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_VAL NULL
@@ -60957,6 +65331,9 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_VAL NULL
 #define OPTION_VAL_VMU_A1_VAL NULL
 #define OPTION_VAL_ALL_VMUS_VAL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_VAL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VAL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VAL NULL
@@ -61004,7 +65381,7 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_70_VAL NULL
 #define OPTION_VAL_80_VAL NULL
 #define OPTION_VAL_90_VAL NULL
-#define OPTION_VAL_100_VAL NULL
+#define OPTION_VAL_100_O57_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VAL NULL
@@ -61072,7 +65449,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "Default", OPTION_VAL_DEFAULT_VAL },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -61091,7 +65468,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "Default",  OPTION_VAL_DEFAULT_VAL },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -61645,6 +66022,39 @@ struct retro_core_option_v2_definition option_defs_val[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_VAL,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_VAL },
+         { "110", OPTION_VAL_110_VAL },
+         { "120", OPTION_VAL_120_VAL },
+         { "130", OPTION_VAL_130_VAL },
+         { "140", OPTION_VAL_140_VAL },
+         { "150", OPTION_VAL_150_VAL },
+         { "160", OPTION_VAL_160_VAL },
+         { "170", OPTION_VAL_170_VAL },
+         { "180", OPTION_VAL_180_VAL },
+         { "190", OPTION_VAL_190_VAL },
+         { "200", OPTION_VAL_200_VAL },
+         { "210", OPTION_VAL_210_VAL },
+         { "220", OPTION_VAL_220_VAL },
+         { "230", OPTION_VAL_230_VAL },
+         { "240", OPTION_VAL_240_VAL },
+         { "250", OPTION_VAL_250_VAL },
+         { "260", OPTION_VAL_260_VAL },
+         { "270", OPTION_VAL_270_VAL },
+         { "280", OPTION_VAL_280_VAL },
+         { "290", OPTION_VAL_290_VAL },
+         { "300", OPTION_VAL_300_VAL },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_VAL,
       NULL,
@@ -61850,6 +66260,19 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_VAL,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VAL,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_VAL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VAL,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VAL,
@@ -62009,7 +66432,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_VAL },
+         { "100%", OPTION_VAL_100_O57_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -62160,7 +66583,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_VAL },
+         { "100%", OPTION_VAL_100_O57_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -62311,7 +66734,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_VAL },
+         { "100%", OPTION_VAL_100_O57_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -62462,7 +66885,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_VAL },
+         { "100%", OPTION_VAL_100_O57_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -62613,6 +67036,29 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_VN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_VN NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VN NULL
+#define OPTION_VAL_100_VN "100%"
+#define OPTION_VAL_110_VN NULL
+#define OPTION_VAL_120_VN NULL
+#define OPTION_VAL_130_VN NULL
+#define OPTION_VAL_140_VN NULL
+#define OPTION_VAL_150_VN NULL
+#define OPTION_VAL_160_VN NULL
+#define OPTION_VAL_170_VN NULL
+#define OPTION_VAL_180_VN NULL
+#define OPTION_VAL_190_VN NULL
+#define OPTION_VAL_200_VN NULL
+#define OPTION_VAL_210_VN NULL
+#define OPTION_VAL_220_VN NULL
+#define OPTION_VAL_230_VN NULL
+#define OPTION_VAL_240_VN NULL
+#define OPTION_VAL_250_VN NULL
+#define OPTION_VAL_260_VN NULL
+#define OPTION_VAL_270_VN NULL
+#define OPTION_VAL_280_VN NULL
+#define OPTION_VAL_290_VN NULL
+#define OPTION_VAL_300_VN NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_VN NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VN NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_VN NULL
@@ -62644,6 +67090,9 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_VN NULL
 #define OPTION_VAL_VMU_A1_VN NULL
 #define OPTION_VAL_ALL_VMUS_VN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_VN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VN NULL
@@ -62691,7 +67140,7 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_70_VN NULL
 #define OPTION_VAL_80_VN NULL
 #define OPTION_VAL_90_VN NULL
-#define OPTION_VAL_100_VN NULL
+#define OPTION_VAL_100_O57_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VN NULL
@@ -62759,7 +67208,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "Default", OPTION_VAL_DEFAULT_VN },
          { NULL, NULL },
       },
-      "Default",
+      "USA",
    },
    {
       CORE_OPTION_NAME "_language",
@@ -62778,7 +67227,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "Default",  OPTION_VAL_DEFAULT_VN },
          { NULL, NULL },
       },
-      "Default",
+      "English",
    },
    {
       CORE_OPTION_NAME "_hle_bios",
@@ -63332,6 +67781,39 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_VN,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_VN },
+         { "110", OPTION_VAL_110_VN },
+         { "120", OPTION_VAL_120_VN },
+         { "130", OPTION_VAL_130_VN },
+         { "140", OPTION_VAL_140_VN },
+         { "150", OPTION_VAL_150_VN },
+         { "160", OPTION_VAL_160_VN },
+         { "170", OPTION_VAL_170_VN },
+         { "180", OPTION_VAL_180_VN },
+         { "190", OPTION_VAL_190_VN },
+         { "200", OPTION_VAL_200_VN },
+         { "210", OPTION_VAL_210_VN },
+         { "220", OPTION_VAL_220_VN },
+         { "230", OPTION_VAL_230_VN },
+         { "240", OPTION_VAL_240_VN },
+         { "250", OPTION_VAL_250_VN },
+         { "260", OPTION_VAL_260_VN },
+         { "270", OPTION_VAL_270_VN },
+         { "280", OPTION_VAL_280_VN },
+         { "290", OPTION_VAL_290_VN },
+         { "300", OPTION_VAL_300_VN },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
       CORE_OPTION_NAME "_custom_textures",
       CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_VN,
       NULL,
@@ -63537,6 +68019,19 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_VN,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_show_vmu_screen_settings",
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VN,
       CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VN,
@@ -63696,7 +68191,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_VN },
+         { "100%", OPTION_VAL_100_O57_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -63847,7 +68342,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_VN },
+         { "100%", OPTION_VAL_100_O57_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -63998,7 +68493,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_VN },
+         { "100%", OPTION_VAL_100_O57_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -64149,7 +68644,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_VN },
+         { "100%", OPTION_VAL_100_O57_VN },
          { NULL,   NULL },
       },
       "100%",

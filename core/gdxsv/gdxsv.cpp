@@ -318,9 +318,11 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 	auto msg = LbsMessage::ClNotice(LbsMessage::lbsP2PMatchingReport);
 	auto lines = InMemoryListener::getInstance()->getLog();
 
+	std::ostringstream ss;
 	for (const auto &line : lines) {
-		*rbk_report.mutable_logs()->Add() = line;
+		ss << line;
 	}
+	rbk_report.set_log(ss.str());
 
 	std::string data;
 	if (rbk_report.SerializeToString(&data)) {
@@ -710,7 +712,8 @@ void Gdxsv::WritePatchDisk1() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	if (InGame() && gdxsv_ReadMem8(0x0c336254) == 2 && gdxsv_ReadMem8(0x0c336255) == 7) {
+	if ((InGame() || (IsReplaying() && config::GdxReplayShowAllyHP)) && gdxsv_ReadMem8(0x0c336254) == 2 &&
+		gdxsv_ReadMem8(0x0c336255) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c2f6652);
 		if (1 <= player_index && player_index <= 4) {
 			player_index--;
@@ -791,7 +794,8 @@ void Gdxsv::WritePatchDisk2() {
 
 	// Ally HP
 	u16 hp_offset = 0x0180;
-	if (InGame() && gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) {
+	if ((InGame() || (IsReplaying() && config::GdxReplayShowAllyHP)) && gdxsv_ReadMem8(0x0c3d16d4) == 2 &&
+		gdxsv_ReadMem8(0x0c3d16d5) == 7) {
 		u8 player_index = gdxsv_ReadMem8(0x0c391d92);
 		if (1 <= player_index && player_index <= 4) {
 			player_index--;
@@ -840,8 +844,17 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 
 	auto str = std::string(path);
 	if (4 <= str.length() && str.substr(0, 4) == "http") {
-		auto resp = os_FetchStringFromURL(str);
-		if (0 < resp.size() && replay_net_.StartBuffer(resp.data(), resp.size())) {
+		std::string content_type;
+		http::init();
+		std::vector<u8> downloaded;
+
+		int rc = http::get(str, downloaded, content_type);
+		if (rc != 200) {
+			ERROR_LOG(COMMON, "replay download failure: %s", str.c_str());
+			return false;
+		}
+
+		if (replay_net_.StartBuffer(downloaded, pov)) {
 			netmode_ = NetMode::Replay;
 			return true;
 		}

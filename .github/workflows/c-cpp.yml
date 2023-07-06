@@ -28,6 +28,7 @@ jobs:
       id-token: write
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           # - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
@@ -44,13 +45,13 @@ jobs:
         run: |
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
-          brew update
+          brew update || :
           brew install libao ldid ninja pulseaudio
           [ -f $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool ] && sudo $VULKAN_SDK/../MaintenanceTool.app/Contents/MacOS/MaintenanceTool --confirm-command purge
-          VULKAN_VER=1.3.224.1 && aria2c --parameterized-uri=true --conditional-get=true --allow-overwrite="true" --auto-file-renaming="false" https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
+          VULKAN_VER=1.3.250.1 && aria2c --parameterized-uri=true --conditional-get=true --allow-overwrite="true" --auto-file-renaming="false" https://{sdk.lunarg.com/sdk/download/$VULKAN_VER/mac,distfiles.macports.org/MoltenVK}/vulkansdk-macos-$VULKAN_VER.dmg
           hdiutil attach ./vulkansdk-macos-$VULKAN_VER.dmg
-          sudo /Volumes/vulkansdk-macos-*/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
-          hdiutil detach /Volumes/vulkansdk-macos-*
+          sudo /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
+          hdiutil detach /Volumes/VulkanSDK
           echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
@@ -191,7 +192,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}

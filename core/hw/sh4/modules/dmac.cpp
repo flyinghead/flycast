@@ -13,6 +13,8 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/holly/holly_intc.h"
 
+DMACRegisters dmac;
+
 void DMAC_Ch2St()
 {
 	u32 dmaor = DMAC_DMAOR.full;
@@ -44,16 +46,16 @@ void DMAC_Ch2St()
 	// 12000000 - 12FFFFE0
 	if ((dst & 0x01000000) == 0)
 	{
-		SQBuffer *sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		if ((src & RAM_MASK) + len > RAM_SIZE)
 		{
 			u32 newLen = RAM_SIZE - (src & RAM_MASK);
-			TAWrite(dst, sys_buf, newLen / sizeof(SQBuffer));
+			SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, newLen);
+			TAWrite(dst, psrc, newLen / sizeof(SQBuffer));
 			len -= newLen;
 			src += newLen;
-			sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		}
-		TAWrite(dst, sys_buf, len / sizeof(SQBuffer));
+		SQBuffer *psrc = (SQBuffer *)GetMemPtr(src, len);
+		TAWrite(dst, psrc, len / sizeof(SQBuffer));
 		src += len;
 	}
 	// Direct Texture path and mirror
@@ -111,36 +113,104 @@ static const InterruptID dmac_itr[] = { sh4_DMAC_DMTE0, sh4_DMAC_DMTE1, sh4_DMAC
 template<u32 ch>
 static void WriteCHCR(u32 addr, u32 data)
 {
-	if (ch == 0 || ch == 1)
+	if constexpr (ch == 0 || ch == 1)
 		DMAC_CHCR(ch).full = data & 0xff0ffff7;
 	else
 		// no AL or RL on channels 2 and 3
 		DMAC_CHCR(ch).full = data & 0xff0afff7;
 
 	if (DMAC_CHCR(ch).TE == 0 && DMAC_CHCR(ch).DE && DMAC_DMAOR.DME)
-    {
+	{
 		if (DMAC_CHCR(ch).RS == 4)
-        {
-			u32 len = DMAC_DMATCR(ch) * 32;
+		{
+			DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
+					DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+			u32 src = DMAC_SAR(ch);
+			u32 len = DMAC_DMATCR(ch);
+			u32 dst = DMAC_DAR(ch);
 
-            DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
-            		DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
-            verify(DMAC_CHCR(ch).TS == 4);
-            for (u32 ofs = 0; ofs < len; ofs += 4)
-            {
-                u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
-                WriteMem32_nommu(DMAC_DAR(ch) + ofs, data);
+			int srcIncr, dstIncr;
+			switch (DMAC_CHCR(ch).SM)
+			{
+			case 1:
+				srcIncr = 1;
+				break;
+			case 2:
+				srcIncr = -1;
+				break;
+			default:
+				srcIncr = 0;
+				break;
+			}
+			switch (DMAC_CHCR(ch).DM)
+			{
+			case 1:
+				dstIncr = 1;
+				break;
+			case 2:
+				dstIncr = -1;
+				break;
+			default:
+				dstIncr = 0;
+				break;
+			}
+
+			switch (DMAC_CHCR(ch).TS)
+			{
+			case 0:	// 64 bits
+				srcIncr *= sizeof(u64);
+				dstIncr *= sizeof(u64);
+				for (; len != 0; len--)
+				{
+					u64 data = addrspace::read64(src);
+					addrspace::write64(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
+
+			case 1: // 8 bits
+				for (; len != 0; len--)
+				{
+					u8 data = addrspace::read8(src);
+					addrspace::write8(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
+
+			case 2: // 16 bits
+				srcIncr *= sizeof(u16);
+				dstIncr *= sizeof(u16);
+				for (; len != 0; len--)
+				{
+					u16 data = addrspace::read16(src);
+					addrspace::write16(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+                break;
+
+			case 4: // 32-byte block
+				len *= 32 / sizeof(u32);
+				[[fallthrough]];
+
+            default: // 32 bits
+				srcIncr *= sizeof(u32);
+				dstIncr *= sizeof(u32);
+				for (; len != 0; len--)
+				{
+					u32 data = addrspace::read32(src);
+					addrspace::write32(dst, data);
+					src += srcIncr;
+					dst += dstIncr;
+				}
+				break;
             }
-
             DMAC_CHCR(ch).TE = 1;
-            if (DMAC_CHCR(ch).SM == 1)
-            	DMAC_SAR(ch) += len;
-            else if (DMAC_CHCR(ch).SM == 2)
-            	DMAC_SAR(ch) -= len;
-            if (DMAC_CHCR(ch).DM == 1)
-            	DMAC_DAR(ch) += len;
-            else if (DMAC_CHCR(ch).DM == 2)
-            	DMAC_DAR(ch) -= len;
+           	DMAC_SAR(ch) = src;
+           	DMAC_DAR(ch) = dst;
+           	DMAC_DMATCR(ch) = len;
         }
 
         InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
@@ -149,88 +219,60 @@ static void WriteCHCR(u32 addr, u32 data)
 }
 
 //Init term res
-void dmac_init()
+void DMACRegisters::init()
 {
+	super::init();
+
 	//DMAC SAR0 0xFFA00000 0x1FA00000 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_SAR0_addr, RIO_DATA);
+	setRW<DMAC_SAR0_addr>();
 
 	//DMAC DAR0 0xFFA00004 0x1FA00004 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_DAR0_addr, RIO_DATA);
+	setRW<DMAC_DAR0_addr>();
 
 	//DMAC DMATCR0 0xFFA00008 0x1FA00008 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg_wmask<DMAC, DMAC_DMATCR0_addr, 0x00ffffff>();
+	setRW<DMAC_DMATCR0_addr, u32, 0x00ffffff>();
 
 	//DMAC CHCR0 0xFFA0000C 0x1FA0000C 32 0x00000000 0x00000000 Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_CHCR0_addr, RIO_WF, nullptr, WriteCHCR<0>);
+	setWriteHandler<DMAC_CHCR0_addr>(WriteCHCR<0>);
 
 	//DMAC SAR1 0xFFA00010 0x1FA00010 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_SAR1_addr, RIO_DATA);
+	setRW<DMAC_SAR1_addr>();
 
 	//DMAC DAR1 0xFFA00014 0x1FA00014 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_DAR1_addr, RIO_DATA);
+	setRW<DMAC_DAR1_addr>();
 
 	//DMAC DMATCR1 0xFFA00018 0x1FA00018 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg_wmask<DMAC, DMAC_DMATCR1_addr, 0x00ffffff>();
+	setRW<DMAC_DMATCR1_addr, u32, 0x00ffffff>();
 
 	//DMAC CHCR1 0xFFA0001C 0x1FA0001C 32 0x00000000 0x00000000 Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_CHCR1_addr, RIO_WF, nullptr, WriteCHCR<1>);
+	setWriteHandler<DMAC_CHCR1_addr>(WriteCHCR<1>);
 
 	//DMAC SAR2 0xFFA00020 0x1FA00020 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_SAR2_addr, RIO_DATA);
+	setRW<DMAC_SAR2_addr>();
 
 	//DMAC DAR2 0xFFA00024 0x1FA00024 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_DAR2_addr, RIO_DATA);
+	setRW<DMAC_DAR2_addr>();
 
 	//DMAC DMATCR2 0xFFA00028 0x1FA00028 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg_wmask<DMAC, DMAC_DMATCR2_addr, 0x00ffffff>();
+	setRW<DMAC_DMATCR2_addr, u32, 0x00ffffff>();
 
 	//DMAC CHCR2 0xFFA0002C 0x1FA0002C 32 0x00000000 0x00000000 Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_CHCR2_addr, RIO_WF, nullptr, WriteCHCR<2>);
+	setWriteHandler<DMAC_CHCR2_addr>(WriteCHCR<2>);
 
 	//DMAC SAR3 0xFFA00030 0x1FA00030 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_SAR3_addr, RIO_DATA);
+	setRW<DMAC_SAR3_addr>();
 
 	//DMAC DAR3 0xFFA00034 0x1FA00034 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_DAR3_addr, RIO_DATA);
+	setRW<DMAC_DAR3_addr>();
 
 	//DMAC DMATCR3 0xFFA00038 0x1FA00038 32 Undefined Undefined Held Held Bclk
-	sh4_rio_reg_wmask<DMAC, DMAC_DMATCR3_addr, 0x00ffffff>();
+	setRW<DMAC_DMATCR3_addr, u32, 0x00ffffff>();
 
 	//DMAC CHCR3 0xFFA0003C 0x1FA0003C 32 0x00000000 0x00000000 Held Held Bclk
-	sh4_rio_reg(DMAC, DMAC_CHCR3_addr, RIO_WF, nullptr, WriteCHCR<3>);
+	setWriteHandler<DMAC_CHCR3_addr>(WriteCHCR<3>);
 
 	//DMAC DMAOR 0xFFA00040 0x1FA00040 32 0x00000000 0x00000000 Held Held Bclk
-	sh4_rio_reg_wmask<DMAC, DMAC_DMAOR_addr, 0x00008307>();
-}
+	setRW<DMAC_DMAOR_addr, u32, 0x00008307>();
 
-void dmac_reset()
-{
-	/*
-	DMAC SAR0 H'FFA0 0000 H'1FA0 0000 32 Undefined Undefined Held Held Bclk
-	DMAC DAR0 H'FFA0 0004 H'1FA0 0004 32 Undefined Undefined Held Held Bclk
-	DMAC DMATCR0 H'FFA0 0008 H'1FA0 0008 32 Undefined Undefined Held Held Bclk
-	DMAC CHCR0 H'FFA0 000C H'1FA0 000C 32 H'0000 0000 H'0000 0000 Held Held Bclk
-	DMAC SAR1 H'FFA0 0010 H'1FA0 0010 32 Undefined Undefined Held Held Bclk
-	DMAC DAR1 H'FFA0 0014 H'1FA0 0014 32 Undefined Undefined Held Held Bclk
-	DMAC DMATCR1 H'FFA0 0018 H'1FA0 0018 32 Undefined Undefined Held Held Bclk
-	DMAC CHCR1 H'FFA0 001C H'1FA0 001C 32 H'0000 0000 H'0000 0000 Held Held Bclk
-	DMAC SAR2 H'FFA0 0020 H'1FA0 0020 32 Undefined Undefined Held Held Bclk
-	DMAC DAR2 H'FFA0 0024 H'1FA0 0024 32 Undefined Undefined Held Held Bclk
-	DMAC DMATCR2 H'FFA0 0028 H'1FA0 0028 32 Undefined Undefined Held Held Bclk
-	DMAC CHCR2 H'FFA0 002C H'1FA0 002C 32 H'0000 0000 H'0000 0000 Held Held Bclk
-	DMAC SAR3 H'FFA0 0030 H'1FA0 0030 32 Undefined Undefined Held Held Bclk
-	DMAC DAR3 H'FFA0 0034 H'1FA0 0034 32 Undefined Undefined Held Held Bclk
-	DMAC DMATCR3 H'FFA0 0038 H'1FA0 0038 32 Undefined Undefined Held Held Bclk
-	DMAC CHCR3 H'FFA0 003C H'1FA0 003C 32 H'0000 0000 H'0000 0000 Held Held Bclk
-	DMAC DMAOR H'FFA0 0040 H'1FA0 0040 32 H'0000 0000 H'0000 0000 Held Held Bclk
-	*/
-	DMAC_CHCR(0).full = 0x0;
-	DMAC_CHCR(1).full = 0x0;
-	DMAC_CHCR(2).full = 0x0;
-	DMAC_CHCR(3).full = 0x0;
-	DMAC_DMAOR.full = 0x0;
-}
-
-void dmac_term()
-{
+	reset();
 }

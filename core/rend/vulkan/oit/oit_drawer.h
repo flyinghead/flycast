@@ -50,7 +50,7 @@ protected:
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
 		if (!quadBuffer)
-			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+			quadBuffer = std::make_unique<QuadBuffer>();
 		this->oitBuffers = oitBuffers;
 		descriptorSets.init(samplerManager,
 				pipelineManager->GetPipelineLayout(),
@@ -87,9 +87,9 @@ protected:
 		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
 		while (mainBuffers.size() <= bufferIndex)
 		{
-			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
+			mainBuffers.push_back(std::make_unique<BufferData>(std::max(512 * 1024u, size),
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-					| vk::BufferUsageFlagBits::eStorageBuffer)));
+					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
 		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
@@ -97,9 +97,9 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
-			mainBuffers[bufferIndex] = std::unique_ptr<BufferData>(new BufferData(newSize,
+			mainBuffers[bufferIndex] = std::make_unique<BufferData>(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-					| vk::BufferUsageFlagBits::eStorageBuffer));
+					| vk::BufferUsageFlagBits::eStorageBuffer);
 		}
 		return mainBuffers[bufferIndex].get();
 	}
@@ -117,7 +117,7 @@ private:
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 			const PolyParam& poly, u32 first, u32 count);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-			const List<PolyParam>& polys, u32 first, u32 last);
+			const std::vector<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
 	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count, const ModifierVolumeParam *modVolParams);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
@@ -161,7 +161,7 @@ public:
 			const vk::Extent2D& viewport)
 	{
 		if (!screenPipelineManager)
-			screenPipelineManager = std::unique_ptr<OITPipelineManager>(new OITPipelineManager());
+			screenPipelineManager = std::make_unique<OITPipelineManager>();
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
@@ -230,7 +230,7 @@ public:
 			TextureCache *textureCache, OITBuffers *oitBuffers)
 	{
 		if (!rttPipelineManager)
-			rttPipelineManager = std::unique_ptr<RttOITPipelineManager>(new RttOITPipelineManager());
+			rttPipelineManager = std::make_unique<RttOITPipelineManager>();
 		rttPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, rttPipelineManager.get(), oitBuffers);
 

@@ -16,6 +16,8 @@
 	Initial code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
+namespace aica
+{
 
 namespace dsp
 {
@@ -100,6 +102,9 @@ void DecodeInst(const u32 *IPtr, Instruction *i)
 void recInit() {
 }
 
+void recTerm() {
+}
+
 void recompile() {
 }
 #endif
@@ -124,6 +129,7 @@ void writeProg(u32 addr)
 void term()
 {
 	state.stopped = true;
+	recTerm();
 }
 
 void step()
@@ -146,4 +152,5 @@ void step()
 	runStep();
 }
 
-}
+} // namespace dsp
+} // namespace aica

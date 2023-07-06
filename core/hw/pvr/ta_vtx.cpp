@@ -77,8 +77,8 @@ public:
 	{
 		if (CurrentList == ListType_None)
 			return;
-		if (CurrentPP != nullptr && CurrentPP->count == 0 && CurrentPP == CurrentPPlist->LastPtr())
-			CurrentPPlist->PopLast();
+		if (CurrentPP != nullptr && CurrentPP->count == 0 && CurrentPP == &CurrentPPlist->back())
+			CurrentPPlist->pop_back();
 		CurrentPP = nullptr;
 		CurrentPPlist = nullptr;
 
@@ -107,19 +107,19 @@ protected:
 
 	static void endModVol()
 	{
-		List<ModifierVolumeParam> *list = nullptr;
+		std::vector<ModifierVolumeParam> *list = nullptr;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
 			list = &vd_rc.global_param_mvo;
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
 			list = &vd_rc.global_param_mvo_tr;
 		else
 			return;
-		if (list->used() > 0)
+		if (!list->empty())
 		{
-			ModifierVolumeParam *p = list->LastPtr();
-			p->count = vd_rc.modtrig.used() - p->first;
+			ModifierVolumeParam *p = &list->back();
+			p->count = vd_rc.modtrig.size() - p->first;
 			if (p->count == 0)
-				list->PopLast();
+				list->pop_back();
 		}
 	}
 
@@ -154,12 +154,12 @@ protected:
 	static ModTriangle* lmr;
 
 	static u32 CurrentList;
-	static PolyParam* CurrentPP;
 	static TaListFP *VertexDataFP;
 public:
-	static List<PolyParam>* CurrentPPlist;
+	static std::vector<PolyParam> *CurrentPPlist;
+	static PolyParam* CurrentPP;
 	static TaListFP* TaCmd;
-	static bool fetchTextures;
+	inline static bool fetchTextures = true;
 };
 
 const u32 *BaseTAParser::ta_type_lut = TaTypeLut::instance().table;
@@ -173,10 +173,9 @@ u32 BaseTAParser::SFaceOffsColor;
 ModTriangle* BaseTAParser::lmr;
 u32 BaseTAParser::CurrentList;
 PolyParam* BaseTAParser::CurrentPP;
-List<PolyParam>* BaseTAParser::CurrentPPlist;
+std::vector<PolyParam>* BaseTAParser::CurrentPPlist;
 BaseTAParser::TaListFP *BaseTAParser::TaCmd;
 BaseTAParser::TaListFP *BaseTAParser::VertexDataFP;
-bool BaseTAParser::fetchTextures = true;
 
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 class TAParserTempl : public BaseTAParser
@@ -189,7 +188,7 @@ class TAParserTempl : public BaseTAParser
 		TA_VertexParam* vp=(TA_VertexParam*)data;
 		u32 rv=0;
 
-		if (part==2)
+		if constexpr (part == 2)
 		{
 			TaCmd=ta_main;
 		}
@@ -218,18 +217,18 @@ break;
 #define ver_64B_def(num) \
 case num : {\
 /*process first half*/\
-	if (part!=2)\
+	if constexpr (part != 2)\
 	{\
 	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
 	}\
 	/*process second half*/\
-	if (part==0)\
+	if constexpr (part == 0)\
 	{\
 	AppendPolyVertex##num##B(&vp->vtx##num##B);\
 	rv+=SZ32;\
 	}\
-	else if (part==2)\
+	else if constexpr (part == 2)\
 	{\
 	AppendPolyVertex##num##B((TA_Vertex##num##B*)data);\
 	rv+=SZ32;\
@@ -369,7 +368,7 @@ strip_end:
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		if (t==2)
+		if constexpr (t == 2)
 			AppendPolyParam2B((TA_PolyParam2B*)data);
 		else
 			AppendPolyParam4B((TA_PolyParam4B*)data);
@@ -528,11 +527,12 @@ private:
 		PolyParam* d_pp = CurrentPP;
 		if (d_pp == NULL || d_pp->count != 0)
 		{
-			d_pp = CurrentPPlist->Append();
+			CurrentPPlist->emplace_back();
+			d_pp = &CurrentPPlist->back();
 			CurrentPP = d_pp;
 		}
 		d_pp->init();
-		d_pp->first = vd_rc.verts.used();
+		d_pp->first = vd_rc.verts.size();
 
 		d_pp->isp = pp->isp;
 		d_pp->tsp = pp->tsp;
@@ -628,15 +628,14 @@ private:
 	//Poly Strip handling
 	static void EndPolyStrip()
 	{
-		CurrentPP->count = vd_rc.verts.used() - CurrentPP->first;
+		CurrentPP->count = vd_rc.verts.size() - CurrentPP->first;
 
 		if (CurrentPP->count > 0)
 		{
-			PolyParam* d_pp = CurrentPPlist->Append();
-			*d_pp = *CurrentPP;
-			CurrentPP = d_pp;
-			d_pp->first = vd_rc.verts.used();
-			d_pp->count = 0;
+			CurrentPPlist->push_back(*CurrentPP);
+			CurrentPP = &CurrentPPlist->back();
+			CurrentPP->first = vd_rc.verts.size();
+			CurrentPP->count = 0;
 		}
 	}
 	
@@ -652,7 +651,8 @@ private:
 	static Vertex* vert_cvt_base_(T* vtx)
 	{
 		f32 invW = vtx->xyz[2];
-		Vertex* cv = vd_rc.verts.Append();
+		vd_rc.verts.emplace_back();
+		Vertex* cv = &vd_rc.verts.back();
 		cv->x = vtx->xyz[0];
 		cv->y = vtx->xyz[1];
 		cv->z = invW;
@@ -664,7 +664,7 @@ private:
 
 		//Resume vertex base (for B part)
 	#define vert_res_base \
-		Vertex* cv=vd_rc.verts.LastPtr();
+		Vertex* cv = &vd_rc.verts.back();
 
 		//uv 16/32
 	#define vert_uv_32(u_name,v_name) \
@@ -951,17 +951,17 @@ private:
 	//Sprites
 	static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
-		//printf("Sprite\n");
 		PolyParam* d_pp = CurrentPP;
 		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
 			if (CurrentPPlist == nullptr)	// wldkickspw
 				return;
-			d_pp = CurrentPPlist->Append();
+			CurrentPPlist->emplace_back();
+			d_pp = &CurrentPPlist->back();
 			CurrentPP = d_pp;
 		}
 		d_pp->init();
-		d_pp->first = vd_rc.verts.used();
+		d_pp->first = vd_rc.verts.size();
 		d_pp->isp = spr->isp;
 		d_pp->tsp = spr->tsp;
 		d_pp->tcw = spr->tcw;
@@ -988,9 +988,12 @@ private:
 	//Sprite Vertex Handlers
 	static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
+		if (CurrentPP == nullptr)
+			return;
         CurrentPP->count = 4;
 
-		Vertex* cv = vd_rc.verts.Append(4);
+        vd_rc.verts.resize(vd_rc.verts.size() + 4);
+		Vertex *cv = &vd_rc.verts.back() - 3;
 
 		//Fill static stuff
 		append_sprite(0);
@@ -1062,6 +1065,8 @@ private:
 
 	static void AppendSpriteVertexB(TA_Sprite1B* sv)
 	{
+		if (CurrentPP == nullptr)
+			return;
 		vert_res_base;
 		cv-=3;
 
@@ -1082,10 +1087,10 @@ private:
 
 		update_fz(cv[0].z);
 
-		PolyParam* d_pp = CurrentPPlist->Append();
-		*d_pp = *CurrentPP;
+		CurrentPPlist->push_back(*CurrentPP);
+		PolyParam *d_pp = &CurrentPPlist->back();
 		CurrentPP = d_pp;
-		d_pp->first = vd_rc.verts.used();
+		d_pp->first = vd_rc.verts.size();
 		d_pp->count = 0;
 	}
 
@@ -1097,22 +1102,29 @@ private:
 
 		ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
-			p = vd_rc.global_param_mvo.Append();
+		{
+			vd_rc.global_param_mvo.emplace_back();
+			p = &vd_rc.global_param_mvo.back();
+		}
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
-			p = vd_rc.global_param_mvo_tr.Append();
+		{
+			vd_rc.global_param_mvo_tr.emplace_back();
+			p = &vd_rc.global_param_mvo_tr.back();
+		}
 		else
 			return;
 		p->init();
 		p->isp.full = param->isp.full;
 		p->isp.VolumeLast = param->pcw.Volume != 0;
-		p->first = vd_rc.modtrig.used();
+		p->first = vd_rc.modtrig.size();
 	}
 
 	static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
 		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
-		lmr=vd_rc.modtrig.Append();
+		vd_rc.modtrig.emplace_back();
+		lmr = &vd_rc.modtrig.back();
 
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
@@ -1149,25 +1161,25 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 
 	if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
 	{
-		fix_texture_bleeding(&ctx.global_param_op, previousPass.op_count, pass.op_count, ctx);
-		fix_texture_bleeding(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, ctx);
-		fix_texture_bleeding(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
+		fix_texture_bleeding(ctx.global_param_op, previousPass.op_count, pass.op_count, ctx);
+		fix_texture_bleeding(ctx.global_param_pt, previousPass.pt_count, pass.pt_count, ctx);
+		fix_texture_bleeding(ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
 	}
 	if (primRestart)
 	{
-		makePrimRestartIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
-		makePrimRestartIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
+		makePrimRestartIndex(ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
+		makePrimRestartIndex(ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
 	}
 	else
 	{
-		makeIndex(&ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
-		makeIndex(&ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
+		makeIndex(ctx.global_param_op, previousPass.op_count, pass.op_count, true, ctx);
+		makeIndex(ctx.global_param_pt, previousPass.pt_count, pass.pt_count, true, ctx);
 	}
 	pass.sorted_tr_count = previousPass.sorted_tr_count;
 	if (pass.autosort && !perPixel)
 	{
 		if (config::PerStripSorting)
-			sortPolyParams(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
+			sortPolyParams(ctx.global_param_tr, previousPass.tr_count, pass.tr_count, ctx);
 		else
 			sortTriangles(ctx, pass, previousPass);
 	}
@@ -1175,28 +1187,22 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 	if (!pass.autosort || perPixel || config::PerStripSorting)
 	{
 		if (primRestart)
-			makePrimRestartIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
+			makePrimRestartIndex(ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
 		else
-			makeIndex(&ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
+			makeIndex(ctx.global_param_tr, previousPass.tr_count, pass.tr_count, mergeTranslucent, ctx);
 	}
 }
 
-static bool ta_parse_vdrc(TA_context* ctx, bool primRestart)
+static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 {
-	bool rv=false;
 	verify(vd_ctx == nullptr);
 	vd_ctx = ctx;
 
 	ta_parse_reset();
 
-	bool empty_context = true;
-
-	PolyParam *bgpp = vd_rc.global_param_op.head();
+	PolyParam *bgpp = &vd_rc.global_param_op.front();
 	if (bgpp->pcw.Texture)
-	{
 		bgpp->texture = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
-		empty_context = false;
-	}
 
 	TA_context *childCtx = ctx;
 	int pass = 0;
@@ -1218,24 +1224,21 @@ static bool ta_parse_vdrc(TA_context* ctx, bool primRestart)
 				break;
 			}
 
-		if (vd_ctx->rend.Overrun)
-			break;
-
-		bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
-				&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
-				&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
-		empty_context = empty_context && empty_pass;
+		bool empty_pass = vd_rc.global_param_op.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().op_count)
+				&& vd_rc.global_param_pt.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().pt_count)
+				&& vd_rc.global_param_tr.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().tr_count);
 
 		if (pass == 0 || !empty_pass)
 		{
-			RenderPass& render_pass = *vd_rc.render_passes.Append();
+			vd_rc.render_passes.emplace_back();
+			RenderPass& render_pass = vd_rc.render_passes.back();
 			getRegionSettings(pass, render_pass);
-			render_pass.op_count = vd_rc.global_param_op.used();
-			render_pass.pt_count = vd_rc.global_param_pt.used();
-			render_pass.tr_count = vd_rc.global_param_tr.used();
+			render_pass.op_count = vd_rc.global_param_op.size();
+			render_pass.pt_count = vd_rc.global_param_pt.size();
+			render_pass.tr_count = vd_rc.global_param_tr.size();
 			render_pass.sorted_tr_count = 0;
-			render_pass.mvo_count = vd_rc.global_param_mvo.used();
-			render_pass.mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+			render_pass.mvo_count = vd_rc.global_param_mvo.size();
+			render_pass.mvo_tr_count = vd_rc.global_param_mvo_tr.size();
 
 			parseRenderPass(render_pass, previousPass, vd_rc, primRestart);
 			previousPass = render_pass;
@@ -1243,29 +1246,18 @@ static bool ta_parse_vdrc(TA_context* ctx, bool primRestart)
 		childCtx = childCtx->nextContext;
 		pass++;
 	}
-	rv = !empty_context;
 
-	bool overrun = vd_ctx->rend.Overrun;
-	if (overrun)
-		WARN_LOG(PVR, "ERROR: TA context overrun");
-	if (rv && !overrun)
-	{
-		u32 xmin, xmax, ymin, ymax;
-		getRegionTileClipping(xmin, xmax, ymin, ymax);
-		vd_rc.fb_X_CLIP.min = std::max(vd_rc.fb_X_CLIP.min, xmin);
-		vd_rc.fb_X_CLIP.max = std::min(vd_rc.fb_X_CLIP.max, xmax + 31);
-		vd_rc.fb_Y_CLIP.min = std::max(vd_rc.fb_Y_CLIP.min, ymin);
-		vd_rc.fb_Y_CLIP.max = std::min(vd_rc.fb_Y_CLIP.max, ymax + 31);
-	}
+	u32 xmin, xmax, ymin, ymax;
+	getRegionTileClipping(xmin, xmax, ymin, ymax);
+	vd_rc.fb_X_CLIP.min = std::max(vd_rc.fb_X_CLIP.min, xmin);
+	vd_rc.fb_X_CLIP.max = std::min(vd_rc.fb_X_CLIP.max, xmax + 31);
+	vd_rc.fb_Y_CLIP.min = std::max(vd_rc.fb_Y_CLIP.min, ymin);
+	vd_rc.fb_Y_CLIP.max = std::min(vd_rc.fb_Y_CLIP.max, ymax + 31);
 
 	vd_ctx = nullptr;
-
-	ctx->rend.Overrun = overrun;
-
-	return rv && !overrun;
 }
 
-static bool ta_parse_naomi2(TA_context* ctx, bool primRestart)
+static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 {
 	for (PolyParam& pp : ctx->rend.global_param_op)
 	{
@@ -1289,39 +1281,29 @@ static bool ta_parse_naomi2(TA_context* ctx, bool primRestart)
 			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
 	}
 
-	bool overrun = ctx->rend.Overrun;
-	if (overrun)
-	{
-		WARN_LOG(PVR, "ERROR: TA context overrun");
-	}
-	else
-	{
-		ctx->rend.newRenderPass();
-		RenderPass previousPass{};
+	ctx->rend.newRenderPass();
+	RenderPass previousPass{};
 
-		for (RenderPass& pass : ctx->rend.render_passes)
-		{
-			parseRenderPass(pass, previousPass, ctx->rend, primRestart);
-			previousPass = pass;
-		}
-
-		u32 xmin, xmax, ymin, ymax;
-		getRegionTileClipping(xmin, xmax, ymin, ymax);
-		ctx->rend.fb_X_CLIP.min = std::max(ctx->rend.fb_X_CLIP.min, xmin);
-		ctx->rend.fb_X_CLIP.max = std::min(ctx->rend.fb_X_CLIP.max, xmax + 31);
-		ctx->rend.fb_Y_CLIP.min = std::max(ctx->rend.fb_Y_CLIP.min, ymin);
-		ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
+	for (RenderPass& pass : ctx->rend.render_passes)
+	{
+		parseRenderPass(pass, previousPass, ctx->rend, primRestart);
+		previousPass = pass;
 	}
 
-	return !overrun;
+	u32 xmin, xmax, ymin, ymax;
+	getRegionTileClipping(xmin, xmax, ymin, ymax);
+	ctx->rend.fb_X_CLIP.min = std::max(ctx->rend.fb_X_CLIP.min, xmin);
+	ctx->rend.fb_X_CLIP.max = std::min(ctx->rend.fb_X_CLIP.max, xmax + 31);
+	ctx->rend.fb_Y_CLIP.min = std::max(ctx->rend.fb_Y_CLIP.min, ymin);
+	ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
 }
 
-bool ta_parse(TA_context *ctx, bool primRestart)
+void ta_parse(TA_context *ctx, bool primRestart)
 {
 	if (settings.platform.isNaomi2())
-		return ta_parse_naomi2(ctx, primRestart);
+		ta_parse_naomi2(ctx, primRestart);
 	else
-		return ta_parse_vdrc(ctx, primRestart);
+		ta_parse_vdrc(ctx, primRestart);
 }
 
 //
@@ -1344,6 +1326,25 @@ const float defaultProjMat[] {
 	  0.f,         0.f,       0.f,  0.f
 };
 
+constexpr int IdentityMatIndex = 0;
+constexpr int DefaultProjMatIndex = 1;
+constexpr int NoLightIndex = 0;
+
+static void setDefaultMatrices()
+{
+	if (ta_ctx->rend.matrices.empty())
+	{
+		ta_ctx->rend.matrices.push_back(*(N2Matrix *)identityMat);
+		ta_ctx->rend.matrices.push_back(*(N2Matrix *)defaultProjMat);
+	}
+}
+
+static void setDefaultLight()
+{
+	if (ta_ctx->rend.lightModels.empty())
+		ta_ctx->rend.lightModels.emplace_back();
+}
+
 void ta_add_poly(const PolyParam& pp)
 {
 	verify(ta_ctx != nullptr);
@@ -1351,17 +1352,22 @@ void ta_add_poly(const PolyParam& pp)
 	vd_ctx = ta_ctx;
 	BaseTAParser::startList(pp.pcw.ListType);
 
-	*BaseTAParser::CurrentPPlist->Append() = pp;
-	n2CurrentPP = BaseTAParser::CurrentPPlist->LastPtr();
-	n2CurrentPP->first = ta_ctx->rend.verts.used();
+	BaseTAParser::CurrentPPlist->push_back(pp);
+	BaseTAParser::CurrentPP = nullptr; // might be invalidated
+	n2CurrentPP = &BaseTAParser::CurrentPPlist->back();
+	n2CurrentPP->first = ta_ctx->rend.verts.size();
 	n2CurrentPP->count = 0;
 	n2CurrentPP->tileclip = BaseTAParser::getTileClip();
-	if (n2CurrentPP->mvMatrix == nullptr)
-		n2CurrentPP->mvMatrix = identityMat;
-	if (n2CurrentPP->normalMatrix == nullptr)
-		n2CurrentPP->normalMatrix = identityMat;
-	if (n2CurrentPP->projMatrix == nullptr)
-		n2CurrentPP->projMatrix = defaultProjMat;
+	setDefaultMatrices();
+	if (n2CurrentPP->mvMatrix == -1)
+		n2CurrentPP->mvMatrix = IdentityMatIndex;
+	if (n2CurrentPP->normalMatrix == -1)
+		n2CurrentPP->normalMatrix = IdentityMatIndex;
+	if (n2CurrentPP->projMatrix == -1)
+		n2CurrentPP->projMatrix = DefaultProjMatIndex;
+	setDefaultLight();
+	if (n2CurrentPP->lightModel == -1)
+		n2CurrentPP->lightModel = NoLightIndex;
 	vd_ctx = nullptr;
 }
 
@@ -1375,49 +1381,51 @@ void ta_add_poly(int listType, const ModifierVolumeParam& mvp)
 	switch (BaseTAParser::getCurrentList())
 	{
 	case ListType_Opaque_Modifier_Volume:
-		*ta_ctx->rend.global_param_mvo.Append() = mvp;
-		n2CurrentMVP = ta_ctx->rend.global_param_mvo.LastPtr();
+		ta_ctx->rend.global_param_mvo.push_back(mvp);
+		n2CurrentMVP = &ta_ctx->rend.global_param_mvo.back();
 		break;
 	case ListType_Translucent_Modifier_Volume:
-		*ta_ctx->rend.global_param_mvo_tr.Append() = mvp;
-		n2CurrentMVP = ta_ctx->rend.global_param_mvo_tr.LastPtr();
+		ta_ctx->rend.global_param_mvo_tr.push_back(mvp);
+		n2CurrentMVP = &ta_ctx->rend.global_param_mvo_tr.back();
 		break;
 	default:
 		die("wrong list type");
 		break;
 	}
-	n2CurrentMVP->first = ta_ctx->rend.modtrig.used();
+	n2CurrentMVP->first = ta_ctx->rend.modtrig.size();
 	n2CurrentMVP->count = 0;
-	if (n2CurrentMVP->mvMatrix == nullptr)
-		n2CurrentMVP->mvMatrix = identityMat;
-	if (n2CurrentMVP->projMatrix == nullptr)
-		n2CurrentMVP->projMatrix = defaultProjMat;
+	setDefaultMatrices();
+	if (n2CurrentMVP->mvMatrix == -1)
+		n2CurrentMVP->mvMatrix = IdentityMatIndex;
+	if (n2CurrentMVP->projMatrix == -1)
+		n2CurrentMVP->projMatrix = DefaultProjMatIndex;
 	vd_ctx = nullptr;
 }
 
 void ta_add_vertex(const Vertex& vtx)
 {
-	*ta_ctx->rend.verts.Append() = vtx;
+	ta_ctx->rend.verts.push_back(vtx);
 	n2CurrentPP->count++;
 }
 
 void ta_add_triangle(const ModTriangle& tri)
 {
-	*ta_ctx->rend.modtrig.Append() = tri;
+	ta_ctx->rend.modtrig.push_back(tri);
 	n2CurrentMVP->count++;
 }
 
-float *ta_add_matrix(const float *matrix)
+int ta_add_matrix(const float *matrix)
 {
-	N2Matrix *n2mat = ta_ctx->rend.matrices.Append();
-	memcpy(n2mat->mat, matrix, sizeof(N2Matrix::mat));
-	return n2mat->mat;
+	setDefaultMatrices();
+	ta_ctx->rend.matrices.push_back(*(N2Matrix *)matrix);
+	return ta_ctx->rend.matrices.size() - 1;
 }
 
-N2LightModel *ta_add_light(const N2LightModel& light)
+int ta_add_light(const N2LightModel& light)
 {
-	*ta_ctx->rend.lightModels.Append() = light;
-	return ta_ctx->rend.lightModels.LastPtr();
+	setDefaultLight();
+	ta_ctx->rend.lightModels.push_back(light);
+	return ta_ctx->rend.lightModels.size() - 1;
 }
 
 u32 ta_add_ta_data(u32 *data, u32 size)
@@ -1536,7 +1544,7 @@ void decode_pvr_vertex(u32 base, u32 ptr, Vertex* cv)
 
 static u8 float_to_satu8_math(float val)
 {
-	return (u8)(std::min(1.f, std::max(0.f, val)) * 255.f);
+	return (u8)(val == val ? std::min(1.f, std::max(0.f, val)) * 255.f : 255.f);
 }
 
 static void vtxdec_init()
@@ -1545,7 +1553,7 @@ static void vtxdec_init()
 		0x3b80 ~ 0x3f80 -> actual useful range. Rest is clamping to 0 or 255 ~
 	*/
 
-	for (u32 i = 0; i < ARRAY_SIZE(f32_su8_tbl); i++)
+	for (u32 i = 0; i < std::size(f32_su8_tbl); i++)
 	{
 		u32 fr = i << 16;
 		
@@ -1557,8 +1565,8 @@ static OnLoad ol_vtxdec(&vtxdec_init);
 void FillBGP(TA_context* ctx)
 {
 	// Background polygon handling
-	PolyParam *bgpp = ctx->rend.global_param_op.head();
-	Vertex *cv = ctx->rend.verts.head();
+	PolyParam *bgpp = &ctx->rend.global_param_op[0];
+	Vertex *cv = &ctx->rend.verts[0];
 
 	//Get the strip base
 	const u32 param_base = PARAM_BASE & 0xF00000;
@@ -1690,12 +1698,12 @@ static void getRegionSettings(int passNumber, RenderPass& pass)
 void rend_context::newRenderPass()
 {
 	RenderPass pass;
-	pass.op_count = global_param_op.used();
-	pass.tr_count = global_param_tr.used();
-	pass.pt_count = global_param_pt.used();
-	pass.mvo_count = global_param_mvo.used();
-	pass.mvo_tr_count = global_param_mvo_tr.used();
+	pass.op_count = global_param_op.size();
+	pass.tr_count = global_param_tr.size();
+	pass.pt_count = global_param_pt.size();
+	pass.mvo_count = global_param_mvo.size();
+	pass.mvo_tr_count = global_param_mvo_tr.size();
 	pass.sorted_tr_count = 0;
-	getRegionSettings(render_passes.used(), pass);
-	*render_passes.Append() = pass;
+	getRegionSettings(render_passes.size(), pass);
+	render_passes.push_back(pass);
 }

@@ -22,3 +22,9 @@
 [submodule "core/deps/oboe"]
 	path = core/deps/oboe
 	url = https://github.com/google/oboe.git
+[submodule "core/deps/Syphon"]
+	path = core/deps/Syphon
+	url=https://github.com/vkedwardli/Syphon-Framework.git
+[submodule "core/deps/Spout"]
+	path = core/deps/Spout
+	url = https://github.com/vkedwardli/Spout2.git

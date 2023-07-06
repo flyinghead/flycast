@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "types.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "emulator.h"
 
 #include "hw/sh4/sh4_core.h"
@@ -106,9 +106,10 @@ static void div32u_slow(u32& r1, u32 r2, u32& r3)
 
 class Div32Test : public ::testing::Test {
 protected:
-	void SetUp() override {
-		if (!_vmem_reserve())
-			die("_vmem_reserve failed");
+	void SetUp() override
+	{
+		if (!addrspace::reserve())
+			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
 	}

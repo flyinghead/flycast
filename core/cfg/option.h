@@ -21,6 +21,7 @@
 #include <vector>
 #include <array>
 #include <cmath>
+#include <type_traits>
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
 #ifdef LIBRETRO
@@ -100,10 +101,6 @@ private:
 	friend class Option;
 };
 
-// Missing in C++11
-template <bool B, typename T = void>
-using enable_if_t = typename std::enable_if<B, T>::type;
-
 template<typename T, bool PerGameOption = true>
 class Option : public BaseOption {
 public:
@@ -173,36 +170,36 @@ public:
 
 protected:
 	template <typename U = T>
-	enable_if_t<std::is_same<U, bool>::value, T>
+	std::enable_if_t<std::is_same_v<U, bool>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		return cfgLoadBool(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<U, int64_t>::value, T>
+	std::enable_if_t<std::is_same<U, int64_t>::value, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		return cfgLoadInt64(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<(std::is_integral<U>::value || std::is_enum<U>::value)
-			&& !std::is_same<U, bool>::value && !std::is_same<U, int64_t>::value, T>
+	std::enable_if_t<(std::is_integral_v<U> || std::is_enum_v<U>)
+			&& !std::is_same_v<U, bool> && !std::is_same_v<U, int64_t>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		return (T)cfgLoadInt(section, name, (int)value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<U, std::string>::value, T>
+	std::enable_if_t<std::is_same_v<U, std::string>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		return cfgLoadStr(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<float, U>::value, T>
+	std::enable_if_t<std::is_same_v<float, U>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		std::string strValue = cfgLoadStr(section, name, "");
@@ -213,7 +210,7 @@ protected:
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<std::vector<std::string>, U>::value, T>
+	std::enable_if_t<std::is_same_v<std::vector<std::string>, U>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
 		std::string paths = cfgLoadStr(section, name, "");
@@ -272,36 +269,36 @@ protected:
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<U, bool>::value>
+	std::enable_if_t<std::is_same_v<U, bool>>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		cfgSaveBool(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<U, int64_t>::value>
+	std::enable_if_t<std::is_same<U, int64_t>::value>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		cfgSaveInt64(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<(std::is_integral<U>::value || std::is_enum<U>::value)
-		&& !std::is_same<U, bool>::value && !std::is_same<U, int64_t>::value>
+	std::enable_if_t<(std::is_integral_v<U> || std::is_enum_v<U>)
+		&& !std::is_same_v<U, bool> && !std::is_same_v<U, int64_t>>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		cfgSaveInt(section, name, (int)value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<U, std::string>::value>
+	std::enable_if_t<std::is_same_v<U, std::string>>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		cfgSaveStr(section, name, value);
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<float, U>::value>
+	std::enable_if_t<std::is_same_v<float, U>>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		char buf[64];
@@ -310,7 +307,7 @@ protected:
 	}
 
 	template <typename U = T>
-	enable_if_t<std::is_same<std::vector<std::string>, U>::value>
+	std::enable_if_t<std::is_same_v<std::vector<std::string>, U>>
 	doSave(const std::string& section, const std::string& name) const
 	{
 		std::string s;
@@ -359,8 +356,9 @@ using OptionString = Option<std::string>;
 // Dynarec
 
 extern Option<bool> DynarecEnabled;
-extern Option<bool> DynarecIdleSkip;
-constexpr bool DynarecSafeMode = false;
+#ifndef LIBRETRO
+extern Option<int> Sh4Clock;
+#endif
 
 // General
 
@@ -368,7 +366,6 @@ extern Option<int> Cable;		// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV Composite
 extern Option<int> Region;		// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 extern Option<int> Broadcast;	// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-extern Option<bool> FullMMU;
 extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
@@ -409,6 +406,7 @@ public:
 	}
 };
 extern AudioVolumeOption AudioVolume;
+extern Option<bool> VmuSound;
 
 // Rendering
 
@@ -468,6 +466,11 @@ extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
 extern Option<int> FixedFrequency;
+#ifdef VIDEO_ROUTING
+extern Option<bool> VideoRouting;
+extern Option<bool> VideoRoutingScale;
+extern Option<int> VideoRoutingVRes;
+#endif
 
 // Misc
 
@@ -498,6 +501,8 @@ extern Option<int> GdxLocalPort;
 extern Option<int> GdxMinDelay;
 extern Option<bool> GdxSaveReplay;
 extern Option<bool> GdxUploadReplay;
+extern Option<bool> GdxReplayHideName;
+extern Option<bool> GdxReplayShowAllyHP;
 
 // Network
 
@@ -516,6 +521,7 @@ extern Option<bool> GGPOChat;
 extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
+extern Option<int> MultiboardSlaves;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;
@@ -532,6 +538,7 @@ extern Option<int> MouseSensitivity;
 extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
+extern Option<bool> PerGameVmu;
 #ifdef _WIN32
 extern Option<bool, false> UseRawInput;
 #else

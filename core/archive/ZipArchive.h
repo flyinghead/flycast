@@ -32,9 +32,13 @@ public:
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile* OpenFileByCrc(u32 crc) override;
 
-private:
-	bool Open(const char* path) override;
+	bool Open(const void *data, size_t size);
+	ArchiveFile *OpenFirstFile();
 
+protected:
+	bool Open(FILE *file) override;
+
+private:
 	struct zip *zip;
 };
 

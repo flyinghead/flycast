@@ -25,11 +25,14 @@ if [ -f /etc/debian_version ]; then
 	OS_NAME=Debian
 	OS_VERSION=`cat /etc/debian_version`
 fi
+
 # use lsb_release (Linux Standard Base) when available
 LSB_RELEASE=`which lsb_release`
 if [ 0 -eq $? -a -x "${LSB_RELEASE}" ]; then
-	OS_NAME=`${LSB_RELEASE} -i -s`
-	OS_VERSION=`${LSB_RELEASE} -r -s`
+	# On NixOS, lsb_release returns strings such as "NixOS" (with quotes),
+	# so we need to stript them with the following xargs trick:
+	OS_NAME=`${LSB_RELEASE} -i -s | xargs echo`
+	OS_VERSION=`${LSB_RELEASE} -r -s | xargs echo`
 	case $OS_NAME in
 		Debian)
 			#OS_VERSION=`${LSB_RELEASE} -c -s`

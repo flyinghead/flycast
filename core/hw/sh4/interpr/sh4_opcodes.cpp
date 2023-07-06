@@ -3,12 +3,10 @@
 */
 #include "types.h"
 
-#include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
-#include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
@@ -838,18 +836,10 @@ sh4op(i0000_nnnn_0000_0011)
 sh4op(i0000_0000_0010_1011)
 {
 	u32 newpc = spc;
-	// FIXME In an RTE delay slot, status register (SR) bits are referenced as follows.
-	// In instruction access, the MD bit is used before modification, and in data access, 
-	// the MD bit is accessed after modification.
-	// The other bits—S, T, M, Q, FD, BL, and RB—after modification are used for delay slot
-	// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
-	sh4_sr_SetFull(ssr);
 	ExecuteDelayslot_RTE();
 	next_pc = newpc;
 	if (UpdateSR())
-	{
 		UpdateINTC();
-	}
 	debugger::subroutineReturn();
 }
 
@@ -942,10 +932,10 @@ sh4op(i1011_iiii_iiii_iiii)
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
-	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
-	debugger::debugTrap(0x160);
+	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
+	debugger::debugTrap(Sh4Ex_Trap);
 	CCN_TRA = (GetImm8(op) << 2);
-	Do_Exception(next_pc,0x160,0x100);
+	Do_Exception(next_pc, Sh4Ex_Trap);
 }
 
 //jmp @<REG_N>
@@ -1161,69 +1151,17 @@ sh4op(i0000_nnnn_1011_0011)
 }
 
 //pref @<REG_N>
-template<bool mmu_on>
-void DYNACALL do_sqw(u32 Dest)
-{
-	//TODO : Check for enabled store queues ?
-	u32 Address;
-
-	//Translate the SQ addresses as needed
-	if (mmu_on)
-	{
-		if (!mmu_TranslateSQW(Dest, &Address))
-			return;
-	}
-	else
-	{
-		//sanity/optimisation check
-		//verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
-
-		u32 QACR = CCN_QACR_TR[0];
-		//QACR has already 0xE000_0000
-		Address= QACR+(Dest&~0x1f);
-	}
-
-	if (((Address >> 26) & 0x7) != 4)//Area 4
-	{
-		SQBuffer *sq = &sq_both[(Dest >> 5) & 1];
-		WriteMemBlock_nommu_sq(Address, sq);
-	}
-	else
-	{
-		TAWriteSQ(Address, sq_both);
-	}
-}
-
-void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
-
-//yes, this micro optimization makes a difference
-void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
-{
-	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000);
-	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
-	*pmem = sqb[(dst >> 5) & 1];
-}
-
-void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
-{
-	u8* pmem = mem_b.data;
-
-	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
-}
-
-void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb) { do_sqw<false>(dst); }
-
 sh4op(i0000_nnnn_1000_0011)
 {
 	u32 n = GetN(op);
 	u32 Dest = r[n];
 
-	if ((Dest>>26) == 0x38) //Store Queue
+	if ((Dest >> 26) == 0x38) // Store Queue
 	{
 		if (CCN_MMUCR.AT)
-			do_sqw<true>(Dest);
+			do_sqw_mmu(Dest);
 		else
-			do_sqw<false>(Dest);
+			do_sqw_nommu(Dest, sq_both);
 	}
 	else
 	{
@@ -2014,8 +1952,8 @@ sh4op(i0100_nnnn_0000_1110)
 sh4op(iNotImplemented)
 {
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
-	debugger::debugTrap(0x180);
-	SH4ThrownException ex { next_pc - 2, 0x180, 0x100 };
-	throw ex;
+	debugger::debugTrap(Sh4Ex_IllegalInstr);
+
+	throw SH4ThrownException(next_pc - 2, Sh4Ex_IllegalInstr);
 }
 

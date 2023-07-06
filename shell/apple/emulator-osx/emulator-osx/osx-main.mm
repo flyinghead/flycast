@@ -35,7 +35,8 @@ int darw_printf(const char* text, ...)
     va_end(args);
     
     NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
-    if (getenv("TERM") == NULL) //Xcode console does not support colors
+    static bool isXcode = [[[NSProcessInfo processInfo] environment][@"OS_ACTIVITY_DT_MODE"] boolValue];
+    if (isXcode) // Xcode console does not support colors
     {
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[0m" withString:@""];
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[92m" withString:@"ℹ️ "];
@@ -109,13 +110,16 @@ extern "C" int SDL_main(int argc, char *argv[])
         std::string config_dir = std::string(home) + "/.flycast/";
 		if (!file_exists(config_dir))
 			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
-
-        /* Different config folder for multiple instances */
-        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
-		if (instanceNumber > 1)
+		
+		/* Different config folder for multiple instances */
+		if (getppid() == 1)
 		{
-			config_dir += std::to_string(instanceNumber) + "/";
-			[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+			int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] count];
+			if (instanceNumber > 1)
+			{
+				config_dir += std::to_string(instanceNumber) + "/";
+				[[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+			}
 		}
 
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
@@ -192,91 +196,6 @@ void os_LaunchFromURL(const std::string& url) {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlString]];
 }
 
-std::string os_FetchStringFromURL(const std::string& url) {
-    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
-    __block std::string result;
-
-    NSURL *URL = [NSURL URLWithString:[[NSString alloc] initWithCString:url.c_str() encoding:NSASCIIStringEncoding]];
-    NSURLRequest *request = [NSURLRequest requestWithURL:URL];
-
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
-                                            completionHandler:
-                                  ^(NSData *data, NSURLResponse *response, NSError *error) {
-        if(error == nil) {
-            NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-            result = std::string([str UTF8String], [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        }
-        dispatch_semaphore_signal(sem);
-    }];
-
-    [task resume];
-    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
-
-    return result;
-}
-
-int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields) {
-    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
-    __block int result;
-
-    NSURL *URL = [NSURL URLWithString:[[NSString alloc] initWithCString:url.c_str() encoding:NSASCIIStringEncoding]];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
-    request.HTTPMethod = @"POST";
-    NSString *boundary = @"----BoundaryFlycastIsAwesome";
-    NSData* newLine = [@"\r\n" dataUsingEncoding:NSUTF8StringEncoding];
-    
-    [request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@",boundary] forHTTPHeaderField:@"Content-Type"];
-    
-    
-    NSMutableData* data = [NSMutableData data];
-    for (auto const &field : fields) {
-        
-        if (field.field_value.empty()) {
-            NSString *path = [NSString stringWithUTF8String:field.file_path.c_str()];
-            NSURL* fileURL = [NSURL fileURLWithPath:path relativeToURL:NULL];
-            
-            if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-                NSData *fileData = [[NSFileManager defaultManager] contentsAtPath:path];
-                [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-                [data appendData:newLine];
-                [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"; filename=\"%@\"", field.field_name.c_str(), [fileURL lastPathComponent]] dataUsingEncoding:NSUTF8StringEncoding]];
-                [data appendData:newLine];
-                [data appendData:[[NSString stringWithFormat:@"Content-Type: %s", field.content_type.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
-                [data appendData:newLine];
-                [data appendData:newLine];
-                [data appendData:fileData];
-                [data appendData:newLine];
-            }
-        } else {
-            [data appendData:[[NSString stringWithFormat:@"--%@",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-            [data appendData:newLine];
-            [data appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%s\"", field.field_name.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
-            [data appendData:newLine];
-            [data appendData:newLine];
-            [data appendData:[[NSString stringWithFormat:@"%s", field.field_value.c_str()] dataUsingEncoding:NSUTF8StringEncoding]];
-            [data appendData:newLine];
-        }
-    }
-    
-    [data appendData:[[NSString stringWithFormat:@"--%@--",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-    [request setHTTPBody:data];
-
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
-                                            completionHandler:
-                                  ^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        result = [httpResponse statusCode];
-        dispatch_semaphore_signal(sem);
-    }];
-
-    [task resume];
-    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
-
-    return result;
-}
-
 std::string os_GetMachineID(){
     io_service_t    platformExpert = IOServiceGetMatchingService(kIOMasterPortDefault,IOServiceMatching("IOPlatformExpertDevice"));
     CFStringRef serialNumberAsCFString = NULL;
@@ -351,4 +270,77 @@ std::string os_GetConnectionMedium() {
     } else {
         return "Wired";
     }
+}
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	if (fork() == 0)
+	{
+		std::vector<char *> localArgs;
+		NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+		const char *selfPath = [[arguments objectAtIndex:0] UTF8String];
+		localArgs.push_back((char *)selfPath);
+		for (int i = 0; i < argc; i++)
+			localArgs.push_back((char *)argv[i]);
+		localArgs.push_back(nullptr);
+		execv(selfPath, &localArgs[0]);
+		ERROR_LOG(BOOT, "Error %d launching Flycast instance %s", errno, selfPath);
+		die("execv failed");
+	}
+}
+
+#import <Syphon/Syphon.h>
+#import <cfg/cfg.h>
+#include "rend/vulkan/vulkan.h"
+static SyphonOpenGLServer* syphonGLServer;
+static SyphonMetalServer* syphonMtlServer;
+
+void os_VideoRoutingInitSyphonWithGLContext(void* glContext)
+{
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[(__bridge NSOpenGLContext*)glContext CGLContextObj] options:nil];
+}
+
+void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
+{
+	CGLLockContext([syphonGLServer context]);
+	[syphonGLServer publishFrameTexture:texID textureTarget:texTarget imageRegion:NSMakeRect(0, 0, w, h) textureDimensions:NSMakeSize(w, h) flipped:NO];
+	CGLUnlockContext([syphonGLServer context]);
+}
+
+void os_VideoRoutingTermGL()
+{
+	[syphonGLServer stop];
+	[syphonGLServer release];
+	syphonGLServer = NULL;
+}
+
+void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device)
+{
+	vk::ExportMetalDeviceInfoEXT deviceInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
+	device->exportMetalObjectsEXT(&objectsInfo);
+	
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
+}
+
+void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
+{
+	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
+	auto commandInfo = vk::ExportMetalCommandQueueInfoEXT(queue);
+	commandInfo.pNext = &textureInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&commandInfo);
+	device.exportMetalObjectsEXT(&objectsInfo);
+	
+	auto commandBuffer = [commandInfo.mtlCommandQueue commandBufferWithUnretainedReferences];
+	[syphonMtlServer publishFrameTexture:textureInfo.mtlTexture onCommandBuffer:commandBuffer imageRegion:NSMakeRect(x, y, w, h) flipped:YES];
+	[commandBuffer commit];
+}
+
+void os_VideoRoutingTermVk()
+{
+	[syphonMtlServer stop];
+	[syphonMtlServer release];
+	syphonMtlServer = NULL;
 }

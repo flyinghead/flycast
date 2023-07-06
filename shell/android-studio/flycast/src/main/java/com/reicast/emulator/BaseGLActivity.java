@@ -26,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
+import com.flycast.emulator.AndroidStorage;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.AudioBackend;
 import com.reicast.emulator.emu.HttpClient;
@@ -62,6 +63,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     private boolean resumedCalled = false;
     private String pendingIntentUrl;
     private boolean hasKeyboard = false;
+    private AndroidStorage storage;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -113,20 +115,29 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             return;
         }
         Log.i("flycast", "Environment initialized");
+        storage = new AndroidStorage(this);
         installButtons();
         setStorageDirectories();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !storagePermissionGranted) {
-            Log.i("flycast", "Asking for external storage permission");
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    },
-                    STORAGE_PERM_REQUEST);
+        boolean externalStorageLegacy = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            externalStorageLegacy = Environment.isExternalStorageLegacy();
+            //Log.i("flycast", "External storage legacy: " + (externalStorageLegacy ? "preserved" : "lost"));
         }
-        else
-            storagePermissionGranted = true;
+        if (!storagePermissionGranted) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+                // No permission needed before Android 6
+                storagePermissionGranted = true;
+            else if (externalStorageLegacy) {
+                Log.i("flycast", "Asking for external storage permission");
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        },
+                        STORAGE_PERM_REQUEST);
+            }
+        }
 
         Log.i("flycast", "Initializing input devices");
         InputDeviceManager.getInstance().startListening(getApplicationContext());
@@ -138,21 +149,16 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
         // When viewing a resource, pass its URI to the native code for opening
         Intent intent = getIntent();
-        if (intent.getAction() != null) {
-            if (intent.getAction().equals(Intent.ACTION_VIEW)) {
-                Uri gameUri = Uri.parse(intent.getData().toString());
-                // Flush the intent to prevent multiple calls
-                getIntent().setData(null);
-                setIntent(null);
-                if (gameUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    gameUri = Uri.parse(gameUri.toString().replace("content://"
-                            + gameUri.getAuthority() + "/external_files", "/storage"));
-                }
-                if (gameUri != null)
-                    if (storagePermissionGranted)
-                        JNIdc.setGameUri(gameUri.toString());
-                    else
-                        pendingIntentUrl = gameUri.toString();
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            Uri gameUri = intent.getData();
+            // Flush the intent to prevent multiple calls
+            getIntent().setData(null);
+            setIntent(null);
+            if (gameUri != null) {
+                if (storagePermissionGranted)
+                    JNIdc.setGameUri(gameUri.toString());
+                else
+                    pendingIntentUrl = gameUri.toString();
             }
         }
         Log.i("flycast", "BaseGLActivity.onCreate done");
@@ -169,6 +175,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         if (dir != null)
             pathList.add(dir.getAbsolutePath());
         Log.i("flycast", "Storage dirs: " + pathList);
+        if (storage != null)
+            storage.setStorageDirectories(pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
 
@@ -415,6 +423,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == AndroidStorage.ADD_STORAGE_ACTIVITY_REQUEST)
+            storage.onAddStorageResult(data);
     }
 
     private static native void register(BaseGLActivity activity);

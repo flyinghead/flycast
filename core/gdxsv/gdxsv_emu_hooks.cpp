@@ -44,6 +44,7 @@ void gdxsv_emu_start() {
 	if (gdxsv.Enabled()) {
 		auto replay = cfgLoadStr("gdxsv", "replay", "");
 		if (!replay.empty()) {
+			dc_savestate(90);
 			dc_loadstate(99);
 		} else if (!cfgLoadStr("gdxsv", "rbk_test", "").empty()) {
 			dc_loadstate(99);
@@ -83,7 +84,8 @@ void gdxsv_emu_loadstate(int slot) {
 	if (gdxsv.Enabled()) {
 		auto replay = cfgLoadStr("gdxsv", "replay", "");
 		if (!replay.empty() && slot == 99) {
-			gdxsv.StartReplayFile(replay.c_str(), 0);
+			auto replay_pov = cfgLoadInt("gdxsv", "ReplayPOV", 1);
+			gdxsv.StartReplayFile(replay.c_str(), replay_pov - 1);
 		}
 
 		auto rbk_test = cfgLoadStr("gdxsv", "rbk_test", "");
@@ -104,7 +106,7 @@ bool gdxsv_widescreen_hack_enabled() { return gdxsv.Enabled() && config::Widescr
 
 static void gui_header(const char* title) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ScaledVec2(0.f, 0.5f));	// Left
-	ImGui::ButtonEx(title, ScaledVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::ButtonEx(title, ScaledVec2(-1, 0), ImGuiItemFlags_Disabled);
 	ImGui::PopStyleVar();
 }
 
@@ -179,7 +181,6 @@ void gdxsv_emu_gui_settings() {
 		config::AudioBufferSize = 706 * 4;
 		// Others
 		config::DynarecEnabled = true;
-		config::DynarecIdleSkip = true;
 		config::ThreadedRendering = false;
 		// Network
 		config::EnableUPnP = true;

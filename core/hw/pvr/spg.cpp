@@ -138,8 +138,11 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 		case 2:
 			asic_RaiseInterrupt(holly_HBLank);
 			break;
+		case 1:
+			WARN_LOG(PVR, "Unimplemented HBLANK INT mode");
+			break;
 		default:
-			die("Unimplemented HBLANK INT mode");
+			INFO_LOG(PVR, "Invalid HBLANK INT mode");
 			break;
 		}
 
@@ -286,7 +289,7 @@ void scheduleRenderDone(TA_context *cntx)
 			int size = 0;
 			for (TA_context *c = cntx; c != nullptr; c = c->nextContext)
 				size += c->tad.thd_data - c->tad.thd_root;
-			cycles = std::min(550000 + size * 100, 1500000);
+			cycles = std::min(450000 + size * 100, 1500000);
 		}
 	}
 	sh4_sched_request(render_end_schid, cycles);
@@ -308,20 +311,7 @@ void spg_Deserialize(Deserializer& deser)
 	if (deser.version() < Deserializer::V30)
 		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
-	if (deser.version() < Deserializer::V9_LIBRETRO)
-	{
-		deser >> pvr_numscanlines;
-		deser >> prv_cur_scanline;
-		deser >> vblk_cnt;
-		deser >> Line_Cycles;
-		deser >> Frame_Cycles;
-		deser.skip<double>();	// speed_load_mspdf
-		deser.skip<u32>();		// mips_counter
-		deser.skip<double>();	// full_rps
-		if (deser.version() <= Deserializer::V4)
-			deser.skip<u32>();	// fskip
-	}
-	else if (deser.version() >= Deserializer::V12)
+	if (deser.version() >= Deserializer::V12)
 	{
 		deser >> maple_int_pending;
 		if (deser.version() >= Deserializer::V14)

@@ -149,38 +149,56 @@ static void tactx_Recycle(TA_context* ctx)
 
 static TA_context *tactx_Find(u32 addr, bool allocnew)
 {
+	TA_context *oldCtx = nullptr;
 	for (TA_context *ctx : ctx_list)
+	{
 		if (ctx->Address == addr)
+		{
+			ctx->lastFrameUsed = FrameCount;
 			return ctx;
+		}
+		if (FrameCount - ctx->lastFrameUsed > 60)
+			oldCtx = ctx;
+	}
 
 	if (allocnew)
 	{
-		TA_context *ctx = tactx_Alloc();
+		TA_context *ctx;
+		if (oldCtx != nullptr)
+		{
+			ctx = oldCtx;
+			ctx->Reset();
+		}
+		else
+		{
+			ctx = tactx_Alloc();
+			ctx_list.push_back(ctx);
+		}
 		ctx->Address = addr;
-		ctx_list.push_back(ctx);
+		ctx->lastFrameUsed = FrameCount;
 
 		return ctx;
 	}
 	return nullptr;
 }
 
-TA_context* tactx_Pop(u32 addr)
+TA_context *tactx_Pop(u32 addr)
 {
-	for (size_t i=0; i<ctx_list.size(); i++)
+	for (size_t i = 0; i < ctx_list.size(); i++)
 	{
-		if (ctx_list[i]->Address==addr)
+		if (ctx_list[i]->Address == addr)
 		{
-			TA_context* rv = ctx_list[i];
+			TA_context *ctx = ctx_list[i];
 			
-			if (ta_ctx == rv)
+			if (::ta_ctx == ctx)
 				SetCurrentTARC(TACTX_NONE);
 
 			ctx_list.erase(ctx_list.begin() + i);
 
-			return rv;
+			return ctx;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void tactx_Term()
@@ -237,7 +255,7 @@ static void deserializeContext(Deserializer& deser, TA_context **pctx)
 	deser.deserialize(tad.thd_root, size);
 	tad.thd_data = tad.thd_root + size;
 	if ((deser.version() >= Deserializer::V12 && deser.version() < Deserializer::V26)
-			|| (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5))
+			|| (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
 	{
 		u32 render_pass_count;
 		deser >> render_pass_count;
@@ -276,7 +294,7 @@ void DeserializeTAContext(Deserializer& deser)
 		}
 		int curCtx;
 		deser >> curCtx;
-		if (curCtx != -1)
+		if (curCtx >= 0 && curCtx < (int)ctx_list.size())
 			SetCurrentTARC(ctx_list[curCtx]->Address);
 	}
 	else

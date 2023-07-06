@@ -1,26 +1,15 @@
 //
-//  Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2020 Alexander Grund
 //
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
-#ifndef NOWIDE_CSTDIO_H_INCLUDED
-#define NOWIDE_CSTDIO_H_INCLUDED
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
 
-#include <cstdio>
-#include <stdio.h>
+#ifndef NOWIDE_CSTDIO_HPP_INCLUDED
+#define NOWIDE_CSTDIO_HPP_INCLUDED
+
 #include <nowide/config.hpp>
-#include <nowide/convert.hpp>
-#include <nowide/stackstring.hpp>
-#include <errno.h>
-
-#ifdef NOWIDE_MSVC
-#  pragma warning(push)
-#  pragma warning(disable : 4996)
-#endif
-
-
+#include <cstdio>
 
 namespace nowide {
 #if !defined(NOWIDE_WINDOWS) && !defined(NOWIDE_DOXYGEN)
@@ -30,72 +19,26 @@ namespace nowide {
     using std::rename;
 #else
 
-///
-/// \brief Same as freopen but file_name and mode are UTF-8 strings
-///
-/// In invalid UTF-8 given, NULL is returned and errno is set to EINVAL
-///
-inline FILE *freopen(char const *file_name,char const *mode,FILE *stream)
-{
-    wstackstring wname;
-    wshort_stackstring wmode;
-    if(!wname.convert(file_name) || !wmode.convert(mode)) {
-        errno = EINVAL;
-        return 0;
-    }
-    return _wfreopen(wname.c_str(),wmode.c_str(),stream);
-}
-///
-/// \brief Same as fopen but file_name and mode are UTF-8 strings
-///
-/// In invalid UTF-8 given, NULL is returned and errno is set to EINVAL
-///
-inline FILE *fopen(char const *file_name,char const *mode)
-{
-    wstackstring wname;
-    wshort_stackstring wmode;
-    if(!wname.convert(file_name) || !wmode.convert(mode)) {
-        errno = EINVAL;
-        return 0;
-    }
-    return _wfopen(wname.c_str(),wmode.c_str());
-}
-///
-/// \brief Same as rename but old_name and new_name are UTF-8 strings
-///
-/// In invalid UTF-8 given, -1 is returned and errno is set to EINVAL
-///
-inline int rename(char const *old_name,char const *new_name)
-{
-    wstackstring wold,wnew;
-    if(!wold.convert(old_name) || !wnew.convert(new_name)) {
-        errno = EINVAL;
-        return -1;
-    }
-    return _wrename(wold.c_str(),wnew.c_str());
-}
-///
-/// \brief Same as rename but name is UTF-8 string
-///
-/// In invalid UTF-8 given, -1 is returned and errno is set to EINVAL
-///
-inline int remove(char const *name)
-{
-    wstackstring wname;
-    if(!wname.convert(name)) {
-        errno = EINVAL;
-        return -1;
-    }
-    return _wremove(wname.c_str());
-}
+    ///
+    /// \brief Same as freopen but file_name and mode are UTF-8 strings
+    ///
+    NOWIDE_DECL FILE* freopen(const char* file_name, const char* mode, FILE* stream);
+    ///
+    /// \brief Same as fopen but file_name and mode are UTF-8 strings
+    ///
+    NOWIDE_DECL FILE* fopen(const char* file_name, const char* mode);
+    ///
+    /// \brief Same as rename but old_name and new_name are UTF-8 strings
+    ///
+    NOWIDE_DECL int rename(const char* old_name, const char* new_name);
+    ///
+    /// \brief Same as rename but name is UTF-8 string
+    ///
+    NOWIDE_DECL int remove(const char* name);
 #endif
-} // nowide
-
-
-#ifdef NOWIDE_MSVC
-#pragma warning(pop)
-#endif
+    namespace detail {
+        NOWIDE_DECL FILE* wfopen(const wchar_t* filename, const wchar_t* mode);
+    }
+} // namespace nowide
 
 #endif
-///
-// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

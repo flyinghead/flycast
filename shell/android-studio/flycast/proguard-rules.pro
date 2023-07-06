@@ -21,4 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.reicast.** {*;}
--keepclassmembers  class com.reicast.** {*;}
+-keepclassmembers class com.reicast.** {*;}
+-keep class com.flycast.** {*;}
+-keepclassmembers class com.flycast.** {*;}

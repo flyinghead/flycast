@@ -235,41 +235,22 @@ private:
 							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
 							&& op.size <= 4)
 					{
-						bool doit = false;
-						if (mmu_enabled())
-						{
-#ifndef FAST_MMU
-							// It is possible to get a tlb miss on data if the page is only in the itlb table
-							// It won't happen with the fast mmu implementation though.
-							u32 paddr;
-							u32 rv = mmu_data_translation<MMU_TT_DREAD, u8>(op.rs1._imm, paddr);
-							doit = rv == MMU_ERROR_NONE;
-#else
-							doit = true;
-#endif
-							if (doit)
-							{
-								// Only for user space addresses
-								if ((op.rs1._imm & 0x80000000) != 0)
-									// And kernel RAM addresses
-									doit = IsOnRam(op.rs1._imm);
-							}
-						}
-						else
-							doit = IsOnRam(op.rs1._imm);
-						if (doit)
+						void *ptr;
+						bool isRam;
+						u32 paddr;
+						if (rdv_readMemImmediate(op.rs1._imm, op.size, ptr, isRam, paddr, block) && isRam)
 						{
 							u32 v;
 							switch (op.size)
 							{
 							case 1:
-								v = (s32)(::s8)ReadMem8(op.rs1._imm);
+								v = (s32)*(::s8 *)ptr;
 								break;
 							case 2:
-								v = (s32)(::s16)ReadMem16(op.rs1._imm);
+								v = (s32)*(::s16 *)ptr;
 								break;
 							case 4:
-								v = ReadMem32(op.rs1._imm);
+								v = *(u32 *)ptr;
 								break;
 							default:
 								die("invalid size");

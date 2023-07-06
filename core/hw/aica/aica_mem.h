@@ -1,11 +1,15 @@
 #pragma once
 #include "types.h"
 
-template<typename T> T aicaReadReg(u32 addr);
-template<typename T> void aicaWriteReg(u32 addr, T data);
+namespace aica
+{
 
-void init_mem();
-void term_mem();
+template<typename T> T readRegInternal(u32 addr);
+template<typename T> void writeRegInternal(u32 addr, T data);
+
+void initMem();
+void termMem();
 
 alignas(4) extern u8 aica_reg[0x8000];
 
+}

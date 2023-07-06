@@ -437,3 +437,16 @@ int pico_icmp4_ping_abort(int id)
 }
 
 #endif
+
+static int deinit_cb(void **p)
+{
+	PICO_FREE(*p);
+	return 0;
+}
+
+void pico_icmp4_deinit(void)
+{
+#ifdef PICO_SUPPORT_PING
+	pico_tree_destroy(&Pings, deinit_cb);
+#endif
+}

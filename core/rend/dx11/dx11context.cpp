@@ -25,11 +25,13 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx11_driver.h"
-#include "imgui_impl_dx11.h"
+#include "imgui/backends/imgui_impl_dx11.h"
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>
 #endif
+
+#include "nowide/stackstring.hpp"
 
 DX11Context theDX11Context;
 
@@ -88,7 +90,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	dxgiAdapter->GetDesc(&desc);
 	nowide::stackstring wdesc;
 	wdesc.convert(desc.Description);
-	adapterDesc = wdesc.c_str();
+	adapterDesc = wdesc.get();
 	adapterVersion = std::to_string(desc.Revision);
 	vendorId = desc.VendorId;
 
@@ -159,6 +161,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 			NOTICE_LOG(RENDERER, "No system-provided shader cache");
 	}
 
+	initVideoRouting();
+
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver(pDevice, pDeviceContext));
 	resize();
 	shaders.init(pDevice, &D3DCompile);
@@ -167,6 +171,19 @@ bool DX11Context::init(bool keepCurrentWindow)
 	if (!success)
 		term();
 	return success;
+}
+
+void DX11Context::initVideoRouting()
+{
+	#ifdef VIDEO_ROUTING
+	extern void os_VideoRoutingTermDX();
+	extern void os_VideoRoutingInitSpoutDXWithDevice(ID3D11Device* pDevice);
+	os_VideoRoutingTermDX();
+	if (config::VideoRouting)
+	{
+		os_VideoRoutingInitSpoutDXWithDevice(pDevice.get());
+	}
+	#endif
 }
 
 void DX11Context::term()
@@ -193,6 +210,10 @@ void DX11Context::term()
 		FreeLibrary(d3dcompilerHandle);
 		d3dcompilerHandle = NULL;
 	}
+#ifdef VIDEO_ROUTING
+	extern void os_VideoRoutingTermDX();
+	os_VideoRoutingTermDX();
+#endif
 }
 
 void DX11Context::Present()
@@ -365,7 +386,7 @@ bool DX11Context::checkTextureSupport()
 	const char * const fmtNames[] = { "B5G5R5A1", "B4G4R4A4", "B5G6R5", "B8G8R8A8", "A8" };
 	const TextureType dcTexTypes[] = { TextureType::_5551, TextureType::_4444, TextureType::_565, TextureType::_8888, TextureType::_8 };
 	UINT support;
-	for (size_t i = 0; i < ARRAY_SIZE(formats); i++)
+	for (std::size_t i = 0; i < std::size(formats); i++)
 	{
 		supportedTexFormats[(int)dcTexTypes[i]] = false;
 		pDevice->CheckFormatSupport(formats[i], &support);

@@ -1,7 +1,9 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
-#include "hw/hwreg.h"
+#include "modules/modules.h"
+#include "modules/ccn.h"
+#include "modules/dmac.h"
 
 //For mem mapping
 void map_area7_init();
@@ -13,53 +15,26 @@ void map_p4();
 
 #define sq_both (sh4rcb.sq_buffer)
 
-extern RegisterStruct CCN[18];
-extern RegisterStruct UBC[9];
-extern RegisterStruct BSC[19];
-extern RegisterStruct DMAC[17];
-extern RegisterStruct CPG[5];
-extern RegisterStruct RTC[16];
-extern RegisterStruct INTC[5];
-extern RegisterStruct TMU[12];
-extern RegisterStruct SCI[8];
-extern RegisterStruct SCIF[10];
-
 void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
-void sh4_rio_reg(RegisterStruct *arr, u32 addr, RegIO flags, RegReadAddrFP *rf = nullptr, RegWriteAddrFP *wf = nullptr);
+namespace sh4
+{
 
-#define SH4IO_REGN(mod, addr) ((mod)[((addr) & 255) / 4].data32)
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+void serialize2(Serializer& ser);
+void deserialize2(Deserializer& deser);
+
+}
+
+#define SH4IO_REGN(mod, addr) ((mod)[((addr) & 255) / 4])
 #define SH4IO_REG(mod, name) SH4IO_REGN(mod, mod##_##name##_addr)
 #define SH4IO_REG_T(mod, name) ((mod##_##name##_type&)SH4IO_REG(mod, name))
 
 #define SH4IO_REG_OFS(mod, name, o, s) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s))
 #define SH4IO_REG_T_OFS(mod, name, o, s) ((mod##_##name##_type&)SH4IO_REG_OFS(mod, name, o, s))
-
-template <RegisterStruct *Module, u32 Addr, u32 Mask = 0xffffffff, u32 OrMask = 0>
-void sh4_write_reg(u32 addr, u32 data)
-{
-	SH4IO_REGN(Module, Addr) = (data & Mask) | OrMask;
-}
-
-template<RegisterStruct *Module, u32 Addr, u32 Mask>
-void sh4_rio_reg_wmask()
-{
-	sh4_rio_reg(Module, Addr, RIO_WF, nullptr, sh4_write_reg<Module, Addr, Mask>);
-};
-
-template<RegisterStruct *Module, u32 Addr>
-void sh4_rio_reg16()
-{
-	sh4_rio_reg_wmask<Module, Addr, 0xffff>();
-};
-
-template<RegisterStruct *Module, u32 Addr>
-void sh4_rio_reg8()
-{
-	sh4_rio_reg_wmask<Module, Addr, 0xff>();
-};
 
 //CCN module registers base
 #define CCN_BASE_addr 0x1F000000
@@ -499,9 +474,7 @@ union BSC_BCR1_type
 	u32 full;
 };
 
-
 #define BSC_BCR1 SH4IO_REG_T(BSC, BCR1)
-//extern BCR1_type BSC_BCR1;
 
 //16 bit
 //A0SZ0,A0SZ1 are read only , others are are editable and reseted to 0
@@ -919,7 +892,7 @@ union BSC_PDTRA_type
 	u16 full;
 };
 
-extern BSC_PDTRA_type BSC_PDTRA;
+#define BSC_PDTRA SH4IO_REG_T(BSC, PDTRA)
 
 //32 bits
 union BSC_PCTRB_type
@@ -1065,13 +1038,15 @@ union CCN_MMUCR_type
 	struct
 	{
 		u32 AT    : 1;
-		u32 res   : 1;
+		u32       : 1;
 		u32 TI    : 1;
-		u32 res_2 : 5;
+		u32       : 5;
 		u32 SV    : 1;
 		u32 SQMD  : 1;
 		u32 URC   : 6;
+		u32       : 2;
 		u32 URB   : 6;
+		u32       : 2;
 		u32 LRUI  : 6;
 	};
 	u32 reg_data;
@@ -1215,13 +1190,6 @@ union DMAC_DMAOR_type
 	u32 full;
 };
 
-/*
-extern u32 DMAC_SAR[4];
-extern u32 DMAC_DAR[4];
-extern u32 DMAC_DMATCR[4];//only 24 bits valid
-extern DMAC_CHCR_type DMAC_CHCR[4];
-*/
-
 #define DMAC_SAR(x) SH4IO_REG_OFS(DMAC, SAR, x, 0x10)
 #define DMAC_DAR(x) SH4IO_REG_OFS(DMAC, DAR, x, 0x10)
 #define DMAC_DMATCR(x) SH4IO_REG_OFS(DMAC, DMATCR, x, 0x10)
@@ -1318,7 +1286,7 @@ union SCIF_SCSCR2_type
 	};
 	u16 full;
 };
-extern SCIF_SCSCR2_type SCIF_SCSCR2;
+#define SCIF_SCSCR2 SH4IO_REG_T(SCIF, SCSCR2)
 
 //SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
 #define SCIF_SCFTDR2 SH4IO_REG(SCIF, SCFTDR2)
@@ -1349,11 +1317,10 @@ union SCIF_SCFSR2_type
 	};
 	u16 full;
 };
-extern SCIF_SCFSR2_type SCIF_SCFSR2;
+#define SCIF_SCFSR2 SH4IO_REG_T(SCIF, SCFSR2)
 
 //SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-//Read OLNY
-extern u8 SCIF_SCFRDR2;
+//Read ONLY
 
 //SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
 union SCIF_SCFCR2_type

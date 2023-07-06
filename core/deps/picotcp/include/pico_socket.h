@@ -203,6 +203,7 @@ int pico_socket_connect(struct pico_socket *s, const void *srv_addr, uint16_t re
 int pico_socket_listen(struct pico_socket *s, const int backlog);
 struct pico_socket *pico_socket_accept(struct pico_socket *s, void *orig, uint16_t *port);
 int8_t pico_socket_del(struct pico_socket *s);
+int8_t pico_socket_del_imm(struct pico_socket *s);
 
 int pico_socket_setoption(struct pico_socket *s, int option, void *value);
 int pico_socket_getoption(struct pico_socket *s, int option, void *value);
@@ -261,5 +262,6 @@ int pico_count_sockets(uint8_t proto);
 #define PICO_SOCKET_SETOPT_DIS(socket, index) (socket->opt_flags &= (uint16_t) ~(1 << index))
 #define PICO_SOCKET_GETOPT(socket, index) ((socket->opt_flags & (1u << index)) != 0)
 
+void pico_socket_deinit(void);
 
 #endif

@@ -27,8 +27,8 @@
 
 struct QuadVertex
 {
-	f32 pos[3];
-	f32 uv[2];
+	float x, y, z;
+	float u, v;
 };
 
 vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv);
@@ -38,7 +38,7 @@ class QuadBuffer
 public:
 	QuadBuffer()
 	{
-		buffer = std::unique_ptr<BufferData>(new BufferData(sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer));
+		buffer = std::make_unique<BufferData>(sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer);
 	}
 
 	void Bind(vk::CommandBuffer commandBuffer)
@@ -54,11 +54,11 @@ public:
 	{
 		if (vertices == nullptr)
 		{
-			static QuadVertex defaultVtx[] = {
-				{ { -1.f, -1.f, 0.f }, { 0.f, 0.f } },
-				{ {  1.f, -1.f, 0.f }, { 1.f, 0.f } },
-				{ { -1.f,  1.f, 0.f }, { 0.f, 1.f } },
-				{ {  1.f,  1.f, 0.f }, { 1.f, 1.f } },
+			static QuadVertex defaultVtx[] {
+				{ -1.f, -1.f, 0.f, 0.f, 0.f },
+				{  1.f, -1.f, 0.f, 1.f, 0.f },
+				{ -1.f,  1.f, 0.f, 0.f, 1.f },
+				{  1.f,  1.f, 0.f, 1.f, 1.f },
 			};
 			vertices = defaultVtx;
 		};

@@ -50,12 +50,16 @@ button_list[] =
 	{ EMU_BTN_FFORWARD, "emulator", "btn_fforward" },
 	{ DC_AXIS_LT, "compat", "btn_trigger_left" },
 	{ DC_AXIS_RT, "compat", "btn_trigger_right" },
+	{ DC_AXIS_LT2, "compat", "btn_trigger_left2" },
+	{ DC_AXIS_RT2, "compat", "btn_trigger_right2" },
 	{ DC_AXIS_UP, "compat", "btn_analog_up" },
 	{ DC_AXIS_DOWN, "compat", "btn_analog_down" },
 	{ DC_AXIS_LEFT, "compat", "btn_analog_left" },
 	{ DC_AXIS_RIGHT, "compat", "btn_analog_right" },
 	{ DC_BTN_RELOAD, "dreamcast", "reload" },
-	{ EMU_BTN_INSERT_CARD, "emulator", "insert_card" },
+	{ DC_BTN_INSERT_CARD, "emulator", "insert_card" },
+	{ EMU_BTN_LOADSTATE, "emulator", "btn_jump_state" },
+	{ EMU_BTN_SAVESTATE, "emulator", "btn_quick_save" },
 };
 
 static struct
@@ -77,8 +81,14 @@ axis_list[] =
 	{ DC_AXIS2_RIGHT, "", "axis2_right", "", "" },
 	{ DC_AXIS2_UP, "", "axis2_up", "", "" },
 	{ DC_AXIS2_DOWN, "", "axis2_down", "", "" },
+	{ DC_AXIS3_LEFT,  "", "axis3_left", "", "" },
+	{ DC_AXIS3_RIGHT, "", "axis3_right", "", "" },
+	{ DC_AXIS3_UP,    "", "axis3_up", "", "" },
+	{ DC_AXIS3_DOWN,  "", "axis3_down", "", "" },
 	{ DC_AXIS_LT, "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
 	{ DC_AXIS_RT, "dreamcast", "axis_trigger_right", "compat", "axis_trigger_right_inverted" },
+	{ DC_AXIS_LT2, "dreamcast", "axis_trigger_left2",   "compat", "axis_trigger_left2_inverted" },
+	{ DC_AXIS_RT2, "dreamcast", "axis_trigger_right2", "compat", "axis_trigger_right2_inverted" },
 
 	// legacy (v2)
 	{ DC_AXIS_RIGHT, "dreamcast", "axis_x", "compat", "axis_x_inverted" },
@@ -164,10 +174,10 @@ using namespace emucfg;
 
 static DreamcastKey getKeyId(const std::string& name)
 {
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < std::size(button_list); i++)
 		if (name == button_list[i].option)
 			return button_list[i].id;
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < std::size(axis_list); i++)
 		if (name == axis_list[i].option)
 			return axis_list[i].id;
 
@@ -258,7 +268,7 @@ void InputMapping::loadv1(ConfigFile& mf)
 {
 	for (int port = 0; port < 4; port++)
 	{
-		for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+		for (u32 i = 0; i < std::size(button_list); i++)
 		{
 			std::string option;
 			if (port == 0)
@@ -278,7 +288,7 @@ void InputMapping::loadv1(ConfigFile& mf)
 			}
 		}
 
-		for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+		for (u32 i = 0; i < std::size(axis_list); i++)
 		{
 			std::string option;
 			if (port == 0)
@@ -304,6 +314,10 @@ void InputMapping::loadv1(ConfigFile& mf)
 					this->set_axis(port, DC_AXIS2_LEFT, axis_code, inverted);
 				else if (axis_list[i].id == DC_AXIS2_DOWN)
 					this->set_axis(port, DC_AXIS2_UP, axis_code, inverted);
+				else if (axis_list[i].id == DC_AXIS3_RIGHT)
+					this->set_axis(port, DC_AXIS3_LEFT, axis_code, inverted);
+				else if (axis_list[i].id == DC_AXIS3_DOWN)
+					this->set_axis(port, DC_AXIS3_UP, axis_code, inverted);
 			}
 		}
 	}
@@ -385,10 +399,10 @@ void InputMapping::set_dirty()
 
 static const char *getKeyName(DreamcastKey key)
 {
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < std::size(button_list); i++)
 		if (key == button_list[i].id)
 			return button_list[i].option.c_str();
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < std::size(axis_list); i++)
 		if (key == axis_list[i].id)
 			return axis_list[i].option.c_str();
 	ERROR_LOG(INPUT, "Invalid key %x", key);

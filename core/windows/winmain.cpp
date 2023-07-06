@@ -27,7 +27,6 @@
 #include <fcntl.h>
 #include <nowide/config.hpp>
 #include <nowide/convert.hpp>
-#include <nowide/stackstring.hpp>
 #endif
 #include "oslib/oslib.h"
 #include "imgread/common.h"
@@ -59,6 +58,7 @@
 #if defined(USE_SDL) || defined(DEF_CONSOLE)
 #include <nowide/args.hpp>
 #endif
+#include <nowide/stackstring.hpp>
 
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
@@ -252,14 +252,14 @@ static void setupPath()
 {
 #ifndef TARGET_UWP
 	wchar_t fname[512];
-	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
+	GetModuleFileNameW(0, fname, std::size(fname));
 
 	std::string fn;
 	nowide::stackstring path;
 	if (!path.convert(fname))
 		fn = ".\\";
 	else
-		fn = path.c_str();
+		fn = path.get();
 	size_t pos = get_last_slash_pos(fn);
 	if (pos != std::string::npos)
 		fn = fn.substr(0, pos) + "\\";
@@ -276,7 +276,7 @@ static void setupPath()
 	StorageFolder^ localFolder = Windows::Storage::ApplicationData::Current->LocalFolder;
 	nowide::stackstring path;
 	path.convert(localFolder->Path->Data());
-	std::string homePath(path.c_str());
+	std::string homePath(path.get());
 	homePath += '\\';
 	set_user_config_dir(homePath);
 	homePath += "data\\";
@@ -463,7 +463,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					keycode = VK_NUMPAD_RETURN;
 				else
 					keycode = wParam & 0xff;
-				keyboard->keyboard_input(keycode, message == WM_KEYDOWN);
+				keyboard->input(keycode, message == WM_KEYDOWN);
 			}
 		}
 		break;
@@ -757,16 +757,16 @@ static bool dumpCallback(const wchar_t* dump_path,
 	if (succeeded)
 	{
 		wchar_t s[MAX_PATH + 32];
-		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
+		_snwprintf(s, std::size(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
 		::OutputDebugStringW(s);
 
 		nowide::stackstring path;
 		if (path.convert(dump_path))
 		{
-			std::string directory = path.c_str();
+			std::string directory = path.get();
 			if (path.convert(minidump_id))
 			{
-				std::string fullPath = directory + '\\' + std::string(path.c_str()) + ".dmp";
+				std::string fullPath = directory + '\\' + std::string(path.get()) + ".dmp";
 				registerCrash(directory.c_str(), fullPath.c_str());
 			}
 		}
@@ -806,7 +806,7 @@ void gui_load_game()
 			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
 			nowide::stackstring path;
 			if (path.convert(file->Path->Data()))
-				gui_start_game(path.c_str());
+				gui_start_game(path.get());
 		}
 	});
 }
@@ -845,7 +845,7 @@ FILE *fopen(char const *file_name, char const *mode)
 	if (strchr(mode, 'b') == nullptr)
 		openFlags |= _O_TEXT;
 
-	HANDLE fileh = CreateFile2FromAppW(wname.c_str(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
+	HANDLE fileh = CreateFile2FromAppW(wname.get(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
 	if (fileh == INVALID_HANDLE_VALUE)
 		return nullptr;
 
@@ -867,7 +867,7 @@ int remove(char const *name)
         errno = EINVAL;
         return -1;
     }
-    return _wremove(wname.c_str());
+    return _wremove(wname.get());
 }
 
 }
@@ -897,7 +897,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int argc = 0;
 	char **argv = nullptr;
 	if (converter.convert(cmd_line))
-		argv = commandLineToArgvA(converter.c_str(), &argc);
+		argv = commandLineToArgvA(converter.get(), &argc);
 #endif
 
 #ifdef USE_BREAKPAD
@@ -908,7 +908,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
 			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
 	};
-	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
+	google_breakpad::CustomClientInfo custom_info = { custom_entries, std::size(custom_entries) };
 
 	google_breakpad::ExceptionHandler handler(tempDir,
 		nullptr,
@@ -938,7 +938,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	nowide::stackstring nws;
 	static std::string tempDir8;
 	if (nws.convert(tempDir))
-		tempDir8 = nws.c_str();
+		tempDir8 = nws.get();
 	auto async = std::async(std::launch::async, uploadCrashes, tempDir8);
 #endif
 
@@ -969,9 +969,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return 0;
 }
 
-void os_DebugBreak()
+[[noreturn]] void os_DebugBreak()
 {
 	__debugbreak();
+	std::abort();
 }
 
 void os_DoEvents()
@@ -999,153 +1000,6 @@ static HWND hWnd;
 void os_LaunchFromURL(const std::string& url)
 {
     ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
-}
-	
-struct InetCloser
-{
-	typedef HINTERNET pointer;
-
-	void operator()(HINTERNET h)
-	{
-		if (h != NULL){
-			InternetCloseHandle(h);
-		}
-	}
-};
-	
-std::string os_FetchStringFromURL(const std::string& url)
-{
-	std::string result;
-	
-	std::unique_ptr<HINTERNET, InetCloser> interwebs (InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
-	if (interwebs.get() == NULL)
-	{
-		ERROR_LOG(COMMON, "InternetOpen Error");
-		return "";
-	}
-	const char* lpszUrl = url.c_str();
-	DeleteUrlCacheEntry(lpszUrl);
-	
-	std::unique_ptr<HINTERNET, InetCloser> urlFile(InternetOpenUrlA(interwebs.get(), lpszUrl, NULL, 0, 0, 0));
-	if (urlFile.get() == NULL)
-	{
-		ERROR_LOG(COMMON, "InternetOpenUrl Error");
-		return "";
-	}
-	
-	char buffer[2000];
-	DWORD bytesRead;
-	do {
-		InternetReadFile(urlFile.get(), buffer, 2000, &bytesRead);
-		result.append(buffer, bytesRead);
-		memset(buffer, 0, 2000);
-	} while (bytesRead);
-	
-	return result;
-}
-
-int os_UploadFilesToURL(const std::string& url, const std::vector<UploadField>& fields)
-{
-	char scheme[16], host[256], path[256];
-	URL_COMPONENTS components;
-	memset(&components, 0, sizeof(components));
-	components.dwStructSize = sizeof(components);
-	components.lpszScheme = scheme;
-	components.dwSchemeLength = sizeof(scheme) / sizeof(scheme[0]);
-	components.lpszHostName = host;
-	components.dwHostNameLength = sizeof(host) / sizeof(host[0]);
-	components.lpszUrlPath = path;
-	components.dwUrlPathLength = sizeof(path) / sizeof(path[0]);
-
-	if (!InternetCrackUrlA(url.c_str(), url.length(), 0, &components)) return 418;
-
-	std::unique_ptr<HINTERNET, InetCloser> interwebs (InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
-	if (interwebs.get() == NULL)
-	{
-		ERROR_LOG(COMMON, "InternetOpen Error: %d", GetLastError());
-		return 418;
-	}
-	
-	std::unique_ptr<HINTERNET, InetCloser> connect (InternetConnect(interwebs.get(), host, components.nPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0));
-	if (connect.get() == NULL)
-	{
-		ERROR_LOG(COMMON, "InternetConnect Error: %d", GetLastError());
-		return 418;
-	}
-
-	std::unique_ptr<HINTERNET, InetCloser> request (HttpOpenRequest(connect.get(), "POST", path, NULL, NULL, NULL, (components.nPort == 443 ? INTERNET_FLAG_SECURE : 0), 0));
-	if (request.get() == NULL)
-	{
-		ERROR_LOG(COMMON, "HttpOpenRequest Error: %d", GetLastError());
-		return 418;
-	}
-	
-	const char *szHeaders = "Content-Type: multipart/form-data; boundary=----BoundaryFlycastIsAwesome";
-	const std::string newline = "\r\n";
-	
-	std::vector<uint8_t> vec_buf;
-	
-	for (auto const &field : fields)
-	{
-		std::ostringstream sbuf;
-		
-		if (field.field_value.empty())
-		{
-			std::size_t found = field.file_path.find_last_of("\\");
-			if (found == std::string::npos) continue;
-			
-			std::ifstream input (field.file_path.c_str(), std::ios::binary);
-			if (input.good())
-			{
-				std::string filename = field.file_path.substr(found+1);
-				
-				sbuf << "------BoundaryFlycastIsAwesome"
-					<< newline
-					<< "Content-Disposition: form-data; name=\"" << field.field_name << "\"; filename=\"" << filename << "\""
-					<< newline
-					<< "Content-Type: " << field.content_type
-					<< newline
-					<< newline;
-				std::string header = sbuf.str();
-				vec_buf.insert(vec_buf.end(), header.begin(), header.end());
-				
-				std::vector<uint8_t> file_buf((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-				vec_buf.insert(vec_buf.end(), file_buf.begin(), file_buf.end());
-				
-				vec_buf.insert(vec_buf.end(), newline.begin(), newline.end());
-			}
-		}
-		else
-		{
-			sbuf << "------BoundaryFlycastIsAwesome"
-				<< newline
-				<< "Content-Disposition: form-data; name=\"" << field.field_name << "\""
-				<< newline
-				<< newline
-				<< field.field_value
-				<< newline;
-			std::string field_data = sbuf.str();
-			vec_buf.insert(vec_buf.end(), field_data.begin(), field_data.end());
-		}
-		
-	}
-	const std::string endline = "------BoundaryFlycastIsAwesome--";
-	vec_buf.insert(vec_buf.end(), endline.begin(), endline.end());
-	
-	if (!HttpSendRequest(request.get(), szHeaders, -1, static_cast<void*>(vec_buf.data()), vec_buf.size()))
-	{
-		ERROR_LOG(COMMON, "HttpSendRequest Error: %d", GetLastError());
-		return 418;
-	}
-	
-	DWORD statCodeLen = sizeof(DWORD);
-	DWORD statCode;
-	if (HttpQueryInfo(request.get(), HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &statCode, &statCodeLen, NULL))
-	{
-		return int(statCode);
-	}
-	
-	return 418;
 }
 
 std::string os_GetMachineID()
@@ -1214,3 +1068,93 @@ std::string os_GetConnectionMedium(){
 
     return result;
 }
+
+void os_RunInstance(int argc, const char *argv[])
+{
+	char exePath[MAX_PATH];
+	GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+	std::string cmdLine(exePath);
+	for (int i = 0; i < argc; i++)
+	{
+		cmdLine += ' ';
+		cmdLine += argv[i];
+	}
+
+	STARTUPINFOA startupInfo{};
+	startupInfo.cb = sizeof(startupInfo);
+
+	PROCESS_INFORMATION processInfo{};
+	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
+	if (rc)
+	{
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+	}
+	else
+	{
+		WARN_LOG(BOOT, "Cannot launch Flycast instance: error %d", GetLastError());
+	}
+}
+
+#ifdef VIDEO_ROUTING
+#include "SpoutSender.h"
+#include "SpoutDX.h"
+
+static SpoutSender* spoutSender;
+static spoutDX* spoutDXSender;
+
+void os_VideoRoutingInitSpout()
+{
+	if (spoutSender == nullptr)
+	{
+		spoutSender = new SpoutSender();
+	}
+	
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	char buf[32] = {0};
+	vsnprintf(buf, sizeof(buf), (boardID == 0 ? "Flycast - Video Content" : "Flycast - Video Content - %d"), std::va_list(&boardID));
+	spoutSender->SetSenderName(buf);
+}
+
+void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
+{
+	spoutSender->SendTexture(texID, texTarget, w, h, true);
+}
+
+void os_VideoRoutingTermGL()
+{
+	if (spoutSender) 
+	{
+		spoutSender->ReleaseSender();
+		spoutSender = nullptr;
+	}
+}
+
+void os_VideoRoutingInitSpoutDXWithDevice(ID3D11Device* pDevice)
+{
+	if (spoutDXSender == nullptr)
+	{
+		spoutDXSender = new spoutDX();
+	}
+	spoutDXSender->OpenDirectX11(pDevice);
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	char buf[32] = {0};
+	vsnprintf(buf, sizeof(buf), (boardID == 0 ? "Flycast - Video Content" : "Flycast - Video Content - %d"), std::va_list(&boardID));
+	spoutDXSender->SetSenderName(buf);
+}
+
+void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture)
+{
+	spoutDXSender->SendTexture(pTexture);
+}
+
+void os_VideoRoutingTermDX()
+{
+	if (spoutDXSender)
+	{
+		spoutDXSender->ReleaseSender();
+		spoutDXSender = nullptr;
+	}
+}
+#endif

@@ -14,6 +14,8 @@
 
 #if defined(_WIN32)
 #include <Windows.h>
+
+#include <nowide/stackstring.hpp>
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 #include <libproc.h>
 #include <sys/stat.h>
@@ -189,7 +191,7 @@ std::string GdxsvUpdate::GetExecutablePath() {
 	GetModuleFileNameW(NULL, module_file_name, _MAX_PATH);
 	nowide::stackstring nws;
 	if (nws.convert(module_file_name)) {
-		return nws.c_str();
+		return nws.get();
 	}
 	return "";
 #elif defined(__APPLE__) && defined(__MACH__)
@@ -216,7 +218,7 @@ std::string GdxsvUpdate::GetTempDir() {
 	GetTempPathW(_MAX_PATH, temp_path);
 	nowide::stackstring nws;
 	if (!nws.convert(temp_path)) return "";
-	auto result = std::string(nws.c_str());
+	auto result = std::string(nws.get());
 	if (result.back() == '/' || result.back() == '\\') result.pop_back();
 	return result;
 #else

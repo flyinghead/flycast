@@ -1,0 +1,70 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Create Release
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Extract tag name
+        id: get_tag
+        run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
+      - name: Create documentation
+        run: |
+          sudo apt-get install doxygen
+          doc/gendoc.sh
+          tar -czf documentation.tar.gz doc index.html
+      - name: Create standalone version
+        run: |
+          bash tools/create_standalone.sh nowide_standalone_${{steps.get_tag.outputs.tag}}
+          tar -czf  nowide_standalone.tar.gz nowide_standalone_${{steps.get_tag.outputs.tag}}
+      - name: Create Boost version
+        run: |
+            FOLDER="nowide_${{steps.get_tag.outputs.tag}}"
+            mkdir "$FOLDER"
+            cp -r build cmake include src test CMakeLists.txt Config.cmake.in "$FOLDER"
+            tar -czf nowide.tar.gz "$FOLDER"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            UTF8-aware functions for Windows to make cross-platform easier
+          draft: false
+          prerelease: false
+      - name: Upload standalone version
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nowide_standalone.tar.gz
+          asset_name: nowide_standalone_${{steps.get_tag.outputs.tag}}.tar.gz
+          asset_content_type: application/tar.gz
+      - name: Upload Boost version
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./nowide.tar.gz
+          asset_name: nowide_${{steps.get_tag.outputs.tag}}.tar.gz
+          asset_content_type: application/tar.gz
+      - name: Upload Documentation
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./documentation.tar.gz
+          asset_name: nowide_docu.tar.gz
+          asset_content_type: application/tar.gz

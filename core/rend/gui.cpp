@@ -22,7 +22,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui/imgui.h"
-#include "imgui/roboto_medium.h"
+#include "roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
@@ -42,6 +42,7 @@
 #include "implot/implot.h"
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
+#include "hw/naomi/card_reader.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -52,7 +53,13 @@
 #include "gui_android.h"
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <mutex>
+#include <algorithm>
 
 static bool game_started;
 
@@ -116,38 +123,52 @@ void gui_init()
 	ImPlot::CreateContext();
 #endif
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
 	io.IniFilename = NULL;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-	io.KeyMap[ImGuiKey_Tab] = 0x2B;
-	io.KeyMap[ImGuiKey_LeftArrow] = 0x50;
-	io.KeyMap[ImGuiKey_RightArrow] = 0x4F;
-	io.KeyMap[ImGuiKey_UpArrow] = 0x52;
-	io.KeyMap[ImGuiKey_DownArrow] = 0x51;
-	io.KeyMap[ImGuiKey_PageUp] = 0x4B;
-	io.KeyMap[ImGuiKey_PageDown] = 0x4E;
-	io.KeyMap[ImGuiKey_Home] = 0x4A;
-	io.KeyMap[ImGuiKey_End] = 0x4D;
-	io.KeyMap[ImGuiKey_Insert] = 0x49;
-	io.KeyMap[ImGuiKey_Delete] = 0x4C;
-	io.KeyMap[ImGuiKey_Backspace] = 0x2A;
-	io.KeyMap[ImGuiKey_Space] = 0x2C;
-	io.KeyMap[ImGuiKey_Enter] = 0x28;
-	io.KeyMap[ImGuiKey_Escape] = 0x29;
-	io.KeyMap[ImGuiKey_A] = 0x04;
-	io.KeyMap[ImGuiKey_C] = 0x06;
-	io.KeyMap[ImGuiKey_V] = 0x19;
-	io.KeyMap[ImGuiKey_X] = 0x1B;
-	io.KeyMap[ImGuiKey_Y] = 0x1C;
-	io.KeyMap[ImGuiKey_Z] = 0x1D;
-
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+}
+
+static ImGuiKey keycodeToImGuiKey(u8 keycode)
+{
+	switch (keycode)
+	{
+		case 0x2B: return ImGuiKey_Tab;
+		case 0x50: return ImGuiKey_LeftArrow;
+		case 0x4F: return ImGuiKey_RightArrow;
+		case 0x52: return ImGuiKey_UpArrow;
+		case 0x51: return ImGuiKey_DownArrow;
+		case 0x4B: return ImGuiKey_PageUp;
+		case 0x4E: return ImGuiKey_PageDown;
+		case 0x4A: return ImGuiKey_Home;
+		case 0x4D: return ImGuiKey_End;
+		case 0x49: return ImGuiKey_Insert;
+		case 0x4C: return ImGuiKey_Delete;
+		case 0x2A: return ImGuiKey_Backspace;
+		case 0x2C: return ImGuiKey_Space;
+		case 0x28: return ImGuiKey_Enter;
+		case 0x29: return ImGuiKey_Escape;
+		case 0x04: return ImGuiKey_A;
+		case 0x06: return ImGuiKey_C;
+		case 0x19: return ImGuiKey_V;
+		case 0x1B: return ImGuiKey_X;
+		case 0x1C: return ImGuiKey_Y;
+		case 0x1D: return ImGuiKey_Z;
+		case 0xE0:
+		case 0xE4:
+			return ImGuiMod_Ctrl;
+		case 0xE1:
+		case 0xE5:
+			return ImGuiMod_Shift;
+		default: return ImGuiKey_None;
+	}
 }
 
 void gui_initFonts()
@@ -304,19 +325,20 @@ void gui_keyboard_inputUTF8(const std::string& s)
 		io.AddInputCharactersUTF8(s.c_str());
 }
 
-void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
+void gui_keyboard_key(u8 keyCode, bool pressed)
 {
 	if (!inited)
 		return;
-	ImGuiIO& io = ImGui::GetIO();
-	if (!pressed && io.KeysDown[keyCode])
+	ImGuiKey key = keycodeToImGuiKey(keyCode);
+	if (key == ImGuiKey_None)
+		return;
+	if (!pressed && ImGui::IsKeyDown(key))
 	{
 		keysUpNextFrame[keyCode] = true;
 		return;
 	}
-	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
-	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
-	io.KeysDown[keyCode] = pressed;
+	ImGuiIO& io = ImGui::GetIO();
+	io.AddKeyEvent(key, pressed);
 }
 
 bool gui_keyboard_captured()
@@ -359,9 +381,9 @@ static void gui_newFrame()
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
-		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+		io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mouseX, mouseY);
+		io.AddMousePosEvent(mouseX, mouseY);
 	static bool delayTouch;
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 	// Delay touch by one frame to allow widgets to be hovered before click
@@ -373,34 +395,34 @@ static void gui_newFrame()
 #endif
 	if (io.WantCaptureMouse)
 	{
-		io.MouseWheel = -mouseWheel / 16;
+		io.AddMouseWheelEvent(0, -mouseWheel / 16);
 		mouseWheel = 0;
 	}
 	if (!delayTouch)
-		io.MouseDown[ImGuiMouseButton_Left] = (mouseButtons & (1 << 0)) != 0;
-	io.MouseDown[ImGuiMouseButton_Right] = (mouseButtons & (1 << 1)) != 0;
-	io.MouseDown[ImGuiMouseButton_Middle] = (mouseButtons & (1 << 2)) != 0;
-	io.MouseDown[3] = (mouseButtons & (1 << 3)) != 0;
+		io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Right, (mouseButtons & (1 << 1)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Middle, (mouseButtons & (1 << 2)) != 0);
+	io.AddMouseButtonEvent(3, (mouseButtons & (1 << 3)) != 0);
 
-	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
-	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
-	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
-	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
-	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
-	io.NavInputs[ImGuiNavInput_DpadDown] = (kcode[0] & DC_DPAD_DOWN) == 0;
-	io.NavInputs[ImGuiNavInput_LStickLeft] = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickLeft] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickRight] = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickRight] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickRight] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickUp] = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickUp] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickUp] = 0.f;
-	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
-		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
+	// shows a popup navigation window even in game because of the OSD
+	//io.AddKeyEvent(ImGuiKey_GamepadFaceLeft, ((kcode[0] & DC_BTN_X) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceRight, ((kcode[0] & DC_BTN_B) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_Y) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadFaceDown, ((kcode[0] & DC_BTN_A) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadLeft, ((kcode[0] & DC_DPAD_LEFT) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
+	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
+	
+	float analog;
+	analog = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
+	analog = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickRight, analog > 0.1f, analog);
+	analog = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickUp, analog > 0.1f, analog);
+	analog = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
+	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickDown, analog > 0.1f, analog);
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 
@@ -422,9 +444,9 @@ static void gui_newFrame()
 static void delayedKeysUp()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	for (u32 i = 0; i < ARRAY_SIZE(keysUpNextFrame); i++)
+	for (u32 i = 0; i < std::size(keysUpNextFrame); i++)
 		if (keysUpNextFrame[i])
-			io.KeysDown[i] = false;
+			io.AddKeyEvent(keycodeToImGuiKey(i), false);
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
 }
 
@@ -468,18 +490,24 @@ void gui_plot_render_time(int width, int height)
 void gui_open_settings()
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed)
+	if (gui_state == GuiState::Closed && !settings.naomi.slave)
 	{
 		if (gdxsv_emu_menu_open())
 		{
 			if (!ggpo::active())
 			{
-				gui_state = GuiState::Commands;
 				HideOSD();
-				emu.stop();
+				try {
+					emu.stop();
+					gui_state = GuiState::Commands;
+				} catch (const FlycastException& e) {
+					gui_stop_game(e.what());
+				}
 			}
 			else
+			{
 				chat.toggle();
+			}
 		}
 	}
 	else if (gui_state == GuiState::VJoyEdit)
@@ -531,6 +559,11 @@ void gui_stop_game(const std::string& message)
 	}
 }
 
+static bool savestateAllowed()
+{
+	return !settings.content.path.empty() && !settings.network.online && !settings.naomi.multiboard && gdxsv_is_savestate_allowed();
+}
+
 static void gui_display_commands()
 {
    	imguiDriver->displayVmus();
@@ -541,10 +574,18 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
     {
-    	DisabledScope scope(settings.content.path.empty() || settings.network.online || !gdxsv_is_savestate_allowed());
+    	if (card_reader::barcodeAvailable())
+    	{
+			char cardBuf[64] {};
+			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
+			if (ImGui::InputText("Card", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr))
+				card_reader::barcodeSetCard(cardBuf);
+    	}
+
+    	DisabledScope scope(!savestateAllowed());
 
 		// Load State
-		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
 			gui_state = GuiState::Closed;
 			dc_loadstate(config::SavestateSlot);
@@ -568,7 +609,7 @@ static void gui_display_commands()
 		ImGui::SameLine();
 
 		// Save State
-		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && !scope.isDisabled())
+		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
 			gui_state = GuiState::Closed;
 			dc_savestate(config::SavestateSlot);
@@ -650,12 +691,38 @@ static void gui_display_commands()
 inline static void header(const char *title)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+	ImGui::BeginDisabled();
+	ImGui::ButtonEx(title, ImVec2(-1, 0));
+	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
 	ImGui::PopStyleVar();
 }
 
-const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
-const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
+const char *maple_device_types[] =
+{
+	"None",
+	"Sega Controller",
+	"Light Gun",
+	"Keyboard",
+	"Mouse",
+	"Twin Stick",
+	"Ascii Stick",
+	"Maracas Controller",
+	"Fishing Controller",
+	"Pop'n Music controller",
+	"Racing Controller",
+	"Densha de Go! Controller",
+//	"Dreameye",
+};
+
+const char *maple_expansion_device_types[] = 
+{ 
+	"None", 
+	"Sega VMU", 
+	"Purupuru", 
+	"Microphone"
+};
 
 static const char *maple_device_name(MapleDeviceType type)
 {
@@ -673,6 +740,18 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[5];
 	case MDT_AsciiStick:
 		return maple_device_types[6];
+	case MDT_MaracasController:
+		return maple_device_types[7];
+	case MDT_FishingController:
+		return maple_device_types[8];
+	case MDT_PopnMusicController:
+		return maple_device_types[9];
+	case MDT_RacingController:
+		return maple_device_types[10];
+	case MDT_DenshaDeGoController:
+		return maple_device_types[11];
+	case MDT_Dreameye:
+//		return maple_device_types[12];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -695,6 +774,18 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 		return MDT_TwinStick;
 	case 6:
 		return MDT_AsciiStick;
+	case 7:
+		return MDT_MaracasController;
+	case 8:
+		return MDT_FishingController;
+	case 9:
+		return MDT_PopnMusicController;
+	case 10:
+		return MDT_RacingController;
+	case 11:
+		return MDT_DenshaDeGoController;
+	case 12:
+		return MDT_Dreameye;
 	case 0:
 	default:
 		return MDT_None;
@@ -736,9 +827,19 @@ const Mapping dcButtons[] = {
 	{ DC_AXIS_LEFT, "Thumbstick Left" },
 	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
-	{ DC_DPAD2_UP, "DPad2 Up" },
-	{ DC_DPAD2_DOWN, "DPad2 Down" },
-	{ DC_DPAD2_LEFT, "DPad2 Left" },
+	{ DC_AXIS2_UP, "R.Thumbstick Up" },
+	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
+	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
+	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+
+	{ DC_AXIS3_UP,    "Axis 3 Up"    },
+	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
+	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
+	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
+
+	{ DC_DPAD2_UP,    "DPad2 Up"    },
+	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
+	{ DC_DPAD2_LEFT,  "DPad2 Left"  },
 	{ DC_DPAD2_RIGHT, "DPad2 Right" },
 
 	{ EMU_BTN_NONE, "Buttons" },
@@ -750,9 +851,11 @@ const Mapping dcButtons[] = {
 	{ DC_BTN_D, "D" },
 	{ DC_BTN_Z, "Z" },
 
-	{ EMU_BTN_NONE, "Triggers" },
-	{ DC_AXIS_LT, "Left Trigger" },
-	{ DC_AXIS_RT, "Right Trigger" },
+	{ EMU_BTN_NONE, "Triggers"      },
+	{ DC_AXIS_LT,   "Left Trigger"  },
+	{ DC_AXIS_RT,   "Right Trigger" },
+	{ DC_AXIS_LT2,   "Left Trigger 2" },
+	{ DC_AXIS_RT2,   "Right Trigger 2" },
 
 	{ EMU_BTN_NONE, "System Buttons" },
 	{ DC_BTN_START, "Start" },
@@ -762,6 +865,8 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_LOADSTATE, "Load State" },
+	{ EMU_BTN_SAVESTATE, "Save State" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -804,12 +909,14 @@ const Mapping arcadeButtons[] = {
 	{ DC_BTN_D, "Coin" },
 	{ DC_DPAD2_UP, "Service" },
 	{ DC_DPAD2_DOWN, "Test" },
+	{ DC_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, "Emulator" },
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
-	{ EMU_BTN_INSERT_CARD, "Insert Card" },
+	{ EMU_BTN_LOADSTATE, "Load State" },
+	{ EMU_BTN_SAVESTATE, "Save State" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -880,6 +987,14 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return DC_AXIS2_RIGHT;
 	case DC_AXIS2_RIGHT:
 		return DC_AXIS2_LEFT;
+	case DC_AXIS3_UP:
+		return DC_AXIS3_DOWN;
+	case DC_AXIS3_DOWN:
+		return DC_AXIS3_UP;
+	case DC_AXIS3_LEFT:
+		return DC_AXIS3_RIGHT;
+	case DC_AXIS3_RIGHT:
+		return DC_AXIS3_LEFT;
 	default:
 		return EMU_BTN_NONE;
 	}
@@ -1068,6 +1183,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::SameLine();
 
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
+
+		if (last_item_current_map_idx == 2 && game_started)
+			// Select the right mappings for the current game
+			item_current_map_idx = settings.platform.isArcade() ? 1 : 0;
 
 		// Here our selection data is an index.
 
@@ -1267,6 +1386,79 @@ static void contentpath_warning_popup()
     }
 }
 
+static inline void gui_debug_tab()
+{
+	if (ImGui::BeginTabItem("Debug"))
+	{
+		ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+	    header("Logging");
+	    {
+	    	LogManager *logManager = LogManager::GetInstance();
+	    	for (LogTypes::LOG_TYPE type = LogTypes::AICA; type < LogTypes::NUMBER_OF_LOGS; type = (LogTypes::LOG_TYPE)(type + 1))
+	    	{
+				bool enabled = logManager->IsEnabled(type, logManager->GetLogLevel());
+				std::string name = std::string(logManager->GetShortName(type)) + " - " + logManager->GetFullName(type);
+				if (ImGui::Checkbox(name.c_str(), &enabled) && logManager->GetLogLevel() > LogTypes::LWARNING) {
+					logManager->SetEnable(type, enabled);
+					cfgSaveBool("log", logManager->GetShortName(type), enabled);
+				}
+	    	}
+	    	ImGui::Spacing();
+
+	    	static const char *levels[] = { "Notice", "Error", "Warning", "Info", "Debug" };
+	    	if (ImGui::BeginCombo("Log Verbosity", levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
+	    	{
+	    		for (std::size_t i = 0; i < std::size(levels); i++)
+	    		{
+	    			bool is_selected = logManager->GetLogLevel() - 1 == (int)i;
+	    			if (ImGui::Selectable(levels[i], &is_selected)) {
+	    				logManager->SetLogLevel((LogTypes::LOG_LEVELS)(i + 1));
+						cfgSaveInt("log", "Verbosity", i + 1);
+	    			}
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
+	    		}
+	    		ImGui::EndCombo();
+	    	}
+	    }
+#if FC_PROFILER
+    	ImGui::Spacing();
+	    header("Profiling");
+	    {
+
+			OptionCheckbox("Enable", config::ProfilerEnabled, "Enable the profiler.");
+			if (!config::ProfilerEnabled)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+			OptionCheckbox("Display", config::ProfilerDrawToGUI, "Draw the profiler output in an overlay.");
+			OptionCheckbox("Output to terminal", config::ProfilerOutputTTY, "Write the profiler output to the terminal");
+			// TODO frame warning time
+			if (!config::ProfilerEnabled)
+			{
+		        ImGui::PopItemFlag();
+		        ImGui::PopStyleVar();
+			}
+	    }
+#endif
+		ImGui::PopStyleVar();
+		ImGui::EndTabItem();
+	}
+}
+
+static void addContentPath(const std::string& path)
+{
+	auto& contentPath = config::ContentPath.get();
+	if (std::count(contentPath.begin(), contentPath.end(), path) == 0)
+	{
+		scanner.stop();
+		contentPath.push_back(path);
+		scanner.refresh();
+	}
+}
+
 static void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -1330,24 +1522,30 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("General"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
-			OptionComboBox("Language", config::Language, languages, ARRAY_SIZE(languages),
-				"The language as configured in the Dreamcast BIOS");
+			{
+				DisabledScope scope(settings.platform.isArcade());
 
-			const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
-			OptionComboBox("Broadcast", config::Broadcast, broadcast, ARRAY_SIZE(broadcast),
-					"TV broadcasting standard for non-VGA modes");
+				const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
+				OptionComboBox("Language", config::Language, languages, std::size(languages),
+					"The language as configured in the Dreamcast BIOS");
 
-			const char *region[] = { "Japan", "USA", "Europe", "Default" };
-			OptionComboBox("Region", config::Region, region, ARRAY_SIZE(region),
+				const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
+				OptionComboBox("Broadcast", config::Broadcast, broadcast, std::size(broadcast),
+						"TV broadcasting standard for non-VGA modes");
+			}
+
+			const char *consoleRegion[] = { "Japan", "USA", "Europe", "Default" };
+			const char *arcadeRegion[] = { "Japan", "USA", "Export", "Korea" };
+			const char **region = settings.platform.isArcade() ? arcadeRegion : consoleRegion;
+			OptionComboBox("Region", config::Region, region, std::size(consoleRegion),
 						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
 			{
-				DisabledScope scope(config::Cable.isReadOnly());
+				DisabledScope scope(config::Cable.isReadOnly() || settings.platform.isArcade());
 
 				const char *value = config::Cable == 0 ? cable[0]
-						: config::Cable > 0 && config::Cable <= ARRAY_SIZE(cable) ? cable[config::Cable - 1]
+						: config::Cable > 0 && config::Cable <= (int)std::size(cable) ? cable[config::Cable - 1]
 						: "?";
 				if (ImGui::BeginCombo("Cable", value, ImGuiComboFlags_None))
 				{
@@ -1361,9 +1559,9 @@ static void gui_display_settings()
 					}
 					ImGui::EndCombo();
 				}
+	            ImGui::SameLine();
+	            ShowHelpMarker("Video connection type");
 			}
-            ImGui::SameLine();
-            ShowHelpMarker("Video connection type");
 
 #if !defined(TARGET_IPHONE)
             ImVec2 size;
@@ -1371,7 +1569,7 @@ static void gui_display_settings()
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
             				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
 
-            if (ImGui::ListBoxHeader("Content Location", size))
+            if (ImGui::BeginListBox("Content Location", size))
             {
             	int to_delete = -1;
                 for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -1385,22 +1583,27 @@ static void gui_display_settings()
                 	ImGui::PopID();
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+#ifdef __ANDROID__
+                if (ImGui::Button("Add"))
+                {
+                	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
+            			if (!cancelled)
+            				addContentPath(selection);
+                	});
+                }
+#else
                 if (ImGui::Button("Add"))
                 	ImGui::OpenPopup("Select Directory");
-                select_file_popup("Select Directory", [](bool cancelled, std::string selection)
-                		{
-                			if (!cancelled)
-                			{
-                				scanner.stop();
-                				config::ContentPath.get().push_back(selection);
-                				scanner.refresh();
-                			}
-                			return true;
-                		});
+                select_file_popup("Select Directory", [](bool cancelled, std::string selection) {
+					if (!cancelled)
+        				addContentPath(selection);
+					return true;
+                });
+#endif
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
-        		ImGui::ListBoxFooter();
+        		ImGui::EndListBox();
             	if (to_delete >= 0)
             	{
             		scanner.stop();
@@ -1411,17 +1614,19 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
+            size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
+
 #if defined(__linux__) && !defined(__ANDROID__)
-            if (ImGui::ListBoxHeader("Data Directory", 1))
+            if (ImGui::BeginListBox("Data Directory", size))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_data_path("").c_str());
-                ImGui::ListBoxFooter();
+                ImGui::EndListBox();
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
 #else
-            if (ImGui::ListBoxHeader("Home Directory", 1))
+            if (ImGui::BeginListBox("Home Directory", size))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
@@ -1430,7 +1635,7 @@ static void gui_display_settings()
                 if (ImGui::Button("Change"))
                 	gui_state = GuiState::Onboarding;
 #endif
-#if defined(__APPLE__) && TARGET_OS_OSX
+#ifdef TARGET_MAC
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Reveal in Finder"))
                 {
@@ -1439,7 +1644,7 @@ static void gui_display_settings()
                     system(temp);
                 }
 #endif
-                ImGui::ListBoxFooter();
+                ImGui::EndListBox();
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
@@ -1447,7 +1652,7 @@ static void gui_display_settings()
 #endif // !TARGET_IPHONE
 
 			OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-					"Display game covert art in the game list.");
+					"Display game cover art in the game list.");
 			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 					"Fetch cover images from TheGamesDB.net.");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
@@ -1495,7 +1700,7 @@ static void gui_display_settings()
 					ImGui::PushID(port_name);
 					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
 					{
-						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
+						for (int j = -1; j < (int)std::size(maple_ports) - 1; j++)
 						{
 							bool is_selected = gamepad->maple_port() == j;
 							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
@@ -1574,9 +1779,19 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = config::MapleMainDevices[bus] == MDT_SegaController ? 2
-							: config::MapleMainDevices[bus] == MDT_LightGun || config::MapleMainDevices[bus] == MDT_TwinStick || config::MapleMainDevices[bus] == MDT_AsciiStick ? 1
-							: 0;
+					int port_count = 0;
+					switch (config::MapleMainDevices[bus]) {
+						case MDT_SegaController:
+							port_count = 2;
+							break;
+						case MDT_LightGun:
+						case MDT_TwinStick:
+						case MDT_AsciiStick:
+						case MDT_RacingController:
+							port_count = 1;
+							break;
+						default: break;
+					}
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
@@ -1633,6 +1848,7 @@ static void gui_display_settings()
 					}
 					ImGui::PopItemWidth();
 				}
+				OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
 		    }
 
 			ImGui::PopStyleVar();
@@ -1983,6 +2199,39 @@ static void gui_display_settings()
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
+#ifdef VIDEO_ROUTING
+#ifdef __APPLE__
+			header("Video Routing (Syphon)");
+#elif defined(_WIN32)
+			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
+#endif
+			{
+#ifdef __APPLE__
+				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#elif defined(_WIN32)
+				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
+				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#endif
+				{
+					GraphicsContext::Instance()->initVideoRouting();
+				}
+				{
+					DisabledScope scope(!config::VideoRouting);
+					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
+					{
+						DisabledScope scope(!config::VideoRoutingScale);
+						static int vres = config::VideoRoutingVRes;
+						if( ImGui::InputInt("Output vertical resolution", &vres) )
+						{
+							config::VideoRoutingVRes = vres;
+						}
+					}
+					ImGui::Text("Output texture size: %d x %d", config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+				}
+			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 
@@ -2007,6 +2256,8 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+            OptionCheckbox("Enable VMU Sounds", config::VmuSound, "Play VMU beeps when enabled.");
+
 			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
 			{
 				config::AudioVolume.calcDbPower();
@@ -2126,12 +2377,10 @@ static void gui_display_settings()
 				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
 					"Use the interpreter. Very slow but may help in case of a dynarec problem");
 				ImGui::Columns(1, NULL, false);
-		    }
-		    if (config::DynarecEnabled)
-		    {
-		    	ImGui::Spacing();
-		    	header("Dynarec Options");
-		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
+
+				OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
+						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+						"%d MHz");
 		    }
 	    	ImGui::Spacing();
 		    header("Network");
@@ -2207,6 +2456,13 @@ static void gui_display_settings()
 				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
+#ifdef NAOMI_MULTIBOARD
+				ImGui::Text("Multiboard Screens:");
+				//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
+				OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
+				ImGui::SameLine();
+				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
+#endif
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2256,6 +2512,11 @@ static void gui_display_settings()
 			}
 			#endif
 		}
+
+#if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
+		gui_debug_tab();
+#endif
+
 		if (ImGui::BeginTabItem("About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -2414,7 +2675,7 @@ static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, I
 		uv0.x = -(ar - 1) / 2;
 		uv1.x = 1 + (ar - 1) / 2;
 	}
-	bool pressed = ImGui::ImageButton(textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	bool pressed = ImGui::ImageButton("", textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
 	gameTooltip(tooltip);
 
     return pressed;
@@ -2458,7 +2719,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
@@ -2759,7 +3020,7 @@ void gui_display_ui()
 		return;
 	if (gui_state == GuiState::Main)
 	{
-		if (!settings.content.path.empty())
+		if (!settings.content.path.empty() || settings.naomi.slave)
 		{
 #ifndef __ANDROID__
 			commandLineStart = true;
@@ -2974,7 +3235,7 @@ void gui_refresh_files()
 
 static void reset_vmus()
 {
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	for (u32 i = 0; i < std::size(vmu_lcd_status); i++)
 		vmu_lcd_status[i] = false;
 }
 
@@ -2987,6 +3248,37 @@ void gui_save()
 {
 	boxart.saveDatabase();
 }
+
+void gui_loadState()
+{
+	const LockGuard lock(guiMutex);
+	if (gui_state == GuiState::Closed && savestateAllowed())
+	{
+		try {
+			emu.stop();
+			dc_loadstate(config::SavestateSlot);
+			emu.start();
+		} catch (const FlycastException& e) {
+			gui_stop_game(e.what());
+		}
+	}
+}
+
+void gui_saveState()
+{
+	const LockGuard lock(guiMutex);
+	if (gui_state == GuiState::Closed && savestateAllowed())
+	{
+		try {
+			emu.stop();
+			dc_savestate(config::SavestateSlot);
+			emu.start();
+		} catch (const FlycastException& e) {
+			gui_stop_game(e.what());
+		}
+	}
+}
+
 
 #ifdef TARGET_UWP
 // Ugly but a good workaround for MS stupidity

@@ -21,6 +21,7 @@
 	#define shil_canonical(rv,name,args,code)
 	#define shil_compile(code)
 #elif  SHIL_MODE==1
+#include "hw/sh4/sh4_interrupts.h"
 	//generate structs ...
 	#define SHIL_START
 	#define SHIL_END
@@ -1124,6 +1125,24 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
+)
+shil_opc_end()
+
+// shop_illegal: illegal instruction
+shil_opc(illegal)
+shil_canonical
+(
+void,f1,(u32 epc, u32 delaySlot),
+	if (delaySlot == 1)
+		Do_Exception(epc - 2, Sh4Ex_SlotIllegalInstr);
+	else
+		Do_Exception(epc, Sh4Ex_IllegalInstr);
+)
+shil_compile
+(
+	shil_cf_arg_u32(rs2);
+	shil_cf_arg_u32(rs1);
+	shil_cf(f1);
 )
 shil_opc_end()
 

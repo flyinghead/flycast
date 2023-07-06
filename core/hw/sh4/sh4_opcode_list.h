@@ -14,22 +14,10 @@ enum sh4_eu
 	LS,
 	FE,
 	CO,
-	MA,
-	sh4_eu_max
 };
 
 std::string disassemble_op(const char* tx1, u32 pc, u16 opcode);
 
-//exception fixup needed , added it to fix exception on opcodes that modify before exept :)
-enum sh4_exept_fixup
-{
-	fix_none,
-	rn_opt_1,    //1 if n!=m
-	rn_opt_2,    //2 if n!=m
-	rn_opt_4,    //4 if n!=m
-	rn_4,        //Always 4 from rn
-	rn_fpu_4,    //4 or 8, according to FPU size
-};
 typedef void ( RecOpCallFP) (u32 op);
 struct sh4_opcodelistentry
 {
@@ -42,12 +30,20 @@ struct sh4_opcodelistentry
 	u8 IssueCycles;
 	u8 LatencyCycles;
 	sh4_eu unit;
-	sh4_exept_fixup ex_fixup;
+	u8 ex_type;
 	u64 decode;
-	u64 fallbacks;
+
 	void Disassemble(char* strout, u32 pc, u16 op) const
 	{
-		std::string text = disassemble_op(diss, pc, op);
+		const char *disOp = diss;
+		if (!strcmp(disOp, "missing"))
+		{
+			static char tmp[6];
+			sprintf(tmp, "?%04X", op);
+			disOp = tmp;
+		}
+
+		std::string text = disassemble_op(disOp, pc, op);
 		strcpy(strout, text.c_str());
 	}
 

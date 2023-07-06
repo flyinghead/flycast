@@ -20,6 +20,7 @@
 
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
+#include "jni_util.h"
 #include <algorithm>
 
 static jobject input_device_manager;
@@ -301,7 +302,7 @@ public:
 
 	void rumble(float power, float inclination, u32 duration_ms) override
     {
-        jboolean has_vibrator = jvm_attacher.getEnv()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
+        jboolean has_vibrator = jni::env()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
         rumbleEnabled = has_vibrator;
     }
 	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }

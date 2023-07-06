@@ -1,5 +1,8 @@
 #include "gdxsv_backend_replay.h"
 
+#include <sstream>
+
+#include "cfg/option.h"
 #include "gdx_rpc.h"
 #include "gdxsv.h"
 #include "gdxsv_replay_util.h"
@@ -11,6 +14,7 @@ void GdxsvBackendReplay::Reset() {
 	state_ = State::None;
 	lbs_tx_reader_.Clear();
 	log_file_.Clear();
+	start_msg_index_.clear();
 	recv_buf_.clear();
 	recv_delay_ = 0;
 	me_ = 0;
@@ -20,6 +24,14 @@ void GdxsvBackendReplay::Reset() {
 void GdxsvBackendReplay::OnMainUiLoop() {
 	if (state_ == State::Start) {
 		kcode[0] = ~0x0004;
+	}
+
+	if (state_ == State::McsInBattle) {
+		const int disk = gdxsv.Disk();
+		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
+		if (gdxsv_ReadMem8(COM_R_No0) == 4 && (gdxsv_ReadMem8(COM_R_No0 + 5) == 3 || gdxsv_ReadMem8(COM_R_No0 + 5) == 4)) {
+			state_ = State::End;
+		}
 	}
 
 	if (state_ == State::End) {
@@ -55,12 +67,19 @@ bool GdxsvBackendReplay::StartFile(const char *path, int pov) {
 	return Start();
 }
 
-bool GdxsvBackendReplay::StartBuffer(const char *buf, int size) {
-	bool ok = log_file_.ParseFromArray(buf, size);
+bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
+	bool ok = log_file_.ParseFromArray(buf.data(), buf.size());
 	if (!ok) {
 		NOTICE_LOG(COMMON, "ParseFromArray failed");
 		return false;
 	}
+
+	if (log_file_.users_size() <= pov) {
+		return false;
+	}
+
+	me_ = pov;
+
 	return Start();
 }
 
@@ -144,16 +163,65 @@ bool GdxsvBackendReplay::Start() {
 	NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
 
 	if (log_file_.log_file_version() < 20210802) {
-		ERROR_LOG(COMMON, "Replay file format is too old");
-		return false;
+		// Parse old replay file
+		// proto2 required fields was moved to UnknownFields
+		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+			auto data = log_file_.mutable_battle_data(i);
+			const auto &fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
+			if (!fields.empty()) {
+				for (int j = 0; j < fields.field_count(); ++j) {
+					const auto &field = fields.field(j);
+					if (j == 0 && field.type() == google::protobuf::UnknownField::TYPE_LENGTH_DELIMITED) {
+						const auto &body = field.length_delimited();
+						data->set_body(body.data(), body.size());
+					}
+					if (j == 1 && field.type() == google::protobuf::UnknownField::TYPE_VARINT) {
+						data->set_seq(field.varint());
+					}
+				}
+			}
+		}
+
+		// Restore player position, team and grade.
+		std::map<std::string, int> player_position;
+		McsMessageReader r;
+		McsMessage msg;
+		for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+			const auto &data = log_file_.battle_data(i);
+			if (player_position.find(data.user_id()) == player_position.end()) {
+				r.Write(data.body().data(), data.body().size());
+				while (r.Read(msg)) {
+					if (msg.Type() == McsMessage::MsgType::PingMsg) {
+						player_position[data.user_id()] = msg.Sender();
+						break;
+					}
+				}
+			}
+			if (log_file_.users_size() == player_position.size()) {
+				break;
+			}
+		}
+
+		for (int i = 0; i < log_file_.users_size(); ++i) {
+			const int pos = player_position[log_file_.users(i).user_id()];
+			log_file_.mutable_users(i)->set_pos(pos + 1);
+			log_file_.mutable_users(i)->set_team(1 + pos / 2);
+			// NOTE: Surprisingly, player's grade seems to affect the game.
+			log_file_.mutable_users(i)->set_grade(std::min(14, log_file_.users(i).win_count() / 100));
+			log_file_.mutable_users(i)->set_user_name_sjis(log_file_.users(i).user_id());
+		}
+
+		std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
+				  [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
 	}
 
 	if (log_file_.inputs_size() == 0 && log_file_.battle_data_size() != 0) {
+		// Convert McsMessage into uint64 input.
+		// start_msg_index_ holds input indexes of round start.
 		NOTICE_LOG(COMMON, "Converting inputs..");
 		McsMessageReader r;
 		McsMessage msg;
 		std::vector<std::vector<std::vector<u16>>> player_chunked_inputs(log_file_.users_size());
-		std::vector<int> start_msg_count(log_file_.users_size());
 
 		for (const auto &data : log_file_.battle_data()) {
 			r.Write(data.body().data(), data.body().size());
@@ -161,7 +229,6 @@ bool GdxsvBackendReplay::Start() {
 			while (r.Read(msg)) {
 				const int p = msg.Sender();
 				if (msg.Type() == McsMessage::StartMsg) {
-					start_msg_count[p]++;
 					player_chunked_inputs[p].emplace_back();
 				}
 				if (msg.Type() == McsMessage::KeyMsg1) {
@@ -180,6 +247,8 @@ bool GdxsvBackendReplay::Start() {
 				min_t = std::min<int>(min_t, player_chunked_inputs[p][chunk].size());
 			}
 
+			start_msg_index_.push_back(log_file_.inputs_size());
+
 			for (int t = 0; t < min_t; t++) {
 				uint64_t input = 0;
 				for (int p = 0; p < log_file_.users_size(); p++) {
@@ -195,6 +264,9 @@ bool GdxsvBackendReplay::Start() {
 	NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 	NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
 	NOTICE_LOG(COMMON, "inputs_size = %d", log_file_.inputs_size());
+	std::ostringstream ss;
+	for (const int a : start_msg_index_) ss << a << " ";
+	NOTICE_LOG(COMMON, "start_msg_index = %s", ss.str().c_str());
 
 	state_ = State::Start;
 	gdxsv.maxlag_ = 0;
@@ -290,7 +362,21 @@ void GdxsvBackendReplay::ProcessLbsMessage() {
 
 		if (msg.command == LbsMessage::lbsAskPlayerInfo) {
 			int pos = msg.Read8();
-			const auto &user = log_file_.users(pos - 1);
+			auto user = log_file_.users(pos - 1);
+
+			if (config::GdxReplayHideName) {
+				user.set_user_id("USER0" + std::to_string(pos));
+				user.set_user_name_sjis("USER0" + std::to_string(pos));
+				auto game_param = user.game_param();
+				user.set_game_param(game_param.replace(16, 17,
+													   "\x82\x6F\x82\x68\x82\x6B\x82\x6E\x82\x73\x82\x4F\x82" +
+														   std::string(1, static_cast<char>(0x4F + pos)) +
+														   "\x01\x01\x07"));  // ＰＩＬＯＴ０１~０４
+				user.set_battle_count(0);
+				user.set_win_count(0);
+				user.set_lose_count(0);
+			}
+
 			LbsMessage::SvAnswer(msg)
 				.Write8(pos)
 				->WriteString(user.user_id())
@@ -363,6 +449,14 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 	} else if (msg_type == McsMessage::MsgType::PongMsg) {
 		// do nothing
 	} else if (msg_type == McsMessage::MsgType::StartMsg) {
+		if (!start_msg_index_.empty()) {
+			auto it = std::lower_bound(start_msg_index_.begin(), start_msg_index_.end(), key_msg_count_);
+			if (it != start_msg_index_.end()) {
+				NOTICE_LOG(COMMON, "key_msg_count updates %d -> %d", key_msg_count_, *it);
+				key_msg_count_ = *it;
+			}
+		}
+
 		gdxsv.maxlag_ = 1;	// StartMsg needs this
 		for (int i = 0; i < log_file_.users_size(); ++i) {
 			if (i != me_) {

@@ -54,6 +54,7 @@ typedef int sock_t;
 #define VALID(s) ((s) >= 0)
 #define L_EWOULDBLOCK EWOULDBLOCK
 #define L_EAGAIN EAGAIN
+#define L_EINPROGRESS EINPROGRESS
 #define get_last_error() (errno)
 #define INVALID_SOCKET (-1)
 #define perror(s) do { INFO_LOG(NETWORK, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
@@ -62,6 +63,7 @@ typedef SOCKET sock_t;
 #define VALID(s) ((s) != INVALID_SOCKET)
 #define L_EWOULDBLOCK WSAEWOULDBLOCK
 #define L_EAGAIN WSAEWOULDBLOCK
+#define L_EINPROGRESS WSAEINPROGRESS
 #define get_last_error() (WSAGetLastError())
 #define perror(s) do { INFO_LOG(NETWORK, "%s: Winsock error: %d", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
 #ifndef SHUT_WR
@@ -112,10 +114,11 @@ static inline bool set_recv_timeout(sock_t fd, int delayms)
 #endif
 }
 
-static inline bool set_send_timeout(sock_t fd, int delayms) {
+static inline bool set_send_timeout(sock_t fd, int delayms)
+{
 #ifdef _WIN32
     const DWORD dwDelay = delayms;
-    return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *) &dwDelay, sizeof(DWORD)) == 0;
+    return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&dwDelay, sizeof(DWORD)) == 0;
 #else
     struct timeval tv;
     tv.tv_sec = delayms / 1000;

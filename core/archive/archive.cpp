@@ -22,24 +22,48 @@
 #include "archive.h"
 #include "7zArchive.h"
 #include "ZipArchive.h"
+#include "oslib/storage.h"
 
-Archive *OpenArchive(const char *path)
+Archive *OpenArchive(const std::string& path)
 {
-	std::string base_path(path);
-
-	Archive *sz_archive = new SzArchive();
-	if (sz_archive->Open(base_path.c_str()) || sz_archive->Open((base_path + ".7z").c_str()) || sz_archive->Open((base_path + ".7Z").c_str()))
-		return sz_archive;
-	delete sz_archive;
-
+	FILE *file = hostfs::storage().openFile(path, "rb");
+	if (file == nullptr)
+	{
+		file = hostfs::storage().openFile(path + ".7z", "rb");
+		if (file == nullptr)
+			file = hostfs::storage().openFile(path + ".7Z", "rb");
+	}
+	if (file != nullptr)
+	{
+		Archive *sz_archive = new SzArchive();
+		if (sz_archive->Open(file))
+			return sz_archive;
+		delete sz_archive;
+	}
+	file = hostfs::storage().openFile(path, "rb");
+	if (file == nullptr)
+	{
+		file = hostfs::storage().openFile(path + ".zip", "rb");
+		if (file == nullptr)
+		{
+			file = hostfs::storage().openFile(path + ".ZIP", "rb");
+			if (file == nullptr)
+				return nullptr;
+		}
+	}
 	Archive *zip_archive = new ZipArchive();
-	if (zip_archive->Open(base_path.c_str()) || zip_archive->Open((base_path + ".zip").c_str()) || zip_archive->Open((base_path + ".ZIP").c_str()))
+	if (zip_archive->Open(file))
 		return zip_archive;
 	delete zip_archive;
 
-	return NULL;
+	return nullptr;
 }
 
-
-
+bool Archive::Open(const char* path)
+{
+	FILE *file = nowide::fopen(path, "rb");
+	if (file == nullptr)
+		return false;
+	return Open(file);
+}
 

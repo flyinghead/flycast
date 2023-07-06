@@ -33,23 +33,23 @@ const u16 ExInputWaitLoadEnd = 2;
 // maple input to mcs pad input
 u16 convertInput(MapleInputState input) {
 	u16 r = 0;
-	if (~input.kcode & 0x0004) r |= 0x4000;					 // A
-	if (~input.kcode & 0x0002) r |= 0x2000;					 // B
-	if (~input.kcode & 0x0001) r |= 0x8000;					 // C
-	if (~input.kcode & 0x0400) r |= 0x0002;					 // X
-	if (~input.kcode & 0x0200) r |= 0x0001;					 // Y
-	if (~input.kcode & 0x0100) r |= 0x1000;					 // Z
-	if (~input.kcode & 0x0010) r |= 0x0020;					 // up
-	if (~input.kcode & 0x0020) r |= 0x0010;					 // down
-	if (~input.kcode & 0x0080) r |= 0x0004;					 // right
-	if (~input.kcode & 0x0040) r |= 0x0008;					 // left
-	if (~input.kcode & 0x0008) r |= 0x0080;					 // Start
-	if (~input.kcode & 0x00020000) r |= 0x8000;				 // LT
-	if (~input.kcode & 0x00040000) r |= 0x1000;				 // RT
-	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;	 // left
-	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;	 // right
-	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;	 // up
-	if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;	 // down
+	if (~input.kcode & DC_BTN_A) r |= 0x4000;
+	if (~input.kcode & DC_BTN_B) r |= 0x2000;
+	if (~input.kcode & DC_BTN_C) r |= 0x8000;
+	if (~input.kcode & DC_BTN_X) r |= 0x0002;
+	if (~input.kcode & DC_BTN_Y) r |= 0x0001;
+	if (~input.kcode & DC_BTN_Z) r |= 0x1000;
+	if (~input.kcode & DC_DPAD_UP) r |= 0x0020;
+	if (~input.kcode & DC_DPAD_DOWN) r |= 0x0010;
+	if (~input.kcode & DC_DPAD_RIGHT) r |= 0x0004;
+	if (~input.kcode & DC_DPAD_LEFT) r |= 0x0008;
+	if (~input.kcode & DC_BTN_START) r |= 0x0080;
+	if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 1)) r |= 0x8000;  // LT
+	if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 2)) r |= 0x1000;  // RT
+	if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;		   // left
+	if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;		   // right
+	if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;		   // up
+	if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;		   // down
 	return r;
 }
 
@@ -95,13 +95,23 @@ void GdxsvBackendRollback::Reset() {
 	input_logs_.clear();
 	osd_network_stat_ = false;
 	ggpo::stopSession();
+	config::GGPOEnable.reset();
 }
 
 void GdxsvBackendRollback::OnMainUiLoop() {
 	const int disk = gdxsv.Disk();
 	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
-	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
-	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+
+	/*
+	if (emu.running()) {
+		const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
+		const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+		const int DataStopCounter = 0x0c3ab51a;
+		NOTICE_LOG(COMMON, "DataStopCounter=%d ConnectionStatus=%d %d %d NetCountDown=%d", gdxsv_ReadMem16(DataStopCounter),
+	gdxsv_ReadMem16(ConnectionStatus), gdxsv_ReadMem16(ConnectionStatus + 2), gdxsv_ReadMem16(ConnectionStatus + 4),
+	gdxsv_ReadMem16(NetCountDown));
+	}
+	*/
 
 	if (state_ == State::StartLocalTest) {
 		kcode[0] = ~0x0004;
@@ -151,7 +161,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					for (int j = 0; j < matching_.player_count(); j++) {
 						if (j == i) continue;
 						if (j == matching_.peer_id()) continue;
-						if (rtt_matrix[matching_.peer_id()][j] && rtt_matrix[j][i]) {
+						if (rtt_matrix[matching_.peer_id()][j] && 0 < rtt_matrix[j][i] && rtt_matrix[j][i] < 255) {
 							int rtt = rtt_matrix[matching_.peer_id()][j] + rtt_matrix[j][i];
 							if (rtt < relay_rtt) {
 								relay_rtt = rtt;
@@ -191,8 +201,10 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			session_start_time = std::chrono::high_resolution_clock::now();
 			state_ = State::WaitGGPOSession;
 		} else {
+			NOTICE_LOG(COMMON, "Network unreachable");
+			SetCloseReason("unreachable");
+			error_fast_return_ = true;
 			emu.start();
-			state_ = State::End;
 		}
 	}
 
@@ -208,15 +220,13 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 			} else {
 				NOTICE_LOG(COMMON, "StartNetwork failure");
 				SetCloseReason("ggpo_start_failure");
-				state_ = State::End;
+				error_fast_return_ = true;
 				emu.start();
 			}
 		} else if (timeout) {
 			NOTICE_LOG(COMMON, "StartNetwork timeout");
 			SetCloseReason("ggpo_start_timeout");
 			error_fast_return_ = true;
-			ggpo::stopSession();
-			state_ = State::End;
 			emu.start();
 		}
 	}
@@ -226,6 +236,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 	// Rebattle end
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 3 && ggpo::active() && !ggpo::rollbacking()) {
 		if (state_ != State::CloseWait) {
+			SetCloseReason("game_end");
 			ggpo::getCurrentFrame(&disconnect_frame);
 			for (int i = 0; i < matching_.users_size(); i++) {
 				ggpo::disconnect(matching_.peer_id());
@@ -236,7 +247,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 
 	// Friend save scene
 	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 4 && ggpo::active() && !ggpo::rollbacking()) {
-		SetCloseReason("game_end");
 		int frame = 0;
 		ggpo::getCurrentFrame(&frame);
 
@@ -247,13 +257,14 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		}
 	}
 
-	// Fast return to lobby on error
-	if (gdxsv_ReadMem16(ConnectionStatus) == 1 && gdxsv_ReadMem16(ConnectionStatus + 4) == 10 && 1 < gdxsv_ReadMem16(NetCountDown)) {
+	// Close session on error
+	if (error_fast_return_) {
 		SetCloseReason("error_fast_return");
-		error_fast_return_ = true;
 		ggpo::stopSession();
 		config::GGPOEnable.reset();
-		state_ = State::End;
+		if (state_ < State::End) {
+			state_ = State::End;
+		}
 	}
 
 	if (is_local_test_ && State::End <= state_) {
@@ -355,9 +366,12 @@ void GdxsvBackendRollback::Open() {
 }
 
 void GdxsvBackendRollback::Close() {
-	if (state_ < State::McsWaitJoin) return;
-	if (state_ == State::Closed) return;
+	if (state_ < State::McsWaitJoin || state_ == State::Closed) {
+		NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close Skipped");
+		return;
+	}
 
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close");
 	SetCloseReason("close");
 	ggpo::stopSession();
 	config::GGPOEnable.reset();
@@ -368,8 +382,10 @@ void GdxsvBackendRollback::Close() {
 	RestorePatch();
 	KillTex = true;
 	osd_network_stat_ = false;
+	error_fast_return_ = false;
 	SaveReplay();
 	state_ = State::Closed;
+	NOTICE_LOG(COMMON, "GdxsvBackendRollback.Close Done");
 }
 
 u32 GdxsvBackendRollback::OnSockWrite(u32 addr, u32 size) {
@@ -404,24 +420,36 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 	ggpo::getCurrentFrame(&frame);
 
 	const int disk = gdxsv.Disk();
-	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
-	const int ConnectionStatus = disk == 1 ? 0x0c310444 : 0x0c3abb84;
 	const int InetBuf = disk == 1 ? 0x0c310244 : 0x0c3ab984;
 	const int NetCountDown = disk == 1 ? 0x0c310202 : 0x0c3ab942;
+	const int DataStopCounter = disk == 1 ? 0x0c30fdda : 0x0c3ab51a;
+	const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 	const auto inputState = mapleInputState;
 	const auto memExInputAddr = gdxsv.symbols_.at("rbk_ex_input");
 
-	// Notify disconnect in game part if other player is disconnect on ggpo
-	if (gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 0 && gdxsv_ReadMem16(ConnectionStatus + 4) < 10) {
+	// Disconnect check (ignore rebattle end scene)
+	if (ggpo::active() && !(gdxsv_ReadMem8(COM_R_No0) == 4 && gdxsv_ReadMem8(COM_R_No0 + 5) == 2)) {
 		for (int i = 0; i < matching_.player_count(); ++i) {
 			if (!ggpo::isConnected(i)) {
-				SetCloseReason("player_disconnected");
+				char buf[256] = {0};
+				const auto& user = matching_.users(i);
+				snprintf(buf, sizeof(buf), "player_disconnect peer=%d fr=%d ID=%s HN=%s PN=%s", i, frame, user.user_id().c_str(),
+						 user.user_name().c_str(), user.pilot_name().c_str());
+				if (SetCloseReason(buf)) {
+					report_.set_disconnected_peer_id(i);
+				}
 				osd_network_stat_countdown_ = 60 * 10;
-				gdxsv_WriteMem16(ConnectionStatus + 4, 0x0a);
-				ggpo::setExInput(ExInputNone);
+				error_fast_return_ = true;
 				break;
 			}
 		}
+	}
+
+	// Fast disconnect dialog appear
+	if (error_fast_return_) {
+		gdxsv_WriteMem16(DataStopCounter, 1800);
+		gdxsv_WriteMem16(NetCountDown, 0);
+		return 0;
 	}
 
 	int msg_len = gdxsv_ReadMem8(InetBuf);
@@ -546,11 +574,6 @@ u32 GdxsvBackendRollback::OnSockRead(u32 addr, u32 size) {
 		report_.set_frame_count(frame);
 	}
 
-	if (error_fast_return_) {
-		gdxsv_WriteMem16(NetCountDown, 60 * 3);
-		error_fast_return_ = false;
-	}
-
 	verify(recv_buf_.size() <= size);
 
 	int n = std::min<int>(recv_buf_.size(), size);
@@ -646,10 +669,12 @@ void GdxsvBackendRollback::ProcessLbsMessage() {
 	}
 }
 
-void GdxsvBackendRollback::SetCloseReason(const char* reason) {
-	if (!report_.close_reason().empty()) {
+bool GdxsvBackendRollback::SetCloseReason(const char* reason) {
+	if (report_.close_reason().empty()) {
 		report_.set_close_reason(reason);
+		return true;
 	}
+	return false;
 }
 
 void GdxsvBackendRollback::SaveReplay() {
@@ -678,6 +703,9 @@ void GdxsvBackendRollback::SaveReplay() {
 	log->set_start_at(start_at_);
 	const auto now = std::chrono::system_clock::now();
 	log->set_end_at(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
+
+	log->set_close_reason(report_.close_reason());
+	log->set_disconnect_user_index(report_.disconnected_peer_id());
 
 	std::thread([log = std::move(log)]() {
 		auto replay_dir = get_writable_data_path("replays");

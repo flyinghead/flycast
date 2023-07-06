@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "network/picoppp.h"
 #include "serialize.h"
+#include "cfg/option.h"
 
 #ifndef NDEBUG
 #include "oslib/oslib.h"
@@ -56,7 +57,7 @@ static u8 dspram[0x1000];
 static_assert(sizeof(regs_write_mask) == sizeof(modem_regs));
 static_assert(sizeof(por_dspram) == sizeof(dspram));
 
-int modem_sched;
+static int modem_sched;
 
 enum ModemStates
 {
@@ -754,6 +755,7 @@ void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 
 void ModemSerialize(Serializer& ser)
 {
+	sh4_sched_serialize(ser, modem_sched);
 	ser << modem_regs;
 	ser << dspram;
 	ser << state;
@@ -763,6 +765,8 @@ void ModemSerialize(Serializer& ser)
 }
 void ModemDeserialize(Deserializer& deser)
 {
+	if (!config::EmulateBBA || deser.version() > Deserializer::V31)
+		sh4_sched_deserialize(deser, modem_sched);
 	if (deser.version() >= Deserializer::V20)
 	{
 		deser >> modem_regs;

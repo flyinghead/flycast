@@ -25,6 +25,7 @@
 
 #include "stdclass.h"
 
+//#define BBA_PCAPNG_DUMP
 #ifdef BBA_PCAPNG_DUMP
 #include "oslib/oslib.h"
 #endif
@@ -72,6 +73,7 @@ static pico_ip4 dcaddr;
 static pico_ip4 dnsaddr;
 static pico_socket *pico_tcp_socket, *pico_udp_socket;
 
+struct pico_ip4 public_ip;
 static pico_ip4 afo_ip;
 
 struct socket_pair
@@ -136,12 +138,9 @@ struct socket_pair
 			len = r;
 			data = buf;
 		}
-		if (pico_sock->remote_port == short_be(5011) && len >= 5)
-		{
+		if (pico_sock->remote_port == short_be(5011) && len >= 5 && data[0] == 1)
 			// Visual Concepts sport games
-			if (buf[0] == 1)
-				memcpy(&buf[1], &pico_sock->local_addr.ip4.addr, 4);
-		}
+			memcpy((void *)&data[1], &pico_sock->local_addr.ip4.addr, 4);
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
 		if (r2 < 0)
@@ -184,6 +183,10 @@ static GamePortList GamesPorts[] = {
 		{ "MK-51049", "HDR-0039", "MK-5104950" },
 		{ 9789 },
 		{ },
+	},
+	{ // Daytona USA
+		{ "MK-51037", "HDR-0106" },
+		{ 12079, 20675 },
 	},
 	{ // NBA 2K1,2K2 / NFL 2K1,2K2 / NCAA 2K2
 		{ "MK-51063", "HDR-0150",					// NBA 2K1
@@ -229,6 +232,10 @@ static GamePortList GamesPorts[] = {
 		{ },
 		{ 17219 },
 	},
+	{ // Driving Strikers online demo
+		{ "IND-161053" },
+		{ 30099 },
+	},
 
 	{ // Atomiswave
 		{ "FASTER THAN SPEED" },
@@ -240,7 +247,6 @@ static GamePortList GamesPorts[] = {
 // listening port -> socket fd
 static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
-static bool pico_stack_inited;
 static bool pico_thread_running = false;
 extern "C" int dont_reject_opt_vj_hack;
 
@@ -311,6 +317,15 @@ int read_pico()
 	}
 }
 
+int pico_available()
+{
+	in_buffer_lock.lock();
+	int len = in_buffer.size();
+	in_buffer_lock.unlock();
+
+	return len;
+}
+
 static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 {
 	char buf[1510];
@@ -318,6 +333,9 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
 	if (r > 0)
 	{
+		if (pico_sock->local_port == short_be(5011) && r >= 5 && buf[0] == 1)
+			// Visual Concepts sport games
+			memcpy(&buf[1], &public_ip.addr, 4);
 		if (send(nat_sock, buf, r, 0) < r)
 		{
 			perror("tcp_callback send");
@@ -404,9 +422,7 @@ static void tcp_callback(uint16_t ev, pico_socket *s)
 				{
 					set_tcp_nodelay(sockfd);
 
-					tcp_sockets.emplace(std::piecewise_construct,
-					              std::forward_as_tuple(sock_a),
-					              std::forward_as_tuple(sock_a, sockfd));
+					tcp_sockets.try_emplace(sock_a, sock_a, sockfd);
 				}
 			}
 		}
@@ -481,6 +497,16 @@ static sock_t find_udp_socket(uint16_t src_port)
 	int broadcastEnable = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
 
+	// bind to same port if possible (Toy Racer)
+	sockaddr_in saddr;
+	socklen_t saddr_len = sizeof(saddr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = src_port;
+	if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
+		perror("bind");
+
 	// FIXME Need to clean up at some point?
 	udp_sockets[src_port] = sockfd;
 
@@ -509,6 +535,26 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 			sock_t sockfd = find_udp_socket(src_port);
 			if (VALID(sockfd))
 			{
+				// Daytona USA
+				if (msginfo.local_port == 0x2F2F && buf[0] == 0x20 && buf[2] == 0x42)
+				{
+					if (buf[1] == 0x2b && r >= 37 + (int)sizeof(public_ip.addr))
+					{
+						// Start session packet
+						char *p = &buf[37];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+					}
+					else if (buf[1] == 0x15 && r >= 14 + (int)sizeof(public_ip.addr))
+					{
+						char *p = &buf[5];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+						p = &buf[14];
+						if (memcmp(p, &dcaddr.addr, sizeof(dcaddr.addr)) == 0)
+							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
+					}
+				}
 				sockaddr_in dst_addr;
 				socklen_t addr_len = sizeof(dst_addr);
 				memset(&dst_addr, 0, sizeof(dst_addr));
@@ -564,10 +610,7 @@ static void read_native_sockets()
     	set_non_blocking(sockfd);
     	set_tcp_nodelay(sockfd);
 
-		tcp_sockets.emplace(std::piecewise_construct,
-		              std::forward_as_tuple(ps),
-		              std::forward_as_tuple(ps, sockfd));
-
+		tcp_sockets.try_emplace(ps, ps, sockfd);
 	}
 
 	// Check connecting outbound TCP sockets
@@ -616,9 +659,7 @@ static void read_native_sockets()
 				{
 					set_tcp_nodelay(it->second);
 
-					tcp_sockets.emplace(std::piecewise_construct,
-				              std::forward_as_tuple(it->first),
-				              std::forward_as_tuple(it->first, it->second));
+					tcp_sockets.try_emplace(it->first, it->first, it->second);
 
 					read_from_dc_socket(it->first, it->second);
 				}
@@ -640,7 +681,7 @@ static void read_native_sockets()
 		memset(&src_addr, 0, addr_len);
 		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (sockaddr *)&src_addr, &addr_len);
 		// filter out messages coming from ourselves (happens for broadcasts)
-		if (r > 0 && !is_local_address(src_addr.sin_addr.s_addr))
+		if (r > 0 && (it->first != src_addr.sin_port || !is_local_address(src_addr.sin_addr.s_addr)))
 		{
 			msginfo.dev = pico_dev;
 			msginfo.tos = 0;
@@ -672,16 +713,26 @@ static void read_native_sockets()
 
 static void close_native_sockets()
 {
-	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
-		closesocket(it->second);
+	for (const auto& pair : udp_sockets)
+		closesocket(pair.second);
 	udp_sockets.clear();
-	tcp_sockets.clear();
-	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
+	for (auto& pair : tcp_sockets)
 	{
-		pico_socket_close(it->first);
-		closesocket(it->second);
+		pico_socket_del_imm(pair.second.pico_sock);
+		pair.second.pico_sock = nullptr;
+		closesocket(pair.second.native_sock);
+		pair.second.native_sock = INVALID_SOCKET;
+	}
+	tcp_sockets.clear();
+	for (const auto& pair : tcp_connecting_sockets)
+	{
+		pico_socket_del_imm(pair.first);
+		closesocket(pair.second);
 	}
 	tcp_connecting_sockets.clear();
+	for (const auto& pair : tcp_listening_sockets)
+		closesocket(pair.second);
+	tcp_listening_sockets.clear();
 }
 
 static int modem_set_speed(pico_device *dev, uint32_t speed)
@@ -694,7 +745,44 @@ static void check_dns_entries()
     static uint32_t dns_query_start = 0;
     static uint32_t dns_query_attempts = 0;
 
-	if (afo_ip.addr == 0)
+	if (public_ip.addr == 0)
+	{
+		if (!dns_query_start)
+		{
+			dns_query_start = PICO_TIME_MS();
+			struct pico_ip4 tmpdns;
+			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
+			get_host_by_name("myip.opendns.com", tmpdns);
+		}
+		else
+		{
+			struct pico_ip4 tmpdns;
+			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
+			if (get_dns_answer(&public_ip, tmpdns) == 0)
+			{
+				dns_query_attempts = 0;
+				dns_query_start = 0;
+				char myip[16];
+				pico_ipv4_to_string(myip, public_ip.addr);
+				INFO_LOG(MODEM, "My IP is %s", myip);
+			}
+			else
+			{
+				if (PICO_TIME_MS() - dns_query_start > 1000)
+				{
+					if (++dns_query_attempts >= 5)
+					{
+						public_ip.addr = 0xffffffff;	// Bogus but not null
+						dns_query_attempts = 0;
+					}
+					else
+						// Retry
+						dns_query_start = 0;
+				}
+			}
+		}
+	}
+	else if (afo_ip.addr == 0)
 	{
 		if (!dns_query_start)
 		{
@@ -746,7 +834,6 @@ static pico_device *pico_eth_create()
     return eth;
 }
 
-//#define BBA_PCAPNG_DUMP
 static FILE *pcapngDump;
 
 static void dumpFrame(const u8 *frame, u32 size)
@@ -828,23 +915,24 @@ static int send_eth_frame(pico_device *dev, void *data, int len)
 
 static void *pico_thread_func(void *)
 {
-    if (!pico_stack_inited)
-    {
-    	pico_stack_init();
-    	pico_stack_inited = true;
+	pico_stack_init();
 #ifdef _WIN32
+	{
 		static WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-			WARN_LOG(MODEM, "WSAStartup failed");
-#endif
+		if (wsaData.wVersion == 0)
+		{
+			if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+				WARN_LOG(MODEM, "WSAStartup failed");
+		}
     }
+#endif
 
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
-	for (u32 i = 0; i < ARRAY_SIZE(GamesPorts) && ports == nullptr; i++)
+	for (u32 i = 0; i < std::size(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
-		for (u32 j = 0; j < ARRAY_SIZE(game.gameId) && game.gameId[j] != nullptr; j++)
+		for (u32 j = 0; j < std::size(game.gameId) && game.gameId[j] != nullptr; j++)
 		{
 			if (settings.content.gameId == game.gameId[j])
 			{
@@ -870,10 +958,10 @@ static void *pico_thread_func(void *)
 					WARN_LOG(MODEM, "UPNP Init failed");
 				else
 				{
-					for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
+					for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 						if (!upnp.AddPortMapping(ports->udpPorts[i], false))
 							WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
-					for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
+					for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
 						if (!upnp.AddPortMapping(ports->tcpPorts[i], true))
 							WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
 				}
@@ -991,24 +1079,14 @@ static void *pico_thread_func(void *)
 	saddr.sin_addr.s_addr = INADDR_ANY;
 	if (ports != nullptr)
 	{
-		for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
+		for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->udpPorts[i]);
-			sock_t sockfd = find_udp_socket(port);
-			saddr.sin_port = port;
-
-			if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
-			{
-				perror("bind");
-				closesocket(sockfd);
-				auto it = udp_sockets.find(port);
-				if (it != udp_sockets.end())
-					it->second = INVALID_SOCKET;
-				continue;
-			}
+			find_udp_socket(port);
+			// bind is done in find_udp_socket
 		}
 
-		for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
+		for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->tcpPorts[i]);
 			saddr.sin_port = port;
@@ -1038,11 +1116,12 @@ static void *pico_thread_func(void *)
 		PICO_IDLE();
     }
 
-	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-		closesocket(it->second);
 	close_native_sockets();
-	pico_socket_close(pico_tcp_socket);
-	pico_socket_close(pico_udp_socket);
+	pico_socket_del_imm(pico_tcp_socket);
+	pico_socket_del_imm(pico_udp_socket);
+	pico_stack_tick();
+	pico_stack_tick();
+	pico_stack_tick();
 
 	if (pico_dev)
 	{
@@ -1058,7 +1137,8 @@ static void *pico_thread_func(void *)
 		}
 		pico_dev = nullptr;
 	}
-	pico_stack_tick();
+	pico_stack_deinit();
+
 	if (ports != nullptr)
 		upnp.get().Term();
 

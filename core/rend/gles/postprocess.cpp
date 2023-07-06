@@ -19,6 +19,7 @@
 */
 #include "postprocess.h"
 
+#ifdef LIBRETRO
 #include <array>
 
 PostProcessor postProcessor;
@@ -41,11 +42,12 @@ precision highp float;
 
 uniform int FrameCount;
 uniform sampler2D Texture;
+uniform vec2 videoShift;
 
 // compatibility #defines
 #define Source Texture
 #define TextureSize textureSize(Texture, 0)
-#define vTexCoord (gl_FragCoord.xy / vec2(textureSize(Texture, 0)))
+#define vTexCoord ((gl_FragCoord.xy + videoShift) / vec2(textureSize(Texture, 0)))
 
 float dithertable[16] = float[](
 	16.,4.,13.,1.,   
@@ -78,7 +80,7 @@ void main()
 	vec2 texcoord4  = vTexCoord;
 	texcoord4.y -= tap * 2.f;
 	int bl;
-	vec4 ble;
+	vec4 ble = vec4(0.0);
 
 	for (bl=0;bl<taps;bl++)
 	{
@@ -138,12 +140,12 @@ void main()
 	texcoord4.y = texcoord4.y;
 	vec4 blur1 = texture(Source, texcoord4);
 	int bl;
-	vec4 ble;
+	vec4 ble = vec4(0.0);
 	for (bl=0;bl<taps;bl++)
 	{
 		float e = 1;
 		if (bl>=3)
-		e=0.35;
+			e=0.35;
 		texcoord4.x -= (tap  / 640);
 		ble.rgb += (texture(Source, texcoord4).rgb * e) / (taps/(bl+1));
 	}
@@ -202,24 +204,37 @@ private:
 			glUniform1i(gu, 0);
 
 		frameCountUniform = glGetUniformLocation(program, "FrameCount");
+		videoShiftUniform = glGetUniformLocation(program, "videoShift");
 	}
 
 	void select()
 	{
 		glcache.UseProgram(program);
 		glUniform1f(frameCountUniform, FrameCount);
+		float shift[] = { -gl.ofbo.shiftX, gl.ofbo.shiftY };
+		glUniform2fv(videoShiftUniform, 1, shift);
 	}
 
 	GLuint program = 0;
-	GLint frameCountUniform = 0;
+	GLint frameCountUniform = -1;
+	GLint videoShiftUniform = -1;
 	static std::array<PostProcessShader, 8> shaders;
 };
 
 std::array<PostProcessShader, 8> PostProcessShader::shaders;
 
+void PostProcessor::VertexArray::defineVtxAttribs()
+{
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(3);
+}
+
 void PostProcessor::init(int width, int height)
 {
-	framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(width, height));
+	framebuffer = std::make_unique<GlFramebuffer>(width, height, true, true);
 
 	float vertices[] = {
 			-1,  1, 1,
@@ -227,32 +242,18 @@ void PostProcessor::init(int width, int height)
 			 1,  1, 1,
 			 1, -1, 1,
 	};
-	glGenBuffers(1, &vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-	{
-		glGenVertexArrays(1, &vertexArray);
-		glBindVertexArray(vertexArray);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-		glDisableVertexAttribArray(3);
-		glBindVertexArray(0);
-	}
-#endif
+	vertexBuffer = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	vertexBuffer->update(vertices, sizeof(vertices));
 	glCheck();
 }
 
 void PostProcessor::term()
 {
 	framebuffer.reset();
-	glDeleteBuffers(1, &vertexBuffer);
-	vertexBuffer = 0;
-	deleteVertexArray(vertexArray);
-	vertexArray = 0;
+	vertexBuffer.reset();
+	vertexBufferShifted.reset();
+	vertexArray.term();
+	vertexArrayShifted.term();
 	PostProcessShader::term();
 	glCheck();
 }
@@ -278,25 +279,76 @@ void PostProcessor::render(GLuint output_fbo)
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
 
+	if (!config::PowerVR2Filter)
+	{
+		// Just handle shifting
+		if (gl.gl_major < 3)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+			glViewport(0, 0, framebuffer->getWidth(), framebuffer->getHeight());
+			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			static float vertices[20] = {
+				-1.f,  1.f, 1.f, 0.f, 1.f,
+				-1.f, -1.f, 1.f, 0.f, 0.f,
+				 1.f,  1.f, 1.f, 1.f, 1.f,
+				 1.f, -1.f, 1.f, 1.f, 0.f,
+			};
+			vertices[0] = vertices[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
+			vertices[10] = vertices[15] = vertices[0] + 2;
+			vertices[1] = vertices[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			vertices[6] = vertices[16] = vertices[1] - 2;
+			glcache.Disable(GL_BLEND);
+			drawQuad(framebuffer->getTexture(), false, false, vertices);
+		}
+		else
+		{
+#ifndef GLES2
+			framebuffer->bind(GL_READ_FRAMEBUFFER);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, output_fbo);
+			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
+					0, 0, framebuffer->getWidth(), framebuffer->getHeight(),
+					GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	    	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+#endif
+		}
+		return;
+	}
+
 	PostProcessShader::select(FB_W_CTRL.fb_dither, SPG_CONTROL.interlace, FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
-	if (vertexArray != 0)
-		bindVertexArray(vertexArray);
+	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+	{
+		if (vertexBufferShifted == nullptr)
+			vertexBufferShifted = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+		float vertices[] = {
+				-1,  1, 1,
+				-1, -1, 1,
+				 1,  1, 1,
+				 1, -1, 1,
+		};
+		vertices[0] = vertices[3] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
+		vertices[6] = vertices[9] = vertices[0] + 2;
+		vertices[1] = vertices[7] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+		vertices[4] = vertices[10] = vertices[1] - 2;
+		vertexBufferShifted->update(vertices, sizeof(vertices));
+		vertexArrayShifted.bind(vertexBufferShifted.get());
+	}
 	else
 	{
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-		glDisableVertexAttribArray(3);
+		vertexArray.bind(vertexBuffer.get());
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, framebuffer->getTexture());
 
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+	glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	bindVertexArray(0);
+	GlVertexArray::unbind();
 }
+#endif // LIBRETRO

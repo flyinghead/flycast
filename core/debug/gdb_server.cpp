@@ -103,7 +103,7 @@ public:
 		if (config::GDBWaitForConnection)
 		{
 			DEBUG_LOG(COMMON, "Waiting for GDB connection...");
-			agent.interrupt();
+			agentInterrupt();
 		}
 	}
 
@@ -198,18 +198,22 @@ private:
 		{
 			NOTICE_LOG(NETWORK, "gdb: client connection");
 			attached = true;
-			agent.interrupt();
+			agentInterrupt();
 		}
 	}
 
 	void readCommand()
 	{
-		if (postDebugTrapNeeded)
-		{
-			postDebugTrapNeeded = false;
-			agent.postDebugTrap();
-		}
-		try {
+        try {
+			if (postDebugTrapNeeded)
+			{
+				postDebugTrapNeeded = false;
+				try {
+					agent.postDebugTrap();
+				} catch (const FlycastException& e) {
+					throw Error(e.what());
+				}
+			}
 			std::string packet = recvPacket();
 			if (packet.empty())
 				return;
@@ -539,7 +543,7 @@ private:
 			// Tell the remote stub about features supported by GDB,
 			// and query the stub for features it supports
 			char qsupported[128];
-			sprintf_s(qsupported, 128, "PacketSize=%i;vContSupported+", MAX_PACKET_LEN);
+			snprintf(qsupported, 128, "PacketSize=%i;vContSupported+", MAX_PACKET_LEN);
 			sendPacket(qsupported);
 		}
 		else if (pkt.rfind("qSymbol:", 0) == 0)
@@ -626,7 +630,7 @@ private:
 				break;
 			}
 			default:
-				WARN_LOG(COMMON, "vCont action not supported %s", pkt[6], pkt.c_str());
+				WARN_LOG(COMMON, "vCont action not supported %s", pkt.c_str());
 			}
 		}
 		else if (pkt.rfind("vFile:", 0) == 0)
@@ -667,15 +671,23 @@ private:
 
 	void step(u32 what = 0)
 	{
-		agent.step();
-		sendPacket("S05");
+		try {
+			agent.step();
+			sendPacket("S05");
+		} catch (const FlycastException& e) {
+			throw Error(e.what());
+		}
 	}
 
 	void stepRange(u32 from, u32 to)
 	{
-		sendPacket("OK");
-		agent.stepRange(from, to);
-		sendPacket("S05");
+		try {
+			sendPacket("OK");
+			agent.stepRange(from, to);
+			sendPacket("S05");
+		} catch (const FlycastException& e) {
+			throw Error(e.what());
+		}
 	}
 
 	void insertMatchpoint(const std::string& pkt)
@@ -688,22 +700,23 @@ private:
 			sendPacket("E01");
 		}
 		switch (type) {
-			case DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK:		// soft bp
-		    	if (agent.insertMatchpoint(0, addr, len))
+			case DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK:		// soft bp
+		    	if (agent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
+		    			addr, len))
 		    		sendPacket("OK");
 		    	else
 		    		sendPacket("E01");
 		    	break;
-		    case DebugAgent::Breakpoint::Type::BP_TYPE_HARDWARE_BREAK:		// hardware bp
+		    case DebugAgent::Breakpoint::BP_TYPE_HARDWARE_BREAK:		// hardware bp
 		    	sendPacket("");
 		    	break;
-		    case DebugAgent::Breakpoint::Type::BP_TYPE_WRITE_WATCHPOINT:	// write watchpoint
+		    case DebugAgent::Breakpoint::BP_TYPE_WRITE_WATCHPOINT:	// write watchpoint
 		    	sendPacket("");
 		    	break;
-		    case DebugAgent::Breakpoint::Type::BP_TYPE_READ_WATCHPOINT:		// read watchpoint
+		    case DebugAgent::Breakpoint::BP_TYPE_READ_WATCHPOINT:		// read watchpoint
 		    	sendPacket("");
 		    	break;
-		    case DebugAgent::Breakpoint::Type::BP_TYPE_ACCESS_WATCHPOINT:	// access watchpoint
+		    case DebugAgent::Breakpoint::BP_TYPE_ACCESS_WATCHPOINT:	// access watchpoint
 		    	sendPacket("");
 		    	break;
 		    default:
@@ -723,7 +736,8 @@ private:
 		}
 		switch (type) {
 		    case 0:		// soft bp
-		    	if (agent.removeMatchpoint(0, addr, len))
+		    	if (agent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
+		    			addr, len))
 		    		sendPacket("OK");
 		    	else
 		    		sendPacket("E01");
@@ -748,7 +762,7 @@ private:
 
 	void interrupt()
 	{
-		u32 signal = agent.interrupt();
+		u32 signal = agentInterrupt();
 		char s[10];
 		sprintf(s, "S%02x", signal);
 		sendPacket(s);
@@ -888,6 +902,15 @@ private:
 			throw Error("I/O error");
 	}
 
+	u32 agentInterrupt()
+	{
+		try {
+			return agent.interrupt();
+		} catch (const FlycastException& e) {
+			throw Error(e.what());
+		}
+	}
+
 	bool initialised = false;
 	bool stopRequested = false;
 	bool attached = false;
@@ -932,8 +955,12 @@ static void emuEventCallback(Event event, void *)
 	switch (event)
 	{
 	case Event::Resume:
-		if (!gdbServer.isRunning())
-			gdbServer.run();
+		try {
+			if (!gdbServer.isRunning())
+				gdbServer.run();
+		} catch (const GdbServer::Error& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+		}
 		break;
 	case Event::Terminate:
 		gdbServer.stop();

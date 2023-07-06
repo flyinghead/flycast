@@ -13,15 +13,14 @@
 #include "blockmanager.h"
 #include "ngen.h"
 #include "decoder.h"
-
-#include <xxhash.h>
+#include "oslib/virtmem.h"
 
 #if FEAT_SHREC != DYNAREC_NONE
 
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *SH4_TCB;
 #else
-static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
+alignas(4096) static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE]
 #if defined(__OpenBSD__)
 	__attribute__((section(".openbsd.mutable")));
 #elif defined(__unix__) || defined(__SWITCH__)
@@ -95,34 +94,6 @@ u32 emit_FreeSpace()
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
-const char* RuntimeBlockInfo::hash()
-{
-	XXH32_hash_t hash = 0;
-
-	u8* ptr = GetMemPtr(this->addr, this->sh4_code_size);
-
-	if (ptr)
-	{
-		XXH32_state_t *state = XXH32_createState();
-		XXH32_reset(state, 7);
-		for (u32 i = 0; i < this->guest_opcodes; i++)
-		{
-			u16 data = ptr[i];
-			//Do not count PC relative loads (relocated code)
-			if ((data >> 12) == 0xD)
-				data = 0xD000;
-
-			XXH32_update(state, &data, 2);
-		}
-		hash = XXH32_digest(state);
-		XXH32_freeState(state);
-	}
-	static char block_hash[20];
-	sprintf(block_hash, ">:1:%02X:%08X", this->guest_opcodes, hash);
-
-	return block_hash;
-}
-
 bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
 	staging_runs=addr=lookups=runs=host_code_size=0;
@@ -138,20 +109,20 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	temp_block = false;
 	
 	vaddr = rpc;
-	if (mmu_enabled())
+	if (vaddr & 1)
 	{
-		u32 rv = mmu_instruction_translation(vaddr, addr);
-		if (rv != MMU_ERROR_NONE)
+		// read address error
+		Do_Exception(vaddr, Sh4Ex_AddressErrorRead);
+		return false;
+	}
+	else if (mmu_enabled())
+	{
+		MmuError rv = mmu_instruction_translation(vaddr, addr);
+		if (rv != MmuError::NONE)
 		{
 			DoMMUException(vaddr, rv, MMU_TT_IREAD);
 			return false;
 		}
-	}
-	else if (vaddr & 1)
-	{
-		// read address error
-		Do_Exception(vaddr, 0xE0, 0x100);
-		return false;
 	}
 	else
 	{
@@ -166,7 +137,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			return false;
 	}
 	catch (const SH4ThrownException& ex) {
-		Do_Exception(rpc, ex.expEvn, ex.callVect);
+		Do_Exception(rpc, ex.expEvn);
 		return false;
 	}
 	SetProtectedFlags();
@@ -241,23 +212,6 @@ static void ngen_FailedToFindBlock_internal() {
 }
 
 void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
-u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
-	next_pc = pc;
-	UpdateINTC();
-
-	return next_pc;
-}
-
-u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
-{
-	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
-	if (!rbi)
-		rbi = bm_GetStaleBlock(block_cpde);
-	verify(rbi != nullptr);
-
-	return rdv_DoInterrupts_pc(rbi->vaddr);
-}
 
 // addr must be the physical address of the start of the block
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
@@ -397,24 +351,20 @@ static void recSh4_Init()
 	Get_Sh4Interpreter(&sh4Interp);
 	sh4Interp.Init();
 	bm_Init();
-
 	
-	if (_nvmem_enabled())
-		verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
-
-	// Prepare some pointer to the pre-allocated code cache:
-	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
+	if (addrspace::virtmemEnabled())
+		verify(&mem_b[0] == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
 
 	// Call the platform-specific magic to make the pages RWX
-	CodeCache = NULL;
+	CodeCache = nullptr;
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
 #else
-	bool rc = vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
 #endif
 	verify(rc);
 	// Ensure the pointer returned is non-null
-	verify(CodeCache != NULL);
+	verify(CodeCache != nullptr);
 
 	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
@@ -424,6 +374,15 @@ static void recSh4_Init()
 static void recSh4_Term()
 {
 	INFO_LOG(DYNAREC, "recSh4 Term");
+#ifdef FEAT_NO_RWX_PAGES
+	if (CodeCache != nullptr)
+		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, CODE_SIZE + TEMP_CODE_SIZE);
+#else
+	if (CodeCache != nullptr && CodeCache != SH4_TCB)
+		virtmem::release_jit_block(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+#endif
+	CodeCache = nullptr;
+	TempCodeCache = nullptr;
 	bm_Term();
 	sh4Interp.Term();
 }
@@ -443,6 +402,53 @@ void Get_Sh4Recompiler(sh4_if* cpu)
 	cpu->Term = recSh4_Term;
 	cpu->IsCpuRunning = recSh4_IsCpuRunning;
 	cpu->ResetCache = recSh4_ClearCache;
+}
+
+static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, RuntimeBlockInfo* block)
+{
+	if (mmu_enabled() && mmu_is_translated(addr, size))
+	{
+		if (addr & (size - 1))
+			// Unaligned
+			return false;
+		if (block != nullptr
+				&& (addr >> 12) != (block->vaddr >> 12)
+				&& (addr >> 12) != ((block->vaddr + block->sh4_code_size - 1) >> 12))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+
+		u32 paddr;
+		MmuError rv = access == MMU_TT_DREAD ?
+				mmu_data_translation<MMU_TT_DREAD>(addr, paddr)
+				: mmu_data_translation<MMU_TT_DWRITE>(addr, paddr);
+		if (rv != MmuError::NONE)
+			return false;
+
+		addr = paddr;
+	}
+	outAddr = addr;
+
+	return true;
+}
+
+bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
+{
+	size = std::min(size, 4);
+	if (!translateAddress(addr, size, MMU_TT_DREAD, physAddr, block))
+		return false;
+	ptr = addrspace::readConst(physAddr, isRam, size);
+
+	return true;
+}
+
+bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block)
+{
+	size = std::min(size, 4);
+	if (!translateAddress(addr, size, MMU_TT_DWRITE, physAddr, block))
+		return false;
+	ptr = addrspace::writeConst(physAddr, isRam, size);
+
+	return true;
 }
 
 #endif  // FEAT_SHREC != DYNAREC_NONE

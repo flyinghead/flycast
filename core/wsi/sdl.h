@@ -42,6 +42,7 @@ public:
 	bool init();
 	void term() override;
 	void swap();
+	void initVideoRouting() override;
 
 private:
 	SDL_GLContext glcontext = nullptr;

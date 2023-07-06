@@ -2,50 +2,32 @@
 #include <cmath>
 
 #include "sh4_opcodes.h"
-#include "../sh4_core.h"
-#include "../sh4_rom.h"
+#include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_rom.h"
 #include "hw/sh4/sh4_mem.h"
 
 #define sh4op(str) void DYNACALL str (u32 op)
-#define GetN(str)     ((str>>8) & 0xf)
-#define GetM(str)     ((str>>4) & 0xf)
-#define GetImm4(str)  ((str>>0) & 0xf)
-#define GetImm8(str)  ((str>>0) & 0xff)
-#define GetImm12(str) ((str>>0) & 0xfff)
 
-#define GetDN(opc)  ((op&0x0F00)>>9)
-#define GetDM(opc)  ((op&0x00F0)>>5)
+static u32 GetN(u32 op) {
+	return (op >> 8) & 0xf;
+}
+static u32 GetM(u32 op) {
+	return (op >> 4) & 0xf;
+}
 
-#define pi (3.14159265f)
+static double getDRn(u32 op) {
+	return GetDR((op >> 9) & 7);
+}
+static double getDRm(u32 op) {
+	return GetDR((op >> 5) & 7);
+}
+static void setDRn(u32 op, double d) {
+	SetDR((op >> 9) & 7, d);
+}
 
 static void iNimp(const char *str);
 
-#define IS_DENORMAL(f) (((*(f))&0x7f800000) == 0)
-
-#define ReadMemU64(to,addr) to=ReadMem64(addr)
-#define ReadMemU32(to,addr) to=ReadMem32(addr)
-#define ReadMemS32(to,addr) to=(s32)ReadMem32(addr)
-#define ReadMemS16(to,addr) to=(u32)(s32)(s16)ReadMem16(addr)
-#define ReadMemS8(to,addr)  to=(u32)(s32)(s8)ReadMem8(addr)
-
-//Base,offset format
-#define ReadMemBOU32(to,addr,offset)        ReadMemU32(to,addr+offset)
-#define ReadMemBOS16(to,addr,offset)        ReadMemS16(to,addr+offset)
-#define ReadMemBOS8(to,addr,offset)         ReadMemS8(to,addr+offset)
-
-//Write Mem Macros
-#define WriteMemU64(addr,data)              WriteMem64(addr,(u64)data)
-#define WriteMemU32(addr,data)              WriteMem32(addr,(u32)data)
-#define WriteMemU16(addr,data)              WriteMem16(addr,(u16)data)
-#define WriteMemU8(addr,data)               WriteMem8(addr,(u8)data)
-
-//Base,offset format
-#define WriteMemBOU32(addr,offset,data)     WriteMemU32(addr+offset,data)
-#define WriteMemBOU16(addr,offset,data)     WriteMemU16(addr+offset,data)
-#define WriteMemBOU8(addr,offset,data)      WriteMemU8(addr+offset,data)
-
 #define CHECK_FPU_32(v) v = fixNaN(v)
-#define CHECK_FPU_64(v) v = fixNaN64(v)
 
 //fadd <FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_0000)
@@ -59,13 +41,9 @@ sh4op(i1111_nnnn_mmmm_0000)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		double drn=GetDR(n), drm=GetDR(m);
-		drn += drm;
-		CHECK_FPU_64(drn);
-		SetDR(n,drn);
+		double d = getDRn(op) + getDRm(op);
+		d = fixNaN64(d);
+		setDRn(op, d);
 	}
 }
 
@@ -82,13 +60,9 @@ sh4op(i1111_nnnn_mmmm_0001)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		double drn=GetDR(n), drm=GetDR(m);
-		drn-=drm;
-		//dr[n] -= dr[m];
-		SetDR(n,drn);
+		double d = getDRn(op) - getDRm(op);
+		d = fixNaN64(d);
+		setDRn(op, d);
 	}
 }
 //fmul <FREG_M>,<FREG_N>
@@ -103,13 +77,9 @@ sh4op(i1111_nnnn_mmmm_0010)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		double drn=GetDR(n), drm=GetDR(m);
-		drn*=drm;
-		//dr[n] *= dr[m];
-		SetDR(n,drn);
+		double d = getDRn(op) * getDRm(op);
+		d = fixNaN64(d);
+		setDRn(op, d);
 	}
 }
 //fdiv <FREG_M>,<FREG_N>
@@ -126,12 +96,9 @@ sh4op(i1111_nnnn_mmmm_0011)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		double drn=GetDR(n), drm=GetDR(m);
-		drn/=drm;
-		SetDR(n,drn);
+		double d = getDRn(op) / getDRm(op);
+		d = fixNaN64(d);
+		setDRn(op, d);
 	}
 }
 //fcmp/eq <FREG_M>,<FREG_N>
@@ -146,10 +113,7 @@ sh4op(i1111_nnnn_mmmm_0100)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		sr.T = GetDR(m) == GetDR(n);
+		sr.T = getDRn(op) == getDRm(op);
 	}
 }
 //fcmp/gt <FREG_M>,<FREG_N>
@@ -167,13 +131,7 @@ sh4op(i1111_nnnn_mmmm_0101)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32 m = (op >> 5) & 0x07;
-
-		if (GetDR(n) > GetDR(m))
-			sr.T = 1;
-		else
-			sr.T = 0;
+		sr.T = getDRn(op) > getDRm(op);
 	}
 }
 //All memory opcodes are here
@@ -185,20 +143,16 @@ sh4op(i1111_nnnn_mmmm_0110)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ReadMemU32(fr_hex[n],r[m] + r[0]);
+		fr_hex[n] = ReadMem32(r[m] + r[0]);
 	}
 	else
 	{
 		u32 n = GetN(op)>>1;
 		u32 m = GetM(op);
-		if (((op >> 8) & 0x1) == 0)
-		{
-			ReadMemU64(dr_hex[n],r[m] + r[0]);
-		}
+		if (((op >> 8) & 1) == 0)
+			dr_hex[n] = ReadMem64(r[m] + r[0]);
 		else
-		{
-			ReadMemU64(xd_hex[n],r[m] + r[0]);
-		}
+			xd_hex[n] = ReadMem64(r[m] + r[0]);
 	}
 }
 
@@ -218,13 +172,9 @@ sh4op(i1111_nnnn_mmmm_0111)
 		u32 n = GetN(op);
 		u32 m = GetM(op)>>1;
 		if (((op >> 4) & 0x1) == 0)
-		{
-			WriteMemU64(r[n] + r[0],dr_hex[m]);
-		}
+			WriteMem64(r[n] + r[0], dr_hex[m]);
 		else
-		{
-			WriteMemU64(r[n] + r[0],xd_hex[m]);
-		}
+			WriteMem64(r[n] + r[0], xd_hex[m]);
 	}
 }
 
@@ -236,20 +186,16 @@ sh4op(i1111_nnnn_mmmm_1000)
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op);
-		ReadMemU32(fr_hex[n],r[m]);
+		fr_hex[n] = ReadMem32(r[m]);
 	}
 	else
 	{
 		u32 n = GetN(op)>>1;
 		u32 m = GetM(op);
-		if (((op >> 8) & 0x1) == 0)
-		{
-			ReadMemU64(dr_hex[n],r[m]);
-		}
+		if (((op >> 8) & 1) == 0)
+			dr_hex[n] = ReadMem64(r[m]);
 		else
-		{
-			ReadMemU64(xd_hex[n],r[m]);
-		}
+			xd_hex[n] = ReadMem64(r[m]);
 	}
 }
 
@@ -262,21 +208,17 @@ sh4op(i1111_nnnn_mmmm_1001)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ReadMemU32(fr_hex[n],r[m]);
+		fr_hex[n] = ReadMem32(r[m]);
 		r[m] += 4;
 	}
 	else
 	{
 		u32 n = GetN(op)>>1;
 		u32 m = GetM(op);
-		if (((op >> 8) & 0x1) == 0)
-		{
-			ReadMemU64(dr_hex[n],r[m]);
-		}
+		if (((op >> 8) & 1) == 0)
+			dr_hex[n] = ReadMem64(r[m]);
 		else
-		{
-			ReadMemU64(xd_hex[n],r[m] );
-		}
+			xd_hex[n] = ReadMem64(r[m]);
 		r[m] += 8;
 	}
 }
@@ -289,7 +231,7 @@ sh4op(i1111_nnnn_mmmm_1010)
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op);
-		WriteMemU32(r[n], fr_hex[m]);
+		WriteMem32(r[n], fr_hex[m]);
 	}
 	else
 	{
@@ -297,14 +239,9 @@ sh4op(i1111_nnnn_mmmm_1010)
 		u32 m = GetM(op)>>1;
 
 		if (((op >> 4) & 0x1) == 0)
-		{
-			WriteMemU64(r[n], dr_hex[m]);
-		}
+			WriteMem64(r[n], dr_hex[m]);
 		else
-		{
-			WriteMemU64(r[n], xd_hex[m]);
-		}
-
+			WriteMem64(r[n], xd_hex[m]);
 	}
 }
 
@@ -318,7 +255,7 @@ sh4op(i1111_nnnn_mmmm_1011)
 
 		u32 addr = r[n] - 4;
 
-		WriteMemU32(addr, fr_hex[m]);
+		WriteMem32(addr, fr_hex[m]);
 
 		r[n] = addr;
 	}
@@ -329,13 +266,9 @@ sh4op(i1111_nnnn_mmmm_1011)
 
 		u32 addr = r[n] - 8;
 		if (((op >> 4) & 0x1) == 0)
-		{
-			WriteMemU64(addr, dr_hex[m]);
-		}
+			WriteMem64(addr, dr_hex[m]);
 		else
-		{
-			WriteMemU64(addr, xd_hex[m]);
-		}
+			WriteMem64(addr, xd_hex[m]);
 
 		r[n] = addr;
 	}
@@ -406,7 +339,7 @@ sh4op(i1111_nnn0_1111_1101)
 		u32 pi_index=fpul&0xFFFF;
 
 	#ifdef NATIVE_FSCA
-			float rads=pi_index/(65536.0f/2)*pi;
+			float rads = pi_index / (65536.0f / 2) * float(M_PI);
 
 			fr[n + 0] = sinf(rads);
 			fr[n + 1] = cosf(rads);
@@ -442,13 +375,12 @@ sh4op(i1111_nnnn_1011_1101)
 
 	if (fpscr.PR == 1)
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32*p=&fpul;
-		*((float*)p) = (float)GetDR(n);
+		u32 *p = &fpul;
+		*((float *)p) = (float)getDRn(op);
 	}
 	else
 	{
-		iNimp("fcnvds <DR_N>,FPUL,m=0");
+		iNimp("FCNVDS: Single precision mode");
 	}
 }
 
@@ -458,13 +390,12 @@ sh4op(i1111_nnnn_1010_1101)
 {
 	if (fpscr.PR == 1)
 	{
-		u32 n = (op >> 9) & 0x07;
-		u32* p = &fpul;
-		SetDR(n,(double)*((float*)p));
+		u32 *p = &fpul;
+		setDRn(op, (double)*((float *)p));
 	}
 	else
 	{
-		iNimp("fcnvsd FPUL,<DR_N>,m=0");
+		iNimp("FCNVSD: Single precision mode");
 	}
 }
 
@@ -547,8 +478,7 @@ sh4op(i1111_nnnn_0010_1101)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		SetDR(n, (double)(int)fpul);
+		setDRn(op, (double)(int)fpul);
 	}
 }
 
@@ -591,10 +521,7 @@ sh4op(i1111_nnnn_0110_1101)
 	}
 	else
 	{
-		//Operation _can_ be done on sh4
-		u32 n = GetN(op)>>1;
-
-		SetDR(n, fixNaN64(sqrt(GetDR(n))));
+		setDRn(op, fixNaN64(sqrt(getDRn(op))));
 	}
 }
 
@@ -618,8 +545,7 @@ sh4op(i1111_nnnn_0011_1101)
 	}
 	else
 	{
-		u32 n = (op >> 9) & 0x07;
-		f64 f = GetDR(n);
+		f64 f = getDRn(op);
 		fpul = (u32)(s32)f;
 
 		// TODO saturate

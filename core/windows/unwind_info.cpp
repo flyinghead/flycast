@@ -95,4 +95,12 @@ void UnwindInfo::clear()
 	tables.clear();
 }
 
+void UnwindInfo::registerFrame(void *frame)
+{
+}
+
+void UnwindInfo::deregisterFrame(void *frame)
+{
+}
+
 #endif

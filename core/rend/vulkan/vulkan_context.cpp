@@ -19,8 +19,9 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "vulkan_context.h"
+#include "vulkan_renderer.h"
 #include "imgui/imgui.h"
-#include "imgui_impl_vulkan.h"
+#include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
@@ -37,6 +38,8 @@
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
+
+#include <memory>
 
 void ReInitOSD();
 
@@ -411,6 +414,8 @@ bool VulkanContext::InitDevice()
 			}
 			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
 				deviceExtensions.push_back("VK_KHR_portability_subset");
+			else if (!strcmp(property.extensionName, "VK_EXT_metal_objects"))
+				deviceExtensions.push_back("VK_EXT_metal_objects");
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
@@ -494,12 +499,12 @@ bool VulkanContext::InitDevice()
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
-	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
-	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, false));
-	    quadPipelineWithAlpha = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
-	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
-	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	    shaderManager = std::make_unique<ShaderManager>();
+	    quadPipeline = std::make_unique<QuadPipeline>(true, false);
+	    quadPipelineWithAlpha = std::make_unique<QuadPipeline>(false, false);
+	    quadDrawer = std::make_unique<QuadDrawer>();
+	    quadRotatePipeline = std::make_unique<QuadPipeline>(true, true);
+	    quadRotateDrawer = std::make_unique<QuadDrawer>();
 
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
@@ -512,6 +517,8 @@ bool VulkanContext::InitDevice()
 				+ std::to_string(props.driverVersion / 10000) + "."
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
+		
+		initVideoRouting();
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -534,6 +541,19 @@ bool VulkanContext::InitDevice()
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
 	return false;
+}
+
+void VulkanContext::initVideoRouting()
+{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
+	os_VideoRoutingTermVk();
+	if (config::VideoRouting)
+	{
+		os_VideoRoutingInitSyphonWithVkDevice(device);
+	}
+#endif
 }
 
 void VulkanContext::CreateSwapChain()
@@ -624,8 +644,8 @@ void VulkanContext::CreateSwapChain()
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#ifdef TEST_AUTOMATION
-			// for final screenshot
+#if defined(TEST_AUTOMATION) || (defined(VIDEO_ROUTING) && defined(TARGET_MAC))
+			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
 			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
@@ -786,8 +806,8 @@ bool VulkanContext::init()
 #else
 #error "Unknown Vulkan platform"
 #endif
-	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
-	textureCache = std::unique_ptr<TextureCache>(new TextureCache());
+	overlay = std::make_unique<VulkanOverlay>();
+	textureCache = std::make_unique<TextureCache>();
 
 	return InitDevice();
 }
@@ -887,12 +907,18 @@ void VulkanContext::Present() noexcept
 
 void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	QuadVertex vtx[] = {
-		{ { -1, -1, 0 }, { 0, 0 } },
-		{ {  1, -1, 0 }, { 1, 0 } },
-		{ { -1,  1, 0 }, { 0, 1 } },
-		{ {  1,  1, 0 }, { 1, 1 } },
+	QuadVertex vtx[] {
+		{ -1, -1, 0, 0, 0 },
+		{  1, -1, 0, 1, 0 },
+		{ -1,  1, 0, 0, 1 },
+		{  1,  1, 0, 1, 1 },
 	};
+	float shiftX, shiftY;
+	getVideoShift(shiftX, shiftY);
+	vtx[0].x = vtx[2].x = -1.f + shiftX * 2.f / extent.width;
+	vtx[1].x = vtx[3].x = vtx[0].x + 2;
+	vtx[0].y = vtx[1].y = -1.f + shiftY * 2.f / extent.height;
+	vtx[2].y = vtx[3].y = vtx[0].y + 2;
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
 	if (config::Rotate90)
@@ -959,6 +985,8 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
+			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
+			
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1012,6 +1040,10 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	os_VideoRoutingTermVk();
+#endif
 #ifndef USE_SDL
 	surface.reset();
 #else

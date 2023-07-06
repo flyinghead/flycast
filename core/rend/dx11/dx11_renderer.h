@@ -35,7 +35,7 @@ struct DX11Renderer : public Renderer
 {
 	bool Init() override;
 	void Term() override;
-	bool Process(TA_context* ctx) override;
+	void Process(TA_context* ctx) override;
 	bool Render() override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 
@@ -96,6 +96,7 @@ protected:
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
+	void renderVideoRouting();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -129,7 +130,7 @@ private:
 	void setBaseScissor();
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
-	void drawList(const List<PolyParam>& gply, int first, int count);
+	void drawList(const std::vector<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
 	void setRenderState(const PolyParam *gp);
 	void drawSorted(int first, int count, bool multipass);
@@ -154,6 +155,10 @@ private:
 	ComPtr<ID3D11Texture2D> fbScaledTexture;
 	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
 	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
+	ComPtr<ID3D11Texture2D> vrStagingTexture;
+	ComPtr<ID3D11ShaderResourceView> vrStagingTextureSRV;
+	ComPtr<ID3D11Texture2D> vrScaledTexture;
+	ComPtr<ID3D11RenderTargetView> vrScaledRenderTarget;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 

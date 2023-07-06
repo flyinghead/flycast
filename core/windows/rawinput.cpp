@@ -23,6 +23,7 @@
 #include <initguid.h>
 #include <devpkey.h>
 #include "hw/maple/maple_devs.h"
+#include "nowide/stackstring.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -278,7 +279,7 @@ static LRESULT CALLBACK rawWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			u8 keycode = 0xff;
 			if ((ri.data.keyboard.Flags & RI_KEY_E0) != 0)
 			{
-				for (u32 i = 0; i < ARRAY_SIZE(Ps2toUsbE0); i++)
+				for (u32 i = 0; i < std::size(Ps2toUsbE0); i++)
 					if (Ps2toUsbE0[i][0] == scancode)
 					{
 						keycode = Ps2toUsbE0[i][1];
@@ -292,7 +293,7 @@ static LRESULT CALLBACK rawWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 				DEBUG_LOG(INPUT, "[%d] key %x -> %x", it->second->maple_port(), scancode, keycode);
 			}
 			if (keycode != 0xff)
-				it->second->keyboard_input(keycode, pressed);
+				it->second->input(keycode, pressed);
 		}
 		break;
 
@@ -379,11 +380,11 @@ static void findDevices()
 				    {
 						DEVPROPTYPE propType;
 						ULONG bufSize = 0;
-						if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
+						if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
 						{
 							std::vector<wchar_t> buf;
 							buf.resize(bufSize / sizeof(wchar_t));
-							if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
+							if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
 							{
 								// Locate the device using the device instance id
 								DEVINST devInst;
@@ -398,7 +399,7 @@ static void findDevices()
 										{
 											nowide::stackstring nwname;
 											if (nwname.convert(&buf[0]))
-												name = nwname.c_str();
+												name = nwname.get();
 										}
 									}
 								}

@@ -104,4 +104,12 @@
         heap_ ## type * p = (heap_ ## type *)PICO_ZALLOC(sizeof(heap_ ## type));  \
         return p;     \
     } \
-
+	static inline void heap_deinit(heap_ ## type *heap) \
+	{ \
+    	uint32_t elements_per_block = MAX_BLOCK_SIZE / sizeof(type); \
+    	uint32_t i; \
+    	if (heap->size > 0) \
+			for (i = 0; i < heap->size / elements_per_block + 1; i++) \
+				PICO_FREE(heap->top[i]); \
+    	PICO_FREE(heap); \
+	}

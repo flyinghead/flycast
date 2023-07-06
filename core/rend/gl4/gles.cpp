@@ -28,6 +28,8 @@
 #include "rend/gles/postprocess.h"
 #endif
 
+#include <memory>
+
 //Fragment and vertex shaders code
 
 const char* ShaderHeader = R"(
@@ -576,11 +578,10 @@ static void gl4_term()
 	for (auto& buffer : gl4.vbo.tr_poly_params)
 		buffer.reset();
 	gl4_delete_shaders();
-	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.main_vao), gl4.vbo.main_vao);
-	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.modvol_vao), gl4.vbo.modvol_vao);
-#ifdef LIBRETRO
-	gl4TermVmuLightgun();
-#endif
+	for (auto& vao : gl4.vbo.main_vao)
+		vao.term();
+	for (auto& vao : gl4.vbo.modvol_vao)
+		vao.term();
 }
 
 static void create_modvol_shader()
@@ -604,33 +605,28 @@ static void create_modvol_shader()
 	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
 
-static bool gl_create_resources()
+static void gl_create_resources()
 {
 	if (gl4.vbo.geometry[0] != nullptr)
 		// Assume the resources have already been created
-		return true;
-
-	//create vao
-	glGenVertexArrays(2, &gl4.vbo.main_vao[0]);
-	glGenVertexArrays(2, &gl4.vbo.modvol_vao[0]);
+		return;
 
 	//create vbos
-	for (u32 i = 0; i < ARRAY_SIZE(gl4.vbo.geometry); i++)
+	for (u32 i = 0; i < std::size(gl4.vbo.geometry); i++)
 	{
-		gl4.vbo.geometry[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-		gl4.vbo.modvols[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-		gl4.vbo.idxs[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		gl4.vbo.geometry[i] = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+		gl4.vbo.modvols[i] = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+		gl4.vbo.idxs[i] = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 		// Create the buffer for Translucent poly params
-		gl4.vbo.tr_poly_params[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_SHADER_STORAGE_BUFFER));
+		gl4.vbo.tr_poly_params[i] = std::make_unique<GlBuffer>(GL_SHADER_STORAGE_BUFFER);
 		gl4.vbo.bufferIndex = i;
 		gl4SetupMainVBO();
 		gl4SetupModvolVBO();
 	}
+	GlVertexArray::unbind();
 
 	initQuad();
 	glCheck();
-
-	return true;
 }
 
 struct OpenGL4Renderer : OpenGLRenderer
@@ -675,6 +671,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 			gl.ofbo2.ready = false;
 			frameRendered = true;
 		}
+		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;
@@ -692,18 +689,18 @@ struct OpenGL4Renderer : OpenGLRenderer
 #ifdef LIBRETRO
 	void DrawOSD(bool clearScreen) override
 	{
-		void gl4DrawVmuTexture(u8 vmu_screen_number);
-		void gl4DrawGunCrosshair(u8 port);
+		void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
+		void DrawGunCrosshair(u8 port, int width, int height);
 
 		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if (vmu_lcd_status[vmu_screen_number * 2])
-					gl4DrawVmuTexture(vmu_screen_number);
+					DrawVmuTexture(vmu_screen_number, width, height);
 		}
 
 		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			gl4DrawGunCrosshair(lightgun_port);
+			DrawGunCrosshair(lightgun_port, width, height);
 	}
 #endif
 };
@@ -729,8 +726,7 @@ bool OpenGL4Renderer::Init()
     //glDebugMessageCallback(gl_DebugOutput, NULL);
     //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-	if (!gl_create_resources())
-		return false;
+	gl_create_resources();
 
 	initABuffer();
 
@@ -784,6 +780,8 @@ static void resize(int w, int h)
 
 bool OpenGL4Renderer::renderFrame(int width, int height)
 {
+	initVideoRoutingFrameBuffer();
+	
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
@@ -812,6 +810,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		rendering_width = width;
 		rendering_height = height;
+		getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 	}
 	resize(rendering_width, rendering_height);
 	
@@ -846,11 +845,13 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		output_fbo = BindRTT(false);
 	else
 	{
+		this->width = width;
+		this->height = height;
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter)
-			output_fbo = postProcessor.getFramebuffer(width, height);
-		else if (config::EmulateFramebuffer)
+		if (config::EmulateFramebuffer)
 			output_fbo = init_output_framebuffer(width, height);
+		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
+			output_fbo = postProcessor.getFramebuffer(width, height);
 		else
 			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
@@ -877,23 +878,22 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		//Main VBO
 		//move vertex to gpu
-		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.head(), pvrrc.verts.bytes());
-		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.head(), pvrrc.idx.bytes());
+		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
+		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 
 		//Modvol VBO
-		if (pvrrc.modtrig.used())
-			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
+		if (!pvrrc.modtrig.empty())
+			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 
 		// TR PolyParam data
-		if (pvrrc.global_param_tr.used() != 0)
+		if (!pvrrc.global_param_tr.empty())
 		{
-			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
-			const PolyParam *pp = pvrrc.global_param_tr.head();
-			for (int i = 0; pp != pp_end; i += 2, pp++)
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+			int i = 0;
+			for (const PolyParam& pp : pvrrc.global_param_tr)
 			{
-				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
-				trPolyParams[i + 1] = pp->tsp1.full;
+				trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+				trPolyParams[i++] = pp.tsp1.full;
 			}
 			gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
 			// Declare storage
@@ -971,13 +971,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
-		if (config::PowerVR2Filter && !is_rtt)
-		{
-			if (config::EmulateFramebuffer)
-				postProcessor.render(init_output_framebuffer(width, height));
-			else
-				postProcessor.render(glsm_get_current_framebuffer());
-		}
+		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}
 
@@ -985,13 +980,14 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		ReadRTTBuffer();
 	else if (config::EmulateFramebuffer)
 		writeFramebufferToVRAM();
-#ifndef LIBRETRO
-	else {
+	else
+	{
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+#ifndef LIBRETRO
 		renderLastFrame();
-	}
 #endif
-	glBindVertexArray(0);
+	}
+	GlVertexArray::unbind();
 
 	return !is_rtt;
 }

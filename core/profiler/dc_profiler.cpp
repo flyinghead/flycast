@@ -30,14 +30,6 @@ struct regacc
 
 #include "hw/sh4/sh4_opcode_list.h"
 
-int stuffcmp(const void* p1,const void* p2)
-{
-	sh4_opcodelistentry* a=(sh4_opcodelistentry*)p1;
-	sh4_opcodelistentry* b=(sh4_opcodelistentry*)p2;
-
-	return b->fallbacks-a->fallbacks;
-}
-
 extern u32 ret_hit,ret_all,ret_stc;
 
 extern u32 bm_gc_luc,bm_gcf_luc,cvld;
@@ -171,28 +163,6 @@ void dc_prof_periodical()
 	{
 		printf("***PROFILE REPORT***\n");
 		dc_prof.counters.print();
-	}
-
-	printf("opcode fallbacks:\n");
-	vector<sh4_opcodelistentry> stuff;
-	for (u32 i=0;opcodes[i].oph;i++)
-	{
-		if (opcodes[i].fallbacks)
-			stuff.push_back(opcodes[i]);
-	}
-
-	if (stuff.size())
-	{
-		qsort(&stuff[0],stuff.size(),sizeof(stuff[0]),stuffcmp);
-		for (u32 i=0;i<10 && i<stuff.size();i++)
-		{
-			printf("%05I64u :%04X %s\n",stuff[i].fallbacks,stuff[i].rez,stuff[i].diss);
-		}
-	}
-
-	for (u32 i=0;opcodes[i].oph;i++)
-	{
-		opcodes[i].fallbacks=0;
 	}
 
 	printf("********************\n");

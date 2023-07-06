@@ -23,9 +23,7 @@
 #include "pipeline.h"
 #include "rend/osd.h"
 #include "rend/transform_matrix.h"
-#ifdef LIBRETRO
-#include "overlay.h"
-#else
+#ifndef LIBRETRO
 #include "rend/gui.h"
 #endif
 
@@ -46,7 +44,7 @@ protected:
 			int w, h;
 			u8 *image_data = loadOSDButtons(w, h);
 			texCommandPool.BeginFrame();
-			vjoyTexture = std::unique_ptr<Texture>(new Texture());
+			vjoyTexture = std::make_unique<Texture>();
 			vjoyTexture->tex_type = TextureType::_8888;
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -60,18 +58,15 @@ protected:
 		}
 		if (!osdBuffer)
 		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-									vk::BufferUsageFlagBits::eVertexBuffer));
+			osdBuffer = std::make_unique<BufferData>(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+									vk::BufferUsageFlagBits::eVertexBuffer);
 		}
 #endif
-		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
+		quadPipeline = std::make_unique<QuadPipeline>(false, false);
 		quadPipeline->Init(&shaderManager, renderPass, subpass);
-		framebufferDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		framebufferDrawer = std::make_unique<QuadDrawer>();
 		framebufferDrawer->Init(quadPipeline.get());
-#ifdef LIBRETRO
-		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
-		overlay->Init(quadPipeline.get());
-#endif
+
 		return true;
 	}
 
@@ -80,10 +75,6 @@ public:
 	{
 		GetContext()->WaitIdle();
 		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D(), 0);
-#ifdef LIBRETRO
-		overlay->Term();
-		overlay.reset();
-#endif
 		framebufferDrawer.reset();
 		quadPipeline.reset();
 		osdBuffer.reset();
@@ -128,7 +119,7 @@ public:
 		return tf;
 	}
 
-	bool Process(TA_context* ctx) override
+	void Process(TA_context* ctx) override
 	{
 		if (KillTex)
 			textureCache.Clear();
@@ -140,25 +131,11 @@ public:
 		texCommandBuffer = texCommandPool.Allocate();
 		texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-		bool result = ta_parse(ctx, true);
+		ta_parse(ctx, true);
 
-		if (result)
-		{
-#ifdef LIBRETRO
-			if (!ctx->rend.isRTT)
-				overlay->Prepare(texCommandBuffer, true, true, textureCache);
-#endif
-			CheckFogTexture();
-			CheckPaletteTexture();
-			texCommandBuffer.end();
-		}
-		else
-		{
-			texCommandBuffer.end();
-			texCommandPool.EndFrame();
-		}
-
-		return result;
+		CheckFogTexture();
+		CheckPaletteTexture();
+		texCommandBuffer.end();
 	}
 
 	void ReInitOSD()
@@ -225,7 +202,7 @@ public:
 		std::unique_ptr<Texture>& curTexture = framebufferTextures[framebufferTexIndex];
 		if (!curTexture)
 		{
-			curTexture = std::unique_ptr<Texture>(new Texture());
+			curTexture = std::make_unique<Texture>();
 			curTexture->tex_type = TextureType::_8888;
 		}
 
@@ -255,6 +232,25 @@ public:
 		fbCommandPool.EndFrame();
 		framebufferRendered = true;
 	}
+	
+	void RenderVideoRouting()
+	{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+		if (config::VideoRouting)
+		{
+			auto device = GetContext()->GetDevice();
+			auto srcImage = device.getSwapchainImagesKHR(GetContext()->GetSwapChain())[GetContext()->GetCurrentImageIndex()];
+			auto graphicsQueue = device.getQueue(GetContext()->GetGraphicsQueueFamilyIndex(), 0);
+			
+			int targetWidth = (config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width);
+			int targetHeight = (config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+			
+			extern void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
+			os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
+		}
+#endif
+	}
+
 
 protected:
 	BaseVulkanRenderer() : viewport(640, 480) {}
@@ -271,7 +267,7 @@ protected:
 	{
 		if (!fogTexture)
 		{
-			fogTexture = std::unique_ptr<Texture>(new Texture());
+			fogTexture = std::make_unique<Texture>();
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -291,7 +287,7 @@ protected:
 	{
 		if (!paletteTexture)
 		{
-			paletteTexture = std::unique_ptr<Texture>(new Texture());
+			paletteTexture = std::make_unique<Texture>();
 			paletteTexture->tex_type = TextureType::_8888;
 			forcePaletteUpdate();
 		}
@@ -335,7 +331,4 @@ protected:
 	std::unique_ptr<QuadDrawer> framebufferDrawer;
 	CommandPool fbCommandPool;
 	bool framebufferRendered = false;
-#ifdef LIBRETRO
-	std::unique_ptr<VulkanOverlay> overlay;
-#endif
 };

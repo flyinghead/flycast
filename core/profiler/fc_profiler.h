@@ -10,7 +10,11 @@
 #include <mutex>
 
 #ifndef __PRETTY_FUNCTION__
+#ifdef _MSC_VER
 #define __PRETTY_FUNCTION__ __FUNCSIG__
+#else
+#define __PRETTY_FUNCTION__ __func__
+#endif
 #endif
 
 #define FC_PROFILE_SCOPE_RESERVE_SIZE 128
@@ -41,8 +45,8 @@ namespace fc_profiler
 		const char* file;
 		u32 line;
 		u32 scope;
-		std::chrono::steady_clock::time_point start;
-		std::chrono::steady_clock::time_point end;
+		std::chrono::high_resolution_clock::time_point start;
+		std::chrono::high_resolution_clock::time_point end;
 	};
 
 	struct ProfileThread
@@ -58,8 +62,8 @@ namespace fc_profiler
 		}
 
 		std::vector<ProfileSection> scopes;
-		std::chrono::steady_clock::time_point startTicks;
-		std::chrono::steady_clock::time_point endTicks;
+		std::chrono::high_resolution_clock::time_point startTicks;
+		std::chrono::high_resolution_clock::time_point endTicks;
 		double history[FC_PROFILE_HISTORY_MAX_SIZE];
 		u32 level;
 		u32 historyIdx;

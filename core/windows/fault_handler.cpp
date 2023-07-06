@@ -18,7 +18,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "rend/TexCache.h"
-#include "hw/mem/_vmem.h"
+#include "hw/mem/addrspace.h"
 #include "hw/mem/mem_watch.h"
 #include <windows.h>
 
@@ -89,7 +89,7 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 	if (VramLockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
 	// FPCB jump table protection
-	if (BM_LockedWrite(address))
+	if (addrspace::bm_lockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
 
 	host_context_t context;

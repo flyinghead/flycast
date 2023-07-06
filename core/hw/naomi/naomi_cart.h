@@ -36,13 +36,16 @@ struct RomBootID
 	u32  testPC;		// test mode entry point
 	u8   country;		// supported regions bitmap
 	u8   cabinet;		// supported # of players bitmap: b0 1 player, b1 2 players, ...
-	u8   resolution;	// 0: 31kHz, 1: 15kHz
-	u8   vertical;		// b0: horizontal mode, b1: vertical mode
+	u8   resolution;	// 0: 31kHz, 1: 15kHz, other: no check
+	u8   vertical;		// 1: horizontal mode, 2: vertical mode, other: no check
 	u8   serialID;		// if 1, check the ROM/DIMM board serial# eeprom
-	u8   _res[211];		// _res[210]: if 0xFF then the header is unencrypted. if not then the header is encrypted starting at offset 0x010.
+	u8   serviceMode;	// 0: common, 1: individual, other: use configured setting
+	u8   _res[210];		// _res[210]: if 0xFF then the header is unencrypted. if not then the header is encrypted starting at offset 0x010.
 
 	// Note: this structure is copied to system RAM by the BIOS at location 0c01f400
 };
+
+struct Game;
 
 class Cartridge
 {
@@ -67,6 +70,8 @@ public:
 	virtual void SetKey(u32 key) { }
 	virtual void SetKeyData(u8 *key_data) { }
 	virtual bool GetBootId(RomBootID *bootId) = 0;
+
+	const Game *game;
 
 protected:
 	u8* RomPtr;
@@ -127,13 +132,14 @@ public:
 	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
-void naomi_cart_LoadRom(const char* file, LoadProgress *progress);
+void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, LoadProgress *progress);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);
 void naomi_cart_ConfigureEEPROM();
+void naomi_cart_serialize(Serializer& ser);
+void naomi_cart_deserialize(Deserializer& deser);
 
-extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
 
 extern Cartridge *CurrentCartridge;
