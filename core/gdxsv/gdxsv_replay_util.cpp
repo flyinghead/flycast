@@ -9,8 +9,10 @@
 #ifdef WIN32
 #define stat _stat
 #define WIN32_LEAN_AND_MEAN
-#include <shellapi.h>
+// clang-format off
 #include <windows.h>
+#include <shellapi.h>
+// clang-format on
 #endif
 
 #include "dirent.h"
