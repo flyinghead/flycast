@@ -73,6 +73,57 @@ static NSString *getApplicationName(void)
     SDL_PushEvent(&event);
 }
 
+- (void)undoAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0x1D, true); // Z
+    gui_keyboard_key(0x1D, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+- (void)redoAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0xE1, true); // Shift
+    gui_keyboard_key(0x1D, true); // Z
+    gui_keyboard_key(0x1D, false);
+    gui_keyboard_key(0xE1, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+- (void)cutAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0x1B, true); // X
+    gui_keyboard_key(0x1B, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+- (void)copyAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0x06, true); // C
+    gui_keyboard_key(0x06, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+- (void)pasteAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0x19, true); // V
+    gui_keyboard_key(0x19, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+- (void)selectAllAction:(id)sender
+{
+    gui_keyboard_key(0xE3, true); // Cmd
+    gui_keyboard_key(0x04, true); // A
+    gui_keyboard_key(0x04, false);
+    gui_keyboard_key(0xE3, false);
+}
+
+
 @end
 
 /* The main class of the application, the application's delegate */
@@ -146,12 +197,26 @@ static void setApplicationMenu(void)
     [menuItem setSubmenu:appleMenu];
     [[NSApp mainMenu] addItem:menuItem];
     
+    NSMenuItem *editMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+    NSMenu *editMenu = [[NSMenu alloc] initWithTitle:@"Edit"];
+    [editMenu addItemWithTitle:@"Undo" action:@selector(undoAction:) keyEquivalent:@"z"];
+    [editMenu addItemWithTitle:@"Redo" action:@selector(redoAction:) keyEquivalent:@"Z"];
+    [editMenu addItem:[NSMenuItem separatorItem]];
+    [editMenu addItemWithTitle:@"Cut" action:@selector(cutAction:) keyEquivalent:@"x"];
+    [editMenu addItemWithTitle:@"Copy" action:@selector(copyAction:) keyEquivalent:@"c"];
+    [editMenu addItemWithTitle:@"Paste" action:@selector(pasteAction:) keyEquivalent:@"v"];
+    [editMenu addItemWithTitle:@"Select All" action:@selector(selectAllAction:) keyEquivalent:@"a"];
+    [editMenuItem setSubmenu:editMenu];
+    [[NSApp mainMenu] addItem:editMenuItem];
+    
     /* Tell the application object that this is now the application menu */
     [NSApp setAppleMenu:appleMenu];
     
     /* Finally give up our references to the objects */
     [appleMenu release];
     [menuItem release];
+    [editMenuItem release];
+    [editMenu release];
 }
 
 /* Create a window menu */

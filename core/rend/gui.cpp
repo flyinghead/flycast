@@ -165,6 +165,9 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 		case 0xE1:
 		case 0xE5:
 			return ImGuiMod_Shift;
+		case 0xE3:
+		case 0xE7:
+			return ImGuiMod_Super;
 		default: return ImGuiKey_None;
 	}
 }
