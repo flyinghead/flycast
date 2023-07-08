@@ -592,7 +592,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.cpp
 		core/deps/chdpsr/cdipsr.h)
 
-add_subdirectory(core/deps/nowide)
+add_subdirectory(core/deps/nowide EXCLUDE_FROM_ALL)
 target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
