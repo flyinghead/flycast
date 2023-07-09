@@ -211,9 +211,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice = nullptr;
 		for (const auto& phyDev : devices)
 		{
-			vk::PhysicalDeviceProperties props;
-			phyDev.getProperties(&props);
-			if (props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+			if (phyDev.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 			{
 				physicalDevice = phyDev;
 				break;
@@ -222,32 +220,22 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		if (!physicalDevice)
 			physicalDevice = devices.front();
 
-		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11)
+		vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+		if (vulkan11 && properties.apiVersion >= VK_API_VERSION_1_1)
 		{
-			static vk::PhysicalDeviceProperties2 properties2;
-			vk::PhysicalDeviceMaintenance3Properties properties3;
-			properties2.pNext = &properties3;
-			physicalDevice.getProperties2(&properties2);
-			properties = &properties2.properties;
-			maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
+			const auto properties2 = physicalDevice.getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceMaintenance3Properties>();
+			properties = properties2.get<vk::PhysicalDeviceProperties2>().properties;
+			maxMemoryAllocationSize = properties2.get<vk::PhysicalDeviceMaintenance3Properties>().maxMemoryAllocationSize;
 			if (maxMemoryAllocationSize == 0)
 				// Happens on Windows 7 with NVidia 376.33, ok on 441.66
 				maxMemoryAllocationSize = 0xFFFFFFFFu;
 		}
-		else
-		{
-			static vk::PhysicalDeviceProperties phyProperties;
-			physicalDevice.getProperties(&phyProperties);
-			properties = &phyProperties;
-		}
-		uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
-		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
-		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
-		maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
-		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
-		vendorID = properties->vendorID;
-		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName.data());
+
+		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
+		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
+		maxSamplerAnisotropy =  properties.limits.maxSamplerAnisotropy;
+		vendorID = properties.vendorID;
+		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties.deviceName.data());
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -270,10 +258,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			optimalTilingSupported4444 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
-		vk::PhysicalDeviceFeatures features;
-		physicalDevice.getFeatures(&features);
-		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
-		samplerAnisotropy = features.samplerAnisotropy;
+		const auto features = physicalDevice.getFeatures();
+		fragmentStoresAndAtomics = !!features.fragmentStoresAndAtomics;
+		samplerAnisotropy = !!features.samplerAnisotropy;
 		if (!fragmentStoresAndAtomics)
 			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
 
@@ -506,8 +493,7 @@ bool VulkanContext::InitDevice()
 	    quadRotatePipeline = std::make_unique<QuadPipeline>(true, true);
 	    quadRotateDrawer = std::make_unique<QuadDrawer>();
 
-		vk::PhysicalDeviceProperties props;
-		physicalDevice.getProperties(&props);
+		vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
 		driverName = (const char *)props.deviceName;
 #ifdef __APPLE__
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
