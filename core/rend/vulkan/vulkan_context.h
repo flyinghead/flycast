@@ -103,8 +103,6 @@ public:
 	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
-	bool IsUnifiedMemory() const { return unifiedMemory; }
-	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
@@ -162,7 +160,6 @@ private:
 	u32 presentQueueIndex = 0;
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
-	u32 maxStorageBufferRange = 0;
 	vk::DeviceSize maxMemoryAllocationSize = 0xFFFFFFFFu;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
@@ -171,7 +168,6 @@ private:
 	bool samplerAnisotropy = false;
 	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
-	bool unifiedMemory = false;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;
