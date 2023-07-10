@@ -935,7 +935,11 @@ sh4op(i1011_iiii_iiii_iiii)
 sh4op(i1100_0011_iiii_iiii)
 {
 	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
+#ifdef GDB_SERVER
 	debugger::debugTrap(Sh4Ex_Trap);
+#else
+	debugAgent.debugTrap(Sh4Ex_Trap);
+#endif
 	emu.stop();
 	throw debugger::Stop();
 	CCN_TRA = (GetImm8(op) << 2);
