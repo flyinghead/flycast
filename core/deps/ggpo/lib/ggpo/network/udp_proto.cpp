@@ -298,6 +298,7 @@ UdpProtocol::SendMsg(UdpMsg *msg)
 	   _last_send_time = GGPOPlatform::GetCurrentTimeMS();
 	   _bytes_sent += msg->PacketSize();
 
+	   msg->hdr.const_magic = CONST_MAGIC;
 	   msg->hdr.magic = _magic_number;
 	   msg->hdr.sequence_number = _next_send_seq++;
 	   msg->hdr.remote_endpoint = _local_player_queue;
@@ -354,6 +355,11 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
       &UdpProtocol::OnInputAck,            /* InputAck */
       &UdpProtocol::OnAppData,             /* AppData */
    };
+
+   if (msg->hdr.const_magic != CONST_MAGIC) {
+      LogMsg("invalid const magic", msg);
+      return;
+   }
 
    // filter out messages that don't match what we expect
    uint16 seq = msg->hdr.sequence_number;

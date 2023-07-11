@@ -76,8 +76,11 @@ Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
    int res = sendto(_socket, buffer, len, flags, dst, destlen);
    if (res == SOCKET_ERROR) {
 	  int err = WSAGetLastError();
-      Log("unknown error in sendto (erro: %d  wsaerr: %d).", res, err);
-      ASSERT(false && "Unknown error in sendto");
+      if (err != WSAEWOULDBLOCK) {
+         LogError("unknown error in sendto (erro: %d  wsaerr: %d).", res, err);
+      }
+      // ASSERT(false && "Unknown error in sendto");
+      return;
    }
    char dst_ip[1024];
    Log("sent packet length %d to %s:%d (ret:%d).", len, inet_ntop(AF_INET, (void *)&to->sin_addr, dst_ip, ARRAY_SIZE(dst_ip)), ntohs(to->sin_port), res);
@@ -99,7 +102,7 @@ Udp::OnLoopPoll(void *cookie)
       if (len == -1) {
          int error = WSAGetLastError();
          if (error != WSAEWOULDBLOCK) {
-            Log("recvfrom WSAGetLastError returned %d (%x).", error, error);
+            LogError("recvfrom WSAGetLastError returned %d (%x).", error, error);
          }
          break;
       } else if (len > 0) {

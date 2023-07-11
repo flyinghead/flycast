@@ -12,6 +12,7 @@
 #define UDP_MSG_MAX_PLAYERS          4
 #define MAX_VERIFICATION_SIZE      256
 #define MAX_APPDATA_SIZE           512
+#define CONST_MAGIC              34046
 #define RELAY_MAGIC              26315
 
 #pragma pack(push, 1)
@@ -37,6 +38,7 @@ struct UdpMsg
    };
 
    struct {
+      uint16         const_magic;
       uint16         magic;
       uint16         sequence_number;
       uint8          remote_endpoint;
