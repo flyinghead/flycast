@@ -445,7 +445,6 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 		start_time_ = std::chrono::high_resolution_clock::now();
 		std::string sender;
 
-		int last_updated = 0;
 		for (int loop_count = 0; running_; loop_count++) {
 			auto now = std::chrono::high_resolution_clock::now();
 			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
@@ -512,7 +511,6 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 						c.remote.Open(sender);
 						candidates_.push_back(c);
 						remote = c.remote;
-						last_updated = loop_count;
 					}
 					if (remote.is_open()) {
 						client_.SendTo(reinterpret_cast<const char *>(&p), sizeof(p), remote);
@@ -538,15 +536,11 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 						for (int j = 0; j < N; j++) {
 							rtt_matrix_[recv.from_peer_id][j] = recv.rtt_matrix[recv.from_peer_id][j];
 						}
-						if (it->rtt + 0.5f < prev_rtt) {
-							last_updated = loop_count;
-						}
 					} else {
 						Candidate c{};
 						c.peer_id = recv.from_peer_id;
 						c.remote.Open(sender);
 						candidates_.push_back(c);
-						last_updated = loop_count;
 					}
 				}
 			}
@@ -585,7 +579,6 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 					NOTICE_LOG(COMMON, "%d>%4d%4d%4d%4d", i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
 				}
 
-				NOTICE_LOG(COMMON, "since_last_update %d", loop_count - last_updated);
 				NOTICE_LOG(COMMON, "peer_count %d", peer_count);
 				for (int i = 0; i < peer_count; i++) {
 					for (int j = 0; j < peer_count; j++) {
@@ -597,7 +590,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 					}
 				}
 
-				if (matrix_ok && timeout_min_ms < ms && last_updated + 500 < loop_count) {
+				if (matrix_ok && timeout_min_ms < ms) {
 					NOTICE_LOG(COMMON, "UdpPingTest Finish ok");
 					client_.Close();
 					running_ = false;
