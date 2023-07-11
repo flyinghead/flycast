@@ -616,15 +616,23 @@ void Gdxsv::ApplyOnlinePatch(bool first_time) {
 			NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
 		}
 		for (int j = 0; j < patch.codes_size(); ++j) {
+			u32 prev = 0;
 			auto &code = patch.codes(j);
 			if (code.size() == 8) {
+				prev = gdxsv_ReadMem8(code.address());
 				gdxsv_WriteMem8(code.address(), (u8)(code.changed() & 0xff));
 			}
 			if (code.size() == 16) {
+				prev = gdxsv_ReadMem16(code.address());
 				gdxsv_WriteMem16(code.address(), (u16)(code.changed() & 0xffff));
 			}
 			if (code.size() == 32) {
+				prev = gdxsv_ReadMem32(code.address());
 				gdxsv_WriteMem32(code.address(), code.changed());
+			}
+
+			if (prev != code.original() && prev != code.changed()) {
+				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(), code.changed());
 			}
 		}
 	}
