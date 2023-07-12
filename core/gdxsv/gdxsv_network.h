@@ -11,6 +11,9 @@
 std::future<std::string> test_udp_port_connectivity(int port);
 
 int get_random_port_number();
+std::string sockaddr_to_string(const sockaddr* addr);
+bool is_same_addr(const sockaddr* addr1, const sockaddr* addr2);
+std::string mask_ip_address(std::string addr, bool is_v6);
 
 class TcpClient {
    public:
@@ -62,20 +65,19 @@ class MessageFilter {
 class UdpRemote {
    public:
 	bool Open(const char *host, int port);
-	bool Open(const std::string &addr);
+	bool Open(const std::string &ip_port);
+	bool Open(const sockaddr* addr, socklen_t addrlen);
 	void Close();
-	bool is_open() const { return is_open_; }
-	const std::string &str_addr() const { return str_addr_; }
-	const std::string &masked_addr() const { return masked_addr_; }
-	const sockaddr* net_addr() const { return is_v6_ ? &net_addr_v6_ : &net_addr_v4_; }
+	bool is_open() const { return 0 < net_addr_len_; }
+	bool is_v6() const { return 0 < net_addr_len_ && net_addr_.ss_family == AF_INET6; }
+	std::string str_addr() const { return sockaddr_to_string(reinterpret_cast<const sockaddr*>(&net_addr_)); }
+	std::string masked_addr() const { return mask_ip_address(str_addr(), is_v6()); }
+	const sockaddr* net_addr() const { return (sockaddr*)&net_addr_; }
+	const size_t net_addr_len() const { return net_addr_len_; }
 
    private:
-	sockaddr_in net_addr_v4_{};
-	sockaddr_in6 net_addr_v6_{};
-	bool is_open_ = false;
-	bool is_v6_ = false;
-	std::string str_addr_;
-	std::string masked_addr_;
+	sockaddr_storage net_addr_{};
+	size_t net_addr_len_ = 0;
 };
 
 class UdpClient {
@@ -83,16 +85,15 @@ class UdpClient {
 	~UdpClient() { Close(); }
 	bool Bind(int port);
 	bool Initialized() const;
-	int RecvFrom(char *buf, int len, std::string &sender);
+	int RecvFrom(char* buf, int len, sockaddr_storage* from_addr, socklen_t* addrlen);
 	int SendTo(const char *buf, int len, const UdpRemote &remote);
-	u32 ReadableSize() const;
 	void Close();
 	int bound_port() const { return bound_port_; }
 
    private:
-	sock_t sock_ = INVALID_SOCKET;
+	sock_t sock_v4_ = INVALID_SOCKET;
+	sock_t sock_v6_ = INVALID_SOCKET;
 	int bound_port_ = 0;
-	std::string local_ip_;
 };
 
 class UdpPingPong {
@@ -104,7 +105,7 @@ class UdpPingPong {
 	bool Running() const;
 	int ElapsedMs() const;
 	void AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port);
-	bool GetAvailableAddress(uint8_t peer_id, sockaddr_in *dst, float *rtt);
+	bool GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt);
 	void GetRttMatrix(uint8_t matrix[N][N]);
 	void DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id);
 

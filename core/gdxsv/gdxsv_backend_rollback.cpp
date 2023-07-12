@@ -145,15 +145,24 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 				ips[i] = "";
 				ports[i] = port_;
 			} else {
-				sockaddr_in addr;
+				sockaddr_storage addr_storage{};
 				float rtt;
-				if (ping_pong_.GetAvailableAddress(i, &addr, &rtt)) {
+				if (ping_pong_.GetAvailableAddress(i, &addr_storage, &rtt)) {
 					NOTICE_LOG(COMMON, "Peer%d rtt%.2f", i, rtt);
 					max_rtt = std::max(max_rtt, rtt);
-					char str[INET_ADDRSTRLEN] = {};
-					inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
-					ips[i] = str;
-					ports[i] = ntohs(addr.sin_port);
+					if (addr_storage.ss_family == AF_INET) {
+						auto addr = (sockaddr_in*)&addr_storage;
+						char str[INET_ADDRSTRLEN] = {};
+						inet_ntop(AF_INET, &(addr->sin_addr), str, sizeof(str));
+						ips[i] = str;
+						ports[i] = ntohs(addr->sin_port);
+					} else if (addr_storage.ss_family == AF_INET6) {
+						auto addr = (sockaddr_in6 *)&addr_storage;
+						char str[INET6_ADDRSTRLEN] = {};
+						inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
+						ips[i] = str;
+						ports[i] = ntohs(addr->sin6_port);
+					}
 				} else {
 					NOTICE_LOG(COMMON, "No available address %d", i);
 					int relay_rtt = INT_MAX;
@@ -170,13 +179,12 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 						}
 					}
 
-					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr, &rtt)) {
+					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr_storage, &rtt)) {
 						NOTICE_LOG(COMMON, "Use relay via %d", relay_peer);
 						max_rtt = std::max(max_rtt, rtt + (float)rtt_matrix[relay_peer][i]);
 						char str[INET_ADDRSTRLEN] = {};
-						inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
-						ips[i] = str;
-						ports[i] = ntohs(addr.sin_port);
+						ips[i] = ips[relay_peer];
+						ports[i] = ports[relay_peer];
 						relays[i] = true;
 					} else {
 						NOTICE_LOG(COMMON, "Peer %d unreachable", i);
@@ -303,7 +311,8 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	matching.set_player_count(n);
 	for (int i = 0; i < n; i++) {
 		proto::PlayerAddress player{};
-		player.set_ip("127.0.0.1");
+		if (i < 2) player.set_ip("::1");
+		else player.set_ip("127.0.0.1");
 		player.set_port(20010 + i);
 		player.set_user_id("USER0" + std::to_string(i));
 		player.set_peer_id(i);
