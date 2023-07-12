@@ -361,7 +361,7 @@ bool UdpClient::Bind(int port) {
 			auto addr = reinterpret_cast<sockaddr_in*>(&addr_storage);
 			addr->sin_port = htons(port);
 			addr->sin_family = AF_INET;
-			addr->sin_addr = in4addr_any;
+			addr->sin_addr.s_addr = htonl(INADDR_ANY);
 			addrlen = sizeof(sockaddr_in);
 		}
 		else {
