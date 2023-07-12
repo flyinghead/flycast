@@ -28,7 +28,7 @@ public:
 
    struct Callbacks {
       virtual ~Callbacks() { }
-      virtual void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) = 0;
+      virtual void OnMsg(sockaddr_storage &from, UdpMsg *msg, int len) = 0;
    };
 
    Udp();
@@ -44,7 +44,8 @@ public:
 
 protected:
    // Network transmission information
-   SOCKET         _socket;
+   SOCKET         _socket_v4;
+   SOCKET         _socket_v6;
 
    // state management
    Callbacks      *_callbacks;

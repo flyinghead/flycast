@@ -38,7 +38,7 @@ public:
    GGPOErrorCode GetCurrentFrame(int* frame) override { *frame = _sync.GetFrameCount(); return GGPO_OK; }
 
 public:
-   void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) override;
+   void OnMsg(sockaddr_storage &from, UdpMsg *msg, int len) override;
 
 protected:
    GGPOErrorCode PlayerHandleToQueue(GGPOPlayerHandle player, int *queue);
