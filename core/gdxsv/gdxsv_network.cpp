@@ -287,12 +287,13 @@ bool UdpRemote::Open(const char *host, int port) {
 		}
 	}
 
+	freeaddrinfo(res);
+
 	if (net_addr_len_ == 0) {
 		WARN_LOG(COMMON, "UDP Remote::Open failed. no address available");
 		return false;
 	}
 
-	freeaddrinfo(res);
 	return true;
 }
 
