@@ -41,6 +41,7 @@ class Gdxsv {
 	void RestoreOnlinePatch();
 	void StartPingTest();
 	void FetchPublicIP();
+	void NotifyWanPort() const;
 	bool StartReplayFile(const char* path, int pov);
 	void StopReplay();
 	bool StartRollbackTest(const char* param);

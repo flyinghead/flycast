@@ -143,6 +143,11 @@ void Gdxsv::Reset() {
 				id[i] = lbs_msg.body[2 + i];
 			}
 			user_id_ = id;
+			NotifyWanPort();
+		}
+
+		if (lbs_msg.command == LbsMessage::lbsLobbyMatchingEntry) {
+			NotifyWanPort();
 		}
 
 		if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide ||
@@ -492,6 +497,45 @@ void Gdxsv::HandleRPC() {
 void Gdxsv::FetchPublicIP() {
 	public_ipv4_ = get_public_ip_address(false).share();
 	public_ipv6_ = get_public_ip_address(true).share();
+}
+
+void Gdxsv::NotifyWanPort() const {
+	if (netmode_ != NetMode::Lbs) {
+		return;
+	}
+
+	const auto lbs_host = lbs_net_.RemoteHost();
+	const auto lbs_port= lbs_net_.RemotePort();
+	const auto udp_port = config::GdxLocalPort.get();
+	const auto user_id = user_id_;
+
+	if (lbs_host.empty() || lbs_port == 0 || udp_port == 0 || user_id.empty()) {
+		return;
+	}
+
+	proto::Packet pkt;
+	pkt.set_type(proto::MessageType::HelloLbs);
+	pkt.mutable_hello_lbs_data()->set_user_id(user_id);
+	char buf[128];
+	if (!pkt.SerializePartialToArray(buf, sizeof(buf))) {
+		ERROR_LOG(COMMON, "packet serialize error");
+		return;
+	}
+
+	UdpClient udp;
+	if (!udp.Bind(udp_port)) {
+		ERROR_LOG(COMMON, "NotifyWanPort udp.Bind failed");
+		return;
+	}
+
+	UdpRemote remote;
+	if (!remote.Open(lbs_host.c_str(), lbs_port)) {
+		ERROR_LOG(COMMON, "NotifyWanPort remote.Open failed");
+		return;
+	}
+
+	udp.SendTo(buf, pkt.GetCachedSize(), remote);
+	udp.Close();
 }
 
 void Gdxsv::StartPingTest() {
