@@ -24,13 +24,13 @@
 #include "rend/gui.h"
 #include "version.h"
 
-bool encode_zlib_deflate(const char* data, int len, std::vector<u8>& out) {
+bool encode_zlib_deflate(const char *data, int len, std::vector<u8> &out) {
 	z_stream z{};
 	int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
 	if (ret == Z_OK) {
 		bool ok = false;
 		char zbuf[1024];
-		z.next_in = (Bytef*)data;
+		z.next_in = (Bytef *)data;
 		z.avail_in = (uInt)len;
 		for (;;) {
 			z.next_out = (Bytef *)zbuf;
@@ -246,7 +246,7 @@ void Gdxsv::HookMainUiLoop() {
 std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	std::stringstream ss;
 	ss << "cpu="
-		<<
+	   <<
 #if HOST_CPU == CPU_X86
 		"x86"
 #elif HOST_CPU == CPU_ARM
@@ -262,9 +262,9 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 #else
 		"Unknown"
 #endif
-		<< "\n";
+	   << "\n";
 	ss << "os="
-		<<
+	   <<
 #ifdef __ANDROID__
 		"Android"
 #elif defined(__unix__)
@@ -280,7 +280,7 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 #else
 		"Unknown"
 #endif
-		<< "\n";
+	   << "\n";
 	ss << "flycast=" << GIT_VERSION << "\n";
 	ss << "git_hash=" << GIT_HASH << "\n";
 	ss << "build_date=" << BUILD_DATE << "\n";
@@ -297,7 +297,7 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	}
 
 	if (gcp_ping_test_mutex_.try_lock()) {
-		for (const auto& res : gcp_ping_test_result_) {
+		for (const auto &res : gcp_ping_test_result_) {
 			ss << res.first << "=" << res.second << "\n";
 		}
 		gcp_ping_test_mutex_.unlock();
@@ -633,7 +633,8 @@ void Gdxsv::ApplyOnlinePatch(bool first_time) {
 			}
 
 			if (prev != code.original() && prev != code.changed()) {
-				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(), code.changed());
+				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(),
+						   code.changed());
 			}
 		}
 	}

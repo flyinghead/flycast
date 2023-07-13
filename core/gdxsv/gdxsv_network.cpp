@@ -11,16 +11,9 @@
 #include <sys/ioctl.h>
 #endif
 
-static std::vector<std::string> v4_urls = {
-	"https://api4.my-ip.io/ip",
-	"https://api.ipify.org/",
-	"https://ipv4.seeip.org"
-};
+static std::vector<std::string> v4_urls = {"https://api4.my-ip.io/ip", "https://api.ipify.org/", "https://ipv4.seeip.org"};
 
-static std::vector<std::string> v6_urls = {
-	"https://api.my-ip.io/ip",
-	"https://api.seeip.org"
-};
+static std::vector<std::string> v6_urls = {"https://api.my-ip.io/ip", "https://api.seeip.org"};
 
 std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6) {
 	return std::async(std::launch::async, [ipv6]() -> std::pair<bool, std::string> {
@@ -30,7 +23,7 @@ std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6) {
 
 		const auto urls = ipv6 ? v6_urls : v4_urls;
 		int rc = 0;
-		for (const auto& url : urls) {
+		for (const auto &url : urls) {
 			rc = http::get(url, myip, dummy);
 			if (!http::success(rc)) {
 				continue;
@@ -39,14 +32,14 @@ std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6) {
 		}
 
 		if (!http::success(rc)) {
-			return { false, "HTTP Request failed 1: " + std::to_string(rc) };
+			return {false, "HTTP Request failed 1: " + std::to_string(rc)};
 		}
 
 		if (ipv6 && std::count(myip.begin(), myip.end(), 0) == 3) {
-			return { false, "No IPv6 address used" };
+			return {false, "No IPv6 address used"};
 		}
 
-		return { true, std::string(myip.begin(), myip.end()) };
+		return {true, std::string(myip.begin(), myip.end())};
 	});
 }
 
@@ -59,7 +52,7 @@ std::future<std::string> test_udp_port_connectivity(int port, bool ipv6) {
 
 		auto public_addr = get_public_ip_address(ipv6);
 		public_addr.wait();
-		auto [ok, msg]  = public_addr.get();
+		auto [ok, msg] = public_addr.get();
 
 		if (!ok) {
 			return msg;
@@ -103,15 +96,15 @@ int get_random_port_number() {
 	return dist(gen);
 }
 
-std::string sockaddr_to_string(const sockaddr* addr) {
+std::string sockaddr_to_string(const sockaddr *addr) {
 	if (addr->sa_family == AF_INET) {
-		auto a = reinterpret_cast<const sockaddr_in*>(addr);
+		auto a = reinterpret_cast<const sockaddr_in *>(addr);
 		char addrbuf[INET_ADDRSTRLEN];
 		::inet_ntop(AF_INET, &a->sin_addr, addrbuf, sizeof(addrbuf));
 		return std::string(addrbuf) + ":" + std::to_string(ntohs(a->sin_port));
 	}
 	if (addr->sa_family == AF_INET6) {
-		auto a = reinterpret_cast<const sockaddr_in6*>(addr);
+		auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
 		char addrbuf[INET6_ADDRSTRLEN];
 		::inet_ntop(AF_INET6, &a->sin6_addr, addrbuf, sizeof(addrbuf));
 		return std::string(addrbuf) + ":" + std::to_string(ntohs(a->sin6_port));
@@ -119,20 +112,20 @@ std::string sockaddr_to_string(const sockaddr* addr) {
 	return "(unknown family)";
 }
 
-bool is_same_addr(const sockaddr* addr1, const sockaddr* addr2) {
+bool is_same_addr(const sockaddr *addr1, const sockaddr *addr2) {
 	if (addr1->sa_family != addr2->sa_family) {
 		return false;
 	}
 
 	if (addr1->sa_family == AF_INET) {
-		const auto a = reinterpret_cast<const sockaddr_in*>(addr1);
-		const auto b = reinterpret_cast<const sockaddr_in*>(addr2);
+		const auto a = reinterpret_cast<const sockaddr_in *>(addr1);
+		const auto b = reinterpret_cast<const sockaddr_in *>(addr2);
 		return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr)) == 0 && a->sin_port == b->sin_port;
 	}
 
 	if (addr1->sa_family == AF_INET6) {
-		const auto a = reinterpret_cast<const sockaddr_in6*>(addr1);
-		const auto b = reinterpret_cast<const sockaddr_in6*>(addr2);
+		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr1);
+		const auto b = reinterpret_cast<const sockaddr_in6 *>(addr2);
 		return memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(a->sin6_addr)) == 0 && a->sin6_port == b->sin6_port;
 	}
 
@@ -148,8 +141,7 @@ std::string mask_ip_address(std::string addr, bool is_v6) {
 			if (cnt < 3) continue;
 			if (('0' <= addr[i] && addr[i] <= '9') || ('a' <= addr[i] && addr[i] <= 'f')) addr[i] = 'x';
 		}
-	}
-	else {
+	} else {
 		for (int i = addr.find('.'); i < addr.size(); i++) {
 			if ('0' <= addr[i] && addr[i] <= '9') addr[i] = 'x';
 			if (addr[i] == ':') break;
@@ -312,13 +304,13 @@ void TcpClient::Close() {
 
 bool UdpRemote::Open(const char *host, int port) {
 	verify(0 < port && port < 65536);
-	addrinfo* res = nullptr;
+	addrinfo *res = nullptr;
 	addrinfo hints{};
-	hints.ai_family = AF_UNSPEC; //  IPv4 or IPv6
-	hints.ai_socktype = SOCK_DGRAM; // UDP
-	hints.ai_flags = AI_NUMERICSERV; // service is port no
+	hints.ai_family = AF_UNSPEC;	  //  IPv4 or IPv6
+	hints.ai_socktype = SOCK_DGRAM;	  // UDP
+	hints.ai_flags = AI_NUMERICSERV;  // service is port no
 	char service[10] = {};
-	snprintf(service, sizeof(service),"%d", port);
+	snprintf(service, sizeof(service), "%d", port);
 	const auto err = getaddrinfo(host, service, &hints, &res);
 	if (err != 0) {
 		WARN_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
@@ -353,7 +345,7 @@ bool UdpRemote::Open(const std::string &ip_port) {
 	return Open(host.c_str(), port);
 }
 
-bool UdpRemote::Open(const sockaddr* addr, socklen_t addrlen) {
+bool UdpRemote::Open(const sockaddr *addr, socklen_t addrlen) {
 	net_addr_len_ = addrlen;
 	memcpy(&net_addr_, addr, addrlen);
 	return true;
@@ -389,13 +381,13 @@ bool UdpClient::Bind(int port) {
 		// sockopt
 		int optval = 0;
 		if (port != 0) {
-			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval, sizeof optval);
+			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&optval, sizeof optval);
 		}
 		optval = 0;
-		setsockopt(sock, SOL_SOCKET, SO_LINGER, (const char*)&optval, sizeof optval);
+		setsockopt(sock, SOL_SOCKET, SO_LINGER, (const char *)&optval, sizeof optval);
 		if (af == AF_INET6) {
 			optval = 1;
-			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&optval, sizeof optval)) {
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&optval, sizeof optval)) {
 				closesocket(sock);
 				continue;
 			}
@@ -405,14 +397,13 @@ bool UdpClient::Bind(int port) {
 		socklen_t addrlen = 0;
 
 		if (af == AF_INET) {
-			auto addr = reinterpret_cast<sockaddr_in*>(&addr_storage);
+			auto addr = reinterpret_cast<sockaddr_in *>(&addr_storage);
 			addr->sin_port = htons(port);
 			addr->sin_family = AF_INET;
 			addr->sin_addr.s_addr = htonl(INADDR_ANY);
 			addrlen = sizeof(sockaddr_in);
-		}
-		else {
-			auto addr = reinterpret_cast<sockaddr_in6*>(&addr_storage);
+		} else {
+			auto addr = reinterpret_cast<sockaddr_in6 *>(&addr_storage);
 			addr->sin6_port = htons(port);
 			addr->sin6_family = AF_INET6;
 			addr->sin6_addr = in6addr_any;
@@ -420,7 +411,7 @@ bool UdpClient::Bind(int port) {
 		}
 
 		// bind
-		if (::bind(sock, reinterpret_cast<sockaddr*>(&addr_storage), addrlen) < 0) {
+		if (::bind(sock, reinterpret_cast<sockaddr *>(&addr_storage), addrlen) < 0) {
 			ERROR_LOG(COMMON, "gdxsv: bind() failed. errno=%d", get_last_error());
 			closesocket(sock);
 			continue;
@@ -451,9 +442,9 @@ bool UdpClient::Bind(int port) {
 
 bool UdpClient::Initialized() const { return !(sock_v4_ == INVALID_SOCKET && sock_v6_ == INVALID_SOCKET); }
 
-int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage* from_addr, socklen_t* addrlen) {
+int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage *from_addr, socklen_t *addrlen) {
 	if (sock_v4_ != INVALID_SOCKET) {
-		int n = ::recvfrom(sock_v4_, buf, len, 0, (struct sockaddr*)from_addr, addrlen);
+		int n = ::recvfrom(sock_v4_, buf, len, 0, (struct sockaddr *)from_addr, addrlen);
 		if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
 			ERROR_LOG(COMMON, "UDP4 Recv failed. errno=%d", get_last_error());
 		}
@@ -463,7 +454,7 @@ int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage* from_addr, socklen
 	}
 
 	if (sock_v6_ != INVALID_SOCKET) {
-		int n = ::recvfrom(sock_v6_, buf, len, 0, (struct sockaddr*)from_addr, addrlen);
+		int n = ::recvfrom(sock_v6_, buf, len, 0, (struct sockaddr *)from_addr, addrlen);
 		if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
 			ERROR_LOG(COMMON, "UDP6 Recv failed. errno=%d", get_last_error());
 		}
@@ -580,7 +571,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 			while (true) {
 				Packet recv{};
 				sockaddr_storage sender_storage{};
-				auto* sender = reinterpret_cast<sockaddr*>(&sender_storage);
+				auto *sender = reinterpret_cast<sockaddr *>(&sender_storage);
 				socklen_t addrlen = sizeof(sender_storage);
 
 				int n = client_.RecvFrom(reinterpret_cast<char *>(&recv), sizeof(Packet), &sender_storage, &addrlen);

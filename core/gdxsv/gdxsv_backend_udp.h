@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <queue>
+#include <string>
 
 #include "gdxsv_network.h"
 

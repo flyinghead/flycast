@@ -157,7 +157,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 						ips[i] = str;
 						ports[i] = ntohs(addr->sin_port);
 					} else if (addr_storage.ss_family == AF_INET6) {
-						auto addr = (sockaddr_in6 *)&addr_storage;
+						auto addr = (sockaddr_in6*)&addr_storage;
 						char str[INET6_ADDRSTRLEN] = {};
 						inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
 						ips[i] = str;
@@ -311,8 +311,10 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	matching.set_player_count(n);
 	for (int i = 0; i < n; i++) {
 		proto::PlayerAddress player{};
-		if (i < 2) player.set_ip("::1");
-		else player.set_ip("127.0.0.1");
+		if (i < 2)
+			player.set_ip("::1");
+		else
+			player.set_ip("127.0.0.1");
 		player.set_port(20010 + i);
 		player.set_user_id("USER0" + std::to_string(i));
 		player.set_peer_id(i);
