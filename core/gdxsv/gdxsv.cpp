@@ -24,6 +24,34 @@
 #include "rend/gui.h"
 #include "version.h"
 
+bool encode_zlib_deflate(const char* data, int len, std::vector<u8>& out) {
+	z_stream z{};
+	int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
+	if (ret == Z_OK) {
+		bool ok = false;
+		char zbuf[1024];
+		z.next_in = (Bytef*)data;
+		z.avail_in = (uInt)len;
+		for (;;) {
+			z.next_out = (Bytef *)zbuf;
+			z.avail_out = sizeof(zbuf);
+			ret = deflate(&z, 0 < z.avail_in ? Z_NO_FLUSH : Z_FINISH);
+			if (ret != Z_OK && ret != Z_STREAM_END) {
+				ERROR_LOG(COMMON, "zlib serialize error: %d", ret);
+				break;
+			}
+			std::copy_n(zbuf, sizeof(zbuf) - z.avail_out, std::back_inserter(out));
+			if (ret == Z_STREAM_END) {
+				ok = true;
+				break;
+			}
+		}
+		deflateEnd(&z);
+		return ok;
+	}
+	return false;
+}
+
 bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback); }
 
 bool Gdxsv::IsOnline() const {
@@ -218,7 +246,7 @@ void Gdxsv::HookMainUiLoop() {
 std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	std::stringstream ss;
 	ss << "cpu="
-	   <<
+		<<
 #if HOST_CPU == CPU_X86
 		"x86"
 #elif HOST_CPU == CPU_ARM
@@ -234,9 +262,9 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 #else
 		"Unknown"
 #endif
-	   << "\n";
+		<< "\n";
 	ss << "os="
-	   <<
+		<<
 #ifdef __ANDROID__
 		"Android"
 #elif defined(__unix__)
@@ -252,7 +280,7 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 #else
 		"Unknown"
 #endif
-	   << "\n";
+		<< "\n";
 	ss << "flycast=" << GIT_VERSION << "\n";
 	ss << "git_hash=" << GIT_HASH << "\n";
 	ss << "build_date=" << BUILD_DATE << "\n";
@@ -269,7 +297,7 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 	}
 
 	if (gcp_ping_test_mutex_.try_lock()) {
-		for (const auto &res : gcp_ping_test_result_) {
+		for (const auto& res : gcp_ping_test_result_) {
 			ss << res.first << "=" << res.second << "\n";
 		}
 		gcp_ping_test_mutex_.unlock();
@@ -287,11 +315,16 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 		}
 	}
 
-	auto s = ss.str();
+	const auto raw_content = ss.str();
+	std::vector<u8> content;
+	if (!encode_zlib_deflate(raw_content.c_str(), raw_content.size(), content)) {
+		content.assign(raw_content.begin(), raw_content.end());
+	}
+
 	std::vector<u8> packet = {0x81, 0xff, 0x99, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff};
-	packet.push_back((s.size() >> 8) & 0xffu);
-	packet.push_back(s.size() & 0xffu);
-	std::copy(std::begin(s), std::end(s), std::back_inserter(packet));
+	packet.push_back((content.size() >> 8) & 0xffu);
+	packet.push_back(content.size() & 0xffu);
+	std::copy(std::begin(content), std::end(content), std::back_inserter(packet));
 	std::vector<u8> e_loginkey(loginkey_.size());
 	static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
 	for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey_[i] ^ magic[i & 3];
@@ -321,26 +354,8 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 
 	std::string data;
 	if (rbk_report.SerializeToString(&data)) {
-		z_stream z{};
-		int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
-		if (ret == Z_OK) {
-			char zbuf[1024];
-			z.next_in = (Bytef *)data.c_str();
-			z.avail_in = (uInt)data.size();
-			for (;;) {
-				z.next_out = (Bytef *)zbuf;
-				z.avail_out = sizeof(zbuf);
-				ret = deflate(&z, 0 < z.avail_in ? Z_NO_FLUSH : Z_FINISH);
-				if (ret != Z_OK && ret != Z_STREAM_END) {
-					ERROR_LOG(COMMON, "zlib serialize error: %d", ret);
-					break;
-				}
-				std::copy_n(zbuf, sizeof(zbuf) - z.avail_out, std::back_inserter(msg.body));
-				if (ret == Z_STREAM_END) break;
-			}
-			deflateEnd(&z);
-		} else {
-			ERROR_LOG(COMMON, "zlib init error: %d", ret);
+		if (!encode_zlib_deflate(data.c_str(), data.size(), msg.body)) {
+			ERROR_LOG(COMMON, "report encode error");
 		}
 	} else {
 		ERROR_LOG(COMMON, "report serialize error");
