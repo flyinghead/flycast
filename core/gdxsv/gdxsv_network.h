@@ -8,8 +8,8 @@
 #include "network/net_platform.h"
 #include "types.h"
 
-std::future<std::string> test_udp_port_connectivity(int port);
-
+std::future<std::string> test_udp_port_connectivity(int port, bool ipv6);
+std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6);
 int get_random_port_number();
 std::string sockaddr_to_string(const sockaddr* addr);
 bool is_same_addr(const sockaddr* addr1, const sockaddr* addr2);

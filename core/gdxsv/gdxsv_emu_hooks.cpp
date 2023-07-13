@@ -297,7 +297,7 @@ void gdxsv_emu_gui_settings() {
 		upnp_result = upnp_future.get();
 	}
 
-	const auto buttonWidth = ImGui::CalcTextSize("Test The Port").x + ImGui::GetStyle().ItemSpacing.x * 2;
+	const auto buttonWidth = ImGui::CalcTextSize("Test The Port (IPv4)").x + ImGui::GetStyle().ItemSpacing.x * 2;
 	if (ImGui::Button("UPnP Now", ScaledVec2(buttonWidth, 0)) && !upnp_future.valid()) {
 		upnp_result = "Please wait...";
 		int port = config::GdxLocalPort;
@@ -312,19 +312,31 @@ void gdxsv_emu_gui_settings() {
 	ImGui::SameLine();
 	ImGui::Text(upnp_result.c_str());
 
-	static std::string udp_test_result;
-	static std::future<std::string> udp_test_future;
-	if (udp_test_future.valid() && udp_test_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-		udp_test_result = udp_test_future.get();
+	static std::string v4_result, v6_result;
+	static std::future<std::string> v4_future, v6_future;
+	if (v4_future.valid() && v4_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		v4_result = v4_future.get();
 	}
-	if (ImGui::Button("Test The Port", ScaledVec2(buttonWidth, 0)) && !udp_test_future.valid()) {
-		udp_test_result = "Please wait...";
-		udp_test_future = test_udp_port_connectivity(config::GdxLocalPort);
+	if (ImGui::Button("Test The Port (IPv4)", ScaledVec2(buttonWidth, 0)) && !v4_future.valid()) {
+		v4_result = "Please wait...";
+		v4_future = test_udp_port_connectivity(config::GdxLocalPort, false);
 	}
 	ImGui::SameLine();
-	ShowHelpMarker("Test receiving data using this UDP port");
+	ShowHelpMarker("Test receiving data using this UDP port on IPv4");
 	ImGui::SameLine();
-	ImGui::Text(udp_test_result.c_str());
+	ImGui::Text("%s", v4_result.c_str());
+
+	if (v6_future.valid() && v6_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		v6_result = v6_future.get();
+	}
+	if (ImGui::Button("Test The Port (IPv6)", ScaledVec2(buttonWidth, 0)) && !v6_future.valid()) {
+		v6_result = "Please wait...";
+		v6_future = test_udp_port_connectivity(config::GdxLocalPort, true);
+	}
+	ImGui::SameLine();
+	ShowHelpMarker("Test receiving data using this UDP port on IPv6");
+	ImGui::SameLine();
+	ImGui::Text("%s", v6_result.c_str());
 
 	if (config::GdxLocalPort == 0) {
 		ImGui::PopItemFlag();

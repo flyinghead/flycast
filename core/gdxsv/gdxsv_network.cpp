@@ -11,37 +11,83 @@
 #include <sys/ioctl.h>
 #endif
 
-std::future<std::string> test_udp_port_connectivity(int port) {
-	return std::async(std::launch::async, [port]() -> std::string {
+static std::vector<std::string> v4_urls = {
+	"https://api4.my-ip.io/ip",
+	"https://api.ipify.org/",
+	"https://ipv4.seeip.org"
+};
+
+static std::vector<std::string> v6_urls = {
+	"https://api.my-ip.io/ip",
+	"https://api.seeip.org"
+};
+
+std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6) {
+	return std::async(std::launch::async, [ipv6]() -> std::pair<bool, std::string> {
+		std::vector<u8> myip;
+		std::string dummy;
+		http::init();
+
+		const auto urls = ipv6 ? v6_urls : v4_urls;
+		int rc = 0;
+		for (const auto& url : urls) {
+			rc = http::get(url, myip, dummy);
+			if (!http::success(rc)) {
+				continue;
+			}
+			break;
+		}
+
+		if (!http::success(rc)) {
+			return { false, "HTTP Request failed 1: " + std::to_string(rc) };
+		}
+
+		if (ipv6 && std::count(myip.begin(), myip.end(), 0) == 3) {
+			return { false, "No IPv6 address used" };
+		}
+
+		return { true, std::string(myip.begin(), myip.end()) };
+	});
+}
+
+std::future<std::string> test_udp_port_connectivity(int port, bool ipv6) {
+	return std::async(std::launch::async, [port, ipv6]() -> std::string {
 		UdpClient udp;
 		if (!udp.Bind(port)) {
 			return "Bind failed";
 		}
 
-		std::vector<u8> myip;
-		std::string dummy;
-		http::init();
-		int rc = http::get("https://api4.my-ip.io/ip", myip, dummy);
-		if (!http::success(rc)) {
-			return "Failed to get external IP: " + std::to_string(rc);
+		auto public_addr = get_public_ip_address(ipv6);
+		public_addr.wait();
+		auto [ok, msg]  = public_addr.get();
+
+		if (!ok) {
+			return msg;
 		}
 
+		const auto myip = msg;
 		std::vector<u8> content;
 		std::string content_type;
 		std::vector<http::PostField> fields;
-		fields.emplace_back("addr", std::string(myip.begin(), myip.end()) + ":" + std::to_string(port));
-		rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/udptest", fields);
+		auto test_addr = myip + ":" + std::to_string(port);
+		if (ipv6) {
+			test_addr = "[" + myip + "]:" + std::to_string(port);
+		}
+		fields.emplace_back("addr", test_addr);
+		int rc = http::post("https://asia-northeast1-gdxsv-274515.cloudfunctions.net/udptest", fields);
 		if (!http::success(rc)) {
 			return "HTTP Request failed: " + std::to_string(rc);
 		}
 
 		for (int t = 0; t < 30; t++) {
 			char buf[128];
-			sockaddr_storage sender;
+			sockaddr_storage sender{};
 			socklen_t addrlen = sizeof(sockaddr_storage);
-			int n = udp.RecvFrom(buf, 128, &sender, &addrlen);
+			int n = udp.RecvFrom(buf, sizeof(buf), &sender, &addrlen);
 			if (0 < n) {
-				return "Success";
+				if (std::string(buf, 5) == "Hello") {
+					return "Success";
+				}
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
@@ -430,7 +476,6 @@ int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage* from_addr, socklen
 }
 
 int UdpClient::SendTo(const char *buf, int len, const UdpRemote &remote) {
-	NOTICE_LOG(COMMON, "SENDING TO %s", remote.str_addr().c_str());
 	sock_t sock = remote.is_v6() ? sock_v6_ : sock_v4_;
 	int n = ::sendto(sock, buf, len, 0, remote.net_addr(), remote.net_addr_len());
 	if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {

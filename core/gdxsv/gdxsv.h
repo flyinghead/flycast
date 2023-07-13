@@ -40,6 +40,7 @@ class Gdxsv {
 	void HandleRPC();
 	void RestoreOnlinePatch();
 	void StartPingTest();
+	void FetchPublicIP();
 	bool StartReplayFile(const char* path, int pov);
 	void StopReplay();
 	bool StartRollbackTest(const char* param);
@@ -72,6 +73,8 @@ class Gdxsv {
 	std::map<std::string, int> gcp_ping_test_result_;
 	std::mutex gcp_ping_test_mutex_;
 	bool going_to_battle_ = false;
+
+	std::shared_future<std::pair<bool, std::string>> public_ipv4_, public_ipv6_;
 
 	MiniUPnP upnp_;
 	std::future<std::string> upnp_result_;
