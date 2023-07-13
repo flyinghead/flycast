@@ -365,7 +365,7 @@ void UdpRemote::Close() {
 }
 
 bool UdpClient::Bind(int port) {
-	assert(0 < port);
+	assert(0 <= port);
 
 	if (sock_v4_ != INVALID_SOCKET) {
 		closesocket(sock_v4_);

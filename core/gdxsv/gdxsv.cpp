@@ -119,22 +119,6 @@ void Gdxsv::Reset() {
 
 		if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide ||
 			lbs_msg.command == LbsMessage::lbsLineCheck) {
-			if (udp_.Initialized()) {
-				if (!lbs_remote_.is_open()) {
-					lbs_remote_.Open(lbs_net_.RemoteHost().c_str(), lbs_net_.RemotePort());
-				}
-
-				proto::Packet pkt;
-				pkt.set_type(proto::MessageType::HelloLbs);
-				pkt.mutable_hello_lbs_data()->set_user_id(user_id_);
-				char buf[128];
-				if (pkt.SerializePartialToArray((void *)buf, (int)sizeof(buf))) {
-					udp_.SendTo((const char *)buf, pkt.GetCachedSize(), lbs_remote_);
-				} else {
-					ERROR_LOG(COMMON, "packet serialize error");
-				}
-			}
-
 			lbs_net_.Send(GeneratePlatformInfoPacket());
 		}
 
@@ -153,10 +137,7 @@ void Gdxsv::Reset() {
 		if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
 			proto::P2PMatching matching;
 			if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-				int port = udp_.bound_port();
-				udp_.Close();
-				lbs_remote_.Close();
-				rollback_net_.Prepare(matching, port);
+				rollback_net_.Prepare(matching, config::GdxLocalPort);
 			} else {
 				ERROR_LOG(COMMON, "p2p matching deserialize error");
 			}
@@ -405,15 +386,13 @@ void Gdxsv::HandleRPC() {
 				netmode_ = NetMode::Lbs;
 				lbs_net_.Send(GeneratePlatformInfoPacket());
 				lbs_net_.Send(GenerateP2PMatchReportPacket());
-				lbs_remote_.Open(server_.c_str(), port);
-				InitUDP(true);
+				FetchPublicIP();
+				AddPortMapping();
 			} else {
 				netmode_ = NetMode::Offline;
 			}
 		} else {
 			if (~host_ip == 0) {
-				lbs_remote_.Close();
-				udp_.Close();
 				rollback_net_.Open();
 				netmode_ = NetMode::McsRollback;
 			} else {
@@ -590,28 +569,16 @@ void Gdxsv::GcpPingTest() {
 	gcp_ping_test_mutex_.unlock();
 }
 
-bool Gdxsv::InitUDP(bool upnp) {
-	if (!udp_.Initialized() || config::GdxLocalPort != udp_.bound_port()) {
-		if (!udp_.Bind(config::GdxLocalPort)) {
-			return false;
-		}
-	}
-
-	if (config::GdxLocalPort != udp_.bound_port()) {
-		config::GdxLocalPort = udp_.bound_port();
-	}
-
-	if (upnp && config::EnableUPnP && upnp_port_ != udp_.bound_port()) {
-		upnp_port_ = udp_.bound_port();
-		upnp_result_ = std::async(std::launch::async, [this]() -> std::string {
-			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", upnp_port_);
-			std::string result = upnp_.Init() && upnp_.AddPortMapping(upnp_port_, false) ? "Success" : upnp_.getLastError();
-			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", upnp_port_, result.c_str());
+void Gdxsv::AddPortMapping() {
+	if (config::EnableUPnP) {
+		int port = config::GdxLocalPort;
+		upnp_result_ = std::async(std::launch::async, [this, port]() -> std::string {
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", port);
+			std::string result = upnp_.Init() && upnp_.AddPortMapping(port, false) ? "Success" : upnp_.getLastError();
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", port, result.c_str());
 			return result;
 		});
 	}
-
-	return true;
 }
 
 std::string Gdxsv::GenerateLoginKey() {

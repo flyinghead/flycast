@@ -287,8 +287,7 @@ void gdxsv_emu_gui_settings() {
 	ShowHelpMarker("UDP port number used for P2P communication. Cannot use the same number as another application.");
 
 	if (config::GdxLocalPort == 0) {
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		config::GdxLocalPort = get_random_port_number();
 	}
 
 	static std::string upnp_result;
@@ -337,11 +336,6 @@ void gdxsv_emu_gui_settings() {
 	ShowHelpMarker("Test receiving data using this UDP port on IPv6");
 	ImGui::SameLine();
 	ImGui::Text("%s", v6_result.c_str());
-
-	if (config::GdxLocalPort == 0) {
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
-	}
 
 	OptionArrowButtons(
 		"Gdx Minimum Delay", config::GdxMinDelay, 2, 6,

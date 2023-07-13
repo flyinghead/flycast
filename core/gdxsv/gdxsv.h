@@ -48,11 +48,10 @@ class Gdxsv {
 	int Disk() const { return disk_; }
 	std::string UserId() const { return user_id_; }
 	MiniUPnP& UPnP() { return upnp_; }
-	UdpClient& Udp() { return udp_; }
 
    private:
 	void GcpPingTest();
-	bool InitUDP(bool upnp);
+	void AddPortMapping();
 	static std::string GenerateLoginKey();
 	std::vector<u8> GeneratePlatformInfoPacket();
 	std::vector<u8> GenerateP2PMatchReportPacket();
@@ -80,8 +79,6 @@ class Gdxsv {
 	std::future<std::string> upnp_result_;
 	int upnp_port_ = 0;
 
-	UdpRemote lbs_remote_ = {};
-	UdpClient udp_ = {};
 	GdxsvBackendTcp lbs_net_;
 	GdxsvBackendUdp udp_net_;
 	GdxsvBackendReplay replay_net_;
