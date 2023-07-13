@@ -13,7 +13,7 @@ std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6);
 int get_random_port_number();
 std::string sockaddr_to_string(const sockaddr *addr);
 bool is_same_addr(const sockaddr *addr1, const sockaddr *addr2);
-std::string mask_ip_address(std::string addr, bool is_v6);
+std::string mask_ip_address(std::string addr);
 
 class TcpClient {
    public:
@@ -71,7 +71,7 @@ class UdpRemote {
 	bool is_open() const { return 0 < net_addr_len_; }
 	bool is_v6() const { return 0 < net_addr_len_ && net_addr_.ss_family == AF_INET6; }
 	std::string str_addr() const { return sockaddr_to_string(reinterpret_cast<const sockaddr *>(&net_addr_)); }
-	std::string masked_addr() const { return mask_ip_address(str_addr(), is_v6()); }
+	std::string masked_addr() const { return mask_ip_address(str_addr()); }
 	const sockaddr *net_addr() const { return (sockaddr *)&net_addr_; }
 	const size_t net_addr_len() const { return net_addr_len_; }
 

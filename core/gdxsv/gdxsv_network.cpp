@@ -132,8 +132,8 @@ bool is_same_addr(const sockaddr *addr1, const sockaddr *addr2) {
 	return false;
 }
 
-std::string mask_ip_address(std::string addr, bool is_v6) {
-	if (is_v6) {
+std::string mask_ip_address(std::string addr) {
+	if (2 <= std::count(addr.begin(), addr.end(), ':')) {
 		int cnt = 0;
 		const int last_colon = addr.rfind(':');
 		for (int i = 0; i < last_colon; i++) {
@@ -562,7 +562,6 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 	std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count, network_delay]() {
 		WARN_LOG(COMMON, "Start UdpPingPong Thread");
 		start_time_ = std::chrono::high_resolution_clock::now();
-		std::string sender;
 
 		for (int loop_count = 0; running_; loop_count++) {
 			auto now = std::chrono::high_resolution_clock::now();

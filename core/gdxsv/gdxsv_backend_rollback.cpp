@@ -195,6 +195,9 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		}
 
 		if (ok) {
+			for (int i = 0; i < ips.size(); i++) {
+				NOTICE_LOG(COMMON, "Peer%d IP:%s Port:%d Relay:%d", i, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
+			}
 			int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
 			config::GGPOEnable.override(true);
