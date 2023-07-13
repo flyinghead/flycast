@@ -37,7 +37,7 @@ public:
    GGPOErrorCode SetDisconnectNotifyStart(int timeout) override { return GGPO_ERRORCODE_UNSUPPORTED; }
 
 public:
-   void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) override;
+   void OnMsg(sockaddr_storage &from, UdpMsg *msg, int len) override;
 
 protected:
    void PollUdpProtocolEvents(void);

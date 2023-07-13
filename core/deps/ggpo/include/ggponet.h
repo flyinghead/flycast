@@ -87,7 +87,7 @@ typedef struct GGPOPlayer {
          bool _unused;
       } local;
       struct {
-         char           ip_address[32];
+         char           ip_address[65]; // INET6_ADDRSTRLEN 65
          unsigned short port;
          bool relay;
       } remote;

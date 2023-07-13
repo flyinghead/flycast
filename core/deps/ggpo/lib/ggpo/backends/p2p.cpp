@@ -628,7 +628,7 @@ Peer2PeerBackend::PlayerHandleToQueue(GGPOPlayerHandle player, int *queue)
 
  
 void
-Peer2PeerBackend::OnMsg(sockaddr_in &from, UdpMsg *msg, int len)
+Peer2PeerBackend::OnMsg(sockaddr_storage &from, UdpMsg *msg, int len)
 {
    if (msg->hdr.type == UdpMsg::Relay) {
       if (msg->hdr.relay_magic == RELAY_MAGIC) {

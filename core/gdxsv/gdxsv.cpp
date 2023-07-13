@@ -24,6 +24,34 @@
 #include "rend/gui.h"
 #include "version.h"
 
+bool encode_zlib_deflate(const char *data, int len, std::vector<u8> &out) {
+	z_stream z{};
+	int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
+	if (ret == Z_OK) {
+		bool ok = false;
+		char zbuf[1024];
+		z.next_in = (Bytef *)data;
+		z.avail_in = (uInt)len;
+		for (;;) {
+			z.next_out = (Bytef *)zbuf;
+			z.avail_out = sizeof(zbuf);
+			ret = deflate(&z, 0 < z.avail_in ? Z_NO_FLUSH : Z_FINISH);
+			if (ret != Z_OK && ret != Z_STREAM_END) {
+				ERROR_LOG(COMMON, "zlib serialize error: %d", ret);
+				break;
+			}
+			std::copy_n(zbuf, sizeof(zbuf) - z.avail_out, std::back_inserter(out));
+			if (ret == Z_STREAM_END) {
+				ok = true;
+				break;
+			}
+		}
+		deflateEnd(&z);
+		return ok;
+	}
+	return false;
+}
+
 bool Gdxsv::InGame() const { return enabled_ && (netmode_ == NetMode::McsUdp || netmode_ == NetMode::McsRollback); }
 
 bool Gdxsv::IsOnline() const {
@@ -93,6 +121,8 @@ void Gdxsv::Reset() {
 	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(),
 			   config::GdxLocalPort.get());
 
+	FetchPublicIP();
+
 	lbs_net_.lbs_packet_filter([this](const LbsMessage &lbs_msg) -> bool {
 		if (netmode_ != NetMode::Lbs) {
 			if (lbs_net_.IsConnected()) {
@@ -113,26 +143,15 @@ void Gdxsv::Reset() {
 				id[i] = lbs_msg.body[2 + i];
 			}
 			user_id_ = id;
+			NotifyWanPort();
+		}
+
+		if (lbs_msg.command == LbsMessage::lbsLobbyMatchingEntry) {
+			NotifyWanPort();
 		}
 
 		if (lbs_msg.command == LbsMessage::lbsUserRegist || lbs_msg.command == LbsMessage::lbsUserDecide ||
 			lbs_msg.command == LbsMessage::lbsLineCheck) {
-			if (udp_.Initialized()) {
-				if (!lbs_remote_.is_open()) {
-					lbs_remote_.Open(lbs_net_.RemoteHost().c_str(), lbs_net_.RemotePort());
-				}
-
-				proto::Packet pkt;
-				pkt.set_type(proto::MessageType::HelloLbs);
-				pkt.mutable_hello_lbs_data()->set_user_id(user_id_);
-				char buf[128];
-				if (pkt.SerializePartialToArray((void *)buf, (int)sizeof(buf))) {
-					udp_.SendTo((const char *)buf, pkt.GetCachedSize(), lbs_remote_);
-				} else {
-					ERROR_LOG(COMMON, "packet serialize error");
-				}
-			}
-
 			lbs_net_.Send(GeneratePlatformInfoPacket());
 		}
 
@@ -151,10 +170,7 @@ void Gdxsv::Reset() {
 		if (lbs_msg.command == LbsMessage::lbsP2PMatching) {
 			proto::P2PMatching matching;
 			if (matching.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-				int port = udp_.bound_port();
-				udp_.Close();
-				lbs_remote_.Close();
-				rollback_net_.Prepare(matching, port);
+				rollback_net_.Prepare(matching, config::GdxLocalPort);
 			} else {
 				ERROR_LOG(COMMON, "p2p matching deserialize error");
 			}
@@ -292,11 +308,28 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 		gcp_ping_test_mutex_.unlock();
 	}
 
-	auto s = ss.str();
+	if (public_ipv4_.valid() && public_ipv4_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		if (public_ipv4_.get().first) {
+			ss << "public_ipv4=" << public_ipv4_.get().second << "\n";
+		}
+	}
+
+	if (public_ipv6_.valid() && public_ipv4_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+		if (public_ipv6_.get().first) {
+			ss << "public_ipv6=" << public_ipv6_.get().second << "\n";
+		}
+	}
+
+	const auto raw_content = ss.str();
+	std::vector<u8> content;
+	if (!encode_zlib_deflate(raw_content.c_str(), raw_content.size(), content)) {
+		content.assign(raw_content.begin(), raw_content.end());
+	}
+
 	std::vector<u8> packet = {0x81, 0xff, 0x99, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff};
-	packet.push_back((s.size() >> 8) & 0xffu);
-	packet.push_back(s.size() & 0xffu);
-	std::copy(std::begin(s), std::end(s), std::back_inserter(packet));
+	packet.push_back((content.size() >> 8) & 0xffu);
+	packet.push_back(content.size() & 0xffu);
+	std::copy(std::begin(content), std::end(content), std::back_inserter(packet));
 	std::vector<u8> e_loginkey(loginkey_.size());
 	static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
 	for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey_[i] ^ magic[i & 3];
@@ -326,26 +359,8 @@ std::vector<u8> Gdxsv::GenerateP2PMatchReportPacket() {
 
 	std::string data;
 	if (rbk_report.SerializeToString(&data)) {
-		z_stream z{};
-		int ret = deflateInit(&z, Z_DEFAULT_COMPRESSION);
-		if (ret == Z_OK) {
-			char zbuf[1024];
-			z.next_in = (Bytef *)data.c_str();
-			z.avail_in = (uInt)data.size();
-			for (;;) {
-				z.next_out = (Bytef *)zbuf;
-				z.avail_out = sizeof(zbuf);
-				ret = deflate(&z, 0 < z.avail_in ? Z_NO_FLUSH : Z_FINISH);
-				if (ret != Z_OK && ret != Z_STREAM_END) {
-					ERROR_LOG(COMMON, "zlib serialize error: %d", ret);
-					break;
-				}
-				std::copy_n(zbuf, sizeof(zbuf) - z.avail_out, std::back_inserter(msg.body));
-				if (ret == Z_STREAM_END) break;
-			}
-			deflateEnd(&z);
-		} else {
-			ERROR_LOG(COMMON, "zlib init error: %d", ret);
+		if (!encode_zlib_deflate(data.c_str(), data.size(), msg.body)) {
+			ERROR_LOG(COMMON, "report encode error");
 		}
 	} else {
 		ERROR_LOG(COMMON, "report serialize error");
@@ -391,15 +406,13 @@ void Gdxsv::HandleRPC() {
 				netmode_ = NetMode::Lbs;
 				lbs_net_.Send(GeneratePlatformInfoPacket());
 				lbs_net_.Send(GenerateP2PMatchReportPacket());
-				lbs_remote_.Open(server_.c_str(), port);
-				InitUDP(true);
+				FetchPublicIP();
+				AddPortMapping();
 			} else {
 				netmode_ = NetMode::Offline;
 			}
 		} else {
 			if (~host_ip == 0) {
-				lbs_remote_.Close();
-				udp_.Close();
 				rollback_net_.Open();
 				netmode_ = NetMode::McsRollback;
 			} else {
@@ -479,6 +492,50 @@ void Gdxsv::HandleRPC() {
 	gdxsv_WriteMem32(gdx_rpc_addr + 20, 0);
 
 	gdxsv_WriteMem32(symbols_["is_online"], netmode_ != NetMode::Offline);
+}
+
+void Gdxsv::FetchPublicIP() {
+	public_ipv4_ = get_public_ip_address(false).share();
+	public_ipv6_ = get_public_ip_address(true).share();
+}
+
+void Gdxsv::NotifyWanPort() const {
+	if (netmode_ != NetMode::Lbs) {
+		return;
+	}
+
+	const auto lbs_host = lbs_net_.RemoteHost();
+	const auto lbs_port= lbs_net_.RemotePort();
+	const auto udp_port = config::GdxLocalPort.get();
+	const auto user_id = user_id_;
+
+	if (lbs_host.empty() || lbs_port == 0 || udp_port == 0 || user_id.empty()) {
+		return;
+	}
+
+	proto::Packet pkt;
+	pkt.set_type(proto::MessageType::HelloLbs);
+	pkt.mutable_hello_lbs_data()->set_user_id(user_id);
+	char buf[128];
+	if (!pkt.SerializePartialToArray(buf, sizeof(buf))) {
+		ERROR_LOG(COMMON, "packet serialize error");
+		return;
+	}
+
+	UdpClient udp;
+	if (!udp.Bind(udp_port)) {
+		ERROR_LOG(COMMON, "NotifyWanPort udp.Bind failed");
+		return;
+	}
+
+	UdpRemote remote;
+	if (!remote.Open(lbs_host.c_str(), lbs_port)) {
+		ERROR_LOG(COMMON, "NotifyWanPort remote.Open failed");
+		return;
+	}
+
+	udp.SendTo(buf, pkt.GetCachedSize(), remote);
+	udp.Close();
 }
 
 void Gdxsv::StartPingTest() {
@@ -571,28 +628,16 @@ void Gdxsv::GcpPingTest() {
 	gcp_ping_test_mutex_.unlock();
 }
 
-bool Gdxsv::InitUDP(bool upnp) {
-	if (!udp_.Initialized() || config::GdxLocalPort != udp_.bound_port()) {
-		if (!udp_.Bind(config::GdxLocalPort)) {
-			return false;
-		}
-	}
-
-	if (config::GdxLocalPort != udp_.bound_port()) {
-		config::GdxLocalPort = udp_.bound_port();
-	}
-
-	if (upnp && config::EnableUPnP && upnp_port_ != udp_.bound_port()) {
-		upnp_port_ = udp_.bound_port();
-		upnp_result_ = std::async(std::launch::async, [this]() -> std::string {
-			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", upnp_port_);
-			std::string result = upnp_.Init() && upnp_.AddPortMapping(upnp_port_, false) ? "Success" : upnp_.getLastError();
-			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", upnp_port_, result.c_str());
+void Gdxsv::AddPortMapping() {
+	if (config::EnableUPnP) {
+		int port = config::GdxLocalPort;
+		upnp_result_ = std::async(std::launch::async, [this, port]() -> std::string {
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", port);
+			std::string result = upnp_.Init() && upnp_.AddPortMapping(port, false) ? "Success" : upnp_.getLastError();
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", port, result.c_str());
 			return result;
 		});
 	}
-
-	return true;
 }
 
 std::string Gdxsv::GenerateLoginKey() {
@@ -632,7 +677,8 @@ void Gdxsv::ApplyOnlinePatch(bool first_time) {
 			}
 
 			if (prev != code.original() && prev != code.changed()) {
-				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(), code.changed());
+				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(),
+						   code.changed());
 			}
 		}
 	}

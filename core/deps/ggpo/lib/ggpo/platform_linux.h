@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #ifdef __SWITCH__
 #include "nswitch.h"

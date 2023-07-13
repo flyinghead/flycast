@@ -86,7 +86,6 @@ void GdxsvBackendUdp::NetThreadLoop() {
 	int ping_recv_count = 0;
 	int rtt_sum = 0;
 	int udp_retransmit_countdown = 0;
-	std::string sender;
 	std::string user_id;
 	std::string session_id;
 	u8 buf[16 * 1024];
@@ -202,17 +201,14 @@ void GdxsvBackendUdp::NetThreadLoop() {
 		}
 
 		while (true) {
-			int n = udp_client_.ReadableSize();
+			sockaddr_storage sender{};
+			socklen_t addrlen = sizeof(sockaddr_storage);
+			int n = udp_client_.RecvFrom((char*)buf, sizeof(buf), &sender, &addrlen);
 			if (n <= 0) {
 				break;
 			}
 
-			n = udp_client_.RecvFrom((char*)buf, std::min<int>(n, sizeof(buf)), sender);
-			if (n <= 0) {
-				break;
-			}
-
-			if (sender != mcs_remote_.str_addr()) {
+			if (!is_same_addr(reinterpret_cast<sockaddr*>(&sender), mcs_remote_.net_addr())) {
 				continue;
 			}
 

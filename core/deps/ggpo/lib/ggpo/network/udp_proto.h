@@ -80,7 +80,7 @@ public:
    bool IsRunning() { return _current_state == Running; }
    void SendInput(GameInput &input);
    void SendInputAck();
-   bool HandlesMsg(sockaddr_in &from, UdpMsg *msg);
+   bool HandlesMsg(sockaddr_storage& from, UdpMsg *msg);
    void OnMsg(UdpMsg *msg, int len);
    void Disconnect();
    void SendAppData(const void *data, int len, bool spectators);
@@ -110,11 +110,11 @@ protected:
    };
    struct QueueEntry {
       int         queue_time;
-      sockaddr_in dest_addr;
+      sockaddr_storage dest_addr;
       UdpMsg      *msg;
 
       QueueEntry() {}
-      QueueEntry(int time, sockaddr_in &dst, UdpMsg *m) : queue_time(time), dest_addr(dst), msg(m) { }
+      QueueEntry(int time, sockaddr_storage &dst, UdpMsg *m) : queue_time(time), dest_addr(dst), msg(m) { }
    };
 
    bool CreateSocket(int retries);
@@ -142,7 +142,8 @@ protected:
     * Network transmission information
     */
    Udp            *_udp;
-   sockaddr_in    _peer_addr; 
+   sockaddr_storage _peer_addr;
+   socklen_t      _peer_addr_len;
    uint16         _magic_number;
    int            _local_player_queue;
    int            _queue;
@@ -153,7 +154,7 @@ protected:
    int            _oop_percent;
    struct {
       int         send_time;
-      sockaddr_in dest_addr;
+      sockaddr_storage dest_addr;
       UdpMsg*     msg;
    }              _oo_packet;
    RingBuffer<QueueEntry, 64> _send_queue;

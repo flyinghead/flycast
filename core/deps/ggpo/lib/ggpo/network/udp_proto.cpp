@@ -23,6 +23,7 @@ static const int MAX_SEQ_DISTANCE = (1 << 15);
 
 UdpProtocol::UdpProtocol() :
    _udp(NULL),
+   _peer_addr_len(0),
    _magic_number(0),
    _local_player_queue(-1),
    _queue(-1),
@@ -80,11 +81,32 @@ UdpProtocol::Init(Udp *udp,
    _relay = relay;
    _local_connect_status = status;
 
-   _peer_addr.sin_family = AF_INET;
-   if (ip != nullptr && ip[0] != '\0')
-   {
-	   _peer_addr.sin_port = htons(port);
-	   inet_pton(AF_INET, ip, &_peer_addr.sin_addr.s_addr);
+   addrinfo* res = nullptr;
+   addrinfo hints{};
+   hints.ai_family = AF_UNSPEC; //  IPv4 or IPv6
+   hints.ai_socktype = SOCK_DGRAM; // UDP
+   hints.ai_flags = AI_NUMERICSERV; // service is port no
+   char service[10] = {};
+   snprintf(service, sizeof(service),"%d", port);
+   const auto err = getaddrinfo(ip, service, &hints, &res);
+   if (err != 0) {
+      LogError("UdpProtocol::Init getaddrinfo error %d", err);
+      return;
+   }
+
+   for (auto info = res; info != nullptr; info = info->ai_next) {
+      if (info->ai_family == AF_INET || info->ai_family == AF_INET6) {
+         memcpy(&_peer_addr, info->ai_addr, info->ai_addrlen);
+         _peer_addr_len = info->ai_addrlen;
+         break;
+      }
+   }
+
+   freeaddrinfo(res);
+
+   if (_peer_addr_len == 0) {
+      LogError("UdpProtocol::Init no address found");
+      return;
    }
 
    do {
@@ -202,7 +224,7 @@ UdpProtocol::OnLoopPoll(void *cookie)
    switch (_current_state) {
    case Syncing:
       next_interval = (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS) ? SYNC_FIRST_RETRY_INTERVAL : SYNC_RETRY_INTERVAL;
-      if (_last_send_time && _last_send_time + next_interval < now && _peer_addr.sin_addr.s_addr != 0) {
+      if (_last_send_time && _last_send_time + next_interval < now && _peer_addr_len != 0) {
          Log("udpproto%d | No luck syncing after %d ms... Re-queueing sync packet.", _queue, next_interval);
          SendSyncRequest();
       }
@@ -316,22 +338,17 @@ UdpProtocol::SendMsg(UdpMsg *msg)
 }
 
 bool
-UdpProtocol::HandlesMsg(sockaddr_in &from,
-                        UdpMsg *msg)
+UdpProtocol::HandlesMsg(sockaddr_storage &from, UdpMsg *msg)
 {
    if (!_udp) {
       return false;
    }
 
-   if (msg->hdr.remote_endpoint < 0) {
-       return false;
-   }
-
    // FIXME: spectator may not work
    if (msg->hdr.remote_endpoint == _queue) {
-       if (_peer_addr.sin_addr.s_addr == 0) {
-           _peer_addr.sin_addr.s_addr = from.sin_addr.s_addr;
-           _peer_addr.sin_port = from.sin_port;
+       if (_peer_addr_len == 0) {
+           _peer_addr = from;
+           _peer_addr_len = sizeof(from); // XXX
        }
        return true;
    }
@@ -438,7 +455,7 @@ UdpProtocol::Synchronize()
    if (_udp) {
       _current_state = Syncing;
       _state.sync.roundtrips_remaining = NUM_SYNC_PACKETS;
-      if (_peer_addr.sin_addr.s_addr != 0)
+      if (_peer_addr_len != 0)
     	  SendSyncRequest();
    }
 }
@@ -802,7 +819,7 @@ UdpProtocol::PumpSendQueue()
          _oo_packet.msg = entry.msg;
          _oo_packet.dest_addr = entry.dest_addr;
       } else {
-         ASSERT(entry.dest_addr.sin_addr.s_addr);
+         ASSERT(entry.dest_addr.ss_family == AF_INET || entry.dest_addr.ss_family == AF_INET6);
 
          _udp->SendTo((char *)entry.msg, entry.msg->PacketSize(), 0,
                       (struct sockaddr *)&entry.dest_addr, sizeof entry.dest_addr);
@@ -861,7 +878,7 @@ void UdpProtocol::SendUnmanagedMsg(UdpMsg* msg, int len)
 	if (_udp == nullptr)
 		return;
 
-	if (_peer_addr.sin_addr.s_addr != 0) {
+	if (_peer_addr_len != 0) {
 		_udp->SendTo((char*)msg, len, 0, (struct sockaddr*)&_peer_addr, sizeof(_peer_addr));
 	}
 }

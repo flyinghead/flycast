@@ -40,6 +40,8 @@ class Gdxsv {
 	void HandleRPC();
 	void RestoreOnlinePatch();
 	void StartPingTest();
+	void FetchPublicIP();
+	void NotifyWanPort() const;
 	bool StartReplayFile(const char* path, int pov);
 	void StopReplay();
 	bool StartRollbackTest(const char* param);
@@ -47,11 +49,10 @@ class Gdxsv {
 	int Disk() const { return disk_; }
 	std::string UserId() const { return user_id_; }
 	MiniUPnP& UPnP() { return upnp_; }
-	UdpClient& Udp() { return udp_; }
 
    private:
 	void GcpPingTest();
-	bool InitUDP(bool upnp);
+	void AddPortMapping();
 	static std::string GenerateLoginKey();
 	std::vector<u8> GeneratePlatformInfoPacket();
 	std::vector<u8> GenerateP2PMatchReportPacket();
@@ -73,12 +74,12 @@ class Gdxsv {
 	std::mutex gcp_ping_test_mutex_;
 	bool going_to_battle_ = false;
 
+	std::shared_future<std::pair<bool, std::string>> public_ipv4_, public_ipv6_;
+
 	MiniUPnP upnp_;
 	std::future<std::string> upnp_result_;
 	int upnp_port_ = 0;
 
-	UdpRemote lbs_remote_ = {};
-	UdpClient udp_ = {};
 	GdxsvBackendTcp lbs_net_;
 	GdxsvBackendUdp udp_net_;
 	GdxsvBackendReplay replay_net_;
