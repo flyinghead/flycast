@@ -35,7 +35,7 @@ std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6) {
 			return {false, "HTTP Request failed 1: " + std::to_string(rc)};
 		}
 
-		if (ipv6 && std::count(myip.begin(), myip.end(), 0) == 3) {
+		if (ipv6 && std::count(myip.begin(), myip.end(), '.') == 3) {
 			return {false, "No IPv6 address used"};
 		}
 
