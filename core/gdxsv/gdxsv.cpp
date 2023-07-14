@@ -118,6 +118,10 @@ void Gdxsv::Reset() {
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
+	if (config::GdxLocalPort == 0) {
+		config::GdxLocalPort = get_random_port_number();
+	}
+
 	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(),
 			   config::GdxLocalPort.get());
 
