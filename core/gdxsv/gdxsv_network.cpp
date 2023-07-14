@@ -500,6 +500,9 @@ int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage *from_addr, socklen
 
 int UdpClient::SendTo(const char *buf, int len, const UdpRemote &remote) {
 	sock_t sock = remote.is_v6() ? sock_v6_ : sock_v4_;
+	if (sock == INVALID_SOCKET) {
+		return 0;
+	}
 	int n = ::sendto(sock, buf, len, 0, remote.net_addr(), remote.net_addr_len());
 	if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
 		WARN_LOG(COMMON, "UDP Send failed. errno=%d", get_last_error());

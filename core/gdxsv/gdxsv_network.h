@@ -112,7 +112,7 @@ class UdpPingPong {
 	void DebugUnreachable(uint8_t peer_id, uint8_t remote_peer_id);
 
    private:
-	static const uint32_t MAGIC = 1434750950;
+	static const uint32_t MAGIC = 2205246188;
 	static const uint8_t PING = 1;
 	static const uint8_t PONG = 2;
 
