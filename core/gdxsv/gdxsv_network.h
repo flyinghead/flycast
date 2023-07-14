@@ -115,7 +115,6 @@ class UdpPingPong {
 	static const uint32_t MAGIC = 1434750950;
 	static const uint8_t PING = 1;
 	static const uint8_t PONG = 2;
-	static const uint8_t PING_FIX = 3;
 
 	struct Candidate {
 		uint8_t peer_id;
@@ -123,7 +122,6 @@ class UdpPingPong {
 		int ping_count;
 		int pong_count;
 		float rtt;
-		bool fixed;
 	};
 
 #pragma pack(1)
@@ -133,6 +131,7 @@ class UdpPingPong {
 		uint8_t type;
 		uint8_t from_peer_id;
 		uint8_t to_peer_id;
+		uint8_t candidate_idx;
 		uint64_t send_timestamp;
 		uint64_t ping_timestamp;
 		uint8_t rtt_matrix[N][N];
