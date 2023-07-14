@@ -630,9 +630,8 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 					continue;
 				}
 
-				if (recv.type == PING || recv.type == PING_FIX) {
-					const bool fixed = recv.type == PING_FIX;
-					NOTICE_LOG(COMMON, "Recv %s from %d", fixed ? "PING_FIX" : "PING", recv.from_peer_id);
+				if (recv.type == PING) {
+					NOTICE_LOG(COMMON, "Recv PING from %d", recv.from_peer_id);
 					std::lock_guard<std::recursive_mutex> lock(mutex_);
 
 					Packet p{};
@@ -641,30 +640,26 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 					p.session_id = session_id;
 					p.from_peer_id = peer_id;
 					p.to_peer_id = recv.from_peer_id;
+					p.candidate_idx = recv.candidate_idx;
 					p.send_timestamp =
 						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
 							.count();
 					p.ping_timestamp = recv.send_timestamp;
 					p.ping_timestamp -= network_delay;
-					UdpRemote remote;
 					memcpy(p.rtt_matrix, rtt_matrix_, sizeof(rtt_matrix_));
 
 					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate &c) {
 						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
 					});
 					if (it != candidates_.end()) {
-						remote = it->remote;
-						it->fixed = fixed;
+						client_.SendTo(reinterpret_cast<const char *>(&p), sizeof(p), it->remote);
 					} else {
 						Candidate c{};
-						c.peer_id = recv.from_peer_id;
-						c.remote.Open(sender, sizeof(sender_storage));
-						c.fixed = fixed;
-						candidates_.push_back(c);
-						remote = c.remote;
-					}
-					if (remote.is_open()) {
-						client_.SendTo(reinterpret_cast<const char *>(&p), sizeof(p), remote);
+						if (c.remote.Open(sender, addrlen)) {
+							c.peer_id = recv.from_peer_id;
+							candidates_.push_back(c);
+							client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), c.remote);
+						}
 					}
 				}
 
@@ -677,65 +672,44 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 					if (rtt <= 0) rtt = 1;
 					NOTICE_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt, mask_ip_address(sockaddr_to_string(sender)).c_str());
 
-					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate &c) {
-						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
-					});
-					if (it != candidates_.end()) {
-						it->rtt = float(it->pong_count * it->rtt + rtt) / float(it->pong_count + 1);
-						it->pong_count++;
-						rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(it->rtt)));
+					// Pong may come from an address different from one which Ping sent, so update the pong_count based on candidate_idx
+					if (recv.candidate_idx < candidates_.size() && candidates_[recv.candidate_idx].peer_id == recv.from_peer_id) {
+						auto& c = candidates_[recv.candidate_idx];
+						c.rtt = float(c.pong_count * c.rtt + rtt) / float(c.pong_count + 1);
+						c.pong_count++;
+						rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(c.rtt)));
 						for (int j = 0; j < N; j++) {
 							rtt_matrix_[recv.from_peer_id][j] = recv.rtt_matrix[recv.from_peer_id][j];
 						}
-					} else {
+					}
+
+					// if the remote address not in candidates, add this.
+					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate& c) {
+						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
+					});
+					if (it == candidates_.end()) {
 						Candidate c{};
-						c.peer_id = recv.from_peer_id;
-						c.remote.Open(sender, addrlen);
-						candidates_.push_back(c);
+						if (c.remote.Open(sender, addrlen)) {
+							c.peer_id = recv.from_peer_id;
+							candidates_.push_back(c);
+						}
 					}
 				}
 			}
 
 			if (ms + 500 < duration_ms && loop_count % 100 == 0) {
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
-				if (duration_ms < ms + 1000) {
-					for (int id = peer_id + 1; id < peer_count; id++) {
-						float max_score = 0;
-						int best_idx = -1;
-						for (int i = 0; i < candidates_.size(); i++) {
-							auto& c = candidates_[i];
-							if (c.peer_id == id && c.pong_count) {
-								if (c.fixed) {
-									best_idx = i;
-									break;
-								}
-								float score = 1000000
-									- 1.f * c.rtt
-									+ 10.f * (10 < c.pong_count)
-									+ 10.f * c.remote.is_v6()
-									+ 55.f * is_loopback_addr(c.remote.net_addr())
-									+ 50.f * is_private_addr(c.remote.net_addr());
-								if (max_score < score) {
-									max_score = score;
-									best_idx = i;
-								}
-							}
-						}
-						if (best_idx != -1) {
-							candidates_[best_idx].fixed = true;
-						}
-					}
-				}
-
-				for (auto &c : candidates_) {
+				for (int i = 0; i < std::min<int>(255, candidates_.size()); i++) {
+					auto& c = candidates_[i];
 					NOTICE_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
 					if (c.remote.is_open()) {
 						Packet p{};
 						p.magic = MAGIC;
-						p.type = c.fixed ? PING_FIX : PING;
+						p.type = PING;
 						p.session_id = session_id;
 						p.from_peer_id = peer_id;
 						p.to_peer_id = c.peer_id;
+						p.candidate_idx = i;
 						p.send_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 											   std::chrono::high_resolution_clock::now().time_since_epoch())
 											   .count();
@@ -805,23 +779,13 @@ void UdpPingPong::AddCandidate(const std::string &user_id, uint8_t peer_id, cons
 
 bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
-	// Return fixed address
-	for (auto &c : candidates_) {
-		if (c.peer_id == peer_id && c.fixed) {
-			memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
-			*rtt = c.rtt;
-			return true;
-		}
-	}
-
-	ERROR_LOG(COMMON, "Peer%d Fixed address not found.");
 
 	// Return min rtt address
 	bool found = false;
 	float min_rtt = 1000.0f;
 	for (auto& c : candidates_) {
-		if (c.peer_id == peer_id && c.pong_count) {
-			if (c.rtt < min_rtt) {
+		if (c.peer_id == peer_id && 0 < c.pong_count) {
+			if (0 < c.rtt && c.rtt < min_rtt) {
 				min_rtt = c.rtt;
 				memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
 				*rtt = c.rtt;
