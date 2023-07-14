@@ -652,53 +652,21 @@ std::string Gdxsv::GenerateLoginKey() {
 }
 
 void Gdxsv::ApplyOnlinePatch(bool first_time) {
-	for (int i = 0; i < patch_list_.patches_size(); ++i) {
-		auto &patch = patch_list_.patches(i);
-		if (patch.write_once() && !first_time) {
-			continue;
-		}
+	for (auto& patch : patch_list_.patches()) {
 		if (first_time) {
 			NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
 		}
-		for (int j = 0; j < patch.codes_size(); ++j) {
-			u32 prev = 0;
-			auto &code = patch.codes(j);
-			if (code.size() == 8) {
-				prev = gdxsv_ReadMem8(code.address());
-				gdxsv_WriteMem8(code.address(), (u8)(code.changed() & 0xff));
-			}
-			if (code.size() == 16) {
-				prev = gdxsv_ReadMem16(code.address());
-				gdxsv_WriteMem16(code.address(), (u16)(code.changed() & 0xffff));
-			}
-			if (code.size() == 32) {
-				prev = gdxsv_ReadMem32(code.address());
-				gdxsv_WriteMem32(code.address(), code.changed());
-			}
-
-			if (prev != code.original() && prev != code.changed()) {
-				NOTICE_LOG(COMMON, "patch is broken name:%s prev:%08x orig:%08x changed:%08x", patch.name().c_str(), prev, code.original(),
-						   code.changed());
-			}
+		for (auto& code : patch.codes()) {
+			gdxsv_WriteMem(code.size(), code.address(), code.changed());
 		}
 	}
 }
 
 void Gdxsv::RestoreOnlinePatch() {
-	for (int i = 0; i < patch_list_.patches_size(); ++i) {
-		auto &patch = patch_list_.patches(i);
+	for (auto& patch : patch_list_.patches()) {
 		NOTICE_LOG(COMMON, "patch restore: %s", patch.name().c_str());
-		for (int j = 0; j < patch.codes_size(); ++j) {
-			auto &code = patch.codes(j);
-			if (code.size() == 8) {
-				gdxsv_WriteMem8(code.address(), (u8)(code.original() & 0xff));
-			}
-			if (code.size() == 16) {
-				gdxsv_WriteMem16(code.address(), (u16)(code.original() & 0xffff));
-			}
-			if (code.size() == 32) {
-				gdxsv_WriteMem32(code.address(), code.original());
-			}
+		for (auto& code : patch.codes()) {
+			gdxsv_WriteMem(code.size(), code.address(), code.original());
 		}
 	}
 	patch_list_.clear_patches();
