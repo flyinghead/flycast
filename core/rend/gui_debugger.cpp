@@ -176,7 +176,7 @@ void gui_debugger_disasm()
 
 	for (size_t i = 0; i < 20; i++)
 	{
-		const u32 addr = pc + i * 2;
+		const u32 addr = (pc & 0x1fffffff) + i * 2;
 
 		u16 instr = ReadMem16_nommu(addr);
 
@@ -222,6 +222,7 @@ void gui_debugger_disasm()
 }
 
 u32 memoryDumpAddr = 0x0c010000;
+ImU32 vslider_value = 0x10000 / 16;
 
 void gui_debugger_memdump()
 {
@@ -239,44 +240,10 @@ void gui_debugger_memdump()
 	ImGui::SameLine();
 	if (ImGui::Button("Go"))
 	{
+		// TODO: Validate input
 		char* tmp;
-		memoryDumpAddr = (strtoul(memDumpAddrBuf, &tmp, 16) / 16) * 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("---"))
-	{
-		memoryDumpAddr -= 16 * 16 * 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("--"))
-	{
-		memoryDumpAddr -= 16 * 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("-"))
-	{
-		memoryDumpAddr -= 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("+"))
-	{
-		memoryDumpAddr += 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("++"))
-	{
-		memoryDumpAddr += 16 * 16;
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("+++"))
-	{
-		memoryDumpAddr += 16 * 16 * 16;
+		memoryDumpAddr = ((strtoul(memDumpAddrBuf, &tmp, 16) / 16) * 16) & 0x1fffffff;
+		vslider_value = (memoryDumpAddr - 0x0c000000) / 0x10;
 	}
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -286,48 +253,74 @@ void gui_debugger_memdump()
 	ImGui::PushFont(defaultFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
-	ImGui::BeginChild("##content", ImVec2(-FLT_MIN, 360));
 	char hexbuf[256];
+
+	float dumpTopPosY = ImGui::GetCursorPosY();
+
+	// TODO: Extract 24 constant (used to clamp memoryDumpAddr further below)
 	for (size_t i = 0; i < 24; i++) {
 		memset(hexbuf, 0, sizeof(hexbuf));
 		size_t hexbuflen = 0;
 
-		hexbuflen += sprintf(hexbuf, "%08lX: ", memoryDumpAddr + i * 16);
+		// hexbuflen += sprintf(hexbuf, "%08lX: ", memoryDumpAddr + i * 16);
+		ImGui::Text("%08lX: ", memoryDumpAddr + i * 16);
+		ImGui::SameLine();
 
 		for (size_t j = 0; j < 16; j++) {
 			int byte = ReadMem8_nommu(memoryDumpAddr + i * 16 + j);
-			hexbuflen += sprintf(hexbuf + hexbuflen, "%02X", byte);
+			// hexbuflen += sprintf(hexbuf + hexbuflen, "%02X", byte);
+			if (byte == 0) {
+				ImGui::TextDisabled("%02X", byte);
+			} else {
+				ImGui::Text("%02X", byte);
+			}
 
 			if ((j + 1) % 4 == 0) {
-				hexbuflen += sprintf(hexbuf + hexbuflen, "|");
+				// hexbuflen += sprintf(hexbuf + hexbuflen, "|");
+				ImGui::SameLine(0, 8);
 			} else {
-				hexbuflen += sprintf(hexbuf + hexbuflen, " ");
+				// hexbuflen += sprintf(hexbuf + hexbuflen, " ");
+				ImGui::SameLine(0, 4);
 			}
 		}
-		hexbuflen += sprintf(hexbuf + hexbuflen, " ");
+		// hexbuflen += sprintf(hexbuf + hexbuflen, " ");
 		for (size_t j = 0; j < 16; j++) {
 			int c = ReadMem8_nommu(memoryDumpAddr + i * 16 + j);
-			// fprintf(fp_out, "%c", )
 			hexbuflen += sprintf(hexbuf + hexbuflen, "%c", (c >= 33 && c <= 126 ? c : '.'));
 		}
 
 		ImGui::Text("%s", hexbuf);
 	}
 
-	if (ImGui::IsWindowHovered())
+	/* ImGui::SetNextItemWidth(-FLT_MIN); */
+	
+	const ImU64 min = 0x0;
+	const ImU64 max = (RAM_SIZE / 0x10);
+
+	float sliderHeight = ImGui::GetCursorPosY() - dumpTopPosY;
+	ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth()-20, dumpTopPosY));
+	if (ImGui::VSliderScalar("##scroll", ImVec2(20, sliderHeight), ImGuiDataType_U32, &vslider_value, &max, &min, "", ImGuiSliderFlags_NoInput))
 	{
-		memoryDumpAddr -= (int) io.MouseWheel * 16;
+		memoryDumpAddr = 0x0c000000 + vslider_value * 0x10;
+	}
+	else if (ImGui::IsWindowHovered())
+	{
+		if (io.MouseWheel > 0 && memoryDumpAddr >= 0x0c000000 + 0x10) {
+			memoryDumpAddr -= 0x10;
+			vslider_value = (memoryDumpAddr - 0x0c000000) / 0x10;
+		} else if (io.MouseWheel < 0 && memoryDumpAddr <= 0x0c000000 + RAM_SIZE - 0x10) {
+			memoryDumpAddr += 0x10;
+			vslider_value = (memoryDumpAddr - 0x0c000000) / 0x10;
+		}
 	}
 
-	if (memoryDumpAddr < 0x8c000000)
+	// TODO: Remove modifier bits from address;
+
+	if (memoryDumpAddr > 0x0c000000 + RAM_SIZE - 24 * 16)
 	{
-		memoryDumpAddr = 0x8c000000;
+		memoryDumpAddr = 0x0c000000 + RAM_SIZE - 24 * 16;
+		vslider_value = (memoryDumpAddr - 0x0c000000) / 0x10;
 	}
-	else if (memoryDumpAddr > 0x8c000000 + RAM_SIZE)
-	{
-		memoryDumpAddr = 0x8c000000 + RAM_SIZE;
-	}
-	ImGui::EndChild();
 
 	ImGui::PopFont();
 	ImGui::PopStyleVar();
