@@ -97,38 +97,70 @@ int get_random_port_number() {
 }
 
 std::string sockaddr_to_string(const sockaddr *addr) {
+	if (addr == nullptr) {
+		return "";
+	}
 	if (addr->sa_family == AF_INET) {
-		auto a = reinterpret_cast<const sockaddr_in *>(addr);
+		const auto a = reinterpret_cast<const sockaddr_in *>(addr);
 		char addrbuf[INET_ADDRSTRLEN];
 		::inet_ntop(AF_INET, &a->sin_addr, addrbuf, sizeof(addrbuf));
 		return std::string(addrbuf) + ":" + std::to_string(ntohs(a->sin_port));
 	}
 	if (addr->sa_family == AF_INET6) {
-		auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
+		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
 		char addrbuf[INET6_ADDRSTRLEN];
 		::inet_ntop(AF_INET6, &a->sin6_addr, addrbuf, sizeof(addrbuf));
 		return std::string(addrbuf) + ":" + std::to_string(ntohs(a->sin6_port));
 	}
-	return "(unknown family)";
+	return "";
+}
+
+bool is_loopback_addr(const sockaddr *addr) {
+	if (addr == nullptr) {
+		return false;
+	}
+	if (addr->sa_family == AF_INET) {
+		const auto a = reinterpret_cast<const sockaddr_in *>(addr);
+		return a->sin_addr.s_addr == htonl(INADDR_LOOPBACK);
+	}
+	if (addr->sa_family == AF_INET6) {
+		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
+		return IN6_IS_ADDR_LOOPBACK(&a->sin6_addr);
+	}
+	return false;
+}
+
+bool is_private_addr(const sockaddr *addr) {
+	if (addr == nullptr) {
+		return false;
+	}
+	if (addr->sa_family == AF_INET) {
+		const auto a = reinterpret_cast<const sockaddr_in *>(addr);
+		const auto ip4 = reinterpret_cast<const uint8_t*>(&a->sin_addr);
+		return ip4[0] == 10 || (ip4[0] == 172 && (ip4[1] & 0xf0) == 16) || (ip4[0] == 192 && ip4[1] == 168);
+	}
+	if (addr->sa_family == AF_INET6) {
+		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
+		const auto ip6 = reinterpret_cast<const uint8_t*>(&a->sin6_addr);
+		return (ip6[0] & 0xfe) == 0xfc;
+	}
+	return false;
 }
 
 bool is_same_addr(const sockaddr *addr1, const sockaddr *addr2) {
 	if (addr1->sa_family != addr2->sa_family) {
 		return false;
 	}
-
 	if (addr1->sa_family == AF_INET) {
 		const auto a = reinterpret_cast<const sockaddr_in *>(addr1);
 		const auto b = reinterpret_cast<const sockaddr_in *>(addr2);
 		return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr)) == 0 && a->sin_port == b->sin_port;
 	}
-
 	if (addr1->sa_family == AF_INET6) {
 		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr1);
 		const auto b = reinterpret_cast<const sockaddr_in6 *>(addr2);
 		return memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(a->sin6_addr)) == 0 && a->sin6_port == b->sin6_port;
 	}
-
 	return false;
 }
 
@@ -539,7 +571,7 @@ bool MessageFilter::IsNextMessage(const proto::BattleMessage &msg) {
 
 void MessageFilter::Clear() { recv_seq.clear(); }
 
-void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms) {
+void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int duration_ms) {
 	if (running_) return;
 	verify(peer_id < N);
 	client_.Close();
@@ -559,7 +591,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 	}
 	int peer_count = peer_ids.size();
 
-	std::thread([this, session_id, peer_id, timeout_min_ms, timeout_max_ms, peer_count, network_delay]() {
+	std::thread([this, session_id, peer_id, duration_ms, peer_count, network_delay]() {
 		WARN_LOG(COMMON, "Start UdpPingPong Thread");
 		start_time_ = std::chrono::high_resolution_clock::now();
 
@@ -598,8 +630,9 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 					continue;
 				}
 
-				if (recv.type == PING) {
-					NOTICE_LOG(COMMON, "Recv PING from %d", recv.from_peer_id);
+				if (recv.type == PING || recv.type == PING_FIX) {
+					const bool fixed = recv.type == PING_FIX;
+					NOTICE_LOG(COMMON, "Recv %s from %d", fixed ? "PING_FIX" : "PING", recv.from_peer_id);
 					std::lock_guard<std::recursive_mutex> lock(mutex_);
 
 					Packet p{};
@@ -621,10 +654,12 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 					});
 					if (it != candidates_.end()) {
 						remote = it->remote;
+						it->fixed = fixed;
 					} else {
 						Candidate c{};
 						c.peer_id = recv.from_peer_id;
 						c.remote.Open(sender, sizeof(sender_storage));
+						c.fixed = fixed;
 						candidates_.push_back(c);
 						remote = c.remote;
 					}
@@ -634,12 +669,13 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				}
 
 				if (recv.type == PONG) {
-					NOTICE_LOG(COMMON, "Recv PONG from Peer%d", recv.from_peer_id);
+					std::lock_guard<std::recursive_mutex> lock(mutex_);
 					const auto now =
 						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
 							.count();
 					auto rtt = static_cast<int>(now - recv.ping_timestamp);
 					if (rtt <= 0) rtt = 1;
+					NOTICE_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt, mask_ip_address(sockaddr_to_string(sender)).c_str());
 
 					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate &c) {
 						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
@@ -660,15 +696,43 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				}
 			}
 
-			if (loop_count % 100 == 0) {
+			if (ms + 500 < duration_ms && loop_count % 100 == 0) {
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
+				if (duration_ms < ms + 1000) {
+					for (int id = peer_id + 1; id < peer_count; id++) {
+						float max_score = 0;
+						int best_idx = -1;
+						for (int i = 0; i < candidates_.size(); i++) {
+							auto& c = candidates_[i];
+							if (c.peer_id == id && c.pong_count) {
+								if (c.fixed) {
+									best_idx = i;
+									break;
+								}
+								float score = 1000000
+									- 1.f * c.rtt
+									+ 10.f * (10 < c.pong_count)
+									+ 10.f * c.remote.is_v6()
+									+ 55.f * is_loopback_addr(c.remote.net_addr())
+									+ 50.f * is_private_addr(c.remote.net_addr());
+								if (max_score < score) {
+									max_score = score;
+									best_idx = i;
+								}
+							}
+						}
+						if (best_idx != -1) {
+							candidates_[best_idx].fixed = true;
+						}
+					}
+				}
 
 				for (auto &c : candidates_) {
 					NOTICE_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
 					if (c.remote.is_open()) {
 						Packet p{};
 						p.magic = MAGIC;
-						p.type = PING;
+						p.type = c.fixed ? PING_FIX : PING;
 						p.session_id = session_id;
 						p.from_peer_id = peer_id;
 						p.to_peer_id = c.peer_id;
@@ -685,7 +749,6 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 			}
 
 			if (0 < loop_count && loop_count % 500 == 0) {
-				bool matrix_ok = true;
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
 
 				NOTICE_LOG(COMMON, "RTT MATRIX");
@@ -693,28 +756,10 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int time
 				for (int i = 0; i < 4; i++) {
 					NOTICE_LOG(COMMON, "%d>%4d%4d%4d%4d", i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
 				}
-
-				NOTICE_LOG(COMMON, "peer_count %d", peer_count);
-				for (int i = 0; i < peer_count; i++) {
-					for (int j = 0; j < peer_count; j++) {
-						if (i != j) {
-							if (rtt_matrix_[i][j] == 0) {
-								matrix_ok = false;
-							}
-						}
-					}
-				}
-
-				if (matrix_ok && timeout_min_ms < ms) {
-					NOTICE_LOG(COMMON, "UdpPingTest Finish ok");
-					client_.Close();
-					running_ = false;
-					break;
-				}
 			}
 
-			if (timeout_max_ms < ms) {
-				NOTICE_LOG(COMMON, "UdpPingTest Finish timeout");
+			if (duration_ms < ms) {
+				NOTICE_LOG(COMMON, "UdpPingTest Finish");
 				client_.Close();
 				running_ = false;
 				break;
@@ -760,9 +805,21 @@ void UdpPingPong::AddCandidate(const std::string &user_id, uint8_t peer_id, cons
 
 bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
-	float min_rtt = 1000.0f;
-	bool found = false;
+	// Return fixed address
 	for (auto &c : candidates_) {
+		if (c.peer_id == peer_id && c.fixed) {
+			memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
+			*rtt = c.rtt;
+			return true;
+		}
+	}
+
+	ERROR_LOG(COMMON, "Peer%d Fixed address not found.");
+
+	// Return min rtt address
+	bool found = false;
+	float min_rtt = 1000.0f;
+	for (auto& c : candidates_) {
 		if (c.peer_id == peer_id && c.pong_count) {
 			if (c.rtt < min_rtt) {
 				min_rtt = c.rtt;
