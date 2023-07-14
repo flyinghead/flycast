@@ -129,37 +129,6 @@ void gui_debugger_disasm()
 		return;
 	}
 
-	ImGui::PushItemWidth(80 * settings.display.uiScale);
-	static char bpBuffer[9] = "";
-	ImGui::InputTextWithHint("##bpAddr", "BP Addr", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-	ImGui::PopItemWidth();
-
-	ImGui::SameLine();
-	if (ImGui::Button("Add BP"))
-	{
-		char* tmp;
-		long bpaddr = strtoul(bpBuffer, &tmp, 16);
-		debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, (u32) bpaddr, 2);
-	}
-
-	ImGui::PushItemWidth(80 * settings.display.uiScale);
-	static char patchAddressBuffer[8 + 1] = "";
-	static char patchWordBuffer[4 + 1] = "";
-	ImGui::InputTextWithHint("##patchAddr", "Patch Addr", patchAddressBuffer, 8 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-	ImGui::SameLine();
-	ImGui::InputTextWithHint("##patchWord", "WORD", patchWordBuffer, 4 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-	ImGui::PopItemWidth();
-
-	ImGui::SameLine();
-	if (ImGui::Button("Write"))
-	{
-		char* tmp;
-		long patchAddress = strtoul(patchAddressBuffer, &tmp, 16);
-		long patchWord = strtoul(patchWordBuffer, &tmp, 16);
-		// debugAgent.insertMatchpoint(0, (u32) patchAddress, 2);
-		WriteMem16_nommu(patchAddress, patchWord);
-	}
-
 	// if (Sh4cntx.pc == 0x8C010000 || Sh4cntx.spc == 0x8C010000)
 	// {
 	// 	NOTICE_LOG(COMMON, "1ST_READ.bin entry");
@@ -231,6 +200,24 @@ void gui_debugger_memdump()
 	ImGui::SetNextWindowPos(ImVec2(600, 450), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(540, 0));
 	ImGui::Begin("Memory Dump", &memdump_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::PushItemWidth(80 * settings.display.uiScale);
+	static char patchAddressBuffer[8 + 1] = "";
+	static char patchWordBuffer[4 + 1] = "";
+	ImGui::InputTextWithHint("##patchAddr", "Patch Addr", patchAddressBuffer, 8 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::SameLine();
+	ImGui::InputTextWithHint("##patchWord", "WORD", patchWordBuffer, 4 + 1, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	if (ImGui::Button("Write"))
+	{
+		char* tmp;
+		long patchAddress = strtoul(patchAddressBuffer, &tmp, 16);
+		long patchWord = strtoul(patchWordBuffer, &tmp, 16);
+		// debugAgent.insertMatchpoint(0, (u32) patchAddress, 2);
+		WriteMem16_nommu(patchAddress, patchWord);
+	}
 
 	ImGui::PushItemWidth(80);
 	static char memDumpAddrBuf[8 + 1] = "";
@@ -338,6 +325,21 @@ void gui_debugger_breakpoints()
 	ImGui::SetNextWindowPos(ImVec2(700, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(150, 0));
 	ImGui::Begin("Breakpoints", &breakpoints_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::PushItemWidth(80 * settings.display.uiScale);
+	static char bpBuffer[9] = "";
+	ImGui::InputTextWithHint("##bpAddr", "Address", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	if (ImGui::Button("Add"))
+	{
+		char* tmp;
+		long bpaddr = strtoul(bpBuffer, &tmp, 16);
+		debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, (u32) bpaddr, 2);
+	}
+
+
 	ImGui::PushFont(defaultFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
