@@ -26,6 +26,10 @@ CreateSocket(uint16 bind_port, bool v6)
 	ioctlsocket(s, FIONBIO, &iMode);
 #endif
 
+   optval = 1 << 16;
+   setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&optval, sizeof optval);
+   setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char *)&optval, sizeof optval);
+
    sockaddr_storage addr_storage{};
    socklen_t addrlen = 0;
    if (!v6) {
@@ -43,7 +47,7 @@ CreateSocket(uint16 bind_port, bool v6)
    }
 
    if (bind(s, (sockaddr *)&addr_storage, addrlen) == 0) {
-     Log("Udp bound to port: %d.", bind_port);
+     LogInfo("Udp bound to port: %d.", bind_port);
 	 return s;
    }
    closesocket(s);

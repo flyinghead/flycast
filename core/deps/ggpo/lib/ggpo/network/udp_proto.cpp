@@ -90,7 +90,7 @@ UdpProtocol::Init(Udp *udp,
    snprintf(service, sizeof(service),"%d", port);
    const auto err = getaddrinfo(ip, service, &hints, &res);
    if (err != 0) {
-      LogError("UdpProtocol::Init getaddrinfo error %d", err);
+      LogError("UdpProtocol::Init getaddrinfo error %d (ip:%s port:%d)", err, ip, port);
       return;
    }
 

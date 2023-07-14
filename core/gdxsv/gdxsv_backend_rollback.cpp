@@ -148,7 +148,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 				sockaddr_storage addr_storage{};
 				float rtt;
 				if (ping_pong_.GetAvailableAddress(i, &addr_storage, &rtt)) {
-					NOTICE_LOG(COMMON, "Peer%d rtt%.2f", i, rtt);
 					max_rtt = std::max(max_rtt, rtt);
 					if (addr_storage.ss_family == AF_INET) {
 						auto addr = (sockaddr_in*)&addr_storage;
@@ -163,8 +162,8 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 						ips[i] = str;
 						ports[i] = ntohs(addr->sin6_port);
 					}
+					NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
 				} else {
-					NOTICE_LOG(COMMON, "No available address %d", i);
 					int relay_rtt = INT_MAX;
 					int relay_peer = -1;
 					for (int j = 0; j < matching_.player_count(); j++) {
@@ -180,14 +179,14 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					}
 
 					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr_storage, &rtt)) {
-						NOTICE_LOG(COMMON, "Use relay via %d", relay_peer);
-						max_rtt = std::max(max_rtt, rtt + (float)rtt_matrix[relay_peer][i]);
-						char str[INET_ADDRSTRLEN] = {};
+						rtt =+ (float)rtt_matrix[relay_peer][i];
+						max_rtt = std::max(max_rtt, rtt);
 						ips[i] = ips[relay_peer];
 						ports[i] = ports[relay_peer];
 						relays[i] = true;
+						NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
 					} else {
-						NOTICE_LOG(COMMON, "Peer %d unreachable", i);
+						NOTICE_LOG(COMMON, "Peer%d unreachable", i);
 						ok = false;
 					}
 				}
@@ -195,9 +194,6 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		}
 
 		if (ok) {
-			for (int i = 0; i < ips.size(); i++) {
-				NOTICE_LOG(COMMON, "Peer%d IP:%s Port:%d Relay:%d", i, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
-			}
 			int delay = std::max(2, std::max(config::GdxMinDelay.get(), int(max_rtt / 2.0 / 16.66 + 0.5)));
 			NOTICE_LOG(COMMON, "max_rtt=%.2f delay=%d", max_rtt, delay);
 			config::GGPOEnable.override(true);
@@ -309,8 +305,8 @@ bool GdxsvBackendRollback::StartLocalTest(const char* param) {
 	matching.set_battle_code("0123456");
 	matching.set_peer_id(me);
 	matching.set_session_id(12345);
-	matching.set_timeout_min_ms(1000);
-	matching.set_timeout_max_ms(10000);
+	// matching.set_timeout_min_ms(1000);
+	matching.set_timeout_max_ms(8000);
 	matching.set_player_count(n);
 	for (int i = 0; i < n; i++) {
 		proto::PlayerAddress player{};
@@ -359,7 +355,7 @@ void GdxsvBackendRollback::Prepare(const proto::P2PMatching& matching, int port)
 			ping_pong_.AddCandidate(c.user_id(), c.peer_id(), c.ip(), c.port());
 		}
 	}
-	ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_min_ms(), matching.timeout_max_ms());
+	ping_pong_.Start(matching.session_id(), matching.peer_id(), port, matching.timeout_max_ms());
 
 	report_.Clear();
 	report_.set_battle_code(matching.battle_code());

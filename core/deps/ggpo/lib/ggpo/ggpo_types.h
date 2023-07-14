@@ -77,6 +77,7 @@ public:
 
 #define Log(...) DEBUG_LOG(NETWORK, __VA_ARGS__)
 #define LogError(...) ERROR_LOG(NETWORK, __VA_ARGS__)
+#define LogInfo(...) NOTICE_LOG(NETWORK, __VA_ARGS__)
 
 #ifndef ARRAY_SIZE
 #  define ARRAY_SIZE(a)    (sizeof(a) / sizeof((a)[0]))

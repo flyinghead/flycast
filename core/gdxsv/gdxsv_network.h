@@ -12,6 +12,8 @@ std::future<std::string> test_udp_port_connectivity(int port, bool ipv6);
 std::future<std::pair<bool, std::string>> get_public_ip_address(bool ipv6);
 int get_random_port_number();
 std::string sockaddr_to_string(const sockaddr *addr);
+bool is_loopback_addr(const sockaddr *addr);
+bool is_private_addr(const sockaddr *addr);
 bool is_same_addr(const sockaddr *addr1, const sockaddr *addr2);
 std::string mask_ip_address(std::string addr);
 
@@ -99,7 +101,7 @@ class UdpClient {
 class UdpPingPong {
    public:
 	static const int N = 4;
-	void Start(uint32_t session_id, uint8_t peer_id, int port, int timeout_min_ms, int timeout_max_ms);
+	void Start(uint32_t session_id, uint8_t peer_id, int port, int duration_ms);
 	void Stop();
 	void Reset();
 	bool Running() const;
@@ -113,6 +115,7 @@ class UdpPingPong {
 	static const uint32_t MAGIC = 1434750950;
 	static const uint8_t PING = 1;
 	static const uint8_t PONG = 2;
+	static const uint8_t PING_FIX = 3;
 
 	struct Candidate {
 		uint8_t peer_id;
@@ -120,6 +123,7 @@ class UdpPingPong {
 		int ping_count;
 		int pong_count;
 		float rtt;
+		bool fixed;
 	};
 
 #pragma pack(1)
