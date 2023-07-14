@@ -90,7 +90,11 @@ void
 Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
 {
    bool v4 = dst->sa_family == AF_INET;
-   int res = sendto(v4 ? _socket_v4 : _socket_v6, buffer, len, flags, dst, destlen);
+   SOCKET sock = v4 ? _socket_v4 : _socket_v6;
+   if (sock == INVALID_SOCKET) {
+      return;
+   }
+   int res = sendto(sock, buffer, len, flags, dst, destlen);
    if (res == SOCKET_ERROR) {
 	  int err = WSAGetLastError();
       if (err != WSAEWOULDBLOCK) {
@@ -119,8 +123,12 @@ Udp::OnLoopPoll(void *cookie)
    socklen_t      recv_addr_len;
 
    for (int s = 0; s < 2; s++) for (;;) {
+      SOCKET sock = s == 0 ? _socket_v4 : _socket_v6;
+      if (sock == INVALID_SOCKET) {
+         continue;
+      }
       recv_addr_len = sizeof(recv_addr);
-      int len = recvfrom(s == 0 ? _socket_v4 : _socket_v6, (char *)recv_buf, MAX_UDP_PACKET_SIZE, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
+      int len = recvfrom(sock, (char *)recv_buf, MAX_UDP_PACKET_SIZE, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
 
       // TODO: handle len == 0... indicates a disconnect.
 
