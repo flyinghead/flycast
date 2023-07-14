@@ -652,20 +652,20 @@ std::string Gdxsv::GenerateLoginKey() {
 }
 
 void Gdxsv::ApplyOnlinePatch(bool first_time) {
-	for (auto& patch : patch_list_.patches()) {
+	for (const auto& patch : patch_list_.patches()) {
 		if (first_time) {
 			NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
 		}
-		for (auto& code : patch.codes()) {
+		for (const auto& code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.changed());
 		}
 	}
 }
 
 void Gdxsv::RestoreOnlinePatch() {
-	for (auto& patch : patch_list_.patches()) {
+	for (const auto& patch : patch_list_.patches()) {
 		NOTICE_LOG(COMMON, "patch restore: %s", patch.name().c_str());
-		for (auto& code : patch.codes()) {
+		for (const auto& code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.original());
 		}
 	}
