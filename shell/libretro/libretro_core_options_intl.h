@@ -56569,7 +56569,7 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_LIGHT_PURPLE_2_16_SK "Svetlofialová (2)"
 #define OPTION_VAL_LIGHT_GREEN_2_17_SK "Svetlozelená (2)"
 #define OPTION_VAL_LIGHT_GREEN_3_18_SK "Svetlozelená (3)"
-#define OPTION_VAL_LIGHT_CYAN_2_19_SK NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_SK "Svetloazúrová (2)"
 #define OPTION_VAL_LIGHT_RED_2_20_SK "Svetločervená (2)"
 #define OPTION_VAL_MAGENTA_21_SK "Purpurová"
 #define OPTION_VAL_LIGHT_PURPLE_3_22_SK "Svetlofialová (3)"
