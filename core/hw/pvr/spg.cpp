@@ -18,9 +18,9 @@
 static u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
-static u32 vblk_cnt;
 
 #if !defined(NDEBUG) || defined(DEBUGFAST)
+static u32 vblk_cnt;
 static float last_fps;
 #endif
 
