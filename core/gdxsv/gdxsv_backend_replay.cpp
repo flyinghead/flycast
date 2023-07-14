@@ -523,22 +523,9 @@ void GdxsvBackendReplay::ApplyPatch(bool first_time) {
 	}
 
 	// Online Patch
-	for (int i = 0; i < log_file_.patches_size(); ++i) {
-		if (log_file_.patches(i).write_once() && !first_time) {
-			continue;
-		}
-
-		for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
-			const auto &code = log_file_.patches(i).codes(j);
-			if (code.size() == 8) {
-				gdxsv_WriteMem8(code.address(), code.changed());
-			}
-			if (code.size() == 16) {
-				gdxsv_WriteMem16(code.address(), code.changed());
-			}
-			if (code.size() == 32) {
-				gdxsv_WriteMem32(code.address(), code.changed());
-			}
+	for (const auto& patch : log_file_.patches()) {
+		for (const auto& code : patch.codes()) {
+			gdxsv_WriteMem(code.size(), code.address(), code.changed());
 		}
 	}
 }
@@ -554,18 +541,9 @@ void GdxsvBackendReplay::RestorePatch() {
 	}
 
 	// Online Patch
-	for (int i = 0; i < log_file_.patches_size(); ++i) {
-		for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
-			const auto &code = log_file_.patches(i).codes(j);
-			if (code.size() == 8) {
-				gdxsv_WriteMem8(code.address(), code.original());
-			}
-			if (code.size() == 16) {
-				gdxsv_WriteMem16(code.address(), code.original());
-			}
-			if (code.size() == 32) {
-				gdxsv_WriteMem32(code.address(), code.original());
-			}
+	for (const auto& patch : log_file_.patches()) {
+		for (const auto& code : patch.codes()) {
+			gdxsv_WriteMem(code.size(), code.address(), code.original());
 		}
 	}
 }
