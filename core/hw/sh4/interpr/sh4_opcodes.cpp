@@ -12,6 +12,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
 #include "hw/sh4/dyna/decoder.h"
+#include "debug/debug_agent.h"
 
 
 #ifdef STRICT_MODE
