@@ -162,7 +162,8 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 						ips[i] = str;
 						ports[i] = ntohs(addr->sin6_port);
 					}
-					NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
+					NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i],
+							   relays[i]);
 				} else {
 					int relay_rtt = INT_MAX;
 					int relay_peer = -1;
@@ -179,12 +180,13 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					}
 
 					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr_storage, &rtt)) {
-						rtt =+ (float)rtt_matrix[relay_peer][i];
+						rtt = +(float)rtt_matrix[relay_peer][i];
 						max_rtt = std::max(max_rtt, rtt);
 						ips[i] = ips[relay_peer];
 						ports[i] = ports[relay_peer];
 						relays[i] = true;
-						NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i], relays[i]);
+						NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i],
+								   relays[i]);
 					} else {
 						NOTICE_LOG(COMMON, "Peer%d unreachable", i);
 						ok = false;

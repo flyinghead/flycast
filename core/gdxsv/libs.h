@@ -1,19 +1,11 @@
 #pragma once
 
-#include "types.h"
 #include "hw/sh4/sh4_mem.h"
+#include "types.h"
 
-inline u32 gdxsv_ReadMem32(u32 addr) {
-	return ReadMem32_nommu(addr);
-
-}
-inline u16 gdxsv_ReadMem16(u32 addr) {
-	return ReadMem16_nommu(addr);
-}
-
-inline u8 gdxsv_ReadMem8(u32 addr) {
-	return ReadMem8_nommu(addr);
-}
+inline u32 gdxsv_ReadMem32(u32 addr) { return ReadMem32_nommu(addr); }
+inline u16 gdxsv_ReadMem16(u32 addr) { return ReadMem16_nommu(addr); }
+inline u8 gdxsv_ReadMem8(u32 addr) { return ReadMem8_nommu(addr); }
 
 inline u32 gdxsv_ReadMem(int bits, u32 addr) {
 	if (bits == 32) return gdxsv_ReadMem32(addr);
@@ -35,8 +27,12 @@ inline void gdxsv_WriteMem8(u32 addr, u8 value) {
 }
 
 inline void gdxsv_WriteMem(int bits, u32 addr, u32 value) {
-	if (bits == 32) gdxsv_WriteMem32(addr, value);
-	else if (bits == 16) gdxsv_WriteMem16(addr, value & 0xffffu);
-	else if (bits == 8) gdxsv_WriteMem8(addr, value & 0xffu);
-	else verify(false);
+	if (bits == 32)
+		gdxsv_WriteMem32(addr, value);
+	else if (bits == 16)
+		gdxsv_WriteMem16(addr, value & 0xffffu);
+	else if (bits == 8)
+		gdxsv_WriteMem8(addr, value & 0xffu);
+	else
+		verify(false);
 }

@@ -11,6 +11,7 @@
 #include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv_translation.h"
+#include "hw/sh4/dyna/blockmanager.h"
 #include "imgui/imgui.h"
 #include "libs.h"
 #include "log/InMemoryListener.h"
@@ -21,8 +22,6 @@
 #include "rend/boxart/http_client.h"
 #include "rend/gui.h"
 #include "version.h"
-#include "hw/sh4/dyna/blockmanager.h"
-
 
 bool encode_zlib_deflate(const char *data, int len, std::vector<u8> &out) {
 	z_stream z{};
@@ -509,7 +508,7 @@ void Gdxsv::NotifyWanPort() const {
 	}
 
 	const auto lbs_host = lbs_net_.RemoteHost();
-	const auto lbs_port= lbs_net_.RemotePort();
+	const auto lbs_port = lbs_net_.RemotePort();
 	const auto udp_port = config::GdxLocalPort.get();
 	const auto user_id = user_id_;
 
@@ -656,23 +655,23 @@ std::string Gdxsv::GenerateLoginKey() {
 }
 
 void Gdxsv::ApplyOnlinePatch(bool first_time) {
-	for (const auto& patch : patch_list_.patches()) {
+	for (const auto &patch : patch_list_.patches()) {
 		if (patch.write_once() && !first_time) {
 			continue;
 		}
 		if (first_time) {
 			NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
 		}
-		for (const auto& code : patch.codes()) {
+		for (const auto &code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.changed());
 		}
 	}
 }
 
 void Gdxsv::RestoreOnlinePatch() {
-	for (const auto& patch : patch_list_.patches()) {
+	for (const auto &patch : patch_list_.patches()) {
 		NOTICE_LOG(COMMON, "patch restore: %s", patch.name().c_str());
-		for (const auto& code : patch.codes()) {
+		for (const auto &code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.original());
 		}
 	}

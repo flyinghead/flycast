@@ -136,12 +136,12 @@ bool is_private_addr(const sockaddr *addr) {
 	}
 	if (addr->sa_family == AF_INET) {
 		const auto a = reinterpret_cast<const sockaddr_in *>(addr);
-		const auto ip4 = reinterpret_cast<const uint8_t*>(&a->sin_addr);
+		const auto ip4 = reinterpret_cast<const uint8_t *>(&a->sin_addr);
 		return ip4[0] == 10 || (ip4[0] == 172 && (ip4[1] & 0xf0) == 16) || (ip4[0] == 192 && ip4[1] == 168);
 	}
 	if (addr->sa_family == AF_INET6) {
 		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
-		const auto ip6 = reinterpret_cast<const uint8_t*>(&a->sin6_addr);
+		const auto ip6 = reinterpret_cast<const uint8_t *>(&a->sin6_addr);
 		return (ip6[0] & 0xfe) == 0xfc;
 	}
 	return false;
@@ -654,7 +654,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 						if (c.remote.Open(sender, addrlen)) {
 							c.peer_id = recv.from_peer_id;
 							candidates_.push_back(c);
-							client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), c.remote);
+							client_.SendTo(reinterpret_cast<const char *>(&p), sizeof(p), c.remote);
 						}
 					}
 				}
@@ -666,11 +666,12 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 							.count();
 					auto rtt = static_cast<int>(now - recv.ping_timestamp);
 					if (rtt <= 0) rtt = 1;
-					DEBUG_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt, mask_ip_address(sockaddr_to_string(sender)).c_str());
+					DEBUG_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt,
+							  mask_ip_address(sockaddr_to_string(sender)).c_str());
 
 					// Pong may come from an address different from one which Ping sent, so update the pong_count based on candidate_idx
 					if (recv.candidate_idx < candidates_.size() && candidates_[recv.candidate_idx].peer_id == recv.from_peer_id) {
-						auto& c = candidates_[recv.candidate_idx];
+						auto &c = candidates_[recv.candidate_idx];
 						c.rtt = float(c.pong_count * c.rtt + rtt) / float(c.pong_count + 1);
 						c.pong_count++;
 						rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(c.rtt)));
@@ -680,7 +681,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 					}
 
 					// if the remote address not in candidates, add this.
-					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate& c) {
+					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate &c) {
 						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
 					});
 					if (it == candidates_.end()) {
@@ -696,7 +697,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 			if (elapsed_ms + 500 < duration_ms && loop_count % 100 == 0) {
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
 				for (int i = 0; i < std::min<int>(255, candidates_.size()); i++) {
-					auto& c = candidates_[i];
+					auto &c = candidates_[i];
 					DEBUG_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
 					if (c.remote.is_open()) {
 						Packet p{};
@@ -736,10 +737,9 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 			}
 
 			NOTICE_LOG(COMMON, "CANDIDATES");
-			for (const auto& c : candidates_) {
-				NOTICE_LOG(COMMON, "[%s] Peer%d %s: ping=%d pong=%d rtt=%.2f addr=%s",
-					0 < c.pong_count ? "x"  : " ", c.peer_id, peer_to_user_[c.peer_id].c_str(),
-					c.ping_count, c.pong_count, c.rtt, c.remote.masked_addr().c_str());
+			for (const auto &c : candidates_) {
+				NOTICE_LOG(COMMON, "[%s] Peer%d %s: ping=%d pong=%d rtt=%.2f addr=%s", 0 < c.pong_count ? "x" : " ", c.peer_id,
+						   peer_to_user_[c.peer_id].c_str(), c.ping_count, c.pong_count, c.rtt, c.remote.masked_addr().c_str());
 			}
 		}
 
@@ -786,7 +786,7 @@ bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, fl
 	// Return min rtt address
 	bool found = false;
 	float min_rtt = 1000.0f;
-	for (auto& c : candidates_) {
+	for (auto &c : candidates_) {
 		if (c.peer_id == peer_id && 0 < c.pong_count) {
 			if (0 < c.rtt && c.rtt < min_rtt) {
 				min_rtt = c.rtt;
