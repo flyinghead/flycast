@@ -89,8 +89,11 @@ Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
 void
 Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
 {
+   ASSERT(dst->sa_family == AF_INET || dst->sa_family == AF_INET6);
    bool v4 = dst->sa_family == AF_INET;
    SOCKET sock = v4 ? _socket_v4 : _socket_v6;
+   // FIXME: Using sizeof(sockaddr_storage) as destlen causes sendto to fail, at least on macOS.
+   destlen = v4 ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
    if (sock == INVALID_SOCKET) {
       return;
    }
@@ -100,7 +103,7 @@ Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
       if (err != WSAEWOULDBLOCK) {
          LogError("unknown error in sendto (erro: %d  wsaerr: %d).", res, err);
       }
-      // ASSERT(false && "Unknown error in sendto");
+      ASSERT(false && "Unknown error in sendto");
       return;
    }
    char dst_ip[1024];
