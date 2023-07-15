@@ -110,7 +110,7 @@ std::string sockaddr_to_string(const sockaddr *addr) {
 		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
 		char addrbuf[INET6_ADDRSTRLEN];
 		::inet_ntop(AF_INET6, &a->sin6_addr, addrbuf, sizeof(addrbuf));
-		return std::string(addrbuf) + ":" + std::to_string(ntohs(a->sin6_port));
+		return "[" + std::string(addrbuf) + "]:" + std::to_string(ntohs(a->sin6_port));
 	}
 	return "";
 }
@@ -136,12 +136,12 @@ bool is_private_addr(const sockaddr *addr) {
 	}
 	if (addr->sa_family == AF_INET) {
 		const auto a = reinterpret_cast<const sockaddr_in *>(addr);
-		const auto ip4 = reinterpret_cast<const uint8_t*>(&a->sin_addr);
+		const auto ip4 = reinterpret_cast<const uint8_t *>(&a->sin_addr);
 		return ip4[0] == 10 || (ip4[0] == 172 && (ip4[1] & 0xf0) == 16) || (ip4[0] == 192 && ip4[1] == 168);
 	}
 	if (addr->sa_family == AF_INET6) {
 		const auto a = reinterpret_cast<const sockaddr_in6 *>(addr);
-		const auto ip6 = reinterpret_cast<const uint8_t*>(&a->sin6_addr);
+		const auto ip6 = reinterpret_cast<const uint8_t *>(&a->sin6_addr);
 		return (ip6[0] & 0xfe) == 0xfc;
 	}
 	return false;
@@ -587,20 +587,13 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 		NOTICE_LOG(COMMON, "GGPO_NETWORK_DELAY is %d", network_delay);
 	}
 
-	std::set<int> peer_ids;
-	peer_ids.insert(peer_id);
-	for (const auto &c : candidates_) {
-		peer_ids.insert(c.peer_id);
-	}
-	int peer_count = peer_ids.size();
-
-	std::thread([this, session_id, peer_id, duration_ms, peer_count, network_delay]() {
+	std::thread([this, session_id, peer_id, duration_ms, network_delay]() {
 		WARN_LOG(COMMON, "Start UdpPingPong Thread");
 		start_time_ = std::chrono::high_resolution_clock::now();
 
 		for (int loop_count = 0; running_; loop_count++) {
 			auto now = std::chrono::high_resolution_clock::now();
-			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
+			auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
 
 			while (true) {
 				Packet recv{};
@@ -634,7 +627,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 				}
 
 				if (recv.type == PING) {
-					NOTICE_LOG(COMMON, "Recv PING from %d", recv.from_peer_id);
+					DEBUG_LOG(COMMON, "Recv PING from %d", recv.from_peer_id);
 					std::lock_guard<std::recursive_mutex> lock(mutex_);
 
 					Packet p{};
@@ -661,7 +654,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 						if (c.remote.Open(sender, addrlen)) {
 							c.peer_id = recv.from_peer_id;
 							candidates_.push_back(c);
-							client_.SendTo(reinterpret_cast<const char*>(&p), sizeof(p), c.remote);
+							client_.SendTo(reinterpret_cast<const char *>(&p), sizeof(p), c.remote);
 						}
 					}
 				}
@@ -673,11 +666,12 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 							.count();
 					auto rtt = static_cast<int>(now - recv.ping_timestamp);
 					if (rtt <= 0) rtt = 1;
-					NOTICE_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt, mask_ip_address(sockaddr_to_string(sender)).c_str());
+					DEBUG_LOG(COMMON, "Recv PONG from Peer%d %d[ms] %s", recv.from_peer_id, rtt,
+							  mask_ip_address(sockaddr_to_string(sender)).c_str());
 
 					// Pong may come from an address different from one which Ping sent, so update the pong_count based on candidate_idx
 					if (recv.candidate_idx < candidates_.size() && candidates_[recv.candidate_idx].peer_id == recv.from_peer_id) {
-						auto& c = candidates_[recv.candidate_idx];
+						auto &c = candidates_[recv.candidate_idx];
 						c.rtt = float(c.pong_count * c.rtt + rtt) / float(c.pong_count + 1);
 						c.pong_count++;
 						rtt_matrix_[peer_id][recv.from_peer_id] = static_cast<uint8_t>(std::min(255, (int)std::ceil(c.rtt)));
@@ -687,7 +681,7 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 					}
 
 					// if the remote address not in candidates, add this.
-					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate& c) {
+					auto it = std::find_if(candidates_.begin(), candidates_.end(), [&recv, &sender](const Candidate &c) {
 						return c.peer_id == recv.from_peer_id && is_same_addr(sender, c.remote.net_addr());
 					});
 					if (it == candidates_.end()) {
@@ -700,11 +694,11 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 				}
 			}
 
-			if (ms + 500 < duration_ms && loop_count % 100 == 0) {
+			if (elapsed_ms + 500 < duration_ms && loop_count % 100 == 0) {
 				std::lock_guard<std::recursive_mutex> lock(mutex_);
 				for (int i = 0; i < std::min<int>(255, candidates_.size()); i++) {
-					auto& c = candidates_[i];
-					NOTICE_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
+					auto &c = candidates_[i];
+					DEBUG_LOG(COMMON, "Send PING to Peer%d %s", c.peer_id, c.remote.masked_addr().c_str());
 					if (c.remote.is_open()) {
 						Packet p{};
 						p.magic = MAGIC;
@@ -725,27 +719,33 @@ void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int dura
 				}
 			}
 
-			if (0 < loop_count && loop_count % 500 == 0) {
-				std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-				NOTICE_LOG(COMMON, "RTT MATRIX");
-				NOTICE_LOG(COMMON, "  %4d%4d%4d%4d", 0, 1, 2, 3);
-				for (int i = 0; i < 4; i++) {
-					NOTICE_LOG(COMMON, "%d>%4d%4d%4d%4d", i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
-				}
-			}
-
-			if (duration_ms < ms) {
-				NOTICE_LOG(COMMON, "UdpPingTest Finish");
-				client_.Close();
-				running_ = false;
+			if (duration_ms < elapsed_ms) {
 				break;
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 
-		WARN_LOG(COMMON, "End UdpPingPong Thread");
+		{
+			std::lock_guard lock(mutex_);
+
+			NOTICE_LOG(COMMON, "UdpPingTest Finish");
+			NOTICE_LOG(COMMON, "RTT MATRIX");
+			NOTICE_LOG(COMMON, "  %4d%4d%4d%4d", 0, 1, 2, 3);
+			for (int i = 0; i < 4; i++) {
+				NOTICE_LOG(COMMON, "%d>%4d%4d%4d%4d", i, rtt_matrix_[i][0], rtt_matrix_[i][1], rtt_matrix_[i][2], rtt_matrix_[i][3]);
+			}
+
+			NOTICE_LOG(COMMON, "CANDIDATES");
+			for (const auto &c : candidates_) {
+				NOTICE_LOG(COMMON, "[%s] Peer%d %s: ping=%d pong=%d rtt=%.2f addr=%s", 0 < c.pong_count ? "x" : " ", c.peer_id,
+						   peer_to_user_[c.peer_id].c_str(), c.ping_count, c.pong_count, c.rtt, c.remote.masked_addr().c_str());
+			}
+		}
+
+		NOTICE_LOG(COMMON, "End UdpPingPong Thread");
+		client_.Close();
+		running_ = false;
 	}).detach();
 }
 
@@ -786,7 +786,7 @@ bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, fl
 	// Return min rtt address
 	bool found = false;
 	float min_rtt = 1000.0f;
-	for (auto& c : candidates_) {
+	for (auto &c : candidates_) {
 		if (c.peer_id == peer_id && 0 < c.pong_count) {
 			if (0 < c.rtt && c.rtt < min_rtt) {
 				min_rtt = c.rtt;

@@ -523,8 +523,8 @@ void GdxsvBackendReplay::ApplyPatch(bool first_time) {
 	}
 
 	// Online Patch
-	for (const auto& patch : log_file_.patches()) {
-		for (const auto& code : patch.codes()) {
+	for (const auto &patch : log_file_.patches()) {
+		for (const auto &code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.changed());
 		}
 	}
@@ -541,8 +541,8 @@ void GdxsvBackendReplay::RestorePatch() {
 	}
 
 	// Online Patch
-	for (const auto& patch : log_file_.patches()) {
-		for (const auto& code : patch.codes()) {
+	for (const auto &patch : log_file_.patches()) {
+		for (const auto &code : patch.codes()) {
 			gdxsv_WriteMem(code.size(), code.address(), code.original());
 		}
 	}
