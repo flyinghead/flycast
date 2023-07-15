@@ -21,6 +21,7 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
+#include "hw/sh4/dyna/blockmanager.h"
 #include "imgui/imgui.h"
 #include "roboto_medium.h"
 #include "network/net_handshake.h"
@@ -1392,6 +1393,16 @@ static inline void gui_debug_tab()
 	{
 		ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+
+		header("Misc");
+		{
+			if (ImGui::Button("Reset dynarec cache")) {
+				bm_ResetCache();
+				bm_ResetTempCache(true);
+			}
+		}
+		ImGui::Spacing();
+
 	    header("Logging");
 	    {
 	    	LogManager *logManager = LogManager::GetInstance();
