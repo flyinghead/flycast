@@ -279,8 +279,19 @@ static void emitDataProcOp(const ArmOp& op)
 static void jump(const void *code)
 {
 	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
-	Label code_label(offset);
-	ass.B(&code_label);
+	if (offset < -32 * 1024 * 1024 || offset >= 32 * 1024 * 1024)
+	{
+		INFO_LOG(AICA_ARM, "jump offset too large: %d", offset);
+		UseScratchRegisterScope scope(&ass);
+		Register reg = scope.Acquire();
+		ass.Mov(reg, (u32)code);
+		ass.Bx(reg);
+	}
+	else
+	{
+		Label code_label(offset);
+		ass.B(&code_label);
+	}
 }
 
 static void call(const void *code, bool saveFlags = true)
@@ -288,8 +299,19 @@ static void call(const void *code, bool saveFlags = true)
 	if (saveFlags)
 		storeFlags();
 	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
-	Label code_label(offset);
-	ass.Bl(&code_label);
+	if (offset < -32 * 1024 * 1024 || offset >= 32 * 1024 * 1024)
+	{
+		INFO_LOG(AICA_ARM, "call offset too large: %d", offset);
+		UseScratchRegisterScope scope(&ass);
+		Register reg = scope.Acquire();
+		ass.Mov(reg, (u32)code);
+		ass.Blx(reg);
+	}
+	else
+	{
+		Label code_label(offset);
+		ass.Bl(&code_label);
+	}
 	if (saveFlags)
 		loadFlags();
 }
