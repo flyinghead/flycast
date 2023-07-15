@@ -11,18 +11,18 @@
 #include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv_translation.h"
-#include "hw/sh4/sh4_mem.h"
 #include "imgui/imgui.h"
 #include "libs.h"
 #include "log/InMemoryListener.h"
 #include "log/LogManager.h"
-#include "lzma/CpuArch.h"
 #include "network/ggpo.h"
 #include "oslib/oslib.h"
 #include "reios/reios.h"
 #include "rend/boxart/http_client.h"
 #include "rend/gui.h"
 #include "version.h"
+#include "hw/sh4/dyna/blockmanager.h"
+
 
 bool encode_zlib_deflate(const char *data, int len, std::vector<u8> &out) {
 	z_stream z{};
@@ -657,6 +657,9 @@ std::string Gdxsv::GenerateLoginKey() {
 
 void Gdxsv::ApplyOnlinePatch(bool first_time) {
 	for (const auto& patch : patch_list_.patches()) {
+		if (patch.write_once() && !first_time) {
+			continue;
+		}
 		if (first_time) {
 			NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
 		}
@@ -674,6 +677,10 @@ void Gdxsv::RestoreOnlinePatch() {
 		}
 	}
 	patch_list_.clear_patches();
+
+	// Discard dynarec cache because it may become corrupted
+	bm_ResetCache();
+	bm_ResetTempCache(true);
 }
 
 void Gdxsv::WritePatch() {
