@@ -934,8 +934,10 @@ void Emulator::start()
 						startTime = sh4_sched_now64();
 						renderTimeout = false;
 						runInternal();
-						if (!ggpo::nextFrame())
-							break;
+						// NOTE: modified for gdxsv
+						// to keep running emulator thread if ggpo stopped.
+						if (ggpo::active()) ggpo::nextFrame();
+						// if (!ggpo::nextFrame()) break;
 					}
 					TermAudio();
 				} catch (...) {
