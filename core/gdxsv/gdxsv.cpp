@@ -146,6 +146,7 @@ void Gdxsv::Reset() {
 				id[i] = lbs_msg.body[2 + i];
 			}
 			user_id_ = id;
+			lbs_net_.Send(GenerateP2PMatchReportPacket());
 			NotifyWanPort();
 		}
 
@@ -408,7 +409,6 @@ void Gdxsv::HandleRPC() {
 			if (lbs_net_.Connect(server_, port)) {
 				netmode_ = NetMode::Lbs;
 				lbs_net_.Send(GeneratePlatformInfoPacket());
-				lbs_net_.Send(GenerateP2PMatchReportPacket());
 				FetchPublicIP();
 				AddPortMapping();
 			} else {
@@ -687,6 +687,8 @@ void Gdxsv::WritePatch() {
 	if (disk_ == 2) WritePatchDisk2();
 	if (symbols_["patch_id"] == 0 || gdxsv_ReadMem32(symbols_["patch_id"]) != symbols_[":patch_id"]) {
 		NOTICE_LOG(COMMON, "patch %d %d", gdxsv_ReadMem32(symbols_["patch_id"]), symbols_[":patch_id"]);
+		bm_ResetCache();
+		bm_ResetTempCache(true);
 
 #include "gdxsv_patch.inc"
 
