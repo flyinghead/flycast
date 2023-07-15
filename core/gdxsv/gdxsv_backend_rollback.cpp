@@ -182,8 +182,19 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr_storage, &rtt)) {
 						rtt = +(float)rtt_matrix[relay_peer][i];
 						max_rtt = std::max(max_rtt, rtt);
-						ips[i] = ips[relay_peer];
-						ports[i] = ports[relay_peer];
+						if (addr_storage.ss_family == AF_INET) {
+							auto addr = (sockaddr_in*)&addr_storage;
+							char str[INET_ADDRSTRLEN] = {};
+							inet_ntop(AF_INET, &(addr->sin_addr), str, sizeof(str));
+							ips[i] = str;
+							ports[i] = ntohs(addr->sin_port);
+						} else if (addr_storage.ss_family == AF_INET6) {
+							auto addr = (sockaddr_in6*)&addr_storage;
+							char str[INET6_ADDRSTRLEN] = {};
+							inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
+							ips[i] = str;
+							ports[i] = ntohs(addr->sin6_port);
+						}
 						relays[i] = true;
 						NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i],
 								   relays[i]);
