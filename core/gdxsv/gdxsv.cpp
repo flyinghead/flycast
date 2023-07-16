@@ -678,8 +678,7 @@ void Gdxsv::RestoreOnlinePatch() {
 	patch_list_.clear_patches();
 
 	// Discard dynarec cache because it may become corrupted
-	bm_ResetCache();
-	bm_ResetTempCache(true);
+	sh4_cpu.ResetCache();
 }
 
 void Gdxsv::WritePatch() {
@@ -687,8 +686,7 @@ void Gdxsv::WritePatch() {
 	if (disk_ == 2) WritePatchDisk2();
 	if (symbols_["patch_id"] == 0 || gdxsv_ReadMem32(symbols_["patch_id"]) != symbols_[":patch_id"]) {
 		NOTICE_LOG(COMMON, "patch %d %d", gdxsv_ReadMem32(symbols_["patch_id"]), symbols_[":patch_id"]);
-		bm_ResetCache();
-		bm_ResetTempCache(true);
+		sh4_cpu.ResetCache();
 
 #include "gdxsv_patch.inc"
 
