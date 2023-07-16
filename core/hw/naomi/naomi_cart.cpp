@@ -45,6 +45,7 @@
 #include "network/alienfnt_modem.h"
 #include "netdimm.h"
 #include "systemsp.h"
+#include "hopper.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -666,6 +667,12 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		{
 			printer::init();
 		}
+		if (!strcmp(CurrentCartridge->game->name, "clubkprz") || !strncmp(CurrentCartridge->game->name, "clubkpz", 7)
+			|| !strncmp(CurrentCartridge->game->name, "shootpl", 7)
+			|| gameId == "KICK '4' CASH")
+		{
+			hopper::init();
+		}
 
 #ifdef NAOMI_MULTIBOARD
 		// Not a multiboard game but needs the same desktop environment
@@ -726,6 +733,7 @@ void naomi_cart_Close()
 	card_reader::initdTerm();
 	card_reader::barcodeTerm();
 	serialModemTerm();
+	hopper::term();
 	delete CurrentCartridge;
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;
@@ -738,6 +746,7 @@ void naomi_cart_serialize(Serializer& ser)
 		CurrentCartridge->Serialize(ser);
 	touchscreen::serialize(ser);
 	printer::serialize(ser);
+	hopper::serialize(ser);
 }
 
 void naomi_cart_deserialize(Deserializer& deser)
@@ -746,6 +755,7 @@ void naomi_cart_deserialize(Deserializer& deser)
 		CurrentCartridge->Deserialize(deser);
 	touchscreen::deserialize(deser);
 	printer::deserialize(deser);
+	hopper::deserialize(deser);
 }
 
 int naomi_cart_GetPlatform(const char *path)

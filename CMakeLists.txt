@@ -883,6 +883,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/printer.cpp
 		core/hw/naomi/systemsp.h
 		core/hw/naomi/systemsp.cpp
+		core/hw/naomi/hopper.h
+		core/hw/naomi/hopper.cpp
 		core/hw/pvr/elan.cpp
 		core/hw/pvr/elan.h
 		core/hw/pvr/elan_struct.h
