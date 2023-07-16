@@ -389,13 +389,9 @@ const Game Games[] =
             { "mtp-23842.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
             { "mtp-23843.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
             { "copy",            0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
-            { NULL, 0, 0 },
-        }
-        // btn0: TOP VIEW, btn2; START/MODE, up: ZOOM IN, down: ZOOM OUT
-        // mouse: TRACK BALL X/Y
-        // TODO CUE ROLLER (x8000)
-        //      CUE TIP UD (x80h)
-        //      CUE TIP LR (x80h)
+        },
+		nullptr,
+		&shootout_inputs,
     },
     // Shootout Pool The Medal / Shootout Pool Prize (Rev A)
     {
@@ -417,9 +413,9 @@ const Game Games[] =
 
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(d11312d3) SHA1(c444012954f58a9af283ab8439f31cb89de9c14d) )
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&shootout_inputs,
     },
     // Shootout Pool The Medal Ver. B / Shootout Pool Prize Ver. B
     {
@@ -438,8 +434,9 @@ const Game Games[] =
             { "opr-24176.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
             { "opr-24177.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
             { "copy",            0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&shootout_inputs,
     },
     // Shootout Pool Prize (Export) / Shootout Pool The Medal (Japan) Version B (prototype)
     {
@@ -458,8 +455,9 @@ const Game Games[] =
             { "rom3.ic3s", 0x1800000, 0x800000 },
             { "rom4.ic4s", 0x2000000, 0x800000 },
             // IC5 - IC21 populated, empty.
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&shootout_inputs,
     },
 
     // Touch de Uno! 2 (Japan)
@@ -4309,6 +4307,19 @@ const Game Games[] =
 		&zombie_inputs,
 		zombrvn_eeprom_dump,
     },
+	{
+		"hopper",
+		nullptr,
+		"SWP Hopper Board",
+		0x0b000000,
+		0x1e5bb0cd,
+		NULL,
+		M2,
+		ROT0,
+		{
+			{ "epr-24083.ic11", 0x000000, 0x400000, 0x2733e65a },
+		},
+	},
     // Naomi M4 Roms
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
     {

@@ -239,6 +239,16 @@ protected:
 			y = mapleInputState[playerNum].absPos.y;
 		}
 	}
+	
+	virtual s16 readRotaryEncoders(int channel, s16 relX, s16 relY)
+	{
+		switch (channel)
+		{
+			case 0: return relX;
+			case 1: return relY;
+			default: return 0;
+		}
+	}
 
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
@@ -345,7 +355,49 @@ public:
 	}
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
+};
 
+// Uses btn1 to switch between cue aim and cue roller encoders
+class jvs_837_13938_shootout : public jvs_837_13938
+{
+public:
+	jvs_837_13938_shootout(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{
+		memset(lastValue, 0, sizeof(lastValue));
+	}
+
+protected:
+	void read_digital_in(const u32 *buttons, u16 *v) override
+	{
+		jvs_837_13938::read_digital_in(buttons, v);
+		btn1down = v[0] & NAOMI_BTN1_KEY;
+	}
+
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		switch (channel)
+		{
+			case 0: // CUE AIM L/R
+				if (!btn1down)
+					lastValue[0] = relX;
+				break;
+			case 1: // CUE AIM U/D
+				if (!btn1down)
+					lastValue[1] = relY;
+				break;
+			case 2: // CUE ROLLER
+				if (btn1down)
+					lastValue[2] = relY;
+				break;
+			default:
+				return 0;
+		}
+		return lastValue[channel];
+	}
+
+	bool btn1down = false;
+	s16 lastValue[3];
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -907,7 +959,10 @@ maple_naomi_jamma::maple_naomi_jamma()
 			io_boards.push_back(std::make_unique<jvs_837_13551_4P>(1, this));
 			break;
 		case JVS::RotaryEncoders:
-			io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
+			if (settings.content.gameId.substr(0, 13) == "SHOOTOUT POOL")
+				io_boards.push_back(std::make_unique<jvs_837_13938_shootout>(1, this));
+			else
+				io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
 			break;
 		case JVS::OutTrigger:
@@ -1891,24 +1946,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
-							if (chan == 0)
-							{
-								LOGJVS("%d:%4x ", chan, rotx & 0xFFFF);
-								JVS_OUT(rotx >> 8);	// MSB
-								JVS_OUT(rotx);		// LSB
-							}
-							else if (chan == 1)
-							{
-								LOGJVS("%d:%4x ", chan, roty & 0xFFFF);
-								JVS_OUT(roty >> 8);	// MSB
-								JVS_OUT(roty);		// LSB
-							}
-							else
-							{
-								LOGJVS("%d:%4x ", chan, 0);
-								JVS_OUT(0x00);		// MSB
-								JVS_OUT(0x00);		// LSB
-							}
+							s16 v = readRotaryEncoders(chan, rotx, roty);
+							LOGJVS("%d:%4x ", chan, v & 0xFFFF);
+							JVS_OUT(v >> 8);	// MSB
+							JVS_OUT(v);			// LSB
 						}
 						cmdi += 2;
 					}
