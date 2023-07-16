@@ -401,30 +401,37 @@ void input_sdl_handle()
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
-				gui_set_mouse_position(event.button.x, event.button.y);
-				gui_set_mouse_button(event.button.button - 1, event.button.state == SDL_PRESSED);
-				checkRawInput();
-				if (!config::UseRawInput)
 				{
-					if (!mouseCaptured || !gameRunning)
-						sdl_mouse->setAbsPos(event.button.x, event.button.y);
-					bool pressed = event.button.state == SDL_PRESSED;
-					switch (event.button.button) {
-					case SDL_BUTTON_LEFT:
-						sdl_mouse->setButton(Mouse::LEFT_BUTTON, pressed);
-						break;
-					case SDL_BUTTON_RIGHT:
-						sdl_mouse->setButton(Mouse::RIGHT_BUTTON, pressed);
-						break;
-					case SDL_BUTTON_MIDDLE:
-						sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, pressed);
-						break;
-					case SDL_BUTTON_X1:
-						sdl_mouse->setButton(Mouse::BUTTON_4, pressed);
-						break;
-					case SDL_BUTTON_X2:
-						sdl_mouse->setButton(Mouse::BUTTON_5, pressed);
-						break;
+					Uint8 button;
+					gui_set_mouse_position(event.button.x, event.button.y);
+					// Swap middle and right clicks for GUI
+					button = event.button.button;
+					if (button == SDL_BUTTON_MIDDLE || button == SDL_BUTTON_RIGHT)
+						button ^= 1;
+					gui_set_mouse_button(button - 1, event.button.state == SDL_PRESSED);
+					checkRawInput();
+					if (!config::UseRawInput)
+					{
+						if (!mouseCaptured || !gameRunning)
+							sdl_mouse->setAbsPos(event.button.x, event.button.y);
+						bool pressed = event.button.state == SDL_PRESSED;
+						switch (event.button.button) {
+						case SDL_BUTTON_LEFT:
+							sdl_mouse->setButton(Mouse::LEFT_BUTTON, pressed);
+							break;
+						case SDL_BUTTON_RIGHT:
+							sdl_mouse->setButton(Mouse::RIGHT_BUTTON, pressed);
+							break;
+						case SDL_BUTTON_MIDDLE:
+							sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, pressed);
+							break;
+						case SDL_BUTTON_X1:
+							sdl_mouse->setButton(Mouse::BUTTON_4, pressed);
+							break;
+						case SDL_BUTTON_X2:
+							sdl_mouse->setButton(Mouse::BUTTON_5, pressed);
+							break;
+						}
 					}
 				}
 				break;
