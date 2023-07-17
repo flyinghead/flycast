@@ -50,6 +50,7 @@ void gdxsv_emu_start() {
 			dc_loadstate(99);
 		} else {
 			gdxsv.StartPingTest();
+			gdxsv.FetchPublicIP();
 		}
 	}
 }

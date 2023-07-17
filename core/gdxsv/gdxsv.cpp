@@ -124,8 +124,6 @@ void Gdxsv::Reset() {
 	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s udp_port:%d", (int)disk_, server_.c_str(), loginkey_.c_str(),
 			   config::GdxLocalPort.get());
 
-	FetchPublicIP();
-
 	lbs_net_.lbs_packet_filter([this](const LbsMessage &lbs_msg) -> bool {
 		if (netmode_ != NetMode::Lbs) {
 			if (lbs_net_.IsConnected()) {
