@@ -406,12 +406,12 @@ bool UdpClient::Bind(int port) {
 		// create socket
 		sock_t sock = socket(af, SOCK_DGRAM, IPPROTO_UDP);
 		if (sock == INVALID_SOCKET) {
-			WARN_LOG(COMMON, "UDP Connect fail %d", get_last_error());
-			continue;
+			WARN_LOG(COMMON, "UDP socket create failed %d", get_last_error());
+			break;
 		}
 
 		// sockopt
-		int optval = 0;
+		int optval = 1;
 		if (port != 0) {
 			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&optval, sizeof optval);
 		}
@@ -421,7 +421,7 @@ bool UdpClient::Bind(int port) {
 			optval = 1;
 			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&optval, sizeof optval)) {
 				closesocket(sock);
-				continue;
+				break;
 			}
 		}
 
@@ -446,7 +446,7 @@ bool UdpClient::Bind(int port) {
 		if (::bind(sock, reinterpret_cast<sockaddr *>(&addr_storage), addrlen) < 0) {
 			ERROR_LOG(COMMON, "gdxsv: bind() failed. errno=%d", get_last_error());
 			closesocket(sock);
-			continue;
+			break;
 		}
 
 		set_recv_timeout(sock, 1);
@@ -462,7 +462,7 @@ bool UdpClient::Bind(int port) {
 		}
 	}
 
-	if (sock_v4_ == INVALID_SOCKET && sock_v6_ == INVALID_SOCKET) {
+	if (sock_v4_ == INVALID_SOCKET) {
 		NOTICE_LOG(COMMON, "UDP Initialize failed");
 		return false;
 	}
@@ -472,7 +472,7 @@ bool UdpClient::Bind(int port) {
 	return true;
 }
 
-bool UdpClient::Initialized() const { return !(sock_v4_ == INVALID_SOCKET && sock_v6_ == INVALID_SOCKET); }
+bool UdpClient::Initialized() const { return sock_v4_ != INVALID_SOCKET; }
 
 int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage *from_addr, socklen_t *addrlen) {
 	if (sock_v4_ != INVALID_SOCKET) {
@@ -577,8 +577,10 @@ void MessageFilter::Clear() { recv_seq.clear(); }
 void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int duration_ms) {
 	if (running_) return;
 	verify(peer_id < N);
-	client_.Close();
-	client_.Bind(port);
+	if (!client_.Bind(port)) {
+		ERROR_LOG(COMMON, "UdpPingPong.Start client_.Bind failed");
+		return;
+	}
 	running_ = true;
 	int network_delay = 0;
 	const auto delay_option = std::getenv("GGPO_NETWORK_DELAY");
