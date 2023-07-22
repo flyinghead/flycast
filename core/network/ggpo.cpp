@@ -1171,13 +1171,14 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me,
 	const std::vector<u16>& ports,
 	const std::vector<u8>& relays) {
 	synchronized = false;
+	const std::string session_code(sessionCode);
 	return std::async(std::launch::async, [=]{
 		{
 			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
 			gdxsvStartSession(0, 0, "");
 #else
-			gdxsvStartSession(sessionCode, me, ips, ports, relays);
+			gdxsvStartSession(session_code.c_str(), me, ips, ports, relays);
 #endif
 		}
 		while (!synchronized && active())
