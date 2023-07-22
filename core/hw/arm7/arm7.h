@@ -1,10 +1,7 @@
 #pragma once
 #include "types.h"
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 void init();
@@ -114,5 +111,4 @@ extern bool Arm7Enabled;
 void CPUFiq();
 void CPUUpdateCPSR();
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm

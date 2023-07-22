@@ -2,10 +2,7 @@
 #include "types.h"
 #include "hw/aica/aica_if.h"
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 template <typename T> T readReg(u32 addr);
@@ -56,5 +53,4 @@ extern u32 e68k_reg_M;
 void update_armintc();
 void interruptChange(u32 bits, u32 L);
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm
