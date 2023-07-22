@@ -125,16 +125,15 @@ Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
 bool
 Udp::OnLoopPoll(void *cookie)
 {
-   uint8          recv_buf[MAX_UDP_PACKET_SIZE];
-   sockaddr_storage recv_addr;
-   socklen_t      recv_addr_len;
+   uint8 recv_buf[MAX_UDP_PACKET_SIZE];
 
    for (int s = 0; s < 2; s++) for (;;) {
       SOCKET sock = s == 0 ? _socket_v4 : _socket_v6;
       if (sock == INVALID_SOCKET) {
          continue;
       }
-      recv_addr_len = sizeof(recv_addr);
+      sockaddr_storage recv_addr{};
+      socklen_t recv_addr_len = sizeof(recv_addr);
       int len = recvfrom(sock, (char *)recv_buf, MAX_UDP_PACKET_SIZE, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
 
       // TODO: handle len == 0... indicates a disconnect.

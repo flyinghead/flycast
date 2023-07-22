@@ -124,7 +124,7 @@ protected:
    void LogMsg(const char *prefix, UdpMsg *msg);
    void LogEvent(const char *prefix, const UdpProtocol::Event &evt);
    void SendSyncRequest();
-   void SendMsg(UdpMsg *msg);
+   void SendMsg(UdpMsg *msg, sockaddr_storage* to = nullptr);
    void PumpSendQueue();
    void SendPendingOutput();
    bool OnInvalid(UdpMsg *msg, int len);
