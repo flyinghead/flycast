@@ -753,6 +753,7 @@ bool nextFrame()
 	}
 
 	// may call save_game_state
+	int loop_count = 0;
 	do {
 		if (!config::ThreadedRendering && !useRandInput)
 			UpdateInputState();
@@ -802,14 +803,19 @@ bool nextFrame()
 		}
 		error = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
 		if (error == GGPO_OK)
+		{
+			if (2 < loop_count)
+				NOTICE_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached looped %dms", loop_count * 5);
 			break;
+		}
 		if (error != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
 		{
-			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", error);
+			ERROR_LOG(NETWORK, "ggpo_add_local_input failed %d", error);
 			stopSession();
 			throw FlycastException("GGPO error");
 		}
-		NOTICE_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
+		DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
+		loop_count++;
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		error = ggpo_idle(ggpoSession, 0);
 		if (error != GGPO_OK)
