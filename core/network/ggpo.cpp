@@ -232,11 +232,11 @@ static bool on_event(GGPOEvent *info)
 		gui_display_notification("Connected to peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
-		NOTICE_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
+		INFO_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
 		gui_display_notification("Synchronizing with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
-		NOTICE_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
+		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
 		connected[info->u.synchronized.player] = true;
 		gui_display_notification("Synchronized with peer", 2000);
 		break;
