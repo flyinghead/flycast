@@ -11,6 +11,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "json.hpp"
+#include "libs.h"
 #include "nowide/fstream.hpp"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
@@ -314,7 +315,7 @@ void gdxsv_emu_gui_settings() {
 
 	static std::string v4_result, v6_result;
 	static std::future<std::string> v4_future, v6_future;
-	if (v4_future.valid() && v4_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+	if (future_is_ready(v4_future)) {
 		v4_result = v4_future.get();
 	}
 	if (ImGui::Button("Test The Port (IPv4)", ScaledVec2(buttonWidth, 0)) && !v4_future.valid()) {
@@ -326,7 +327,7 @@ void gdxsv_emu_gui_settings() {
 	ImGui::SameLine();
 	ImGui::Text("%s", v4_result.c_str());
 
-	if (v6_future.valid() && v6_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+	if (future_is_ready(v6_future)) {
 		v6_result = v6_future.get();
 	}
 	if (ImGui::Button("Test The Port (IPv6)", ScaledVec2(buttonWidth, 0)) && !v6_future.valid()) {

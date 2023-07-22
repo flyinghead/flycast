@@ -18,6 +18,7 @@
 #include "dirent.h"
 #include "gdxsv.h"
 #include "json.hpp"
+#include "libs.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
 #include "rend/boxart/http_client.h"
@@ -390,11 +391,6 @@ void parse_user_json(const std::vector<u8>& json_string, std::vector<UserEntry>&
 	} catch (const nlohmann::json::exception& e) {
 		WARN_LOG(COMMON, "json parse failure: %s", e.what());
 	}
-}
-
-template <typename T>
-bool future_is_ready(const T& future) {
-	return future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
 }
 
 void fetch_replay_json() {

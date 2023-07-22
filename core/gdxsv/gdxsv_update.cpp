@@ -9,6 +9,7 @@
 #include <string>
 
 #include "json.hpp"
+#include "libs.h"
 #include "rend/boxart/http_client.h"
 #include "version.h"
 
@@ -55,11 +56,6 @@ static const std::string DefaultFlycastName =
 #else
 		"";
 #endif
-
-template <typename T>
-static bool future_is_ready(const T& future) {
-	return future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
-}
 
 void GdxsvUpdate::Reset() {
 	fetch_latest_version_future_ = {};
