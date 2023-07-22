@@ -338,14 +338,14 @@ bool UdpRemote::Open(const char *host, int port) {
 	verify(0 < port && port < 65536);
 	addrinfo *res = nullptr;
 	addrinfo hints{};
-	hints.ai_family = AF_UNSPEC;	  //  IPv4 or IPv6
+	hints.ai_family = AF_UNSPEC;	  // IPv4 or IPv6
 	hints.ai_socktype = SOCK_DGRAM;	  // UDP
 	hints.ai_flags = AI_NUMERICSERV;  // service is port no
 	char service[10] = {};
 	snprintf(service, sizeof(service), "%d", port);
 	const auto err = getaddrinfo(host, service, &hints, &res);
 	if (err != 0) {
-		WARN_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
+		ERROR_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
 		return false;
 	}
 
@@ -360,7 +360,7 @@ bool UdpRemote::Open(const char *host, int port) {
 	freeaddrinfo(res);
 
 	if (net_addr_len_ == 0) {
-		WARN_LOG(COMMON, "UDP Remote::Open failed. no address available");
+		ERROR_LOG(COMMON, "UDP Remote::Open failed. no address available");
 		return false;
 	}
 
@@ -772,12 +772,13 @@ int UdpPingPong::ElapsedMs() const {
 
 void UdpPingPong::AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
-	Candidate c{};
 	user_to_peer_[user_id] = peer_id;
 	peer_to_user_[peer_id] = user_id;
+	Candidate c{};
 	c.peer_id = peer_id;
-	c.remote.Open(ip.c_str(), port);
-	candidates_.push_back(c);
+	if (c.remote.Open(ip.c_str(), port)) {
+		candidates_.emplace_back(c);
+	}
 }
 
 bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt) {
