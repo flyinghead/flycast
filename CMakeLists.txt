@@ -137,15 +137,17 @@ if(VITA)
 	set(USE_GLES2 ON)
 	enable_language(ASM)
 
-	add_executable(${PROJECT_NAME} core/emulator.cpp)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
-	# target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_EXCEPTIONS)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE VITA _GNU_SOURCE)
+	if(LIBRETRO)
+		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO VITA)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro_vita")
+	else()
+		add_executable(${PROJECT_NAME} core/emulator.cpp)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+	endif()
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE _GNU_SOURCE)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
-
-	# For proper fseek/ftell definition in external dependency "libchdr", doesn't impact anything else:
-	target_compile_definitions(${PROJECT_NAME} PRIVATE __PS3__)
-
 elseif(NINTENDO_SWITCH)
 	set(USE_VULKAN OFF)
 	enable_language(ASM)
@@ -638,7 +640,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.h)
 
 add_subdirectory(core/deps/nowide EXCLUDE_FROM_ALL)
-target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
+target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE> $<$<BOOL:${VITA}>:_GNU_SOURCE>)
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
@@ -659,7 +661,7 @@ if(NOT MINIUPNP_FOUND)
 	endif()
 endif()
 
-if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH OR VITA)
+if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
@@ -1867,16 +1869,20 @@ if(NINTENDO_SWITCH)
 endif()
 
 if(VITA)
-	vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE STRIPPED NOASLR)
-	vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
-		VERSION ${VITA_VERSION}
-		NAME ${VITA_APP_NAME}
-		FILE ${CMAKE_SOURCE_DIR}/shell/vita/icon0.png sce_sys/icon0.png
-		${CMAKE_SOURCE_DIR}/shell/vita/startup.png sce_sys/livearea/contents/startup.png
-		${CMAKE_SOURCE_DIR}/shell/vita/bg.png sce_sys/livearea/contents/bg.png
-		${CMAKE_SOURCE_DIR}/shell/vita/template.xml sce_sys/livearea/contents/template.xml
-		${VPK_INCLUDES}
-	)
+	if(LIBRETRO)
+		# TODO?
+	else()
+		vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE STRIPPED NOASLR)
+		vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
+			VERSION ${VITA_VERSION}
+			NAME ${VITA_APP_NAME}
+			FILE ${CMAKE_SOURCE_DIR}/shell/vita/icon0.png sce_sys/icon0.png
+			${CMAKE_SOURCE_DIR}/shell/vita/startup.png sce_sys/livearea/contents/startup.png
+			${CMAKE_SOURCE_DIR}/shell/vita/bg.png sce_sys/livearea/contents/bg.png
+			${CMAKE_SOURCE_DIR}/shell/vita/template.xml sce_sys/livearea/contents/template.xml
+			${VPK_INCLUDES}
+		)
+	endif()
 endif()
 
 if(IOS)

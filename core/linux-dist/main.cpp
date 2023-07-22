@@ -220,7 +220,7 @@ std::string find_user_data_dir()
 #endif
 }
 
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__vita__)
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
 {
 	std::string::size_type pos = 0;

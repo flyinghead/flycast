@@ -20,6 +20,10 @@
 #include "stdclass.h"
 #include "file/file_path.h"
 
+#ifdef __vita__
+#include <sys/syslimits.h> // for PATH_MAX
+#endif
+
 const char *retro_get_system_directory();
 
 extern char game_dir_no_slash[1024];

@@ -29,6 +29,10 @@
 #include "nswitch.h"
 #endif
 
+#ifdef __vita__
+#include <sys/syslimits.h> // for PATH_MAX
+#endif
+
 #include <sys/stat.h>
 #include <file/file_path.h>
 

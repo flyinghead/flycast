@@ -502,8 +502,10 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     glLinkProgram(g_ShaderHandle);
     CheckProgram(g_ShaderHandle, "shader program");
 
+#ifndef __vita__
     glDetachShader(g_ShaderHandle, vert_handle);
     glDetachShader(g_ShaderHandle, frag_handle);
+#endif
     glDeleteShader(vert_handle);
     glDeleteShader(frag_handle);
 

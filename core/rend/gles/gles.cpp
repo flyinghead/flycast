@@ -975,8 +975,10 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
+#ifndef __vita__
 	glDetachShader(program, vs);
 	glDetachShader(program, ps);
+#endif
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
