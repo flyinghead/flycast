@@ -45,10 +45,7 @@
 #define clip_verify(x)
 #endif
 
-namespace aica
-{
-
-namespace sgc
+namespace aica::sgc
 {
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -1622,5 +1619,4 @@ void deserialize(Deserializer& deser)
 	}
 }
 
-} // namespace sgc
-} // namespace aica
+} // namespace aica::sgc

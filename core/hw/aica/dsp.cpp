@@ -16,10 +16,7 @@
 	Initial code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
-namespace aica
-{
-
-namespace dsp
+namespace aica::dsp
 {
 
 DSPState state;
@@ -152,5 +149,4 @@ void step()
 	runStep();
 }
 
-} // namespace dsp
-} // namespace aica
+} // namespace aica::dsp

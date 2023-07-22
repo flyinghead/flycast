@@ -23,10 +23,7 @@
 #include <array>
 #include <vector>
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 struct ArmOp
@@ -468,5 +465,4 @@ extern void (*arm_compilecode)();
 using arm_mainloop_t = void (*)(reg_pair *arm_regs, void (*entrypoints[])());
 extern arm_mainloop_t arm_mainloop;
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm

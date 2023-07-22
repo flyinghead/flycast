@@ -34,10 +34,7 @@
 #include <sstream>
 #endif
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
@@ -770,6 +767,5 @@ void avoidRaceCondition()
 	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm
 #endif // FEAT_AREC != DYNAREC_NONE
