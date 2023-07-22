@@ -85,9 +85,9 @@ Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
 
    Log("binding udp socket to port %d.", port);
    _socket_v4 = CreateSocket(port, false);
-   _socket_v6 = CreateSocket(port, true);
-   if (_socket_v4 == INVALID_SOCKET && _socket_v6 == INVALID_SOCKET)
+   if (_socket_v4 == INVALID_SOCKET)
 	   throw GGPOException("Socket creation or bind failed", GGPO_ERRORCODE_NETWORK_ERROR);
+   _socket_v6 = CreateSocket(port, true);
 }
 
 void
