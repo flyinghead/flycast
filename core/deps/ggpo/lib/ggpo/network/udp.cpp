@@ -144,7 +144,7 @@ Udp::OnLoopPoll(void *cookie)
             LogError("recvfrom WSAGetLastError returned %d (%x).", error, error);
          }
          break;
-      } else if (len > 0) {
+      } else if (len >= sizeof(UdpMsg::hdr)) {
          char src_ip[1024];
          if (recv_addr.ss_family == AF_INET) {
             inet_ntop(AF_INET, &((sockaddr_in*)&recv_addr)->sin_addr, src_ip, ARRAY_SIZE(src_ip));
