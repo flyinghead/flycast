@@ -808,6 +808,7 @@ bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, fl
 
 	const int i = std::max_element(score_to_index.begin(), score_to_index.end())->second;
 	const auto &c = candidates_[i];
+	memset(dst, 0, sizeof(sockaddr_storage));
 	memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
 	*rtt = c.rtt;
 	return true;
