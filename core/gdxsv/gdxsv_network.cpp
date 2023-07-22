@@ -783,21 +783,34 @@ void UdpPingPong::AddCandidate(const std::string &user_id, uint8_t peer_id, cons
 
 bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
+	std::vector<std::pair<float, int>> score_to_index;
 
-	// Return min rtt address
-	bool found = false;
-	float min_rtt = 1000.0f;
-	for (auto &c : candidates_) {
-		if (c.peer_id == peer_id && 0 < c.pong_count) {
-			if (0 < c.rtt && c.rtt < min_rtt) {
-				min_rtt = c.rtt;
-				memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
-				*rtt = c.rtt;
-				found = true;
+	for (int i = 0; i < candidates_.size(); i++) {
+		const auto &c = candidates_[i];
+		if (c.peer_id == peer_id && 0 < c.pong_count && 0 < c.rtt) {
+			float score = 10000.f - c.rtt;
+			if (is_loopback_addr(c.remote.net_addr())) {
+				score += 100.f;
 			}
+			if (is_private_addr(c.remote.net_addr())) {
+				score += 50.f;
+			}
+			if (c.remote.is_v6()) {
+				score += 20.f;
+			}
+			score_to_index.emplace_back(score, i);
 		}
 	}
-	return found;
+
+	if (score_to_index.empty()) {
+		return false;
+	}
+
+	const int i = std::max_element(score_to_index.begin(), score_to_index.end())->second;
+	const auto &c = candidates_[i];
+	memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
+	*rtt = c.rtt;
+	return true;
 }
 
 void UdpPingPong::GetRttMatrix(uint8_t matrix[N][N]) {
