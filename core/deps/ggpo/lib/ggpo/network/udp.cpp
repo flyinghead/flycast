@@ -26,7 +26,11 @@ CreateSocket(uint16 bind_port, bool v6)
 	ioctlsocket(s, FIONBIO, &iMode);
 #endif
 
-   optval = 1 << 16;
+#if defined(__APPLE__)
+   optval = 9216;
+#else
+   optval = 16384;
+#endif
    setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&optval, sizeof optval);
    setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char *)&optval, sizeof optval);
 
