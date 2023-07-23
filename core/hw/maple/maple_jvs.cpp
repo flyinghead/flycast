@@ -371,7 +371,7 @@ protected:
 	void read_digital_in(const u32 *buttons, u16 *v) override
 	{
 		jvs_837_13938::read_digital_in(buttons, v);
-		btn1down = v[0] & NAOMI_BTN1_KEY;
+		btn3down = v[0] & NAOMI_BTN3_KEY;
 	}
 
 	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
@@ -379,15 +379,15 @@ protected:
 		switch (channel)
 		{
 			case 0: // CUE AIM L/R
-				if (!btn1down)
+				if (!btn3down)
 					lastValue[0] = relX;
 				break;
 			case 1: // CUE AIM U/D
-				if (!btn1down)
+				if (!btn3down)
 					lastValue[1] = relY;
 				break;
 			case 2: // CUE ROLLER
-				if (btn1down)
+				if (btn3down)
 					lastValue[2] = relY;
 				break;
 			default:
@@ -396,8 +396,53 @@ protected:
 		return lastValue[channel];
 	}
 
-	bool btn1down = false;
+	bool btn3down = false;
 	s16 lastValue[3];
+};
+
+//
+// The encoders are rotated by 45° so coordinates must be converted.
+// Polling is done twice per frame so we only handle half the delta per poll.
+//
+class jvs_837_13938_kick4cash : public jvs_837_13938
+{
+public:
+	jvs_837_13938_kick4cash(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{}
+
+protected:
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		const s16 deltaX = (relX - prevRelX) / 2;
+		const s16 deltaY = (relY - prevRelY) / 2;
+		s16 rv;
+		switch (channel)
+		{
+		case 0: // x
+			rotX += (deltaX - deltaY) * 0.7071f;
+			rv = (int)std::round(rotX);
+			break;
+		case 1: // y
+			rotY += (deltaX + deltaY) * 0.7071f;
+			rv = (int)std::round(rotY);
+			break;
+		default:
+			rv = 0;
+			break;
+		}
+		if (channel == 1)
+		{
+			prevRelX += deltaX;
+			prevRelY += deltaY;
+		}
+		return rv;
+	}
+
+	s16 prevRelX = 0;
+	s16 prevRelY = 0;
+	float rotX = 0.f;
+	float rotY = 0.f;
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -961,6 +1006,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 		case JVS::RotaryEncoders:
 			if (settings.content.gameId.substr(0, 13) == "SHOOTOUT POOL")
 				io_boards.push_back(std::make_unique<jvs_837_13938_shootout>(1, this));
+			else if (settings.content.gameId == "KICK '4' CASH")
+				io_boards.push_back(std::make_unique<jvs_837_13938_kick4cash>(1, this));
 			else
 				io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
@@ -1939,8 +1986,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						static s16 roty = 0;
 						// TODO Add more players.
 						// I can't think of any naomi multiplayer game that uses rotary encoders
-						rotx += mapleInputState[first_player].relPos.x * 5;
-						roty -= mapleInputState[first_player].relPos.y * 5;
+						rotx += mapleInputState[first_player].relPos.x * 3;
+						roty -= mapleInputState[first_player].relPos.y * 3;
 						mapleInputState[first_player].relPos.x = 0;
 						mapleInputState[first_player].relPos.y = 0;
 						LOGJVS("rotenc ");
@@ -2020,7 +2067,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 				}
 			}
-			LOGJVS("\n");
 		}
 		else
 		{

@@ -23,10 +23,14 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/modules.h"
 #include "serialize.h"
+#include "oslib/oslib.h"
+#include "emulator.h"
+#include "cfg/option.h"
 
 #include <array>
 #include <vector>
 #include <deque>
+#include <memory>
 
 namespace hopper
 {
@@ -34,11 +38,36 @@ namespace hopper
 class BaseHopper : public SerialPipe
 {
 public:
-	BaseHopper() {
+	BaseHopper()
+	{
 		schedId = sh4_sched_register(0, schedCallback, this);
 		sh4_sched_request(schedId, SCHED_CYCLES);
+		EventManager::listen(Event::Pause, handleEvent, this);
+
+		std::string path = getConfigFileName();
+		FILE *f = fopen(path.c_str(), "rb");
+		if (f == nullptr) {
+			INFO_LOG(NAOMI, "Hopper config not found at %s", path.c_str());
+		}
+		else
+		{
+			u8 data[4096];
+			size_t len = fread(data, 1, sizeof(data), f);
+			fclose(f);
+			verify(len < sizeof(data));
+			if (len <= 0) {
+				ERROR_LOG(NAOMI, "Hopper config empty or I/O error: %s", path.c_str());
+			}
+			else
+			{
+				Deserializer deser(data, len);
+				deserializeConfig(deser);
+			}
+		}
 	}
+
 	virtual ~BaseHopper() {
+		EventManager::unlisten(Event::Pause, handleEvent, this);
 		sh4_sched_unregister(schedId);
 	}
 
@@ -77,29 +106,11 @@ public:
 		}
 	}
 	
-	virtual void serialize(Serializer& ser)
+	void serialize(Serializer& ser) const
 	{
 		ser << (u32)recvBuffer.size();
 		ser.serialize(recvBuffer.data(), recvBuffer.size());
-		ser << credit0;
-		ser << credit1;
-		ser << totalCredit;
-		ser << premium;
-		ser << gameNumber;
-		ser << freePlay;
-		ser << autoPayOut;
-		ser << autoExchange;
-		ser << twoWayMode;
-		ser << coinDisc;
-		ser << currency;
-		ser << medalExchRate;
-		ser << maxHopperFloat;
-		ser << maxPay;
-		ser << maxCredit;
-		ser << hopperSize;
-		ser << maxBet;
-		ser << minBet;
-		ser << addBet;
+		serializeConfig(ser);
 		ser << expectedBytes;
 		ser << (u32)toSend.size();
 		for (u8 b : toSend)
@@ -108,31 +119,13 @@ public:
 		sh4_sched_serialize(ser, schedId);
 	}
 	
-	virtual void deserialize(Deserializer& deser)
+	void deserialize(Deserializer& deser)
 	{
 		u32 size;
 		deser >> size;
 		recvBuffer.resize(size);
 		deser.deserialize(recvBuffer.data(), size);
-		deser >> credit0;
-		deser >> credit1;
-		deser >> totalCredit;
-		deser >> premium;
-		deser >> gameNumber;
-		deser >> freePlay;
-		deser >> autoPayOut;
-		deser >> autoExchange;
-		deser >> twoWayMode;
-		deser >> coinDisc;
-		deser >> currency;
-		deser >> medalExchRate;
-		deser >> maxHopperFloat;
-		deser >> maxPay;
-		deser >> maxCredit;
-		deser >> hopperSize;
-		deser >> maxBet;
-		deser >> minBet;
-		deser >> addBet;
+		deserializeConfig(deser);
 		deser >> expectedBytes;
 		deser >> size;
 		toSend.clear();
@@ -146,9 +139,31 @@ public:
 		sh4_sched_deserialize(deser, schedId);
 	}
 
+	void saveConfig() const
+	{
+		std::string path = getConfigFileName();
+		FILE *f = fopen(path.c_str(), "wb");
+		if (f == nullptr) {
+			ERROR_LOG(NAOMI, "Can't save hopper config to %s", path.c_str());
+			return;
+		}
+		Serializer ser;
+		serializeConfig(ser);
+		std::unique_ptr<u8[]> data = std::make_unique<u8[]>(ser.size());
+		ser = Serializer(data.get(), ser.size());
+		serializeConfig(ser);
+
+		size_t len = fwrite(data.get(), 1, ser.size(), f);
+		fclose(f);
+		if (len != ser.size())
+			ERROR_LOG(NAOMI, "Hopper config I/O error: %s", path.c_str());
+	}
+
 protected:
 	virtual void handleMessage(u8 command) = 0;
 	virtual void sendCoinInMessage() = 0;
+	virtual void sendCoinOutMessage() = 0;
+	virtual void sendPayWinMessage() = 0;
 
 	void sendMessage(u8 command, const u8 *payload, size_t len)
 	{
@@ -171,18 +186,55 @@ protected:
 		serial_updateStatusRegister();
 	}
 
+	void bet(const u32 *values)
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			u32& primary = i == 0 ? credit0 : credit1;
+			u32& second = i == 0 ? credit1 : credit0;
+			if (primary >= values[i]) {
+				primary -= values[i];
+			}
+			else
+			{
+				int residual = values[i] - primary;
+				primary = 0;
+				second = std::max(0, (int)second - residual);
+			}
+		}
+		premium = std::max(0, (int)premium - (int)values[2]);
+	}
+
+	void payOut(u32 value)
+	{
+		if (value == 0)
+			return;
+		wonAmount += value;
+		if (!autoPayOut)
+			credit0 += value;
+		else {
+			paidAmount += value;
+			sendPayWinMessage();
+		}
+	}
+
+	void insertCoin(u32 value) {
+		credit0 += value;
+	}
+
 	std::vector<u8> recvBuffer;
 	u32 credit0 = 0;
 	u32 credit1 = 0;
-	u32 totalCredit = 0;
+	u32 totalCredit = 100; // min bet
 	u32 premium = 0;
 	u32 gameNumber = 0;
 	bool freePlay = false;
 	bool autoPayOut = false;
 	bool autoExchange = false;
 	bool twoWayMode = true;
-	bool coinDisc = true;
-	u8 currency = 0;	// 0:medal, 1:pound, 2:dollar, 3:euro, 4:token
+	bool coinDiscrimination = true;
+	bool betButton = true;
+	u8 currency = ~0;	// 0:medal, 1:pound, 2:dollar, 3:euro, 4:token, 5: any cash (837-14438 only)
 	u8 medalExchRate = 5;
 	u32 maxHopperFloat = 200;
 	u32 maxPay = 1999900;
@@ -191,6 +243,9 @@ protected:
 	u32 maxBet = 10000;
 	u32 minBet = 100; // normally 1000
 	u32 addBet = 100;
+	u32 paidAmount = 0;
+	u32 wonAmount = 0;
+	u32 curBase = 100;
 
 	int schedId;
 	bool started = false;
@@ -210,6 +265,77 @@ private:
 			board->coinKey = (mapleInputState[0].kcode & DC_BTN_D) == 0;
 		}
 		return SCHED_CYCLES;
+	}
+
+	static void handleEvent(Event event, void *p) {
+		((BaseHopper *)p)->saveConfig();
+	}
+
+	std::string getConfigFileName() const
+	{
+		return hostfs::getArcadeFlashPath() + "-hopper.bin";
+	}
+
+	void serializeConfig(Serializer& ser) const
+	{
+		ser << credit0;
+		ser << credit1;
+		ser << totalCredit;
+		ser << premium;
+		ser << gameNumber;
+		ser << freePlay;
+		ser << autoPayOut;
+		ser << autoExchange;
+		ser << twoWayMode;
+		ser << coinDiscrimination;
+		ser << currency;
+		ser << medalExchRate;
+		ser << maxHopperFloat;
+		ser << maxPay;
+		ser << maxCredit;
+		ser << hopperSize;
+		ser << maxBet;
+		ser << minBet;
+		ser << addBet;
+		ser << paidAmount;
+		ser << wonAmount;
+		ser << betButton;
+		ser << curBase;
+	}
+
+	void deserializeConfig(Deserializer& deser)
+	{
+		deser >> credit0;
+		deser >> credit1;
+		deser >> totalCredit;
+		deser >> premium;
+		deser >> gameNumber;
+		deser >> freePlay;
+		deser >> autoPayOut;
+		deser >> autoExchange;
+		deser >> twoWayMode;
+		deser >> coinDiscrimination;
+		deser >> currency;
+		deser >> medalExchRate;
+		deser >> maxHopperFloat;
+		deser >> maxPay;
+		deser >> maxCredit;
+		deser >> hopperSize;
+		deser >> maxBet;
+		deser >> minBet;
+		deser >> addBet;
+		if (deser.version() >= Deserializer::V39)
+		{
+			deser >> paidAmount;
+			deser >> wonAmount;
+			deser >> betButton;
+			deser >> curBase;
+		}
+		else
+		{
+			paidAmount = 0;
+			wonAmount = 0;
+		}
 	}
 
 	u32 expectedBytes = 0;
@@ -244,13 +370,18 @@ protected:
 			{
 				// POWER ON
 				INFO_LOG(NAOMI, "hopper received POWER ON");
+				// 8: currency
+				if (currency != recvBuffer[8]) {
+					currency = recvBuffer[8];
+					setDefaults();
+				}
 				std::array<u32, 0x1ea> payload{};
 				payload[0] = gameNumber;	// game number
 				payload[1] = 0;         	// atp num
 				payload[2] = 0;         	// atp kind and error code
 				payload[3] = status;		// status bitfield. rectangle in background if != 0
 				payload[4] = freePlay | (autoPayOut << 8) | (twoWayMode << 16) | (medalExchRate << 24);
-				payload[5] = autoExchange | (coinDisc << 8);
+				payload[5] = autoExchange | (coinDiscrimination << 8) | (curBase << 16) | (betButton << 24);
 				payload[6] = 0;				// ? 8c027124
 				payload[7] = maxPay;
 				payload[8] = maxCredit;
@@ -258,7 +389,7 @@ protected:
 				payload[10] = maxBet;
 				payload[11] = minBet;
 				payload[12] = addBet;
-				payload[13] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token)
+				payload[13] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token, 5: any cash)
 										// ? 8c027141, 8c027142, 8c027143
 				payload[14] = credit0;		// credit0
 				payload[15] = credit1;		// credit1
@@ -272,12 +403,12 @@ protected:
 				payload[0x2a] = 0;		// ? FUN_8c015b5a()
 				payload[0x2b] = 0;		// ? FUN_8c0163d8() + FUN_8c0148d4()
 				payload[0x2c] = 0;		// hopperOutLap
-				payload[0x2d] = 0;		// wins
+				payload[0x2d] = wonAmount;
 				payload[0x2e] = 0;		// ? 8c02717c
 				payload[0x2f] = 0;		// ? 8c027180
 				payload[0x30] = 0;		// ? 8c027188
 				payload[0x31] = 0;		// ? 8c02718c
-				payload[0x32] = 0;		// paid? 8c027190
+				payload[0x32] = paidAmount;	// paid? 8c027190
 				
 				payload[0x33] = maxHopperFloat;
 				payload[0x34] = 0;		// showLastWinAndHopperFloat (b6: show last win b7: show hopperfloat)
@@ -310,29 +441,16 @@ protected:
 				// 1d8		(short)12 shorts?
 				//				100 200 300 400 500 1000 2000 2500 5000 10000 0 ...
 				// Default values
-				payload[0x1c0] = 0x5010000;	// medal exch rate (5), 2-way (1), autoPO (0), free play (0)
-				payload[0x1c1] = 0x1640100;	// ? (1), ? (100), coin disc (1), auto exch (0)
-				payload[0x1c3] = 1999900;	// max pay
-				payload[0x1c4] = 1999900;	// max credit
-				payload[0x1c5] = 39900;		// hopper size
-				payload[0x1c6] = 10000;		// max bet
-				payload[0x1c7] = 1000;		// min bet
-				payload[0x1c8] = 100;		// add bet
-				payload[0x1c9] = 100;
-				payload[0x1ca] = 10000;
-				payload[0x1cb] = 100 | (499 << 16);
-				payload[0x1cc] = 500 | (499 << 16);
-				payload[0x1cd] = 500 | (49 << 16);
-				payload[0x1ce] = 50;
-				payload[0x1cf] = 200;
-				payload[0x1d3] = 2000 | (200 << 16);
-				payload[0x1d4] = 100;
-				payload[0x1d6] = 100;
-				payload[0x1da] = 100 | (200 << 16);
-				payload[0x1db] = 300 | (400 << 16);
-				payload[0x1dc] = 500 | (1000 << 16);
-				payload[0x1dd] = 2000 | (2500 << 16);
-				payload[0x1de] = 5000 | (10000 << 16);
+				const u32 *def = getDefaultValues();
+				payload[0x1c0] = def[0];
+				payload[0x1c1] = def[1];
+				payload[0x1c3] = def[2];
+				payload[0x1c4] = def[3];
+				payload[0x1c5] = def[4];
+				payload[0x1c6] = def[5];
+				payload[0x1c7] = def[6];
+				payload[0x1c8] = def[7];
+				getRanges(&payload[0x1c9]);
 				payload[0x1e9] = 1;		// hopper ready flag
 				sendMessage(0x21, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
 				started = true;
@@ -356,8 +474,8 @@ protected:
 			{
 				// GAME START
 				INFO_LOG(NAOMI, "hopper received GAME START");
-				// 4: credit used?
-				credit0 -= *(u32 *)&recvBuffer[4];
+				u32 *betValues = (u32 *)&recvBuffer[4];
+				bet(betValues);
 				std::array<u32, 0x1f> payload{};
 				payload[0] = ++gameNumber;	// game#, ?
 				payload[1] = 0;				// atp num
@@ -425,7 +543,9 @@ protected:
 					twoWayMode = recvBuffer[6] & 1;
 					medalExchRate = recvBuffer[7];
 					autoExchange = recvBuffer[8] & 1;
-					coinDisc = recvBuffer[9] & 1;
+					coinDiscrimination = recvBuffer[9] & 1;
+					curBase = recvBuffer[0xa];
+					betButton = recvBuffer[0xb] & 1;
 					// 0xc ??
 					maxPay = *(u32 *)&recvBuffer[0x10];
 					maxCredit = *(u32 *)&recvBuffer[0x14];
@@ -433,11 +553,10 @@ protected:
 					maxBet = *(u32 *)&recvBuffer[0x1c];
 					minBet = *(u32 *)&recvBuffer[0x20];
 					addBet = *(u32 *)&recvBuffer[0x24];
-					currency = recvBuffer[0x28]; // ??
 				}
 				std::array<u32, 0xa> payload{};
 				payload[0] = freePlay | (autoPayOut << 8) | (twoWayMode << 16) | (medalExchRate << 24);
-				payload[1] = autoExchange | (coinDisc << 8);
+				payload[1] = autoExchange | (coinDiscrimination << 8) | (curBase << 16) | (betButton << 24);
 				payload[2] = 0;				// ? 8c027124
 				payload[3] = maxPay;
 				payload[4] = maxCredit;
@@ -445,11 +564,15 @@ protected:
 				payload[6] = maxBet;
 				payload[7] = minBet;
 				payload[8] = addBet;
-				payload[9] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token)
+				payload[9] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token, 5:any cash)
 										// ? 8c027141, 8c027142, 8c027143
 				sendMessage(0x2b, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
 				break;
 			}
+
+			case 0x61: // COIN IN ACK
+			case 0x62: // COIN OUT ACK
+				break;
 
 			default:
 				WARN_LOG(NAOMI, "Unexpected hopper message: %x", command);
@@ -479,8 +602,7 @@ private:
 
 	void sendCoinInMessage() override
 	{
-		credit0 += 100;
-		totalCredit += 100;
+		insertCoin(100);
 		std::array<u32, 8> payload{};
 		payload[0] = 0;         // atp num
 		payload[1] = 0;         // atp kind and error code
@@ -488,8 +610,219 @@ private:
 		payload[3] = credit0;
 		payload[4] = credit1;
 		payload[5] = totalCredit;
-		payload[5] = premium;
+		payload[6] = premium;
 		sendMessage(1, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	void sendCoinOutMessage() override
+	{
+		insertCoin(100);
+		std::array<u32, 8> payload{};
+		payload[0] = 0;         // atp num
+		payload[1] = 0;         // atp kind and error code
+		payload[2] = status;
+		payload[3] = credit0;
+		payload[4] = credit1;
+		payload[5] = totalCredit;
+		payload[6] = premium;
+		sendMessage(2, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	void sendPayWinMessage() override
+	{
+		std::array<u32, 0xa> payload{};
+		payload[0] = 0;         // atp num
+		payload[1] = 0;         // atp kind and error code
+		payload[2] = status;
+		payload[3] = credit0;
+		payload[4] = credit1;
+		payload[5] = totalCredit;
+		payload[6] = premium;
+		payload[7] = wonAmount;
+		payload[8] = paidAmount;
+		sendMessage(3, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	const u32 *getDefaultValues()
+	{
+		static const u32 defaults[][8] = {
+			// free play...           max pay         hopper size   min bet
+			//            auto exch...        max credit      max bet     add bet
+			{ 0x05010000, 0x01640100, 1999900, 1999900, 39900, 10000, 1000, 100 },
+			{      0x100,    0x50000,   10000, 1999900, 39900,   100,  100,  50 },
+			{      0x100,    0x50000,   10000, 1999900, 39900,   100,  100, 100 },
+			{      0x100,    0x50000,   10000, 1999900, 39900,   100,  100, 100 },
+			{          0, 0x01640000, 1999900, 1999900, 39900, 10000,  100, 100 },
+			{      0x100,    0x50000,   10000, 1999900, 39900,   100,  100, 100 },
+		};
+		if (currency >= std::size(defaults))
+			return defaults[0];
+		else
+			return defaults[currency];
+	}
+
+	void setDefaults()
+	{
+		const u32 *def = getDefaultValues();
+		freePlay = def[0] & 1;
+		autoPayOut = def[0] & 0x100;
+		twoWayMode = def[0] & 0x10000;
+		medalExchRate = def[0] >> 24;
+		autoExchange = def[1] & 1;
+		coinDiscrimination = def[1] & 0x100;
+		curBase = (def[1] >> 16) & 0xff;
+		betButton = def[1] & 0x1000000;
+		maxPay = def[2];
+		maxCredit = def[3];
+		hopperSize = def[4];
+		maxBet = def[5];
+		minBet = def[6];
+		addBet = def[7];
+		totalCredit = minBet;
+	}
+
+	void getRanges(u32 *p)
+	{
+		switch (currency)
+		{
+		case 0: // medal
+			p[0x0] = 100;
+			p[0x1] = 10000;
+			p[0x2] = 100 | (499 << 16);
+			p[0x3] = 500 | (499 << 16);
+			p[0x4] = 500 | (49 << 16);
+			p[0x5] = 50;
+			p[0x6] = 200;
+			p[0x7] = 0;
+			p[0x8] = 0;
+			p[0x9] = 0;
+			p[0xa] = 2000 | (200 << 16);
+			p[0xb] = 100;
+			p[0xc] = 0;
+
+			p[0xd] = 100;
+			p[0xe] = 0;
+			p[0xf] = 0;
+			p[0x10] = 0;
+
+			p[0x11] = 100 | (200 << 16);
+			p[0x12] = 300 | (400 << 16);
+			p[0x13] = 500 | (1000 << 16);
+			p[0x14] = 2000 | (2500 << 16);
+			p[0x15] = 5000 | (10000 << 16);
+			p[0x16] = 0;
+			break;
+		case 1: // pound
+			p[0x0] = 50;
+			p[0x1] = 100;
+			p[0x2] = 50 | (5 << 16);
+			p[0x3] = 5 | (499 << 16);
+			p[0x4] = 500 | (19 << 16);
+			p[0x5] = 20;
+			p[0x6] = 70;
+			p[0x7] = 0;
+			p[0x8] = 0;
+			p[0x9] = 0;
+			p[0xa] = 70 | (70 << 16);
+			p[0xb] = 0;
+			p[0xc] = 0;
+
+			p[0xd] = 5 | (10 << 16);
+			p[0xe] = 20 | (50 << 16);
+			p[0xf] = 50 | (100 << 16);
+			p[0x10] = 200;
+
+			p[0x11] = 5 | (10 << 16);
+			p[0x12] = 20 | (50 << 16);
+			p[0x13] = 100 | (200 << 16);
+			p[0x14] = 500 | (1000 << 16);
+			p[0x15] = 0;
+			p[0x16] = 0;
+			break;
+		case 2: // dollar
+		case 5: // any cash
+		default:
+			p[0x0] = 50;
+			p[0x1] = 100;
+			p[0x2] = 50 | (5 << 16);
+			p[0x3] = 5 | (499 << 16);
+			p[0x4] = 500 | (19 << 16);
+			p[0x5] = 20;
+			p[0x6] = 200;
+			p[0x7] = 0;
+			p[0x8] = 0;
+			p[0x9] = 0;
+			p[0xa] = 200 | (50 << 16);
+			p[0xb] = 10;
+			p[0xc] = 0;
+
+			p[0xd] = 5 | (10 << 16);
+			p[0xe] = 20 | (25 << 16);
+			p[0xf] = 50 | (100 << 16);
+			p[0x10] = 200 | (100 << 16);
+
+			p[0x11] = 5 | (10 << 16);
+			p[0x12] = 20 | (25 << 16);
+			p[0x13] = 50 | (100 << 16);
+			p[0x14] = 200 | (500 << 16);
+			p[0x15] = 1000;
+			p[0x16] = 0;
+			break;
+		case 3: // euro
+			p[0x0] = 50;
+			p[0x1] = 100;
+			p[0x2] = 50 | (5 << 16);
+			p[0x3] = 5 | (499 << 16);
+			p[0x4] = 500 | (19 << 16);
+			p[0x5] = 20;
+			p[0x6] = 200;
+			p[0x7] = 0;
+			p[0x8] = 0;
+			p[0x9] = 0;
+			p[0xa] = 200 | (50 << 16);
+			p[0xb] = 10;
+			p[0xc] = 0;
+
+			p[0xd] = 5 | (10 << 16);
+			p[0xe] = 20 | (50 << 16);
+			p[0xf] = 50 | (100 << 16);
+			p[0x10] = 200 | (100 << 16);
+
+			p[0x11] = 5 | (10 << 16);
+			p[0x12] = 20 | (50 << 16);
+			p[0x13] = 100 | (200 << 16);
+			p[0x14] = 500 | (1000 << 16);
+			p[0x15] = 0;
+			p[0x16] = 0;
+			break;
+		case 4: // token
+			p[0x0] = 100;
+			p[0x1] = 10000;
+			p[0x2] = 100 | (499 << 16);
+			p[0x3] = 500 | (499 << 16);
+			p[0x4] = 500 | (19 << 16);
+			p[0x5] = 20;
+			p[0x6] = 200;
+			p[0x7] = 0;
+			p[0x8] = 0;
+			p[0x9] = 0;
+			p[0xa] = 200 | (50 << 16);
+			p[0xb] = 10;
+			p[0xc] = 0;
+
+			p[0xd] = 100;
+			p[0xe] = 0;
+			p[0xf] = 0;
+			p[0x10] = 0;
+
+			p[0x11] = 100 | (200 << 16);
+			p[0x12] = 300 | (400 << 16);
+			p[0x13] = 500 | (1000 << 16);
+			p[0x14] = 2000 | (2500 << 16);
+			p[0x15] = 5000 | (10000 << 16);
+			p[0x16] = 0;
+			break;
+		}
 	}
 
 	// ?:1
@@ -553,56 +886,63 @@ protected:
 					"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0DOOR IS OPEN"
 				};
 
+				// 8: currency
+				if (currency != recvBuffer[8]) {
+					currency = recvBuffer[8];
+					setDefaults();
+				}
 				INFO_LOG(NAOMI, "hopper received POWER ON");
 				std::array<u32, 0x13a> payload{};
 				payload[0] = gameNumber;
 				payload[1] = 0;			// atp num
 				payload[2] = status;	// status bitfield. rectangle in background if != 0
 				payload[3] = freePlay | (autoPayOut << 8) | (twoWayMode << 16) | (medalExchRate << 24);
-				payload[4] = autoExchange | (coinDisc << 8);
+				payload[4] = autoExchange | (coinDiscrimination << 8) | (curBase << 16) | (betButton << 24);
 				payload[5] = maxPay;
 				payload[6] = maxCredit;
 				payload[7] = hopperSize;
 				payload[8] = maxBet;
 				payload[9] = minBet;
 				payload[10] = addBet;
-				payload[11] = 0;		// ? BYTE_8c0c9fa8
+				payload[11] = currency;		// ? BYTE_8c0c9fa8-b
 				payload[12] = credit0;
 				payload[13] = credit1;
 				payload[14] = totalCredit;
 				payload[15] = premium;
-				payload[16] = 1;		// min count
-				payload[17] = 666;		// paid amount
+				payload[16] = wonAmount;
+				payload[17] = paidAmount;	// paid amount (if autoPO) else credit won?
 				
-				/* doesn't seem to matter */
-				payload[18] = ~0;
-				payload[19] = ~0;
-				payload[20] = ~0;
-				payload[21] = ~0;
-				payload[22] = ~0;
-				payload[23] = ~0;
-				payload[24] = ~0;
+				payload[18] = 0;		// coin1 in count
+				payload[19] = 0;		// coin2 in count
+				payload[20] = 0;		// coin3 in count
+				payload[21] = 0;		// coin4 in count
+				payload[22] = 0;		// coin5 in count
+				payload[23] = 0;		// coin6 in count
+				payload[24] = 0;		// coin out count
 
-				payload[25] = ~0;        // ?
-				payload[26] = ~0;        // ?
-				payload[27] = ~0;        // ?
-				// don't care?
-				payload[28] = ~0;
-				payload[29] = ~0;        // ?
-				payload[30] = ~0;        // ?
-				payload[31] = ~0;        // ?
-				// don't care?
-				payload[32] = ~0;
+				payload[25] = 0;        // big int(1/2) 8c0ca674?
+				payload[26] = 0;        // big int(2/2)?
+				payload[27] = 0;        // 8c0ca67c?
+
+				payload[28] = 0;        // 8c0ca680?
+				payload[29] = 0;        // big int(1/2) 8c0ca684?
+				payload[30] = 0;        // big int(2/2)?
+				payload[31] = 0;        // 8c0ca68c?
+				payload[32] = 0;		// 8c0ca690?
 				size_t idx = 0x84;
 				for (size_t i = 0; i < std::size(hopperErrors); i++) {
 					memcpy((u8 *)payload.data() + idx, hopperErrors[i], sizeof(hopperErrors[i]));
 					idx += 32;
 				}
-				// power down in game if lsb != 0
+				// init done/hopper ready?
 				payload[0x139] = 1;
 				sendMessage(0x10, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
 
 				started = true;
+
+				// Displays the in-game hopper debug overlay
+				//u32 payload2 = 0;
+				//sendMessage(0xf, (const u8 *)&payload2, 3); // DEBUG
 				break;
 			}
 
@@ -619,8 +959,13 @@ protected:
 			case 0x22:	// GAME START
 			{
 				INFO_LOG(NAOMI, "hopper received GAME START");
-				// 4: credit used?
-				credit0 -= *(u32 *)&recvBuffer[4];
+				// 4: bet value: credit0
+				// 8:            credit1
+				// c:			 premium
+				u32 *betValues = (u32 *)&recvBuffer[4];
+				bet(betValues);
+				wonAmount = 0;
+				paidAmount = 0;
 				std::array<u32, 0x17> payload{};
 				payload[0] = ++gameNumber;
 				payload[1] = 0;				// atp num
@@ -629,6 +974,14 @@ protected:
 				payload[4] = credit1;
 				payload[5] = totalCredit;
 				payload[6] = premium;
+				// 7-c: coinIn1-6Count
+				// d: coinOutCount
+				// e-f: bigint 8c0ca674
+				// 10: 8c0ca67c
+				// 11: 8c0ca680
+				// 12-13: bigint 8c0ca684
+				// 14: 8c0ca68c
+				// 15: 8c0ca690
 				sendMessage(0x12, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
 				break;
 			}
@@ -637,21 +990,86 @@ protected:
 			{
 				INFO_LOG(NAOMI, "hopper received GAME END");
 				// 8: amount to pay?
-				//credit0 += *(u32 *)&recvBuffer[8];
+				u32 value = *(u32 *)&recvBuffer[8];
+				payOut(value);
 				std::array<u32, 0x15> payload{};
-				payload[0] = 1;	// gameNum, upper 16 bits: ? 0, -1 or -2
+				payload[0] = gameNumber;	// gameNum, upper 16 bits: ? 0, -1 or -2
 				payload[1] = credit0;
 				payload[2] = credit1;
 				payload[3] = totalCredit;
 				payload[4] = premium;
+				// 5-a: coinIn1-6Count
+				// b: coinOutCount
+				// c-d: bigint 8c0ca674
+				// e: 8c0ca67c
+				// f: 8c0ca680
+				// 10-11: bigint 8c0ca684
+				// 12: 8c0ca68c
+				// 13: 8c0ca690
 				sendMessage(0x13, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
-				// TODO send PAY WIN message?
+				break;
+			}
+
+			case 0x24:	// TEST START
+			{
+				INFO_LOG(NAOMI, "hopper received TEST START");
+				// recv[4] is 1
+				std::array<u32, 0x33> payload{};
+				payload[0] = 0;				// atp num
+				payload[1] = status;
+				// c0 bytes from 8c0ca1b4
+				payload[0x12] = 2023 | (7 << 16) | (19 << 24);	// year month day
+				payload[0x13] = (55 << 24) | (48 << 16) | (11 << 8) | 3; // day of week, hour, minute, second
+				payload[0x14] = gameNumber;
+				sendMessage(0x14, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+				break;
+			}
+
+			case 0x25:	// BACKUP CLEAR
+			{
+				INFO_LOG(NAOMI, "hopper received BACKUP CLEAR");
+				credit0 = 0;
+				credit1 = 0;
+				premium = 0;
+				paidAmount = 0;
+				wonAmount = 0;
+				std::array<u32, 0x44> payload{};
+				payload[0] = credit0;
+				payload[1] = credit1;
+				payload[2] = totalCredit;
+				payload[3] = premium;
+				// coin1InCount -> coin6InCount
+				// coinOutCount
+				// bigint 8c0ca674
+				// 8c0ca67c
+				// 8c0ca680
+				// bigint 8c0ca684
+				// 8c0ca68c
+				// 8c0ca690
+				// copy c0 bytes from 8c0ca1b4
+				payload[0x23] = 2023 | (7 << 16) | (19 << 24);	// year month day
+				payload[0x24] = (55 << 24) | (48 << 16) | (11 << 8) | 3; // day of week, hour, minute, second
+				payload[0x25] = gameNumber;
+				sendMessage(0x15, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+				break;
+			}
+
+			case 0x26:	// BET
+			{
+				INFO_LOG(NAOMI, "hopper received BET");
+				u32 v = *(u32 *)&recvBuffer[4];
+				std::array<u32, 2> payload{};
+				payload[0] = v;
+				sendMessage(0x16, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
 				break;
 			}
 
 			case 0x29:	// SWITCH
 			{
 				INFO_LOG(NAOMI, "hopper received SWITCH");
+				// 4: test button
+				// 5: service button
+				// 6-7: c01 in test menu
 				break;
 			}
 
@@ -665,27 +1083,57 @@ protected:
 					twoWayMode = recvBuffer[6] & 1;
 					medalExchRate = recvBuffer[7];
 					autoExchange = recvBuffer[8] & 1;
-					coinDisc = recvBuffer[9] & 1;
+					coinDiscrimination = recvBuffer[9] & 1;
+					curBase = recvBuffer[0xa];
+					betButton = recvBuffer[0xb] & 1;
 					maxPay = *(u32 *)&recvBuffer[0xc];
 					maxCredit = *(u32 *)&recvBuffer[0x10];
 					hopperSize = *(u32 *)&recvBuffer[0x14];
 					maxBet = *(u32 *)&recvBuffer[0x18];
 					minBet = *(u32 *)&recvBuffer[0x1c];
 					addBet = *(u32 *)&recvBuffer[0x20];
-					//currency = recvBuffer[0x24]; // ??
 				}
 				std::array<u32, 9> payload{};
 				payload[0] = freePlay | (autoPayOut << 8) | (twoWayMode << 16) | (medalExchRate << 24);
-				payload[1] = autoExchange | (coinDisc << 8);
+				payload[1] = autoExchange | (coinDiscrimination << 8) | (curBase << 16) | (betButton << 24);
 				payload[2] = maxPay;
 				payload[3] = maxCredit;
 				payload[4] = hopperSize;
 				payload[5] = maxBet;
 				payload[6] = minBet;
 				payload[7] = addBet;
-				payload[8] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token)
+				//payload[8] = currency;		// currency (lsb, 0:medal, 1:pound, 2:dollar, 3:euro, 4:token)
 											// ?, ?, ?
 				sendMessage(0x1a, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+				break;
+			}
+
+			case 0x2f: // TEST DATA MON
+			{
+				INFO_LOG(NAOMI, "hopper received cmd TEST DATA MON");
+				// recv[4] == 2 (3 in coin test, 4 in error log)
+				// recv[8] b0	payout lamp
+				//		   b1   coin in lamp
+				//		   b2	divider cash box side
+				//		   b3	divider hopper side
+				//		   b5	coin inhibit
+				//         b6	cash inhibit
+				// recv[c] hopper run
+				// no reply
+				break;
+			}
+
+			case 0x31: // COIN IN ACK?
+			{
+				INFO_LOG(NAOMI, "hopper received cmd 31");
+				// no reply
+				break;
+			}
+
+			case 0x32: // COIN OUT ACK?
+			{
+				INFO_LOG(NAOMI, "hopper received cmd 32");
+				// no reply
 				break;
 			}
 
@@ -708,8 +1156,7 @@ private:
 
 	void sendCoinInMessage() override
 	{
-		credit0 += 100;
-		totalCredit += 100;
+		insertCoin(100);
 		std::array<u32, 7> payload{};
 		payload[0] = 0;			// atp num
 		payload[1] = status;
@@ -718,6 +1165,101 @@ private:
 		payload[4] = totalCredit;
 		payload[5] = premium;
 		sendMessage(1, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	void sendCoinOutMessage() override
+	{
+		insertCoin(100);
+		std::array<u32, 7> payload{};
+		payload[0] = 0;			// atp num
+		payload[1] = status;
+		payload[2] = credit0;
+		payload[3] = credit1;
+		payload[4] = totalCredit;
+		payload[5] = premium;
+		sendMessage(2, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	void sendPayWinMessage() override
+	{
+		std::array<u32, 9> payload{};
+		payload[0] = 0;			// atp num
+		payload[1] = status;
+		payload[2] = credit0;
+		payload[3] = credit1;
+		payload[4] = totalCredit;
+		payload[5] = premium;
+		payload[6] = wonAmount;
+		payload[7] = paidAmount;
+		sendMessage(3, (const u8 *)payload.data(), payload.size() * sizeof(u32) - 1);
+	}
+
+	void setDefaults()
+	{
+		switch (currency)
+		{
+		case 0:	// Medal
+			medalExchRate = 5;
+			twoWayMode = true;
+			autoPayOut = false;
+			coinDiscrimination = true;
+			curBase = 100;
+			betButton = true;
+			maxPay = 1999900;
+			maxCredit = 1999900;
+			hopperSize = 39900;
+			maxBet = 10000;
+			minBet = 1000;
+			addBet = 100;
+			break;
+		case 1:	// Pound
+			medalExchRate = 0;
+			twoWayMode = false;
+			autoPayOut = true;
+			coinDiscrimination = false;
+			curBase = 5;
+			betButton = false;
+			maxPay = 4000;
+			maxCredit = 1999900;
+			hopperSize = 1999900;
+			maxBet = 100;
+			minBet = 100;
+			addBet = 50;
+			break;
+		case 2:	// Dollar
+		case 3:	// Euro
+			medalExchRate = 0;
+			twoWayMode = false;
+			autoPayOut = false;
+			coinDiscrimination = false;
+			curBase = 5;
+			betButton = true;
+			maxPay = 1999900;
+			maxCredit = 1999900;
+			hopperSize = 39900;
+			maxBet = 10000;
+			minBet = 100;
+			addBet = 100;
+			break;
+		case 4:	// Token
+			medalExchRate = 0;
+			twoWayMode = false;
+			autoPayOut = false;
+			coinDiscrimination = false;
+			curBase = 100;
+			betButton = true;
+			maxPay = 1999900;
+			maxCredit = 1999900;
+			hopperSize = 39900;
+			maxBet = 10000;
+			minBet = 100;
+			addBet = 100;
+			break;
+		default:
+			WARN_LOG(NAOMI, "Unsupported currency %d", currency);
+			break;
+		}
+		totalCredit = minBet;
 	}
 
 	// error:16
@@ -730,34 +1272,35 @@ private:
 	const u32 status = 0x00000000;
 };
 
-static BaseHopper *pipe;
+static BaseHopper *hopper;
 
 void init()
 {
 	term();
 	if (settings.content.gameId == "KICK '4' CASH")
-		pipe = new Sega837_14438Hopper();
+		hopper = new Sega837_14438Hopper();
 	else
-		pipe = new NaomiHopper();
-	serial_setPipe(pipe);
+		hopper = new NaomiHopper();
+	serial_setPipe(hopper);
+	config::ForceFreePlay.override(false);
 }
 
 void term()
 {
-	delete pipe;
-	pipe = nullptr;
+	delete hopper;
+	hopper = nullptr;
 }
 
 void serialize(Serializer& ser)
 {
-	if (pipe != nullptr)
-		pipe->serialize(ser);
+	if (hopper != nullptr)
+		hopper->serialize(ser);
 }
 
 void deserialize(Deserializer& deser)
 {
-	if (pipe != nullptr)
-		pipe->deserialize(deser);
+	if (hopper != nullptr)
+		hopper->deserialize(deser);
 }
 
 }	// namespace hopper
