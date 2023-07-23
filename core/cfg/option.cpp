@@ -102,7 +102,7 @@ Option<bool> VSync("rend.vsync", true);
 Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
-Option<bool> ThreadedRendering("rend.ThreadedRendering", false);
+Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);

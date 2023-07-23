@@ -126,14 +126,6 @@ void gdxsv_emu_gui_display() {
 void gdxsv_emu_gui_settings() {
 	gui_header("gdxsv Settings");
 
-	if (config::ThreadedRendering.get()) {
-		ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1), "WARNING: Multi-threaded emulation is enabled. Disable is strongly recommended.");
-		ImGui::SameLine();
-		if (ImGui::Button("Set Disable")) {
-			config::ThreadedRendering = false;
-		}
-	}
-
 	if (config::PerStripSorting.get()) {
 		ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1),
 						   "WARNING: Transparent Sorting is not Per Triangle. Per Triangle is strongly recommended.");
@@ -183,7 +175,6 @@ void gdxsv_emu_gui_settings() {
 		config::AudioBufferSize = 706 * 4;
 		// Others
 		config::DynarecEnabled = true;
-		config::ThreadedRendering = false;
 		// Network
 		config::EnableUPnP = true;
 		if (config::GdxLocalPort == 0) {
@@ -228,6 +219,11 @@ void gdxsv_emu_gui_settings() {
     Gdxsv:
       SaveReplay: yes
       UploadReplay: yes)");
+
+	OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+		R"(Run the emulated CPU and GPU on different threads.
+	Enable = Best for low spec CPU.
+	Disable = Best for high spec CPU.)");
 
 	bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
 	bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
