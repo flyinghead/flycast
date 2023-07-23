@@ -310,7 +310,7 @@ UdpProtocol::SendSyncRequest()
 }
 
 void
-UdpProtocol::SendMsg(UdpMsg *msg)
+UdpProtocol::SendMsg(UdpMsg *msg, sockaddr_storage* to)
 {
    LogMsg("send", msg);
 
@@ -332,7 +332,7 @@ UdpProtocol::SendMsg(UdpMsg *msg)
           msg->hdr.type = UdpMsg::MsgType::Relay;
        }
 
-	   _send_queue.push(QueueEntry(GGPOPlatform::GetCurrentTimeMS(), _peer_addr, msg));
+	   _send_queue.push(QueueEntry(GGPOPlatform::GetCurrentTimeMS(), to != nullptr ? *to : _peer_addr, msg));
    }
    PumpSendQueue();
 }
@@ -349,6 +349,11 @@ UdpProtocol::HandlesMsg(sockaddr_storage &from, UdpMsg *msg)
        if (_peer_addr_len == 0) {
            _peer_addr = from;
            _peer_addr_len = sizeof(from); // XXX
+       }
+
+       if (msg->hdr.type == UdpMsg::QualityReply) {
+           // Since peer_addr and from addr may differ, send keep-alive packets to from addr.
+           SendMsg(new UdpMsg(UdpMsg::KeepAlive), &from);
        }
        return true;
    }

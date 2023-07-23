@@ -118,7 +118,7 @@ static int localPlayerNum;
 static GGPOPlayerHandle playerHandles[MAX_PLAYERS];
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
-static std::map<GGPOPlayerHandle, bool> connected;
+static int disconnect_flags;
 static bool synchronized;
 static std::recursive_mutex ggpoMutex;
 static std::array<int, 5> msPerFrame;
@@ -232,12 +232,11 @@ static bool on_event(GGPOEvent *info)
 		gui_display_notification("Connected to peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
-		NOTICE_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
+		INFO_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
 		gui_display_notification("Synchronizing with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
-		NOTICE_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
-		connected[info->u.synchronized.player] = true;
+		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
 		gui_display_notification("Synchronized with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_RUNNING:
@@ -247,7 +246,6 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
 		NOTICE_LOG(NETWORK, "Disconnected from peer %d", info->u.disconnected.player);
-		connected[info->u.connected.player] = false;
 		// throw FlycastException("Disconnected from peer");
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
@@ -511,7 +509,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.on_event        = on_event;
 	cb.log_game_state  = log_game_state;
 	cb.on_message      = on_message;
-	connected.clear();
+	disconnect_flags = 0;
 
 #ifdef SYNC_TEST
 	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), 2, sizeof(kcode[0]), 1);
@@ -642,7 +640,7 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
-	connected.clear();
+	disconnect_flags = 0;
 	miniupnp.Term();
 	totalRollbackFrames = 0;
 	totalTimeSync = 0;
@@ -664,7 +662,7 @@ void getInput(MapleInputState inputState[4])
 
 	std::vector<u8> inputData(inputSize * MAX_PLAYERS);
 	// should not call any callback
-	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputData[0], inputData.size(), nullptr);
+	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputData[0], inputData.size(), &disconnect_flags);
 	if (error != GGPO_OK)
 	{
 		stopSession();
@@ -753,6 +751,7 @@ bool nextFrame()
 	}
 
 	// may call save_game_state
+	int loop_count = 0;
 	do {
 		if (!config::ThreadedRendering && !useRandInput)
 			UpdateInputState();
@@ -802,14 +801,19 @@ bool nextFrame()
 		}
 		error = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
 		if (error == GGPO_OK)
+		{
+			if (2 < loop_count)
+				NOTICE_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached looped %dms", loop_count * 5);
 			break;
+		}
 		if (error != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
 		{
-			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", error);
+			ERROR_LOG(NETWORK, "ggpo_add_local_input failed %d", error);
 			stopSession();
 			throw FlycastException("GGPO error");
 		}
-		NOTICE_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
+		DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
+		loop_count++;
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		error = ggpo_idle(ggpoSession, 0);
 		if (error != GGPO_OK)
@@ -1022,7 +1026,7 @@ void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)
 
 bool isConnected(int playerNum) {
 	if (playerNum == localPlayerNum) return true;
-	return connected[playerHandles[playerNum]];
+	return !(disconnect_flags >> playerNum & 1);
 }
 
 void disconnect(int playerNum) {
@@ -1171,13 +1175,14 @@ std::future<bool> gdxsvStartNetwork(const char* sessionCode, int me,
 	const std::vector<u16>& ports,
 	const std::vector<u8>& relays) {
 	synchronized = false;
+	const std::string session_code(sessionCode);
 	return std::async(std::launch::async, [=]{
 		{
 			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
 			gdxsvStartSession(0, 0, "");
 #else
-			gdxsvStartSession(sessionCode, me, ips, ports, relays);
+			gdxsvStartSession(session_code.c_str(), me, ips, ports, relays);
 #endif
 		}
 		while (!synchronized && active())

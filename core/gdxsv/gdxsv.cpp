@@ -310,13 +310,13 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 		gcp_ping_test_mutex_.unlock();
 	}
 
-	if (public_ipv4_.valid() && public_ipv4_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+	if (future_is_ready(public_ipv4_)) {
 		if (public_ipv4_.get().first) {
 			ss << "public_ipv4=" << public_ipv4_.get().second << "\n";
 		}
 	}
 
-	if (public_ipv6_.valid() && public_ipv4_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+	if (future_is_ready(public_ipv6_)) {
 		if (public_ipv6_.get().first) {
 			ss << "public_ipv6=" << public_ipv6_.get().second << "\n";
 		}
@@ -407,7 +407,6 @@ void Gdxsv::HandleRPC() {
 			if (lbs_net_.Connect(server_, port)) {
 				netmode_ = NetMode::Lbs;
 				lbs_net_.Send(GeneratePlatformInfoPacket());
-				FetchPublicIP();
 				AddPortMapping();
 			} else {
 				netmode_ = NetMode::Offline;
@@ -632,9 +631,14 @@ void Gdxsv::GcpPingTest() {
 void Gdxsv::AddPortMapping() {
 	if (config::EnableUPnP) {
 		int port = config::GdxLocalPort;
+		if (upnp_.isMapped(port, false)) {
+			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d is already mapped", port);
+			return;
+		}
 		upnp_result_ = std::async(std::launch::async, [this, port]() -> std::string {
 			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d", port);
-			std::string result = upnp_.Init() && upnp_.AddPortMapping(port, false) ? "Success" : upnp_.getLastError();
+			const bool ok = upnp_.Init() && upnp_.AddPortMapping(port, false);
+			std::string result = ok ? "Success" : upnp_.getLastError();
 			NOTICE_LOG(COMMON, "UPnP AddPortMapping port=%d %s", port, result.c_str());
 			return result;
 		});

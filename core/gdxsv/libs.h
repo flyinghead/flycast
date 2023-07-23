@@ -36,3 +36,8 @@ inline void gdxsv_WriteMem(int bits, u32 addr, u32 value) {
 	else
 		verify(false);
 }
+
+template <typename T>
+static bool future_is_ready(const T& future) {
+	return future.valid() && future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
+}

@@ -26,7 +26,11 @@ CreateSocket(uint16 bind_port, bool v6)
 	ioctlsocket(s, FIONBIO, &iMode);
 #endif
 
-   optval = 1 << 16;
+#if defined(__APPLE__)
+   optval = 9216;
+#else
+   optval = 16384;
+#endif
    setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&optval, sizeof optval);
    setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char *)&optval, sizeof optval);
 
@@ -81,9 +85,9 @@ Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
 
    Log("binding udp socket to port %d.", port);
    _socket_v4 = CreateSocket(port, false);
-   _socket_v6 = CreateSocket(port, true);
-   if (_socket_v4 == INVALID_SOCKET && _socket_v6 == INVALID_SOCKET)
+   if (_socket_v4 == INVALID_SOCKET)
 	   throw GGPOException("Socket creation or bind failed", GGPO_ERRORCODE_NETWORK_ERROR);
+   _socket_v6 = CreateSocket(port, true);
 }
 
 void
@@ -121,16 +125,15 @@ Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
 bool
 Udp::OnLoopPoll(void *cookie)
 {
-   uint8          recv_buf[MAX_UDP_PACKET_SIZE];
-   sockaddr_storage recv_addr;
-   socklen_t      recv_addr_len;
+   uint8 recv_buf[MAX_UDP_PACKET_SIZE];
 
    for (int s = 0; s < 2; s++) for (;;) {
       SOCKET sock = s == 0 ? _socket_v4 : _socket_v6;
       if (sock == INVALID_SOCKET) {
          continue;
       }
-      recv_addr_len = sizeof(recv_addr);
+      sockaddr_storage recv_addr{};
+      socklen_t recv_addr_len = sizeof(recv_addr);
       int len = recvfrom(sock, (char *)recv_buf, MAX_UDP_PACKET_SIZE, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
 
       // TODO: handle len == 0... indicates a disconnect.
@@ -141,7 +144,7 @@ Udp::OnLoopPoll(void *cookie)
             LogError("recvfrom WSAGetLastError returned %d (%x).", error, error);
          }
          break;
-      } else if (len > 0) {
+      } else if (len >= sizeof(UdpMsg::hdr)) {
          char src_ip[1024];
          if (recv_addr.ss_family == AF_INET) {
             inet_ntop(AF_INET, &((sockaddr_in*)&recv_addr)->sin_addr, src_ip, ARRAY_SIZE(src_ip));

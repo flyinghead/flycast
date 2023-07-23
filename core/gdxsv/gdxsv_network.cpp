@@ -338,14 +338,14 @@ bool UdpRemote::Open(const char *host, int port) {
 	verify(0 < port && port < 65536);
 	addrinfo *res = nullptr;
 	addrinfo hints{};
-	hints.ai_family = AF_UNSPEC;	  //  IPv4 or IPv6
+	hints.ai_family = AF_UNSPEC;	  // IPv4 or IPv6
 	hints.ai_socktype = SOCK_DGRAM;	  // UDP
 	hints.ai_flags = AI_NUMERICSERV;  // service is port no
 	char service[10] = {};
 	snprintf(service, sizeof(service), "%d", port);
 	const auto err = getaddrinfo(host, service, &hints, &res);
 	if (err != 0) {
-		WARN_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
+		ERROR_LOG(COMMON, "UDP Remote::Open failed. getaddrinfo %s err %d", host, err);
 		return false;
 	}
 
@@ -360,7 +360,7 @@ bool UdpRemote::Open(const char *host, int port) {
 	freeaddrinfo(res);
 
 	if (net_addr_len_ == 0) {
-		WARN_LOG(COMMON, "UDP Remote::Open failed. no address available");
+		ERROR_LOG(COMMON, "UDP Remote::Open failed. no address available");
 		return false;
 	}
 
@@ -406,12 +406,12 @@ bool UdpClient::Bind(int port) {
 		// create socket
 		sock_t sock = socket(af, SOCK_DGRAM, IPPROTO_UDP);
 		if (sock == INVALID_SOCKET) {
-			WARN_LOG(COMMON, "UDP Connect fail %d", get_last_error());
-			continue;
+			WARN_LOG(COMMON, "UDP socket create failed %d", get_last_error());
+			break;
 		}
 
 		// sockopt
-		int optval = 0;
+		int optval = 1;
 		if (port != 0) {
 			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&optval, sizeof optval);
 		}
@@ -421,7 +421,7 @@ bool UdpClient::Bind(int port) {
 			optval = 1;
 			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&optval, sizeof optval)) {
 				closesocket(sock);
-				continue;
+				break;
 			}
 		}
 
@@ -446,7 +446,7 @@ bool UdpClient::Bind(int port) {
 		if (::bind(sock, reinterpret_cast<sockaddr *>(&addr_storage), addrlen) < 0) {
 			ERROR_LOG(COMMON, "gdxsv: bind() failed. errno=%d", get_last_error());
 			closesocket(sock);
-			continue;
+			break;
 		}
 
 		set_recv_timeout(sock, 1);
@@ -462,7 +462,7 @@ bool UdpClient::Bind(int port) {
 		}
 	}
 
-	if (sock_v4_ == INVALID_SOCKET && sock_v6_ == INVALID_SOCKET) {
+	if (sock_v4_ == INVALID_SOCKET) {
 		NOTICE_LOG(COMMON, "UDP Initialize failed");
 		return false;
 	}
@@ -472,7 +472,7 @@ bool UdpClient::Bind(int port) {
 	return true;
 }
 
-bool UdpClient::Initialized() const { return !(sock_v4_ == INVALID_SOCKET && sock_v6_ == INVALID_SOCKET); }
+bool UdpClient::Initialized() const { return sock_v4_ != INVALID_SOCKET; }
 
 int UdpClient::RecvFrom(char *buf, int len, sockaddr_storage *from_addr, socklen_t *addrlen) {
 	if (sock_v4_ != INVALID_SOCKET) {
@@ -577,8 +577,10 @@ void MessageFilter::Clear() { recv_seq.clear(); }
 void UdpPingPong::Start(uint32_t session_id, uint8_t peer_id, int port, int duration_ms) {
 	if (running_) return;
 	verify(peer_id < N);
-	client_.Close();
-	client_.Bind(port);
+	if (!client_.Bind(port)) {
+		ERROR_LOG(COMMON, "UdpPingPong.Start client_.Bind failed");
+		return;
+	}
 	running_ = true;
 	int network_delay = 0;
 	const auto delay_option = std::getenv("GGPO_NETWORK_DELAY");
@@ -772,31 +774,46 @@ int UdpPingPong::ElapsedMs() const {
 
 void UdpPingPong::AddCandidate(const std::string &user_id, uint8_t peer_id, const std::string &ip, int port) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
-	Candidate c{};
 	user_to_peer_[user_id] = peer_id;
 	peer_to_user_[peer_id] = user_id;
+	Candidate c{};
 	c.peer_id = peer_id;
-	c.remote.Open(ip.c_str(), port);
-	candidates_.push_back(c);
+	if (c.remote.Open(ip.c_str(), port)) {
+		candidates_.emplace_back(c);
+	}
 }
 
 bool UdpPingPong::GetAvailableAddress(uint8_t peer_id, sockaddr_storage *dst, float *rtt) {
 	std::lock_guard<std::recursive_mutex> lock(mutex_);
+	std::vector<std::pair<float, int>> score_to_index;
 
-	// Return min rtt address
-	bool found = false;
-	float min_rtt = 1000.0f;
-	for (auto &c : candidates_) {
-		if (c.peer_id == peer_id && 0 < c.pong_count) {
-			if (0 < c.rtt && c.rtt < min_rtt) {
-				min_rtt = c.rtt;
-				memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
-				*rtt = c.rtt;
-				found = true;
+	for (int i = 0; i < candidates_.size(); i++) {
+		const auto &c = candidates_[i];
+		if (c.peer_id == peer_id && 0 < c.pong_count && 0 < c.rtt) {
+			float score = 10000.f - c.rtt;
+			if (is_loopback_addr(c.remote.net_addr())) {
+				score += 100.f;
 			}
+			if (is_private_addr(c.remote.net_addr())) {
+				score += 50.f;
+			}
+			if (c.remote.is_v6()) {
+				score += 20.f;
+			}
+			score_to_index.emplace_back(score, i);
 		}
 	}
-	return found;
+
+	if (score_to_index.empty()) {
+		return false;
+	}
+
+	const int i = std::max_element(score_to_index.begin(), score_to_index.end())->second;
+	const auto &c = candidates_[i];
+	memset(dst, 0, sizeof(sockaddr_storage));
+	memcpy(dst, c.remote.net_addr(), c.remote.net_addr_len());
+	*rtt = c.rtt;
+	return true;
 }
 
 void UdpPingPong::GetRttMatrix(uint8_t matrix[N][N]) {

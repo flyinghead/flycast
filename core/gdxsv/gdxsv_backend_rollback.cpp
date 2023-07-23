@@ -137,6 +137,22 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 		std::vector<std::string> ips(matching_.player_count());
 		std::vector<u16> ports(matching_.player_count());
 		std::vector<u8> relays(matching_.player_count());
+		static const auto get_ip_port = [](const sockaddr_storage& storage) -> std::tuple<std::string, u16> {
+			if (storage.ss_family == AF_INET) {
+				auto addr = (sockaddr_in*)&storage;
+				char str[INET_ADDRSTRLEN] = {};
+				inet_ntop(AF_INET, &(addr->sin_addr), str, sizeof(str));
+				return {str, ntohs(addr->sin_port)};
+			}
+			if (storage.ss_family == AF_INET6) {
+				auto addr = (sockaddr_in6*)&storage;
+				char str[INET6_ADDRSTRLEN] = {};
+				inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
+				return {str, ntohs(addr->sin6_port)};
+			}
+			return {"", 0};
+		};
+
 		float max_rtt = 0;
 		NOTICE_LOG(COMMON, "Peer count %d", matching_.player_count());
 		for (int i = 0; i < matching_.player_count(); i++) {
@@ -149,19 +165,7 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 				float rtt;
 				if (ping_pong_.GetAvailableAddress(i, &addr_storage, &rtt)) {
 					max_rtt = std::max(max_rtt, rtt);
-					if (addr_storage.ss_family == AF_INET) {
-						auto addr = (sockaddr_in*)&addr_storage;
-						char str[INET_ADDRSTRLEN] = {};
-						inet_ntop(AF_INET, &(addr->sin_addr), str, sizeof(str));
-						ips[i] = str;
-						ports[i] = ntohs(addr->sin_port);
-					} else if (addr_storage.ss_family == AF_INET6) {
-						auto addr = (sockaddr_in6*)&addr_storage;
-						char str[INET6_ADDRSTRLEN] = {};
-						inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
-						ips[i] = str;
-						ports[i] = ntohs(addr->sin6_port);
-					}
+					std::tie(ips[i], ports[i]) = get_ip_port(addr_storage);
 					NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i],
 							   relays[i]);
 				} else {
@@ -180,21 +184,9 @@ void GdxsvBackendRollback::OnMainUiLoop() {
 					}
 
 					if (relay_peer != -1 && ping_pong_.GetAvailableAddress(relay_peer, &addr_storage, &rtt)) {
-						rtt = +(float)rtt_matrix[relay_peer][i];
+						rtt += (float)rtt_matrix[relay_peer][i];
 						max_rtt = std::max(max_rtt, rtt);
-						if (addr_storage.ss_family == AF_INET) {
-							auto addr = (sockaddr_in*)&addr_storage;
-							char str[INET_ADDRSTRLEN] = {};
-							inet_ntop(AF_INET, &(addr->sin_addr), str, sizeof(str));
-							ips[i] = str;
-							ports[i] = ntohs(addr->sin_port);
-						} else if (addr_storage.ss_family == AF_INET6) {
-							auto addr = (sockaddr_in6*)&addr_storage;
-							char str[INET6_ADDRSTRLEN] = {};
-							inet_ntop(AF_INET6, &(addr->sin6_addr), str, sizeof(str));
-							ips[i] = str;
-							ports[i] = ntohs(addr->sin6_port);
-						}
+						std::tie(ips[i], ports[i]) = get_ip_port(addr_storage);
 						relays[i] = true;
 						NOTICE_LOG(COMMON, "Peer%d %.2fms IP:%s Port:%d Relay:%d", i, rtt, mask_ip_address(ips[i]).c_str(), ports[i],
 								   relays[i]);
