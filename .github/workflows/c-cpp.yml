@@ -168,28 +168,6 @@ jobs:
           rm flycast-gdxsv-x86_64.AppImage
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - name: Setup google cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.3.0
-        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
-
-      - name: Authenticate to google cloud platform
-        id: auth
-        uses: google-github-actions/auth@v0
-        with:
-          workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          create_credentials_file: 'true'
-          access_token_lifetime: 1200s
-        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
-
-      - name: Upload to GCS
-        run: |
-          gcloud storage cp artifact/bin/* gs://gdxsv/flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA/${{ matrix.config.packageName }}
-          gcloud storage ls --json -r gs://gdxsv/flycast-builds > index.json
-          gcloud storage cp index.json gs://gdxsv/flycast-builds/index.json
-        shell: bash
-        if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
-
       - name: Configure AWS Credentials
         id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v2
