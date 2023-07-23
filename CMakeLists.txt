@@ -680,11 +680,14 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH OR VITA)
 endif()
 
 if(VITA)
+	add_subdirectory(core/deps/kubridge)
+	add_dependencies(${PROJECT_NAME} kubridge_all)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/kubridge) # to override system kubridge.h if present
 	target_link_libraries(${PROJECT_NAME} PRIVATE
 			-Wl,--whole-archive pthread -Wl,--no-whole-archive
 			stdc++
 			SDL2
-			kubridge_stub
+			${CMAKE_CURRENT_BINARY_DIR}/core/deps/kubridge/stubs/libkubridge_stub.a
 			ScePgf_stub
 			SceHid_stub
 			SceAppMgr_stub

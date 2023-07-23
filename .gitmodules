@@ -28,3 +28,6 @@
 [submodule "core/deps/Spout"]
 	path = core/deps/Spout
 	url = https://github.com/vkedwardli/Spout2.git
+[submodule "core/deps/kubridge"]
+	path = core/deps/kubridge
+	url = https://github.com/bythos14/kubridge.git
