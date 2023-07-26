@@ -652,7 +652,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB"
 				|| gameId.substr(0, 9) == "MUSHIKING"
-				|| gameId == "DINOSAUR KING")
+				|| gameId == "DINOSAUR KING"
+				|| gameId == "INW PUPPY 2008 VER1.001")	// SystemSP isshoni
 		{
 			card_reader::barcodeInit();
 		}
@@ -730,7 +731,7 @@ void naomi_cart_Close()
 {
 	touchscreen::term();
 	printer::term();
-	card_reader::initdTerm();
+	card_reader::term();
 	card_reader::barcodeTerm();
 	serialModemTerm();
 	hopper::term();

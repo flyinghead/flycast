@@ -5,6 +5,7 @@
 #include <cmath>
 #include "input/gamepad.h"
 #include "serialize.h"
+#include "hw/hwreg.h"
 
 #include <memory>
 #include <vector>
@@ -257,7 +258,7 @@ struct maple_base: maple_device
 
 class jvs_io_board;
 
-struct maple_naomi_jamma : maple_base
+struct maple_naomi_jamma : maple_base, SerialPort
 {
 	static constexpr u8 ALL_NODES = 0xff;
 
@@ -295,4 +296,11 @@ struct maple_naomi_jamma : maple_base
 
 	void serialize(Serializer& ser) const override;
 	void deserialize(Deserializer& deser) override;
+
+	void setPipe(Pipe *pipe) override {
+		serialPipe = pipe;
+	}
+	void updateStatus() override {}
+
+	Pipe *serialPipe = nullptr;
 };

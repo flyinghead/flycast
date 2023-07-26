@@ -716,7 +716,7 @@ void initMidiForceFeedback()
 	aica::setMidiReceiver(forceFeedbackMidiReceiver);
 }
 
-struct DriveSimPipe : public SerialPipe
+struct DriveSimPipe : public SerialPort::Pipe
 {
 	void write(u8 data) override
 	{
@@ -773,7 +773,7 @@ void initDriveSimSerialPipe()
 	static DriveSimPipe pipe;
 
 	pipe.reset();
-	serial_setPipe(&pipe);
+	SCIFSerialPort::Instance().setPipe(&pipe);
 }
 
 G2PrinterConnection g2PrinterConnection;

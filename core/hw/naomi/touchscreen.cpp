@@ -34,13 +34,13 @@ namespace touchscreen
 // 837-14672 touchscreen sensor board
 // used by Manic Panic Ghosts and Touch De Zunou
 //
-class TouchscreenPipe final : public SerialPipe
+class TouchscreenPipe final : public SerialPort::Pipe
 {
 public:
 	TouchscreenPipe()
 	{
 		schedId = sh4_sched_register(0, schedCallback, this);
-		serial_setPipe(this);
+		SCIFSerialPort::Instance().setPipe(this);
 	}
 
 	~TouchscreenPipe()
@@ -101,7 +101,7 @@ private:
 			return;
 		toSend.insert(toSend.end(), &msg[0], &msg[size]);
 		toSend.push_back(calcChecksum(msg, size));
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 	}
 
 	u8 calcChecksum(const u8 *data, int size)

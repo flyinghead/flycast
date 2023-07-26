@@ -22,7 +22,8 @@
 namespace card_reader {
 
 void initdInit();
-void initdTerm();
+void derbyInit();
+void term();
 
 void barcodeInit();
 void barcodeTerm();

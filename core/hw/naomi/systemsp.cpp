@@ -33,9 +33,9 @@
 #include "oslib/oslib.h"
 #include "cfg/option.h"
 #include "card_reader.h"
+#include "naomi_roms.h"
+#include "stdclass.h"
 #include <errno.h>
-
-#include "hw/sh4/sh4_if.h"
 
 #ifdef DEBUG_EEPROM
 #define EEPROM_LOG(...) DEBUG_LOG(FLASHROM, __VA_ARGS__)
@@ -162,67 +162,20 @@ void SerialEeprom93Cxx::writeCLK(int state)
 	clk = state;
 }
 
-u8 SerialPort::readReg(u32 addr)
+//
+// RS232C I/F board (838-14244) connected to RFID Chip R/W board (838-14243)
+//
+class RfidReaderWriter : public SerialPort::Pipe
 {
-	switch ((addr & 0x3f) / 4)
+public:
+	RfidReaderWriter(SerialPort *port, int index) : port(port), index(index)
 	{
-	case 0: // data in
-		{
-			u8 data = 0;
-			if (!toSend.empty())
-			{
-				data = toSend.front();
-				toSend.pop_front();
-			}
-			if (toSend.empty())
-				asic_CancelInterrupt(holly_EXP_PCI);
-			SERIAL_LOG("UART%d read data in %x", index, data);
-			return data;
-		}
-	case 1: // out buffer len
-		SERIAL_LOG("UART%d read out buf len", index);
-		return 0;
-	case 2: // in buffer len
-		SERIAL_LOG("UART%d read in buf len %d", index, (int)toSend.size());
-		return toSend.size();
-	case 3: // errors?
-		SERIAL_LOG("UART%d read errors", index);
-		return 0;
-	case 4: // unknown
-		SERIAL_LOG("UART%d read reg4", index);
-		return 0;
-	case 5: // flow control
-		SERIAL_LOG("UART%d read flow control", index);
-		return 0;
-	case 6: // status. bit 3: receive buffer not empty
-		SERIAL_LOG("UART%d read status %x pr %x", index, (u8)(!toSend.empty()) << 3, p_sh4rcb->cntx.pr);
-		return (u8)(!toSend.empty()) << 3;
-	case 7: // interrupt status/mask?
-		SERIAL_LOG("UART%d read interrupt mask/status?", index);
-		return 0;
-	case 8: // unknown
-		SERIAL_LOG("UART%d read reg8", index);
-		return 0;
-	case 9: // control?
-		SERIAL_LOG("UART%d read control?", index);
-		return 0;
-	case 10: // baudrate (lsb)
-		SERIAL_LOG("UART%d read baudrate(lsb)", index);
-		return 0;
-	case 11: // baudrate (msb)
-		SERIAL_LOG("UART%d read baudrate(msb)", index);
-		return 0;
-	default:
-		INFO_LOG(NAOMI, "Unknown UART%d port %x\n", index, addr);
-		return 0;
+		port->setPipe(this);
+		// TODO load card
 	}
-}
 
-void SerialPort::writeReg(u32 addr, u8 v)
-{
-	switch ((addr & 0x3f) / 4)
+	void write(u8 v) override
 	{
-	case 0: // data out
 		if (expectedBytes > 0)
 		{
 			SERIAL_LOG("UART%d write data out: %02x", index, v);
@@ -248,7 +201,7 @@ void SerialPort::writeReg(u32 addr, u8 v)
 					toSend.push_back(1);
 					SERIAL_LOG("UART%d COUNT %x", index, recvBuffer[1]);
 				}
-				asic_RaiseInterrupt(holly_EXP_PCI);
+				port->updateStatus();
 				expectedBytes = 0;
 			}
 			return;
@@ -329,10 +282,312 @@ void SerialPort::writeReg(u32 addr, u8 v)
 			toSend.push_back(0x3a); // ng
 			break;
 		}
-		if (toSend.empty())
-			asic_CancelInterrupt(holly_EXP_PCI);
+	}
+
+	int available() override {
+		return toSend.size();
+	}
+
+	u8 read() override
+	{
+		u8 b = 0;
+		if (!toSend.empty())
+		{
+			b = toSend.front();
+			toSend.pop_front();
+		}
+		return b;
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << (u32)toSend.size();
+		for (u8 b : toSend)
+			ser << b;
+		ser << expectedBytes;
+		ser << (u32)recvBuffer.size();
+		ser.serialize(recvBuffer.data(), recvBuffer.size());
+	}
+
+	void deserialize(Deserializer& deser) override
+	{
+		u32 size;
+		deser >> size;
+		toSend.resize(size);
+		for (u32 i = 0; i < size; i++)
+			deser >> toSend[i];
+		deser >> expectedBytes;
+		deser >> size;
+		recvBuffer.resize(size);
+		deser.deserialize(recvBuffer.data(), recvBuffer.size());
+	}
+
+private:
+	SerialPort *port;
+	const int index;
+	std::deque<u8> toSend;
+	std::array<u8, 128> cardData;
+	u8 expectedBytes = 0;
+	std::vector<u8> recvBuffer;
+};
+
+//
+// Isshoni Wanwan Waiwai Puppy touchscreen
+//
+class Touchscreen : public SerialPort::Pipe
+{
+public:
+	Touchscreen(SerialPort *port) : port(port)
+	{
+		port->setPipe(this);
+		schedId = sh4_sched_register(0, schedCallback, this);
+	}
+
+	~Touchscreen()
+	{
+		sh4_sched_unregister(schedId);
+	}
+
+	void write(u8 v) override
+	{
+		if (v == '\r')
+		{
+			if (recvBuffer.size() >= 2 && recvBuffer[0] == 1)
+			{
+				toSend.push_back(1);
+				if (recvBuffer.size() == 3 && recvBuffer[1] == 'O' && recvBuffer[2] == 'I')
+				{
+					SERIAL_LOG("Received cmd OI: get name");
+					toSend.push_back('A');
+					toSend.push_back('3');
+					toSend.push_back('0');
+					toSend.push_back('9');
+					toSend.push_back('9');
+					toSend.push_back('9');
+				}
+				else if (recvBuffer.size() == 3 && recvBuffer[1] == 'N' && recvBuffer[2] == 'M')
+				{
+					SERIAL_LOG("Received cmd NM: unit verify");
+					const std::array<u8, 19> id { 'E','X','I','I','-','7','7','2','0','S','C',' ','R','e','v',' ','3','.','0' };
+					toSend.insert(toSend.end(), id.begin(), id.end());
+				}
+				else if (recvBuffer.size() == 3 && recvBuffer[1] == 'U' && recvBuffer[2] == 'V')
+				{
+					SERIAL_LOG("Received cmd UV: reset");
+					const std::array<u8, 8> resp { 'Q','M','V','*','*','*','0','0' };
+					toSend.insert(toSend.end(), resp.begin(), resp.end());
+				}
+				else if (recvBuffer.size() == 2 && recvBuffer[1] == 'R')
+				{
+					SERIAL_LOG("Received cmd R");
+					toSend.push_back('0');
+					sh4_sched_request(schedId, SCHED_CYCLES);
+				}
+				else
+				{
+					SERIAL_LOG("Received cmd %c", recvBuffer[1]);
+					toSend.push_back('0');
+				}
+				toSend.push_back('\r');
+				port->updateStatus();
+
+				// FIXME
+				if (recvBuffer.size() == 2 && recvBuffer[1] == 'Z')
+					sendPosition(0);
+			}
+			else
+			{
+				WARN_LOG(NAOMI, "\\r ignored. buf size %d", (int)recvBuffer.size());
+			}
+			recvBuffer.clear();
+		}
 		else
-			asic_RaiseInterrupt(holly_EXP_PCI);
+		{
+			if (recvBuffer.size() == 9)
+			{
+				if (!memcmp(&recvBuffer[0], "Ua0000000", 9))
+				{
+					SERIAL_LOG("UART receive Ua...%c", v);
+					sendPosition(1);
+				}
+				else
+					WARN_LOG(NAOMI, "Unknown command %.9s", &recvBuffer[0]);
+				recvBuffer.clear();
+			}
+			else
+			{
+				recvBuffer.push_back(v);
+			}
+		}
+	}
+
+	int available() override {
+		return toSend.size();
+	}
+
+	u8 read() override
+	{
+		u8 data = 0;
+		if (!toSend.empty())
+		{
+			data = toSend.front();
+			toSend.pop_front();
+		}
+		if (toSend.empty())
+			port->updateStatus();
+		SERIAL_LOG("UART read data %x", data);
+		return data;
+	}
+
+	void serialize(Serializer& ser) const override
+	{
+		ser << (u32)toSend.size();
+		for (u8 b : toSend)
+			ser << b;
+		ser << (u32)recvBuffer.size();
+		ser.serialize(recvBuffer.data(), recvBuffer.size());
+	}
+
+	void deserialize(Deserializer& deser) override
+	{
+		u32 size;
+		deser >> size;
+		toSend.resize(size);
+		for (u32 i = 0; i < size; i++)
+			deser >> toSend[i];
+		deser >> size;
+		recvBuffer.resize(size);
+		deser.deserialize(recvBuffer.data(), recvBuffer.size());
+	}
+
+private:
+	void sendPosition(int type)
+	{
+		MapleInputState input[4];
+		ggpo::getInput(input);
+		// 0-1023 ?
+		const u32 x = (640 - input[0].absPos.x) * 1023 / 639;
+		const u32 y = input[0].absPos.y * 1023 / 479;
+
+		size_t start = toSend.size();
+		if (type == 1)
+		{
+			toSend.push_back('U');
+			toSend.push_back('T');
+			toSend.push_back(0x20);	// bit 0 and 1 are checked
+			toSend.push_back(x & 0xff);
+			toSend.push_back((x >> 8) & 0x1f);
+			toSend.push_back(y & 0xff);
+			toSend.push_back((y >> 8) & 0x1f);
+			toSend.push_back(0);	// z pos
+			u8 crc = 0xaa;
+			for (; start < toSend.size(); start++)
+				crc += toSend[start];
+			toSend.push_back(crc);
+			port->updateStatus();
+		}
+		else
+		{
+			bool button = (input[0].kcode & DC_BTN_B) == 0;	// FIXME use button A instead
+			if (button != lastButton || x != lastPosX || y != lastPosY)
+			{
+				// bit 6 is touch down
+				if (button)
+					toSend.push_back(0xc0);
+				else
+					toSend.push_back(0x80);
+				toSend.push_back((x & 7) << 4);
+				toSend.push_back((x >> 3) & 0x7f);
+				toSend.push_back((y & 7) << 4);
+				toSend.push_back((y >> 3) & 0x7f);
+				lastButton = button;
+				lastPosX = x;
+				lastPosY = y;
+				port->updateStatus();
+			}
+		}
+	}
+
+	static int schedCallback(int tag, int cycles, int jitter, void *p)
+	{
+		((Touchscreen *)p)->sendPosition(0);
+		return SCHED_CYCLES;
+	}
+
+	SerialPort *port;
+	std::deque<u8> toSend;
+	std::vector<u8> recvBuffer;
+	int schedId = 0;
+	u32 lastPosX = ~0;
+	u32 lastPosY = ~0;
+	bool lastButton = false;
+
+	static constexpr u32 SCHED_CYCLES = SH4_MAIN_CLOCK / 60;
+};
+
+u8 SerialPort::readReg(u32 addr)
+{
+	switch ((addr & 0x3f) / 4)
+	{
+	case 0: // data in
+		if (pipe != nullptr)
+			return pipe->read();
+		else
+			return 0;
+	case 1: // out buffer len
+		//SERIAL_LOG("UART%d read out buf len", index);
+		return 0;
+	case 2: // in buffer len
+		//SERIAL_LOG("UART%d read in buf len %d", index, (int)toSend.size());
+		if (pipe != nullptr)
+			return pipe->available();
+		else
+			return 0;
+	case 3: // errors?
+		SERIAL_LOG("UART%d read errors", index);
+		return 0;
+	case 4: // unknown
+		SERIAL_LOG("UART%d read reg4", index);
+		return 0;
+	case 5: // flow control
+		SERIAL_LOG("UART%d read flow control", index);
+		return 0;
+	case 6: // status. bit 3: receive buffer not empty
+		SERIAL_LOG("UART%d read status", index);
+		if (pipe != nullptr && pipe->available() > 0)
+			return 8;
+		else
+			return 0;
+	case 7: // interrupt status/mask?
+		SERIAL_LOG("UART%d read interrupt mask/status?", index);
+		return 0;
+	case 8: // unknown
+		SERIAL_LOG("UART%d read reg8", index);
+		return 0;
+	case 9: // control?
+		SERIAL_LOG("UART%d read control?", index);
+		return 0;
+	case 10: // baudrate (lsb)
+		SERIAL_LOG("UART%d read baudrate(lsb)", index);
+		return 0;
+	case 11: // baudrate (msb)
+		SERIAL_LOG("UART%d read baudrate(msb)", index);
+		return 0;
+	default:
+		INFO_LOG(NAOMI, "Unknown UART%d port %x\n", index, addr);
+		return 0;
+	}
+}
+
+void SerialPort::writeReg(u32 addr, u8 v)
+{
+	switch ((addr & 0x3f) / 4)
+	{
+	case 0: // data out
+		if (pipe != nullptr)
+			pipe->write(v);
+		else
+			INFO_LOG(NAOMI, "UART%d out: %02x %c", index, v, v);
 		break;
 
 	case 1: // out buffer len
@@ -373,16 +628,23 @@ void SerialPort::writeReg(u32 addr, u8 v)
 
 	case 10: // baudrate (lsb)
 		SERIAL_LOG("UART%d write baudrate(lsb): %x", index, v);
+		flush();
 		break;
 
 	case 11: // baudrate (msb)
 		SERIAL_LOG("UART%d write baudrate(msb): %x", index, v);
+		flush();
 		break;
 
 	default:
 		INFO_LOG(NAOMI, "Unknown UART%d port %x\n", index, addr);
 		break;
 	}
+}
+
+void SerialPort::updateStatus()
+{
+	cart->updateInterrupt(index == 1 ? SystemSpCart::INT_UART1 : SystemSpCart::INT_UART2);
 }
 
 template<typename T>
@@ -455,9 +717,7 @@ T SystemSpCart::readMemArea0(u32 addr)
 								if (ata.cylinder == 0)
 									ata.driveHead.head++;
 								readSectors();
-								ata.interruptPending |= 0x10;
-								if (ata.devCtrl.nien == 0)
-									asic_RaiseInterrupt(holly_EXP_PCI);
+								updateInterrupt(INT_ATA);
 							}
 							else
 							{
@@ -544,11 +804,17 @@ T SystemSpCart::readMemArea0(u32 addr)
 		case 0x30:
 			return 0;
 		case 0x80:
-			// interrupt status
-			asic_CancelInterrupt(holly_EXP_PCI);
-			// bit3 is for DIMM
-			// bit4 is for ATA controller
-			return uart1.hasData() | (uart2.hasData() << 1) | ata.interruptPending;
+			{
+				// interrupt status
+				const u8 intPending = ata.interruptPending;
+				ata.interruptPending = 0;
+				updateInterrupt();
+				// b0: UART1
+				// b1: UART2
+				// b3: DIMM
+				// b4: ATA controller
+				return intPending;
+			}
 		case 0x84:
 			// interrupt mask?
 			// 10084: (dinoking) bit0,1 reset, sometimes set
@@ -961,7 +1227,17 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 	INFO_LOG(NAOMI, "systemsp::writeMemArea0<%d>: Unknown addr %x = %x", (int)sizeof(T), addr, (int)v);
 }
 
-SystemSpCart::SystemSpCart(u32 size) : M4Cartridge(size), eeprom(128), uart1(1), uart2(2)
+void SystemSpCart::updateInterrupt(u32 mask)
+{
+	ata.interruptPending |= mask;
+	if ((ata.interruptPending & (INT_UART1 | INT_UART2 | INT_DIMM))
+			|| ((ata.interruptPending & INT_ATA) && ata.devCtrl.nien == 0))
+		asic_RaiseInterrupt(holly_EXP_PCI);
+	else
+		asic_CancelInterrupt(holly_EXP_PCI);
+}
+
+SystemSpCart::SystemSpCart(u32 size) : M4Cartridge(size), eeprom(128), uart1(this, 1), uart2(this, 2)
 {
 	schedId = sh4_sched_register(0, schedCallback, this);
 	Instance = this;
@@ -1068,6 +1344,16 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 		ata.status.rdy = 0;
 		ata.status.df = 1;
 	}
+	if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0))
+	{
+		new RfidReaderWriter(&uart1, 1);
+		new RfidReaderWriter(&uart2, 2);
+	}
+	else if (!strcmp(game->name, "isshoni"))
+	{
+		new Touchscreen(&uart1);
+	}
+
 	EventManager::listen(Event::Pause, handleEvent, this);
 }
 
@@ -1083,6 +1369,8 @@ void SystemSpCart::WriteMem(u32 address, u32 data, u32 size)
 
 bool SystemSpCart::Read(u32 offset, u32 size, void *dst)
 {
+	// TODO sram? if ((offset & 0x3f000000) == 0x39000000)
+
 	if ((offset & 0x3f000000) == 0x3f000000)
 	{
 		// network card present
@@ -1208,9 +1496,7 @@ int SystemSpCart::schedCallback()
 {
 	ata.status.rdy = 1;
 	ata.status.bsy = 0;
-	ata.interruptPending |= 0x10;
-	if (ata.devCtrl.nien == 0)
-		asic_RaiseInterrupt(holly_EXP_PCI);
+	updateInterrupt(INT_ATA);
 
 	return 0;
 }

@@ -1464,6 +1464,47 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x0);
 			break;
 
+		// RS422 port
+		case 0x41: // reset?
+			DEBUG_LOG(MAPLE, "JVS: RS422 reset");
+			if (serialPipe != nullptr)
+				while (serialPipe->available())
+					serialPipe->read();
+			break;
+
+		case 0x47: // send data
+			DEBUG_LOG(MAPLE, "JVS: RS422 send %02x", dma_buffer_in[4]);
+			if (serialPipe != nullptr)
+				serialPipe->write(dma_buffer_in[4]);
+			break;
+
+		case 0x4d: // receive data
+			{
+				int avail = 0;
+				if (serialPipe != nullptr)
+					avail = std::min(serialPipe->available(), 0xfe);
+				DEBUG_LOG(MAPLE, "JVS: RS422 receive %d bytes", avail);
+				w8(MDRS_JVSReply);
+				w8(0);
+				w8(0x20);
+				w8(1 + (avail + 3) / 4);
+
+				w8(0);
+				w8(0);
+				w8(0);
+				w8(avail == 0 ? 0xff : avail); // 0xff => no data, else byte count
+
+				for (int i = 0; i < ((avail + 3) / 4) * 4; i++)
+					w8(i >= avail ? 0 : serialPipe->read());
+				break;
+			}
+
+		case 0x49: // I?
+		case 0x4b: // K?
+		case 0x4f: // O?
+			//DEBUG_LOG(MAPLE, "JVS: 0x86,%02x RS422 len %d", subcode, dma_count_in - 3);
+			break;
+
 		default:
 			INFO_LOG(MAPLE, "JVS: Unknown 0x86 sub-command %x", subcode);
 			w8(MDRE_UnknownCmd);

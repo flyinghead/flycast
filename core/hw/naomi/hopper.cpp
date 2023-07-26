@@ -35,7 +35,7 @@
 namespace hopper
 {
 
-class BaseHopper : public SerialPipe
+class BaseHopper : public SerialPort::Pipe
 {
 public:
 	BaseHopper()
@@ -183,7 +183,7 @@ protected:
 			chksum += *payload;
 		}
 		toSend.push_back(chksum);
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 	}
 
 	void bet(const u32 *values)
@@ -1281,7 +1281,7 @@ void init()
 		hopper = new Sega837_14438Hopper();
 	else
 		hopper = new NaomiHopper();
-	serial_setPipe(hopper);
+	SCIFSerialPort::Instance().setPipe(hopper);
 	config::ForceFreePlay.override(false);
 }
 

@@ -291,3 +291,25 @@ void WriteMemArr(u8 *array, u32 addr, T data)
 {
 	*(T *)&array[addr] = data;
 }
+
+class SerialPort
+{
+public:
+	class Pipe
+	{
+	public:
+		// Serial TX
+		virtual void write(u8 data) { }
+		// RX buffer Size
+		virtual int available() { return 0; }
+		// Serial RX
+		virtual u8 read() { return 0; }
+
+		virtual ~Pipe() = default;
+	};
+
+	virtual void setPipe(Pipe *pipe) = 0;
+	virtual void updateStatus() = 0;
+
+	virtual ~SerialPort() = default;
+};

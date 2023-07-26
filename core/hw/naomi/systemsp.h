@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 #include "emulator.h"
+#include "hw/hwreg.h"
 #include "hw/naomi/m4cartridge.h"
 #include "hw/flashrom/flashrom.h"
 #include "serialize.h"
@@ -35,6 +36,9 @@ T readMemArea0(u32 addr);
 template<typename T>
 void writeMemArea0(u32 addr, T v);
 
+//
+// rom board eeprom
+//
 class SerialEeprom93Cxx : public WritableChip
 {
 public:
@@ -102,8 +106,6 @@ public:
 		deser >> dataOutBits;
 	}
 
-	void save(const std::string& path);
-
 private:
 	u8 getCommandAddress() const
 	{
@@ -137,51 +139,63 @@ private:
 	u8 dataOutBits = 0;
 };
 
-class SerialPort
+class SystemSpCart;
+
+// rom board custom UART ports
+class SerialPort : public ::SerialPort
 {
 public:
-	SerialPort(int index) : index(index)
+	class Pipe : public ::SerialPort::Pipe
 	{
+	public:
+		virtual void serialize(Serializer& ser) const {}
+		virtual void deserialize(Deserializer& deser) {}
+	};
+
+	SerialPort(SystemSpCart *cart, int index) : cart(cart), index(index) {
+	}
+
+	~SerialPort() {
+		if (pipe != nullptr)
+			delete pipe;
 	}
 
 	u8 readReg(u32 addr);
 
 	void writeReg(u32 addr, u8 v);
 
-	bool hasData() const {
-		return !toSend.empty();
+	void serialize(Serializer& ser) const {
+		if (pipe != nullptr)
+			pipe->serialize(ser);
 	}
 
-	void serialize(Serializer& ser) const
-	{
-		ser << (u32)toSend.size();
-		for (u8 b : toSend)
-			ser << b;
-		ser << expectedBytes;
-		ser << (u32)recvBuffer.size();
-		ser.serialize(recvBuffer.data(), recvBuffer.size());
+	void deserialize(Deserializer& deser) {
+		if (pipe != nullptr)
+			pipe->deserialize(deser);
 	}
-	void deserialize(Deserializer& deser)
-	{
-		u32 size;
-		deser >> size;
-		toSend.resize(size);
-		for (u32 i = 0; i < size; i++)
-			deser >> toSend[i];
-		deser >> expectedBytes;
-		deser >> size;
-		recvBuffer.resize(size);
-		deser.deserialize(recvBuffer.data(), recvBuffer.size());
+
+	void setPipe(::SerialPort::Pipe *pipe) override {
+		this->pipe = (Pipe *)pipe;
 	}
+
+	void updateStatus() override;
 
 private:
+	void flush()
+	{
+		if (pipe != nullptr)
+			while (pipe->available())
+				pipe->read();
+	}
+
+	SystemSpCart *cart;
 	const int index;
-	std::deque<u8> toSend;
-	std::array<u8, 128> cardData;
-	u8 expectedBytes = 0;
-	std::vector<u8> recvBuffer;
+	Pipe *pipe = nullptr;
 };
 
+//
+// ATA registers for CompactFlash interface
+//
 union AtaStatusRegister
 {
 	u8 full;
@@ -256,6 +270,8 @@ public:
 			return false;
 	}
 
+	void updateInterrupt(u32 mask = 0);
+
 private:
 	static int schedCallback(int tag, int sch_cycl, int jitter, void *arg);
 	int schedCallback();
@@ -319,6 +335,11 @@ private:
 	} flash;
 
 public:
+	static constexpr u32 INT_UART1 = 0x01;
+	static constexpr u32 INT_UART2 = 0x02;
+	static constexpr u32 INT_DIMM = 0x08;
+	static constexpr u32 INT_ATA = 0x10;
+
 	static SystemSpCart *Instance;
 };
 
