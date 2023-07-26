@@ -938,12 +938,10 @@ void gdxsv_start_replay(const std::string& replay_file, int pov) {
 }
 
 void gdxsv_end_replay() {
+	emu.stop();
 	dc_loadstate(90);
 	settings.input.fastForwardMode = false;
 
-	emu.start();
-	emu.render();
-	emu.stop();
 	if (!selected_replay_file.empty() || selected_replay_entry_index != -1) {
 		gui_state = GuiState::GdxsvReplay;
 	} else {

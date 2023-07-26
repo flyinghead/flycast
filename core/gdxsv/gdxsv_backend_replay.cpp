@@ -35,7 +35,6 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 	}
 
 	if (state_ == State::End) {
-		gdxsv.Reset();
 		gdxsv_end_replay();
 	}
 }
@@ -83,6 +82,11 @@ bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
 	return Start();
 }
 
+void GdxsvBackendReplay::Stop() {
+	RestorePatch();
+	state_ = State::End;
+}
+
 bool GdxsvBackendReplay::isReplaying() { return state_ == State::McsInBattle; }
 
 void GdxsvBackendReplay::Open() {
@@ -91,8 +95,8 @@ void GdxsvBackendReplay::Open() {
 	ApplyPatch(true);
 }
 
-void GdxsvBackendReplay::Close(bool by_user) {
-	if (by_user == false && state_ <= State::McsWaitJoin) {
+void GdxsvBackendReplay::Close() {
+	if (state_ <= State::McsWaitJoin) {
 		return;
 	}
 
