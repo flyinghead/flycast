@@ -445,6 +445,7 @@ if(NOT LIBRETRO)
 		endif()
 		if(NOT SDL2_FOUND)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
+			target_include_directories(${PROJECT_NAME} PRIVATE "core/deps/SDL/include")
 			set(SDL2_FOUND 1)
 		endif()
 

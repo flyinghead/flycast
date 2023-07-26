@@ -896,7 +896,9 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	return false;
 }
 
-void Gdxsv::StopReplay() { replay_net_.Close(true); }
+void Gdxsv::StopReplay() {
+	replay_net_.Stop();
+}
 
 bool Gdxsv::StartRollbackTest(const char *param) {
 	rollback_net_.Reset();
