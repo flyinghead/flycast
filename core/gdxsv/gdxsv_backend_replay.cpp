@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include "emulator.h"
 #include "cfg/option.h"
+#include "emulator.h"
 #include "gdx_rpc.h"
 #include "gdxsv.h"
 #include "gdxsv_replay_util.h"
@@ -22,11 +22,16 @@ void GdxsvBackendReplay::Reset() {
 	key_msg_count_ = 0;
 	ctrl_play_speed_ = 0;
 	ctrl_pause_ = false;
+	ctrl_step_frame_ = false;
+	ctrl_some_frame_backward_ = false;
+	ctrl_some_frame_forward_ = false;
+	seek_frames_ = false;
+	gdxsv_save_state.Reset();
 }
 
 void GdxsvBackendReplay::OnMainUiLoop() {
 	if (state_ == State::Start) {
-		kcode[0] = ~0x0004;
+		kcode[0] = ~0x0004u;
 	}
 
 	if (state_ == State::McsInBattle) {
@@ -38,51 +43,56 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 	}
 
 	if (state_ == State::End) {
+		gdxsv_save_state.Reset();
 		gdxsv_end_replay();
 		return;
 	}
 
-	{
+	if (State::LbsStartBattleFlow < state_) {
+		constexpr int duration = 1000;
+		constexpr u32 BTN_TRIGGER_LEFT = DC_BTN_BITMAPPED_LAST << 1;
+		constexpr u32 BTN_TRIGGER_RIGHT = DC_BTN_BITMAPPED_LAST << 2;
 		auto input = mapleInputState[0];
 		if (input.fullAxes[0] + 128 <= 128 - 0x20) input.kcode &= ~DC_DPAD_LEFT;
 		if (input.fullAxes[0] + 128 >= 128 + 0x20) input.kcode &= ~DC_DPAD_RIGHT;
 		if (input.fullAxes[1] + 128 <= 128 - 0x20) input.kcode &= ~DC_DPAD_UP;
 		if (input.fullAxes[1] + 128 >= 128 + 0x20) input.kcode &= ~DC_DPAD_DOWN;
+		if (rt[0] >= 64)
+			input.kcode |= BTN_TRIGGER_RIGHT;
+		else
+			input.kcode &= ~BTN_TRIGGER_RIGHT;
+		if (lt[0] >= 64)
+			input.kcode |= BTN_TRIGGER_LEFT;
+		else
+			input.kcode &= ~BTN_TRIGGER_LEFT;
 
 		static u32 prev_kcode = ~0;
 		u32 pressed_kcode = ~((input.kcode ^ prev_kcode) & ~input.kcode);
 
 		if (input.kcode != prev_kcode) {
 			if (~input.kcode & DC_BTN_X) {
-				if (~pressed_kcode & DC_DPAD_RIGHT)
-					CtrlSpeedUp();
-				if (~pressed_kcode & DC_DPAD_LEFT)
-					CtrlSpeedDown();
+				if (~pressed_kcode & DC_DPAD_RIGHT) CtrlSpeedUp();
+				if (~pressed_kcode & DC_DPAD_LEFT) CtrlSpeedDown();
 			}
 
 			if (~pressed_kcode & DC_BTN_B) {
 				CtrlTogglePause();
-				gui_display_notification(ctrl_pause_ ? "Paused" : "Resumed", 3000);
+				gui_display_notification(ctrl_pause_ ? "Paused" : "Resumed", duration);
 			}
 
-			if (~pressed_kcode & DC_BTN_A)
+			if (~pressed_kcode & DC_BTN_A) {
 				CtrlStepFrame();
+			}
 
-			// if (~input.kcode & DC_BTN_A) r |= 0x4000;
-			// if (~input.kcode & DC_BTN_B) r |= 0x2000;
-			// if (~input.kcode & DC_BTN_C) r |= 0x8000;
-			// if (~input.kcode & DC_BTN_X) r |= 0x0002;
-			// if (~input.kcode & DC_BTN_Y) r |= 0x0001;
-			// if (~input.kcode & DC_BTN_Z) r |= 0x1000;
-			// if (~input.kcode & DC_DPAD_UP) r |= 0x0020;
-			// if (~input.kcode & DC_DPAD_DOWN) r |= 0x0010;
-			// if (~input.kcode & DC_BTN_START) r |= 0x0080;
-			// if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 1)) r |= 0x8000;  // LT
-			// if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 2)) r |= 0x1000;  // RT
-			// if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;		   // left
-			// if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;		   // right
-			// if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;		   // up
-			// if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;		   // down
+			if (~pressed_kcode & BTN_TRIGGER_LEFT) {
+				gui_display_notification("SeekBackward", duration);
+				CtrlSomeFrameBackward();
+			}
+
+			if (~pressed_kcode & BTN_TRIGGER_RIGHT) {
+				gui_display_notification("SeekForward", duration);
+				CtrlSomeFrameForward();
+			}
 		}
 		prev_kcode = input.kcode;
 
@@ -94,9 +104,59 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 			if (ctrl_play_speed_ == 2) speed_text = "Speed:300%";
 			if (ctrl_play_speed_ == -1) speed_text = "Speed:50%";
 			if (ctrl_play_speed_ == -2) speed_text = "Speed:33%";
-			gui_display_notification(speed_text.c_str(), 3000);
+			gui_display_notification(speed_text.c_str(), duration);
 		}
 		prev_speed = ctrl_play_speed_;
+	}
+}
+
+void GdxsvBackendReplay::OnVBlank() {
+	static int prev_key_msg_count_ = 0;
+	bool game_scene = false;
+	bool current_frame_saved = false;
+	if (gdxsv.Disk() == 1) {
+		game_scene = gdxsv_ReadMem8(0x0c336254) == 2 && (gdxsv_ReadMem8(0x0c336255) == 5 || gdxsv_ReadMem8(0x0c336255) == 7);
+	} else {
+		game_scene = gdxsv_ReadMem8(0x0c3d16d4) == 2 && (gdxsv_ReadMem8(0x0c3d16d5) == 5 || gdxsv_ReadMem8(0x0c3d16d5) == 7);
+	}
+
+	constexpr int SAVE_INTERVAL_FRAME = 180;
+
+	if (key_msg_count_ % SAVE_INTERVAL_FRAME == 0 && key_msg_count_ != prev_key_msg_count_ && recv_buf_.empty()) {
+		if (game_scene) {
+			gdxsv_save_state.SaveState(key_msg_count_);
+			current_frame_saved = true;
+		}
+	}
+
+	if (ctrl_some_frame_backward_ && recv_buf_.empty()) {
+		ctrl_some_frame_backward_ = false;
+		if (game_scene) {
+			if (!current_frame_saved) {
+				gdxsv_save_state.SaveState(key_msg_count_);
+			}
+
+			int target_frame = (key_msg_count_ - 60) / SAVE_INTERVAL_FRAME * SAVE_INTERVAL_FRAME;
+			if (gdxsv_save_state.LoadState(target_frame)) {
+				key_msg_count_ = target_frame;
+				NOTICE_LOG(COMMON, "LoadState ok");
+			} else {
+				NOTICE_LOG(COMMON, "LoadState failure");
+			}
+		}
+	}
+
+	if (ctrl_some_frame_forward_ && seek_frames_ == 0) {
+		ctrl_some_frame_forward_ = false;
+		seek_frames_ = 60;
+		settings.aica.muteAudio = true;
+		rend_enable_renderer(false);
+	} else if (0 < seek_frames_) {
+		seek_frames_--;
+	} else {
+		seek_frames_ = 0;
+		settings.aica.muteAudio = false;
+		rend_enable_renderer(true);
 	}
 }
 
@@ -146,11 +206,9 @@ bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
 void GdxsvBackendReplay::Stop() {
 	RestorePatch();
 	config::SkipFrame.reset();
+	gdxsv_save_state.EndUsing();
 	state_ = State::End;
 }
-
-bool GdxsvBackendReplay::isReplaying() { return state_ == State::McsInBattle; }
-
 
 void GdxsvBackendReplay::CtrlSpeedUp() {
 	ctrl_play_speed_++;
@@ -170,15 +228,17 @@ void GdxsvBackendReplay::CtrlSpeedDown() {
 	}
 }
 
-void GdxsvBackendReplay::CtrlTogglePause() {
-	ctrl_pause_ = !ctrl_pause_;
-}
+void GdxsvBackendReplay::CtrlTogglePause() { ctrl_pause_ = !ctrl_pause_; }
 
 void GdxsvBackendReplay::CtrlStepFrame() {
 	if (ctrl_pause_) {
 		ctrl_step_frame_ = true;
 	}
 }
+
+void GdxsvBackendReplay::CtrlSomeFrameBackward() { ctrl_some_frame_backward_ = true; }
+
+void GdxsvBackendReplay::CtrlSomeFrameForward() { ctrl_some_frame_forward_ = true; }
 
 void GdxsvBackendReplay::Open() {
 	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
@@ -197,6 +257,7 @@ void GdxsvBackendReplay::Close() {
 
 	RestorePatch();
 	config::SkipFrame.reset();
+	gdxsv_save_state.EndUsing();
 	state_ = State::End;
 }
 
@@ -379,6 +440,8 @@ bool GdxsvBackendReplay::Start() {
 	state_ = State::Start;
 	gdxsv.maxlag_ = 0;
 	key_msg_count_ = 0;
+	gdxsv_save_state.StartUsing();
+	rend_allow_rollback();
 	NOTICE_LOG(COMMON, "Replay Start");
 	return true;
 }
@@ -565,6 +628,8 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 			}
 		}
 
+		gdxsv_save_state.Clear();
+		KillTex = true;
 		gdxsv.maxlag_ = 1;	// StartMsg needs this
 		for (int i = 0; i < log_file_.users_size(); ++i) {
 			if (i != me_) {
@@ -621,7 +686,6 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 		WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg_type));
 		WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
 	}
-
 }
 
 void GdxsvBackendReplay::ApplyPatch(bool first_time) {

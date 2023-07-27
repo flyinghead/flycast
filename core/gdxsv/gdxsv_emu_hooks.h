@@ -51,3 +51,5 @@ void gdxsv_gui_display_osd();
 void gdxsv_crash_append_log(FILE* f);
 
 void gdxsv_crash_append_tag(const std::string& logfile, std::vector<http::PostField>& post_fields);
+
+bool gdxsv_is_using_memwatch();

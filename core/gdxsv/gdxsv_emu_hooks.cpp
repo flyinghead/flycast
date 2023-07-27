@@ -221,7 +221,7 @@ void gdxsv_emu_gui_settings() {
       UploadReplay: yes)");
 
 	OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-		R"(Run the emulated CPU and GPU on different threads.
+				   R"(Run the emulated CPU and GPU on different threads.
 	Enable = Best for low spec CPU.
 	Disable = Best for high spec CPU.)");
 
@@ -525,3 +525,5 @@ static void wireless_warning_popup() {
 		ImGui::EndPopup();
 	}
 }
+
+bool gdxsv_is_using_memwatch() { return gdxsv.Enabled() && gdxsv_save_state.Enabled(); }

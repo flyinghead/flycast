@@ -225,6 +225,9 @@ void Gdxsv::HookVBlank() {
 		// Don't edit memory at vsync if ggpo::active
 		WritePatch();
 	}
+	if (netmode_ == NetMode::Replay) {
+		gdxsv.replay_net_.OnVBlank();
+	}
 }
 
 void Gdxsv::HookMainUiLoop() {
@@ -896,9 +899,7 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	return false;
 }
 
-void Gdxsv::StopReplay() {
-	replay_net_.Stop();
-}
+void Gdxsv::StopReplay() { replay_net_.Stop(); }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
 	rollback_net_.Reset();
