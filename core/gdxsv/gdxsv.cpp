@@ -64,7 +64,11 @@ bool Gdxsv::IsReplaying() const { return netmode_ == NetMode::Replay; }
 
 bool Gdxsv::Enabled() const { return enabled_; }
 
-void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
+void Gdxsv::DisplayOSD()
+{
+	rollback_net_.DisplayOSD();
+	replay_net_.DisplayOSD();
+}
 
 const char *Gdxsv::NetModeString() const {
 	if (netmode_ == NetMode::Offline) return "Offline";
@@ -214,6 +218,10 @@ bool Gdxsv::HookOpenMenu() {
 		return false;
 	}
 
+	if (netmode_ == NetMode::Replay) {
+		return replay_net_.OnOpenMenu();
+	}
+
 	return true;
 }
 
@@ -224,6 +232,9 @@ void Gdxsv::HookVBlank() {
 	if (!ggpo::active()) {
 		// Don't edit memory at vsync if ggpo::active
 		WritePatch();
+	}
+	if (netmode_ == NetMode::Replay) {
+		gdxsv.replay_net_.OnVBlank();
 	}
 }
 
@@ -896,9 +907,7 @@ bool Gdxsv::StartReplayFile(const char *path, int pov) {
 	return false;
 }
 
-void Gdxsv::StopReplay() {
-	replay_net_.Stop();
-}
+void Gdxsv::StopReplay() { replay_net_.Stop(); }
 
 bool Gdxsv::StartRollbackTest(const char *param) {
 	rollback_net_.Reset();

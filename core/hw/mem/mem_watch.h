@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "types.h"
 #include "addrspace.h"
 #include "hw/aica/aica_if.h"
@@ -24,6 +25,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/elan.h"
 #include "rend/TexCache.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 #include <unordered_map>
 
 namespace memwatch
@@ -186,7 +188,7 @@ extern ElanRamWatcher elanWatcher;
 
 inline static bool writeAccess(void *p)
 {
-	if (!config::GGPOEnable)
+	if (!config::GGPOEnable && !gdxsv_is_using_memwatch())
 		return false;
 	if (ramWatcher.hit(p))
 	{
@@ -205,7 +207,7 @@ inline static bool writeAccess(void *p)
 
 inline static void protect()
 {
-	if (!config::GGPOEnable)
+	if (!config::GGPOEnable && !gdxsv_is_using_memwatch())
 		return;
 	vramWatcher.protect();
 	ramWatcher.protect();

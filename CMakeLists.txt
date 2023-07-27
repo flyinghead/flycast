@@ -445,7 +445,9 @@ if(NOT LIBRETRO)
 		endif()
 		if(NOT SDL2_FOUND)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
-			target_include_directories(${PROJECT_NAME} PRIVATE "core/deps/SDL/include")
+			if(MSVC)
+				target_include_directories(${PROJECT_NAME} PRIVATE "core/deps/SDL/include")
+			endif()
 			set(SDL2_FOUND 1)
 		endif()
 
@@ -2089,8 +2091,10 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/gdxsv/gdxsv_emu_hooks.h
 		core/gdxsv/gdxsv_update.h
 		core/gdxsv/gdxsv_update.cpp
-		"core/gdxsv/gdxsv_replay_util.h"
-		"core/gdxsv/gdxsv_replay_util.cpp"
+		core/gdxsv/gdxsv_replay_util.h
+		core/gdxsv/gdxsv_replay_util.cpp
+		core/gdxsv/gdxsv_save_state.h
+		core/gdxsv/gdxsv_save_state.cpp
 		core/gdxsv/gdxsv_translation.h
 		core/gdxsv/gdxsv_translation.cpp
 		core/gdxsv/gdxsv_translation_patch.inc
