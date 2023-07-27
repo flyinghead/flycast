@@ -26,6 +26,13 @@ class GdxsvBackendReplay {
 	void Stop();
 	bool isReplaying();
 
+	// Replay control
+	void CtrlSpeedUp();
+	void CtrlSpeedDown();
+	void CtrlTogglePause();
+	void CtrlStepFrame();
+
+	// Network Backend Interface
 	void Open();
 	void Close();
 	u32 OnSockWrite(u32 addr, u32 size);
@@ -48,4 +55,7 @@ class GdxsvBackendReplay {
 	int recv_delay_;
 	int me_;
 	int key_msg_count_;
+	int ctrl_play_speed_;
+	bool ctrl_pause_;
+	bool ctrl_step_frame_;
 };

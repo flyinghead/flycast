@@ -2,15 +2,16 @@
 
 #include <sstream>
 
+#include "emulator.h"
 #include "cfg/option.h"
 #include "gdx_rpc.h"
 #include "gdxsv.h"
 #include "gdxsv_replay_util.h"
 #include "input/gamepad_device.h"
 #include "libs.h"
+#include "rend/gui.h"
 
 void GdxsvBackendReplay::Reset() {
-	RestorePatch();
 	state_ = State::None;
 	lbs_tx_reader_.Clear();
 	log_file_.Clear();
@@ -19,6 +20,8 @@ void GdxsvBackendReplay::Reset() {
 	recv_delay_ = 0;
 	me_ = 0;
 	key_msg_count_ = 0;
+	ctrl_play_speed_ = 0;
+	ctrl_pause_ = false;
 }
 
 void GdxsvBackendReplay::OnMainUiLoop() {
@@ -30,12 +33,70 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 		const int disk = gdxsv.Disk();
 		const int COM_R_No0 = disk == 1 ? 0x0c2f6639 : 0x0c391d79;
 		if (gdxsv_ReadMem8(COM_R_No0) == 4 && (gdxsv_ReadMem8(COM_R_No0 + 5) == 3 || gdxsv_ReadMem8(COM_R_No0 + 5) == 4)) {
-			state_ = State::End;
+			Stop();
 		}
 	}
 
 	if (state_ == State::End) {
 		gdxsv_end_replay();
+		return;
+	}
+
+	{
+		auto input = mapleInputState[0];
+		if (input.fullAxes[0] + 128 <= 128 - 0x20) input.kcode &= ~DC_DPAD_LEFT;
+		if (input.fullAxes[0] + 128 >= 128 + 0x20) input.kcode &= ~DC_DPAD_RIGHT;
+		if (input.fullAxes[1] + 128 <= 128 - 0x20) input.kcode &= ~DC_DPAD_UP;
+		if (input.fullAxes[1] + 128 >= 128 + 0x20) input.kcode &= ~DC_DPAD_DOWN;
+
+		static u32 prev_kcode = ~0;
+		u32 pressed_kcode = ~((input.kcode ^ prev_kcode) & ~input.kcode);
+
+		if (input.kcode != prev_kcode) {
+			if (~input.kcode & DC_BTN_X) {
+				if (~pressed_kcode & DC_DPAD_RIGHT)
+					CtrlSpeedUp();
+				if (~pressed_kcode & DC_DPAD_LEFT)
+					CtrlSpeedDown();
+			}
+
+			if (~pressed_kcode & DC_BTN_B) {
+				CtrlTogglePause();
+				gui_display_notification(ctrl_pause_ ? "Paused" : "Resumed", 3000);
+			}
+
+			if (~pressed_kcode & DC_BTN_A)
+				CtrlStepFrame();
+
+			// if (~input.kcode & DC_BTN_A) r |= 0x4000;
+			// if (~input.kcode & DC_BTN_B) r |= 0x2000;
+			// if (~input.kcode & DC_BTN_C) r |= 0x8000;
+			// if (~input.kcode & DC_BTN_X) r |= 0x0002;
+			// if (~input.kcode & DC_BTN_Y) r |= 0x0001;
+			// if (~input.kcode & DC_BTN_Z) r |= 0x1000;
+			// if (~input.kcode & DC_DPAD_UP) r |= 0x0020;
+			// if (~input.kcode & DC_DPAD_DOWN) r |= 0x0010;
+			// if (~input.kcode & DC_BTN_START) r |= 0x0080;
+			// if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 1)) r |= 0x8000;  // LT
+			// if (~input.kcode & (DC_BTN_BITMAPPED_LAST << 2)) r |= 0x1000;  // RT
+			// if (input.fullAxes[0] + 128 <= 128 - 0x20) r |= 0x0008;		   // left
+			// if (input.fullAxes[0] + 128 >= 128 + 0x20) r |= 0x0004;		   // right
+			// if (input.fullAxes[1] + 128 <= 128 - 0x20) r |= 0x0020;		   // up
+			// if (input.fullAxes[1] + 128 >= 128 + 0x20) r |= 0x0010;		   // down
+		}
+		prev_kcode = input.kcode;
+
+		static int prev_speed = 0;
+		if (prev_speed != ctrl_play_speed_) {
+			std::string speed_text;
+			if (ctrl_play_speed_ == 0) speed_text = "Speed:100%";
+			if (ctrl_play_speed_ == 1) speed_text = "Speed:200%";
+			if (ctrl_play_speed_ == 2) speed_text = "Speed:300%";
+			if (ctrl_play_speed_ == -1) speed_text = "Speed:50%";
+			if (ctrl_play_speed_ == -2) speed_text = "Speed:33%";
+			gui_display_notification(speed_text.c_str(), 3000);
+		}
+		prev_speed = ctrl_play_speed_;
 	}
 }
 
@@ -84,10 +145,40 @@ bool GdxsvBackendReplay::StartBuffer(const std::vector<u8> &buf, int pov) {
 
 void GdxsvBackendReplay::Stop() {
 	RestorePatch();
+	config::SkipFrame.reset();
 	state_ = State::End;
 }
 
 bool GdxsvBackendReplay::isReplaying() { return state_ == State::McsInBattle; }
+
+
+void GdxsvBackendReplay::CtrlSpeedUp() {
+	ctrl_play_speed_++;
+	ctrl_play_speed_ = std::min(ctrl_play_speed_, 2);
+
+	if (0 <= ctrl_play_speed_) {
+		config::SkipFrame.override(ctrl_play_speed_);
+	}
+}
+
+void GdxsvBackendReplay::CtrlSpeedDown() {
+	ctrl_play_speed_--;
+	ctrl_play_speed_ = std::max(ctrl_play_speed_, -2);
+
+	if (0 <= ctrl_play_speed_) {
+		config::SkipFrame.override(ctrl_play_speed_);
+	}
+}
+
+void GdxsvBackendReplay::CtrlTogglePause() {
+	ctrl_pause_ = !ctrl_pause_;
+}
+
+void GdxsvBackendReplay::CtrlStepFrame() {
+	if (ctrl_pause_) {
+		ctrl_step_frame_ = true;
+	}
+}
 
 void GdxsvBackendReplay::Open() {
 	recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
@@ -105,6 +196,7 @@ void GdxsvBackendReplay::Close() {
 	}
 
 	RestorePatch();
+	config::SkipFrame.reset();
 	state_ = State::End;
 }
 
@@ -142,6 +234,18 @@ u32 GdxsvBackendReplay::OnSockRead(u32 addr, u32 size) {
 			}
 			ProcessMcsMessage(msg);
 		}
+	}
+
+	if (0 < recv_delay_) {
+		recv_delay_--;
+		return 0;
+	}
+
+	if (ctrl_pause_) {
+		if (!ctrl_step_frame_) {
+			return 0;
+		}
+		ctrl_step_frame_ = false;
 	}
 
 	int n = std::min<int>(recv_buf_.size(), size);
@@ -472,6 +576,14 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 		// do nothing
 	} else if (msg_type == McsMessage::MsgType::KeyMsg1) {
 		gdxsv.maxlag_ = 0;
+
+		static int keymsg_counter = 0;
+		keymsg_counter++;
+
+		if (ctrl_play_speed_ < 0) {
+			recv_delay_ = -ctrl_play_speed_;
+		}
+
 		if (log_file_.inputs_size()) {
 			if (key_msg_count_ < log_file_.inputs_size()) {
 				const u64 inputs = log_file_.inputs(key_msg_count_);
@@ -486,7 +598,7 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 
 				key_msg_count_++;
 				if (key_msg_count_ == log_file_.inputs_size()) {
-					state_ = State::End;
+					Stop();
 				}
 			}
 		}
@@ -509,12 +621,20 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 		WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg_type));
 		WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
 	}
+
 }
 
 void GdxsvBackendReplay::ApplyPatch(bool first_time) {
 	if (state_ == State::None || state_ == State::End) {
 		return;
 	}
+
+	// Prevent disconnections while pausing
+	const int disk = gdxsv.Disk();
+	const int DataStopCounter = disk == 1 ? 0x0c30fdda : 0x0c3ab51a;
+	const int FrameStopCounter = disk == 1 ? 0x0c30fddc : 0x0c3ab51c;
+	gdxsv_WriteMem16(DataStopCounter, 0);
+	gdxsv_WriteMem16(FrameStopCounter, 0);
 
 	// Skip Key MsgPush
 	if (gdxsv.Disk() == 1) {
