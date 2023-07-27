@@ -10,6 +10,7 @@
 #include "input/gamepad_device.h"
 #include "libs.h"
 #include "rend/gui.h"
+#include "rend/gui_util.h"
 
 void GdxsvBackendReplay::Reset() {
 	state_ = State::None;
@@ -48,7 +49,7 @@ void GdxsvBackendReplay::OnMainUiLoop() {
 		return;
 	}
 
-	if (State::LbsStartBattleFlow < state_) {
+	if (State::LbsStartBattleFlow <= state_ && !pause_menu_opend_) {
 		constexpr int duration = 1000;
 		constexpr u32 BTN_TRIGGER_LEFT = DC_BTN_BITMAPPED_LAST << 1;
 		constexpr u32 BTN_TRIGGER_RIGHT = DC_BTN_BITMAPPED_LAST << 2;
@@ -160,6 +161,21 @@ void GdxsvBackendReplay::OnVBlank() {
 	}
 }
 
+bool GdxsvBackendReplay::OnOpenMenu() {
+	if (state_ <= State::LbsStartBattleFlow) {
+		return false;
+	}
+
+	pause_menu_opend_ = !pause_menu_opend_;
+	return false;
+}
+
+void GdxsvBackendReplay::DisplayOSD() {
+	if (pause_menu_opend_) {
+		RenderPauseMenu();
+	}
+}
+
 bool GdxsvBackendReplay::StartFile(const char *path, int pov) {
 #ifdef NOWIDE_CONFIG_H_INCLUDED
 	FILE *fp = nowide::fopen(path, "rb");
@@ -211,8 +227,8 @@ void GdxsvBackendReplay::Stop() {
 }
 
 void GdxsvBackendReplay::CtrlSpeedUp() {
-	ctrl_play_speed_++;
-	ctrl_play_speed_ = std::min(ctrl_play_speed_, 2);
+	++ctrl_play_speed_;
+	ctrl_play_speed_ = std::min<int>(ctrl_play_speed_, 2);
 
 	if (0 <= ctrl_play_speed_) {
 		config::SkipFrame.override(ctrl_play_speed_);
@@ -220,8 +236,8 @@ void GdxsvBackendReplay::CtrlSpeedUp() {
 }
 
 void GdxsvBackendReplay::CtrlSpeedDown() {
-	ctrl_play_speed_--;
-	ctrl_play_speed_ = std::max(ctrl_play_speed_, -2);
+	--ctrl_play_speed_;
+	ctrl_play_speed_ = std::max<int>(ctrl_play_speed_, -2);
 
 	if (0 <= ctrl_play_speed_) {
 		config::SkipFrame.override(ctrl_play_speed_);
@@ -307,6 +323,10 @@ u32 GdxsvBackendReplay::OnSockRead(u32 addr, u32 size) {
 			return 0;
 		}
 		ctrl_step_frame_ = false;
+	}
+
+	if (pause_menu_opend_) {
+		return 0;
 	}
 
 	int n = std::min<int>(recv_buf_.size(), size);
@@ -621,9 +641,9 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 		// do nothing
 	} else if (msg_type == McsMessage::MsgType::StartMsg) {
 		if (!start_msg_index_.empty()) {
-			auto it = std::lower_bound(start_msg_index_.begin(), start_msg_index_.end(), key_msg_count_);
+			const auto it = std::lower_bound(start_msg_index_.begin(), start_msg_index_.end(), key_msg_count_);
 			if (it != start_msg_index_.end()) {
-				NOTICE_LOG(COMMON, "key_msg_count updates %d -> %d", key_msg_count_, *it);
+				NOTICE_LOG(COMMON, "key_msg_count updates %d -> %d", key_msg_count_.load(), *it);
 				key_msg_count_ = *it;
 			}
 		}
@@ -642,9 +662,6 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 	} else if (msg_type == McsMessage::MsgType::KeyMsg1) {
 		gdxsv.maxlag_ = 0;
 
-		static int keymsg_counter = 0;
-		keymsg_counter++;
-
 		if (ctrl_play_speed_ < 0) {
 			recv_delay_ = -ctrl_play_speed_;
 		}
@@ -661,7 +678,7 @@ void GdxsvBackendReplay::ProcessMcsMessage(const McsMessage &msg) {
 					std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
 				}
 
-				key_msg_count_++;
+				++key_msg_count_;
 				if (key_msg_count_ == log_file_.inputs_size()) {
 					Stop();
 				}
@@ -735,3 +752,41 @@ void GdxsvBackendReplay::RestorePatch() {
 		}
 	}
 }
+
+void GdxsvBackendReplay::RenderPauseMenu()
+{
+    centerNextWindow();
+    ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+
+    ImGui::Begin("##gdxsv-replay-pause", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Columns(2, "buttons", false);
+	if (ImGui::Button("Stop Replay", ScaledVec2(150, 50))) {
+		pause_menu_opend_ = false;
+		gdxsv.StopReplay();
+	}
+	ImGui::NextColumn();
+	if (ImGui::Button("Resume", ScaledVec2(150, 50))) {
+		pause_menu_opend_ = false;
+	}
+
+	ImGui::Columns(1, "usage", true);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f));
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+	ImGui::BeginDisabled();
+	ImGui::ButtonEx("Replay Control Commands", ImVec2(-1, 0));
+	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
+	ImGui::PopStyleVar();
+	ImGui::Text("Menu: Toggle this menu");
+	ImGui::Text("B: Pause / Resume");
+	ImGui::Text("A: Step Frame (available during Pause)");
+	ImGui::Text("X+Left: Speed Down");
+	ImGui::Text("X+Right: Speed Up");
+	ImGui::Text("LT: Seek Backward");
+	ImGui::Text("RT: Seek Forward");
+
+	ImGui::End();
+}
+

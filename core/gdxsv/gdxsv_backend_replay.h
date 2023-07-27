@@ -22,6 +22,8 @@ class GdxsvBackendReplay {
 	void Reset();
 	void OnMainUiLoop();
 	void OnVBlank();
+	bool OnOpenMenu();
+	void DisplayOSD();
 
 	bool StartFile(const char *path, int pov);
 	bool StartBuffer(const std::vector<u8> &buf, int pov);
@@ -49,8 +51,10 @@ class GdxsvBackendReplay {
 	void ProcessMcsMessage(const McsMessage &msg);
 	void ApplyPatch(bool first_time);
 	void RestorePatch();
+	void RenderPauseMenu();
 
 	State state_;
+	bool pause_menu_opend_;
 	LbsMessageReader lbs_tx_reader_;
 	proto::BattleLogFile log_file_;
 	std::vector<int> start_msg_index_;
@@ -58,10 +62,10 @@ class GdxsvBackendReplay {
 	int recv_delay_;
 	int seek_frames_;
 	int me_;
-	int key_msg_count_;
-	int ctrl_play_speed_;
-	bool ctrl_pause_;
-	bool ctrl_step_frame_;
-	bool ctrl_some_frame_backward_;
-	bool ctrl_some_frame_forward_;
+	std::atomic<int> key_msg_count_;
+	std::atomic<int> ctrl_play_speed_;
+	std::atomic<bool> ctrl_pause_;
+	std::atomic<bool> ctrl_step_frame_;
+	std::atomic<bool> ctrl_some_frame_backward_;
+	std::atomic<bool> ctrl_some_frame_forward_;
 };

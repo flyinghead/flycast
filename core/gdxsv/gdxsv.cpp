@@ -64,7 +64,11 @@ bool Gdxsv::IsReplaying() const { return netmode_ == NetMode::Replay; }
 
 bool Gdxsv::Enabled() const { return enabled_; }
 
-void Gdxsv::DisplayOSD() { rollback_net_.DisplayOSD(); }
+void Gdxsv::DisplayOSD()
+{
+	rollback_net_.DisplayOSD();
+	replay_net_.DisplayOSD();
+}
 
 const char *Gdxsv::NetModeString() const {
 	if (netmode_ == NetMode::Offline) return "Offline";
@@ -212,6 +216,10 @@ bool Gdxsv::HookOpenMenu() {
 			rollback_net_.ToggleNetworkStat();
 		}
 		return false;
+	}
+
+	if (netmode_ == NetMode::Replay) {
+		return replay_net_.OnOpenMenu();
 	}
 
 	return true;
