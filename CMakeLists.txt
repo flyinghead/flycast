@@ -1399,6 +1399,9 @@ if(ENABLE_GDB_SERVER)
 endif()
 
 if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1414,8 +1417,6 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/aarch32/macro-assembler-aarch32.h
 		core/deps/vixl/aarch32/operands-aarch32.cc
 		core/deps/vixl/aarch32/operands-aarch32.h
-		core/deps/vixl/aarch32/disasm-aarch32.cc
-		core/deps/vixl/aarch32/disasm-aarch32.h
 		core/deps/vixl/assembler-base-vixl.h
 		core/deps/vixl/code-buffer-vixl.cc
 		core/deps/vixl/code-buffer-vixl.h
