@@ -273,8 +273,8 @@ void jit_set_exec(void* code, size_t size, bool enable)
 #endif
 }
 
-#if HOST_CPU == CPU_ARM64
-static void Arm64_CacheFlush(void *start, void *end) {
+#if HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_ARM
+static void Arm_Arm64_CacheFlush(void *start, void *end) {
 	if (start == end) {
 		return;
 	}
@@ -283,11 +283,11 @@ static void Arm64_CacheFlush(void *start, void *end) {
 }
 
 void flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end) {
-	Arm64_CacheFlush(dcache_start, dcache_end);
+	Arm_Arm64_CacheFlush(dcache_start, dcache_end);
 
 	// Dont risk it and flush and invalidate icache&dcache for both ranges just in case.
 	if (icache_start != dcache_start) {
-		Arm64_CacheFlush(icache_start, icache_end);
+		Arm_Arm64_CacheFlush(icache_start, icache_end);
 	}
 }
 #endif
