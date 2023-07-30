@@ -708,6 +708,7 @@ void VulkanContext::CreateSwapChain()
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
+	    currentSemaphore = 0;
 	    quadPipeline->Init(shaderManager.get(), *renderPass, 0);
 	    quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass, 0);
 	    quadDrawer->Init(quadPipeline.get());

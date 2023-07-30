@@ -15,6 +15,7 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     strategy:
+      fail-fast: false
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
