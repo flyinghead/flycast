@@ -31,6 +31,7 @@
 //  2016-05-07: DirectX11: Disabling depth-write.
 
 #include "imgui/imgui.h"
+#ifndef IMGUI_DISABLE
 #include "imgui_impl_dx11.h"
 
 // DirectX
@@ -604,3 +605,7 @@ void ImGui_ImplDX11_NewFrame()
     if (!bd->pFontSampler)
         ImGui_ImplDX11_CreateDeviceObjects();
 }
+
+//-----------------------------------------------------------------------------
+
+#endif // #ifndef IMGUI_DISABLE
