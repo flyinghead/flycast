@@ -377,7 +377,7 @@ if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	option(SKIP_GLSLANG_INSTALL "Skip installation" ON)
 	option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" OFF)
-	option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" OFF)
+	option(ENABLE_GLSLANG_BINARIES "Builds glslang and spirv-remap" OFF)
 	option(ENABLE_HLSL "Enables HLSL input support" OFF)
 	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
@@ -1263,15 +1263,10 @@ if(USE_VULKAN)
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
-	if (APPLE)
-		# Only available on macOS 10.12+
-		target_compile_definitions(${PROJECT_NAME} PRIVATE VMA_USE_STL_SHARED_MUTEX=0)
-	endif()
-	
-	add_library(VulkanMemoryAllocator INTERFACE)
+	add_subdirectory(core/deps/VulkanMemoryAllocator)
+	target_compile_definitions(VulkanMemoryAllocator INTERFACE $<$<BOOL:${APPLE}>:VMA_USE_STL_SHARED_MUTEX=0>) # Only available on macOS 10.12+
 	target_compile_options(VulkanMemoryAllocator INTERFACE $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wno-nullability-completeness>)
-	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
-	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
+	target_link_libraries(${PROJECT_NAME} PRIVATE GPUOpen::VulkanMemoryAllocator)
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
 	target_sources(${PROJECT_NAME} PRIVATE
