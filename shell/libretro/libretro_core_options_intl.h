@@ -59864,48 +59864,48 @@ struct retro_core_options_v2 options_sr = {
 /* RETRO_LANGUAGE_SV */
 
 #define CATEGORY_SYSTEM_LABEL_SV NULL
-#define CATEGORY_SYSTEM_INFO_0_SV NULL
+#define CATEGORY_SYSTEM_INFO_0_SV "Konfigurera region, språk, BIOS och grundläggande hårdvaruinställningar."
 #define CATEGORY_VIDEO_LABEL_SV "Bild"
-#define CATEGORY_VIDEO_INFO_0_SV NULL
+#define CATEGORY_VIDEO_INFO_0_SV "Konfigurera upplösning, oberoende transparens i ordning och visuella effektinställningar."
 #define CATEGORY_PERFORMANCE_LABEL_SV "Prestanda"
-#define CATEGORY_PERFORMANCE_INFO_0_SV NULL
-#define CATEGORY_HACKS_LABEL_SV NULL
-#define CATEGORY_HACKS_INFO_0_SV NULL
+#define CATEGORY_PERFORMANCE_INFO_0_SV "Konfigurera inställningar för trådad rendering och bildruteskippning."
+#define CATEGORY_HACKS_LABEL_SV "Emuleringshackning"
+#define CATEGORY_HACKS_INFO_0_SV "Konfigurera inställningar för widescreen-överskridanden, GD-ROM-laddningshastighet och texturrelaterade inställningar."
 #define CATEGORY_INPUT_LABEL_SV "Inmatning"
-#define CATEGORY_INPUT_INFO_0_SV NULL
-#define CATEGORY_VMU_LABEL_SV NULL
-#define CATEGORY_VMU_INFO_0_SV NULL
+#define CATEGORY_INPUT_INFO_0_SV "Konfigurera inställningar för spelkontrollern och ljuspistolen."
+#define CATEGORY_VMU_LABEL_SV "Visuell minnesenhet"
+#define CATEGORY_VMU_INFO_0_SV "Konfigurera per-spel VMU-sparfiler och inställningar för synlighet av VMU på skärmen."
 #define CORE_OPTION_NAME_REGION_LABEL_SV NULL
 #define OPTION_VAL_JAPAN_SV NULL
 #define OPTION_VAL_USA_SV NULL
 #define OPTION_VAL_EUROPE_SV "Europa"
-#define OPTION_VAL_DEFAULT_SV NULL
+#define OPTION_VAL_DEFAULT_SV "Standard"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_SV "Språk"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_SV "Ändrar språket som används av BIOS och av eventuella spel som innehåller flera språk."
 #define OPTION_VAL_JAPANESE_SV "Japanska"
 #define OPTION_VAL_ENGLISH_SV "Engelska"
 #define OPTION_VAL_GERMAN_SV "Tyska"
 #define OPTION_VAL_FRENCH_SV "Franska"
 #define OPTION_VAL_SPANISH_SV "Spanska"
 #define OPTION_VAL_ITALIAN_SV "Italienska"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_SV NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_SV NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_SV "HLE BIOS (Omstart krävs)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SV "Tvingar användningen av BIOS för emulering på hög nivå."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_SV "Starta i BIOS (Omstart krävs)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SV "Starta direkt i Dreamcast BIOS-menyn."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SV "Aktivera DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SV NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_SV NULL
-#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SV NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_SV NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_SV NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SV "Aktivera emulering av Dreamcasts ljud-DSP (digital signal processor). Förbättrar noggrannheten i genererat ljud, men ökar prestandakraven."
+#define CORE_OPTION_NAME_FORCE_WINCE_LABEL_SV "Tvinga Windows CE-läge"
+#define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_SV "Aktivera fullständig emulering av MMU (Memory Management Unit) och andra inställningar för Windows CE-spel."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV "Tillåt NAOMI tjänsteknappar"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV "Aktiverar TJÄNST-knappen för NAOMI, för att komma åt kabinett inställningar."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV "Emulering av bredbandsadapter"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV "Emulera bredbandsadaptern istället för modemet. (Omstart krävs)"
+#define CORE_OPTION_NAME_UPNP_LABEL_SV "Aktivera UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_SV "Använd UPnP för att automatiskt konfigurera din internetrouter för onlinespel."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV "Ändra renderingsupplösning."
 #define OPTION_VAL_320X240_SV NULL
 #define OPTION_VAL_640X480_SV NULL
 #define OPTION_VAL_800X600_SV NULL
@@ -59934,72 +59934,72 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_12160X9120_SV NULL
 #define OPTION_VAL_12800X9600_SV NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_SV "Kabeltyp"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SV "Utgångssignalstyp. \"TV (Komposit)\" är den mest välkomna."
 #define OPTION_VAL_VGA_SV NULL
 #define OPTION_VAL_TV_RGB_SV NULL
-#define OPTION_VAL_TV_COMPOSITE_SV NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_SV NULL
+#define OPTION_VAL_TV_COMPOSITE_SV "TV (Komposit)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_SV "Sändningsstandard"
 #define OPTION_VAL_NTSC_SV NULL
-#define OPTION_VAL_PAL_SV NULL
+#define OPTION_VAL_PAL_SV "PAL (Världen)"
 #define OPTION_VAL_PAL_N_SV NULL
-#define OPTION_VAL_PAL_M_SV NULL
+#define OPTION_VAL_PAL_M_SV "PAL-M (Brasilien)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SV "Skärmorientering"
 #define OPTION_VAL_HORIZONTAL_SV "Horisontell"
-#define OPTION_VAL_VERTICAL_SV NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_SV NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_SV NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SV NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SV NULL
+#define OPTION_VAL_VERTICAL_SV "Vertikal"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV "Alfa sortering"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV "Per Strip (snabbt, minst noggrant)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_SV "Per Triangel (Normal)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_SV "Per Pixel (noggrant, men långsammast)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SV "Storlek på ackumulerande pixelbuffert"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SV "Högre värden kan vara nödvändiga för att korrekt visa utdata i högre upplösningar."
 #define OPTION_VAL_512MB_SV NULL
 #define OPTION_VAL_1GB_SV NULL
 #define OPTION_VAL_2GB_SV NULL
 #define OPTION_VAL_4GB_SV NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SV NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SV "Maximalt antal transparenta lager"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SV "Högre värden kan krävas för komplexa scener."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SV "Fullständig framebuffer-emulering"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SV "Aktivera fullständig framebuffer-emulering i VRAM. Detta är användbart för spel som läser eller skriver direkt till framebuffer i VRAM. När det är aktiverat tvingas intern upplösning till 640x480 och prestanda kan påverkas allvarligt."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV "Aktivera RTT (Render To Texture) buffert"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV "Kopiera renderade texturer tillbaka från GPU till VRAM. Denna inställning är normalt aktiverad för spel som kräver det. När den är aktiverad avaktiveras uppskalning av texturrendering och prestandan kan påverkas."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SV NULL
 #define CORE_OPTION_NAME_FOG_LABEL_SV "Dimeffekter"
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SV NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SV NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SV NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SV NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SV NULL
-#define OPTION_VAL_1_SV NULL
-#define OPTION_VAL_2_SV NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SV NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SV NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SV NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV "Volymjusterare"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SV "En Dreamcast GPU-funktion som vanligtvis används av spel för att rita objektsskuggor. Detta bör normalt vara aktiverat - prestandapåverkan är vanligtvis minimal till försumbar."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SV "Anisotropisk Filtering"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SV "Förbättrar kvaliteten på texturer på ytor som är i sneda betraktningsvinklar i förhållande till kameran. Högre värden kräver mer av GPU:n. Ändringar av denna inställning gäller endast efter omstart."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SV "Texturfiltrering"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SV "Texturfiltreringsläget som ska användas. Detta kan användas för att tvinga ett visst texturfiltreringsläge på alla texturer för att få en skarpare (eller slätare) utseende än standard. Värden som skiljer sig från standard kan orsaka olika renderingsproblem. Ändringar av denna inställning gäller endast efter omstart."
+#define OPTION_VAL_1_SV "Tvinga Närmsta granne"
+#define OPTION_VAL_2_SV "Tvinga Linjär"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SV "Fördröj bildrutebyte"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SV "Användbart för att undvika blinkande skärmar eller glitchiga videor. Rekommenderas inte på långsamma plattformar."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV "Upptäck förändringar i bildfrekvensen"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SV "Meddela gränssnittet när den interna bildrutefrekvensen ändras (till exempel från 60 fps till 30 fps). Förbättrar taktningen av bildfrekvensen i spel som körs med en låst hastighet på 30 fps eller 20 fps, men bör vara inaktiverad för spel med upplåsta (ostadiga) bildrutefrekvenser (till exempel Ecco the Dolphin, Unreal Tournament). Observera!: Ej tillgänglig när \"Auto Skip Frame\" är aktiverad."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SV "PowerVR2 Efterbehandlingsfilter"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV "Efterbehandla den renderade bilden för att simulera effekter som är specifika för PowerVR2 GPU:n och analoga videosignaler."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV "Texturuppskalning (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SV "Förbättrar handritade 2D-pixelgrafik. Ska endast användas med 2D-pixeliserade spel."
 #define OPTION_VAL_2_O27_SV NULL
 #define OPTION_VAL_4_SV NULL
 #define OPTION_VAL_6_SV NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SV NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV "Maximalt filtrerad storlek för texturuppskalning"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV "Ursprunglig djupinterpolation"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV "Hjälper till med texturkorruption och djupproblem på AMD-GPU:n. Kan även hjälpa Intel-GPU:n i vissa fall."
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV "Trådad rendering"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV "Kör GPU och CPU på olika trådar. Starkt rekommenderat."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV "Skippa bildrutor automatiskt"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SV "Hoppa automatiskt över bildrutor när emuleringen går långsamt. Observera!: Denna inställning gäller endast när \"Trådad Rendering\" är aktiverad."
 #define OPTION_VAL_SOME_SV NULL
-#define OPTION_VAL_MORE_SV NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SV NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SV NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SV NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SV NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SV NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SV NULL
+#define OPTION_VAL_MORE_SV "Maximalt"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SV "Bildruteskippning"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SV "Sätter antalet bildrutor att hoppa över mellan varje visad bildruta."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SV "Bredbildsfusk (Omstart krävs)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SV "Aktiverar fusk som gör det möjligt för vissa spel att visas i bredbildsformat."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SV "Bredbildshackning"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV "Ritar geometrin utanför den normala 4:3 bildförhållandet. Kan leda till grafiska fel i de avslöjade områdena."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SV "GD-ROM Snabbladdning (felaktig)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SV "Ökar hastigheten på GD-ROM laddningen."
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_SV NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SV NULL
 #define OPTION_VAL_100_SV "100 %"
@@ -60023,9 +60023,9 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_280_SV NULL
 #define OPTION_VAL_290_SV NULL
 #define OPTION_VAL_300_SV NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Ladda in anpassade texturer"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV "Analoga spakens dödzon"
 #define OPTION_VAL_0_SV "0 %"
 #define OPTION_VAL_5_SV "5 %"
 #define OPTION_VAL_10_SV "10 %"
@@ -60033,53 +60033,53 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_20_SV "20 %"
 #define OPTION_VAL_25_SV "25 %"
 #define OPTION_VAL_30_SV "30 %"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SV NULL
-#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SV NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV "Utlös dödzonen"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV "Digitala utlösare"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SV "Purupuru Paketet/Vibrations Paketet"
+#define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_SV "Gör det möjligt för kontrollern att vibrera med force feedback."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV "Digitala utgångar för sändning"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV "Sänd digitala utgångar och force-feedbackstatus på TCP-port 8000. Kompatibelt med MAME-alternativet \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV "Aktivera konfiguration av alternativ för ljuspistolens hårkors. OBS!: Snabbmenyn kan behöva aktiveras och avaktiveras för att denna inställning ska träda i kraft."
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
 #define OPTION_VAL_GREEN_SV "Grön"
 #define OPTION_VAL_BLUE_SV "Blå"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SV NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SV NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 4"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SV "Per-spel visningsminnesenheter/systemer (VMU)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SV "Per-spel VMU:er"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV "Alla spel delar 4 sparade VMU-filer (A1, B1, C1, D1) som finns i RetroArchs systemkatalog när detta alternativ är inaktiverad. Inställningen 'VMU A1' skapar en unik VMU-fil 'A1' i RetroArchs sparakatalog för varje spel som startas. Inställningen \"Alla VMU-enheter\" skapar 4 unika VMU-filer (A1, B1, C1, D1) för varje spel som startas."
 #define OPTION_VAL_VMU_A1_SV NULL
 #define OPTION_VAL_ALL_VMUS_SV "Alla VMU:er"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV NULL
-#define OPTION_VAL_UPPER_LEFT_SV NULL
-#define OPTION_VAL_UPPER_RIGHT_SV NULL
-#define OPTION_VAL_LOWER_LEFT_SV NULL
-#define OPTION_VAL_LOWER_RIGHT_SV NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för visuell minnesenhet/system (VMU) skärm"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 1"
+#define OPTION_VAL_UPPER_LEFT_SV "Uppe till vänster"
+#define OPTION_VAL_UPPER_RIGHT_SV "Uppe till höger"
+#define OPTION_VAL_LOWER_LEFT_SV "Nere till vänster"
+#define OPTION_VAL_LOWER_RIGHT_SV "Nere till höger"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 1"
 #define OPTION_VAL_1X_SV NULL
 #define OPTION_VAL_3X_SV NULL
 #define OPTION_VAL_5X_SV NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SV NULL
-#define OPTION_VAL_DEFAULT_ON_00_SV NULL
-#define OPTION_VAL_DEFAULT_OFF_01_SV NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SV "Aktivera pixelfärg på VMU skärm 1"
+#define OPTION_VAL_DEFAULT_ON_00_SV "Standard PÅ"
+#define OPTION_VAL_DEFAULT_OFF_01_SV "Standard AV"
 #define OPTION_VAL_BLACK_02_SV "Svart"
 #define OPTION_VAL_LIGHT_BLUE_04_SV "Ljusblå"
 #define OPTION_VAL_CYAN_06_SV NULL
-#define OPTION_VAL_CYAN_BLUE_07_SV NULL
+#define OPTION_VAL_CYAN_BLUE_07_SV "Cyanblå"
 #define OPTION_VAL_LIGHT_GREEN_08_SV "Ljusgrön"
-#define OPTION_VAL_CYAN_GREEN_09_SV NULL
-#define OPTION_VAL_LIGHT_CYAN_10_SV NULL
+#define OPTION_VAL_CYAN_GREEN_09_SV "Cyangrön"
+#define OPTION_VAL_LIGHT_CYAN_10_SV "Ljuscyan"
 #define OPTION_VAL_PURPLE_12_SV "Lila"
 #define OPTION_VAL_LIGHT_PURPLE_13_SV "Ljuslila"
 #define OPTION_VAL_YELLOW_14_SV "Gul"
@@ -60087,17 +60087,17 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_LIGHT_PURPLE_2_16_SV "Ljuslila (2)"
 #define OPTION_VAL_LIGHT_GREEN_2_17_SV "Ljusgrön (2)"
 #define OPTION_VAL_LIGHT_GREEN_3_18_SV "Ljusgrön (3)"
-#define OPTION_VAL_LIGHT_CYAN_2_19_SV NULL
-#define OPTION_VAL_LIGHT_RED_2_20_SV NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_SV "Ljuscyan (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_SV "Ljusröd (2)"
 #define OPTION_VAL_MAGENTA_21_SV NULL
 #define OPTION_VAL_LIGHT_PURPLE_3_22_SV "Ljuslila (3)"
 #define OPTION_VAL_LIGHT_ORANGE_23_SV "Ljusorange"
 #define OPTION_VAL_ORANGE_24_SV NULL
 #define OPTION_VAL_LIGHT_PURPLE_4_25_SV "Ljuslila (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_SV "Ljusgul"
-#define OPTION_VAL_LIGHT_YELLOW_2_27_SV NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SV NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_SV "Ljusgul (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 1"
 #define OPTION_VAL_40_SV "40 %"
 #define OPTION_VAL_50_SV "50 %"
 #define OPTION_VAL_60_SV "60 %"
@@ -60105,24 +60105,24 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_80_SV "80 %"
 #define OPTION_VAL_90_SV "90 %"
 #define OPTION_VAL_100_O57_SV NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SV NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV "Visa VMU Skärm 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 1"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SV "Aktivera pixelfärg på VMU skärm 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SV "Aktivera pixelfärg på VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SV "Aktivera pixelfärg på VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 4"
 
 struct retro_core_option_v2_category option_cats_sv[] = {
    {
