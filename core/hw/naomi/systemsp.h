@@ -21,7 +21,7 @@
 #include "emulator.h"
 #include "hw/hwreg.h"
 #include "hw/naomi/m4cartridge.h"
-#include "hw/flashrom/flashrom.h"
+#include "hw/flashrom/at93cxx.h"
 #include "serialize.h"
 #include <deque>
 #include <array>
@@ -35,109 +35,6 @@ template<typename T>
 T readMemArea0(u32 addr);
 template<typename T>
 void writeMemArea0(u32 addr, T v);
-
-//
-// rom board eeprom
-//
-class SerialEeprom93Cxx : public WritableChip
-{
-public:
-	SerialEeprom93Cxx(u32 size) : WritableChip(size) {
-		memset(data, 0xff, size);
-	}
-
-	// combined DO + READY/BUSY
-	int readDO()
-	{
-		if (dataOutBits > 0)
-			// DO
-			return (dataOut >> (dataOutBits - 1)) & 1;
-		else
-			// Ready
-			return 1;
-	}
-
-	// chip select (active high)
-	void writeCS(int state) {
-		cs = state;
-	}
-
-	// clock
-	void writeCLK(int state);
-
-	// data in
-	void writeDI(int state) {
-		di = state;
-	}
-
-	void Write(u32 addr, u32 data, u32 size) override {
-		die("Unsupported");
-	}
-
-	void serialize(Serializer& ser) const
-	{
-		ser << cs;
-		ser << clk;
-		ser << di;
-		ser << (u32)command.size();
-		for (bool b : command)
-			ser << b;
-		ser << expected;
-		ser << writeEnable;
-		ser << dataOut;
-		ser << dataOutBits;
-	}
-	void deserialize(Deserializer& deser)
-	{
-		deser >> cs;
-		deser >> clk;
-		deser >> di;
-		u32 size;
-		deser >> size;
-		command.resize(size);
-		for (u32 i = 0; i < size; i++) {
-			bool b;
-			deser >> b;
-			command[i] = b;
-		}
-		deser >> expected;
-		deser >> writeEnable;
-		deser >> dataOut;
-		deser >> dataOutBits;
-	}
-
-private:
-	u8 getCommandAddress() const
-	{
-		verify(command.size() >= 9);
-		u8 addr = 0;
-		for (int i = 3; i < 9; i++) {
-			addr <<= 1;
-			addr |= command[i];
-		}
-		return addr;
-	}
-
-	u16 getCommandData() const
-	{
-		verify(command.size() >= 25);
-		u16 v = 0;
-		for (int i = 9; i < 25; i++) {
-			v <<= 1;
-			v |= command[i];
-		}
-		return v;
-	}
-
-	u8 cs = 0;
-	u8 clk = 0;
-	u8 di = 0;
-	std::vector<bool> command;
-	int expected = 0;
-	bool writeEnable = false;
-	u16 dataOut = 0;
-	u8 dataOutBits = 0;
-};
 
 class SystemSpCart;
 
@@ -293,7 +190,7 @@ private:
 	std::unique_ptr<u8[]> hunkmem;
 	u32 hunknum = ~0;
 
-	SerialEeprom93Cxx eeprom;
+	AT93C46SerialEeprom eeprom;
 	SerialPort uart1;
 	SerialPort uart2;
 	u16 bank = 0;

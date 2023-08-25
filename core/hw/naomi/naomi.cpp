@@ -19,21 +19,15 @@
 #include "hw/sh4/modules/modules.h"
 #include "rend/gui.h"
 #include "printer.h"
+#include "hw/flashrom/x76f100.h"
 
 #include <algorithm>
 
 static NaomiM3Comm m3comm;
 Multiboard *multiboard;
 
-static const u32 BoardID = 0x980055AA;
-static u32 GSerialBuffer, BSerialBuffer;
-static int GBufPos, BBufPos;
-static int GState, BState;
-static int GOldClk, BOldClk;
-static int BControl, BCmd, BLastCmd;
-static int GControl, GCmd, GLastCmd;
-static int SerStep, SerStep2;
-
+static X76F100SerialFlash mainSerialId;
+static X76F100SerialFlash romSerialId;
 /*
 El numero de serie solo puede contener:
 0-9		(0x30-0x39)
@@ -41,294 +35,44 @@ A-H		(0x41-0x48)
 J-N		(0x4A-0x4E)
 P-Z		(0x50-0x5A)
 */
-static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+//static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 //static u8 BSerial[]="\x09\xa1                              0000000000000000\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; // default from mame
-static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+//static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 
 static u8 midiTxBuf[4];
 static u32 midiTxBufIndex;
 
-static unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
+void NaomiBoardIDWrite(const u16 data)
 {
-	const unsigned int Magic=0x10210000;
-	unsigned int i;
-	for(i=0;i<rounds;++i)
-	{
-		if(CRC&0x80000000)
-			CRC=(CRC<<1)+Magic;
-		else
-			CRC=(CRC<<1);
-	}
-	return CRC;
-}
-
-static unsigned short CRCSerial(const u8 *Serial,unsigned int len)
-{
-	unsigned int CRC=0xDEBDEB00;
-	unsigned int i;
-
-	for(i=0;i<len;++i)
-	{
-		unsigned char c=Serial[i];
-		//CRC&=0xFFFFFF00;
-		CRC|=c;
-		CRC=ShiftCRC(CRC,8);
-	}
-	CRC=ShiftCRC(CRC,8);
-	return (u16)(CRC>>16);
-}
-
-void NaomiInit()
-{
-	u16 CRC;
-	CRC=CRCSerial(BSerial+2,0x2E);
-	BSerial[0]=(u8)(CRC>>8);
-	BSerial[1]=(u8)(CRC);
-
-	CRC=CRCSerial(GSerial+2,0x2E);
-	GSerial[0]=(u8)(CRC>>8);
-	GSerial[1]=(u8)(CRC);
-}
-
-void NaomiBoardIDWrite(const u16 Data)
-{
-	int Dat=Data&8;
-	int Clk=Data&4;
-	int Rst=Data&0x20;
-	int Sta=Data&0x10;
-	
-	if(Rst)
-	{
-		BState=0;
-		BBufPos=0;
-	}
-	
-	if(Clk!=BOldClk && !Clk)	//Falling Edge clock
-	{
-		//State change
-		if(BState==0 && Sta) 
-			BState=1;		
-		if(BState==1 && !Sta)
-			BState=2;
-
-		if((BControl&0xfff)==0xFF0)	//Command mode
-		{
-			BCmd<<=1;
-			if(Dat)
-				BCmd|=1;
-			else
-				BCmd&=0xfffffffe;
-		}
-
-		//State processing
-		if(BState==1)		//LoadBoardID
-		{
-			BSerialBuffer=BoardID;
-			BBufPos=0;		//??
-		}
-		if(BState==2)		//ShiftBoardID
-		{
-			BBufPos++;
-		}
-	}
-	BOldClk=Clk;
+	// bit 2: clock
+	// bit 3: data
+	// bit 4: reset (x76f100 only)
+	// bit 5: chip select
+	mainSerialId.writeCS(data & 0x20);
+	mainSerialId.writeRST(data & 0x10);
+	mainSerialId.writeSCL(data & 4);
+	mainSerialId.writeSDA(data & 8);
 }
 
 u16 NaomiBoardIDRead()
 {
-	if((BControl&0xff)==0xFE)
-		return 0xffff;
-	return (BSerialBuffer&(1<<(31-BBufPos)))?8:0;
+	// bit 0 indicates the eeprom is a X76F100, otherwise the BIOS expects a AT93C46
+	// bit 3 is xf76f100 SDA
+	// bit 4 is at93c46 DO
+	return (mainSerialId.readSDA() << 3) | 1;
 }
 
-static u32 AdaptByte(u8 val)
+void NaomiGameIDWrite(const u16 data)
 {
-	return val<<24;
-}
-
-void NaomiBoardIDWriteControl(const u16 Data)
-{
-	if((Data&0xfff)==0xF30 && BCmd!=BLastCmd)
-	{
-		if((BCmd&0x81)==0x81)
-		{
-			SerStep2=(BCmd>>1)&0x3f;
-
-			BSerialBuffer=0x00000000;	//First block contains CRC
-			BBufPos=0;
-		}
-		if((BCmd&0xff)==0x55)	//Load Offset 0
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2])>>1;
-		}
-		if((BCmd&0xff)==0xAA)	//Load Offset 1
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+1]);
-		}
-		if((BCmd&0xff)==0x54)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+2]);
-		}
-		if((BCmd&0xff)==0xA8)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+3]);
-		}
-		if((BCmd&0xff)==0x50)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+4]);
-		}
-		if((BCmd&0xff)==0xA0)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+5]);
-		}
-		if((BCmd&0xff)==0x40)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+6]);
-		}
-		if((BCmd&0xff)==0x80)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+7]);
-		}
-		BLastCmd=BCmd;
-	}
-	BControl=Data;
-}
-
-static void NaomiGameIDProcessCmd()
-{
-	if(GCmd!=GLastCmd)
-	{
-		if((GCmd&0x81)==0x81)
-		{
-			SerStep=(GCmd>>1)&0x3f;
-
-			GSerialBuffer=0x00000000;	//First block contains CRC
-			GBufPos=0;
-		}
-		if((GCmd&0xff)==0x55)	//Load Offset 0
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep])>>0;
-		}
-		if((GCmd&0xff)==0xAA)	//Load Offset 1
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+1]);
-		}
-		if((GCmd&0xff)==0x54)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+2]);
-		}
-		if((GCmd&0xff)==0xA8)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+3]);
-		}
-		if((GCmd&0xff)==0x50)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+4]);
-		}
-		if((GCmd&0xff)==0xA0)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+5]);
-		}
-		if((GCmd&0xff)==0x40)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+6]);
-		}
-		if((GCmd&0xff)==0x80)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+7]);
-		}
-		GLastCmd=GCmd;
-	}
-}
-
-
-void NaomiGameIDWrite(const u16 Data)
-{
-	int Dat=Data&0x01;	// mame: SDA
-	int Clk=Data&0x02;	// mame: SCL
-	int Rst=Data&0x04;	// mame: CS
-	int Sta=Data&0x08;	// mame: RST
-	int Cmd=Data&0x10;	// mame: unused...
-	
-	if(Rst)
-	{
-		GState=0;
-		GBufPos=0;
-	}
-	
-	if(Clk!=GOldClk && !Clk)	//Falling Edge clock
-	{
-		//State change
-		if(GState==0 && Sta) 
-			GState=1;		
-		if(GState==1 && !Sta)
-			GState=2;
-
-		//State processing
-		if(GState==1)		//LoadBoardID
-		{
-			GSerialBuffer=BoardID;
-			GBufPos=0;		//??
-		}
-		if(GState==2)		//ShiftBoardID
-			GBufPos++;
-
-		if(GControl!=Cmd && !Cmd)
-		{
-			NaomiGameIDProcessCmd();
-		}
-		GControl=Cmd;
-	}
-	if(Clk!=GOldClk && Clk)	//Rising Edge clock
-	{
-		if(Cmd)	//Command mode
-		{
-			GCmd<<=1;
-			if(Dat)
-				GCmd|=1;
-			else
-				GCmd&=0xfffffffe;
-			GControl=Cmd;
-		}
-	}
-	GOldClk=Clk;
+	romSerialId.writeCS(data & 4);
+	romSerialId.writeRST(data & 8);
+	romSerialId.writeSCL(data & 2);
+	romSerialId.writeSDA(data & 1);
 }
 
 u16 NaomiGameIDRead()
 {
-	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
+	return romSerialId.readSDA() << 15;
 }
 
 static bool aw_ram_test_skipped = false;
@@ -421,8 +165,23 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 
 void naomi_reg_Init()
 {
-	NaomiInit();
 	networkOutput.init();
+
+	static const u8 romSerialData[0x84] = {
+		0x19, 0x00, 0xaa, 0x55,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x69, 0x79, 0x68, 0x6b, 0x74, 0x6d, 0x68, 0x6d,
+		0xa1, 0x09, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ', ' ', ' ', ' ',
+		'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'
+	};
+	romSerialId.setData(romSerialData);
+	mainSerialId.setData(romSerialData);
+}
+
+void setGameSerialId(const u8 *data)
+{
+	romSerialId.setData(data);
 }
 
 void naomi_reg_Term()
@@ -442,22 +201,7 @@ void naomi_reg_Reset(bool hard)
 	SB_GDEN = 0;
 
 	aw_ram_test_skipped = false;
-	GSerialBuffer = 0;
-	BSerialBuffer = 0;
-	GBufPos = 0;
-	BBufPos = 0;
-	GState = 0;
-	BState = 0;
-	GOldClk = 0;
-	BOldClk = 0;
-	BControl = 0;
-	BCmd = 0;
-	BLastCmd = 0;
-	GControl = 0;
-	GCmd = 0;
-	GLastCmd = 0;
-	SerStep = 0;
-	SerStep2 = 0;
+
 	m3comm.closeNetwork();
 	if (hard)
 	{
@@ -470,6 +214,8 @@ void naomi_reg_Reset(bool hard)
 		if (settings.naomi.multiboard)
 			multiboard = new Multiboard();
 		networkOutput.reset();
+		mainSerialId.reset();
+		romSerialId.reset();
 	}
 	else if (multiboard != nullptr)
 		multiboard->reset();
@@ -587,24 +333,8 @@ static bool ffbCalibrating;
 
 void naomi_Serialize(Serializer& ser)
 {
-	ser << GSerialBuffer;
-	ser << BSerialBuffer;
-	ser << GBufPos;
-	ser << BBufPos;
-	ser << GState;
-	ser << BState;
-	ser << GOldClk;
-	ser << BOldClk;
-	ser << BControl;
-	ser << BCmd;
-	ser << BLastCmd;
-	ser << GControl;
-	ser << GCmd;
-	ser << GLastCmd;
-	ser << SerStep;
-	ser << SerStep2;
-	ser.serialize(BSerial, 69);
-	ser.serialize(GSerial, 69);
+	mainSerialId.serialize(ser);
+	romSerialId.serialize(ser);
 	ser << aw_maple_devs;
 	ser << coin_chute_time;
 	ser << aw_ram_test_skipped;
@@ -615,24 +345,32 @@ void naomi_Serialize(Serializer& ser)
 }
 void naomi_Deserialize(Deserializer& deser)
 {
-	deser >> GSerialBuffer;
-	deser >> BSerialBuffer;
-	deser >> GBufPos;
-	deser >> BBufPos;
-	deser >> GState;
-	deser >> BState;
-	deser >> GOldClk;
-	deser >> BOldClk;
-	deser >> BControl;
-	deser >> BCmd;
-	deser >> BLastCmd;
-	deser >> GControl;
-	deser >> GCmd;
-	deser >> GLastCmd;
-	deser >> SerStep;
-	deser >> SerStep2;
-	deser.deserialize(BSerial, 69);
-	deser.deserialize(GSerial, 69);
+	if (deser.version() < Deserializer::V40)
+	{
+		deser.skip<u32>();	// GSerialBuffer
+		deser.skip<u32>();	// BSerialBuffer
+		deser.skip<int>();	// GBufPos
+		deser.skip<int>();	// BBufPos
+		deser.skip<int>();	// GState
+		deser.skip<int>();	// BState
+		deser.skip<int>();	// GOldClk
+		deser.skip<int>();	// BOldClk
+		deser.skip<int>();	// BControl
+		deser.skip<int>();	// BCmd
+		deser.skip<int>();	// BLastCmd
+		deser.skip<int>();	// GControl
+		deser.skip<int>();	// GCmd
+		deser.skip<int>();	// GLastCmd
+		deser.skip<int>();	// SerStep
+		deser.skip<int>();	// SerStep2
+		deser.skip(69);		// BSerial
+		deser.skip(69);		// GSerial
+	}
+	else
+	{
+		mainSerialId.deserialize(deser);
+		romSerialId.deserialize(deser);
+	}
 	if (deser.version() < Deserializer::V36)
 	{
 		deser.skip<u32>(); // reg_dimm_command;

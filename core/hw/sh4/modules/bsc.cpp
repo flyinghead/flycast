@@ -9,56 +9,46 @@
 
 BSCRegisters bsc;
 
-template<typename T>
-static void write_BSC_PCTRA(u32 addr, T data)
+//u32 port_out_data;
+static void write_BSC_PDTRA_arcade(u32 addr, u16 data)
 {
-	BSC_PCTRA.full = data;
-	if (settings.platform.isNaomi())
-		NaomiBoardIDWriteControl((u16)data);
-	//else
-	//printf("C:BSC_PCTRA = %08X\n",data);
+	BSC_PDTRA.full = data;
+	NaomiBoardIDWrite(data);
 }
 
-//u32 port_out_data;
 static void write_BSC_PDTRA(u32 addr, u16 data)
 {
 	BSC_PDTRA.full = data;
-	//printf("D:BSC_PDTRA = %04x\n", data);
+}
 
-	if (settings.platform.isNaomi())
-		NaomiBoardIDWrite(data);
+static u16 read_BSC_PDTRA_arcade(u32 addr)
+{
+	return NaomiBoardIDRead();
 }
 
 static u16 read_BSC_PDTRA(u32 addr)
 {
-	if (settings.platform.isNaomi())
-	{
-		return NaomiBoardIDRead();
-	}
+	/* as seen on chankast */
+	u32 tpctra = BSC_PCTRA.full;
+	u32 tpdtra = BSC_PDTRA.full;
+
+	u16 tfinal = 0;
+	// magic values
+	if ((tpctra & 0xf) == 0x8)
+		tfinal = 3;
+	else if ((tpctra & 0xf) == 0xB)
+		tfinal = 3;
 	else
-	{
-		/* as seen on chankast */
-		u32 tpctra = BSC_PCTRA.full;
-		u32 tpdtra = BSC_PDTRA.full;
+		tfinal = 0;
 
-		u16 tfinal = 0;
-		// magic values
-		if ((tpctra & 0xf) == 0x8)
-			tfinal = 3;
-		else if ((tpctra & 0xf) == 0xB)
-			tfinal = 3;
-		else
-			tfinal = 0;
+	if ((tpctra & 0xf) == 0xB && (tpdtra & 0xf) == 2)
+		tfinal = 0;
+	else if ((tpctra & 0xf) == 0xC && (tpdtra & 0xf) == 2)
+		tfinal = 3;
 
-		if ((tpctra & 0xf) == 0xB && (tpdtra & 0xf) == 2)
-			tfinal = 0;
-		else if ((tpctra & 0xf) == 0xC && (tpdtra & 0xf) == 2)
-			tfinal = 3;
+	tfinal |= config::Cable << 8;
 
-		tfinal |= config::Cable << 8;
-
-		return tfinal;
-	}
+	return tfinal;
 }
 
 void BSCRegisters::init()
@@ -101,10 +91,10 @@ void BSCRegisters::init()
 
 	//BSC PCTRA 0xFF80002C 0x1F80002C 32 0x00000000 Held Held Held Bclk
 	// Naomi BIOS writes u16 in this register but ignoring them doesn't seem to hurt
-	setWriteHandler<BSC_PCTRA_addr>(write_BSC_PCTRA<u32>);
+	setRW<BSC_PCTRA_addr, u32>();
 
 	//BSC PDTRA 0xFF800030 0x1F800030 16 Undefined Held Held Held Bclk
-	setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA, write_BSC_PDTRA);
+	setRW<BSC_PDTRA_addr, u16>();
 
 	//BSC PCTRB 0xFF800040 0x1F800040 32 0x00000000 Held Held Held Bclk
 	setRW<BSC_PCTRB_addr, u32, 0x000000ff>();
@@ -149,4 +139,9 @@ void BSCRegisters::reset()
 	BSC_WCR3.full = 0x07777777;
 
 	BSC_RFCR.full = 17;
+
+	if (settings.platform.isNaomi() || settings.platform.isSystemSP())
+		setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA_arcade, write_BSC_PDTRA_arcade);
+	else
+		setHandlers<BSC_PDTRA_addr>(read_BSC_PDTRA, write_BSC_PDTRA);
 }

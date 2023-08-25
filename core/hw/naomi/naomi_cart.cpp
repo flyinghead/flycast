@@ -388,14 +388,27 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 
 					case Eeprom:
 						{
-							naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
-							if (naomi_default_eeprom == nullptr)
-								throw NaomiCartException("Memory allocation failed");
+							if (game->blobs[romid].length == 0x84)
+							{
+								// on-cart X76F100 security eeprom
+								u8 data[0x84];
+								u32 read = file->Read(data, sizeof(data));
+								if (config::GGPOEnable)
+									md5.add(data, sizeof(data));
+								setGameSerialId(data);
+								DEBUG_LOG(NAOMI, "Loaded %s: %x bytes rom serial eeprom", game->blobs[romid].filename, read);
+							}
+							else
+							{
+								naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
+								if (naomi_default_eeprom == nullptr)
+									throw NaomiCartException("Memory allocation failed");
 
-							u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
-							if (config::GGPOEnable)
-								md5.add(naomi_default_eeprom, game->blobs[romid].length);
-							DEBUG_LOG(NAOMI, "Loaded %s: %x bytes default eeprom", game->blobs[romid].filename, read);
+								u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
+								if (config::GGPOEnable)
+									md5.add(naomi_default_eeprom, game->blobs[romid].length);
+								DEBUG_LOG(NAOMI, "Loaded %s: %x bytes default eeprom", game->blobs[romid].filename, read);
+							}
 						}
 						break;
 
@@ -774,7 +787,8 @@ int naomi_cart_GetPlatform(const char *path)
 	else
 	{
 #ifdef NAOMI_MULTIBOARD
-		if (game->multiboard > 0)
+		if (game->multiboard > 0
+				&& (!strncmp("f355", game->name, 4) || config::MultiboardSlaves == 2))
 			settings.naomi.multiboard = true;
 #endif
 		return DC_PLATFORM_NAOMI;
@@ -911,7 +925,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		return (u16)DmaCount;
 
 	case NAOMI_BOARDID_READ_addr:
-		return NaomiGameIDRead() ? 0x8000 : 0x0000;
+		return NaomiGameIDRead();
 
 	case NAOMI_DMA_OFFSETH_addr:
 		return DmaOffset >> 16;
@@ -919,7 +933,6 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		return DmaOffset & 0xFFFF;
 
 	case NAOMI_BOARDID_WRITE_addr:
-		DEBUG_LOG(NAOMI, "naomi ReadBoardId: %X, %d", address, size);
 		return 1;
 
 	default:
@@ -999,9 +1012,7 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		NaomiGameIDWrite((u16)data);
 		return;
 
-		//This should be valid
 	case NAOMI_BOARDID_READ_addr:
-		DEBUG_LOG(NAOMI, "naomi WriteMem: %X <= %X, %d", address, data, size);
 		return;
 
 	case NAOMI_LED_addr:

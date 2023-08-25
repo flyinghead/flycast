@@ -37,11 +37,6 @@
 #include "stdclass.h"
 #include <errno.h>
 
-#ifdef DEBUG_EEPROM
-#define EEPROM_LOG(...) DEBUG_LOG(FLASHROM, __VA_ARGS__)
-#else
-#define EEPROM_LOG(...)
-#endif
 #ifdef DEBUG_SERIAL
 #define SERIAL_LOG(...) DEBUG_LOG(NAOMI, __VA_ARGS__)
 #else
@@ -67,100 +62,6 @@ namespace systemsp
 {
 
 SystemSpCart *SystemSpCart::Instance;
-
-void SerialEeprom93Cxx::writeCLK(int state)
-{
-	// CS asserted and CLK rising
-	if (clk == 0 && state == 1 && cs == 1)
-	{
-		if (dataOutBits > 0)
-			dataOutBits--;
-		if (dataOutBits == 0)
-		{
-			if (command.empty() && di == 0)
-				INFO_LOG(NAOMI, "serial eeprom: Ignoring bit 0 (start bit must be 1)");
-			else
-			{
-				command.push_back(di);
-				if (command.size() == 9)
-				{
-					int opCode = (int)command[1] * 2 + (int)command[2];
-					//EEPROM_LOG("Received command: %d", opCode);
-					switch (opCode)
-					{
-					case 0: // write enable/disable, erase all, write all
-						{
-							int subCode = (int)command[3] * 2 + (int)command[4];
-							switch (subCode)
-							{
-							case 0: // disable write
-								EEPROM_LOG("serial eeprom: EWDS");
-								writeEnable = false;
-								command.clear();
-								break;
-							case 1: // write all
-								expected = 3 + 6 + 16; // 6 bits of address, 16 bits of data
-								break;
-							case 2: // erase all
-								EEPROM_LOG("serial eeprom: ERAL");
-								if (writeEnable)
-									memset(data, 0xff, size);
-								command.clear();
-								break;
-							case 3: // enable write
-								EEPROM_LOG("serial eeprom: EWEN");
-								writeEnable = true;
-								command.clear();
-								break;
-							}
-						}
-						break;
-					case 1: // write
-						expected = 3 + 6 + 16; // 6 bits of address, 16 bits of data
-						break;
-					case 2: // read
-						dataOut = Read(getCommandAddress() * 2, 2);
-						dataOutBits = 17; // actually 16 but 0 means no data
-						EEPROM_LOG("serial eeprom: READ %x: %x", getCommandAddress(), dataOut);
-						command.clear();
-						break;
-					case 3: // erase
-						EEPROM_LOG("serial eeprom: ERASE %x", getCommandAddress());
-						if (writeEnable)
-							*(u16 *)&data[(getCommandAddress() * 2) &  mask] = 0xffff;
-						command.clear();
-						break;
-					}
-				}
-				else if (expected > 0 && (int)command.size() == expected)
-				{
-					int opCode = (int)command[1] * 2 + (int)command[2];
-					//EEPROM_LOG("Executing write command: %d", opCode);
-					switch (opCode)
-					{
-					case 0: // write all
-						{
-							u16 v = getCommandData();
-							EEPROM_LOG("serial eeprom: WRAL = %x", v);
-							if (writeEnable)
-								for (u32 i = 0; i < size; i += 2)
-									*(u16 *)&data[i & mask] = v;
-						}
-						break;
-					case 1: // write
-						EEPROM_LOG("serial eeprom: WRITE %x = %x", getCommandAddress(), getCommandData());
-						if (writeEnable)
-							*(u16 *)&data[(getCommandAddress() * 2) &  mask] = getCommandData();
-						break;
-					}
-					command.clear();
-					expected = 0;
-				}
-			}
-		}
-	}
-	clk = state;
-}
 
 //
 // RS232C I/F board (838-14244) connected to RFID Chip R/W board (838-14243)
@@ -1237,10 +1138,25 @@ void SystemSpCart::updateInterrupt(u32 mask)
 		asic_CancelInterrupt(holly_EXP_PCI);
 }
 
-SystemSpCart::SystemSpCart(u32 size) : M4Cartridge(size), eeprom(128), uart1(this, 1), uart2(this, 2)
+SystemSpCart::SystemSpCart(u32 size) : M4Cartridge(size), uart1(this, 1), uart2(this, 2)
 {
 	schedId = sh4_sched_register(0, schedCallback, this);
 	Instance = this;
+	// mb_serial.ic57
+	static const u8 eepromData[0x80] = {
+		0xf5, 0x90, 0x53, 0x45, 0x47, 0x41, 0x20, 0x45, 0x4e, 0x54, 0x45, 0x52,
+		0x50, 0x52, 0x49, 0x53, 0x45, 0x53, 0x2c, 0x4c, 0x54, 0x44, 0x2e, 0x00,
+		0x4e, 0x41, 0x4f, 0x4d, 0x49, 0x00, 0x00, 0x00, 0x41, 0x41, 0x46, 0x45,
+		0x30, 0x31, 0x44, 0x31, 0x35, 0x39, 0x32, 0x34, 0x38, 0x31, 0x36, 0x00,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+	};
+	eeprom.Load(eepromData, sizeof(eepromData));
 }
 
 SystemSpCart::~SystemSpCart()
@@ -1507,7 +1423,7 @@ void SystemSpCart::Serialize(Serializer& ser) const
 	sh4_sched_serialize(ser, schedId);
 	uart1.serialize(ser);
 	uart2.serialize(ser);
-	eeprom.serialize(ser);
+	eeprom.Serialize(ser);
 	ser << bank;
 	ser << ata.features;
 	ser << ata.cylinder;
@@ -1534,7 +1450,7 @@ void SystemSpCart::Deserialize(Deserializer& deser)
 	sh4_sched_deserialize(deser, schedId);
 	uart1.deserialize(deser);
 	uart2.deserialize(deser);
-	eeprom.deserialize(deser);
+	eeprom.Deserialize(deser);
 	deser >> bank;
 	deser >> ata.features;
 	deser >> ata.cylinder;

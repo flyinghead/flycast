@@ -947,14 +947,12 @@ const Game Games[] =
             { "mpr-21738.ic11",  0x5800000, 0x800000 },
 
             // on-cart X76F100 eeprom contents
-            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
-            //ROM_LOAD( "airlinepdx.sf",  0x000000, 0x000084, CRC(404b2add) SHA1(540c8474806775646ace111a2993397b1419fee3) )
-
-            { NULL, 0, 0 },
+			{ "airlinepdx.sf",  0x000000, 0x000084, 0x404b2add, Eeprom },
         },
         NULL,
         &alpilot_inputs,
-        alpilot_eeprom_dump
+        alpilot_eeprom_dump,
+		2,
     },
     // Airline Pilots (Japan, Rev A)
     {
@@ -983,7 +981,8 @@ const Game Games[] =
         },
         NULL,
         &alpilot_inputs,
-        alpilot_eeprom_dump
+        alpilot_eeprom_dump,
+		2,
     },
     // Alien Front (Rev T)
     {
@@ -1387,7 +1386,11 @@ const Game Games[] =
             { "mpr-22237.ic15s", 0x7800000, 0x800000 },
             { "mpr-22238.ic16s", 0x8000000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
@@ -1416,7 +1419,11 @@ const Game Games[] =
             { "mpr-22097.ic13s", 0x6800000, 0x0800000 },
             { "mpr-22098.ic14s", 0x7000000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club II (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
@@ -1442,7 +1449,11 @@ const Game Games[] =
             { "mpr-22304.ic10",  0x9800000, 0x1000000 },
             { "mpr-22305.ic11",  0xa800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club World Edition (JPN, USA, EXP, KOR, AUS) (Rev D)
     {
@@ -1465,6 +1476,10 @@ const Game Games[] =
             { "mpr-22338.ic7",   0x6800000, 0x1000000, 0x4bda7303 },
             { NULL, 0, 0, 0x00000000 },
         },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club World Edition (Rev A)
     {
@@ -1486,7 +1501,11 @@ const Game Games[] =
             { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
             { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club World Edition (Rev B)
     {
@@ -1508,7 +1527,11 @@ const Game Games[] =
             { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
             { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club World Edition (Rev C)
     {
@@ -1530,7 +1553,11 @@ const Game Games[] =
             { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
             { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Derby Owners Club World Edition (Rev T)
     {
@@ -1552,6 +1579,10 @@ const Game Games[] =
             { "mpr-22333.ic6",   0x5800000, 0x1000000, 0x96f324aa },
             { "mpr-22334.ic7",   0x6800000, 0x1000000, 0x5389b05a },
         },
+		nullptr,
+		nullptr,
+		nullptr,
+		1,
     },
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
     {
@@ -3464,6 +3495,8 @@ const Game Games[] =
         },
 		nullptr,
 		&sstrkfgt_inputs,
+		nullptr,
+		2,
     },
     // Sega Strike Fighter (Rev A, no training mode)
     {
@@ -3501,6 +3534,8 @@ const Game Games[] =
         },
 		nullptr,
 		&sstrkfgt_inputs,
+		nullptr,
+		2,
     },
     // Idol Janshi Suchie-Pai 3 (JPN)
     {

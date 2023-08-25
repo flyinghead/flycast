@@ -33,7 +33,7 @@ static void updateInterrupts()
 // SCIF SCFTDR2
 void SCIFSerialPort::writeData(u32 addr, u8 data)
 {
-	INFO_LOG(COMMON, "serial out %02x %c", data, data);
+	//DEBUG_LOG(COMMON, "serial out %02x %c", data, data);
 	if (Instance().pipe != nullptr)
 		Instance().pipe->write(data);
 
