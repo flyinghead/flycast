@@ -1,6 +1,19 @@
 /*
-	This file is a mix of my code, Zezu's, and duno wtf-else (most likely ElSemi's ?)
-*/
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "types.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
@@ -28,16 +41,6 @@ Multiboard *multiboard;
 
 static X76F100SerialFlash mainSerialId;
 static X76F100SerialFlash romSerialId;
-/*
-El numero de serie solo puede contener:
-0-9		(0x30-0x39)
-A-H		(0x41-0x48)
-J-N		(0x4A-0x4E)
-P-Z		(0x50-0x5A)
-*/
-//static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
-//static u8 BSerial[]="\x09\xa1                              0000000000000000\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; // default from mame
-//static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 
 static u8 midiTxBuf[4];
 static u32 midiTxBufIndex;
@@ -56,7 +59,7 @@ void NaomiBoardIDWrite(const u16 data)
 
 u16 NaomiBoardIDRead()
 {
-	// bit 0 indicates the eeprom is a X76F100, otherwise the BIOS expects a AT93C46
+	// bit 0 indicates the eeprom is a X76F100, otherwise the BIOS expects an AT93C46
 	// bit 3 is xf76f100 SDA
 	// bit 4 is at93c46 DO
 	return (mainSerialId.readSDA() << 3) | 1;

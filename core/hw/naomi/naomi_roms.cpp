@@ -1619,10 +1619,7 @@ const Game Games[] =
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
 
             // on-cart X76F100 eeprom contents
-            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
-            //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
-
-            { NULL, 0, 0 },
+			{ "841-0003.sf",  0x000000, 0x000084, 0x3a119a17, Eeprom },
         },
 		nullptr,
 		&doa2_inputs,
@@ -1663,10 +1660,7 @@ const Game Games[] =
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
 
             // on-cart X76F100 eeprom contents
-            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
-            //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
-
-            { NULL, 0, 0 },
+			{ "841-0003.sf",  0x000000, 0x000084, 0x3a119a17, Eeprom },
         },
 		nullptr,
 		&doa2_inputs,
@@ -1707,9 +1701,7 @@ const Game Games[] =
             { "mpr-22120.ic21s",0xa800000, 0x0800000 },
 
             // on-cart X76F100 eeprom contents
-            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
-            //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
-            { NULL, 0, 0 },
+			{ "841-0003.sf",  0x000000, 0x000084, 0x3a119a17, Eeprom },
         },
 		nullptr,
 		&doa2_inputs,
@@ -3589,10 +3581,7 @@ const Game Games[] =
             { "mpr-22077.ic4",  0x2000000, 0x400000 },
 
             // on-cart X76F100 eeprom contents
-            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
-            //ROM_LOAD( "x76f100.ic37", 0x000000, 0x000084, CRC(c79251d5) SHA1(3e70bbbb6d28bade7eec7e27d716463045656f98) )
-
-            { NULL, 0, 0 },
+			{ "x76f100.ic37", 0x000000, 0x000084, 0xc79251d5, Eeprom },
         },
 		nullptr,
 		nullptr,

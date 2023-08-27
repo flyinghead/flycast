@@ -64,7 +64,7 @@ namespace card_reader {
     Copyright (C) 2022-2023 tugpoat (https://github.com/tugpoat)
 */
 
-class CardReader : public SerialPort::Pipe
+class SanwaCRP1231BR : public SerialPort::Pipe
 {
 public:
 	void write(u8 b) override
@@ -130,26 +130,26 @@ public:
 			INFO_LOG(NAOMI, "Card inserted");
 	}
 
-private:
+protected:
 	enum Commands
 	{
 		CARD_INIT			= 0x10,
 		CARD_GET_CARD_STATE	= 0x20,
-		CARD_IS_PRESENT		= 0x40, // cancel?
+		CARD_CANCEL			= 0x40,
 		CARD_LOAD_CARD		= 0xB0,
 		CARD_CLEAN_CARD		= 0xA0,
 		CARD_READ			= 0x33,
 		CARD_WRITE			= 0x53,
-		CARD_WRITE_INFO		= 0x7C,
-		CARD_PRINT			= 0x78,
-		CARD_7A				= 0x7A,
-		CARD_7D				= 0x7D,
+		CARD_PRINT			= 0x7C,
+		CARD_PRINT_SETTINGS	= 0x78,
+		CARD_REGISTER_FONT	= 0x7A,
+		CARD_ERASE_PRINT	= 0x7D,
 		CARD_DOOR			= 0xD0,
 		CARD_EJECT			= 0x80,
 		CARD_NEW            = 0xB0,
 	};
 
-	u8 getStatus1()
+	virtual u8 getStatus1()
 	{
 		return ((doorOpen ? 2 : 1) << 6) | 0x20 | (cardInserted ? 0x18 : 0);
 	}
@@ -167,10 +167,12 @@ private:
 		{
 		case CARD_DOOR:
 			doorOpen = rxCommand[4] == '1';
+			INFO_LOG(NAOMI, "Door %s", doorOpen ? "open" : "closed");
 			status1 = getStatus1();
 			break;
 
 		case CARD_NEW:
+			INFO_LOG(NAOMI, "New card");
 			cardInserted = true;
 			doorOpen = false;
 			status1 = getStatus1();
@@ -222,16 +224,17 @@ private:
 			break;
 
 		case CARD_EJECT:
+			INFO_LOG(NAOMI, "Card ejected");
 			cardInserted = false;
 			status1 = getStatus1();
 			break;
 
-		case CARD_IS_PRESENT:
+		case CARD_CANCEL:
 		case CARD_GET_CARD_STATE:
 		case CARD_INIT:
-		case CARD_7A:
+		case CARD_REGISTER_FONT:
+		case CARD_PRINT_SETTINGS:
 		case CARD_PRINT:
-		case CARD_WRITE_INFO:
 		case CARD_CLEAN_CARD:
 			break;
 
@@ -342,8 +345,21 @@ private:
 	bool cardInserted = false;
 };
 
+class SanwaCRP1231LR : public SanwaCRP1231BR
+{
+	u8 getStatus1() override
+	{
+		// '0'	no card
+		// '1'	pos magnetic read/write
+		// '2'	pos thermal printer
+		// '3'	pos thermal dispenser
+		// '4'	ejected not removed
+		return cardInserted ? '1' : '0';
+	}
+};
+
 // Hooked to the SH4 SCIF serial port
-class InitialDCardReader final : public CardReader
+class InitialDCardReader final : public SanwaCRP1231BR
 {
 public:
 	InitialDCardReader() {
@@ -356,28 +372,44 @@ public:
 };
 
 // Hooked to the MIE via a 838-13661 RS232/RS422 converter board
-class DerbyCardReader final : public CardReader
+class DerbyBRCardReader final : public SanwaCRP1231BR
 {
 public:
-	DerbyCardReader() {
+	DerbyBRCardReader() {
 		getMieDevice()->setPipe(this);
 	}
 
-	~DerbyCardReader() {
+	~DerbyBRCardReader() {
 		getMieDevice()->setPipe(nullptr);
 	}
 };
 
-static std::unique_ptr<CardReader> cardReader;
+class DerbyLRCardReader final : public SanwaCRP1231LR
+{
+public:
+	DerbyLRCardReader() {
+		getMieDevice()->setPipe(this);
+	}
+
+	~DerbyLRCardReader() {
+		getMieDevice()->setPipe(nullptr);
+	}
+};
+
+static std::unique_ptr<SanwaCRP1231BR> cardReader;
 
 void initdInit() {
 	term();
 	cardReader = std::make_unique<InitialDCardReader>();
 }
 
-void derbyInit() {
+void derbyInit()
+{
 	term();
-	cardReader = std::make_unique<DerbyCardReader>();
+	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------")
+		cardReader = std::make_unique<DerbyBRCardReader>();
+	else
+		cardReader = std::make_unique<DerbyLRCardReader>();
 }
 
 void term() {
