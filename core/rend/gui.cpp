@@ -483,7 +483,7 @@ void gui_open_settings()
 			HideOSD();
 			try {
 				emu.stop();
-				gui_state = GuiState::Commands;
+				gui_setState(GuiState::Commands);
 			} catch (const FlycastException& e) {
 				gui_stop_game(e.what());
 			}
@@ -495,7 +495,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
-		gui_state = GuiState::VJoyEditCommands;
+		gui_setState(GuiState::VJoyEditCommands);
 	}
 	else if (gui_state == GuiState::Loading)
 	{
@@ -503,7 +503,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands)
 	{
-		gui_state = GuiState::Closed;
+		gui_setState(GuiState::Closed);
 		GamepadDevice::load_system_mappings();
 		emu.start();
 	}
@@ -517,7 +517,7 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
-	gui_state = GuiState::Loading;
+	gui_setState(GuiState::Loading);
 	gameLoader.load(path);
 }
 
@@ -528,7 +528,7 @@ void gui_stop_game(const std::string& message)
 	{
 		// Exit to main menu
 		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		reset_vmus();
 		if (!message.empty())
 			gui_error("Flycast has stopped.\n\n" + message);
@@ -570,7 +570,7 @@ static void gui_display_commands()
 		// Load State
 		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 			dc_loadstate(config::SavestateSlot);
 		}
 		ImGui::SameLine();
@@ -594,7 +594,7 @@ static void gui_display_commands()
 		// Save State
 		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 			dc_savestate(config::SavestateSlot);
 		}
     }
@@ -604,13 +604,13 @@ static void gui_display_commands()
 	// Settings
 	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
 	{
-		gui_state = GuiState::Settings;
+		gui_setState(GuiState::Settings);
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
 		GamepadDevice::load_system_mappings();
-		gui_state = GuiState::Closed;
+		gui_setState(GuiState::Closed);
 	}
 
 	ImGui::NextColumn();
@@ -621,12 +621,12 @@ static void gui_display_commands()
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
-			gui_state = GuiState::SelectDisk;
+			gui_setState(GuiState::SelectDisk);
 		}
 		else
 		{
 			DiscOpenLid();
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 		}
 	}
 	ImGui::NextColumn();
@@ -636,7 +636,7 @@ static void gui_display_commands()
 		DisabledScope scope(settings.network.online);
 
 		if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-			gui_state = GuiState::Cheats;
+			gui_setState(GuiState::Cheats);
 	}
 	ImGui::Columns(1, nullptr, false);
 
@@ -1424,9 +1424,9 @@ static void gui_display_settings()
     if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
     	if (game_started)
-    		gui_state = GuiState::Commands;
+    		gui_setState(GuiState::Commands);
     	else
-    		gui_state = GuiState::Main;
+    		gui_setState(GuiState::Main);
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
@@ -1577,7 +1577,7 @@ static void gui_display_settings()
 #ifdef __ANDROID__
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
-                	gui_state = GuiState::Onboarding;
+                	gui_setState(GuiState::Onboarding);
 #endif
 #ifdef TARGET_MAC
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
@@ -1670,7 +1670,7 @@ static void gui_display_settings()
 						if (ImGui::Button("Edit"))
 						{
 							vjoy_start_editing();
-							gui_state = GuiState::VJoyEdit;
+							gui_setState(GuiState::VJoyEdit);
 						}
 						ImGui::SameLine();
 						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
@@ -2653,7 +2653,7 @@ static void gui_display_content()
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
 		if (ImGui::Button("Settings"))
-			gui_state = GuiState::Settings;
+			gui_setState(GuiState::Settings);
     }
     ImGui::PopStyleVar();
 
@@ -2749,7 +2749,7 @@ static void gui_display_content()
 							settings.content.path = game.path;
 							try {
 								DiscSwap(game.path);
-								gui_state = GuiState::Closed;
+								gui_setState(GuiState::Closed);
 							} catch (const FlycastException& e) {
 								gui_error(e.what());
 							}
@@ -2785,7 +2785,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 {
 	if (cancelled)
 	{
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		return true;
 	}
 	selection += "/";
@@ -2823,7 +2823,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 		config::Settings::instance().load(false);
 		// Make sure the renderer type doesn't change mid-flight
 		config::RendererType = RenderType::OpenGL;
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		if (config::ContentPath.get().empty())
 		{
 			scanner.stop();
@@ -2858,7 +2858,7 @@ static void gui_network_start()
 		ImGui::Text("Starting...");
 		try {
 			if (networkStatus.get())
-				gui_state = GuiState::Closed;
+				gui_setState(GuiState::Closed);
 			else
 				gui_stop_game();
 		} catch (const FlycastException& e) {
@@ -2919,11 +2919,11 @@ static void gui_display_loadscreen()
 			if (NetworkHandshake::instance != nullptr)
 			{
 				networkStatus = NetworkHandshake::instance->start();
-				gui_state = GuiState::NetworkStart;
+				gui_setState(GuiState::NetworkStart);
 			}
 			else
 			{
-				gui_state = GuiState::Closed;
+				gui_setState(GuiState::Closed);
 				ImGui::Text("%s", label);
 			}
 		}
@@ -3126,7 +3126,7 @@ void gui_display_profiler()
 
 void gui_open_onboarding()
 {
-	gui_state = GuiState::Onboarding;
+	gui_setState(GuiState::Onboarding);
 }
 
 void gui_cancel_load()
@@ -3215,6 +3215,18 @@ void gui_saveState()
 	}
 }
 
+void gui_setState(GuiState newState)
+{
+	gui_state = newState;
+	if (newState == GuiState::Closed)
+	{
+		// If the game isn't rendering any frame, these flags won't be updated and keyboard/mouse input will be ignored.
+		// So we force them false here. They will be set in the next ImGUI::NewFrame() anyway
+		ImGuiIO& io = ImGui::GetIO();
+		io.WantCaptureKeyboard = false;
+		io.WantCaptureMouse = false;
+	}
+}
 
 #ifdef TARGET_UWP
 // Ugly but a good workaround for MS stupidity

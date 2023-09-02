@@ -111,7 +111,7 @@ static bool emulatorRunning;
 	}
 	if ([url startAccessingSecurityScopedResource])
 		openedURL = url;
-	gui_state = GuiState::Closed;
+	gui_setState(GuiState::Closed);
 	gui_start_game(url.fileSystemRepresentation);
 
 	return true;

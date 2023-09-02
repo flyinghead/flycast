@@ -92,7 +92,7 @@ public:
 			} catch (const FlycastException&) {
 			}
 		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 	}
 
 	bool ready()
