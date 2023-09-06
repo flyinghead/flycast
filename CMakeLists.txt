@@ -1375,7 +1375,7 @@ if(WIN32 AND USE_DX11)
 		core/rend/dx11/oit/dx11_oitshaders.h)
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
-	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler dxgi)
 endif()
 
 if(ENABLE_GDB_SERVER)

@@ -26,6 +26,8 @@
 #include "emulator.h"
 #include "dx11_driver.h"
 #include "imgui/backends/imgui_impl_dx11.h"
+#include <dxgi.h>
+#include <dxgi1_6.h>
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>
@@ -57,6 +59,23 @@ bool DX11Context::init(bool keepCurrentWindow)
 	}
 #endif
 
+	// Use high performance GPU on Windows 10 (1803 or later)
+	ComPtr<IDXGIFactory1> dxgiFactory;
+	ComPtr<IDXGIFactory6> dxgiFactory6;
+	ComPtr<IDXGIAdapter> dxgiAdapter;
+	HRESULT hr;
+	hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void **)&dxgiFactory.get());
+	if (SUCCEEDED(hr))
+	{
+		dxgiFactory.as(dxgiFactory6);
+		if (dxgiFactory6) 
+		{
+			dxgiFactory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, __uuidof(IDXGIAdapter), (void **)&dxgiAdapter.get());
+			dxgiFactory6.reset();
+		}
+	}
+	dxgiFactory.reset();
+
 	D3D_FEATURE_LEVEL featureLevels[] =
 	{
 		D3D_FEATURE_LEVEL_11_1,
@@ -64,10 +83,9 @@ bool DX11Context::init(bool keepCurrentWindow)
 		D3D_FEATURE_LEVEL_10_1,
 		D3D_FEATURE_LEVEL_10_0,
 	};
-	HRESULT hr;
 	hr = D3D11CreateDevice(
-	    nullptr, // Specify nullptr to use the default adapter.
-	    D3D_DRIVER_TYPE_HARDWARE,
+	    dxgiAdapter.get(), // High performance GPU, or fallback to use the default adapter.
+	    dxgiAdapter.get() == nullptr ? D3D_DRIVER_TYPE_HARDWARE : D3D_DRIVER_TYPE_UNKNOWN, // D3D_DRIVER_TYPE_UNKNOWN is required when providing an adapter.
 	    nullptr,
 		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG,
 	    featureLevels,
@@ -84,7 +102,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	ComPtr<IDXGIDevice2> dxgiDevice;
 	pDevice.as(dxgiDevice);
 
-	ComPtr<IDXGIAdapter> dxgiAdapter;
+	dxgiAdapter.reset();
 	dxgiDevice->GetAdapter(&dxgiAdapter.get());
 	DXGI_ADAPTER_DESC desc;
 	dxgiAdapter->GetDesc(&desc);
@@ -94,7 +112,6 @@ bool DX11Context::init(bool keepCurrentWindow)
 	adapterVersion = std::to_string(desc.Revision);
 	vendorId = desc.VendorId;
 
-	ComPtr<IDXGIFactory1> dxgiFactory;
 	dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void **)&dxgiFactory.get());
 
 	ComPtr<IDXGIFactory2> dxgiFactory2;
