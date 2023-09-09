@@ -344,6 +344,8 @@ void retro_init()
 
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)
+#else
+	(void)emuInited;
 #endif
 		emu.init();
 	emuInited = true;
@@ -1696,18 +1698,19 @@ static bool set_opengl_hw_render(u32 preferred)
 	preferred = RETRO_HW_CONTEXT_OPENGL_CORE;
 #endif
 #ifdef HAVE_OIT
-	if (config::RendererType == RenderType::OpenGL_OIT)
+	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::DirectX11_OIT || config::RendererType == RenderType::Vulkan_OIT)
 	{
-		params.context_type          = (retro_hw_context_type)preferred;
+		config::RendererType = RenderType::OpenGL_OIT;
+		params.context_type = (retro_hw_context_type)preferred;
 		if (preferred == RETRO_HW_CONTEXT_OPENGL)
 		{
 			// There are some weirdness with RA's gl context's versioning :
 			// - any value above 3.0 won't provide a valid context, while the GLSM_CTL_STATE_CONTEXT_INIT call returns true...
 			// - the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
 			// FIXME what's the point of this?
-			retro_hw_render_callback hw_render;
-			hw_render.version_major = 3;
-			hw_render.version_minor = 0;
+			//retro_hw_render_callback hw_render;
+			//hw_render.version_major = 3;
+			//hw_render.version_minor = 0;
 		}
 		else
 		{
