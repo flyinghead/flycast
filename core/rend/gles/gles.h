@@ -57,6 +57,7 @@ struct PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
+	GLint ditherColorMax;
 
 	// Naomi2
 	GLint mvMat;
@@ -113,6 +114,7 @@ struct PipelineShader
 	bool palette;
 	bool naomi2;
 	bool divPosZ;
+	bool dithering;
 };
 
 class GlBuffer
@@ -399,7 +401,7 @@ void writeFramebufferToVRAM();
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette, bool naomi2);
+		bool palette, bool naomi2, bool dithering);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader);
@@ -425,6 +427,8 @@ extern struct ShaderUniforms_t
 		int height;
 	} base_clipping;
 	int palette_index;
+	bool dithering;
+	float ditherColorMax[4];
 
 	void Set(const PipelineShader* s)
 	{
@@ -453,6 +457,9 @@ extern struct ShaderUniforms_t
 
 		if (s->palette_index != -1)
 			glUniform1i(s->palette_index, palette_index);
+
+		if (s->ditherColorMax != -1)
+			glUniform4fv(s->ditherColorMax, 1, ditherColorMax);
 	}
 
 } ShaderUniforms;

@@ -688,7 +688,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindSampler(0, 0);
 				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer();
+				renderABuffer(false);
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -716,5 +716,5 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
 	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
-	renderABuffer();
+	renderABuffer(true);
 }

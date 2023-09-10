@@ -70,6 +70,7 @@ protected:
 		float colorClampMax[4];
 		float fog_col_vert[4];
 		float fog_col_ram[4];
+		float ditherColorMax[4];
 		float fogDensity;
 		float shadowScale;
 		float alphaTestValue;
@@ -123,6 +124,7 @@ protected:
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;
 	float aspectRatio = 4.f / 3.f;
+	bool dithering = false;
 
 private:
 	void readDCFramebuffer();

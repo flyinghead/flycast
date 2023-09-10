@@ -201,7 +201,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	}
 
-	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette);
+	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	if (poly.pcw.Texture || poly.isNaomi2())
 	{
@@ -351,6 +351,29 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1] = fragUniforms.ditherColorMax[2] = 31.f;
+			fragUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[2] = 31.f;
+			fragUniforms.ditherColorMax[1] = 63.f;
+			fragUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1]
+				= fragUniforms.ditherColorMax[2] = fragUniforms.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
 
 	currentScissor = vk::Rect2D();
 

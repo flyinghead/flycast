@@ -144,6 +144,9 @@ uniform lowp vec4 fog_clamp_max;
 uniform sampler2D palette;
 uniform mediump int palette_index;
 #endif
+#if DITHERING == 1
+uniform lowp vec4 ditherColorMax;
+#endif
 
 /* Vertex input*/
 INTERPOLATION in highp vec4 vtx_base;
@@ -302,6 +305,19 @@ void main()
 	highp float w = 100000.0 * vtx_uv.z;
 #endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
+#endif
+#if DITHERING == 1
+	float ditherTable[16] = float[](
+		 0.9375,  0.1875,  0.75,  0.,   
+		 0.4375,  0.6875,  0.25,  0.5,
+		 0.8125,  0.0625,  0.875, 0.125,
+		 0.3125,  0.5625,  0.375, 0.625	
+	);
+	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	color += r / ditherColorMax;
+	// avoid rounding
+	color = floor(color * 255.) / 255.;
 #endif
 	gl_FragColor = color;
 }
@@ -657,7 +673,7 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette, bool naomi2)
+		bool palette, bool naomi2, bool dithering)
 {
 	u32 rv=0;
 
@@ -676,6 +692,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	rv <<= 1; rv |= palette;
 	rv <<= 1; rv |= naomi2;
 	rv <<= 1, rv |= !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+	rv <<= 1; rv |= dithering;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -695,6 +712,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		shader->palette = palette;
 		shader->naomi2 = naomi2;
 		shader->divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
+		shader->dithering = dithering;
 		CompilePipelineShader(shader);
 	}
 
@@ -733,6 +751,7 @@ public:
 		addConstant("pp_TriLinear", s->trilinear);
 		addConstant("pp_Palette", s->palette);
 		addConstant("DIV_POS_Z", s->divPosZ);
+		addConstant("DITHERING", s->dithering);
 
 		addSource(PixelCompatShader);
 		addSource(GouraudSource);
@@ -801,6 +820,7 @@ bool CompilePipelineShader(PipelineShader* s)
 		s->fog_clamp_max = -1;
 	}
 	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
+	s->ditherColorMax = glGetUniformLocation(s->program, "ditherColorMax");
 
 	if (s->naomi2)
 		initN2Uniforms(s);
@@ -1211,6 +1231,34 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	}
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
+
+	if (config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3)
+	{
+		ShaderUniforms.dithering = true;
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[1] = ShaderUniforms.ditherColorMax[2] = 31.f;
+			ShaderUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[2] = 31.f;
+			ShaderUniforms.ditherColorMax[1] = 63.f;
+			ShaderUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[1]
+				= ShaderUniforms.ditherColorMax[2] = ShaderUniforms.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		ShaderUniforms.dithering = false;
+	}
 
 	for (auto& it : gl.shaders)
 	{

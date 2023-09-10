@@ -102,16 +102,19 @@ public:
 
 	vk::ShaderModule GetTrModVolShader(const TrModVolShaderParams& params) { return getShader(trModVolShaders, params); }
 
-	vk::ShaderModule GetFinalShader()
+	vk::ShaderModule GetFinalShader(bool dithering)
 	{
-		if (!finalFragmentShader || maxLayers != config::PerPixelLayers)
+		if (!finalFragmentShaders[dithering] || maxLayers != config::PerPixelLayers)
 		{
-			if (maxLayers != config::PerPixelLayers)
+			if (maxLayers != config::PerPixelLayers) {
 				trModVolShaders.clear();
-			finalFragmentShader = compileFinalShader();
+				finalFragmentShaders[0].reset();
+				finalFragmentShaders[1].reset();
+			}
+			finalFragmentShaders[dithering] = compileFinalShader(dithering);
 			maxLayers = config::PerPixelLayers;
 		}
-		return *finalFragmentShader;
+		return *finalFragmentShaders[dithering];
 	}
 	vk::ShaderModule GetFinalVertexShader()
 	{
@@ -136,7 +139,8 @@ public:
 		trModVolShaders.clear();
 
 		finalVertexShader.reset();
-		finalFragmentShader.reset();
+		finalFragmentShaders[0].reset();
+		finalFragmentShaders[1].reset();
 		clearShader.reset();
 	}
 
@@ -156,7 +160,7 @@ private:
 	vk::UniqueShaderModule compileShader(const ModVolShaderParams& params);
 	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ);
 	vk::UniqueShaderModule compileShader(const TrModVolShaderParams& params);
-	vk::UniqueShaderModule compileFinalShader();
+	vk::UniqueShaderModule compileFinalShader(bool dithering);
 	vk::UniqueShaderModule compileFinalVertexShader();
 	vk::UniqueShaderModule compileClearShader();
 
@@ -167,7 +171,7 @@ private:
 	std::map<u32, vk::UniqueShaderModule> trModVolShaders;
 
 	vk::UniqueShaderModule finalVertexShader;
-	vk::UniqueShaderModule finalFragmentShader;
+	vk::UniqueShaderModule finalFragmentShaders[2];
 	vk::UniqueShaderModule clearShader;
 	int maxLayers = 0;
 };

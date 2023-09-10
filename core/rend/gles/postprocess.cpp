@@ -319,7 +319,9 @@ void PostProcessor::render(GLuint output_fbo)
 		return;
 	}
 
-	PostProcessShader::select(FB_W_CTRL.fb_dither, SPG_CONTROL.interlace, FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
+			SPG_CONTROL.interlace,
+			FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 	{
 		if (vertexBufferShifted == nullptr)

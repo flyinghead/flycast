@@ -258,6 +258,7 @@ private:
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	PipelineManager *pipelineManager = nullptr;
 	bool perStripSorting = false;
+	bool dithering = false;
 };
 
 class ScreenDrawer : public Drawer

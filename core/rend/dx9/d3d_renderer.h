@@ -175,5 +175,6 @@ private:
 	bool frameRenderedOnce = false;
 	int maxAnisotropy = 1;
 	float aspectRatio = 4.f / 3.f;
+	bool dithering = false;
 };
 

@@ -546,6 +546,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	if (gu != -1)
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
+	s->ditherColorMax = glGetUniformLocation(s->program, "ditherColorMax");
 
 	if (s->naomi2)
 		initN2Uniforms(s);

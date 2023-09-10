@@ -415,6 +415,31 @@ void DX11Renderer::setupPixelShaderConstants()
 	// Punch-through alpha ref
 	pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
+	// Dithering
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[1] = 63.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1]
+				= pixelConstants.ditherColorMax[2] = pixelConstants.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
+
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(pxlConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
@@ -592,7 +617,8 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			gp->pcw.Gouraud,
 			Type == ListType_Punch_Through,
 			clipmode == TileClipping::Inside,
-			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV);
+			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV,
+			dithering);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
 	if (gpuPalette)
@@ -733,6 +759,7 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 				false,
 				false,
 				true,
+				false,
 				false,
 				false,
 				false);

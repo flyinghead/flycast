@@ -304,7 +304,6 @@ struct PvrTexInfo
 	int bpp;        //4/8 for pal. 16 for yuv, rgb, argb
 	TextureType type;
 	// Conversion to 16 bpp
-	TexConvFP PL;
 	TexConvFP TW;
 	TexConvFP VQ;
 	// Conversion to 32 bpp
@@ -317,15 +316,15 @@ struct PvrTexInfo
 
 #define TEX_CONV_TABLE \
 const PvrTexInfo pvrTexInfo[8] = \
-{	/* name     bpp Final format			   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)	*/	\
-	{"1555", 	16,	TextureType::_5551,        tex1555_PL,  tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },			\
-	{"565", 	16, TextureType::_565,         tex565_PL,   tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    	\
-	{"4444", 	16, TextureType::_4444,        tex4444_PL,  tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    	\
-	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },			\
-	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,   texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },			\
-	{"pal4", 	4,	TextureType::_5551,		   nullptr,     texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },		\
-	{"pal8", 	8,	TextureType::_5551,		   nullptr,     texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },		\
-	{"ns/1555", 0},	                                                                                                                                    \
+{	/* name     bpp Final format			   Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)	*/	\
+	{"1555", 	16,	TextureType::_5551,        tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },			\
+	{"565", 	16, TextureType::_565,         tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    	\
+	{"4444", 	16, TextureType::_4444,        tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    	\
+	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },			\
+	{"bumpmap", 16, TextureType::_4444,        texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },			\
+	{"pal4", 	4,	TextureType::_5551,		   texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },		\
+	{"pal8", 	8,	TextureType::_5551,		   texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },		\
+	{"ns/1555", 0},	                                                                                                                        \
 }
 
 namespace opengl {
@@ -490,7 +489,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 
 	texconv8 = nullptr;
 
-	if (tcw.ScanOrder && (tex->PL || tex->PL32))
+	if (tcw.ScanOrder && tex->PL32 != nullptr)
 	{
 		//Texture is stored 'planar' in memory, no deswizzle is needed
 		if (tcw.VQ_Comp != 0)
@@ -514,7 +513,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 		}
 
 		//Call the format specific conversion code
-		texconv = tex->PL;
+		texconv = nullptr;
 		texconv32 = tex->PL32;
 		//calculate the size, in bytes, for the locking
 		size = stride * height * tex->bpp / 8;
@@ -615,7 +614,7 @@ bool BaseTextureCacheData::Update()
 	//texture conversion work
 	u32 stride = width;
 
-	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
+	if (tcw.StrideSel && tcw.ScanOrder && tex->PL32 != nullptr)
 	{
 		stride = (TEXT_CONTROL & 31) * 32;
 		if (stride == 0)
@@ -952,54 +951,6 @@ void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& wid
 template void ReadFramebuffer<RGBAPacker>(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
 template void ReadFramebuffer<BGRAPacker>(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& width, int& height);
 
-template<int Red, int Green, int Blue, int Alpha>
-void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
-{
-	u32 padding = linestride;
-	if (padding / 2 > width)
-		padding = padding / 2 - width;
-	else
-		padding = 0;
-
-	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
-	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
-
-	const u8 *p = data;
-
-	for (u32 l = 0; l < height; l++) {
-		switch(fb_w_ctrl.fb_packmode)
-		{
-		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | kval_bit;
-				p += 4;
-			}
-			break;
-		case 1: //0x1   565 RGB 16 bit
-			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 3) & 0x1F) << 11) | (((p[Green] >> 2) & 0x3F) << 5) | ((p[Blue] >> 3) & 0x1F);
-				p += 4;
-			}
-			break;
-		case 2: //0x2   4444 ARGB 16 bit
-			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 4) & 0xF) << 8) | (((p[Green] >> 4) & 0xF) << 4) | ((p[Blue] >> 4) & 0xF) | (((p[Alpha] >> 4) & 0xF) << 12);
-				p += 4;
-			}
-			break;
-		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0);
-				p += 4;
-			}
-			break;
-		}
-		dst += padding;
-	}
-}
-template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
-template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
-
 template<int bits>
 static inline u8 roundColor(u8 in)
 {
@@ -1009,30 +960,323 @@ static inline u8 roundColor(u8 in)
 	return out;
 }
 
-template<int Red, int Green, int Blue, int Alpha>
-void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+// write to 32-bit vram area (framebuffer)
+class FBPixelWriter
 {
-	int bpp;
+public:
+	FBPixelWriter(u32 dstAddr) : dstAddr(dstAddr) {}
+
+	template<typename T>
+	void write(T pixel) {
+		pvr_write32p(dstAddr, pixel);
+		dstAddr += sizeof(T);
+	}
+
+	void advance(int bytes) {
+		dstAddr += bytes;
+	}
+
+private:
+	u32 dstAddr;
+};
+
+// write to 64-bit vram area (render to texture)
+class TexPixelWriter
+{
+public:
+	TexPixelWriter(u16 *dest) : dest(dest) {}
+
+	void write(u16 pixel) {
+		*dest++ = pixel;
+	}
+
+	void advance(int bytes) {
+		(u8 *&)dest += bytes;
+	}
+
+private:
+	u16 *dest;
+};
+
+// 0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter, bool Round = false>
+class FBLineWriter0555
+{
+public:
+	FBLineWriter0555(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {
+		kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
+	}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			u8 red, green, blue;
+			if constexpr (Round)
+			{
+				red = roundColor<5>(pixel[Red]);
+				green = roundColor<5>(pixel[Green]);
+				blue = roundColor<5>(pixel[Blue]);
+			}
+			else
+			{
+				red = pixel[Red] >> 3;
+				green = pixel[Green] >> 3;
+				blue = pixel[Blue] >> 3;
+			}
+			pixWriter.write((u16)((red << 10) | (green << 5) | blue | kval_bit));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 2;
+
+private:
+	u16 kval_bit;
+	PixelWriter& pixWriter;
+};
+
+// 565 RGB 16 bit
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter, bool Round = false>
+class FBLineWriter565
+{
+public:
+	FBLineWriter565(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			u8 red, green, blue;
+			if constexpr (Round)
+			{
+				red = roundColor<5>(pixel[Red]);
+				green = roundColor<6>(pixel[Green]);
+				blue = roundColor<5>(pixel[Blue]);
+			}
+			else
+			{
+				red = pixel[Red] >> 3;
+				green = pixel[Green] >> 2;
+				blue = pixel[Blue] >> 3;
+			}
+			pixWriter.write((u16)((red << 11) | (green << 5) | blue));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 2;
+
+private:
+	PixelWriter& pixWriter;
+};
+
+// 4444 ARGB 16 bit
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter, bool Round = false>
+class FBLineWriter4444
+{
+public:
+	FBLineWriter4444(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			u8 red, green, blue, alpha;
+			if constexpr (Round)
+			{
+				red = roundColor<4>(pixel[Red]);
+				green = roundColor<4>(pixel[Green]);
+				blue = roundColor<4>(pixel[Blue]);
+				alpha = roundColor<4>(pixel[Alpha]);
+			}
+			else
+			{
+				red = pixel[Red] >> 4;
+				green = pixel[Green] >> 4;
+				blue = pixel[Blue] >> 4;
+				alpha = pixel[Alpha] >> 4;
+			}
+			pixWriter.write((u16)((red << 8) | (green << 4) | blue | (alpha << 12)));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 2;
+
+private:
+	PixelWriter& pixWriter;
+};
+
+// 1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter, bool Round = false>
+class FBLineWriter1555
+{
+public:
+	FBLineWriter1555(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {
+		fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
+	}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			u8 red, green, blue;
+			if constexpr (Round)
+			{
+				red = roundColor<5>(pixel[Red]);
+				green = roundColor<5>(pixel[Green]);
+				blue = roundColor<5>(pixel[Blue]);
+			}
+			else
+			{
+				red = pixel[Red] >> 3;
+				green = pixel[Green] >> 3;
+				blue = pixel[Blue] >> 3;
+			}
+			pixWriter.write((u16)((red << 10) | (green << 5) | blue
+					| (pixel[Alpha] >= fb_alpha_threshold ? 0x8000 : 0)));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 2;
+
+private:
+	PixelWriter& pixWriter;
+	u8 fb_alpha_threshold;
+};
+
+// 888 RGB 24 bit packed
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter>
+class FBLineWriter888
+{
+public:
+	FBLineWriter888(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax - 3; c += 4)
+		{
+			pixWriter.write((u32)((pixel[Blue + 4] << 24) | (pixel[Red] << 16) | (pixel[Green] << 8) | pixel[Blue]));
+			pixel += 4;
+			pixWriter.write((u32)((pixel[Green + 4] << 24) | (pixel[Blue + 4] << 16) | (pixel[Red] << 8) | pixel[Green]));
+			pixel += 4;
+			pixWriter.write((u32)((pixel[Red + 4] << 24) | (pixel[Green + 4] << 16) | (pixel[Blue + 4] << 8) | pixel[Red]));
+			pixel += 8;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 3;
+
+private:
+	PixelWriter& pixWriter;
+};
+
+// 0888 KRGB 32 bit (K is the value of fb_kval.)
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter>
+class FBLineWriter0888
+{
+public:
+	FBLineWriter0888(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {
+		fb_kval = fb_w_ctrl.fb_kval << 24;
+	}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			pixWriter.write((u32)((pixel[Red] << 16) | (pixel[Green] << 8) | pixel[Blue] | fb_kval));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 4;
+
+private:
+	u32 fb_kval;
+	PixelWriter& pixWriter;
+};
+
+// 8888 ARGB 32 bit
+template<int Red, int Green, int Blue, int Alpha, typename PixelWriter>
+class FBLineWriter8888
+{
+public:
+	FBLineWriter8888(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
+
+	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	{
+		for (int c = xmin; c < xmax; c++)
+		{
+			pixWriter.write((u32)((pixel[Red] << 16) | (pixel[Green] << 8) | pixel[Blue] | (pixel[Alpha] << 24)));
+			pixel += 4;
+		}
+	}
+
+	static constexpr int BytesPerPixel = 4;
+
+private:
+	PixelWriter& pixWriter;
+};
+
+template<typename FBLineWriter>
+static void writeTexture(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
+{
+	u32 padding = linestride;
+	if (padding > width * 2)
+		padding = padding - width * 2;
+	else
+		padding = 0;
+
+	TexPixelWriter pixWriter(dst);
+	FBLineWriter lineWriter(fb_w_ctrl, pixWriter);
+
+	for (u32 l = 0; l < height; l++) {
+		lineWriter.write(0, width, data, l);
+		pixWriter.advance(padding);
+	}
+}
+
+template<int Red, int Green, int Blue, int Alpha>
+void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
+{
+	bool dither = fb_w_ctrl.fb_dither && config::EmulateFramebuffer;
 	switch (fb_w_ctrl.fb_packmode)
 	{
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-			bpp = 2;
-			break;
-		case 4:
-			bpp = 3;
-			break;
-		case 5:
-		case 6:
-			bpp = 4;
-			break;
-		default:
-			die("Invalid framebuffer format");
-			bpp = 4;
-			break;
+	case 0: // 0555 KRGB 16 bit  (default)
+		if (dither)
+			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+		else
+			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+		break;
+	case 1: // 565 RGB 16 bit
+		if (dither)
+			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+		else
+			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+		break;
+	case 2: // 4444 ARGB 16 bit
+		if (dither)
+			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+		else
+			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+		break;
+	case 3: // 1555 ARGB 16 bit
+		if (dither)
+			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+		else
+			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+		break;
 	}
+}
+template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+
+template<typename FBLineWriter>
+static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+{
+	int bpp = FBLineWriter::BytesPerPixel;
 
 	u32 padding = linestride;
 	if (padding > width * bpp)
@@ -1040,90 +1284,56 @@ void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_C
 	else
 		padding = 0;
 
-	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
-	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
-
 	const u8 *p = data + 4 * yclip.min * width;
 	dstAddr += bpp * yclip.min * (width + padding / bpp);
 
-	for (u32 l = yclip.min; l < height && l <= yclip.max; l++)
+	const u32 clipWidth = std::min(width, xclip.max + 1u);
+	height = std::min(height, yclip.max + 1u);
+
+	FBPixelWriter pixWriter(dstAddr);
+	FBLineWriter lineWriter(fb_w_ctrl, pixWriter);
+
+	for (u32 l = yclip.min; l < height; l++)
 	{
 		p += 4 * xclip.min;
-		dstAddr += bpp * xclip.min;
+		pixWriter.advance(bpp * xclip.min);
 
-		switch(fb_w_ctrl.fb_packmode)
-		{
-		case 0: // 0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
-						| (roundColor<5>(p[Green]) << 5)
-						| roundColor<5>(p[Blue])
-						| kval_bit));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		case 1: // 565 RGB 16 bit
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 11)
-						| (roundColor<6>(p[Green]) << 5)
-						| roundColor<5>(p[Blue])));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		case 2: // 4444 ARGB 16 bit
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u16)((roundColor<4>(p[Red]) << 8)
-						| (roundColor<4>(p[Green]) << 4)
-						| roundColor<4>(p[Blue])
-						| (roundColor<4>(p[Alpha]) << 12)));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		case 3: // 1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u16)((roundColor<5>(p[Red]) << 10)
-						| (roundColor<5>(p[Green]) << 5)
-						| roundColor<5>(p[Blue])
-						| (p[Alpha] >= fb_alpha_threshold ? 0x8000 : 0)));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		case 4: // 888 RGB 24 bit packed
-			for (u32 c = xclip.min; c < width - 3u && c <= xclip.max - 3u; c += 4) {
-				pvr_write32p(dstAddr, (u32)((p[Blue + 4] << 24) | (p[Red] << 16) | (p[Green] << 8) | p[Blue]));
-				p += 4;
-				dstAddr += 4;
-				pvr_write32p(dstAddr, (u32)((p[Green + 4] << 24) | (p[Blue + 4] << 16) | (p[Red] << 8) | p[Green]));
-				p += 4;
-				dstAddr += 4;
-				pvr_write32p(dstAddr, (u32)((p[Red + 4] << 24) | (p[Green + 4] << 16) | (p[Blue + 4] << 8) | p[Red]));
-				p += 8;
-				dstAddr += 4;
-			}
-			break;
-		case 5: // 0888 KRGB 32 bit (K is the value of fk_kval.)
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u32)((p[Red] << 16) | (p[Green] << 8) | p[Blue] | (fb_w_ctrl.fb_kval << 24)));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		case 6: // 8888 ARGB 32 bit
-			for (u32 c = xclip.min; c < width && c <= xclip.max; c++) {
-				pvr_write32p(dstAddr, (u32)((p[Red] << 16) | (p[Green] << 8) | p[Blue] | (p[Alpha] << 24)));
-				p += 4;
-				dstAddr += bpp;
-			}
-			break;
-		default:
-			break;
-		}
-		dstAddr += padding + (width - xclip.max - 1) * bpp;
+		lineWriter.write(xclip.min, clipWidth, p, l);
+
+		pixWriter.advance(padding + (width - xclip.max - 1) * bpp);
 		p += (width - xclip.max - 1) * 4;
+	}
+}
+
+template<int Red, int Green, int Blue, int Alpha>
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+{
+	switch (fb_w_ctrl.fb_packmode)
+	{
+	case 0: // 0555 KRGB 16 bit
+		writeFramebufferLW<FBLineWriter0555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 1: // 565 RGB 16 bit
+		writeFramebufferLW<FBLineWriter565<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 2: // 4444 ARGB 16 bit
+		writeFramebufferLW<FBLineWriter4444<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 3: // 1555 ARGB 16 bit
+		writeFramebufferLW<FBLineWriter1555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 4: // 888 RGB 24 bit packed
+		writeFramebufferLW<FBLineWriter888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 5: // 0888 KRGB 32 bit
+		writeFramebufferLW<FBLineWriter0888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	case 6: // 8888 ARGB 32 bit
+		writeFramebufferLW<FBLineWriter8888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		break;
+	default:
+		die("Invalid framebuffer format");
+		break;
 	}
 }
 template void WriteFramebuffer<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl,

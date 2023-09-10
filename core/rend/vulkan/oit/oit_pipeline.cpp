@@ -183,7 +183,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 			graphicsPipelineCreateInfo).value;
 }
 
-void OITPipelineManager::CreateFinalPipeline()
+void OITPipelineManager::CreateFinalPipeline(bool dithering)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetQuadInputStateCreateInfo(false);
 
@@ -240,7 +240,7 @@ void OITPipelineManager::CreateFinalPipeline()
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetFinalVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetFinalShader();
+	vk::ShaderModule fragment_module = shaderManager->GetFinalShader(dithering);
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -264,7 +264,7 @@ void OITPipelineManager::CreateFinalPipeline()
 	  2                                           // subpass
 	);
 
-	finalPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
+	finalPipelines[dithering] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateClearPipeline()

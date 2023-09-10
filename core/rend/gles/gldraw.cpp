@@ -137,7 +137,8 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f,
 								  gpuPalette,
-								  gp->isNaomi2());
+								  gp->isNaomi2(),
+								  ShaderUniforms.dithering);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)

@@ -260,7 +260,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 					graphicsPipelineCreateInfo).value;
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette, bool dithering)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -404,6 +404,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.palette = gpuPalette;
 	params.divPosZ = divPosZ;
+	params.dithering = dithering;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
@@ -427,7 +428,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  renderPass                                  // renderPass
 	);
 
-	pipelines[hash(listType, sortTriangles, &pp, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+	pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo).value;
 }
 

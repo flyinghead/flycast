@@ -452,7 +452,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		deviceContext->IASetInputLayout(finalInputLayout);
 		deviceContext->VSSetShader(shaders.getFinalVertexShader(), nullptr, 0);
-		deviceContext->PSSetShader(shaders.getFinalShader(), nullptr, 0);
+		deviceContext->PSSetShader(shaders.getFinalShader(dithering && lastPass), nullptr, 0);
 
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		deviceContext->Draw(4, 0);

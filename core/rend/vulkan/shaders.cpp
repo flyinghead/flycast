@@ -74,6 +74,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	vec4 colorClampMax;
 	vec4 sp_FOG_COL_RAM;
 	vec4 sp_FOG_COL_VERT;
+	vec4 ditherColorMax;
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 } uniformBuffer;
@@ -246,6 +247,19 @@ void main()
 #endif
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 
+#if DITHERING == 1
+	float ditherTable[16] = float[](
+		 0.9375,  0.1875,  0.75,  0.,   
+		 0.4375,  0.6875,  0.25,  0.5,
+		 0.8125,  0.0625,  0.875, 0.125,
+		 0.3125,  0.5625,  0.375, 0.625	
+	);
+	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	color += r / uniformBuffer.ditherColorMax;
+	// avoid rounding
+	color = floor(color * 255.) / 255.;
+#endif
 	gl_FragColor = color;
 }
 )";
@@ -728,6 +742,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("pp_TriLinear", (int)params.trilinear)
 		.addConstant("pp_Palette", (int)params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
+		.addConstant("DITHERING", (int)params.dithering)
 		.addSource(GouraudSource)
 		.addSource(FragmentShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
