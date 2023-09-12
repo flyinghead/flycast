@@ -74,15 +74,17 @@ static DynaCode *linkBlockNextStub;
 static DynaCode *writeStoreQueue32;
 static DynaCode *writeStoreQueue64;
 
-#ifdef TARGET_IPHONE
-static void JITWriteProtect(bool enable)
+static void jitWriteProtect(Sh4CodeBuffer &codeBuffer, bool enable)
 {
+#ifdef TARGET_IPHONE
     if (enable)
-    	virtmem::region_set_exec(codeBuffer->getBase(), codeBuffer->getSize());
+    	virtmem::region_set_exec(codeBuffer.getBase(), codeBuffer.getSize());
     else
-    	virtmem::region_unlock(codeBuffer->getBase(), codeBuffer->getSize());
-}
+    	virtmem::region_unlock(codeBuffer.getBase(), codeBuffer.getSize());
+#else
+    JITWriteProtect(enable);
 #endif
+}
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
@@ -253,7 +255,7 @@ public:
 	void compileBlock(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
-		JITWriteProtect(false);
+		jitWriteProtect(codeBuffer, false);
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -967,7 +969,7 @@ public:
 		RelinkBlock(block);
 
 		Finalize();
-		JITWriteProtect(true);
+		jitWriteProtect(codeBuffer, true);
 	}
 
 	void canonStart(const shil_opcode *op)
@@ -2255,14 +2257,14 @@ public:
 	{
 		if (::mainloop != nullptr)
 			return;
-		JITWriteProtect(false);
+		jitWriteProtect(*codeBuffer, false);
 		compiler = new Arm64Assembler(*codeBuffer);
 
 		compiler->GenMainloop();
 
 		delete compiler;
 		compiler = nullptr;
-		JITWriteProtect(true);
+		jitWriteProtect(*codeBuffer, true);
 	}
 
 	RuntimeBlockInfo* allocateBlock() override
@@ -2311,7 +2313,7 @@ public:
 				8,
 		};
 
-		JITWriteProtect(false);
+		jitWriteProtect(*codeBuffer, false);
 		//LOGI("Sh4Dynarec::rewrite pc %zx\n", context.pc);
 		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 		u32 armv8_op = *code_ptr;
@@ -2343,7 +2345,7 @@ public:
 		assembler->Finalize(true);
 		delete assembler;
 		context.pc = (unat)CC_RW2RX(code_rewrite);
-		JITWriteProtect(true);
+		jitWriteProtect(*codeBuffer, true);
 
 		return true;
 	}
@@ -2360,13 +2362,13 @@ u32 DynaRBI::Relink()
 {
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
-	JITWriteProtect(false);
+	jitWriteProtect(codeBuffer, false);
 	Arm64Assembler *compiler = new Arm64Assembler(codeBuffer, (u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
 	delete compiler;
-	JITWriteProtect(true);
+	jitWriteProtect(codeBuffer, true);
 
 	return code_size;
 #else
