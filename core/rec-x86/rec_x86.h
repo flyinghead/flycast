@@ -31,8 +31,8 @@ class X86Compiler : public BaseXbyakRec<X86Compiler, false>
 public:
 	using BaseCompiler = BaseXbyakRec<X86Compiler, false>;
 
-	X86Compiler() : BaseCompiler(), regalloc(this) { }
-	X86Compiler(u8 *code_ptr) : BaseCompiler(code_ptr), regalloc(this) { }
+	X86Compiler(Sh4CodeBuffer& codeBuffer) : BaseCompiler(codeBuffer), regalloc(this) { }
+	X86Compiler(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(codeBuffer, code_ptr), regalloc(this) { }
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise);
 

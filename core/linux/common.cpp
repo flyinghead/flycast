@@ -15,7 +15,6 @@
   #include <dlfcn.h>
 #endif
 #include <unistd.h>
-#include "hw/sh4/dyna/blockmanager.h"
 
 #include "oslib/host_context.h"
 
@@ -61,15 +60,13 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	// fast mem access rewriting
 	host_context_t ctx;
 	context_from_segfault(&ctx, segfault_ctx);
-	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) >= (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
-
-	if (dyna_cde && ngen_Rewrite(ctx, si->si_addr))
+	if (sh4Dynarec->rewrite(ctx, si->si_addr))
 	{
 		context_to_segfault(&ctx, segfault_ctx);
 		return;
 	}
 #endif
-	ERROR_LOG(COMMON, "SIGSEGV @ %p -> %p was not in vram, dynacode:%d", (void *)ctx.pc, si->si_addr, dyna_cde);
+	ERROR_LOG(COMMON, "SIGSEGV @ %p invalid access to %p", (void *)ctx.pc, si->si_addr);
 #ifdef __SWITCH__
 	MemoryInfo meminfo;
 	u32 pageinfo;
@@ -192,4 +189,4 @@ void common_linux_setup()
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
-#endif
+#endif	// __unix__ or __APPLE__ or __SWITCH__

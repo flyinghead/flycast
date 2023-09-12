@@ -146,7 +146,7 @@ static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 		Sh4cntx.pc = pc;
 		DoMMUException(vaddr, rv, write ? MMU_TT_DWRITE : MMU_TT_DREAD);
 		host_context_t ctx;
-		ngen_HandleException(ctx);
+		sh4Dynarec->handleException(ctx);
 		((void (*)())ctx.pc)();
 		// not reached
 		return 0;
