@@ -159,9 +159,9 @@ protected:
 	virtual const char *get_id() = 0;
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
 
-	virtual void read_digital_in(const u32 *buttons, u16 *v)
+	virtual void read_digital_in(const u32 *buttons, u32 *v)
 	{
-		memset(v, 0, sizeof(u16) * 4);
+		memset(v, 0, sizeof(u32) * 4);
 		for (u32 player = first_player; player < 4; player++)
 		{
 			// always-on mapping
@@ -368,7 +368,7 @@ public:
 	}
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13938::read_digital_in(buttons, v);
 		btn3down = v[0] & NAOMI_BTN3_KEY;
@@ -520,7 +520,7 @@ public:
 	}
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13844::read_digital_in(buttons, v);
 
@@ -695,7 +695,7 @@ public:
 	}
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13844_racing::read_digital_in(buttons, v);
 		if (buttons[0] & NAOMI_BTN2_KEY)
@@ -827,7 +827,7 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_io_board::read_digital_in(buttons, v);
 				// main button
@@ -906,7 +906,7 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
@@ -962,7 +962,7 @@ public:
 		: jvs_837_13551(node_id, parent, first_player) { }
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13551::read_digital_in(buttons, v);
 		if (!(v[0] & NAOMI_TEST_KEY))
@@ -1889,14 +1889,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
-						u16 inputs[4];
+						u32 inputs[4];
 						read_digital_in(buttons, inputs);
 						JVS_OUT((inputs[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							inputs[player] &= ~(NAOMI_TEST_KEY | NAOMI_COIN_KEY);
-							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);
+							LOGJVS("P%d %02x ", player + 1 + first_player, (inputs[player] >> 8) & 0xFF);
 							JVS_OUT(inputs[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
 							{
