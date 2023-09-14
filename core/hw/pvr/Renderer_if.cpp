@@ -250,9 +250,10 @@ bool rend_single_frame(const bool& enabled)
 {
 	FC_PROFILE_SCOPE;
 
+	const int timeout = SPG_CONTROL.isPAL() ? 23 : 20;
 	presented = false;
 	while (enabled && !presented)
-		if (!pvrQueue.waitAndExecute(50))
+		if (!pvrQueue.waitAndExecute(timeout))
 			return false;
 	return true;
 }

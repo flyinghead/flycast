@@ -193,16 +193,16 @@ static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 				const char* mode=0;
 				const char* res=0;
 
-				res=SPG_CONTROL.interlace?"480i":"240p";
+				res = SPG_CONTROL.interlace ? "480i" : "240p";
 
-				if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-					mode="PAL";
-				else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-					mode="NTSC";
+				if (SPG_CONTROL.isPAL())
+					mode = "PAL";
+				else if (SPG_CONTROL.isNTSC())
+					mode = "NTSC";
 				else
 				{
-					res=SPG_CONTROL.interlace?"480i":"480p";
-					mode="VGA";
+					res = SPG_CONTROL.interlace ? "480i" : "480p";
+					mode = "VGA";
 				}
 
 				double frames_done=spd_cpu/2;
