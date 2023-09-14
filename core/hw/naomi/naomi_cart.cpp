@@ -627,12 +627,15 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 	{
 		bool systemSP = memcmp(bootId.boardName, "SystemSP", 8) == 0;
 		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[systemSP ? 1 : 0], &bootId.gameTitle[systemSP ? 1 : 0][32]));
+		std::string romName;
+		if (CurrentCartridge->game != nullptr)
+			romName = CurrentCartridge->game->name;
 		if (gameId == "SAMPLE GAME MAX LONG NAME-")
 		{
 			// Use better game names
-			if (!strcmp(CurrentCartridge->game->name, "sgdrvsim"))
+			if (romName == "sgdrvsim")
 				gameId = "SEGA DRIVING SIMULATOR";
-			else if (!strcmp(CurrentCartridge->game->name, "dragntr3"))
+			else if (romName == "dragntr3")
 				gameId = "DRAGON TREASURE 3";
 		}
 		if (!gameId.empty())
@@ -677,12 +680,12 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
 					// only for F355 Deluxe
-			|| (gameId == "F355 CHALLENGE JAPAN" && !strcmp(CurrentCartridge->game->name, "f355")))
+			|| (gameId == "F355 CHALLENGE JAPAN" && romName == "f355"))
 		{
 			printer::init();
 		}
-		if (!strcmp(CurrentCartridge->game->name, "clubkprz") || !strncmp(CurrentCartridge->game->name, "clubkpz", 7)
-			|| !strncmp(CurrentCartridge->game->name, "shootpl", 7)
+		if (romName == "clubkprz" || romName.substr(0, 7) == "clubkpz"
+			|| romName.substr(0, 7) == "shootpl"
 			|| gameId == "KICK '4' CASH")
 		{
 			hopper::init();
