@@ -413,8 +413,6 @@ private:
 	float vib_inclination = 0;
 	double vib_stop_time = 0;
 	SDL_GameController *sdl_controller = nullptr;
-	u32 leftTrigger = ~0;
-	u32 rightTrigger = ~0;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
 };
 

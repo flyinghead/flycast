@@ -110,6 +110,8 @@ protected:
 	std::shared_ptr<InputMapping> input_mapper;
 	bool rumbleEnabled = false;
 	int rumblePower = 100;
+	u32 leftTrigger = ~0;
+	u32 rightTrigger = ~0;
 
 private:
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);

@@ -72,7 +72,7 @@ template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
 {
 public:
-	DefaultInputMapping(const AndroidGamepadDevice& gamepad);
+	DefaultInputMapping(AndroidGamepadDevice& gamepad);
 };
 
 class ShieldRemoteInputMapping : public InputMapping
@@ -216,6 +216,12 @@ public:
 		}
 	}
 
+	void set_trigger_axes(u32 left_axis_code, u32 right_axis_code)
+	{
+		leftTrigger = left_axis_code;
+		rightTrigger = right_axis_code;
+	}
+
 	static std::shared_ptr<AndroidGamepadDevice> GetAndroidGamepad(int id)
 	{
 		auto it = android_gamepads.find(id);
@@ -338,7 +344,7 @@ private:
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
 
 template<bool Arcade, bool Gamepad>
-inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(const AndroidGamepadDevice& gamepad)
+inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(AndroidGamepadDevice& gamepad)
 {
 	name = Arcade ? Gamepad ? "Arcade Gamepad" : "Arcade Hitbox" : "Default";
 	int ltAxis = AXIS_LTRIGGER;
@@ -453,6 +459,8 @@ inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(const AndroidGa
 	set_axis(DC_AXIS_RIGHT, AXIS_X, true);
 	set_axis(DC_AXIS_UP, AXIS_Y, false);
 	set_axis(DC_AXIS_DOWN, AXIS_Y, true);
+
+	gamepad.set_trigger_axes(ltAxis, rtAxis);
 
 	dirty = false;
 }
