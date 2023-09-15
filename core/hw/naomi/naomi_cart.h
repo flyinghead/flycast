@@ -71,7 +71,7 @@ public:
 	virtual void SetKeyData(u8 *key_data) { }
 	virtual bool GetBootId(RomBootID *bootId) = 0;
 
-	const Game *game;
+	const Game *game = nullptr;
 
 protected:
 	u8* RomPtr;
