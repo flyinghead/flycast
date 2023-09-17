@@ -420,7 +420,7 @@ static void setPlatform(int platform)
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
-		settings.platform.ram_size = 16_MB;
+		settings.platform.ram_size = config::RamMod32MB ? 32_MB : 16_MB;
 		settings.platform.vram_size = 8_MB;
 		settings.platform.aram_size = 2_MB;
 		settings.platform.bios_size = 2_MB;
