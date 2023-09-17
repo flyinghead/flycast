@@ -101,6 +101,7 @@ Option<bool> UseReios(CORE_OPTION_NAME "_hle_bios");
 
 Option<bool> OpenGlChecks("", false);
 Option<bool> FastGDRomLoad(CORE_OPTION_NAME "_gdrom_fast_loading", false);
+Option<bool> RamMod32MB(CORE_OPTION_NAME "_dc_32mb_mod", false);
 
 //Option<std::vector<std::string>, false> ContentPath("");
 //Option<bool, false> HideLegacyNaomiRoms("", true);

@@ -690,6 +690,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      "Dreamcast 32MB RAM Mod",
+      NULL,
+      "Enables 32MB RAM Mod for Dreamcast. May affect compatibility",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       "SH4 CPU under/overclock",
       NULL,
