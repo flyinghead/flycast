@@ -63,16 +63,78 @@ namespace systemsp
 
 SystemSpCart *SystemSpCart::Instance;
 
+constexpr u8 DINOKING_CHIP_DATA[128] = {
+    0x12, 0x34, 0x56, 0x78, // Serial No.0
+    0x31, 0x00, 0x86, 0x07, // Serial No.1
+    0x00, 0x00, 0x00, 0x00, // Key
+    0x05, 0x40, 0x00, 0xAA, // Extend  Extend  Access  Mode
+    0x23, 0xFF, 0xFF, 0xFF, // Counter4  Counter3  Counter2  Counter1
+    0x00, 0x00, 0x00, 0x00, // User Data (first set date: day bits 0-4, month bits 5-8, year bits 9-... + 2000)
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x23, 0xFF, 0xFF, 0xFF, // User Data (max counters)
+};
+constexpr u8 LOVEBERRY_CHIP_DATA[128] = {
+    0x10, 0xc5, 0x10, 0x96, // Serial No.0
+    0xab, 0x2f, 0xf1, 0x74, // Serial No.1
+    0x99, 0x33, 0x78, 0xa7, // Key
+    0x05, 0x77, 0x00, 0xAA, // Extend  Extend  Access  Mode
+    0x23, 0xFF, 0xFF, 0xFF, // Counter4  Counter3  Counter2  Counter1
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x00, 0x00, 0x00, 0x00, // User Data
+    0x23, 0xFF, 0xFF, 0xFF, // User Data
+};
+
 //
-// RS232C I/F board (838-14244) connected to RFID Chip R/W board (838-14243)
+// RS232C I/F board (838-14244) connected to RFID Chip R/W board (838-14243 aka Maxell Picochet ME-MR23)
 //
 class RfidReaderWriter : public SerialPort::Pipe
 {
+	enum Responses : u8 {
+		OK = 0xa,
+		RETRY = 0xca,
+		NG = 0x3a,
+		NOT = 0x6a,
+	};
+
+	enum Commands : u8 {
+		REQ = 0x4e,
+		SEL = 0x2e,
+		READ = 0xe,
+		WRITE = 0xce,
+		WRITE_NOP = 0x8e,
+		WRITE_ST = 0xee,
+		HALT = 0xae,
+		COUNT = 0x6e,
+		RESET = 0x7e,
+		TEST = 0x5e,
+		CHANGE = 0x3e,
+	};
+	static constexpr u8 TEST_CODE = 0;
+	static constexpr u8 RF_OFF = 0x80;
+
 public:
-	RfidReaderWriter(SerialPort *port, int index) : port(port), index(index)
+	RfidReaderWriter(SerialPort *port, int index, const std::string& gameName) : port(port), index(index), gameName(gameName)
 	{
 		port->setPipe(this);
-		// TODO load card
+
+		FILE *f = nowide::fopen(getCardDataPath().c_str(), "rb");
+		if (f != nullptr)
+		{
+			if (fread(cardData.data(), 1, cardData.size(), f) != cardData.size())
+				WARN_LOG(NAOMI, "Rfid card %d: truncated read", index);
+			fclose(f);
+		}
+		else {
+			makeNewCard();
+		}
 	}
 
 	void write(u8 v) override
@@ -83,106 +145,169 @@ public:
 			recvBuffer.push_back(v);
 			if (recvBuffer.size() == expectedBytes)
 			{
-				toSend.push_back(0xa); // ok
-				if (recvBuffer[0] == 0xce) // WRITE
+				switch (recvBuffer[0])
 				{
-					//memcpy(cardData.data(), &recvBuffer[1], expectedBytes - 1);
-					memcpy(&cardData[0x14], &recvBuffer[1], 4);
-					memcpy(&cardData[0x18], &recvBuffer[6], 4);
-					memcpy(&cardData[0x1c], &recvBuffer[11], 4);
-					memcpy(&cardData[0x20], &recvBuffer[16], 4);
-					memcpy(&cardData[0x24], &recvBuffer[21], 4);
-					// TODO save card
-					INFO_LOG(NAOMI, "UART%d card written", index);
-				}
-				else if (recvBuffer[0] == 0x6e) // COUNT
-				{
-					// receives card type? (0-3+)
-					// TODO must decrement counter by 1 and return it
-					toSend.push_back(1);
-					SERIAL_LOG("UART%d COUNT %x", index, recvBuffer[1]);
+				case TEST:
+					if (recvBuffer[1] == RF_OFF) {
+						state = Off;
+						toSend.push_back(OK);
+						SERIAL_LOG("UART%d state Off", index);
+					}
+					else if (state == Off) {
+						state = Connecting;
+						toSend.push_back(NOT);
+						SERIAL_LOG("UART%d state Connecting", index);
+					}
+					else
+						toSend.push_back(OK);
+					break;
+				case SEL:
+					if ((state == Connected || state == FullRead)
+							&& (recvBuffer[5] != 0 || recvBuffer[6] != 0 || recvBuffer[7] != 0 || recvBuffer[8] != 0))
+						state = FullRead;
+					else
+						state = Connected;
+					toSend.push_back(OK);
+					break;
+				case COUNT:
+					{
+						u8 newVal = 0;
+						switch (recvBuffer[1])
+						{
+						case 0xc0:
+							newVal = --cardData[16];
+							break;
+						case 0x30:
+							newVal = --cardData[17];
+							break;
+						case 0x0c:
+							newVal = --cardData[18];
+							break;
+						case 0x03:
+							newVal = --cardData[19];
+							if (newVal == 0)
+								makeNewCard();
+							break;
+						}
+						toSend.push_back(OK);
+						toSend.push_back(newVal);
+						saveData();
+						SERIAL_LOG("UART%d COUNT %x -> %x", index, recvBuffer[1], newVal);
+						break;
+					}
+				case WRITE:
+					memcpy(&cardData[4 * rowCounter], &recvBuffer[1], 4);
+					saveData();
+					SERIAL_LOG("UART%d card written @ row %d", index, rowCounter);
+					toSend.push_back(OK);
+					break;
+				case WRITE_NOP:
+				case WRITE_ST:
+				case CHANGE:
+				case HALT:
+					toSend.push_back(OK);
+					break;
+				default:
+					SERIAL_LOG("UART%d unhandled cmd %x (len %d)", index, recvBuffer[0], expectedBytes);
+					break;
 				}
 				port->updateStatus();
 				expectedBytes = 0;
 			}
 			return;
 		}
-		//SERIAL_LOG("UART%d write data out: %x", index, v);
+
 		switch (v)
 		{
-		case 0x00: 	// TEST_CODE
-		case 0x80:	// RF_OFF
-			SERIAL_LOG("UART%d cmd %s", index, v == 0 ? "TEST_CODE" : "RF_OFF");
-			expectedBytes = 2 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case 0x5e:	// TEST
+		case TEST:
 			SERIAL_LOG("UART%d cmd TEST", index);
 			expectedBytes = 2 + 1;
 			recvBuffer.clear();
 			recvBuffer.push_back(v);
 			break;
-		case 0x3e:	// CHANGE
+		case CHANGE: // change baud rate
 			SERIAL_LOG("UART%d cmd CHANGE", index);
 			expectedBytes = 1 + 1;
 			recvBuffer.clear();
 			recvBuffer.push_back(v);
 			break;
-		case 0x7e:	// RESET
-		case 0x8e:	// WRITE_NOP FIXME sends 5
-		case 0xae:	// HALT FIXME sends 5
-			SERIAL_LOG("UART%d cmd %s", index, v == 0x7e ? "RESET" : v == 0x8e ? "WRITE_NOP" : "ALT");
-			toSend.push_back(0xa); // ok
+		case RESET:
+			SERIAL_LOG("UART%d cmd RESET", index);
+			state = Off;
+			toSend.push_back(OK);
 			break;
-		case 0x0e:	// READ
+		case HALT:
+			SERIAL_LOG("UART%d cmd HALT", index);
+			expectedBytes = 4 + 1; // ser0
+			recvBuffer.clear();
+			recvBuffer.push_back(v);
+			break;
+		case READ:
 			SERIAL_LOG("UART%d cmd READ", index);
-			toSend.push_back(0xa); // ok
-			toSend.insert(toSend.end(), cardData.begin(), cardData.end());
-			//toSend.insert(toSend.end(), &cardData[0x14], &cardData[0x28]); // FIXME what to return?
+			toSend.push_back(OK);
+			if (state == FullRead) {
+				toSend.insert(toSend.end(), cardData.begin(), cardData.end());
+			}
+			else
+			{
+				toSend.insert(toSend.end(), cardData.begin(), cardData.begin() + 8);
+				static const u8 maskedData[120] = { 0, 0, 0, 0, 0, 0, 0, 0xaa };
+				toSend.insert(toSend.end(), std::begin(maskedData), std::end(maskedData));
+			}
 			break;
-		case 0x1a:	// DESCRIPT
-			SERIAL_LOG("UART%d cmd DESCRIPT", index);
-			toSend.push_back(0xa); // ok
-			toSend.push_back('A'); // should have 0x5a bytes (max?)
-			toSend.push_back('B');
-			toSend.push_back('C');
-			break;
-		case 0x2e:	// SEL
+		case SEL:
 			SERIAL_LOG("UART%d cmd SEL", index);
 			expectedBytes = 8 + 1;	// ser0 key (key is calc'ed from ser1)
 			recvBuffer.clear();
 			recvBuffer.push_back(v);
 			break;
-		case 0x4e: // REQ
+		case REQ:
 			SERIAL_LOG("UART%d cmd REQ", index);
-			toSend.push_back(0xa); // ok
-			toSend.insert(toSend.end(), &cardData[0], &cardData[4]);	// ser0
+			if (state == Connecting)
+			{
+				state = Connected;
+				toSend.push_back(RETRY);
+				SERIAL_LOG("UART%d state Connected", index);
+			}
+			else if (state == Connected || state == FullRead)
+			{
+				toSend.push_back(OK);
+				toSend.insert(toSend.end(), &cardData[0], &cardData[4]);	// ser0
+				SERIAL_LOG("UART%d exec REQ", index);
+			}
+			else
+				toSend.push_back(RETRY);
 			break;
-		case 0x6e: // COUNT
+		case COUNT:
 			SERIAL_LOG("UART%d cmd COUNT", index);
 			expectedBytes = 1 + 1;
 			recvBuffer.clear();
 			recvBuffer.push_back(v);
 			break;
-		case 0xce: // WRITE
+		case WRITE:
 			SERIAL_LOG("UART%d cmd WRITE", index);
-			//expectedBytes = 128 + 1; // FIXME may be less than 128...
-			expectedBytes = 24 + 1;
+			rowCounter++;
+			expectedBytes = 4 + 1;
 			recvBuffer.clear();
 			recvBuffer.push_back(0xce);
 			break;
-		case 0xee: // WRITE_ST
-			SERIAL_LOG("UART%d cmd WRITE_ST", index);
+		case WRITE_ST:
+		case WRITE_NOP:
+			SERIAL_LOG("UART%d cmd %s", index, v == WRITE_ST ? "WRITE_ST" : "WRITE_NOP");
+			if (v == WRITE_ST)
+				rowCounter = 0;
+			else
+				rowCounter++;
 			expectedBytes = 4 + 1;
 			recvBuffer.clear();
-			recvBuffer.push_back(0xee);
+			recvBuffer.push_back(v);
 			break;
 		default:
 			INFO_LOG(NAOMI, "UART%d write data out: unknown cmd %x", index, v);
-			toSend.push_back(0x3a); // ng
+			toSend.push_back(NG);
 			break;
 		}
+		port->updateStatus();
 	}
 
 	int available() override {
@@ -197,6 +322,8 @@ public:
 			b = toSend.front();
 			toSend.pop_front();
 		}
+		if (toSend.empty())
+			port->updateStatus();
 		return b;
 	}
 
@@ -208,6 +335,9 @@ public:
 		ser << expectedBytes;
 		ser << (u32)recvBuffer.size();
 		ser.serialize(recvBuffer.data(), recvBuffer.size());
+		ser << state;
+		ser << rowCounter;
+		ser.serialize(cardData.data(), cardData.size());
 	}
 
 	void deserialize(Deserializer& deser) override
@@ -221,15 +351,152 @@ public:
 		deser >> size;
 		recvBuffer.resize(size);
 		deser.deserialize(recvBuffer.data(), recvBuffer.size());
+		if (deser.version() >= Deserializer::V41)
+		{
+			deser >> state;
+			deser >> rowCounter;
+			deser.deserialize(cardData.data(), cardData.size());
+		}
+		else
+		{
+			state = Off;
+			rowCounter = 0;
+		}
 	}
 
 private:
+	void makeNewCard()
+	{
+		INFO_LOG(NAOMI, "Creating new RFID card");
+		if (gameName.substr(0, 6) == "dinoki")
+		{
+			memcpy(&cardData[0], &DINOKING_CHIP_DATA[0], sizeof(DINOKING_CHIP_DATA));
+			for (int i = 0; i < 4; i++)
+				cardData[i] = rand() & 0xff;
+
+			u32 ser1 = ((rand() & 0xffff) << 16) | (rand() & 0xffff);
+			ser1 &= ~0xc0000000;
+			if (config::Region == 1) // USA (dinoking, dinokior)
+				ser1 |= 0x40000000;
+			ser1 = dinoShuffle(ser1);
+			cardData[4] = ser1 >> 24;
+			cardData[5] = ser1 >> 16;
+			cardData[6] = ser1 >> 8;
+			cardData[7] = ser1;
+		}
+		else
+		{
+			memcpy(&cardData[0], &LOVEBERRY_CHIP_DATA[0], sizeof(LOVEBERRY_CHIP_DATA));
+			for (int i = 0; i < 4; i++)
+				cardData[i] = rand() & 0xff;
+
+			cardData[5] = rand() & 0xff;
+			cardData[7] = rand() & 0xff;
+			u32 ser1 = (cardData[4] << 24) | (cardData[5] << 16) | (cardData[6] << 8) | cardData[7];
+			if (config::Region == 2) // Export
+			{
+				ser1 = loveberyDeobfuscate(ser1);
+				ser1 &= ~0xc0000000;
+				ser1 = loveberyObfuscate(ser1);
+				cardData[4] = ser1 >> 24;
+				cardData[5] = ser1 >> 16;
+				cardData[6] = ser1 >> 8;
+				cardData[7] = ser1;
+			}
+
+			ser1 ^= 0x321c89d3;
+			cardData[8] = ser1 >> 24;
+			cardData[9] = ser1 >> 16;
+			cardData[10] = ser1 >> 8;
+			cardData[11] = ser1;
+		}
+	}
+
+	std::string getCardDataPath()
+	{
+		std::string path = hostfs::getArcadeFlashPath();
+		switch (config::Region)
+		{
+		case 0:
+			path += "-jp";
+			break;
+		case 1:
+			path += "-us";
+			break;
+		default:
+			path += "-exp";
+			break;
+		}
+		path += ".rfid" + std::to_string(index);
+
+		return path;
+	}
+
+	void saveData()
+	{
+		FILE *f = nowide::fopen(getCardDataPath().c_str(), "wb");
+		if (f == nullptr) {
+			WARN_LOG(NAOMI, "Can't save RFID card: error %x", errno);
+			return;
+		}
+		fwrite(cardData.data(), 1, cardData.size(), f);
+		fclose(f);
+	}
+
+	u32 dinoShuffle(u32 v) {
+		return ((v & 1) << 22) | ((v & 2) << 28) | ((v & 4) << 1) | ((v & 8) << 3)
+				| ((v & 0x10) << 21) | ((v & 0x20) << 10) | ((v & 0x40) << 1) | ((v & 0x80) >> 7)
+				| ((v & 0x100) << 22) | ((v & 0x200) >> 1) | ((v & 0x400) >> 1) | ((v & 0x800) << 17)
+				| ((v & 0x1000) << 4) | ((v & 0x2000) << 18) | ((v & 0x4000) >> 4) | ((v & 0x8000) >> 13)
+				| ((v & 0x10000) >> 15) | ((v & 0x20000) >> 4) | ((v & 0x40000) << 1) | ((v & 0x80000) >> 8)
+				| ((v & 0x100000) >> 6) | ((v & 0x200000) << 2) | ((v & 0x400000) >> 18) | ((v & 0x800000) >> 2)
+				| ((v & 0x1000000) >> 12) | ((v & 0x2000000) >> 7) | ((v & 0x4000000) << 1) | ((v & 0x8000000) >> 3)
+				| ((v & 0x10000000) >> 11) | ((v & 0x20000000) >> 9) | ((v & 0x40000000) >> 25) | ((v & 0x80000000) >> 5);
+	}
+
+	u32 dinoUnshuffle(u32 v) {
+		  return ((v & 1) << 7) | ((v & 2) << 15) | ((v & 4) << 13) | ((v & 8) >> 1)
+		         | ((v & 0x10) << 18) | ((v & 0x20) << 25) | ((v & 0x40) >> 3) | ((v & 0x80) >> 1)
+				 | ((v & 0x100) << 1) | ((v & 0x200) << 1) | ((v & 0x400) << 4) | ((v & 0x800) << 8)
+				 | ((v & 0x1000) << 12) | ((v & 0x2000) << 4) | ((v & 0x4000) << 6) | ((v & 0x8000) >> 10)
+				 | ((v & 0x10000) >> 4) | ((v & 0x20000) << 11) | ((v & 0x40000) << 7) | ((v & 0x80000) >> 1)
+				 | ((v & 0x100000) << 9) | ((v & 0x200000) << 2) | ((v & 0x400000) >> 22) | ((v & 0x800000) >> 2)
+				 | ((v & 0x1000000) << 3) | ((v & 0x2000000) >> 21) | ((v & 0x4000000) << 5) | ((v & 0x8000000) >> 1)
+				 | ((v & 0x10000000) >> 17) | ((v & 0x20000000) >> 28) | ((v & 0x40000000) >> 22) | ((v & 0x80000000) >> 18);
+	}
+
+	u32 loveberyDeobfuscate(u32 v)
+	{
+		v ^= 0xa35ec5e3;
+		// 87654321 -> 34781256
+		return ((v & 0xf00000) >> 20) | ((v & 0xf0000) >> 12)
+				| ((v & 0xf0) << 4) | ((v & 0xf) << 12)
+				| ((v & 0xf0000000) >> 12) | ((v & 0xf000000) >> 4)
+				| ((v & 0xf000) << 12) | ((v & 0xf00) << 20);
+	}
+	u32 loveberyObfuscate(u32 v)
+	{
+		v = ((v & 0xf) << 20) | ((v & 0xf0) << 12)
+				| ((v & 0xf00) >> 4) | ((v & 0xf000) >> 12)
+				| ((v & 0xf0000) << 12) | ((v & 0xf00000) << 4)
+				| ((v & 0xf000000) >> 12) | ((v & 0xf0000000) >> 20);
+		return v ^ 0xa35ec5e3;
+	}
+
 	SerialPort *port;
 	const int index;
+	const std::string gameName;
 	std::deque<u8> toSend;
 	std::array<u8, 128> cardData;
 	u8 expectedBytes = 0;
 	std::vector<u8> recvBuffer;
+	enum State {
+		Off,
+		Connecting,
+		Connected,
+		FullRead
+	} state = Off;
+	int rowCounter = 0;
 };
 
 //
@@ -1260,10 +1527,12 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 		ata.status.rdy = 0;
 		ata.status.df = 1;
 	}
-	if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0))
+	// dinoki4 doesn't use rfid chips. dinokich uses a different reader/writer protocol
+	if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0 && strcmp(game->name, "dinokich") != 0)
+			|| !strncmp(game->name, "loveber", 7))
 	{
-		new RfidReaderWriter(&uart1, 1);
-		new RfidReaderWriter(&uart2, 2);
+		new RfidReaderWriter(&uart1, 1, game->name);
+		new RfidReaderWriter(&uart2, 2, game->name);
 	}
 	else if (!strcmp(game->name, "isshoni"))
 	{

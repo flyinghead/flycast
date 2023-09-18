@@ -669,7 +669,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		else if (gameId.substr(0, 8) == "MKG TKOB"
 				|| gameId.substr(0, 9) == "MUSHIKING"
 				|| gameId == "DINOSAUR KING"
-				|| gameId == "INW PUPPY 2008 VER1.001")	// SystemSP isshoni
+				|| gameId == "INW PUPPY 2008 VER1.001"	// SystemSP isshoni
+				|| gameId.substr(0, 14) == "LOVE AND BERRY")
 		{
 			card_reader::barcodeInit();
 		}
@@ -725,7 +726,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 	else
 	{
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", settings.content.gameId.c_str());
-		if (settings.content.gameId.substr(0, 6) == "dinoki")
+		if (settings.content.gameId.substr(0, 6) == "dinoki"
+				|| settings.content.gameId.substr(0, 7) == "loveber")
 			card_reader::barcodeInit();
 	}
 }
