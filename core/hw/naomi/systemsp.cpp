@@ -1504,7 +1504,30 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
 	M4Cartridge::Init(progress, digest);
 
+	RomBootID bootId;
+	if (GetBootId(&bootId)
+			&& bootId.country != 0 && (bootId.country & (2 << config::Region)) == 0)
+	{
+		if (bootId.country & 4)
+		{
+			NOTICE_LOG(NAOMI, "Forcing region USA");
+			config::Region.override(1);
+		}
+		else if (bootId.country & 8)
+		{
+			NOTICE_LOG(NAOMI, "Forcing region Export");
+			config::Region.override(2);
+		}
+		else if (bootId.country & 2)
+		{
+			NOTICE_LOG(NAOMI, "Forcing region Japan");
+			config::Region.override(0);
+		}
+		// Force BIOS reload now to get the default eeprom for the correct region
+		naomi_cart_LoadBios(settings.content.fileName.c_str());
+	}
 	region = config::Region;
+	// Region must be set before loading the eeprom
 	if (!eeprom.Load(getEepromPath()) && naomi_default_eeprom != nullptr)
 		memcpy(eeprom.data, naomi_default_eeprom, 128);
 
