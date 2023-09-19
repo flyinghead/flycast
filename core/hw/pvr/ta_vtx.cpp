@@ -1614,23 +1614,25 @@ void FillBGP(TA_context* ctx)
 	}
 	else
 	{
+		if (cv[2].x == cv[1].x) {
+			cv[2].x = cv[0].x;
+			cv[2].u = cv[0].u;
+		}
 		const float deltaU = (cv[1].u - cv[0].u) * 0.4f;
 		cv[0].x -= 256.f;
 		cv[0].u -= deltaU;
 		cv[1].x += 256.f;
 		cv[1].u += deltaU;
-		cv[2].x += 256.f;
-		cv[2].u += deltaU;
+		cv[2].x -= 256.f;
+		cv[2].u -= deltaU;
 
 		cv[0].x *= scale_x;
 		cv[1].x *= scale_x;
 		cv[2].x *= scale_x;
 
 		cv[3] = cv[2];
-		cv[3].x = cv[0].x;
-		cv[3].u = cv[0].u;
-
-		std::swap(cv[0], cv[1]);
+		cv[3].x = cv[1].x;
+		cv[3].u = cv[1].u;
 	}
 }
 
