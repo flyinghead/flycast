@@ -182,8 +182,8 @@ private:
 	}
 
 	int schedId;
-	const char *mediaName;
-	const char *parentName;
+	const char *mediaName = nullptr;
+	const char *parentName = nullptr;
 	FILE *chdFile = nullptr;
 	chd_file *chd = nullptr;
 	u32 hunkbytes = 0;

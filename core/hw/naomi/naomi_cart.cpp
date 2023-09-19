@@ -757,6 +757,7 @@ void naomi_cart_Close()
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;
 	bios_loaded = false;
+	naomi_default_eeprom = nullptr;
 }
 
 void naomi_cart_serialize(Serializer& ser)
