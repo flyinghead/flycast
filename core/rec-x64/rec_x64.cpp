@@ -420,6 +420,42 @@ public:
 					}
 				}
 				break;
+
+			case shop_fmac:
+				{
+					Xbyak::Xmm rs1 = regalloc.MapXRegister(op.rs1);
+					Xbyak::Xmm rs2 = regalloc.MapXRegister(op.rs2);
+					Xbyak::Xmm rs3 = regalloc.MapXRegister(op.rs3);
+					Xbyak::Xmm rd = regalloc.MapXRegister(op.rd);
+					if (rd == rs2)
+					{
+						movss(xmm1, rs2);
+						rs2 = xmm1;
+					}
+					if (rd == rs3)
+					{
+						movss(xmm2, rs3);
+						rs3 = xmm2;
+					}
+					if (op.rs1.is_imm()) // FIXME MapXRegister(op.rs1) would have failed
+					{
+						mov(eax, op.rs1._imm);
+						movd(rd, eax);
+					}
+					else if (rd != rs1)
+					{
+						movss(rd, rs1);
+					}
+					if (cpu.has(Cpu::tFMA) && !config::GGPOEnable)
+						vfmadd231ss(rd, rs2, rs3);
+					else
+					{
+						movss(xmm0, rs2);
+						mulss(xmm0, rs3);
+						addss(rd, xmm0);
+					}
+				}
+				break;
 #endif
 
 			default:
