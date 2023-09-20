@@ -233,12 +233,14 @@ struct Unpacker4444_32 {
 	}
 
 	// no color data extension (planar textures)
+	// The alpha channel still needs to be extended for PT polygons to work (Langrisser Millennium)
+	// TODO Is the documentation correct?
 	static u32 unpackPL(u16 word) {
 		return Packer::pack(
 				((word >> 8) & 0xF) << 4,
 				((word >> 4) & 0xF) << 4,
 				((word >> 0) & 0xF) << 4,
-				((word >> 12) & 0xF) << 4);
+				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
 	}
 };
 
