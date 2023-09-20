@@ -2313,9 +2313,12 @@ public:
 				8,
 		};
 
-		jitWriteProtect(*codeBuffer, false);
 		//LOGI("Sh4Dynarec::rewrite pc %zx\n", context.pc);
 		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
+		if ((u8 *)code_ptr < (u8 *)codeBuffer->getBase()
+				|| (u8 *)code_ptr >= (u8 *)codeBuffer->getBase() + codeBuffer->getSize())
+			return false;
+		jitWriteProtect(*codeBuffer, false);
 		u32 armv8_op = *code_ptr;
 		bool is_read = false;
 		u32 size = 0;

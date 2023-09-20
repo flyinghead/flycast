@@ -778,6 +778,9 @@ bool Arm32Dynarec::rewrite(host_context_t& context, void *faultAddress)
 		u32 full;
 	};
 
+	if ((u8 *)context.pc < (u8 *)codeBuffer->getBase()
+			|| (u8 *)context.pc >= (u8 *)codeBuffer->getBase() + codeBuffer->getSize())
+		return false;
 	u32 *regs = context.reg;
 	arm_mem_op *ptr = (arm_mem_op *)context.pc;
 
