@@ -97,14 +97,14 @@ constexpr u8 LOVEBERRY_CHIP_DATA[128] = {
 //
 class RfidReaderWriter : public SerialPort::Pipe
 {
-	enum Responses : u8 {
+	enum Response : u8 {
 		OK = 0xa,
 		RETRY = 0xca,
 		NG = 0x3a,
 		NOT = 0x6a,
 	};
 
-	enum Commands : u8 {
+	enum Command : u8 {
 		REQ = 0x4e,
 		SEL = 0x2e,
 		READ = 0xe,
@@ -143,169 +143,157 @@ public:
 		{
 			SERIAL_LOG("UART%d write data out: %02x", index, v);
 			recvBuffer.push_back(v);
-			if (recvBuffer.size() == expectedBytes)
+			if (recvBuffer.size() < expectedBytes)
+				return;
+
+			switch (recvBuffer[0])
 			{
-				switch (recvBuffer[0])
+			case TEST:
+				if (recvBuffer[1] == RF_OFF)
 				{
-				case TEST:
-					if (recvBuffer[1] == RF_OFF) {
-						state = Off;
-						toSend.push_back(OK);
-						SERIAL_LOG("UART%d state Off", index);
-					}
-					else if (state == Off) {
-						state = Connecting;
-						toSend.push_back(NOT);
-						SERIAL_LOG("UART%d state Connecting", index);
-					}
-					else
-						toSend.push_back(OK);
-					break;
-				case SEL:
-					if ((state == Connected || state == FullRead)
-							&& (recvBuffer[5] != 0 || recvBuffer[6] != 0 || recvBuffer[7] != 0 || recvBuffer[8] != 0))
-						state = FullRead;
-					else
-						state = Connected;
+					state = Off;
 					toSend.push_back(OK);
-					break;
-				case COUNT:
+					SERIAL_LOG("UART%d state Off", index);
+				}
+				else if (state == Off)
+				{
+					state = Connecting;
+					toSend.push_back(NOT);
+					SERIAL_LOG("UART%d state Connecting", index);
+				}
+				else
+					toSend.push_back(OK);
+				break;
+			case SEL:
+				if ((state == Connected || state == FullRead)
+						&& (recvBuffer[5] != 0 || recvBuffer[6] != 0 || recvBuffer[7] != 0 || recvBuffer[8] != 0))
+					state = FullRead;
+				else
+					state = Connected;
+				toSend.push_back(OK);
+				break;
+			case COUNT:
+				{
+					u8 newVal = 0;
+					switch (recvBuffer[1])
 					{
-						u8 newVal = 0;
-						switch (recvBuffer[1])
-						{
-						case 0xc0:
-							newVal = --cardData[16];
-							break;
-						case 0x30:
-							newVal = --cardData[17];
-							break;
-						case 0x0c:
-							newVal = --cardData[18];
-							break;
-						case 0x03:
-							newVal = --cardData[19];
-							if (newVal == 0)
-								makeNewCard();
-							break;
-						}
-						toSend.push_back(OK);
-						toSend.push_back(newVal);
-						saveData();
-						SERIAL_LOG("UART%d COUNT %x -> %x", index, recvBuffer[1], newVal);
+					case 0xc0:
+						newVal = --cardData[16];
+						break;
+					case 0x30:
+						newVal = --cardData[17];
+						break;
+					case 0x0c:
+						newVal = --cardData[18];
+						break;
+					case 0x03:
+						newVal = --cardData[19];
+						if (newVal == 0)
+							makeNewCard();
 						break;
 					}
-				case WRITE:
-					memcpy(&cardData[4 * rowCounter], &recvBuffer[1], 4);
+					toSend.push_back(OK);
+					toSend.push_back(newVal);
 					saveData();
-					SERIAL_LOG("UART%d card written @ row %d", index, rowCounter);
-					toSend.push_back(OK);
-					break;
-				case WRITE_NOP:
-				case WRITE_ST:
-				case CHANGE:
-				case HALT:
-					toSend.push_back(OK);
-					break;
-				default:
-					SERIAL_LOG("UART%d unhandled cmd %x (len %d)", index, recvBuffer[0], expectedBytes);
+					SERIAL_LOG("UART%d COUNT %x -> %x", index, recvBuffer[1], newVal);
 					break;
 				}
-				port->updateStatus();
-				expectedBytes = 0;
-			}
-			return;
-		}
-
-		switch (v)
-		{
-		case TEST:
-			SERIAL_LOG("UART%d cmd TEST", index);
-			expectedBytes = 2 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case CHANGE: // change baud rate
-			SERIAL_LOG("UART%d cmd CHANGE", index);
-			expectedBytes = 1 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case RESET:
-			SERIAL_LOG("UART%d cmd RESET", index);
-			state = Off;
-			toSend.push_back(OK);
-			break;
-		case HALT:
-			SERIAL_LOG("UART%d cmd HALT", index);
-			expectedBytes = 4 + 1; // ser0
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case READ:
-			SERIAL_LOG("UART%d cmd READ", index);
-			toSend.push_back(OK);
-			if (state == FullRead) {
-				toSend.insert(toSend.end(), cardData.begin(), cardData.end());
-			}
-			else
-			{
-				toSend.insert(toSend.end(), cardData.begin(), cardData.begin() + 8);
-				static const u8 maskedData[120] = { 0, 0, 0, 0, 0, 0, 0, 0xaa };
-				toSend.insert(toSend.end(), std::begin(maskedData), std::end(maskedData));
-			}
-			break;
-		case SEL:
-			SERIAL_LOG("UART%d cmd SEL", index);
-			expectedBytes = 8 + 1;	// ser0 key (key is calc'ed from ser1)
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case REQ:
-			SERIAL_LOG("UART%d cmd REQ", index);
-			if (state == Connecting)
-			{
-				state = Connected;
-				toSend.push_back(RETRY);
-				SERIAL_LOG("UART%d state Connected", index);
-			}
-			else if (state == Connected || state == FullRead)
-			{
+			case WRITE:
+				memcpy(&cardData[4 * rowCounter], &recvBuffer[1], 4);
+				saveData();
+				SERIAL_LOG("UART%d card written @ row %d", index, rowCounter);
 				toSend.push_back(OK);
-				toSend.insert(toSend.end(), &cardData[0], &cardData[4]);	// ser0
-				SERIAL_LOG("UART%d exec REQ", index);
+				break;
+			case WRITE_NOP:
+			case WRITE_ST:
+			case CHANGE:
+			case HALT:
+				toSend.push_back(OK);
+				break;
+			default:
+				SERIAL_LOG("UART%d unhandled cmd %x (len %d)", index, recvBuffer[0], expectedBytes);
+				break;
 			}
-			else
-				toSend.push_back(RETRY);
-			break;
-		case COUNT:
-			SERIAL_LOG("UART%d cmd COUNT", index);
-			expectedBytes = 1 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		case WRITE:
-			SERIAL_LOG("UART%d cmd WRITE", index);
-			rowCounter++;
-			expectedBytes = 4 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(0xce);
-			break;
-		case WRITE_ST:
-		case WRITE_NOP:
-			SERIAL_LOG("UART%d cmd %s", index, v == WRITE_ST ? "WRITE_ST" : "WRITE_NOP");
-			if (v == WRITE_ST)
-				rowCounter = 0;
-			else
+			expectedBytes = 0;
+		}
+		else
+		{
+			switch (v)
+			{
+			case TEST:
+				SERIAL_LOG("UART%d cmd TEST", index);
+				expect(v, 2);
+				break;
+			case CHANGE: // change baud rate
+				SERIAL_LOG("UART%d cmd CHANGE", index);
+				expect(v, 1);
+				break;
+			case RESET:
+				SERIAL_LOG("UART%d cmd RESET", index);
+				state = Off;
+				toSend.push_back(OK);
+				break;
+			case HALT:
+				SERIAL_LOG("UART%d cmd HALT", index);
+				expect(v, 4); // ser0
+				break;
+			case READ:
+				SERIAL_LOG("UART%d cmd READ", index);
+				toSend.push_back(OK);
+				if (state == FullRead) {
+					toSend.insert(toSend.end(), cardData.begin(), cardData.end());
+				}
+				else
+				{
+					toSend.insert(toSend.end(), cardData.begin(), cardData.begin() + 8);
+					static const u8 maskedData[120] = { 0, 0, 0, 0, 0, 0, 0, 0xaa };
+					toSend.insert(toSend.end(), std::begin(maskedData), std::end(maskedData));
+				}
+				break;
+			case SEL:
+				SERIAL_LOG("UART%d cmd SEL", index);
+				expect(v, 8);	// ser0 key (key is calc'ed from ser1)
+				break;
+			case REQ:
+				SERIAL_LOG("UART%d cmd REQ", index);
+				if (state == Connecting)
+				{
+					state = Connected;
+					toSend.push_back(RETRY);
+					SERIAL_LOG("UART%d state Connected", index);
+				}
+				else if (state == Connected || state == FullRead)
+				{
+					toSend.push_back(OK);
+					toSend.insert(toSend.end(), &cardData[0], &cardData[4]);	// ser0
+					SERIAL_LOG("UART%d exec REQ", index);
+				}
+				else
+					toSend.push_back(RETRY);
+				break;
+			case COUNT:
+				SERIAL_LOG("UART%d cmd COUNT", index);
+				expect(v, 1);
+				break;
+			case WRITE:
+				SERIAL_LOG("UART%d cmd WRITE", index);
 				rowCounter++;
-			expectedBytes = 4 + 1;
-			recvBuffer.clear();
-			recvBuffer.push_back(v);
-			break;
-		default:
-			INFO_LOG(NAOMI, "UART%d write data out: unknown cmd %x", index, v);
-			toSend.push_back(NG);
-			break;
+				expect(v, 4);
+				break;
+			case WRITE_ST:
+			case WRITE_NOP:
+				SERIAL_LOG("UART%d cmd %s", index, v == WRITE_ST ? "WRITE_ST" : "WRITE_NOP");
+				if (v == WRITE_ST)
+					rowCounter = 0;
+				else
+					rowCounter++;
+				expect(v, 4);
+				break;
+			default:
+				INFO_LOG(NAOMI, "UART%d write data out: unknown cmd %x", index, v);
+				toSend.push_back(NG);
+				break;
+			}
 		}
 		port->updateStatus();
 	}
@@ -365,6 +353,13 @@ public:
 	}
 
 private:
+	void expect(u8 cmd, int bytes)
+	{
+		expectedBytes = bytes + 1;
+		recvBuffer.clear();
+		recvBuffer.push_back(cmd);
+	}
+
 	void makeNewCard()
 	{
 		INFO_LOG(NAOMI, "Creating new RFID card");
@@ -1500,9 +1495,207 @@ std::string SystemSpCart::getEepromPath() const
 	return path;
 }
 
+class BootIdLoader
+{
+	static constexpr u32 SECSIZE = 512;
+
+public:
+	BootIdLoader(SystemSpCart& cart) : cart(cart)
+	{
+		const chd_header* head = chd_get_header(cart.chd);
+
+		hunkbytes = head->hunkbytes;
+		hunkmem = std::make_unique<u8[]>(hunkbytes);
+	}
+
+	RomBootID *load()
+	{
+		// Read master boot record
+		if (chd_read(cart.chd, 0, &hunkmem[0]) != CHDERR_NONE)
+			return nullptr;
+		// Check boot signature
+		if (hunkmem[510] != 0x55 || hunkmem[511] != 0xaa)
+			return nullptr;
+		// Get partition 1 info
+		if (hunkmem[446 + 4] != 6)
+			// Not a FAT16B partition
+			return nullptr;
+		u32 start = *(u32 *)&hunkmem[446 + 8];
+
+		// Read partition Bios Parameter Block
+		if (chd_read(cart.chd, start * SECSIZE / hunkbytes, &hunkmem[0]) != CHDERR_NONE)
+			return nullptr;
+		int offset = (start * SECSIZE) % hunkbytes;
+		// Partition attributes
+		sectorsPerCluster = hunkmem[offset + 13];
+		u16 resSectors = *(u16 *)&hunkmem[offset + 14];
+		u8 fatCount = hunkmem[offset + 16];
+		rootFolderSize = *(u16 *)&hunkmem[offset + 17]; // in entries
+		u16 fatSize = *(u16 *)&hunkmem[offset + 22]; // in sectors
+		// FATs start after reserved sectors
+		fatOffset = start + resSectors;
+		rootOffset = fatOffset + fatSize * fatCount;
+		dataStartOffset = rootOffset + rootFolderSize * sizeof(DirEntry) / SECSIZE;
+
+		if (!openFile("1STREAD.BIN"))
+			return nullptr;
+		std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(file.size);
+		cart.enc_reset();
+		for (u32 i = 0; i < file.size; i += 2)
+			*(u16 *)&buffer[i] = cart.decrypt(*(u16 *)&hunkmem[file.offset + i]);
+		if (memcmp(&buffer[0], "SPCF", 4))
+			// wrong signature
+			return nullptr;
+		std::string imageName((const char *)&buffer[0x80]);
+		if (imageName.length() > 12)
+			// make short 8.3 name
+			imageName = imageName.substr(0, 6) + "~1" + imageName.substr(imageName.find('.'));
+		string_toupper(imageName);
+
+		if (!openFile(imageName))
+			return nullptr;
+		buffer = std::make_unique<u8[]>(sizeof(RomBootID));
+		cart.enc_reset();
+		for (size_t i = 0; i < sizeof(RomBootID); i += 2)
+		{
+			if (file.offset + i >= hunkbytes)
+			{
+				u32 fileOffset = dataStartOffset + (file.cluster - 2) * sectorsPerCluster + i / SECSIZE;
+				if (chd_read(cart.chd, fileOffset * SECSIZE / hunkbytes, &hunkmem[0]) != CHDERR_NONE)
+					return nullptr;
+				file.offset = (fileOffset * SECSIZE) % hunkbytes - i;
+				file.size -= i;
+			}
+			*(u16 *)&buffer[i] = cart.decrypt(*(u16 *)&hunkmem[file.offset + i]);
+		}
+		if (memcmp(&buffer[0], "SystemSP", 8))
+		{
+			// Yes, it is encrypted twice (except tetgiano)
+			cart.enc_reset();
+			for (size_t i = 0; i < sizeof(RomBootID); i += 2)
+				*(u16 *)&buffer[i] = cart.decrypt(*(u16 *)&buffer[i]);
+		}
+		RomBootID *bootId = new RomBootID();
+		memcpy(bootId, &buffer[0], sizeof(RomBootID));
+
+		return bootId;
+	}
+
+private:
+	struct DirEntry
+	{
+		char name[8];
+		char ext[3];
+		enum Attribute : u8 {
+			ReadOnly = 0x01,
+			Hidden = 0x02,
+			System = 0x04,
+			VolumeName = 0x8,
+			Directory = 0x10,
+			Archive = 0x20,
+			LongName = 0xf,
+		};
+		Attribute attributes;
+		u8 _reserved;
+		u8 creationTimeMs;
+		u16 creationTime;
+		u16 creationDate;
+		u16 accessDate;
+		u16 clusterHigh;
+		u16 updateTime;
+		u16 updateDate;
+		u16 cluster;
+		u32 size;
+	};
+
+	bool openFile(const std::string& fileName)
+	{
+		u32 curRootOffset = rootOffset;
+		if (chd_read(cart.chd, curRootOffset * SECSIZE / hunkbytes, &hunkmem[0]) != CHDERR_NONE)
+			return false;
+		int offset = (curRootOffset * SECSIZE) % hunkbytes;
+		for (int i = 0; i < rootFolderSize; i++)
+		{
+			if (offset + i * sizeof(DirEntry) >= hunkbytes)
+			{
+				++curRootOffset;
+				if (chd_read(cart.chd, curRootOffset * SECSIZE / hunkbytes, &hunkmem[0]) != CHDERR_NONE)
+					return false;
+				offset = (curRootOffset * SECSIZE) % hunkbytes - i * sizeof(DirEntry);
+			}
+			const DirEntry *entry = (const DirEntry *)&hunkmem[offset + i * sizeof(DirEntry)];
+			u8 b = (u8)entry->name[0];
+			if (b == 0)
+				// end of directory
+				return false;
+			if (b == 0xe5 || b == 0x2e)
+				// unused or ./.. entry
+				continue;
+			if (entry->attributes == DirEntry::LongName || (entry->attributes & (DirEntry::VolumeName | DirEntry::System)))
+				// long name or volume name/system
+				continue;
+			std::string name(std::begin(entry->name), std::end(entry->name));
+			name = trim_trailing_ws(name);
+			std::string ext(std::begin(entry->ext), std::end(entry->ext));
+			ext = trim_trailing_ws(ext);
+			if (!ext.empty())
+				name += "." + ext;
+			//printf("%s%c\t%d\n", name.c_str(), entry->attributes & DirEntry::Directory ? '/' : ' ', entry->size);
+			if (name != fileName)
+				continue;
+			file.cluster = entry->cluster;
+			file.size = entry->size;
+			u32 fileOffset = dataStartOffset + (file.cluster - 2) * sectorsPerCluster;
+			if (chd_read(cart.chd, fileOffset * SECSIZE / hunkbytes, &hunkmem[0]) != CHDERR_NONE)
+				return false;
+			file.offset = (fileOffset * SECSIZE) % hunkbytes;
+
+			return true;
+		}
+		return false;
+	}
+
+	SystemSpCart& cart;
+	u32 hunkbytes;
+	std::unique_ptr<u8[]> hunkmem;
+	u8 sectorsPerCluster = 0;
+	u32 fatOffset = 0;
+	u16 rootFolderSize = 0;
+	u32 rootOffset = 0;
+	u32 dataStartOffset = 0;
+	struct {
+		u32 cluster;
+		u32 size;
+		int offset;
+	} file;
+};
+
 void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
 	M4Cartridge::Init(progress, digest);
+
+	if (mediaName != nullptr)
+	{
+		std::string parent = hostfs::storage().getParentPath(settings.content.path);
+		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + std::string(mediaName) + ".chd";
+		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
+		chd = openChd(gdrom_path);
+		if (parentName != nullptr && chd == nullptr)
+		{
+			std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(parentName) + "/" + std::string(mediaName) + ".chd");
+			chd = openChd(gdrom_parent_path);
+		}
+		if (chd == nullptr)
+			throw NaomiCartException("SystemSP: Cannot open CompactFlash file " + gdrom_path);
+
+		BootIdLoader loader(*this);
+		romBootId.reset(loader.load());
+	}
+	else
+	{
+		ata.status.rdy = 0;
+		ata.status.df = 1;
+	}
 
 	RomBootID bootId;
 	if (GetBootId(&bootId)
@@ -1524,6 +1717,7 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 			config::Region.override(0);
 		}
 		// Force BIOS reload now to get the default eeprom for the correct region
+		naomi_default_eeprom = nullptr;
 		naomi_cart_LoadBios(settings.content.fileName.c_str());
 	}
 	region = config::Region;
@@ -1531,25 +1725,6 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	if (!eeprom.Load(getEepromPath()) && naomi_default_eeprom != nullptr)
 		memcpy(eeprom.data, naomi_default_eeprom, 128);
 
-	if (mediaName != nullptr)
-	{
-		std::string parent = hostfs::storage().getParentPath(settings.content.path);
-		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + std::string(mediaName) + ".chd";
-		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
-		chd = openChd(gdrom_path);
-		if (parentName != nullptr && chd == nullptr)
-		{
-			std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(parentName) + "/" + std::string(mediaName) + ".chd");
-			chd = openChd(gdrom_parent_path);
-		}
-		if (chd == nullptr)
-			throw NaomiCartException("SystemSP: Cannot open CompactFlash file " + gdrom_path);
-	}
-	else
-	{
-		ata.status.rdy = 0;
-		ata.status.df = 1;
-	}
 	// dinoki4 doesn't use rfid chips. dinokich uses a different reader/writer protocol
 	if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0 && strcmp(game->name, "dinokich") != 0)
 			|| !strncmp(game->name, "loveber", 7))

@@ -162,9 +162,10 @@ public:
 	{
 		if (mediaName == nullptr)
 			return M4Cartridge::GetBootId(bootId);
-		else
-			// TODO
+		if (!romBootId)
 			return false;
+		memcpy(bootId, romBootId.get(), sizeof(RomBootID));
+		return true;
 	}
 
 	void updateInterrupt(u32 mask = 0);
@@ -189,6 +190,7 @@ private:
 	u32 hunkbytes = 0;
 	std::unique_ptr<u8[]> hunkmem;
 	u32 hunknum = ~0;
+	std::unique_ptr<RomBootID> romBootId;
 
 	AT93C46SerialEeprom eeprom;
 	SerialPort uart1;
@@ -238,6 +240,8 @@ public:
 	static constexpr u32 INT_ATA = 0x10;
 
 	static SystemSpCart *Instance;
+
+	friend class BootIdLoader;
 };
 
 }

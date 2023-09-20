@@ -106,6 +106,11 @@ static inline void string_tolower(std::string& s)
 	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
 }
 
+static inline void string_toupper(std::string& s)
+{
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::toupper(c); });
+}
+
 static inline std::string get_file_extension(const std::string& s)
 {
 	size_t dot = s.find_last_of('.');

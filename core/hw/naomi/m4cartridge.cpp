@@ -290,7 +290,9 @@ bool M4Cartridge::GetBootId(RomBootID *bootId)
 	if (RomSize < sizeof(RomBootID))
 		return false;
 	RomBootID *pBootId = (RomBootID *)RomPtr;
-	if (memcmp(pBootId->boardName, "NAOMI", 5))
+	if (memcmp(pBootId->boardName, "NAOMI", 5)
+			&& memcmp(pBootId->boardName, "Naomi2", 6)
+			&& memcmp(pBootId->boardName, "SystemSP", 8))
 	{
 		rom_cur_address = 0;
 		enc_reset();
