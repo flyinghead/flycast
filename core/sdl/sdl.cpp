@@ -254,6 +254,8 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
+					auto is_key_mapped = [](u32 code) -> bool { return (sdl_keyboard->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE); };
+					
 					if (event.type == SDL_KEYDOWN
 							&& ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
 									|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0)))
@@ -272,7 +274,7 @@ void input_sdl_handle()
 						}
 						window_fullscreen = !window_fullscreen;
 					}
-					else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
+					else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL) && !(is_key_mapped(SDL_SCANCODE_LALT) || is_key_mapped(SDL_SCANCODE_LCTRL)) )
 					{
 						captureMouse(!mouseCaptured);
 					}
