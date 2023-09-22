@@ -43370,8 +43370,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO "일반적인 4:3 화면비 밖에도 개체를 그립니다. 드러난 부분에서 그래픽 오류가 발생할 수도 있습니다."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO "GD-ROM 빠른 로딩 (정확하지 않음)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO "GD-ROM 로딩 속도를 높입니다."
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_KO NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_KO "SH4 CPU 언더/오버클럭"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO "SH4 메인 CPU 클럭을 기본 200MHz에서 변경합니다. 언더클럭하면 플랫폼 속도가 느려질 수 있습니다. 오버클럭하면 일부 게임에서 프레임 속도가 증가할 수 있습니다. 주의해서 사용하세요."
 #define OPTION_VAL_100_KO NULL
 #define OPTION_VAL_110_KO NULL
 #define OPTION_VAL_120_KO NULL
@@ -43444,9 +43444,9 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 4개의 VMU 저장 파일(A1, B1, C1, D1)을 공유합니다. 'VMU A1' 설정은 RetroArch의 세이브 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다. '모든 VMU'는 게임 하나 당 4개의 VMU 파일(A1, B1, C1, D1)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO "VMU 사운드"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO "활성화하면 VMU 신호음이 재생됩니다."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO "Visual Memory Unit/System(VMU) 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO "VMU 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_KO "에뮬레이트되는 VMU LCD 화면의 표시 여부, 크기, 위치, 색상 설정을 표시합니다. 주의: 변경 사항이 적용되려면 빠른 메뉴를 껐다 켜야 할 수도 있습니다."
