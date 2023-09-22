@@ -2423,9 +2423,11 @@ static void gui_display_settings()
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
 #endif
-				OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
-	            		"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
-
+				{
+					DisabledScope scope(game_started);
+					OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
+						"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
+				}
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
 
