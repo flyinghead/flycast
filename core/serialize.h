@@ -67,7 +67,8 @@ public:
 		V39,
 		V40,
 		V41,
-		Current = V41,
+		V42,
+		Current = V42,
 
 		Next = Current + 1,
 	};
@@ -101,6 +102,15 @@ public:
 			throw Exception("Unsupported version");
 		if (_version > Current)
 			throw Exception("Version too recent");
+
+		if(_version >= V42 && settings.platform.isConsole())
+		{
+			u32 ramSize;
+			deserialize(ramSize);
+			if (ramSize != settings.platform.ram_size) {
+				throw Exception("Selected RAM Size doesn't match Save State");
+		}
+	}
 	}
 
 	template<typename T>
@@ -162,6 +172,8 @@ public:
 	{
 		Version v = Current;
 		serialize(v);
+		if (settings.platform.isConsole())
+			serialize(settings.platform.ram_size);
 	}
 
 	template<typename T>
