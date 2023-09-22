@@ -101,6 +101,13 @@ public:
 			throw Exception("Unsupported version");
 		if (_version > Current)
 			throw Exception("Version too recent");
+
+		if(_version >= V41 && settings.platform.isConsole()) {
+			deserialize(_ram_size);
+			if (_ram_size != settings.platform.ram_size) {
+				throw Exception("Select RAM Size doesn't match Save State");
+		}
+	}
 	}
 
 	template<typename T>
@@ -148,6 +155,7 @@ private:
 	}
 
 	Version _version;
+	u32 _ram_size;
 	const u8 *data;
 };
 
@@ -162,6 +170,8 @@ public:
 	{
 		Version v = Current;
 		serialize(v);
+		if (settings.platform.isConsole())
+			serialize(settings.platform.ram_size);
 	}
 
 	template<typename T>
