@@ -67,7 +67,8 @@ public:
 		V39,
 		V40,
 		V41,
-		Current = V41,
+		V42,
+		Current = V42,
 
 		Next = Current + 1,
 	};
@@ -102,7 +103,7 @@ public:
 		if (_version > Current)
 			throw Exception("Version too recent");
 
-		if(_version >= V41 && settings.platform.isConsole())
+		if(_version >= V42 && settings.platform.isConsole())
 		{
 			u32 ramSize;
 			deserialize(ramSize);
