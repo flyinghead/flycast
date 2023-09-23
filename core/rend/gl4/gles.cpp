@@ -322,12 +322,6 @@ void main()
 				IF(cur_ignore_tex_alpha)
 					texcol.a=1.0;	
 			#endif
-			
-			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0;
-			#endif 
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -385,6 +379,13 @@ void main()
 	
 	color *= trilinear_alpha;
 	
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0) / 255.0;
+		if (cp_AlphaTestValue > color.a)
+			discard;
+		color.a = 1.0;
+	#endif
+
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
 	#if PASS == PASS_COLOR 

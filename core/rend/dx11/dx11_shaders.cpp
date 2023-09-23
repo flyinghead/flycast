@@ -260,11 +260,6 @@ PSO main(in Pixel inpix)
 			#if pp_IgnoreTexA == 1
 				texcol.a = 1.0f;
 			#endif
-			#if cp_AlphaTest == 1
-				if (alphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0f;
-			#endif
 		#endif
 		#if pp_ShadInstr == 0
 			color = texcol;
@@ -297,6 +292,13 @@ PSO main(in Pixel inpix)
 	
 	#if pp_TriLinear == 1
 	color *= trilinearAlpha;
+	#endif
+
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0f) / 255.0f;
+		if (alphaTestValue > color.a)
+			discard;
+		color.a = 1.0f;
 	#endif
 
 #if DITHERING == 1

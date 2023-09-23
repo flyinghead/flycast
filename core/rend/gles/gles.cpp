@@ -132,7 +132,7 @@ const char* PixelPipelineShader = R"(
 
 /* Shader program params*/
 /* gles has no alpha test stage, so its emulated on the shader */
-uniform lowp float cp_AlphaTestValue;
+uniform highp float cp_AlphaTestValue;
 uniform lowp vec4 pp_ClipTest;
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
 uniform highp float sp_FOG_DENSITY;
@@ -249,12 +249,6 @@ void main()
 			#if pp_IgnoreTexA==1
 				texcol.a=1.0;	
 			#endif
-			
-			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0;
-			#endif 
 		#endif
 		#if pp_ShadInstr==0
 		{
@@ -297,6 +291,13 @@ void main()
 	color *= trilinear_alpha;
 	#endif
 	
+	#if cp_AlphaTest == 1
+		color.a = floor(color.a * 255.0 + 0.5) / 255.0;
+		if (cp_AlphaTestValue > color.a)
+			discard;
+		color.a = 1.0;
+	#endif 
+
 	//color.rgb = vec3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
 #if TARGET_GL != GLES2
 #if DIV_POS_Z == 1

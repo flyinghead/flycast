@@ -477,11 +477,6 @@ PSO main(in VertexIn inpix)
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0f;
 			#endif
-			#if cp_AlphaTest == 1
-				if (alphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0f;
-			#endif
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -524,6 +519,13 @@ PSO main(in VertexIn inpix)
 	#endif
 	
 	color *= trilinearAlpha;
+
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0f) / 255.0f;
+		if (alphaTestValue > color.a)
+			discard;
+		color.a = 1.0f;
+	#endif
 
 	#if PASS == PASS_COLOR 
 		pso.col = color;
