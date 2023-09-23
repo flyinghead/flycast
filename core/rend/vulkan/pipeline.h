@@ -272,6 +272,7 @@ private:
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
 		hash |= ((u32)sortTriangles << 26) | ((u32)gpuPalette << 27) | ((u32)pp->isNaomi2() << 28);
 		hash |= (u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 29;
+		hash |= (u32)(pp->tcw.PixelFmt == PixelBumpMap) << 30;
 
 		return hash;
 	}
