@@ -1195,11 +1195,6 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-	if (!is_rtt && !config::EmulateFramebuffer)
-		gcflip = 0;
-	else
-		gcflip = 1;
-
 	ShaderUniforms.depth_coefs[0] = 2 / (vtx_max_fZ - vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1] = -vtx_min_fZ - 1;
 	ShaderUniforms.depth_coefs[2] = 0;
@@ -1294,13 +1289,9 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 			if (init_output_framebuffer(width, height) == 0)
 				return false;
 		}
-		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
-		}
 		else
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
+			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
 		}
 		glViewport(0, 0, width, height);
 #else
@@ -1410,7 +1401,7 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 
 		DrawStrips();
 #ifdef LIBRETRO
-		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+		if (!is_rtt && !config::EmulateFramebuffer)
 			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}

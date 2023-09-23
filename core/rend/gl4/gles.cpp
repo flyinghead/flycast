@@ -791,11 +791,6 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
-
-	if (!is_rtt && !config::EmulateFramebuffer)
-		gcflip = 0;
-	else
-		gcflip = 1;
 	
 	/*
 		Handle Dc to screen scaling
@@ -852,10 +847,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 #ifdef LIBRETRO
 		if (config::EmulateFramebuffer)
 			output_fbo = init_output_framebuffer(width, height);
-		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-			output_fbo = postProcessor.getFramebuffer(width, height);
 		else
-			output_fbo = glsm_get_current_framebuffer();
+			output_fbo = postProcessor.getFramebuffer(width, height);
 		glViewport(0, 0, width, height);
 #else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
@@ -973,7 +966,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
-		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+		if (!is_rtt && !config::EmulateFramebuffer)
 			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}

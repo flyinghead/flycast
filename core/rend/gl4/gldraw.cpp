@@ -25,7 +25,6 @@
 #include <memory>
 
 static gl4PipelineShader* CurrentShader;
-extern u32 gcflip;
 GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
@@ -265,8 +264,7 @@ static void SetGPState(const PolyParam* gp)
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode ^ gcflip);
+	SetCull(gp->isp.CullMode ^ 1);
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (pass == Pass::Depth && SortingEnabled))

@@ -36,9 +36,6 @@
 // Naomi2
 #define VERTEX_NORM_ARRAY 7
 
-//vertex types
-extern u32 gcflip;
-
 extern glm::mat4 ViewportMatrix;
 
 void DrawStrips();
