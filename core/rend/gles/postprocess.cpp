@@ -215,7 +215,7 @@ private:
 	{
 		glcache.UseProgram(program);
 		glUniform1f(frameCountUniform, FrameCount);
-		float shift[] = { -gl.ofbo.shiftX, gl.ofbo.shiftY };
+		float shift[] = { -gl.ofbo.shiftX, -gl.ofbo.shiftY };
 		glUniform2fv(videoShiftUniform, 1, shift);
 	}
 
@@ -314,7 +314,7 @@ void PostProcessor::render(GLuint output_fbo)
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, output_fbo);
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
+			glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
 					0, framebuffer->getHeight(), framebuffer->getWidth(), 0,
 					GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	    	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
@@ -323,9 +323,15 @@ void PostProcessor::render(GLuint output_fbo)
 		return;
 	}
 
-	PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
-			SPG_CONTROL.interlace,
-			FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	if (_pvrrc == nullptr)
+		// Framebuffer render: no dithering
+		PostProcessShader::select(!config::EmulateFramebuffer,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	else
+		PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 	{
 		if (vertexBufferShifted == nullptr)
