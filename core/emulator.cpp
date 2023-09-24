@@ -103,7 +103,27 @@ static void loadSpecialSettings()
 				// Shenmue (JP)
 				|| prod_id == "HDR-0016"
 				// Izumo
-				|| prod_id == "T46902M")
+				|| prod_id == "T46902M"
+				// Cardcaptor Sakura
+				|| prod_id == "HDR-0115"
+				// Grandia II (US)
+				|| prod_id == "T17716N"
+				// Grandia II (EU)
+				|| prod_id == "T17715D"
+				// Grandia II (JP)
+				|| prod_id == "T4503M"
+				// Canvas: Sepia Iro no Motif
+				|| prod_id == "T20108M"
+				// Kimi ga Nozomu Eien
+				|| prod_id == "T47101M"
+				// Pro Mahjong Kiwame D
+				|| prod_id == "T16801M"
+				// Yoshia no Oka de Nekoronde...
+				|| prod_id == "T18704M"
+				// Tamakyuu (a.k.a. Tama-cue)
+				|| prod_id == "T20133M"
+				// Sakura Taisen 3
+				|| prod_id == "HDR-0152")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);

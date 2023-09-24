@@ -450,11 +450,7 @@ void termGLCommon()
 	glcache.DeleteTextures(1, &paletteTextureId);
 	paletteTextureId = 0;
 	// RTT
-	glDeleteBuffers(1, &gl.rtt.pbo);
-	gl.rtt.pbo = 0;
-	gl.rtt.pboSize = 0;
 	gl.rtt.framebuffer.reset();
-	gl.rtt.texAddress = ~0;
 
 	gl_free_osd_resources();
 	gl.ofbo.framebuffer.reset();
@@ -1292,8 +1288,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		else
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
+			glViewport(0, 0, width, height);
 		}
-		glViewport(0, 0, width, height);
 #else
 		if (init_output_framebuffer(width, height) == 0)
 			return false;

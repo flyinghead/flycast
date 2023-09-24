@@ -267,14 +267,6 @@ struct gl_ctx
 
 	struct
 	{
-		u32 texAddress = ~0;
-		GLuint pbo;
-		u32 pboSize;
-		bool directXfer;
-		u32 width;
-		u32 height;
-		FB_W_CTRL_type fb_w_ctrl;
-		u32 linestride;
 		std::unique_ptr<GlFramebuffer> framebuffer;
 	} rtt;
 
