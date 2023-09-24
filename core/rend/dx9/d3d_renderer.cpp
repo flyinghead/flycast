@@ -296,9 +296,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 
 	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, info.vo_border_col._red, info.vo_border_col._green, info.vo_border_col._blue));
-	u32 bar = (this->width - this->height * 640 / 480) / 2;
-	RECT rd{ (LONG)bar, 0, (LONG)(this->width - bar), (LONG)this->height };
-	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
+	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, nullptr, D3DTEXF_LINEAR);
 
 	aspectRatio = getDCFramebufferAspectRatio();
 	displayFramebuffer();
