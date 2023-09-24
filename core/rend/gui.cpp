@@ -1770,23 +1770,25 @@ static void gui_display_settings()
 							((color >> 16) & 0xff) / 255.f,
 							((color >> 24) & 0xff) / 255.f
 						};
-						ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+						bool colorChanged = ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
 								| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
 						ImGui::SameLine();
 						bool enabled = color != 0;
-						ImGui::Checkbox("Crosshair", &enabled);
-						if (enabled)
+						if (ImGui::Checkbox("Crosshair", &enabled) || colorChanged)
 						{
-							config::CrosshairColor[bus] = (u8)(xhairColor[0] * 255.f)
-									| ((u8)(xhairColor[1] * 255.f) << 8)
-									| ((u8)(xhairColor[2] * 255.f) << 16)
-									| ((u8)(xhairColor[3] * 255.f) << 24);
-							if (config::CrosshairColor[bus] == 0)
-								config::CrosshairColor[bus] = 0xC0FFFFFF;
-						}
-						else
-						{
-							config::CrosshairColor[bus] = 0;
+							if (enabled)
+							{
+								config::CrosshairColor[bus] = (u8)(std::round(xhairColor[0] * 255.f))
+										| ((u8)(std::round(xhairColor[1] * 255.f)) << 8)
+										| ((u8)(std::round(xhairColor[2] * 255.f)) << 16)
+										| ((u8)(std::round(xhairColor[3] * 255.f)) << 24);
+								if (config::CrosshairColor[bus] == 0)
+									config::CrosshairColor[bus] = 0xC0FFFFFF;
+							}
+							else
+							{
+								config::CrosshairColor[bus] = 0;
+							}
 						}
 						ImGui::PopID();
 					}
