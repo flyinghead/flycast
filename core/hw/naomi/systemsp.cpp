@@ -651,7 +651,7 @@ private:
 		}
 		else
 		{
-			bool button = (input[0].kcode & DC_BTN_B) == 0;	// FIXME use button A instead
+			bool button = (input[0].kcode & DC_BTN_A) == 0;
 			if (button != lastButton || x != lastPosX || y != lastPosY)
 			{
 				// bit 6 is touch down
@@ -809,6 +809,169 @@ void SerialPort::updateStatus()
 {
 	cart->updateInterrupt(index == 1 ? SystemSpCart::INT_UART1 : SystemSpCart::INT_UART2);
 }
+
+class DefaultInPortManager : public InPortManager
+{
+public:
+	// IN_PORT0
+	u8 getCN9_17_24() override
+	{
+		MapleInputState mapleInputState[4];
+		ggpo::getInput(mapleInputState);
+
+		u8 v = 0xff;
+		// 0: P1 start
+		// 1: P2 start
+		// 2: P1 right
+		// 3: P2 right
+		// 4: P1 left
+		// 5: P2 left
+		// 6: P1 up
+		// 7: P2 up
+		if (!(mapleInputState[0].kcode & DC_BTN_START))
+			v &= ~0x01;
+		if (!(mapleInputState[1].kcode & DC_BTN_START))
+			v &= ~0x02;
+		if (!(mapleInputState[0].kcode & DC_DPAD_RIGHT))
+			v &= ~0x04;
+		if (!(mapleInputState[1].kcode & DC_DPAD_RIGHT))
+			v &= ~0x08;
+		if (!(mapleInputState[0].kcode & DC_DPAD_LEFT))
+			v &= ~0x10;
+		if (!(mapleInputState[1].kcode & DC_DPAD_LEFT))
+			v &= ~0x20;
+		if (!(mapleInputState[0].kcode & DC_DPAD_UP))
+			v &= ~0x40;
+		if (!(mapleInputState[1].kcode & DC_DPAD_UP))
+			v &= ~0x80;
+		IO_LOG("systemsp::read IN_PORT0 %x", v);
+		return v;
+	}
+
+	// IN_PORT3
+	u8 getCN9_25_32() override
+	{
+		u8 v = 0xff;
+		// 0: P1 down
+		// 1: P2 down
+		// 2: P1 button 1
+		// 3: P2 button 1
+		// 4: P1 button 2
+		// 5: P2 button 2
+		// 6: P1 button 3
+		// 7: P2 button 3
+		MapleInputState mapleInputState[4];
+		ggpo::getInput(mapleInputState);
+		if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))
+			v &= ~0x01;
+		if (!(mapleInputState[1].kcode & DC_DPAD_DOWN))
+			v &= ~0x02;
+		if (!(mapleInputState[0].kcode & DC_BTN_A))
+			v &= ~0x04;
+		if (!(mapleInputState[1].kcode & DC_BTN_A))
+			v &= ~0x08;
+		if (!(mapleInputState[0].kcode & DC_BTN_B))
+			v &= ~0x10;
+		if (!(mapleInputState[1].kcode & DC_BTN_B))
+			v &= ~0x20;
+		if (!(mapleInputState[0].kcode & DC_BTN_C))
+			v &= ~0x40;
+		if (!(mapleInputState[1].kcode & DC_BTN_C))
+			v &= ~0x80;
+		IO_LOG("systemsp::read IN_PORT3 %x", v);
+		return v;
+	}
+
+	u8 getCN9_33_40() override
+	{
+		IO_LOG("systemsp::read IN CN9 33-40");
+		return 0xff;
+	}
+
+	// IN_PORT1
+	u8 getCN9_41_48() override
+	{
+		u8 v = 0xff;
+		// 0: P1 service
+		// 2: P1 test
+		// 4: P1 coin
+		// 5: P2 coin
+		MapleInputState mapleInputState[4];
+		ggpo::getInput(mapleInputState);
+		if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
+			v &= ~0x01;
+		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
+			v &= ~0x04;
+		if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
+			v &= ~0x10;
+		if (!(mapleInputState[1].kcode & DC_BTN_D))
+			v &= ~0x20;
+		IO_LOG("systemsp::read IN_PORT1 %x", v);
+		return v;
+	}
+
+	// IN_PORT4
+	u8 getCN9_49_56() override
+	{
+		u8 v = 0;
+		// FIXME these are outputs??
+		// 0: P1 coin meter
+		// 1: P2 coin meter
+		MapleInputState mapleInputState[4];
+		ggpo::getInput(mapleInputState);
+		if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
+			v |= 1;
+		if (!(mapleInputState[1].kcode & DC_BTN_D))
+			v |= 2;
+		IO_LOG("systemsp::read IN_PORT4 %x", v);
+		return v;
+	}
+};
+
+class CardReaderInPortManager : public DefaultInPortManager
+{
+public:
+	u8 getCN9_17_24() override
+	{
+		MapleInputState mapleInputState[4];
+		ggpo::getInput(mapleInputState);
+		for (size_t i = 0; i < 2; i++)
+		{
+			if ((mapleInputState[i].kcode & DC_BTN_INSERT_CARD) == 0
+					&& (last_kcode[i] & DC_BTN_INSERT_CARD) != 0)
+				card_reader::insertCard(i);
+			last_kcode[i] = mapleInputState[i].kcode;
+		}
+		return DefaultInPortManager::getCN9_17_24();
+	}
+
+	virtual u8 getCN9_33_40()
+	{
+		IO_LOG("systemsp::read IN CN9 33-40");
+		// dinosaur king, love & berry:
+		// 0: P1 card set (not used)
+		// 2: CD1 input ok (active low)
+		// 4: CD1 card jam (active low)
+		// 6: CD1 empty (active low)
+		return 0xfb;
+	}
+
+private:
+	u32 last_kcode[2] = {};
+};
+
+class IsshoniInPortManager : public CardReaderInPortManager
+{
+public:
+	u8 getCN9_17_24() override {
+		CardReaderInPortManager::getCN9_17_24();
+		return 0xff;
+	}
+
+	u8 getCN9_25_32() override {
+		return 0xff;
+	}
+};
 
 template<typename T>
 T readMemArea0(u32 addr)
@@ -992,118 +1155,20 @@ T SystemSpCart::readMemArea0(u32 addr)
 		switch (addr - 0x10100)
 		{
 		case 0x0: // IN_PORT0 (CN9 17-24)
-			{
-				MapleInputState mapleInputState[4];
-				ggpo::getInput(mapleInputState);
-				for (size_t i = 0; i < 2; i++)
-				{
-					if ((mapleInputState[i].kcode & DC_BTN_INSERT_CARD) == 0
-							&& (last_kcode[i] & DC_BTN_INSERT_CARD) != 0)
-						card_reader::insertCard(i);
-					last_kcode[i] = mapleInputState[i].kcode;
-				}
-				u8 v = 0xff;
-				// 0: P1 start
-				// 1: P2 start
-				// 2: P1 right
-				// 3: P2 right
-				// 4: P1 left
-				// 5: P2 left
-				// 6: P1 up
-				// 7: P2 up
-				if (!(mapleInputState[0].kcode & DC_BTN_START))
-					v &= ~0x01;
-				if (!(mapleInputState[1].kcode & DC_BTN_START))
-					v &= ~0x02;
-				if (!(mapleInputState[0].kcode & DC_DPAD_RIGHT))
-					v &= ~0x04;
-				if (!(mapleInputState[1].kcode & DC_DPAD_RIGHT))
-					v &= ~0x08;
-				if (!(mapleInputState[0].kcode & DC_DPAD_LEFT))
-					v &= ~0x10;
-				if (!(mapleInputState[1].kcode & DC_DPAD_LEFT))
-					v &= ~0x20;
-				if (!(mapleInputState[0].kcode & DC_DPAD_UP))
-					v &= ~0x40;
-				if (!(mapleInputState[1].kcode & DC_DPAD_UP))
-					v &= ~0x80;
-				IO_LOG("systemsp::read(%x) IN_PORT0 %x", addr, v);
-				return v;
-			}
+			return inPortManager->getCN9_17_24();
+
 		case 0x4: // IN_PORT1 (CN9 41-48)
-			{
-				u8 v = 0xff;
-				// 0: P1 service
-				// 2: P1 test
-				// 4: P1 coin
-				// 5: P2 coin
-				MapleInputState mapleInputState[4];
-				ggpo::getInput(mapleInputState);
-				if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
-					v &= ~0x01;
-				if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
-					v &= ~0x04;
-				if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
-					v &= ~0x10;
-				if (!(mapleInputState[1].kcode & DC_BTN_D))
-					v &= ~0x20;
-				IO_LOG("systemsp::read(%x) IN_PORT1 %x", addr, v);
-				return v;
-			}
+			return inPortManager->getCN9_41_48();
+
 		case 0x8: // IN_PORT3 (CN9 25-32)
-			{
-				u8 v = 0xff;
-				// 0: P1 down
-				// 1: P2 down
-				// 2: P1 button 1
-				// 3: P2 button 1
-				// 4: P1 button 2
-				// 5: P2 button 2
-				// 6: P1 button 3
-				// 7: P2 button 3
-				MapleInputState mapleInputState[4];
-				ggpo::getInput(mapleInputState);
-				if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))
-					v &= ~0x01;
-				if (!(mapleInputState[1].kcode & DC_DPAD_DOWN))
-					v &= ~0x02;
-				if (!(mapleInputState[0].kcode & DC_BTN_A))
-					v &= ~0x04;
-				if (!(mapleInputState[1].kcode & DC_BTN_A))
-					v &= ~0x08;
-				if (!(mapleInputState[0].kcode & DC_BTN_B))
-					v &= ~0x10;
-				if (!(mapleInputState[1].kcode & DC_BTN_B))
-					v &= ~0x20;
-				if (!(mapleInputState[0].kcode & DC_BTN_C))
-					v &= ~0x40;
-				if (!(mapleInputState[1].kcode & DC_BTN_C))
-					v &= ~0x80;
-				IO_LOG("systemsp::read(%x) IN_PORT3 %x", addr, v);
-				return v;
-			}
+			return inPortManager->getCN9_25_32();
+
 		case 0xc: // IN CN9 33-40
-			IO_LOG("systemsp::read(%x) IN CN9 33-40", addr);
- 			// dinosaur king, love & berry:
- 			// 0: P1 card set (not used)
- 			// 2: CD1 input ok (active low)
- 			// 4: CD1 card jam (active low)
- 			// 6: CD1 empty (active low)
- 			return 0xfb;
+			return inPortManager->getCN9_33_40();
+
 		case 0x10: // IN_PORT4 (CN9 49-56)
-			{
-				u8 v = 0;
-				// 0: P1 coin meter
-				// 1: P2 coin meter
-				MapleInputState mapleInputState[4];
-				ggpo::getInput(mapleInputState);
-				if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
-					v |= 1;
-				if (!(mapleInputState[1].kcode & DC_BTN_D))
-					v |= 2;
-				IO_LOG("systemsp::read(%x) IN_PORT4 %x", addr, v);
-				return v;
-			}
+			return inPortManager->getCN9_49_56();
+
 		case 0x18: // IN_PORT2 (DIP switches and jumpers, and P1 service for older pcb rev)
 			{
 				// DIP switches
@@ -1735,7 +1800,12 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	else if (!strcmp(game->name, "isshoni"))
 	{
 		new Touchscreen(&uart1);
+		inPortManager = std::make_unique<IsshoniInPortManager>();
 	}
+	if (!strncmp(game->name, "dinoki", 6) || !strncmp(game->name, "loveber", 7))
+		inPortManager = std::make_unique<CardReaderInPortManager>();
+	if (!inPortManager)
+		inPortManager = std::make_unique<DefaultInPortManager>();
 
 	EventManager::listen(Event::Pause, handleEvent, this);
 }

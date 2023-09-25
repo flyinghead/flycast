@@ -132,6 +132,17 @@ union AtaDevCtrlRegister
 	};
 };
 
+class InPortManager
+{
+public:
+	virtual u8 getCN9_17_24() = 0;
+	virtual u8 getCN9_25_32() = 0;
+	virtual u8 getCN9_33_40() = 0;
+	virtual u8 getCN9_41_48() = 0;
+	virtual u8 getCN9_49_56() = 0;
+	virtual ~InPortManager() = default;
+};
+
 class SystemSpCart : public M4Cartridge
 {
 public:
@@ -197,7 +208,7 @@ private:
 	SerialPort uart2;
 	u16 bank = 0;
 	int region = 0;
-	u32 last_kcode[2] = {};
+	std::unique_ptr<InPortManager> inPortManager;
 
 	static constexpr u32 SECTOR_SIZE = 512;
 

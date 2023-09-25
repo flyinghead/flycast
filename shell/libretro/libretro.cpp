@@ -1311,6 +1311,26 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 			/* LIGHTGUN_RIGHT  */ 	NAOMI_RIGHT_KEY,
 	};
 
+	static const uint32_t systemsp_joymap[] =
+	{
+			/* JOYPAD_B      */ DC_BTN_A,
+			/* JOYPAD_Y      */ DC_BTN_C,
+			/* JOYPAD_SELECT */ DC_BTN_D,		// coin
+			/* JOYPAD_START  */ DC_BTN_START,
+			/* JOYPAD_UP     */ DC_DPAD_UP,
+			/* JOYPAD_DOWN   */ DC_DPAD_DOWN,
+			/* JOYPAD_LEFT   */ DC_DPAD_LEFT,
+			/* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
+			/* JOYPAD_A      */ DC_BTN_B,
+			/* JOYPAD_X      */ 0,
+			/* JOYPAD_L      */ 0,
+			/* JOYPAD_R      */ 0,
+			/* JOYPAD_L2     */ 0,
+			/* JOYPAD_R2     */ 0,
+			/* JOYPAD_L3     */ DC_DPAD2_DOWN,	// test
+			/* JOYPAD_R3     */ DC_DPAD2_UP,	// service
+	};
+
 	const uint32_t *joymap;
 	size_t joymap_size;
 
@@ -1367,6 +1387,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		default:
 			return 0;
 		}
+		break;
+
+	case DC_PLATFORM_SYSTEMSP:
+		joymap = systemsp_joymap;
+		joymap_size = std::size(systemsp_joymap);
 		break;
 
 	default:

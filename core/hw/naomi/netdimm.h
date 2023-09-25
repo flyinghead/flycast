@@ -166,5 +166,4 @@ private:
 	u32 dimmBufferOffset = 0x0f000000;
 
 	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 60;
-	static NetDimm *Instance;
 };
