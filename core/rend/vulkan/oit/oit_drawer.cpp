@@ -362,7 +362,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     	else
     		targetFramebuffer = GetFinalFramebuffer();
     	cmdBuffer.beginRenderPass(
-    			vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(initialPass, finalPass),
+    			vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(initialPass, finalPass, initialPass && pvrrc.clearFramebuffer),
     					targetFramebuffer, viewport, clear_colors),
     			vk::SubpassContents::eInline);
 

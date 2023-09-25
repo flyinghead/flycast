@@ -1210,12 +1210,8 @@ static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 
 	while (childCtx != nullptr)
 	{
-		childCtx->MarkRend();
-		vd_rc.proc_start = childCtx->rend.proc_start;
-		vd_rc.proc_end = childCtx->rend.proc_end;
-
-		Ta_Dma* ta_data = (Ta_Dma *)vd_rc.proc_start;
-		Ta_Dma* ta_data_end = (Ta_Dma *)vd_rc.proc_end;
+		Ta_Dma* ta_data = (Ta_Dma *)childCtx->getTADataBegin();
+		Ta_Dma* ta_data_end = (Ta_Dma *)childCtx->getTADataEnd();
 
 		while (ta_data < ta_data_end)
 			try {

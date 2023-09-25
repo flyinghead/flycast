@@ -459,6 +459,13 @@ bool DX11Renderer::Render()
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+		if (pvrrc.clearFramebuffer)
+		{
+			float colors[4];
+			VO_BORDER_COL.getRGBColor(colors);
+			colors[3] = 1.f;
+			deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
+		}
 	}
 	configVertexShader();
 

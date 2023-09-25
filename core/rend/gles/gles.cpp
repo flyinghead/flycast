@@ -1173,7 +1173,6 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	
 	bool is_rtt = pvrrc.isRTT;
 
-	float vtx_min_fZ = 0.f;	//pvrrc.fZ_min;
 	float vtx_max_fZ = pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)
@@ -1182,7 +1181,6 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		vtx_max_fZ = 10 * 1024;
 
 	//add some extra range to avoid clipping border cases
-	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
@@ -1191,8 +1189,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
-	ShaderUniforms.depth_coefs[0] = 2 / (vtx_max_fZ - vtx_min_fZ);
-	ShaderUniforms.depth_coefs[1] = -vtx_min_fZ - 1;
+	ShaderUniforms.depth_coefs[0] = 2.f / vtx_max_fZ;
+	ShaderUniforms.depth_coefs[1] = -1.f;
 	ShaderUniforms.depth_coefs[2] = 0;
 	ShaderUniforms.depth_coefs[3] = 0;
 
@@ -1310,6 +1308,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 	if (!is_rtt)
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+	else
+		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 
 	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
 	{
@@ -1318,6 +1318,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	}
 	else
 	{
+		if (is_rtt || pvrrc.clearFramebuffer)
+			glClear(GL_COLOR_BUFFER_BIT);
 		//move vertex to gpu
 		//Main VBO
 		gl.vbo.geometry->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));

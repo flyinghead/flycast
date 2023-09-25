@@ -964,6 +964,8 @@ bool D3DRenderer::Render()
 	else
 	{
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.clearFramebuffer)
+			device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
 		verify(rc);
 		D3DVIEWPORT9 viewport;

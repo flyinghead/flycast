@@ -383,7 +383,7 @@ public:
 	vk::DescriptorSetLayout GetPerPolyDSLayout() const { return *perPolyLayout; }
 	vk::DescriptorSetLayout GetColorInputDSLayout() const { return *colorInputLayout; }
 
-	vk::RenderPass GetRenderPass(bool initial, bool last) { return renderPasses->GetRenderPass(initial, last); }
+	vk::RenderPass GetRenderPass(bool initial, bool last, bool loadClear = false) { return renderPasses->GetRenderPass(initial, last, loadClear); }
 
 private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);

@@ -325,7 +325,7 @@ void PostProcessor::render(GLuint output_fbo)
 
 	if (_pvrrc == nullptr)
 		// Framebuffer render: no dithering
-		PostProcessShader::select(!config::EmulateFramebuffer,
+		PostProcessShader::select(false,
 				SPG_CONTROL.interlace,
 				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	else

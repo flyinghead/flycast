@@ -481,6 +481,15 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+	if (!pvrrc.isRTT && pvrrc.clearFramebuffer)
+	{
+		glcache.Disable(GL_SCISSOR_TEST);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		if (gl4ShaderUniforms.base_clipping.enabled)
+			glcache.Enable(GL_SCISSOR_TEST);
+	}
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 

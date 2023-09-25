@@ -692,7 +692,7 @@ void writeFramebufferToVRAM()
 			gl.fbscaling.framebuffer->bind();
 			glViewport(0, 0, scaledW, scaledH);
 			glcache.Disable(GL_SCISSOR_TEST);
-			glcache.ClearColor(1.f, 0.f, 0.f, 1.f);
+			glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.framebuffer->getTexture());
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

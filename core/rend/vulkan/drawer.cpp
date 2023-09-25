@@ -715,7 +715,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 		transitionNeeded[GetCurrentImage()] = false;
 	}
 
-	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] ? *renderPassClear : *renderPassLoad;
+	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || pvrrc.clearFramebuffer ? *renderPassClear : *renderPassLoad;
 	clearNeeded[GetCurrentImage()] = false;
 	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
