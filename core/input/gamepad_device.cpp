@@ -296,7 +296,11 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
-			if (std::abs(v) < 16384)
+			int threshold = 16384;
+			if ( code == leftTrigger || code == rightTrigger )
+				threshold = 100;
+				
+			if (std::abs(v) < threshold)
 				kcode[port] |=  key; // button released
 			else
 				kcode[port] &= ~key; // button pressed
