@@ -295,7 +295,7 @@ PSO main(in Pixel inpix)
 	#endif
 
 	#if cp_AlphaTest == 1
-		color.a = round(color.a * 255.0f) / 255.0f;
+		color.a = round(color.a * 255.0f) * 0.0039215688593685626983642578125; // 1 / 255
 		if (alphaTestValue > color.a)
 			discard;
 		color.a = 1.0f;
