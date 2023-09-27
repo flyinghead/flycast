@@ -146,7 +146,7 @@ float getFragDepth(float z)
 #else
 	float w = 100000.0 * z;
 #endif
-	return log2(1.0 + w) / 34.0;
+	return log2(1.0 + max(w, -0.999999f)) / 34.0;
 }
 
 struct PolyParam {

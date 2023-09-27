@@ -246,7 +246,7 @@ void main()
 #else
 	highp float w = 100000.0 * vtx_uv.z;
 #endif
-	gl_FragDepth = log2(1.0 + w) / 34.0;
+	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
 
 #if DITHERING == 1
 	float ditherTable[16] = float[](
@@ -306,7 +306,7 @@ void main()
 #else
 	highp float w = 100000.0 * depth;
 #endif
-	gl_FragDepth = log2(1.0 + w) / 34.0;
+	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
 	FragColor = vec4(0.0, 0.0, 0.0, pushConstants.sp_ShaderColor);
 }
 )";

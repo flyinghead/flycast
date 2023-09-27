@@ -320,7 +320,7 @@ PSO main(in Pixel inpix)
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = color;
 
 	return pso;
@@ -340,7 +340,7 @@ PSO modifierVolume(in MVPixel inpix)
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = float4(0, 0, 0, 1.f - shadowScale);
 
 	return pso;

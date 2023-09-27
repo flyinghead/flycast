@@ -242,7 +242,7 @@ PSO main(in pixel inpix)
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = color;
 
 	return pso;
@@ -256,7 +256,7 @@ PSO modifierVolume(float4 uv : TEXCOORD0)
 #else
 	float w = 100000.0f * uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = float4(0, 0, 0, FOG_DENSITY_SCALE.y);
 
 	return pso;
