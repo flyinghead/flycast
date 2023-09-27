@@ -2,10 +2,7 @@
 #include "types.h"
 #include "serialize.h"
 
-namespace aica
-{
-
-namespace dsp
+namespace aica::dsp
 {
 
 struct DSPState
@@ -104,5 +101,4 @@ void DecodeInst(const u32 *IPtr, Instruction *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);
 
-} // namespace dsp
-} // namespace aica
+} // namespace aica::dsp

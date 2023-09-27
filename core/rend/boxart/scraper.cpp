@@ -85,7 +85,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 		}
 		Disc *disc = nullptr;
 		try {
-			disc = OpenDisc(item.gamePath.c_str());
+			disc = OpenDisc(item.gamePath);
 			if (disc == nullptr)
 				WARN_LOG(COMMON, "Can't open disk %s", item.gamePath.c_str());
 		} catch (const std::runtime_error& e) {

@@ -18,9 +18,9 @@
 static u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
-static u32 vblk_cnt;
 
 #if !defined(NDEBUG) || defined(DEBUGFAST)
+static u32 vblk_cnt;
 static float last_fps;
 #endif
 
@@ -96,7 +96,7 @@ void rescheduleSPG()
 	sh4_sched_request(vblank_schid, getNextSpgInterrupt());
 }
 
-static int spg_line_sched(int tag, int cycles, int jitter)
+static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 {
 	clc_pvr_scanline += cycles + jitter;
 
@@ -193,16 +193,16 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 				const char* mode=0;
 				const char* res=0;
 
-				res=SPG_CONTROL.interlace?"480i":"240p";
+				res = SPG_CONTROL.interlace ? "480i" : "240p";
 
-				if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-					mode="PAL";
-				else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-					mode="NTSC";
+				if (SPG_CONTROL.isPAL())
+					mode = "PAL";
+				else if (SPG_CONTROL.isNTSC())
+					mode = "NTSC";
 				else
 				{
-					res=SPG_CONTROL.interlace?"480i":"480p";
-					mode="VGA";
+					res = SPG_CONTROL.interlace ? "480i" : "480p";
+					mode = "VGA";
 				}
 
 				double frames_done=spd_cpu/2;

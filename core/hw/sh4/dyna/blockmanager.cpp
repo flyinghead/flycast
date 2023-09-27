@@ -241,7 +241,7 @@ void bm_Reset()
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
 		// so we have to unlock each region individually
-		if (settings.platform.ram_size == 16 * 1024 * 1024)
+		if (settings.platform.ram_size == 16_MB)
 		{
 			virtmem::region_unlock(addrspace::ram_base + 0x0C000000, RAM_SIZE);
 			virtmem::region_unlock(addrspace::ram_base + 0x0D000000, RAM_SIZE);
@@ -280,7 +280,7 @@ void bm_UnlockPage(u32 addr, u32 size)
 
 void bm_ResetCache()
 {
-	ngen_ResetBlocks();
+	sh4Dynarec->reset();
 	addrspace::bm_reset();
 
 	for (const auto& it : blkmap)
@@ -380,112 +380,6 @@ void sh4_jitsym(FILE* out)
 		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
 	}
 }
-
-#if 0
-u32 GetLookup(RuntimeBlockInfo* elem)
-{
-	return elem->lookups;
-}
-
-bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{
-	return elem1->runs > elem2->runs;
-}
-
-bool UDgreater2 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{
-	return elem1->runs*elem1->host_opcodes > elem2->runs*elem2->host_opcodes;
-}
-
-bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{
-	return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
-}
-
-void bm_PrintTopBlocks()
-{
-	double total_lups=0;
-	double total_runs=0;
-	double total_cycles=0;
-	double total_hops=0;
-	double total_sops=0;
-
-	for (size_t i=0;i<all_blocks.size();i++)
-	{
-		total_lups+=GetLookup(all_blocks[i]);
-		total_cycles+=all_blocks[i]->runs*all_blocks[i]->guest_cycles;
-		total_hops+=all_blocks[i]->runs*all_blocks[i]->host_opcodes;
-		total_sops+=all_blocks[i]->runs*all_blocks[i]->guest_opcodes;
-		total_runs+=all_blocks[i]->runs;
-	}
-
-	INFO_LOG(DYNAREC, "Total lookups:  %.0fKRuns, %.0fKLuops, Total cycles: %.0fMhz, Total Hops: %.0fMips, Total Sops: %.0fMips!",total_runs/1000,total_lups/1000,total_cycles/1000/1000,total_hops/1000/1000,total_sops/1000/1000);
-	total_hops/=100;
-	total_cycles/=100;
-	total_runs/=100;
-
-	double sel_hops=0;
-	for (size_t i=0;i<(all_blocks.size()/100);i++)
-	{
-		INFO_LOG(DYNAREC, "Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)",
-			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
-			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
-
-			all_blocks[i]->runs/total_runs,
-			all_blocks[i]->guest_cycles*all_blocks[i]->runs/total_cycles,
-			all_blocks[i]->host_opcodes*all_blocks[i]->runs/total_hops);
-		
-		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
-	}
-
-	INFO_LOG(DYNAREC, " >-< %.2f%% covered in top 1%% blocks",sel_hops/total_hops);
-
-	size_t i;
-	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
-	{
-		INFO_LOG(DYNAREC, "Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)",
-			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
-			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
-
-			all_blocks[i]->runs/total_runs,
-			all_blocks[i]->guest_cycles*all_blocks[i]->runs/total_cycles,
-			all_blocks[i]->host_opcodes*all_blocks[i]->runs/total_hops);
-		
-		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
-	}
-
-	INFO_LOG(DYNAREC, " >-< %.2f%% covered in top %.2f%% blocks",sel_hops/total_hops,i*100.0/all_blocks.size());
-
-}
-
-void bm_Sort()
-{
-	INFO_LOG(DYNAREC, "!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!");
-
-	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on Runs ! ----     ");
-	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater);
-	bm_PrintTopBlocks();
-
-	INFO_LOG(DYNAREC, "<><><><><><><><><><><><><><><><><><><><><><><><><>");
-
-	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on hops ! ----     ");
-	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater2);
-	bm_PrintTopBlocks();
-
-	INFO_LOG(DYNAREC, "<><><><><><><><><><><><><><><><><><><><><><><><><>");
-
-	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on wefs ! ----     ");
-	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater3);
-	bm_PrintTopBlocks();
-
-	INFO_LOG(DYNAREC, "^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^");
-
-	for (size_t i=0;i<all_blocks.size();i++)
-	{
-		all_blocks[i]->runs=0;
-	}
-}
-#endif
 
 RuntimeBlockInfo::~RuntimeBlockInfo()
 {
@@ -663,7 +557,6 @@ void print_blocks()
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
 			fprintf(f,"code: %p\n",blk->code);
-			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);
 			fprintf(f,"NextBlock: %08X\n",blk->NextBlock);
 			fprintf(f,"BranchBlock: %08X\n",blk->BranchBlock);
@@ -708,8 +601,6 @@ void print_blocks()
 
 			fprintf(f,"}\n");
 		}
-
-		blk->runs=0;
 	}
 
 	if (f) fclose(f);

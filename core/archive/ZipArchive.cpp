@@ -51,15 +51,16 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 
 struct zip_file *zip_fopen_by_crc(struct zip *za, u32 crc, int flags)
 {
-    int i, n;
+    zip_uint64_t i;
+    zip_int64_t n;
     struct zip_stat stat;
 
     if (crc == 0) {
         return NULL;
     }
 
-    n = zip_get_num_files(za);
-    for (i = 0; i < n; i++) {
+    n = zip_get_num_entries(za, 0);
+    for (i = 0; i < (zip_uint64_t)n; i++) {
         if (zip_stat_index(za, i, flags, &stat) < -1) {
             return NULL;
         }

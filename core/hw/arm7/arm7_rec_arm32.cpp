@@ -24,8 +24,20 @@
 #include "rec-ARM/arm_unwind.h"
 #include "oslib/virtmem.h"
 
+#ifdef _M_ARM
+#pragma push_macro("MemoryBarrier")
+#pragma push_macro("Yield")
+#undef MemoryBarrier
+#undef Yield
+#endif
+
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
+
+#ifdef _M_ARM
+#pragma pop_macro("MemoryBarrier")
+#pragma pop_macro("Yield")
+#endif
 
 static ArmUnwindInfo unwinder;
 

@@ -54,6 +54,8 @@ public:
 protected:
 	void DmaOffsetChanged(u32 dma_offset) override;
 	void PioOffsetChanged(u32 pio_offset) override;
+	u16 decrypt(u16 w);
+	void enc_reset();
 
 private:
 	void device_start();
@@ -76,7 +78,6 @@ private:
 	bool xfer_ready;
 
 	void enc_init();
-	void enc_reset();
 	void enc_fill();
 	u16 decrypt_one_round(u16 word, u16 subkey);
 };

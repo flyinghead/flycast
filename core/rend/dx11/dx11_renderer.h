@@ -70,6 +70,7 @@ protected:
 		float colorClampMax[4];
 		float fog_col_vert[4];
 		float fog_col_ram[4];
+		float ditherColorMax[4];
 		float fogDensity;
 		float shadowScale;
 		float alphaTestValue;
@@ -96,6 +97,7 @@ protected:
 	void setCullMode(int mode);
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
+	void renderVideoRouting();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -122,6 +124,7 @@ protected:
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;
 	float aspectRatio = 4.f / 3.f;
+	bool dithering = false;
 
 private:
 	void readDCFramebuffer();
@@ -154,6 +157,10 @@ private:
 	ComPtr<ID3D11Texture2D> fbScaledTexture;
 	ComPtr<ID3D11ShaderResourceView> fbScaledTextureView;
 	ComPtr<ID3D11RenderTargetView> fbScaledRenderTarget;
+	ComPtr<ID3D11Texture2D> vrStagingTexture;
+	ComPtr<ID3D11ShaderResourceView> vrStagingTextureSRV;
+	ComPtr<ID3D11Texture2D> vrScaledTexture;
+	ComPtr<ID3D11RenderTargetView> vrScaledRenderTarget;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 

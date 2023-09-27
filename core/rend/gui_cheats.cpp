@@ -112,7 +112,7 @@ void gui_cheats()
 
 	ImGui::SameLine();
 	if (ImGui::Button("Close"))
-		gui_state = GuiState::Commands;
+		gui_setState(GuiState::Commands);
 
     ImGui::Unindent(10 * settings.display.uiScale);
     ImGui::PopStyleVar();

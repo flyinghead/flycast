@@ -96,7 +96,7 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 	readContext(ep, context);
 #if FEAT_SHREC == DYNAREC_JIT
 	// fast mem access rewriting
-	if (ngen_Rewrite(context, address))
+	if (sh4Dynarec->rewrite(context, address))
 	{
 		writeContext(ep, context);
 		return EXCEPTION_CONTINUE_EXECUTION;

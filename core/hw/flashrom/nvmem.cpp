@@ -47,7 +47,6 @@ static std::string getRomPrefix()
 	case DC_PLATFORM_ATOMISWAVE:
 		return "aw_";
 	default:
-		die("Unsupported platform");
 		return "";
 	}
 }
@@ -375,6 +374,10 @@ void init()
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		sys_rom = new DCFlashChip(settings.platform.bios_size, settings.platform.bios_size / 2);
+		sys_nvmem = new SRamChip(settings.platform.flash_size);
+		break;
+	case DC_PLATFORM_SYSTEMSP:
+		sys_rom = new RomChip(settings.platform.bios_size);
 		sys_nvmem = new SRamChip(settings.platform.flash_size);
 		break;
 	}

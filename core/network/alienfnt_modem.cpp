@@ -25,17 +25,17 @@
 #include <deque>
 #include <memory>
 
-struct ModemEmu : public SerialPipe
+struct ModemEmu : public SerialPort::Pipe
 {
 	ModemEmu() {
-		serial_setPipe(this);
+		SCIFSerialPort::Instance().setPipe(this);
 		schedId = sh4_sched_register(0, schedCallback);
 	}
 
 	~ModemEmu() {
 		sh4_sched_unregister(schedId);
 		stop_pico();
-		serial_setPipe(nullptr);
+		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
 	u8 read() override
@@ -132,12 +132,12 @@ private:
 	{
 		toSend.insert(toSend.end(), l.begin(), l.end());
 		toSend.push_back('\n');
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 	}
 
-	static int schedCallback(int tag, int cycles, int lag)
+	static int schedCallback(int tag, int cycles, int lag, void *arg)
 	{
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 		return SH4_MAIN_CLOCK / 60;
 	}
 

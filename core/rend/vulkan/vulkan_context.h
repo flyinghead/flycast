@@ -61,6 +61,7 @@ public:
 	void Present() noexcept;
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
+	void initVideoRouting() override;
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return *device; }
@@ -69,6 +70,7 @@ public:
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { (u32)settings.display.width, (u32)settings.display.height }; }
+	vk::SwapchainKHR GetSwapChain() const { return *swapChain; }
 	u32 GetSwapChainSize() const { return (u32)imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;
@@ -101,8 +103,6 @@ public:
 	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
-	bool IsUnifiedMemory() const { return unifiedMemory; }
-	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
@@ -160,7 +160,6 @@ private:
 	u32 presentQueueIndex = 0;
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
-	u32 maxStorageBufferRange = 0;
 	vk::DeviceSize maxMemoryAllocationSize = 0xFFFFFFFFu;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
@@ -169,7 +168,6 @@ private:
 	bool samplerAnisotropy = false;
 	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
-	bool unifiedMemory = false;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;

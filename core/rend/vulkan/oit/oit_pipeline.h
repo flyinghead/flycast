@@ -45,6 +45,7 @@ public:
 		float colorClampMax[4];
 		float sp_FOG_COL_RAM[4];	// Only using 3 elements but easier for std140
 		float sp_FOG_COL_VERT[4];	// same comment
+		float ditherColorMax[4];
 		float cp_AlphaTestValue;
 		float sp_FOG_DENSITY;
 		float shade_scale_factor;	// new for OIT
@@ -321,7 +322,8 @@ public:
 		pipelines.clear();
 		modVolPipelines.clear();
 		trModVolPipelines.clear();
-		finalPipeline.reset();
+		finalPipelines[0].reset();
+		finalPipelines[1].reset();
 		clearPipeline.reset();
 	}
 
@@ -357,14 +359,18 @@ public:
 
 		return *trModVolPipelines[pipehash];
 	}
-	vk::Pipeline GetFinalPipeline()
+	vk::Pipeline GetFinalPipeline(bool dithering)
 	{
-		if (!finalPipeline || maxLayers != config::PerPixelLayers)
+		if (!finalPipelines[dithering] || maxLayers != config::PerPixelLayers)
 		{
-			CreateFinalPipeline();
-			maxLayers = config::PerPixelLayers;
+			if (maxLayers != config::PerPixelLayers) {
+				finalPipelines[0].reset();
+				finalPipelines[1].reset();
+				maxLayers = config::PerPixelLayers;
+			}
+			CreateFinalPipeline(dithering);
 		}
-		return *finalPipeline;
+		return *finalPipelines[dithering];
 	}
 	vk::Pipeline GetClearPipeline()
 	{
@@ -377,7 +383,7 @@ public:
 	vk::DescriptorSetLayout GetPerPolyDSLayout() const { return *perPolyLayout; }
 	vk::DescriptorSetLayout GetColorInputDSLayout() const { return *colorInputLayout; }
 
-	vk::RenderPass GetRenderPass(bool initial, bool last) { return renderPasses->GetRenderPass(initial, last); }
+	vk::RenderPass GetRenderPass(bool initial, bool last, bool loadClear = false) { return renderPasses->GetRenderPass(initial, last, loadClear); }
 
 private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
@@ -443,13 +449,13 @@ private:
 	}
 
 	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette);
-	void CreateFinalPipeline();
+	void CreateFinalPipeline(bool dithering);
 	void CreateClearPipeline();
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> trModVolPipelines;
-	vk::UniquePipeline finalPipeline;
+	vk::UniquePipeline finalPipelines[2];
 	vk::UniquePipeline clearPipeline;
 
 	vk::UniquePipelineLayout pipelineLayout;

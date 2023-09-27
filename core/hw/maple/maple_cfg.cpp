@@ -2,6 +2,7 @@
 #include "maple_helper.h"
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/card_reader.h"
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "serialize.h"
@@ -238,6 +239,10 @@ static void createNaomiDevices()
 		mcfg_Create(MDT_SegaController, 2, 5);
 		mcfg_Create(MDT_SegaVMU, 2, 0);
 	}
+	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------"
+			|| settings.content.gameId == " DERBY OWNERS CLUB ------------"
+			|| settings.content.gameId == " DERBY OWNERS CLUB II-----------")
+		card_reader::derbyInit();
 }
 
 static void createAtomiswaveDevices()
@@ -361,6 +366,8 @@ void mcfg_CreateDevices()
 	case DC_PLATFORM_ATOMISWAVE:
 		createAtomiswaveDevices();
 		break;
+	case DC_PLATFORM_SYSTEMSP:
+		return;
 	default:
 		die("Unknown system");
 		break;
@@ -368,15 +375,17 @@ void mcfg_CreateDevices()
 	vmuDigest();
 }
 
-void mcfg_DestroyDevices()
+// Don't destroy the JVS MIE if full is false
+void mcfg_DestroyDevices(bool full)
 {
 	for (int i = 0; i < MAPLE_PORTS; i++)
-		for (int j=0;j<=5;j++)
+		for (int j = 0; j <= 5; j++)
 		{
-			if (MapleDevices[i][j] != NULL)
+			if (MapleDevices[i][j] != nullptr
+					&& (full || MapleDevices[i][j]->get_device_type() != MDT_NaomiJamma))
 			{
 				delete MapleDevices[i][j];
-				MapleDevices[i][j] = NULL;
+				MapleDevices[i][j] = nullptr;
 			}
 		}
 }
@@ -407,7 +416,7 @@ void mcfg_SerializeDevices(Serializer& ser)
 void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	if (!deser.rollback())
-		mcfg_DestroyDevices();
+		mcfg_DestroyDevices(false);
 	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
 	if (deser.version() < Deserializer::V23)
 	{
@@ -439,11 +448,18 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 			deser >> deviceType;
 			if (deviceType != MDT_None)
 			{
-				if (!deser.rollback())
+				if (!deser.rollback() && deviceType != MDT_NaomiJamma)
 					mcfg_Create((MapleDeviceType)deviceType, i, j);
 				MapleDevices[i][j]->deserialize(deser);
 			}
 		}
 	if (deser.version() < Deserializer::V23 && EEPROM != nullptr)
 		memcpy(EEPROM, eeprom, sizeof(eeprom));
+}
+
+maple_naomi_jamma *getMieDevice()
+{
+	if (MapleDevices[0][5] == nullptr || MapleDevices[0][5]->get_device_type() != MDT_NaomiJamma)
+		return nullptr;
+	return (maple_naomi_jamma *)MapleDevices[0][5];
 }

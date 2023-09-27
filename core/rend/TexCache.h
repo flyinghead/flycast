@@ -162,6 +162,7 @@ struct UnpackerNop {
 		return word;
 	}
 };
+
 // ARGB1555 to RGBA5551
 struct Unpacker1555 {
 	using unpacked_type = u16;
@@ -169,6 +170,7 @@ struct Unpacker1555 {
 		return ((word >> 15) & 1) | (((word >> 10) & 0x1F) << 11)  | (((word >> 5) & 0x1F) << 6)  | (((word >> 0) & 0x1F) << 1);
 	}
 };
+
 // ARGB4444 to RGBA4444
 struct Unpacker4444 {
 	using unpacked_type = u16;
@@ -187,7 +189,17 @@ struct Unpacker1555_32 {
 				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
 				(word & 0x8000) ? 0xFF : 0);
 	}
+
+	// no color data extension (planar textures)
+	static u32 unpackPL(u16 word) {
+		return Packer::pack(
+				((word >> 10) & 0x1F) << 3,
+				((word >> 5) & 0x1F) << 3,
+				((word >> 0) & 0x1F) << 3,
+				(word & 0x8000) ? 0xFF : 0);
+	}
 };
+
 template <typename Packer>
 struct Unpacker565_32 {
 	using unpacked_type = u32;
@@ -198,7 +210,17 @@ struct Unpacker565_32 {
 				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
 				0xFF);
 	}
+
+	// no color data extension (planar textures)
+	static u32 unpackPL(u16 word) {
+		return Packer::pack(
+				((word >> 11) & 0x1F) << 3,
+				((word >> 5) & 0x3F) << 2,
+				((word >> 0) & 0x1F) << 3,
+				0xFF);
+	}
 };
+
 template <typename Packer>
 struct Unpacker4444_32 {
 	using unpacked_type = u32;
@@ -209,7 +231,19 @@ struct Unpacker4444_32 {
 				(((word >> 0) & 0xF) << 4) | ((word >> 0) & 0xF),
 				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
 	}
+
+	// no color data extension (planar textures)
+	// The alpha channel still needs to be extended for PT polygons to work (Langrisser Millennium)
+	// TODO Is the documentation correct?
+	static u32 unpackPL(u16 word) {
+		return Packer::pack(
+				((word >> 8) & 0xF) << 4,
+				((word >> 4) & 0xF) << 4,
+				((word >> 0) & 0xF) << 4,
+				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
+	}
 };
+
 // ARGB8888 to whatever
 template <typename Packer>
 struct Unpacker8888 {
@@ -232,10 +266,10 @@ struct ConvertPlanar
 	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
 		const u16 *p_in = (const u16 *)data;
-		pb->prel(0, Unpacker::unpack(p_in[0]));
-		pb->prel(1, Unpacker::unpack(p_in[1]));
-		pb->prel(2, Unpacker::unpack(p_in[2]));
-		pb->prel(3, Unpacker::unpack(p_in[3]));
+		pb->prel(0, Unpacker::unpackPL(p_in[0]));
+		pb->prel(1, Unpacker::unpackPL(p_in[1]));
+		pb->prel(2, Unpacker::unpackPL(p_in[2]));
+		pb->prel(3, Unpacker::unpackPL(p_in[3]));
 	}
 };
 
@@ -465,8 +499,6 @@ typedef void (*TexConvFP)(PixelBuffer<u16> *pb, const u8 *p_in, u32 width, u32 h
 typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, const u8 *p_in, u32 width, u32 height);
 typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, const u8 *p_in, u32 width, u32 height);
 
-//Planar
-constexpr TexConvFP tex565_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
 //Twiddle
 constexpr TexConvFP tex565_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
 // Palette
@@ -490,11 +522,7 @@ namespace opengl {
 // OpenGL
 
 //Planar
-constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<Unpacker1555>>;
-constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<Unpacker4444>>;
-constexpr TexConvFP texBMP_PL = tex4444_PL;
 constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<RGBAPacker>>;
-
 constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<RGBAPacker>>>;
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<RGBAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<RGBAPacker>>>;
@@ -524,11 +552,7 @@ namespace directx {
 // DirectX
 
 //Planar
-constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
-constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
-constexpr TexConvFP texBMP_PL = tex4444_PL;
 constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<BGRAPacker>>;
-
 constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<BGRAPacker>>>;

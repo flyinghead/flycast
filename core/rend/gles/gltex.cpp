@@ -7,8 +7,6 @@
 
 GlTextureCache TexCache;
 
-static void readAsyncPixelBuffer(u32 addr);
-
 void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	//upload to OpenGL !
@@ -160,31 +158,11 @@ GLuint BindRTT(bool withDepthBuffer)
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
-	if (gl.rtt.texAddress != ~0u)
-		readAsyncPixelBuffer(gl.rtt.texAddress);
-	gl.rtt.texAddress = texAddress;
-
 	gl.rtt.framebuffer.reset();
 
 	u32 fbw2;
 	u32 fbh2;
 	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
-
-#ifdef GL_PIXEL_PACK_BUFFER
-	if (gl.gl_major >= 3 && config::RenderToTextureBuffer)
-	{
-		if (gl.rtt.pbo == 0)
-			glGenBuffers(1, &gl.rtt.pbo);
-		u32 glSize = fbw2 * fbh2 * 4;
-		if (glSize > gl.rtt.pboSize)
-		{
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-			glBufferData(GL_PIXEL_PACK_BUFFER, glSize, 0, GL_STREAM_READ);
-			gl.rtt.pboSize = glSize;
-			glCheck();
-		}
-	}
-#endif
 
 	// Create a texture for rendering to
 	GLuint texture = glcache.GenTexture();
@@ -198,18 +176,16 @@ GLuint BindRTT(bool withDepthBuffer)
 	return gl.rtt.framebuffer->getFramebuffer();
 }
 
-constexpr u32 MAGIC_NUMBER = 0xbaadf00d;
-
 void ReadRTTBuffer()
 {
 	u32 w = pvrrc.getFramebufferWidth();
 	u32 h = pvrrc.getFramebufferHeight();
 
 	const u8 fb_packmode = pvrrc.fb_W_CTRL.fb_packmode;
+	const u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK;
 
 	if (config::RenderToTextureBuffer)
 	{
-		u32 tex_addr = gl.rtt.texAddress;
 #ifdef TARGET_VIDEOCORE
 		// Remove all vram locks before calling glReadPixels
 		// (deadlock on rpi)
@@ -221,112 +197,53 @@ void ReadRTTBuffer()
 			VramLockedWriteOffset(page);
 #endif
 
-#ifdef GL_PIXEL_PACK_BUFFER
-		if (gl.gl_major >= 3)
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-#endif
-
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		gl.rtt.width = w;
-		gl.rtt.height = h;
-		u16 *dst = gl.gl_major >= 3 ? nullptr : (u16 *)&vram[tex_addr];
 
-		gl.rtt.linestride = pvrrc.fb_W_LINESTRIDE * 8;
-		if (gl.rtt.linestride == 0)
-			gl.rtt.linestride = w * 2;
+		u16 *dst = (u16 *)&vram[tex_addr];
+
+		u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+		if (linestride == 0)
+			linestride = w * 2;
 
 		GLint color_fmt, color_type;
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-		if (fb_packmode == 1 && gl.rtt.linestride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
+		if (fb_packmode == 1 && linestride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
 		{
-			gl.rtt.directXfer = true;
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
-			if (dst == nullptr)
-				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
 		}
 		else
 		{
-			gl.rtt.directXfer = false;
-			if (gl.gl_major >= 3)
-			{
-				gl.rtt.fb_w_ctrl = pvrrc.fb_W_CTRL;
-				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
-			}
-			else
-			{
-				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w, h);
+			PixelBuffer<u32> tmp_buf;
+			tmp_buf.init(w, h);
 
-				u8 *p = (u8 *)tmp_buf.data();
-				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
+			u8 *p = (u8 *)tmp_buf.data();
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-				WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, gl.rtt.linestride);
-				gl.rtt.texAddress = ~0;
-			}
+			WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, linestride);
 		}
-#ifdef GL_PIXEL_PACK_BUFFER
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-#endif
 		glCheck();
 	}
 	else
 	{
-		//memset(&vram[gl.rtt.texAddress], 0, size);
+		//memset(&vram[tex_addr], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			TextureCacheData *texture_data = TexCache.getRTTexture(gl.rtt.texAddress, fb_packmode, w, h);
+			TextureCacheData *texture_data = TexCache.getRTTexture(tex_addr, fb_packmode, w, h);
 			glcache.DeleteTextures(1, &texture_data->texID);
 			texture_data->texID = gl.rtt.framebuffer->detachTexture();
 			texture_data->dirty = 0;
 			texture_data->unprotectVRam();
 		}
-		gl.rtt.texAddress = ~0;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 }
 
-static void readAsyncPixelBuffer(u32 addr)
-{
-#ifndef GLES2
-	if (!config::RenderToTextureBuffer || gl.rtt.pbo == 0)
-		return;
-
-	u32 tex_addr = gl.rtt.texAddress;
-	if (addr != tex_addr)
-		return;
-	gl.rtt.texAddress = ~0;
-
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-	u8 *ptr = (u8 *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, gl.rtt.pboSize, GL_MAP_READ_BIT);
-	if (ptr == nullptr)
-	{
-		WARN_LOG(RENDERER, "glMapBuffer failed");
-		return;
-	}
-	u16 *dst = (u16 *)&vram[tex_addr];
-	// Make sure the vram region hasn't been overwritten already, otherwise we skip the copy
-	// (Worms World Party intro)
-	if (*(u32 *)dst == MAGIC_NUMBER)
-	{
-		if (gl.rtt.directXfer)
-			// Can be read directly into vram
-			memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
-		else
-			WriteTextureToVRam(gl.rtt.width, gl.rtt.height, ptr, dst, gl.rtt.fb_w_ctrl, gl.rtt.linestride);
-	}
-	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-#endif
-}
 BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 {
 	//lookup texture
 	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
-
-	readAsyncPixelBuffer(tf->sa_tex);
 
 	//update if needed
 	if (tf->NeedsUpdate())

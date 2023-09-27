@@ -16,14 +16,10 @@ struct RuntimeBlockInfo
 
 	u32 addr;
 	DynarecCodeEntryPtr code;
-	u32 lookups;
 	u32 vaddr;
 
 	u32 host_code_size;	//in bytes
 	u32 sh4_code_size; //in bytes
-
-	u32 runs;
-	s32 staging_runs;
 
 	fpscr_t fpu_cfg;
 	u32 guest_cycles;
@@ -55,7 +51,9 @@ struct RuntimeBlockInfo
 
 	virtual ~RuntimeBlockInfo();
 
-	virtual u32 Relink()=0;
+	virtual u32 Relink() {
+		return 0;
+	}
 	
 	//predecessors references
 	std::vector<RuntimeBlockInfoPtr> pre_refs;

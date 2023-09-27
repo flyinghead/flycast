@@ -1,10 +1,7 @@
 #include "arm_mem.h"
 #include "hw/aica/aica_mem.h"
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 #define REG_L (0x2D00)
@@ -97,5 +94,4 @@ template void writeReg<>(u32 adr, u8 data);
 template void writeReg<>(u32 adr, u16 data);
 template void writeReg<>(u32 adr, u32 data);
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm

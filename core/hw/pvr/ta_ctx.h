@@ -227,13 +227,10 @@ struct SortedTriangle
 
 struct rend_context
 {
-	u8* proc_start;
-	u8* proc_end;
-
-	f32 fZ_min;
 	f32 fZ_max;
 
 	bool isRTT;
+	bool clearFramebuffer;
 	
 	TA_GLOB_TILE_CLIP_type ta_GLOB_TILE_CLIP;
 	SCALER_CTL_type scaler_ctl;
@@ -280,10 +277,10 @@ struct rend_context
 		global_param_op.back().init();
 		verts.resize(4);
 
-		fZ_min = 1000000.0f;
 		fZ_max = 1.0f;
 		matrices.clear();
 		lightModels.clear();
+		clearFramebuffer = false;
 	}
 
 	void newRenderPass();
@@ -301,7 +298,7 @@ struct rend_context
 	}
 };
 
-#define TA_DATA_SIZE (8 * 1024 * 1024)
+#define TA_DATA_SIZE 8_MB
 
 //vertex lists
 struct TA_context
@@ -329,10 +326,12 @@ struct TA_context
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
-	void MarkRend()
-	{
-		rend.proc_start = tad.thd_root;
-		rend.proc_end = tad.End();
+	u8 *getTADataBegin() {
+		return tad.thd_root;
+	}
+
+	u8 *getTADataEnd() {
+		return tad.End();
 	}
 
 	void Alloc()
@@ -358,16 +357,15 @@ struct TA_context
 
 	void Reset()
 	{
-		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
+		verify(tad.End() - tad.thd_root <= (ptrdiff_t)TA_DATA_SIZE);
 		tad.Clear();
 		nextContext = nullptr;
 		rend.Clear();
-		rend.proc_end = rend.proc_start = tad.thd_root;
 	}
 
 	~TA_context()
 	{
-		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
+		verify(tad.End() - tad.thd_root <= (ptrdiff_t)TA_DATA_SIZE);
 		freeAligned(tad.thd_root);
 	}
 };

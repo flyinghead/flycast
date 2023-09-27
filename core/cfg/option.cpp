@@ -98,7 +98,7 @@ Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
-Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512_MB);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
@@ -106,6 +106,11 @@ Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
+#ifdef VIDEO_ROUTING
+Option<bool> VideoRouting("rend.VideoRouting", false);
+Option<bool> VideoRoutingScale("rend.VideoRoutingScale", false);
+Option<int> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
+#endif
 
 // Misc
 
@@ -116,6 +121,7 @@ Option<int> GDBPort("Debug.GDBPort", debugger::DEFAULT_PORT);
 Option<bool> GDBWaitForConnection("Debug.GDBWaitForConnection");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
+Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 

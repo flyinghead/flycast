@@ -182,7 +182,7 @@ template void writeAicaReg<>(u32 addr, u8 data);
 template void writeAicaReg<>(u32 addr, u16 data);
 template void writeAicaReg<>(u32 addr, u32 data);
 
-static int DreamcastSecond(int tag, int c, int j)
+static int DreamcastSecond(int tag, int cycles, int jitter, void *arg)
 {
 	RealTimeClock++;
 
@@ -220,7 +220,7 @@ void termRtc()
 	rtc_schid = -1;
 }
 
-static int dma_end_sched(int tag, int cycl, int jitt)
+static int dma_end_sched(int tag, int cycles, int jitter, void *arg)
 {
 	u32 len = SB_ADLEN & 0x7FFFFFFF;
 
@@ -405,7 +405,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 			// Schedule the end of DMA transfer interrupt
 			int cycles = len * (SH4_MAIN_CLOCK / 2 / G2_BUS_CLOCK);       // 16 bits @ 25 MHz
 			if (cycles <= 512)
-				dma_end_sched(0, 0, 0);
+				dma_end_sched(0, 0, 0, nullptr);
 			else
 				sh4_sched_request(dma_sched_id, cycles);
 		}
@@ -577,7 +577,7 @@ void deserialize(Deserializer& deser)
 	{
 		aica_ram.deserialize(deser);
 		if (settings.platform.isAtomiswave())
-			deser.skip(6 * 1024 * 1024, Deserializer::V30);
+			deser.skip(6_MB, Deserializer::V30);
 	}
 	deser >> VREG;
 	deser >> ARMRST;

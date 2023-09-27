@@ -20,43 +20,8 @@
 
 SCIRegisters sci;
 SCIFRegisters scif;
-static SerialPipe *serialPipe;
 
-/*
-//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
-SCSMR2_type SCIF_SCSMR2;
-
-//SCIF SCBRR2 0xFFE80004 0x1FE80004 8 0xFF 0xFF Held Held Pclk
-u8 SCIF_SCBRR2;
-
-//SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
-SCSCR2_type SCIF_SCSCR2;
-
-//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-u8 SCIF_SCFTDR2;
-
-//SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
-SCSCR2_type SCIF_SCFSR2;
-
-//SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-//Read OLNY
-u8 SCIF_SCFRDR2;
-
-//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
-SCFCR2_type SCIF_SCFCR2;
-
-//Read OLNY
-//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
-SCFDR2_type SCIF_SCFDR2;
-
-//SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
-SCSPTR2_type SCIF_SCSPTR2;
-
-//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
-SCLSR2_type SCIF_SCLSR2;
-*/
-
-static void Serial_UpdateInterrupts()
+static void updateInterrupts()
 {
     InterruptPend(sh4_SCIF_TXI, SCIF_SCFSR2.TDFE);
     InterruptMask(sh4_SCIF_TXI, SCIF_SCSCR2.TIE);
@@ -65,42 +30,28 @@ static void Serial_UpdateInterrupts()
     InterruptMask(sh4_SCIF_RXI, SCIF_SCSCR2.RIE);
 }
 
-void serial_updateStatusRegister()
-{
-	if (serialPipe != nullptr)
-	{
-		constexpr int trigLevels[] { 1, 4, 8, 14 };
-		int avail = serialPipe->available();
-
-		if (avail >= trigLevels[SCIF_SCFCR2.RTRG1 * 2 + SCIF_SCFCR2.RTRG0])
-			SCIF_SCFSR2.RDF = 1;
-		if (avail >= 1)
-			SCIF_SCFSR2.DR = 1;
-		Serial_UpdateInterrupts();
-	}
-}
-
 // SCIF SCFTDR2
-static void SerialWrite(u32 addr, u8 data)
+void SCIFSerialPort::writeData(u32 addr, u8 data)
 {
-	//DEBUG_LOG(COMMON, "serial %02x", data);
-	if (serialPipe != nullptr)
-		serialPipe->write(data);
+	//DEBUG_LOG(COMMON, "serial out %02x %c", data, data);
+	if (Instance().pipe != nullptr)
+		Instance().pipe->write(data);
 
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
 
-    Serial_UpdateInterrupts();
+    updateInterrupts();
 }
 
-//SCIF_SCFSR2 read
-static u16 ReadSerialStatus(u32 addr)
+// SCIF_SCFSR2 read
+u16 SCIFSerialPort::readStatus(u32 addr)
 {
-	serial_updateStatusRegister();
+	Instance().updateStatus();
 	return SCIF_SCFSR2.full;
 }
 
-static void WriteSerialStatus(u32 addr, u16 data)
+// SCIF_SCFSR2 write
+void SCIFSerialPort::writeStatus(u32 addr, u16 data)
 {
 	if (!SCIF_SCFSR2.BRK)
 		data &= ~0x10;
@@ -110,27 +61,51 @@ static void WriteSerialStatus(u32 addr, u16 data)
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
 
-	serial_updateStatusRegister();
+	Instance().updateStatus();
 }
 
 //SCIF_SCFDR2 - 16b
-static u16 Read_SCFDR2(u32 addr)
+u16 SCIFSerialPort::readSCFDR2(u32 addr)
 {
-	if (serialPipe != nullptr)
-		return std::min(16, serialPipe->available());
+	if (Instance().pipe != nullptr)
+		return std::min(16, Instance().pipe->available());
 	else
 		return 0;
 }
 
 //SCIF_SCFRDR2
-static u8 ReadSerialData(u32 addr)
+u8 SCIFSerialPort::readData(u32 addr)
 {
 	u8 data = 0;
-	if (serialPipe != nullptr)
-		data = serialPipe->read();
-	serial_updateStatusRegister();
+	if (Instance().pipe != nullptr) {
+		data = Instance().pipe->read();
+		//DEBUG_LOG(COMMON, "serial in %02x %c", data, data);
+	}
+	Instance().updateStatus();
 
 	return data;
+}
+
+void SCIFSerialPort::updateStatus()
+{
+	if (pipe == nullptr)
+		return;
+
+	constexpr int trigLevels[] { 1, 4, 8, 14 };
+	int avail = pipe->available();
+
+	if (avail >= trigLevels[SCIF_SCFCR2.RTRG1 * 2 + SCIF_SCFCR2.RTRG0])
+		SCIF_SCFSR2.RDF = 1;
+	if (avail >= 1)
+		SCIF_SCFSR2.DR = 1;
+	updateInterrupts();
+}
+
+SCIFSerialPort& SCIFSerialPort::Instance()
+{
+	static SCIFSerialPort instance;
+
+	return instance;
 }
 
 //SCSCR2
@@ -144,10 +119,10 @@ static void SCSCR2_write(u32 addr, u16 data)
 {
 	SCIF_SCSCR2.full = data & 0x00fa;
 
-	Serial_UpdateInterrupts();
+	updateInterrupts();
 }
 
-struct PTYPipe : public SerialPipe
+struct PTYPipe : public SerialPort::Pipe
 {
 	void write(u8 data) override {
 		if (config::SerialConsole)
@@ -204,7 +179,7 @@ struct PTYPipe : public SerialPipe
 			}
 #endif
 		}
-		serial_setPipe(this);
+		SCIFSerialPort::Instance().setPipe(this);
 	}
 
 	void term()
@@ -238,21 +213,21 @@ void SCIFRegisters::init()
 	setHandlers<SCIF_SCSCR2_addr>(SCSCR2_read, SCSCR2_write);
 
 	//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-	setWriteOnly<SCIF_SCFTDR2_addr>(SerialWrite);
+	setWriteOnly<SCIF_SCFTDR2_addr>(SCIFSerialPort::writeData);
 
 	//SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
-	setHandlers<SCIF_SCFSR2_addr>(ReadSerialStatus, WriteSerialStatus);
+	setHandlers<SCIF_SCFSR2_addr>(SCIFSerialPort::readStatus, SCIFSerialPort::writeStatus);
 
 	//READ only
 	//SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-	setReadOnly<SCIF_SCFRDR2_addr>(ReadSerialData);
+	setReadOnly<SCIF_SCFRDR2_addr>(SCIFSerialPort::readData);
 
 	//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
 	setRW<SCIF_SCFCR2_addr, u16, 0x00ff>();
 
 	//Read only
 	//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
-	setReadOnly<SCIF_SCFDR2_addr>(Read_SCFDR2);
+	setReadOnly<SCIF_SCFDR2_addr>(SCIFSerialPort::readSCFDR2);
 
 	//SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
 	setRW<SCIF_SCSPTR2_addr, u16, 0x00f3>();
@@ -315,9 +290,4 @@ void SCIFRegisters::term()
 {
 	super::term();
 	ptyPipe.term();
-}
-
-void serial_setPipe(SerialPipe *pipe)
-{
-	serialPipe = pipe;
 }

@@ -24,11 +24,11 @@
 class RenderPasses
 {
 public:
-	vk::RenderPass GetRenderPass(bool initial, bool last)
+	vk::RenderPass GetRenderPass(bool initial, bool last, bool loadClear = false)
 	{
-		size_t index = (initial ? 1 : 0) | (last ? 2 : 0);
+		size_t index = (initial ? 1 : 0) | (last ? 2 : 0) | (loadClear ? 4 : 0);
 		if (!renderPasses[index])
-			renderPasses[index] = MakeRenderPass(initial, last);
+			renderPasses[index] = MakeRenderPass(initial, last, loadClear);
 		return *renderPasses[index];
 	}
 	void Reset()
@@ -40,11 +40,11 @@ public:
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-	vk::UniqueRenderPass MakeRenderPass(bool initial, bool last);
-	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const
+	vk::UniqueRenderPass MakeRenderPass(bool initial, bool last, bool loadClear);
+	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const
 	{
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-				vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
+				loadClear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
 				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -59,13 +59,13 @@ protected:
 	}
 
 private:
-	std::array<vk::UniqueRenderPass, 4> renderPasses;
+	std::array<vk::UniqueRenderPass, 8> renderPasses;
 };
 
 class RttRenderPasses : public RenderPasses
 {
 protected:
-	vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const override
+	vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const override
 	{
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,

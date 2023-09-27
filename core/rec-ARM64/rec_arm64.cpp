@@ -21,7 +21,9 @@
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
 
+#ifndef _M_ARM64
 #include <unistd.h>
+#endif
 #include <map>
 
 #include <aarch64/macro-assembler-aarch64.h>
@@ -44,11 +46,13 @@ using namespace vixl::aarch64;
 
 #undef do_sqw_nommu
 
-static void generate_mainloop();
-
 struct DynaRBI : RuntimeBlockInfo
 {
+	DynaRBI(Sh4CodeBuffer& codeBuffer) : codeBuffer(codeBuffer) {}
 	u32 Relink() override;
+
+private:
+	Sh4CodeBuffer& codeBuffer;
 };
 
 static u64 jmp_stack;
@@ -70,53 +74,16 @@ static DynaCode *linkBlockNextStub;
 static DynaCode *writeStoreQueue32;
 static DynaCode *writeStoreQueue64;
 
-static bool restarting;
-
-void ngen_mainloop(void* v_cntx)
+static void jitWriteProtect(Sh4CodeBuffer &codeBuffer, bool enable)
 {
-	try {
-		do {
-			restarting = false;
-			generate_mainloop();
-
-			mainloop(v_cntx);
-			if (restarting)
-				p_sh4rcb->cntx.CpuRunning = 1;
-		} while (restarting);
-	} catch (const SH4ThrownException&) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-		throw FlycastException("Fatal: Unhandled SH4 exception");
-	}
-}
-
 #ifdef TARGET_IPHONE
-static void JITWriteProtect(bool enable)
-{
     if (enable)
-    	virtmem::region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    	virtmem::region_set_exec(codeBuffer.getBase(), codeBuffer.getSize());
     else
-    	virtmem::region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
-}
+    	virtmem::region_unlock(codeBuffer.getBase(), codeBuffer.getSize());
+#else
+    JITWriteProtect(enable);
 #endif
-
-void ngen_init()
-{
-	INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
-}
-
-void ngen_ResetBlocks()
-{
-	unwinder.clear();
-	mainloop = nullptr;
-
-	if (p_sh4rcb->cntx.CpuRunning)
-	{
-		// Force the dynarec out of mainloop() to regenerate it
-		p_sh4rcb->cntx.CpuRunning = 0;
-		restarting = true;
-	}
-	else
-		generate_mainloop();
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -158,28 +125,28 @@ class Arm64Assembler : public MacroAssembler
 	typedef void (MacroAssembler::*Arm64Fop_RRR)(const VRegister&, const VRegister&, const VRegister&);
 
 public:
-	Arm64Assembler() : Arm64Assembler(emit_GetCCPtr())
-	{
+	Arm64Assembler(Sh4CodeBuffer& codeBuffer) : Arm64Assembler(codeBuffer, codeBuffer.get()) {
 	}
-	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, emit_FreeSpace()), regalloc(this)
-	{
-		call_regs.push_back(&w0);
-		call_regs.push_back(&w1);
-		call_regs.push_back(&w2);
-		call_regs.push_back(&w3);
-		call_regs.push_back(&w4);
-		call_regs.push_back(&w5);
-		call_regs.push_back(&w6);
-		call_regs.push_back(&w7);
 
-		call_regs64.push_back(&x0);
-		call_regs64.push_back(&x1);
-		call_regs64.push_back(&x2);
-		call_regs64.push_back(&x3);
-		call_regs64.push_back(&x4);
-		call_regs64.push_back(&x5);
-		call_regs64.push_back(&x6);
-		call_regs64.push_back(&x7);
+	Arm64Assembler(Sh4CodeBuffer& codeBuffer, void *buffer) : MacroAssembler((u8 *)buffer, codeBuffer.getFreeSpace()), regalloc(this), codeBuffer(codeBuffer)
+	{
+		call_regs.push_back((const WRegister*)&w0);
+		call_regs.push_back((const WRegister*)&w1);
+		call_regs.push_back((const WRegister*)&w2);
+		call_regs.push_back((const WRegister*)&w3);
+		call_regs.push_back((const WRegister*)&w4);
+		call_regs.push_back((const WRegister*)&w5);
+		call_regs.push_back((const WRegister*)&w6);
+		call_regs.push_back((const WRegister*)&w7);
+
+		call_regs64.push_back((const XRegister*)&x0);
+		call_regs64.push_back((const XRegister*)&x1);
+		call_regs64.push_back((const XRegister*)&x2);
+		call_regs64.push_back((const XRegister*)&x3);
+		call_regs64.push_back((const XRegister*)&x4);
+		call_regs64.push_back((const XRegister*)&x5);
+		call_regs64.push_back((const XRegister*)&x6);
+		call_regs64.push_back((const XRegister*)&x7);
 
 		call_fregs.push_back(&s0);
 		call_fregs.push_back(&s1);
@@ -191,7 +158,7 @@ public:
 		call_fregs.push_back(&s7);
 	}
 
-	void ngen_BinaryOp_RRO(shil_opcode* op, Arm64Op_RRO arm_op, Arm64Op_RROF arm_op2)
+	void binaryOp_RRO(shil_opcode* op, Arm64Op_RRO arm_op, Arm64Op_RROF arm_op2)
 	{
 		Operand op3 = Operand(0);
 		if (op->rs2.is_imm())
@@ -208,7 +175,7 @@ public:
 			((*this).*arm_op2)(regalloc.MapRegister(op->rd), regalloc.MapRegister(op->rs1), op3, LeaveFlags);
 	}
 
-	void ngen_BinaryFop(shil_opcode* op, Arm64Fop_RRR arm_op)
+	void binaryFop(shil_opcode* op, Arm64Fop_RRR arm_op)
 	{
 		VRegister reg1;
 		VRegister reg2;
@@ -285,10 +252,10 @@ public:
 		return *ret_reg;
 	}
 
-	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+	void compileBlock(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
-		JITWriteProtect(false);
+		jitWriteProtect(codeBuffer, false);
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -443,19 +410,19 @@ public:
 				break;
 
 			case shop_and:
-				ngen_BinaryOp_RRO(&op, &MacroAssembler::And, NULL);
+				binaryOp_RRO(&op, &MacroAssembler::And, NULL);
 				break;
 			case shop_or:
-				ngen_BinaryOp_RRO(&op, &MacroAssembler::Orr, NULL);
+				binaryOp_RRO(&op, &MacroAssembler::Orr, NULL);
 				break;
 			case shop_xor:
-				ngen_BinaryOp_RRO(&op, &MacroAssembler::Eor, NULL);
+				binaryOp_RRO(&op, &MacroAssembler::Eor, NULL);
 				break;
 			case shop_add:
-				ngen_BinaryOp_RRO(&op, NULL, &MacroAssembler::Add);
+				binaryOp_RRO(&op, NULL, &MacroAssembler::Add);
 				break;
 			case shop_sub:
-				ngen_BinaryOp_RRO(&op, NULL, &MacroAssembler::Sub);
+				binaryOp_RRO(&op, NULL, &MacroAssembler::Sub);
 				break;
 			case shop_shl:
 				if (op.rs2.is_imm())
@@ -485,7 +452,7 @@ public:
 			case shop_adc:
 				{
 					Register reg1;
-					Operand op2;
+					Operand op2 = Operand(0);
 					Register reg3;
 					if (op.rs1.is_imm())
 					{
@@ -517,8 +484,8 @@ public:
 			case shop_sbc:
 				{
 					Register reg1;
-					Operand op2;
-					Operand op3;
+					Operand op2 = Operand(0);
+					Operand op3 = Operand(0);
 					if (op.rs1.is_imm())
 					{
 						Mov(w0, op.rs1.imm_value());
@@ -543,8 +510,8 @@ public:
 				break;
 			case shop_negc:
 				{
-					Operand op1;
-					Operand op2;
+					Operand op1 = Operand(0);
+					Operand op2 = Operand(0);
 					if (op.rs1.is_imm())
 						op1 = Operand(op.rs1.imm_value());
 					else
@@ -885,16 +852,16 @@ public:
 			//
 
 			case shop_fadd:
-				ngen_BinaryFop(&op, &MacroAssembler::Fadd);
+				binaryFop(&op, &MacroAssembler::Fadd);
 				break;
 			case shop_fsub:
-				ngen_BinaryFop(&op, &MacroAssembler::Fsub);
+				binaryFop(&op, &MacroAssembler::Fsub);
 				break;
 			case shop_fmul:
-				ngen_BinaryFop(&op, &MacroAssembler::Fmul);
+				binaryFop(&op, &MacroAssembler::Fmul);
 				break;
 			case shop_fdiv:
-				ngen_BinaryFop(&op, &MacroAssembler::Fdiv);
+				binaryFop(&op, &MacroAssembler::Fdiv);
 				break;
 
 			case shop_fabs:
@@ -1002,15 +969,15 @@ public:
 		RelinkBlock(block);
 
 		Finalize();
-		JITWriteProtect(true);
+		jitWriteProtect(codeBuffer, true);
 	}
 
-	void ngen_CC_Start(shil_opcode* op)
+	void canonStart(const shil_opcode *op)
 	{
 		CC_pars.clear();
 	}
 
-	void ngen_CC_Param(shil_opcode& op, shil_param& prm, CanonicalParamType tp)
+	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp)
 	{
 		switch (tp)
 		{
@@ -1040,7 +1007,7 @@ public:
 		}
 	}
 
-	void ngen_CC_Call(shil_opcode*op, void* function)
+	void canonCall(const shil_opcode *op, void *function)
 	{
 		int regused = 0;
 		int fregused = 0;
@@ -1049,7 +1016,7 @@ public:
 		for (int i = CC_pars.size(); i-- > 0;)
 		{
 			verify(fregused < (int)call_fregs.size() && regused < (int)call_regs.size());
-			shil_param& prm = *CC_pars[i].prm;
+			const shil_param& prm = *CC_pars[i].prm;
 			switch (CC_pars[i].type)
 			{
 			// push the params
@@ -1063,7 +1030,7 @@ public:
 				if (prm.is_reg())
 					Fmov(*call_fregs[fregused], regalloc.MapVRegister(prm));
 				else if (prm.is_imm())
-					Fmov(*call_fregs[fregused], reinterpret_cast<f32&>(prm._imm));
+					Fmov(*call_fregs[fregused], reinterpret_cast<const f32&>(prm._imm));
 				else
 					verify(prm.is_null());
 				fregused++;
@@ -1079,7 +1046,7 @@ public:
 			case CPT_u64rvL:
 			case CPT_u64rvH:
 			case CPT_f32rv:
-				// return values are handled in ngen_CC_param()
+				// return values are handled in canonParam()
 				break;
 			}
 		}
@@ -1337,7 +1304,7 @@ public:
 			block->host_code_size = GetBuffer()->GetSizeInBytes();
 			block->host_opcodes = GetLabelAddress<u32*>(&code_end) - GetBuffer()->GetStartAddress<u32*>();
 
-			emit_Skip(block->host_code_size);
+			codeBuffer.advance(block->host_code_size);
 		}
 
 		// Flush and invalidate caches
@@ -1373,12 +1340,12 @@ public:
 
 		// int intc_sched(int pc, int cycle_counter)
 		arm64_intc_sched = GetCursorAddress<DynaCode *>();
-		verify((void *)arm64_intc_sched == (void *)CodeCache);
+		verify((void *)arm64_intc_sched == codeBuffer.getBase());
 		B(&intc_sched);
 
 		// Not yet compiled block stub
 		// WARNING: this function must be at a fixed address, or transitioning to mmu will fail (switch)
-		ngen_FailedToFindBlock = (void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>());
+		rdv_SetFailedToFindBlockHandler((void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>()));
 		if (mmu_enabled())
 		{
 			GenCallRuntime(rdv_FailedToFindBlock_pc);
@@ -1418,7 +1385,7 @@ public:
 		// For stack unwinding purposes, we pretend that the entire code block is just one function, with the same
 		// unwinding instructions everywhere. This isn't true until the end of the following prolog, but exceptions
 		// can only be thrown by called functions so this is good enough.
-		unwinder.start(CodeCache);
+		unwinder.start(codeBuffer.getBase());
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
@@ -1605,9 +1572,9 @@ public:
 		Ret();
 
 		FinalizeCode();
-		emit_Skip(GetBuffer()->GetSizeInBytes());
+		codeBuffer.advance(GetBuffer()->GetSizeInBytes());
 
-		size_t unwindSize = unwinder.end(CODE_SIZE - 128, (ptrdiff_t)CC_RW2RX(0));
+		size_t unwindSize = unwinder.end(codeBuffer.getSize() - 128, (ptrdiff_t)CC_RW2RX(0));
 		verify(unwindSize <= 128);
 
 		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
@@ -1881,14 +1848,14 @@ private:
 
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
-		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
+		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See rewrite()
 		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
 		// WARNING: the rewrite code relies on having 2 ops before the memory access
-		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
+		// Update rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
 		Ubfx(x1, x0, 0, 29);
 		Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 
@@ -2019,14 +1986,14 @@ private:
 
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
-		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
+		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See rewrite()
 		if (!addrspace::virtmemEnabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
 		// WARNING: the rewrite code relies on having 2 ops before the memory access
-		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
+		// Update rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
 		Ubfx(x7, x0, 0, 29);
 		Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 
@@ -2198,7 +2165,7 @@ private:
 	struct CC_PS
 	{
 		CanonicalParamType type;
-		shil_param* prm;
+		const shil_param *prm;
 	};
 	std::vector<CC_PS> CC_pars;
 	std::vector<const WRegister*> call_regs;
@@ -2208,149 +2175,203 @@ private:
 	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr for fast access. calling a handler can use more than 3 depending on offset
 	const int write_memory_rewrite_size = 5; // ubfx, add, str
+	Sh4CodeBuffer& codeBuffer;
 };
 
-static Arm64Assembler* compiler;
-
-void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
+class Arm64Dynarec : public Sh4Dynarec
 {
-	verify(emit_FreeSpace() >= 16 * 1024);
+public:
+	Arm64Dynarec() {
+		sh4Dynarec = this;
+	}
 
-	compiler = new Arm64Assembler();
-
-	compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
-
-	delete compiler;
-	compiler = NULL;
-}
-
-void ngen_CC_Start(shil_opcode* op)
-{
-	compiler->ngen_CC_Start(op);
-}
-
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_Param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode*op, void* function)
-{
-	compiler->ngen_CC_Call(op, function);
-}
-
-void ngen_CC_Finish(shil_opcode* op)
-{
-
-}
-
-#define STR_LDR_MASK   0xFFE0EC00
-
-static const u32 armv8_mem_ops[] = {
-		0x38E06800,		// Ldrsb
-		0x78E06800,		// Ldrsh
-		0xB8606800,		// Ldr w
-		0xF8606800,		// Ldr x
-		0x38206800,		// Strb
-		0x78206800,		// Strh
-		0xB8206800,		// Str w
-		0xF8206800,		// Str x
-};
-static const bool read_ops[] = {
-		true,
-		true,
-		true,
-		true,
-		false,
-		false,
-		false,
-		false,
-};
-static const u32 op_sizes[] = {
-		1,
-		2,
-		4,
-		8,
-		1,
-		2,
-		4,
-		8,
-};
-bool ngen_Rewrite(host_context_t &context, void *faultAddress)
-{
-	JITWriteProtect(false);
-	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
-	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
-	u32 armv8_op = *code_ptr;
-	bool is_read = false;
-	u32 size = 0;
-	bool found = false;
-	u32 masked = armv8_op & STR_LDR_MASK;
-	for (u32 i = 0; i < std::size(armv8_mem_ops); i++)
+	void init(Sh4CodeBuffer& codeBuffer) override
 	{
-		if (masked == armv8_mem_ops[i])
+		INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
+		this->codeBuffer = &codeBuffer;
+	}
+
+	void reset() override
+	{
+		unwinder.clear();
+		::mainloop = nullptr;
+
+		if (p_sh4rcb->cntx.CpuRunning)
 		{
-			size = op_sizes[i];
-			is_read = read_ops[i];
-			found = true;
-			break;
+			// Force the dynarec out of mainloop() to regenerate it
+			p_sh4rcb->cntx.CpuRunning = 0;
+			restarting = true;
+		}
+		else
+			generate_mainloop();
+	}
+
+	void mainloop(void* v_cntx) override
+	{
+		try {
+			do {
+				restarting = false;
+				generate_mainloop();
+
+				::mainloop(v_cntx);
+				if (restarting)
+					p_sh4rcb->cntx.CpuRunning = 1;
+			} while (restarting);
+		} catch (const SH4ThrownException&) {
+			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+			throw FlycastException("Fatal: Unhandled SH4 exception");
 		}
 	}
-	verify(found);
 
-	// Skip the preceding ops (add, ubfx)
-	u32 *code_rewrite = code_ptr - 2;
-	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
-	if (is_read)
-		assembler->GenReadMemorySlow(size);
-	else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
-		assembler->GenWriteStoreQueue(size);
-	else
-		assembler->GenWriteMemorySlow(size);
-	assembler->Finalize(true);
-	delete assembler;
-	context.pc = (unat)CC_RW2RX(code_rewrite);
-	JITWriteProtect(true);
+	void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override
+	{
+		verify(codeBuffer->getFreeSpace() >= 16 * 1024);
 
-	return true;
-}
+		compiler = new Arm64Assembler(*codeBuffer);
 
-static void generate_mainloop()
-{
-	if (mainloop != nullptr)
-		return;
-	JITWriteProtect(false);
-	compiler = new Arm64Assembler();
+		compiler->compileBlock(block, smc_checks, optimise);
 
-	compiler->GenMainloop();
+		delete compiler;
+		compiler = nullptr;
+	}
 
-	delete compiler;
-	compiler = nullptr;
-	JITWriteProtect(true);
-}
+	void canonStart(const shil_opcode *op) override
+	{
+		compiler->canonStart(op);
+	}
 
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	generate_mainloop();
-	return new DynaRBI();
-}
+	void canonParam(const shil_opcode *op, const shil_param *par, CanonicalParamType tp) override
+	{
+		compiler->canonParam(*op, *par, tp);
+	}
 
-void ngen_HandleException(host_context_t &context)
-{
-	context.pc = (uintptr_t)handleException;
-}
+	void canonCall(const shil_opcode *op, void *function) override
+	{
+		compiler->canonCall(op, function);
+	}
+
+	void canonFinish(const shil_opcode *op) override {
+	}
+
+	void generate_mainloop()
+	{
+		if (::mainloop != nullptr)
+			return;
+		jitWriteProtect(*codeBuffer, false);
+		compiler = new Arm64Assembler(*codeBuffer);
+
+		compiler->GenMainloop();
+
+		delete compiler;
+		compiler = nullptr;
+		jitWriteProtect(*codeBuffer, true);
+	}
+
+	RuntimeBlockInfo* allocateBlock() override
+	{
+		generate_mainloop();
+		return new DynaRBI(*codeBuffer);
+	}
+
+	void handleException(host_context_t &context) override
+	{
+		context.pc = (uintptr_t)::handleException;
+	}
+
+	bool rewrite(host_context_t &context, void *faultAddress) override
+	{
+		constexpr u32 STR_LDR_MASK = 0xFFE0EC00;
+
+		static const u32 armv8_mem_ops[] = {
+				0x38E06800,		// Ldrsb
+				0x78E06800,		// Ldrsh
+				0xB8606800,		// Ldr w
+				0xF8606800,		// Ldr x
+				0x38206800,		// Strb
+				0x78206800,		// Strh
+				0xB8206800,		// Str w
+				0xF8206800,		// Str x
+		};
+		static const bool read_ops[] = {
+				true,
+				true,
+				true,
+				true,
+				false,
+				false,
+				false,
+				false,
+		};
+		static const u32 op_sizes[] = {
+				1,
+				2,
+				4,
+				8,
+				1,
+				2,
+				4,
+				8,
+		};
+
+		//LOGI("Sh4Dynarec::rewrite pc %zx\n", context.pc);
+		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
+		if ((u8 *)code_ptr < (u8 *)codeBuffer->getBase()
+				|| (u8 *)code_ptr >= (u8 *)codeBuffer->getBase() + codeBuffer->getSize())
+			return false;
+		jitWriteProtect(*codeBuffer, false);
+		u32 armv8_op = *code_ptr;
+		bool is_read = false;
+		u32 size = 0;
+		bool found = false;
+		u32 masked = armv8_op & STR_LDR_MASK;
+		for (u32 i = 0; i < std::size(armv8_mem_ops); i++)
+		{
+			if (masked == armv8_mem_ops[i])
+			{
+				size = op_sizes[i];
+				is_read = read_ops[i];
+				found = true;
+				break;
+			}
+		}
+		verify(found);
+
+		// Skip the preceding ops (add, ubfx)
+		u32 *code_rewrite = code_ptr - 2;
+		Arm64Assembler *assembler = new Arm64Assembler(*codeBuffer, code_rewrite);
+		if (is_read)
+			assembler->GenReadMemorySlow(size);
+		else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
+			assembler->GenWriteStoreQueue(size);
+		else
+			assembler->GenWriteMemorySlow(size);
+		assembler->Finalize(true);
+		delete assembler;
+		context.pc = (unat)CC_RW2RX(code_rewrite);
+		jitWriteProtect(*codeBuffer, true);
+
+		return true;
+	}
+
+private:
+	Arm64Assembler* compiler = nullptr;
+	bool restarting = false;
+	Sh4CodeBuffer *codeBuffer;
+};
+
+static Arm64Dynarec instance;
 
 u32 DynaRBI::Relink()
 {
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
-	JITWriteProtect(false);
-	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
+	jitWriteProtect(codeBuffer, false);
+	Arm64Assembler *compiler = new Arm64Assembler(codeBuffer, (u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
 	delete compiler;
-	JITWriteProtect(true);
+	jitWriteProtect(codeBuffer, true);
 
 	return code_size;
 #else

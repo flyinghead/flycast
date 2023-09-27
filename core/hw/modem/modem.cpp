@@ -134,7 +134,7 @@ static FILE *recv_fp;
 static FILE *sent_fp;
 #endif
 
-static int modem_sched_func(int tag, int cycles, int jitter)
+static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 {
 #ifndef NDEBUG
 	if (os_GetSeconds() - last_comm_stats >= 2)
@@ -626,7 +626,10 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			{
 				modem_regs.reg1a.SFRES = 0;
 				LOG("Soft Reset SET && NEWC, executing reset and init");
+				modem_reset(0);
 				modem_reset(1);
+				modem_regs.reg1f.NEWC = 1;
+				modem_regs.ptr[0x20] = 0;
 			}
 			else
 			{
@@ -702,15 +705,13 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 
 		case MS_ST_CONTROLER:
 		case MS_ST_DSP:
-			if (reg==0x10)
-			{
-				modem_regs.reg1e.TDBE=0;
+		case MS_END_DSP:
+			if (reg == 0x10)
+				// don't reset TBDE to help kos modem self test
+				//modem_regs.reg1e.TDBE = 0;
 				return 0;
-			}
 			else
-			{
 				return modem_regs.ptr[reg];
-			}
 
 		case MS_RESETING:
 			return 0; //still reset

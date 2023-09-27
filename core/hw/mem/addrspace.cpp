@@ -461,9 +461,9 @@ void initMappings()
 	mem_b.zero();
 	NOTICE_LOG(VMEM, "BASE %p RAM(%d MB) %p VRAM64(%d MB) %p ARAM(%d MB) %p",
 			ram_base,
-			RAM_SIZE / 1024 / 1024, &mem_b[0],
-			VRAM_SIZE / 1024 / 1024, &vram[0],
-			ARAM_SIZE / 1024 / 1024, &aica::aica_ram[0]);
+			(u32)(RAM_SIZE / 1_MB), &mem_b[0],
+			(u32)(VRAM_SIZE / 1_MB), &vram[0],
+			(u32)(ARAM_SIZE / 1_MB), &aica::aica_ram[0]);
 }
 
 void release()

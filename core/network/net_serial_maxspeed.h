@@ -26,7 +26,7 @@
 #include "hw/naomi/naomi_flashrom.h"
 #include <deque>
 
-struct MaxSpeedNetPipe : public SerialPipe
+struct MaxSpeedNetPipe : public SerialPort::Pipe
 {
 	class Exception : public FlycastException
 	{
@@ -243,7 +243,7 @@ private:
 		else
 			enableNetworkBroadcast(true);
 
-		serial_setPipe(this);
+		SCIFSerialPort::Instance().setPipe(this);
 	}
 
 	sock_t sock = INVALID_SOCKET;

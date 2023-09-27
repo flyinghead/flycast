@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "vulkan_context.h"
+#include "vulkan_renderer.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "../gui.h"
@@ -210,9 +211,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice = nullptr;
 		for (const auto& phyDev : devices)
 		{
-			vk::PhysicalDeviceProperties props;
-			phyDev.getProperties(&props);
-			if (props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+			if (phyDev.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 			{
 				physicalDevice = phyDev;
 				break;
@@ -221,32 +220,22 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		if (!physicalDevice)
 			physicalDevice = devices.front();
 
-		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11)
+		vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+		if (vulkan11 && properties.apiVersion >= VK_API_VERSION_1_1)
 		{
-			static vk::PhysicalDeviceProperties2 properties2;
-			vk::PhysicalDeviceMaintenance3Properties properties3;
-			properties2.pNext = &properties3;
-			physicalDevice.getProperties2(&properties2);
-			properties = &properties2.properties;
-			maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
+			const auto properties2 = physicalDevice.getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceMaintenance3Properties>();
+			properties = properties2.get<vk::PhysicalDeviceProperties2>().properties;
+			maxMemoryAllocationSize = properties2.get<vk::PhysicalDeviceMaintenance3Properties>().maxMemoryAllocationSize;
 			if (maxMemoryAllocationSize == 0)
 				// Happens on Windows 7 with NVidia 376.33, ok on 441.66
 				maxMemoryAllocationSize = 0xFFFFFFFFu;
 		}
-		else
-		{
-			static vk::PhysicalDeviceProperties phyProperties;
-			physicalDevice.getProperties(&phyProperties);
-			properties = &phyProperties;
-		}
-		uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
-		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
-		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
-		maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
-		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
-		vendorID = properties->vendorID;
-		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName.data());
+
+		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
+		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
+		maxSamplerAnisotropy =  properties.limits.maxSamplerAnisotropy;
+		vendorID = properties.vendorID;
+		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties.deviceName.data());
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -269,10 +258,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			optimalTilingSupported4444 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
-		vk::PhysicalDeviceFeatures features;
-		physicalDevice.getFeatures(&features);
-		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
-		samplerAnisotropy = features.samplerAnisotropy;
+		const auto features = physicalDevice.getFeatures();
+		fragmentStoresAndAtomics = !!features.fragmentStoresAndAtomics;
+		samplerAnisotropy = !!features.samplerAnisotropy;
 		if (!fragmentStoresAndAtomics)
 			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
 
@@ -413,6 +401,8 @@ bool VulkanContext::InitDevice()
 			}
 			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
 				deviceExtensions.push_back("VK_KHR_portability_subset");
+			else if (!strcmp(property.extensionName, "VK_EXT_metal_objects"))
+				deviceExtensions.push_back("VK_EXT_metal_objects");
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
@@ -503,8 +493,7 @@ bool VulkanContext::InitDevice()
 	    quadRotatePipeline = std::make_unique<QuadPipeline>(true, true);
 	    quadRotateDrawer = std::make_unique<QuadDrawer>();
 
-		vk::PhysicalDeviceProperties props;
-		physicalDevice.getProperties(&props);
+		vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
 		driverName = (const char *)props.deviceName;
 #ifdef __APPLE__
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.apiVersion)) + "."
@@ -514,6 +503,8 @@ bool VulkanContext::InitDevice()
 				+ std::to_string(props.driverVersion / 10000) + "."
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
+		
+		initVideoRouting();
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -536,6 +527,19 @@ bool VulkanContext::InitDevice()
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
 	return false;
+}
+
+void VulkanContext::initVideoRouting()
+{
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
+	os_VideoRoutingTermVk();
+	if (config::VideoRouting)
+	{
+		os_VideoRoutingInitSyphonWithVkDevice(device);
+	}
+#endif
 }
 
 void VulkanContext::CreateSwapChain()
@@ -626,8 +630,8 @@ void VulkanContext::CreateSwapChain()
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#ifdef TEST_AUTOMATION
-			// for final screenshot
+#if defined(TEST_AUTOMATION) || (defined(VIDEO_ROUTING) && defined(TARGET_MAC))
+			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
 			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
@@ -968,6 +972,8 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
+			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
+			
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1021,6 +1027,10 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+	extern void os_VideoRoutingTermVk();
+	os_VideoRoutingTermVk();
+#endif
 #ifndef USE_SDL
 	surface.reset();
 #else

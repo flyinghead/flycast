@@ -93,16 +93,22 @@ public:
 };
 extern SCIFRegisters scif;
 
-struct SerialPipe
+class SCIFSerialPort : public SerialPort
 {
-	// Serial TX
-	virtual void write(u8 data) { }
-	// RX buffer Size
-	virtual int available() { return 0; }
-	// Serial RX
-	virtual u8 read() { return 0; }
+public:
+	void setPipe(Pipe *pipe) override {
+		this->pipe = pipe;
+	}
+	void updateStatus() override;
 
-	virtual ~SerialPipe() = default;
+	static u8 readData(u32 addr);
+	static void writeData(u32 addr, u8 data);
+	static u16 readStatus(u32 addr);
+	static void writeStatus(u32 addr, u16 data);
+	static u16 readSCFDR2(u32 addr);
+
+	static SCIFSerialPort& Instance();
+
+private:
+	Pipe *pipe = nullptr;
 };
-void serial_setPipe(SerialPipe *pipe);
-void serial_updateStatusRegister();

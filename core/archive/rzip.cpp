@@ -54,7 +54,7 @@ bool RZipFile::Open(const std::string& path, bool write)
 	}
 	else
 	{
-		maxChunkSize = 1024 * 1024;
+		maxChunkSize = 1_MB;
 		if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
 			|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
 			|| std::fwrite(&size, sizeof(size), 1, file) != 1)

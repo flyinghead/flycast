@@ -17,10 +17,14 @@
 
 #if FEAT_SHREC != DYNAREC_NONE
 
+constexpr u32 CODE_SIZE = 10_MB;
+constexpr u32 TEMP_CODE_SIZE = 1_MB;
+constexpr u32 FULL_SIZE = CODE_SIZE + TEMP_CODE_SIZE;
+
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *SH4_TCB;
 #else
-alignas(4096) static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE]
+alignas(4096) static u8 SH4_TCB[FULL_SIZE]
 #if defined(__OpenBSD__)
 	__attribute__((section(".openbsd.mutable")));
 #elif defined(__unix__) || defined(__SWITCH__)
@@ -32,32 +36,66 @@ alignas(4096) static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE]
 #endif
 #endif
 
-u8* CodeCache;
+static u8* CodeCache;
 static u8* TempCodeCache;
 ptrdiff_t cc_rx_offset;
-
-static u32 LastAddr;
-static u32 TempLastAddr;
-static u32 *emit_ptr;
-static u32 *emit_ptr_limit;
 
 static std::unordered_set<u32> smc_hotspots;
 
 static sh4_if sh4Interp;
+static Sh4CodeBuffer codeBuffer;
+Sh4Dynarec *sh4Dynarec;
 
-void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
+void *Sh4CodeBuffer::get()
+{
+	return tempBuffer ? &TempCodeCache[tempLastAddr] : &CodeCache[lastAddr];
+}
+
+void Sh4CodeBuffer::advance(u32 size)
+{
+	if (tempBuffer)
+		tempLastAddr += size;
+	else
+		lastAddr += size;
+}
+
+u32 Sh4CodeBuffer::getFreeSpace()
+{
+	if (tempBuffer)
+		return TEMP_CODE_SIZE - tempLastAddr;
+	else
+		return CODE_SIZE - lastAddr;
+}
+
+void *Sh4CodeBuffer::getBase()
+{
+	return CodeCache;
+}
+
+u32 Sh4CodeBuffer::getSize()
+{
+	return FULL_SIZE;
+}
+
+void Sh4CodeBuffer::reset(bool temporary)
+{
+	if (temporary)
+		tempLastAddr = 0;
+	else
+		lastAddr = 0;
+}
 
 static void clear_temp_cache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
-	TempLastAddr = 0;
+	codeBuffer.reset(true);
 	bm_ResetTempCache(full);
 }
 
 static void recSh4_ClearCache()
 {
-	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, emit_FreeSpace());
-	LastAddr = 0;
+	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, codeBuffer.getFreeSpace());
+	codeBuffer.reset(false);
 	bm_ResetCache();
 	smc_hotspots.clear();
 	clear_temp_cache(true);
@@ -71,33 +109,17 @@ static void recSh4_Run()
 	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 	
-	ngen_mainloop(sh4_dyna_rcb);
+	sh4Dynarec->mainloop(sh4_dyna_rcb);
 
 	sh4_int_bCpuRun = false;
-}
-
-void emit_Skip(u32 sz)
-{
-	if (emit_ptr)
-		emit_ptr = (u32*)((u8*)emit_ptr + sz);
-	else
-		LastAddr += sz;
-
-}
-u32 emit_FreeSpace()
-{
-	if (emit_ptr)
-		return (emit_ptr_limit - emit_ptr) * sizeof(u32);
-	else
-		return CODE_SIZE - LastAddr;
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
 bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
-	staging_runs=addr=lookups=runs=host_code_size=0;
-	guest_cycles=guest_opcodes=host_opcodes=0;
+	addr = host_code_size = 0;
+	guest_cycles = guest_opcodes = host_opcodes = 0;
 	sh4_code_size = 0;
 	pBranchBlock=pNextBlock=0;
 	code=0;
@@ -149,43 +171,36 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 
 DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
-	u32 pc=next_pc;
+	const u32 pc = next_pc;
 
-	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
+	if (codeBuffer.getFreeSpace() < 16_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
 		recSh4_ClearCache();
 
-	RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+	RuntimeBlockInfo* rbi = sh4Dynarec->allocateBlock();
 
-	if (!rbi->Setup(pc,fpscr))
+	if (!rbi->Setup(pc, fpscr))
 	{
 		delete rbi;
-		return NULL;
+		return nullptr;
 	}
 	rbi->blockcheck_failures = blockcheck_failures;
 	if (smc_hotspots.find(rbi->addr) != smc_hotspots.end())
 	{
-		if (TEMP_CODE_SIZE - TempLastAddr < 16 * 1024)
+		codeBuffer.useTempBuffer(true);
+		if (codeBuffer.getFreeSpace() < 16_KB)
 			clear_temp_cache(false);
-		emit_ptr = (u32 *)(TempCodeCache + TempLastAddr);
-		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
 		rbi->temp_block = true;
 		if (rbi->read_only)
 			INFO_LOG(DYNAREC, "WARNING: temp block %x (%x) is protected!", rbi->vaddr, rbi->addr);
 	}
 	bool do_opts = !rbi->temp_block;
-	rbi->staging_runs=do_opts?100:-100;
 	bool block_check = !rbi->read_only;
-	ngen_Compile(rbi, block_check, (pc & 0xFFFFFF) == 0x08300 || (pc & 0xFFFFFF) == 0x10000, false, do_opts);
-	verify(rbi->code!=0);
+	sh4Dynarec->compile(rbi, block_check, do_opts);
+	verify(rbi->code != nullptr);
 
 	bm_AddBlock(rbi);
 
-	if (emit_ptr != NULL)
-	{
-		TempLastAddr = (u8*)emit_ptr - TempCodeCache;
-		emit_ptr = NULL;
-		emit_ptr_limit = NULL;
-	}
+	codeBuffer.useTempBuffer(false);
 
 	return rbi->code;
 }
@@ -327,6 +342,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	
 	return (void*)rv;
 }
+
 static void recSh4_Stop()
 {
 	sh4Interp.Stop();
@@ -358,16 +374,16 @@ static void recSh4_Init()
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = nullptr;
 #ifdef FEAT_NO_RWX_PAGES
-	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, FULL_SIZE, (void**)&CodeCache, &cc_rx_offset);
 #else
-	bool rc = virtmem::prepare_jit_block(SH4_TCB, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache);
+	bool rc = virtmem::prepare_jit_block(SH4_TCB, FULL_SIZE, (void**)&CodeCache);
 #endif
 	verify(rc);
 	// Ensure the pointer returned is non-null
 	verify(CodeCache != nullptr);
 
 	TempCodeCache = CodeCache + CODE_SIZE;
-	ngen_init();
+	sh4Dynarec->init(codeBuffer);
 	bm_ResetCache();
 }
 
@@ -376,10 +392,10 @@ static void recSh4_Term()
 	INFO_LOG(DYNAREC, "recSh4 Term");
 #ifdef FEAT_NO_RWX_PAGES
 	if (CodeCache != nullptr)
-		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, CODE_SIZE + TEMP_CODE_SIZE);
+		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, FULL_SIZE);
 #else
 	if (CodeCache != nullptr && CodeCache != SH4_TCB)
-		virtmem::release_jit_block(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+		virtmem::release_jit_block(CodeCache, FULL_SIZE);
 #endif
 	CodeCache = nullptr;
 	TempCodeCache = nullptr;
@@ -451,4 +467,8 @@ bool rdv_writeMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& phy
 	return true;
 }
 
+void rdv_SetFailedToFindBlockHandler(void (*handler)())
+{
+	ngen_FailedToFindBlock = handler;
+}
 #endif  // FEAT_SHREC != DYNAREC_NONE

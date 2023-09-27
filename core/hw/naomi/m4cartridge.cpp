@@ -232,27 +232,32 @@ u16 M4Cartridge::decrypt_one_round(u16 word, u16 subkey)
 	return one_round[word ^ subkey] ^ subkey ;
 }
 
+u16 M4Cartridge::decrypt(u16 enc)
+{
+	u16 dec = iv;
+	iv = decrypt_one_round(enc ^ iv, subkey1);
+	dec ^= decrypt_one_round(iv, subkey2);
+	counter++;
+	if (counter == 16) {
+		counter = 0;
+		iv = 0;
+	}
+
+	return dec;
+}
+
 void M4Cartridge::enc_fill()
 {
 	const u8 *base = RomPtr + rom_cur_address;
 	while (buffer_actual_size < sizeof(buffer))
 	{
-		u16 enc = base[0] | (base[1] << 8);
-		u16 dec = iv;
-		iv = decrypt_one_round(enc ^ iv, subkey1);
-		dec ^= decrypt_one_round(iv, subkey2);
+		u16 dec = decrypt(base[0] | (base[1] << 8));
 
 		buffer[buffer_actual_size++] = dec;
 		buffer[buffer_actual_size++] = dec >> 8;
 
 		base += 2;
 		rom_cur_address += 2;
-
-		counter++;
-		if(counter == 16) {
-			counter = 0;
-			iv = 0;
-		}
 	}
 //	printf("Decrypted M4 data:\n");
 //	for (int i = 0; i < buffer_actual_size; i++)
@@ -285,7 +290,9 @@ bool M4Cartridge::GetBootId(RomBootID *bootId)
 	if (RomSize < sizeof(RomBootID))
 		return false;
 	RomBootID *pBootId = (RomBootID *)RomPtr;
-	if (memcmp(pBootId->boardName, "NAOMI", 5))
+	if (memcmp(pBootId->boardName, "NAOMI", 5)
+			&& memcmp(pBootId->boardName, "Naomi2", 6)
+			&& memcmp(pBootId->boardName, "SystemSP", 8))
 	{
 		rom_cur_address = 0;
 		enc_reset();

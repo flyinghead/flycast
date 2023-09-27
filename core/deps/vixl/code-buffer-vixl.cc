@@ -24,9 +24,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef VIXL_CODE_BUFFER_MMAP
 extern "C" {
 #include <sys/mman.h>
 }
+#endif
 
 #include "code-buffer-vixl.h"
 #include "utils-vixl.h"
@@ -74,7 +76,7 @@ CodeBuffer::CodeBuffer(byte* buffer, size_t capacity)
 }
 
 
-CodeBuffer::~CodeBuffer() {
+CodeBuffer::~CodeBuffer() VIXL_NEGATIVE_TESTING_ALLOW_EXCEPTION {
   VIXL_ASSERT(!IsDirty());
   if (managed_) {
 #ifdef VIXL_CODE_BUFFER_MALLOC
@@ -88,28 +90,37 @@ CodeBuffer::~CodeBuffer() {
 }
 
 
-#ifdef VIXL_CODE_BUFFER_MMAP
 void CodeBuffer::SetExecutable() {
+#ifdef VIXL_CODE_BUFFER_MMAP
   int ret = mprotect(buffer_, capacity_, PROT_READ | PROT_EXEC);
   VIXL_CHECK(ret == 0);
-}
+#else
+  // This requires page-aligned memory blocks, which we can only guarantee with
+  // mmap.
+  VIXL_UNIMPLEMENTED();
 #endif
+}
 
 
-#ifdef VIXL_CODE_BUFFER_MMAP
 void CodeBuffer::SetWritable() {
+#ifdef VIXL_CODE_BUFFER_MMAP
   int ret = mprotect(buffer_, capacity_, PROT_READ | PROT_WRITE);
   VIXL_CHECK(ret == 0);
-}
+#else
+  // This requires page-aligned memory blocks, which we can only guarantee with
+  // mmap.
+  VIXL_UNIMPLEMENTED();
 #endif
+}
 
 
 void CodeBuffer::EmitString(const char* string) {
-  VIXL_ASSERT(HasSpaceFor(strlen(string) + 1));
+  const auto len = strlen(string) + 1;
+  VIXL_ASSERT(HasSpaceFor(len));
   char* dst = reinterpret_cast<char*>(cursor_);
   dirty_ = true;
-  char* null_char = stpcpy(dst, string);
-  cursor_ = reinterpret_cast<byte*>(null_char) + 1;
+  memcpy(dst, string, len);
+  cursor_ = reinterpret_cast<byte*>(dst + len);
 }
 
 

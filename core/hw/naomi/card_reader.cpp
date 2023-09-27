@@ -20,57 +20,16 @@
 #include "oslib/oslib.h"
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_devs.h"
 #include <deque>
 #include <memory>
 #include <errno.h>
 
 namespace card_reader {
 
-class CardReader
-{
-protected:
-	u8 calcCrc(u8 *data, u32 len)
-	{
-		u32 crc = 0;
-		for (u32 i = 0; i < len; i++)
-			crc ^= data[i];
-		return crc;
-	}
-
-	bool loadCard(u8 *cardData, u32 len)
-	{
-		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "rb");
-		if (fp == nullptr)
-			return false;
-
-		DEBUG_LOG(NAOMI, "Loading card file from %s", path.c_str());
-		if (fread(cardData, 1, len, fp) != len)
-			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
-		fclose(fp);
-
-		return true;
-	}
-
-	void saveCard(const u8 *cardData, u32 len)
-	{
-		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "wb");
-		if (fp == nullptr)
-		{
-			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
-			return;
-		}
-		DEBUG_LOG(NAOMI, "Saving card file to %s", path.c_str());
-		if (fwrite(cardData, 1, len, fp) != len)
-			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-		fclose(fp);
-	}
-};
-
-
 /*
-	Initial D card reader protocol (from my good friend Metallic)
+	Sanwa CRP-1231BR-10 card reader/writer protocol (from my good friend Metallic)
+	used in InitialD and Derby Owners Club
 
 >>>	SEND PKT: [START 02][LEN][CMD][0][0][0]{optional data}[STOP 03][CRC]
 <<<	RECV ACK: [OK 06]
@@ -99,18 +58,15 @@ protected:
 
 	Protocol dumps and more:
 	https://www.arcade-projects.com/threads/naomi-2-chihiro-triforce-card-reader-emulator-initial-d3-wmmt-mario-kart-f-zero-ax.814/
- */
-class InitialDCardReader final : public CardReader, SerialPipe
+
+	Bits from YACardEmu: https://github.com/GXTX/YACardEmu/
+	Copyright (C) 2020-2023 wutno (https://github.com/GXTX)
+    Copyright (C) 2022-2023 tugpoat (https://github.com/tugpoat)
+*/
+
+class SanwaCRP1231BR : public SerialPort::Pipe
 {
 public:
-	InitialDCardReader() {
-		serial_setPipe(this);
-	}
-
-	~InitialDCardReader() {
-		serial_setPipe(nullptr);
-	}
-
 	void write(u8 b) override
 	{
 		if (inBufferIdx == 0 && b == 5)
@@ -174,26 +130,26 @@ public:
 			INFO_LOG(NAOMI, "Card inserted");
 	}
 
-private:
+protected:
 	enum Commands
 	{
 		CARD_INIT			= 0x10,
 		CARD_GET_CARD_STATE	= 0x20,
-		CARD_IS_PRESENT		= 0x40, // cancel?
+		CARD_CANCEL			= 0x40,
 		CARD_LOAD_CARD		= 0xB0,
 		CARD_CLEAN_CARD		= 0xA0,
 		CARD_READ			= 0x33,
 		CARD_WRITE			= 0x53,
-		CARD_WRITE_INFO		= 0x7C,
-		CARD_PRINT			= 0x78,
-		CARD_7A				= 0x7A,
-		CARD_7D				= 0x7D,
+		CARD_PRINT			= 0x7C,
+		CARD_PRINT_SETTINGS	= 0x78,
+		CARD_REGISTER_FONT	= 0x7A,
+		CARD_ERASE_PRINT	= 0x7D,
 		CARD_DOOR			= 0xD0,
 		CARD_EJECT			= 0x80,
 		CARD_NEW            = 0xB0,
 	};
 
-	u8 getStatus1()
+	virtual u8 getStatus1()
 	{
 		return ((doorOpen ? 2 : 1) << 6) | 0x20 | (cardInserted ? 0x18 : 0);
 	}
@@ -204,7 +160,6 @@ private:
 			return;
 		outBuffer[outBufferLen++] = 2;
 		u32 crcIdx = outBufferLen;
-		u8 len = 6;
 		u8 status1 = getStatus1();
 		u8 status2 = '0';
 		u8 status3 = '0';
@@ -212,38 +167,74 @@ private:
 		{
 		case CARD_DOOR:
 			doorOpen = rxCommand[4] == '1';
+			INFO_LOG(NAOMI, "Door %s", doorOpen ? "open" : "closed");
 			status1 = getStatus1();
 			break;
 
 		case CARD_NEW:
+			INFO_LOG(NAOMI, "New card");
 			cardInserted = true;
 			doorOpen = false;
 			status1 = getStatus1();
 			break;
 
 		case CARD_WRITE:
-			memcpy(cardData, &rxCommand[7], sizeof(cardData));
+			// 4: mode ('0': read 0x45 bytes, '1': variable length write 1-47 bytes)
+			// 5: parity ('0': 7-bit parity, '1': 8-bit no parity)
+			// 6: track (see below)
+			INFO_LOG(NAOMI, "Card write mode %c parity %c track %c", rxCommand[4], rxCommand[5], rxCommand[6]);
+			switch (rxCommand[6])
+			{
+			case '0': // track 1
+				memcpy(cardData, &rxCommand[7], TRACK_SIZE);
+				break;
+			case '1': // track 2
+				memcpy(cardData + TRACK_SIZE, &rxCommand[7], TRACK_SIZE);
+				break;
+			case '2': // track 3
+				memcpy(cardData + TRACK_SIZE * 2, &rxCommand[7], TRACK_SIZE);
+				break;
+			case '3': // track 1 & 2
+				memcpy(cardData, &rxCommand[7], TRACK_SIZE * 2);
+				break;
+			case '4': // track 1 & 3
+				memcpy(cardData, &rxCommand[7], TRACK_SIZE);
+				memcpy(cardData + TRACK_SIZE * 2, &rxCommand[7 + TRACK_SIZE], TRACK_SIZE);
+				break;
+			case '5': // track 2 & 3
+				memcpy(cardData + TRACK_SIZE, &rxCommand[7], TRACK_SIZE * 2);
+				break;
+			case '6': // track 1 2 & 3
+				memcpy(cardData, &rxCommand[7], TRACK_SIZE * 3);
+				break;
+			default:
+				WARN_LOG(NAOMI, "Unknown track# %02x", rxCommand[6]);
+				break;
+			}
 			saveCard(cardData, sizeof(cardData));
 			break;
 
 		case CARD_READ:
-			if (cardInserted && !doorOpen)
-				len = 6 + sizeof(cardData);
-			else
+			// 4: mode ('0': read 0x45 bytes, '1': variable length read 1-47 bytes, '2': card capture, pull in card?)
+			// 5: parity ('0': 7-bit parity, '1': 8-bit no parity)
+			// 6: track (see below)
+			INFO_LOG(NAOMI, "Card read mode %c parity %c track %c", rxCommand[4], rxCommand[5], rxCommand[6]);
+			if (!cardInserted || doorOpen)
 				status3 = cardInserted ? '0' : '4';
 			break;
 
 		case CARD_EJECT:
+			INFO_LOG(NAOMI, "Card ejected");
 			cardInserted = false;
 			status1 = getStatus1();
 			break;
 
-		case CARD_IS_PRESENT:
+		case CARD_CANCEL:
 		case CARD_GET_CARD_STATE:
 		case CARD_INIT:
-		case CARD_7A:
+		case CARD_REGISTER_FONT:
+		case CARD_PRINT_SETTINGS:
 		case CARD_PRINT:
-		case CARD_WRITE_INFO:
 		case CARD_CLEAN_CARD:
 			break;
 
@@ -251,19 +242,91 @@ private:
 			WARN_LOG(NAOMI, "Unknown command %x", rxCommand[0]);
 			break;
 		}
-		outBuffer[outBufferLen++] = len;
+		outBuffer[outBufferLen++] = 6;
 		outBuffer[outBufferLen++] = rxCommand[0];
 		outBuffer[outBufferLen++] = status1;
 		outBuffer[outBufferLen++] = status2;
 		outBuffer[outBufferLen++] = status3;
-		if (rxCommand[0] == CARD_READ && cardInserted && !doorOpen)
+		if (rxCommand[0] == CARD_READ && cardInserted && !doorOpen && rxCommand[4] != '2')
 		{
-			memcpy(&outBuffer[outBufferLen], cardData, sizeof(cardData));
-			outBufferLen += sizeof(cardData);
+			u32 idx = 0;
+			u32 size = TRACK_SIZE;
+			switch (rxCommand[6])
+			{
+			case '0': // track 1
+				break;
+			case '1': // track 2
+				idx = TRACK_SIZE;
+				break;
+			case '2': // track 3
+				idx = TRACK_SIZE * 2;
+				break;
+			case '3': // track 1 & 2
+				size = TRACK_SIZE * 2;
+				break;
+			case '4': // track 1 & 3
+				memcpy(&outBuffer[outBufferLen], cardData, TRACK_SIZE);
+				outBufferLen += TRACK_SIZE;
+				outBuffer[crcIdx] += size;
+				idx = TRACK_SIZE * 2;
+				break;
+			case '5': // track 2 & 3
+				idx = TRACK_SIZE;
+				size = TRACK_SIZE * 2;
+				break;
+			case '6': // track 1 2 & 3
+				size = TRACK_SIZE * 3;
+				break;
+			default:
+				WARN_LOG(NAOMI, "Unknown track# %02x", rxCommand[6]);
+				size = 0;
+				break;
+			}
+			memcpy(&outBuffer[outBufferLen], cardData + idx, size);
+			outBufferLen += size;
+			outBuffer[crcIdx] += size;
 		}
 		outBuffer[outBufferLen++] = 3;
 		outBuffer[outBufferLen] = calcCrc(&outBuffer[crcIdx], outBufferLen - crcIdx);
 		outBufferLen++;
+	}
+
+	u8 calcCrc(u8 *data, u32 len)
+	{
+		u32 crc = 0;
+		for (u32 i = 0; i < len; i++)
+			crc ^= data[i];
+		return crc;
+	}
+
+	bool loadCard(u8 *cardData, u32 len)
+	{
+		std::string path = hostfs::getArcadeFlashPath() + ".card";
+		FILE *fp = nowide::fopen(path.c_str(), "rb");
+		if (fp == nullptr)
+			return false;
+
+		DEBUG_LOG(NAOMI, "Loading card file from %s", path.c_str());
+		if (fread(cardData, 1, len, fp) != len)
+			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
+		fclose(fp);
+
+		return true;
+	}
+
+	void saveCard(const u8 *cardData, u32 len)
+	{
+		std::string path = hostfs::getArcadeFlashPath() + ".card";
+		FILE *fp = nowide::fopen(path.c_str(), "wb");
+		if (fp == nullptr)
+		{
+			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
+			return;
+		}
+		DEBUG_LOG(NAOMI, "Saving card file to %s", path.c_str());
+		if (fwrite(cardData, 1, len, fp) != len)
+			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
+		fclose(fp);
 	}
 
 	u8 inBuffer[256];
@@ -276,30 +339,92 @@ private:
 	u32 outBufferIdx = 0;
 	u32 outBufferLen = 0;
 
-	u8 cardData[207];
+	static constexpr u32 TRACK_SIZE = 0x45;
+	u8 cardData[TRACK_SIZE * 3];
 	bool doorOpen = false;
 	bool cardInserted = false;
 };
 
-static std::unique_ptr<InitialDCardReader> initdReader;
+class SanwaCRP1231LR : public SanwaCRP1231BR
+{
+	u8 getStatus1() override
+	{
+		// '0'	no card
+		// '1'	pos magnetic read/write
+		// '2'	pos thermal printer
+		// '3'	pos thermal dispenser
+		// '4'	ejected not removed
+		return cardInserted ? '1' : '0';
+	}
+};
+
+// Hooked to the SH4 SCIF serial port
+class InitialDCardReader final : public SanwaCRP1231BR
+{
+public:
+	InitialDCardReader() {
+		SCIFSerialPort::Instance().setPipe(this);
+	}
+
+	~InitialDCardReader() {
+		SCIFSerialPort::Instance().setPipe(nullptr);
+	}
+};
+
+// Hooked to the MIE via a 838-13661 RS232/RS422 converter board
+class DerbyBRCardReader final : public SanwaCRP1231BR
+{
+public:
+	DerbyBRCardReader() {
+		getMieDevice()->setPipe(this);
+	}
+
+	~DerbyBRCardReader() {
+		getMieDevice()->setPipe(nullptr);
+	}
+};
+
+class DerbyLRCardReader final : public SanwaCRP1231LR
+{
+public:
+	DerbyLRCardReader() {
+		getMieDevice()->setPipe(this);
+	}
+
+	~DerbyLRCardReader() {
+		getMieDevice()->setPipe(nullptr);
+	}
+};
+
+static std::unique_ptr<SanwaCRP1231BR> cardReader;
 
 void initdInit() {
-	initdReader = std::make_unique<InitialDCardReader>();
+	term();
+	cardReader = std::make_unique<InitialDCardReader>();
 }
 
-void initdTerm() {
-	initdReader.reset();
+void derbyInit()
+{
+	term();
+	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------")
+		cardReader = std::make_unique<DerbyBRCardReader>();
+	else
+		cardReader = std::make_unique<DerbyLRCardReader>();
 }
 
-class BarcodeReader final : public SerialPipe
+void term() {
+	cardReader.reset();
+}
+
+class BarcodeReader final : public SerialPort::Pipe
 {
 public:
 	BarcodeReader() {
-		serial_setPipe(this);
+		SCIFSerialPort::Instance().setPipe(this);
 	}
 
 	~BarcodeReader() {
-		serial_setPipe(nullptr);
+		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
 	int available() override {
@@ -320,7 +445,7 @@ public:
 		INFO_LOG(NAOMI, "Card read: %s", card.c_str());
 		std::string data = card + "*";
 		toSend.insert(toSend.end(), (const u8 *)&data[0], (const u8 *)(&data.back() + 1));
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 	}
 
 	std::string getCard() const	{
@@ -366,8 +491,8 @@ void barcodeSetCard(const std::string& card)
 
 void insertCard(int playerNum)
 {
-	if (initdReader != nullptr)
-		initdReader->insertCard();
+	if (cardReader != nullptr)
+		cardReader->insertCard();
 	else if (barcodeReader != nullptr)
 		barcodeReader->insertCard();
 	else

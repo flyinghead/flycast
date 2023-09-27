@@ -38,7 +38,7 @@ public:
 	const ComPtr<ID3D11VertexShader>& getVertexShader(bool gouraud, bool naomi2, bool positionOnly, bool lightOn, bool twoVolumes = true);
 	const ComPtr<ID3D11PixelShader>& getModVolShader();
 	const ComPtr<ID3D11VertexShader>& getMVVertexShader(bool naomi2);
-	const ComPtr<ID3D11PixelShader>& getFinalShader();
+	const ComPtr<ID3D11PixelShader>& getFinalShader(bool dithering);
 	const ComPtr<ID3D11PixelShader>& getTrModVolShader(int type);
 	const ComPtr<ID3D11VertexShader>& getFinalVertexShader();
 
@@ -53,7 +53,8 @@ public:
 			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
-		finalShader.reset();
+		for (auto& shader : finalShaders)
+			shader.reset();
 		clearShader.reset();
 		finalVertexShader.reset();
 		device.reset();
@@ -74,7 +75,7 @@ private:
 	ComPtr<ID3D11VertexShader> modVolVertexShaders[4];
 
 	ComPtr<ID3D11PixelShader> trModVolShaders[16];
-	ComPtr<ID3D11PixelShader> finalShader;
+	ComPtr<ID3D11PixelShader> finalShaders[2];
 	ComPtr<ID3D11PixelShader> clearShader;
 	ComPtr<ID3D11VertexShader> finalVertexShader;
 	pD3DCompile D3DCompile = nullptr;

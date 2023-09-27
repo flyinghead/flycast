@@ -28,8 +28,8 @@ template<typename T, bool ArchX64>
 class BaseXbyakRec : public Xbyak::CodeGenerator
 {
 protected:
-	BaseXbyakRec() : BaseXbyakRec((u8 *)emit_GetCCPtr()) { }
-	BaseXbyakRec(u8 *code_ptr) : Xbyak::CodeGenerator(emit_FreeSpace(), code_ptr) { }
+	BaseXbyakRec(Sh4CodeBuffer& codeBuffer) : BaseXbyakRec(codeBuffer, (u8 *)codeBuffer.get()) { }
+	BaseXbyakRec(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : Xbyak::CodeGenerator(codeBuffer.getFreeSpace(), code_ptr), codeBuffer(codeBuffer) { }
 
 	using BinaryOp = void (BaseXbyakRec::*)(const Xbyak::Operand&, const Xbyak::Operand&);
 	using BinaryFOp = void (BaseXbyakRec::*)(const Xbyak::Xmm&, const Xbyak::Operand&);
@@ -521,7 +521,7 @@ protected:
 					movss(xmm2, rs3);
 					rs3 = xmm2;
 				}
-				if (op.rs1.is_imm())
+				if (op.rs1.is_imm()) // FIXME mapXRegister(op.rs1) would have failed
 				{
 					mov(eax, op.rs1._imm);
 					movd(rd, eax);
@@ -530,14 +530,9 @@ protected:
 				{
 					movss(rd, rs1);
 				}
-				//if (cpu.has(Xbyak::util::Cpu::tFMA))
-				//	vfmadd231ss(rd, rs2, rs3);
-				//else
-				{
-					movss(xmm0, rs2);
-					mulss(xmm0, rs3);
-					addss(rd, xmm0);
-				}
+				movss(xmm0, rs2);
+				mulss(xmm0, rs3);
+				addss(rd, xmm0);
 			}
 			break;
 
@@ -778,6 +773,8 @@ protected:
 			}
 		}
 	}
+
+	Sh4CodeBuffer& codeBuffer;
 
 private:
 	Xbyak::Reg32 mapRegister(const shil_param& param) {

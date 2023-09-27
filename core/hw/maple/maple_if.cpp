@@ -277,7 +277,7 @@ static void maple_DoDma()
 		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (256 * 1024)), (u64)SH4_MAIN_CLOCK));
 }
 
-static int maple_schd(int tag, int c, int j)
+static int maple_schd(int tag, int cycles, int jitter, void *arg)
 {
 	if (SB_MDEN & 1)
 	{

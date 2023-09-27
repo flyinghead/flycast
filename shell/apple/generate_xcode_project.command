@@ -21,7 +21,7 @@ if [[ -z "${VULKAN_SDK}" ]]; then
     read -p "Type y to install Vulkan SDK: " v
     if [ $v == "y" ]; then
         curl https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.dmg -o vulkan-sdk.dmg
-        hdiutil attach ./vulkan-sdk.dmg
+        hdiutil attach ./vulkan-sdk.dmg -mountpoint /Volumes/VulkanSDK
         /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
         hdiutil detach /Volumes/VulkanSDK
         rm ./vulkan-sdk.dmg

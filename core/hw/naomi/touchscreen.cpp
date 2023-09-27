@@ -34,20 +34,18 @@ namespace touchscreen
 // 837-14672 touchscreen sensor board
 // used by Manic Panic Ghosts and Touch De Zunou
 //
-class TouchscreenPipe final : public SerialPipe
+class TouchscreenPipe final : public SerialPort::Pipe
 {
 public:
 	TouchscreenPipe()
 	{
-		Instance = this;
-		schedId = sh4_sched_register(0, schedCallback);
-		serial_setPipe(this);
+		schedId = sh4_sched_register(0, schedCallback, this);
+		SCIFSerialPort::Instance().setPipe(this);
 	}
 
 	~TouchscreenPipe()
 	{
 		sh4_sched_unregister(schedId);
-		Instance = nullptr;
 	}
 
 	void write(u8 data) override
@@ -103,7 +101,7 @@ private:
 			return;
 		toSend.insert(toSend.end(), &msg[0], &msg[size]);
 		toSend.push_back(calcChecksum(msg, size));
-		serial_updateStatusRegister();
+		SCIFSerialPort::Instance().updateStatus();
 	}
 
 	u8 calcChecksum(const u8 *data, int size)
@@ -114,8 +112,9 @@ private:
 		return 256 - c;
 	}
 
-	static int schedCallback(int tag, int cycles, int lag)
+	static int schedCallback(int tag, int cycles, int jitter, void *arg)
 	{
+		TouchscreenPipe *instance = (TouchscreenPipe *)arg;
 		u32 pack[2];
 		for (size_t i = 0; i < std::size(pack); i++)
 		{
@@ -127,14 +126,14 @@ private:
 			// drag needs bit 22 off
 			// bit 23 is charge
 			pack[i] = (charge << 23) | (hit << 21) | (hit << 20) | (y << 10) | x;
-			if (!Instance->touch[i])
+			if (!instance->touch[i])
 				pack[i] |= hit << 22;
-			Instance->touch[i] = hit;
+			instance->touch[i] = hit;
 		}
 		u8 msg[] = { 0xaa, 0x10,
 				u8(pack[0] >> 16), u8(pack[0] >> 8), u8(pack[0]),
 				u8(pack[1] >> 16), u8(pack[1] >> 8), u8(pack[1]) };
-		Instance->send(msg, sizeof(msg));
+		instance->send(msg, sizeof(msg));
 
 		return FRAME_CYCLES;
 	}
@@ -144,10 +143,8 @@ private:
 	bool schedulerStarted = false;
 	bool touch[2] {};
 
-	static TouchscreenPipe *Instance;
 	static constexpr int FRAME_CYCLES = SH4_MAIN_CLOCK / 60;
 };
-TouchscreenPipe *TouchscreenPipe::Instance;
 
 std::unique_ptr<TouchscreenPipe> touchscreen;
 

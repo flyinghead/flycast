@@ -20,11 +20,11 @@
 */
 #include "oit_renderpass.h"
 
-vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
+vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool loadClear)
 {
     std::array<vk::AttachmentDescription, 4> attachmentDescriptions = {
     		// Swap chain image
-    		GetAttachment0Description(initial, last),
+    		GetAttachment0Description(initial, last, loadClear),
 			// OP+PT color attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,

@@ -114,6 +114,7 @@ cbuffer constantBuffer : register(b0)
 	float4 colorClampMax;
 	float4 FOG_COL_VERT;
 	float4 FOG_COL_RAM;
+	float4 ditherColorMax;
 	float fogDensity;
 	float shadowScale;
 	float alphaTestValue;
@@ -145,7 +146,7 @@ float getFragDepth(float z)
 #else
 	float w = 100000.0 * z;
 #endif
-	return log2(1.0 + w) / 34.0;
+	return log2(1.0 + max(w, -0.999999f)) / 34.0;
 }
 
 struct PolyParam {
@@ -476,11 +477,6 @@ PSO main(in VertexIn inpix)
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0f;
 			#endif
-			#if cp_AlphaTest == 1
-				if (alphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0f;
-			#endif
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -523,6 +519,13 @@ PSO main(in VertexIn inpix)
 	#endif
 	
 	color *= trilinearAlpha;
+
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0f) * 0.0039215688593685626983642578125; // 1 / 255
+		if (alphaTestValue > color.a)
+			discard;
+		color.a = 1.0f;
+	#endif
 
 	#if PASS == PASS_COLOR 
 		pso.col = color;
@@ -693,6 +696,19 @@ float4 resolveAlphaBlend(in float2 pos)
 		else
 			finalColor = result;
 	}
+#if DITHERING == 1
+	static const float ditherTable[16] = {
+		 0.9375f,  0.1875f,  0.75f,  0.0f,   
+		 0.4375f,  0.6875f,  0.25f,  0.5f,
+		 0.8125f,  0.0625f,  0.875f, 0.125f,
+		 0.3125f,  0.5625f,  0.375f, 0.625f	
+	};
+	float r = ditherTable[int(pos.y % 4.0f) * 4 + int(pos.x % 4.0f)] + 0.03125f; // why is this bias needed??
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	finalColor += r / ditherColorMax;
+	// avoid rounding
+	finalColor = floor(finalColor * 255.0f) / 255.0f;
+#endif
 
 	return finalColor;
 }
@@ -976,26 +992,28 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
 	return modVolShader;
 }
 
-const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader()
+const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader(bool dithering)
 {
 	if (maxLayers != config::PerPixelLayers)
 	{
-		finalShader.reset();
+		for (auto& shader : finalShaders)
+			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
 		maxLayers = config::PerPixelLayers;
 	}
-	if (!finalShader)
+	if (!finalShaders[dithering])
 	{
 		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
+			{ "DITHERING", MacroValues[dithering] },
 			{ }
 		};
-		finalShader = compilePS(OITFinalShaderSource, "main", macros);
+		finalShaders[dithering] = compilePS(OITFinalShaderSource, "main", macros);
 	}
-	return finalShader;
+	return finalShaders[dithering];
 }
 
 const ComPtr<ID3D11VertexShader>& DX11OITShaders::getFinalVertexShader()
@@ -1010,7 +1028,8 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 {
 	if (maxLayers != config::PerPixelLayers)
 	{
-		finalShader.reset();
+		for (auto& shader : finalShaders)
+			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
 		maxLayers = config::PerPixelLayers;

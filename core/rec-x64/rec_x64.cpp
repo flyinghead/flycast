@@ -18,20 +18,11 @@ using namespace Xbyak::util;
 #include "hw/sh4/sh4_mem.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
-
-struct DynaRBI : RuntimeBlockInfo
-{
-	u32 Relink() override {
-		return 0;
-	}
-};
 
 static void (*mainloop)();
 static void (*handleException)();
-
-u32 mem_writes, mem_reads;
 
 static u64 jmp_rsp;
 
@@ -66,26 +57,6 @@ static UnwindInfo unwinder;
 #ifndef _WIN32
 static float xmmSave[4];
 #endif
-
-void ngen_mainloop(void *)
-{
-	verify(mainloop != nullptr);
-	try {
-		mainloop();
-	} catch (const SH4ThrownException& ex) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop code %x", ex.expEvn);
-		throw FlycastException("Fatal: Unhandled SH4 exception");
-	}
-}
-
-void ngen_init()
-{
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
 
 static void ngen_blockcheckfail(u32 pc) {
 	//printf("X64 JIT: SMC invalidation at %08X\n", pc);
@@ -149,12 +120,12 @@ public:
 	using BaseCompiler = BaseXbyakRec<BlockCompiler, true>;
 	friend class BaseXbyakRec<BlockCompiler, true>;
 
-	BlockCompiler() : BaseCompiler(), regalloc(this) { }
-	BlockCompiler(u8 *code_ptr) : BaseCompiler(code_ptr), regalloc(this) { }
+	BlockCompiler(Sh4CodeBuffer& codeBuffer) : BaseCompiler(codeBuffer), regalloc(this) { }
+	BlockCompiler(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(codeBuffer, code_ptr), regalloc(this) { }
 
-	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 	{
-		//printf("X86_64 compiling %08x to %p\n", block->addr, emit_GetCCPtr());
+		//printf("X86_64 compiling %08x to %p\n", block->addr, codeBuffer.get());
 		current_opid = -1;
 
 		CheckBlock(force_checks, block);
@@ -449,6 +420,42 @@ public:
 					}
 				}
 				break;
+
+			case shop_fmac:
+				{
+					Xbyak::Xmm rs1 = regalloc.MapXRegister(op.rs1);
+					Xbyak::Xmm rs2 = regalloc.MapXRegister(op.rs2);
+					Xbyak::Xmm rs3 = regalloc.MapXRegister(op.rs3);
+					Xbyak::Xmm rd = regalloc.MapXRegister(op.rd);
+					if (rd == rs2)
+					{
+						movss(xmm1, rs2);
+						rs2 = xmm1;
+					}
+					if (rd == rs3)
+					{
+						movss(xmm2, rs3);
+						rs3 = xmm2;
+					}
+					if (op.rs1.is_imm()) // FIXME MapXRegister(op.rs1) would have failed
+					{
+						mov(eax, op.rs1._imm);
+						movd(rd, eax);
+					}
+					else if (rd != rs1)
+					{
+						movss(rd, rs1);
+					}
+					if (cpu.has(Cpu::tFMA) && !config::GGPOEnable)
+						vfmadd231ss(rd, rs2, rs3);
+					else
+					{
+						movss(xmm0, rs2);
+						mulss(xmm0, rs3);
+						addss(rd, xmm0);
+					}
+				}
+				break;
 #endif
 
 			default:
@@ -534,15 +541,15 @@ public:
 		block->code = (DynarecCodeEntryPtr)getCode();
 		block->host_code_size = getSize();
 
-		emit_Skip(getSize());
+		codeBuffer.advance(getSize());
 	}
 
-	void ngen_CC_Start(const shil_opcode& op)
+	void canonStart(const shil_opcode& op)
 	{
 		CC_pars.clear();
 	}
 
-	void ngen_CC_param(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp) {
+	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp) {
 		switch (tp)
 		{
 
@@ -575,7 +582,7 @@ public:
 		}
 	}
 
-	void ngen_CC_Call(const shil_opcode& op, void* function)
+	void canonCall(const shil_opcode& op, void* function)
 	{
 		int regused = 0;
 		int xmmused = 0;
@@ -602,7 +609,7 @@ public:
 				break;
 
             default:
-               // Other cases handled in ngen_CC_param
+               // Other cases handled in canonParam
                break;
 			}
 		}
@@ -735,7 +742,7 @@ public:
 		genMemHandlers();
 
 		size_t savedSize = getSize();
-		setSize(CODE_SIZE - 128 - startOffset);
+		setSize(codeBuffer.getFreeSpace() - 128 - startOffset);
 		unwindSize = unwinder.end(getSize());
 		verify(unwindSize <= 128);
 		setSize(savedSize);
@@ -744,7 +751,7 @@ public:
 		mainloop = (void (*)())getCode();
 		handleException = (void(*)())handleExceptionLabel.getAddress();
 
-		emit_Skip(getSize());
+		codeBuffer.advance(getSize());
 	}
 
 	bool rewriteMemAccess(host_context_t &context)
@@ -752,7 +759,7 @@ public:
 		if (!addrspace::virtmemEnabled())
 			return false;
 
-		//printf("ngen_Rewrite pc %p\n", context.pc);
+		//printf("rewriteMemAccess pc %p\n", context.pc);
 		if (context.pc < (size_t)MemHandlerStart || context.pc >= (size_t)MemHandlerEnd)
 			return false;
 
@@ -1296,86 +1303,109 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 	compiler->RegWriteback_FPU(reg, nreg);
 }
 
-static BlockCompiler* ccCompiler;
-
-void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
+class X64Dynarec : public Sh4Dynarec
 {
-	verify(emit_FreeSpace() >= 16 * 1024);
-	void* protStart = emit_GetCCPtr();
-	size_t protSize = emit_FreeSpace();
-	virtmem::jit_set_exec(protStart, protSize, false);
-
-	BlockCompiler compiler;
-	::ccCompiler = &compiler;
-	try {
-		compiler.compile(block, smc_checks, reset, staging, optimise);
-	} catch (const Xbyak::Error& e) {
-		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+public:
+	X64Dynarec() {
+		sh4Dynarec = this;
 	}
-	::ccCompiler = nullptr;
-	virtmem::jit_set_exec(protStart, protSize, true);
-}
 
-void ngen_CC_Start(shil_opcode* op)
-{
-	ccCompiler->ngen_CC_Start(*op);
-}
+	void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override
+	{
+		void* protStart = codeBuffer->get();
+		size_t protSize = codeBuffer->getFreeSpace();
+		virtmem::jit_set_exec(protStart, protSize, false);
 
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	ccCompiler->ngen_CC_param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode* op, void* function)
-{
-	ccCompiler->ngen_CC_Call(*op, function);
-}
-
-void ngen_CC_Finish(shil_opcode* op)
-{
-}
-
-bool ngen_Rewrite(host_context_t &context, void *faultAddress)
-{
-	void* protStart = emit_GetCCPtr();
-	size_t protSize = emit_FreeSpace();
-	virtmem::jit_set_exec(protStart, protSize, false);
-
-	u8 *retAddr = *(u8 **)context.rsp - 5;
-	BlockCompiler compiler(retAddr);
-	bool rc = false;
-	try {
-		rc = compiler.rewriteMemAccess(context);
+		ccCompiler = new BlockCompiler(*codeBuffer);
+		try {
+			ccCompiler->compile(block, smc_checks, optimise);
+		} catch (const Xbyak::Error& e) {
+			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+		}
+		delete ccCompiler;
+		ccCompiler = nullptr;
 		virtmem::jit_set_exec(protStart, protSize, true);
-	} catch (const Xbyak::Error& e) {
-		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
-	return rc;
-}
 
-void ngen_HandleException(host_context_t &context)
-{
-	context.pc = (uintptr_t)handleException;
-}
-
-void ngen_ResetBlocks()
-{
-	unwinder.clear();
-	// Avoid generating the main loop more than once
-	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
-		return;
-
-	void* protStart = emit_GetCCPtr();
-	size_t protSize = emit_FreeSpace();
-	virtmem::jit_set_exec(protStart, protSize, false);
-
-	BlockCompiler compiler;
-	try {
-		compiler.genMainloop();
-	} catch (const Xbyak::Error& e) {
-		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+	void init(Sh4CodeBuffer& codeBuffer) override
+	{
+		this->codeBuffer = &codeBuffer;
 	}
-	virtmem::jit_set_exec(protStart, protSize, true);
-}
+
+	void mainloop(void *) override
+	{
+		verify(::mainloop != nullptr);
+		try {
+			::mainloop();
+		} catch (const SH4ThrownException& ex) {
+			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop code %x", ex.expEvn);
+			throw FlycastException("Fatal: Unhandled SH4 exception");
+		}
+	}
+
+	void canonStart(const shil_opcode* op) override {
+		ccCompiler->canonStart(*op);
+	}
+
+	void canonParam(const shil_opcode* op, const shil_param* par, CanonicalParamType tp) override {
+		ccCompiler->canonParam(*op, *par, tp);
+	}
+
+	void canonCall(const shil_opcode* op, void* function) override {
+		ccCompiler->canonCall(*op, function);
+	}
+
+	void canonFinish(const shil_opcode* op) override {
+	}
+
+	bool rewrite(host_context_t &context, void *faultAddress) override
+	{
+		void* protStart = codeBuffer->get();
+		size_t protSize = codeBuffer->getFreeSpace();
+		virtmem::jit_set_exec(protStart, protSize, false);
+
+		u8 *retAddr = *(u8 **)context.rsp - 5;
+		BlockCompiler compiler(*codeBuffer, retAddr);
+		bool rc = false;
+		try {
+			rc = compiler.rewriteMemAccess(context);
+			virtmem::jit_set_exec(protStart, protSize, true);
+		} catch (const Xbyak::Error& e) {
+			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+		}
+		return rc;
+	}
+
+	void handleException(host_context_t &context) override
+	{
+		context.pc = (uintptr_t)::handleException;
+	}
+
+	void reset() override
+	{
+		unwinder.clear();
+		// Avoid generating the main loop more than once
+		if (::mainloop != nullptr && ::mainloop != codeBuffer->get())
+			return;
+
+		void* protStart = codeBuffer->get();
+		size_t protSize = codeBuffer->getFreeSpace();
+		virtmem::jit_set_exec(protStart, protSize, false);
+
+		BlockCompiler compiler(*codeBuffer);
+		try {
+			compiler.genMainloop();
+		} catch (const Xbyak::Error& e) {
+			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+		}
+		virtmem::jit_set_exec(protStart, protSize, true);
+	}
+
+private:
+	Sh4CodeBuffer *codeBuffer = nullptr;
+	BlockCompiler *ccCompiler = nullptr;
+};
+
+static X64Dynarec instance;
 
 #endif

@@ -103,7 +103,27 @@ static void loadSpecialSettings()
 				// Shenmue (JP)
 				|| prod_id == "HDR-0016"
 				// Izumo
-				|| prod_id == "T46902M")
+				|| prod_id == "T46902M"
+				// Cardcaptor Sakura
+				|| prod_id == "HDR-0115"
+				// Grandia II (US)
+				|| prod_id == "T17716N"
+				// Grandia II (EU)
+				|| prod_id == "T17715D"
+				// Grandia II (JP)
+				|| prod_id == "T4503M"
+				// Canvas: Sepia Iro no Motif
+				|| prod_id == "T20108M"
+				// Kimi ga Nozomu Eien
+				|| prod_id == "T47101M"
+				// Pro Mahjong Kiwame D
+				|| prod_id == "T16801M"
+				// Yoshia no Oka de Nekoronde...
+				|| prod_id == "T18704M"
+				// Tamakyuu (a.k.a. Tama-cue)
+				|| prod_id == "T20133M"
+				// Sakura Taisen 3
+				|| prod_id == "HDR-0152")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -420,33 +440,40 @@ static void setPlatform(int platform)
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
-		settings.platform.ram_size = 16 * 1024 * 1024;
-		settings.platform.vram_size = 8 * 1024 * 1024;
-		settings.platform.aram_size = 2 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 128 * 1024;
+		settings.platform.ram_size = config::RamMod32MB ? 32_MB : 16_MB;
+		settings.platform.vram_size = 8_MB;
+		settings.platform.aram_size = 2_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 128_KB;
 		break;
 	case DC_PLATFORM_NAOMI:
-		settings.platform.ram_size = 32 * 1024 * 1024;
-		settings.platform.vram_size = 16 * 1024 * 1024;
-		settings.platform.aram_size = 8 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB;
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 32_KB;	// battery-backed ram
 		break;
 	case DC_PLATFORM_NAOMI2:
-		settings.platform.ram_size = 32 * 1024 * 1024;
-		settings.platform.vram_size = 16 * 1024 * 1024; // 2x16 MB VRAM, only 16 emulated
-		settings.platform.aram_size = 8 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
-		elan::ERAM_SIZE = 32 * 1024 * 1024;
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB; // 2x16 MB VRAM, only 16 emulated
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 32_KB;	// battery-backed ram
+		elan::ERAM_SIZE = 32_MB;
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
-		settings.platform.ram_size = 16 * 1024 * 1024;
-		settings.platform.vram_size = 8 * 1024 * 1024;
-		settings.platform.aram_size = 2 * 1024 * 1024;
-		settings.platform.bios_size = 128 * 1024;
-		settings.platform.flash_size = 128 * 1024;	// sram
+		settings.platform.ram_size = 16_MB;
+		settings.platform.vram_size = 8_MB;
+		settings.platform.aram_size = 2_MB;
+		settings.platform.bios_size = 128_KB;
+		settings.platform.flash_size = 128_KB;	// sram
+		break;
+	case DC_PLATFORM_SYSTEMSP:
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB;
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 128_KB;	// sram
 		break;
 	default:
 		die("Unsupported platform");

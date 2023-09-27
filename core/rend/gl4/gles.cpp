@@ -322,12 +322,6 @@ void main()
 				IF(cur_ignore_tex_alpha)
 					texcol.a=1.0;	
 			#endif
-			
-			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0;
-			#endif 
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -385,6 +379,13 @@ void main()
 	
 	color *= trilinear_alpha;
 	
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0) / 255.0;
+		if (cp_AlphaTestValue > color.a)
+			discard;
+		color.a = 1.0;
+	#endif
+
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
 	#if PASS == PASS_COLOR 
@@ -546,6 +547,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	if (gu != -1)
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
+	s->ditherColorMax = glGetUniformLocation(s->program, "ditherColorMax");
 
 	if (s->naomi2)
 		initN2Uniforms(s);
@@ -671,6 +673,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 			gl.ofbo2.ready = false;
 			frameRendered = true;
 		}
+		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;
@@ -779,6 +782,8 @@ static void resize(int w, int h)
 
 bool OpenGL4Renderer::renderFrame(int width, int height)
 {
+	initVideoRoutingFrameBuffer();
+	
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
@@ -786,11 +791,6 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
-
-	if (!is_rtt && !config::EmulateFramebuffer)
-		gcflip = 0;
-	else
-		gcflip = 1;
 	
 	/*
 		Handle Dc to screen scaling
@@ -847,10 +847,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 #ifdef LIBRETRO
 		if (config::EmulateFramebuffer)
 			output_fbo = init_output_framebuffer(width, height);
-		else if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-			output_fbo = postProcessor.getFramebuffer(width, height);
 		else
-			output_fbo = glsm_get_current_framebuffer();
+			output_fbo = postProcessor.getFramebuffer(width, height);
 		glViewport(0, 0, width, height);
 #else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
@@ -968,7 +966,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 #ifdef LIBRETRO
-		if ((config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0) && !is_rtt && !config::EmulateFramebuffer)
+		if (!is_rtt && !config::EmulateFramebuffer)
 			postProcessor.render(glsm_get_current_framebuffer());
 #endif
 	}

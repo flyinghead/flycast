@@ -157,6 +157,7 @@ cbuffer constantBuffer : register(b0)
 	float4 colorClampMax;
 	float4 FOG_COL_VERT;
 	float4 FOG_COL_RAM;
+	float4 ditherColorMax;
 	float fogDensity;
 	float shadowScale;
 	float alphaTestValue;
@@ -259,11 +260,6 @@ PSO main(in Pixel inpix)
 			#if pp_IgnoreTexA == 1
 				texcol.a = 1.0f;
 			#endif
-			#if cp_AlphaTest == 1
-				if (alphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0f;
-			#endif
 		#endif
 		#if pp_ShadInstr == 0
 			color = texcol;
@@ -298,13 +294,33 @@ PSO main(in Pixel inpix)
 	color *= trilinearAlpha;
 	#endif
 
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0f) * 0.0039215688593685626983642578125; // 1 / 255
+		if (alphaTestValue > color.a)
+			discard;
+		color.a = 1.0f;
+	#endif
+
+#if DITHERING == 1
+	static const float ditherTable[16] = {
+		 0.9375f,  0.1875f,  0.75f,  0.0f,   
+		 0.4375f,  0.6875f,  0.25f,  0.5f,
+		 0.8125f,  0.0625f,  0.875f, 0.125f,
+		 0.3125f,  0.5625f,  0.375f, 0.625f	
+	};
+	float r = ditherTable[int(inpix.pos.y % 4.0f) * 4 + int(inpix.pos.x % 4.0f)] + 0.03125f; // why is this bias needed??
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	color += r / ditherColorMax;
+	// avoid rounding
+	color = floor(color * 255.0f) / 255.0f;
+#endif
 	PSO pso;
 #if DIV_POS_Z == 1
 	float w = 100000.0f / inpix.uv.w;
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = color;
 
 	return pso;
@@ -324,7 +340,7 @@ PSO modifierVolume(in MVPixel inpix)
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = float4(0, 0, 0, 1.f - shadowScale);
 
 	return pso;
@@ -413,7 +429,8 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroNearestWrapFix
+	MacroNearestWrapFix,
+	MacroDithering
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
@@ -433,12 +450,13 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
 	{ "NearestWrapFix", "0" },
+	{ "DITHERING", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix)
+		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool dithering)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -455,7 +473,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (alphaTest << 13)
 			| (clipInside << 14)
 			| (nearestWrapFix << 15)
-			| (divPosZ << 16);
+			| (divPosZ << 16)
+			| (dithering << 17);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -476,6 +495,7 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
+		PixelMacros[MacroDithering].Definition = MacroValues[dithering];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
 		verify(shader != nullptr);

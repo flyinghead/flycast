@@ -34,6 +34,7 @@ public:
 	virtual std::string getDriverName() = 0;
 	virtual std::string getDriverVersion() = 0;
 	virtual bool hasPerPixel() { return false; }
+	virtual void initVideoRouting() {}
 
 	void setWindow(void *window, void *display = nullptr) {
 		this->window = window;

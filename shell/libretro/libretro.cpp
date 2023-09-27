@@ -70,6 +70,11 @@ constexpr char slash = path_default_slash_c();
 #define RETRO_DEVICE_TWINSTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_TWINSTICK_SATURN		RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
 #define RETRO_DEVICE_ASCIISTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 3 )
+#define RETRO_DEVICE_MARACAS				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 4 )
+#define RETRO_DEVICE_FISHING				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 5 )
+#define RETRO_DEVICE_POPNMUSIC				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 6 )
+#define RETRO_DEVICE_RACING					RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 7 )
+#define RETRO_DEVICE_DENSHA					RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 8 )
 
 #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
 
@@ -283,13 +288,18 @@ void retro_set_environment(retro_environment_t cb)
 			{ "Twin Stick",			RETRO_DEVICE_TWINSTICK },
 			{ "Saturn Twin-Stick",	RETRO_DEVICE_TWINSTICK_SATURN },
 			{ "Pointer",			RETRO_DEVICE_POINTER },
+			{ "Maracas",			RETRO_DEVICE_MARACAS },
+			{ "Fishing Controller",	RETRO_DEVICE_FISHING },
+			{ "Pop'n Music",		RETRO_DEVICE_POPNMUSIC },
+			{ "Race Controller",	RETRO_DEVICE_RACING },
+			{ "Densha de Go!",		RETRO_DEVICE_DENSHA },
 			{ 0 },
 	};
 	static const struct retro_controller_info ports[] = {
-			{ ports_default,  8 },
-			{ ports_default,  8 },
-			{ ports_default,  8 },
-			{ ports_default,  8 },
+			{ ports_default,  13 },
+			{ ports_default,  13 },
+			{ ports_default,  13 },
+			{ ports_default,  13 },
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -629,7 +639,7 @@ static void setGameGeometry(retro_game_geometry& geometry)
 void setAVInfo(retro_system_av_info& avinfo)
 {
 	double sample_rate = 44100.0;
-	double fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+	double fps = SPG_CONTROL.isNTSC() ? 59.94 : SPG_CONTROL.isPAL() ? 50.0 : 60.0;
 
 	setGameGeometry(avinfo.geometry);
 	avinfo.timing.sample_rate = sample_rate;
@@ -850,13 +860,20 @@ static void update_variables(bool first_startup)
 		{
 			enable_purupuru = strcmp("enabled", var.value) == 0;
 			for (int i = 0; i < MAPLE_PORTS; i++) {
-				if (config::MapleMainDevices[i] == MDT_SegaController)
-					config::MapleExpansionDevices[i][1] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
-				else if (config::MapleMainDevices[i] == MDT_LightGun || config::MapleMainDevices[i] == MDT_TwinStick
-						|| config::MapleMainDevices[i] == MDT_AsciiStick)
-					config::MapleExpansionDevices[i][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
+				switch (config::MapleMainDevices[i]) {
+					case MDT_SegaController:
+						config::MapleExpansionDevices[i][1] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
+						break;
+					case MDT_LightGun:
+					case MDT_TwinStick:
+					case MDT_AsciiStick:
+					case MDT_RacingController:
+						config::MapleExpansionDevices[i][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
+						break;
+					default:
+						break;
+				}
 			}
-
 			if (!first_startup)
 				maple_ReconnectDevices();
 		}
@@ -1296,6 +1313,26 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 			/* LIGHTGUN_RIGHT  */ 	NAOMI_RIGHT_KEY,
 	};
 
+	static const uint32_t systemsp_joymap[] =
+	{
+			/* JOYPAD_B      */ DC_BTN_A,
+			/* JOYPAD_Y      */ DC_BTN_C,
+			/* JOYPAD_SELECT */ DC_BTN_D,		// coin
+			/* JOYPAD_START  */ DC_BTN_START,
+			/* JOYPAD_UP     */ DC_DPAD_UP,
+			/* JOYPAD_DOWN   */ DC_DPAD_DOWN,
+			/* JOYPAD_LEFT   */ DC_DPAD_LEFT,
+			/* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
+			/* JOYPAD_A      */ DC_BTN_B,
+			/* JOYPAD_X      */ 0,
+			/* JOYPAD_L      */ 0,
+			/* JOYPAD_R      */ 0,
+			/* JOYPAD_L2     */ 0,
+			/* JOYPAD_R2     */ 0,
+			/* JOYPAD_L3     */ DC_DPAD2_DOWN,	// test
+			/* JOYPAD_R3     */ DC_DPAD2_UP,	// service
+	};
+
 	const uint32_t *joymap;
 	size_t joymap_size;
 
@@ -1354,6 +1391,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		}
 		break;
 
+	case DC_PLATFORM_SYSTEMSP:
+		joymap = systemsp_joymap;
+		joymap_size = std::size(systemsp_joymap);
+		break;
+
 	default:
 		return 0;
 	}
@@ -1405,7 +1447,7 @@ static const char *get_axis_name(unsigned index, const char *default_name)
 
 static void set_input_descriptors()
 {
-	struct retro_input_descriptor desc[22 * 4 + 1];
+	struct retro_input_descriptor desc[100];
 	int descriptor_index = 0;
 	if (settings.platform.isArcade())
 	{
@@ -1585,6 +1627,69 @@ static void set_input_descriptors()
 				desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "B" };
 				break;
+
+			case MDT_MaracasController:
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A (R-Shake)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B (L-Shake)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_X,     "C (L-Button)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_L,     "D (R-Lost)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z (R-Lost)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start (R-Button)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Maraca 1 X pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Maraca 1 Y pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Maraca 2 X pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Maraca 2 Y pos." };
+
+			case MDT_FishingController:
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Analog X (L-R)" }; // A3: Analog key
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (U-D)" }; // A4: Analog key
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_R2,                          "Reel handle output" }; // A1: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "Acc. sensor Z"  }; // A2: Acc. sensor Z
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Acc. sensor X"  }; // A5: Acc. sensor X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Acc. sensor Y"  }; // A6: Acc. sensor Y
+
+			case MDT_PopnMusicController:
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_B,     "E" }; // A
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "F" }; // X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_A,     "G" }; // B
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_X,     "H" }; // Y
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_R,     "I" }; // C
+				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+
+			case MDT_RacingController:
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,   "D-Pad Up (+)"   };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, "D-Pad Down (-)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,        "A"     };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_UP,          "B"     };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_START,       "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Wheel (L-R)" }; // A3: Analog key, also La, Ra
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_R2,                              "R-Axis"      }; // A1: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "L-Axis"      }; // A2: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Accelerator" }; // A5: Accelerator?
+				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Brake"       }; // A6: Brake?
+
+			case MDT_DenshaDeGoController:
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Brake bit 3" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Brake bit 2" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Brake bit 1" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Brake bit 0" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Master Control bit 2" }; // X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Master Control bit 1" }; // Y
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Master Control bit 0" }; // Z
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_B,      "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_A,      "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_L,      "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "D" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" };
 
 			default:
 				break;
@@ -2190,59 +2295,32 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 	{
 		devices_need_refresh = true;
 		device_type[in_port] = device;
+		struct Cfg {
+			MapleDeviceType main, exp0, exp1;
+		};
+		struct Cfg cfg = { MDT_None, MDT_None, MDT_None };
+		MapleDeviceType puru_or_vmu = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
 		switch (device)
 		{
-			case RETRO_DEVICE_JOYPAD:
-				config::MapleMainDevices[in_port] = MDT_SegaController;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = MDT_SegaVMU;
-					config::MapleExpansionDevices[in_port][1] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
-				}
-				break;
-			case RETRO_DEVICE_TWINSTICK:
-			case RETRO_DEVICE_TWINSTICK_SATURN:
-				config::MapleMainDevices[in_port] = MDT_TwinStick;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
-			case RETRO_DEVICE_ASCIISTICK:
-				config::MapleMainDevices[in_port] = MDT_AsciiStick;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
-			case RETRO_DEVICE_KEYBOARD:
-				config::MapleMainDevices[in_port] = MDT_Keyboard;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = MDT_None;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
-			case RETRO_DEVICE_MOUSE:
-				config::MapleMainDevices[in_port] = MDT_Mouse;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = MDT_None;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
-			case RETRO_DEVICE_LIGHTGUN:
-			case RETRO_DEVICE_POINTER:
-				config::MapleMainDevices[in_port] = MDT_LightGun;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = enable_purupuru ? MDT_PurupuruPack : MDT_SegaVMU;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
-			default:
-				config::MapleMainDevices[in_port] = MDT_None;
-				if (settings.platform.isConsole()) {
-					config::MapleExpansionDevices[in_port][0] = MDT_None;
-					config::MapleExpansionDevices[in_port][1] = MDT_None;
-				}
-				break;
+			case RETRO_DEVICE_JOYPAD           : cfg = { MDT_SegaController,       MDT_SegaVMU, puru_or_vmu }; break;
+			case RETRO_DEVICE_TWINSTICK        : 
+			case RETRO_DEVICE_TWINSTICK_SATURN : cfg = { MDT_TwinStick,            puru_or_vmu, MDT_None };    break;
+			case RETRO_DEVICE_ASCIISTICK       : cfg = { MDT_AsciiStick,           puru_or_vmu, MDT_None };    break;
+			case RETRO_DEVICE_KEYBOARD         : cfg = { MDT_Keyboard,             MDT_None,    MDT_None };    break;
+			case RETRO_DEVICE_MOUSE            : cfg = { MDT_Mouse,                MDT_None,    MDT_None };    break;
+			case RETRO_DEVICE_LIGHTGUN         :
+			case RETRO_DEVICE_POINTER          : cfg = { MDT_LightGun,             puru_or_vmu, MDT_None };    break;
+			case RETRO_DEVICE_MARACAS          : cfg = { MDT_MaracasController,    MDT_None,    MDT_None };    break;
+			case RETRO_DEVICE_FISHING          : cfg = { MDT_FishingController,    MDT_None,    MDT_None };    break;
+			case RETRO_DEVICE_POPNMUSIC        : cfg = { MDT_PopnMusicController,  MDT_None,    MDT_None };    break;
+			case RETRO_DEVICE_RACING           : cfg = { MDT_RacingController,     puru_or_vmu, MDT_None };    break;
+			case RETRO_DEVICE_DENSHA           : cfg = { MDT_DenshaDeGoController, MDT_None,    MDT_None };    break;
+			default                            : cfg = { MDT_None,                 MDT_None,    MDT_None };
+		};
+		config::MapleMainDevices[in_port] = cfg.main;
+		if (settings.platform.isConsole()) {
+			config::MapleExpansionDevices[in_port][0] = cfg.exp0;
+			config::MapleExpansionDevices[in_port][1] = cfg.exp1;
 		}
 	}
 }
@@ -2394,35 +2472,40 @@ static uint16_t get_analog_trigger(
    return trigger;
 }
 
-static void setDeviceButtonState(u32 port, int deviceType, int btnId)
+inline static void setDeviceButton(u32 port, uint32_t dc_key, bool is_down)
 {
-	uint32_t dc_key = map_gamepad_button(deviceType, btnId);
-	bool is_down = input_cb(port, deviceType, 0, btnId);
 	if (is_down)
 		kcode[port] &= ~dc_key;
 	else
 		kcode[port] |= dc_key;
+}
+
+static void setDeviceButtonState(u32 port, int deviceType, int btnId)
+{
+	uint32_t dc_key = map_gamepad_button(deviceType, btnId);
+	bool is_down    = input_cb(port, deviceType, 0, btnId);
+	setDeviceButton(port, dc_key, is_down);
 }
 
 static void setDeviceButtonStateFromBitmap(u32 bitmap, u32 port, int deviceType, int btnId)
 {
 	uint32_t dc_key = map_gamepad_button(deviceType, btnId);
 	bool is_down    = bitmap & (1 << btnId);
-	if (is_down)
-		kcode[port] &= ~dc_key;
-	else
-		kcode[port] |= dc_key;
+	setDeviceButton(port, dc_key, is_down);
 }
 
-// don't call map_gamepad_button, we supply the DC bit directly.
-static void setDeviceButtonStateDirect(u32 bitmap, u32 port, int deviceType, int btnId, int dc_bit)
+// Don't call map_gamepad_button, we supply the DC key directly.
+static void setDeviceButtonStateDirect(u32 bitmap, u32 port, int btnId, uint32_t dc_key)
 {
-	uint32_t dc_key = 1 << dc_bit;
-	bool is_down    = bitmap & (1 << btnId);
-	if (is_down)
-		kcode[port] &= ~dc_key;
-	else
-		kcode[port] |= dc_key;
+	bool is_down = bitmap & (1 << btnId);
+	setDeviceButton(port, dc_key, is_down);
+}
+
+static void setDeviceButtonStateDirect2(u32 bitmap, u32 port, int btnId1, int btnId2, uint32_t dc_key)
+{
+	bool is_down = (bitmap & (1 << btnId1)) ||
+	               (bitmap & (1 << btnId2));
+	setDeviceButton(port, dc_key, is_down);
 }
 
 static void updateMouseState(u32 port)
@@ -2715,6 +2798,20 @@ static void UpdateInputStateNaomi(u32 port)
 	}
 }
 
+static int16_t getBitmask(u32 port, int deviceType)
+{
+	int16_t ret = 0;
+	if (libretro_supports_bitmasks)
+		ret = input_cb(port, deviceType, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+	else
+	{
+		for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+			if (input_cb(port, deviceType, 0, id))
+				ret |= (1 << id);
+	}
+	return ret;
+}
+
 static void UpdateInputState(u32 port)
 {
 	if (gl_ctx_resetting)
@@ -2738,37 +2835,23 @@ static void UpdateInputState(u32 port)
 			rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 65535 * vib_strength[port] * rem_time * vib_delta[port]);
 		}
 	}
-   
+
 	lightgun_params[port].offscreen = true;
 
 	switch (config::MapleMainDevices[port])
 	{
 	case MDT_SegaController:
 		{
-			int16_t ret = 0;
-			//
+			int16_t ret = getBitmask(port, RETRO_DEVICE_JOYPAD);
+
 			// -- buttons
-
-			if (libretro_supports_bitmasks)
-				ret = input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-			else
-			{
-				for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
-					if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, id))
-						ret |= (1 << id);
-			}
-
 			for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
 				setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 
-			//
 			// -- analog stick
-
 			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 
-			//
 			// -- triggers
-
 			if ( digital_triggers )
 			{
 				// -- digital left trigger
@@ -2793,54 +2876,25 @@ static void UpdateInputState(u32 port)
 
 	case MDT_AsciiStick:
 		{
-			int16_t ret = 0;
-
-			if (libretro_supports_bitmasks)
-				ret = input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-			else
-			{
-				for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
-					if (input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, id))
-						ret |= (1 << id);
-			}
-
+			int16_t ret = getBitmask(port, RETRO_DEVICE_ASCIISTICK);
 			kcode[port] = 0xFFFF; // active-low
 
 			// stick
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,    DC_DPAD_UP    );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN,  DC_DPAD_DOWN  );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_LEFT,  DC_DPAD_LEFT  );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_RIGHT, DC_DPAD_RIGHT );
 
 			// buttons
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_B,  2 ); // A
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_A,  1 ); // B
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_Y, 10 ); // X
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_X,  9 ); // Y
-
-			// Z
-			{
-				uint32_t dc_key = 1 << 8; // Z
-				bool is_down = (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L )) ||
-							   (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2));
-				if (is_down)
-					kcode[port] &= ~dc_key;
-				else
-					kcode[port] |= dc_key;
-			}
-
-			// C
-			{
-				uint32_t dc_key = 1 << 0; // C
-				bool is_down = (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R)) ||
-							   (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2));
-				if (is_down)
-					kcode[port] &= ~dc_key;
-				else
-					kcode[port] |= dc_key;
-			}
-
-			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 ); // Start
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B, DC_BTN_A );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A, DC_BTN_B );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y, DC_BTN_X );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X, DC_BTN_Y );
+			setDeviceButtonStateDirect2(ret, port, RETRO_DEVICE_ID_JOYPAD_L, 
+			                                       RETRO_DEVICE_ID_JOYPAD_L2, DC_BTN_Z );
+			setDeviceButtonStateDirect2(ret, port, RETRO_DEVICE_ID_JOYPAD_R, 
+			                                       RETRO_DEVICE_ID_JOYPAD_R2, DC_BTN_C );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START );
 
 			// unused inputs
 			lt[port]=0;
@@ -2853,7 +2907,6 @@ static void UpdateInputState(u32 port)
 	case MDT_TwinStick:
 		{
 			int16_t ret = 0;
-
 			kcode[port] = 0xFFFF; // active-low
 			
 			if ( device_type[port] == RETRO_DEVICE_TWINSTICK_SATURN )
@@ -2869,34 +2922,27 @@ static void UpdateInputState(u32 port)
 
 				// NOTE: the dc_bits below are the same, only the retro id values have been rearranged.
 
-				if (libretro_supports_bitmasks)
-					ret = input_cb(port, RETRO_DEVICE_TWINSTICK_SATURN, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-				else
-				{
-					for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
-						if (input_cb(port, RETRO_DEVICE_TWINSTICK_SATURN, 0, id))
-							ret |= (1 << id);
-				}
+				ret = getBitmask(port, RETRO_DEVICE_TWINSTICK_SATURN);
 
 				// left-stick
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R2, 9 ); // left-turbo
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,    DC_DPAD_UP    );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN,  DC_DPAD_DOWN  );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_LEFT,  DC_DPAD_LEFT  );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_RIGHT, DC_DPAD_RIGHT );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L2,    DC_BTN_X      ); // left-trigger
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R2,    DC_BTN_Y      ); // left-turbo
 
 				// right-stick
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L, 15 ); // right
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_A, 13 ); // down
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_B, 2 ); // right-trigger
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X, DC_DPAD2_UP    );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L, DC_DPAD2_RIGHT );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A, DC_DPAD2_DOWN  );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y, DC_DPAD2_LEFT  );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B, DC_BTN_A       ); // right-trigger
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R, DC_BTN_B       ); // right-turbo
 
 				// misc control
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_START, 3 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START,  DC_BTN_START );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_SELECT, DC_BTN_D     );
 			}
 			else
 			{
@@ -2904,80 +2950,73 @@ static void UpdateInputState(u32 port)
 
 				const int thresh = 11000; // about 33%, allows for 8-way movement
 
-				if (libretro_supports_bitmasks)
-					ret = input_cb(port, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-				else
-				{
-					for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
-						if (input_cb(port, RETRO_DEVICE_TWINSTICK, 0, id))
-							ret |= (1 << id);
-				}
+				ret = getBitmask(port, RETRO_DEVICE_TWINSTICK);
 
 				// LX
 				analog = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X );
 				if ( analog < -thresh )
-					kcode[port] &= ~( 1 << 6 ); // L
+					kcode[port] &= ~DC_DPAD_LEFT;
 				else if ( analog > thresh )
-					kcode[port] &= ~( 1 << 7 ); // R
+					kcode[port] &= ~DC_DPAD_RIGHT;
 				else
 				{
 					// digital
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_LEFT,  DC_DPAD_LEFT  );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_RIGHT, DC_DPAD_RIGHT );
 				}
 
 				// LY
 				analog = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y );
 				if ( analog < -thresh )
-					kcode[port] &= ~( 1 << 4 ); // U
+					kcode[port] &= ~DC_DPAD_UP;
 				else if ( analog > thresh )
-					kcode[port] &= ~( 1 << 5 ); // D
+					kcode[port] &= ~DC_DPAD_DOWN;
 				else
 				{
 					// digital
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,   DC_DPAD_UP   );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN, DC_DPAD_DOWN );
 				}
 
 				// RX
 				analog = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X );
 				if ( analog < -thresh )
-					kcode[port] &= ~( 1 << 14 ); // L
+					kcode[port] &= ~DC_DPAD2_LEFT;
 				else if ( analog > thresh )
-					kcode[port] &= ~( 1 << 15 ); // R
+					kcode[port] &= ~DC_DPAD2_RIGHT;
 				else
 				{
 					// digital
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_A, 15 ); // right
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y, DC_DPAD2_LEFT  );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A, DC_DPAD2_RIGHT );
 				}
 
 				// RY
 				analog = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y );
 				if ( analog < -thresh )
-					kcode[port] &= ~( 1 << 12 ); // U
+					kcode[port] &= ~DC_DPAD2_UP;
 				else if ( analog > thresh )
-					kcode[port] &= ~( 1 << 13 ); // D
+					kcode[port] &= ~DC_DPAD2_DOWN;
 				else
 				{
 					// digital
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
-					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_B, 13 ); // down
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X, DC_DPAD2_UP   );
+					setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B, DC_DPAD2_DOWN );
 				}
 
 				// left-stick buttons
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L, 9 ); // left-turbo
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L2, DC_BTN_X ); // left-trigger
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L,  DC_BTN_Y ); // left-turbo
 
 				// right-stick buttons
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R2, 2 ); // right-trigger
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R2, DC_BTN_A ); // right-trigger
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R,  DC_BTN_B ); // right-turbo
 
 				// misc control
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 );
-				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START,  DC_BTN_START );
+				setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_SELECT, DC_BTN_D     );
 			}
-			
+
 			// unused inputs
 			lt[port]=0;
 			rt[port]=0;
@@ -3056,6 +3095,127 @@ static void UpdateInputState(u32 port)
 
 	case MDT_Mouse:
 		updateMouseState(port);
+		break;
+
+	case MDT_MaracasController:
+		{
+			int16_t ret = getBitmask(port, RETRO_DEVICE_MARACAS);
+			kcode[port] = 0xFFFF; // active-low
+
+			// buttons
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B,     DC_BTN_A     ); // Right maraca shake switch
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A,     DC_BTN_B     ); // Left  maraca shake switch
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X,     DC_BTN_C     ); // Left  maraca button
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L,     DC_BTN_D     ); // Left  maraca "lost" flag
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R,     DC_BTN_Z     ); // Right maraca "lost" flag
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START ); // Right maraca button
+
+			// If we wanted to apply deadzone (which we don't want for maracas), we could use:
+			// get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );
+			// get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &(joyrx[port]), &(joyry[port]) );
+			joyx [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X ) >> 8;
+   			joyy [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y ) >> 8;
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X ) >> 8;
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y ) >> 8;
+
+			// unused inputs
+			lt[port]=0;
+			rt[port]=0;
+		}
+		break;
+
+	case MDT_FishingController:
+		{
+			int16_t ret = getBitmask(port, RETRO_DEVICE_FISHING);
+			kcode[port] = 0xFFFF; // active-low
+
+			// buttons
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B,     DC_BTN_A     );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A,     DC_BTN_B     );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y,     DC_BTN_X     );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X,     DC_BTN_Y     );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START );
+
+			// analog axes
+			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                   // A3, A4: Analog keys (XY)
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  ) >> 8; // A5: Acc. sensor X
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  ) >> 8; // A6: Acc. sensor Y
+			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) >> 7; // A2: Acc. sensor Z
+			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) >> 7; // A1: Analog lever
+		}
+		break;
+
+	case MDT_PopnMusicController:
+		{
+			int16_t ret = getBitmask(port, RETRO_DEVICE_POPNMUSIC);
+			kcode[port] = 0xFFFF; // active-low
+
+			// buttons
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_LEFT,  DC_DPAD_LEFT  ); // Pop'n A
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,    DC_DPAD_UP    ); // Pop'n B
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN,  DC_DPAD_DOWN  ); // Pop'n C
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_RIGHT, DC_DPAD_RIGHT ); // Pop'n D
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B,     DC_BTN_A      ); // Pop'n E
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y,     DC_BTN_X      ); // Pop'n F
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A,     DC_BTN_B      ); // Pop'n G
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X,     DC_BTN_Y      ); // Pop'n H
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R,     DC_BTN_C      ); // Pop'n I
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START  ); // Pop'n Start
+
+			// unused inputs
+			lt[port]=0;
+			rt[port]=0;
+			joyx[port]=0;
+			joyy[port]=0;
+		}
+		break;
+
+	case MDT_RacingController:
+		{
+			int16_t ret = getBitmask(port, RETRO_DEVICE_RACING);
+			kcode[port] = 0xFFFF; // active-low
+
+			// buttons
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,    DC_DPAD_UP    );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN,  DC_DPAD_DOWN  );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B,     DC_BTN_A      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A,     DC_BTN_B      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START  );
+
+			// analog axes
+			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                   // A3: Analog key;
+			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) >> 7; // A1: Analog lever
+			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) >> 7; // A2: Analog lever
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  ) >> 8; // A5: Accelerator?
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  ) >> 8; // A6: Brake?
+			joyy [port] = 0x80;                                                                                                    // A4: 80h
+		}
+		break;
+
+	case MDT_DenshaDeGoController:
+		{
+			int16_t ret = getBitmask(port, RETRO_DEVICE_DENSHA);
+			kcode[port] = 0xFFFF; // active-low
+
+			// buttons
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_RIGHT, DC_DPAD_RIGHT );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_LEFT,  DC_DPAD_LEFT  );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_DOWN,  DC_DPAD_DOWN  );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_UP,    DC_DPAD_UP    );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_Y,     DC_BTN_X      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_X,     DC_BTN_Y      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_R,     DC_BTN_Z      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_B,     DC_BTN_A      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_A,     DC_BTN_B      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L,     DC_BTN_C      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_L2,    DC_BTN_D      );
+			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START  );
+			// unused inputs - actually, A1, A2, A5, A6 == FFh, A3, A4 == 0, but that is already set in maple_densha_controller...
+			//lt[port]=0;
+			//rt[port]=0;
+			//joyx[port]=0;
+			//joyy[port]=0;
+		}
 		break;
 
 	default:

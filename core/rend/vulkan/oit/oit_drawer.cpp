@@ -273,6 +273,29 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	// sizeof(Pixel) == 16
 	fragUniforms.pixelBufferSize = std::min<u64>(config::PixelBufferSize, GetContext()->GetMaxMemoryAllocationSize()) / 16;
 	fragUniforms.viewportWidth = maxWidth;
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1] = fragUniforms.ditherColorMax[2] = 31.f;
+			fragUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[2] = 31.f;
+			fragUniforms.ditherColorMax[1] = 63.f;
+			fragUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1]
+				= fragUniforms.ditherColorMax[2] = fragUniforms.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
 
 	currentScissor = vk::Rect2D();
 
@@ -339,7 +362,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     	else
     		targetFramebuffer = GetFinalFramebuffer();
     	cmdBuffer.beginRenderPass(
-    			vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(initialPass, finalPass),
+    			vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(initialPass, finalPass, initialPass && pvrrc.clearFramebuffer),
     					targetFramebuffer, viewport, clear_colors),
     			vk::SubpassContents::eInline);
 
@@ -408,7 +431,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
 		}
 
-		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
+		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(dithering && finalPass);
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		quadBuffer->Bind(cmdBuffer);
 		quadBuffer->Draw(cmdBuffer);

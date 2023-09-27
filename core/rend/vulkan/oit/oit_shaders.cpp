@@ -89,6 +89,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	vec4 colorClampMax;
 	vec4 sp_FOG_COL_RAM;
 	vec4 sp_FOG_COL_VERT;
+	vec4 ditherColorMax;
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 	float shade_scale_factor;
@@ -328,12 +329,6 @@ void main()
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0;	
 			#endif
-			
-			#if cp_AlphaTest == 1
-				if (uniformBuffer.cp_AlphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0;
-			#endif 
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -391,6 +386,13 @@ void main()
 	
 	color *= pushConstants.trilinearAlpha;
 	
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0) / 255.0;
+		if (uniformBuffer.cp_AlphaTestValue > color.a)
+			discard;
+		color.a = 1.0;
+	#endif
+
 	//color.rgb = vec3(vtx_uv.z * uniformBuffer.sp_FOG_DENSITY / 128.0);
 	
 	#if PASS == PASS_COLOR 
@@ -559,6 +561,19 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 			finalColor = result;
 	}
 
+#if DITHERING == 1
+	float ditherTable[16] = float[](
+		 0.9375,  0.1875,  0.75,  0.,   
+		 0.4375,  0.6875,  0.25,  0.5,
+		 0.8125,  0.0625,  0.875, 0.125,
+		 0.3125,  0.5625,  0.375, 0.625	
+	);
+	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	finalColor += r / uniformBuffer.ditherColorMax;
+	// avoid rounding
+	finalColor = floor(finalColor * 255.) / 255.;
+#endif
 	return finalColor;
 	
 }
@@ -792,10 +807,11 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
-vk::UniqueShaderModule OITShaderManager::compileFinalShader()
+vk::UniqueShaderModule OITShaderManager::compileFinalShader(bool dithering)
 {
 	VulkanSource src;
 	src.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+		.addConstant("DITHERING", dithering)
 		.addSource(OITShaderHeader)
 		.addSource(OITFinalShaderSource);
 

@@ -15,7 +15,6 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     strategy:
-      fail-fast: false
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
@@ -32,10 +31,10 @@ jobs:
         run: |
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
-          brew update
+          brew update || :
           brew install libao ldid ninja pulseaudio
-          VULKAN_VER=1.3.250.1 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
-          hdiutil attach ./vulkansdk-macos-*.dmg
+          VULKAN_VER=1.3.261.1 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
+          hdiutil attach ./vulkansdk-macos-*.dmg -mountpoint /Volumes/VulkanSDK
           sudo /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/VulkanSDK
           echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
@@ -173,7 +172,7 @@ jobs:
           VERSION=$(git describe --tags --always)
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
-          sentry-cli upload-dif symbols
+          sentry-cli debug-files upload symbols
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}

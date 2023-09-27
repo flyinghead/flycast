@@ -404,11 +404,6 @@ void input_sdl_handle()
 						sdl_mouse->setRelPos(event.motion.xrel, event.motion.yrel);
 					else
 						sdl_mouse->setAbsPos(event.motion.x, event.motion.y);
-					sdl_mouse->setButton(Mouse::LEFT_BUTTON, event.motion.state & SDL_BUTTON_LMASK);
-					sdl_mouse->setButton(Mouse::RIGHT_BUTTON, event.motion.state & SDL_BUTTON_RMASK);
-					sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, event.motion.state & SDL_BUTTON_MMASK);
-					sdl_mouse->setButton(Mouse::BUTTON_4, event.motion.state & SDL_BUTTON_X1MASK);
-					sdl_mouse->setButton(Mouse::BUTTON_5, event.motion.state & SDL_BUTTON_X2MASK);
 				}
 				else if (mouseCaptured && gameRunning)
 				{

@@ -41,8 +41,8 @@ private:
 	u16 comm_offset = 0;
 	u16 comm_status0 = 0;
 	u16 comm_status1 = 0;
-	u8 m68k_ram[128 * 1024];
-	u8 comm_ram[128 * 1024];
+	u8 m68k_ram[128_KB];
+	u8 comm_ram[128_KB];
 	u16 packet_number = 0;
 
 	int slot_count = 0;

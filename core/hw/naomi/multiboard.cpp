@@ -38,7 +38,7 @@ static Multiboard *multiboard;
 
 constexpr int SyncCycles = 500000;
 
-static int schedCallback(int tag, int cycles, int jitter)
+static int schedCallback(int tag, int cycles, int jitter, void *arg)
 {
 	multiboard->syncWait();
 	return SyncCycles;

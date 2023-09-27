@@ -38,6 +38,7 @@ static bool rendererEnabled = true;
 TA_context* _pvrrc;
 
 static bool presented;
+static u32 fbAddrHistory[2] { 1, 1 };
 
 class PvrMessageQueue
 {
@@ -250,9 +251,10 @@ bool rend_single_frame(const bool& enabled)
 {
 	FC_PROFILE_SCOPE;
 
+	const int timeout = SPG_CONTROL.isPAL() ? 23 : 20;
 	presented = false;
 	while (enabled && !presented)
-		if (!pvrQueue.waitAndExecute(50))
+		if (!pvrQueue.waitAndExecute(timeout))
 			return false;
 	return true;
 }
@@ -342,6 +344,8 @@ void rend_reset()
 	fb_w_cur = 1;
 	pvrQueue.reset();
 	rendererEnabled = true;
+	fbAddrHistory[0] = 1;
+	fbAddrHistory[1] = 1;
 }
 
 void rend_start_render()
@@ -394,7 +398,18 @@ void rend_start_render()
 	ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 
 	if (!ctx->rend.isRTT)
+	{
+		if (FB_W_SOF1 != fbAddrHistory[0] && FB_W_SOF1 != fbAddrHistory[1])
+		{
+			ctx->rend.clearFramebuffer = true;
+			fbAddrHistory[0] = fbAddrHistory[1];
+			fbAddrHistory[1] = FB_W_SOF1;
+		}
+		else {
+			ctx->rend.clearFramebuffer = false;
+		}
 		ggpo::endOfFrame();
+	}
 
 	if (QueueRender(ctx))
 	{
@@ -406,7 +421,7 @@ void rend_start_render()
 	}
 }
 
-int rend_end_render(int tag, int cycles, int jitter)
+int rend_end_render(int tag, int cycles, int jitter, void *arg)
 {
 	if (settings.platform.isNaomi2())
 	{
@@ -529,4 +544,6 @@ void rend_deserialize(Deserializer& deser)
 		deser >> fb_watch_addr_end;
 	}
 	pend_rend = false;
+	fbAddrHistory[0] = 1;
+	fbAddrHistory[1] = 1;
 }

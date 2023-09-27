@@ -27,13 +27,10 @@
 #include "aica_if.h"
 #include "oslib/virtmem.h"
 
-namespace aica
+namespace aica::dsp
 {
 
-namespace dsp
-{
-
-constexpr size_t CodeBufferSize = 32 * 1024;
+constexpr size_t CodeBufferSize = 32_KB;
 #if defined(_WIN32)
 static u8 *CodeBuffer;
 #else
@@ -450,6 +447,5 @@ void runStep()
 	((void (*)())&pCodeBuffer[0])();
 }
 
-} // namespace dsp
-} // namespace aica
+} // namespace aica::dsp
 #endif

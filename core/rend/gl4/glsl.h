@@ -45,7 +45,7 @@ void setFragDepth(float z) \n\
 #else \n\
 	float w = 100000.0 * z; \n\
 #endif \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
+	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0; \n\
 } \n\
 \n\
 struct PolyParam { \n\

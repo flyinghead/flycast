@@ -1210,12 +1210,8 @@ static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 
 	while (childCtx != nullptr)
 	{
-		childCtx->MarkRend();
-		vd_rc.proc_start = childCtx->rend.proc_start;
-		vd_rc.proc_end = childCtx->rend.proc_end;
-
-		Ta_Dma* ta_data = (Ta_Dma *)vd_rc.proc_start;
-		Ta_Dma* ta_data_end = (Ta_Dma *)vd_rc.proc_end;
+		Ta_Dma* ta_data = (Ta_Dma *)childCtx->getTADataBegin();
+		Ta_Dma* ta_data_end = (Ta_Dma *)childCtx->getTADataEnd();
 
 		while (ta_data < ta_data_end)
 			try {
@@ -1319,24 +1315,13 @@ const float identityMat[] {
 	0.f, 0.f, 0.f, 1.f
 };
 
-const float defaultProjMat[] {
-	579.411194f,   0.f,       0.f,  0.f,
-	  0.f,      -579.411194f, 0.f,  0.f,
-   -320.f,      -240.f,      -1.f, -1.f,
-	  0.f,         0.f,       0.f,  0.f
-};
-
 constexpr int IdentityMatIndex = 0;
-constexpr int DefaultProjMatIndex = 1;
 constexpr int NoLightIndex = 0;
 
 static void setDefaultMatrices()
 {
 	if (ta_ctx->rend.matrices.empty())
-	{
 		ta_ctx->rend.matrices.push_back(*(N2Matrix *)identityMat);
-		ta_ctx->rend.matrices.push_back(*(N2Matrix *)defaultProjMat);
-	}
 }
 
 static void setDefaultLight()
@@ -1363,8 +1348,6 @@ void ta_add_poly(const PolyParam& pp)
 		n2CurrentPP->mvMatrix = IdentityMatIndex;
 	if (n2CurrentPP->normalMatrix == -1)
 		n2CurrentPP->normalMatrix = IdentityMatIndex;
-	if (n2CurrentPP->projMatrix == -1)
-		n2CurrentPP->projMatrix = DefaultProjMatIndex;
 	setDefaultLight();
 	if (n2CurrentPP->lightModel == -1)
 		n2CurrentPP->lightModel = NoLightIndex;
@@ -1397,8 +1380,6 @@ void ta_add_poly(int listType, const ModifierVolumeParam& mvp)
 	setDefaultMatrices();
 	if (n2CurrentMVP->mvMatrix == -1)
 		n2CurrentMVP->mvMatrix = IdentityMatIndex;
-	if (n2CurrentMVP->projMatrix == -1)
-		n2CurrentMVP->projMatrix = DefaultProjMatIndex;
 	vd_ctx = nullptr;
 }
 
@@ -1629,23 +1610,25 @@ void FillBGP(TA_context* ctx)
 	}
 	else
 	{
+		if (cv[2].x == cv[1].x) {
+			cv[2].x = cv[0].x;
+			cv[2].u = cv[0].u;
+		}
 		const float deltaU = (cv[1].u - cv[0].u) * 0.4f;
 		cv[0].x -= 256.f;
 		cv[0].u -= deltaU;
 		cv[1].x += 256.f;
 		cv[1].u += deltaU;
-		cv[2].x += 256.f;
-		cv[2].u += deltaU;
+		cv[2].x -= 256.f;
+		cv[2].u -= deltaU;
 
 		cv[0].x *= scale_x;
 		cv[1].x *= scale_x;
 		cv[2].x *= scale_x;
 
 		cv[3] = cv[2];
-		cv[3].x = cv[0].x;
-		cv[3].u = cv[0].u;
-
-		std::swap(cv[0], cv[1]);
+		cv[3].x = cv[1].x;
+		cv[3].u = cv[1].u;
 	}
 }
 

@@ -52,7 +52,7 @@ public:
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud,
-			bool alphaTest, bool clipInside, bool nearestWrapFix);
+			bool alphaTest, bool clipInside, bool nearestWrapFix, bool dithering);
 	const ComPtr<ID3D11VertexShader>& getVertexShader(bool gouraud, bool naomi2);
 	const ComPtr<ID3D11PixelShader>& getModVolShader();
 	const ComPtr<ID3D11VertexShader>& getMVVertexShader(bool naomi2);

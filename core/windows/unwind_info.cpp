@@ -19,8 +19,8 @@
 */
 // Based on Asmjit unwind info registration and stack walking code for Windows, Linux and macOS
 // https://gist.github.com/dpjudas/925d5c4ffef90bd8114be3b465069fff
-#ifdef _WIN64
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
+#ifdef _M_X64
 #include <windows.h>
 #include <dbghelp.h>
 #include <algorithm>
@@ -58,9 +58,9 @@ void UnwindInfo::endProlog(u32 offset)
 	codes.push_back(0);
 	codes.push_back(0);
 	std::reverse(codes.begin(), codes.end());
-	codes[0] = 1 | (offset  << 8);
-	codes[1] = (u8)codes.size() - 2;
-	if (codes.size() & 1)
+	codes[0] = 1 | (offset  << 8);		// version (1), flags (0) and prolog size (offset)
+	codes[1] = (u8)codes.size() - 2;	// unwind codes count
+	if (codes.size() & 1)				// table size must be even
 		codes.push_back(0);
 }
 

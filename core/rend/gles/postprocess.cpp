@@ -67,7 +67,9 @@ float dithertable[16] = float[](
 void main()
 {
 	vec2 texcoord = vTexCoord;
+	texcoord.y = 1. - texcoord.y;
 	vec2 texcoord2 = vTexCoord;
+	texcoord2.y = 1. - texcoord2.y;
 	texcoord2.x *= float(TextureSize.x);
 	texcoord2.y *= float(TextureSize.y);
 	vec4 color = texture(Source, texcoord);
@@ -78,6 +80,7 @@ void main()
 	int taps = int(3);
 	float tap = (2.666f/float(taps)) / float(min(TextureSize.y, 720));
 	vec2 texcoord4  = vTexCoord;
+	texcoord4.y = 1. - texcoord4.y;
 	texcoord4.y -= tap * 2.f;
 	int bl;
 	vec4 ble = vec4(0.0);
@@ -136,6 +139,7 @@ void main()
 	int taps = 32;
 	float tap = 12.0/taps;
 	vec2 texcoord4  = vTexCoord;
+	texcoord4.y = 1. - texcoord4.y;
 	texcoord4.x = texcoord4.x + (2.0/640.0);
 	texcoord4.y = texcoord4.y;
 	vec4 blur1 = texture(Source, texcoord4);
@@ -211,7 +215,7 @@ private:
 	{
 		glcache.UseProgram(program);
 		glUniform1f(frameCountUniform, FrameCount);
-		float shift[] = { -gl.ofbo.shiftX, gl.ofbo.shiftY };
+		float shift[] = { -gl.ofbo.shiftX, -gl.ofbo.shiftY };
 		glUniform2fv(videoShiftUniform, 1, shift);
 	}
 
@@ -281,7 +285,7 @@ void PostProcessor::render(GLuint output_fbo)
 
 	if (!config::PowerVR2Filter)
 	{
-		// Just handle shifting
+		// Just handle shifting and Y flipping
 		if (gl.gl_major < 3)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
@@ -301,7 +305,7 @@ void PostProcessor::render(GLuint output_fbo)
 			vertices[1] = vertices[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
 			vertices[6] = vertices[16] = vertices[1] - 2;
 			glcache.Disable(GL_BLEND);
-			drawQuad(framebuffer->getTexture(), false, false, vertices);
+			drawQuad(framebuffer->getTexture(), false, true, vertices);
 		}
 		else
 		{
@@ -310,8 +314,8 @@ void PostProcessor::render(GLuint output_fbo)
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, output_fbo);
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
-					0, 0, framebuffer->getWidth(), framebuffer->getHeight(),
+			glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
+					0, framebuffer->getHeight(), framebuffer->getWidth(), 0,
 					GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	    	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 #endif
@@ -319,7 +323,15 @@ void PostProcessor::render(GLuint output_fbo)
 		return;
 	}
 
-	PostProcessShader::select(FB_W_CTRL.fb_dither, SPG_CONTROL.interlace, FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	if (_pvrrc == nullptr)
+		// Framebuffer render: no dithering
+		PostProcessShader::select(false,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	else
+		PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 	{
 		if (vertexBufferShifted == nullptr)

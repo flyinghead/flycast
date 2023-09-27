@@ -252,7 +252,6 @@ static glm::mat4x4 curMatrix;
 static int taMVMatrix = -1;
 static int taNormalMatrix = -1;
 static glm::mat4 projectionMatrix;
-static int taProjMatrix = -1;
 static LightModel *curLightModel;
 static ElanBase *curLights[MAX_LIGHTS];
 static float nearPlane = 0.001f;
@@ -273,7 +272,6 @@ struct State
 
 	u32 gmp = Null;
 	u32 instance = Null;
-	u32 projMatrix = Null;
 	u32 lightModel = Null;
 	u32 lights[MAX_LIGHTS] = {
 			Null, Null, Null, Null, Null, Null, Null, Null,
@@ -282,15 +280,17 @@ struct State
 	bool lightModelUpdated = false;
 	float envMapUOffset = 0.f;
 	float envMapVOffset = 0.f;
+	float projMatrix[4] = { 579.411194f, -320.f, -579.411194f, -240.f };
+	int projMatrixIdx = -1;
 
 	void reset()
 	{
 		gmp = Null;
 		instance = Null;
-		projMatrix = Null;
 		lightModel = Null;
 		for (auto& light : lights)
 			light = Null;
+		projMatrixIdx = -1;
 		update();
 		if (isDirectX(config::RendererType))
 			packColor = packColorBGRA;
@@ -347,30 +347,43 @@ struct State
 
 	void setProjectionMatrix(void *p)
 	{
-		projMatrix = elanRamAddress(p);
+		ProjMatrix *pm = (ProjMatrix *)&RAM[elanRamAddress(p)];
+		projMatrix[0] = pm->fx;
+		projMatrix[1] = pm->tx;
+		projMatrix[2] = pm->fy;
+		projMatrix[3] = pm->ty;
+		DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f near %f far %f", pm->fx, pm->tx, pm->fy, pm->ty, nearPlane, farPlane);
 		updateProjectionMatrix();
 	}
 
 	void updateProjectionMatrix()
 	{
-		if (projMatrix == Null)
-		{
-			taProjMatrix = -1;
-			return;
-		}
-		ProjMatrix *pm = (ProjMatrix *)&RAM[projMatrix];
-		DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f near %f far %f", pm->fx, pm->tx, pm->fy, pm->ty, nearPlane, farPlane);
 		// fx = -m00 * w/2
 		// tx = -m20 * w/2 + left + w/2
 		// fy = -m11 * h/2
 		// ty = -m21 * h/2 + top + h/2
 		projectionMatrix = glm::mat4(
-				-pm->fx,  0,       0,  0,
-				0,        pm->fy,  0,  0,
-				-pm->tx, -pm->ty, -1, -1,
-				0,        0,       0,  0
+				-projMatrix[0], 0,               0,  0,
+				0,              projMatrix[2],   0,  0,
+				-projMatrix[1], -projMatrix[3], -1, -1,
+				0,              0,               0,  0
 		);
-		taProjMatrix = ta_add_matrix(glm::value_ptr(projectionMatrix));
+		projMatrixIdx = ta_add_matrix(glm::value_ptr(projectionMatrix));
+	}
+
+	void resetProjectionMatrix()
+	{
+		projMatrix[0] = 579.411194f;
+		projMatrix[1] = -320.f;
+		projMatrix[2] = -579.411194f;
+		projMatrix[3] = -240.f;
+	}
+
+	int getProjectionMatrixIndex()
+	{
+		if (projMatrixIdx == -1)
+			updateProjectionMatrix();
+		return projMatrixIdx;
 	}
 
 	void setGMP(void *p)
@@ -470,7 +483,6 @@ struct State
 	void update()
 	{
 		updateMatrix();
-		updateProjectionMatrix();
 		updateGMP();
 		updateLightModel();
 		for (u32 i = 0; i < MAX_LIGHTS; i++)
@@ -498,9 +510,11 @@ struct State
 
 	void deserialize(Deserializer& deser)
 	{
+		projMatrixIdx = -1;
 		if (deser.version() < Deserializer::V24)
 		{
 			reset();
+			resetProjectionMatrix();
 			return;
 		}
 		ta_parse_reset();
@@ -509,7 +523,14 @@ struct State
 		ta_set_list_type(listType);
 		deser >> gmp;
 		deser >> instance;
-		deser >> projMatrix;
+		if (deser.version() < Deserializer::V40)
+		{
+			deser.skip<u32>();	// projMatrix address
+			resetProjectionMatrix();
+		}
+		else {
+			deser >> projMatrix;
+		}
 		u32 tileclip;
 		deser >> tileclip;
 		ta_set_tileclip(tileclip);
@@ -1087,7 +1108,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx, bool needClipping)
 	mvp.isp.VolumeLast = list->pcw.volume;
 	mvp.isp.DepthMode &= 3;
 	mvp.mvMatrix = taMVMatrix;
-	mvp.projMatrix = taProjMatrix;
+	mvp.projMatrix = state.getProjectionMatrixIndex();
 	ta_add_poly(list->pcw.listType, mvp);
 
 	ModifierVolumeClipper clipper(needClipping);
@@ -1242,7 +1263,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 	sendLights();
 	pp.mvMatrix = taMVMatrix;
 	pp.normalMatrix = taNormalMatrix;
-	pp.projMatrix = taProjMatrix;
+	pp.projMatrix = state.getProjectionMatrixIndex();
 	pp.lightModel = taLightModel;
 	pp.envMapping[0] = false;
 	pp.envMapping[1] = false;
@@ -1279,7 +1300,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 	pp.tsp1.full ^= modelTSP.full;
 
 	// projFlip is for left-handed projection matrices (initd rear view mirror)
-	bool projFlip = taProjMatrix != -1 && std::signbit(projectionMatrix[0][0]) == std::signbit(projectionMatrix[1][1]);
+	bool projFlip = std::signbit(projectionMatrix[0][0]) == std::signbit(projectionMatrix[1][1]);
 	pp.isp.CullMode ^= (u32)cullingReversed ^ (u32)projFlip;
 	pp.pcw.Shadow ^= shadowedVolume;
 	if (pp.pcw.Shadow == 0 || pp.pcw.Volume == 0)
@@ -1751,6 +1772,7 @@ void reset(bool hard)
 	{
 		memset(RAM, 0, ERAM_SIZE);
 		state.reset();
+		state.resetProjectionMatrix();
 	}
 }
 

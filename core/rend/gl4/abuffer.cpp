@@ -24,7 +24,7 @@
 static GLuint pixels_buffer;
 static GLuint pixels_pointers;
 static GLuint atomic_buffer;
-static gl4PipelineShader g_abuffer_final_shader;
+static gl4PipelineShader g_abuffer_final_shader[2];
 static gl4PipelineShader g_abuffer_clear_shader;
 static gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static int maxLayers;
@@ -46,6 +46,9 @@ static AQuadVertexArray g_quadVertexArray;
 static const char *final_shader_source = R"(
 layout(binding = 0) uniform sampler2D tex;
 uniform float shade_scale_factor;
+#if DITHERING == 1
+uniform vec4 ditherColorMax;
+#endif
 
 out vec4 FragColor;
 
@@ -178,6 +181,19 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 		else
 			finalColor = result;
 	}
+#if DITHERING == 1
+	float ditherTable[16] = float[](
+		 0.9375,  0.1875,  0.75,  0.,   
+		 0.4375,  0.6875,  0.25,  0.5,
+		 0.8125,  0.0625,  0.875, 0.125,
+		 0.3125,  0.5625,  0.375, 0.625	
+	);
+	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	finalColor += r / ditherColorMax;
+	// avoid rounding
+	finalColor = floor(finalColor * 255.) / 255.;
+#endif
 	
 	return finalColor;
 	
@@ -273,23 +289,28 @@ static void compileFinalAndModVolShaders()
 	if (maxLayers != config::PerPixelLayers)
 	{
 		maxLayers = config::PerPixelLayers;
-		glcache.DeleteProgram(g_abuffer_final_shader.program);
-		g_abuffer_final_shader.program = 0;
-		for (int mode = 0; mode < ModeCount; mode++)
-		{
-			glcache.DeleteProgram(g_abuffer_tr_modvol_shaders[mode].program);
-			g_abuffer_tr_modvol_shaders[mode].program = 0;
+		for (auto& shader : g_abuffer_final_shader) {
+			glcache.DeleteProgram(shader.program);
+			shader.program = 0;
+		}
+		for (auto& shader : g_abuffer_tr_modvol_shaders) {
+			glcache.DeleteProgram(shader.program);
+			shader.program = 0;
 		}
 	}
-	if (g_abuffer_final_shader.program == 0)
+	if (g_abuffer_final_shader[0].program == 0)
 	{
 		OpenGl4Source vertexShader;
 		vertexShader.addSource(VertexShaderSource);
-		OpenGl4Source finalShader;
-		finalShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
-				.addSource(ShaderHeader)
-				.addSource(final_shader_source);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, finalShader.generate().c_str(), vertexShader.generate().c_str());
+		for (size_t i = 0; i < std::size(g_abuffer_final_shader); i++)
+		{
+			OpenGl4Source finalShader;
+			finalShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+					.addConstant("DITHERING", i)
+					.addSource(ShaderHeader)
+					.addSource(final_shader_source);
+			gl4CompilePipelineShader(&g_abuffer_final_shader[i], finalShader.generate().c_str(), vertexShader.generate().c_str());
+		}
 	}
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
@@ -421,14 +442,15 @@ void termABuffer()
 	g_quadVertexArray.term();
 	g_quadBuffer.reset();
 	g_quadIndexBuffer.reset();
-	glcache.DeleteProgram(g_abuffer_final_shader.program);
-	g_abuffer_final_shader.program = 0;
+	for (auto& shader : g_abuffer_final_shader) {
+		glcache.DeleteProgram(shader.program);
+		shader.program = 0;
+	}
 	glcache.DeleteProgram(g_abuffer_clear_shader.program);
 	g_abuffer_clear_shader.program = 0;
-	for (int mode = 0; mode < ModeCount; mode++)
-	{
-		glcache.DeleteProgram(g_abuffer_tr_modvol_shaders[mode].program);
-		g_abuffer_tr_modvol_shaders[mode].program = 0;
+	for (auto& shader : g_abuffer_tr_modvol_shaders) {
+		glcache.DeleteProgram(shader.program);
+		shader.program = 0;
 	}
 	maxLayers = 0;
 }
@@ -550,12 +572,38 @@ void checkOverflowAndReset()
  	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
 }
 
-void renderABuffer()
+void renderABuffer(bool lastPass)
 {
 	// Render to output FBO
 	compileFinalAndModVolShaders();
-	glcache.UseProgram(g_abuffer_final_shader.program);
-	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
+	if (lastPass && config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3)
+	{
+		glcache.UseProgram(g_abuffer_final_shader[1].program);
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[1] = gl4ShaderUniforms.ditherColorMax[2] = 31.f;
+			gl4ShaderUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[2] = 31.f;
+			gl4ShaderUniforms.ditherColorMax[1] = 63.f;
+			gl4ShaderUniforms.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[1]
+				= gl4ShaderUniforms.ditherColorMax[2] = gl4ShaderUniforms.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+		gl4ShaderUniforms.Set(&g_abuffer_final_shader[1]);
+	}
+	else {
+		glcache.UseProgram(g_abuffer_final_shader[0].program);
+		gl4ShaderUniforms.Set(&g_abuffer_final_shader[0]);
+	}
 
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_CULL_FACE);

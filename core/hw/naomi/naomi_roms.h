@@ -33,7 +33,8 @@ enum BlobType {
 	InterleavedWord,
 	Copy,
 	Key,
-	Eeprom
+	Eeprom,
+	EepromBE16
 };
 
 enum CartridgeType {
@@ -59,6 +60,7 @@ struct BIOS_t
 		u32 offset;
 		u32 length;
 		u32 crc;
+		BlobType blob_type;
 	} blobs[MAX_GAME_FILES];
 };
 extern const BIOS_t BIOS[];

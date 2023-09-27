@@ -24,8 +24,21 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "oslib/virtmem.h"
+
+#ifdef _M_ARM
+#pragma push_macro("MemoryBarrier")
+#pragma push_macro("Yield")
+#undef MemoryBarrier
+#undef Yield
+#endif
+
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
+
+#ifdef _M_ARM
+#pragma pop_macro("MemoryBarrier")
+#pragma pop_macro("Yield")
+#endif
 
 namespace aica
 {
@@ -37,6 +50,8 @@ constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
 
 #if defined(__unix__)
 alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
+#elif defined(_M_ARM)
+static u8 *DynCode;
 #else
 #error "Unsupported platform for arm32 DSP dynarec"
 #endif
@@ -383,9 +398,9 @@ private:
 		// RBP is constant for this program
 		Add(ADDR, ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
-		if (ARAM_SIZE == 2*1024*1024)
+		if (ARAM_SIZE == 2_MB)
 			Bfc(ADDR, 21, 11);
-		else if (ARAM_SIZE == 8*1024*1024)
+		else if (ARAM_SIZE == 8_MB)
 			Bfc(ADDR, 23, 9);
 		else
 			die("Unsupported ARAM_SIZE");

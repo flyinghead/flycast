@@ -5,6 +5,7 @@
 #include <cmath>
 #include "input/gamepad.h"
 #include "serialize.h"
+#include "hw/hwreg.h"
 
 #include <memory>
 #include <vector>
@@ -88,12 +89,12 @@ enum NAOMI_KEYS
 	NAOMI_BTN5_KEY = 1 << 4,
 	NAOMI_BTN6_KEY = 1 << 3,
 	NAOMI_BTN7_KEY = 1 << 2,
+
+	// Not actual JVS buttons
 	NAOMI_BTN8_KEY = 1 << 16,
 
-	NAOMI_TEST_KEY = 1 << 1,
-
-	// Not an actual button
-	NAOMI_COIN_KEY = 1 << 0,
+	NAOMI_TEST_KEY = 1 << 18,
+	NAOMI_COIN_KEY = 1 << 19,
 	NAOMI_RELOAD_KEY = 1 << 17,
 };
 
@@ -115,9 +116,9 @@ enum AWAVE_KEYS
 	AWAVE_SERVICE_KEY = 1 << 13,
 	AWAVE_TEST_KEY 	  = 1 << 14,
 
-	// Not an actual button
-	AWAVE_COIN_KEY    = 1 << 15,
-	AWAVE_TRIGGER_KEY = 1 << 12,
+	// Not actual AW buttons
+	AWAVE_COIN_KEY    = 1 << 16,
+	AWAVE_TRIGGER_KEY = 1 << 17,
 };
 
 struct maple_device
@@ -257,7 +258,7 @@ struct maple_base: maple_device
 
 class jvs_io_board;
 
-struct maple_naomi_jamma : maple_base
+struct maple_naomi_jamma : maple_base, SerialPort
 {
 	static constexpr u8 ALL_NODES = 0xff;
 
@@ -295,4 +296,11 @@ struct maple_naomi_jamma : maple_base
 
 	void serialize(Serializer& ser) const override;
 	void deserialize(Deserializer& deser) override;
+
+	void setPipe(Pipe *pipe) override {
+		serialPipe = pipe;
+	}
+	void updateStatus() override {}
+
+	Pipe *serialPipe = nullptr;
 };

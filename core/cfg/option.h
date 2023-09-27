@@ -465,6 +465,11 @@ extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
+#ifdef VIDEO_ROUTING
+extern Option<bool> VideoRouting;
+extern Option<bool> VideoRoutingScale;
+extern Option<int> VideoRoutingVRes;
+#endif
 
 // Misc
 
@@ -475,6 +480,7 @@ extern Option<int> GDBPort;
 extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
+extern Option<bool> RamMod32MB;
 
 extern Option<bool> OpenGlChecks;
 

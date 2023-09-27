@@ -25,7 +25,6 @@
 #include <memory>
 
 static gl4PipelineShader* CurrentShader;
-extern u32 gcflip;
 GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
@@ -265,8 +264,7 @@ static void SetGPState(const PolyParam* gp)
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode ^ gcflip);
+	SetCull(gp->isp.CullMode ^ 1);
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (pass == Pass::Depth && SortingEnabled))
@@ -483,6 +481,15 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+	if (!pvrrc.isRTT && pvrrc.clearFramebuffer)
+	{
+		glcache.Disable(GL_SCISSOR_TEST);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		if (gl4ShaderUniforms.base_clipping.enabled)
+			glcache.Enable(GL_SCISSOR_TEST);
+	}
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
@@ -688,7 +695,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindSampler(0, 0);
 				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer();
+				renderABuffer(false);
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -716,5 +723,5 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
 	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
-	renderABuffer();
+	renderABuffer(true);
 }

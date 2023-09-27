@@ -252,6 +252,7 @@ struct settings_t
 		bool isAtomiswave() const { return system == DC_PLATFORM_ATOMISWAVE; }
 		bool isArcade() const { return !isConsole(); }
 		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
+		bool isSystemSP() const { return system == DC_PLATFORM_SYSTEMSP; }
 	} platform;
 
 	struct {
@@ -342,3 +343,23 @@ public:
 
 class Serializer;
 class Deserializer;
+
+constexpr size_t operator""_KB(unsigned long long  x)
+{
+	return 1024 * x;
+}
+
+constexpr size_t operator""_MB(unsigned long long  x)
+{
+	return 1024 * 1024 * x;
+}
+
+constexpr size_t operator""_GB(unsigned long long  x)
+{
+	return 1024 * 1024 * 1024 * x;
+}
+
+constexpr u32 RAM_SIZE_MAX = 32_MB;
+constexpr u32 VRAM_SIZE_MAX = 16_MB;
+constexpr u32 ARAM_SIZE_MAX = 8_MB;
+

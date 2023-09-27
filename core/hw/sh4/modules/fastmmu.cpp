@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < full_table_size; i++)
 	{
 		u32 sz = full_table[i].entry.Data.SZ1 * 2 + full_table[i].entry.Data.SZ0;
-		u32 mask = sz == 3 ? 1*1024*1024 : sz == 2 ? 64*1024 : sz == 1 ? 4*1024 : 1024;
+		u32 mask = sz == 3 ? 1_MB : sz == 2 ? 64_KB : sz == 1 ? 4_KB : 1_KB;
 		mask--;
 		addrs.push_back(((full_table[i].entry.Address.VPN << 10) & mmu_mask[sz]) | (random() * mask / RAND_MAX));
 		asids.push_back(full_table[i].entry.Address.ASID);

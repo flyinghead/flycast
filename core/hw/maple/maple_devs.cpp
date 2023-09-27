@@ -324,7 +324,7 @@ u8 vmu_default[] = {
 struct maple_sega_vmu: maple_base
 {
 	FILE* file;
-	u8 flash_data[128*1024];
+	u8 flash_data[128_KB];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
 

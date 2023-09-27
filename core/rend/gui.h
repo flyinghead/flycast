@@ -66,6 +66,8 @@ enum class GuiState {
 };
 extern GuiState gui_state;
 
+void gui_setState(GuiState newState);
+
 static inline bool gui_is_open()
 {
 	return gui_state != GuiState::Closed && gui_state != GuiState::VJoyEdit;

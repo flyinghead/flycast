@@ -39,20 +39,20 @@ void gui_display_vjoy_commands()
 	if (ImGui::Button("Save", ScaledVec2(150, 50)))
 	{
 		vjoy_stop_editing(false);
-		gui_state = GuiState::Settings;
+		gui_setState(GuiState::Settings);
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Reset", ScaledVec2(150, 50)))
 	{
 		vjoy_reset_editing();
-		gui_state = GuiState::VJoyEdit;
+		gui_setState(GuiState::VJoyEdit);
 	}
 
 	ImGui::SameLine();
 	if (ImGui::Button("Cancel", ScaledVec2(150, 50)))
 	{
 		vjoy_stop_editing(true);
-		gui_state = GuiState::Settings;
+		gui_setState(GuiState::Settings);
 	}
     ImGui::End();
 }

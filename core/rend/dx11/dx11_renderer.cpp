@@ -185,6 +185,10 @@ void DX11Renderer::Term()
 	quad.reset();
 	deviceContext.reset();
 	device.reset();
+	vrStagingTexture.reset();
+	vrStagingTextureSRV.reset();
+	vrScaledTexture.reset();
+	vrScaledRenderTarget.reset();
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
@@ -411,6 +415,31 @@ void DX11Renderer::setupPixelShaderConstants()
 	// Punch-through alpha ref
 	pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
+	// Dithering
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[1] = 63.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1]
+				= pixelConstants.ditherColorMax[2] = pixelConstants.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
+
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(pxlConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
@@ -430,6 +459,13 @@ bool DX11Renderer::Render()
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+		if (pvrrc.clearFramebuffer)
+		{
+			float colors[4];
+			VO_BORDER_COL.getRGBColor(colors);
+			colors[3] = 1.f;
+			deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
+		}
 	}
 	configVertexShader();
 
@@ -460,6 +496,7 @@ bool DX11Renderer::Render()
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
 		DrawOSD(false);
+		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
 		ID3D11RenderTargetView *nullView = nullptr;
@@ -587,7 +624,8 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			gp->pcw.Gouraud,
 			Type == ListType_Punch_Through,
 			clipmode == TileClipping::Inside,
-			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV);
+			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV,
+			dithering);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
 	if (gpuPalette)
@@ -728,6 +766,7 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 				false,
 				false,
 				true,
+				false,
 				false,
 				false,
 				false);
@@ -960,6 +999,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
+	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
 	ID3D11RenderTargetView *nullView = nullptr;
@@ -1225,9 +1265,10 @@ void DX11Renderer::writeFramebufferToVRAM()
 			viewDesc.Texture2D.MipLevels = 1;
 			device->CreateShaderResourceView(fbScaledTexture, &viewDesc, &fbScaledTextureView.get());
 		}
+		deviceContext->OMSetRenderTargets(1, &fbScaledRenderTarget.get(), nullptr);
 		D3D11_VIEWPORT vp{};
-		vp.Width = (FLOAT)width;
-		vp.Height = (FLOAT)height;
+		vp.Width = (FLOAT)scaledW;
+		vp.Height = (FLOAT)scaledH;
 		vp.MinDepth = 0.f;
 		vp.MaxDepth = 1.f;
 		deviceContext->RSSetViewports(1, &vp);
@@ -1292,6 +1333,88 @@ void DX11Renderer::writeFramebufferToVRAM()
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
+}
+
+void DX11Renderer::renderVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		extern void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture);
+		
+		ID3D11RenderTargetView* pRenderTargetView = theDX11Context.getRenderTarget().get();
+
+		// Backbuffer texture would be different after reszing, fetching new address everytime
+		ID3D11Resource* pResource = nullptr;
+		pRenderTargetView->GetResource(&pResource);
+		ID3D11Texture2D* backBufferTexture = nullptr;
+		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&backBufferTexture);		
+		
+		if (config::VideoRoutingScale)
+		{
+			static int targetWidth, targetHeight, vrStagingWidth, vrStagingHeight;
+			static D3D11_VIEWPORT scaledViewPort{};
+
+			auto updateScaledTexture = [this]() -> void {
+				targetWidth = config::VideoRoutingVRes * settings.display.width / settings.display.height;
+				targetHeight = config::VideoRoutingVRes;
+
+				vrScaledTexture.reset();
+				vrScaledRenderTarget.reset();
+				createTexAndRenderTarget(vrScaledTexture, vrScaledRenderTarget, targetWidth, targetHeight);
+
+				scaledViewPort.Width = targetWidth;
+				scaledViewPort.Height = targetHeight;
+				scaledViewPort.MinDepth = 0.f;
+				scaledViewPort.MaxDepth = 1.f;
+			};
+
+			D3D11_TEXTURE2D_DESC bbDesc = {};
+			backBufferTexture->GetDesc(&bbDesc);
+
+			// Window resized
+			if (bbDesc.Width != vrStagingWidth || bbDesc.Height != vrStagingHeight)
+			{
+				vrStagingTexture.reset();
+				vrStagingTextureSRV.reset();
+
+				D3D11_TEXTURE2D_DESC srvDesc = bbDesc;
+				srvDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				srvDesc.Usage = D3D11_USAGE_DEFAULT;
+				device->CreateTexture2D(&srvDesc, nullptr, &vrStagingTexture.get());
+
+				D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+				viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				viewDesc.Texture2D.MipLevels = 1;
+				
+				device->CreateShaderResourceView(vrStagingTexture.get(), &viewDesc, &vrStagingTextureSRV.get());
+
+				updateScaledTexture();
+			}
+
+			// Scale down value changed
+			if (targetHeight != config::VideoRoutingVRes)
+			{
+				updateScaledTexture();	
+			}
+
+			deviceContext->OMSetRenderTargets(1, &vrScaledRenderTarget.get(), nullptr);
+			deviceContext->RSSetViewports(1, &scaledViewPort);
+			deviceContext->CopyResource(vrStagingTexture.get(), backBufferTexture);
+			quad->draw(vrStagingTextureSRV, samplers->getSampler(true));
+			os_VideoRoutingPublishFrameTexture(vrScaledTexture);
+
+			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+
+		} else {
+			os_VideoRoutingPublishFrameTexture(backBufferTexture);
+		}
+
+		backBufferTexture->Release();
+		pResource->Release();
+	}
+#endif
 }
 
 Renderer *rend_DirectX11()

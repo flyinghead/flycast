@@ -90,10 +90,10 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Color flags and blending
 	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
+	vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (listType == ListType_Punch_Through || pass == Pass::Color)
+	if (listType == ListType_Punch_Through || (listType == ListType_Translucent && pass == Pass::Color))
 	{
-		vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 		u32 src = pp.tsp.SrcInstr;
 		u32 dst = pp.tsp.DstInstr;
 		pipelineColorBlendAttachmentState =
@@ -110,6 +110,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	}
 	else
 	{
+		if (pass == Pass::Depth || pass == Pass::OIT)
+			colorComponentFlags = vk::ColorComponentFlags();
 		pipelineColorBlendAttachmentState =
 		{
 		  false,                      // blendEnable
@@ -119,7 +121,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 		  vk::BlendFactor::eZero,     // srcAlphaBlendFactor
 		  vk::BlendFactor::eZero,     // dstAlphaBlendFactor
 		  vk::BlendOp::eAdd,          // alphaBlendOp
-		  vk::ColorComponentFlags()   // colorWriteMask
+		  colorComponentFlags		  // colorWriteMask
 		};
 	}
 
@@ -183,7 +185,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 			graphicsPipelineCreateInfo).value;
 }
 
-void OITPipelineManager::CreateFinalPipeline()
+void OITPipelineManager::CreateFinalPipeline(bool dithering)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetQuadInputStateCreateInfo(false);
 
@@ -240,7 +242,7 @@ void OITPipelineManager::CreateFinalPipeline()
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetFinalVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetFinalShader();
+	vk::ShaderModule fragment_module = shaderManager->GetFinalShader(dithering);
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -264,7 +266,7 @@ void OITPipelineManager::CreateFinalPipeline()
 	  2                                           // subpass
 	);
 
-	finalPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
+	finalPipelines[dithering] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateClearPipeline()

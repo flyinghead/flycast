@@ -94,6 +94,7 @@ float4 clipTest : register(c4);
 float4 trilinearAlpha : register(c5);
 float4 colorClampMin : register(c6);
 float4 colorClampMax : register(c7);
+float4 ditherColorMax : register(c8);
 
 float fog_mode2(float w)
 {
@@ -222,14 +223,26 @@ PSO main(in pixel inpix)
 	color *= trilinearAlpha;
 	#endif
 
-	//color.rgb = float3(inpix.uv.w * FOG_DENSITY_SCALE.x / 128.0f);
+#if DITHERING == 1
+	static const float ditherTable[16] = {
+		 0.9375f,  0.1875f,  0.75f,  0.0f,   
+		 0.4375f,  0.6875f,  0.25f,  0.5f,
+		 0.8125f,  0.0625f,  0.875f, 0.125f,
+		 0.3125f,  0.5625f,  0.375f, 0.625f	
+	};
+	float r = ditherTable[int(inpix.pos.y % 4.0f) * 4 + int(inpix.pos.x % 4.0f)] + 0.03125f; // why is this bias needed??
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	color += r / ditherColorMax;
+	// avoid rounding
+	color = floor(color * 255.0f) / 255.0f;
+#endif
 	PSO pso;
 #if DIV_POS_Z == 1
 	float w = 100000.0f / inpix.uv.w;
 #else
 	float w = 100000.0f * inpix.uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = color;
 
 	return pso;
@@ -243,7 +256,7 @@ PSO modifierVolume(float4 uv : TEXCOORD0)
 #else
 	float w = 100000.0f * uv.w;
 #endif
-	pso.z = log2(1.0f + w) / 34.0f;
+	pso.z = log2(1.0f + max(w, -0.999999f)) / 34.0f;
 	pso.col = float4(0, 0, 0, FOG_DENSITY_SCALE.y);
 
 	return pso;
@@ -273,6 +286,7 @@ enum ShaderMacros {
 	MacroBumpMap,
 	MacroTriLinear,
 	MacroClipInside,
+	MacroDithering,
 };
 
 static D3DXMACRO PixelMacros[]
@@ -290,12 +304,13 @@ static D3DXMACRO PixelMacros[]
 	{ "pp_BumpMap", "0" },
 	{ "pp_TriLinear", "0" },
 	{ "pp_ClipInside", "0" },
+	{ "DITHERING", "0" },
 	{0, 0}
 };
 
 const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool clipInside)
+		bool trilinear, bool palette, bool gouraud, bool clipInside, bool dithering)
 {
 	u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -309,7 +324,8 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 			| (palette << 11)
 			| (gouraud << 12)
 			| (clipInside << 13)
-			| ((int)config::NativeDepthInterpolation << 14);
+			| ((int)config::NativeDepthInterpolation << 14)
+			| (dithering << 15);
 	auto it = shaders.find(hash);
 	if (it == shaders.end())
 	{
@@ -328,6 +344,7 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroGouraud].Definition = MacroValues[gouraud];
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[config::NativeDepthInterpolation];
+		PixelMacros[MacroDithering].Definition = MacroValues[dithering];
 		ComPtr<IDirect3DPixelShader9> shader = compilePS(PixelShader, "main", PixelMacros);
 		verify((bool )shader);
 		it = shaders.insert(std::make_pair(hash, shader)).first;

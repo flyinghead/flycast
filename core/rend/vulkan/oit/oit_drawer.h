@@ -152,6 +152,7 @@ private:
 	int renderPass = 0;
 	OITDescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
+	bool dithering = false;
 };
 
 class OITScreenDrawer : public OITDrawer

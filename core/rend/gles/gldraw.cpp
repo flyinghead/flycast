@@ -71,7 +71,6 @@ const u32 SrcBlendGL[] =
 };
 
 PipelineShader* CurrentShader;
-u32 gcflip;
 
 void SetCull(u32 CullMode)
 {
@@ -137,7 +136,8 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f,
 								  gpuPalette,
-								  gp->isNaomi2());
+								  gp->isNaomi2(),
+								  ShaderUniforms.dithering);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
@@ -234,8 +234,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode^cflip^gcflip);
+	SetCull(gp->isp.CullMode ^ cflip ^ 1);
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
@@ -327,7 +326,7 @@ static void drawSorted(int first, int count, bool multipass)
 				// FIXME no clipping in modvol shader
 				//SetTileClip(gp->tileclip,true);
 
-				SetCull(params->isp.CullMode ^ gcflip);
+				SetCull(params->isp.CullMode ^ 1);
 
 				glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
 						(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
@@ -622,11 +621,8 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	saveCurrentFramebuffer();
 	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 #ifdef LIBRETRO
-	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
-		glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
+	glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
 #else
 	if (gl.ofbo2.framebuffer != nullptr
 			&& (gl.dcfb.width != gl.ofbo2.framebuffer->getWidth() || gl.dcfb.height != gl.ofbo2.framebuffer->getHeight()))
@@ -655,11 +651,10 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	else
 	{
 		glcache.Disable(GL_BLEND);
-		drawQuad(gl.dcfb.tex, false, true);
+		drawQuad(gl.dcfb.tex, false, false);
 	}
 #ifdef LIBRETRO
-	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-		postProcessor.render(glsm_get_current_framebuffer());
+	postProcessor.render(glsm_get_current_framebuffer());
 #else
 	renderLastFrame();
 #endif
@@ -697,7 +692,7 @@ void writeFramebufferToVRAM()
 			gl.fbscaling.framebuffer->bind();
 			glViewport(0, 0, scaledW, scaledH);
 			glcache.Disable(GL_SCISSOR_TEST);
-			glcache.ClearColor(1.f, 0.f, 0.f, 1.f);
+			glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.framebuffer->getTexture());
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -788,7 +783,7 @@ bool OpenGLRenderer::renderLastFrame()
 			vertices = sverts;
 		}
 		glcache.Disable(GL_BLEND);
-		drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
+		drawQuad(framebuffer->getTexture(), config::Rotate90, true, vertices);
 	}
 	else
 	{
@@ -797,8 +792,8 @@ bool OpenGLRenderer::renderLastFrame()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
-				dx, dy, settings.display.width - dx, settings.display.height - dy,
+		glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
+				dx, settings.display.height - dy, settings.display.width - dx, dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif

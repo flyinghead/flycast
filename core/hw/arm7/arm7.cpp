@@ -2,10 +2,7 @@
 #include "arm_mem.h"
 #include "arm7_rec.h"
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[(addr) & ARAM_MASK])
@@ -409,5 +406,4 @@ template void DYNACALL MSR_do<1>(u32 v);
 } // namespace recompiler
 #endif	// FEAT_AREC != DYNAREC_NONE
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm

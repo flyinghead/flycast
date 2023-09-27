@@ -1,10 +1,7 @@
 #pragma once
 #include "types.h"
 
-namespace aica
-{
-
-namespace sgc
+namespace aica::sgc
 {
 
 void AICA_Sample();
@@ -62,5 +59,4 @@ void serialize(Serializer& ctx);
 void deserialize(Deserializer& ctx);
 void vmuBeep(int on, int period);
 
-} // namespace sgc
-} // namespace aica
+} // namespace aica::sgc

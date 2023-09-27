@@ -130,7 +130,7 @@ bool D3DRenderer::Init()
 	device = theDXContext.getDevice();
 	devCache.setDevice(device);
 
-	bool success = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024);
+	bool success = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4_MB);
 	success &= ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
 
 	success &= SUCCEEDED(device->CreateVertexDeclaration(MainVtxElement, &mainVtxDecl.get()));
@@ -189,7 +189,7 @@ void D3DRenderer::postReset()
 	width = 0;
 	height = 0;
 	resize(w, h);
-	bool rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4 * 1024 * 1024);
+	bool rc = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4_MB);
 	verify(rc);
 	rc = ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
 	verify(rc);
@@ -296,9 +296,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 
 	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, info.vo_border_col._red, info.vo_border_col._green, info.vo_border_col._blue));
-	u32 bar = (this->width - this->height * 640 / 480) / 2;
-	RECT rd{ (LONG)bar, 0, (LONG)(this->width - bar), (LONG)this->height };
-	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
+	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, nullptr, D3DTEXF_LINEAR);
 
 	aspectRatio = getDCFramebufferAspectRatio();
 	displayFramebuffer();
@@ -372,7 +370,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			trilinear_alpha != 1.f,
 			gpuPalette,
 			gp->pcw.Gouraud,
-			clipmode == TileClipping::Inside));
+			clipmode == TileClipping::Inside,
+			dithering));
 
 	if (trilinear_alpha != 1.f)
 	{
@@ -965,6 +964,8 @@ bool D3DRenderer::Render()
 	else
 	{
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+		if (pvrrc.clearFramebuffer)
+			device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
 		verify(rc);
 		D3DVIEWPORT9 viewport;
@@ -1060,6 +1061,33 @@ bool D3DRenderer::Render()
 	device->SetPixelShaderConstantF(6, color_clamp, 1);
 	pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
 	device->SetPixelShaderConstantF(7, color_clamp, 1);
+
+	// Dithering
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		float ditherColorMax[4];
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			ditherColorMax[0] = ditherColorMax[1] = ditherColorMax[2] = 31.f;
+			ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			ditherColorMax[0] = ditherColorMax[2] = 31.f;
+			ditherColorMax[1] = 63.f;
+			ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			ditherColorMax[0] = ditherColorMax[1]
+				= ditherColorMax[2] = ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+		device->SetPixelShaderConstantF(8, ditherColorMax, 1);
+	}
 
 	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 

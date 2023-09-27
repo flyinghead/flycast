@@ -45,6 +45,7 @@ struct gl4PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
+	GLint ditherColorMax;
 
 	// Naomi2
 	GLint mvMat;
@@ -180,7 +181,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = n
 void initABuffer();
 void termABuffer();
 void reshapeABuffer(int width, int height);
-void renderABuffer();
+void renderABuffer(bool lastPass);
 void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom);
 void checkOverflowAndReset();
 
@@ -227,6 +228,7 @@ extern struct gl4ShaderUniforms_t
 		int height;
 	} base_clipping;
 	int palette_index;
+	float ditherColorMax[4];
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{
@@ -257,6 +259,7 @@ extern struct gl4ShaderUniforms_t
 		glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 		glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 		glUniform1i(s->palette_index, palette_index);
+		glUniform4fv(s->ditherColorMax, 1, ditherColorMax);
 	}
 
 } gl4ShaderUniforms;

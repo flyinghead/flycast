@@ -446,13 +446,14 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->PSSetShaderResources(0, 1, &opaqueTextureView.get());
         auto sampler = samplers->getSampler(false);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
-		deviceContext->RSSetScissorRects(1, &scissorRect);
+        D3D11_RECT rect { 0, 0, (LONG)width, (LONG)height };
+		deviceContext->RSSetScissorRects(1, &rect);
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(false, false, 0, false), 0);
 		setCullMode(0);
 
 		deviceContext->IASetInputLayout(finalInputLayout);
 		deviceContext->VSSetShader(shaders.getFinalVertexShader(), nullptr, 0);
-		deviceContext->PSSetShader(shaders.getFinalShader(), nullptr, 0);
+		deviceContext->PSSetShader(shaders.getFinalShader(dithering && lastPass), nullptr, 0);
 
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		deviceContext->Draw(4, 0);
@@ -512,6 +513,13 @@ struct DX11OITRenderer : public DX11Renderer
 		buffers.bind();
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 		deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+		if (pvrrc.clearFramebuffer && !pvrrc.isRTT)
+		{
+			float colors[4];
+			VO_BORDER_COL.getRGBColor(colors);
+			colors[3] = 1.f;
+			deviceContext->ClearRenderTargetView(opaqueRenderTarget, colors);
+		}
 
 		RenderPass previous_pass {};
 		int render_pass_count = (int)pvrrc.render_passes.size();
@@ -667,6 +675,7 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 			displayFramebuffer();
 			DrawOSD(false);
+			renderVideoRouting();
 			theDX11Context.setFrameRendered();
 #else
 			ID3D11RenderTargetView *nullView = nullptr;

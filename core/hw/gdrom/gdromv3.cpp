@@ -1163,7 +1163,7 @@ static int getGDROMTicks()
 }
 
 //is this needed ?
-static int GDRomschd(int i, int c, int j)
+static int GDRomschd(int tag, int cycles, int jitter, void *arg)
 {
 	if (SecNumber.Status == GD_SEEK)
 	{
@@ -1275,7 +1275,7 @@ static void GDROM_DmaStart(u32 addr, u32 data)
 		int ticks = getGDROMTicks();
 		if (ticks < SH4_TIMESLICE)
 		{
-			ticks = GDRomschd(0,0,0);
+			ticks = GDRomschd(0, 0, 0, nullptr);
 		}
 
 		if (ticks)

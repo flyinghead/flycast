@@ -463,6 +463,22 @@ static InputDescriptors toukon4_inputs = INPUT_5_BUTTONS("X", "Y", "R", "A", "B"
 
 static InputDescriptors hmgeo_inputs = INPUT_4_BUTTONS("Fire", "Attack", "Jump", "Target");
 
+static InputDescriptors shootout_inputs = {
+	{
+		{ NAOMI_START_KEY, "START/MODE", NAOMI_BTN2_KEY },
+		{ NAOMI_BTN0_KEY, "TOP/VIEW" },				// !prize
+		{ NAOMI_BTN1_KEY, "BET", NAOMI_BTN6_KEY },	// prize only
+		{ NAOMI_BTN3_KEY, "CUE ROLLER" },			// only used by emulator. press to use cue roller instead of cue aim
+		{ NAOMI_UP_KEY, "ZOOM IN" },
+		{ NAOMI_DOWN_KEY, "ZOOM OUT" },
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "CUE TIP U/D", Full, 1, true },
+		{ "CUE TIP L/R", Full, 0, true },
+	}
+};
+
 //
 // AtomisWave games
 //
@@ -604,7 +620,8 @@ static InputDescriptors kingrt66_inputs = {
 
 static InputDescriptors clubkart_inputs = {
 	{
-			{ NAOMI_DOWN_KEY, "VIEW" },
+			{ NAOMI_DOWN_KEY, "VIEW" },	// !prize (start is used instead)
+			{ NAOMI_BTN1_KEY, "BET" },	// prize only
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	},

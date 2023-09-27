@@ -18,7 +18,7 @@ def getSentryUrl = { ->
 
 android {
     namespace 'com.reicast.emulator'
-    ndkVersion '23.1.7779620'
+    ndkVersion '23.2.8568313'
     compileSdk 29
 
     defaultConfig {
@@ -65,7 +65,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('../../../CMakeLists.txt')
-            version '3.18.1'
+            version '3.22.1'
         }
     }
     packagingOptions {

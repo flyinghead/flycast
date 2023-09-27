@@ -26,7 +26,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/addrspace.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 
 static void (*mainloop)();
 static void (*ngen_FailedToFindBlock_)();
@@ -39,17 +39,12 @@ static void (*ngen_LinkBlock_Generic_stub)();
 static void (*ngen_blockcheckfail)();
 void (*X86Compiler::handleException)();
 
-static X86Compiler* compiler;
-
 static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand::EBP,  Xbyak::Operand::ESI,  Xbyak::Operand::EDI, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
 alignas(16) static f32 thaw_regs[4];
 UnwindInfo unwinder;
 
-static bool restarting;
 static u64 jmp_esp;
-
-static void generate_mainloop();
 
 void X86RegAlloc::doAlloc(RuntimeBlockInfo* block)
 {
@@ -74,14 +69,13 @@ void X86RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 struct DynaRBI : RuntimeBlockInfo
 {
+	DynaRBI(Sh4CodeBuffer *codeBuffer) : codeBuffer(codeBuffer) {}
 	u32 Relink() override;
+
+private:
+	Sh4CodeBuffer *codeBuffer;
 };
 
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	generate_mainloop();
-	return new DynaRBI();
-}
 
 void X86Compiler::alignStack(int amount)
 {
@@ -96,7 +90,7 @@ void X86Compiler::alignStack(int amount)
 
 void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 {
-	DEBUG_LOG(DYNAREC, "X86 compiling %08x to %p", block->addr, emit_GetCCPtr());
+	DEBUG_LOG(DYNAREC, "X86 compiling %08x to %p", block->addr, codeBuffer.get());
 	current_opid = -1;
 
 	unwinder.start((void *)getCurr());
@@ -160,7 +154,7 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	size_t unwindSize = unwinder.end(getSize());
 	setSize(getSize() + unwindSize);
 
-	emit_Skip(getSize());
+	codeBuffer.advance(getSize());
 }
 
 u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
@@ -329,7 +323,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 
 u32 DynaRBI::Relink()
 {
-	X86Compiler *compiler = new X86Compiler((u8*)code + relink_offset);
+	X86Compiler *compiler = new X86Compiler(*codeBuffer, (u8*)code + relink_offset);
 	u32 codeSize = compiler->relinkBlock(this);
 	delete compiler;
 
@@ -591,7 +585,7 @@ void X86Compiler::genMainloop()
 
 	ready();
 
-	mainloop = (void (*)())getCode();
+	::mainloop = (void (*)())getCode();
 	ngen_FailedToFindBlock_ = (void (*)())failedToFindBlock.getAddress();
 	intc_sched = (void (*)())intc_schedLabel.getAddress();
 	no_update = (void (*)())no_updateLabel.getAddress();
@@ -601,12 +595,7 @@ void X86Compiler::genMainloop()
 	ngen_blockcheckfail = (void (*)())ngen_blockcheckfailLabel.getAddress();
 	X86Compiler::handleException = (void (*)())handleExceptionLabel.getAddress();
 
-	emit_Skip(getSize());
-}
-
-void ngen_HandleException(host_context_t &context)
-{
-	context.pc = (uintptr_t)X86Compiler::handleException;
+	codeBuffer.advance(getSize());
 }
 
 bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -846,103 +835,129 @@ void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 	}
 }
 
-void ngen_init()
+class X86Dynarec : public Sh4Dynarec
 {
-}
-
-static void generate_mainloop()
-{
-	if (mainloop != nullptr)
-		return;
-
-	compiler = new X86Compiler();
-
-	try {
-		compiler->genMainloop();
-	} catch (const Xbyak::Error& e) {
-		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+public:
+	X86Dynarec() {
+		sh4Dynarec = this;
 	}
 
-	delete compiler;
-	compiler = nullptr;
-
-	ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
-}
-
-void ngen_ResetBlocks()
-{
-	mainloop = nullptr;
-	unwinder.clear();
-
-	if (p_sh4rcb->cntx.CpuRunning)
+	void init(Sh4CodeBuffer& codeBuffer) override
 	{
-		// Force the dynarec out of mainloop() to regenerate it
-		p_sh4rcb->cntx.CpuRunning = 0;
-		restarting = true;
+		this->codeBuffer = &codeBuffer;
 	}
-	else
-		generate_mainloop();
-}
 
-void ngen_mainloop(void* v_cntx)
-{
-	try {
-		do {
-			restarting = false;
+	void handleException(host_context_t &context) override
+	{
+		context.pc = (uintptr_t)X86Compiler::handleException;
+	}
+
+	void generate_mainloop()
+	{
+		if (::mainloop != nullptr)
+			return;
+
+		compiler = new X86Compiler(*codeBuffer);
+
+		try {
+			compiler->genMainloop();
+		} catch (const Xbyak::Error& e) {
+			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+		}
+
+		delete compiler;
+		compiler = nullptr;
+
+		rdv_SetFailedToFindBlockHandler(ngen_FailedToFindBlock_);
+	}
+
+	void reset() override
+	{
+		::mainloop = nullptr;
+		unwinder.clear();
+
+		if (p_sh4rcb->cntx.CpuRunning)
+		{
+			// Force the dynarec out of mainloop() to regenerate it
+			p_sh4rcb->cntx.CpuRunning = 0;
+			restarting = true;
+		}
+		else
 			generate_mainloop();
-
-			mainloop();
-			if (restarting)
-				p_sh4rcb->cntx.CpuRunning = 1;
-		} while (restarting);
-	} catch (const SH4ThrownException& e) {
-		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop %x pc %x", e.expEvn, e.epc);
-		throw FlycastException("Fatal: Unhandled SH4 exception");
-	}
-}
-
-void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool, bool, bool optimise)
-{
-	verify(emit_FreeSpace() >= 16 * 1024);
-
-	compiler = new X86Compiler();
-
-	try {
-		compiler->compile(block, smc_checks, optimise);
-	} catch (const Xbyak::Error& e) {
-		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
 
-	delete compiler;
-}
+	RuntimeBlockInfo* allocateBlock() override
+	{
+		generate_mainloop();
+		return new DynaRBI(codeBuffer);
+	}
 
-bool ngen_Rewrite(host_context_t &context, void *faultAddress)
-{
-	u8 *rewriteAddr = *(u8 **)context.esp - 5;
-	X86Compiler *compiler = new X86Compiler(rewriteAddr);
-	bool rv = compiler->rewriteMemAccess(context);
-	delete compiler;
+	void mainloop(void* v_cntx) override
+	{
+		try {
+			do {
+				restarting = false;
+				generate_mainloop();
 
-	return rv;
-}
+				::mainloop();
+				if (restarting)
+					p_sh4rcb->cntx.CpuRunning = 1;
+			} while (restarting);
+		} catch (const SH4ThrownException& e) {
+			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop %x pc %x", e.expEvn, e.epc);
+			throw FlycastException("Fatal: Unhandled SH4 exception");
+		}
+	}
 
-void ngen_CC_Start(shil_opcode* op)
-{
-	compiler->ngen_CC_Start(*op);
-}
+	void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override
+	{
+		compiler = new X86Compiler(*codeBuffer);
 
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_param(*op, *par, tp);
-}
+		try {
+			compiler->compile(block, smc_checks, optimise);
+		} catch (const Xbyak::Error& e) {
+			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+		}
 
-void ngen_CC_Call(shil_opcode* op, void* function)
-{
-	compiler->ngen_CC_Call(*op, function);
-}
+		delete compiler;
+	}
 
-void ngen_CC_Finish(shil_opcode* op)
-{
-	compiler->ngen_CC_Finish(*op);
-}
+	bool rewrite(host_context_t &context, void *faultAddress) override
+	{
+		u8 *rewriteAddr = *(u8 **)context.esp - 5;
+		X86Compiler *compiler = new X86Compiler(*codeBuffer, rewriteAddr);
+		bool rv = compiler->rewriteMemAccess(context);
+		delete compiler;
+
+		return rv;
+	}
+
+	void canonStart(const shil_opcode *op) override
+	{
+		compiler->ngen_CC_Start(*op);
+	}
+
+	void canonParam(const shil_opcode *op, const shil_param *par, CanonicalParamType tp) override
+	{
+		compiler->ngen_CC_param(*op, *par, tp);
+	}
+
+	void canonCall(const shil_opcode *op, void *function) override
+	{
+		compiler->ngen_CC_Call(*op, function);
+	}
+
+	void canonFinish(const shil_opcode *op) override
+	{
+		compiler->ngen_CC_Finish(*op);
+	}
+
+private:
+	Sh4CodeBuffer *codeBuffer = nullptr;
+	X86Compiler *compiler = nullptr;
+	bool restarting = false;
+};
+
+static X86Dynarec instance;
+
 #endif

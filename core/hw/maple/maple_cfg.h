@@ -111,7 +111,7 @@ struct MapleInputState
 extern MapleInputState mapleInputState[4];
 
 void mcfg_CreateDevices();
-void mcfg_DestroyDevices();
+void mcfg_DestroyDevices(bool full = true);
 void mcfg_SerializeDevices(Serializer& ser);
 void mcfg_DeserializeDevices(Deserializer& deser);
 
@@ -120,3 +120,6 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 void insertRfidCard(int playerNum);
 const u8 *getRfidCardData(int playerNum);
 void setRfidCardData(int playerNum, u8 *data);
+
+struct maple_naomi_jamma;
+maple_naomi_jamma *getMieDevice();

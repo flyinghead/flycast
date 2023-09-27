@@ -165,6 +165,9 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 		case 0xE1:
 		case 0xE5:
 			return ImGuiMod_Shift;
+		case 0xE3:
+		case 0xE7:
+			return ImGuiMod_Super;
 		default: return ImGuiKey_None;
 	}
 }
@@ -480,7 +483,7 @@ void gui_open_settings()
 			HideOSD();
 			try {
 				emu.stop();
-				gui_state = GuiState::Commands;
+				gui_setState(GuiState::Commands);
 			} catch (const FlycastException& e) {
 				gui_stop_game(e.what());
 			}
@@ -492,7 +495,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
-		gui_state = GuiState::VJoyEditCommands;
+		gui_setState(GuiState::VJoyEditCommands);
 	}
 	else if (gui_state == GuiState::Loading)
 	{
@@ -500,7 +503,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands)
 	{
-		gui_state = GuiState::Closed;
+		gui_setState(GuiState::Closed);
 		GamepadDevice::load_system_mappings();
 		emu.start();
 	}
@@ -514,7 +517,7 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
-	gui_state = GuiState::Loading;
+	gui_setState(GuiState::Loading);
 	gameLoader.load(path);
 }
 
@@ -525,7 +528,7 @@ void gui_stop_game(const std::string& message)
 	{
 		// Exit to main menu
 		emu.unloadGame();
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		reset_vmus();
 		if (!message.empty())
 			gui_error("Flycast has stopped.\n\n" + message);
@@ -567,7 +570,7 @@ static void gui_display_commands()
 		// Load State
 		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 			dc_loadstate(config::SavestateSlot);
 		}
 		ImGui::SameLine();
@@ -591,7 +594,7 @@ static void gui_display_commands()
 		// Save State
 		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && savestateAllowed())
 		{
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 			dc_savestate(config::SavestateSlot);
 		}
     }
@@ -601,13 +604,13 @@ static void gui_display_commands()
 	// Settings
 	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
 	{
-		gui_state = GuiState::Settings;
+		gui_setState(GuiState::Settings);
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
 	{
 		GamepadDevice::load_system_mappings();
-		gui_state = GuiState::Closed;
+		gui_setState(GuiState::Closed);
 	}
 
 	ImGui::NextColumn();
@@ -618,12 +621,12 @@ static void gui_display_commands()
 	{
 		if (libGDR_GetDiscType() == Open)
 		{
-			gui_state = GuiState::SelectDisk;
+			gui_setState(GuiState::SelectDisk);
 		}
 		else
 		{
 			DiscOpenLid();
-			gui_state = GuiState::Closed;
+			gui_setState(GuiState::Closed);
 		}
 	}
 	ImGui::NextColumn();
@@ -633,7 +636,7 @@ static void gui_display_commands()
 		DisabledScope scope(settings.network.online);
 
 		if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-			gui_state = GuiState::Cheats;
+			gui_setState(GuiState::Cheats);
 	}
 	ImGui::Columns(1, nullptr, false);
 
@@ -1421,9 +1424,9 @@ static void gui_display_settings()
     if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
     	if (game_started)
-    		gui_state = GuiState::Commands;
+    		gui_setState(GuiState::Commands);
     	else
-    		gui_state = GuiState::Main;
+    		gui_setState(GuiState::Main);
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
@@ -1574,9 +1577,9 @@ static void gui_display_settings()
 #ifdef __ANDROID__
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
-                	gui_state = GuiState::Onboarding;
+                	gui_setState(GuiState::Onboarding);
 #endif
-#if defined(__APPLE__) && TARGET_OS_OSX
+#ifdef TARGET_MAC
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Reveal in Finder"))
                 {
@@ -1667,7 +1670,7 @@ static void gui_display_settings()
 						if (ImGui::Button("Edit"))
 						{
 							vjoy_start_editing();
-							gui_state = GuiState::VJoyEdit;
+							gui_setState(GuiState::VJoyEdit);
 						}
 						ImGui::SameLine();
 						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
@@ -1767,23 +1770,25 @@ static void gui_display_settings()
 							((color >> 16) & 0xff) / 255.f,
 							((color >> 24) & 0xff) / 255.f
 						};
-						ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+						bool colorChanged = ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
 								| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
 						ImGui::SameLine();
 						bool enabled = color != 0;
-						ImGui::Checkbox("Crosshair", &enabled);
-						if (enabled)
+						if (ImGui::Checkbox("Crosshair", &enabled) || colorChanged)
 						{
-							config::CrosshairColor[bus] = (u8)(xhairColor[0] * 255.f)
-									| ((u8)(xhairColor[1] * 255.f) << 8)
-									| ((u8)(xhairColor[2] * 255.f) << 16)
-									| ((u8)(xhairColor[3] * 255.f) << 24);
-							if (config::CrosshairColor[bus] == 0)
-								config::CrosshairColor[bus] = 0xC0FFFFFF;
-						}
-						else
-						{
-							config::CrosshairColor[bus] = 0;
+							if (enabled)
+							{
+								config::CrosshairColor[bus] = (u8)(std::round(xhairColor[0] * 255.f))
+										| ((u8)(std::round(xhairColor[1] * 255.f)) << 8)
+										| ((u8)(std::round(xhairColor[2] * 255.f)) << 16)
+										| ((u8)(std::round(xhairColor[3] * 255.f)) << 24);
+								if (config::CrosshairColor[bus] == 0)
+									config::CrosshairColor[bus] = 0xC0FFFFFF;
+							}
+							else
+							{
+								config::CrosshairColor[bus] = 0;
+							}
 						}
 						ImGui::PopID();
 					}
@@ -2077,7 +2082,7 @@ static void gui_display_settings()
 				ImGui::Spacing();
 				header("Per Pixel Settings");
 
-				const std::array<int64_t, 4> bufSizes{ (u64)512 * 1024 * 1024, (u64)1024 * 1024 * 1024, (u64)2 * 1024 * 1024 * 1024, (u64)4 * 1024 * 1024 * 1024 };
+				const std::array<int64_t, 4> bufSizes{ 512_MB, 1_GB, 2_GB, 4_GB };
 				const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
 				u32 selected = 0;
@@ -2143,6 +2148,39 @@ static void gui_display_settings()
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
+#ifdef VIDEO_ROUTING
+#ifdef __APPLE__
+			header("Video Routing (Syphon)");
+#elif defined(_WIN32)
+			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
+#endif
+			{
+#ifdef __APPLE__
+				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#elif defined(_WIN32)
+				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
+				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
+								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#endif
+				{
+					GraphicsContext::Instance()->initVideoRouting();
+				}
+				{
+					DisabledScope scope(!config::VideoRouting);
+					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
+					{
+						DisabledScope scope(!config::VideoRoutingScale);
+						static int vres = config::VideoRoutingVRes;
+						if( ImGui::InputInt("Output vertical resolution", &vres) )
+						{
+							config::VideoRoutingVRes = vres;
+						}
+					}
+					ImGui::Text("Output texture size: %d x %d", config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+				}
+			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 
@@ -2387,6 +2425,11 @@ static void gui_display_settings()
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
 #endif
+				{
+					DisabledScope scope(game_started);
+					OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
+						"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
+				}
 	            OptionCheckbox("Dump Textures", config::DumpTextures,
 	            		"Dump all textures into data/texdump/<game id>");
 
@@ -2617,7 +2660,7 @@ static void gui_display_content()
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
 #endif
 		if (ImGui::Button("Settings"))
-			gui_state = GuiState::Settings;
+			gui_setState(GuiState::Settings);
     }
     ImGui::PopStyleVar();
 
@@ -2713,7 +2756,7 @@ static void gui_display_content()
 							settings.content.path = game.path;
 							try {
 								DiscSwap(game.path);
-								gui_state = GuiState::Closed;
+								gui_setState(GuiState::Closed);
 							} catch (const FlycastException& e) {
 								gui_error(e.what());
 							}
@@ -2749,7 +2792,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 {
 	if (cancelled)
 	{
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		return true;
 	}
 	selection += "/";
@@ -2787,7 +2830,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 		config::Settings::instance().load(false);
 		// Make sure the renderer type doesn't change mid-flight
 		config::RendererType = RenderType::OpenGL;
-		gui_state = GuiState::Main;
+		gui_setState(GuiState::Main);
 		if (config::ContentPath.get().empty())
 		{
 			scanner.stop();
@@ -2822,7 +2865,7 @@ static void gui_network_start()
 		ImGui::Text("Starting...");
 		try {
 			if (networkStatus.get())
-				gui_state = GuiState::Closed;
+				gui_setState(GuiState::Closed);
 			else
 				gui_stop_game();
 		} catch (const FlycastException& e) {
@@ -2883,11 +2926,11 @@ static void gui_display_loadscreen()
 			if (NetworkHandshake::instance != nullptr)
 			{
 				networkStatus = NetworkHandshake::instance->start();
-				gui_state = GuiState::NetworkStart;
+				gui_setState(GuiState::NetworkStart);
 			}
 			else
 			{
-				gui_state = GuiState::Closed;
+				gui_setState(GuiState::Closed);
 				ImGui::Text("%s", label);
 			}
 		}
@@ -3090,7 +3133,7 @@ void gui_display_profiler()
 
 void gui_open_onboarding()
 {
-	gui_state = GuiState::Onboarding;
+	gui_setState(GuiState::Onboarding);
 }
 
 void gui_cancel_load()
@@ -3179,6 +3222,18 @@ void gui_saveState()
 	}
 }
 
+void gui_setState(GuiState newState)
+{
+	gui_state = newState;
+	if (newState == GuiState::Closed)
+	{
+		// If the game isn't rendering any frame, these flags won't be updated and keyboard/mouse input will be ignored.
+		// So we force them false here. They will be set in the next ImGUI::NewFrame() anyway
+		ImGuiIO& io = ImGui::GetIO();
+		io.WantCaptureKeyboard = false;
+		io.WantCaptureMouse = false;
+	}
+}
 
 #ifdef TARGET_UWP
 // Ugly but a good workaround for MS stupidity

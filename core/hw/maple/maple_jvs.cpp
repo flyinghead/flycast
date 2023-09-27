@@ -159,9 +159,9 @@ protected:
 	virtual const char *get_id() = 0;
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
 
-	virtual void read_digital_in(const u32 *buttons, u16 *v)
+	virtual void read_digital_in(const u32 *buttons, u32 *v)
 	{
-		memset(v, 0, sizeof(u16) * 4);
+		memset(v, 0, sizeof(u32) * 4);
 		for (u32 player = first_player; player < 4; player++)
 		{
 			// always-on mapping
@@ -237,6 +237,16 @@ protected:
 		{
 			x = mapleInputState[playerNum].absPos.x;
 			y = mapleInputState[playerNum].absPos.y;
+		}
+	}
+	
+	virtual s16 readRotaryEncoders(int channel, s16 relX, s16 relY)
+	{
+		switch (channel)
+		{
+			case 0: return relX;
+			case 1: return relY;
+			default: return 0;
 		}
 	}
 
@@ -345,7 +355,94 @@ public:
 	}
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
+};
 
+// Uses btn1 to switch between cue aim and cue roller encoders
+class jvs_837_13938_shootout : public jvs_837_13938
+{
+public:
+	jvs_837_13938_shootout(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{
+		memset(lastValue, 0, sizeof(lastValue));
+	}
+
+protected:
+	void read_digital_in(const u32 *buttons, u32 *v) override
+	{
+		jvs_837_13938::read_digital_in(buttons, v);
+		btn3down = v[0] & NAOMI_BTN3_KEY;
+	}
+
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		switch (channel)
+		{
+			case 0: // CUE AIM L/R
+				if (!btn3down)
+					lastValue[0] = relX;
+				break;
+			case 1: // CUE AIM U/D
+				if (!btn3down)
+					lastValue[1] = relY;
+				break;
+			case 2: // CUE ROLLER
+				if (btn3down)
+					lastValue[2] = relY;
+				break;
+			default:
+				return 0;
+		}
+		return lastValue[channel];
+	}
+
+	bool btn3down = false;
+	s16 lastValue[3];
+};
+
+//
+// The encoders are rotated by 45° so coordinates must be converted.
+// Polling is done twice per frame so we only handle half the delta per poll.
+//
+class jvs_837_13938_kick4cash : public jvs_837_13938
+{
+public:
+	jvs_837_13938_kick4cash(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{}
+
+protected:
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		const s16 deltaX = (relX - prevRelX) / 2;
+		const s16 deltaY = (relY - prevRelY) / 2;
+		s16 rv;
+		switch (channel)
+		{
+		case 0: // x
+			rotX += (deltaX - deltaY) * 0.7071f;
+			rv = (int)std::round(rotX);
+			break;
+		case 1: // y
+			rotY += (deltaX + deltaY) * 0.7071f;
+			rv = (int)std::round(rotY);
+			break;
+		default:
+			rv = 0;
+			break;
+		}
+		if (channel == 1)
+		{
+			prevRelX += deltaX;
+			prevRelY += deltaY;
+		}
+		return rv;
+	}
+
+	s16 prevRelX = 0;
+	s16 prevRelY = 0;
+	float rotX = 0.f;
+	float rotY = 0.f;
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -423,7 +520,7 @@ public:
 	}
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13844::read_digital_in(buttons, v);
 
@@ -598,7 +695,7 @@ public:
 	}
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13844_racing::read_digital_in(buttons, v);
 		if (buttons[0] & NAOMI_BTN2_KEY)
@@ -730,7 +827,7 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_io_board::read_digital_in(buttons, v);
 				// main button
@@ -809,7 +906,7 @@ public:
 protected:
 	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
@@ -865,7 +962,7 @@ public:
 		: jvs_837_13551(node_id, parent, first_player) { }
 
 protected:
-	void read_digital_in(const u32 *buttons, u16 *v) override
+	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_837_13551::read_digital_in(buttons, v);
 		if (!(v[0] & NAOMI_TEST_KEY))
@@ -898,6 +995,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 		default:
 			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING")
 				io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
+			else if (settings.content.gameId == "ANPANMAN POPCORN KOUJOU 2")
+				io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
 			else
 				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 			break;
@@ -905,7 +1004,12 @@ maple_naomi_jamma::maple_naomi_jamma()
 			io_boards.push_back(std::make_unique<jvs_837_13551_4P>(1, this));
 			break;
 		case JVS::RotaryEncoders:
-			io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
+			if (settings.content.gameId.substr(0, 13) == "SHOOTOUT POOL")
+				io_boards.push_back(std::make_unique<jvs_837_13938_shootout>(1, this));
+			else if (settings.content.gameId == "KICK '4' CASH")
+				io_boards.push_back(std::make_unique<jvs_837_13938_kick4cash>(1, this));
+			else
+				io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
 			break;
 		case JVS::OutTrigger:
@@ -1360,6 +1464,47 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x0);
 			break;
 
+		// RS422 port
+		case 0x41: // reset?
+			DEBUG_LOG(MAPLE, "JVS: RS422 reset");
+			if (serialPipe != nullptr)
+				while (serialPipe->available())
+					serialPipe->read();
+			break;
+
+		case 0x47: // send data
+			DEBUG_LOG(MAPLE, "JVS: RS422 send %02x", dma_buffer_in[4]);
+			if (serialPipe != nullptr)
+				serialPipe->write(dma_buffer_in[4]);
+			break;
+
+		case 0x4d: // receive data
+			{
+				int avail = 0;
+				if (serialPipe != nullptr)
+					avail = std::min(serialPipe->available(), 0xfe);
+				DEBUG_LOG(MAPLE, "JVS: RS422 receive %d bytes", avail);
+				w8(MDRS_JVSReply);
+				w8(0);
+				w8(0x20);
+				w8(1 + (avail + 3) / 4);
+
+				w8(0);
+				w8(0);
+				w8(0);
+				w8(avail == 0 ? 0xff : avail); // 0xff => no data, else byte count
+
+				for (int i = 0; i < ((avail + 3) / 4) * 4; i++)
+					w8(i >= avail ? 0 : serialPipe->read());
+				break;
+			}
+
+		case 0x49: // I?
+		case 0x4b: // K?
+		case 0x4f: // O?
+			//DEBUG_LOG(MAPLE, "JVS: 0x86,%02x RS422 len %d", subcode, dma_count_in - 3);
+			break;
+
 		default:
 			INFO_LOG(MAPLE, "JVS: Unknown 0x86 sub-command %x", subcode);
 			w8(MDRE_UnknownCmd);
@@ -1744,14 +1889,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
-						u16 inputs[4];
+						u32 inputs[4];
 						read_digital_in(buttons, inputs);
 						JVS_OUT((inputs[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							inputs[player] &= ~(NAOMI_TEST_KEY | NAOMI_COIN_KEY);
-							LOGJVS("P%d %02x ", player + 1 + first_player, inputs[player] >> 8);
+							LOGJVS("P%d %02x ", player + 1 + first_player, (inputs[player] >> 8) & 0xFF);
 							JVS_OUT(inputs[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
 							{
@@ -1882,31 +2026,17 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						static s16 roty = 0;
 						// TODO Add more players.
 						// I can't think of any naomi multiplayer game that uses rotary encoders
-						rotx += mapleInputState[first_player].relPos.x * 5;
-						roty -= mapleInputState[first_player].relPos.y * 5;
+						rotx += mapleInputState[first_player].relPos.x * 3;
+						roty -= mapleInputState[first_player].relPos.y * 3;
 						mapleInputState[first_player].relPos.x = 0;
 						mapleInputState[first_player].relPos.y = 0;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
-							if (chan == 0)
-							{
-								LOGJVS("%d:%4x ", chan, rotx & 0xFFFF);
-								JVS_OUT(rotx >> 8);	// MSB
-								JVS_OUT(rotx);		// LSB
-							}
-							else if (chan == 1)
-							{
-								LOGJVS("%d:%4x ", chan, roty & 0xFFFF);
-								JVS_OUT(roty >> 8);	// MSB
-								JVS_OUT(roty);		// LSB
-							}
-							else
-							{
-								LOGJVS("%d:%4x ", chan, 0);
-								JVS_OUT(0x00);		// MSB
-								JVS_OUT(0x00);		// LSB
-							}
+							s16 v = readRotaryEncoders(chan, rotx, roty);
+							LOGJVS("%d:%4x ", chan, v & 0xFFFF);
+							JVS_OUT(v >> 8);	// MSB
+							JVS_OUT(v);			// LSB
 						}
 						cmdi += 2;
 					}
@@ -1977,7 +2107,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 				}
 			}
-			LOGJVS("\n");
 		}
 		else
 		{

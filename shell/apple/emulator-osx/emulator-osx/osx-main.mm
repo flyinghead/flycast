@@ -33,7 +33,8 @@ int darw_printf(const char* text, ...)
     va_end(args);
     
     NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
-    if (getenv("TERM") == NULL) //Xcode console does not support colors
+    static bool isXcode = [[[NSProcessInfo processInfo] environment][@"OS_ACTIVITY_DT_MODE"] boolValue];
+    if (isXcode) // Xcode console does not support colors
     {
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[0m" withString:@""];
         log = [log stringByReplacingOccurrencesOfString:@"\x1b[92m" withString:@"ℹ️ "];
@@ -50,6 +51,10 @@ void os_SetWindowText(const char * text) {
 }
 
 void os_DoEvents() {
+#if defined(USE_SDL)
+	NSMenuItem *editMenuItem = [[NSApp mainMenu] itemAtIndex:1];
+	[editMenuItem setEnabled:SDL_IsTextInputActive()];
+#endif
 }
 
 void UpdateInputState() {
@@ -201,4 +206,60 @@ void os_RunInstance(int argc, const char *argv[])
 		ERROR_LOG(BOOT, "Error %d launching Flycast instance %s", errno, selfPath);
 		die("execv failed");
 	}
+}
+
+#import <Syphon/Syphon.h>
+#import <cfg/cfg.h>
+#include "rend/vulkan/vulkan.h"
+static SyphonOpenGLServer* syphonGLServer;
+static SyphonMetalServer* syphonMtlServer;
+
+void os_VideoRoutingInitSyphonWithGLContext(void* glContext)
+{
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[(__bridge NSOpenGLContext*)glContext CGLContextObj] options:nil];
+}
+
+void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
+{
+	CGLLockContext([syphonGLServer context]);
+	[syphonGLServer publishFrameTexture:texID textureTarget:texTarget imageRegion:NSMakeRect(0, 0, w, h) textureDimensions:NSMakeSize(w, h) flipped:NO];
+	CGLUnlockContext([syphonGLServer context]);
+}
+
+void os_VideoRoutingTermGL()
+{
+	[syphonGLServer stop];
+	[syphonGLServer release];
+	syphonGLServer = NULL;
+}
+
+void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device)
+{
+	vk::ExportMetalDeviceInfoEXT deviceInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
+	device->exportMetalObjectsEXT(&objectsInfo);
+	
+	int boardID = cfgLoadInt("naomi", "BoardId", 0);
+	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
+}
+
+void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
+{
+	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
+	auto commandInfo = vk::ExportMetalCommandQueueInfoEXT(queue);
+	commandInfo.pNext = &textureInfo;
+	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&commandInfo);
+	device.exportMetalObjectsEXT(&objectsInfo);
+	
+	auto commandBuffer = [commandInfo.mtlCommandQueue commandBufferWithUnretainedReferences];
+	[syphonMtlServer publishFrameTexture:textureInfo.mtlTexture onCommandBuffer:commandBuffer imageRegion:NSMakeRect(x, y, w, h) flipped:YES];
+	[commandBuffer commit];
+}
+
+void os_VideoRoutingTermVk()
+{
+	[syphonMtlServer stop];
+	[syphonMtlServer release];
+	syphonMtlServer = NULL;
 }

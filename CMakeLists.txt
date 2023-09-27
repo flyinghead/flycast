@@ -214,10 +214,15 @@ else()
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
+if(${CMAKE_OSX_SYSROOT} MATCHES "\/MacOSX.platform\/Developer\/SDKs")
+	set(TARGET_MAC ON)
+endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${APPLE}>:GL_SILENCE_DEPRECATION>
 		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
 		$<$<BOOL:${IOS}>:TARGET_IPHONE>
+		$<$<BOOL:${TARGET_MAC}>:TARGET_MAC>
 		$<$<BOOL:${IOS}>:GLES>
 		$<$<BOOL:${IOS}>:GLES3>
 		$<$<BOOL:${IOS}>:GLES_SILENCE_DEPRECATION>
@@ -227,6 +232,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${MSVC}>:NOMINMAX>
 		$<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
 
 if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
@@ -371,7 +377,7 @@ if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	option(SKIP_GLSLANG_INSTALL "Skip installation" ON)
 	option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" OFF)
-	option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" OFF)
+	option(ENABLE_GLSLANG_BINARIES "Builds glslang and spirv-remap" OFF)
 	option(ENABLE_HLSL "Enables HLSL input support" OFF)
 	option(ENABLE_PCH "Enables Precompiled header" OFF)
 	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
@@ -587,7 +593,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.cpp
 		core/deps/chdpsr/cdipsr.h)
 
-add_subdirectory(core/deps/nowide)
+add_subdirectory(core/deps/nowide EXCLUDE_FROM_ALL)
 target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
@@ -813,10 +819,14 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/bba/bba.cpp
 		core/hw/bba/rtl8139c.h
 		core/hw/bba/rtl8139c.cpp
+		core/hw/flashrom/at93cxx.cpp
+		core/hw/flashrom/at93cxx.h
 		core/hw/flashrom/flashrom.cpp
 		core/hw/flashrom/flashrom.h
 		core/hw/flashrom/nvmem.cpp
 		core/hw/flashrom/nvmem.h
+		core/hw/flashrom/x76f100.cpp
+		core/hw/flashrom/x76f100.h
 		core/hw/gdrom/gdrom_if.h
 		core/hw/gdrom/gdrom_response.cpp
 		core/hw/gdrom/gdromv3.cpp
@@ -876,6 +886,10 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/touchscreen.cpp
 		core/hw/naomi/printer.h
 		core/hw/naomi/printer.cpp
+		core/hw/naomi/systemsp.h
+		core/hw/naomi/systemsp.cpp
+		core/hw/naomi/hopper.h
+		core/hw/naomi/hopper.cpp
 		core/hw/pvr/elan.cpp
 		core/hw/pvr/elan.h
 		core/hw/pvr/elan_struct.h
@@ -1095,6 +1109,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/oslib.h
 		core/oslib/storage.cpp
 		core/oslib/storage.h
+		core/oslib/unwind_info.h
 		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)
@@ -1246,20 +1261,16 @@ if(USE_VULKAN)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
 	elseif(APPLE)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_MACOS_MVK)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_METAL_EXT)
 	endif()
 
 	add_subdirectory(core/deps/Vulkan-Headers)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Headers)
 
-	if (APPLE)
-		# Only available on macOS 10.12+
-		target_compile_definitions(${PROJECT_NAME} PRIVATE VMA_USE_STL_SHARED_MUTEX=0)
-	endif()
-	
-	add_library(VulkanMemoryAllocator INTERFACE)
+	add_subdirectory(core/deps/VulkanMemoryAllocator)
+	target_compile_definitions(VulkanMemoryAllocator INTERFACE $<$<BOOL:${APPLE}>:VMA_USE_STL_SHARED_MUTEX=0>) # Only available on macOS 10.12+
 	target_compile_options(VulkanMemoryAllocator INTERFACE $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wno-nullability-completeness>)
-	target_include_directories(VulkanMemoryAllocator INTERFACE core/deps/VulkanMemoryAllocator/include)
-	target_link_libraries(${PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
+	target_link_libraries(${PROJECT_NAME} PRIVATE GPUOpen::VulkanMemoryAllocator)
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1387,6 +1398,9 @@ if(ENABLE_GDB_SERVER)
 endif()
 
 if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1402,8 +1416,6 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/aarch32/macro-assembler-aarch32.h
 		core/deps/vixl/aarch32/operands-aarch32.cc
 		core/deps/vixl/aarch32/operands-aarch32.h
-		core/deps/vixl/aarch32/disasm-aarch32.cc
-		core/deps/vixl/aarch32/disasm-aarch32.h
 		core/deps/vixl/assembler-base-vixl.h
 		core/deps/vixl/code-buffer-vixl.cc
 		core/deps/vixl/code-buffer-vixl.h
@@ -1422,32 +1434,26 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/utils-vixl.h)
 endif()
 if("arm64" IN_LIST ARCHITECTURE)
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
+	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h
 		core/deps/vixl/aarch64/assembler-aarch64.cc
 		core/deps/vixl/aarch64/assembler-aarch64.h
+		core/deps/vixl/aarch64/assembler-sve-aarch64.cc
 		core/deps/vixl/aarch64/constants-aarch64.h
-		core/deps/vixl/aarch64/cpu-aarch64.cc
-		core/deps/vixl/aarch64/cpu-aarch64.h
-		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
-		core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
-		core/deps/vixl/aarch64/decoder-aarch64.cc
-		core/deps/vixl/aarch64/decoder-aarch64.h
-		core/deps/vixl/aarch64/disasm-aarch64.cc
-		core/deps/vixl/aarch64/disasm-aarch64.h
 		core/deps/vixl/aarch64/instructions-aarch64.cc
 		core/deps/vixl/aarch64/instructions-aarch64.h
-		core/deps/vixl/aarch64/instrument-aarch64.cc
-		core/deps/vixl/aarch64/instrument-aarch64.h
-		core/deps/vixl/aarch64/logic-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.cc
 		core/deps/vixl/aarch64/macro-assembler-aarch64.h
+		core/deps/vixl/aarch64/macro-assembler-sve-aarch64.cc
 		core/deps/vixl/aarch64/operands-aarch64.cc
 		core/deps/vixl/aarch64/operands-aarch64.h
+		core/deps/vixl/aarch64/registers-aarch64.cc
+		core/deps/vixl/aarch64/registers-aarch64.h
 		core/deps/vixl/aarch64/pointer-auth-aarch64.cc
-		core/deps/vixl/aarch64/simulator-aarch64.cc
-		core/deps/vixl/aarch64/simulator-aarch64.h
 		core/deps/vixl/aarch64/simulator-constants-aarch64.h
 		core/deps/vixl/assembler-base-vixl.h
 		core/deps/vixl/code-buffer-vixl.cc
@@ -1623,6 +1629,20 @@ if(NOT LIBRETRO)
 				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Flycast
 				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
+
+			add_subdirectory(core/deps/Syphon)
+			target_link_libraries(${PROJECT_NAME} PRIVATE Syphon)
+			if(${CMAKE_GENERATOR} MATCHES "^Xcode.*")
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Resources/)
+			else()
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy ${SYPHON_METALLIB}
+					${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Resources/)
+			endif()
+			target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
@@ -1659,6 +1679,7 @@ if(NOT LIBRETRO)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(OPENGL_LIBRARY OpenGL)
+			find_library(METAL_LIBRARY Metal)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 
@@ -1667,6 +1688,7 @@ if(NOT LIBRETRO)
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
 				${OPENGL_LIBRARY}
+				${METAL_LIBRARY}
 				${IOSURFACE_LIBRARY}
 				${MULTITOUCH_SUPPORT_LIBRARY})
 
@@ -1713,6 +1735,18 @@ if(NOT LIBRETRO)
 				shell/uwp/http_client.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
+			if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
+				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutGL)
+				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutDirectX/SpoutDX)
+				SET(SPOUT_BUILD_CMT OFF CACHE BOOL "For Visual Studio - build /MT to link runtime libraries" FORCE)
+				SET(SPOUT_BUILD_SPOUTDX ON CACHE BOOL "Build SpoutDX DirectX11 support library" FORCE)
+				SET(SPOUT_BUILD_LIBRARY OFF CACHE BOOL "Build C-compatible cross compiler library" FORCE)
+				SET(SKIP_INSTALL_ALL ON CACHE BOOL "Install headers and libraries" FORCE)
+				add_subdirectory(core/deps/Spout)
+				target_link_libraries(${PROJECT_NAME} PRIVATE Spout_static SpoutDX_static)
+				target_compile_definitions(${PROJECT_NAME} PRIVATE VIDEO_ROUTING)
+			endif()
+
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
 		endif()
