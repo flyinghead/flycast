@@ -194,6 +194,8 @@ extern "C" {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_AR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_AR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_AR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_AR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_AR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_AR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_AR NULL
 #define OPTION_VAL_100_AR NULL
@@ -318,7 +320,7 @@ extern "C" {
 #define OPTION_VAL_70_AR NULL
 #define OPTION_VAL_80_AR NULL
 #define OPTION_VAL_90_AR NULL
-#define OPTION_VAL_100_O57_AR NULL
+#define OPTION_VAL_100_O58_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AR NULL
@@ -959,6 +961,20 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_AR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_AR,
       NULL,
@@ -1389,7 +1405,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O57_AR },
+         { "100%", OPTION_VAL_100_O58_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1540,7 +1556,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O57_AR },
+         { "100%", OPTION_VAL_100_O58_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1691,7 +1707,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O57_AR },
+         { "100%", OPTION_VAL_100_O58_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1842,7 +1858,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O57_AR },
+         { "100%", OPTION_VAL_100_O58_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1993,6 +2009,8 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_AST NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_AST NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_AST "Aumenta la velocidá de carga de los GD-ROMs."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_AST NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_AST NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_AST NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_AST NULL
 #define OPTION_VAL_100_AST NULL
@@ -2117,7 +2135,7 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_70_AST NULL
 #define OPTION_VAL_80_AST NULL
 #define OPTION_VAL_90_AST NULL
-#define OPTION_VAL_100_O57_AST NULL
+#define OPTION_VAL_100_O58_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AST NULL
@@ -2758,6 +2776,20 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_AST,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_AST,
       NULL,
@@ -3188,7 +3220,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O57_AST },
+         { "100%", OPTION_VAL_100_O58_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3339,7 +3371,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O57_AST },
+         { "100%", OPTION_VAL_100_O58_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3490,7 +3522,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O57_AST },
+         { "100%", OPTION_VAL_100_O58_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3641,7 +3673,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O57_AST },
+         { "100%", OPTION_VAL_100_O58_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3792,6 +3824,8 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_BE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_BE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_BE NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_BE NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_BE NULL
 #define OPTION_VAL_100_BE NULL
@@ -3916,7 +3950,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_70_BE NULL
 #define OPTION_VAL_80_BE NULL
 #define OPTION_VAL_90_BE NULL
-#define OPTION_VAL_100_O57_BE NULL
+#define OPTION_VAL_100_O58_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
@@ -4557,6 +4591,20 @@ struct retro_core_option_v2_definition option_defs_be[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_BE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_BE,
       NULL,
@@ -4987,7 +5035,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O57_BE },
+         { "100%", OPTION_VAL_100_O58_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5138,7 +5186,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O57_BE },
+         { "100%", OPTION_VAL_100_O58_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5289,7 +5337,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O57_BE },
+         { "100%", OPTION_VAL_100_O58_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5440,7 +5488,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O57_BE },
+         { "100%", OPTION_VAL_100_O58_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5591,6 +5639,8 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CA NULL
 #define OPTION_VAL_100_CA NULL
@@ -5715,7 +5765,7 @@ struct retro_core_options_v2 options_be = {
 #define OPTION_VAL_70_CA NULL
 #define OPTION_VAL_80_CA NULL
 #define OPTION_VAL_90_CA NULL
-#define OPTION_VAL_100_O57_CA NULL
+#define OPTION_VAL_100_O58_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CA NULL
@@ -6356,6 +6406,20 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_CA,
       NULL,
@@ -6786,7 +6850,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O57_CA },
+         { "100%", OPTION_VAL_100_O58_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -6937,7 +7001,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O57_CA },
+         { "100%", OPTION_VAL_100_O58_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7088,7 +7152,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O57_CA },
+         { "100%", OPTION_VAL_100_O58_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7239,7 +7303,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O57_CA },
+         { "100%", OPTION_VAL_100_O58_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7390,6 +7454,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CHS NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CHS NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CHS NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHS NULL
 #define OPTION_VAL_100_CHS NULL
@@ -7514,7 +7580,7 @@ struct retro_core_options_v2 options_ca = {
 #define OPTION_VAL_70_CHS NULL
 #define OPTION_VAL_80_CHS NULL
 #define OPTION_VAL_90_CHS NULL
-#define OPTION_VAL_100_O57_CHS NULL
+#define OPTION_VAL_100_O58_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHS NULL
@@ -8155,6 +8221,20 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CHS,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_CHS,
       NULL,
@@ -8585,7 +8665,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O57_CHS },
+         { "100%", OPTION_VAL_100_O58_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8736,7 +8816,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O57_CHS },
+         { "100%", OPTION_VAL_100_O58_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8887,7 +8967,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O57_CHS },
+         { "100%", OPTION_VAL_100_O58_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -9038,7 +9118,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O57_CHS },
+         { "100%", OPTION_VAL_100_O58_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -9189,6 +9269,8 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CHT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CHT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CHT NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CHT NULL
 #define OPTION_VAL_100_CHT NULL
@@ -9313,7 +9395,7 @@ struct retro_core_options_v2 options_chs = {
 #define OPTION_VAL_70_CHT NULL
 #define OPTION_VAL_80_CHT NULL
 #define OPTION_VAL_90_CHT NULL
-#define OPTION_VAL_100_O57_CHT NULL
+#define OPTION_VAL_100_O58_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHT NULL
@@ -9954,6 +10036,20 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CHT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_CHT,
       NULL,
@@ -10384,7 +10480,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O57_CHT },
+         { "100%", OPTION_VAL_100_O58_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10535,7 +10631,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O57_CHT },
+         { "100%", OPTION_VAL_100_O58_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10686,7 +10782,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O57_CHT },
+         { "100%", OPTION_VAL_100_O58_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10837,7 +10933,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O57_CHT },
+         { "100%", OPTION_VAL_100_O58_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10988,6 +11084,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CS "Kreslení geometrie mimo běžný poměr stran 4:3. Může způsobit grafické závady v odhalených oblastech."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CS "Rychlé Načítání GD-ROM (nepřesné)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CS "Zrychluje načítání GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CS NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CS NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CS "Podtaktování/přetaktování procesoru SH4"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CS "Změňte takt hlavního procesoru SH4 z výchozích 200 MHz. Podtaktování může pomoci pomalým platformám. Přetaktování může u některých her zvýšit snímkovou frekvenci. Používejte s opatrností."
 #define OPTION_VAL_100_CS NULL
@@ -11112,7 +11210,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_70_CS NULL
 #define OPTION_VAL_80_CS NULL
 #define OPTION_VAL_90_CS NULL
-#define OPTION_VAL_100_O57_CS NULL
+#define OPTION_VAL_100_O58_CS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 2"
@@ -11753,6 +11851,20 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CS,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_CS,
       NULL,
@@ -12183,7 +12295,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O57_CS },
+         { "100%", OPTION_VAL_100_O58_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12334,7 +12446,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O57_CS },
+         { "100%", OPTION_VAL_100_O58_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12485,7 +12597,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O57_CS },
+         { "100%", OPTION_VAL_100_O58_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12636,7 +12748,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O57_CS },
+         { "100%", OPTION_VAL_100_O58_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12787,6 +12899,8 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CY NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CY NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CY NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CY NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CY NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CY NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CY NULL
 #define OPTION_VAL_100_CY NULL
@@ -12911,7 +13025,7 @@ struct retro_core_options_v2 options_cs = {
 #define OPTION_VAL_70_CY NULL
 #define OPTION_VAL_80_CY NULL
 #define OPTION_VAL_90_CY NULL
-#define OPTION_VAL_100_O57_CY NULL
+#define OPTION_VAL_100_O58_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CY NULL
@@ -13552,6 +13666,20 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CY,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_CY,
       NULL,
@@ -13982,7 +14110,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O57_CY },
+         { "100%", OPTION_VAL_100_O58_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14133,7 +14261,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O57_CY },
+         { "100%", OPTION_VAL_100_O58_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14284,7 +14412,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O57_CY },
+         { "100%", OPTION_VAL_100_O58_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14435,7 +14563,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O57_CY },
+         { "100%", OPTION_VAL_100_O58_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14586,6 +14714,8 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_DA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_DA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_DA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_DA NULL
 #define OPTION_VAL_100_DA NULL
@@ -14710,7 +14840,7 @@ struct retro_core_options_v2 options_cy = {
 #define OPTION_VAL_70_DA NULL
 #define OPTION_VAL_80_DA NULL
 #define OPTION_VAL_90_DA NULL
-#define OPTION_VAL_100_O57_DA NULL
+#define OPTION_VAL_100_O58_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DA NULL
@@ -15351,6 +15481,20 @@ struct retro_core_option_v2_definition option_defs_da[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_DA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_DA,
       NULL,
@@ -15781,7 +15925,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O57_DA },
+         { "100%", OPTION_VAL_100_O58_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -15932,7 +16076,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O57_DA },
+         { "100%", OPTION_VAL_100_O58_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16083,7 +16227,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O57_DA },
+         { "100%", OPTION_VAL_100_O58_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16234,7 +16378,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O57_DA },
+         { "100%", OPTION_VAL_100_O58_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16385,6 +16529,8 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_DE "Zeichnet Geometrie außerhalb des normalen 4:3-Seitenverhältnisses. Kann grafische Fehler in den aufgedeckten Bereichen erzeugen."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_DE "GD-ROM schnelles Laden (ungenau)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_DE "Beschleunigt das Laden von GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_DE "Dreamcast 32 MB RAM Mod"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_DE "Aktiviert 32 MB RAM Mod für Dreamcast.Kann die Kompatibilität beeinflussen"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_DE "SH4 CPU unter-/übertakten"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_DE "Ändert den Haupt-CPU-Takt des SH4 statt der standardmäßigen 200 MHz. Untertakten kann bei langsamen Plattformen helfen. Übertakten kann die Bildrate für einige Spiele erhöhen. Mit Vorsicht verwenden."
 #define OPTION_VAL_100_DE NULL
@@ -16509,7 +16655,7 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_70_DE "70 %"
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_O57_DE "100 %"
+#define OPTION_VAL_100_O58_DE "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DE "Anzeige VMU-Bildschirm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DE "Position VMU-Bildschirm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DE "Größe VMU-Bildschirm 2"
@@ -17150,6 +17296,20 @@ struct retro_core_option_v2_definition option_defs_de[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_DE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_DE,
       NULL,
@@ -17580,7 +17740,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O57_DE },
+         { "100%", OPTION_VAL_100_O58_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -17731,7 +17891,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O57_DE },
+         { "100%", OPTION_VAL_100_O58_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -17882,7 +18042,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O57_DE },
+         { "100%", OPTION_VAL_100_O58_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -18033,7 +18193,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O57_DE },
+         { "100%", OPTION_VAL_100_O58_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -18184,6 +18344,8 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_EL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EL NULL
 #define OPTION_VAL_100_EL NULL
@@ -18308,7 +18470,7 @@ struct retro_core_options_v2 options_de = {
 #define OPTION_VAL_70_EL NULL
 #define OPTION_VAL_80_EL "το 80%"
 #define OPTION_VAL_90_EL NULL
-#define OPTION_VAL_100_O57_EL NULL
+#define OPTION_VAL_100_O58_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EL NULL
@@ -18949,6 +19111,20 @@ struct retro_core_option_v2_definition option_defs_el[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_EL,
       NULL,
@@ -19379,7 +19555,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O57_EL },
+         { "100%", OPTION_VAL_100_O58_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19530,7 +19706,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O57_EL },
+         { "100%", OPTION_VAL_100_O58_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19681,7 +19857,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O57_EL },
+         { "100%", OPTION_VAL_100_O58_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19832,7 +20008,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O57_EL },
+         { "100%", OPTION_VAL_100_O58_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19983,6 +20159,8 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EN NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EN NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EN NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_EN NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EN NULL
 #define OPTION_VAL_100_EN NULL
@@ -20107,7 +20285,7 @@ struct retro_core_options_v2 options_el = {
 #define OPTION_VAL_70_EN NULL
 #define OPTION_VAL_80_EN NULL
 #define OPTION_VAL_90_EN NULL
-#define OPTION_VAL_100_O57_EN NULL
+#define OPTION_VAL_100_O58_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EN NULL
@@ -20748,6 +20926,20 @@ struct retro_core_option_v2_definition option_defs_en[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_EN,
       NULL,
@@ -21178,7 +21370,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O57_EN },
+         { "100%", OPTION_VAL_100_O58_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21329,7 +21521,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O57_EN },
+         { "100%", OPTION_VAL_100_O58_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21480,7 +21672,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O57_EN },
+         { "100%", OPTION_VAL_100_O58_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21631,7 +21823,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O57_EN },
+         { "100%", OPTION_VAL_100_O58_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21782,6 +21974,8 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_EO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_EO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_EO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EO NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_EO NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_EO NULL
 #define OPTION_VAL_100_EO NULL
@@ -21906,7 +22100,7 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_70_EO NULL
 #define OPTION_VAL_80_EO NULL
 #define OPTION_VAL_90_EO NULL
-#define OPTION_VAL_100_O57_EO NULL
+#define OPTION_VAL_100_O58_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EO NULL
@@ -22547,6 +22741,20 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_EO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_EO,
       NULL,
@@ -22977,7 +23185,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O57_EO },
+         { "100%", OPTION_VAL_100_O58_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23128,7 +23336,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O57_EO },
+         { "100%", OPTION_VAL_100_O58_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23279,7 +23487,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O57_EO },
+         { "100%", OPTION_VAL_100_O58_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23430,7 +23638,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O57_EO },
+         { "100%", OPTION_VAL_100_O58_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23581,6 +23789,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ES "Dibuja la geometría más allá de la relación de aspecto normal de 4:3. Puede producir fallos gráficos en las zonas reveladas."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_ES "Lectura rápida de GD-ROM (inexacta)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_ES "Acelera la carga de los GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_ES "Mod de 32 MB de RAM para Dreamcast"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_ES "Activa el mod de 32 MB de RAM para Dreamcast. Podría afectar a la compatibilidad."
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_ES "Velocidad de la CPU SH4"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_ES "Cambia la velocidad de reloj de la CPU SH4 principal de los 200 MHz. Una bajada de velocidad podría ayudar a plataformas lentas. Una subida podría acelerar la velocidad de fotogramas en ciertos juegos. Utilizar con precaución."
 #define OPTION_VAL_100_ES "100 MHz"
@@ -23705,7 +23915,7 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_70_ES "70 %"
 #define OPTION_VAL_80_ES "80 %"
 #define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_O57_ES "100 %"
+#define OPTION_VAL_100_O58_ES "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ES "Pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ES "Posición de la pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ES "Tamaño de la pantalla de la VMU 2"
@@ -24346,6 +24556,20 @@ struct retro_core_option_v2_definition option_defs_es[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_ES,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_ES,
       NULL,
@@ -24776,7 +25000,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O57_ES },
+         { "100%", OPTION_VAL_100_O58_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -24927,7 +25151,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O57_ES },
+         { "100%", OPTION_VAL_100_O58_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25078,7 +25302,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O57_ES },
+         { "100%", OPTION_VAL_100_O58_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25229,7 +25453,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O57_ES },
+         { "100%", OPTION_VAL_100_O58_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25380,6 +25604,8 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_FA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FA NULL
 #define OPTION_VAL_100_FA NULL
@@ -25504,7 +25730,7 @@ struct retro_core_options_v2 options_es = {
 #define OPTION_VAL_70_FA NULL
 #define OPTION_VAL_80_FA NULL
 #define OPTION_VAL_90_FA NULL
-#define OPTION_VAL_100_O57_FA NULL
+#define OPTION_VAL_100_O58_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FA NULL
@@ -26145,6 +26371,20 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_FA,
       NULL,
@@ -26575,7 +26815,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O57_FA },
+         { "100%", OPTION_VAL_100_O58_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -26726,7 +26966,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O57_FA },
+         { "100%", OPTION_VAL_100_O58_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -26877,7 +27117,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O57_FA },
+         { "100%", OPTION_VAL_100_O58_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -27028,7 +27268,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O57_FA },
+         { "100%", OPTION_VAL_100_O58_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -27179,6 +27419,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FI NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FI NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FI NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FI NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FI NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_FI "SH4-suorittimen ali-/ylikellotus"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FI NULL
 #define OPTION_VAL_100_FI NULL
@@ -27303,7 +27545,7 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_70_FI "70 %"
 #define OPTION_VAL_80_FI "80 %"
 #define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_O57_FI "100 %"
+#define OPTION_VAL_100_O58_FI "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FI NULL
@@ -27944,6 +28186,20 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FI,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_FI,
       NULL,
@@ -28374,7 +28630,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O57_FI },
+         { "100%", OPTION_VAL_100_O58_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28525,7 +28781,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O57_FI },
+         { "100%", OPTION_VAL_100_O58_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28676,7 +28932,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O57_FI },
+         { "100%", OPTION_VAL_100_O58_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28827,7 +29083,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O57_FI },
+         { "100%", OPTION_VAL_100_O58_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28978,6 +29234,8 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_FR "Afficher un rendu de la géométrie en dehors du rapport d'aspect normal de 4:3. Peut produire des bugs graphiques dans les zones révélées."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_FR "Chargement rapide des GD-ROM (inexact)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_FR "Accélère le chargement des GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FR "Mod RAM Dreamcast 32 Mo"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FR "Active le mod RAM 32 Mo pour Dreamcast. Peut affecter la compatibilité"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_FR "Under/overclock processeur du SH4"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_FR "Modifie la fréquence d'horloge du processeur principal du SH4 cadencé par défaut à 200 MHz. La diminuer peut aider les plates-formes lentes. L'augmenter peut améliorer la fréquence d'images pour certains jeux. À utiliser avec prudence."
 #define OPTION_VAL_100_FR NULL
@@ -29102,7 +29360,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_70_FR NULL
 #define OPTION_VAL_80_FR NULL
 #define OPTION_VAL_90_FR NULL
-#define OPTION_VAL_100_O57_FR NULL
+#define OPTION_VAL_100_O58_FR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FR "Affichage de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FR "Position de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FR "Taille de l'écran du VMU 2"
@@ -29743,6 +30001,20 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_FR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_FR,
       NULL,
@@ -30173,7 +30445,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O57_FR },
+         { "100%", OPTION_VAL_100_O58_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30324,7 +30596,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O57_FR },
+         { "100%", OPTION_VAL_100_O58_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30475,7 +30747,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O57_FR },
+         { "100%", OPTION_VAL_100_O58_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30626,7 +30898,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O57_FR },
+         { "100%", OPTION_VAL_100_O58_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30777,6 +31049,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL NULL
 #define OPTION_VAL_100_GL NULL
@@ -30901,7 +31175,7 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_70_GL NULL
 #define OPTION_VAL_80_GL NULL
 #define OPTION_VAL_90_GL NULL
-#define OPTION_VAL_100_O57_GL NULL
+#define OPTION_VAL_100_O58_GL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_GL "Pantalla 2 da VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_GL "Posición da pantalla 2 VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_GL "Tamaño da pantalla 2 VMU"
@@ -31542,6 +31816,20 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_GL,
       NULL,
@@ -31972,7 +32260,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O57_GL },
+         { "100%", OPTION_VAL_100_O58_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32123,7 +32411,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O57_GL },
+         { "100%", OPTION_VAL_100_O58_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32274,7 +32562,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O57_GL },
+         { "100%", OPTION_VAL_100_O58_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32425,7 +32713,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O57_GL },
+         { "100%", OPTION_VAL_100_O58_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32576,6 +32864,8 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HE NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HE NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HE NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_HE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HE NULL
 #define OPTION_VAL_100_HE NULL
@@ -32700,7 +32990,7 @@ struct retro_core_options_v2 options_gl = {
 #define OPTION_VAL_70_HE NULL
 #define OPTION_VAL_80_HE NULL
 #define OPTION_VAL_90_HE NULL
-#define OPTION_VAL_100_O57_HE NULL
+#define OPTION_VAL_100_O58_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HE NULL
@@ -33341,6 +33631,20 @@ struct retro_core_option_v2_definition option_defs_he[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HE,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_HE,
       NULL,
@@ -33771,7 +34075,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O57_HE },
+         { "100%", OPTION_VAL_100_O58_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -33922,7 +34226,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O57_HE },
+         { "100%", OPTION_VAL_100_O58_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34073,7 +34377,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O57_HE },
+         { "100%", OPTION_VAL_100_O58_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34224,7 +34528,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O57_HE },
+         { "100%", OPTION_VAL_100_O58_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34375,6 +34679,8 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_HR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HR NULL
 #define OPTION_VAL_100_HR NULL
@@ -34499,7 +34805,7 @@ struct retro_core_options_v2 options_he = {
 #define OPTION_VAL_70_HR NULL
 #define OPTION_VAL_80_HR NULL
 #define OPTION_VAL_90_HR NULL
-#define OPTION_VAL_100_O57_HR NULL
+#define OPTION_VAL_100_O58_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HR NULL
@@ -35140,6 +35446,20 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_HR,
       NULL,
@@ -35570,7 +35890,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O57_HR },
+         { "100%", OPTION_VAL_100_O58_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -35721,7 +36041,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O57_HR },
+         { "100%", OPTION_VAL_100_O58_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -35872,7 +36192,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O57_HR },
+         { "100%", OPTION_VAL_100_O58_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36023,7 +36343,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O57_HR },
+         { "100%", OPTION_VAL_100_O58_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36174,6 +36494,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_HU "A normál 4:3-as képarányon kívüli geometria felrajzolása. Grafikai hibákat tartalmazhat az így megjelenített területeken."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HU "GD-ROM gyorstöltés (pontatlan)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HU "A GD-ROM betöltésének felgyorsítása."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HU NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HU NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_HU NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HU NULL
 #define OPTION_VAL_100_HU NULL
@@ -36298,7 +36620,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_70_HU NULL
 #define OPTION_VAL_80_HU NULL
 #define OPTION_VAL_90_HU NULL
-#define OPTION_VAL_100_O57_HU NULL
+#define OPTION_VAL_100_O58_HU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU "VMU 2 képernyő megjelenítése"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU "VMU 2 képernyő helyzete"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU "VMU 2 képernyő mérete"
@@ -36939,6 +37261,20 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HU,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_HU,
       NULL,
@@ -37369,7 +37705,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O57_HU },
+         { "100%", OPTION_VAL_100_O58_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -37520,7 +37856,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O57_HU },
+         { "100%", OPTION_VAL_100_O58_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -37671,7 +38007,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O57_HU },
+         { "100%", OPTION_VAL_100_O58_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -37822,7 +38158,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O57_HU },
+         { "100%", OPTION_VAL_100_O58_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -37973,6 +38309,8 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ID NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_ID NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_ID NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_ID NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_ID NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_ID NULL
 #define OPTION_VAL_100_ID NULL
@@ -38097,7 +38435,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_70_ID NULL
 #define OPTION_VAL_80_ID NULL
 #define OPTION_VAL_90_ID NULL
-#define OPTION_VAL_100_O57_ID NULL
+#define OPTION_VAL_100_O58_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ID NULL
@@ -38738,6 +39076,20 @@ struct retro_core_option_v2_definition option_defs_id[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_ID,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_ID,
       NULL,
@@ -39168,7 +39520,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O57_ID },
+         { "100%", OPTION_VAL_100_O58_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39319,7 +39671,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O57_ID },
+         { "100%", OPTION_VAL_100_O58_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39470,7 +39822,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O57_ID },
+         { "100%", OPTION_VAL_100_O58_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39621,7 +39973,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O57_ID },
+         { "100%", OPTION_VAL_100_O58_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39772,6 +40124,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_IT "Disegnare la geometria al di fuori del normale rapporto di aspetto 4:3. Può produrre difetti grafici nelle aree rivelate."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_IT "Caricamento Veloce GD-ROM (inaccurato)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_IT "Accelera il caricamento di GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_IT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_IT NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_IT "CPU SH4 sotto/overclock"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_IT "Cambia l'orologio principale della CPU SH4 da 200 MHz predefinito. Underclocking può aiutare le piattaforme lente. L'overclocking può aumentare il frame rate per alcuni giochi. Usare con cautela."
 #define OPTION_VAL_100_IT NULL
@@ -39896,7 +40250,7 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_70_IT NULL
 #define OPTION_VAL_80_IT NULL
 #define OPTION_VAL_90_IT NULL
-#define OPTION_VAL_100_O57_IT NULL
+#define OPTION_VAL_100_O58_IT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_IT "Visualizzazione Schermo VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_IT "Posizione VMU Schermo 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_IT "Dimensione VMU Schermo 2"
@@ -40537,6 +40891,20 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_IT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_IT,
       NULL,
@@ -40967,7 +41335,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O57_IT },
+         { "100%", OPTION_VAL_100_O58_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41118,7 +41486,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O57_IT },
+         { "100%", OPTION_VAL_100_O58_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41269,7 +41637,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O57_IT },
+         { "100%", OPTION_VAL_100_O58_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41420,7 +41788,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O57_IT },
+         { "100%", OPTION_VAL_100_O58_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41571,6 +41939,8 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_JA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_JA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_JA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_JA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_JA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_JA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_JA NULL
 #define OPTION_VAL_100_JA NULL
@@ -41695,7 +42065,7 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_70_JA NULL
 #define OPTION_VAL_80_JA NULL
 #define OPTION_VAL_90_JA NULL
-#define OPTION_VAL_100_O57_JA NULL
+#define OPTION_VAL_100_O58_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_JA NULL
@@ -42336,6 +42706,20 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_JA,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_JA,
       NULL,
@@ -42766,7 +43150,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O57_JA },
+         { "100%", OPTION_VAL_100_O58_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -42917,7 +43301,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O57_JA },
+         { "100%", OPTION_VAL_100_O58_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43068,7 +43452,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O57_JA },
+         { "100%", OPTION_VAL_100_O58_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43219,7 +43603,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O57_JA },
+         { "100%", OPTION_VAL_100_O58_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43370,6 +43754,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO "일반적인 4:3 화면비 밖에도 개체를 그립니다. 드러난 부분에서 그래픽 오류가 발생할 수도 있습니다."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO "GD-ROM 빠른 로딩 (정확하지 않음)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO "GD-ROM 로딩 속도를 높입니다."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_KO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_KO NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_KO "SH4 CPU 언더/오버클럭"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO "SH4 메인 CPU 클럭을 기본 200MHz에서 변경합니다. 언더클럭하면 플랫폼 속도가 느려질 수 있습니다. 오버클럭하면 일부 게임에서 프레임 속도가 증가할 수 있습니다. 주의해서 사용하세요."
 #define OPTION_VAL_100_KO NULL
@@ -43494,7 +43880,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_70_KO NULL
 #define OPTION_VAL_80_KO NULL
 #define OPTION_VAL_90_KO NULL
-#define OPTION_VAL_100_O57_KO NULL
+#define OPTION_VAL_100_O58_KO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_KO "VMU 화면 2 표시"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_KO "VMU 화면 2 위치"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 2 크기"
@@ -44135,6 +44521,20 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_KO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_KO,
       NULL,
@@ -44565,7 +44965,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O57_KO },
+         { "100%", OPTION_VAL_100_O58_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -44716,7 +45116,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O57_KO },
+         { "100%", OPTION_VAL_100_O58_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -44867,7 +45267,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O57_KO },
+         { "100%", OPTION_VAL_100_O58_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45018,7 +45418,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O57_KO },
+         { "100%", OPTION_VAL_100_O58_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45169,6 +45569,8 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_NL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_NL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_NL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_NL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_NL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_NL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_NL NULL
 #define OPTION_VAL_100_NL NULL
@@ -45293,7 +45695,7 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_70_NL NULL
 #define OPTION_VAL_80_NL NULL
 #define OPTION_VAL_90_NL NULL
-#define OPTION_VAL_100_O57_NL NULL
+#define OPTION_VAL_100_O58_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NL NULL
@@ -45934,6 +46336,20 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_NL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_NL,
       NULL,
@@ -46364,7 +46780,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O57_NL },
+         { "100%", OPTION_VAL_100_O58_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -46515,7 +46931,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O57_NL },
+         { "100%", OPTION_VAL_100_O58_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -46666,7 +47082,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O57_NL },
+         { "100%", OPTION_VAL_100_O58_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -46817,7 +47233,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O57_NL },
+         { "100%", OPTION_VAL_100_O58_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -46968,6 +47384,8 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_NO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_NO NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_NO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_NO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_NO NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_NO NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_NO NULL
 #define OPTION_VAL_100_NO NULL
@@ -47092,7 +47510,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_70_NO NULL
 #define OPTION_VAL_80_NO NULL
 #define OPTION_VAL_90_NO NULL
-#define OPTION_VAL_100_O57_NO NULL
+#define OPTION_VAL_100_O58_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NO NULL
@@ -47733,6 +48151,20 @@ struct retro_core_option_v2_definition option_defs_no[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_NO,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_NO,
       NULL,
@@ -48163,7 +48595,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O57_NO },
+         { "100%", OPTION_VAL_100_O58_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48314,7 +48746,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O57_NO },
+         { "100%", OPTION_VAL_100_O58_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48465,7 +48897,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O57_NO },
+         { "100%", OPTION_VAL_100_O58_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48616,7 +49048,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O57_NO },
+         { "100%", OPTION_VAL_100_O58_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48767,6 +49199,8 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_OR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_OR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_OR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_OR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_OR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_OR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_OR NULL
 #define OPTION_VAL_100_OR NULL
@@ -48891,7 +49325,7 @@ struct retro_core_options_v2 options_no = {
 #define OPTION_VAL_70_OR NULL
 #define OPTION_VAL_80_OR NULL
 #define OPTION_VAL_90_OR NULL
-#define OPTION_VAL_100_O57_OR NULL
+#define OPTION_VAL_100_O58_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OR NULL
@@ -49532,6 +49966,20 @@ struct retro_core_option_v2_definition option_defs_or[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_OR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_OR,
       NULL,
@@ -49962,7 +50410,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O57_OR },
+         { "100%", OPTION_VAL_100_O58_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50113,7 +50561,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O57_OR },
+         { "100%", OPTION_VAL_100_O58_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50264,7 +50712,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O57_OR },
+         { "100%", OPTION_VAL_100_O58_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50415,7 +50863,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O57_OR },
+         { "100%", OPTION_VAL_100_O58_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50566,6 +51014,8 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PL "Włącza modyfikację pamięci RAM 32MB dla Dreamcast. Może wpływać na kompatybilność"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_PL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PL "Zmień główny zegar procesora SH4 z domyślnego 200 MHz. Odzwierciedlanie może pomóc spowolnić platformy. Przełączanie może zwiększyć szybkość klatek dla niektórych gier. Używaj ostrożnie."
 #define OPTION_VAL_100_PL NULL
@@ -50690,7 +51140,7 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_70_PL NULL
 #define OPTION_VAL_80_PL "80 %"
 #define OPTION_VAL_90_PL NULL
-#define OPTION_VAL_100_O57_PL NULL
+#define OPTION_VAL_100_O58_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PL NULL
@@ -51331,6 +51781,20 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_PL,
       NULL,
@@ -51761,7 +52225,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O57_PL },
+         { "100%", OPTION_VAL_100_O58_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -51912,7 +52376,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O57_PL },
+         { "100%", OPTION_VAL_100_O58_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52063,7 +52527,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O57_PL },
+         { "100%", OPTION_VAL_100_O58_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52214,7 +52678,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O57_PL },
+         { "100%", OPTION_VAL_100_O58_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52365,6 +52829,8 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PT_BR "Desenha a geometria além da proporção de tela normal de 4:3. Pode produzir falhas gráficas em áreas reveladas."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PT_BR "Carregamento rápido do GD-ROM (impreciso)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PT_BR "Acelera o carregamento do GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PT_BR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_BR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_BR NULL
 #define OPTION_VAL_100_PT_BR NULL
@@ -52489,7 +52955,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_70_PT_BR NULL
 #define OPTION_VAL_80_PT_BR NULL
 #define OPTION_VAL_90_PT_BR NULL
-#define OPTION_VAL_100_O57_PT_BR NULL
+#define OPTION_VAL_100_O58_PT_BR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_BR "Tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_BR "Posição da tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_BR "Tamanho da tela da VMU 2"
@@ -53130,6 +53596,20 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PT_BR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_BR,
       NULL,
@@ -53560,7 +54040,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O57_PT_BR },
+         { "100%", OPTION_VAL_100_O58_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -53711,7 +54191,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O57_PT_BR },
+         { "100%", OPTION_VAL_100_O58_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -53862,7 +54342,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O57_PT_BR },
+         { "100%", OPTION_VAL_100_O58_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54013,7 +54493,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O57_PT_BR },
+         { "100%", OPTION_VAL_100_O58_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54164,6 +54644,8 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PT_PT NULL
 #define OPTION_VAL_100_PT_PT NULL
@@ -54288,7 +54770,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_70_PT_PT NULL
 #define OPTION_VAL_80_PT_PT NULL
 #define OPTION_VAL_90_PT_PT NULL
-#define OPTION_VAL_100_O57_PT_PT NULL
+#define OPTION_VAL_100_O58_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_PT NULL
@@ -54929,6 +55411,20 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PT_PT,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_PT_PT,
       NULL,
@@ -55359,7 +55855,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O57_PT_PT },
+         { "100%", OPTION_VAL_100_O58_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -55510,7 +56006,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O57_PT_PT },
+         { "100%", OPTION_VAL_100_O58_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -55661,7 +56157,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O57_PT_PT },
+         { "100%", OPTION_VAL_100_O58_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -55812,7 +56308,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O57_PT_PT },
+         { "100%", OPTION_VAL_100_O58_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -55836,7 +56332,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CATEGORY_HACKS_INFO_0_RU "Настройки широкоформатных чит-кодов, скорости загрузки GD-ROM и замены текстур."
 #define CATEGORY_INPUT_LABEL_RU "Ввод"
 #define CATEGORY_INPUT_INFO_0_RU "Настройки геймпада и светового пистолета."
-#define CATEGORY_VMU_LABEL_RU NULL
+#define CATEGORY_VMU_LABEL_RU "Визуальные карты памяти"
 #define CATEGORY_VMU_INFO_0_RU "Настройки файлов сохранений VMU для каждой игры и отображения VMU на экране."
 #define CORE_OPTION_NAME_REGION_LABEL_RU "Регион"
 #define OPTION_VAL_JAPAN_RU "Япония"
@@ -55844,7 +56340,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_EUROPE_RU "Европа"
 #define OPTION_VAL_DEFAULT_RU "По умолчанию"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_RU "Язык"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_RU "Выбор языка, используемого в BIOS и любых играх, содержащих несколько языков."
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_RU "Выбор языка, используемого в BIOS, а также в любых играх с поддержкой нескольких языков."
 #define OPTION_VAL_JAPANESE_RU "Японский"
 #define OPTION_VAL_ENGLISH_RU "Английский"
 #define OPTION_VAL_GERMAN_RU "Немецкий"
@@ -55854,13 +56350,13 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_RU "Эмуляция BIOS (требуется перезапуск)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_RU "Принудительно использовать высокоуровневую эмуляцию BIOS."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_RU "Загрузка в BIOS (требуется перезапуск)"
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RU "Загружаться непосредственно в меню Dreamcast BIOS."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_RU "Загружаться непосредственно в меню BIOS Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_RU "Включить DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_RU "Включить эмуляцию звукового DSP (цифрового сигнального процессора) Dreamcast. Улучшает точность генерируемого звука, но повышает системные требования."
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_RU "Принудительный режим Windows CE"
 #define CORE_OPTION_NAME_FORCE_WINCE_INFO_0_RU "Включает полную эмуляцию MMU (блока управления памятью) и другие настройки для игр Windows CE."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_RU "Разрешить сервисные кнопки NAOMI"
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU "Включает сервисную кнопку NAOMI для входа в настройки автомата."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_RU "Включает сервисную кнопку NAOMI для доступа к настройкам автомата."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU "Режим Free Play для игр NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU "Изменять настройки монетизации для включения бесплатной игры."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
@@ -55897,7 +56393,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_12160X9120_RU NULL
 #define OPTION_VAL_12800X9600_RU NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_RU "Тип кабеля"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU "Тип выходного сигнала. Наиболее поддерживаемым является 'ТВ (композит)'."
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_RU "Тип выходного сигнала. 'ТВ (композит)' является наиболее совместимым."
 #define OPTION_VAL_VGA_RU NULL
 #define OPTION_VAL_TV_RGB_RU "ТВ (RGB)"
 #define OPTION_VAL_TV_COMPOSITE_RU "ТВ (композит)"
@@ -55920,7 +56416,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_2GB_RU "2 ГБ"
 #define OPTION_VAL_4GB_RU "4 ГБ"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_RU "Максимум прозрачных слоёв"
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU "Сложные сцены могут потребовать более высоких значений."
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_RU "Для сложных сцен могут потребоваться более высокие значения."
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_RU "Полная эмуляция фреймбуфера"
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_RU "Включает полную эмуляцию кадрового буфера в VRAM. Полезно для игр, которые напрямую производят чтение или запись фреймбуфера в VRAM. При включении внутреннее разрешение будет принудительно установлено в 640x480 и возможно сильное падение скорости."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_RU "Включить буфер рендера в текстуру"
@@ -55928,7 +56424,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_RU "MIP-текстурирование"
 #define CORE_OPTION_NAME_FOG_LABEL_RU "Эффекты тумана"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_RU "Модификатор объема"
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RU "Функция графического процессора Dreamcast, которая обычно используется играми для отрисовки теней объектов. По умолчанию она должна быть включена - влияние на производительность обычно минимально или незначительно."
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_RU "Функция графического процессора Dreamcast, используемая в играх для отрисовки теней объектов. По умолчанию должно быть включено - влияние на производительность обычно минимально или незначительно."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_RU "Анизотропная фильтрация"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_RU "Улучшает качество текстур на поверхностях под непрямыми углами обзора по отношению к камере. Более высокие значения повышают требования к GPU. Изменения настройки вступают в силу при перезапуске."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_RU "Сглаживание текстур"
@@ -55940,73 +56436,75 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU "Определять изменение частоты кадров"
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU "Уведомлять фронтенд об изменениях внутренней частоты кадров (напр. с 60 до 30 к/с). Улучшает распределение кадров в играх с постоянной частотой в 30 или 20 к/с, но должно быть выключено для игр с плавающим значением частоты кадров (напр. Ecco the Dolphin, Unreal Tournament). Недоступно при вкл. опции 'Автопропуск кадров'."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU "Фильтр постобработки PowerVR2"
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Делает постобработку отображаемого изображения для имитации эффектов, специфичных для графического процессора PowerVR2 и аналоговых видеосигналов."
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Масштабирование текстур (xBRZ)"
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU "Улучшает 2D пиксель-арт с ручной отрисовкой. Рекомендуется применять только в 2D-играх с пиксельной графикой."
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Включает постобработку изображения для имитации эффектов графического процессора PowerVR2 и аналоговых видеосигналов."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Апскейлинг текстур (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_RU "Улучшает 2D пиксель-арт с ручной отрисовкой. Рекомендуется только для 2D-игр с пиксельной графикой."
 #define OPTION_VAL_2_O27_RU NULL
 #define OPTION_VAL_4_RU NULL
 #define OPTION_VAL_6_RU NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_RU "Макс. размер сглаженных текстур при апскейлинге"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_RU "Нативная глубина интерполяции"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_RU "Помогает при проблемах с глубиной и искажением текстур на видеокартах AMD. В ряде случаев также устраняет проблемы на видеокартах Intel."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_RU "Рендеринг в отдельном потоке"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_RU "Запускает графический и центральный процессоры в разных потоках. Настоятельно рекомендуется."
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RU "Автоматический пропуск кадров"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_RU "Автопропуск кадров"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_RU "Автоматически пропускать кадры при замедлении эмулятора. Применяется только с вкл. опцией 'Рендеринг в отдельном потоке'."
 #define OPTION_VAL_SOME_RU "Нормально"
 #define OPTION_VAL_MORE_RU "Максимум"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_RU "Пропуск кадров"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_RU "Устанавливает количество кадров пропуска между отображаемыми кадрами."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_RU "Широкоэкранные чит-коды (требуется перезапуск)"
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RU "Активирует чит-коды, которые позволяют отображать некоторые игры в широкоэкранном формате."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_RU "Включает чит-коды для отображения некоторых игр в широкоэкранном формате."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_RU "Широкоэкранный хак"
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RU "Отрисовывать геометрию вне нормального соотношения 4:3. Может вызвать графические артефакты в показываемых областях."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_RU "Отрисовывать геометрию за пределами стандартного соотношения 4:3. Может вызвать искажения графики в расширенной области."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_RU "Быстрая загрузка GD-ROM (неточно)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_RU "Ускоряет загрузку GD-ROM."
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_RU NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_RU NULL
-#define OPTION_VAL_100_RU NULL
-#define OPTION_VAL_110_RU NULL
-#define OPTION_VAL_120_RU NULL
-#define OPTION_VAL_130_RU NULL
-#define OPTION_VAL_140_RU NULL
-#define OPTION_VAL_150_RU NULL
-#define OPTION_VAL_160_RU NULL
-#define OPTION_VAL_170_RU NULL
-#define OPTION_VAL_180_RU NULL
-#define OPTION_VAL_190_RU NULL
-#define OPTION_VAL_200_RU NULL
-#define OPTION_VAL_210_RU NULL
-#define OPTION_VAL_220_RU NULL
-#define OPTION_VAL_230_RU NULL
-#define OPTION_VAL_240_RU NULL
-#define OPTION_VAL_250_RU NULL
-#define OPTION_VAL_260_RU NULL
-#define OPTION_VAL_270_RU NULL
-#define OPTION_VAL_280_RU NULL
-#define OPTION_VAL_290_RU NULL
-#define OPTION_VAL_300_RU NULL
-#define OPTION_VAL_310_RU NULL
-#define OPTION_VAL_320_RU NULL
-#define OPTION_VAL_330_RU NULL
-#define OPTION_VAL_340_RU NULL
-#define OPTION_VAL_350_RU NULL
-#define OPTION_VAL_360_RU NULL
-#define OPTION_VAL_370_RU NULL
-#define OPTION_VAL_380_RU NULL
-#define OPTION_VAL_390_RU NULL
-#define OPTION_VAL_400_RU NULL
-#define OPTION_VAL_410_RU NULL
-#define OPTION_VAL_420_RU NULL
-#define OPTION_VAL_430_RU NULL
-#define OPTION_VAL_440_RU NULL
-#define OPTION_VAL_450_RU NULL
-#define OPTION_VAL_460_RU NULL
-#define OPTION_VAL_470_RU NULL
-#define OPTION_VAL_480_RU NULL
-#define OPTION_VAL_490_RU NULL
-#define OPTION_VAL_500_RU NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать пользовательские текстуры"
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_RU "Мод Dreamcast на 32 Мбайт ОЗУ"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_RU "Вкл. мод для Dreamcast на 32 мегабайта ОЗУ. Может влиять на совместимость."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_RU "Разгон/замедление SH4"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_RU "Изменение стандартной частоты процессора SH4 в 200 МГц. Снижение частоты помогает для слабых платформ. Разгон может повышать частоту кадров в некоторых играх. Используйте с осторожностью."
+#define OPTION_VAL_100_RU "100 МГц"
+#define OPTION_VAL_110_RU "110 МГц"
+#define OPTION_VAL_120_RU "120 МГц"
+#define OPTION_VAL_130_RU "130 МГц"
+#define OPTION_VAL_140_RU "140 МГц"
+#define OPTION_VAL_150_RU "150 МГц"
+#define OPTION_VAL_160_RU "160 МГц"
+#define OPTION_VAL_170_RU "170 МГц"
+#define OPTION_VAL_180_RU "180 МГц"
+#define OPTION_VAL_190_RU "190 МГц"
+#define OPTION_VAL_200_RU "200 МГц"
+#define OPTION_VAL_210_RU "210 МГц"
+#define OPTION_VAL_220_RU "220 МГц"
+#define OPTION_VAL_230_RU "230 МГц"
+#define OPTION_VAL_240_RU "240 МГц"
+#define OPTION_VAL_250_RU "250 МГц"
+#define OPTION_VAL_260_RU "260 МГц"
+#define OPTION_VAL_270_RU "270 МГц"
+#define OPTION_VAL_280_RU "280 МГц"
+#define OPTION_VAL_290_RU "290 МГц"
+#define OPTION_VAL_300_RU "300 МГц"
+#define OPTION_VAL_310_RU "310 МГц"
+#define OPTION_VAL_320_RU "320 МГц"
+#define OPTION_VAL_330_RU "330 МГц"
+#define OPTION_VAL_340_RU "340 МГц"
+#define OPTION_VAL_350_RU "350 МГц"
+#define OPTION_VAL_360_RU "360 МГц"
+#define OPTION_VAL_370_RU "370 МГц"
+#define OPTION_VAL_380_RU "380 МГц"
+#define OPTION_VAL_390_RU "390 МГц"
+#define OPTION_VAL_400_RU "400 МГц"
+#define OPTION_VAL_410_RU "410 МГц"
+#define OPTION_VAL_420_RU "420 МГц"
+#define OPTION_VAL_430_RU "430 МГц"
+#define OPTION_VAL_440_RU "440 МГц"
+#define OPTION_VAL_450_RU "450 МГц"
+#define OPTION_VAL_460_RU "460 МГц"
+#define OPTION_VAL_470_RU "470 МГц"
+#define OPTION_VAL_480_RU "480 МГц"
+#define OPTION_VAL_490_RU "490 МГц"
+#define OPTION_VAL_500_RU "500 МГц"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать внешние текстуры"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_RU "Мёртвая зона аналогового стика"
 #define OPTION_VAL_0_RU NULL
@@ -56022,7 +56520,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_INFO_0_RU "Включает отдачу контроллера."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_RU "Транслировать цифровые сигналы"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU "Транслировать события цифрового ввода и состояние вибрации в TCP-порт 8000. Совместимо с параметром MAME \"-output network\"."
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показать настройки светового пистолета"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показывать настройки свет. пистолета"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU "Включает конфигурацию параметров прицела светового пистолета. Для применения настройки требуется переключить быстрое меню."
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
@@ -56032,15 +56530,15 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 2"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 3"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 4"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RU "Отдельные блоки визуальной памяти (VMU) для игр"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RU "Отдельные визуальные карты памяти (VMU) для игр"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RU "VMU для каждой игры"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если выключено, для всех игр используются 4 общие файла сохранений VMU (A1, B1, C1, D1), расположенные в системном каталоге RetroArch. В режиме 'VMU A1' для каждой загруженной игры в каталоге сохранений RetroArch создаётся уникальный файл VMU 'A1'. В режиме 'Все VMU' для каждой запускаемой игры создаётся по 4 уникальных файла VMU (A1, B1, C1, D1)."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если откл., все игры используют 4 общих файла сохранений VMU (A1, B1, C1, D1), расположенных в системном каталоге RetroArch. В режиме 'VMU A1' для каждой запускаемой игры в каталоге сохранений RetroArch создаётся уникальный файл VMU 'A1'. В режиме 'Все VMU' для каждой запускаемой игры создаётся по 4 уникальных файла VMU (A1, B1, C1, D1)."
 #define OPTION_VAL_VMU_A1_RU NULL
 #define OPTION_VAL_ALL_VMUS_RU "Все VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения блока визуальной памяти (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU "Звуковые сигналы визуальных карт памяти (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU "Сигналы VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU "Включает воспроизведение сигналов VMU."
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 1"
@@ -56087,7 +56585,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define OPTION_VAL_70_RU NULL
 #define OPTION_VAL_80_RU NULL
 #define OPTION_VAL_90_RU NULL
-#define OPTION_VAL_100_O57_RU NULL
+#define OPTION_VAL_100_O58_RU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_RU "Положение экрана VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_RU "Размер экрана VMU 2"
@@ -56728,6 +57226,20 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_RU,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_RU,
       NULL,
@@ -57158,7 +57670,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O57_RU },
+         { "100%", OPTION_VAL_100_O58_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57309,7 +57821,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O57_RU },
+         { "100%", OPTION_VAL_100_O58_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57460,7 +57972,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O57_RU },
+         { "100%", OPTION_VAL_100_O58_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57611,7 +58123,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O57_RU },
+         { "100%", OPTION_VAL_100_O58_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57762,6 +58274,8 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SK NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SK NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_SK NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SK NULL
 #define OPTION_VAL_100_SK NULL
@@ -57886,7 +58400,7 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_70_SK NULL
 #define OPTION_VAL_80_SK NULL
 #define OPTION_VAL_90_SK NULL
-#define OPTION_VAL_100_O57_SK NULL
+#define OPTION_VAL_100_O58_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SK NULL
@@ -58527,6 +59041,20 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SK,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_SK,
       NULL,
@@ -58957,7 +59485,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O57_SK },
+         { "100%", OPTION_VAL_100_O58_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59108,7 +59636,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O57_SK },
+         { "100%", OPTION_VAL_100_O58_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59259,7 +59787,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O57_SK },
+         { "100%", OPTION_VAL_100_O58_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59410,7 +59938,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O57_SK },
+         { "100%", OPTION_VAL_100_O58_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59561,6 +60089,8 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SR NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SR NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_SR NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SR NULL
 #define OPTION_VAL_100_SR NULL
@@ -59685,7 +60215,7 @@ struct retro_core_options_v2 options_sk = {
 #define OPTION_VAL_70_SR NULL
 #define OPTION_VAL_80_SR NULL
 #define OPTION_VAL_90_SR NULL
-#define OPTION_VAL_100_O57_SR NULL
+#define OPTION_VAL_100_O58_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SR NULL
@@ -60326,6 +60856,20 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_SR,
       NULL,
@@ -60756,7 +61300,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O57_SR },
+         { "100%", OPTION_VAL_100_O58_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -60907,7 +61451,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O57_SR },
+         { "100%", OPTION_VAL_100_O58_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61058,7 +61602,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O57_SR },
+         { "100%", OPTION_VAL_100_O58_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61209,7 +61753,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O57_SR },
+         { "100%", OPTION_VAL_100_O58_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61360,8 +61904,10 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV "Ritar geometrin utanför den normala 4:3 bildförhållandet. Kan leda till grafiska fel i de avslöjade områdena."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SV "GD-ROM Snabbladdning (felaktig)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SV "Ökar hastigheten på GD-ROM laddningen."
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SV NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SV "\"Dreamcast 32MB RAM-modifikation\""
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SV "Aktiverar 32MB RAM-modifikation för Dreamcast. Kan påverka kompatibiliteten."
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SV "SH4 CPU under/överklockning"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SV "Ändra SH4 huvud-CPU-klockan från standarden 200 MHz. Att sänka klockfrekvensen kan hjälpa på långsamma plattformar. Att öka klockfrekvensen kan öka bildhastigheten i vissa spel. Använd på egen risk."
 #define OPTION_VAL_100_SV NULL
 #define OPTION_VAL_110_SV NULL
 #define OPTION_VAL_120_SV NULL
@@ -61434,9 +61980,9 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV "Alla spel delar 4 sparade VMU-filer (A1, B1, C1, D1) som finns i RetroArchs systemkatalog när detta alternativ är inaktiverad. Inställningen 'VMU A1' skapar en unik VMU-fil 'A1' i RetroArchs sparakatalog för varje spel som startas. Inställningen \"Alla VMU-enheter\" skapar 4 unika VMU-filer (A1, B1, C1, D1) för varje spel som startas."
 #define OPTION_VAL_VMU_A1_SV NULL
 #define OPTION_VAL_ALL_VMUS_SV "Alla VMU:er"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV "Ljud för visuella minnesenheter/System (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV "VMU-ljud"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV "När detta är aktiverad, spelas VMU-pipen."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för visuell minnesenhet/system (VMU) skärm"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
@@ -61484,7 +62030,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_70_SV "70 %"
 #define OPTION_VAL_80_SV "80 %"
 #define OPTION_VAL_90_SV "90 %"
-#define OPTION_VAL_100_O57_SV "100 %"
+#define OPTION_VAL_100_O58_SV "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV "Visa VMU Skärm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 1"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 2"
@@ -62125,6 +62671,20 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SV,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_SV,
       NULL,
@@ -62555,7 +63115,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O57_SV },
+         { "100%", OPTION_VAL_100_O58_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -62706,7 +63266,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O57_SV },
+         { "100%", OPTION_VAL_100_O58_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -62857,7 +63417,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O57_SV },
+         { "100%", OPTION_VAL_100_O58_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63008,7 +63568,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O57_SV },
+         { "100%", OPTION_VAL_100_O58_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63159,6 +63719,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TR "Normal 4:3 en boy oranının dışına geometri çizin. Ortaya çıkan alanlarda grafiksel hatalara neden olabilir."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TR "GDROM Hızlı Yükleme (kusurlu)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TR "GD-ROM yüklemesini hızlandırır."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_TR "Dreamcast 32MB RAM Modu"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TR "Dreamcast için 32 MB RAM Modunu etkinleştirir. Uyumluluğu etkileyebilir"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_TR "SH4 CPU düşük/hız aşırtması"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_TR "SH4 ana CPU saatini varsayılan 200 MHz değerinden değiştirin. Hız aşırtması platformların yavaşlamasına yardımcı olabilir. Hız aşırtma bazı oyunlarda kare hızını artırabilir. Dikkatle kullanın."
 #define OPTION_VAL_100_TR NULL
@@ -63283,7 +63845,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_70_TR "%70"
 #define OPTION_VAL_80_TR "%80"
 #define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_O57_TR "%100"
+#define OPTION_VAL_100_O58_TR "%100"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TR "VMU Ekranı 2 Görüntüle"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TR "VMU Ekranı 2 Pozisyon"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TR "VMU Ekranı 2 Boyut"
@@ -63924,6 +64486,20 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TR,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_TR,
       NULL,
@@ -64354,7 +64930,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O57_TR },
+         { "100%", OPTION_VAL_100_O58_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -64505,7 +65081,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O57_TR },
+         { "100%", OPTION_VAL_100_O58_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -64656,7 +65232,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O57_TR },
+         { "100%", OPTION_VAL_100_O58_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -64807,7 +65383,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O57_TR },
+         { "100%", OPTION_VAL_100_O58_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -64958,6 +65534,8 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_UK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_UK NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_UK NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_UK NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_UK NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_UK NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_UK NULL
 #define OPTION_VAL_100_UK NULL
@@ -65082,7 +65660,7 @@ struct retro_core_options_v2 options_tr = {
 #define OPTION_VAL_70_UK NULL
 #define OPTION_VAL_80_UK NULL
 #define OPTION_VAL_90_UK NULL
-#define OPTION_VAL_100_O57_UK NULL
+#define OPTION_VAL_100_O58_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_UK NULL
@@ -65723,6 +66301,20 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_UK,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_UK,
       NULL,
@@ -66153,7 +66745,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O57_UK },
+         { "100%", OPTION_VAL_100_O58_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -66304,7 +66896,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O57_UK },
+         { "100%", OPTION_VAL_100_O58_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -66455,7 +67047,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O57_UK },
+         { "100%", OPTION_VAL_100_O58_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -66606,7 +67198,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O57_UK },
+         { "100%", OPTION_VAL_100_O58_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -66757,6 +67349,8 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_VAL NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VAL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_VAL NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VAL NULL
 #define OPTION_VAL_100_VAL NULL
@@ -66881,7 +67475,7 @@ struct retro_core_options_v2 options_uk = {
 #define OPTION_VAL_70_VAL NULL
 #define OPTION_VAL_80_VAL NULL
 #define OPTION_VAL_90_VAL NULL
-#define OPTION_VAL_100_O57_VAL NULL
+#define OPTION_VAL_100_O58_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VAL NULL
@@ -67522,6 +68116,20 @@ struct retro_core_option_v2_definition option_defs_val[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VAL,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_VAL,
       NULL,
@@ -67952,7 +68560,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O57_VAL },
+         { "100%", OPTION_VAL_100_O58_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68103,7 +68711,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O57_VAL },
+         { "100%", OPTION_VAL_100_O58_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68254,7 +68862,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O57_VAL },
+         { "100%", OPTION_VAL_100_O58_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68405,7 +69013,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O57_VAL },
+         { "100%", OPTION_VAL_100_O58_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68556,6 +69164,8 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_VN NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VN NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VN NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_VN NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VN NULL
 #define OPTION_VAL_100_VN NULL
@@ -68680,7 +69290,7 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_70_VN NULL
 #define OPTION_VAL_80_VN NULL
 #define OPTION_VAL_90_VN NULL
-#define OPTION_VAL_100_O57_VN NULL
+#define OPTION_VAL_100_O58_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VN NULL
@@ -69321,6 +69931,20 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VN,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_sh4clock",
       CORE_OPTION_NAME_SH4CLOCK_LABEL_VN,
       NULL,
@@ -69751,7 +70375,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O57_VN },
+         { "100%", OPTION_VAL_100_O58_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -69902,7 +70526,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O57_VN },
+         { "100%", OPTION_VAL_100_O58_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -70053,7 +70677,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O57_VN },
+         { "100%", OPTION_VAL_100_O58_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -70204,7 +70828,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O57_VN },
+         { "100%", OPTION_VAL_100_O58_VN },
          { NULL,   NULL },
       },
       "100%",
