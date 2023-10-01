@@ -719,6 +719,7 @@ void Emulator::unloadGame()
 		settings.content.path.clear();
 		settings.content.gameId.clear();
 		settings.content.fileName.clear();
+		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
