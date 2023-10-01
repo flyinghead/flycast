@@ -426,9 +426,9 @@ private:
 		// RBP is constant for this program
 		Add(ADDR, ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
-		if (ARAM_SIZE == 2*1024*1024)
+		if (ARAM_SIZE == 2_MB)
 			Bfc(ADDR, 21, 11);
-		else if (ARAM_SIZE == 8*1024*1024)
+		else if (ARAM_SIZE == 8_MB)
 			Bfc(ADDR, 23, 9);
 		else
 			die("Unsupported ARAM_SIZE");

@@ -1250,11 +1250,10 @@ public:
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
 				Sub(x2, x28, offsetof(Sh4RCB, cntx));
-#if RAM_SIZE_MAX == 33554432
-				Ubfx(w1, w29, 1, 24);
-#else
-				Ubfx(w1, w29, 1, 23);
-#endif
+				if (RAM_SIZE == 32_MB)
+					Ubfx(w1, w29, 1, 24);
+				else
+					Ubfx(w1, w29, 1, 23);
 				Ldr(x15, MemOperand(x2, x1, LSL, 3));	// Get block entry point
 				Br(x15);
 			}
@@ -1365,9 +1364,9 @@ public:
 		if (!mmu_enabled())
 		{
 			Sub(x2, x28, offsetof(Sh4RCB, cntx));
-			if (RAM_SIZE == 32 * 1024 * 1024)
+			if (RAM_SIZE == 32_MB)
 				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
-			else if (RAM_SIZE == 16 * 1024 * 1024)
+			else if (RAM_SIZE == 16_MB)
 				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
 			else
 				die("Unsupported RAM_SIZE");
