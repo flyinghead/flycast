@@ -435,7 +435,7 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
 	endif()
 
-	find_package(Lua)
+	find_package(Lua 5.2)
 	if(NOT APPLE AND LUA_FOUND)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LUA)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
