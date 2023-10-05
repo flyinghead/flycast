@@ -495,18 +495,32 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + gdrom_name;
 		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
-		std::unique_ptr<Disc> gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
-		if (gdrom == nullptr)
-			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi", digest));
-		if (gdrom_parent_name != nullptr && gdrom == nullptr)
-		{
-			std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(gdrom_parent_name) + "/" + gdrom_name);
-			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
-			if (gdrom == nullptr)
-				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi", digest));
+		std::unique_ptr<Disc> gdrom;
+		try {
+			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
 		}
-		if (gdrom == nullptr)
-			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");
+		catch (const FlycastException& e)
+		{
+			try {
+				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi", digest));
+			}
+			catch (const FlycastException& e)
+			{
+				if (gdrom_parent_name != nullptr)
+				{
+					std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(gdrom_parent_name) + "/" + gdrom_name);
+					try {
+						gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
+					} catch (const FlycastException& e) {
+						try {
+							gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi", digest));
+						} catch (const FlycastException& e) {}
+					}
+				}
+				if (gdrom == nullptr)
+					throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");
+			}
+		}
 
 		// primary volume descriptor
 		// read frame 0xb06e (frame=sector+150)

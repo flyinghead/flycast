@@ -90,7 +90,7 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 			return disc;
 	}
 
-	return nullptr;
+	throw FlycastException("Unknown disk format");
 }
 
 static bool loadDisk(const std::string& path)
