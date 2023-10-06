@@ -43754,8 +43754,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_KO "일반적인 4:3 화면비 밖에도 개체를 그립니다. 드러난 부분에서 그래픽 오류가 발생할 수도 있습니다."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_KO "GD-ROM 빠른 로딩 (정확하지 않음)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_KO "GD-ROM 로딩 속도를 높입니다."
-#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_KO NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_KO "드림캐스트 32MB RAM 모드"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_KO "드림캐스트용 32MB RAM 모드를 활성화합니다. 호환성에 영향이 있을 수 있습니다"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_KO "SH4 CPU 언더/오버클럭"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_KO "SH4 메인 CPU 클럭을 기본 200MHz에서 변경합니다. 언더클럭하면 플랫폼 속도가 느려질 수 있습니다. 오버클럭하면 일부 게임에서 프레임 속도가 증가할 수 있습니다. 주의해서 사용하세요."
 #define OPTION_VAL_100_KO NULL
