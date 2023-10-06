@@ -140,6 +140,17 @@ void RestoreHostRoundingMode()
 	setHostRoundingMode();
 }
 
+void setDefaultRoundingMode()
+{
+	u32 savedRM = fpscr.RM;
+	u32 savedDN = fpscr.DN;
+	fpscr.RM = 0;
+	fpscr.DN = 0;
+	setHostRoundingMode();
+	fpscr.RM = savedRM;
+	fpscr.DN = savedDN;
+}
+
 static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
 	if ((reg>=reg_r0) && (reg<=reg_r15))

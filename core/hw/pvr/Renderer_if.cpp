@@ -90,10 +90,15 @@ public:
 		}
 		else
 		{
+			void setDefaultRoundingMode();
+			void RestoreHostRoundingMode();
+
+			setDefaultRoundingMode();
 			// drain the queue after switching to !threaded rendering
 			while (!queue.empty())
 				waitAndExecute();
 			execute(msg);
+			RestoreHostRoundingMode();
 		}
 	}
 
