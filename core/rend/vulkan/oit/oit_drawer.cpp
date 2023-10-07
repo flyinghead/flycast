@@ -366,35 +366,27 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     					targetFramebuffer, viewport, clear_colors),
     			vk::SubpassContents::eInline);
 
-    	if (!pvrrc.isRTT && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
-    	{
-    		// Video output disabled
-			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-    	}
-    	else
-    	{
-			// Depth + stencil subpass
-			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+		// Depth + stencil subpass
+		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.data());
+		DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, pvrrc.global_param_mvo.data());
 
-			// Color subpass
-			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
+		// Color subpass
+		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 
-			// OP + PT
-			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Color, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+		// OP + PT
+		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Color, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-			// TR
-			if (current_pass.autosort)
-			{
-				if (!firstFrameAfterInit)
-					DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
-			}
-			else
-				DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
-    	}
+		// TR
+		if (current_pass.autosort)
+		{
+			if (!firstFrameAfterInit)
+				DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+		}
+		else
+			DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);

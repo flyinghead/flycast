@@ -412,12 +412,18 @@ void initABuffer()
 	g_quadVertexArray.bind(g_quadBuffer.get(), g_quadIndexBuffer.get());
 	g_quadVertexArray.unbind();
 
-	// Clear A-buffer pointers
-	glcache.UseProgram(g_abuffer_clear_shader.program);
-	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
+	if (pixels_pointers != 0)
+	{
+		// Clear A-buffer pointers
+		glcache.UseProgram(g_abuffer_clear_shader.program);
+		gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
+		glcache.Disable(GL_DEPTH_TEST);
+		glcache.Disable(GL_CULL_FACE);
+		glcache.Disable(GL_SCISSOR_TEST);
 
-	abufferDrawQuad();
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		abufferDrawQuad();
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	}
 
 	glCheck();
 }

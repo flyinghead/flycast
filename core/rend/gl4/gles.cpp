@@ -670,7 +670,6 @@ struct OpenGL4Renderer : OpenGLRenderer
 		if (!config::EmulateFramebuffer)
 		{
 			DrawOSD(false);
-			gl.ofbo2.ready = false;
 			frameRendered = true;
 		}
 		renderVideoRouting();
@@ -862,114 +861,104 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	if (!is_rtt)
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 
-	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
-	{
-		// Video output disabled
-		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-	else
-	{
-		//Main VBO
-		//move vertex to gpu
-		gl4.vbo.getVertexBuffer()->update(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
-		gl4.vbo.getIndexBuffer()->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
+	//Main VBO
+	//move vertex to gpu
+	gl4.vbo.getVertexBuffer()->update(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
+	gl4.vbo.getIndexBuffer()->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
 
-		//Modvol VBO
-		if (!pvrrc.modtrig.empty())
-			gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
+	//Modvol VBO
+	if (!pvrrc.modtrig.empty())
+		gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
 
-		// TR PolyParam data
-		if (!pvrrc.global_param_tr.empty())
+	// TR PolyParam data
+	if (!pvrrc.global_param_tr.empty())
+	{
+		std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+		int i = 0;
+		for (const PolyParam& pp : pvrrc.global_param_tr)
 		{
-			std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
-			int i = 0;
-			for (const PolyParam& pp : pvrrc.global_param_tr)
-			{
-				trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
-				trPolyParams[i++] = pp.tsp1.full;
-			}
-			gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
-			// Declare storage
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
+			trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+			trPolyParams[i++] = pp.tsp1.full;
 		}
-		glCheck();
+		gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
+		// Declare storage
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
+	}
+	glCheck();
 
-		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
+	if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
+	{
+		float fWidth;
+		float fHeight;
+		float min_x;
+		float min_y;
+		if (!is_rtt)
 		{
-			float fWidth;
-			float fHeight;
-			float min_x;
-			float min_y;
-			if (!is_rtt)
-			{
-				glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-				glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-								   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
-				clip_min = scissor_mat * clip_min;
-				clip_dim = scissor_mat * clip_dim;
-				
-				min_x = clip_min[0];
-				min_y = clip_min[1];
-				fWidth = clip_dim[0];
-				fHeight = clip_dim[1];
-				if (fWidth < 0)
-				{
-					min_x += fWidth;
-					fWidth = -fWidth;
-				}
-				if (fHeight < 0)
-				{
-					min_y += fHeight;
-					fHeight = -fHeight;
-				}
-				if (matrices.GetSidebarWidth() > 0)
-				{
-					float scaled_offs_x = matrices.GetSidebarWidth();
+			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+			clip_min = scissor_mat * clip_min;
+			clip_dim = scissor_mat * clip_dim;
 
-					glcache.Enable(GL_SCISSOR_TEST);
-					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
-					glClear(GL_COLOR_BUFFER_BIT);
-					glcache.Scissor((GLint)lroundf(rendering_width - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
-					glClear(GL_COLOR_BUFFER_BIT);
-				}
-			}
-			else
+			min_x = clip_min[0];
+			min_y = clip_min[1];
+			fWidth = clip_dim[0];
+			fHeight = clip_dim[1];
+			if (fWidth < 0)
 			{
-				fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-				min_x = pvrrc.fb_X_CLIP.min;
-				min_y = pvrrc.fb_Y_CLIP.min;
-				if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
-				{
-					float scale = config::RenderResolution / 480.f;
-					min_x *= scale;
-					min_y *= scale;
-					fWidth *= scale;
-					fHeight *= scale;
-				}
+				min_x += fWidth;
+				fWidth = -fWidth;
 			}
-			gl4ShaderUniforms.base_clipping.enabled = true;
-			gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
-			gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
-			gl4ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
-			gl4ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
-			glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
-					gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
-			glcache.Enable(GL_SCISSOR_TEST);
+			if (fHeight < 0)
+			{
+				min_y += fHeight;
+				fHeight = -fHeight;
+			}
+			if (matrices.GetSidebarWidth() > 0)
+			{
+				float scaled_offs_x = matrices.GetSidebarWidth();
+
+				glcache.Enable(GL_SCISSOR_TEST);
+				glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glcache.Scissor((GLint)lroundf(rendering_width - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
 		}
 		else
 		{
-			gl4ShaderUniforms.base_clipping.enabled = false;
+			fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+			fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+			min_x = pvrrc.fb_X_CLIP.min;
+			min_y = pvrrc.fb_Y_CLIP.min;
+			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
+			{
+				float scale = config::RenderResolution / 480.f;
+				min_x *= scale;
+				min_y *= scale;
+				fWidth *= scale;
+				fHeight *= scale;
+			}
 		}
-
-		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
-#ifdef LIBRETRO
-		if (!is_rtt && !config::EmulateFramebuffer)
-			postProcessor.render(glsm_get_current_framebuffer());
-#endif
+		gl4ShaderUniforms.base_clipping.enabled = true;
+		gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
+		gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
+		gl4ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
+		gl4ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
+		glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
+				gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
+		glcache.Enable(GL_SCISSOR_TEST);
 	}
+	else
+	{
+		gl4ShaderUniforms.base_clipping.enabled = false;
+	}
+
+	gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+#ifdef LIBRETRO
+	if (!is_rtt && !config::EmulateFramebuffer)
+		postProcessor.render(glsm_get_current_framebuffer());
+#endif
 
 	if (is_rtt)
 		ReadRTTBuffer();
@@ -979,6 +968,7 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	{
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
 #ifndef LIBRETRO
+		gl.ofbo2.ready = false;
 		renderLastFrame();
 #endif
 	}
