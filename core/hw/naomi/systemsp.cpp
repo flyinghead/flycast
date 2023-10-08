@@ -945,7 +945,7 @@ public:
 		return DefaultInPortManager::getCN9_17_24();
 	}
 
-	virtual u8 getCN9_33_40()
+	u8 getCN9_33_40() override
 	{
 		IO_LOG("systemsp::read IN CN9 33-40");
 		// dinosaur king, love & berry:
