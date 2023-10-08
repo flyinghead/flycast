@@ -308,13 +308,13 @@ void main()
 	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
 #endif
 #if DITHERING == 1
-	float ditherTable[16] = float[](
+	mediump float ditherTable[16] = float[](
 		 0.9375,  0.1875,  0.75,  0.,   
 		 0.4375,  0.6875,  0.25,  0.5,
 		 0.8125,  0.0625,  0.875, 0.125,
 		 0.3125,  0.5625,  0.375, 0.625	
 	);
-	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	mediump float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
 	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
 	color += r / ditherColorMax;
 	// avoid rounding
