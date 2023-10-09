@@ -199,7 +199,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		{
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped  && Type != ListType_Punch_Through ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 
@@ -215,7 +215,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
 						std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
 				// Set the recommended minification filter for best results
-				if (mipmapped)
+				if (mipmapped && Type != ListType_Punch_Through)
 					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			}
 			else

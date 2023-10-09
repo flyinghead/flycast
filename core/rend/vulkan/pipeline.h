@@ -77,7 +77,7 @@ public:
 	}
 
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
-			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset)
+			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset, bool punchThrough)
 	{
 		vk::DescriptorSet perPolyDescSet;
 		auto it = perPolyDescSets.find(&poly);
@@ -89,7 +89,7 @@ public:
 			vk::DescriptorImageInfo imageInfo;
 			if (poly.texture != nullptr)
 			{
-				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp),
+				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp, punchThrough),
 						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 			}

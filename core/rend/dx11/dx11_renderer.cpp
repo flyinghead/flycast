@@ -624,7 +624,6 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			gp->pcw.Gouraud,
 			Type == ListType_Punch_Through,
 			clipmode == TileClipping::Inside,
-			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV,
 			dithering);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
@@ -670,7 +669,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			linearFiltering = false;
 		else
 			linearFiltering = true;
-        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV, Type == ListType_Punch_Through);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 
@@ -766,7 +765,6 @@ void DX11Renderer::drawSorted(int first, int count, bool multipass)
 				false,
 				false,
 				true,
-				false,
 				false,
 				false,
 				false);

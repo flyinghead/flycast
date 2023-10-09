@@ -188,7 +188,6 @@ struct DX11OITRenderer : public DX11Renderer
 					gp->pcw.Gouraud,
 					useTexture,
 					clipmode == TileClipping::Inside,
-					false,
 					two_volumes_mode,
 					pass);
 		}
@@ -212,7 +211,6 @@ struct DX11OITRenderer : public DX11Renderer
 					gp->pcw.Gouraud,
 					Type == ListType_Punch_Through,
 					clipmode == TileClipping::Inside,
-					gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV,
 					two_volumes_mode,
 					pass);
 
@@ -296,7 +294,7 @@ struct DX11OITRenderer : public DX11Renderer
 					linearFiltering = false;
 				else
 					linearFiltering = true;
-		        auto sampler = samplers->getSampler(linearFiltering, tsp.ClampU, tsp.ClampV, tsp.FlipU, tsp.FlipV);
+		        auto sampler = samplers->getSampler(linearFiltering, tsp.ClampU, tsp.ClampV, tsp.FlipU, tsp.FlipV, Type == ListType_Punch_Through);
 		        deviceContext->PSSetSamplers(slot, 1, &sampler.get());
 			}
 		}

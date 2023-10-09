@@ -111,7 +111,8 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 				break;
 			}
 		}
-		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, polyNumber, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset);
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, polyNumber, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset,
+				listType == ListType_Punch_Through);
 	}
 
 	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, autosort, poly, pass, gpuPalette);

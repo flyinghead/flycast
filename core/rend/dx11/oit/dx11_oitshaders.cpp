@@ -449,9 +449,6 @@ PSO main(in VertexIn inpix)
 			uv /= inpix.uv.w;
 		#endif
 
-		#if NearestWrapFix == 1
-			uv = min(fmod(uv, 1.f), 0.9997f);
-		#endif
 		float4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
@@ -846,7 +843,6 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroNearestWrapFix,
 	MacroPass
 };
 
@@ -866,14 +862,13 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "pp_Palette", "0" },
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
-	{ "NearestWrapFix", "0" },
 	{ "PASS", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool twoVolumes, Pass pass)
+		bool palette, bool gouraud, bool alphaTest, bool clipInside, bool twoVolumes, Pass pass)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -888,10 +883,9 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 			| ((int)gouraud << 11)
 			| ((int)alphaTest << 12)
 			| ((int)clipInside << 13)
-			| ((int)nearestWrapFix << 14)
-			| ((int)twoVolumes << 15)
-			| ((int)pass << 16)
-			| ((int)divPosZ << 18);
+			| ((int)twoVolumes << 14)
+			| ((int)pass << 15)
+			| ((int)divPosZ << 17);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -910,7 +904,6 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroAlphaTest].Definition = MacroValues[alphaTest];
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
-		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 		PixelMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroPass].Definition = MacroValues[pass];

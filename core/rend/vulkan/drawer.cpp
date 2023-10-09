@@ -225,7 +225,8 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 				break;
 			}
 		}
-		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, index, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset);
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, index, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset,
+				listType == ListType_Punch_Through);
 	}
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }

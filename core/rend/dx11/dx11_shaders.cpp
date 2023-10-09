@@ -242,9 +242,6 @@ PSO main(in Pixel inpix)
 		#if DIV_POS_Z != 1
 			uv /= inpix.uv.w;
 		#endif
-		#if NearestWrapFix == 1
-			uv = min(fmod(uv, 1.f), 0.9997f);
-		#endif
 		#if pp_Palette == 0
 			float4 texcol = texture0.Sample(sampler0, uv);
 		#else
@@ -429,7 +426,6 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroNearestWrapFix,
 	MacroDithering
 };
 
@@ -449,14 +445,13 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "pp_Palette", "0" },
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
-	{ "NearestWrapFix", "0" },
 	{ "DITHERING", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool dithering)
+		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside, bool dithering)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -472,9 +467,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (gouraud << 12)
 			| (alphaTest << 13)
 			| (clipInside << 14)
-			| (nearestWrapFix << 15)
-			| (divPosZ << 16)
-			| (dithering << 17);
+			| (divPosZ << 15)
+			| (dithering << 16);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -493,7 +487,6 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroAlphaTest].Definition = MacroValues[alphaTest];
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
-		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroDithering].Definition = MacroValues[dithering];
 
