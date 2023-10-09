@@ -91,7 +91,9 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
+		strcpy((char *)block + 2, "flycast@gmail.com");
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
+		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
 		block[60] = 1;
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
