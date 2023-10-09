@@ -365,6 +365,7 @@ void gd_process_ata_cmd()
 		Error.Sense = sns_key;
 		GDStatus.BSY = 0;
 		GDStatus.CHECK = 1;
+		GDStatus.DRQ = 0;
 
 		asic_RaiseInterrupt(holly_GDROM_CMD);
 		gd_set_state(gds_waitcmd);
