@@ -25,6 +25,7 @@
 #include "reios/reios.h"
 #include "pvrparser.h"
 #include <stb_image_write.h>
+#include <random>
 
 bool Scraper::downloadImage(const std::string& url, const std::string& localName)
 {
@@ -60,10 +61,14 @@ bool Scraper::downloadImage(const std::string& url, const std::string& localName
 
 std::string Scraper::makeUniqueFilename(const std::string& url)
 {
+	static std::random_device randomDev;
+	static std::mt19937 mt(randomDev());
+	static std::uniform_int_distribution<int> dist(1, 1000000000);
+
 	std::string extension = get_file_extension(url);
 	std::string path;
 	do {
-		path = saveDirectory + std::to_string(rand()) + "." + extension;
+		path = saveDirectory + std::to_string(dist(mt)) + "." + extension;
 	} while (file_exists(path));
 	return path;
 }
