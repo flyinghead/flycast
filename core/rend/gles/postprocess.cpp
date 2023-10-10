@@ -215,7 +215,7 @@ private:
 	{
 		glcache.UseProgram(program);
 		glUniform1f(frameCountUniform, FrameCount);
-		float shift[] = { -gl.ofbo.shiftX, -gl.ofbo.shiftY };
+		float shift[] = { -gl.ofbo.shiftX, gl.ofbo.shiftY };
 		glUniform2fv(videoShiftUniform, 1, shift);
 	}
 
@@ -255,9 +255,7 @@ void PostProcessor::term()
 {
 	framebuffer.reset();
 	vertexBuffer.reset();
-	vertexBufferShifted.reset();
 	vertexArray.term();
-	vertexArrayShifted.term();
 	PostProcessShader::term();
 	glCheck();
 }
@@ -295,17 +293,17 @@ void PostProcessor::render(GLuint output_fbo)
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			static float vertices[20] = {
-				-1.f,  1.f, 1.f, 0.f, 1.f,
-				-1.f, -1.f, 1.f, 0.f, 0.f,
-				 1.f,  1.f, 1.f, 1.f, 1.f,
-				 1.f, -1.f, 1.f, 1.f, 0.f,
+				-1.f, -1.f, 1.f, 0.f, 1.f,
+				-1.f,  1.f, 1.f, 0.f, 0.f,
+				 1.f, -1.f, 1.f, 1.f, 1.f,
+				 1.f,  1.f, 1.f, 1.f, 0.f,
 			};
 			vertices[0] = vertices[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
 			vertices[10] = vertices[15] = vertices[0] + 2;
-			vertices[1] = vertices[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-			vertices[6] = vertices[16] = vertices[1] - 2;
+			vertices[1] = vertices[11] = -1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			vertices[6] = vertices[16] = vertices[1] + 2;
 			glcache.Disable(GL_BLEND);
-			drawQuad(framebuffer->getTexture(), false, true, vertices);
+			drawQuad(framebuffer->getTexture(), false, false, vertices);
 		}
 		else
 		{
@@ -332,27 +330,7 @@ void PostProcessor::render(GLuint output_fbo)
 		PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
 				SPG_CONTROL.interlace,
 				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
-	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-	{
-		if (vertexBufferShifted == nullptr)
-			vertexBufferShifted = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
-		float vertices[] = {
-				-1,  1, 1,
-				-1, -1, 1,
-				 1,  1, 1,
-				 1, -1, 1,
-		};
-		vertices[0] = vertices[3] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
-		vertices[6] = vertices[9] = vertices[0] + 2;
-		vertices[1] = vertices[7] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-		vertices[4] = vertices[10] = vertices[1] - 2;
-		vertexBufferShifted->update(vertices, sizeof(vertices));
-		vertexArrayShifted.bind(vertexBufferShifted.get());
-	}
-	else
-	{
-		vertexArray.bind(vertexBuffer.get());
-	}
+	vertexArray.bind(vertexBuffer.get());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 	glActiveTexture(GL_TEXTURE0);

@@ -39,8 +39,6 @@ private:
 	std::unique_ptr<GlBuffer> vertexBuffer;
 	VertexArray vertexArray;
 	std::unique_ptr<GlFramebuffer> framebuffer;
-	std::unique_ptr<GlBuffer> vertexBufferShifted;
-	VertexArray vertexArrayShifted;
 };
 
 extern PostProcessor postProcessor;
