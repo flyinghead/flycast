@@ -668,6 +668,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB"
 				|| gameId.substr(0, 9) == "MUSHIKING"
+				|| gameId == "MUSHIUSA '04 1ST VER0.900-"
 				|| gameId.substr(0, 13) == "DINOSAUR KING"
 				|| gameId == "INW PUPPY 2008 VER1.001"	// SystemSP isshoni
 				|| gameId.substr(0, 14) == "LOVE AND BERRY")

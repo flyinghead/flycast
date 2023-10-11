@@ -993,7 +993,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 		{
 		case JVS::Default:
 		default:
-			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING")
+			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING"
+					|| settings.content.gameId == "MUSHIUSA '04 1ST VER0.900-")
 				io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
 			else if (settings.content.gameId == "ANPANMAN POPCORN KOUJOU 2")
 				io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
