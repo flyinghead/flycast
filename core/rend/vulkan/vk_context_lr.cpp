@@ -321,7 +321,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	return true;
 }
 
-void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
+void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio, vk::Event event)
 {
 	if (image == vk::Image())
 		return;
