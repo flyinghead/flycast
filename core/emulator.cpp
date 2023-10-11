@@ -153,7 +153,9 @@ static void loadSpecialSettings()
 			config::ExtraDepthScale.override(1e26f);
 		}
 		// Test Drive V-Rally
-		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
+		else if (prod_id == "T15110N" || prod_id == "T15105D 50"
+				// Caesars Palace 2000
+				|| prod_id == "T-12504N" || prod_id == "12502D-50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
@@ -807,7 +809,7 @@ void loadGameSpecificSettings()
 	// Reload per-game settings
 	config::Settings::instance().load(true);
 
-	if (config::ForceWindowsCE)
+	if (config::ForceWindowsCE && !config::ExtraDepthScale.isReadOnly())
 		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
 }
 
