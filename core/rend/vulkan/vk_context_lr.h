@@ -43,7 +43,7 @@ public:
 	void term() override;
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
-	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio, vk::Event event = nullptr);
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return device; }

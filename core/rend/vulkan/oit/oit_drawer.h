@@ -165,16 +165,12 @@ public:
 			screenPipelineManager = std::make_unique<OITPipelineManager>();
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
-		if (GetContext()->GetVendorID() == VulkanContext::VENDOR_ARM)
-			// Use an event to synchronize command buffers with Mali GPUs
-			event = GetContext()->GetDevice().createEventUnique(vk::EventCreateInfo());
 
 		MakeFramebuffers(viewport);
 		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport, 0);
 	}
 	void Term()
 	{
-		event.reset();
 		screenPipelineManager.reset();
 		framebuffers.clear();
 		finalColorAttachments.clear();
@@ -192,10 +188,6 @@ public:
 		}
 		else
 		{
-			if (event) {
-				GetContext()->GetDevice().resetEvent(*event);
-				currentCommandBuffer.setEvent(*event, vk::PipelineStageFlagBits::eBottomOfPipe);
-			}
 			currentCommandBuffer.end();
 			commandPool->EndFrame();
 			aspectRatio = getOutputFramebufferAspectRatio();
@@ -211,7 +203,7 @@ public:
 			return false;
 		frameRendered = false;
 		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImage(),
-				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent, aspectRatio, *event);
+				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent, aspectRatio);
 
 		return true;
 	}
@@ -230,7 +222,6 @@ private:
 	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
-	vk::UniqueEvent event;
 };
 
 class OITTextureDrawer : public OITDrawer
