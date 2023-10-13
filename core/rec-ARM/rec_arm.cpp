@@ -778,6 +778,9 @@ bool Arm32Dynarec::rewrite(host_context_t& context, void *faultAddress)
 		u32 full;
 	};
 
+	if (codeBuffer == nullptr)
+		// init() not called yet
+		return false;
 	if ((u8 *)context.pc < (u8 *)codeBuffer->getBase()
 			|| (u8 *)context.pc >= (u8 *)codeBuffer->getBase() + codeBuffer->getSize())
 		return false;

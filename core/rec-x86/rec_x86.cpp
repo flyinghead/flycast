@@ -924,6 +924,9 @@ public:
 
 	bool rewrite(host_context_t &context, void *faultAddress) override
 	{
+		if (codeBuffer == nullptr)
+			// init() not called yet
+			return false;
 		u8 *rewriteAddr = *(u8 **)context.esp - 5;
 		X86Compiler *compiler = new X86Compiler(*codeBuffer, rewriteAddr);
 		bool rv = compiler->rewriteMemAccess(context);

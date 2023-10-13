@@ -2312,6 +2312,9 @@ public:
 				8,
 		};
 
+		if (codeBuffer == nullptr)
+			// init() not called yet
+			return false;
 		//LOGI("Sh4Dynarec::rewrite pc %zx\n", context.pc);
 		u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 		if ((u8 *)code_ptr < (u8 *)codeBuffer->getBase()
@@ -2355,7 +2358,7 @@ public:
 private:
 	Arm64Assembler* compiler = nullptr;
 	bool restarting = false;
-	Sh4CodeBuffer *codeBuffer;
+	Sh4CodeBuffer *codeBuffer = nullptr;
 };
 
 static Arm64Dynarec instance;

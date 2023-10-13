@@ -1360,6 +1360,9 @@ public:
 
 	bool rewrite(host_context_t &context, void *faultAddress) override
 	{
+		if (codeBuffer == nullptr)
+			// init() not called yet
+			return false;
 		void* protStart = codeBuffer->get();
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
