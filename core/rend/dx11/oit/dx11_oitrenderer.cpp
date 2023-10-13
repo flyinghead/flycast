@@ -303,7 +303,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		//set Z mode, only if required
 		int zfunc;
-		if (Type == ListType_Punch_Through || (pass == DX11OITShaders::Depth && SortingEnabled))
+		if (Type == ListType_Punch_Through || SortingEnabled)
 			zfunc = 6; // GEQ
 		else
 			zfunc = gp->isp.DepthMode;
@@ -520,7 +520,7 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 
 		RenderPass previous_pass {};
-		int render_pass_count = (int)pvrrc.render_passes.size();
+		const int render_pass_count = (int)pvrrc.render_passes.size();
 		for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
 		{
 			const RenderPass& current_pass = pvrrc.render_passes[render_pass];
@@ -555,13 +555,13 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Color>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Color>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
+		    deviceContext->PSSetShaderResources(4, 1, &nullView);
 
 			//
 			// PASS 3: Render TR to a-buffers
 			//
 			if (current_pass.autosort)
 			{
-			    deviceContext->PSSetShaderResources(4, 1, &nullView);
 				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 			    deviceContext->PSSetShaderResources(4, 1, &depthView.get());
 			    // disable color writes
@@ -569,14 +569,6 @@ struct DX11OITRenderer : public DX11Renderer
 				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 				// unbind depth tex
 			    deviceContext->PSSetShaderResources(4, 1, &nullView);
-				if (render_pass < render_pass_count - 1)
-				{
-					//
-					// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
-					//
-					deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
-					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
-				}
 			    if (!theDX11Context.isIntel())
 			    {
 			    	// Intel Iris Plus 640 just crashes
@@ -588,11 +580,19 @@ struct DX11OITRenderer : public DX11Renderer
 			}
 			else
 			{
-			    deviceContext->PSSetShaderResources(4, 1, &nullView);
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 				drawList<ListType_Translucent, false, DX11OITShaders::Color>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 			}
 			if (render_pass < render_pass_count - 1)
 			{
+				//
+				// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
+				//
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
+				if (current_pass.autosort)
+					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+				else
+					drawList<ListType_Translucent, false, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
