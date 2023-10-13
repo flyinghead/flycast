@@ -40125,7 +40125,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_IT "Caricamento Veloce GD-ROM (inaccurato)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_IT "Accelera il caricamento di GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_IT NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_IT NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_IT "Abilita 32MB RAM Mod per Dreamcast. Può influire sulla compatibilità"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_IT "CPU SH4 sotto/overclock"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_IT "Cambia l'orologio principale della CPU SH4 da 200 MHz predefinito. Underclocking può aiutare le piattaforme lente. L'overclocking può aumentare il frame rate per alcuni giochi. Usare con cautela."
 #define OPTION_VAL_100_IT NULL
