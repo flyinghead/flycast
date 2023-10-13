@@ -53,6 +53,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			}
 			if (texture == nullptr || vmu_lcd_changed[i])
 			{
+				texture.reset();
 				device->CreateTexture(48, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture.get(), 0);
 				D3DLOCKED_RECT rect;
 				if (SUCCEEDED(texture->LockRect(0, &rect, nullptr, 0)))

@@ -276,6 +276,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	if (!dcfbTexture)
 	{
 		device->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &dcfbTexture.get(), 0);
+		dcfbSurface.reset();
 		dcfbTexture->GetSurfaceLevel(0, &dcfbSurface.get());
 	}
 
