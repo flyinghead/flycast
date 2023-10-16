@@ -757,13 +757,17 @@ bool VulkanContext::init()
 #elif defined(__ANDROID__)
 	extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #endif
-	if (!InitInstance(&extensions[0], extensions.size()))
+	if (!InitInstance(&extensions[0], extensions.size())) {
+		term();
 		return false;
+	}
 
 #if defined(USE_SDL)
     VkSurfaceKHR surface;
-    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0)
+    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0) {
+		term();
     	return false;
+    }
     this->surface.reset(vk::SurfaceKHR(surface));
     SDL_Window *sdlWin = (SDL_Window *)window;
     int w, h;
@@ -796,7 +800,12 @@ bool VulkanContext::init()
 	overlay = std::make_unique<VulkanOverlay>();
 	textureCache = std::make_unique<TextureCache>();
 
-	return InitDevice();
+	if (!InitDevice()) {
+		term();
+		return false;
+	}
+
+	return true;
 }
 
 bool VulkanContext::recreateSwapChainIfNeeded()
@@ -989,24 +998,23 @@ void VulkanContext::term()
 {
 	GraphicsContext::instance = nullptr;
 	lastFrameView = nullptr;
-	if (!device)
-		return;
-	WaitIdle();
+	if (device && graphicsQueue)
+		WaitIdle();
 	imguiDriver.reset();
 	if (device && pipelineCache)
-    {
-        std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
-        if (!cacheData.empty())
-        {
-            std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
-            FILE *f = nowide::fopen(cachePath.c_str(), "wb");
-            if (f != nullptr)
-            {
-                (void)std::fwrite(&cacheData[0], 1, cacheData.size(), f);
-                std::fclose(f);
-            }
-        }
-    }
+	{
+		std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
+		if (!cacheData.empty())
+		{
+			std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
+			FILE *f = nowide::fopen(cachePath.c_str(), "wb");
+			if (f != nullptr)
+			{
+				(void)std::fwrite(&cacheData[0], 1, cacheData.size(), f);
+				std::fclose(f);
+			}
+		}
+	}
 	overlay.reset();
 	textureCache.reset();
 	ShaderCompiler::Term();
