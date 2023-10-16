@@ -481,6 +481,19 @@ void CheatManager::reset(const std::string& gameId)
 			else if (gameId == "MKG TKOB 2 KOR VER1.000-")	// mushik2k
 				setMushikingCheats(0x706084);
 		}
+		else if (gameId == "T-8120N")		// Dave Mirra BMX (US)
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x0030b8cc, 0x42040000); // 33.0 ms
+			cheats.back().builtIn = true;
+		}
+		else if (gameId == "T8120D  50")	// Dave Mirra BMX (EU)
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000); // 40.0 ms
+			cheats.back().builtIn = true;
+		}
+
 	}
 	if (config::WidescreenGameHacks)
 	{
