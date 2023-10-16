@@ -1364,10 +1364,10 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		}
 		else
 		{
-			fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-			fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-			min_x = pvrrc.fb_X_CLIP.min;
-			min_y = pvrrc.fb_Y_CLIP.min;
+			min_x = (float)pvrrc.getFramebufferMinX();
+			min_y = (float)pvrrc.getFramebufferMinY();
+			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
+			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				float scale = config::RenderResolution / 480.f;

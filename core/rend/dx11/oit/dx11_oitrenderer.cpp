@@ -127,8 +127,10 @@ struct DX11OITRenderer : public DX11Renderer
 		createDepthTexAndView(depthTex, depthTexView, width, height, DXGI_FORMAT_R32G8X24_TYPELESS);
 	}
 
-	void setRTTSize(int width, int height) override {
-		buffers.resize(width, height);
+	void setRTTSize(int width, int height) override
+	{
+		if (width > (int)this->width || height > (int)this->height)
+			resize(width, height);
 	}
 
 	void Term() override
@@ -444,8 +446,7 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->PSSetShaderResources(0, 1, &opaqueTextureView.get());
         auto sampler = samplers->getSampler(false);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
-        D3D11_RECT rect { 0, 0, (LONG)width, (LONG)height };
-		deviceContext->RSSetScissorRects(1, &rect);
+		deviceContext->RSSetScissorRects(1, &scissorRect);
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(false, false, 0, false), 0);
 		setCullMode(0);
 

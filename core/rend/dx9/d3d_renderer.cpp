@@ -849,10 +849,10 @@ void D3DRenderer::setBaseScissor()
 		}
 		else
 		{
-			fWidth = (float)(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1);
-			fHeight = (float)(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1);
-			min_x = (float)pvrrc.fb_X_CLIP.min;
-			min_y = (float)pvrrc.fb_Y_CLIP.min;
+			min_x = (float)pvrrc.getFramebufferMinX();
+			min_y = (float)pvrrc.getFramebufferMinY();
+			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
+			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				min_x *= config::RenderResolution / 480.f;
@@ -892,6 +892,13 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	rttSurface.reset();
 	rttTexture->GetSurfaceLevel(0, &rttSurface.get());
 	device->SetRenderTarget(0, rttSurface);
+
+	if (fbw2 > width || fbh2 > height)
+	{
+		depthSurface.reset();
+		HRESULT rc = SUCCEEDED(device->CreateDepthStencilSurface(fbw2, fbh2, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+		verify(rc);
+	}
 
 	D3DVIEWPORT9 viewport;
 	viewport.X = viewport.Y = 0;

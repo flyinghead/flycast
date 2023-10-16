@@ -81,7 +81,12 @@ public:
 		desc.Format = DXGI_FORMAT_R32_UINT;
 		desc.MipLevels = 1;
 
-		HRESULT hr = device->CreateTexture2D(&desc, nullptr, &abufferPointersTex.get());
+		D3D11_SUBRESOURCE_DATA initialData{};
+		initialData.SysMemPitch = this->width * sizeof(int);
+		initialData.pSysMem = malloc(initialData.SysMemPitch * this->height);
+		memset((void *)initialData.pSysMem, 0xff, initialData.SysMemPitch * this->height);
+		HRESULT hr = device->CreateTexture2D(&desc, &initialData, &abufferPointersTex.get());
+		free((void *)initialData.pSysMem);
 		if (FAILED(hr))
 		{
 			WARN_LOG(RENDERER, "A-buffer texture creation failed: %x", hr);

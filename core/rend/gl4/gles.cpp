@@ -799,8 +799,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	if (is_rtt)
 	{
 		float scaling = config::RenderToTextureBuffer ? 1.f : config::RenderResolution / 480.f;
-		rendering_width = matrices.GetDreamcastViewport().x * scaling;
-		rendering_height = matrices.GetDreamcastViewport().y * scaling;
+		rendering_width = pvrrc.getFramebufferWidth() * scaling; // FIXME hscale?
+		rendering_height = pvrrc.getFramebufferHeight() * scaling;
 	}
 	else
 	{
@@ -927,10 +927,10 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		}
 		else
 		{
-			fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-			fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-			min_x = pvrrc.fb_X_CLIP.min;
-			min_y = pvrrc.fb_Y_CLIP.min;
+			min_x = (float)pvrrc.getFramebufferMinX();
+			min_y = (float)pvrrc.getFramebufferMinY();
+			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
+			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				float scale = config::RenderResolution / 480.f;

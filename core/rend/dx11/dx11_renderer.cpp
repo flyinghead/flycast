@@ -1062,10 +1062,10 @@ void DX11Renderer::setBaseScissor()
 		}
 		else
 		{
-			fWidth = (float)(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1);
-			fHeight = (float)(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1);
-			min_x = (float)pvrrc.fb_X_CLIP.min;
-			min_y = (float)pvrrc.fb_Y_CLIP.min;
+			min_x = (float)pvrrc.getFramebufferMinX();
+			min_y = (float)pvrrc.getFramebufferMinY();
+			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
+			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				min_x *= config::RenderResolution / 480.f;

@@ -95,10 +95,6 @@ public:
 		return sidebarWidth;
 	}
 
-	glm::vec2 GetDreamcastViewport() const {
-		return dcViewport;
-	}
-
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
 		constexpr int flipY = System == COORD_DIRECTX ? -1 : 1;

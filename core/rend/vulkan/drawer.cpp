@@ -536,8 +536,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, { width, height }), clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	u32 minX = pvrrc.fb_X_CLIP.min;
-	u32 minY = pvrrc.fb_Y_CLIP.min;
+	u32 minX = pvrrc.getFramebufferMinX() * upscaledWidth / origWidth;
+	u32 minY = pvrrc.getFramebufferMinY() * upscaledHeight / origHeight;
 	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);

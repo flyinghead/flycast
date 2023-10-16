@@ -286,15 +286,31 @@ struct rend_context
 	void newRenderPass();
 
 	// For RTT TODO merge with framebufferWidth/Height
-	u32 getFramebufferWidth() const {
+	u32 getFramebufferWidth() const
+	{
 		u32 w = fb_X_CLIP.max + 1;
 		if (fb_W_LINESTRIDE != 0)
 			// Happens for Flag to Flag, Virtua Tennis?
 			w = std::min(fb_W_LINESTRIDE * 4, w);
 		return w;
 	}
-	u32 getFramebufferHeight() const {
-		return fb_Y_CLIP.max + 1;
+	u32 getFramebufferHeight() const
+	{
+		u32 h = fb_Y_CLIP.max + 1;
+		if (scaler_ctl.vscalefactor < 0x400)
+			h = h * 1024 / scaler_ctl.vscalefactor;
+		return h;
+	}
+	u32 getFramebufferMinX() const
+	{
+		return fb_X_CLIP.min;
+	}
+	u32 getFramebufferMinY() const
+	{
+		u32 y = fb_Y_CLIP.min;
+		if (scaler_ctl.vscalefactor < 0x400)
+			y = y * 1024 / scaler_ctl.vscalefactor;
+		return y;
 	}
 };
 
