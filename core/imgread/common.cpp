@@ -297,6 +297,7 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 		else
 		{
 			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
+			memset(dst, 0, fmt);
 		}
 		dst+=fmt;
 		FAD++;

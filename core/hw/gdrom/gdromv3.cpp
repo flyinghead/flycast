@@ -690,11 +690,14 @@ void gd_process_spi_cmd()
 #define readcmd packet_cmd.GDReadBlock
 
 			cdda.status = cdda_t::NoInfo;
-			u32 sector_type=2048;
-			if (readcmd.head ==1 && readcmd.subh==1 && readcmd.data==1 && readcmd.expdtype==3 && readcmd.other==0)
-				sector_type=2340;
-			else if(readcmd.head ||readcmd.subh || readcmd.other || (!readcmd.data)) // assert
-				WARN_LOG(GDROM, "GDROM: *FIXME* ADD MORE CD READ SETTINGS %d %d %d %d 0x%01X",readcmd.head,readcmd.subh,readcmd.other,readcmd.data,readcmd.expdtype);
+			u32 sector_type = 2048;
+			if (readcmd.head == 1 && readcmd.subh == 1 && readcmd.data == 1 && readcmd.expdtype == 3 && readcmd.other == 0)
+				sector_type = 2340;
+			else if (readcmd.other == 1 || readcmd.expdtype == 1) // Expected Data Type: CD-DA
+				sector_type = 2352;
+			else if (readcmd.head == 1 || readcmd.subh == 1 || readcmd.other == 1 || readcmd.data == 0)
+				WARN_LOG(GDROM, "GDROM: *FIXME* ADD MORE CD READ SETTINGS head %d subh %d other %d data %d type %d",
+						readcmd.head, readcmd.subh, readcmd.other, readcmd.data, readcmd.expdtype);
 
 			read_params.start_sector = GetFAD(&readcmd.b[2], readcmd.prmtype);
 			if (packet_cmd.data_8[0] == SPI_CD_READ)
