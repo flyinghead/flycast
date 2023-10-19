@@ -122,6 +122,8 @@ static void loadSpecialSettings()
 				|| prod_id == "T18704M"
 				// Tamakyuu (a.k.a. Tama-cue)
 				|| prod_id == "T20133M"
+				// Sakura Taisen 1
+				|| prod_id == "HDR-0072"
 				// Sakura Taisen 3
 				|| prod_id == "HDR-0152")
 		{
