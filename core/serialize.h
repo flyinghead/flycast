@@ -97,6 +97,12 @@ public:
 	Deserializer(const void *data, size_t limit, bool rollback = false)
 		: SerializeBase(limit, rollback), data((const u8 *)data)
 	{
+		if (!memcmp(data, "RASTATE\001", 8))
+		{
+			// RetroArch savestate: a 16-byte header is now added here because why not?
+			this->data += 16;
+			this->limit -= 16;
+		}
 		deserialize(_version);
 		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
 			throw Exception("Unsupported version");
