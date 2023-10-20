@@ -611,6 +611,7 @@ void sh4_mmr_reset(bool hard)
 	ubc.reset();
 
 	MMU_reset();
+	memset(p_sh4rcb->sq_buffer, 0, sizeof(p_sh4rcb->sq_buffer));
 }
 
 void sh4_mmr_term()

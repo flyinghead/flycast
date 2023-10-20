@@ -16,6 +16,7 @@ void DYNACALL TAWriteSQ(u32 address, const SQBuffer *sqb);
 void YUV_init();
 void YUV_serialize(Serializer& ser);
 void YUV_deserialize(Deserializer& deser);
+void YUV_reset();
 
 // 32-bit vram path handlers
 template<typename T> T DYNACALL pvr_read32p(u32 addr);

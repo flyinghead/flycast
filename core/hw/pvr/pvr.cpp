@@ -47,7 +47,11 @@ void reset(bool hard)
 	tactx_Term();
 	elan::reset(hard);
 	if (hard)
+	{
 		ta_parse_reset();
+		YUV_reset();
+		taRenderPass = 0;
+	}
 }
 
 void init()

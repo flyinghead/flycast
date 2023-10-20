@@ -37,7 +37,6 @@ struct TLB_Entry
 
 extern TLB_Entry UTLB[64];
 extern TLB_Entry ITLB[4];
-extern u32 sq_remap[64];
 extern bool mmuOn;
 
 constexpr u32 fast_reg_lut[8] =

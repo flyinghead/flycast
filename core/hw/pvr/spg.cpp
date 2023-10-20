@@ -274,6 +274,9 @@ void spg_Reset(bool hard)
 	cpu_time_idx = 0;
 	cpu_cycles.fill(0);
 	real_times.fill(0.0);
+	maple_int_pending = false;
+	lightgun_line = 0xffff;
+	lightgun_hpos = 0;
 }
 
 void scheduleRenderDone(TA_context *cntx)

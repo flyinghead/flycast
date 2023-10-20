@@ -125,6 +125,7 @@ protected:
 
 	static void reset()
 	{
+		tileclip_val = 0;
 		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
 		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));

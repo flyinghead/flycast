@@ -492,6 +492,7 @@ void MMU_reset()
 	memset(ITLB, 0, sizeof(ITLB));
 	mmu_set_state();
 	mmu_flush_table();
+	memset(sq_remap, 0, sizeof(sq_remap));
 }
 
 void MMU_term()
