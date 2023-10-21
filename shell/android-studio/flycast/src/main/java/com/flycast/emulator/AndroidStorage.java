@@ -102,8 +102,6 @@ public class AndroidStorage {
                 List<String> comps = path.getPath();
                 if (comps.size() > 1)
                     return DocumentsContract.buildDocumentUriUsingTree(uri, comps.get(comps.size() - 2)).toString();
-                else
-                    return "";
             } catch (IllegalArgumentException e) {
                 // Happens for root storage uri:
                 // DocumentsContract: Failed to find path: Invalid URI: content://com.android.externalstorage.documents/tree/primary%3AFlycast
