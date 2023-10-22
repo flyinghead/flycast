@@ -586,32 +586,29 @@ struct ChannelEx
 		if (AEG.state != EG_Release)
 			return;
 
-		//if it was off then turn it on !
 		enable();
 
 		// reset AEG
 		SetAegState(EG_Attack);
 		AEG.SetValue(0x280);	// start value taken from HT
 
-		//reset FEG
+		// reset FEG
 		SetFegState(EG_Attack);
-		//set values and crap
 
+		// reset sampling state
+		CA = 0;
+		step.full = 0;
 
-		//Reset sampling state
-		CA=0;
-		step.full=0;
-
-		loop.looped=false;
+		loop.looped = false;
 
 		adpcm.Reset(this);
 
 		StepStreamInitial(this);
-		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d",
+		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d - SA %x LSA %x LEA %x",
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
 				ccd->KRS, ccd->OCT, ccd->FNS >> 9,
-				ccd->PLFOS, ccd->PLFOWS);
+				ccd->PLFOS, ccd->PLFOWS, (int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
 	}
 
 	void KEY_OFF()
@@ -645,8 +642,12 @@ struct ChannelEx
 	//LSA,LEA
 	void UpdateLoop()
 	{
-		loop.LSA=ccd->LSA;
-		loop.LEA=ccd->LEA;
+		loop.LSA = ccd->LSA;
+		if (ccd->LEA > ccd->LSA)
+			loop.LEA = ccd->LEA;
+		else
+			// Legacy of Kain
+			loop.LEA = 0xffff;
 	}
 
 	s32 EG_BaseRate()
