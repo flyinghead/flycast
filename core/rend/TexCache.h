@@ -189,15 +189,6 @@ struct Unpacker1555_32 {
 				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
 				(word & 0x8000) ? 0xFF : 0);
 	}
-
-	// no color data extension (planar textures)
-	static u32 unpackPL(u16 word) {
-		return Packer::pack(
-				((word >> 10) & 0x1F) << 3,
-				((word >> 5) & 0x1F) << 3,
-				((word >> 0) & 0x1F) << 3,
-				(word & 0x8000) ? 0xFF : 0);
-	}
 };
 
 template <typename Packer>
@@ -210,15 +201,6 @@ struct Unpacker565_32 {
 				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
 				0xFF);
 	}
-
-	// no color data extension (planar textures)
-	static u32 unpackPL(u16 word) {
-		return Packer::pack(
-				((word >> 11) & 0x1F) << 3,
-				((word >> 5) & 0x3F) << 2,
-				((word >> 0) & 0x1F) << 3,
-				0xFF);
-	}
 };
 
 template <typename Packer>
@@ -229,17 +211,6 @@ struct Unpacker4444_32 {
 				(((word >> 8) & 0xF) << 4) | ((word >> 8) & 0xF),
 				(((word >> 4) & 0xF) << 4) | ((word >> 4) & 0xF),
 				(((word >> 0) & 0xF) << 4) | ((word >> 0) & 0xF),
-				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
-	}
-
-	// no color data extension (planar textures)
-	// The alpha channel still needs to be extended for PT polygons to work (Langrisser Millennium)
-	// TODO Is the documentation correct?
-	static u32 unpackPL(u16 word) {
-		return Packer::pack(
-				((word >> 8) & 0xF) << 4,
-				((word >> 4) & 0xF) << 4,
-				((word >> 0) & 0xF) << 4,
 				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
 	}
 };
@@ -266,10 +237,10 @@ struct ConvertPlanar
 	static void Convert(PixelBuffer<unpacked_type> *pb, const u8 *data)
 	{
 		const u16 *p_in = (const u16 *)data;
-		pb->prel(0, Unpacker::unpackPL(p_in[0]));
-		pb->prel(1, Unpacker::unpackPL(p_in[1]));
-		pb->prel(2, Unpacker::unpackPL(p_in[2]));
-		pb->prel(3, Unpacker::unpackPL(p_in[3]));
+		pb->prel(0, Unpacker::unpack(p_in[0]));
+		pb->prel(1, Unpacker::unpack(p_in[1]));
+		pb->prel(2, Unpacker::unpack(p_in[2]));
+		pb->prel(3, Unpacker::unpack(p_in[3]));
 	}
 };
 
