@@ -893,11 +893,20 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	rttTexture->GetSurfaceLevel(0, &rttSurface.get());
 	device->SetRenderTarget(0, rttSurface);
 
-	if (fbw2 > width || fbh2 > height)
+	if (fbw2 > width || fbh2 > height || !depthSurface)
 	{
-		depthSurface.reset();
-		HRESULT rc = SUCCEEDED(device->CreateDepthStencilSurface(fbw2, fbh2, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
-		verify(rc);
+		if (depthSurface)
+		{
+			D3DSURFACE_DESC desc;
+			depthSurface->GetDesc(&desc);
+			if (fbw2 > desc.Width || fbh2 > desc.Height)
+				depthSurface.reset();
+		}
+		if (!depthSurface)
+		{
+			HRESULT rc = SUCCEEDED(device->CreateDepthStencilSurface(std::max(fbw2, width), std::max(fbh2, height), D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+			verify(rc);
+		}
 	}
 
 	D3DVIEWPORT9 viewport;
