@@ -412,14 +412,17 @@ extern Option<bool> VmuSound;
 
 class RendererOption : public Option<RenderType> {
 public:
-	RendererOption()
+	RendererOption() : Option<RenderType>("pvr.rend",
 #if defined(USE_DX11)
-		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
+			RenderType::DirectX11
 #elif defined(USE_DX9)
-		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+			RenderType::DirectX9
+#elif !defined(USE_OPENGL)
+			RenderType::Vulkan
 #else
-		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
+			RenderType::OpenGL
 #endif
+		) {}
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
