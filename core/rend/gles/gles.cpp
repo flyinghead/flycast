@@ -306,7 +306,7 @@ void main()
 	highp float w = 100000.0 * vtx_uv.z;
 #endif
 	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
-#endif
+
 #if DITHERING == 1
 	mediump float ditherTable[16] = float[](
 		 0.9375,  0.1875,  0.75,  0.,   
@@ -319,6 +319,7 @@ void main()
 	color += r / ditherColorMax;
 	// avoid rounding
 	color = floor(color * 255.) / 255.;
+#endif
 #endif
 	gl_FragColor = color;
 }
