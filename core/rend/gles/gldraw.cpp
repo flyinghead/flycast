@@ -771,15 +771,15 @@ bool OpenGLRenderer::renderLastFrame()
 		if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 		{
 			static float sverts[20] = {
-				-1.f,  1.f, 1.f, 0.f, 1.f,
-				-1.f, -1.f, 1.f, 0.f, 0.f,
-				 1.f,  1.f, 1.f, 1.f, 1.f,
+				-1.f, -1.f, 1.f, 0.f, 1.f,
+				-1.f,  1.f, 1.f, 0.f, 0.f,
+				 1.f, -1.f, 1.f, 1.f, 1.f,
 				 1.f, -1.f, 1.f, 1.f, 0.f,
 			};
 			sverts[0] = sverts[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
 			sverts[10] = sverts[15] = sverts[0] + 2;
-			sverts[1] = sverts[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-			sverts[6] = sverts[16] = sverts[1] - 2;
+			sverts[1] = sverts[11] = -1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			sverts[6] = sverts[16] = sverts[1] + 2;
 			vertices = sverts;
 		}
 		glcache.Disable(GL_BLEND);
