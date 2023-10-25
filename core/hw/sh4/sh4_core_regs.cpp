@@ -5,7 +5,9 @@
 #include "types.h"
 #include "sh4_core.h"
 #include "sh4_interrupts.h"
-
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM
+#include <fenv.h>
+#endif
 
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
@@ -47,10 +49,10 @@ static u32 old_dn = 0xFF;
 
 static void setHostRoundingMode()
 {
-	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
+	if (old_rm != fpscr.RM || old_dn != fpscr.DN)
 	{
-		old_rm=fpscr.RM ;
-		old_dn=fpscr.DN ;
+		old_rm = fpscr.RM;
+		old_dn = fpscr.DN;
         
         //Correct rounding is required by some games (SOTB, etc)
 #ifdef _MSC_VER
@@ -76,26 +78,34 @@ static void setHostRoundingMode()
 				temp|=(1<<15);
 			asm("ldmxcsr %0" : : "m"(temp));
     #elif HOST_CPU==CPU_ARM
-		static const unsigned int x = 0x04086060;
-		unsigned int y = 0x02000000;
-		if (fpscr.RM==1)  //if round to 0 , set the flag
-			y|=3<<22;
-	
+		static const unsigned int offMask = 0x04086060;
+		unsigned int onMask = 0x02000000;
+
+		if (fpscr.RM == 1)  //if round to 0 , set the flag
+			onMask |= 3 << 22;
+
 		if (fpscr.DN)
-			y|=1<<24;
+			onMask |= 1 << 24;
 
-
-		int raa;
-
-		asm volatile
-			(
-				"fmrx   %0, fpscr   \n\t"
-				"and    %0, %0, %1  \n\t"
-				"orr    %0, %0, %2  \n\t"
-				"fmxr   fpscr, %0   \n\t"
-				: "=r"(raa)
-				: "r"(x), "r"(y)
-			);
+		#ifdef __ANDROID__
+			fenv_t fenv;
+			fegetenv(&fenv);
+			fenv &= offMask;
+			fenv |= onMask;
+			fesetenv(&fenv);
+		#else
+			int raa;
+	
+			asm volatile
+				(
+					"fmrx   %0, fpscr   \n\t"
+					"and    %0, %0, %1  \n\t"
+					"orr    %0, %0, %2  \n\t"
+					"fmxr   fpscr, %0   \n\t"
+					: "=r"(raa)
+					: "r"(offMask), "r"(onMask)
+				);
+		#endif
 	#elif HOST_CPU == CPU_ARM64
 		static const unsigned long off_mask = 0x04080000;
         unsigned long on_mask = 0x02000000;    // DN=1 Any operation involving one or more NaNs returns the Default NaN
