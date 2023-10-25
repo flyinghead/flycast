@@ -117,10 +117,11 @@ static void SetGPState(const PolyParam* gp)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
-	bool gpuPalette = false;
+	bool gpuPalette;
 
 	if (pass == Pass::Depth)
 	{
+		gpuPalette = gp->texture != nullptr && Type == ListType_Punch_Through ? gp->texture->gpuPalette : false;
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : false,
@@ -133,7 +134,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
-				false,
+				gpuPalette,
 				gp->isNaomi2(),
 				pass);
 	}
@@ -481,12 +482,25 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
-	if (!pvrrc.isRTT && pvrrc.clearFramebuffer)
+	if (!pvrrc.isRTT)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		if (pvrrc.clearFramebuffer)
+		{
+			// Clear framebuffer
+			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		else
+		{
+			// Copy previous framebuffer content (in case of partial render)
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, output_fbo);
+			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			glCheck();
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+		}
 		if (gl4ShaderUniforms.base_clipping.enabled)
 			glcache.Enable(GL_SCISSOR_TEST);
 	}

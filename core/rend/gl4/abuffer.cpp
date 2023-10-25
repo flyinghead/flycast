@@ -615,6 +615,7 @@ void renderABuffer(bool lastPass)
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_SCISSOR_TEST);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+	glcache.Disable(GL_BLEND);
 
 	abufferDrawQuad();
 
