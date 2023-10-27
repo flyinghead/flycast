@@ -94,7 +94,9 @@ static void loadSpecialSettings()
 				|| prod_id == "HDR-0078"
 				// JSR (EU)
 				|| prod_id == "MK-5105850"
-				// Worms World Party
+				// Worms World Party (US)
+				|| prod_id == "T22904N"
+				// Worms World Party (EU)
 				|| prod_id == "T7016D  50"
 				// Shenmue (US)
 				|| prod_id == "MK-51059"
@@ -125,7 +127,23 @@ static void loadSpecialSettings()
 				// Sakura Taisen 1
 				|| prod_id == "HDR-0072"
 				// Sakura Taisen 3
-				|| prod_id == "HDR-0152")
+				|| prod_id == "HDR-0152"
+				// Hundred Swords
+				|| prod_id == "HDR-0124"
+				// Musapey's Choco Marker
+				|| prod_id == "T23203M"
+				// Sister Princess Premium Edition
+				|| prod_id == "T27802M"
+				// Sentimental Graffiti
+				|| prod_id == "T20128M"
+				// Sentimental Graffiti 2
+				|| prod_id == "T20104M"
+				// Kanon
+				|| prod_id == "T20105M"
+				// Aikagi
+				|| prod_id == "T20130M"
+				// AIR
+				|| prod_id == "T20112M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -288,7 +306,8 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			config::TranslucentPolygonDepthMask.override(true);
 		}
-		if (prod_id == "BEACH SPIKERS JAPAN")
+		if (prod_id == "BEACH SPIKERS JAPAN"
+				|| prod_id == "CHOCO MARKER")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
