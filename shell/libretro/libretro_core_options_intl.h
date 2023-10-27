@@ -36495,9 +36495,9 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_HU "GD-ROM gyorstöltés (pontatlan)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_HU "A GD-ROM betöltésének felgyorsítása."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_HU NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HU NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_HU NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_HU "A Dreamcast 32 MB-os RAM módosítása. Hatással lehet a kompatibilitásra"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_HU "SH4 CPU alul/túlhajtás"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_HU "Az SH4 fő CPU órajelének átállítása az alapértelmezett 200 Mhz-ről. Az alulhajtás segíthet lassú platformokon, a túlhajtás növelheti a képsebességet néhány játéknál. Óvatos használatra."
 #define OPTION_VAL_100_HU NULL
 #define OPTION_VAL_110_HU NULL
 #define OPTION_VAL_120_HU NULL
@@ -36570,9 +36570,9 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a 4 VMU mentés fájlt (A1, B1, C1, D1) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak négy külön VMU fájlt (A1, B1, C1, D1) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU "VMU hangok"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU "Bekapcsolva a VMU csipogása is hallható."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU "Visual Memory Unit/System (VMU) megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU "VMU megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU "Az emulált VMU LCD képernyő láthatósági, méret, helyzet, és szín beállításainak engedélyezése. Figyelem: a gyorsmenüt ki-be kell kapcsolni, hogy ez a beállítás érvényre jusson."
