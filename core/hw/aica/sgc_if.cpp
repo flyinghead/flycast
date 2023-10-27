@@ -600,6 +600,9 @@ struct ChannelEx
 		step.full = 0;
 
 		loop.looped = false;
+		if (loop.LEA <= loop.LSA && ccd->LPCTL == 1)
+			// Legacy of Kain
+			loop.LEA = 0xffff;
 
 		adpcm.Reset(this);
 
@@ -607,7 +610,7 @@ struct ChannelEx
 		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d - SA %x LSA %x LEA %x",
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
-				ccd->KRS, ccd->OCT, ccd->FNS >> 9,
+				ccd->KRS, ccd->OCT, ccd->FNS,
 				ccd->PLFOS, ccd->PLFOWS, (int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
 	}
 
@@ -643,11 +646,7 @@ struct ChannelEx
 	void UpdateLoop()
 	{
 		loop.LSA = ccd->LSA;
-		if (ccd->LEA > ccd->LSA)
-			loop.LEA = ccd->LEA;
-		else
-			// Legacy of Kain
-			loop.LEA = 0xffff;
+		loop.LEA = ccd->LEA;
 	}
 
 	s32 EG_BaseRate()
