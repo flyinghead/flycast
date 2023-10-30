@@ -283,7 +283,10 @@ static void loadSpecialSettings()
 		}
 		if (prod_id == "T1102M"				// Densha de Go! 2
 				|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
-				|| prod_id == "T15124N 00")	// Worms Pinball (prototype)
+				|| prod_id == "T15124N 00"	// Worms Pinball (prototype)
+				|| prod_id == "T9503M"		// Eisei Meijin III
+				|| prod_id == "T5202M"		// Marionette Company
+				|| prod_id == "T5301M")		// World Neverland Plus
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
