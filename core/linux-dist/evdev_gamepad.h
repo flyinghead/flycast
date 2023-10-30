@@ -65,6 +65,7 @@ public:
 		}
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
+		hasAnalogStick = true;
 	}
 	~EvdevGamepadDevice() override
 	{

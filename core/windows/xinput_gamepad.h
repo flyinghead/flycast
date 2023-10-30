@@ -45,6 +45,7 @@ public:
 		char buf[32];
 		sprintf(buf, "xinput-%d", xinput_port + 1);
 		_unique_id = buf;
+		hasAnalogStick = true;
 	}
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
