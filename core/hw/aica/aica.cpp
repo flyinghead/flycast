@@ -76,18 +76,16 @@ static bool UpdateSh4Ints()
 	if (p_ints)
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
-		{
 			// if no interrupt is already pending then raise one
 			asic_RaiseInterrupt(holly_SPU_IRQ);
-			return true;
-		}
+		return true;
 	}
 	else
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT) != 0)
 			asic_CancelInterrupt(holly_SPU_IRQ);
+		return false;
 	}
-	return false;
 }
 
 AicaTimer timers[3];
