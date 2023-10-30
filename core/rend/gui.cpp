@@ -1685,6 +1685,14 @@ static void gui_display_settings()
 						if (ImGui::SliderInt("Rumble", &power, 0, 100))
 							gamepad->set_rumble_power(power);
 					}
+					if (gamepad->has_analog_stick())
+					{
+						ImGui::SameLine(0, 16 * settings.display.uiScale);
+						float deadzone = gamepad->get_dead_zone();
+						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
+						if (ImGui::SliderFloat("Deadzone", &deadzone, 0.0f, 1.0f))
+							gamepad->set_dead_zone(deadzone);
+					}
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}

@@ -205,6 +205,8 @@ public:
 #else
 		rumbleEnabled = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
 #endif
+
+		hasAnalogStick = SDL_JoystickNumAxes(sdl_joystick) > 0;
 	}
 
 	bool gamepad_axis_input(u32 code, int value) override
