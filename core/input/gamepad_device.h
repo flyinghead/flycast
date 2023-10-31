@@ -70,6 +70,16 @@ public:
 			}
 		}
 	}
+	bool has_analog_stick() const { return hasAnalogStick; }
+	float get_dead_zone() const { return input_mapper->dead_zone; }
+	void set_dead_zone(float deadzone) {
+		if (deadzone != input_mapper->dead_zone)
+		{
+			input_mapper->dead_zone = deadzone;
+			input_mapper->set_dirty();
+			save_mapping();
+		}
+	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 
@@ -109,6 +119,7 @@ protected:
 	std::string _unique_id;
 	std::shared_ptr<InputMapping> input_mapper;
 	bool rumbleEnabled = false;
+	bool hasAnalogStick = false;
 	int rumblePower = 100;
 	u32 leftTrigger = ~0;
 	u32 rightTrigger = ~0;

@@ -1682,8 +1682,16 @@ static void gui_display_settings()
 						ImGui::SameLine(0, 16 * settings.display.uiScale);
 						int power = gamepad->get_rumble_power();
 						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
-						if (ImGui::SliderInt("Rumble", &power, 0, 100))
+						if (ImGui::SliderInt("Rumble", &power, 0, 100, "%d%%"))
 							gamepad->set_rumble_power(power);
+					}
+					if (gamepad->has_analog_stick())
+					{
+						ImGui::SameLine(0, 16 * settings.display.uiScale);
+						int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
+						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
+						if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
+							gamepad->set_dead_zone(deadzone / 100.f);
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
