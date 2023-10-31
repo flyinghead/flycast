@@ -70,7 +70,7 @@ Option<int> ScreenStretching("", 100);
 Option<bool> Fog(CORE_OPTION_NAME "_fog", true);
 Option<bool> FloatVMUs("");
 Option<bool> Rotate90("");
-Option<bool> PerStripSorting("rend.PerStripSorting");
+Option<bool> PerStripSorting("");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
 Option<bool> WidescreenGameHacks(CORE_OPTION_NAME "_widescreen_cheats");
 std::array<Option<int>, 4> CrosshairColor {

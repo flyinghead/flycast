@@ -412,7 +412,11 @@ extern Option<bool> VmuSound;
 
 class RendererOption : public Option<RenderType> {
 public:
+#ifdef LIBRETRO
+	RendererOption() : Option<RenderType>("",
+#else
 	RendererOption() : Option<RenderType>("pvr.rend",
+#endif
 #if defined(USE_DX11)
 			RenderType::DirectX11
 #elif defined(USE_DX9)
