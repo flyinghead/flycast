@@ -681,8 +681,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
-					// only for F355 Deluxe
-			|| (gameId == "F355 CHALLENGE JAPAN" && romName == "f355"))
+			|| gameId == "F355 CHALLENGE JAPAN")
 		{
 			printer::init();
 		}
