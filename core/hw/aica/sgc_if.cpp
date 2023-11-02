@@ -74,19 +74,7 @@ static const double AEG_DSR_Time[64] =
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
-// These times come from the documentation but don't sound correct.
-// HT uses the AEG decay times instead and it sounds better.
-//static const double FEG_Time[] =
-//{
-//	-1, -1, 472800.0, 405200.0, 354400.0, 283600.0, 236400.0, 202800.0,
-//	177200.0, 142000.0, 118400.0, 101200.0, 88800.0, 70800.0, 59200.0, 50800.0,
-//	44400.0, 35600.0, 29600.0, 25200.0, 22000.0, 17600.0, 14800.0, 12800.0,
-//	11200.0, 8800.0, 7200.0, 6400.0, 5600.0, 4400.0, 3680.0, 3160.0,
-//	2760.0, 2220.0, 1840.0, 1560.0, 1360.0, 1080.0, 920.0, 800.0,
-//	680.0, 560.0, 440.0, 392.0, 340.0, 272.0, 228.0, 196.0,
-//	172.0, 158.0, 136.0, 100.0, 88.0, 72.0, 56.0, 48.0,
-//	44.0, 34.0, 28.0, 24.0, 22.0, 17.0, 14.0, 12.0
-//};
+
 static const float PLFOS_Scale[8] = { 0.f, 3.61f, 7.22f, 14.44f, 28.88f, 57.75f, 115.5f, 231.f };
 static int PLFO_Scales[8][256];
 
@@ -488,11 +476,16 @@ struct ChannelEx
 			if (FEG.active)
 			{
 				u32 fv = FEG.GetValue();
-				s32 f = (((fv & 0xFF) | 0x100) << 4) >> ((fv >> 8) ^ 0x1F);
-				f = std::max(1, f);
-				sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
-				sample >>= 13;
-				sample = std::clamp(sample, -32768, 32767);
+				s32 f = (((fv & 0x1FF) | 0x200) << 3) >> ((fv >> 9) ^ 0xF);
+				if (f == 0) {
+					sample = 0;
+				}
+				else
+				{
+					sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
+					sample >>= 13;
+					sample = std::clamp(sample, -32768, 32767);
+				}
 				FEG.prev2 = FEG.prev1;
 				FEG.prev1 = sample;
 			}
@@ -822,6 +815,7 @@ struct ChannelEx
 		case 0x19://FNS,OCT
 			UpdatePitch();
 			UpdateAEG();
+			UpdateFEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
@@ -1293,12 +1287,15 @@ void init()
 	for (int i=256;i<1024;i++)
 		tl_lut[i]=0;
 
-	for (int i=0;i<64;i++)
+	for (int i = 0; i < 64; i++)
 	{
 		AEG_ATT_SPS[i] = CalcAttackEgSteps(AEG_Attack_Time[i]);
-		AEG_DSR_SPS[i]=CalcEgSteps(AEG_DSR_Time[i]);
-		FEG_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
-		//FEG_SPS[i] = CalcEgSteps(FEG_Time[i]);
+		AEG_DSR_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
+		// The AEG range is 1024, while the FEG range is 8912.
+		// So decay times are x8 greater for FEG than AEG
+		// instead of x4 as mentioned in the doc.
+		// However it sounds better this way.
+		FEG_SPS[i] = AEG_DSR_SPS[i];
 	}
 	for (std::size_t i = 0; i < std::size(Chans); i++)
 		Chans[i].Init(i,aica_reg);
