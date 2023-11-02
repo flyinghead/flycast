@@ -173,27 +173,6 @@ void fatal_error(const char* text, ...);
 #define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();}} while (false)
 #define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();} while (false)
 
-enum class JVS {
-	Default,
-	FourPlayers,
-	RotaryEncoders,
-	SegaMarineFishing,
-	DualIOBoards4P,
-	LightGun,
-	Mazan,
-	GunSurvivor,
-	DogWalking,
-	TouchDeUno,
-	WorldKicks,
-	WorldKicksPCB,
-	Keyboard,
-	OutTrigger,
-	LightGunAsAnalog,
-	WaveRunnerGP,
-	_18Wheeler,
-	F355
-};
-
 enum class RenderType {
 	OpenGL = 0,
 	OpenGL_OIT = 3,
@@ -282,10 +261,13 @@ struct settings_t
 	} content;
 
 	struct {
-		JVS JammaSetup;
 		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 		bool fastForwardMode;
+		// The following flags are only set for arcade games
 		bool lightgunGame; // or touchscreen
+		bool keyboardGame;
+		bool mouseGame; // or rotary encoders
+		bool fourPlayerGames;
 	} input;
 
 	struct

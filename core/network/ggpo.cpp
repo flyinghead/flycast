@@ -510,9 +510,9 @@ void startSession(int localPort, int localPlayerNum)
 		mouseGame = false;
 		if (settings.input.lightgunGame)
 			absPointerPos = true;
-		else if (settings.input.JammaSetup == JVS::Keyboard)
+		else if (settings.input.keyboardGame)
 			keyboardGame = true;
-		else if (settings.input.JammaSetup == JVS::RotaryEncoders)
+		else if (settings.input.mouseGame)
 			mouseGame = true;
 		else if (NaomiGameInputs != nullptr)
 		{

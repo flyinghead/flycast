@@ -53,8 +53,6 @@ static void loadSpecialSettings()
 	std::string& prod_id = settings.content.gameId;
 	NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 
-	settings.input.lightgunGame = false;
-
 	if (settings.platform.isConsole())
 	{
 		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
@@ -316,126 +314,6 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Disabling Free Play for game %s", prod_id.c_str());
 			config::ForceFreePlay.override(false);
-		}
-		// Input configuration
-		settings.input.JammaSetup = JVS::Default;
-		if (prod_id == "DYNAMIC GOLF"
-				|| prod_id == "SHOOTOUT POOL"
-				|| prod_id == "SHOOTOUT POOL MEDAL"
-				|| prod_id == "CRACKIN'DJ  ver JAPAN"
-				|| prod_id == "CRACKIN'DJ PART2  ver JAPAN"
-				|| prod_id == "KICK '4' CASH"
-				|| prod_id == "DRIVE")			// Waiwai drive
-		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::RotaryEncoders;
-		}
-		else if (prod_id == "POWER STONE 2 JAPAN"		// Naomi
-				|| prod_id == "GUILTY GEAR isuka"		// AW
-				|| prod_id == "Dirty Pigskin Football") // AW
-		{
-			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::FourPlayers;
-		}
-		else if (prod_id == "SEGA MARINE FISHING JAPAN"
-					|| prod_id == "BASS FISHING SIMULATOR VER.A")	// AW
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::SegaMarineFishing;
-		}
-		else if (prod_id == "RINGOUT 4X4 JAPAN"
-					|| prod_id == "VIRTUA ATHLETE"
-					|| prod_id == "ROYAL RUMBLE"
-					|| prod_id == "BEACH SPIKERS JAPAN"
-					|| prod_id == "MJ JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::DualIOBoards4P;
-		}
-		else if (prod_id == "NINJA ASSAULT"
-					|| prod_id == "Sports Shooting USA"	// AW
-					|| prod_id == "SEGA CLAY CHALLENGE"	// AW
-					|| prod_id == "RANGER MISSION"		// AW
-					|| prod_id == "EXTREME HUNTING"		// AW
-					|| prod_id == "Fixed BOOT strapper")// Extreme hunting 2 (AW)
-		{
-			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::LightGun;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "MAZAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::Mazan;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == " BIOHAZARD  GUN SURVIVOR2")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::GunSurvivor;
-		}
-		else if (prod_id == "WORLD KICKS")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WorldKicks;
-		}
-		else if (prod_id == "WORLD KICKS PCB")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WorldKicksPCB;
-		}
-		else if (prod_id == "THE TYPING OF THE DEAD"
-				|| prod_id == " LUPIN THE THIRD  -THE TYPING-"
-				|| prod_id == "------La Keyboardxyu------")
-		{
-			INFO_LOG(BOOT, "Enabling keyboard for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::Keyboard;
-		}
-		else if (prod_id == "OUTTRIGGER     JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::OutTrigger;
-		}
-		else if (prod_id == "THE MAZE OF THE KINGS"
-				|| prod_id == " CONFIDENTIAL MISSION ---------"
-				|| prod_id == "DEATH CRIMSON OX"
-				|| prod_id.substr(0, 5) == "hotd2"	// House of the Dead 2
-				|| prod_id == "LUPIN THE THIRD  -THE SHOOTING-")
-		{
-			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::LightGunAsAnalog;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "WAVE RUNNER GP")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WaveRunnerGP;
-		}
-		else if (prod_id == "  18WHEELER")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::_18Wheeler;
-		}
-		else if (prod_id == "F355 CHALLENGE JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::F355;
-		}
-		else if (prod_id == "INU NO OSANPO")	// Dog Walking
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::DogWalking;
-		}
-		else if (prod_id == " TOUCH DE UNOH -------------" || prod_id == " TOUCH DE UNOH 2 -----------")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::TouchDeUno;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
-				|| prod_id == "TOUCH DE ZUNO (JAPAN)")
-		{
-			settings.input.lightgunGame = true;
 		}
 	}
 }
