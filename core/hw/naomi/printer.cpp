@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "types.h"
+#include "stdclass.h"
 #include "printer.h"
 #include "serialize.h"
 #include "rend/gui.h"
@@ -738,7 +739,7 @@ private:
 			state = Default;
 			if (bitmapWriter && bitmapWriter->isDirty())
 			{
-				std::string s = settings.content.gameId + "-results.png";
+				std::string s = get_writable_data_path(settings.content.gameId + "-results.png");
 				bitmapWriter->save(s);
 				bitmapWriter.reset();
 				s = "Print out saved to " + s;
