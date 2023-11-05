@@ -165,6 +165,7 @@ jobs:
           token: ${{ env.SENTRY_TOKEN }}
           organization: flycast
           project: minidump
+          version: 2.21.2
         if: ${{ env.SENTRY_TOKEN != '' }}
       
       - name: Upload symbols to Sentry (Windows, macOS, Linux)
