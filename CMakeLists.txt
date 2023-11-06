@@ -398,7 +398,7 @@ if(NOT LIBRETRO)
 
 	if(NOT ANDROID AND NOT IOS)
 		if(USE_HOST_SDL)
-			find_package(SDL2)
+			find_package(SDL2 2.0.9)
 		endif()
 		if(NOT SDL2_FOUND)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
