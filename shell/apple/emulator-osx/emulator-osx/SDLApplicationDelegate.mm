@@ -5,7 +5,8 @@
  Feel free to customize this file to suit your needs
  */
 #include <SDL.h>
-#include "SDLMain.h"
+#include "SDLApplicationDelegate.h"
+#include "emulator.h"
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
 #include "rend/gui.h"
@@ -38,11 +39,6 @@ extern "C" {
     OSErr CPSSetFrontProcess( CPSProcessSerNum *psn);
 }
 #endif /* SDL_USE_CPS */
-
-static int    gArgc;
-static char  **gArgv;
-static BOOL   gFinderLaunch;
-static BOOL   gCalledAppMainline = FALSE;
 
 static NSString *getApplicationName(void)
 {
@@ -127,21 +123,14 @@ static NSString *getApplicationName(void)
 @end
 
 /* The main class of the application, the application's delegate */
-@implementation SDLMain
+@implementation SDLApplicationDelegate
 
 /* Set the working directory to the .app's parent directory */
-- (void) setupWorkingDirectory:(BOOL)shouldChdir
+- (void) setupWorkingDirectory
 {
-    if (shouldChdir)
+	if([[NSProcessInfo processInfo] environment][@"PWD"] == NULL && [[[NSFileManager defaultManager] currentDirectoryPath] isEqualToString:@"/"])
     {
-        char parentdir[MAXPATHLEN];
-        CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-        CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url);
-        if (CFURLGetFileSystemRepresentation(url2, 1, (UInt8 *)parentdir, MAXPATHLEN)) {
-            chdir(parentdir);   /* chdir to the binary app's parent */
-        }
-        CFRelease(url);
-        CFRelease(url2);
+		chdir([[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] cStringUsingEncoding:NSUTF8StringEncoding]);
     }
 }
 
@@ -274,7 +263,7 @@ static void setupHelpMenu(void)
 static void CustomApplicationMain (int argc, char **argv)
 {
     NSAutoreleasePool    *pool = [[NSAutoreleasePool alloc] init];
-    SDLMain                *sdlMain;
+    SDLApplicationDelegate                *appDelegate;
 
     /* Ensure the application object is initialised */
     [NSApplication sharedApplication];
@@ -297,13 +286,13 @@ static void CustomApplicationMain (int argc, char **argv)
     setupHelpMenu(); /* needed for help menu */
     
     /* Create SDLMain and make it the app delegate */
-    sdlMain = [[SDLMain alloc] init];
-    [NSApp setDelegate:sdlMain];
+    appDelegate = [[SDLApplicationDelegate alloc] init];
+    [NSApp setDelegate:appDelegate];
     
     /* Start the main event loop */
     [NSApp run];
     
-    [sdlMain release];
+    [appDelegate release];
     [pool release];
 }
 
@@ -338,34 +327,10 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
-    const char *temparg;
-    size_t arglen;
-    char *arg;
-    char **newargv;
-    
-    if (!gFinderLaunch)  /* MacOS is passing command line args. */
-        return FALSE;
-    
-    if (gCalledAppMainline)  /* app has started, ignore this document. */
-        return FALSE;
-    
-    temparg = [filename UTF8String];
-    arglen = SDL_strlen(temparg) + 1;
-    arg = (char *) SDL_malloc(arglen);
-    if (arg == NULL)
-        return FALSE;
-    
-    newargv = (char **) realloc(gArgv, sizeof (char *) * (gArgc + 2));
-    if (newargv == NULL)
-    {
-        SDL_free(arg);
-        return FALSE;
-    }
-    gArgv = newargv;
-    
-    SDL_strlcpy(arg, temparg, arglen);
-    gArgv[gArgc++] = arg;
-    gArgv[gArgc] = NULL;
+	dispatch_async(dispatch_get_main_queue(), ^(){
+		gui_start_game([filename cStringUsingEncoding:NSUTF8StringEncoding]);
+	});
+
     return TRUE;
 }
 
@@ -381,11 +346,9 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
     int status;
     
     /* Set the working directory to the .app's parent directory */
-    [self setupWorkingDirectory:gFinderLaunch];
+    [self setupWorkingDirectory];
     
-    /* Hand off to main application code */
-    gCalledAppMainline = TRUE;
-    status = SDL_main (gArgc, gArgv);
+    status = SDL_main(NULL, NULL);
     
     /* We're done, thank you for playing */
     exit(status);
@@ -456,23 +419,6 @@ static bool dumpCallback(const char *dump_dir, const char *minidump_id, void *co
 /* Main entry point to executable - should *not* be SDL_main! */
 int main (int argc, char **argv)
 {
-    /* Copy the arguments into a global variable */
-    /* This is passed if we are launched by double-clicking */
-    if ( argc >= 2 && strncmp (argv[1], "-psn", 4) == 0 ) {
-        gArgv = (char **) SDL_malloc(sizeof (char *) * 2);
-        gArgv[0] = argv[0];
-        gArgv[1] = NULL;
-        gArgc = 1;
-        gFinderLaunch = YES;
-    } else {
-        int i;
-        gArgc = argc;
-        gArgv = (char **) SDL_malloc(sizeof (char *) * (argc+1));
-        for (i = 0; i <= argc; i++)
-            gArgv[i] = argv[i];
-        gFinderLaunch = NO;
-    }
-    
     if (getppid() != 1) {
         /* Make LLDB ignore EXC_BAD_ACCESS for debugging */
         task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);

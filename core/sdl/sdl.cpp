@@ -467,6 +467,10 @@ void input_sdl_handle()
 			case SDL_JOYDEVICEREMOVED:
 				sdl_close_joystick((SDL_JoystickID)event.jdevice.which);
 				break;
+				
+			case SDL_DROPFILE:
+				gui_start_game(event.drop.file);
+				break;
 		}
 	}
 }

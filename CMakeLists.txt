@@ -1645,8 +1645,8 @@ if(NOT LIBRETRO)
 
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
-					shell/apple/emulator-osx/emulator-osx/SDLMain.h
-					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
+					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.h
+					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
