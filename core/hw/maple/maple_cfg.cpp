@@ -320,7 +320,6 @@ static void createDreamcastDevices()
 		case MDT_MaracasController:
 		case MDT_FishingController:
 		case MDT_PopnMusicController:
-		case MDT_RacingController:
 		case MDT_DenshaDeGoController:
 		case MDT_Dreameye:
 			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
@@ -332,6 +331,7 @@ static void createDreamcastDevices()
 		case MDT_LightGun:
 		case MDT_TwinStick:
 		case MDT_AsciiStick:
+		case MDT_RacingController:
 			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			if (config::MapleExpansionDevices[bus][0] != MDT_None)
 				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);

@@ -976,21 +976,33 @@ void os_DoEvents()
 
 void os_RunInstance(int argc, const char *argv[])
 {
-	char exePath[MAX_PATH];
-	GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+	wchar_t exePath[MAX_PATH];
+	GetModuleFileNameW(NULL, exePath, std::size(exePath));
 
-	std::string cmdLine(exePath);
+	std::wstring cmdLine = L'"' + std::wstring(exePath) + L'"';
 	for (int i = 0; i < argc; i++)
 	{
-		cmdLine += ' ';
-		cmdLine += argv[i];
+		nowide::wstackstring wname;
+		if (!wname.convert(argv[i])) {
+			WARN_LOG(BOOT, "Invalid argument: %s", argv[i]);
+			continue;
+		}
+		cmdLine += L" \"";
+		for (wchar_t *p = wname.get(); *p != L'\0'; p++)
+		{
+			cmdLine += *p;
+			if (*p == L'"')
+				// escape double quote
+				cmdLine += L'"';
+		}
+		cmdLine += L'"';
 	}
 
-	STARTUPINFOA startupInfo{};
+	STARTUPINFOW startupInfo{};
 	startupInfo.cb = sizeof(startupInfo);
 
 	PROCESS_INFORMATION processInfo{};
-	BOOL rc = CreateProcessA(exePath, (char *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
+	BOOL rc = CreateProcessW(exePath, (wchar_t *)cmdLine.c_str(), nullptr, nullptr, true, 0, nullptr, nullptr, &startupInfo, &processInfo);
 	if (rc)
 	{
 		CloseHandle(processInfo.hProcess);

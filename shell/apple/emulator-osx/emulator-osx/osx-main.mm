@@ -13,6 +13,7 @@
 #include <mach/mach_port.h>
 
 #include "types.h"
+#include "cfg/option.h"
 #include "log/LogManager.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
@@ -144,6 +145,27 @@ extern "C" int SDL_main(int argc, char *argv[])
     CFRelease(mainBundle);
 
 	emu_flycast_init();
+	
+	int boardId = cfgLoadInt("naomi", "BoardId", 0);
+	if (boardId > 0)
+	{
+		NSString *label = @"S";		// Slave
+		if (config::MultiboardSlaves == 2) // 1 = Single, 2 = Deluxe
+		{
+			switch (boardId) {
+				case 1:
+					label = @"C";	// Center
+					break;
+				case 2:
+					label = @"L";	// Left
+					break;
+				case 3:
+					label = @"R";	// Right
+			}
+		}
+		[[NSApp dockTile] setBadgeLabel:label];
+	}
+	
 #ifdef USE_BREAKPAD
 	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
 #endif

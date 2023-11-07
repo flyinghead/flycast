@@ -978,8 +978,8 @@ cmrc_add_resources(flycast-resources
 		resources/flash/wldkicksj.nvmem.zip	# free play
 		resources/flash/wldkicksu.nvmem.zip	# free play
 		resources/flash/f355.nvmem.zip		# printer on
-		resources/flash/f355twin.nvmem.zip
-		resources/flash/f355twn2.nvmem.zip
+		resources/flash/f355twin.nvmem.zip	# printer on
+		resources/flash/f355twn2.nvmem.zip	# printer on
 		resources/flash/dirtypig.nvmem.zip	# 4 players
 		resources/flash/dirtypig.nvmem2.zip
 		resources/flash/vf4.nvmem.zip		# card all day, stage select
