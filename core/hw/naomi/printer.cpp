@@ -744,6 +744,7 @@ private:
 				bitmapWriter.reset();
 				s = "Print out saved to " + s;
 				gui_display_notification(s.c_str(), 5000);
+				NOTICE_LOG(NAOMI, "%s", s.c_str());
 			}
 			break;
 		case 'K': // Set Kanji mode

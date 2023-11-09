@@ -362,7 +362,8 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "THE KING OF ROUTE66")
 	{
-		write_naomi_eeprom(0x3d, node == -1 ? 0x44 : node == 0 ? 0x54 : 0x64);
+		u8 b = read_naomi_eeprom(0x3d) & 0xf;
+		write_naomi_eeprom(0x3d, (node == -1 ? 0x40 : node == 0 ? 0x50 : 0x60) | b);
 	}
 	else if (gameId == "MAXIMUM SPEED")
 	{
@@ -370,7 +371,6 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "F355 CHALLENGE JAPAN")
 	{
-		// FIXME need default flash
 		write_naomi_flash(0x230, node == -1 ? 0 : node == 0 ? 1 : 2);
 		if (node != -1)
 			// car number (0 to 7)

@@ -136,7 +136,7 @@ void write_naomi_eeprom(u32 offset, u8 value)
 		WARN_LOG(NAOMI, "EEPROM record doesn't exist or is too short");
 }
 
-static u8 readEeprom(u32 offset)
+u8 read_naomi_eeprom(u32 offset)
 {
 	return EEPROM[offset & 127];
 }
@@ -168,7 +168,7 @@ static bool initEeprom(const RomBootID *bootId)
 		// ROM-specific defaults
 		write_naomi_eeprom(2, bootId->coinFlag[0][1] | (((bootId->coinFlag[0][1] & 2) ^ 2) << 3));
 		if (bootId->coinFlag[0][2] == 1) // individual coin chute
-			write_naomi_eeprom(8, readEeprom(8) | 1);
+			write_naomi_eeprom(8, read_naomi_eeprom(8) | 1);
 		write_naomi_eeprom(9, bootId->coinFlag[0][3] - 1);
 		write_naomi_eeprom(10, std::max(bootId->coinFlag[0][6], (u8)1));
 		write_naomi_eeprom(11, std::max(bootId->coinFlag[0][4], (u8)1));
@@ -203,21 +203,21 @@ void configure_naomi_eeprom(const RomBootID *bootId)
 	if (bootId->vertical == 2)
 	{
 		NOTICE_LOG(NAOMI, "EEPROM: vertical monitor orientation");
-		write_naomi_eeprom(2, readEeprom(2) | 1);
+		write_naomi_eeprom(2, read_naomi_eeprom(2) | 1);
 		config::Rotate90.override(true);
 	}
 	else if (bootId->vertical == 1)
 	{
 		NOTICE_LOG(NAOMI, "EEPROM: horizontal monitor orientation");
-		write_naomi_eeprom(2, readEeprom(2) & ~1);
+		write_naomi_eeprom(2, read_naomi_eeprom(2) & ~1);
 	}
 	// Number of players
 	if (bootId->cabinet != 0 && bootId->cabinet < 0x10)
 	{
-		int nPlayers = readEeprom(8) >> 4;	// 0 to 3
+		int nPlayers = read_naomi_eeprom(8) >> 4;	// 0 to 3
 		if (!(bootId->cabinet & (1 << nPlayers)))
 		{
-			u8 coinChute = readEeprom(8) & 1;
+			u8 coinChute = read_naomi_eeprom(8) & 1;
 			if (bootId->cabinet & 8)
 			{
 				NOTICE_LOG(NAOMI, "EEPROM: 4-player cabinet");
