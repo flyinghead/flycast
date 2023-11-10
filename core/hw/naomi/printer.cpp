@@ -25,13 +25,17 @@
 #include <memory>
 #include <vector>
 #ifdef STANDALONE_TEST
+#define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #undef INFO_LOG
 #define INFO_LOG(t, s, ...) printf(s "\n",  __VA_ARGS__)
+#undef NOTICE_LOG
+#define NOTICE_LOG(t, s, ...) printf(s "\n",  __VA_ARGS__)
 #else
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(flycast);
 #endif
+#include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
 
 namespace printer
@@ -311,6 +315,44 @@ public:
 	{
 		if (page.empty())
 			return false;
+		if (settings.content.gameId.substr(0, 4) == "F355")
+		{
+			u8 *data = nullptr;
+			int x, y, comp;
+#ifndef STANDALONE_TEST
+			try {
+				cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
+				cmrc::file templateFile = fs.open("picture/f355_print_template.png");
+				const u8 *fileData = (const u8 *)templateFile.begin();
+				data = stbi_load_from_memory(fileData, templateFile.size(), &x, &y, &comp, STBI_rgb_alpha);
+			} catch (const std::system_error& e) {
+				ERROR_LOG(NAOMI, "Failed to load the printer template: %s", e.what());
+			}
+#else
+			FILE *f = fopen("../resources/picture/f355_print_template.png", "rb");
+			if (f != nullptr)
+			{
+				data = stbi_load_from_file(f, &x, &y, &comp, STBI_rgb_alpha);
+				fclose(f);
+			}
+			else
+				fprintf(stderr, "Can't open template file %d\n", errno);
+#endif
+			if (data != nullptr)
+			{
+				u32 *p = (u32 *)data;
+				for (u8 b : page)
+				{
+					if (b == 0xff)
+						*p = 0xff000000;
+					p++;
+				}
+				stbi_write_png(filename.c_str(), printerWidth, lines, 4, data, printerWidth * 4);
+				stbi_image_free(data);
+
+				return true;
+			}
+		}
 		for (u8& b : page)
 			b = 0xff - b;
 		stbi_write_png(filename.c_str(), printerWidth, lines, 1, &page[0], printerWidth);
@@ -1085,6 +1127,14 @@ void deserialize(Deserializer& deser)
 #ifdef STANDALONE_TEST
 settings_t settings;
 
+std::string get_writable_data_path(const std::string& s)
+{
+	return "./" + s;
+}
+
+void gui_display_notification(char const*, int) {
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -1094,7 +1144,7 @@ int main(int argc, char *argv[])
 		perror(argv[1]);
 		return 1;
 	}
-	settings.content.gameId = "somegame";
+	settings.content.gameId = "F355 CHALLENGE";
 	printer::ThermalPrinter printer;
 	for (;;)
 	{
