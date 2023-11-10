@@ -350,7 +350,7 @@ void SetNaomiNetworkConfig(int node)
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
-	else if (gameId == "CLUB KART IN JAPAN")
+	else if (gameId == "CLUB KART IN JAPAN" && settings.content.fileName.substr(0, 6) != "clubkp")
 	{
 		write_naomi_eeprom(0x34, node + 1); // also 03 = satellite
 	}
@@ -358,7 +358,8 @@ void SetNaomiNetworkConfig(int node)
 			|| gameId == "INITIAL D Ver.2"
 			|| gameId == "INITIAL D Ver.3")
 	{
-		write_naomi_eeprom(0x34, node == -1 ? 0x02 : node == 0 ? 0x12 : 0x22);
+		u8 b = read_naomi_eeprom(0x34) & 0xcf;
+		write_naomi_eeprom(0x34, (node == -1 ? 0x00 : node == 0 ? 0x10 : 0x20) | b);
 	}
 	else if (gameId == "THE KING OF ROUTE66")
 	{
@@ -392,6 +393,9 @@ bool NaomiNetworkSupported()
 		"SEGA DRIVING SIMULATOR"
 	};
 	if (!config::NetworkEnable)
+		return false;
+	if (settings.content.fileName.substr(0, 6) == "clubkp")
+		// Club Kart Prize doesn't support networking
 		return false;
 	for (auto game : games)
 		if (settings.content.gameId == game)
