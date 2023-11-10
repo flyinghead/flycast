@@ -22,6 +22,10 @@
 #include "types.h"
 #include "context.h"
 
+#if defined(USE_OPENGL) && !defined(LIBRETRO)
+	#include <glad/gl.h>
+#endif
+
 #ifdef TEST_AUTOMATION
 void do_swap_automation();
 #else

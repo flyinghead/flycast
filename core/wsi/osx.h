@@ -19,9 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#if defined(TARGET_IPHONE) //apple-specific ogles3 headers
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
+#if defined(TARGET_IPHONE)
 #include "gl_context.h"
 
 class OSXGraphicsContext : public GLGraphicsContext

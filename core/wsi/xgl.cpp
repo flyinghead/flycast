@@ -18,17 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "types.h"
 #if defined(SUPPORT_X11) && !defined(USE_SDL) && !defined(LIBRETRO)
-#include "gl_context.h"
 #include "cfg/option.h"
-
-#ifndef GLX_CONTEXT_MAJOR_VERSION_ARB
-#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-#endif
-#ifndef GLX_CONTEXT_MINOR_VERSION_ARB
-#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-#endif
+#include "types.h"
+#include "xgl.h"
 
 XGLGraphicsContext theGLContext;
 
@@ -39,12 +32,7 @@ static int x11_error_handler(Display *, XErrorEvent *)
 
 bool XGLGraphicsContext::init()
 {
-	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
 	instance = this;
-	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-	verify(glXCreateContextAttribsARB != 0);
 	int context_attribs[] =
 	{
 			GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
@@ -67,7 +55,7 @@ bool XGLGraphicsContext::init()
 		context = glXCreateContextAttribsARB((Display *)display, *framebufferConfigs, 0, True, context_attribs);
 		if (!context)
 		{
-			ERROR_LOG(RENDERER, "OpenGL 3.0 not supported\n");
+			ERROR_LOG(RENDERER, "OpenGL 3.0 not supported");
 			return false;
 		}
 	}
@@ -76,7 +64,10 @@ bool XGLGraphicsContext::init()
 
 	glXMakeCurrent((Display *)display, (GLXDrawable)window, context);
 
-	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
+	if (!gladLoadGL((GLADloadfunc) glXGetProcAddressARB))
+		return false;
+
+	if (!GLAD_GL_VERSION_3_1)
 		return false;
 
 	Window win;
@@ -85,12 +76,10 @@ bool XGLGraphicsContext::init()
 	XGetGeometry((Display *)display, (GLXDrawable)window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 
 	swapOnVSync = config::VSync;
-	glXSwapIntervalMESA = (int (*)(unsigned))glXGetProcAddress((const GLubyte*)"glXSwapIntervalMESA");
 	if (glXSwapIntervalMESA != nullptr)
 		glXSwapIntervalMESA((unsigned)swapOnVSync);
 	else
 	{
-		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalEXT");
 		if (glXSwapIntervalEXT != nullptr)
 			glXSwapIntervalEXT((Display *)display, (GLXDrawable)window, (int)swapOnVSync);
 	}
@@ -102,6 +91,10 @@ bool XGLGraphicsContext::init()
 
 bool XGLGraphicsContext::ChooseVisual(Display* x11Display, XVisualInfo** visual, int* depth)
 {
+	const long x11Screen = XDefaultScreen(x11Display);
+
+	gladLoaderLoadGLX(x11Display, x11Screen);
+
 	// Get a matching FB config
 	static int visual_attribs[] =
 	{
@@ -126,7 +119,6 @@ bool XGLGraphicsContext::ChooseVisual(Display* x11Display, XVisualInfo** visual,
 		ERROR_LOG(RENDERER, "Invalid GLX version");
 		return false;
 	}
-	const long x11Screen = XDefaultScreen(x11Display);
 
 	int fbcount;
 	framebufferConfigs = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);

@@ -122,7 +122,6 @@ if(NINTENDO_SWITCH)
 		set(CMAKE_STATIC_LIBRARY_PREFIX "")
 	else()
 		add_executable(${PROJECT_NAME} core/emulator.cpp)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
 	endif()
 	if(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
@@ -239,7 +238,7 @@ if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/khronos core/deps/json)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/json)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -505,11 +504,6 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
 	endif()
 endif()
 
-if(NINTENDO_SWITCH AND USE_GLES)
-	pkg_check_modules(GLESV2 IMPORTED_TARGET glesv2)
-	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GLESV2)
-endif()
-
 if(UNIX AND NOT APPLE AND NOT ANDROID)
 	add_definitions(
 		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
@@ -521,20 +515,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 		if(USE_VIDEOCORE)
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lbrcmGLESv2")
 			target_link_directories(${PROJECT_NAME} PRIVATE "/opt/vc/lib")
-		else()
-			target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
 		endif()
 	elseif(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
-		if(NOT SDL2_FOUND)
-			target_link_libraries(${PROJECT_NAME} PRIVATE EGL)
-		endif()
-		find_library(GLES3_LIBRARIES NAMES GLESv3 GLESv2 NO_CACHE REQUIRED)
-		target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES3_LIBRARIES})
-	elseif(USE_OPENGL)
-		set(OpenGL_GL_PREFERENCE LEGACY)
-		find_package(OpenGL REQUIRED)
-		target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 	endif()
 
 	find_package(Threads REQUIRED)
@@ -553,8 +536,6 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 			target_include_directories(${PROJECT_NAME} PRIVATE ${X11_INCLUDE_DIR})
 			target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
 		endif()
-	else()
-		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_X11)
 	endif()
 
 	find_library(LIBRT rt)
@@ -739,6 +720,11 @@ if(LIBRETRO)
 		core/deps/libretro-common/file/retro_dirent.c
 		core/deps/libretro-common/string/stdstring.c)
 	if(USE_OPENGL)
+		if(UNIX AND NOT APPLE AND NOT ANDROID)
+			find_package(OpenGL REQUIRED)
+			target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+		endif()
+
 		target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/libretro-common/glsm/glsm.c
 			core/deps/libretro-common/glsym/rglgen.c)
@@ -1163,15 +1149,6 @@ if(USE_OPENGL)
 			core/wsi/xgl.cpp
 			core/wsi/xgl.h)
 
-	if(NOT APPLE AND NOT LIBRETRO)
-		target_sources(${PROJECT_NAME} PRIVATE
-				core/wsi/gl32funcs.c
-				core/wsi/gl32funcs.h)
-	endif()
-	if(NOT (NINTENDO_SWITCH AND LIBRETRO))
-		target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
-	endif()
-
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/gles/glcache.h
 			core/rend/gles/gldraw.cpp
@@ -1491,6 +1468,24 @@ if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
 	endif()
 endif()
 
+if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
+	add_library(glad STATIC core/deps/glad/src/gl.c)
+	if(X11_FOUND)
+		target_sources(glad PRIVATE core/deps/glad/src/glx.c)
+	endif()
+	if(ANDROID OR USE_GLES2 OR USE_GLES)
+		target_sources(glad PRIVATE core/deps/glad/src/egl.c)
+	endif()
+	if(WIN32)
+		target_sources(glad PRIVATE core/deps/glad/src/wgl.c)
+	endif()
+	if(NINTENDO_SWITCH)
+		target_compile_definitions(glad PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+	endif()
+	target_include_directories(glad PUBLIC core/deps/glad/include)
+	target_link_libraries(${PROJECT_NAME} PRIVATE glad)
+endif()
+
 if(NOT LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/ggpo/include core/deps/ggpo/lib/ggpo)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1537,7 +1532,7 @@ if(NOT LIBRETRO)
 			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
 			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 
-		target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
+		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
@@ -1603,7 +1598,6 @@ if(NOT LIBRETRO)
 
 			find_library(UIKIT UIKit)
 			find_library(FOUNDATION Foundation)
-			find_library(OPENGLES OpenGLES)
 			find_library(GLKIT GLKit)
 			find_library(GAMECONTROLLER GameController)
 			find_library(AUDIOTOOLBOX AudioToolbox)
@@ -1611,7 +1605,6 @@ if(NOT LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE
 				${UIKIT}
 				${FOUNDATION}
-				${OPENGLES}
 				${GLKIT}
 				${GAMECONTROLLER}
 				${AUDIOTOOLBOX}
@@ -1678,7 +1671,6 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
-			find_library(OPENGL_LIBRARY OpenGL)
 			find_library(METAL_LIBRARY Metal)
 			find_library(IOSURFACE_LIBRARY IOSurface)
 			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
@@ -1687,7 +1679,6 @@ if(NOT LIBRETRO)
 				${AUDIO_UNIT_LIBRARY}
 				${FOUNDATION_LIBRARY}
 				${AUDIO_TOOLBOX_LIBRARY}
-				${OPENGL_LIBRARY}
 				${METAL_LIBRARY}
 				${IOSURFACE_LIBRARY}
 				${MULTITOUCH_SUPPORT_LIBRARY})
@@ -1748,7 +1739,7 @@ if(NOT LIBRETRO)
 			endif()
 
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
 		endif()
 	endif()
 endif()

@@ -19,14 +19,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #if defined(USE_SDL)
-#include <math.h>
-#include <algorithm>
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
 #include "cfg/option.h"
 
-extern "C" int eglGetError();
+#include <algorithm>
+#include <cmath>
 
 SDLGLGraphicsContext theGLContext;
 
@@ -100,23 +99,15 @@ bool SDLGLGraphicsContext::init()
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
 #ifdef GLES
-	load_gles_symbols();
-#elif !defined(__APPLE__)
-	if (gl3wInit() == -1 || !gl3wIsSupported(3, 0))
+	gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress);
+#else
+	if (!gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress) || !GLAD_GL_VERSION_3_0)
 	{
-		ERROR_LOG(RENDERER, "gl3wInit failed or GL 3.0 not supported");
+		ERROR_LOG(RENDERER, "gladLoadGL failed or GL 3.0 not supported");
 		return false;
 	}
 #endif
 	postInit();
-
-#ifdef TARGET_UWP
-	// Force link with libGLESv2.dll and libEGL.dll
-#undef glGetError
-	glGetError();
-	eglGetError();
-#endif
-	
 	initVideoRouting();
 	
 	return true;

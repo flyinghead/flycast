@@ -362,7 +362,8 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		settings.display.width = LOWORD(lParam);
 		settings.display.height = HIWORD(lParam);
 		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
-		GraphicsContext::Instance()->resize();
+		if (GraphicsContext::Instance())
+			GraphicsContext::Instance()->resize();
 		return 0;
 
 	case WM_LBUTTONDOWN:
