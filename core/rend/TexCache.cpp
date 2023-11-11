@@ -554,6 +554,8 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 
 void BaseTextureCacheData::ComputeHash()
 {
+	// Include everything but texaddr, reserved and stride. Palette textures don't have ScanOrder
+	const u32 tcwMask = IsPaletted() ? 0xF8000000 : 0xFC000000;
 	u32 hashSize = size;
 	if (tcw.VQ_Comp)
 	{
@@ -561,14 +563,33 @@ void BaseTextureCacheData::ComputeHash()
 		// We use the old size to compute the hash for backward-compatibility
 		// with existing custom texture packs.
 		hashSize = size - 256 * 8;
+		old_vqtexture_hash = XXH32(&vram[sa], hashSize, 7);
+		if (IsPaletted())
+			old_vqtexture_hash ^= palette_hash;
+		old_texture_hash = old_vqtexture_hash;
+		old_vqtexture_hash ^= tcw.full & tcwMask;
+		// New hash
+	    XXH32_state_t *state = XXH32_createState();
+	    XXH32_reset(state, 7);
+	    // hash vq codebook
+	    XXH32_update(state, &vram[sa_tex], 256 * 8);
+	    // hash texture
+	    XXH32_update(state, &vram[sa + 256 * 8], hashSize);
+	    texture_hash = XXH32_digest(state);
+	    XXH32_freeState(state);
+		if (IsPaletted())
+			texture_hash ^= palette_hash;
+		texture_hash ^= tcw.full & tcwMask;
 	}
-	texture_hash = XXH32(&vram[sa], hashSize, 7);
-	if (IsPaletted())
-		texture_hash ^= palette_hash;
-	old_texture_hash = texture_hash;
-	// Include everything but texaddr, reserved and stride. Palette textures don't have ScanOrder
-	const u32 tcwMask = IsPaletted() ? 0xF8000000 : 0xFC000000;
-	texture_hash ^= tcw.full & tcwMask;
+	else
+	{
+		old_vqtexture_hash = 0;
+		texture_hash = XXH32(&vram[sa], hashSize, 7);
+		if (IsPaletted())
+			texture_hash ^= palette_hash;
+		old_texture_hash = texture_hash;
+		texture_hash ^= tcw.full & tcwMask;
+	}
 }
 
 bool BaseTextureCacheData::Update()

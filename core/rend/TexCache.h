@@ -624,6 +624,7 @@ public:
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_vqtexture_hash;		// legacy hash for vq textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
