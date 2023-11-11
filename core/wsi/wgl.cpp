@@ -18,17 +18,15 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "gl_context.h"
-#include "types.h"
-
 #if defined(_WIN32) && !defined(USE_SDL) && !defined(LIBRETRO)
+#include "types.h"
+#include "wgl.h"
+
+#include <glad/wgl.h>
+
 void CreateMainWindow();
 
 WGLGraphicsContext theGLContext;
-
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 bool WGLGraphicsContext::init()
 {
@@ -65,17 +63,7 @@ bool WGLGraphicsContext::init()
 	HGLRC tempOpenGLContext = wglCreateContext((HDC)display);
 	wglMakeCurrent((HDC)display, tempOpenGLContext);
 
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	if(!wglChoosePixelFormatARB)
-		return false;
-
-	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-	if(!wglCreateContextAttribsARB)
-		return false;
-
-	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-	if(!wglSwapIntervalEXT)
-		return false;
+	gladLoaderLoadWGL((HDC) display);
 
 	int attribs[] =
 	{
@@ -107,7 +95,7 @@ bool WGLGraphicsContext::init()
 	wglDeleteContext(tempOpenGLContext);
 
 	if (rv) {
-		rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
+		rv = (gladLoadGL((GLADloadfunc) wglGetProcAddress) != 0) && GLAD_GL_VERSION_3_1;
 	}
 
 	RECT r;

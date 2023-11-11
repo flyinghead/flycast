@@ -19,11 +19,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <GL4/gl3w.h>
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <GL/glx.h>
 #include "gl_context.h"
+#include <glad/glx.h>
 
 class XGLGraphicsContext : public GLGraphicsContext
 {
@@ -38,8 +35,6 @@ public:
 private:
 	GLXContext context;
 	GLXFBConfig* framebufferConfigs = nullptr;
-	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
-	int (*glXSwapIntervalMESA)(unsigned int interval) = nullptr;
 	bool swapOnVSync = false;
 };
 
