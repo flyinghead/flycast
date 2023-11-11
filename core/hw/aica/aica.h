@@ -30,13 +30,13 @@ struct CommonData_struct
 	u32 VER:4;
 	u32 DAC18B:1;
 	u32 MEM8MB:1;
-	u32 pad0_0:5;
+	u32 :5;
 	u32 Mono:1;
 	
 	u32 :16;
 	//+4
 	u32 RBP:12;
-	u32 pad1_0:1;
+	u32 :1;
 	u32 RBL:2;
 	u32 TESTB0:1;
 
@@ -48,14 +48,14 @@ struct CommonData_struct
 	u32 MIOVF :1;
 	u32 MOEMP :1;
 	u32 MOFUL :1;
-	u32 pad3_0:3;
+	u32 :3;
 
 	u32 :16;
 	//+C
 	u32 MOBUF:8;
 	u32 MSLC:6;
 	u32 AFSEL:1;
-	u32 padC_0:1;
+	u32 :1;
 
 	u32 :16;
 	//+10
@@ -76,24 +76,24 @@ struct CommonData_struct
 	u32 MRWINH:4;
 	u32 $T:1;
 	u32 $TSCD:3;
-	u32 pad80_0:1;
+	u32 :1;
 	u32 DMEA_hi:7;
 
 	u32 :16;
 	//+84
-	u32 pad84_0:2;
+	u32 :2;
 	u32 DMEA_lo:14;
 
 	u32 :16;
 	//+88
-	u32 pad88_0:2;
+	u32 :2;
 	u32 DRGA:13;
 	u32 DGATE:1;
 
 	u32 :16;
 	//+8C
 	u32 DEXE:1;
-	u32 pad8C_0:1;
+	u32 :1;
 	u32 DLG:13;
 	u32 DDIR:1;
 
@@ -101,73 +101,73 @@ struct CommonData_struct
 	//+90
 	u32 TIMA:8;
 	u32 TACTL:3;
-	u32 pad90_0:5;
+	u32 :5;
 
 	u32 :16;
 	//+94
 	u32 TIMB:8;
 	u32 TBCTL:3;
-	u32 pad94_0:5;
+	u32 :5;
 
 	u32 :16;
 	//+98
 	u32 TIMC:8;
 	u32 TCCTL:3;
-	u32 pad98_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+9C
 	u32 SCIEB:11;
-	u32 pad9C_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+A0
 	u32 SCIPD:11;
-	u32 padA0_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+A4
 	u32 SCIRE:11;
-	u32 padA4_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+A8
 	u32 SCILV0:8;
-	u32 padA8_0:8;
+	u32 :8;
 
 	u32 :16;
 
 	//+AC
 	u32 SCILV1:8;
-	u32 padAC_0:8;
+	u32 :8;
 
 	u32 :16;
 
 	//+B0
 	u32 SCILV2:8;
-	u32 padB0_0:8;
+	u32 :8;
 
 	u32 :16;
 
 	//+B4
 	u32 MCIEB:11;
-	u32 padB4_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+B8
 	u32 MCIPD:11;
-	u32 padB8_0:5;
+	u32 :5;
 
 	u32 :16;
 
 	//+BC
 	u32 MCIRE:11;
-	u32 padBC_0:5;
+	u32 :5;
 
 	u32 :16;
 	
@@ -176,9 +176,9 @@ struct CommonData_struct
 
 	//+400 , hopefully :p
 	u32 AR:1;
-	u32 pad400_0:7;
+	u32 :7;
 	u32 VREG:2;
-	u32 pad400_1:6;
+	u32 :6;
 
 	u32 :16;
 
@@ -195,7 +195,7 @@ struct CommonData_struct
 	u32 L6_r:1;
 	u32 L7_r:1;
 	
-	u32 pad500_0:8;
+	u32 :8;
 
 	u32 :16;
 
@@ -211,10 +211,11 @@ struct CommonData_struct
 	u32 M7_r:1;
 	u32 RP:1;
 	
-	u32 pad504_0:7;
+	u32 :7;
 
 	u32 :16;
 };
+static_assert(sizeof(CommonData_struct) == 0x508, "Wrong CommonData size");
 
 struct DSPData_struct
 {
@@ -272,9 +273,9 @@ union InterruptInfo
 		//Bit 0 (R): Requests interrupt to external interrupt input pin "INTON". (SCSI) 
 		u32 INTON:1;
 		//Bit 1 (R): Reserved. 
-		u32 res_1:1;
+		u32 :1;
 		//Bit 2 (R): Reserved. 
-		u32 res_3:1;
+		u32 :1;
 		//Bit 3 (R): MIDI input interrupt. 
 		//(Interrupt request generated when input FIFO has fetched valid data. Hence, if the CPU reads FIFO data, it must read the lot once and leave the FIFO empty. When the FIFO has changed to empty status, the interrupt request is canceled automatically.) 
 		u32 MIDI_IN:1;
@@ -297,16 +298,31 @@ union InterruptInfo
 	};
 	u32 full;
 };
-extern InterruptInfo* MCIEB;
-extern InterruptInfo* MCIPD;
-extern InterruptInfo* MCIRE;
-extern InterruptInfo* SCIEB;
-extern InterruptInfo* SCIPD;
-extern InterruptInfo* SCIRE;
+
+struct DSP_OUT_VOL_REG
+{
+	//--	EFSDL[3:0]	--	EFPAN[4:0]
+
+	u32 EFPAN:5;
+	u32 :3;
+
+	u32 EFSDL:4;
+	u32 :4;
+
+	u32 :16;
+};
+
+extern InterruptInfo * const MCIEB;
+extern InterruptInfo * const MCIPD;
+extern InterruptInfo * const MCIRE;
+extern InterruptInfo * const SCIEB;
+extern InterruptInfo * const SCIPD;
+extern InterruptInfo * const SCIRE;
 extern std::deque<u8> midiSendBuffer;
 
-extern CommonData_struct* CommonData;
-extern DSPData_struct*	  DSPData;
+extern CommonData_struct * const CommonData;
+extern DSPData_struct * const DSPData;
+extern const DSP_OUT_VOL_REG * const dsp_out_vol;
 
 template<typename T>
 void writeTimerAndIntReg(u32 reg, T data);
@@ -321,8 +337,7 @@ class AicaTimer
 			{
 				u32 count:8;
 				u32 md:3;
-				u32 nil:5;
-				u32 pad:16;
+				u32 :21;
 			};
 			u32 data;
 		};

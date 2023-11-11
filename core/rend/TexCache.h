@@ -736,8 +736,8 @@ public:
 
 	Texture *getRTTexture(u32 address, u32 fb_packmode, u32 width, u32 height)
 	{
-		// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-		TCW tcw{ { address >> 3, 0, 0, 1 } };
+		// TexAddr : (address), StrideSel : 0, ScanOrder : 1
+		TCW tcw{ { address >> 3, 0, 1 } };
 		switch (fb_packmode)
 		{
 		case 0:
@@ -796,10 +796,10 @@ protected:
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7
 	const TSP TSPTextureCacheMask = { { 7, 7 } };
-	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+	//     TexAddr : 0x1FFFFF, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 1, 7, 1, 1 } };
 	//     TexAddr : 0x1FFFFF, PalSelect : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 0, 7, 1, 1 } };
+	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 7, 1, 1 } };
 };
 
 template<typename Packer = RGBAPacker>

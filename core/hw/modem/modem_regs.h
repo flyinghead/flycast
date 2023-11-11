@@ -36,7 +36,7 @@ union modemreg_t
 			u8 RXP:1;
 			u8 RXHF:1;
 			u8 TXHF:1;
-			u8 nil2:2;
+			u8 :2;
 			u8 VPAUSE:1;
 			u8 VOLUME:2;
 		} reg01;
@@ -52,19 +52,19 @@ union modemreg_t
 					u8 V54AE:1;
 					u8 V54TE:1;
 					u8 RTSDE:1;
-					u8 nil1:1;
+					u8 :1;
 					u8 S511:1;
 				} v0;
 				struct
 				{
 					u8 CODBITS:2;
-					u8 nil2:2;
+					u8 :2;
 					u8 CDEN:1;
 					u8 DCDEN:1;
 				} v1;
 				struct
 				{
-					u8 nila:6;
+					u8 :6;
 					u8 TDE:1;
 					u8 SQDIS:1;
 				};
@@ -75,7 +75,7 @@ union modemreg_t
 		{
 			u8 GTS:1;
 			u8 GTE:1;
-			u8 nil2:2;
+			u8 :2;
 			u8 RLSDE:1;
 			u8 SRCEN:1;
 			u8 SEPT:1;
@@ -87,20 +87,20 @@ union modemreg_t
 			u8 STRN:1;
 			u8 TOD:1;
 			u8 NRZIEN_VAGC:1;
-			u8 nil1_1:1;
+			u8 :1;
 			u8 FIFOEN:1;
-			u8 nil1:2;
+			u8 :2;
 			u8 RB:1;
 		} reg04;
 		//05 - - - TXSQ CEQ - STOFF -
 		struct
 		{
-			u8 nil1_2:1;
+			u8 :1;
 			u8 STOFF:1;
-			u8 nil1_1:1;
+			u8 :1;
 			u8 CEQ:1;
 			u8 TXSQ:1;
-			u8 nil1:3;
+			u8 :3;
 		} reg05;
 		//06 - EXOS - HDLC PEN STB WDSZ/DECBITS
 		struct
@@ -109,18 +109,18 @@ union modemreg_t
 			u8 STB:1;
 			u8 PEN:1;
 			u8 HDLC:1;
-			u8 nil1_1:1;
+			u8 :1;
 			u8 EXOS:1;
-			u8 nil1:1;
+			u8 :1;
 		} reg06;
 		//07 RDLE RDL L2ACT - L3ACT - RA MHLD
 		struct
 		{
 			u8 MHLD:1;
 			u8 RA:1;
-			u8 nil1_1:1;
+			u8 :1;
 			u8 L3ACT:1;
-			u8 nil1:1;
+			u8 :1;
 			u8 L2ACT:1;
 			u8 RDL:1;
 			u8 RDLE:1;
@@ -166,7 +166,7 @@ union modemreg_t
 		{
 			u8 EQMAT:1;
 			u8 DISDET:1;
-			u8 nil:1;
+			u8 :1;
 			u8 ATBEL:1;
 			u8 ATV25:1;
 			u8 TONEC:1;
@@ -188,9 +188,9 @@ union modemreg_t
 		//0D P2DET PNDET S1DET SCR1 U1DET - TXFNF -
 		struct
 		{
-			u8 nil2:1;
+			u8 :1;
 			u8 TXFNF:1;
-			u8 nil1:1;
+			u8 :1;
 			u8 U1DET:1;
 			u8 SCR1:1;
 			u8 S1DET:1;
@@ -266,7 +266,7 @@ union modemreg_t
 			u8 SECEN:1;
 			u8 SCIBE:1;
 			u8 SCOBF:1;
-			u8 nil:1;
+			u8 :1;
 			u8 DMAE:1;
 			u8 RION:1;
 			u8 RIEN:1;
@@ -289,17 +289,17 @@ union modemreg_t
 			u8 MEMADD_h:4;
 			u8 MEMCR:1;
 			u8 MEMW:1;
-			u8 nil:1;
+			u8 :1;
 			u8 MEACC:1;
 		} reg1c_1d;
 		//1E TDBIA RDBIA TDBIE - TDBE RDBIE - RDBF
 		struct
 		{
 			u8 RDBF:1;
-			u8 nil:1;
+			u8 :1;
 			u8 RDBIE:1;
 			u8 TDBE:1;
-			u8 nil2:1;
+			u8 :1;
 			u8 TDBIE:1;
 			u8 RDBIA:1;
 			u8 TDBIA:1;
@@ -308,11 +308,11 @@ union modemreg_t
 		struct
 		{
 			u8 NEWC:1;
-			u8 nil:1;
+			u8 :1;
 			u8 NCIE:1;
 			u8 NEWS :1;
 			u8 NSIE:1;
-			u8 nil2:1;
+			u8 :1;
 			u8 NCIA:1;
 			u8 NSIA:1;
 		} reg1f;

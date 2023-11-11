@@ -674,19 +674,25 @@ static void reios_boot()
 	}
 }
 
-static std::map<u32, hook_fp*> hooks;
+#define SYSCALL_ADDR(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
 
-#define SYSCALL_ADDR_MAP(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
+static const std::map<u32, hook_fp*> hooks = {
+		{ SYSCALL_ADDR(0xA0000000), reios_boot },
 
-static void register_hook(u32 pc, hook_fp* fn) {
-	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
-}
+		{ SYSCALL_ADDR(0x8C001000), reios_sys_system },
+		{ SYSCALL_ADDR(0x8C001002), reios_sys_font },
+		{ SYSCALL_ADDR(0x8C001004), reios_sys_flashrom },
+		{ SYSCALL_ADDR(0x8C001006), gdrom_hle_op },
+		{ SYSCALL_ADDR(0x8C001008), reios_sys_misc },
+
+		{ SYSCALL_ADDR(dc_bios_entrypoint_gd2), reios_boot },
+};
 
 void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
 	u32 pc = next_pc - 2;
 
-	u32 mapd = SYSCALL_ADDR_MAP(pc);
+	u32 mapd = SYSCALL_ADDR(pc);
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
@@ -705,18 +711,6 @@ void DYNACALL reios_trap(u32 op) {
 
 bool reios_init()
 {
-	INFO_LOG(REIOS, "reios: Init");
-
-	register_hook(0xA0000000, reios_boot);
-
-	register_hook(0x8C001000, reios_sys_system);
-	register_hook(0x8C001002, reios_sys_font);
-	register_hook(0x8C001004, reios_sys_flashrom);
-	register_hook(0x8C001006, gdrom_hle_op);
-	register_hook(0x8C001008, reios_sys_misc);
-
-	register_hook(dc_bios_entrypoint_gd2, gdrom_hle_op);
-
 	return true;
 }
 
