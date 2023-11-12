@@ -25,7 +25,7 @@ import sys
 import os
 import re
 
-banned_ext = [ 'AMD', 'APPLE', 'NV', 'NVX', 'ATI', '3DLABS', 'SUN', 'SGI', 'SGIX', 'SGIS', 'INTEL', '3DFX', 'IBM', 'MESA', 'GREMEDY', 'OML', 'PGI', 'I3D', 'INGL', 'MTX', 'QCOM', 'IMG', 'ANGLE', 'SUNX', 'INGR' ]
+banned_ext = [ 'AMD', 'APPLE', 'NVX', 'ATI', '3DLABS', 'SUN', 'SGI', 'SGIX', 'SGIS', 'INTEL', '3DFX', 'IBM', 'MESA', 'GREMEDY', 'OML', 'PGI', 'I3D', 'INGL', 'MTX', 'QCOM', 'IMG', 'ANGLE', 'SUNX', 'INGR' ]
 
 def noext(sym):
    for ext in banned_ext:
@@ -57,7 +57,7 @@ def find_gl_symbols(lines):
    syms = []
    for line in lines:
       m = re.search(r'^typedef.+PFN(\S+)PROC.+$', line)
-      g = re.search(r'^.+(gl\S+)\W*\(.+\).*$', line)
+      g = re.search(r'^.+\W(gl\S+)\W*\(.+\).*$', line)
       if m and noext(m.group(1)):
          typedefs.append(m.group(0).replace('PFN', 'RGLSYM').replace('GLDEBUGPROC', 'RGLGENGLDEBUGPROC'))
       if g and noext(g.group(1)):
@@ -73,8 +73,13 @@ def generate_defines(gl_syms):
 def generate_declarations(gl_syms):
    return ['RGLSYM' + x.upper() + 'PROC ' + '__rglgen_' + x + ';' for x in gl_syms]
 
+def remove_prefix(text, prefix):
+   if text.startswith(prefix):
+      return text[len(prefix):]
+   return text
+
 def generate_macros(gl_syms):
-   return ['    SYM(' + x.replace('gl', '') + '),' for x in gl_syms]
+   return ['    SYM(' + remove_prefix(x, 'gl') + '),' for x in gl_syms]
 
 def dump(f, lines):
    f.write('\n'.join(lines))
