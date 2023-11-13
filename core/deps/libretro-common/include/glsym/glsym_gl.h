@@ -724,7 +724,6 @@ typedef GLboolean (APIENTRYP RGLSYMGLISIMAGEHANDLERESIDENTARBPROC) (GLuint64 han
 typedef void (APIENTRYP RGLSYMGLVERTEXATTRIBL1UI64ARBPROC) (GLuint index, GLuint64EXT x);
 typedef void (APIENTRYP RGLSYMGLVERTEXATTRIBL1UI64VARBPROC) (GLuint index, const GLuint64EXT *v);
 typedef void (APIENTRYP RGLSYMGLGETVERTEXATTRIBLUI64VARBPROC) (GLuint index, GLenum pname, GLuint64EXT *params);
-typedef GLsync (APIENTRYP RGLSYMGLCREATESYNCFROMCLEVENTARBPROC) (struct _cl_context *context, struct _cl_event *event, GLbitfield flags);
 typedef void (APIENTRYP RGLSYMGLDISPATCHCOMPUTEGROUPSIZEARBPROC) (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, GLuint group_size_x, GLuint group_size_y, GLuint group_size_z);
 typedef void (APIENTRYP RGLSYMGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
 typedef void (APIENTRYP RGLSYMGLDEBUGMESSAGEINSERTARBPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
@@ -1120,7 +1119,6 @@ typedef void (APIENTRYP RGLSYMGLSUBPIXELPRECISIONBIASNVPROC) (GLuint xbits, GLui
 typedef void (APIENTRYP RGLSYMGLCONSERVATIVERASTERPARAMETERFNVPROC) (GLenum pname, GLfloat value);
 typedef void (APIENTRYP RGLSYMGLCONSERVATIVERASTERPARAMETERINVPROC) (GLenum pname, GLint param);
 typedef void (APIENTRYP RGLSYMGLDRAWVKIMAGENVPROC) (GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1);
-typedef GLVULKANPROCNV (APIENTRYP RGLSYMGLGETVKPROCADDRNVPROC) (const GLchar *name);
 typedef void (APIENTRYP RGLSYMGLWAITVKSEMAPHORENVPROC) (GLuint64 vkSemaphore);
 typedef void (APIENTRYP RGLSYMGLSIGNALVKSEMAPHORENVPROC) (GLuint64 vkSemaphore);
 typedef void (APIENTRYP RGLSYMGLSIGNALVKFENCENVPROC) (GLuint64 vkFence);
@@ -3206,7 +3204,6 @@ extern RGLSYMGLISIMAGEHANDLERESIDENTARBPROC __rglgen_glIsImageHandleResidentARB;
 extern RGLSYMGLVERTEXATTRIBL1UI64ARBPROC __rglgen_glVertexAttribL1ui64ARB;
 extern RGLSYMGLVERTEXATTRIBL1UI64VARBPROC __rglgen_glVertexAttribL1ui64vARB;
 extern RGLSYMGLGETVERTEXATTRIBLUI64VARBPROC __rglgen_glGetVertexAttribLui64vARB;
-extern RGLSYMGLCREATESYNCFROMCLEVENTARBPROC __rglgen_glCreateSyncFromCLeventARB;
 extern RGLSYMGLDISPATCHCOMPUTEGROUPSIZEARBPROC __rglgen_glDispatchComputeGroupSizeARB;
 extern RGLSYMGLDEBUGMESSAGECONTROLARBPROC __rglgen_glDebugMessageControlARB;
 extern RGLSYMGLDEBUGMESSAGEINSERTARBPROC __rglgen_glDebugMessageInsertARB;
@@ -3602,7 +3599,6 @@ extern RGLSYMGLSUBPIXELPRECISIONBIASNVPROC __rglgen_glSubpixelPrecisionBiasNV;
 extern RGLSYMGLCONSERVATIVERASTERPARAMETERFNVPROC __rglgen_glConservativeRasterParameterfNV;
 extern RGLSYMGLCONSERVATIVERASTERPARAMETERINVPROC __rglgen_glConservativeRasterParameteriNV;
 extern RGLSYMGLDRAWVKIMAGENVPROC __rglgen_glDrawVkImageNV;
-extern RGLSYMGLGETVKPROCADDRNVPROC __rglgen_glGetVkProcAddrNV;
 extern RGLSYMGLWAITVKSEMAPHORENVPROC __rglgen_glWaitVkSemaphoreNV;
 extern RGLSYMGLSIGNALVKSEMAPHORENVPROC __rglgen_glSignalVkSemaphoreNV;
 extern RGLSYMGLSIGNALVKFENCENVPROC __rglgen_glSignalVkFenceNV;
@@ -3772,6 +3768,13 @@ extern RGLSYMGLVERTEXATTRIBIFORMATNVPROC __rglgen_glVertexAttribIFormatNV;
 extern RGLSYMGLGETINTEGERUI64I_VNVPROC __rglgen_glGetIntegerui64i_vNV;
 extern RGLSYMGLVIEWPORTSWIZZLENVPROC __rglgen_glViewportSwizzleNV;
 extern RGLSYMGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC __rglgen_glFramebufferTextureMultiviewOVR;
+
+#ifndef __APPLE__
+typedef GLsync (APIENTRYP RGLSYMGLCREATESYNCFROMCLEVENTARBPROC) (struct _cl_context *context, struct _cl_event *event, GLbitfield flags);
+typedef GLVULKANPROCNV (APIENTRYP RGLSYMGLGETVKPROCADDRNVPROC) (const GLchar *name);
+extern RGLSYMGLCREATESYNCFROMCLEVENTARBPROC __rglgen_glCreateSyncFromCLeventARB;
+extern RGLSYMGLGETVKPROCADDRNVPROC __rglgen_glGetVkProcAddrNV;
+#endif
 
 struct rglgen_sym_map { const char *sym; void *ptr; };
 extern const struct rglgen_sym_map rglgen_symbol_map[];

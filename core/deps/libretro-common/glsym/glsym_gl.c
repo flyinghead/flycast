@@ -701,7 +701,6 @@ const struct rglgen_sym_map rglgen_symbol_map[] = {
     SYM(VertexAttribL1ui64ARB),
     SYM(VertexAttribL1ui64vARB),
     SYM(GetVertexAttribLui64vARB),
-    SYM(CreateSyncFromCLeventARB),
     SYM(DispatchComputeGroupSizeARB),
     SYM(DebugMessageControlARB),
     SYM(DebugMessageInsertARB),
@@ -1097,7 +1096,6 @@ const struct rglgen_sym_map rglgen_symbol_map[] = {
     SYM(ConservativeRasterParameterfNV),
     SYM(ConservativeRasterParameteriNV),
     SYM(DrawVkImageNV),
-    SYM(GetVkProcAddrNV),
     SYM(WaitVkSemaphoreNV),
     SYM(SignalVkSemaphoreNV),
     SYM(SignalVkFenceNV),
@@ -1267,6 +1265,10 @@ const struct rglgen_sym_map rglgen_symbol_map[] = {
     SYM(GetIntegerui64i_vNV),
     SYM(ViewportSwizzleNV),
     SYM(FramebufferTextureMultiviewOVR),
+#ifndef __APPLE__
+    SYM(CreateSyncFromCLeventARB),
+    SYM(GetVkProcAddrNV),
+#endif
 
     { NULL, NULL },
 };
@@ -1944,7 +1946,6 @@ RGLSYMGLISIMAGEHANDLERESIDENTARBPROC __rglgen_glIsImageHandleResidentARB;
 RGLSYMGLVERTEXATTRIBL1UI64ARBPROC __rglgen_glVertexAttribL1ui64ARB;
 RGLSYMGLVERTEXATTRIBL1UI64VARBPROC __rglgen_glVertexAttribL1ui64vARB;
 RGLSYMGLGETVERTEXATTRIBLUI64VARBPROC __rglgen_glGetVertexAttribLui64vARB;
-RGLSYMGLCREATESYNCFROMCLEVENTARBPROC __rglgen_glCreateSyncFromCLeventARB;
 RGLSYMGLDISPATCHCOMPUTEGROUPSIZEARBPROC __rglgen_glDispatchComputeGroupSizeARB;
 RGLSYMGLDEBUGMESSAGECONTROLARBPROC __rglgen_glDebugMessageControlARB;
 RGLSYMGLDEBUGMESSAGEINSERTARBPROC __rglgen_glDebugMessageInsertARB;
@@ -2340,7 +2341,6 @@ RGLSYMGLSUBPIXELPRECISIONBIASNVPROC __rglgen_glSubpixelPrecisionBiasNV;
 RGLSYMGLCONSERVATIVERASTERPARAMETERFNVPROC __rglgen_glConservativeRasterParameterfNV;
 RGLSYMGLCONSERVATIVERASTERPARAMETERINVPROC __rglgen_glConservativeRasterParameteriNV;
 RGLSYMGLDRAWVKIMAGENVPROC __rglgen_glDrawVkImageNV;
-RGLSYMGLGETVKPROCADDRNVPROC __rglgen_glGetVkProcAddrNV;
 RGLSYMGLWAITVKSEMAPHORENVPROC __rglgen_glWaitVkSemaphoreNV;
 RGLSYMGLSIGNALVKSEMAPHORENVPROC __rglgen_glSignalVkSemaphoreNV;
 RGLSYMGLSIGNALVKFENCENVPROC __rglgen_glSignalVkFenceNV;
@@ -2511,3 +2511,7 @@ RGLSYMGLGETINTEGERUI64I_VNVPROC __rglgen_glGetIntegerui64i_vNV;
 RGLSYMGLVIEWPORTSWIZZLENVPROC __rglgen_glViewportSwizzleNV;
 RGLSYMGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC __rglgen_glFramebufferTextureMultiviewOVR;
 
+#ifndef __APPLE__
+RGLSYMGLCREATESYNCFROMCLEVENTARBPROC __rglgen_glCreateSyncFromCLeventARB;
+RGLSYMGLGETVKPROCADDRNVPROC __rglgen_glGetVkProcAddrNV;
+#endif
