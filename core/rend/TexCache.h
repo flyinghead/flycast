@@ -12,6 +12,7 @@
 #include <utility>
 
 extern const u8 *vq_codebook;
+constexpr int VQ_CODEBOOK_SIZE = 256 * 8;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
@@ -446,7 +447,6 @@ void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u
 template<class PixelConvertor>
 void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
-	p_in += 256 * 4 * 2;	// Skip VQ codebook
 	pb->amove(0, 0);
 
 	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
@@ -578,10 +578,10 @@ public:
 		tsp = other.tsp;
 		tcw = other.tcw;
 		tex_type = other.tex_type;
-		sa_tex = other.sa_tex;
+		startAddress = other.startAddress;
 		dirty = other.dirty;
 		std::swap(lock_block, other.lock_block);
-		sa = other.sa;
+		mmStartAddress = other.mmStartAddress;
 		width = other.width;
 		height = other.height;
 		size = other.size;
@@ -605,12 +605,12 @@ public:
 
 	// Decoded/filtered texture format
 	TextureType tex_type;
-	u32 sa_tex;			// texture data start address in vram
+	u32 startAddress;	// texture data start address in vram
 
 	u32 dirty;			// frame number at which texture was overwritten
 	vram_block* lock_block;
 
-	u32 sa;         	// pixel data start address of max level mipmap
+	u32 mmStartAddress; // pixel data start address of max level mipmap
 	u16 width, height;	// width & height of the texture
 	u32 size;       	// size in bytes of max level mipmap in vram
 
