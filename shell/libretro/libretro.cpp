@@ -2122,7 +2122,11 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (settings.content.gameId == "INITIAL D"
 			|| settings.content.gameId == "INITIAL D Ver.2"
 			|| settings.content.gameId == "INITIAL D Ver.3"
-			|| settings.content.gameId == "INITIAL D CYCRAFT")
+			|| settings.content.gameId == "INITIAL D CYCRAFT"
+			|| settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN"
+			|| settings.content.gameId == "VF4 EVOLUTION JAPAN"
+			|| settings.content.gameId == "VF4 FINAL TUNED JAPAN"
+			|| card_reader::barcodeAvailable()) // TODO how to input card code?
 		haveCardReader = true;
 	else
 		haveCardReader = false;
