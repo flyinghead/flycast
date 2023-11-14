@@ -828,11 +828,11 @@ static void updateVmuTexture(int vmu_screen_number)
 
 void DrawVmuTexture(u8 vmu_screen_number, int width, int height)
 {
-	constexpr float vmu_padding = 8.f;
+	float vmu_padding = 8.f * config::RenderResolution / 480.f;
 	float x = vmu_padding;
 	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio;
-	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio * config::RenderResolution / 480.f;
+	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * config::RenderResolution / 480.f;
 
 	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
 		updateVmuTexture(vmu_screen_number);
