@@ -370,7 +370,7 @@ void SetNaomiNetworkConfig(int node)
 	{
 		configure_maxspeed_flash(node != -1, node == 0);
 	}
-	else if (gameId == "F355 CHALLENGE JAPAN")
+	else if (gameId == "F355 CHALLENGE JAPAN" && settings.content.fileName != "f355")
 	{
 		write_naomi_flash(0x230, node == -1 ? 0 : node == 0 ? 1 : 2);
 		if (node != -1)
@@ -394,8 +394,8 @@ bool NaomiNetworkSupported()
 	};
 	if (!config::NetworkEnable)
 		return false;
-	if (settings.content.fileName.substr(0, 6) == "clubkp")
-		// Club Kart Prize doesn't support networking
+	if (settings.content.fileName.substr(0, 6) == "clubkp" || settings.content.fileName == "f355")
+		// Club Kart Prize and F355 (vanilla) don't support networking
 		return false;
 	for (auto game : games)
 		if (settings.content.gameId == game)

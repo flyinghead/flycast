@@ -30,7 +30,9 @@
 #undef INFO_LOG
 #define INFO_LOG(t, s, ...) printf(s "\n",  __VA_ARGS__)
 #undef NOTICE_LOG
-#define NOTICE_LOG(t, s, ...) printf(s "\n",  __VA_ARGS__)
+#define NOTICE_LOG INFO_LOG
+#undef ERROR_LOG
+#define ERROR_LOG INFO_LOG
 #else
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(flycast);
@@ -329,7 +331,7 @@ public:
 				ERROR_LOG(NAOMI, "Failed to load the printer template: %s", e.what());
 			}
 #else
-			FILE *f = fopen("../resources/picture/f355_print_template.png", "rb");
+			FILE *f = fopen("f355_print_template.png", "rb");
 			if (f != nullptr)
 			{
 				data = stbi_load_from_file(f, &x, &y, &comp, STBI_rgb_alpha);
@@ -338,8 +340,23 @@ public:
 			else
 				fprintf(stderr, "Can't open template file %d\n", errno);
 #endif
+			if (data != nullptr && (x != printerWidth || comp != STBI_rgb_alpha))
+			{
+				ERROR_LOG(NAOMI, "Invalid printer template: width %d comp %d", x, comp);
+				stbi_image_free(data);
+				data = nullptr;
+			}
 			if (data != nullptr)
 			{
+				if (lines > y)
+				{
+					u8 *newData = (u8 *)malloc(printerWidth * 4 * lines);
+					const u8 *end = newData + printerWidth * 4 * lines;
+					for (u8 *p = newData; p < end; p += printerWidth * 4 * y)
+						memcpy(p, data, std::min(printerWidth * 4 * y, (int)(end - p)));
+					stbi_image_free(data);
+					data = newData;
+				}
 				u32 *p = (u32 *)data;
 				for (u8 b : page)
 				{
