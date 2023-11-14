@@ -919,8 +919,8 @@ void DrawGunCrosshair(u8 port, int width, int height)
 	if (lightgun_params[port].offscreen || lightgun_params[port].colour == 0)
 		return;
 
-	float w = (float)LIGHTGUN_CROSSHAIR_SIZE * 4.f / 3.f / gl.ofbo.aspectRatio;
-	float h = (float)LIGHTGUN_CROSSHAIR_SIZE;
+	float w = (float)LIGHTGUN_CROSSHAIR_SIZE * 4.f / 3.f / gl.ofbo.aspectRatio * config::RenderResolution / 480.f;
+	float h = (float)LIGHTGUN_CROSSHAIR_SIZE * config::RenderResolution / 480.f;
 	auto [x, y] = getCrosshairPosition(port);
 	x -= w / 2;
 	y -= h / 2;
@@ -939,10 +939,8 @@ void DrawGunCrosshair(u8 port, int width, int height)
 		x1, y,  1.f, 1.f, 1.f,
 	};
 	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-	drawQuad(lightgunTextureId[port], false, false, vertices);
-
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	drawQuad(lightgunTextureId[port], false, false, vertices);
 }
 
 void termVmuLightgun()
