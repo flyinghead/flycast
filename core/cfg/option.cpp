@@ -107,9 +107,9 @@ Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 #ifdef VIDEO_ROUTING
-Option<bool> VideoRouting("rend.VideoRouting", false);
-Option<bool> VideoRoutingScale("rend.VideoRoutingScale", false);
-Option<int> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
+Option<bool, false> VideoRouting("rend.VideoRouting", false);
+Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);
+Option<int, false> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
 #endif
 
 // Misc
