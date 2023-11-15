@@ -495,7 +495,8 @@ bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& optio
 template bool OptionCheckbox(const char *name, config::Option<bool, true>& option, const char *help);
 template bool OptionCheckbox(const char *name, config::Option<bool, false>& option, const char *help);
 
-bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help, const char *format)
+template<bool PerGameOption>
+bool OptionSlider(const char *name, config::Option<int, PerGameOption>& option, int min, int max, const char *help, const char *format)
 {
 	bool valueChanged;
 	{
@@ -513,6 +514,8 @@ bool OptionSlider(const char *name, config::Option<int>& option, int min, int ma
 	}
 	return valueChanged;
 }
+template bool OptionSlider(const char *name, config::Option<int, true>& option, int min, int max, const char *help, const char *format);
+template bool OptionSlider(const char *name, config::Option<int, false>& option, int min, int max, const char *help, const char *format);
 
 bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help)
 {

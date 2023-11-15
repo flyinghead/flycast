@@ -373,6 +373,7 @@ extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;
 extern Option<bool, false> FetchBoxart;
 extern Option<bool, false> BoxartDisplayMode;
+extern Option<int, false> UIScaling;
 
 // Sound
 

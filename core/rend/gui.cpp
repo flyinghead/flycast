@@ -77,6 +77,7 @@ static double osd_message_end;
 static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
+static bool uiUserScaleUpdated;
 
 static int map_system = 0;
 static void reset_vmus();
@@ -184,6 +185,7 @@ void gui_initFonts()
     if (settings.display.width <= 640 || settings.display.height <= 480)
     	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
 #endif
+    settings.display.uiScale *= config::UIScaling / 100.f;
 	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
 		return;
 	uiScale = settings.display.uiScale;
@@ -1423,6 +1425,11 @@ static void gui_display_settings()
 
     if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
+    	if (uiUserScaleUpdated)
+    	{
+    		uiUserScaleUpdated = false;
+    		mainui_reinit();
+    	}
     	if (game_started)
     		gui_setState(GuiState::Commands);
     	else
@@ -1544,6 +1551,9 @@ static void gui_display_settings()
 					return true;
                 });
 #endif
+                ImGui::SameLine();
+    			if (ImGui::Button("Rescan Content"))
+    				scanner.refresh();
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
@@ -1599,6 +1609,17 @@ static void gui_display_settings()
 					"Display game cover art in the game list.");
 			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 					"Fetch cover images from TheGamesDB.net.");
+			if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
+				uiUserScaleUpdated = true;
+			if (uiUserScaleUpdated)
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Apply")) {
+					mainui_reinit();
+					uiUserScaleUpdated = false;
+				}
+			}
+
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
