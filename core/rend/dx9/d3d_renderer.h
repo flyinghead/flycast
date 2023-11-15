@@ -136,7 +136,7 @@ private:
 	void drawModVols(int first, int count);
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
 	void setBaseScissor();
-	void prepareRttRenderTarget(u32 texAddress);
+	void prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHeight);
 	void readRttRenderTarget(u32 texAddress);
 	void writeFramebufferToVRAM();
 
