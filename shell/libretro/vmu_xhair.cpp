@@ -112,6 +112,7 @@ u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3] =
 };
 
 lightgun_params_t lightgun_params[4];
+float lightgun_crosshair_size = (float)LIGHTGUN_CROSSHAIR_SIZE;
 
 std::pair<float, float> getCrosshairPosition(int playerNum)
 {
