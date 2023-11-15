@@ -112,9 +112,9 @@ const std::vector<OSDVertex>& GetOSDVertices()
 
 	DrawButton2(vjoy_pos[8], kcode[0] & DC_BTN_START);
 
-	DrawButton(vjoy_pos[9], lt[0]);
+	DrawButton(vjoy_pos[9], lt[0] >> 8);
 
-	DrawButton(vjoy_pos[10], rt[0]);
+	DrawButton(vjoy_pos[10], rt[0] >> 8);
 
 	DrawButton2(vjoy_pos[11], true);
 	DrawButton2(vjoy_pos[12], false);

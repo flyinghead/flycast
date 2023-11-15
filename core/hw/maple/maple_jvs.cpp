@@ -843,8 +843,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
-		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1] >> 8;
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1] >> 8;
 		limit_joystick_magnitude<64>(axis_x, axis_y);
 		return std::min(0xff, 0x80 - axis_x) << 8;
 	}
@@ -874,13 +874,13 @@ protected:
 		case 7:
 			return read_joystick_y(3);
 		case 8:
-			return mapleInputState[0].halfAxes[PJTI_R] << 8;
+			return mapleInputState[0].halfAxes[PJTI_R];
 		case 9:
-			return mapleInputState[1].halfAxes[PJTI_R] << 8;
+			return mapleInputState[1].halfAxes[PJTI_R];
 		case 10:
-			return mapleInputState[2].halfAxes[PJTI_R] << 8;
+			return mapleInputState[2].halfAxes[PJTI_R];
 		case 11:
-			return mapleInputState[3].halfAxes[PJTI_R] << 8;
+			return mapleInputState[3].halfAxes[PJTI_R];
 		default:
 			return 0x8000;
 		}
@@ -911,7 +911,7 @@ protected:
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
 		{
-			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 2;
+			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 10;
 					// Ball button
 			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
 					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
@@ -923,8 +923,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
-		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1] >> 8;
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1] >> 8;
 		limit_joystick_magnitude<48>(axis_x, axis_y);
 		return (axis_x + 128) << 8;
 	}
@@ -1790,10 +1790,10 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 {
 	u16 v;
 	if (player_axis >= 0 && player_axis < 4)
-		v = (mapleInputState[player_num].fullAxes[player_axis] + 128) << 8;
+		v = mapleInputState[player_num].fullAxes[player_axis] + 0x8000;
 	else
 		v = 0x8000;
-	return inverted ? 0xff00 - v : v;
+	return inverted ? 0xffff - v : v;
 }
 
 #define JVS_OUT(b) buffer_out[length++] = b
@@ -2052,15 +2052,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									if (axisDesc.type == Half)
 									{
 										if (axisDesc.axis == 4)
-											axis_value = mapleInputState[player_num].halfAxes[PJTI_R] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_R];
 										else if (axisDesc.axis == 5)
-											axis_value = mapleInputState[player_num].halfAxes[PJTI_L] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_L];
 										else
 											axis_value = 0;
 										if (axisDesc.inverted)
-											axis_value = 0xff00u - axis_value;
+											axis_value = 0xffffu - axis_value;
 										// this fixes kingrt66 immediate win
-										if (axis_value == 0x8000)
+										if (axis_value >= 0x8000 && axis_value < 0x8100)
 											axis_value = 0x8100;
 									}
 									else

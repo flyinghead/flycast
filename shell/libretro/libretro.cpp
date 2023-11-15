@@ -133,14 +133,14 @@ static bool vmuScreenSettingsShown = true;
 static bool lightgunSettingsShown = true;
 
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
-u8 rt[4];
-u8 lt[4];
-u8 lt2[4];
-u8 rt2[4];
+u16 rt[4];
+u16 lt[4];
+u16 lt2[4];
+u16 rt2[4];
 u32 vks[4];
-s8 joyx[4], joyy[4];
-s8 joyrx[4], joyry[4];
-s8 joy3x[4], joy3y[4];
+s16 joyx[4], joyy[4];
+s16 joyrx[4], joyry[4];
+s16 joy3x[4], joy3y[4];
 // Mouse buttons
 // bit 0: Button C
 // bit 1: Right button (B)
@@ -2371,8 +2371,8 @@ static uint32_t get_time_ms()
 static void get_analog_stick( retro_input_state_t input_state_cb,
                        int player_index,
                        int stick,
-                       s8* p_analog_x,
-                       s8* p_analog_y )
+                       s16* p_analog_x,
+                       s16* p_analog_y )
 {
    int analog_x, analog_y;
    analog_x = input_state_cb( player_index, RETRO_DEVICE_ANALOG, stick, RETRO_DEVICE_ID_ANALOG_X );
@@ -2410,8 +2410,8 @@ static void get_analog_stick( retro_input_state_t input_state_cb,
    }
 
    // output
-   *p_analog_x = (s8)(analog_x >> 8);
-   *p_analog_y = (s8)(analog_y >> 8);
+   *p_analog_x = analog_x;
+   *p_analog_y = analog_y;
 }
 
 static uint16_t apply_trigger_deadzone( uint16_t input )
@@ -2707,8 +2707,8 @@ static void UpdateInputStateNaomi(u32 port)
 
 			get_analog_stick(input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &joyx[port], &joyy[port] );
 			get_analog_stick(input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &joyrx[port], &joyry[port]);
-			lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2) / 128;
-			rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2) / 128;
+			lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2) * 2;
+			rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2) * 2;
 
 			if (NaomiGameInputs != NULL)
 			{
@@ -2717,24 +2717,24 @@ static void UpdateInputStateNaomi(u32 port)
 					if (NaomiGameInputs->axes[i].type == Half)
 					{
 						/* Note:
-						 * - Analog stick axes have a range of [-128, 127]
-						 * - Analog triggers have a range of [0, 255] */
+						 * - Analog stick axes have a range of [-32768, 32767]
+						 * - Analog triggers have a range of [0, 65535] */
 						switch (NaomiGameInputs->axes[i].axis)
 						{
 						case 0:
-							/* Left stick X: [-128, 127] */
+							/* Left stick X: [-32768, 32767] */
 							joyx[port] = std::max((int)joyx[port], 0) * 2;
 							break;
 						case 1:
-							/* Left stick Y: [-128, 127] */
+							/* Left stick Y: [-32768, 32767] */
 							joyy[port] = std::max((int)joyy[port], 0) * 2;
 							break;
 						case 2:
-							/* Right stick X: [-128, 127] */
+							/* Right stick X: [-32768, 32767] */
 							joyrx[port] = std::max((int)joyrx[port], 0) * 2;
 							break;
 						case 3:
-							/* Right stick Y: [-128, 127] */
+							/* Right stick Y: [-32768, 32767] */
 							joyry[port] = std::max((int)joyry[port], 0) * 2;
 						break;
 							/* Case 4/5 correspond to right/left trigger.
@@ -2856,20 +2856,20 @@ static void UpdateInputState(u32 port)
 			{
 				// -- digital left trigger
 				if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2))
-					lt[port]=0xFF;
+					lt[port] = 0xFFFF;
 				else
-					lt[port]=0;
+					lt[port] = 0;
 				// -- digital right trigger
 				if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2))
-					rt[port]=0xFF;
+					rt[port] = 0xFFFF;
 				else
-					rt[port]=0;
+					rt[port] = 0;
 			}
 			else
 			{
 				// -- analog triggers
-				lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
-				rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+				lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) * 2;
+				rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) * 2;
 			}
 		}
 		break;
@@ -3113,10 +3113,10 @@ static void UpdateInputState(u32 port)
 			// If we wanted to apply deadzone (which we don't want for maracas), we could use:
 			// get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );
 			// get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &(joyrx[port]), &(joyry[port]) );
-			joyx [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X ) >> 8;
-   			joyy [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y ) >> 8;
-			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X ) >> 8;
-   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y ) >> 8;
+			joyx [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X );
+   			joyy [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y );
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X );
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y );
 
 			// unused inputs
 			lt[port]=0;
@@ -3137,11 +3137,11 @@ static void UpdateInputState(u32 port)
 			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START );
 
 			// analog axes
-			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                   // A3, A4: Analog keys (XY)
-			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  ) >> 8; // A5: Acc. sensor X
-   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  ) >> 8; // A6: Acc. sensor Y
-			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) >> 7; // A2: Acc. sensor Z
-			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) >> 7; // A1: Analog lever
+			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                  // A3, A4: Analog keys (XY)
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  );     // A5: Acc. sensor X
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  );     // A6: Acc. sensor Y
+			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) * 2; // A2: Acc. sensor Z
+			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) * 2; // A1: Analog lever
 		}
 		break;
 
@@ -3183,12 +3183,12 @@ static void UpdateInputState(u32 port)
 			setDeviceButtonStateDirect(ret, port, RETRO_DEVICE_ID_JOYPAD_START, DC_BTN_START  );
 
 			// analog axes
-			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                   // A3: Analog key;
-			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) >> 7; // A1: Analog lever
-			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) >> 7; // A2: Analog lever
-			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  ) >> 8; // A5: Accelerator?
-   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  ) >> 8; // A6: Brake?
-			joyy [port] = 0x80;                                                                                                    // A4: 80h
+			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT,  &(joyx [port]), &(joyy [port]) );                  // A3: Analog key;
+			rt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 ) * 2; // A1: Analog lever
+			lt   [port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 ) * 2; // A2: Analog lever
+			joyrx[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_X  );     // A5: Accelerator?
+   			joyry[port] = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,  RETRO_DEVICE_ID_ANALOG_Y  );     // A6: Brake?
+			joyy [port] = 0;                                                                                                      // A4: unused
 		}
 		break;
 

@@ -401,13 +401,13 @@ static void gui_newFrame()
 	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
 	
 	float analog;
-	analog = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
+	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
-	analog = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
+	analog = joyx[0] > 0 ? (float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickRight, analog > 0.1f, analog);
-	analog = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
+	analog = joyy[0] < 0 ? -(float)joyy[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickUp, analog > 0.1f, analog);
-	analog = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
+	analog = joyy[0] > 0 ? (float)joyy[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickDown, analog > 0.1f, analog);
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);

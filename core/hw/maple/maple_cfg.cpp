@@ -13,9 +13,9 @@ extern std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
 
 void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
-static u8 GetBtFromSgn(s8 val)
+static u8 GetBtFromSgn(s16 val)
 {
-	return val+128;
+	return (val + 32768) >> 8;
 }
 
 u32 awave_button_mapping[32] = {
@@ -81,10 +81,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->joy[PJAI_Y2] = GetBtFromSgn(inputState.fullAxes[PJAI_Y2]);
 		pjs->joy[PJAI_X3] = GetBtFromSgn(inputState.fullAxes[PJAI_X3]);
 		pjs->joy[PJAI_Y3] = GetBtFromSgn(inputState.fullAxes[PJAI_Y3]);
-		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
-		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
-		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2];
-		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2];
+		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R] >> 8;
+		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L] >> 8;
+		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2] >> 8;
+		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2] >> 8;
 	}
 	else if (settings.platform.isAtomiswave())
 	{
@@ -131,10 +131,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 4:
-							pjs->joy[axis] = inputState.halfAxes[PJTI_R];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R] >> 8;
 							break;
 						case 5:
-							pjs->joy[axis] = inputState.halfAxes[PJTI_L];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L] >> 8;
 							break;
 						default:
 							pjs->joy[axis] = 0;
@@ -154,8 +154,8 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		{
 			pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
 			pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
-			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R];
-			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L];
+			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R] >> 8;
+			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L] >> 8;
 		}
 	}
 }

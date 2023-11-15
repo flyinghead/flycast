@@ -33,17 +33,17 @@
 
 // Gamepads
 u32 kcode[4] = { ~0u, ~0u, ~0u, ~0u };
-s8 joyx[4];
-s8 joyy[4];
-s8 joyrx[4];
-s8 joyry[4];
-u8 rt[4];
-u8 lt[4];
-s8 joy3x[4];
-s8 joy3y[4];
+s16 joyx[4];
+s16 joyy[4];
+s16 joyrx[4];
+s16 joyry[4];
+s16 joy3x[4];
+s16 joy3y[4];
+u16 rt[4];
+u16 lt[4];
+u16 lt2[4];
+u16 rt2[4];
 // Keyboards
-u8 lt2[4];
-u8 rt2[4];
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
@@ -101,19 +101,19 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case DC_AXIS_LT:
 			if (port >= 0)
-				lt[port] = pressed ? 255 : 0;
+				lt[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_RT:
 			if (port >= 0)
-				rt[port] = pressed ? 255 : 0;
+				rt[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_LT2:
 			if (port >= 0)
-				lt2[port] = pressed ? 255 : 0;
+				lt2[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_RT2:
 			if (port >= 0)
-				rt2[port] = pressed ? 255 : 0;
+				rt2[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
@@ -202,27 +202,27 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("T-AXIS %d Mapped to %d -> %d\n", key, value, std::min(std::abs(v) >> 7, 255));
 			if (key == DC_AXIS_LT)
-				lt[port] = std::min(std::abs(v) >> 7, 255);
+				lt[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_RT)
-				rt[port] = std::min(std::abs(v) >> 7, 255);
+				rt[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_LT2)
-				lt2[port] = std::min(std::abs(v) >> 7, 255);
+				lt2[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_RT2)
-				rt2[port] = std::min(std::abs(v) >> 7, 255);
+				rt2[port] = std::min(std::abs(v) << 1, 0xffff);
 			else
 				return false;
 		}
 		else if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_STICKS) // Analog axes
 		{
 			//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
-			s8 *this_axis;
-			s8 *other_axis;
+			s16 *this_axis;
+			s16 *other_axis;
 			int axisDirection = -1;
 			switch (key)
 			{
 			case DC_AXIS_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS_LEFT:
 				this_axis = &joyx[port];
 				other_axis = &joyy[port];
@@ -230,7 +230,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			case DC_AXIS_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS_UP:
 				this_axis = &joyy[port];
 				other_axis = &joyx[port];
@@ -238,7 +238,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			case DC_AXIS2_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS2_LEFT:
 				this_axis = &joyrx[port];
 				other_axis = &joyry[port];
@@ -246,7 +246,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			case DC_AXIS2_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS2_UP:
 				this_axis = &joyry[port];
 				other_axis = &joyrx[port];
@@ -254,7 +254,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			case DC_AXIS3_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS3_LEFT:
 				this_axis = &joy3x[port];
 				other_axis = &joy3y[port];
@@ -262,7 +262,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			case DC_AXIS3_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS3_UP:
 				this_axis = &joy3y[port];
 				other_axis = &joy3x[port];
@@ -283,8 +283,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
-			v = std::min(127, std::abs(v >> 8));
-			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
+			v = std::min(32767, std::abs(v));
+			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 32768.f * 32768.f)
 			{
 				*this_axis = 0;
 				*other_axis = 0;
@@ -297,7 +297,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
 			int threshold = 16384;
-			if ( code == leftTrigger || code == rightTrigger )
+			if (code == leftTrigger || code == rightTrigger )
 				threshold = 100;
 				
 			if (std::abs(v) < threshold)

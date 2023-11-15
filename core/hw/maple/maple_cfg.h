@@ -91,8 +91,8 @@ struct MapleInputState
 	}
 
 	u32 kcode = ~0;
-	u8 halfAxes[PJTI_Count];		// LT, RT, 2, 3
-	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y, Other X, Other Y
+	u16 halfAxes[PJTI_Count];		// LT, RT, 2, 3
+	int16_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y, Other X, Other Y
 	u8 mouseButtons = ~0;
 	struct {
 		int x = -1;

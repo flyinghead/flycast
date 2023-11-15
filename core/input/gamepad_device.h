@@ -144,7 +144,7 @@ private:
 	};
 
 	template<DreamcastKey DcNegDir, DigAnalog NegDir, DigAnalog PosDir>
-	void buttonToAnalogInput(int port, DreamcastKey key, bool pressed, s8& joystick)
+	void buttonToAnalogInput(int port, DreamcastKey key, bool pressed, s16& joystick)
 	{
 		if (port < 0)
 			return;
@@ -157,9 +157,9 @@ private:
 		if (socd == 0 || socd == (NegDir | PosDir))
 			joystick = 0;
 		else if (socd == NegDir)
-			joystick = -128;
+			joystick = -32768;
 		else
-			joystick = 127;
+			joystick = 32767;
 
 	}
 
@@ -184,7 +184,7 @@ void replay_input();
 #endif
 
 extern u32 kcode[4];
-extern u8 rt[4], lt[4], rt2[4], lt2[4];
-extern s8 joyx[4], joyy[4];
-extern s8 joyrx[4], joyry[4];
-extern s8 joy3x[4], joy3y[4];
+extern u16 rt[4], lt[4], rt2[4], lt2[4];
+extern s16 joyx[4], joyy[4];
+extern s16 joyrx[4], joyry[4];
+extern s16 joy3x[4], joy3y[4];
