@@ -456,6 +456,7 @@ extern Option<bool> PerStripSorting;
 extern Option<bool> DelayFrameSwapping;	// Delay swapping frame until FB_R_SOF matches FB_W_SOF
 extern Option<bool> WidescreenGameHacks;
 extern std::array<Option<int>, 4> CrosshairColor;
+extern Option<int> CrosshairSize;
 extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more

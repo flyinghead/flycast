@@ -1700,6 +1700,7 @@ static void gui_display_settings()
 			ImGui::Spacing();
 			header("Dreamcast Devices");
 		    {
+				bool is_there_any_xhair = false;
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
@@ -1790,9 +1791,14 @@ static void gui_display_settings()
 								config::CrosshairColor[bus] = 0;
 							}
 						}
+						is_there_any_xhair |= enabled;
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
+				}
+				{
+					DisabledScope scope(!is_there_any_xhair);
+					OptionSlider("Crosshair Size", config::CrosshairSize, 10, 100);
 				}
 				OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
 		    }

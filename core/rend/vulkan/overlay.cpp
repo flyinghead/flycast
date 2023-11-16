@@ -214,8 +214,8 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			float h = lightgun_crosshair_size * scaling;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float w = XHAIR_WIDTH * scaling;
-			float h = XHAIR_HEIGHT * scaling;
+			float w = config::CrosshairSize * scaling;
+			float h = config::CrosshairSize * scaling;
 #endif
 			x -= w / 2;
 			y -= h / 2;

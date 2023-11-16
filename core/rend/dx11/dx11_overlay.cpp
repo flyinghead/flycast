@@ -176,7 +176,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			float halfHeight = halfWidth;
 #endif
 			D3D11_VIEWPORT vp{};

@@ -48,9 +48,6 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 const u32 *getCrosshairTextureData();
 std::pair<float, float> getCrosshairPosition(int playerNum);
 
-constexpr int XHAIR_WIDTH = 40;
-constexpr int XHAIR_HEIGHT = 40;
-
 static inline bool crosshairsNeeded()
 {
 	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0

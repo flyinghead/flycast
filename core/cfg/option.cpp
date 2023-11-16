@@ -93,6 +93,7 @@ std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor3"),
 	Option<int>("rend.CrossHairColor4"),
 };
+Option<int> CrosshairSize("rend.CrosshairSize", 40);
 Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
