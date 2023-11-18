@@ -172,11 +172,11 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 			auto [x, y] = getCrosshairPosition(i);
 #ifdef LIBRETRO
-			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
-			float halfHeight = LIGHTGUN_CROSSHAIR_SIZE / 2.f * config::RenderResolution / 480.f;
+			float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
+			float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			float halfHeight = halfWidth;
 #endif
 			D3D11_VIEWPORT vp{};

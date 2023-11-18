@@ -609,6 +609,9 @@ static bool set_variable_visibility(void)
 	{
 		option_display.visible = lightgunSettingsShown;
 
+		option_display.key = CORE_OPTION_NAME "_lightgun_crosshair_size_scaling";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
 		for (unsigned i = 0; i < 4; i++)
 		{
 			char key[256];
@@ -910,6 +913,12 @@ static void update_variables(bool first_startup)
 	}
 	else
 		allow_service_buttons = false;
+
+	var.key = CORE_OPTION_NAME "_lightgun_crosshair_size_scaling";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		lightgun_crosshair_size = (float)LIGHTGUN_CROSSHAIR_SIZE * std::stof(var.value) / 100.f;
+	else
+		lightgun_crosshair_size = (float)LIGHTGUN_CROSSHAIR_SIZE;
 
 	char key[256];
 	key[0] = '\0';

@@ -111,3 +111,4 @@ struct lightgun_params_t {
 extern u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3];
 extern u8 lightgun_img_crosshair[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE];
 extern lightgun_params_t lightgun_params[4] ;
+extern float lightgun_crosshair_size;
