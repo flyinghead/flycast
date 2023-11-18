@@ -27,6 +27,67 @@
 
 namespace card_reader {
 
+class CardReaderWriter
+{
+public:
+	virtual ~CardReaderWriter() = default;
+
+	void insertCard()
+	{
+		cardInserted = loadCard();
+		if (cardInserted)
+			INFO_LOG(NAOMI, "Card inserted");
+	}
+
+protected:
+	virtual bool loadCard() = 0;
+
+	bool loadCard(u8 *cardData, u32 len)
+	{
+		std::string path = hostfs::getArcadeFlashPath() + ".card";
+		FILE *fp = nowide::fopen(path.c_str(), "rb");
+		if (fp == nullptr)
+			return false;
+
+		INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
+		if (fread(cardData, 1, len, fp) != len)
+			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
+		fclose(fp);
+
+		return true;
+	}
+
+	void saveCard(const u8 *cardData, u32 len)
+	{
+		std::string path = hostfs::getArcadeFlashPath() + ".card";
+		FILE *fp = nowide::fopen(path.c_str(), "wb");
+		if (fp == nullptr)
+		{
+			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
+			return;
+		}
+		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
+		if (fwrite(cardData, 1, len, fp) != len)
+			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
+		fclose(fp);
+	}
+
+	static u8 calcCrc(u8 *data, u32 len)
+	{
+		u32 crc = 0;
+		for (u32 i = 0; i < len; i++)
+			crc ^= data[i];
+		return crc;
+	}
+
+	bool cardInserted = false;
+
+	static constexpr u8 STX = 2;
+	static constexpr u8 ETX = 3;
+	static constexpr u8 ENQ = 5;
+	static constexpr u8 ACK = 6;
+};
+
 /*
 	Sanwa CRP-1231BR-10 card reader/writer protocol (from my good friend Metallic)
 	used in InitialD and Derby Owners Club
@@ -64,12 +125,12 @@ namespace card_reader {
     Copyright (C) 2022-2023 tugpoat (https://github.com/tugpoat)
 */
 
-class SanwaCRP1231BR : public SerialPort::Pipe
+class SanwaCRP1231BR : public CardReaderWriter, public SerialPort::Pipe
 {
 public:
 	void write(u8 b) override
 	{
-		if (inBufferIdx == 0 && b == 5)
+		if (inBufferIdx == 0 && b == ENQ)
 		{
 			DEBUG_LOG(NAOMI, "Received RQ(5)");
 			handleCommand();
@@ -78,7 +139,7 @@ public:
 		inBuffer[inBufferIdx++] = b;
 		if (inBufferIdx >= 3)
 		{
-			if (inBuffer[0] != 2)
+			if (inBuffer[0] != STX)
 			{
 				INFO_LOG(NAOMI, "Unexpected cmd start byte %x", inBuffer[0]);
 				inBufferIdx = 0;
@@ -102,7 +163,7 @@ public:
 				return;
 			}
 			DEBUG_LOG(NAOMI, "Received cmd %x len %d", inBuffer[2], inBuffer[1]);
-			outBuffer[outBufferLen++] = 6;	// ACK
+			outBuffer[outBufferLen++] = ACK;
 			rxCommandLen = inBufferIdx - 3;
 			memcpy(rxCommand, inBuffer + 2, rxCommandLen);
 			inBufferIdx = 0;
@@ -121,13 +182,6 @@ public:
 
 	int available() override {
 		return outBufferLen - outBufferIdx;
-	}
-
-	void insertCard()
-	{
-		cardInserted = loadCard(cardData, sizeof(cardData));
-		if (cardInserted)
-			INFO_LOG(NAOMI, "Card inserted");
 	}
 
 protected:
@@ -149,6 +203,10 @@ protected:
 		CARD_NEW            = 0xB0,
 	};
 
+	bool loadCard() override {
+		return CardReaderWriter::loadCard(cardData, sizeof(cardData));
+	}
+
 	virtual u8 getStatus1()
 	{
 		return ((doorOpen ? 2 : 1) << 6) | 0x20 | (cardInserted ? 0x18 : 0);
@@ -158,7 +216,7 @@ protected:
 	{
 		if (rxCommandLen == 0)
 			return;
-		outBuffer[outBufferLen++] = 2;
+		outBuffer[outBufferLen++] = STX;
 		u32 crcIdx = outBufferLen;
 		u8 status1 = getStatus1();
 		u8 status2 = '0';
@@ -242,7 +300,7 @@ protected:
 			WARN_LOG(NAOMI, "Unknown command %x", rxCommand[0]);
 			break;
 		}
-		outBuffer[outBufferLen++] = 6;
+		outBuffer[outBufferLen++] = ACK;
 		outBuffer[outBufferLen++] = rxCommand[0];
 		outBuffer[outBufferLen++] = status1;
 		outBuffer[outBufferLen++] = status2;
@@ -286,47 +344,9 @@ protected:
 			outBufferLen += size;
 			outBuffer[crcIdx] += size;
 		}
-		outBuffer[outBufferLen++] = 3;
+		outBuffer[outBufferLen++] = ETX;
 		outBuffer[outBufferLen] = calcCrc(&outBuffer[crcIdx], outBufferLen - crcIdx);
 		outBufferLen++;
-	}
-
-	u8 calcCrc(u8 *data, u32 len)
-	{
-		u32 crc = 0;
-		for (u32 i = 0; i < len; i++)
-			crc ^= data[i];
-		return crc;
-	}
-
-	bool loadCard(u8 *cardData, u32 len)
-	{
-		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "rb");
-		if (fp == nullptr)
-			return false;
-
-		DEBUG_LOG(NAOMI, "Loading card file from %s", path.c_str());
-		if (fread(cardData, 1, len, fp) != len)
-			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
-		fclose(fp);
-
-		return true;
-	}
-
-	void saveCard(const u8 *cardData, u32 len)
-	{
-		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "wb");
-		if (fp == nullptr)
-		{
-			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
-			return;
-		}
-		DEBUG_LOG(NAOMI, "Saving card file to %s", path.c_str());
-		if (fwrite(cardData, 1, len, fp) != len)
-			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-		fclose(fp);
 	}
 
 	u8 inBuffer[256];
@@ -396,7 +416,254 @@ public:
 	}
 };
 
-static std::unique_ptr<SanwaCRP1231BR> cardReader;
+/*
+	Club Kart - Sanwa CR-1231R
+
+>>>	SEND CMD: [START 02][CMD char1][CMD char2]{parameter char}{data}[STOP 03][CRC]
+<<<	RECV ACK: [OK 06] or [ERR 15]
+<<<	RECV STX: [START 02]{REPLY}{data}[STOP 03][CRC]
+	note: it seems reply packet sent only after command fully completed or error happened
+
+	REPLY: 2chars
+		OK - RESULT_OK
+		O1 - RESULT_CANCEL_INSERT
+		N0 - ERROR_CONNECT / Unknown Error
+		N1 - ERROR_COMMAND / Connection Error
+		N2 - ERROR_MOTOR / Mechanic Error 1
+		N3 - ERROR_HEAD_UPDOWN / Mechanic Error 2
+		N4 - ERROR_CARD_STUCK / Card Stuffed
+		N5 - ERROR_VERIFY / OK ????
+		N6 - ERROR_HEAD_TEMP / Mechanic Error 3
+		N7 - ERROR_CARD_EMPTY / Card Empty
+		N8 - ERROR_CARD_LOAD / Draw Card Error
+		N9 - ERROR_NO_HOPPER / Card Empty
+		NA - ERROR_CARD_PRESENT
+		NB - ERROR_CARD_EJECT
+		NC - ERROR_CANT_CANCEL
+		ND - ERROR_NOT_INSERT
+		NE - ERROR_NOT_WAIT
+		NF - ERROR_BAD_CARD
+
+	CMD SS REPLY: 6 ASCII characters
+		5chars '0'/'1' - Card Sensors Status, MSB first
+			0
+			10 18
+			1C C E 8 7 3
+			other
+		1char '0'/'1'  - Dispenser Status
+			'0' - Empty
+			'1' - Full
+
+Commands:
+IN   - init
+CA   - cancel command
+OT0  - eject card
+HI   - get new card from dispenser
+CL   - cleaning
+RT5  - unknown
+RL   - read data/load card into reader
+WL   - write data (followed by 69 bytes of data)
+SS   - get status
+
+reply for commands is simple
+06
+02 'O' 'K' 03 crc
+except
+- RL command, which have 69 bytes of card data after OK (or no any reply if no card insterted)
+- SS command, which is
+06
+02 '0/1' '0/1' '0/1' '0/1' '0/1' '0/1' 03 crc
+there 0/1 - encoded in char binary value described earlier
+ */
+class ClubKartCardReader : public CardReaderWriter, SerialPort::Pipe
+{
+public:
+	ClubKartCardReader() {
+		SCIFSerialPort::Instance().setPipe(this);
+	}
+	~ClubKartCardReader() {
+		SCIFSerialPort::Instance().setPipe(nullptr);
+	}
+
+	void write(u8 data) override
+	{
+		inBuffer[inBufferIdx++] = data;
+		if (inBufferIdx == 5)
+		{
+			if ((inBuffer[1] != 'W' || inBuffer[2] != 'L') && inBuffer[2] != 'T')
+			{
+				handleCommand();
+				inBufferIdx = 0;
+			}
+		}
+		else if (inBufferIdx == 6 && inBuffer[2] == 'T') // OT0, RT5
+		{
+			handleCommand();
+			inBufferIdx = 0;
+		}
+		else if (inBufferIdx == TRACK_SIZE + 5) // WL
+		{
+			handleCommand();
+			inBufferIdx = 0;
+		}
+	}
+
+	int available() override {
+		return outBufferLen - outBufferIdx;
+	}
+
+	u8 read() override
+	{
+		if (outBufferIdx >= outBufferLen)
+			return 0;
+		u8 b = outBuffer[outBufferIdx++];
+		if (outBufferIdx == outBufferLen)
+			outBufferIdx = outBufferLen = 0;
+		return b;
+	}
+
+private:
+	enum Commands {
+		CARD_INIT,
+		CARD_CANCEL_CMD,
+		CARD_EJECT,
+		CARD_NEW,
+		CARD_CLEAN,
+		CARD_RT5,
+		CARD_READ,
+		CARD_WRITE,
+		CARD_STATUS,
+
+		CARD_MAX
+	};
+	static const u8 CommandBytes[][2];
+
+	bool loadCard() override
+	{
+		bool rc = CardReaderWriter::loadCard(cardData, sizeof(cardData));
+		if (rc && readPending)
+		{
+			sendReply(CARD_READ);
+			readPending = false;
+		}
+		return rc;
+	}
+
+	void handleCommand()
+	{
+		readPending = false;
+		int cmd;
+		for (cmd = 0; cmd < CARD_MAX; cmd++)
+			if (inBuffer[1] == CommandBytes[cmd][0] && inBuffer[2] == CommandBytes[cmd][1])
+				break;
+		if (cmd == CARD_MAX)
+		{
+			WARN_LOG(NAOMI, "Unhandled command '%c%c'", inBuffer[1], inBuffer[2]);
+			return;
+		}
+		u32 crc = calcCrc(&inBuffer[1], inBufferIdx - 2);
+		if (crc != inBuffer[inBufferIdx - 1])
+		{
+			WARN_LOG(NAOMI, "Wrong crc: expected %x got %x", crc, inBuffer[inBufferIdx - 1]);
+			return;
+		}
+		outBuffer[outBufferLen++] = ACK;
+		switch (cmd)
+		{
+		case CARD_WRITE:
+			INFO_LOG(NAOMI, "Card write");
+			memcpy(cardData, &inBuffer[3], sizeof(cardData));
+			saveCard(cardData, sizeof(cardData));
+			break;
+		case CARD_READ:
+			INFO_LOG(NAOMI, "Card read");
+			if (!cardInserted) {
+				readPending = true;
+				return;
+			}
+			break;
+		case CARD_EJECT:
+			INFO_LOG(NAOMI, "Card eject");
+			cardInserted = false;
+			break;
+		case CARD_NEW:
+			INFO_LOG(NAOMI, "New card");
+			cardInserted = true;
+			break;
+		case CARD_INIT:
+			DEBUG_LOG(NAOMI, "Card init");
+			break;
+		case CARD_CANCEL_CMD:
+			DEBUG_LOG(NAOMI, "Cancel cmd");
+			break;
+		case CARD_CLEAN:
+			DEBUG_LOG(NAOMI, "Card clean");
+			break;
+		case CARD_RT5:
+			DEBUG_LOG(NAOMI, "Card RT5");
+			break;
+		case CARD_STATUS:
+			DEBUG_LOG(NAOMI, "Card status (cardInserted %d)", cardInserted);
+			break;
+		}
+		sendReply(cmd);
+	}
+
+	void sendReply(int cmd)
+	{
+		outBuffer[outBufferLen++] = STX;
+		u32 crcIndex = outBufferLen;
+		if (cmd == CARD_STATUS)
+		{
+			outBuffer[outBufferLen++] = '0';
+			outBuffer[outBufferLen++] = '0';
+			outBuffer[outBufferLen++] = '0';
+			outBuffer[outBufferLen++] = cardInserted ? '1' : '0';
+			outBuffer[outBufferLen++] = cardInserted ? '1' : '0';
+			outBuffer[outBufferLen++] = '1'; // dispenser full
+		}
+		else
+		{
+			outBuffer[outBufferLen++] = 'O';
+			outBuffer[outBufferLen++] = 'K';
+			if (cmd == CARD_READ)
+			{
+				memcpy(&outBuffer[outBufferLen], cardData, sizeof(cardData));
+				outBufferLen += sizeof(cardData);
+			}
+		}
+		outBuffer[outBufferLen++] = ETX;
+		outBuffer[outBufferLen] = calcCrc(&outBuffer[crcIndex], outBufferLen - crcIndex);
+		outBufferLen++;
+	}
+
+	static constexpr u32 TRACK_SIZE = 0x45;
+	u8 cardData[TRACK_SIZE];
+
+	u8 inBuffer[256];
+	u32 inBufferIdx = 0;
+
+	u8 outBuffer[256];
+	u32 outBufferIdx = 0;
+	u32 outBufferLen = 0;
+
+	bool readPending = false;
+};
+
+const u8 ClubKartCardReader::CommandBytes[][2]
+{
+	{ 'I', 'N' },	// init
+	{ 'C', 'A' },	// cancel command
+	{ 'O', 'T' },	// ...0  - eject card
+	{ 'H', 'I' },	// get new card from dispenser
+	{ 'C', 'L' },	// cleaning
+	{ 'R', 'T' },	// ...5  - unknown
+	{ 'R', 'L' },	// read data/load card into reader
+	{ 'W', 'L' },	// write data (followed by 69 bytes of data)
+	{ 'S', 'S' },	// get status
+};
+
+static std::unique_ptr<CardReaderWriter> cardReader;
 
 void initdInit() {
 	term();
@@ -410,6 +677,11 @@ void derbyInit()
 		cardReader = std::make_unique<DerbyBRCardReader>();
 	else
 		cardReader = std::make_unique<DerbyLRCardReader>();
+}
+
+void clubkInit() {
+	term();
+	cardReader = std::make_unique<ClubKartCardReader>();
 }
 
 void term() {

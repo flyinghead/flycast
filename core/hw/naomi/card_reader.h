@@ -23,6 +23,7 @@ namespace card_reader {
 
 void initdInit();
 void derbyInit();
+void clubkInit();
 void term();
 
 void barcodeInit();

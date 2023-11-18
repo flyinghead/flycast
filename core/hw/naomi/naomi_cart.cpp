@@ -660,6 +660,9 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		{
 			if (settings.naomi.drivingSimSlave == 0)
 				initMidiForceFeedback();
+			if (romName == "clubkrt" || romName == "clubkrto"
+					|| romName == "clubkrta" || romName == "clubkrtc")
+				card_reader::clubkInit();
 		}
 		else if (gameId == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
 				|| gameId == "TOUCH DE ZUNO (JAPAN)")

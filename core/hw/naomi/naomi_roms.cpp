@@ -7314,7 +7314,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
 	{
     	"clubkrta",
@@ -7341,7 +7341,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkrtc",
@@ -7368,7 +7368,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkrt",
@@ -7395,7 +7395,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkprz",
