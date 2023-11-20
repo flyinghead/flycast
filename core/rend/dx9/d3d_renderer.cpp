@@ -876,7 +876,7 @@ void D3DRenderer::setBaseScissor()
 	}
 }
 
-void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
+void D3DRenderer::prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHeight)
 {
 	u32 fbw = pvrrc.getFramebufferWidth();
 	u32 fbh = pvrrc.getFramebufferHeight();
@@ -916,6 +916,8 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	viewport.MinZ = 0;
 	viewport.MaxZ = 1;
 	device->SetViewport(&viewport);
+	vpWidth = fbw;
+	vpHeight = fbh;
 }
 
 void D3DRenderer::readRttRenderTarget(u32 texAddress)
@@ -982,9 +984,10 @@ bool D3DRenderer::Render()
 	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
 	verify(rc);
 	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
+	int vpWidth, vpHeight;
 	if (is_rtt)
 	{
-		prepareRttRenderTarget(texAddress);
+		prepareRttRenderTarget(texAddress, vpWidth, vpHeight);
 	}
 	else
 	{
@@ -1001,13 +1004,15 @@ bool D3DRenderer::Render()
 		viewport.MaxZ = 1;
 		rc = SUCCEEDED(device->SetViewport(&viewport));
 		verify(rc);
+		vpWidth = width;
+		vpHeight = height;
 	}
 	rc = SUCCEEDED(device->SetDepthStencilSurface(depthSurface));
 	verify(rc);
 	matrices.CalcMatrices(&pvrrc, width, height);
 	// infamous DX9 half-pixel viewport shift
 	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
-	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / width, 1.f / height, 0)) * matrices.GetNormalMatrix();
+	glm::mat4 normalMat = glm::translate(glm::vec3(1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
 	rc = SUCCEEDED(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
 	verify(rc);
 
@@ -1124,6 +1129,7 @@ bool D3DRenderer::Render()
 	devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
 	devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	devCache.SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
 	devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 	devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 	devCache.SetRenderState(D3DRS_CLIPPING, FALSE);

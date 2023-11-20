@@ -28,14 +28,17 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
 	{
+#ifndef LIBRETRO
 		float vmu_padding = 8.f * settings.display.uiScale;
 		float vmu_height = 70.f * settings.display.uiScale;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
-#ifndef LIBRETRO
 		const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		deviceContext->OMSetBlendState(blendStates.getState(true, 8, 8), blend_factor, 0xffffffff);
 #else
+		float vmu_padding = 8.f * config::RenderResolution / 480.f;
+		float vmu_height = 32.f * config::RenderResolution / 480.f;
+		float vmu_width = 48.f * config::RenderResolution / 480.f;
 		deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
 #endif
 
@@ -169,11 +172,11 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 			auto [x, y] = getCrosshairPosition(i);
 #ifdef LIBRETRO
-			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f / config::ScreenStretching * 100.f;
-			float halfHeight = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
+			float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
+			float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			float halfHeight = halfWidth;
 #endif
 			D3D11_VIEWPORT vp{};

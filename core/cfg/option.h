@@ -461,6 +461,7 @@ extern Option<bool> PerStripSorting;
 extern Option<bool> DelayFrameSwapping;	// Delay swapping frame until FB_R_SOF matches FB_W_SOF
 extern Option<bool> WidescreenGameHacks;
 extern std::array<Option<int>, 4> CrosshairColor;
+extern Option<int> CrosshairSize;
 extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
@@ -474,9 +475,9 @@ extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
 #ifdef VIDEO_ROUTING
-extern Option<bool> VideoRouting;
-extern Option<bool> VideoRoutingScale;
-extern Option<int> VideoRoutingVRes;
+extern Option<bool, false> VideoRouting;
+extern Option<bool, false> VideoRoutingScale;
+extern Option<int, false> VideoRoutingVRes;
 #endif
 
 // Misc

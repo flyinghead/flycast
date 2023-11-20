@@ -11085,7 +11085,7 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CS "Rychlé Načítání GD-ROM (nepřesné)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CS "Zrychluje načítání GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CS NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CS "Povoluje 32MB RAM Mod pro Dreamcast. Může ovlivnit kompatibilitu"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CS "Podtaktování/přetaktování procesoru SH4"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CS "Změňte takt hlavního procesoru SH4 z výchozích 200 MHz. Podtaktování může pomoci pomalým platformám. Přetaktování může u některých her zvýšit snímkovou frekvenci. Používejte s opatrností."
 #define OPTION_VAL_100_CS NULL
@@ -16592,14 +16592,14 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DE "Digitale Ausgänge und Force-Feedback-Status auf TCP-Port 8000 übertragen. Kompatibel mit der MAME-Option „-output network“."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DE "Lightgun-Einstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DE "Aktiviert die Konfiguration der Lightgun-Fadenkreuz-Anzeigeoptionen. HINWEIS: Schnellmenü muss eingeschaltet sein, damit diese Einstellung wirksam wird."
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 1 anzeigen"
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 1"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
 #define OPTION_VAL_GREEN_DE "Grün"
 #define OPTION_VAL_BLUE_DE "Blau"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 2 anzeigen"
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 3 anzeigen"
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_DE "Pistolen Fadenkreuz 4 anzeigen"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 4"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_DE "Visual Memory Units/Systeme (VMU) pro Spiel"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_DE "VMUs pro Spiel"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE "Wenn deaktiviert, teilen alle Spiele 4 VMU-Speicherdateien (A1, B1, C1, D1) im Systemverzeichnis von RetroArch. Die Einstellung „VMU A1“ erzeugt für jedes Spiel, das gestartet wird, eine einzigartige VMU-„A1“-Datei im Speicherverzeichnis von RetroArch. Die Einstellung „Alle VMUs“ erzeugt 4 einzigartige VMU-Dateien (A1, B1, C1, D1) für jedes Spiel, das gestartet wird."

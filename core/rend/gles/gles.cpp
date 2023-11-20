@@ -1401,13 +1401,13 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		ReadRTTBuffer();
 	else if (config::EmulateFramebuffer)
 		writeFramebufferToVRAM();
-#ifndef LIBRETRO
 	else {
 		gl.ofbo.aspectRatio = getOutputFramebufferAspectRatio();
+#ifndef LIBRETRO
 		gl.ofbo2.ready = false;
 		renderLastFrame();
-	}
 #endif
+	}
 	GlVertexArray::unbind();
 
 	return !is_rtt;

@@ -684,7 +684,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
-			|| (gameId == "F355 CHALLENGE JAPAN" && config::MultiboardSlaves == 2))
+			|| (gameId == "F355 CHALLENGE JAPAN" && (config::MultiboardSlaves == 2 || romName == "f355")))
 		{
 			printer::init();
 		}

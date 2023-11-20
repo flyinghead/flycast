@@ -229,6 +229,11 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
 
+if(UNIX AND NOT ANDROID AND NOT APPLE)
+	execute_process(COMMAND getconf PAGESIZE OUTPUT_VARIABLE PAGE_SIZE OUTPUT_STRIP_TRAILING_WHITESPACE)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE PAGE_SIZE=${PAGE_SIZE})
+endif()
+
 if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
@@ -960,7 +965,8 @@ cmrc_add_resources(flycast-resources
 		resources/flash/dirtypig.nvmem2.zip
 		resources/flash/vf4.nvmem.zip		# card all day, stage select
 		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
-		resources/flash/vf4tuned.nvmem.zip) # card all day, stage select, 45 sec time limit, 3 match
+		resources/flash/vf4tuned.nvmem.zip  # card all day, stage select, 45 sec time limit, 3 match
+		resources/picture/f355_print_template.png)
 
 cmrc_add_resources(flycast-resources
 		fonts/printer_ascii8x16.bin

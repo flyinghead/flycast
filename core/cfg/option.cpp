@@ -94,6 +94,7 @@ std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor3"),
 	Option<int>("rend.CrossHairColor4"),
 };
+Option<int> CrosshairSize("rend.CrosshairSize", 40);
 Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
@@ -108,9 +109,9 @@ Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 #ifdef VIDEO_ROUTING
-Option<bool> VideoRouting("rend.VideoRouting", false);
-Option<bool> VideoRoutingScale("rend.VideoRoutingScale", false);
-Option<int> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
+Option<bool, false> VideoRouting("rend.VideoRouting", false);
+Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);
+Option<int, false> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
 #endif
 
 // Misc
