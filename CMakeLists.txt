@@ -31,7 +31,11 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+if(NINTENDO_SWITCH)
+	set(CMAKE_CXX_EXTENSIONS ON)
+else()
+	set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 
 include(DetectArchitecture)
 if(NOT DEFINED ARCHITECTURE)
@@ -194,9 +198,7 @@ if(WINDOWS_STORE)
 	set(USE_VULKAN OFF)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-	CXX_EXTENSIONS OFF
-	LINK_FLAGS_RELEASE -s)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS-)
 	if(WINDOWS_STORE)
@@ -224,7 +226,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>
 		$<$<BOOL:${MSVC}>:_WINSOCK_DEPRECATED_NO_WARNING>
 		$<$<BOOL:${MSVC}>:NOMINMAX>
-		$<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
 		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
@@ -575,7 +576,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/chdpsr/cdipsr.h)
 
 add_subdirectory(core/deps/nowide EXCLUDE_FROM_ALL)
-target_compile_definitions(nowide PRIVATE $<$<BOOL:${NINTENDO_SWITCH}>:_DEFAULT_SOURCE>)
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
