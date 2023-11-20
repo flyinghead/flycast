@@ -33,5 +33,6 @@ std::string barcodeGetCard();
 void barcodeSetCard(const std::string& card);
 
 void insertCard(int playerNum);
+bool readerAvailable();
 
 }

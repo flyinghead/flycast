@@ -2119,13 +2119,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	setRotation();
 
-	if (settings.content.gameId == "INITIAL D"
-			|| settings.content.gameId == "INITIAL D Ver.2"
-			|| settings.content.gameId == "INITIAL D Ver.3"
-			|| settings.content.gameId == "INITIAL D CYCRAFT")
-		haveCardReader = true;
-	else
-		haveCardReader = false;
+	haveCardReader = card_reader::readerAvailable();
 	refresh_devices(true);
 
 	// System may have changed - have to update hidden core options

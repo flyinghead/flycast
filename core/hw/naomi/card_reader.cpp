@@ -771,4 +771,11 @@ void insertCard(int playerNum)
 		insertRfidCard(playerNum);
 }
 
+bool readerAvailable()
+{
+	return cardReader != nullptr
+			|| barcodeAvailable()
+			|| getRfidCardData(0) != nullptr;
+}
+
 }

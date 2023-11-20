@@ -1783,6 +1783,7 @@ const Game Games[] =
 		nullptr,
 		&wsbb_inputs,
     },
+#ifdef NAOMI_MULTIBOARD
     // Ferrari F355 Challenge (deluxe)
     {
         "f355",
@@ -1950,6 +1951,7 @@ const Game Games[] =
 		nullptr,
 		3,
     },
+#endif
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
     {
         "ggram2",
@@ -7598,6 +7600,7 @@ const Game Games[] =
 		nullptr,
 		&clubkart_inputs,
     },
+#ifdef NAOMI_MULTIBOARD
     {
     	"sgdrvsim",
 		nullptr,
@@ -7623,6 +7626,7 @@ const Game Games[] =
 		&drvsim_inputs,
 		sgdrvsim_eeprom_dump,
     },
+#endif
 	//
 	// Naomi 2 GD-ROM
 	//
