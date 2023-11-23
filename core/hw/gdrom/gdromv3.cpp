@@ -1158,7 +1158,7 @@ static int getGDROMTicks()
 			return 512;
 		u32 len = SB_GDLEN == 0 ? 0x02000000 : SB_GDLEN;
 		if (len - SB_GDLEND > 10240)
-			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
+			return 1100000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
 		else
 			return std::min((u32)10240, len - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
 	}
