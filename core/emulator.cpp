@@ -834,6 +834,7 @@ void Emulator::start()
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
+	setupPtyPipe();
 
 	memwatch::protect();
 

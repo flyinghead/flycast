@@ -1287,6 +1287,7 @@ void init()
 
 void term()
 {
+	SCIFSerialPort::Instance().setPipe(nullptr);
 	delete hopper;
 	hopper = nullptr;
 }

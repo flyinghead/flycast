@@ -521,6 +521,7 @@ extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
+extern Option<bool> BattleCableEnable;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

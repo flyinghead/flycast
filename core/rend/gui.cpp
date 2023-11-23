@@ -671,7 +671,7 @@ const char *maple_device_types[] =
 	"Keyboard",
 	"Mouse",
 	"Twin Stick",
-	"Ascii Stick",
+	"Arcade/Ascii Stick",
 	"Maracas Controller",
 	"Fishing Controller",
 	"Pop'n Music controller",
@@ -2349,39 +2349,61 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Advanced"))
+		if (ImGui::BeginTabItem("Network"))
 		{
+			ImGuiStyle& style = ImGui::GetStyle();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    header("CPU Mode");
-		    {
-				ImGui::Columns(2, "cpu_modes", false);
-				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
-					"Use the dynamic recompiler. Recommended in most cases");
+
+			header("Network Type");
+			{
+				DisabledScope scope(game_started);
+
+				int netType = 0;
+				if (config::GGPOEnable)
+					netType = 1;
+				else if (config::NetworkEnable)
+					netType = 2;
+				else if (config::BattleCableEnable)
+					netType = 3;
+				ImGui::Columns(4, "networkType", false);
+				ImGui::RadioButton("Disabled", &netType, 0);
 				ImGui::NextColumn();
-				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
-					"Use the interpreter. Very slow but may help in case of a dynarec problem");
-				ImGui::Columns(1, NULL, false);
+				ImGui::RadioButton("GGPO", &netType, 1);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Enable networking using GGPO");
+				ImGui::NextColumn();
+				ImGui::RadioButton("Naomi", &netType, 2);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Enable networking for supported Naomi and Atomiswave games");
+				ImGui::NextColumn();
+				ImGui::RadioButton("Battle Cable", &netType, 3);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Emulate the Taisen (Battle) null modem cable for games that support it");
+				ImGui::Columns(1, nullptr, false);
 
-				OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
-						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
-						"%d MHz");
-		    }
-	    	ImGui::Spacing();
-		    header("Network");
-		    {
+				config::GGPOEnable = false;
+				config::NetworkEnable = false;
+				config::BattleCableEnable = false;
+				switch (netType) {
+				case 1:
+					config::GGPOEnable = true;
+					break;
+				case 2:
+					config::NetworkEnable = true;
+					break;
+				case 3:
+					config::BattleCableEnable = true;
+					break;
+				}
+			}
+			if (config::GGPOEnable || config::NetworkEnable || config::BattleCableEnable) {
+				ImGui::Spacing();
+				header("Configuration");
+			}
+			{
+				if (config::GGPOEnable)
 				{
-					DisabledScope scope(game_started);
-
-					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-		    	}
-		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
-		    			"Enable networking using GGPO");
-		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
-		    			"Enable networking for supported Naomi games");
-		    	if (config::GGPOEnable)
-		    	{
-		    		config::NetworkEnable = false;
+					config::NetworkEnable = false;
 					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
 					char server_name[256];
@@ -2415,10 +2437,10 @@ static void gui_display_settings()
 						}
 					}
 					OptionCheckbox("Network Statistics", config::NetworkStats,
-			    			"Display network statistics on screen");
-		    	}
-		    	else if (config::NetworkEnable)
-		    	{
+							"Display network statistics on screen");
+				}
+				else if (config::NetworkEnable)
+				{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
 					if (!config::ActAsServer)
@@ -2436,17 +2458,65 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("The local UDP port to use");
 					config::LocalPort.set(atoi(localPort));
-		    	}
+				}
+				else if (config::BattleCableEnable)
+				{
+					char server_name[256];
+					strcpy(server_name, config::NetworkServer.get().c_str());
+					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
+					config::NetworkServer.set(server_name);
+					char localPort[256];
+					sprintf(localPort, "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
+				}
+			}
+			ImGui::Spacing();
+			header("Network Options");
+			{
 				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
+				{
+					DisabledScope scope(game_started);
+
+					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+				}
+			}
 #ifdef NAOMI_MULTIBOARD
-				ImGui::Text("Multiboard Screens:");
+			ImGui::Spacing();
+			header("Multiboard Screens");
+			{
 				//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
 				OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
 				ImGui::SameLine();
 				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
+			}
 #endif
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Advanced"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		    header("CPU Mode");
+		    {
+				ImGui::Columns(2, "cpu_modes", false);
+				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
+					"Use the dynamic recompiler. Recommended in most cases");
+				ImGui::NextColumn();
+				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
+					"Use the interpreter. Very slow but may help in case of a dynarec problem");
+				ImGui::Columns(1, NULL, false);
+
+				OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
+						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+						"%d MHz");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");

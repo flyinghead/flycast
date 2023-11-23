@@ -1,5 +1,5 @@
 /*
-	Copyright 2022 flyinghead
+	Copyright 2023 flyinghead
 
 	This file is part of Flycast.
 
@@ -23,11 +23,11 @@
 #include "hw/sh4/sh4_sched.h"
 #include "naomi_network.h"
 #include "net_handshake.h"
-#include "hw/naomi/naomi_flashrom.h"
 #include <deque>
 
-struct MaxSpeedNetPipe : public SerialPort::Pipe
+class NullModemPipe : public SerialPort::Pipe
 {
+public:
 	class Exception : public FlycastException
 	{
 	public:
@@ -37,19 +37,31 @@ struct MaxSpeedNetPipe : public SerialPort::Pipe
 	// Serial TX
 	void write(u8 data) override
 	{
-		txBuffer.push_back(data);
-		parseMaxspeedPacket(data);
-		if (txPacketSize != 0 && txBuffer.size() == txPacketSize)
-		{
-			sendto(sock, (const char *)&txBuffer[0], txPacketSize, 0, (const sockaddr *)&peerAddress, sizeof(peerAddress));
-			txBuffer.clear();
-		}
+		u8 packet[2] = { 'D', data };
+		int rc = sendto(sock, (const char *)&packet[0], sizeof(packet), 0, (const sockaddr *)&peerAddress, sizeof(peerAddress));
+		if (rc != sizeof(packet))
+			ERROR_LOG(NETWORK, "sendto: %d errno %d", rc, get_last_error());
+		DEBUG_LOG(NETWORK, "Write %02x %c (buf rx %d)", data, data, (int)rxBuffer.size());
+	}
+
+	void sendBreak() override
+	{
+		const char b = 'B';
+		int rc = sendto(sock, &b, 1, 0, (const sockaddr *)&peerAddress, sizeof(peerAddress));
+		if (rc != 1)
+			ERROR_LOG(NETWORK, "sendto: %d errno %d", rc, get_last_error());
+		DEBUG_LOG(NETWORK, "Send Break");
 	}
 
 	// RX buffer Size
 	int available() override {
 		poll();
-		return rxBuffer.size();
+		checkBreak();
+		int realSize = 0;
+		for (u32 b : rxBuffer)
+			if (b != (u32)~0)
+				realSize++;
+		return realSize;
 	}
 
 	// Serial RX
@@ -62,17 +74,19 @@ struct MaxSpeedNetPipe : public SerialPort::Pipe
 		}
 		u8 b = rxBuffer.front();
 		rxBuffer.pop_front();
+		DEBUG_LOG(NETWORK, "Read %02x (buf rx %d)", b, (int)rxBuffer.size());
+		checkBreak();
 
 		return b;
 	}
 
-	~MaxSpeedNetPipe() {
+	~NullModemPipe()
+	{
 		shutdown();
 	}
 
 	bool init()
 	{
-		configure_maxspeed_flash(config::NetworkEnable, config::ActAsServer);
 #ifdef _WIN32
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
@@ -95,58 +109,19 @@ struct MaxSpeedNetPipe : public SerialPort::Pipe
 
 	void shutdown()
 	{
-		SCIFSerialPort::Instance().setPipe(nullptr);
 		enableNetworkBroadcast(false);
 		if (VALID(sock))
 			closesocket(sock);
 		sock = INVALID_SOCKET;
+		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
 private:
-	void parseMaxspeedPacket(u8 b)
+	void checkBreak()
 	{
-		switch (txPacketState)
-		{
-		case 0:
-			if (b == 0x4d)
-				txPacketState = 1;
-			else
-				txPacketSize = 1;
-			break;
-		case 1:
-			if (b == 0x41)
-				txPacketState = 2;
-			else {
-				txPacketState = 0;
-				txPacketSize = 2;
-			}
-			break;
-		case 2:
-			if (b == 0x58)
-				txPacketState = 3;
-			else {
-				txPacketState = 0;
-				txPacketSize = 3;
-			}
-			break;
-		case 3:
-			txPacketSize = b;
-			if (txPacketSize < 3)
-			{
-				// invalid size
-				txPacketState = 0;
-				txPacketSize = 4;
-			}
-			else
-			{
-				txPacketState = 4;
-				txPacketSize += 4;
-			}
-			break;
-		case 4:	// payload then crc (lsb), crc (msb), 1
-			if (txPacketSize == txBuffer.size())
-				txPacketState = 0;
-			break;
+		if (!rxBuffer.empty() && rxBuffer.front() == (u32)~0) {
+			SCIFSerialPort::Instance().receiveBreak();
+			rxBuffer.pop_front();
 		}
 	}
 
@@ -173,14 +148,34 @@ private:
 #endif
 				throw Exception("Receive error: errno " + std::to_string(error));
 			}
-			rxBuffer.insert(rxBuffer.end(), &data[0], &data[rc]);
-
-			if (peerAddress.sin_addr.s_addr == INADDR_BROADCAST
-					&& (addr.sin_port != htons(config::LocalPort) || !is_local_address(addr.sin_addr.s_addr)))
+			if (peerAddress.sin_addr.s_addr == INADDR_BROADCAST)
 			{
-				peerAddress.sin_addr.s_addr = addr.sin_addr.s_addr;
-				peerAddress.sin_port = addr.sin_port;
-				enableNetworkBroadcast(false);
+				if (addr.sin_port != htons(config::LocalPort) || !is_local_address(addr.sin_addr.s_addr))
+				{
+					peerAddress.sin_addr.s_addr = addr.sin_addr.s_addr;
+					peerAddress.sin_port = addr.sin_port;
+					enableNetworkBroadcast(false);
+					NOTICE_LOG(NETWORK, "Data received from peer %x:%d", htonl(addr.sin_addr.s_addr), htons(addr.sin_port));
+				}
+				else
+				{
+					// this is coming from us so ignore it
+					continue;
+				}
+			}
+			if (rc == 2)
+			{
+				if (data[0] != 'D')
+					ERROR_LOG(NETWORK, "Unexpected packet '%c'", data[0]);
+				else
+					rxBuffer.push_back(data[1]);
+			}
+			else if (rc == 1)
+			{
+				if (data[0] != 'B')
+					ERROR_LOG(NETWORK, "Unexpected packet '%c'", data[0]);
+				else
+					rxBuffer.push_back(~0);
 			}
 		}
 	}
@@ -217,8 +212,9 @@ private:
 	    peerAddress.sin_family = AF_INET;
 	    peerAddress.sin_addr.s_addr = INADDR_BROADCAST;
 	    peerAddress.sin_port = htons(NaomiNetwork::SERVER_PORT);
-		// ignore server name if acting as server
-		if (!config::NetworkServer.get().empty() && !config::ActAsServer)
+		if (!config::NetworkServer.get().empty()
+				// ignore server name if acting as server (maxspeed)
+				&& (!config::ActAsServer || settings.platform.isConsole()))
 		{
 			auto pos = config::NetworkServer.get().find_last_of(':');
 			std::string server;
@@ -249,15 +245,12 @@ private:
 
 	sock_t sock = INVALID_SOCKET;
 	MiniUPnP miniupnp;
-	std::deque<u8> rxBuffer;
-	std::vector<u8> txBuffer;
-	u32 txPacketSize = 0;
-	int txPacketState = 0;
+	std::deque<u32> rxBuffer;
 	sockaddr_in peerAddress{};
 	u64 lastPoll = 0;
 };
 
-class MaxSpeedHandshake : public NetworkHandshake
+class BattleCableHandshake : public NetworkHandshake
 {
 public:
 	std::future<bool> start() override {
@@ -274,5 +267,5 @@ public:
 	void startNow() override {}
 
 private:
-	MaxSpeedNetPipe pipe;
+	NullModemPipe pipe;
 };

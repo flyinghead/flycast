@@ -138,6 +138,11 @@ void sh4_sched_request(int id, int cycles)
 	sh4_sched_ffts();
 }
 
+bool sh4_sched_is_scheduled(int id)
+{
+	return sch_list[id].end != -1;
+}
+
 /* Returns how much time has passed for this callback */
 static int sh4_sched_elapsed(sched_list& sched)
 {

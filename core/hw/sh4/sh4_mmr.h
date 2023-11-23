@@ -1233,23 +1233,13 @@ union SCIF_SCSMR2_type
 {
 	struct
 	{
-		u32 CKS0          : 1;
-		u32 CKS1          : 1;
-		u32 res_0         : 1;
+		u32 CKS           : 2;
+		u32               : 1;
 		u32 STOP          : 1;
 		u32 OE_paritymode : 1;
 		u32 PE            : 1;
 		u32 CHR           : 1;
-		u32 res_1         : 1;
-		//8
-		u32 res_2         : 1;
-		u32 res_3         : 1;
-		u32 res_4         : 1;
-		u32 res_5         : 1;
-		u32 res_6         : 1;
-		u32 res_7         : 1;
-		u32 res_8         : 1;
-		u32 res_9         : 1;
+		u32               : 9;
 		//16
 	};
 	u16 full;
@@ -1265,23 +1255,16 @@ union SCIF_SCSCR2_type
 {
 	struct
 	{
-		u32 res_0 : 1;
+		u32       : 1;
 		u32 CKE1  : 1;
-		u32 res_1 : 1;
+		u32       : 1;
 		u32 REIE  : 1;
 		u32 RE    : 1;
 		u32 TE    : 1;
 		u32 RIE   : 1;
 		u32 TIE   : 1;
 		//8
-		u32 res_2 : 1;
-		u32 res_3 : 1;
-		u32 res_4 : 1;
-		u32 res_5 : 1;
-		u32 res_6 : 1;
-		u32 res_7 : 1;
-		u32 res_8 : 1;
-		u32 res_9 : 1;
+		u32       : 8;
 		//16
 	};
 	u16 full;
@@ -1305,14 +1288,8 @@ union SCIF_SCFSR2_type
 		u32 TEND : 1;
 		u32 ER   : 1;
 		//8
-		u32 FER0 : 1;
-		u32 FER1 : 1;
-		u32 FER2 : 1;
-		u32 FER3 : 1;
-		u32 PER0 : 1;
-		u32 PER1 : 1;
-		u32 PER2 : 1;
-		u32 PER3 : 1;
+		u32 FERn : 4;
+		u32 PERn : 4;
 		//16
 	};
 	u16 full;
@@ -1331,19 +1308,10 @@ union SCIF_SCFCR2_type
 		u32 RFRST : 1;
 		u32 TFRST : 1;
 		u32 MCE   : 1;
-		u32 TTRG0 : 1;
-		u32 TTRG1 : 1;
-		u32 RTRG0 : 1;
-		u32 RTRG1 : 1;
+		u32 TTRG  : 2;
+		u32 RTRG  : 2;
 		//8
-		u32 res_0 : 1;
-		u32 res_1 : 1;
-		u32 res_2 : 1;
-		u32 res_3 : 1;
-		u32 res_4 : 1;
-		u32 res_5 : 1;
-		u32 res_6 : 1;
-		u32 res_7 : 1;
+		u32       : 8;
 		//16
 	};
 	u16 full;
@@ -1357,10 +1325,10 @@ union SCIF_SCFDR2_type
 	struct
 	{
 		u32 R     : 5;
-		u32 res_0 : 3;
+		u32       : 3;
 		//8
 		u32 T     : 5;
-		u32 res_1 : 3;
+		u32       : 3;
 		//16
 	};
 	u16 full;
@@ -1373,21 +1341,13 @@ union SCIF_SCSPTR2_type
 	{
 		u32 SPB2DT : 1;
 		u32 SPB2IO : 1;
-		u32 res_0  : 1;
-		u32 res_1  : 1;
+		u32        : 2;
 		u32 CTSDT  : 1;
 		u32 CTSIO  : 1;
 		u32 RTSDT  : 1;
 		u32 RTSIO  : 1;
 		//8
-		u32 res_2  : 1;
-		u32 res_3  : 1;
-		u32 res_4  : 1;
-		u32 res_5  : 1;
-		u32 res_6  : 1;
-		u32 res_7  : 1;
-		u32 res_8  : 1;
-		u32 res_9  : 1;
+		u32        : 8;
 		//16
 	};
 	u16 full;
@@ -1400,9 +1360,7 @@ union SCIF_SCLSR2_type
 	struct
 	{
 		u32 ORER  : 1;
-		u32 res_0 : 7;
-		//8
-		u32 res_1 : 8;
+		u32       :15;
 		//16
 	};
 	u16 full;

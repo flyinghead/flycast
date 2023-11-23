@@ -684,6 +684,7 @@ void serialize(Serializer& ser)
 	ser << TMU;
 	ser << SCI;
 	ser << SCIF;
+	SCIFSerialPort::Instance().serialize(ser);
 	icache.Serialize(ser);
 	ocache.Serialize(ser);
 
@@ -739,6 +740,7 @@ void deserialize(Deserializer& deser)
 		deser >> SCI;
 		deser >> SCIF;
 	}
+	SCIFSerialPort::Instance().deserialize(deser);
 	if (deser.version() >= Deserializer::V9
 			// Note (lr): was added in V11 fa49de29 24/12/2020 but ver not updated until V12 (13/4/2021)
 			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
