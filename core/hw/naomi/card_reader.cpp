@@ -72,15 +72,18 @@ protected:
 		fclose(fp);
 	}
 
-	static u8 calcCrc(u8 *data, u32 len)
+	template<typename T>
+	static u8 calcCrc(T begin, T end)
 	{
 		u32 crc = 0;
-		for (u32 i = 0; i < len; i++)
-			crc ^= data[i];
+		for (auto it = begin; it != end; it++)
+			crc ^= *it;
 		return crc;
 	}
 
 	bool cardInserted = false;
+	std::deque<u8> outBuffer;
+	std::vector<u8> inBuffer;
 
 	static constexpr u8 STX = 2;
 	static constexpr u8 ETX = 3;
@@ -130,58 +133,58 @@ class SanwaCRP1231BR : public CardReaderWriter, public SerialPort::Pipe
 public:
 	void write(u8 b) override
 	{
-		if (inBufferIdx == 0 && b == ENQ)
+		if (inBuffer.empty() && b == ENQ)
 		{
 			DEBUG_LOG(NAOMI, "Received RQ(5)");
 			handleCommand();
 			return;
 		}
-		inBuffer[inBufferIdx++] = b;
-		if (inBufferIdx >= 3)
+		inBuffer.push_back(b);
+		if (inBuffer.size() >= 3)
 		{
 			if (inBuffer[0] != STX)
 			{
 				INFO_LOG(NAOMI, "Unexpected cmd start byte %x", inBuffer[0]);
-				inBufferIdx = 0;
+				inBuffer.clear();
 				return;
 			}
 			u32 len = inBuffer[1];
-			if (inBufferIdx < len + 2)
+			if (inBuffer.size() < len + 2)
 			{
-				if (inBufferIdx == sizeof(inBuffer))
+				if (inBuffer.size() == 256)
 				{
 					WARN_LOG(NAOMI, "Card reader buffer overflow");
-					inBufferIdx = 0;
+					inBuffer.clear();
 				}
 				return;
 			}
-			u32 crc = calcCrc(&inBuffer[1], inBufferIdx - 2);
-			if (crc != inBuffer[inBufferIdx - 1])
+			u32 crc = calcCrc(inBuffer.begin() + 1, inBuffer.end() - 1);
+			if (crc != inBuffer.back())
 			{
-				INFO_LOG(NAOMI, "Wrong crc: expected %x got %x", crc, inBuffer[inBufferIdx - 1]);
-				inBufferIdx = 0;
+				INFO_LOG(NAOMI, "Wrong crc: expected %x got %x", crc, inBuffer.back());
+				inBuffer.clear();
 				return;
 			}
 			DEBUG_LOG(NAOMI, "Received cmd %x len %d", inBuffer[2], inBuffer[1]);
-			outBuffer[outBufferLen++] = ACK;
-			rxCommandLen = inBufferIdx - 3;
-			memcpy(rxCommand, inBuffer + 2, rxCommandLen);
-			inBufferIdx = 0;
+			outBuffer.push_back(ACK);
+			rxCommandLen = std::min(inBuffer.size() - 3, sizeof(rxCommand));
+			memcpy(rxCommand, &inBuffer[2], rxCommandLen);
+			inBuffer.clear();
 		}
 	}
 
 	u8 read() override
 	{
-		verify(outBufferIdx < outBufferLen);
-		u8 b = outBuffer[outBufferIdx++];
+		if (outBuffer.empty())
+			return 0;
+		u8 b = outBuffer.front();
+		outBuffer.pop_front();
 		DEBUG_LOG(NAOMI, "Sending %x", b);
-		if (outBufferIdx == outBufferLen)
-			outBufferIdx = outBufferLen = 0;
 		return b;
 	}
 
 	int available() override {
-		return outBufferLen - outBufferIdx;
+		return outBuffer.size();
 	}
 
 protected:
@@ -216,8 +219,8 @@ protected:
 	{
 		if (rxCommandLen == 0)
 			return;
-		outBuffer[outBufferLen++] = STX;
-		u32 crcIdx = outBufferLen;
+		outBuffer.push_back(STX);
+		u32 crcIdx = outBuffer.size();
 		u8 status1 = getStatus1();
 		u8 status2 = '0';
 		u8 status3 = '0';
@@ -300,11 +303,11 @@ protected:
 			WARN_LOG(NAOMI, "Unknown command %x", rxCommand[0]);
 			break;
 		}
-		outBuffer[outBufferLen++] = ACK;
-		outBuffer[outBufferLen++] = rxCommand[0];
-		outBuffer[outBufferLen++] = status1;
-		outBuffer[outBufferLen++] = status2;
-		outBuffer[outBufferLen++] = status3;
+		outBuffer.push_back(ACK);
+		outBuffer.push_back(rxCommand[0]);
+		outBuffer.push_back(status1);
+		outBuffer.push_back(status2);
+		outBuffer.push_back(status3);
 		if (rxCommand[0] == CARD_READ && cardInserted && !doorOpen && rxCommand[4] != '2')
 		{
 			u32 idx = 0;
@@ -323,9 +326,9 @@ protected:
 				size = TRACK_SIZE * 2;
 				break;
 			case '4': // track 1 & 3
-				memcpy(&outBuffer[outBufferLen], cardData, TRACK_SIZE);
-				outBufferLen += TRACK_SIZE;
-				outBuffer[crcIdx] += size;
+				for (u32 i = 0; i < TRACK_SIZE; i++)
+					outBuffer.push_back(cardData[i]);
+				outBuffer[crcIdx] += TRACK_SIZE;
 				idx = TRACK_SIZE * 2;
 				break;
 			case '5': // track 2 & 3
@@ -340,29 +343,20 @@ protected:
 				size = 0;
 				break;
 			}
-			memcpy(&outBuffer[outBufferLen], cardData + idx, size);
-			outBufferLen += size;
+			for (u32 i = 0; i < size; i++)
+				outBuffer.push_back(cardData[idx + i]);
 			outBuffer[crcIdx] += size;
 		}
-		outBuffer[outBufferLen++] = ETX;
-		outBuffer[outBufferLen] = calcCrc(&outBuffer[crcIdx], outBufferLen - crcIdx);
-		outBufferLen++;
+		outBuffer.push_back(ETX);
+		outBuffer.push_back(calcCrc(outBuffer.begin() + crcIdx, outBuffer.end()));
 	}
-
-	u8 inBuffer[256];
-	u32 inBufferIdx = 0;
 
 	u8 rxCommand[256];
 	u32 rxCommandLen = 0;
 
-	u8 outBuffer[256];
-	u32 outBufferIdx = 0;
-	u32 outBufferLen = 0;
-
 	static constexpr u32 TRACK_SIZE = 0x45;
 	u8 cardData[TRACK_SIZE * 3];
 	bool doorOpen = false;
-	bool cardInserted = false;
 };
 
 class SanwaCRP1231LR : public SanwaCRP1231BR
@@ -487,38 +481,37 @@ public:
 
 	void write(u8 data) override
 	{
-		inBuffer[inBufferIdx++] = data;
-		if (inBufferIdx == 5)
+		inBuffer.push_back(data);
+		if (inBuffer.size() == 5)
 		{
 			if ((inBuffer[1] != 'W' || inBuffer[2] != 'L') && inBuffer[2] != 'T')
 			{
 				handleCommand();
-				inBufferIdx = 0;
+				inBuffer.clear();
 			}
 		}
-		else if (inBufferIdx == 6 && inBuffer[2] == 'T') // OT0, RT5
+		else if (inBuffer.size() == 6 && inBuffer[2] == 'T') // OT0, RT5
 		{
 			handleCommand();
-			inBufferIdx = 0;
+			inBuffer.clear();
 		}
-		else if (inBufferIdx == TRACK_SIZE + 5) // WL
+		else if (inBuffer.size() == TRACK_SIZE + 5) // WL
 		{
 			handleCommand();
-			inBufferIdx = 0;
+			inBuffer.clear();
 		}
 	}
 
 	int available() override {
-		return outBufferLen - outBufferIdx;
+		return outBuffer.size();
 	}
 
 	u8 read() override
 	{
-		if (outBufferIdx >= outBufferLen)
+		if (outBuffer.empty())
 			return 0;
-		u8 b = outBuffer[outBufferIdx++];
-		if (outBufferIdx == outBufferLen)
-			outBufferIdx = outBufferLen = 0;
+		u8 b = outBuffer.front();
+		outBuffer.pop_front();
 		return b;
 	}
 
@@ -561,18 +554,19 @@ private:
 			WARN_LOG(NAOMI, "Unhandled command '%c%c'", inBuffer[1], inBuffer[2]);
 			return;
 		}
-		u32 crc = calcCrc(&inBuffer[1], inBufferIdx - 2);
-		if (crc != inBuffer[inBufferIdx - 1])
+		u32 crc = calcCrc(inBuffer.begin() + 1, inBuffer.end() - 1);
+		if (crc != inBuffer.back())
 		{
-			WARN_LOG(NAOMI, "Wrong crc: expected %x got %x", crc, inBuffer[inBufferIdx - 1]);
+			WARN_LOG(NAOMI, "Wrong crc: expected %x got %x", crc, inBuffer.back());
 			return;
 		}
-		outBuffer[outBufferLen++] = ACK;
+		outBuffer.push_back(ACK);
 		switch (cmd)
 		{
 		case CARD_WRITE:
 			INFO_LOG(NAOMI, "Card write");
-			memcpy(cardData, &inBuffer[3], sizeof(cardData));
+			for (u32 i = 0; i < sizeof(cardData); i++)
+				cardData[i] = inBuffer[i + 3];
 			saveCard(cardData, sizeof(cardData));
 			break;
 		case CARD_READ:
@@ -611,41 +605,32 @@ private:
 
 	void sendReply(int cmd)
 	{
-		outBuffer[outBufferLen++] = STX;
-		u32 crcIndex = outBufferLen;
+		outBuffer.push_back(STX);
+		u32 crcIndex = outBuffer.size();
 		if (cmd == CARD_STATUS)
 		{
-			outBuffer[outBufferLen++] = '0';
-			outBuffer[outBufferLen++] = '0';
-			outBuffer[outBufferLen++] = '0';
-			outBuffer[outBufferLen++] = cardInserted ? '1' : '0';
-			outBuffer[outBufferLen++] = cardInserted ? '1' : '0';
-			outBuffer[outBufferLen++] = '1'; // dispenser full
+			outBuffer.push_back('0');
+			outBuffer.push_back('0');
+			outBuffer.push_back('0');
+			outBuffer.push_back(cardInserted ? '1' : '0');
+			outBuffer.push_back(cardInserted ? '1' : '0');
+			outBuffer.push_back('1'); // dispenser full
 		}
 		else
 		{
-			outBuffer[outBufferLen++] = 'O';
-			outBuffer[outBufferLen++] = 'K';
-			if (cmd == CARD_READ)
-			{
-				memcpy(&outBuffer[outBufferLen], cardData, sizeof(cardData));
-				outBufferLen += sizeof(cardData);
+			outBuffer.push_back('O');
+			outBuffer.push_back('K');
+			if (cmd == CARD_READ) {
+				for (u32 i = 0; i < sizeof(cardData); i++)
+					outBuffer.push_back(cardData[i]);
 			}
 		}
-		outBuffer[outBufferLen++] = ETX;
-		outBuffer[outBufferLen] = calcCrc(&outBuffer[crcIndex], outBufferLen - crcIndex);
-		outBufferLen++;
+		outBuffer.push_back(ETX);
+		outBuffer.push_back(calcCrc(outBuffer.begin() + crcIndex, outBuffer.end()));
 	}
 
 	static constexpr u32 TRACK_SIZE = 0x45;
 	u8 cardData[TRACK_SIZE];
-
-	u8 inBuffer[256];
-	u32 inBufferIdx = 0;
-
-	u8 outBuffer[256];
-	u32 outBufferIdx = 0;
-	u32 outBufferLen = 0;
 
 	bool readPending = false;
 };
