@@ -64,15 +64,22 @@ int SCIFSerialPort::schedCallback(int tag, int cycles, int lag, void *arg)
 	}
 }
 
+bool SCIFSerialPort::isTDFE() const {
+	return (int)txFifo.size() <= 1 << (3 - SCIF_SCFCR2.TTRG);
+}
+
+bool SCIFSerialPort::isRDF() const {
+	constexpr u32 trigLevels[] { 1, 4, 8, 14 };
+	return rxFifo.size() >= trigLevels[SCIF_SCFCR2.RTRG];
+}
+
 bool SCIFSerialPort::txDone()
 {
 	if (!transmitting || SCIF_SCFCR2.TFRST == 1)
 		return false;
 	if (txFifo.empty())
 	{
-		SCIF_SCFSR2.TEND = 1;
-		SCIF_SCFSR2.TDFE = 1; // should not be set since the tx fifo hasn't changed but vonot needs it
-		updateInterrupts();
+		setStatusBit(TEND);
 		transmitting = false;
 		return false; // don't reschedule
 	}
@@ -80,9 +87,8 @@ bool SCIFSerialPort::txDone()
 	txFifo.pop_front();
 	if (pipe != nullptr)
 		pipe->write(v);
-	u32 txTrigger = 1 << (3 - SCIF_SCFCR2.TTRG);
-	if (txFifo.size() <= txTrigger) {
-		SCIF_SCFSR2.TDFE = 1;
+	if (isTDFE()) {
+		setStatusBit(TDFE);
 		updateInterrupts();
 	}
 	return true;
@@ -92,13 +98,6 @@ void SCIFSerialPort::rxSched()
 {
 	if (pipe == nullptr)
 		return;
-	 // FIXME fifo size checked to avoid overruns but incorrect
-	if (rxFifo.size() >= 16)
-	{
-		SCIF_SCFSR2.RDF = 1;
-		updateInterrupts();
-		return;
-	}
 
 	if (pipe->available() > 0)
 	{
@@ -115,9 +114,8 @@ void SCIFSerialPort::rxSched()
 		else
 		{
 			rxFifo.push_back(v);
-			constexpr u32 trigLevels[] { 1, 4, 8, 14 };
-			if (rxFifo.size() >= trigLevels[SCIF_SCFCR2.RTRG]) {
-				SCIF_SCFSR2.RDF = 1;
+			if (isRDF()) {
+				setStatusBit(RDF);
 				updateInterrupts();
 			}
 		}
@@ -125,7 +123,7 @@ void SCIFSerialPort::rxSched()
 	// TODO fifo might have been emptied since last rx
 	else if (!rxFifo.empty())
 	{
-		SCIF_SCFSR2.DR = 1;
+		setStatusBit(DR);
 		updateInterrupts();
 	}
 }
@@ -154,9 +152,9 @@ void SCIFSerialPort::SCFTDR2_write(u8 data)
 		if (pipe != nullptr)
 			pipe->write(data);
 		transmitting = true;
-		// Need to reschedule so it's doesn't happen too early (f355)
+		// Need to reschedule so it doesn't happen too early (f355)
 		sh4_sched_request(schedId, frameSize * cyclesPerBit);
-		SCIF_SCFSR2.TDFE = 1; // immediately transfer SCFTDR2 into the shift register
+		setStatusBit(TDFE); // immediately transfer SCFTDR2 into the shift register
 		updateInterrupts();
 	}
 	else if (txFifo.size() < 16) {
@@ -180,19 +178,30 @@ u16 SCIFSerialPort::readStatus()
 	return SCIF_SCFSR2.full;
 }
 
+void SCIFSerialPort::setStatusBit(StatusBit bit)
+{
+	statusLastRead &= ~bit;
+	SCIF_SCFSR2.full |= bit;
+}
+
 // SCIF_SCFSR2 write - Serial Status Register
 void SCIFSerialPort::writeStatus(u16 data)
 {
 	data = data | ~0x00f3 | ~statusLastRead;
+	// RDF and TDFE cannot be reset until the trigger level is reached
+	if (isRDF())
+		data |= RDF;
+	if (isTDFE())
+		data |= TDFE;
 	SCIF_LOG("SCIF_SCFSR2.reset %s%s%s%s%s%s%s%s",
-			(data & 0x80) ? "" : "ER ",
-			(data & 0x40) ? "" : "TEND ",
-			(data & 0x20) ? "" : "TDFE ",
-			(data & 0x10) ? "" : "BRK ",
-			(data & 0x08) ? "" : "FER ",
-			(data & 0x04) ? "" : "PER ",
-			(data & 0x02) ? "" : "RDF ",
-			(data & 0x01) ? "" : "DR");
+			(data & ER)   ? "" : "ER ",
+			(data & TEND) ? "" : "TEND ",
+			(data & TDFE) ? "" : "TDFE ",
+			(data & BRK)  ? "" : "BRK ",
+			(data & FER)  ? "" : "FER ",
+			(data & PER)  ? "" : "PER ",
+			(data & RDF)  ? "" : "RDF ",
+			(data & DR)   ? "" : "DR");
 
 	SCIF_SCFSR2.full &= data;
 	statusLastRead &= data;
@@ -235,18 +244,17 @@ static u16 SCSCR2_read(u32 addr)
 	return SCIF_SCSCR2.full;
 }
 
-void SCIFSerialPort::SCSCR2_write(u32 addr, u16 data)
+void SCIFSerialPort::SCSCR2_write(u16 data)
 {
 	SCIF_SCSCR2.full = data & 0x00fa;
 	if (SCIF_SCSCR2.TE == 0)
 	{
-		SCIF_SCFSR2.TEND = 1;
-		//SCIF_SCFSR2.TDFE = 1; // TODO not sure about this one
+		setStatusBit(TEND);
 		// TE must be cleared to send a break
-		Instance().setBreak(SCIF_SCSPTR2.SPB2IO == 1 && SCIF_SCSPTR2.SPB2DT == 0);
+		setBreak(SCIF_SCSPTR2.SPB2IO == 1 && SCIF_SCSPTR2.SPB2DT == 0);
 	}
 	else {
-		Instance().setBreak(false);
+		setBreak(false);
 	}
 	updateInterrupts();
 	SCIF_LOG("SCIF_SCSCR2= %s%s%s%s%s",
@@ -307,8 +315,8 @@ void SCIFSerialPort::SCFCR2_write(u16 data)
 	{
 		// when TFRST 1 -> 0
 		// seems to help tetris send data during sync
-		SCIF_SCFSR2.TEND = 1;
-		SCIF_SCFSR2.TDFE = 1;
+		setStatusBit(TEND);
+		setStatusBit(TDFE);
 		updateInterrupts();
 	}
 	SCIF_SCFCR2.full = data & 0x00ff;
@@ -346,7 +354,7 @@ void SCIFSerialPort::SCSMR2_write(u32 addr, u16 data)
 void SCIFSerialPort::receiveBreak()
 {
 	SCIF_LOG("Break received");
-	SCIF_SCFSR2.BRK = 1;
+	setStatusBit(BRK);
 	updateInterrupts();
 }
 
@@ -375,6 +383,16 @@ void SCIFSerialPort::term()
 		sh4_sched_unregister(brkSchedId);
 		brkSchedId = -1;
 	}
+}
+
+void SCIFSerialPort::reset()
+{
+	sh4_sched_request(brkSchedId, -1);
+	transmitting = false;
+	statusLastRead = 0;
+	txFifo.clear();
+	rxFifo.clear();
+	updateBaudRate();
 }
 
 void SCIFSerialPort::serialize(Serializer& ser)
@@ -553,7 +571,7 @@ void SCIFRegisters::init()
 	setWriteHandler<SCIF_SCBRR2_addr, u8>(SCIFSerialPort::SCBRR2_write);
 
 	//SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
-	setHandlers<SCIF_SCSCR2_addr>(SCSCR2_read, SCIFSerialPort::SCSCR2_write);
+	setHandlers<SCIF_SCSCR2_addr>(SCSCR2_read, SINGLETON_FORWARD(SCIFSerialPort::Instance(), SCSCR2_write));
 
 	//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
 	setWriteOnly<SCIF_SCFTDR2_addr>(SINGLETON_FORWARD(SCIFSerialPort::Instance(), SCFTDR2_write));
@@ -605,6 +623,7 @@ void SCIFRegisters::reset(bool hard)
 
 	if (hard)
 		SCIFSerialPort::Instance().setPipe(nullptr);
+	SCIFSerialPort::Instance().reset();
 }
 
 void SCIFRegisters::term()

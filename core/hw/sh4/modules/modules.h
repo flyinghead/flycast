@@ -107,6 +107,7 @@ public:
 	void receiveBreak() override;
 	void init();
 	void term();
+	void reset();
 	void serialize(Serializer& ser);
 	void deserialize(Deserializer& deser);
 
@@ -120,11 +121,25 @@ public:
 	void SCSPTR2_write(u16 data);
 	static void SCBRR2_write(u32 addr, u8 data);
 	static void SCSMR2_write(u32 addr, u16 data);
-	static void SCSCR2_write(u32 addr, u16 data);
+	void SCSCR2_write(u16 data);
 
 	static SCIFSerialPort& Instance();
 
 private:
+	enum StatusBit {
+		DR = 0x01,
+		RDF = 0x02,
+		PER = 0x04,
+		FER = 0x08,
+		BRK = 0x10,
+		TDFE = 0x20,
+		TEND = 0x40,
+		ER = 0x80,
+	};
+
+	void setStatusBit(StatusBit bit);
+	bool isTDFE() const;
+	bool isRDF() const;
 	void updateBaudRate();
 	void setBreak(bool on);
 	void sendBreak();
