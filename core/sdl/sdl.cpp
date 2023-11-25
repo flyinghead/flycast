@@ -17,7 +17,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif

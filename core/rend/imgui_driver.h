@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui.h"
 #include <memory>
 #include <unordered_map>

@@ -13,13 +13,16 @@
 // - [Solution 3] IDE/msbuild: edit imconfig.h and add '#define ImTextureID ImU64' (prefer solution 2 to create your own config file!)
 // - [Solution 4] command-line: add '/D ImTextureID=ImU64' to your cl.exe command-line (this is what we do in our batch files)
 
-// You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
-// Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
 // The aim of imgui_impl_vulkan.h/.cpp is to be usable in your engine without any modification.
 // IF YOU FEEL YOU NEED TO MAKE ANY CHANGE TO THIS CODE, please share them and your feedback at https://github.com/ocornut/imgui/
+
+// You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
+// Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
+// Learn about Dear ImGui:
+// - FAQ                  https://dearimgui.com/faq
+// - Getting Started      https://dearimgui.com/getting-started
+// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+// - Introduction, links and more at the top of imgui.cpp
 
 // Important note to the reader who wish to integrate imgui_impl_vulkan.cpp/.h in their own engine/app.
 // - Common ImGui_ImplVulkan_XXX functions and structures are used to interface with imgui_impl_vulkan.cpp/.h.
@@ -66,7 +69,7 @@
 //  2016-10-18: Vulkan: Add location decorators & change to use structs as in/out in glsl, update embedded spv (produced with glslangValidator -x). Null the released resources.
 //  2016-08-27: Vulkan: Fix Vulkan example for use when a depth buffer is active.
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #ifndef IMGUI_DISABLE
 #include "imgui_impl_vulkan.h"
 #include <stdio.h>
@@ -777,15 +780,15 @@ static void ImGui_ImplVulkan_CreatePipeline(VkDevice device, const VkAllocationC
     attribute_desc[0].location = 0;
     attribute_desc[0].binding = binding_desc[0].binding;
     attribute_desc[0].format = VK_FORMAT_R32G32_SFLOAT;
-    attribute_desc[0].offset = IM_OFFSETOF(ImDrawVert, pos);
+    attribute_desc[0].offset = offsetof(ImDrawVert, pos);
     attribute_desc[1].location = 1;
     attribute_desc[1].binding = binding_desc[0].binding;
     attribute_desc[1].format = VK_FORMAT_R32G32_SFLOAT;
-    attribute_desc[1].offset = IM_OFFSETOF(ImDrawVert, uv);
+    attribute_desc[1].offset = offsetof(ImDrawVert, uv);
     attribute_desc[2].location = 2;
     attribute_desc[2].binding = binding_desc[0].binding;
     attribute_desc[2].format = VK_FORMAT_R8G8B8A8_UNORM;
-    attribute_desc[2].offset = IM_OFFSETOF(ImDrawVert, col);
+    attribute_desc[2].offset = offsetof(ImDrawVert, col);
 
     VkPipelineVertexInputStateCreateInfo vertex_info = {};
     vertex_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

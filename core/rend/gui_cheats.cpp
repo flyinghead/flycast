@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "gui.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui_util.h"
 #include "cheats.h"
 #include "oslib/storage.h"

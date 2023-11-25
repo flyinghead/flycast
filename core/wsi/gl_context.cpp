@@ -20,7 +20,11 @@
 */
 #include "gl_context.h"
 
+#ifndef LIBRETRO
 #include "rend/gles/opengl_driver.h"
+#endif
+
+#include <cstring>
 
 void GLGraphicsContext::findGLVersion()
 {

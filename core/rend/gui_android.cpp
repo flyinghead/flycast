@@ -23,7 +23,7 @@
 
 #include "types.h"
 #include "stdclass.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui_util.h"
 
 void vjoy_reset_editing();
