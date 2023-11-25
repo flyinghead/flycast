@@ -257,6 +257,33 @@ extern "C" {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_AR NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_AR NULL
+#define OPTION_VAL_50_AR NULL
+#define OPTION_VAL_60_AR NULL
+#define OPTION_VAL_70_AR NULL
+#define OPTION_VAL_80_AR NULL
+#define OPTION_VAL_90_AR NULL
+#define OPTION_VAL_100_O46_AR NULL
+#define OPTION_VAL_110_O46_AR NULL
+#define OPTION_VAL_120_O46_AR NULL
+#define OPTION_VAL_130_O46_AR NULL
+#define OPTION_VAL_140_O46_AR NULL
+#define OPTION_VAL_150_O46_AR NULL
+#define OPTION_VAL_160_O46_AR NULL
+#define OPTION_VAL_170_O46_AR NULL
+#define OPTION_VAL_180_O46_AR NULL
+#define OPTION_VAL_190_O46_AR NULL
+#define OPTION_VAL_200_O46_AR NULL
+#define OPTION_VAL_210_O46_AR NULL
+#define OPTION_VAL_220_O46_AR NULL
+#define OPTION_VAL_230_O46_AR NULL
+#define OPTION_VAL_240_O46_AR NULL
+#define OPTION_VAL_250_O46_AR NULL
+#define OPTION_VAL_260_O46_AR NULL
+#define OPTION_VAL_270_O46_AR NULL
+#define OPTION_VAL_280_O46_AR NULL
+#define OPTION_VAL_290_O46_AR NULL
+#define OPTION_VAL_300_O46_AR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AR NULL
 #define OPTION_VAL_WHITE_AR NULL
 #define OPTION_VAL_RED_AR "أحمر"
@@ -315,12 +342,6 @@ extern "C" {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_AR NULL
 #define OPTION_VAL_40_AR NULL
-#define OPTION_VAL_50_AR NULL
-#define OPTION_VAL_60_AR NULL
-#define OPTION_VAL_70_AR NULL
-#define OPTION_VAL_80_AR NULL
-#define OPTION_VAL_90_AR NULL
-#define OPTION_VAL_100_O58_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AR NULL
@@ -1150,6 +1171,44 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_AR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_AR },
+         { "60%",  OPTION_VAL_60_AR },
+         { "70%",  OPTION_VAL_70_AR },
+         { "80%",  OPTION_VAL_80_AR },
+         { "90%",  OPTION_VAL_90_AR },
+         { "100%", OPTION_VAL_100_O46_AR },
+         { "110%", OPTION_VAL_110_O46_AR },
+         { "120%", OPTION_VAL_120_O46_AR },
+         { "130%", OPTION_VAL_130_O46_AR },
+         { "140%", OPTION_VAL_140_O46_AR },
+         { "150%", OPTION_VAL_150_O46_AR },
+         { "160%", OPTION_VAL_160_O46_AR },
+         { "170%", OPTION_VAL_170_O46_AR },
+         { "180%", OPTION_VAL_180_O46_AR },
+         { "190%", OPTION_VAL_190_O46_AR },
+         { "200%", OPTION_VAL_200_O46_AR },
+         { "210%", OPTION_VAL_210_O46_AR },
+         { "220%", OPTION_VAL_220_O46_AR },
+         { "230%", OPTION_VAL_230_O46_AR },
+         { "240%", OPTION_VAL_240_O46_AR },
+         { "250%", OPTION_VAL_250_O46_AR },
+         { "260%", OPTION_VAL_260_O46_AR },
+         { "270%", OPTION_VAL_270_O46_AR },
+         { "280%", OPTION_VAL_280_O46_AR },
+         { "290%", OPTION_VAL_290_O46_AR },
+         { "300%", OPTION_VAL_300_O46_AR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AR,
       NULL,
@@ -1405,7 +1464,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O58_AR },
+         { "100%", OPTION_VAL_100_O46_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1556,7 +1615,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O58_AR },
+         { "100%", OPTION_VAL_100_O46_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1707,7 +1766,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O58_AR },
+         { "100%", OPTION_VAL_100_O46_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -1858,7 +1917,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "70%",  OPTION_VAL_70_AR },
          { "80%",  OPTION_VAL_80_AR },
          { "90%",  OPTION_VAL_90_AR },
-         { "100%", OPTION_VAL_100_O58_AR },
+         { "100%", OPTION_VAL_100_O46_AR },
          { NULL,   NULL },
       },
       "100%",
@@ -2072,6 +2131,33 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_AST NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_AST NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_AST NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_AST NULL
+#define OPTION_VAL_50_AST NULL
+#define OPTION_VAL_60_AST NULL
+#define OPTION_VAL_70_AST NULL
+#define OPTION_VAL_80_AST NULL
+#define OPTION_VAL_90_AST NULL
+#define OPTION_VAL_100_O46_AST NULL
+#define OPTION_VAL_110_O46_AST NULL
+#define OPTION_VAL_120_O46_AST NULL
+#define OPTION_VAL_130_O46_AST NULL
+#define OPTION_VAL_140_O46_AST NULL
+#define OPTION_VAL_150_O46_AST NULL
+#define OPTION_VAL_160_O46_AST NULL
+#define OPTION_VAL_170_O46_AST NULL
+#define OPTION_VAL_180_O46_AST NULL
+#define OPTION_VAL_190_O46_AST NULL
+#define OPTION_VAL_200_O46_AST NULL
+#define OPTION_VAL_210_O46_AST NULL
+#define OPTION_VAL_220_O46_AST NULL
+#define OPTION_VAL_230_O46_AST NULL
+#define OPTION_VAL_240_O46_AST NULL
+#define OPTION_VAL_250_O46_AST NULL
+#define OPTION_VAL_260_O46_AST NULL
+#define OPTION_VAL_270_O46_AST NULL
+#define OPTION_VAL_280_O46_AST NULL
+#define OPTION_VAL_290_O46_AST NULL
+#define OPTION_VAL_300_O46_AST NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AST NULL
 #define OPTION_VAL_WHITE_AST "Blancu"
 #define OPTION_VAL_RED_AST "Coloráu"
@@ -2130,12 +2216,6 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_AST NULL
 #define OPTION_VAL_40_AST NULL
-#define OPTION_VAL_50_AST NULL
-#define OPTION_VAL_60_AST NULL
-#define OPTION_VAL_70_AST NULL
-#define OPTION_VAL_80_AST NULL
-#define OPTION_VAL_90_AST NULL
-#define OPTION_VAL_100_O58_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_AST NULL
@@ -2965,6 +3045,44 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_AST,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_AST },
+         { "60%",  OPTION_VAL_60_AST },
+         { "70%",  OPTION_VAL_70_AST },
+         { "80%",  OPTION_VAL_80_AST },
+         { "90%",  OPTION_VAL_90_AST },
+         { "100%", OPTION_VAL_100_O46_AST },
+         { "110%", OPTION_VAL_110_O46_AST },
+         { "120%", OPTION_VAL_120_O46_AST },
+         { "130%", OPTION_VAL_130_O46_AST },
+         { "140%", OPTION_VAL_140_O46_AST },
+         { "150%", OPTION_VAL_150_O46_AST },
+         { "160%", OPTION_VAL_160_O46_AST },
+         { "170%", OPTION_VAL_170_O46_AST },
+         { "180%", OPTION_VAL_180_O46_AST },
+         { "190%", OPTION_VAL_190_O46_AST },
+         { "200%", OPTION_VAL_200_O46_AST },
+         { "210%", OPTION_VAL_210_O46_AST },
+         { "220%", OPTION_VAL_220_O46_AST },
+         { "230%", OPTION_VAL_230_O46_AST },
+         { "240%", OPTION_VAL_240_O46_AST },
+         { "250%", OPTION_VAL_250_O46_AST },
+         { "260%", OPTION_VAL_260_O46_AST },
+         { "270%", OPTION_VAL_270_O46_AST },
+         { "280%", OPTION_VAL_280_O46_AST },
+         { "290%", OPTION_VAL_290_O46_AST },
+         { "300%", OPTION_VAL_300_O46_AST },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_AST,
       NULL,
@@ -3220,7 +3338,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O58_AST },
+         { "100%", OPTION_VAL_100_O46_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3371,7 +3489,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O58_AST },
+         { "100%", OPTION_VAL_100_O46_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3522,7 +3640,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O58_AST },
+         { "100%", OPTION_VAL_100_O46_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3673,7 +3791,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "70%",  OPTION_VAL_70_AST },
          { "80%",  OPTION_VAL_80_AST },
          { "90%",  OPTION_VAL_90_AST },
-         { "100%", OPTION_VAL_100_O58_AST },
+         { "100%", OPTION_VAL_100_O46_AST },
          { NULL,   NULL },
       },
       "100%",
@@ -3887,6 +4005,33 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE NULL
+#define OPTION_VAL_50_BE NULL
+#define OPTION_VAL_60_BE NULL
+#define OPTION_VAL_70_BE NULL
+#define OPTION_VAL_80_BE NULL
+#define OPTION_VAL_90_BE NULL
+#define OPTION_VAL_100_O46_BE NULL
+#define OPTION_VAL_110_O46_BE NULL
+#define OPTION_VAL_120_O46_BE NULL
+#define OPTION_VAL_130_O46_BE NULL
+#define OPTION_VAL_140_O46_BE NULL
+#define OPTION_VAL_150_O46_BE NULL
+#define OPTION_VAL_160_O46_BE NULL
+#define OPTION_VAL_170_O46_BE NULL
+#define OPTION_VAL_180_O46_BE NULL
+#define OPTION_VAL_190_O46_BE NULL
+#define OPTION_VAL_200_O46_BE NULL
+#define OPTION_VAL_210_O46_BE NULL
+#define OPTION_VAL_220_O46_BE NULL
+#define OPTION_VAL_230_O46_BE NULL
+#define OPTION_VAL_240_O46_BE NULL
+#define OPTION_VAL_250_O46_BE NULL
+#define OPTION_VAL_260_O46_BE NULL
+#define OPTION_VAL_270_O46_BE NULL
+#define OPTION_VAL_280_O46_BE NULL
+#define OPTION_VAL_290_O46_BE NULL
+#define OPTION_VAL_300_O46_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE NULL
 #define OPTION_VAL_WHITE_BE NULL
 #define OPTION_VAL_RED_BE "Чырвоная"
@@ -3945,12 +4090,6 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_BE NULL
 #define OPTION_VAL_40_BE NULL
-#define OPTION_VAL_50_BE NULL
-#define OPTION_VAL_60_BE NULL
-#define OPTION_VAL_70_BE NULL
-#define OPTION_VAL_80_BE NULL
-#define OPTION_VAL_90_BE NULL
-#define OPTION_VAL_100_O58_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
@@ -4780,6 +4919,44 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_BE },
+         { "60%",  OPTION_VAL_60_BE },
+         { "70%",  OPTION_VAL_70_BE },
+         { "80%",  OPTION_VAL_80_BE },
+         { "90%",  OPTION_VAL_90_BE },
+         { "100%", OPTION_VAL_100_O46_BE },
+         { "110%", OPTION_VAL_110_O46_BE },
+         { "120%", OPTION_VAL_120_O46_BE },
+         { "130%", OPTION_VAL_130_O46_BE },
+         { "140%", OPTION_VAL_140_O46_BE },
+         { "150%", OPTION_VAL_150_O46_BE },
+         { "160%", OPTION_VAL_160_O46_BE },
+         { "170%", OPTION_VAL_170_O46_BE },
+         { "180%", OPTION_VAL_180_O46_BE },
+         { "190%", OPTION_VAL_190_O46_BE },
+         { "200%", OPTION_VAL_200_O46_BE },
+         { "210%", OPTION_VAL_210_O46_BE },
+         { "220%", OPTION_VAL_220_O46_BE },
+         { "230%", OPTION_VAL_230_O46_BE },
+         { "240%", OPTION_VAL_240_O46_BE },
+         { "250%", OPTION_VAL_250_O46_BE },
+         { "260%", OPTION_VAL_260_O46_BE },
+         { "270%", OPTION_VAL_270_O46_BE },
+         { "280%", OPTION_VAL_280_O46_BE },
+         { "290%", OPTION_VAL_290_O46_BE },
+         { "300%", OPTION_VAL_300_O46_BE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE,
       NULL,
@@ -5035,7 +5212,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O58_BE },
+         { "100%", OPTION_VAL_100_O46_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5186,7 +5363,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O58_BE },
+         { "100%", OPTION_VAL_100_O46_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5337,7 +5514,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O58_BE },
+         { "100%", OPTION_VAL_100_O46_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5488,7 +5665,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "70%",  OPTION_VAL_70_BE },
          { "80%",  OPTION_VAL_80_BE },
          { "90%",  OPTION_VAL_90_BE },
-         { "100%", OPTION_VAL_100_O58_BE },
+         { "100%", OPTION_VAL_100_O46_BE },
          { NULL,   NULL },
       },
       "100%",
@@ -5702,6 +5879,33 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CA NULL
+#define OPTION_VAL_50_CA NULL
+#define OPTION_VAL_60_CA NULL
+#define OPTION_VAL_70_CA NULL
+#define OPTION_VAL_80_CA NULL
+#define OPTION_VAL_90_CA NULL
+#define OPTION_VAL_100_O46_CA NULL
+#define OPTION_VAL_110_O46_CA NULL
+#define OPTION_VAL_120_O46_CA NULL
+#define OPTION_VAL_130_O46_CA NULL
+#define OPTION_VAL_140_O46_CA NULL
+#define OPTION_VAL_150_O46_CA NULL
+#define OPTION_VAL_160_O46_CA NULL
+#define OPTION_VAL_170_O46_CA NULL
+#define OPTION_VAL_180_O46_CA NULL
+#define OPTION_VAL_190_O46_CA NULL
+#define OPTION_VAL_200_O46_CA NULL
+#define OPTION_VAL_210_O46_CA NULL
+#define OPTION_VAL_220_O46_CA NULL
+#define OPTION_VAL_230_O46_CA NULL
+#define OPTION_VAL_240_O46_CA NULL
+#define OPTION_VAL_250_O46_CA NULL
+#define OPTION_VAL_260_O46_CA NULL
+#define OPTION_VAL_270_O46_CA NULL
+#define OPTION_VAL_280_O46_CA NULL
+#define OPTION_VAL_290_O46_CA NULL
+#define OPTION_VAL_300_O46_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CA NULL
 #define OPTION_VAL_WHITE_CA NULL
 #define OPTION_VAL_RED_CA NULL
@@ -5760,12 +5964,6 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CA NULL
 #define OPTION_VAL_40_CA NULL
-#define OPTION_VAL_50_CA NULL
-#define OPTION_VAL_60_CA NULL
-#define OPTION_VAL_70_CA NULL
-#define OPTION_VAL_80_CA NULL
-#define OPTION_VAL_90_CA NULL
-#define OPTION_VAL_100_O58_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CA NULL
@@ -6595,6 +6793,44 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CA,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_CA },
+         { "60%",  OPTION_VAL_60_CA },
+         { "70%",  OPTION_VAL_70_CA },
+         { "80%",  OPTION_VAL_80_CA },
+         { "90%",  OPTION_VAL_90_CA },
+         { "100%", OPTION_VAL_100_O46_CA },
+         { "110%", OPTION_VAL_110_O46_CA },
+         { "120%", OPTION_VAL_120_O46_CA },
+         { "130%", OPTION_VAL_130_O46_CA },
+         { "140%", OPTION_VAL_140_O46_CA },
+         { "150%", OPTION_VAL_150_O46_CA },
+         { "160%", OPTION_VAL_160_O46_CA },
+         { "170%", OPTION_VAL_170_O46_CA },
+         { "180%", OPTION_VAL_180_O46_CA },
+         { "190%", OPTION_VAL_190_O46_CA },
+         { "200%", OPTION_VAL_200_O46_CA },
+         { "210%", OPTION_VAL_210_O46_CA },
+         { "220%", OPTION_VAL_220_O46_CA },
+         { "230%", OPTION_VAL_230_O46_CA },
+         { "240%", OPTION_VAL_240_O46_CA },
+         { "250%", OPTION_VAL_250_O46_CA },
+         { "260%", OPTION_VAL_260_O46_CA },
+         { "270%", OPTION_VAL_270_O46_CA },
+         { "280%", OPTION_VAL_280_O46_CA },
+         { "290%", OPTION_VAL_290_O46_CA },
+         { "300%", OPTION_VAL_300_O46_CA },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CA,
       NULL,
@@ -6850,7 +7086,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O58_CA },
+         { "100%", OPTION_VAL_100_O46_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7001,7 +7237,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O58_CA },
+         { "100%", OPTION_VAL_100_O46_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7152,7 +7388,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O58_CA },
+         { "100%", OPTION_VAL_100_O46_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7303,7 +7539,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "70%",  OPTION_VAL_70_CA },
          { "80%",  OPTION_VAL_80_CA },
          { "90%",  OPTION_VAL_90_CA },
-         { "100%", OPTION_VAL_100_O58_CA },
+         { "100%", OPTION_VAL_100_O46_CA },
          { NULL,   NULL },
       },
       "100%",
@@ -7517,6 +7753,33 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHS NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CHS NULL
+#define OPTION_VAL_50_CHS NULL
+#define OPTION_VAL_60_CHS NULL
+#define OPTION_VAL_70_CHS NULL
+#define OPTION_VAL_80_CHS NULL
+#define OPTION_VAL_90_CHS NULL
+#define OPTION_VAL_100_O46_CHS NULL
+#define OPTION_VAL_110_O46_CHS NULL
+#define OPTION_VAL_120_O46_CHS NULL
+#define OPTION_VAL_130_O46_CHS NULL
+#define OPTION_VAL_140_O46_CHS NULL
+#define OPTION_VAL_150_O46_CHS NULL
+#define OPTION_VAL_160_O46_CHS NULL
+#define OPTION_VAL_170_O46_CHS NULL
+#define OPTION_VAL_180_O46_CHS NULL
+#define OPTION_VAL_190_O46_CHS NULL
+#define OPTION_VAL_200_O46_CHS NULL
+#define OPTION_VAL_210_O46_CHS NULL
+#define OPTION_VAL_220_O46_CHS NULL
+#define OPTION_VAL_230_O46_CHS NULL
+#define OPTION_VAL_240_O46_CHS NULL
+#define OPTION_VAL_250_O46_CHS NULL
+#define OPTION_VAL_260_O46_CHS NULL
+#define OPTION_VAL_270_O46_CHS NULL
+#define OPTION_VAL_280_O46_CHS NULL
+#define OPTION_VAL_290_O46_CHS NULL
+#define OPTION_VAL_300_O46_CHS NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHS NULL
 #define OPTION_VAL_WHITE_CHS "白色"
 #define OPTION_VAL_RED_CHS "红色"
@@ -7575,12 +7838,6 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CHS NULL
 #define OPTION_VAL_40_CHS NULL
-#define OPTION_VAL_50_CHS NULL
-#define OPTION_VAL_60_CHS NULL
-#define OPTION_VAL_70_CHS NULL
-#define OPTION_VAL_80_CHS NULL
-#define OPTION_VAL_90_CHS NULL
-#define OPTION_VAL_100_O58_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHS NULL
@@ -8410,6 +8667,44 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CHS,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_CHS },
+         { "60%",  OPTION_VAL_60_CHS },
+         { "70%",  OPTION_VAL_70_CHS },
+         { "80%",  OPTION_VAL_80_CHS },
+         { "90%",  OPTION_VAL_90_CHS },
+         { "100%", OPTION_VAL_100_O46_CHS },
+         { "110%", OPTION_VAL_110_O46_CHS },
+         { "120%", OPTION_VAL_120_O46_CHS },
+         { "130%", OPTION_VAL_130_O46_CHS },
+         { "140%", OPTION_VAL_140_O46_CHS },
+         { "150%", OPTION_VAL_150_O46_CHS },
+         { "160%", OPTION_VAL_160_O46_CHS },
+         { "170%", OPTION_VAL_170_O46_CHS },
+         { "180%", OPTION_VAL_180_O46_CHS },
+         { "190%", OPTION_VAL_190_O46_CHS },
+         { "200%", OPTION_VAL_200_O46_CHS },
+         { "210%", OPTION_VAL_210_O46_CHS },
+         { "220%", OPTION_VAL_220_O46_CHS },
+         { "230%", OPTION_VAL_230_O46_CHS },
+         { "240%", OPTION_VAL_240_O46_CHS },
+         { "250%", OPTION_VAL_250_O46_CHS },
+         { "260%", OPTION_VAL_260_O46_CHS },
+         { "270%", OPTION_VAL_270_O46_CHS },
+         { "280%", OPTION_VAL_280_O46_CHS },
+         { "290%", OPTION_VAL_290_O46_CHS },
+         { "300%", OPTION_VAL_300_O46_CHS },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHS,
       NULL,
@@ -8665,7 +8960,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O58_CHS },
+         { "100%", OPTION_VAL_100_O46_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8816,7 +9111,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O58_CHS },
+         { "100%", OPTION_VAL_100_O46_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -8967,7 +9262,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O58_CHS },
+         { "100%", OPTION_VAL_100_O46_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -9118,7 +9413,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "70%",  OPTION_VAL_70_CHS },
          { "80%",  OPTION_VAL_80_CHS },
          { "90%",  OPTION_VAL_90_CHS },
-         { "100%", OPTION_VAL_100_O58_CHS },
+         { "100%", OPTION_VAL_100_O46_CHS },
          { NULL,   NULL },
       },
       "100%",
@@ -9332,6 +9627,33 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CHT NULL
+#define OPTION_VAL_50_CHT NULL
+#define OPTION_VAL_60_CHT NULL
+#define OPTION_VAL_70_CHT NULL
+#define OPTION_VAL_80_CHT NULL
+#define OPTION_VAL_90_CHT NULL
+#define OPTION_VAL_100_O46_CHT NULL
+#define OPTION_VAL_110_O46_CHT NULL
+#define OPTION_VAL_120_O46_CHT NULL
+#define OPTION_VAL_130_O46_CHT NULL
+#define OPTION_VAL_140_O46_CHT NULL
+#define OPTION_VAL_150_O46_CHT NULL
+#define OPTION_VAL_160_O46_CHT NULL
+#define OPTION_VAL_170_O46_CHT NULL
+#define OPTION_VAL_180_O46_CHT NULL
+#define OPTION_VAL_190_O46_CHT NULL
+#define OPTION_VAL_200_O46_CHT NULL
+#define OPTION_VAL_210_O46_CHT NULL
+#define OPTION_VAL_220_O46_CHT NULL
+#define OPTION_VAL_230_O46_CHT NULL
+#define OPTION_VAL_240_O46_CHT NULL
+#define OPTION_VAL_250_O46_CHT NULL
+#define OPTION_VAL_260_O46_CHT NULL
+#define OPTION_VAL_270_O46_CHT NULL
+#define OPTION_VAL_280_O46_CHT NULL
+#define OPTION_VAL_290_O46_CHT NULL
+#define OPTION_VAL_300_O46_CHT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHT NULL
 #define OPTION_VAL_WHITE_CHT "白色"
 #define OPTION_VAL_RED_CHT "紅色"
@@ -9390,12 +9712,6 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CHT NULL
 #define OPTION_VAL_40_CHT NULL
-#define OPTION_VAL_50_CHT NULL
-#define OPTION_VAL_60_CHT NULL
-#define OPTION_VAL_70_CHT NULL
-#define OPTION_VAL_80_CHT NULL
-#define OPTION_VAL_90_CHT NULL
-#define OPTION_VAL_100_O58_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CHT NULL
@@ -10225,6 +10541,44 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CHT,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_CHT },
+         { "60%",  OPTION_VAL_60_CHT },
+         { "70%",  OPTION_VAL_70_CHT },
+         { "80%",  OPTION_VAL_80_CHT },
+         { "90%",  OPTION_VAL_90_CHT },
+         { "100%", OPTION_VAL_100_O46_CHT },
+         { "110%", OPTION_VAL_110_O46_CHT },
+         { "120%", OPTION_VAL_120_O46_CHT },
+         { "130%", OPTION_VAL_130_O46_CHT },
+         { "140%", OPTION_VAL_140_O46_CHT },
+         { "150%", OPTION_VAL_150_O46_CHT },
+         { "160%", OPTION_VAL_160_O46_CHT },
+         { "170%", OPTION_VAL_170_O46_CHT },
+         { "180%", OPTION_VAL_180_O46_CHT },
+         { "190%", OPTION_VAL_190_O46_CHT },
+         { "200%", OPTION_VAL_200_O46_CHT },
+         { "210%", OPTION_VAL_210_O46_CHT },
+         { "220%", OPTION_VAL_220_O46_CHT },
+         { "230%", OPTION_VAL_230_O46_CHT },
+         { "240%", OPTION_VAL_240_O46_CHT },
+         { "250%", OPTION_VAL_250_O46_CHT },
+         { "260%", OPTION_VAL_260_O46_CHT },
+         { "270%", OPTION_VAL_270_O46_CHT },
+         { "280%", OPTION_VAL_280_O46_CHT },
+         { "290%", OPTION_VAL_290_O46_CHT },
+         { "300%", OPTION_VAL_300_O46_CHT },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CHT,
       NULL,
@@ -10480,7 +10834,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O58_CHT },
+         { "100%", OPTION_VAL_100_O46_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10631,7 +10985,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O58_CHT },
+         { "100%", OPTION_VAL_100_O46_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10782,7 +11136,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O58_CHT },
+         { "100%", OPTION_VAL_100_O46_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -10933,7 +11287,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "70%",  OPTION_VAL_70_CHT },
          { "80%",  OPTION_VAL_80_CHT },
          { "90%",  OPTION_VAL_90_CHT },
-         { "100%", OPTION_VAL_100_O58_CHT },
+         { "100%", OPTION_VAL_100_O46_CHT },
          { NULL,   NULL },
       },
       "100%",
@@ -11147,6 +11501,33 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS "Vysílání digitálních výstupů a stavu vynucene zpětné vazby na portu TCP 8000. Kompatibilní s volbou MAME \"-výstupní síť\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS "Zobrazit Nastavení Světelné Pistole"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CS "Povolení konfigurace možností zobrazení zaměřovacího kříže světelné pistole. POZNÁMKA: Aby se toto nastavení projevilo, může být nutné přepnout rychlou nabídku."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CS "Měřítko velikosti zaměřovacího kříže zbraně"
+#define OPTION_VAL_50_CS NULL
+#define OPTION_VAL_60_CS NULL
+#define OPTION_VAL_70_CS NULL
+#define OPTION_VAL_80_CS NULL
+#define OPTION_VAL_90_CS NULL
+#define OPTION_VAL_100_O46_CS NULL
+#define OPTION_VAL_110_O46_CS NULL
+#define OPTION_VAL_120_O46_CS NULL
+#define OPTION_VAL_130_O46_CS NULL
+#define OPTION_VAL_140_O46_CS NULL
+#define OPTION_VAL_150_O46_CS NULL
+#define OPTION_VAL_160_O46_CS NULL
+#define OPTION_VAL_170_O46_CS NULL
+#define OPTION_VAL_180_O46_CS NULL
+#define OPTION_VAL_190_O46_CS NULL
+#define OPTION_VAL_200_O46_CS NULL
+#define OPTION_VAL_210_O46_CS NULL
+#define OPTION_VAL_220_O46_CS NULL
+#define OPTION_VAL_230_O46_CS NULL
+#define OPTION_VAL_240_O46_CS NULL
+#define OPTION_VAL_250_O46_CS NULL
+#define OPTION_VAL_260_O46_CS NULL
+#define OPTION_VAL_270_O46_CS NULL
+#define OPTION_VAL_280_O46_CS NULL
+#define OPTION_VAL_290_O46_CS NULL
+#define OPTION_VAL_300_O46_CS NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 1"
 #define OPTION_VAL_WHITE_CS "Bílá"
 #define OPTION_VAL_RED_CS "Červený"
@@ -11205,12 +11586,6 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CS "Vypnout Barvu Pixelu Obrazovky VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CS "Průhlednost Obrazovky VMU 1"
 #define OPTION_VAL_40_CS NULL
-#define OPTION_VAL_50_CS NULL
-#define OPTION_VAL_60_CS NULL
-#define OPTION_VAL_70_CS NULL
-#define OPTION_VAL_80_CS NULL
-#define OPTION_VAL_90_CS NULL
-#define OPTION_VAL_100_O58_CS NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CS "Displej Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CS "Pozice Obrazovky VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CS "Velikost Obrazovky VMU 2"
@@ -12040,6 +12415,44 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CS,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_CS },
+         { "60%",  OPTION_VAL_60_CS },
+         { "70%",  OPTION_VAL_70_CS },
+         { "80%",  OPTION_VAL_80_CS },
+         { "90%",  OPTION_VAL_90_CS },
+         { "100%", OPTION_VAL_100_O46_CS },
+         { "110%", OPTION_VAL_110_O46_CS },
+         { "120%", OPTION_VAL_120_O46_CS },
+         { "130%", OPTION_VAL_130_O46_CS },
+         { "140%", OPTION_VAL_140_O46_CS },
+         { "150%", OPTION_VAL_150_O46_CS },
+         { "160%", OPTION_VAL_160_O46_CS },
+         { "170%", OPTION_VAL_170_O46_CS },
+         { "180%", OPTION_VAL_180_O46_CS },
+         { "190%", OPTION_VAL_190_O46_CS },
+         { "200%", OPTION_VAL_200_O46_CS },
+         { "210%", OPTION_VAL_210_O46_CS },
+         { "220%", OPTION_VAL_220_O46_CS },
+         { "230%", OPTION_VAL_230_O46_CS },
+         { "240%", OPTION_VAL_240_O46_CS },
+         { "250%", OPTION_VAL_250_O46_CS },
+         { "260%", OPTION_VAL_260_O46_CS },
+         { "270%", OPTION_VAL_270_O46_CS },
+         { "280%", OPTION_VAL_280_O46_CS },
+         { "290%", OPTION_VAL_290_O46_CS },
+         { "300%", OPTION_VAL_300_O46_CS },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CS,
       NULL,
@@ -12295,7 +12708,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O58_CS },
+         { "100%", OPTION_VAL_100_O46_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12446,7 +12859,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O58_CS },
+         { "100%", OPTION_VAL_100_O46_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12597,7 +13010,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O58_CS },
+         { "100%", OPTION_VAL_100_O46_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12748,7 +13161,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "70%",  OPTION_VAL_70_CS },
          { "80%",  OPTION_VAL_80_CS },
          { "90%",  OPTION_VAL_90_CS },
-         { "100%", OPTION_VAL_100_O58_CS },
+         { "100%", OPTION_VAL_100_O46_CS },
          { NULL,   NULL },
       },
       "100%",
@@ -12962,6 +13375,33 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CY NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CY NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CY NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CY NULL
+#define OPTION_VAL_50_CY NULL
+#define OPTION_VAL_60_CY NULL
+#define OPTION_VAL_70_CY NULL
+#define OPTION_VAL_80_CY NULL
+#define OPTION_VAL_90_CY NULL
+#define OPTION_VAL_100_O46_CY NULL
+#define OPTION_VAL_110_O46_CY NULL
+#define OPTION_VAL_120_O46_CY NULL
+#define OPTION_VAL_130_O46_CY NULL
+#define OPTION_VAL_140_O46_CY NULL
+#define OPTION_VAL_150_O46_CY NULL
+#define OPTION_VAL_160_O46_CY NULL
+#define OPTION_VAL_170_O46_CY NULL
+#define OPTION_VAL_180_O46_CY NULL
+#define OPTION_VAL_190_O46_CY NULL
+#define OPTION_VAL_200_O46_CY NULL
+#define OPTION_VAL_210_O46_CY NULL
+#define OPTION_VAL_220_O46_CY NULL
+#define OPTION_VAL_230_O46_CY NULL
+#define OPTION_VAL_240_O46_CY NULL
+#define OPTION_VAL_250_O46_CY NULL
+#define OPTION_VAL_260_O46_CY NULL
+#define OPTION_VAL_270_O46_CY NULL
+#define OPTION_VAL_280_O46_CY NULL
+#define OPTION_VAL_290_O46_CY NULL
+#define OPTION_VAL_300_O46_CY NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CY NULL
 #define OPTION_VAL_WHITE_CY NULL
 #define OPTION_VAL_RED_CY "Coch"
@@ -13020,12 +13460,6 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_CY NULL
 #define OPTION_VAL_40_CY NULL
-#define OPTION_VAL_50_CY NULL
-#define OPTION_VAL_60_CY NULL
-#define OPTION_VAL_70_CY NULL
-#define OPTION_VAL_80_CY NULL
-#define OPTION_VAL_90_CY NULL
-#define OPTION_VAL_100_O58_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_CY NULL
@@ -13855,6 +14289,44 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CY,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_CY },
+         { "60%",  OPTION_VAL_60_CY },
+         { "70%",  OPTION_VAL_70_CY },
+         { "80%",  OPTION_VAL_80_CY },
+         { "90%",  OPTION_VAL_90_CY },
+         { "100%", OPTION_VAL_100_O46_CY },
+         { "110%", OPTION_VAL_110_O46_CY },
+         { "120%", OPTION_VAL_120_O46_CY },
+         { "130%", OPTION_VAL_130_O46_CY },
+         { "140%", OPTION_VAL_140_O46_CY },
+         { "150%", OPTION_VAL_150_O46_CY },
+         { "160%", OPTION_VAL_160_O46_CY },
+         { "170%", OPTION_VAL_170_O46_CY },
+         { "180%", OPTION_VAL_180_O46_CY },
+         { "190%", OPTION_VAL_190_O46_CY },
+         { "200%", OPTION_VAL_200_O46_CY },
+         { "210%", OPTION_VAL_210_O46_CY },
+         { "220%", OPTION_VAL_220_O46_CY },
+         { "230%", OPTION_VAL_230_O46_CY },
+         { "240%", OPTION_VAL_240_O46_CY },
+         { "250%", OPTION_VAL_250_O46_CY },
+         { "260%", OPTION_VAL_260_O46_CY },
+         { "270%", OPTION_VAL_270_O46_CY },
+         { "280%", OPTION_VAL_280_O46_CY },
+         { "290%", OPTION_VAL_290_O46_CY },
+         { "300%", OPTION_VAL_300_O46_CY },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CY,
       NULL,
@@ -14110,7 +14582,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O58_CY },
+         { "100%", OPTION_VAL_100_O46_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14261,7 +14733,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O58_CY },
+         { "100%", OPTION_VAL_100_O46_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14412,7 +14884,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O58_CY },
+         { "100%", OPTION_VAL_100_O46_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14563,7 +15035,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "70%",  OPTION_VAL_70_CY },
          { "80%",  OPTION_VAL_80_CY },
          { "90%",  OPTION_VAL_90_CY },
-         { "100%", OPTION_VAL_100_O58_CY },
+         { "100%", OPTION_VAL_100_O46_CY },
          { NULL,   NULL },
       },
       "100%",
@@ -14777,6 +15249,33 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DA NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_DA NULL
+#define OPTION_VAL_50_DA NULL
+#define OPTION_VAL_60_DA NULL
+#define OPTION_VAL_70_DA NULL
+#define OPTION_VAL_80_DA NULL
+#define OPTION_VAL_90_DA NULL
+#define OPTION_VAL_100_O46_DA NULL
+#define OPTION_VAL_110_O46_DA NULL
+#define OPTION_VAL_120_O46_DA NULL
+#define OPTION_VAL_130_O46_DA NULL
+#define OPTION_VAL_140_O46_DA NULL
+#define OPTION_VAL_150_O46_DA NULL
+#define OPTION_VAL_160_O46_DA NULL
+#define OPTION_VAL_170_O46_DA NULL
+#define OPTION_VAL_180_O46_DA NULL
+#define OPTION_VAL_190_O46_DA NULL
+#define OPTION_VAL_200_O46_DA NULL
+#define OPTION_VAL_210_O46_DA NULL
+#define OPTION_VAL_220_O46_DA NULL
+#define OPTION_VAL_230_O46_DA NULL
+#define OPTION_VAL_240_O46_DA NULL
+#define OPTION_VAL_250_O46_DA NULL
+#define OPTION_VAL_260_O46_DA NULL
+#define OPTION_VAL_270_O46_DA NULL
+#define OPTION_VAL_280_O46_DA NULL
+#define OPTION_VAL_290_O46_DA NULL
+#define OPTION_VAL_300_O46_DA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DA NULL
 #define OPTION_VAL_WHITE_DA NULL
 #define OPTION_VAL_RED_DA NULL
@@ -14835,12 +15334,6 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_DA NULL
 #define OPTION_VAL_40_DA NULL
-#define OPTION_VAL_50_DA NULL
-#define OPTION_VAL_60_DA NULL
-#define OPTION_VAL_70_DA NULL
-#define OPTION_VAL_80_DA NULL
-#define OPTION_VAL_90_DA NULL
-#define OPTION_VAL_100_O58_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DA NULL
@@ -15670,6 +16163,44 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_DA,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_DA },
+         { "60%",  OPTION_VAL_60_DA },
+         { "70%",  OPTION_VAL_70_DA },
+         { "80%",  OPTION_VAL_80_DA },
+         { "90%",  OPTION_VAL_90_DA },
+         { "100%", OPTION_VAL_100_O46_DA },
+         { "110%", OPTION_VAL_110_O46_DA },
+         { "120%", OPTION_VAL_120_O46_DA },
+         { "130%", OPTION_VAL_130_O46_DA },
+         { "140%", OPTION_VAL_140_O46_DA },
+         { "150%", OPTION_VAL_150_O46_DA },
+         { "160%", OPTION_VAL_160_O46_DA },
+         { "170%", OPTION_VAL_170_O46_DA },
+         { "180%", OPTION_VAL_180_O46_DA },
+         { "190%", OPTION_VAL_190_O46_DA },
+         { "200%", OPTION_VAL_200_O46_DA },
+         { "210%", OPTION_VAL_210_O46_DA },
+         { "220%", OPTION_VAL_220_O46_DA },
+         { "230%", OPTION_VAL_230_O46_DA },
+         { "240%", OPTION_VAL_240_O46_DA },
+         { "250%", OPTION_VAL_250_O46_DA },
+         { "260%", OPTION_VAL_260_O46_DA },
+         { "270%", OPTION_VAL_270_O46_DA },
+         { "280%", OPTION_VAL_280_O46_DA },
+         { "290%", OPTION_VAL_290_O46_DA },
+         { "300%", OPTION_VAL_300_O46_DA },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DA,
       NULL,
@@ -15925,7 +16456,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O58_DA },
+         { "100%", OPTION_VAL_100_O46_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16076,7 +16607,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O58_DA },
+         { "100%", OPTION_VAL_100_O46_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16227,7 +16758,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O58_DA },
+         { "100%", OPTION_VAL_100_O46_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16378,7 +16909,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "70%",  OPTION_VAL_70_DA },
          { "80%",  OPTION_VAL_80_DA },
          { "90%",  OPTION_VAL_90_DA },
-         { "100%", OPTION_VAL_100_O58_DA },
+         { "100%", OPTION_VAL_100_O46_DA },
          { NULL,   NULL },
       },
       "100%",
@@ -16592,6 +17123,33 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_DE "Digitale Ausgänge und Force-Feedback-Status auf TCP-Port 8000 übertragen. Kompatibel mit der MAME-Option „-output network“."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_DE "Lightgun-Einstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_DE "Aktiviert die Konfiguration der Lightgun-Fadenkreuz-Anzeigeoptionen. HINWEIS: Schnellmenü muss eingeschaltet sein, damit diese Einstellung wirksam wird."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_DE "Skalierung der Fadenkreuzgröße"
+#define OPTION_VAL_50_DE "50 %"
+#define OPTION_VAL_60_DE "60 %"
+#define OPTION_VAL_70_DE "70 %"
+#define OPTION_VAL_80_DE "80 %"
+#define OPTION_VAL_90_DE "90 %"
+#define OPTION_VAL_100_O46_DE "100 %"
+#define OPTION_VAL_110_O46_DE "110 %"
+#define OPTION_VAL_120_O46_DE "120 %"
+#define OPTION_VAL_130_O46_DE "130 %"
+#define OPTION_VAL_140_O46_DE "140 %"
+#define OPTION_VAL_150_O46_DE "150 %"
+#define OPTION_VAL_160_O46_DE "160 %"
+#define OPTION_VAL_170_O46_DE "170 %"
+#define OPTION_VAL_180_O46_DE "180 %"
+#define OPTION_VAL_190_O46_DE "190 %"
+#define OPTION_VAL_200_O46_DE "200 %"
+#define OPTION_VAL_210_O46_DE "210 %"
+#define OPTION_VAL_220_O46_DE "220 %"
+#define OPTION_VAL_230_O46_DE "230 %"
+#define OPTION_VAL_240_O46_DE "240 %"
+#define OPTION_VAL_250_O46_DE "250 %"
+#define OPTION_VAL_260_O46_DE "260 %"
+#define OPTION_VAL_270_O46_DE "270 %"
+#define OPTION_VAL_280_O46_DE "280 %"
+#define OPTION_VAL_290_O46_DE "290 %"
+#define OPTION_VAL_300_O46_DE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 1"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
@@ -16650,12 +17208,6 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_DE "Pixel-aus-Farbe VMU-Bildschirm 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_DE "Deckkraft VMU-Bildschirm 1"
 #define OPTION_VAL_40_DE "40 %"
-#define OPTION_VAL_50_DE "50 %"
-#define OPTION_VAL_60_DE "60 %"
-#define OPTION_VAL_70_DE "70 %"
-#define OPTION_VAL_80_DE "80 %"
-#define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_O58_DE "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_DE "Anzeige VMU-Bildschirm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_DE "Position VMU-Bildschirm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_DE "Größe VMU-Bildschirm 2"
@@ -17485,6 +18037,44 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_DE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_DE },
+         { "60%",  OPTION_VAL_60_DE },
+         { "70%",  OPTION_VAL_70_DE },
+         { "80%",  OPTION_VAL_80_DE },
+         { "90%",  OPTION_VAL_90_DE },
+         { "100%", OPTION_VAL_100_O46_DE },
+         { "110%", OPTION_VAL_110_O46_DE },
+         { "120%", OPTION_VAL_120_O46_DE },
+         { "130%", OPTION_VAL_130_O46_DE },
+         { "140%", OPTION_VAL_140_O46_DE },
+         { "150%", OPTION_VAL_150_O46_DE },
+         { "160%", OPTION_VAL_160_O46_DE },
+         { "170%", OPTION_VAL_170_O46_DE },
+         { "180%", OPTION_VAL_180_O46_DE },
+         { "190%", OPTION_VAL_190_O46_DE },
+         { "200%", OPTION_VAL_200_O46_DE },
+         { "210%", OPTION_VAL_210_O46_DE },
+         { "220%", OPTION_VAL_220_O46_DE },
+         { "230%", OPTION_VAL_230_O46_DE },
+         { "240%", OPTION_VAL_240_O46_DE },
+         { "250%", OPTION_VAL_250_O46_DE },
+         { "260%", OPTION_VAL_260_O46_DE },
+         { "270%", OPTION_VAL_270_O46_DE },
+         { "280%", OPTION_VAL_280_O46_DE },
+         { "290%", OPTION_VAL_290_O46_DE },
+         { "300%", OPTION_VAL_300_O46_DE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE,
       NULL,
@@ -17740,7 +18330,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O58_DE },
+         { "100%", OPTION_VAL_100_O46_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -17891,7 +18481,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O58_DE },
+         { "100%", OPTION_VAL_100_O46_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -18042,7 +18632,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O58_DE },
+         { "100%", OPTION_VAL_100_O46_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -18193,7 +18783,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "70%",  OPTION_VAL_70_DE },
          { "80%",  OPTION_VAL_80_DE },
          { "90%",  OPTION_VAL_90_DE },
-         { "100%", OPTION_VAL_100_O58_DE },
+         { "100%", OPTION_VAL_100_O46_DE },
          { NULL,   NULL },
       },
       "100%",
@@ -18407,6 +18997,33 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EL NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EL NULL
+#define OPTION_VAL_50_EL NULL
+#define OPTION_VAL_60_EL NULL
+#define OPTION_VAL_70_EL NULL
+#define OPTION_VAL_80_EL "το 80%"
+#define OPTION_VAL_90_EL NULL
+#define OPTION_VAL_100_O46_EL NULL
+#define OPTION_VAL_110_O46_EL NULL
+#define OPTION_VAL_120_O46_EL NULL
+#define OPTION_VAL_130_O46_EL NULL
+#define OPTION_VAL_140_O46_EL NULL
+#define OPTION_VAL_150_O46_EL NULL
+#define OPTION_VAL_160_O46_EL NULL
+#define OPTION_VAL_170_O46_EL NULL
+#define OPTION_VAL_180_O46_EL NULL
+#define OPTION_VAL_190_O46_EL NULL
+#define OPTION_VAL_200_O46_EL NULL
+#define OPTION_VAL_210_O46_EL NULL
+#define OPTION_VAL_220_O46_EL NULL
+#define OPTION_VAL_230_O46_EL NULL
+#define OPTION_VAL_240_O46_EL NULL
+#define OPTION_VAL_250_O46_EL NULL
+#define OPTION_VAL_260_O46_EL NULL
+#define OPTION_VAL_270_O46_EL NULL
+#define OPTION_VAL_280_O46_EL NULL
+#define OPTION_VAL_290_O46_EL NULL
+#define OPTION_VAL_300_O46_EL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EL NULL
 #define OPTION_VAL_WHITE_EL NULL
 #define OPTION_VAL_RED_EL "Κόκκινο"
@@ -18465,12 +19082,6 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_EL NULL
 #define OPTION_VAL_40_EL NULL
-#define OPTION_VAL_50_EL NULL
-#define OPTION_VAL_60_EL NULL
-#define OPTION_VAL_70_EL NULL
-#define OPTION_VAL_80_EL "το 80%"
-#define OPTION_VAL_90_EL NULL
-#define OPTION_VAL_100_O58_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EL NULL
@@ -19300,6 +19911,44 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EL,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_EL },
+         { "60%",  OPTION_VAL_60_EL },
+         { "70%",  OPTION_VAL_70_EL },
+         { "80%",  OPTION_VAL_80_EL },
+         { "90%",  OPTION_VAL_90_EL },
+         { "100%", OPTION_VAL_100_O46_EL },
+         { "110%", OPTION_VAL_110_O46_EL },
+         { "120%", OPTION_VAL_120_O46_EL },
+         { "130%", OPTION_VAL_130_O46_EL },
+         { "140%", OPTION_VAL_140_O46_EL },
+         { "150%", OPTION_VAL_150_O46_EL },
+         { "160%", OPTION_VAL_160_O46_EL },
+         { "170%", OPTION_VAL_170_O46_EL },
+         { "180%", OPTION_VAL_180_O46_EL },
+         { "190%", OPTION_VAL_190_O46_EL },
+         { "200%", OPTION_VAL_200_O46_EL },
+         { "210%", OPTION_VAL_210_O46_EL },
+         { "220%", OPTION_VAL_220_O46_EL },
+         { "230%", OPTION_VAL_230_O46_EL },
+         { "240%", OPTION_VAL_240_O46_EL },
+         { "250%", OPTION_VAL_250_O46_EL },
+         { "260%", OPTION_VAL_260_O46_EL },
+         { "270%", OPTION_VAL_270_O46_EL },
+         { "280%", OPTION_VAL_280_O46_EL },
+         { "290%", OPTION_VAL_290_O46_EL },
+         { "300%", OPTION_VAL_300_O46_EL },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EL,
       NULL,
@@ -19555,7 +20204,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O58_EL },
+         { "100%", OPTION_VAL_100_O46_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19706,7 +20355,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O58_EL },
+         { "100%", OPTION_VAL_100_O46_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -19857,7 +20506,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O58_EL },
+         { "100%", OPTION_VAL_100_O46_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -20008,7 +20657,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "70%",  OPTION_VAL_70_EL },
          { "80%",  OPTION_VAL_80_EL },
          { "90%",  OPTION_VAL_90_EL },
-         { "100%", OPTION_VAL_100_O58_EL },
+         { "100%", OPTION_VAL_100_O46_EL },
          { NULL,   NULL },
       },
       "100%",
@@ -20222,6 +20871,33 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EN "Enable configuration of light gun cross-hair display options. NOTE: Quick Menu may need to be toggled for this setting to take effect."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EN NULL
+#define OPTION_VAL_50_EN NULL
+#define OPTION_VAL_60_EN NULL
+#define OPTION_VAL_70_EN NULL
+#define OPTION_VAL_80_EN NULL
+#define OPTION_VAL_90_EN NULL
+#define OPTION_VAL_100_O46_EN NULL
+#define OPTION_VAL_110_O46_EN NULL
+#define OPTION_VAL_120_O46_EN NULL
+#define OPTION_VAL_130_O46_EN NULL
+#define OPTION_VAL_140_O46_EN NULL
+#define OPTION_VAL_150_O46_EN NULL
+#define OPTION_VAL_160_O46_EN NULL
+#define OPTION_VAL_170_O46_EN NULL
+#define OPTION_VAL_180_O46_EN NULL
+#define OPTION_VAL_190_O46_EN NULL
+#define OPTION_VAL_200_O46_EN NULL
+#define OPTION_VAL_210_O46_EN NULL
+#define OPTION_VAL_220_O46_EN NULL
+#define OPTION_VAL_230_O46_EN NULL
+#define OPTION_VAL_240_O46_EN NULL
+#define OPTION_VAL_250_O46_EN NULL
+#define OPTION_VAL_260_O46_EN NULL
+#define OPTION_VAL_270_O46_EN NULL
+#define OPTION_VAL_280_O46_EN NULL
+#define OPTION_VAL_290_O46_EN NULL
+#define OPTION_VAL_300_O46_EN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EN NULL
 #define OPTION_VAL_WHITE_EN NULL
 #define OPTION_VAL_RED_EN NULL
@@ -20280,12 +20956,6 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_EN NULL
 #define OPTION_VAL_40_EN NULL
-#define OPTION_VAL_50_EN NULL
-#define OPTION_VAL_60_EN NULL
-#define OPTION_VAL_70_EN NULL
-#define OPTION_VAL_80_EN NULL
-#define OPTION_VAL_90_EN NULL
-#define OPTION_VAL_100_O58_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EN NULL
@@ -21115,6 +21785,44 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_EN },
+         { "60%",  OPTION_VAL_60_EN },
+         { "70%",  OPTION_VAL_70_EN },
+         { "80%",  OPTION_VAL_80_EN },
+         { "90%",  OPTION_VAL_90_EN },
+         { "100%", OPTION_VAL_100_O46_EN },
+         { "110%", OPTION_VAL_110_O46_EN },
+         { "120%", OPTION_VAL_120_O46_EN },
+         { "130%", OPTION_VAL_130_O46_EN },
+         { "140%", OPTION_VAL_140_O46_EN },
+         { "150%", OPTION_VAL_150_O46_EN },
+         { "160%", OPTION_VAL_160_O46_EN },
+         { "170%", OPTION_VAL_170_O46_EN },
+         { "180%", OPTION_VAL_180_O46_EN },
+         { "190%", OPTION_VAL_190_O46_EN },
+         { "200%", OPTION_VAL_200_O46_EN },
+         { "210%", OPTION_VAL_210_O46_EN },
+         { "220%", OPTION_VAL_220_O46_EN },
+         { "230%", OPTION_VAL_230_O46_EN },
+         { "240%", OPTION_VAL_240_O46_EN },
+         { "250%", OPTION_VAL_250_O46_EN },
+         { "260%", OPTION_VAL_260_O46_EN },
+         { "270%", OPTION_VAL_270_O46_EN },
+         { "280%", OPTION_VAL_280_O46_EN },
+         { "290%", OPTION_VAL_290_O46_EN },
+         { "300%", OPTION_VAL_300_O46_EN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EN,
       NULL,
@@ -21370,7 +22078,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O58_EN },
+         { "100%", OPTION_VAL_100_O46_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21521,7 +22229,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O58_EN },
+         { "100%", OPTION_VAL_100_O46_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21672,7 +22380,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O58_EN },
+         { "100%", OPTION_VAL_100_O46_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -21823,7 +22531,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "70%",  OPTION_VAL_70_EN },
          { "80%",  OPTION_VAL_80_EN },
          { "90%",  OPTION_VAL_90_EN },
-         { "100%", OPTION_VAL_100_O58_EN },
+         { "100%", OPTION_VAL_100_O46_EN },
          { NULL,   NULL },
       },
       "100%",
@@ -22037,6 +22745,33 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_EO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_EO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_EO NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EO NULL
+#define OPTION_VAL_50_EO NULL
+#define OPTION_VAL_60_EO NULL
+#define OPTION_VAL_70_EO NULL
+#define OPTION_VAL_80_EO NULL
+#define OPTION_VAL_90_EO NULL
+#define OPTION_VAL_100_O46_EO NULL
+#define OPTION_VAL_110_O46_EO NULL
+#define OPTION_VAL_120_O46_EO NULL
+#define OPTION_VAL_130_O46_EO NULL
+#define OPTION_VAL_140_O46_EO NULL
+#define OPTION_VAL_150_O46_EO NULL
+#define OPTION_VAL_160_O46_EO NULL
+#define OPTION_VAL_170_O46_EO NULL
+#define OPTION_VAL_180_O46_EO NULL
+#define OPTION_VAL_190_O46_EO NULL
+#define OPTION_VAL_200_O46_EO NULL
+#define OPTION_VAL_210_O46_EO NULL
+#define OPTION_VAL_220_O46_EO NULL
+#define OPTION_VAL_230_O46_EO NULL
+#define OPTION_VAL_240_O46_EO NULL
+#define OPTION_VAL_250_O46_EO NULL
+#define OPTION_VAL_260_O46_EO NULL
+#define OPTION_VAL_270_O46_EO NULL
+#define OPTION_VAL_280_O46_EO NULL
+#define OPTION_VAL_290_O46_EO NULL
+#define OPTION_VAL_300_O46_EO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EO NULL
 #define OPTION_VAL_WHITE_EO NULL
 #define OPTION_VAL_RED_EO NULL
@@ -22095,12 +22830,6 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_EO NULL
 #define OPTION_VAL_40_EO NULL
-#define OPTION_VAL_50_EO NULL
-#define OPTION_VAL_60_EO NULL
-#define OPTION_VAL_70_EO NULL
-#define OPTION_VAL_80_EO NULL
-#define OPTION_VAL_90_EO NULL
-#define OPTION_VAL_100_O58_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_EO NULL
@@ -22930,6 +23659,44 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_EO,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_EO },
+         { "60%",  OPTION_VAL_60_EO },
+         { "70%",  OPTION_VAL_70_EO },
+         { "80%",  OPTION_VAL_80_EO },
+         { "90%",  OPTION_VAL_90_EO },
+         { "100%", OPTION_VAL_100_O46_EO },
+         { "110%", OPTION_VAL_110_O46_EO },
+         { "120%", OPTION_VAL_120_O46_EO },
+         { "130%", OPTION_VAL_130_O46_EO },
+         { "140%", OPTION_VAL_140_O46_EO },
+         { "150%", OPTION_VAL_150_O46_EO },
+         { "160%", OPTION_VAL_160_O46_EO },
+         { "170%", OPTION_VAL_170_O46_EO },
+         { "180%", OPTION_VAL_180_O46_EO },
+         { "190%", OPTION_VAL_190_O46_EO },
+         { "200%", OPTION_VAL_200_O46_EO },
+         { "210%", OPTION_VAL_210_O46_EO },
+         { "220%", OPTION_VAL_220_O46_EO },
+         { "230%", OPTION_VAL_230_O46_EO },
+         { "240%", OPTION_VAL_240_O46_EO },
+         { "250%", OPTION_VAL_250_O46_EO },
+         { "260%", OPTION_VAL_260_O46_EO },
+         { "270%", OPTION_VAL_270_O46_EO },
+         { "280%", OPTION_VAL_280_O46_EO },
+         { "290%", OPTION_VAL_290_O46_EO },
+         { "300%", OPTION_VAL_300_O46_EO },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_EO,
       NULL,
@@ -23185,7 +23952,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O58_EO },
+         { "100%", OPTION_VAL_100_O46_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23336,7 +24103,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O58_EO },
+         { "100%", OPTION_VAL_100_O46_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23487,7 +24254,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O58_EO },
+         { "100%", OPTION_VAL_100_O46_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23638,7 +24405,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "70%",  OPTION_VAL_70_EO },
          { "80%",  OPTION_VAL_80_EO },
          { "90%",  OPTION_VAL_90_EO },
-         { "100%", OPTION_VAL_100_O58_EO },
+         { "100%", OPTION_VAL_100_O46_EO },
          { NULL,   NULL },
       },
       "100%",
@@ -23852,6 +24619,33 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ES "Transmite las salidas digitales y el estado de la vibración al puerto TCP 8000. Compatible con la opción de MAME «-output network»."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ES "Mostrar ajustes de las pistolas de luz"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_ES "Permite configurar los puntos de mira de las pistolas de luz. NOTA: es necesario salir y volver a entrar del menú rápido para que el cambio surta efecto."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_ES "Escala del punto de mira de la pistola"
+#define OPTION_VAL_50_ES "50 %"
+#define OPTION_VAL_60_ES "60 %"
+#define OPTION_VAL_70_ES "70 %"
+#define OPTION_VAL_80_ES "80 %"
+#define OPTION_VAL_90_ES "90 %"
+#define OPTION_VAL_100_O46_ES "100 %"
+#define OPTION_VAL_110_O46_ES "110 %"
+#define OPTION_VAL_120_O46_ES "120 %"
+#define OPTION_VAL_130_O46_ES "130 %"
+#define OPTION_VAL_140_O46_ES "140 %"
+#define OPTION_VAL_150_O46_ES "150 %"
+#define OPTION_VAL_160_O46_ES "160 %"
+#define OPTION_VAL_170_O46_ES "170 %"
+#define OPTION_VAL_180_O46_ES "180 %"
+#define OPTION_VAL_190_O46_ES "190 %"
+#define OPTION_VAL_200_O46_ES "200 %"
+#define OPTION_VAL_210_O46_ES "210 %"
+#define OPTION_VAL_220_O46_ES "220 %"
+#define OPTION_VAL_230_O46_ES "230 %"
+#define OPTION_VAL_240_O46_ES "240 %"
+#define OPTION_VAL_250_O46_ES "250 %"
+#define OPTION_VAL_260_O46_ES "260 %"
+#define OPTION_VAL_270_O46_ES "270 %"
+#define OPTION_VAL_280_O46_ES "280 %"
+#define OPTION_VAL_290_O46_ES "290 %"
+#define OPTION_VAL_300_O46_ES "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES "Mostrar punto de mira del arma 1"
 #define OPTION_VAL_WHITE_ES "Blanco"
 #define OPTION_VAL_RED_ES "Rojo"
@@ -23910,12 +24704,6 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_ES "Color de píxeles apagados de la VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_ES "Opacidad de la pantalla de la VMU 1"
 #define OPTION_VAL_40_ES "40 %"
-#define OPTION_VAL_50_ES "50 %"
-#define OPTION_VAL_60_ES "60 %"
-#define OPTION_VAL_70_ES "70 %"
-#define OPTION_VAL_80_ES "80 %"
-#define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_O58_ES "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ES "Pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ES "Posición de la pantalla de la VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ES "Tamaño de la pantalla de la VMU 2"
@@ -24745,6 +25533,44 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_ES,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_ES },
+         { "60%",  OPTION_VAL_60_ES },
+         { "70%",  OPTION_VAL_70_ES },
+         { "80%",  OPTION_VAL_80_ES },
+         { "90%",  OPTION_VAL_90_ES },
+         { "100%", OPTION_VAL_100_O46_ES },
+         { "110%", OPTION_VAL_110_O46_ES },
+         { "120%", OPTION_VAL_120_O46_ES },
+         { "130%", OPTION_VAL_130_O46_ES },
+         { "140%", OPTION_VAL_140_O46_ES },
+         { "150%", OPTION_VAL_150_O46_ES },
+         { "160%", OPTION_VAL_160_O46_ES },
+         { "170%", OPTION_VAL_170_O46_ES },
+         { "180%", OPTION_VAL_180_O46_ES },
+         { "190%", OPTION_VAL_190_O46_ES },
+         { "200%", OPTION_VAL_200_O46_ES },
+         { "210%", OPTION_VAL_210_O46_ES },
+         { "220%", OPTION_VAL_220_O46_ES },
+         { "230%", OPTION_VAL_230_O46_ES },
+         { "240%", OPTION_VAL_240_O46_ES },
+         { "250%", OPTION_VAL_250_O46_ES },
+         { "260%", OPTION_VAL_260_O46_ES },
+         { "270%", OPTION_VAL_270_O46_ES },
+         { "280%", OPTION_VAL_280_O46_ES },
+         { "290%", OPTION_VAL_290_O46_ES },
+         { "300%", OPTION_VAL_300_O46_ES },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES,
       NULL,
@@ -25000,7 +25826,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O58_ES },
+         { "100%", OPTION_VAL_100_O46_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25151,7 +25977,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O58_ES },
+         { "100%", OPTION_VAL_100_O46_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25302,7 +26128,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O58_ES },
+         { "100%", OPTION_VAL_100_O46_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25453,7 +26279,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "70%",  OPTION_VAL_70_ES },
          { "80%",  OPTION_VAL_80_ES },
          { "90%",  OPTION_VAL_90_ES },
-         { "100%", OPTION_VAL_100_O58_ES },
+         { "100%", OPTION_VAL_100_O46_ES },
          { NULL,   NULL },
       },
       "100%",
@@ -25667,6 +26493,33 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FA NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FA NULL
+#define OPTION_VAL_50_FA NULL
+#define OPTION_VAL_60_FA NULL
+#define OPTION_VAL_70_FA NULL
+#define OPTION_VAL_80_FA NULL
+#define OPTION_VAL_90_FA NULL
+#define OPTION_VAL_100_O46_FA NULL
+#define OPTION_VAL_110_O46_FA NULL
+#define OPTION_VAL_120_O46_FA NULL
+#define OPTION_VAL_130_O46_FA NULL
+#define OPTION_VAL_140_O46_FA NULL
+#define OPTION_VAL_150_O46_FA NULL
+#define OPTION_VAL_160_O46_FA NULL
+#define OPTION_VAL_170_O46_FA NULL
+#define OPTION_VAL_180_O46_FA NULL
+#define OPTION_VAL_190_O46_FA NULL
+#define OPTION_VAL_200_O46_FA NULL
+#define OPTION_VAL_210_O46_FA NULL
+#define OPTION_VAL_220_O46_FA NULL
+#define OPTION_VAL_230_O46_FA NULL
+#define OPTION_VAL_240_O46_FA NULL
+#define OPTION_VAL_250_O46_FA NULL
+#define OPTION_VAL_260_O46_FA NULL
+#define OPTION_VAL_270_O46_FA NULL
+#define OPTION_VAL_280_O46_FA NULL
+#define OPTION_VAL_290_O46_FA NULL
+#define OPTION_VAL_300_O46_FA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FA NULL
 #define OPTION_VAL_WHITE_FA NULL
 #define OPTION_VAL_RED_FA NULL
@@ -25725,12 +26578,6 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_FA NULL
 #define OPTION_VAL_40_FA NULL
-#define OPTION_VAL_50_FA NULL
-#define OPTION_VAL_60_FA NULL
-#define OPTION_VAL_70_FA NULL
-#define OPTION_VAL_80_FA NULL
-#define OPTION_VAL_90_FA NULL
-#define OPTION_VAL_100_O58_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FA NULL
@@ -26560,6 +27407,44 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FA,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_FA },
+         { "60%",  OPTION_VAL_60_FA },
+         { "70%",  OPTION_VAL_70_FA },
+         { "80%",  OPTION_VAL_80_FA },
+         { "90%",  OPTION_VAL_90_FA },
+         { "100%", OPTION_VAL_100_O46_FA },
+         { "110%", OPTION_VAL_110_O46_FA },
+         { "120%", OPTION_VAL_120_O46_FA },
+         { "130%", OPTION_VAL_130_O46_FA },
+         { "140%", OPTION_VAL_140_O46_FA },
+         { "150%", OPTION_VAL_150_O46_FA },
+         { "160%", OPTION_VAL_160_O46_FA },
+         { "170%", OPTION_VAL_170_O46_FA },
+         { "180%", OPTION_VAL_180_O46_FA },
+         { "190%", OPTION_VAL_190_O46_FA },
+         { "200%", OPTION_VAL_200_O46_FA },
+         { "210%", OPTION_VAL_210_O46_FA },
+         { "220%", OPTION_VAL_220_O46_FA },
+         { "230%", OPTION_VAL_230_O46_FA },
+         { "240%", OPTION_VAL_240_O46_FA },
+         { "250%", OPTION_VAL_250_O46_FA },
+         { "260%", OPTION_VAL_260_O46_FA },
+         { "270%", OPTION_VAL_270_O46_FA },
+         { "280%", OPTION_VAL_280_O46_FA },
+         { "290%", OPTION_VAL_290_O46_FA },
+         { "300%", OPTION_VAL_300_O46_FA },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FA,
       NULL,
@@ -26815,7 +27700,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O58_FA },
+         { "100%", OPTION_VAL_100_O46_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -26966,7 +27851,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O58_FA },
+         { "100%", OPTION_VAL_100_O46_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -27117,7 +28002,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O58_FA },
+         { "100%", OPTION_VAL_100_O46_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -27268,7 +28153,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "70%",  OPTION_VAL_70_FA },
          { "80%",  OPTION_VAL_80_FA },
          { "90%",  OPTION_VAL_90_FA },
-         { "100%", OPTION_VAL_100_O58_FA },
+         { "100%", OPTION_VAL_100_O46_FA },
          { NULL,   NULL },
       },
       "100%",
@@ -27482,6 +28367,33 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FI NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FI "Näytä valoaseen asetukset"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FI NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FI "Aseen tähtäimen koko"
+#define OPTION_VAL_50_FI "50 %"
+#define OPTION_VAL_60_FI "60 %"
+#define OPTION_VAL_70_FI "70 %"
+#define OPTION_VAL_80_FI "80 %"
+#define OPTION_VAL_90_FI "90 %"
+#define OPTION_VAL_100_O46_FI "100 %"
+#define OPTION_VAL_110_O46_FI "110 %"
+#define OPTION_VAL_120_O46_FI "120 %"
+#define OPTION_VAL_130_O46_FI "130 %"
+#define OPTION_VAL_140_O46_FI "140 %"
+#define OPTION_VAL_150_O46_FI "150 %"
+#define OPTION_VAL_160_O46_FI "160 %"
+#define OPTION_VAL_170_O46_FI "170 %"
+#define OPTION_VAL_180_O46_FI "180 %"
+#define OPTION_VAL_190_O46_FI "190 %"
+#define OPTION_VAL_200_O46_FI "200 %"
+#define OPTION_VAL_210_O46_FI "210 %"
+#define OPTION_VAL_220_O46_FI "220 %"
+#define OPTION_VAL_230_O46_FI "230 %"
+#define OPTION_VAL_240_O46_FI "240 %"
+#define OPTION_VAL_250_O46_FI "250 %"
+#define OPTION_VAL_260_O46_FI "260 %"
+#define OPTION_VAL_270_O46_FI "270 %"
+#define OPTION_VAL_280_O46_FI "280 %"
+#define OPTION_VAL_290_O46_FI "290 %"
+#define OPTION_VAL_300_O46_FI "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI NULL
 #define OPTION_VAL_WHITE_FI "Valkoinen"
 #define OPTION_VAL_RED_FI "Punainen"
@@ -27540,12 +28452,6 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_FI NULL
 #define OPTION_VAL_40_FI "40 %"
-#define OPTION_VAL_50_FI "50 %"
-#define OPTION_VAL_60_FI "60 %"
-#define OPTION_VAL_70_FI "70 %"
-#define OPTION_VAL_80_FI "80 %"
-#define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_O58_FI "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FI NULL
@@ -28375,6 +29281,44 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FI,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_FI },
+         { "60%",  OPTION_VAL_60_FI },
+         { "70%",  OPTION_VAL_70_FI },
+         { "80%",  OPTION_VAL_80_FI },
+         { "90%",  OPTION_VAL_90_FI },
+         { "100%", OPTION_VAL_100_O46_FI },
+         { "110%", OPTION_VAL_110_O46_FI },
+         { "120%", OPTION_VAL_120_O46_FI },
+         { "130%", OPTION_VAL_130_O46_FI },
+         { "140%", OPTION_VAL_140_O46_FI },
+         { "150%", OPTION_VAL_150_O46_FI },
+         { "160%", OPTION_VAL_160_O46_FI },
+         { "170%", OPTION_VAL_170_O46_FI },
+         { "180%", OPTION_VAL_180_O46_FI },
+         { "190%", OPTION_VAL_190_O46_FI },
+         { "200%", OPTION_VAL_200_O46_FI },
+         { "210%", OPTION_VAL_210_O46_FI },
+         { "220%", OPTION_VAL_220_O46_FI },
+         { "230%", OPTION_VAL_230_O46_FI },
+         { "240%", OPTION_VAL_240_O46_FI },
+         { "250%", OPTION_VAL_250_O46_FI },
+         { "260%", OPTION_VAL_260_O46_FI },
+         { "270%", OPTION_VAL_270_O46_FI },
+         { "280%", OPTION_VAL_280_O46_FI },
+         { "290%", OPTION_VAL_290_O46_FI },
+         { "300%", OPTION_VAL_300_O46_FI },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI,
       NULL,
@@ -28630,7 +29574,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O58_FI },
+         { "100%", OPTION_VAL_100_O46_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28781,7 +29725,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O58_FI },
+         { "100%", OPTION_VAL_100_O46_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -28932,7 +29876,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O58_FI },
+         { "100%", OPTION_VAL_100_O46_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -29083,7 +30027,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "70%",  OPTION_VAL_70_FI },
          { "80%",  OPTION_VAL_80_FI },
          { "90%",  OPTION_VAL_90_FI },
-         { "100%", OPTION_VAL_100_O58_FI },
+         { "100%", OPTION_VAL_100_O46_FI },
          { NULL,   NULL },
       },
       "100%",
@@ -29297,6 +30241,33 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_FR "Diffuser les sorties numériques et l'état du retour de force sur le port TCP 8000. Compatible avec l'option de MAME \"-output network\" ."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_FR "Afficher les réglages du pistolet"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_FR "Activer la configuration des options d'affichage du viseur des pistolets. REMARQUE : le menu rapide devrait être réouvert pour que ce paramètre prenne effet."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FR "Mise à l'échelle du viseur de pistolet"
+#define OPTION_VAL_50_FR NULL
+#define OPTION_VAL_60_FR NULL
+#define OPTION_VAL_70_FR NULL
+#define OPTION_VAL_80_FR NULL
+#define OPTION_VAL_90_FR NULL
+#define OPTION_VAL_100_O46_FR NULL
+#define OPTION_VAL_110_O46_FR NULL
+#define OPTION_VAL_120_O46_FR NULL
+#define OPTION_VAL_130_O46_FR NULL
+#define OPTION_VAL_140_O46_FR NULL
+#define OPTION_VAL_150_O46_FR NULL
+#define OPTION_VAL_160_O46_FR NULL
+#define OPTION_VAL_170_O46_FR NULL
+#define OPTION_VAL_180_O46_FR NULL
+#define OPTION_VAL_190_O46_FR NULL
+#define OPTION_VAL_200_O46_FR NULL
+#define OPTION_VAL_210_O46_FR NULL
+#define OPTION_VAL_220_O46_FR NULL
+#define OPTION_VAL_230_O46_FR NULL
+#define OPTION_VAL_240_O46_FR NULL
+#define OPTION_VAL_250_O46_FR NULL
+#define OPTION_VAL_260_O46_FR NULL
+#define OPTION_VAL_270_O46_FR NULL
+#define OPTION_VAL_280_O46_FR NULL
+#define OPTION_VAL_290_O46_FR NULL
+#define OPTION_VAL_300_O46_FR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FR "Afficher le viseur du pistolet 1"
 #define OPTION_VAL_WHITE_FR "Blanc"
 #define OPTION_VAL_RED_FR "Rouge"
@@ -29355,12 +30326,6 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_FR "Couleur des pixels éteints de l'écran du VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_FR "Opacité de l'écran du VMU 1"
 #define OPTION_VAL_40_FR NULL
-#define OPTION_VAL_50_FR NULL
-#define OPTION_VAL_60_FR NULL
-#define OPTION_VAL_70_FR NULL
-#define OPTION_VAL_80_FR NULL
-#define OPTION_VAL_90_FR NULL
-#define OPTION_VAL_100_O58_FR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_FR "Affichage de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_FR "Position de l'écran du VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_FR "Taille de l'écran du VMU 2"
@@ -30190,6 +31155,44 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_FR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_FR },
+         { "60%",  OPTION_VAL_60_FR },
+         { "70%",  OPTION_VAL_70_FR },
+         { "80%",  OPTION_VAL_80_FR },
+         { "90%",  OPTION_VAL_90_FR },
+         { "100%", OPTION_VAL_100_O46_FR },
+         { "110%", OPTION_VAL_110_O46_FR },
+         { "120%", OPTION_VAL_120_O46_FR },
+         { "130%", OPTION_VAL_130_O46_FR },
+         { "140%", OPTION_VAL_140_O46_FR },
+         { "150%", OPTION_VAL_150_O46_FR },
+         { "160%", OPTION_VAL_160_O46_FR },
+         { "170%", OPTION_VAL_170_O46_FR },
+         { "180%", OPTION_VAL_180_O46_FR },
+         { "190%", OPTION_VAL_190_O46_FR },
+         { "200%", OPTION_VAL_200_O46_FR },
+         { "210%", OPTION_VAL_210_O46_FR },
+         { "220%", OPTION_VAL_220_O46_FR },
+         { "230%", OPTION_VAL_230_O46_FR },
+         { "240%", OPTION_VAL_240_O46_FR },
+         { "250%", OPTION_VAL_250_O46_FR },
+         { "260%", OPTION_VAL_260_O46_FR },
+         { "270%", OPTION_VAL_270_O46_FR },
+         { "280%", OPTION_VAL_280_O46_FR },
+         { "290%", OPTION_VAL_290_O46_FR },
+         { "300%", OPTION_VAL_300_O46_FR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FR,
       NULL,
@@ -30445,7 +31448,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O58_FR },
+         { "100%", OPTION_VAL_100_O46_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30596,7 +31599,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O58_FR },
+         { "100%", OPTION_VAL_100_O46_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30747,7 +31750,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O58_FR },
+         { "100%", OPTION_VAL_100_O46_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -30898,7 +31901,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "70%",  OPTION_VAL_70_FR },
          { "80%",  OPTION_VAL_80_FR },
          { "90%",  OPTION_VAL_90_FR },
-         { "100%", OPTION_VAL_100_O58_FR },
+         { "100%", OPTION_VAL_100_O46_FR },
          { NULL,   NULL },
       },
       "100%",
@@ -31112,6 +32115,33 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL NULL
+#define OPTION_VAL_50_GL NULL
+#define OPTION_VAL_60_GL NULL
+#define OPTION_VAL_70_GL NULL
+#define OPTION_VAL_80_GL NULL
+#define OPTION_VAL_90_GL NULL
+#define OPTION_VAL_100_O46_GL NULL
+#define OPTION_VAL_110_O46_GL NULL
+#define OPTION_VAL_120_O46_GL NULL
+#define OPTION_VAL_130_O46_GL NULL
+#define OPTION_VAL_140_O46_GL NULL
+#define OPTION_VAL_150_O46_GL NULL
+#define OPTION_VAL_160_O46_GL NULL
+#define OPTION_VAL_170_O46_GL NULL
+#define OPTION_VAL_180_O46_GL NULL
+#define OPTION_VAL_190_O46_GL NULL
+#define OPTION_VAL_200_O46_GL NULL
+#define OPTION_VAL_210_O46_GL NULL
+#define OPTION_VAL_220_O46_GL NULL
+#define OPTION_VAL_230_O46_GL NULL
+#define OPTION_VAL_240_O46_GL NULL
+#define OPTION_VAL_250_O46_GL NULL
+#define OPTION_VAL_260_O46_GL NULL
+#define OPTION_VAL_270_O46_GL NULL
+#define OPTION_VAL_280_O46_GL NULL
+#define OPTION_VAL_290_O46_GL NULL
+#define OPTION_VAL_300_O46_GL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL NULL
 #define OPTION_VAL_WHITE_GL "Branco"
 #define OPTION_VAL_RED_GL "Vermello"
@@ -31170,12 +32200,6 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_GL "Desactivar píxel en cor na pantalla 1 VMU"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_GL "Opacidade da pantalla 1 VMU"
 #define OPTION_VAL_40_GL NULL
-#define OPTION_VAL_50_GL NULL
-#define OPTION_VAL_60_GL NULL
-#define OPTION_VAL_70_GL NULL
-#define OPTION_VAL_80_GL NULL
-#define OPTION_VAL_90_GL NULL
-#define OPTION_VAL_100_O58_GL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_GL "Pantalla 2 da VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_GL "Posición da pantalla 2 VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_GL "Tamaño da pantalla 2 VMU"
@@ -32005,6 +33029,44 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_GL },
+         { "60%",  OPTION_VAL_60_GL },
+         { "70%",  OPTION_VAL_70_GL },
+         { "80%",  OPTION_VAL_80_GL },
+         { "90%",  OPTION_VAL_90_GL },
+         { "100%", OPTION_VAL_100_O46_GL },
+         { "110%", OPTION_VAL_110_O46_GL },
+         { "120%", OPTION_VAL_120_O46_GL },
+         { "130%", OPTION_VAL_130_O46_GL },
+         { "140%", OPTION_VAL_140_O46_GL },
+         { "150%", OPTION_VAL_150_O46_GL },
+         { "160%", OPTION_VAL_160_O46_GL },
+         { "170%", OPTION_VAL_170_O46_GL },
+         { "180%", OPTION_VAL_180_O46_GL },
+         { "190%", OPTION_VAL_190_O46_GL },
+         { "200%", OPTION_VAL_200_O46_GL },
+         { "210%", OPTION_VAL_210_O46_GL },
+         { "220%", OPTION_VAL_220_O46_GL },
+         { "230%", OPTION_VAL_230_O46_GL },
+         { "240%", OPTION_VAL_240_O46_GL },
+         { "250%", OPTION_VAL_250_O46_GL },
+         { "260%", OPTION_VAL_260_O46_GL },
+         { "270%", OPTION_VAL_270_O46_GL },
+         { "280%", OPTION_VAL_280_O46_GL },
+         { "290%", OPTION_VAL_290_O46_GL },
+         { "300%", OPTION_VAL_300_O46_GL },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL,
       NULL,
@@ -32260,7 +33322,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O58_GL },
+         { "100%", OPTION_VAL_100_O46_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32411,7 +33473,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O58_GL },
+         { "100%", OPTION_VAL_100_O46_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32562,7 +33624,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O58_GL },
+         { "100%", OPTION_VAL_100_O46_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32713,7 +33775,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "70%",  OPTION_VAL_70_GL },
          { "80%",  OPTION_VAL_80_GL },
          { "90%",  OPTION_VAL_90_GL },
-         { "100%", OPTION_VAL_100_O58_GL },
+         { "100%", OPTION_VAL_100_O46_GL },
          { NULL,   NULL },
       },
       "100%",
@@ -32927,6 +33989,33 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HE NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HE NULL
+#define OPTION_VAL_50_HE NULL
+#define OPTION_VAL_60_HE NULL
+#define OPTION_VAL_70_HE NULL
+#define OPTION_VAL_80_HE NULL
+#define OPTION_VAL_90_HE NULL
+#define OPTION_VAL_100_O46_HE NULL
+#define OPTION_VAL_110_O46_HE NULL
+#define OPTION_VAL_120_O46_HE NULL
+#define OPTION_VAL_130_O46_HE NULL
+#define OPTION_VAL_140_O46_HE NULL
+#define OPTION_VAL_150_O46_HE NULL
+#define OPTION_VAL_160_O46_HE NULL
+#define OPTION_VAL_170_O46_HE NULL
+#define OPTION_VAL_180_O46_HE NULL
+#define OPTION_VAL_190_O46_HE NULL
+#define OPTION_VAL_200_O46_HE NULL
+#define OPTION_VAL_210_O46_HE NULL
+#define OPTION_VAL_220_O46_HE NULL
+#define OPTION_VAL_230_O46_HE NULL
+#define OPTION_VAL_240_O46_HE NULL
+#define OPTION_VAL_250_O46_HE NULL
+#define OPTION_VAL_260_O46_HE NULL
+#define OPTION_VAL_270_O46_HE NULL
+#define OPTION_VAL_280_O46_HE NULL
+#define OPTION_VAL_290_O46_HE NULL
+#define OPTION_VAL_300_O46_HE NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HE NULL
 #define OPTION_VAL_WHITE_HE NULL
 #define OPTION_VAL_RED_HE NULL
@@ -32985,12 +34074,6 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HE NULL
 #define OPTION_VAL_40_HE NULL
-#define OPTION_VAL_50_HE NULL
-#define OPTION_VAL_60_HE NULL
-#define OPTION_VAL_70_HE NULL
-#define OPTION_VAL_80_HE NULL
-#define OPTION_VAL_90_HE NULL
-#define OPTION_VAL_100_O58_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HE NULL
@@ -33820,6 +34903,44 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HE,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_HE },
+         { "60%",  OPTION_VAL_60_HE },
+         { "70%",  OPTION_VAL_70_HE },
+         { "80%",  OPTION_VAL_80_HE },
+         { "90%",  OPTION_VAL_90_HE },
+         { "100%", OPTION_VAL_100_O46_HE },
+         { "110%", OPTION_VAL_110_O46_HE },
+         { "120%", OPTION_VAL_120_O46_HE },
+         { "130%", OPTION_VAL_130_O46_HE },
+         { "140%", OPTION_VAL_140_O46_HE },
+         { "150%", OPTION_VAL_150_O46_HE },
+         { "160%", OPTION_VAL_160_O46_HE },
+         { "170%", OPTION_VAL_170_O46_HE },
+         { "180%", OPTION_VAL_180_O46_HE },
+         { "190%", OPTION_VAL_190_O46_HE },
+         { "200%", OPTION_VAL_200_O46_HE },
+         { "210%", OPTION_VAL_210_O46_HE },
+         { "220%", OPTION_VAL_220_O46_HE },
+         { "230%", OPTION_VAL_230_O46_HE },
+         { "240%", OPTION_VAL_240_O46_HE },
+         { "250%", OPTION_VAL_250_O46_HE },
+         { "260%", OPTION_VAL_260_O46_HE },
+         { "270%", OPTION_VAL_270_O46_HE },
+         { "280%", OPTION_VAL_280_O46_HE },
+         { "290%", OPTION_VAL_290_O46_HE },
+         { "300%", OPTION_VAL_300_O46_HE },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HE,
       NULL,
@@ -34075,7 +35196,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O58_HE },
+         { "100%", OPTION_VAL_100_O46_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34226,7 +35347,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O58_HE },
+         { "100%", OPTION_VAL_100_O46_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34377,7 +35498,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O58_HE },
+         { "100%", OPTION_VAL_100_O46_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34528,7 +35649,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "70%",  OPTION_VAL_70_HE },
          { "80%",  OPTION_VAL_80_HE },
          { "90%",  OPTION_VAL_90_HE },
-         { "100%", OPTION_VAL_100_O58_HE },
+         { "100%", OPTION_VAL_100_O46_HE },
          { NULL,   NULL },
       },
       "100%",
@@ -34742,6 +35863,33 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HR NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HR NULL
+#define OPTION_VAL_50_HR NULL
+#define OPTION_VAL_60_HR NULL
+#define OPTION_VAL_70_HR NULL
+#define OPTION_VAL_80_HR NULL
+#define OPTION_VAL_90_HR NULL
+#define OPTION_VAL_100_O46_HR NULL
+#define OPTION_VAL_110_O46_HR NULL
+#define OPTION_VAL_120_O46_HR NULL
+#define OPTION_VAL_130_O46_HR NULL
+#define OPTION_VAL_140_O46_HR NULL
+#define OPTION_VAL_150_O46_HR NULL
+#define OPTION_VAL_160_O46_HR NULL
+#define OPTION_VAL_170_O46_HR NULL
+#define OPTION_VAL_180_O46_HR NULL
+#define OPTION_VAL_190_O46_HR NULL
+#define OPTION_VAL_200_O46_HR NULL
+#define OPTION_VAL_210_O46_HR NULL
+#define OPTION_VAL_220_O46_HR NULL
+#define OPTION_VAL_230_O46_HR NULL
+#define OPTION_VAL_240_O46_HR NULL
+#define OPTION_VAL_250_O46_HR NULL
+#define OPTION_VAL_260_O46_HR NULL
+#define OPTION_VAL_270_O46_HR NULL
+#define OPTION_VAL_280_O46_HR NULL
+#define OPTION_VAL_290_O46_HR NULL
+#define OPTION_VAL_300_O46_HR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HR NULL
 #define OPTION_VAL_WHITE_HR NULL
 #define OPTION_VAL_RED_HR NULL
@@ -34800,12 +35948,6 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HR NULL
 #define OPTION_VAL_40_HR NULL
-#define OPTION_VAL_50_HR NULL
-#define OPTION_VAL_60_HR NULL
-#define OPTION_VAL_70_HR NULL
-#define OPTION_VAL_80_HR NULL
-#define OPTION_VAL_90_HR NULL
-#define OPTION_VAL_100_O58_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HR NULL
@@ -35635,6 +36777,44 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_HR },
+         { "60%",  OPTION_VAL_60_HR },
+         { "70%",  OPTION_VAL_70_HR },
+         { "80%",  OPTION_VAL_80_HR },
+         { "90%",  OPTION_VAL_90_HR },
+         { "100%", OPTION_VAL_100_O46_HR },
+         { "110%", OPTION_VAL_110_O46_HR },
+         { "120%", OPTION_VAL_120_O46_HR },
+         { "130%", OPTION_VAL_130_O46_HR },
+         { "140%", OPTION_VAL_140_O46_HR },
+         { "150%", OPTION_VAL_150_O46_HR },
+         { "160%", OPTION_VAL_160_O46_HR },
+         { "170%", OPTION_VAL_170_O46_HR },
+         { "180%", OPTION_VAL_180_O46_HR },
+         { "190%", OPTION_VAL_190_O46_HR },
+         { "200%", OPTION_VAL_200_O46_HR },
+         { "210%", OPTION_VAL_210_O46_HR },
+         { "220%", OPTION_VAL_220_O46_HR },
+         { "230%", OPTION_VAL_230_O46_HR },
+         { "240%", OPTION_VAL_240_O46_HR },
+         { "250%", OPTION_VAL_250_O46_HR },
+         { "260%", OPTION_VAL_260_O46_HR },
+         { "270%", OPTION_VAL_270_O46_HR },
+         { "280%", OPTION_VAL_280_O46_HR },
+         { "290%", OPTION_VAL_290_O46_HR },
+         { "300%", OPTION_VAL_300_O46_HR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HR,
       NULL,
@@ -35890,7 +37070,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O58_HR },
+         { "100%", OPTION_VAL_100_O46_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36041,7 +37221,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O58_HR },
+         { "100%", OPTION_VAL_100_O46_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36192,7 +37372,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O58_HR },
+         { "100%", OPTION_VAL_100_O46_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36343,7 +37523,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "70%",  OPTION_VAL_70_HR },
          { "80%",  OPTION_VAL_80_HR },
          { "90%",  OPTION_VAL_90_HR },
-         { "100%", OPTION_VAL_100_O58_HR },
+         { "100%", OPTION_VAL_100_O46_HR },
          { NULL,   NULL },
       },
       "100%",
@@ -36557,6 +37737,33 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU "A digitális kimenetek és az erővisszacsatolás állapotának közzététele a 8000-es TCP porton. Kompatibilis a MAME \"-output network\" opciójával."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU "Fénypisztoly beállítások megjelenítése"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_HU "A fénypisztoly célkereszt megjelenítés beállításai. Figyelem: a változtatás életbelépéséhez újra be kell lépni a gyorsmenübe."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HU NULL
+#define OPTION_VAL_50_HU NULL
+#define OPTION_VAL_60_HU NULL
+#define OPTION_VAL_70_HU NULL
+#define OPTION_VAL_80_HU NULL
+#define OPTION_VAL_90_HU NULL
+#define OPTION_VAL_100_O46_HU NULL
+#define OPTION_VAL_110_O46_HU NULL
+#define OPTION_VAL_120_O46_HU NULL
+#define OPTION_VAL_130_O46_HU NULL
+#define OPTION_VAL_140_O46_HU NULL
+#define OPTION_VAL_150_O46_HU NULL
+#define OPTION_VAL_160_O46_HU NULL
+#define OPTION_VAL_170_O46_HU NULL
+#define OPTION_VAL_180_O46_HU NULL
+#define OPTION_VAL_190_O46_HU NULL
+#define OPTION_VAL_200_O46_HU NULL
+#define OPTION_VAL_210_O46_HU NULL
+#define OPTION_VAL_220_O46_HU NULL
+#define OPTION_VAL_230_O46_HU NULL
+#define OPTION_VAL_240_O46_HU NULL
+#define OPTION_VAL_250_O46_HU NULL
+#define OPTION_VAL_260_O46_HU NULL
+#define OPTION_VAL_270_O46_HU NULL
+#define OPTION_VAL_280_O46_HU NULL
+#define OPTION_VAL_290_O46_HU NULL
+#define OPTION_VAL_300_O46_HU NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU "1. fénypisztoly célkeresztjének megjelenítése"
 #define OPTION_VAL_WHITE_HU "Fehér"
 #define OPTION_VAL_RED_HU "Vörös"
@@ -36615,12 +37822,6 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_HU "VMU 1 képernyő kikapcsolt pixel színe"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_HU "VMU 1 képernyő átlátszatlansága"
 #define OPTION_VAL_40_HU NULL
-#define OPTION_VAL_50_HU NULL
-#define OPTION_VAL_60_HU NULL
-#define OPTION_VAL_70_HU NULL
-#define OPTION_VAL_80_HU NULL
-#define OPTION_VAL_90_HU NULL
-#define OPTION_VAL_100_O58_HU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_HU "VMU 2 képernyő megjelenítése"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_HU "VMU 2 képernyő helyzete"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_HU "VMU 2 képernyő mérete"
@@ -37450,6 +38651,44 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_HU,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_HU },
+         { "60%",  OPTION_VAL_60_HU },
+         { "70%",  OPTION_VAL_70_HU },
+         { "80%",  OPTION_VAL_80_HU },
+         { "90%",  OPTION_VAL_90_HU },
+         { "100%", OPTION_VAL_100_O46_HU },
+         { "110%", OPTION_VAL_110_O46_HU },
+         { "120%", OPTION_VAL_120_O46_HU },
+         { "130%", OPTION_VAL_130_O46_HU },
+         { "140%", OPTION_VAL_140_O46_HU },
+         { "150%", OPTION_VAL_150_O46_HU },
+         { "160%", OPTION_VAL_160_O46_HU },
+         { "170%", OPTION_VAL_170_O46_HU },
+         { "180%", OPTION_VAL_180_O46_HU },
+         { "190%", OPTION_VAL_190_O46_HU },
+         { "200%", OPTION_VAL_200_O46_HU },
+         { "210%", OPTION_VAL_210_O46_HU },
+         { "220%", OPTION_VAL_220_O46_HU },
+         { "230%", OPTION_VAL_230_O46_HU },
+         { "240%", OPTION_VAL_240_O46_HU },
+         { "250%", OPTION_VAL_250_O46_HU },
+         { "260%", OPTION_VAL_260_O46_HU },
+         { "270%", OPTION_VAL_270_O46_HU },
+         { "280%", OPTION_VAL_280_O46_HU },
+         { "290%", OPTION_VAL_290_O46_HU },
+         { "300%", OPTION_VAL_300_O46_HU },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_HU,
       NULL,
@@ -37705,7 +38944,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O58_HU },
+         { "100%", OPTION_VAL_100_O46_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -37856,7 +39095,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O58_HU },
+         { "100%", OPTION_VAL_100_O46_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -38007,7 +39246,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O58_HU },
+         { "100%", OPTION_VAL_100_O46_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -38158,7 +39397,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "70%",  OPTION_VAL_70_HU },
          { "80%",  OPTION_VAL_80_HU },
          { "90%",  OPTION_VAL_90_HU },
-         { "100%", OPTION_VAL_100_O58_HU },
+         { "100%", OPTION_VAL_100_O46_HU },
          { NULL,   NULL },
       },
       "100%",
@@ -38372,6 +39611,33 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_ID NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_ID NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_ID NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_ID NULL
+#define OPTION_VAL_50_ID NULL
+#define OPTION_VAL_60_ID NULL
+#define OPTION_VAL_70_ID NULL
+#define OPTION_VAL_80_ID NULL
+#define OPTION_VAL_90_ID NULL
+#define OPTION_VAL_100_O46_ID NULL
+#define OPTION_VAL_110_O46_ID NULL
+#define OPTION_VAL_120_O46_ID NULL
+#define OPTION_VAL_130_O46_ID NULL
+#define OPTION_VAL_140_O46_ID NULL
+#define OPTION_VAL_150_O46_ID NULL
+#define OPTION_VAL_160_O46_ID NULL
+#define OPTION_VAL_170_O46_ID NULL
+#define OPTION_VAL_180_O46_ID NULL
+#define OPTION_VAL_190_O46_ID NULL
+#define OPTION_VAL_200_O46_ID NULL
+#define OPTION_VAL_210_O46_ID NULL
+#define OPTION_VAL_220_O46_ID NULL
+#define OPTION_VAL_230_O46_ID NULL
+#define OPTION_VAL_240_O46_ID NULL
+#define OPTION_VAL_250_O46_ID NULL
+#define OPTION_VAL_260_O46_ID NULL
+#define OPTION_VAL_270_O46_ID NULL
+#define OPTION_VAL_280_O46_ID NULL
+#define OPTION_VAL_290_O46_ID NULL
+#define OPTION_VAL_300_O46_ID NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ID NULL
 #define OPTION_VAL_WHITE_ID NULL
 #define OPTION_VAL_RED_ID NULL
@@ -38430,12 +39696,6 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_ID NULL
 #define OPTION_VAL_40_ID NULL
-#define OPTION_VAL_50_ID NULL
-#define OPTION_VAL_60_ID NULL
-#define OPTION_VAL_70_ID NULL
-#define OPTION_VAL_80_ID NULL
-#define OPTION_VAL_90_ID NULL
-#define OPTION_VAL_100_O58_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_ID NULL
@@ -39265,6 +40525,44 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_ID,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_ID },
+         { "60%",  OPTION_VAL_60_ID },
+         { "70%",  OPTION_VAL_70_ID },
+         { "80%",  OPTION_VAL_80_ID },
+         { "90%",  OPTION_VAL_90_ID },
+         { "100%", OPTION_VAL_100_O46_ID },
+         { "110%", OPTION_VAL_110_O46_ID },
+         { "120%", OPTION_VAL_120_O46_ID },
+         { "130%", OPTION_VAL_130_O46_ID },
+         { "140%", OPTION_VAL_140_O46_ID },
+         { "150%", OPTION_VAL_150_O46_ID },
+         { "160%", OPTION_VAL_160_O46_ID },
+         { "170%", OPTION_VAL_170_O46_ID },
+         { "180%", OPTION_VAL_180_O46_ID },
+         { "190%", OPTION_VAL_190_O46_ID },
+         { "200%", OPTION_VAL_200_O46_ID },
+         { "210%", OPTION_VAL_210_O46_ID },
+         { "220%", OPTION_VAL_220_O46_ID },
+         { "230%", OPTION_VAL_230_O46_ID },
+         { "240%", OPTION_VAL_240_O46_ID },
+         { "250%", OPTION_VAL_250_O46_ID },
+         { "260%", OPTION_VAL_260_O46_ID },
+         { "270%", OPTION_VAL_270_O46_ID },
+         { "280%", OPTION_VAL_280_O46_ID },
+         { "290%", OPTION_VAL_290_O46_ID },
+         { "300%", OPTION_VAL_300_O46_ID },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ID,
       NULL,
@@ -39520,7 +40818,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O58_ID },
+         { "100%", OPTION_VAL_100_O46_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39671,7 +40969,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O58_ID },
+         { "100%", OPTION_VAL_100_O46_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39822,7 +41120,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O58_ID },
+         { "100%", OPTION_VAL_100_O46_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -39973,7 +41271,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "70%",  OPTION_VAL_70_ID },
          { "80%",  OPTION_VAL_80_ID },
          { "90%",  OPTION_VAL_90_ID },
-         { "100%", OPTION_VAL_100_O58_ID },
+         { "100%", OPTION_VAL_100_O46_ID },
          { NULL,   NULL },
       },
       "100%",
@@ -40187,6 +41485,33 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_IT "Trasmissione di uscite digitali e stato di forza-feedback sulla porta TCP 8000. Compatibile con l'opzione MAME \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_IT "Mostra Impostazioni Pistola Ottica"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_IT "Abilita la configurazione delle opzioni di visualizzazione di una pistola leggera. NOTA: potrebbe essere necessario attivare il menu rapido perché questa impostazione abbia effetto."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_IT "Scala Dimensione del Mirino della Lightgun"
+#define OPTION_VAL_50_IT NULL
+#define OPTION_VAL_60_IT NULL
+#define OPTION_VAL_70_IT NULL
+#define OPTION_VAL_80_IT NULL
+#define OPTION_VAL_90_IT NULL
+#define OPTION_VAL_100_O46_IT NULL
+#define OPTION_VAL_110_O46_IT NULL
+#define OPTION_VAL_120_O46_IT NULL
+#define OPTION_VAL_130_O46_IT NULL
+#define OPTION_VAL_140_O46_IT NULL
+#define OPTION_VAL_150_O46_IT NULL
+#define OPTION_VAL_160_O46_IT NULL
+#define OPTION_VAL_170_O46_IT NULL
+#define OPTION_VAL_180_O46_IT NULL
+#define OPTION_VAL_190_O46_IT NULL
+#define OPTION_VAL_200_O46_IT NULL
+#define OPTION_VAL_210_O46_IT NULL
+#define OPTION_VAL_220_O46_IT NULL
+#define OPTION_VAL_230_O46_IT NULL
+#define OPTION_VAL_240_O46_IT NULL
+#define OPTION_VAL_250_O46_IT NULL
+#define OPTION_VAL_260_O46_IT NULL
+#define OPTION_VAL_270_O46_IT NULL
+#define OPTION_VAL_280_O46_IT NULL
+#define OPTION_VAL_290_O46_IT NULL
+#define OPTION_VAL_300_O46_IT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_IT "Mostra mirino della Pistola 1"
 #define OPTION_VAL_WHITE_IT "Bianco"
 #define OPTION_VAL_RED_IT "Rosso"
@@ -40245,12 +41570,6 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_IT "Colore Vmu Schermo 1 Pixel Off"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_IT "Opacità VMU Screen 1"
 #define OPTION_VAL_40_IT NULL
-#define OPTION_VAL_50_IT NULL
-#define OPTION_VAL_60_IT NULL
-#define OPTION_VAL_70_IT NULL
-#define OPTION_VAL_80_IT NULL
-#define OPTION_VAL_90_IT NULL
-#define OPTION_VAL_100_O58_IT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_IT "Visualizzazione Schermo VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_IT "Posizione VMU Schermo 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_IT "Dimensione VMU Schermo 2"
@@ -41080,6 +42399,44 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_IT,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_IT },
+         { "60%",  OPTION_VAL_60_IT },
+         { "70%",  OPTION_VAL_70_IT },
+         { "80%",  OPTION_VAL_80_IT },
+         { "90%",  OPTION_VAL_90_IT },
+         { "100%", OPTION_VAL_100_O46_IT },
+         { "110%", OPTION_VAL_110_O46_IT },
+         { "120%", OPTION_VAL_120_O46_IT },
+         { "130%", OPTION_VAL_130_O46_IT },
+         { "140%", OPTION_VAL_140_O46_IT },
+         { "150%", OPTION_VAL_150_O46_IT },
+         { "160%", OPTION_VAL_160_O46_IT },
+         { "170%", OPTION_VAL_170_O46_IT },
+         { "180%", OPTION_VAL_180_O46_IT },
+         { "190%", OPTION_VAL_190_O46_IT },
+         { "200%", OPTION_VAL_200_O46_IT },
+         { "210%", OPTION_VAL_210_O46_IT },
+         { "220%", OPTION_VAL_220_O46_IT },
+         { "230%", OPTION_VAL_230_O46_IT },
+         { "240%", OPTION_VAL_240_O46_IT },
+         { "250%", OPTION_VAL_250_O46_IT },
+         { "260%", OPTION_VAL_260_O46_IT },
+         { "270%", OPTION_VAL_270_O46_IT },
+         { "280%", OPTION_VAL_280_O46_IT },
+         { "290%", OPTION_VAL_290_O46_IT },
+         { "300%", OPTION_VAL_300_O46_IT },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_IT,
       NULL,
@@ -41335,7 +42692,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O58_IT },
+         { "100%", OPTION_VAL_100_O46_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41486,7 +42843,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O58_IT },
+         { "100%", OPTION_VAL_100_O46_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41637,7 +42994,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O58_IT },
+         { "100%", OPTION_VAL_100_O46_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -41788,7 +43145,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "70%",  OPTION_VAL_70_IT },
          { "80%",  OPTION_VAL_80_IT },
          { "90%",  OPTION_VAL_90_IT },
-         { "100%", OPTION_VAL_100_O58_IT },
+         { "100%", OPTION_VAL_100_O46_IT },
          { NULL,   NULL },
       },
       "100%",
@@ -42002,6 +43359,33 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_JA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_JA NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_JA NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_JA NULL
+#define OPTION_VAL_50_JA NULL
+#define OPTION_VAL_60_JA NULL
+#define OPTION_VAL_70_JA NULL
+#define OPTION_VAL_80_JA NULL
+#define OPTION_VAL_90_JA NULL
+#define OPTION_VAL_100_O46_JA NULL
+#define OPTION_VAL_110_O46_JA NULL
+#define OPTION_VAL_120_O46_JA NULL
+#define OPTION_VAL_130_O46_JA NULL
+#define OPTION_VAL_140_O46_JA NULL
+#define OPTION_VAL_150_O46_JA NULL
+#define OPTION_VAL_160_O46_JA NULL
+#define OPTION_VAL_170_O46_JA NULL
+#define OPTION_VAL_180_O46_JA NULL
+#define OPTION_VAL_190_O46_JA NULL
+#define OPTION_VAL_200_O46_JA NULL
+#define OPTION_VAL_210_O46_JA NULL
+#define OPTION_VAL_220_O46_JA NULL
+#define OPTION_VAL_230_O46_JA NULL
+#define OPTION_VAL_240_O46_JA NULL
+#define OPTION_VAL_250_O46_JA NULL
+#define OPTION_VAL_260_O46_JA NULL
+#define OPTION_VAL_270_O46_JA NULL
+#define OPTION_VAL_280_O46_JA NULL
+#define OPTION_VAL_290_O46_JA NULL
+#define OPTION_VAL_300_O46_JA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_JA NULL
 #define OPTION_VAL_WHITE_JA NULL
 #define OPTION_VAL_RED_JA "レッド"
@@ -42060,12 +43444,6 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_JA NULL
 #define OPTION_VAL_40_JA NULL
-#define OPTION_VAL_50_JA NULL
-#define OPTION_VAL_60_JA NULL
-#define OPTION_VAL_70_JA NULL
-#define OPTION_VAL_80_JA NULL
-#define OPTION_VAL_90_JA NULL
-#define OPTION_VAL_100_O58_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_JA NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_JA NULL
@@ -42895,6 +44273,44 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_JA,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_JA },
+         { "60%",  OPTION_VAL_60_JA },
+         { "70%",  OPTION_VAL_70_JA },
+         { "80%",  OPTION_VAL_80_JA },
+         { "90%",  OPTION_VAL_90_JA },
+         { "100%", OPTION_VAL_100_O46_JA },
+         { "110%", OPTION_VAL_110_O46_JA },
+         { "120%", OPTION_VAL_120_O46_JA },
+         { "130%", OPTION_VAL_130_O46_JA },
+         { "140%", OPTION_VAL_140_O46_JA },
+         { "150%", OPTION_VAL_150_O46_JA },
+         { "160%", OPTION_VAL_160_O46_JA },
+         { "170%", OPTION_VAL_170_O46_JA },
+         { "180%", OPTION_VAL_180_O46_JA },
+         { "190%", OPTION_VAL_190_O46_JA },
+         { "200%", OPTION_VAL_200_O46_JA },
+         { "210%", OPTION_VAL_210_O46_JA },
+         { "220%", OPTION_VAL_220_O46_JA },
+         { "230%", OPTION_VAL_230_O46_JA },
+         { "240%", OPTION_VAL_240_O46_JA },
+         { "250%", OPTION_VAL_250_O46_JA },
+         { "260%", OPTION_VAL_260_O46_JA },
+         { "270%", OPTION_VAL_270_O46_JA },
+         { "280%", OPTION_VAL_280_O46_JA },
+         { "290%", OPTION_VAL_290_O46_JA },
+         { "300%", OPTION_VAL_300_O46_JA },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_JA,
       NULL,
@@ -43150,7 +44566,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O58_JA },
+         { "100%", OPTION_VAL_100_O46_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43301,7 +44717,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O58_JA },
+         { "100%", OPTION_VAL_100_O46_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43452,7 +44868,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O58_JA },
+         { "100%", OPTION_VAL_100_O46_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43603,7 +45019,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "70%",  OPTION_VAL_70_JA },
          { "80%",  OPTION_VAL_80_JA },
          { "90%",  OPTION_VAL_90_JA },
-         { "100%", OPTION_VAL_100_O58_JA },
+         { "100%", OPTION_VAL_100_O46_JA },
          { NULL,   NULL },
       },
       "100%",
@@ -43817,6 +45233,33 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_KO "디지털 출력과 포스 피드백 상태를 TCP 포트 8000번으로 송출합니다. MAME의 \"-output network\" 옵션과 호환됩니다."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO "라이트 건 설정 표시"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_KO "라이트건 십자 조준선 옵션 구성을 활성화합니다. 참고: 이 설정을 적용하려면 빠른 메뉴를 다시 표시해야 할 수 있습니다."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_KO NULL
+#define OPTION_VAL_50_KO NULL
+#define OPTION_VAL_60_KO NULL
+#define OPTION_VAL_70_KO NULL
+#define OPTION_VAL_80_KO NULL
+#define OPTION_VAL_90_KO NULL
+#define OPTION_VAL_100_O46_KO NULL
+#define OPTION_VAL_110_O46_KO NULL
+#define OPTION_VAL_120_O46_KO NULL
+#define OPTION_VAL_130_O46_KO NULL
+#define OPTION_VAL_140_O46_KO NULL
+#define OPTION_VAL_150_O46_KO NULL
+#define OPTION_VAL_160_O46_KO NULL
+#define OPTION_VAL_170_O46_KO NULL
+#define OPTION_VAL_180_O46_KO NULL
+#define OPTION_VAL_190_O46_KO NULL
+#define OPTION_VAL_200_O46_KO NULL
+#define OPTION_VAL_210_O46_KO NULL
+#define OPTION_VAL_220_O46_KO NULL
+#define OPTION_VAL_230_O46_KO NULL
+#define OPTION_VAL_240_O46_KO NULL
+#define OPTION_VAL_250_O46_KO NULL
+#define OPTION_VAL_260_O46_KO NULL
+#define OPTION_VAL_270_O46_KO NULL
+#define OPTION_VAL_280_O46_KO NULL
+#define OPTION_VAL_290_O46_KO NULL
+#define OPTION_VAL_300_O46_KO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_KO "라이트건 조준선 1 표시"
 #define OPTION_VAL_WHITE_KO "흰색"
 #define OPTION_VAL_RED_KO "빨강"
@@ -43875,12 +45318,6 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_KO "VMU 화면 1 꺼진 픽셀 색상"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_KO "VMU 화면 1 투명도"
 #define OPTION_VAL_40_KO NULL
-#define OPTION_VAL_50_KO NULL
-#define OPTION_VAL_60_KO NULL
-#define OPTION_VAL_70_KO NULL
-#define OPTION_VAL_80_KO NULL
-#define OPTION_VAL_90_KO NULL
-#define OPTION_VAL_100_O58_KO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_KO "VMU 화면 2 표시"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_KO "VMU 화면 2 위치"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_KO "VMU 화면 2 크기"
@@ -44710,6 +46147,44 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_KO,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_KO },
+         { "60%",  OPTION_VAL_60_KO },
+         { "70%",  OPTION_VAL_70_KO },
+         { "80%",  OPTION_VAL_80_KO },
+         { "90%",  OPTION_VAL_90_KO },
+         { "100%", OPTION_VAL_100_O46_KO },
+         { "110%", OPTION_VAL_110_O46_KO },
+         { "120%", OPTION_VAL_120_O46_KO },
+         { "130%", OPTION_VAL_130_O46_KO },
+         { "140%", OPTION_VAL_140_O46_KO },
+         { "150%", OPTION_VAL_150_O46_KO },
+         { "160%", OPTION_VAL_160_O46_KO },
+         { "170%", OPTION_VAL_170_O46_KO },
+         { "180%", OPTION_VAL_180_O46_KO },
+         { "190%", OPTION_VAL_190_O46_KO },
+         { "200%", OPTION_VAL_200_O46_KO },
+         { "210%", OPTION_VAL_210_O46_KO },
+         { "220%", OPTION_VAL_220_O46_KO },
+         { "230%", OPTION_VAL_230_O46_KO },
+         { "240%", OPTION_VAL_240_O46_KO },
+         { "250%", OPTION_VAL_250_O46_KO },
+         { "260%", OPTION_VAL_260_O46_KO },
+         { "270%", OPTION_VAL_270_O46_KO },
+         { "280%", OPTION_VAL_280_O46_KO },
+         { "290%", OPTION_VAL_290_O46_KO },
+         { "300%", OPTION_VAL_300_O46_KO },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_KO,
       NULL,
@@ -44965,7 +46440,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O58_KO },
+         { "100%", OPTION_VAL_100_O46_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45116,7 +46591,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O58_KO },
+         { "100%", OPTION_VAL_100_O46_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45267,7 +46742,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O58_KO },
+         { "100%", OPTION_VAL_100_O46_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45418,7 +46893,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "70%",  OPTION_VAL_70_KO },
          { "80%",  OPTION_VAL_80_KO },
          { "90%",  OPTION_VAL_90_KO },
-         { "100%", OPTION_VAL_100_O58_KO },
+         { "100%", OPTION_VAL_100_O46_KO },
          { NULL,   NULL },
       },
       "100%",
@@ -45632,6 +47107,33 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_NL NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_NL NULL
+#define OPTION_VAL_50_NL NULL
+#define OPTION_VAL_60_NL NULL
+#define OPTION_VAL_70_NL NULL
+#define OPTION_VAL_80_NL NULL
+#define OPTION_VAL_90_NL NULL
+#define OPTION_VAL_100_O46_NL NULL
+#define OPTION_VAL_110_O46_NL NULL
+#define OPTION_VAL_120_O46_NL NULL
+#define OPTION_VAL_130_O46_NL NULL
+#define OPTION_VAL_140_O46_NL NULL
+#define OPTION_VAL_150_O46_NL NULL
+#define OPTION_VAL_160_O46_NL NULL
+#define OPTION_VAL_170_O46_NL NULL
+#define OPTION_VAL_180_O46_NL NULL
+#define OPTION_VAL_190_O46_NL NULL
+#define OPTION_VAL_200_O46_NL NULL
+#define OPTION_VAL_210_O46_NL NULL
+#define OPTION_VAL_220_O46_NL NULL
+#define OPTION_VAL_230_O46_NL NULL
+#define OPTION_VAL_240_O46_NL NULL
+#define OPTION_VAL_250_O46_NL NULL
+#define OPTION_VAL_260_O46_NL NULL
+#define OPTION_VAL_270_O46_NL NULL
+#define OPTION_VAL_280_O46_NL NULL
+#define OPTION_VAL_290_O46_NL NULL
+#define OPTION_VAL_300_O46_NL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NL NULL
 #define OPTION_VAL_WHITE_NL NULL
 #define OPTION_VAL_RED_NL "Rood"
@@ -45690,12 +47192,6 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_NL NULL
 #define OPTION_VAL_40_NL NULL
-#define OPTION_VAL_50_NL NULL
-#define OPTION_VAL_60_NL NULL
-#define OPTION_VAL_70_NL NULL
-#define OPTION_VAL_80_NL NULL
-#define OPTION_VAL_90_NL NULL
-#define OPTION_VAL_100_O58_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NL NULL
@@ -46525,6 +48021,44 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_NL,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_NL },
+         { "60%",  OPTION_VAL_60_NL },
+         { "70%",  OPTION_VAL_70_NL },
+         { "80%",  OPTION_VAL_80_NL },
+         { "90%",  OPTION_VAL_90_NL },
+         { "100%", OPTION_VAL_100_O46_NL },
+         { "110%", OPTION_VAL_110_O46_NL },
+         { "120%", OPTION_VAL_120_O46_NL },
+         { "130%", OPTION_VAL_130_O46_NL },
+         { "140%", OPTION_VAL_140_O46_NL },
+         { "150%", OPTION_VAL_150_O46_NL },
+         { "160%", OPTION_VAL_160_O46_NL },
+         { "170%", OPTION_VAL_170_O46_NL },
+         { "180%", OPTION_VAL_180_O46_NL },
+         { "190%", OPTION_VAL_190_O46_NL },
+         { "200%", OPTION_VAL_200_O46_NL },
+         { "210%", OPTION_VAL_210_O46_NL },
+         { "220%", OPTION_VAL_220_O46_NL },
+         { "230%", OPTION_VAL_230_O46_NL },
+         { "240%", OPTION_VAL_240_O46_NL },
+         { "250%", OPTION_VAL_250_O46_NL },
+         { "260%", OPTION_VAL_260_O46_NL },
+         { "270%", OPTION_VAL_270_O46_NL },
+         { "280%", OPTION_VAL_280_O46_NL },
+         { "290%", OPTION_VAL_290_O46_NL },
+         { "300%", OPTION_VAL_300_O46_NL },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NL,
       NULL,
@@ -46780,7 +48314,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O58_NL },
+         { "100%", OPTION_VAL_100_O46_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -46931,7 +48465,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O58_NL },
+         { "100%", OPTION_VAL_100_O46_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -47082,7 +48616,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O58_NL },
+         { "100%", OPTION_VAL_100_O46_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -47233,7 +48767,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "70%",  OPTION_VAL_70_NL },
          { "80%",  OPTION_VAL_80_NL },
          { "90%",  OPTION_VAL_90_NL },
-         { "100%", OPTION_VAL_100_O58_NL },
+         { "100%", OPTION_VAL_100_O46_NL },
          { NULL,   NULL },
       },
       "100%",
@@ -47447,6 +48981,33 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_NO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_NO NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_NO NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_NO NULL
+#define OPTION_VAL_50_NO NULL
+#define OPTION_VAL_60_NO NULL
+#define OPTION_VAL_70_NO NULL
+#define OPTION_VAL_80_NO NULL
+#define OPTION_VAL_90_NO NULL
+#define OPTION_VAL_100_O46_NO NULL
+#define OPTION_VAL_110_O46_NO NULL
+#define OPTION_VAL_120_O46_NO NULL
+#define OPTION_VAL_130_O46_NO NULL
+#define OPTION_VAL_140_O46_NO NULL
+#define OPTION_VAL_150_O46_NO NULL
+#define OPTION_VAL_160_O46_NO NULL
+#define OPTION_VAL_170_O46_NO NULL
+#define OPTION_VAL_180_O46_NO NULL
+#define OPTION_VAL_190_O46_NO NULL
+#define OPTION_VAL_200_O46_NO NULL
+#define OPTION_VAL_210_O46_NO NULL
+#define OPTION_VAL_220_O46_NO NULL
+#define OPTION_VAL_230_O46_NO NULL
+#define OPTION_VAL_240_O46_NO NULL
+#define OPTION_VAL_250_O46_NO NULL
+#define OPTION_VAL_260_O46_NO NULL
+#define OPTION_VAL_270_O46_NO NULL
+#define OPTION_VAL_280_O46_NO NULL
+#define OPTION_VAL_290_O46_NO NULL
+#define OPTION_VAL_300_O46_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO NULL
 #define OPTION_VAL_WHITE_NO NULL
 #define OPTION_VAL_RED_NO NULL
@@ -47505,12 +49066,6 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_NO NULL
 #define OPTION_VAL_40_NO NULL
-#define OPTION_VAL_50_NO NULL
-#define OPTION_VAL_60_NO NULL
-#define OPTION_VAL_70_NO NULL
-#define OPTION_VAL_80_NO NULL
-#define OPTION_VAL_90_NO NULL
-#define OPTION_VAL_100_O58_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_NO NULL
@@ -48340,6 +49895,44 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_NO,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_NO },
+         { "60%",  OPTION_VAL_60_NO },
+         { "70%",  OPTION_VAL_70_NO },
+         { "80%",  OPTION_VAL_80_NO },
+         { "90%",  OPTION_VAL_90_NO },
+         { "100%", OPTION_VAL_100_O46_NO },
+         { "110%", OPTION_VAL_110_O46_NO },
+         { "120%", OPTION_VAL_120_O46_NO },
+         { "130%", OPTION_VAL_130_O46_NO },
+         { "140%", OPTION_VAL_140_O46_NO },
+         { "150%", OPTION_VAL_150_O46_NO },
+         { "160%", OPTION_VAL_160_O46_NO },
+         { "170%", OPTION_VAL_170_O46_NO },
+         { "180%", OPTION_VAL_180_O46_NO },
+         { "190%", OPTION_VAL_190_O46_NO },
+         { "200%", OPTION_VAL_200_O46_NO },
+         { "210%", OPTION_VAL_210_O46_NO },
+         { "220%", OPTION_VAL_220_O46_NO },
+         { "230%", OPTION_VAL_230_O46_NO },
+         { "240%", OPTION_VAL_240_O46_NO },
+         { "250%", OPTION_VAL_250_O46_NO },
+         { "260%", OPTION_VAL_260_O46_NO },
+         { "270%", OPTION_VAL_270_O46_NO },
+         { "280%", OPTION_VAL_280_O46_NO },
+         { "290%", OPTION_VAL_290_O46_NO },
+         { "300%", OPTION_VAL_300_O46_NO },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO,
       NULL,
@@ -48595,7 +50188,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O58_NO },
+         { "100%", OPTION_VAL_100_O46_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48746,7 +50339,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O58_NO },
+         { "100%", OPTION_VAL_100_O46_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -48897,7 +50490,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O58_NO },
+         { "100%", OPTION_VAL_100_O46_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -49048,7 +50641,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "70%",  OPTION_VAL_70_NO },
          { "80%",  OPTION_VAL_80_NO },
          { "90%",  OPTION_VAL_90_NO },
-         { "100%", OPTION_VAL_100_O58_NO },
+         { "100%", OPTION_VAL_100_O46_NO },
          { NULL,   NULL },
       },
       "100%",
@@ -49262,6 +50855,33 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_OR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_OR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_OR NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_OR NULL
+#define OPTION_VAL_50_OR NULL
+#define OPTION_VAL_60_OR NULL
+#define OPTION_VAL_70_OR NULL
+#define OPTION_VAL_80_OR NULL
+#define OPTION_VAL_90_OR NULL
+#define OPTION_VAL_100_O46_OR NULL
+#define OPTION_VAL_110_O46_OR NULL
+#define OPTION_VAL_120_O46_OR NULL
+#define OPTION_VAL_130_O46_OR NULL
+#define OPTION_VAL_140_O46_OR NULL
+#define OPTION_VAL_150_O46_OR NULL
+#define OPTION_VAL_160_O46_OR NULL
+#define OPTION_VAL_170_O46_OR NULL
+#define OPTION_VAL_180_O46_OR NULL
+#define OPTION_VAL_190_O46_OR NULL
+#define OPTION_VAL_200_O46_OR NULL
+#define OPTION_VAL_210_O46_OR NULL
+#define OPTION_VAL_220_O46_OR NULL
+#define OPTION_VAL_230_O46_OR NULL
+#define OPTION_VAL_240_O46_OR NULL
+#define OPTION_VAL_250_O46_OR NULL
+#define OPTION_VAL_260_O46_OR NULL
+#define OPTION_VAL_270_O46_OR NULL
+#define OPTION_VAL_280_O46_OR NULL
+#define OPTION_VAL_290_O46_OR NULL
+#define OPTION_VAL_300_O46_OR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OR NULL
 #define OPTION_VAL_WHITE_OR NULL
 #define OPTION_VAL_RED_OR NULL
@@ -49320,12 +50940,6 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_OR NULL
 #define OPTION_VAL_40_OR NULL
-#define OPTION_VAL_50_OR NULL
-#define OPTION_VAL_60_OR NULL
-#define OPTION_VAL_70_OR NULL
-#define OPTION_VAL_80_OR NULL
-#define OPTION_VAL_90_OR NULL
-#define OPTION_VAL_100_O58_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_OR NULL
@@ -50155,6 +51769,44 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_OR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_OR },
+         { "60%",  OPTION_VAL_60_OR },
+         { "70%",  OPTION_VAL_70_OR },
+         { "80%",  OPTION_VAL_80_OR },
+         { "90%",  OPTION_VAL_90_OR },
+         { "100%", OPTION_VAL_100_O46_OR },
+         { "110%", OPTION_VAL_110_O46_OR },
+         { "120%", OPTION_VAL_120_O46_OR },
+         { "130%", OPTION_VAL_130_O46_OR },
+         { "140%", OPTION_VAL_140_O46_OR },
+         { "150%", OPTION_VAL_150_O46_OR },
+         { "160%", OPTION_VAL_160_O46_OR },
+         { "170%", OPTION_VAL_170_O46_OR },
+         { "180%", OPTION_VAL_180_O46_OR },
+         { "190%", OPTION_VAL_190_O46_OR },
+         { "200%", OPTION_VAL_200_O46_OR },
+         { "210%", OPTION_VAL_210_O46_OR },
+         { "220%", OPTION_VAL_220_O46_OR },
+         { "230%", OPTION_VAL_230_O46_OR },
+         { "240%", OPTION_VAL_240_O46_OR },
+         { "250%", OPTION_VAL_250_O46_OR },
+         { "260%", OPTION_VAL_260_O46_OR },
+         { "270%", OPTION_VAL_270_O46_OR },
+         { "280%", OPTION_VAL_280_O46_OR },
+         { "290%", OPTION_VAL_290_O46_OR },
+         { "300%", OPTION_VAL_300_O46_OR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_OR,
       NULL,
@@ -50410,7 +52062,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O58_OR },
+         { "100%", OPTION_VAL_100_O46_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50561,7 +52213,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O58_OR },
+         { "100%", OPTION_VAL_100_O46_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50712,7 +52364,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O58_OR },
+         { "100%", OPTION_VAL_100_O46_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -50863,7 +52515,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "70%",  OPTION_VAL_70_OR },
          { "80%",  OPTION_VAL_80_OR },
          { "90%",  OPTION_VAL_90_OR },
-         { "100%", OPTION_VAL_100_O58_OR },
+         { "100%", OPTION_VAL_100_O46_OR },
          { NULL,   NULL },
       },
       "100%",
@@ -51077,6 +52729,33 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PL NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PL NULL
+#define OPTION_VAL_50_PL "50 %"
+#define OPTION_VAL_60_PL "60 %"
+#define OPTION_VAL_70_PL NULL
+#define OPTION_VAL_80_PL "80 %"
+#define OPTION_VAL_90_PL NULL
+#define OPTION_VAL_100_O46_PL NULL
+#define OPTION_VAL_110_O46_PL NULL
+#define OPTION_VAL_120_O46_PL NULL
+#define OPTION_VAL_130_O46_PL NULL
+#define OPTION_VAL_140_O46_PL NULL
+#define OPTION_VAL_150_O46_PL NULL
+#define OPTION_VAL_160_O46_PL NULL
+#define OPTION_VAL_170_O46_PL NULL
+#define OPTION_VAL_180_O46_PL NULL
+#define OPTION_VAL_190_O46_PL NULL
+#define OPTION_VAL_200_O46_PL NULL
+#define OPTION_VAL_210_O46_PL NULL
+#define OPTION_VAL_220_O46_PL NULL
+#define OPTION_VAL_230_O46_PL NULL
+#define OPTION_VAL_240_O46_PL NULL
+#define OPTION_VAL_250_O46_PL NULL
+#define OPTION_VAL_260_O46_PL NULL
+#define OPTION_VAL_270_O46_PL NULL
+#define OPTION_VAL_280_O46_PL NULL
+#define OPTION_VAL_290_O46_PL NULL
+#define OPTION_VAL_300_O46_PL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PL NULL
 #define OPTION_VAL_WHITE_PL NULL
 #define OPTION_VAL_RED_PL "Czerwony"
@@ -51135,12 +52814,6 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_PL NULL
 #define OPTION_VAL_40_PL NULL
-#define OPTION_VAL_50_PL "50 %"
-#define OPTION_VAL_60_PL "60 %"
-#define OPTION_VAL_70_PL NULL
-#define OPTION_VAL_80_PL "80 %"
-#define OPTION_VAL_90_PL NULL
-#define OPTION_VAL_100_O58_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PL NULL
@@ -51970,6 +53643,44 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PL,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_PL },
+         { "60%",  OPTION_VAL_60_PL },
+         { "70%",  OPTION_VAL_70_PL },
+         { "80%",  OPTION_VAL_80_PL },
+         { "90%",  OPTION_VAL_90_PL },
+         { "100%", OPTION_VAL_100_O46_PL },
+         { "110%", OPTION_VAL_110_O46_PL },
+         { "120%", OPTION_VAL_120_O46_PL },
+         { "130%", OPTION_VAL_130_O46_PL },
+         { "140%", OPTION_VAL_140_O46_PL },
+         { "150%", OPTION_VAL_150_O46_PL },
+         { "160%", OPTION_VAL_160_O46_PL },
+         { "170%", OPTION_VAL_170_O46_PL },
+         { "180%", OPTION_VAL_180_O46_PL },
+         { "190%", OPTION_VAL_190_O46_PL },
+         { "200%", OPTION_VAL_200_O46_PL },
+         { "210%", OPTION_VAL_210_O46_PL },
+         { "220%", OPTION_VAL_220_O46_PL },
+         { "230%", OPTION_VAL_230_O46_PL },
+         { "240%", OPTION_VAL_240_O46_PL },
+         { "250%", OPTION_VAL_250_O46_PL },
+         { "260%", OPTION_VAL_260_O46_PL },
+         { "270%", OPTION_VAL_270_O46_PL },
+         { "280%", OPTION_VAL_280_O46_PL },
+         { "290%", OPTION_VAL_290_O46_PL },
+         { "300%", OPTION_VAL_300_O46_PL },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PL,
       NULL,
@@ -52225,7 +53936,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O58_PL },
+         { "100%", OPTION_VAL_100_O46_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52376,7 +54087,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O58_PL },
+         { "100%", OPTION_VAL_100_O46_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52527,7 +54238,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O58_PL },
+         { "100%", OPTION_VAL_100_O46_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52678,7 +54389,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "70%",  OPTION_VAL_70_PL },
          { "80%",  OPTION_VAL_80_PL },
          { "90%",  OPTION_VAL_90_PL },
-         { "100%", OPTION_VAL_100_O58_PL },
+         { "100%", OPTION_VAL_100_O46_PL },
          { NULL,   NULL },
       },
       "100%",
@@ -52892,6 +54603,33 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_BR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_BR "Mostrar configurações das pistolas de luz"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PT_BR "Ativa a configuração do da mira da pistola de luz na tela. OBSERVAÇÃO: O menu rápido pode precisar ser alternado para que esta configuração surta efeito."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PT_BR NULL
+#define OPTION_VAL_50_PT_BR NULL
+#define OPTION_VAL_60_PT_BR NULL
+#define OPTION_VAL_70_PT_BR NULL
+#define OPTION_VAL_80_PT_BR NULL
+#define OPTION_VAL_90_PT_BR NULL
+#define OPTION_VAL_100_O46_PT_BR NULL
+#define OPTION_VAL_110_O46_PT_BR NULL
+#define OPTION_VAL_120_O46_PT_BR NULL
+#define OPTION_VAL_130_O46_PT_BR NULL
+#define OPTION_VAL_140_O46_PT_BR NULL
+#define OPTION_VAL_150_O46_PT_BR NULL
+#define OPTION_VAL_160_O46_PT_BR NULL
+#define OPTION_VAL_170_O46_PT_BR NULL
+#define OPTION_VAL_180_O46_PT_BR NULL
+#define OPTION_VAL_190_O46_PT_BR NULL
+#define OPTION_VAL_200_O46_PT_BR NULL
+#define OPTION_VAL_210_O46_PT_BR NULL
+#define OPTION_VAL_220_O46_PT_BR NULL
+#define OPTION_VAL_230_O46_PT_BR NULL
+#define OPTION_VAL_240_O46_PT_BR NULL
+#define OPTION_VAL_250_O46_PT_BR NULL
+#define OPTION_VAL_260_O46_PT_BR NULL
+#define OPTION_VAL_270_O46_PT_BR NULL
+#define OPTION_VAL_280_O46_PT_BR NULL
+#define OPTION_VAL_290_O46_PT_BR NULL
+#define OPTION_VAL_300_O46_PT_BR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_BR "Mostrar ponto de mira da arma 1"
 #define OPTION_VAL_WHITE_PT_BR "Branco"
 #define OPTION_VAL_RED_PT_BR "Vermelho"
@@ -52950,12 +54688,6 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_PT_BR "Cor dos pixels apagados da VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_PT_BR "Opacidade da tela da VMU 1"
 #define OPTION_VAL_40_PT_BR NULL
-#define OPTION_VAL_50_PT_BR NULL
-#define OPTION_VAL_60_PT_BR NULL
-#define OPTION_VAL_70_PT_BR NULL
-#define OPTION_VAL_80_PT_BR NULL
-#define OPTION_VAL_90_PT_BR NULL
-#define OPTION_VAL_100_O58_PT_BR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_BR "Tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_BR "Posição da tela da VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_BR "Tamanho da tela da VMU 2"
@@ -53785,6 +55517,44 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PT_BR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_PT_BR },
+         { "60%",  OPTION_VAL_60_PT_BR },
+         { "70%",  OPTION_VAL_70_PT_BR },
+         { "80%",  OPTION_VAL_80_PT_BR },
+         { "90%",  OPTION_VAL_90_PT_BR },
+         { "100%", OPTION_VAL_100_O46_PT_BR },
+         { "110%", OPTION_VAL_110_O46_PT_BR },
+         { "120%", OPTION_VAL_120_O46_PT_BR },
+         { "130%", OPTION_VAL_130_O46_PT_BR },
+         { "140%", OPTION_VAL_140_O46_PT_BR },
+         { "150%", OPTION_VAL_150_O46_PT_BR },
+         { "160%", OPTION_VAL_160_O46_PT_BR },
+         { "170%", OPTION_VAL_170_O46_PT_BR },
+         { "180%", OPTION_VAL_180_O46_PT_BR },
+         { "190%", OPTION_VAL_190_O46_PT_BR },
+         { "200%", OPTION_VAL_200_O46_PT_BR },
+         { "210%", OPTION_VAL_210_O46_PT_BR },
+         { "220%", OPTION_VAL_220_O46_PT_BR },
+         { "230%", OPTION_VAL_230_O46_PT_BR },
+         { "240%", OPTION_VAL_240_O46_PT_BR },
+         { "250%", OPTION_VAL_250_O46_PT_BR },
+         { "260%", OPTION_VAL_260_O46_PT_BR },
+         { "270%", OPTION_VAL_270_O46_PT_BR },
+         { "280%", OPTION_VAL_280_O46_PT_BR },
+         { "290%", OPTION_VAL_290_O46_PT_BR },
+         { "300%", OPTION_VAL_300_O46_PT_BR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_BR,
       NULL,
@@ -54040,7 +55810,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O58_PT_BR },
+         { "100%", OPTION_VAL_100_O46_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54191,7 +55961,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O58_PT_BR },
+         { "100%", OPTION_VAL_100_O46_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54342,7 +56112,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O58_PT_BR },
+         { "100%", OPTION_VAL_100_O46_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54493,7 +56263,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "70%",  OPTION_VAL_70_PT_BR },
          { "80%",  OPTION_VAL_80_PT_BR },
          { "90%",  OPTION_VAL_90_PT_BR },
-         { "100%", OPTION_VAL_100_O58_PT_BR },
+         { "100%", OPTION_VAL_100_O46_PT_BR },
          { NULL,   NULL },
       },
       "100%",
@@ -54707,6 +56477,33 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PT_PT NULL
+#define OPTION_VAL_50_PT_PT NULL
+#define OPTION_VAL_60_PT_PT NULL
+#define OPTION_VAL_70_PT_PT NULL
+#define OPTION_VAL_80_PT_PT NULL
+#define OPTION_VAL_90_PT_PT NULL
+#define OPTION_VAL_100_O46_PT_PT NULL
+#define OPTION_VAL_110_O46_PT_PT NULL
+#define OPTION_VAL_120_O46_PT_PT NULL
+#define OPTION_VAL_130_O46_PT_PT NULL
+#define OPTION_VAL_140_O46_PT_PT NULL
+#define OPTION_VAL_150_O46_PT_PT NULL
+#define OPTION_VAL_160_O46_PT_PT NULL
+#define OPTION_VAL_170_O46_PT_PT NULL
+#define OPTION_VAL_180_O46_PT_PT NULL
+#define OPTION_VAL_190_O46_PT_PT NULL
+#define OPTION_VAL_200_O46_PT_PT NULL
+#define OPTION_VAL_210_O46_PT_PT NULL
+#define OPTION_VAL_220_O46_PT_PT NULL
+#define OPTION_VAL_230_O46_PT_PT NULL
+#define OPTION_VAL_240_O46_PT_PT NULL
+#define OPTION_VAL_250_O46_PT_PT NULL
+#define OPTION_VAL_260_O46_PT_PT NULL
+#define OPTION_VAL_270_O46_PT_PT NULL
+#define OPTION_VAL_280_O46_PT_PT NULL
+#define OPTION_VAL_290_O46_PT_PT NULL
+#define OPTION_VAL_300_O46_PT_PT NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_PT NULL
 #define OPTION_VAL_WHITE_PT_PT NULL
 #define OPTION_VAL_RED_PT_PT "Vermelho"
@@ -54765,12 +56562,6 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_PT_PT NULL
 #define OPTION_VAL_40_PT_PT NULL
-#define OPTION_VAL_50_PT_PT NULL
-#define OPTION_VAL_60_PT_PT NULL
-#define OPTION_VAL_70_PT_PT NULL
-#define OPTION_VAL_80_PT_PT NULL
-#define OPTION_VAL_90_PT_PT NULL
-#define OPTION_VAL_100_O58_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PT_PT NULL
@@ -55600,6 +57391,44 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_PT_PT,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_PT_PT },
+         { "60%",  OPTION_VAL_60_PT_PT },
+         { "70%",  OPTION_VAL_70_PT_PT },
+         { "80%",  OPTION_VAL_80_PT_PT },
+         { "90%",  OPTION_VAL_90_PT_PT },
+         { "100%", OPTION_VAL_100_O46_PT_PT },
+         { "110%", OPTION_VAL_110_O46_PT_PT },
+         { "120%", OPTION_VAL_120_O46_PT_PT },
+         { "130%", OPTION_VAL_130_O46_PT_PT },
+         { "140%", OPTION_VAL_140_O46_PT_PT },
+         { "150%", OPTION_VAL_150_O46_PT_PT },
+         { "160%", OPTION_VAL_160_O46_PT_PT },
+         { "170%", OPTION_VAL_170_O46_PT_PT },
+         { "180%", OPTION_VAL_180_O46_PT_PT },
+         { "190%", OPTION_VAL_190_O46_PT_PT },
+         { "200%", OPTION_VAL_200_O46_PT_PT },
+         { "210%", OPTION_VAL_210_O46_PT_PT },
+         { "220%", OPTION_VAL_220_O46_PT_PT },
+         { "230%", OPTION_VAL_230_O46_PT_PT },
+         { "240%", OPTION_VAL_240_O46_PT_PT },
+         { "250%", OPTION_VAL_250_O46_PT_PT },
+         { "260%", OPTION_VAL_260_O46_PT_PT },
+         { "270%", OPTION_VAL_270_O46_PT_PT },
+         { "280%", OPTION_VAL_280_O46_PT_PT },
+         { "290%", OPTION_VAL_290_O46_PT_PT },
+         { "300%", OPTION_VAL_300_O46_PT_PT },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PT_PT,
       NULL,
@@ -55855,7 +57684,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O58_PT_PT },
+         { "100%", OPTION_VAL_100_O46_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -56006,7 +57835,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O58_PT_PT },
+         { "100%", OPTION_VAL_100_O46_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -56157,7 +57986,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O58_PT_PT },
+         { "100%", OPTION_VAL_100_O46_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -56308,7 +58137,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "70%",  OPTION_VAL_70_PT_PT },
          { "80%",  OPTION_VAL_80_PT_PT },
          { "90%",  OPTION_VAL_90_PT_PT },
-         { "100%", OPTION_VAL_100_O58_PT_PT },
+         { "100%", OPTION_VAL_100_O46_PT_PT },
          { NULL,   NULL },
       },
       "100%",
@@ -56522,6 +58351,33 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_RU "Транслировать события цифрового ввода и состояние вибрации в TCP-порт 8000. Совместимо с параметром MAME \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_RU "Показывать настройки свет. пистолета"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_RU "Включает конфигурацию параметров прицела светового пистолета. Для применения настройки требуется переключить быстрое меню."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_RU "Масштабирование прицела"
+#define OPTION_VAL_50_RU NULL
+#define OPTION_VAL_60_RU NULL
+#define OPTION_VAL_70_RU NULL
+#define OPTION_VAL_80_RU NULL
+#define OPTION_VAL_90_RU NULL
+#define OPTION_VAL_100_O46_RU NULL
+#define OPTION_VAL_110_O46_RU NULL
+#define OPTION_VAL_120_O46_RU NULL
+#define OPTION_VAL_130_O46_RU NULL
+#define OPTION_VAL_140_O46_RU NULL
+#define OPTION_VAL_150_O46_RU NULL
+#define OPTION_VAL_160_O46_RU NULL
+#define OPTION_VAL_170_O46_RU NULL
+#define OPTION_VAL_180_O46_RU NULL
+#define OPTION_VAL_190_O46_RU NULL
+#define OPTION_VAL_200_O46_RU NULL
+#define OPTION_VAL_210_O46_RU NULL
+#define OPTION_VAL_220_O46_RU NULL
+#define OPTION_VAL_230_O46_RU NULL
+#define OPTION_VAL_240_O46_RU NULL
+#define OPTION_VAL_250_O46_RU NULL
+#define OPTION_VAL_260_O46_RU NULL
+#define OPTION_VAL_270_O46_RU NULL
+#define OPTION_VAL_280_O46_RU NULL
+#define OPTION_VAL_290_O46_RU NULL
+#define OPTION_VAL_300_O46_RU NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU "Отображение прицела пистолета 1"
 #define OPTION_VAL_WHITE_RU "Белый"
 #define OPTION_VAL_RED_RU "Красный"
@@ -56580,12 +58436,6 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_RU "Цвет выкл. пикселей VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_RU "Видимость экрана VMU 1"
 #define OPTION_VAL_40_RU NULL
-#define OPTION_VAL_50_RU NULL
-#define OPTION_VAL_60_RU NULL
-#define OPTION_VAL_70_RU NULL
-#define OPTION_VAL_80_RU NULL
-#define OPTION_VAL_90_RU NULL
-#define OPTION_VAL_100_O58_RU NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_RU "Показывать экран VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_RU "Положение экрана VMU 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_RU "Размер экрана VMU 2"
@@ -57415,6 +59265,44 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_RU,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_RU },
+         { "60%",  OPTION_VAL_60_RU },
+         { "70%",  OPTION_VAL_70_RU },
+         { "80%",  OPTION_VAL_80_RU },
+         { "90%",  OPTION_VAL_90_RU },
+         { "100%", OPTION_VAL_100_O46_RU },
+         { "110%", OPTION_VAL_110_O46_RU },
+         { "120%", OPTION_VAL_120_O46_RU },
+         { "130%", OPTION_VAL_130_O46_RU },
+         { "140%", OPTION_VAL_140_O46_RU },
+         { "150%", OPTION_VAL_150_O46_RU },
+         { "160%", OPTION_VAL_160_O46_RU },
+         { "170%", OPTION_VAL_170_O46_RU },
+         { "180%", OPTION_VAL_180_O46_RU },
+         { "190%", OPTION_VAL_190_O46_RU },
+         { "200%", OPTION_VAL_200_O46_RU },
+         { "210%", OPTION_VAL_210_O46_RU },
+         { "220%", OPTION_VAL_220_O46_RU },
+         { "230%", OPTION_VAL_230_O46_RU },
+         { "240%", OPTION_VAL_240_O46_RU },
+         { "250%", OPTION_VAL_250_O46_RU },
+         { "260%", OPTION_VAL_260_O46_RU },
+         { "270%", OPTION_VAL_270_O46_RU },
+         { "280%", OPTION_VAL_280_O46_RU },
+         { "290%", OPTION_VAL_290_O46_RU },
+         { "300%", OPTION_VAL_300_O46_RU },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_RU,
       NULL,
@@ -57670,7 +59558,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O58_RU },
+         { "100%", OPTION_VAL_100_O46_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57821,7 +59709,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O58_RU },
+         { "100%", OPTION_VAL_100_O46_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -57972,7 +59860,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O58_RU },
+         { "100%", OPTION_VAL_100_O46_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -58123,7 +60011,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "70%",  OPTION_VAL_70_RU },
          { "80%",  OPTION_VAL_80_RU },
          { "90%",  OPTION_VAL_90_RU },
-         { "100%", OPTION_VAL_100_O58_RU },
+         { "100%", OPTION_VAL_100_O46_RU },
          { NULL,   NULL },
       },
       "100%",
@@ -58337,6 +60225,33 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SK NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SK NULL
+#define OPTION_VAL_50_SK NULL
+#define OPTION_VAL_60_SK NULL
+#define OPTION_VAL_70_SK NULL
+#define OPTION_VAL_80_SK NULL
+#define OPTION_VAL_90_SK NULL
+#define OPTION_VAL_100_O46_SK NULL
+#define OPTION_VAL_110_O46_SK NULL
+#define OPTION_VAL_120_O46_SK NULL
+#define OPTION_VAL_130_O46_SK NULL
+#define OPTION_VAL_140_O46_SK NULL
+#define OPTION_VAL_150_O46_SK NULL
+#define OPTION_VAL_160_O46_SK NULL
+#define OPTION_VAL_170_O46_SK NULL
+#define OPTION_VAL_180_O46_SK NULL
+#define OPTION_VAL_190_O46_SK NULL
+#define OPTION_VAL_200_O46_SK NULL
+#define OPTION_VAL_210_O46_SK NULL
+#define OPTION_VAL_220_O46_SK NULL
+#define OPTION_VAL_230_O46_SK NULL
+#define OPTION_VAL_240_O46_SK NULL
+#define OPTION_VAL_250_O46_SK NULL
+#define OPTION_VAL_260_O46_SK NULL
+#define OPTION_VAL_270_O46_SK NULL
+#define OPTION_VAL_280_O46_SK NULL
+#define OPTION_VAL_290_O46_SK NULL
+#define OPTION_VAL_300_O46_SK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK NULL
 #define OPTION_VAL_WHITE_SK "Biela"
 #define OPTION_VAL_RED_SK "Červená"
@@ -58395,12 +60310,6 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SK NULL
 #define OPTION_VAL_40_SK NULL
-#define OPTION_VAL_50_SK NULL
-#define OPTION_VAL_60_SK NULL
-#define OPTION_VAL_70_SK NULL
-#define OPTION_VAL_80_SK NULL
-#define OPTION_VAL_90_SK NULL
-#define OPTION_VAL_100_O58_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SK NULL
@@ -59230,6 +61139,44 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SK,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_SK },
+         { "60%",  OPTION_VAL_60_SK },
+         { "70%",  OPTION_VAL_70_SK },
+         { "80%",  OPTION_VAL_80_SK },
+         { "90%",  OPTION_VAL_90_SK },
+         { "100%", OPTION_VAL_100_O46_SK },
+         { "110%", OPTION_VAL_110_O46_SK },
+         { "120%", OPTION_VAL_120_O46_SK },
+         { "130%", OPTION_VAL_130_O46_SK },
+         { "140%", OPTION_VAL_140_O46_SK },
+         { "150%", OPTION_VAL_150_O46_SK },
+         { "160%", OPTION_VAL_160_O46_SK },
+         { "170%", OPTION_VAL_170_O46_SK },
+         { "180%", OPTION_VAL_180_O46_SK },
+         { "190%", OPTION_VAL_190_O46_SK },
+         { "200%", OPTION_VAL_200_O46_SK },
+         { "210%", OPTION_VAL_210_O46_SK },
+         { "220%", OPTION_VAL_220_O46_SK },
+         { "230%", OPTION_VAL_230_O46_SK },
+         { "240%", OPTION_VAL_240_O46_SK },
+         { "250%", OPTION_VAL_250_O46_SK },
+         { "260%", OPTION_VAL_260_O46_SK },
+         { "270%", OPTION_VAL_270_O46_SK },
+         { "280%", OPTION_VAL_280_O46_SK },
+         { "290%", OPTION_VAL_290_O46_SK },
+         { "300%", OPTION_VAL_300_O46_SK },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK,
       NULL,
@@ -59485,7 +61432,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O58_SK },
+         { "100%", OPTION_VAL_100_O46_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59636,7 +61583,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O58_SK },
+         { "100%", OPTION_VAL_100_O46_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59787,7 +61734,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O58_SK },
+         { "100%", OPTION_VAL_100_O46_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -59938,7 +61885,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "70%",  OPTION_VAL_70_SK },
          { "80%",  OPTION_VAL_80_SK },
          { "90%",  OPTION_VAL_90_SK },
-         { "100%", OPTION_VAL_100_O58_SK },
+         { "100%", OPTION_VAL_100_O46_SK },
          { NULL,   NULL },
       },
       "100%",
@@ -60152,6 +62099,33 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SR NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SR NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SR NULL
+#define OPTION_VAL_50_SR NULL
+#define OPTION_VAL_60_SR NULL
+#define OPTION_VAL_70_SR NULL
+#define OPTION_VAL_80_SR NULL
+#define OPTION_VAL_90_SR NULL
+#define OPTION_VAL_100_O46_SR NULL
+#define OPTION_VAL_110_O46_SR NULL
+#define OPTION_VAL_120_O46_SR NULL
+#define OPTION_VAL_130_O46_SR NULL
+#define OPTION_VAL_140_O46_SR NULL
+#define OPTION_VAL_150_O46_SR NULL
+#define OPTION_VAL_160_O46_SR NULL
+#define OPTION_VAL_170_O46_SR NULL
+#define OPTION_VAL_180_O46_SR NULL
+#define OPTION_VAL_190_O46_SR NULL
+#define OPTION_VAL_200_O46_SR NULL
+#define OPTION_VAL_210_O46_SR NULL
+#define OPTION_VAL_220_O46_SR NULL
+#define OPTION_VAL_230_O46_SR NULL
+#define OPTION_VAL_240_O46_SR NULL
+#define OPTION_VAL_250_O46_SR NULL
+#define OPTION_VAL_260_O46_SR NULL
+#define OPTION_VAL_270_O46_SR NULL
+#define OPTION_VAL_280_O46_SR NULL
+#define OPTION_VAL_290_O46_SR NULL
+#define OPTION_VAL_300_O46_SR NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SR NULL
 #define OPTION_VAL_WHITE_SR NULL
 #define OPTION_VAL_RED_SR NULL
@@ -60210,12 +62184,6 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SR NULL
 #define OPTION_VAL_40_SR NULL
-#define OPTION_VAL_50_SR NULL
-#define OPTION_VAL_60_SR NULL
-#define OPTION_VAL_70_SR NULL
-#define OPTION_VAL_80_SR NULL
-#define OPTION_VAL_90_SR NULL
-#define OPTION_VAL_100_O58_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SR NULL
@@ -61045,6 +63013,44 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_SR },
+         { "60%",  OPTION_VAL_60_SR },
+         { "70%",  OPTION_VAL_70_SR },
+         { "80%",  OPTION_VAL_80_SR },
+         { "90%",  OPTION_VAL_90_SR },
+         { "100%", OPTION_VAL_100_O46_SR },
+         { "110%", OPTION_VAL_110_O46_SR },
+         { "120%", OPTION_VAL_120_O46_SR },
+         { "130%", OPTION_VAL_130_O46_SR },
+         { "140%", OPTION_VAL_140_O46_SR },
+         { "150%", OPTION_VAL_150_O46_SR },
+         { "160%", OPTION_VAL_160_O46_SR },
+         { "170%", OPTION_VAL_170_O46_SR },
+         { "180%", OPTION_VAL_180_O46_SR },
+         { "190%", OPTION_VAL_190_O46_SR },
+         { "200%", OPTION_VAL_200_O46_SR },
+         { "210%", OPTION_VAL_210_O46_SR },
+         { "220%", OPTION_VAL_220_O46_SR },
+         { "230%", OPTION_VAL_230_O46_SR },
+         { "240%", OPTION_VAL_240_O46_SR },
+         { "250%", OPTION_VAL_250_O46_SR },
+         { "260%", OPTION_VAL_260_O46_SR },
+         { "270%", OPTION_VAL_270_O46_SR },
+         { "280%", OPTION_VAL_280_O46_SR },
+         { "290%", OPTION_VAL_290_O46_SR },
+         { "300%", OPTION_VAL_300_O46_SR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SR,
       NULL,
@@ -61300,7 +63306,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O58_SR },
+         { "100%", OPTION_VAL_100_O46_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61451,7 +63457,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O58_SR },
+         { "100%", OPTION_VAL_100_O46_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61602,7 +63608,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O58_SR },
+         { "100%", OPTION_VAL_100_O46_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61753,7 +63759,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "70%",  OPTION_VAL_70_SR },
          { "80%",  OPTION_VAL_80_SR },
          { "90%",  OPTION_VAL_90_SR },
-         { "100%", OPTION_VAL_100_O58_SR },
+         { "100%", OPTION_VAL_100_O46_SR },
          { NULL,   NULL },
       },
       "100%",
@@ -61967,6 +63973,33 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV "Sänd digitala utgångar och force-feedbackstatus på TCP-port 8000. Kompatibelt med MAME-alternativet \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV "Aktivera konfiguration av alternativ för ljuspistolens hårkors. OBS!: Snabbmenyn kan behöva aktiveras och avaktiveras för att denna inställning ska träda i kraft."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SV NULL
+#define OPTION_VAL_50_SV "50 %"
+#define OPTION_VAL_60_SV "60 %"
+#define OPTION_VAL_70_SV "70 %"
+#define OPTION_VAL_80_SV "80 %"
+#define OPTION_VAL_90_SV "90 %"
+#define OPTION_VAL_100_O46_SV "100 %"
+#define OPTION_VAL_110_O46_SV "110 %"
+#define OPTION_VAL_120_O46_SV "120 %"
+#define OPTION_VAL_130_O46_SV "130 %"
+#define OPTION_VAL_140_O46_SV "140 %"
+#define OPTION_VAL_150_O46_SV "150 %"
+#define OPTION_VAL_160_O46_SV "160 %"
+#define OPTION_VAL_170_O46_SV "170 %"
+#define OPTION_VAL_180_O46_SV "180 %"
+#define OPTION_VAL_190_O46_SV "190 %"
+#define OPTION_VAL_200_O46_SV "200 %"
+#define OPTION_VAL_210_O46_SV "210 %"
+#define OPTION_VAL_220_O46_SV "220 %"
+#define OPTION_VAL_230_O46_SV "230 %"
+#define OPTION_VAL_240_O46_SV "240 %"
+#define OPTION_VAL_250_O46_SV "250 %"
+#define OPTION_VAL_260_O46_SV "260 %"
+#define OPTION_VAL_270_O46_SV "270 %"
+#define OPTION_VAL_280_O46_SV "280 %"
+#define OPTION_VAL_290_O46_SV "290 %"
+#define OPTION_VAL_300_O46_SV "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
@@ -62025,12 +64058,6 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 1"
 #define OPTION_VAL_40_SV "40 %"
-#define OPTION_VAL_50_SV "50 %"
-#define OPTION_VAL_60_SV "60 %"
-#define OPTION_VAL_70_SV "70 %"
-#define OPTION_VAL_80_SV "80 %"
-#define OPTION_VAL_90_SV "90 %"
-#define OPTION_VAL_100_O58_SV "100 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV "Visa VMU Skärm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 1"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 2"
@@ -62860,6 +64887,44 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SV,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_SV },
+         { "60%",  OPTION_VAL_60_SV },
+         { "70%",  OPTION_VAL_70_SV },
+         { "80%",  OPTION_VAL_80_SV },
+         { "90%",  OPTION_VAL_90_SV },
+         { "100%", OPTION_VAL_100_O46_SV },
+         { "110%", OPTION_VAL_110_O46_SV },
+         { "120%", OPTION_VAL_120_O46_SV },
+         { "130%", OPTION_VAL_130_O46_SV },
+         { "140%", OPTION_VAL_140_O46_SV },
+         { "150%", OPTION_VAL_150_O46_SV },
+         { "160%", OPTION_VAL_160_O46_SV },
+         { "170%", OPTION_VAL_170_O46_SV },
+         { "180%", OPTION_VAL_180_O46_SV },
+         { "190%", OPTION_VAL_190_O46_SV },
+         { "200%", OPTION_VAL_200_O46_SV },
+         { "210%", OPTION_VAL_210_O46_SV },
+         { "220%", OPTION_VAL_220_O46_SV },
+         { "230%", OPTION_VAL_230_O46_SV },
+         { "240%", OPTION_VAL_240_O46_SV },
+         { "250%", OPTION_VAL_250_O46_SV },
+         { "260%", OPTION_VAL_260_O46_SV },
+         { "270%", OPTION_VAL_270_O46_SV },
+         { "280%", OPTION_VAL_280_O46_SV },
+         { "290%", OPTION_VAL_290_O46_SV },
+         { "300%", OPTION_VAL_300_O46_SV },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV,
       NULL,
@@ -63115,7 +65180,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O58_SV },
+         { "100%", OPTION_VAL_100_O46_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63266,7 +65331,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O58_SV },
+         { "100%", OPTION_VAL_100_O46_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63417,7 +65482,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O58_SV },
+         { "100%", OPTION_VAL_100_O46_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63568,7 +65633,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "70%",  OPTION_VAL_70_SV },
          { "80%",  OPTION_VAL_80_SV },
          { "90%",  OPTION_VAL_90_SV },
-         { "100%", OPTION_VAL_100_O58_SV },
+         { "100%", OPTION_VAL_100_O46_SV },
          { NULL,   NULL },
       },
       "100%",
@@ -63782,6 +65847,33 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TR "TCP port 8000'de dijital çıkışları ve zorla geri bildirim durumunu yayınlayın. \"-output network\" MAME seçeneğiyle uyumludur."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TR "Light Gun Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TR "Light gun artı gösterge seçeneklerinin yapılandırılmasını etkinleştirin. NOT: Bu ayarın etkili olması için Hızlı Menü'nün değiştirilmesi gerekebilir."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TR "Silah Nişangah Boyut Ölçeği"
+#define OPTION_VAL_50_TR "%50"
+#define OPTION_VAL_60_TR "%60"
+#define OPTION_VAL_70_TR "%70"
+#define OPTION_VAL_80_TR "%80"
+#define OPTION_VAL_90_TR "%90"
+#define OPTION_VAL_100_O46_TR "%100"
+#define OPTION_VAL_110_O46_TR "%110"
+#define OPTION_VAL_120_O46_TR "%120"
+#define OPTION_VAL_130_O46_TR "%130"
+#define OPTION_VAL_140_O46_TR "%140"
+#define OPTION_VAL_150_O46_TR "%150"
+#define OPTION_VAL_160_O46_TR "%160"
+#define OPTION_VAL_170_O46_TR "%170"
+#define OPTION_VAL_180_O46_TR "%180"
+#define OPTION_VAL_190_O46_TR "%190"
+#define OPTION_VAL_200_O46_TR "%200"
+#define OPTION_VAL_210_O46_TR "%210"
+#define OPTION_VAL_220_O46_TR "%220"
+#define OPTION_VAL_230_O46_TR "%230"
+#define OPTION_VAL_240_O46_TR "%240"
+#define OPTION_VAL_250_O46_TR "%250"
+#define OPTION_VAL_260_O46_TR "%260"
+#define OPTION_VAL_270_O46_TR "%270"
+#define OPTION_VAL_280_O46_TR "%280"
+#define OPTION_VAL_290_O46_TR "%290"
+#define OPTION_VAL_300_O46_TR "%300"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 1 Görüntüle"
 #define OPTION_VAL_WHITE_TR "Beyaz"
 #define OPTION_VAL_RED_TR "Kırmızı"
@@ -63840,12 +65932,6 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_TR "VMU Ekranı 1 Piksel Kapalı Renk"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_TR "VMU Ekranı 1 Şeffaflığı"
 #define OPTION_VAL_40_TR "%40"
-#define OPTION_VAL_50_TR "%50"
-#define OPTION_VAL_60_TR "%60"
-#define OPTION_VAL_70_TR "%70"
-#define OPTION_VAL_80_TR "%80"
-#define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_O58_TR "%100"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TR "VMU Ekranı 2 Görüntüle"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TR "VMU Ekranı 2 Pozisyon"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TR "VMU Ekranı 2 Boyut"
@@ -64675,6 +66761,44 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TR,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_TR },
+         { "60%",  OPTION_VAL_60_TR },
+         { "70%",  OPTION_VAL_70_TR },
+         { "80%",  OPTION_VAL_80_TR },
+         { "90%",  OPTION_VAL_90_TR },
+         { "100%", OPTION_VAL_100_O46_TR },
+         { "110%", OPTION_VAL_110_O46_TR },
+         { "120%", OPTION_VAL_120_O46_TR },
+         { "130%", OPTION_VAL_130_O46_TR },
+         { "140%", OPTION_VAL_140_O46_TR },
+         { "150%", OPTION_VAL_150_O46_TR },
+         { "160%", OPTION_VAL_160_O46_TR },
+         { "170%", OPTION_VAL_170_O46_TR },
+         { "180%", OPTION_VAL_180_O46_TR },
+         { "190%", OPTION_VAL_190_O46_TR },
+         { "200%", OPTION_VAL_200_O46_TR },
+         { "210%", OPTION_VAL_210_O46_TR },
+         { "220%", OPTION_VAL_220_O46_TR },
+         { "230%", OPTION_VAL_230_O46_TR },
+         { "240%", OPTION_VAL_240_O46_TR },
+         { "250%", OPTION_VAL_250_O46_TR },
+         { "260%", OPTION_VAL_260_O46_TR },
+         { "270%", OPTION_VAL_270_O46_TR },
+         { "280%", OPTION_VAL_280_O46_TR },
+         { "290%", OPTION_VAL_290_O46_TR },
+         { "300%", OPTION_VAL_300_O46_TR },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR,
       NULL,
@@ -64930,7 +67054,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O58_TR },
+         { "100%", OPTION_VAL_100_O46_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -65081,7 +67205,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O58_TR },
+         { "100%", OPTION_VAL_100_O46_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -65232,7 +67356,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O58_TR },
+         { "100%", OPTION_VAL_100_O46_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -65383,7 +67507,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "70%",  OPTION_VAL_70_TR },
          { "80%",  OPTION_VAL_80_TR },
          { "90%",  OPTION_VAL_90_TR },
-         { "100%", OPTION_VAL_100_O58_TR },
+         { "100%", OPTION_VAL_100_O46_TR },
          { NULL,   NULL },
       },
       "100%",
@@ -65597,6 +67721,33 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_UK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_UK NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_UK NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_UK NULL
+#define OPTION_VAL_50_UK NULL
+#define OPTION_VAL_60_UK NULL
+#define OPTION_VAL_70_UK NULL
+#define OPTION_VAL_80_UK NULL
+#define OPTION_VAL_90_UK NULL
+#define OPTION_VAL_100_O46_UK NULL
+#define OPTION_VAL_110_O46_UK NULL
+#define OPTION_VAL_120_O46_UK NULL
+#define OPTION_VAL_130_O46_UK NULL
+#define OPTION_VAL_140_O46_UK NULL
+#define OPTION_VAL_150_O46_UK NULL
+#define OPTION_VAL_160_O46_UK NULL
+#define OPTION_VAL_170_O46_UK NULL
+#define OPTION_VAL_180_O46_UK NULL
+#define OPTION_VAL_190_O46_UK NULL
+#define OPTION_VAL_200_O46_UK NULL
+#define OPTION_VAL_210_O46_UK NULL
+#define OPTION_VAL_220_O46_UK NULL
+#define OPTION_VAL_230_O46_UK NULL
+#define OPTION_VAL_240_O46_UK NULL
+#define OPTION_VAL_250_O46_UK NULL
+#define OPTION_VAL_260_O46_UK NULL
+#define OPTION_VAL_270_O46_UK NULL
+#define OPTION_VAL_280_O46_UK NULL
+#define OPTION_VAL_290_O46_UK NULL
+#define OPTION_VAL_300_O46_UK NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_UK NULL
 #define OPTION_VAL_WHITE_UK NULL
 #define OPTION_VAL_RED_UK "Червоний"
@@ -65655,12 +67806,6 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_UK NULL
 #define OPTION_VAL_40_UK NULL
-#define OPTION_VAL_50_UK NULL
-#define OPTION_VAL_60_UK NULL
-#define OPTION_VAL_70_UK NULL
-#define OPTION_VAL_80_UK NULL
-#define OPTION_VAL_90_UK NULL
-#define OPTION_VAL_100_O58_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_UK NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_UK NULL
@@ -66490,6 +68635,44 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_UK,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_UK },
+         { "60%",  OPTION_VAL_60_UK },
+         { "70%",  OPTION_VAL_70_UK },
+         { "80%",  OPTION_VAL_80_UK },
+         { "90%",  OPTION_VAL_90_UK },
+         { "100%", OPTION_VAL_100_O46_UK },
+         { "110%", OPTION_VAL_110_O46_UK },
+         { "120%", OPTION_VAL_120_O46_UK },
+         { "130%", OPTION_VAL_130_O46_UK },
+         { "140%", OPTION_VAL_140_O46_UK },
+         { "150%", OPTION_VAL_150_O46_UK },
+         { "160%", OPTION_VAL_160_O46_UK },
+         { "170%", OPTION_VAL_170_O46_UK },
+         { "180%", OPTION_VAL_180_O46_UK },
+         { "190%", OPTION_VAL_190_O46_UK },
+         { "200%", OPTION_VAL_200_O46_UK },
+         { "210%", OPTION_VAL_210_O46_UK },
+         { "220%", OPTION_VAL_220_O46_UK },
+         { "230%", OPTION_VAL_230_O46_UK },
+         { "240%", OPTION_VAL_240_O46_UK },
+         { "250%", OPTION_VAL_250_O46_UK },
+         { "260%", OPTION_VAL_260_O46_UK },
+         { "270%", OPTION_VAL_270_O46_UK },
+         { "280%", OPTION_VAL_280_O46_UK },
+         { "290%", OPTION_VAL_290_O46_UK },
+         { "300%", OPTION_VAL_300_O46_UK },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_UK,
       NULL,
@@ -66745,7 +68928,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O58_UK },
+         { "100%", OPTION_VAL_100_O46_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -66896,7 +69079,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O58_UK },
+         { "100%", OPTION_VAL_100_O46_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -67047,7 +69230,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O58_UK },
+         { "100%", OPTION_VAL_100_O46_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -67198,7 +69381,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "70%",  OPTION_VAL_70_UK },
          { "80%",  OPTION_VAL_80_UK },
          { "90%",  OPTION_VAL_90_UK },
-         { "100%", OPTION_VAL_100_O58_UK },
+         { "100%", OPTION_VAL_100_O46_UK },
          { NULL,   NULL },
       },
       "100%",
@@ -67412,6 +69595,33 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VAL NULL
+#define OPTION_VAL_50_VAL NULL
+#define OPTION_VAL_60_VAL NULL
+#define OPTION_VAL_70_VAL NULL
+#define OPTION_VAL_80_VAL NULL
+#define OPTION_VAL_90_VAL NULL
+#define OPTION_VAL_100_O46_VAL NULL
+#define OPTION_VAL_110_O46_VAL NULL
+#define OPTION_VAL_120_O46_VAL NULL
+#define OPTION_VAL_130_O46_VAL NULL
+#define OPTION_VAL_140_O46_VAL NULL
+#define OPTION_VAL_150_O46_VAL NULL
+#define OPTION_VAL_160_O46_VAL NULL
+#define OPTION_VAL_170_O46_VAL NULL
+#define OPTION_VAL_180_O46_VAL NULL
+#define OPTION_VAL_190_O46_VAL NULL
+#define OPTION_VAL_200_O46_VAL NULL
+#define OPTION_VAL_210_O46_VAL NULL
+#define OPTION_VAL_220_O46_VAL NULL
+#define OPTION_VAL_230_O46_VAL NULL
+#define OPTION_VAL_240_O46_VAL NULL
+#define OPTION_VAL_250_O46_VAL NULL
+#define OPTION_VAL_260_O46_VAL NULL
+#define OPTION_VAL_270_O46_VAL NULL
+#define OPTION_VAL_280_O46_VAL NULL
+#define OPTION_VAL_290_O46_VAL NULL
+#define OPTION_VAL_300_O46_VAL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VAL NULL
 #define OPTION_VAL_WHITE_VAL NULL
 #define OPTION_VAL_RED_VAL NULL
@@ -67470,12 +69680,6 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_VAL NULL
 #define OPTION_VAL_40_VAL NULL
-#define OPTION_VAL_50_VAL NULL
-#define OPTION_VAL_60_VAL NULL
-#define OPTION_VAL_70_VAL NULL
-#define OPTION_VAL_80_VAL NULL
-#define OPTION_VAL_90_VAL NULL
-#define OPTION_VAL_100_O58_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VAL NULL
@@ -68305,6 +70509,44 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VAL,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_VAL },
+         { "60%",  OPTION_VAL_60_VAL },
+         { "70%",  OPTION_VAL_70_VAL },
+         { "80%",  OPTION_VAL_80_VAL },
+         { "90%",  OPTION_VAL_90_VAL },
+         { "100%", OPTION_VAL_100_O46_VAL },
+         { "110%", OPTION_VAL_110_O46_VAL },
+         { "120%", OPTION_VAL_120_O46_VAL },
+         { "130%", OPTION_VAL_130_O46_VAL },
+         { "140%", OPTION_VAL_140_O46_VAL },
+         { "150%", OPTION_VAL_150_O46_VAL },
+         { "160%", OPTION_VAL_160_O46_VAL },
+         { "170%", OPTION_VAL_170_O46_VAL },
+         { "180%", OPTION_VAL_180_O46_VAL },
+         { "190%", OPTION_VAL_190_O46_VAL },
+         { "200%", OPTION_VAL_200_O46_VAL },
+         { "210%", OPTION_VAL_210_O46_VAL },
+         { "220%", OPTION_VAL_220_O46_VAL },
+         { "230%", OPTION_VAL_230_O46_VAL },
+         { "240%", OPTION_VAL_240_O46_VAL },
+         { "250%", OPTION_VAL_250_O46_VAL },
+         { "260%", OPTION_VAL_260_O46_VAL },
+         { "270%", OPTION_VAL_270_O46_VAL },
+         { "280%", OPTION_VAL_280_O46_VAL },
+         { "290%", OPTION_VAL_290_O46_VAL },
+         { "300%", OPTION_VAL_300_O46_VAL },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VAL,
       NULL,
@@ -68560,7 +70802,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O58_VAL },
+         { "100%", OPTION_VAL_100_O46_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68711,7 +70953,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O58_VAL },
+         { "100%", OPTION_VAL_100_O46_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -68862,7 +71104,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O58_VAL },
+         { "100%", OPTION_VAL_100_O46_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -69013,7 +71255,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "70%",  OPTION_VAL_70_VAL },
          { "80%",  OPTION_VAL_80_VAL },
          { "90%",  OPTION_VAL_90_VAL },
-         { "100%", OPTION_VAL_100_O58_VAL },
+         { "100%", OPTION_VAL_100_O46_VAL },
          { NULL,   NULL },
       },
       "100%",
@@ -69227,6 +71469,33 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VN NULL
+#define OPTION_VAL_50_VN NULL
+#define OPTION_VAL_60_VN NULL
+#define OPTION_VAL_70_VN NULL
+#define OPTION_VAL_80_VN NULL
+#define OPTION_VAL_90_VN NULL
+#define OPTION_VAL_100_O46_VN NULL
+#define OPTION_VAL_110_O46_VN NULL
+#define OPTION_VAL_120_O46_VN NULL
+#define OPTION_VAL_130_O46_VN NULL
+#define OPTION_VAL_140_O46_VN NULL
+#define OPTION_VAL_150_O46_VN NULL
+#define OPTION_VAL_160_O46_VN NULL
+#define OPTION_VAL_170_O46_VN NULL
+#define OPTION_VAL_180_O46_VN NULL
+#define OPTION_VAL_190_O46_VN NULL
+#define OPTION_VAL_200_O46_VN NULL
+#define OPTION_VAL_210_O46_VN NULL
+#define OPTION_VAL_220_O46_VN NULL
+#define OPTION_VAL_230_O46_VN NULL
+#define OPTION_VAL_240_O46_VN NULL
+#define OPTION_VAL_250_O46_VN NULL
+#define OPTION_VAL_260_O46_VN NULL
+#define OPTION_VAL_270_O46_VN NULL
+#define OPTION_VAL_280_O46_VN NULL
+#define OPTION_VAL_290_O46_VN NULL
+#define OPTION_VAL_300_O46_VN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VN NULL
 #define OPTION_VAL_WHITE_VN NULL
 #define OPTION_VAL_RED_VN NULL
@@ -69285,12 +71554,6 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_VN NULL
 #define OPTION_VAL_40_VN NULL
-#define OPTION_VAL_50_VN NULL
-#define OPTION_VAL_60_VN NULL
-#define OPTION_VAL_70_VN NULL
-#define OPTION_VAL_80_VN NULL
-#define OPTION_VAL_90_VN NULL
-#define OPTION_VAL_100_O58_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VN NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VN NULL
@@ -70120,6 +72383,44 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       "disabled"
    },
    {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VN,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_VN },
+         { "60%",  OPTION_VAL_60_VN },
+         { "70%",  OPTION_VAL_70_VN },
+         { "80%",  OPTION_VAL_80_VN },
+         { "90%",  OPTION_VAL_90_VN },
+         { "100%", OPTION_VAL_100_O46_VN },
+         { "110%", OPTION_VAL_110_O46_VN },
+         { "120%", OPTION_VAL_120_O46_VN },
+         { "130%", OPTION_VAL_130_O46_VN },
+         { "140%", OPTION_VAL_140_O46_VN },
+         { "150%", OPTION_VAL_150_O46_VN },
+         { "160%", OPTION_VAL_160_O46_VN },
+         { "170%", OPTION_VAL_170_O46_VN },
+         { "180%", OPTION_VAL_180_O46_VN },
+         { "190%", OPTION_VAL_190_O46_VN },
+         { "200%", OPTION_VAL_200_O46_VN },
+         { "210%", OPTION_VAL_210_O46_VN },
+         { "220%", OPTION_VAL_220_O46_VN },
+         { "230%", OPTION_VAL_230_O46_VN },
+         { "240%", OPTION_VAL_240_O46_VN },
+         { "250%", OPTION_VAL_250_O46_VN },
+         { "260%", OPTION_VAL_260_O46_VN },
+         { "270%", OPTION_VAL_270_O46_VN },
+         { "280%", OPTION_VAL_280_O46_VN },
+         { "290%", OPTION_VAL_290_O46_VN },
+         { "300%", OPTION_VAL_300_O46_VN },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
       CORE_OPTION_NAME "_lightgun1_crosshair",
       CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VN,
       NULL,
@@ -70375,7 +72676,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O58_VN },
+         { "100%", OPTION_VAL_100_O46_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -70526,7 +72827,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O58_VN },
+         { "100%", OPTION_VAL_100_O46_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -70677,7 +72978,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O58_VN },
+         { "100%", OPTION_VAL_100_O46_VN },
          { NULL,   NULL },
       },
       "100%",
@@ -70828,7 +73129,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "70%",  OPTION_VAL_70_VN },
          { "80%",  OPTION_VAL_80_VN },
          { "90%",  OPTION_VAL_90_VN },
-         { "100%", OPTION_VAL_100_O58_VN },
+         { "100%", OPTION_VAL_100_O46_VN },
          { NULL,   NULL },
       },
       "100%",

@@ -173,7 +173,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	const u32 pc = next_pc;
 
-	if (codeBuffer.getFreeSpace() < 16_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
+	if (codeBuffer.getFreeSpace() < 32_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
 		recSh4_ClearCache();
 
 	RuntimeBlockInfo* rbi = sh4Dynarec->allocateBlock();
@@ -187,7 +187,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	if (smc_hotspots.find(rbi->addr) != smc_hotspots.end())
 	{
 		codeBuffer.useTempBuffer(true);
-		if (codeBuffer.getFreeSpace() < 16_KB)
+		if (codeBuffer.getFreeSpace() < 32_KB)
 			clear_temp_cache(false);
 		rbi->temp_block = true;
 		if (rbi->read_only)
