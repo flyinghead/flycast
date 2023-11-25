@@ -81,7 +81,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 

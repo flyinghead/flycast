@@ -19,7 +19,7 @@
 #pragma once
 #include "types.h"
 #include "gui.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "network/ggpo.h"
 #include <chrono>
 

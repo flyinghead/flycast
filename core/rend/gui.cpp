@@ -21,7 +21,7 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
@@ -39,7 +39,9 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
-#include "implot/implot.h"
+#if FC_PROFILER
+#include "implot.h"
+#endif
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
 #include "hw/naomi/card_reader.h"
@@ -1138,11 +1140,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::SameLine();
 			if (ImGui::Button("No"))
 				ImGui::CloseCurrentPopup();
-			ImGui::PopStyleVar(2);;
+			ImGui::PopStyleVar(2);
 
 			ImGui::EndPopup();
 		}
-		ImGui::PopStyleVar(1);;
+		ImGui::PopStyleVar(1);
 
 		ImGui::SameLine();
 
@@ -1189,7 +1191,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		char key_id[32];
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_DragScrolling);
+		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle);
 
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
@@ -1248,7 +1250,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	    scrollWhenDraggingOnVoid();
 	    windowDragScroll();
 
-		ImGui::EndChildFrame();
+		ImGui::EndChild();
 		error_popup();
 		ImGui::EndPopup();
 	}

@@ -25,8 +25,8 @@
 #include "types.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>

@@ -25,7 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx9_driver.h"
-#include "imgui/backends/imgui_impl_dx9.h"
+#include "imgui_impl_dx9.h"
 
 DXContext theDXContext;
 

@@ -20,8 +20,8 @@
 
 #include "types.h"
 #include "cfg/option.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
 
