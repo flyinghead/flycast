@@ -24,7 +24,7 @@
 	url = https://github.com/google/oboe.git
 [submodule "core/deps/Syphon"]
 	path = core/deps/Syphon
-	url=https://github.com/vkedwardli/Syphon-Framework.git
+	url = https://github.com/vkedwardli/Syphon-Framework.git
 [submodule "core/deps/Spout"]
 	path = core/deps/Spout
-	url = https://github.com/vkedwardli/Spout2.git
+	url = https://github.com/leadedge/Spout2.git
