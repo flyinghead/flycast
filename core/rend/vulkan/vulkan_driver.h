@@ -33,6 +33,7 @@ public:
 	}
 
 	void newFrame() override {
+		ImGui_ImplVulkan_NewFrame();
 	}
 
 	void renderDrawData(ImDrawData *drawData, bool gui_open) override
