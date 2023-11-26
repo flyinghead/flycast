@@ -236,14 +236,13 @@ void os_RunInstance(int argc, const char *argv[])
 static SyphonOpenGLServer* syphonGLServer;
 static SyphonMetalServer* syphonMtlServer;
 
-void os_VideoRoutingInitSyphonWithGLContext(void* glContext)
-{
-	int boardID = cfgLoadInt("naomi", "BoardId", 0);
-	syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[(__bridge NSOpenGLContext*)glContext CGLContextObj] options:nil];
-}
-
 void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
 {
+	if (syphonGLServer == NULL)
+	{
+		int boardID = cfgLoadInt("naomi", "BoardId", 0);
+		syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[SDL_GL_GetCurrentContext() CGLContextObj] options:nil];
+	}
 	CGLLockContext([syphonGLServer context]);
 	[syphonGLServer publishFrameTexture:texID textureTarget:texTarget imageRegion:NSMakeRect(0, 0, w, h) textureDimensions:NSMakeSize(w, h) flipped:NO];
 	CGLUnlockContext([syphonGLServer context]);
@@ -256,18 +255,18 @@ void os_VideoRoutingTermGL()
 	syphonGLServer = NULL;
 }
 
-void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device)
-{
-	vk::ExportMetalDeviceInfoEXT deviceInfo;
-	auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
-	device->exportMetalObjectsEXT(&objectsInfo);
-	
-	int boardID = cfgLoadInt("naomi", "BoardId", 0);
-	syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
-}
-
 void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
 {
+	if (syphonMtlServer == NULL)
+	{
+		vk::ExportMetalDeviceInfoEXT deviceInfo;
+		auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
+		device.exportMetalObjectsEXT(&objectsInfo);
+		
+		int boardID = cfgLoadInt("naomi", "BoardId", 0);
+		syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
+	}
+	
 	auto textureInfo = vk::ExportMetalTextureInfoEXT(image);
 	auto commandInfo = vk::ExportMetalCommandQueueInfoEXT(queue);
 	commandInfo.pNext = &textureInfo;

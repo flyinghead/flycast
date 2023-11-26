@@ -1472,6 +1472,11 @@ void OpenGLRenderer::renderVideoRouting()
 		extern void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h);
 		os_VideoRoutingPublishFrameTexture(gl.videorouting.framebuffer->getTexture(), GL_TEXTURE_2D, targetWidth, targetHeight);
 	}
+	else
+	{
+		extern void os_VideoRoutingTermGL();
+		os_VideoRoutingTermGL();
+	}
 #endif
 }
 
