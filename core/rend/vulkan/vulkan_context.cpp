@@ -311,21 +311,6 @@ void VulkanContext::InitImgui()
 	{
 		die("ImGui initialization failed");
 	}
-	if (ImGui::GetIO().Fonts->TexID == 0)
-	{
-		// Upload Fonts
-		device->resetFences(*drawFences.front());
-		device->resetCommandPool(*commandPools.front(), vk::CommandPoolResetFlagBits::eReleaseResources);
-		vk::CommandBuffer& commandBuffer = *commandBuffers.front();
-		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-		ImGui_ImplVulkan_CreateFontsTexture((VkCommandBuffer)commandBuffer);
-		commandBuffer.end();
-		vk::SubmitInfo submitInfo(nullptr, nullptr, commandBuffer);
-		graphicsQueue.submit(submitInfo, *drawFences.front());
-
-		device->waitIdle();
-		ImGui_ImplVulkan_DestroyFontUploadObjects();
-	}
 }
 
 bool VulkanContext::InitDevice()
