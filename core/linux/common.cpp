@@ -65,8 +65,10 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 		context_to_segfault(&ctx, segfault_ctx);
 		return;
 	}
-#endif
+
 	ERROR_LOG(COMMON, "SIGSEGV @ %p invalid access to %p", (void *)ctx.pc, si->si_addr);
+#endif
+
 #ifdef __SWITCH__
 	MemoryInfo meminfo;
 	u32 pageinfo;
