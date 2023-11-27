@@ -459,7 +459,9 @@ void mmu_set_state()
 	setSqwHandler();
 }
 
+#ifdef FAST_MMU
 u32 mmuAddressLUT[0x100000];
+#endif
 
 void MMU_init()
 {
