@@ -268,6 +268,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
 		}
+		else if (prod_id == "T17708N"	// Stupid Invaders (US)
+			|| prod_id == "T17711D")	// Stupid Invaders (EU)
+		{
+			NOTICE_LOG(BOOT, "Forcing HLE BIOS");
+			config::UseReios.override(true);
+		}
 		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "MK-51146"	// Sega Smash Pack - Volume 1
 			|| prod_id == "T-9702D-50"	// Hydro Thunder (PAL)
@@ -732,7 +738,8 @@ void Emulator::unloadGame()
 	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty() && !settings.naomi.multiboard)
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
+				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
 			dc_savestate(config::SavestateSlot);
 		try {
 			dc_reset(true);
