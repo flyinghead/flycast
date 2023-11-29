@@ -20,6 +20,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_devs.h"
 #include "input/gamepad.h"
 #include "serialize.h"
 
@@ -120,8 +121,13 @@ private:
 		{
 			int x = std::clamp(mapleInputState[i].absPos.x, 0, 1023);
 			int y = std::clamp(mapleInputState[i].absPos.y, 0, 1023);
+#ifdef LIBRETRO
+			int hit = (mapleInputState[i].kcode & NAOMI_BTN0_KEY) == 0;
+			int charge = (mapleInputState[i].kcode & NAOMI_BTN1_KEY) == 0;
+#else
 			int hit = (mapleInputState[i].kcode & DC_BTN_A) == 0;
 			int charge = (mapleInputState[i].kcode & DC_BTN_B) == 0;
+#endif
 			// touches require bits 20, 21 and 22
 			// drag needs bit 22 off
 			// bit 23 is charge
