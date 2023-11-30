@@ -2330,13 +2330,13 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			config::MapleExpansionDevices[in_port][0] = cfg.exp0;
 			config::MapleExpansionDevices[in_port][1] = cfg.exp1;
 		}
+		set_input_descriptors();
 	}
 }
 
 static void refresh_devices(bool first_startup)
 {
    devices_need_refresh = false;
-   set_input_descriptors();
 
    if (!first_startup)
    {
