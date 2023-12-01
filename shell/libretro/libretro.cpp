@@ -1591,40 +1591,40 @@ static void set_input_descriptors()
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" };
 				break;
 
 			case MDT_TwinStick:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "L-Stick Left" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "L-Stick Up" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "L-Stick Down" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "L-Stick Right" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_B,     "R-Stick Down" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_A,     "R-Stick Right" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_X,     "R-Stick Up" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "R-Stick Left" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_L,    "L Turbo" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_R,    "R Turbo" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Special" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "L-Stick Left" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "L-Stick Up" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "L-Stick Down" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "L-Stick Right" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "R-Stick Down" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "R-Stick Right" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "R-Stick Up" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "R-Stick Left" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "L Turbo" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "R Turbo" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "L Trigger" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "R Trigger" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Special" };
 				break;
 
 			case MDT_AsciiStick:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "Stick Left" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "Stick Up" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "Stick Down" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Stick Right" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_L,    "C" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_R,    "Z" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "Stick Left" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "Stick Up" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "Stick Down" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Stick Right" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
 				break;
 
 			case MDT_LightGun:
@@ -1638,67 +1638,72 @@ static void set_input_descriptors()
 				break;
 
 			case MDT_MaracasController:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A (R-Shake)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B (L-Shake)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_X,     "C (L-Button)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_L,     "D (R-Lost)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z (R-Lost)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start (R-Button)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Maraca 1 X pos." };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Maraca 1 Y pos." };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Maraca 2 X pos." };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_MARACAS, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Maraca 2 Y pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A (R-Shake)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B (L-Shake)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "C (L-Button)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "D (R-Lost)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z (R-Lost)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start (R-Button)" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Maraca 1 X pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Maraca 1 Y pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Maraca 2 X pos." };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Maraca 2 Y pos." };
+				break;
 
 			case MDT_FishingController:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Analog X (L-R)" }; // A3: Analog key
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (U-D)" }; // A4: Analog key
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_R2,                          "Reel handle output" }; // A1: Analog lever
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "Acc. sensor Z"  }; // A2: Acc. sensor Z
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Acc. sensor X"  }; // A5: Acc. sensor X
-				desc[descriptor_index++] = { i, RETRO_DEVICE_FISHING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Acc. sensor Y"  }; // A6: Acc. sensor Y
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "Reel handle output" };                       // A1: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "Acc. sensor Z" };                            // A2: Acc. sensor Z
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Analog X (L-R)" }; // A3: Analog key
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (U-D)" }; // A4: Analog key
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Acc. sensor X" };  // A5: Acc. sensor X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Acc. sensor Y" };  // A6: Acc. sensor Y
+				break;
 
 			case MDT_PopnMusicController:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "A" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "B" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "C" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_B,     "E" }; // A
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "F" }; // X
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_A,     "G" }; // B
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_X,     "H" }; // Y
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_R,     "I" }; // C
-				desc[descriptor_index++] = { i, RETRO_DEVICE_POPNMUSIC, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "E" }; // A
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "F" }; // X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "G" }; // B
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "H" }; // Y
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "I" }; // C
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				break;
 
 			case MDT_RacingController:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,   "D-Pad Up (+)"   };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, "D-Pad Down (-)" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,        "A"     };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_UP,          "B"     };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_START,       "Start" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Wheel (L-R)" }; // A3: Analog key, also La, Ra
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_R2,                              "R-Axis"      }; // A1: Analog lever
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "L-Axis"      }; // A2: Analog lever
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Accelerator" }; // A5: Accelerator?
-				desc[descriptor_index++] = { i, RETRO_DEVICE_RACING, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Brake"       }; // A6: Brake?
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "+" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "-" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R-Axis" };                                // A1: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L-Axis" };                                // A2: Analog lever
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,  RETRO_DEVICE_ID_ANALOG_X, "Wheel (L-R)" }; // A3: Analog key, also La, Ra
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Accelerator" }; // A5: Accelerator?
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Brake" };       // A6: Brake?
+				break;
 
 			case MDT_DenshaDeGoController:
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Brake bit 3" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Brake bit 2" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Brake bit 1" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Brake bit 0" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Master Control bit 2" }; // X
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Master Control bit 1" }; // Y
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Master Control bit 0" }; // Z
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_B,      "A" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_A,      "B" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_L,      "C" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "D" };
-				desc[descriptor_index++] = { i, RETRO_DEVICE_DENSHA, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Brake bit 3" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "Brake bit 2" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "Brake bit 1" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "Brake bit 0" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "Master Control bit 2" }; // X
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Master Control bit 1" }; // Y
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Master Control bit 0" }; // Z
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "D" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				break;
 
 			default:
 				break;
@@ -2325,13 +2330,13 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			config::MapleExpansionDevices[in_port][0] = cfg.exp0;
 			config::MapleExpansionDevices[in_port][1] = cfg.exp1;
 		}
+		set_input_descriptors();
 	}
 }
 
 static void refresh_devices(bool first_startup)
 {
    devices_need_refresh = false;
-   set_input_descriptors();
 
    if (!first_startup)
    {
