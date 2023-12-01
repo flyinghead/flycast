@@ -4005,7 +4005,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE "Маштабаванне прыцэлу пісталета"
 #define OPTION_VAL_50_BE NULL
 #define OPTION_VAL_60_BE NULL
 #define OPTION_VAL_70_BE NULL
@@ -11381,7 +11381,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_PAL_CS "PAL (Svět)"
 #define OPTION_VAL_PAL_N_CS NULL
 #define OPTION_VAL_PAL_M_CS "PAL-M (Brazílie)"
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CS "Orientace Obrazovky"
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_CS "Orientace obrazovky"
 #define OPTION_VAL_HORIZONTAL_CS "Horizontální"
 #define OPTION_VAL_VERTICAL_CS "Vertikální"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CS "Třídění Alpha"
@@ -63884,7 +63884,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_2_SV "Tvinga Linjär"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SV "Fördröj bildrutebyte"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SV "Användbart för att undvika blinkande skärmar eller glitchiga videor. Rekommenderas inte på långsamma plattformar."
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV "Upptäck förändringar i bildfrekvensen"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SV "Upptäck ändringar i bildhastighet"
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SV "Meddela gränssnittet när den interna bildrutefrekvensen ändras (till exempel från 60 fps till 30 fps). Förbättrar taktningen av bildfrekvensen i spel som körs med en låst hastighet på 30 fps eller 20 fps, men bör vara inaktiverad för spel med upplåsta (ostadiga) bildrutefrekvenser (till exempel Ecco the Dolphin, Unreal Tournament). Observera!: Ej tillgänglig när \"Auto Skip Frame\" är aktiverad."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SV "PowerVR2 Efterbehandlingsfilter"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SV "Efterbehandla den renderade bilden för att simulera effekter som är specifika för PowerVR2 GPU:n och analoga videosignaler."
@@ -63907,7 +63907,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SV "Bredbildsfusk (Omstart krävs)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SV "Aktiverar fusk som gör det möjligt för vissa spel att visas i bredbildsformat."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SV "Bredbildshackning"
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV "Ritar geometrin utanför den normala 4:3 bildförhållandet. Kan leda till grafiska fel i de avslöjade områdena."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SV "Ritar geometrin utanför den normala 4:3 bildformatet. Kan leda till grafiska fel i de avslöjade områdena."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SV "GD-ROM Snabbladdning (felaktig)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SV "Ökar hastigheten på GD-ROM laddningen."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SV "\"Dreamcast 32MB RAM-modifikation\""
@@ -63958,13 +63958,13 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Ladda in anpassade texturer"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV "Analoga spakens dödzon"
-#define OPTION_VAL_0_SV "0 %"
-#define OPTION_VAL_5_SV "5 %"
-#define OPTION_VAL_10_SV "10 %"
-#define OPTION_VAL_15_SV "15 %"
-#define OPTION_VAL_20_SV "20 %"
-#define OPTION_VAL_25_SV "25 %"
-#define OPTION_VAL_30_SV "30 %"
+#define OPTION_VAL_0_SV NULL
+#define OPTION_VAL_5_SV NULL
+#define OPTION_VAL_10_SV NULL
+#define OPTION_VAL_15_SV NULL
+#define OPTION_VAL_20_SV NULL
+#define OPTION_VAL_25_SV NULL
+#define OPTION_VAL_30_SV NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV "Utlös dödzonen"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV "Digitala utlösare"
 #define CORE_OPTION_NAME_ENABLE_PURUPURU_LABEL_SV "Purupuru Paketet/Vibrations Paketet"
@@ -63974,32 +63974,32 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV "Aktivera konfiguration av alternativ för ljuspistolens hårkors. OBS!: Snabbmenyn kan behöva aktiveras och avaktiveras för att denna inställning ska träda i kraft."
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SV NULL
-#define OPTION_VAL_50_SV "50 %"
-#define OPTION_VAL_60_SV "60 %"
-#define OPTION_VAL_70_SV "70 %"
-#define OPTION_VAL_80_SV "80 %"
-#define OPTION_VAL_90_SV "90 %"
-#define OPTION_VAL_100_O46_SV "100 %"
-#define OPTION_VAL_110_O46_SV "110 %"
-#define OPTION_VAL_120_O46_SV "120 %"
-#define OPTION_VAL_130_O46_SV "130 %"
-#define OPTION_VAL_140_O46_SV "140 %"
-#define OPTION_VAL_150_O46_SV "150 %"
-#define OPTION_VAL_160_O46_SV "160 %"
-#define OPTION_VAL_170_O46_SV "170 %"
-#define OPTION_VAL_180_O46_SV "180 %"
-#define OPTION_VAL_190_O46_SV "190 %"
-#define OPTION_VAL_200_O46_SV "200 %"
-#define OPTION_VAL_210_O46_SV "210 %"
-#define OPTION_VAL_220_O46_SV "220 %"
-#define OPTION_VAL_230_O46_SV "230 %"
-#define OPTION_VAL_240_O46_SV "240 %"
-#define OPTION_VAL_250_O46_SV "250 %"
-#define OPTION_VAL_260_O46_SV "260 %"
-#define OPTION_VAL_270_O46_SV "270 %"
-#define OPTION_VAL_280_O46_SV "280 %"
-#define OPTION_VAL_290_O46_SV "290 %"
-#define OPTION_VAL_300_O46_SV "300 %"
+#define OPTION_VAL_50_SV NULL
+#define OPTION_VAL_60_SV NULL
+#define OPTION_VAL_70_SV NULL
+#define OPTION_VAL_80_SV NULL
+#define OPTION_VAL_90_SV NULL
+#define OPTION_VAL_100_O46_SV NULL
+#define OPTION_VAL_110_O46_SV NULL
+#define OPTION_VAL_120_O46_SV NULL
+#define OPTION_VAL_130_O46_SV NULL
+#define OPTION_VAL_140_O46_SV NULL
+#define OPTION_VAL_150_O46_SV NULL
+#define OPTION_VAL_160_O46_SV NULL
+#define OPTION_VAL_170_O46_SV NULL
+#define OPTION_VAL_180_O46_SV NULL
+#define OPTION_VAL_190_O46_SV NULL
+#define OPTION_VAL_200_O46_SV NULL
+#define OPTION_VAL_210_O46_SV NULL
+#define OPTION_VAL_220_O46_SV NULL
+#define OPTION_VAL_230_O46_SV NULL
+#define OPTION_VAL_240_O46_SV NULL
+#define OPTION_VAL_250_O46_SV NULL
+#define OPTION_VAL_260_O46_SV NULL
+#define OPTION_VAL_270_O46_SV NULL
+#define OPTION_VAL_280_O46_SV NULL
+#define OPTION_VAL_290_O46_SV NULL
+#define OPTION_VAL_300_O46_SV NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
@@ -64057,7 +64057,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_SV "Ljusgul (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 1"
-#define OPTION_VAL_40_SV "40 %"
+#define OPTION_VAL_40_SV NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SV "Visa VMU Skärm 2"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 1"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 2"
