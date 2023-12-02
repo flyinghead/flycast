@@ -276,7 +276,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			if (!mem_dumped)
 			{
 				mem_dumped = true;
-				for (int i = 0 ; i < sizeof(modem_regs); i++)
+				for (size_t i = 0 ; i < sizeof(modem_regs); i++)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif

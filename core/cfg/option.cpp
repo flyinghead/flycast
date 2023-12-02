@@ -179,19 +179,19 @@ std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
 	Option<MapleDeviceType>("device3", MDT_None, "input"),
 	Option<MapleDeviceType>("device4", MDT_None, "input"),
 };
-std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
-	Option<MapleDeviceType>("device1.1", MDT_SegaVMU, "input"),
-	Option<MapleDeviceType>("device1.2", MDT_SegaVMU, "input"),
+std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {{
+	{{Option<MapleDeviceType>("device1.1", MDT_SegaVMU, "input"),
+	Option<MapleDeviceType>("device1.2", MDT_SegaVMU, "input")}},
 
-	Option<MapleDeviceType>("device2.1", MDT_None, "input"),
-	Option<MapleDeviceType>("device2.2", MDT_None, "input"),
+	{{Option<MapleDeviceType>("device2.1", MDT_None, "input"),
+	Option<MapleDeviceType>("device2.2", MDT_None, "input")}},
 
-	Option<MapleDeviceType>("device3.1", MDT_None, "input"),
-	Option<MapleDeviceType>("device3.2", MDT_None, "input"),
+	{{Option<MapleDeviceType>("device3.1", MDT_None, "input"),
+	Option<MapleDeviceType>("device3.2", MDT_None, "input")}},
 
-	Option<MapleDeviceType>("device4.1", MDT_None, "input"),
-	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
-};
+	{{Option<MapleDeviceType>("device4.1", MDT_None, "input"),
+	Option<MapleDeviceType>("device4.2", MDT_None, "input")}},
+}};
 Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");

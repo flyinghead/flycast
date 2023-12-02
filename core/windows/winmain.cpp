@@ -453,8 +453,17 @@ void os_SetThreadName(const char *name)
 }
 
 #ifdef VIDEO_ROUTING
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 #include "SpoutSender.h"
 #include "SpoutDX.h"
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
 
 static SpoutSender* spoutSender;
 static spoutDX* spoutDXSender;
