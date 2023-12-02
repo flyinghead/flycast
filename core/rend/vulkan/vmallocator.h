@@ -21,7 +21,14 @@
 #pragma once
 #include <cinttypes>
 #include "vulkan.h"
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 #include "vk_mem_alloc.h"
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
 
 #if !defined(PRIu64) && defined(_WIN32)
 #define PRIu64 "I64u"

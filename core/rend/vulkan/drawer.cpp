@@ -80,7 +80,7 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 	}
 	else
 	{
-		baseScissor = { 0, 0, (u32)viewport.width, (u32)viewport.height };
+		baseScissor = vk::Rect2D{ {0, 0}, {(u32)viewport.width, (u32)viewport.height} };
 	}
 }
 

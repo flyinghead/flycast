@@ -368,7 +368,14 @@ void DYNACALL interpret(u32 opcode)
 	u32 clockTicks = 0;
 
 #define NO_OPCODE_READ
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #include "arm-new.h"
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
 #undef NO_OPCODE_READ
 
 	reg[CYCL_CNT].I -= clockTicks;

@@ -348,7 +348,7 @@ void DX11Context::handleDeviceLost()
 	}
 	else
 	{
-		Renderer* rend_norend();
+		Renderer* rend_norend(void);
 		renderer = rend_norend();
 		renderer->Init();
 	}

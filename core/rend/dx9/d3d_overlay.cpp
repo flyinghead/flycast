@@ -25,10 +25,10 @@ void D3DOverlay::drawQuad(const RECT& rect, D3DCOLOR color)
 {
 	device->SetTextureStageState(0, D3DTSS_CONSTANT, color);
 	Vertex quad[] {
-		{ (float)(rect.left),  (float)(rect.top),    0.5f, 0.f, 0.f },
-		{ (float)(rect.left),  (float)(rect.bottom), 0.5f, 0.f, 1.f },
-		{ (float)(rect.right), (float)(rect.top),    0.5f, 1.f, 0.f },
-		{ (float)(rect.right), (float)(rect.bottom), 0.5f, 1.f, 1.f }
+		{ {(float)(rect.left),  (float)(rect.top),    0.5f}, {0.f, 0.f} },
+		{ {(float)(rect.left),  (float)(rect.bottom), 0.5f}, {0.f, 1.f} },
+		{ {(float)(rect.right), (float)(rect.top),    0.5f}, {1.f, 0.f} },
+		{ {(float)(rect.right), (float)(rect.bottom), 0.5f}, {1.f, 1.f} }
 	};
 	device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, quad, sizeof(Vertex));
 }
