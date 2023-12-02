@@ -27,31 +27,71 @@ static LONG (WINAPI *prevExceptionHandler)(EXCEPTION_POINTERS *ep);
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
-#if HOST_CPU == CPU_X86
-	context.pc = ep->ContextRecord->Eip;
-	context.esp = ep->ContextRecord->Esp;
-	context.eax = ep->ContextRecord->Eax;
-	context.ecx = ep->ContextRecord->Ecx;
-#elif HOST_CPU == CPU_X64
+#if defined(_M_AMD64)
 	context.pc = ep->ContextRecord->Rip;
 	context.rsp = ep->ContextRecord->Rsp;
 	context.r9 = ep->ContextRecord->R9;
 	context.rcx = ep->ContextRecord->Rcx;
+#elif defined(_M_ARM)
+	context.pc = ep->ContextRecord->Pc;
+	context.reg[0] = ep->ContextRecord->R0;
+	context.reg[1] = ep->ContextRecord->R1;
+	context.reg[2] = ep->ContextRecord->R2;
+	context.reg[3] = ep->ContextRecord->R3;
+	context.reg[4] = ep->ContextRecord->R4;
+	context.reg[5] = ep->ContextRecord->R5;
+	context.reg[6] = ep->ContextRecord->R6;
+	context.reg[7] = ep->ContextRecord->R7;
+	context.reg[8] = ep->ContextRecord->R8;
+	context.reg[9] = ep->ContextRecord->R9;
+	context.reg[10] = ep->ContextRecord->R10;
+	context.reg[11] = ep->ContextRecord->R11;
+	context.reg[12] = ep->ContextRecord->R12;
+	context.reg[13] = ep->ContextRecord->Sp;
+	context.reg[14] = ep->ContextRecord->Lr;
+#elif defined(_M_ARM64)
+	context.pc = ep->ContextRecord->Pc;
+	context.x0 = ep->ContextRecord->X0;
+#elif defined(_M_IX86)
+	context.pc = ep->ContextRecord->Eip;
+	context.esp = ep->ContextRecord->Esp;
+	context.eax = ep->ContextRecord->Eax;
+	context.ecx = ep->ContextRecord->Ecx;
 #endif
 }
 
 static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
 {
-#if HOST_CPU == CPU_X86
-	ep->ContextRecord->Eip = context.pc;
-	ep->ContextRecord->Esp = context.esp;
-	ep->ContextRecord->Eax = context.eax;
-	ep->ContextRecord->Ecx = context.ecx;
-#elif HOST_CPU == CPU_X64
+#if defined(_M_AMD64)
 	ep->ContextRecord->Rip = context.pc;
 	ep->ContextRecord->Rsp = context.rsp;
 	ep->ContextRecord->R9 = context.r9;
 	ep->ContextRecord->Rcx = context.rcx;
+#elif defined(_M_ARM)
+	ep->ContextRecord->Pc = context.pc;
+	ep->ContextRecord->R0 = context.reg[0];
+	ep->ContextRecord->R1 = context.reg[1];
+	ep->ContextRecord->R2 = context.reg[2];
+	ep->ContextRecord->R3 = context.reg[3];
+	ep->ContextRecord->R4 = context.reg[4];
+	ep->ContextRecord->R5 = context.reg[5];
+	ep->ContextRecord->R6 = context.reg[6];
+	ep->ContextRecord->R7 = context.reg[7];
+	ep->ContextRecord->R8 = context.reg[8];
+	ep->ContextRecord->R9 = context.reg[9];
+	ep->ContextRecord->R10 = context.reg[10];
+	ep->ContextRecord->R11 = context.reg[11];
+	ep->ContextRecord->R12 = context.reg[12];
+	ep->ContextRecord->Sp = context.reg[13];
+	ep->ContextRecord->Lr = context.reg[14];
+#elif defined(_M_ARM64)
+	ep->ContextRecord->Pc = context.pc;
+	ep->ContextRecord->X0 = context.x0;
+#elif defined(_M_IX86)
+	ep->ContextRecord->Eip = context.pc;
+	ep->ContextRecord->Esp = context.esp;
+	ep->ContextRecord->Eax = context.eax;
+	ep->ContextRecord->Ecx = context.ecx;
 #endif
 }
 
