@@ -109,7 +109,7 @@ void SCIFSerialPort::rxSched()
 			// rx overrun
 			SCIF_SCLSR2.ORER = 1;
 			updateInterrupts();
-			WARN_LOG(SH4, "scif: Receive overrun");
+			INFO_LOG(SH4, "scif: Receive overrun");
 		}
 		else
 		{
@@ -134,9 +134,8 @@ void SCIFSerialPort::updateBaudRate()
 	frameSize = 1 + 8 - SCIF_SCSMR2.CHR + SCIF_SCSMR2.PE + 1 + SCIF_SCSMR2.STOP;
 	int bauds = SH4_MAIN_CLOCK / 4 / (SCIF_SCBRR2 + 1) / 32 / (1 << (SCIF_SCSMR2.CKS * 2));
 	cyclesPerBit = SH4_MAIN_CLOCK / bauds;
-	INFO_LOG(SH4, "SCIF: Frame size %d cycles/bit %d (%d bauds)", frameSize, cyclesPerBit, bauds);
-	if (sh4_sched_is_scheduled(schedId))
-		sh4_sched_request(schedId, frameSize * cyclesPerBit);
+	INFO_LOG(SH4, "SCIF: Frame size %d cycles/bit %d (%d bauds) pipe %p", frameSize, cyclesPerBit, bauds, pipe);
+	sh4_sched_request(schedId, frameSize * cyclesPerBit);
 }
 
 // SCIF SCFTDR2 - Transmit FIFO Data Register
@@ -222,7 +221,7 @@ u16 SCIFSerialPort::SCFDR2_read()
 u8 SCIFSerialPort::SCFRDR2_read()
 {
 	if (rxFifo.empty()) {
-		WARN_LOG(SH4, "Empty rx fifo read");
+		INFO_LOG(SH4, "Empty rx fifo read");
 		return 0;
 	}
 	u8 data = rxFifo.front();
