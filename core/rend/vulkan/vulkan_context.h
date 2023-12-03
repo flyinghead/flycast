@@ -40,13 +40,12 @@ public:
 #include "wsi/context.h"
 
 struct ImDrawData;
-class TextureCache;
 
-class VulkanContext : public GraphicsContext
+class VulkanContext : public GraphicsContext, public FlightManager
 {
 public:
 	VulkanContext();
-	~VulkanContext();
+	~VulkanContext() override;
 
 	bool init();
 	void term() override;
@@ -113,16 +112,21 @@ public:
 	}
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool recreateSwapChainIfNeeded();
+	void addToFlight(Deletable *object) override {
+		inFlightObjects[GetCurrentImageIndex()].emplace_back(object);
+	}
 
 #ifdef VK_DEBUG
-	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)
+	void setObjectName(void *object, vk::ObjectType objectType, const std::string& name)
 	{
-		VkDebugMarkerObjectNameInfoEXT nameInfo = {};
-		nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+		vk::DebugUtilsObjectNameInfoEXT nameInfo {};
 		nameInfo.objectType = objectType;
-		nameInfo.object = object;
+		nameInfo.objectHandle = (uint64_t)object;
 		nameInfo.pObjectName = name.c_str();
-		VULKAN_HPP_DEFAULT_DISPATCHER.vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
+		if (device) {
+			vk::Result e = device->setDebugUtilsObjectNameEXT(&nameInfo);
+			(void)e;
+		}
 	}
 #endif
 	constexpr static int VENDOR_AMD = 0x1022;
@@ -211,8 +215,7 @@ private:
 	float lastFrameAR = 0.f;
 
 	std::unique_ptr<VulkanOverlay> overlay;
-	// only used to delay the destruction of overlay textures
-	std::unique_ptr<TextureCache> textureCache;
+	std::vector<std::vector<std::unique_ptr<Deletable>>> inFlightObjects;
 
 	std::string driverName;
 	std::string driverVersion;

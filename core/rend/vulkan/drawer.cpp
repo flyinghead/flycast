@@ -100,7 +100,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 		u32 scaledH = height * yscale;
 
 		scaledFB = new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
-		scaledFB->Init(scaledW, scaledH, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst);
+		scaledFB->Init(scaledW, scaledH, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
+				"SCALED FRAMEBUFFER");
 
 		setImageLayout(commandBuffer, scaledFB->GetImage(), vk::Format::eR8G8B8A8Unorm, 1, vk::ImageLayout::eUndefined,
 				vk::ImageLayout::eTransferDstOptimal);
@@ -143,10 +144,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
 
 	commandBuffer.end();
-	commandPool->EndFrame();
+	commandPool->EndFrameAndWait();
 
-	vk::Fence fence = commandPool->GetCurrentFence();
-	GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
 	PixelBuffer<u32> tmpBuf;
 	tmpBuf.init(width, height);
 	finalFB->GetBufferData()->download(width * height * 4, tmpBuf.data());
@@ -470,7 +469,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		else
 			GetContext()->WaitIdle();
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat(),
-				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
+				"RTT DEPTH ATTACHMENT");
 	}
 	vk::Image colorImage;
 	vk::ImageView colorImageView;
@@ -479,14 +479,15 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (!config::RenderToTextureBuffer)
 	{
 		texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
-		if (textureCache->IsInFlight(texture))
+		if (textureCache->IsInFlight(texture, false))
 		{
 			texture->readOnlyImageView = *texture->imageView;
-			textureCache->DestroyLater(texture);
+			texture->deferDeleteResource(commandPool);
 		}
 		textureCache->SetInFlight(texture);
 
-		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
+		if (!texture->image || texture->format != vk::Format::eR8G8B8A8Unorm
+				|| texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
@@ -511,7 +512,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
-					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc);
+					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+					"RTT COLOR ATTACHMENT");
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else
@@ -574,12 +576,10 @@ void TextureDrawer::EndRenderPass()
 	currentCommandBuffer.end();
 
 	currentCommandBuffer = nullptr;
-	commandPool->EndFrame();
 
 	if (config::RenderToTextureBuffer)
 	{
-		vk::Fence fence = commandPool->GetCurrentFence();
-		GetContext()->GetDevice().waitForFences(fence, true, UINT64_MAX);
+		commandPool->EndFrameAndWait();
 
 		u16 *dst = (u16 *)&vram[textureAddr];
 
@@ -590,6 +590,7 @@ void TextureDrawer::EndRenderPass()
 	}
 	else
 	{
+		commandPool->EndFrame();
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
@@ -616,7 +617,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		depthAttachment = std::make_unique<FramebufferAttachment>(
 				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(),
-				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
+				"DEPTH ATTACHMENT");
 	}
 
 	if (!renderPassLoad)
@@ -680,7 +682,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				usage |= vk::ImageUsageFlagBits::eTransferSrc;
 			else
 				usage |= vk::ImageUsageFlagBits::eSampled;
-			colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage);
+			colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage,
+					"COLOR ATTACHMENT " + std::to_string(colorAttachments.size() - 1));
 			attachments[0] = colorAttachments.back()->GetImageView();
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
 					attachments, viewport.width, viewport.height, 1);

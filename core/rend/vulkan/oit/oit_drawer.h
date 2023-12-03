@@ -97,6 +97,9 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
+			// FIXME vf4evob still complains about buffer in use after 2 frames! due to swap chain size of 3
+			// even releasing using the vk context doesn't work
+			commandPool->addToFlight(new Deleter(mainBuffers[bufferIndex].release()));
 			mainBuffers[bufferIndex] = std::make_unique<BufferData>(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
 					| vk::BufferUsageFlagBits::eStorageBuffer);
@@ -147,7 +150,7 @@ private:
 	OITBuffers *oitBuffers = nullptr;
 	int maxWidth = 0;
 	int maxHeight = 0;
-	bool needDepthTransition = false;
+	bool needAttachmentTransition = false;
 	int imageIndex = 0;
 	int renderPass = 0;
 	OITDescriptorSets descriptorSets;

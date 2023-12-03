@@ -28,7 +28,6 @@
 #include <SDL_vulkan.h>
 #endif
 #include "compiler.h"
-#include "texture.h"
 #include "utils.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
@@ -533,6 +532,14 @@ void VulkanContext::CreateSwapChain()
 	{
 		device->waitIdle();
 
+		if (!drawFences.empty())
+		{
+			std::vector<vk::Fence> allFences = vk::uniqueToRaw(drawFences);
+			vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
+			if (res != vk::Result::eSuccess)
+				WARN_LOG(RENDERER, "VulkanContext::CreateSwapChain: waitForFences failed %d", (int)res);
+		}
+		inFlightObjects.clear();
 		overlay->Term();
 		framebuffers.clear();
 		drawFences.clear();
@@ -693,6 +700,7 @@ void VulkanContext::CreateSwapChain()
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
+	    inFlightObjects.resize(imageViews.size());
 	    currentSemaphore = 0;
 	    quadPipeline->Init(shaderManager.get(), *renderPass, 0);
 	    quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass, 0);
@@ -783,7 +791,6 @@ bool VulkanContext::init()
 #error "Unknown Vulkan platform"
 #endif
 	overlay = std::make_unique<VulkanOverlay>();
-	textureCache = std::make_unique<TextureCache>();
 
 	if (!InitDevice()) {
 		term();
@@ -810,13 +817,13 @@ void VulkanContext::NewFrame()
 	recreateSwapChainIfNeeded();
 	if (!IsValid())
 		throw InvalidVulkanContext();
-	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
-	device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
-	device->resetFences(*drawFences[currentImage]);
+	vk::Result res = device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
+	res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
+	(void)res;
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
+	inFlightObjects[currentImage].clear();
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	textureCache->SetCurrentIndex(GetCurrentImageIndex());
 	verify(!rendering);
 	rendering = true;
 }
@@ -844,6 +851,7 @@ void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 		allCmdBuffers.push_back(overlayCmdBuffer);
 	allCmdBuffers.push_back(commandBuffer);
 	vk::SubmitInfo submitInfo(*imageAcquiredSemaphores[currentSemaphore], wait_stage, allCmdBuffers, *renderCompleteSemaphores[currentSemaphore]);
+	device->resetFences(*drawFences[currentImage]);
 	graphicsQueue.submit(submitInfo, *drawFences[currentImage]);
 	verify(rendering);
 	rendering = false;
@@ -856,14 +864,15 @@ void VulkanContext::Present() noexcept
 	{
 		try {
 			DoSwapAutomation();
-			presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+			(void)res;
 			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
 
 			if (lastFrameView && IsValid() && !gui_is_open())
 				for (int i = 1; i < swapInterval; i++)
 				{
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
-					presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 					currentSemaphore = (currentSemaphore + 1) % imageViews.size();
 				}
 		} catch (const vk::SystemError& e) {
@@ -935,7 +944,7 @@ void VulkanContext::WaitIdle() const
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
-	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair, *textureCache);
+	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
 }
 
  void VulkanContext::DrawOverlay(float scaling, bool vmu, bool crosshair)
@@ -985,6 +994,14 @@ void VulkanContext::term()
 	lastFrameView = nullptr;
 	if (device && graphicsQueue)
 		WaitIdle();
+	if (device && !drawFences.empty())
+	{
+		std::vector<vk::Fence> allFences = vk::uniqueToRaw(drawFences);
+		vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
+		if (res != vk::Result::eSuccess)
+			WARN_LOG(RENDERER, "VulkanContext::term: waitForFences failed %d", (int)res);
+	}
+	inFlightObjects.clear();
 	imguiDriver.reset();
 	if (device && pipelineCache)
 	{
@@ -1001,7 +1018,6 @@ void VulkanContext::term()
 		}
 	}
 	overlay.reset();
-	textureCache.reset();
 	ShaderCompiler::Term();
 	swapChain.reset();
 	imageViews.clear();

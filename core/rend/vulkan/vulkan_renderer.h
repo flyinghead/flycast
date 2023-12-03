@@ -98,7 +98,7 @@ public:
 		if (tf->NeedsUpdate())
 		{
 			// This kills performance when a frame is skipped and lots of texture updated each frame
-			//if (textureCache.IsInFlight(tf))
+			//if (textureCache.IsInFlight(tf, true))
 			//	textureCache.DestroyLater(tf);
 			tf->SetCommandBuffer(texCommandBuffer);
 			if (!tf->Update())
@@ -109,7 +109,7 @@ public:
 		}
 		else if (tf->IsCustomTextureAvailable())
 		{
-			textureCache.DestroyLater(tf);
+			tf->deferDeleteResource(&texCommandPool);
 			tf->SetCommandBuffer(texCommandBuffer);
 			tf->CheckCustomTexture();
 		}

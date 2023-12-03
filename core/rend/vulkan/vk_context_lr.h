@@ -31,13 +31,12 @@
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class FramebufferAttachment;
-class TextureCache;
 
-class VulkanContext : public GraphicsContext
+class VulkanContext : public GraphicsContext, public FlightManager
 {
 public:
 	VulkanContext();
-	~VulkanContext();
+	~VulkanContext() override;
 
 	bool init(retro_hw_render_interface_vulkan *render_if);
 	void term() override;
@@ -91,6 +90,12 @@ public:
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
+	void addToFlight(Deletable *object) override {
+		commandPool.addToFlight(object);
+	}
+#ifdef VK_DEBUG
+	void setObjectName(void *object, vk::ObjectType objectType, const std::string& name) {}
+#endif
 
 	constexpr static int VENDOR_AMD = 0x1022;
 	// AMD GPU products use the ATI vendor Id
@@ -143,8 +148,6 @@ private:
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<VulkanOverlay> overlay;
-	// only used to delay the destruction of overlay textures
-	std::unique_ptr<TextureCache> textureCache;
 
 	retro_vulkan_image retro_image;
 
