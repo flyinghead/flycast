@@ -493,7 +493,18 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000); // 40.0 ms
 			cheats.back().builtIn = true;
 		}
-
+		else if (gameId == "MK-0100")	// F355 US
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000);
+			cheats.back().builtIn = true;
+		}
+		else if (gameId == "T8118D  50")	// F355 EU
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000);
+			cheats.back().builtIn = true;
+		}
 	}
 	if (config::WidescreenGameHacks)
 	{
@@ -579,11 +590,13 @@ void CheatManager::apply()
 				writeRam(address, widescreen_cheat->values[i], 32);
 		}
 	}
-	if (active && !settings.network.online)
+	if (active)
 	{
 		bool skipCheat = false;
 		for (const Cheat& cheat : cheats)
 		{
+			if (!cheat.builtIn && settings.network.online)
+				continue;
 			if (skipCheat) {
 				skipCheat = false;
 				continue;
