@@ -60,6 +60,7 @@ button_list[] =
 	{ DC_BTN_INSERT_CARD, "emulator", "insert_card" },
 	{ EMU_BTN_LOADSTATE, "emulator", "btn_jump_state" },
 	{ EMU_BTN_SAVESTATE, "emulator", "btn_quick_save" },
+	{ EMU_BTN_BYPASS_KB, "emulator", "btn_bypass_kb" },
 };
 
 static struct
