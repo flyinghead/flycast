@@ -179,6 +179,26 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	return rc;
 }
 
+static DreamcastKey getOppositeAxis(DreamcastKey key)
+{
+	switch (key)
+	{
+	case DC_AXIS_RIGHT: return DC_AXIS_LEFT;
+	case DC_AXIS_LEFT: return DC_AXIS_RIGHT;
+	case DC_AXIS_UP: return DC_AXIS_DOWN;
+	case DC_AXIS_DOWN: return DC_AXIS_UP;
+	case DC_AXIS2_RIGHT: return DC_AXIS2_LEFT;
+	case DC_AXIS2_LEFT: return DC_AXIS2_RIGHT;
+	case DC_AXIS2_UP: return DC_AXIS2_DOWN;
+	case DC_AXIS2_DOWN: return DC_AXIS2_UP;
+	case DC_AXIS3_RIGHT: return DC_AXIS3_LEFT;
+	case DC_AXIS3_LEFT: return DC_AXIS3_RIGHT;
+	case DC_AXIS3_UP: return DC_AXIS3_DOWN;
+	case DC_AXIS3_DOWN: return DC_AXIS3_UP;
+	default: return key;
+	}
+}
+
 //
 // value must be >= -32768 and <= 32767 for full axes
 // and 0 to 32767 for half axes/triggers
@@ -216,7 +236,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
 			s16 *this_axis;
-			s16 *other_axis;
+			int otherAxisValue;
 			int axisDirection = -1;
 			switch (key)
 			{
@@ -225,7 +245,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS_LEFT:
 				this_axis = &joyx[port];
-				other_axis = &joyy[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_UP];
 				break;
 
 			case DC_AXIS_DOWN:
@@ -233,7 +253,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS_UP:
 				this_axis = &joyy[port];
-				other_axis = &joyx[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_LEFT];
 				break;
 
 			case DC_AXIS2_RIGHT:
@@ -241,7 +261,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS2_LEFT:
 				this_axis = &joyrx[port];
-				other_axis = &joyry[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS2_UP];
 				break;
 
 			case DC_AXIS2_DOWN:
@@ -249,7 +269,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS2_UP:
 				this_axis = &joyry[port];
-				other_axis = &joyrx[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS2_LEFT];
 				break;
 
 			case DC_AXIS3_RIGHT:
@@ -257,7 +277,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS3_LEFT:
 				this_axis = &joy3x[port];
-				other_axis = &joy3y[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS3_UP];
 				break;
 
 			case DC_AXIS3_DOWN:
@@ -265,17 +285,18 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 				[[fallthrough]];
 			case DC_AXIS3_UP:
 				this_axis = &joy3y[port];
-				other_axis = &joy3x[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS3_LEFT];
 				break;
 
 			default:
 				return false;
 			}
-			// Lightgun with left analog stick
 			int& lastValue = lastAxisValue[port][key];
-			if (lastValue != v)
+			int& lastOpValue = lastAxisValue[port][getOppositeAxis(key)];
+			if (lastValue != v || lastOpValue != v)
 			{
-				lastValue = v;
+				lastValue = lastOpValue = v;
+				// Lightgun with left analog stick
 				if (key == DC_AXIS_RIGHT || key == DC_AXIS_LEFT)
 					mo_x_abs[port] = (std::abs(v) * axisDirection + 32768) * 639 / 65535;
 				else if (key == DC_AXIS_UP || key == DC_AXIS_DOWN)
@@ -283,14 +304,19 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
-			v = std::min(32767, std::abs(v));
-			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 32768.f * 32768.f)
+			const float nv = std::abs(v) / 32768.f;
+			const float r2 = nv * nv + otherAxisValue * otherAxisValue / 32768.f / 32768.f;
+			if (r2 < input_mapper->dead_zone * input_mapper->dead_zone || r2 == 0.f)
 			{
 				*this_axis = 0;
-				*other_axis = 0;
 			}
 			else
-				*this_axis = v * axisDirection;
+			{
+				float pdz = nv * input_mapper->dead_zone / std::sqrt(r2);
+				// there's a dead angular zone at 45° with saturation > 1 (both axes are saturated)
+				v = std::round((nv - pdz) / (1 - pdz) * 32768.f * input_mapper->saturation);
+				*this_axis = std::clamp(v * axisDirection, -32768, 32767);
+			}
 		}
 		else if (key != EMU_BTN_NONE && key <= DC_BTN_BITMAPPED_LAST) // Map triggers to digital buttons
 		{

@@ -80,6 +80,16 @@ public:
 			save_mapping();
 		}
 	}
+	float get_saturation() const { return input_mapper->saturation; }
+	void set_saturation(float saturation)
+	{
+		if (saturation != input_mapper->saturation)
+		{
+			input_mapper->saturation = saturation;
+			input_mapper->set_dirty();
+			save_mapping();
+		}
+	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 

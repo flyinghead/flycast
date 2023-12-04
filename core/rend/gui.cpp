@@ -1257,6 +1257,61 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	ImGui::PopStyleVar();
 }
 
+static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
+{
+	centerNextWindow();
+	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		{
+			ImGui::CloseCurrentPopup();
+			gamepad->save_mapping(map_system);
+			ImGui::EndPopup();
+			ImGui::PopStyleVar();
+			return;
+		}
+		ImGui::NewLine();
+		if (gamepad->is_virtual_gamepad())
+		{
+			header("Haptic");
+			OptionSlider("Power", config::VirtualGamepadVibration, 0, 60, "Haptic feedback power");
+		}
+		else if (gamepad->is_rumble_enabled())
+		{
+			header("Rumble");
+			int power = gamepad->get_rumble_power();
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Power", &power, 0, 100, "%d%%"))
+				gamepad->set_rumble_power(power);
+			ImGui::SameLine();
+			ShowHelpMarker("Rumble power");
+		}
+		if (gamepad->has_analog_stick())
+		{
+			header("Thumbsticks");
+			int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
+				gamepad->set_dead_zone(deadzone / 100.f);
+			ImGui::SameLine();
+			ShowHelpMarker("Minimum deflection to register as input");
+			int saturation = std::round(gamepad->get_saturation() * 100.f);
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Saturation", &saturation, 50, 200, "%d%%"))
+				gamepad->set_saturation(saturation / 100.f);
+			ImGui::SameLine();
+			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
+					"Values greater than 100% will saturate before full deflection of the thumbstick.");
+		}
+
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar();
+}
+
 void error_popup()
 {
 	if (!error_msg_shown && !error_msg.empty())
@@ -1690,31 +1745,23 @@ static void gui_display_settings()
 #ifdef __ANDROID__
 					if (gamepad->is_virtual_gamepad())
 					{
-						if (ImGui::Button("Edit"))
+						if (ImGui::Button("Edit Layout"))
 						{
 							vjoy_start_editing();
 							gui_setState(GuiState::VJoyEdit);
 						}
-						ImGui::SameLine();
-						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
-					else
 #endif
-					if (gamepad->is_rumble_enabled())
+					if (gamepad->is_rumble_enabled() || gamepad->has_analog_stick()
+#ifdef __ANDROID__
+							|| gamepad->is_virtual_gamepad()
+#endif
+							)
 					{
 						ImGui::SameLine(0, 16 * settings.display.uiScale);
-						int power = gamepad->get_rumble_power();
-						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
-						if (ImGui::SliderInt("Rumble", &power, 0, 100, "%d%%"))
-							gamepad->set_rumble_power(power);
-					}
-					if (gamepad->has_analog_stick())
-					{
-						ImGui::SameLine(0, 16 * settings.display.uiScale);
-						int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
-						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
-						if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
-							gamepad->set_dead_zone(deadzone / 100.f);
+						if (ImGui::Button("Settings"))
+							ImGui::OpenPopup("Gamepad Settings");
+						gamepadSettingsPopup(gamepad);
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
