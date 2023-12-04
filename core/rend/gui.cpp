@@ -833,6 +833,7 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
+	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -883,6 +884,7 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
+	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
