@@ -1510,9 +1510,7 @@ struct maple_racing_controller: maple_sega_controller
 		// byte 2: R2 L2 D2 U2 D  X  Y  Z
 		// byte 3: R  L  D  U  St A  B  C
 
-		return 0xfe003700;	// Steering + accelerator/brake unit: Ra,La,Da,Ua,A,B,Start,A1,A2,A3,A5,A6
-							// (A5 & A6 only valid when the accelerator/brake unit is connected.)
-		//return 0xfe000700;	// Steering only
+		return 0xfe000700;	// Steering only: Ra,La,Da,Ua,A,B,Start,A1,A2,A3
 	}
 
 	u16 getButtonState(const PlainJoystickState &pjs) override
@@ -1539,9 +1537,6 @@ struct maple_racing_controller: maple_sega_controller
 		case 0: return pjs.trigger[PJTI_R];	 // A1: lever, 0 at rest
 		case 1: return pjs.trigger[PJTI_L];	 // A2: lever, 0 at rest
 		case 2: return pjs.joy[PJAI_X1];	 // A3: 0-0xff, 0x80 at rest
-		// (A5 and A6 are only valid when the accelerator/brake unit is connected)
-		case 4:	return pjs.trigger[PJTI_R2]; // A5: lever, 0 at rest
-		case 5: return pjs.trigger[PJTI_L2]; // A6: lever, 0 at rest
 		default: return 0x80;				 // unused
 		}
 	}
