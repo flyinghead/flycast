@@ -1373,7 +1373,6 @@ void serialize(Serializer& ser)
 	ser << read_params;
 	ser << read_buff;
 	ser << pio_buff;
-	ser << set_mode_offset;
 	ser << ata_cmd;
 	ser << cdda;
 	ser << gd_state;
@@ -1409,7 +1408,7 @@ void deserialize(Deserializer& deser)
 		read_buff.cache_size = 0;
 	}
 	deser >> pio_buff;
-	deser >> set_mode_offset;
+	deser.skip<u32>(Deserializer::V44); // set_mode_offset (repeat)
 	deser >> ata_cmd;
 	deser >> cdda;
 	if (deser.version() < Deserializer::V10)
