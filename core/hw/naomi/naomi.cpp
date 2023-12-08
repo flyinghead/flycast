@@ -141,11 +141,11 @@ static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
 //Dma Start
 static void Naomi_DmaStart(u32 addr, u32 data)
 {
-	if ((data & 1) == 0)
+	if ((data & 1) == 0 || SB_GDST == 1)
 		return;
 	if (SB_GDEN == 0)
 	{
-		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
+		INFO_LOG(NAOMI, "Invalid NAOMI-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
@@ -177,8 +177,9 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 	SB_GDEN = data & 1;
 	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
-		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
+		INFO_LOG(NAOMI, "NAOMI-DMA aborted");
 		SB_GDST = 0;
+		sh4_sched_request(dmaSchedId, -1);
 	}
 }
 
@@ -223,6 +224,7 @@ void naomi_reg_Reset(bool hard)
 	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
+	sh4_sched_request(dmaSchedId, -1);
 
 	aw_ram_test_skipped = false;
 
