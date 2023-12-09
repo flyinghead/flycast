@@ -88,10 +88,6 @@ private:
 
 #include "egl.h"
 
-#elif defined(_WIN32)
-
-#include "wgl.h"
-
 #elif defined(SUPPORT_X11)
 
 #include "xgl.h"
