@@ -1145,8 +1145,6 @@ if(USE_OPENGL)
 			core/wsi/osx.h
 			core/wsi/sdl.cpp
 			core/wsi/sdl.h
-			core/wsi/wgl.cpp
-			core/wsi/wgl.h
 			core/wsi/xgl.cpp
 			core/wsi/xgl.h)
 
@@ -1478,9 +1476,6 @@ if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
 		if(ANDROID OR USE_GLES2 OR USE_GLES)
 			target_sources(glad PRIVATE core/deps/glad/src/egl.c)
 		endif()
-		if(WIN32)
-			target_sources(glad PRIVATE core/deps/glad/src/wgl.c)
-		endif()
 	endif()
 	target_include_directories(glad PUBLIC core/deps/glad/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE glad)
@@ -1703,9 +1698,7 @@ if(NOT LIBRETRO)
 			target_sources(${PROJECT_NAME} PRIVATE
 				core/windows/rawinput.cpp
 				core/windows/rawinput.h
-				core/windows/win_keyboard.h
-				core/windows/winmain.cpp
-				core/windows/xinput_gamepad.h)
+				core/windows/winmain.cpp)
 		endif()
 		if(WINDOWS_STORE)
 			file(READ shell/uwp/Package.appxmanifest MANIFEST)
