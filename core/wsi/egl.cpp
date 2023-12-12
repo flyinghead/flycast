@@ -164,13 +164,19 @@ bool EGLGraphicsContext::init()
 void EGLGraphicsContext::term()
 {
 	preTerm();
-	eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-	if (context != EGL_NO_CONTEXT)
-		eglDestroyContext(display, context);
-	if (surface != EGL_NO_SURFACE)
-		eglDestroySurface(display, surface);
+
 	if (display != EGL_NO_DISPLAY)
+	{
+		eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+		if (context != EGL_NO_CONTEXT)
+			eglDestroyContext(display, context);
+
+		if (surface != EGL_NO_SURFACE)
+			eglDestroySurface(display, surface);
+
 		eglTerminate(display);
+	}
 
 	context = EGL_NO_CONTEXT;
 	surface = EGL_NO_SURFACE;
