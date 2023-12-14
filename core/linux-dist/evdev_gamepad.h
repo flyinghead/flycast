@@ -1,3 +1,4 @@
+#pragma once
 #include "evdev.h"
 #include "input/gamepad_device.h"
 #include "oslib/oslib.h"
