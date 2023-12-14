@@ -12,12 +12,12 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install ccache libcurl4-openssl-dev ninja-build
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
           
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -35,7 +35,7 @@ jobs:
         env:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-release.apk
           path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
@@ -60,7 +60,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
