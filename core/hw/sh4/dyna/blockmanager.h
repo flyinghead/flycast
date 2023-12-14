@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "decoder.h"
+#include "shil.h"
 #include "stdclass.h"
 
 #include <memory>

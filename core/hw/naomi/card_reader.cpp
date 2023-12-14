@@ -24,7 +24,7 @@
 #include "rend/gui.h"
 #include <deque>
 #include <memory>
-#include <errno.h>
+#include <cerrno>
 
 namespace card_reader {
 

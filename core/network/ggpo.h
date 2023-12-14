@@ -17,8 +17,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "types.h"
 #include <future>
+#include <string>
 
 struct MapleInputState;
 

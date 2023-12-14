@@ -9,8 +9,8 @@
 #include "cfg/option.h"
 #include "rend/gui.h"
 #include <zlib.h>
-#include <time.h>
-#include <errno.h>
+#include <cerrno>
+#include <ctime>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";

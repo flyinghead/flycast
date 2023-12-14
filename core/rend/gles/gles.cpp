@@ -4,6 +4,7 @@
 #ifndef LIBRETRO
 #include "rend/gui.h"
 #else
+#include "rend/gles/postprocess.h"
 #include "vmu_xhair.h"
 #endif
 #include "rend/osd.h"
@@ -12,7 +13,6 @@
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
-#include "rend/gles/postprocess.h"
 
 #ifdef TEST_AUTOMATION
 #include "cfg/cfg.h"

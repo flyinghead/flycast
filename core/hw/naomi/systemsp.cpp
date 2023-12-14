@@ -26,7 +26,6 @@
 #include "hw/maple/maple_cfg.h"
 #include "input/gamepad.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/mem/addrspace.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "oslib/storage.h"
@@ -35,7 +34,8 @@
 #include "card_reader.h"
 #include "naomi_roms.h"
 #include "stdclass.h"
-#include <errno.h>
+#include <cerrno>
+#include <deque>
 
 #ifdef DEBUG_SERIAL
 #define SERIAL_LOG(...) DEBUG_LOG(NAOMI, __VA_ARGS__)

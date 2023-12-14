@@ -26,7 +26,6 @@
 #include "decrypt.h"
 #include "naomi_roms.h"
 #include "hw/flashrom/nvmem.h"
-#include "hw/holly/holly_intc.h"
 #include "m1cartridge.h"
 #include "m4cartridge.h"
 #include "awcartridge.h"

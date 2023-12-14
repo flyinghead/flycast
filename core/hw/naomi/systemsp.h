@@ -23,8 +23,6 @@
 #include "hw/naomi/m4cartridge.h"
 #include "hw/flashrom/at93cxx.h"
 #include "serialize.h"
-#include <deque>
-#include <array>
 #include <memory>
 #include <libchdr/chd.h>
 

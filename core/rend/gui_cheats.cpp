@@ -20,7 +20,9 @@
 #include "imgui.h"
 #include "gui_util.h"
 #include "cheats.h"
+#ifdef __ANDROID__
 #include "oslib/storage.h"
+#endif
 
 static bool addingCheat;
 

@@ -18,7 +18,6 @@
  */
 #include "mmu.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
 

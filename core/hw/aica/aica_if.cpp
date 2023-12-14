@@ -17,7 +17,6 @@
 
 #include "serialize.h"
 #include "hw/arm7/arm_mem.h"
-#include "hw/arm7/arm7.h"
 #include "dsp.h"
 #include "sgc_if.h"
 #include "aica.h"
