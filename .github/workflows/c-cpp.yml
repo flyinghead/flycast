@@ -66,7 +66,7 @@ jobs:
           arch: ${{ matrix.config.arch }}
         if: matrix.config.shell == 'cmd'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
@@ -125,7 +125,7 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-${{ matrix.config.name }}
           path: artifact/bin
@@ -144,7 +144,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
