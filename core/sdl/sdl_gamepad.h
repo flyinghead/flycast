@@ -1,3 +1,4 @@
+#pragma once
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
 #include "oslib/oslib.h"

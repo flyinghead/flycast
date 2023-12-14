@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta.h"
