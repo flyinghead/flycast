@@ -275,12 +275,14 @@ static void loadSpecialSettings()
 		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "MK-51146"	// Sega Smash Pack - Volume 1
 			|| prod_id == "T-9702D-50"	// Hydro Thunder (PAL)
-			|| prod_id == "T41601N")	// Elemental Gimmick Gear (US)
+			|| prod_id == "T41601N"		// Elemental Gimmick Gear (US)
+			|| prod_id == "T-8116N")	// South Park Rally (US)
 		{
 			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
 			config::Broadcast.override(0);
 		}
-		else if (prod_id == "T-9709D-50")	// San Francisco Rush 2049 (EU)
+		else if (prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+			|| prod_id == "T-8112D-50")	// South Park Rally (EU)
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
