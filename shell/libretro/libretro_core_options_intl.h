@@ -43200,7 +43200,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_JA NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_JA NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA "内部解像度"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_JA NULL
 #define OPTION_VAL_320X240_JA NULL
 #define OPTION_VAL_640X480_JA NULL
@@ -63855,11 +63855,11 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_PAL_M_SV "PAL-M (Brasilien)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SV "Skärmorientering"
 #define OPTION_VAL_HORIZONTAL_SV "Horisontell"
-#define OPTION_VAL_VERTICAL_SV NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_SV NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_SV NULL
+#define OPTION_VAL_VERTICAL_SV "Vertikal"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV "Alfa sortering"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV "Per-Strip (snabbast, minst noggrann)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_SV "Per-Triangel (normal)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_SV "Per-Pixel (noggrann, men långsammast)"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SV "Storlek på ackumulerande pixelbuffert"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SV "Högre värden kan vara nödvändiga för att korrekt visa utdata i högre upplösningar."
 #define OPTION_VAL_512MB_SV NULL
@@ -63973,7 +63973,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV "Sänd digitala utgångar och force-feedbackstatus på TCP-port 8000. Kompatibelt med MAME-alternativet \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV "Aktivera konfiguration av alternativ för ljuspistolens hårkors. OBS!: Snabbmenyn kan behöva aktiveras och avaktiveras för att denna inställning ska träda i kraft."
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SV NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SV "Storleksskalning för pistolhårkors"
 #define OPTION_VAL_50_SV NULL
 #define OPTION_VAL_60_SV NULL
 #define OPTION_VAL_70_SV NULL
@@ -64000,7 +64000,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_280_O46_SV NULL
 #define OPTION_VAL_290_O46_SV NULL
 #define OPTION_VAL_300_O46_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
 #define OPTION_VAL_GREEN_SV "Grön"
@@ -64016,16 +64016,16 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV "Ljud för visuella minnesenheter/System (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV "VMU-ljud"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV "När detta är aktiverad, spelas VMU-pipen."
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för Visual Memory Unit/System (VMU)-skärmen"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV "Position för VMU-skärm 1"
 #define OPTION_VAL_UPPER_LEFT_SV "Övre vänstra"
 #define OPTION_VAL_UPPER_RIGHT_SV "Övre högra"
 #define OPTION_VAL_LOWER_LEFT_SV "Nedre vänstra"
 #define OPTION_VAL_LOWER_RIGHT_SV "Nedre högra"
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "VMU skärm 1 Storlek"
 #define OPTION_VAL_1X_SV NULL
 #define OPTION_VAL_3X_SV NULL
 #define OPTION_VAL_5X_SV NULL
@@ -64066,13 +64066,13 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SV "VMU Skärm 2 Opacitet"
 #define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 3"
 #define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 3"
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SV "VMU skärm 3 Storlek"
 #define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SV "Aktivera pixelfärg på VMU skärm 3"
 #define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SV "Avaktivera pixelfärg på VMU skärm 3"
 #define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SV "Opaciteten för VMU Skärm 3"
 #define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 4"
 #define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SV "Positionen för VMU skärm 4"
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SV "Storleken för VMU skärm 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SV "VMU skärm 4 Storlek"
 #define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SV "VMU Skärm 4 Pixel PÅ Färg"
 #define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SV "VMU Skärm 4 Pixel AV Färg"
 #define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SV "VMU Skärm 4 Opacitet"
