@@ -1286,12 +1286,8 @@ struct maple_lightgun : maple_base
 			//2 key code
 			w16(transform_kcode(pjs.kcode));
 
-			//not used
-			//2
-			w16(0xFFFF);
-
-			//not used
-			//4
+			//6 analog (not used)
+			w16(0);
 			w32(0x80808080);
 		}
 		return MDRS_DataTransfer;
