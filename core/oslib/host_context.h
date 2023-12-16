@@ -3,7 +3,7 @@
 
 struct host_context_t {
 #if HOST_CPU != CPU_GENERIC
-	unat pc;
+	uintptr_t pc;
 #endif
 
 #if HOST_CPU == CPU_X86
