@@ -25,6 +25,12 @@
 
 //#define VK_DEBUG 1
 
+#if VK_USE_64_BIT_PTR_DEFINES == 1
+using VkHandle = void *;
+#else
+using VkHandle = uint64_t;
+#endif
+
 // RAII-like interface for objects that need to be deleted/released in the future
 class Deletable
 {

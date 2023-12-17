@@ -117,7 +117,7 @@ public:
 	}
 
 #ifdef VK_DEBUG
-	void setObjectName(void *object, vk::ObjectType objectType, const std::string& name)
+	void setObjectName(VkHandle object, vk::ObjectType objectType, const std::string& name)
 	{
 		vk::DebugUtilsObjectNameInfoEXT nameInfo {};
 		nameInfo.objectType = objectType;

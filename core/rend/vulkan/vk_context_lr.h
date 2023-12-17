@@ -94,7 +94,7 @@ public:
 		commandPool.addToFlight(object);
 	}
 #ifdef VK_DEBUG
-	void setObjectName(void *object, vk::ObjectType objectType, const std::string& name) {}
+	void setObjectName(VkHandle object, vk::ObjectType objectType, const std::string& name) {}
 #endif
 
 	constexpr static int VENDOR_AMD = 0x1022;
