@@ -126,9 +126,21 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 
 	if (vmu)
 	{
+#ifndef LIBRETRO
 		f32 vmu_padding = 8.f * scaling;
 		f32 vmu_height = 32.f * scaling;
 		f32 vmu_width = 48.f * scaling;
+#else
+		f32 vmu_padding_x = 8.f * viewport.width / 640.f;
+		f32 vmu_padding_y = 8.f * viewport.height / 480.f;
+		f32 vmu_width = 48.f * viewport.width / 640.f;
+		f32 vmu_height = 32.f * viewport.height / 480.f;
+		if (config::Widescreen)
+		{
+			vmu_padding_x = vmu_padding_x / 4.f * 3.f;
+			vmu_width = vmu_width / 4.f * 3.f;
+		}
+#endif
 
 		pipeline->BindPipeline(commandBuffer);
 		const float *color = nullptr;
@@ -158,20 +170,20 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			{
 			case UPPER_LEFT:
 			default:
-				x = vmu_padding;
-				y = vmu_padding;
+				x = vmu_padding_x;
+				y = vmu_padding_y;
 				break;
 			case UPPER_RIGHT:
-				x = viewport.width - vmu_padding - w;
-				y = vmu_padding;
+				x = viewport.width - vmu_padding_x - w;
+				y = vmu_padding_y;
 				break;
 			case LOWER_LEFT:
-				x = vmu_padding;
-				y = viewport.height - vmu_padding - h;
+				x = vmu_padding_x;
+				y = viewport.height - vmu_padding_y - h;
 				break;
 			case LOWER_RIGHT:
-				x = viewport.width - vmu_padding - w;
-				y = viewport.height - vmu_padding - h;
+				x = viewport.width - vmu_padding_x - w;
+				y = viewport.height - vmu_padding_y - h;
 				break;
 			}
 #else
