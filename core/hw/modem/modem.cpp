@@ -141,7 +141,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 	{
 		if (last_comm_stats != 0)
 		{
-			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
+			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d", sent_bytes, sent_bytes / 2000.0,
 					recvd_bytes, recvd_bytes / 2000.0,
 					modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
 			sent_bytes = 0;
@@ -286,6 +286,8 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			// This value is critical. Setting it too low will cause some sockets to stall.
 			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
 			// 143 us/bytes corresponds to 56K
+			// 57600 @ 10b: 174
+			// 38400 @ 10b: 260
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
 			modem_regs.reg1e.TDBE = 1;
 

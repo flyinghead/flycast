@@ -192,7 +192,8 @@ static void fixUpDCFlash()
      		console_id[-1] = console_id[0xA0 - 1] = sum;
      		console_id[-2] = console_id[0xA0 - 2] = ~sum;
      	}
- 		// must be != 0xff
+ 		// machine_version: ff - VA0, fe - VA1, fd - VA2
+     	// must be != 0xff
  		console_id[7] = console_id[0xA0 + 7] = 0xfe;
 	}
 }
