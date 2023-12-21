@@ -2241,24 +2241,19 @@ static void gui_display_settings()
 			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
 #endif
 			{
-#ifdef __APPLE__
-				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
-								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
-#elif defined(_WIN32)
-				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
-				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
-								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#ifdef _WIN32
+				DisabledScope scope(!((renderApi == 0) || (renderApi == 3)));
 #endif
-				{
-					GraphicsContext::Instance()->initVideoRouting();
-				}
+				OptionCheckbox("Send video content to another program", config::VideoRouting,
+					"e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture");
+
 				{
 					DisabledScope scope(!config::VideoRouting);
 					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
 					{
 						DisabledScope scope(!config::VideoRoutingScale);
 						static int vres = config::VideoRoutingVRes;
-						if( ImGui::InputInt("Output vertical resolution", &vres) )
+						if (ImGui::InputInt("Output vertical resolution", &vres))
 						{
 							config::VideoRoutingVRes = vres;
 						}

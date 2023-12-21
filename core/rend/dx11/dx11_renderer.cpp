@@ -1412,6 +1412,11 @@ void DX11Renderer::renderVideoRouting()
 		backBufferTexture->Release();
 		pResource->Release();
 	}
+	else
+	{
+		extern void os_VideoRoutingTermDX();
+		os_VideoRoutingTermDX();
+	}
 #endif
 }
 

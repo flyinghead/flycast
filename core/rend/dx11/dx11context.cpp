@@ -178,8 +178,6 @@ bool DX11Context::init(bool keepCurrentWindow)
 			NOTICE_LOG(RENDERER, "No system-provided shader cache");
 	}
 
-	initVideoRouting();
-
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver(pDevice, pDeviceContext));
 	resize();
 	shaders.init(pDevice, &D3DCompile);
@@ -188,19 +186,6 @@ bool DX11Context::init(bool keepCurrentWindow)
 	if (!success)
 		term();
 	return success;
-}
-
-void DX11Context::initVideoRouting()
-{
-	#ifdef VIDEO_ROUTING
-	extern void os_VideoRoutingTermDX();
-	extern void os_VideoRoutingInitSpoutDXWithDevice(ID3D11Device* pDevice);
-	os_VideoRoutingTermDX();
-	if (config::VideoRouting)
-	{
-		os_VideoRoutingInitSpoutDXWithDevice(pDevice.get());
-	}
-	#endif
 }
 
 void DX11Context::term()

@@ -487,8 +487,6 @@ bool VulkanContext::InitDevice()
 				+ std::to_string(props.driverVersion / 10000) + "."
 				+ std::to_string((props.driverVersion % 10000) / 100) + "."
 				+ std::to_string(props.driverVersion % 100);
-		
-		initVideoRouting();
 #else
 		driverVersion = std::to_string(VK_API_VERSION_MAJOR(props.driverVersion)) + "."
 				+ std::to_string(VK_API_VERSION_MINOR(props.driverVersion)) + "."
@@ -511,19 +509,6 @@ bool VulkanContext::InitDevice()
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
 	return false;
-}
-
-void VulkanContext::initVideoRouting()
-{
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
-	extern void os_VideoRoutingTermVk();
-	extern void os_VideoRoutingInitSyphonWithVkDevice(const vk::UniqueDevice& device);
-	os_VideoRoutingTermVk();
-	if (config::VideoRouting)
-	{
-		os_VideoRoutingInitSyphonWithVkDevice(device);
-	}
-#endif
 }
 
 void VulkanContext::CreateSwapChain()
