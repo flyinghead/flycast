@@ -416,6 +416,9 @@ static bool set_variable_visibility(void)
 		option_display.visible = platformIsArcade;
 		option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.visible = settings.platform.isNaomi();
+		option_display.key = CORE_OPTION_NAME "_force_freeplay";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 		// Show/hide Dreamcast options
 		option_display.visible = platformIsDreamcast;
@@ -436,6 +439,10 @@ static bool set_variable_visibility(void)
 		option_display.key = CORE_OPTION_NAME "_enable_purupuru";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.key = CORE_OPTION_NAME "_per_content_vmus";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_dc_32mb_mod";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_vmu_sound";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.visible = platformIsDreamcast || settings.platform.isAtomiswave();
 		option_display.key = CORE_OPTION_NAME "_emulate_bba";
@@ -523,7 +530,7 @@ static bool set_variable_visibility(void)
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
 	var.key = CORE_OPTION_NAME "_texupscale";
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "off"))
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "1"))
 		textureUpscaleEnabled = true;
 
 	if (first_run || (textureUpscaleEnabled != textureUpscaleWasEnabled))
