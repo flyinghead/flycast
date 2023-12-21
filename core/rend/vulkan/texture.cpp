@@ -180,7 +180,8 @@ void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped,
 		}
 	}
 	bool isNew = true;
-	if (width != (int)extent.width || height != (int)extent.height || format != this->format)
+	if (width != (int)extent.width || height != (int)extent.height
+			|| format != this->format || !this->image)
 		Init(width, height, format, dataSize, mipmapped, mipmapsIncluded);
 	else
 		isNew = false;
