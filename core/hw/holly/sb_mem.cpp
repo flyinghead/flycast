@@ -106,8 +106,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 				else
 					return (T)0;
 			}
-			else
-			{
+			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
 				return (T)libExtDevice_ReadMem_A0_006(addr, sz);
 			}
 		}
@@ -217,12 +216,12 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 			{
 				if (!config::EmulateBBA)
 					ModemWriteMem_A0_006(addr, data, sz);
+				return;
 			}
-			else
-			{
+			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
 				libExtDevice_WriteMem_A0_006(addr, data, sz);
+				return;
 			}
-			return;
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
