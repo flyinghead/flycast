@@ -160,7 +160,7 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 		// Max G1 bus rate: 50 MHz x 16 bits
 		// SH4_access990312_e.xls: 14.4 MB/s from GD-ROM to system RAM
 		// Here: 7 MB/s
-		sh4_sched_request(dmaSchedId, SB_GDLEN * 27);
+		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * 27, SH4_MAIN_CLOCK));
 		return;
 	}
 	else
