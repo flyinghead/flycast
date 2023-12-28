@@ -50,6 +50,9 @@ public:
 	std::string getDriverVersion() override {
 		return driverVersion;
 	}
+	bool isAMD() override {
+		return amd;
+	}
 	void resetUIDriver();
 
 	bool hasPerPixel() override
@@ -70,6 +73,7 @@ private:
 	bool _isGLES = false;
 	std::string driverName;
 	std::string driverVersion;
+	bool amd = false;
 };
 
 #if defined(LIBRETRO)

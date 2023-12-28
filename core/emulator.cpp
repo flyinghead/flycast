@@ -43,6 +43,7 @@
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
 #include "oslib/storage.h"
+#include "wsi/context.h"
 #include <chrono>
 
 settings_t settings;
@@ -327,6 +328,8 @@ static void loadSpecialSettings()
 			config::ForceFreePlay.override(false);
 		}
 	}
+	if (GraphicsContext::Instance()->isAMD())
+		config::NativeDepthInterpolation.override(true);
 }
 
 void dc_reset(bool hard)

@@ -89,6 +89,7 @@ bool DXContext::init(bool keepCurrentWindow)
 	driverName = std::string(id.Description);
 	driverVersion = std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 		+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+	amd = id.VendorId == 0x1002 || id.VendorId == 0x1022;
 	deviceReady = true;
 
 	return true;

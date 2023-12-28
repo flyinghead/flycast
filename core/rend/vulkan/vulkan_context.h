@@ -95,6 +95,9 @@ public:
 	std::string getDriverVersion() override {
 		return driverVersion;
 	}
+	bool isAMD() override {
+		return vendorID == VENDOR_ATI || vendorID == VENDOR_AMD;
+	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }

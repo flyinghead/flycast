@@ -55,6 +55,9 @@ public:
 	bool isIntel() const {
 		return vendorId == VENDOR_INTEL;
 	}
+	bool isAMD() override {
+		return vendorId == VENDOR_ATI || vendorId == VENDOR_AMD;
+	}
 
 	void setFrameRendered() {
 		frameRendered = true;
@@ -97,6 +100,8 @@ private:
 	pD3DCompile d3dcompiler = nullptr;
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
+	static constexpr UINT VENDOR_ATI = 0x1002;
+	static constexpr UINT VENDOR_AMD = 0x1022;
 };
 extern DX11Context theDX11Context;
 #endif

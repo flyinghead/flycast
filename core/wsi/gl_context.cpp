@@ -46,6 +46,16 @@ void GLGraphicsContext::findGLVersion()
 	driverName = p != nullptr ? p : "unknown";
 	p = (const char *)glGetString(GL_VERSION);
 	driverVersion = p != nullptr ? p : "unknown";
+	p = (const char *)glGetString(GL_VENDOR);
+	std::string vendor = p != nullptr ? p : "";
+	if (vendor.substr(0, 4) == "ATI ")
+		amd = true;
+	else if (driverName.find(" ATI ") != std::string::npos
+			|| driverName.find(" AMD ") != std::string::npos)
+		// mesa
+		amd = true;
+	else
+		amd = false;
 }
 
 void GLGraphicsContext::postInit()

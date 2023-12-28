@@ -50,6 +50,9 @@ public:
 	std::string getDriverVersion() override {
 		return driverVersion;
 	}
+	bool isAMD() override {
+		return amd;
+	}
 	void setFrameRendered() {
 		frameRendered = true;
 	}
@@ -69,6 +72,7 @@ private:
 	bool frameRendered = false;
 	std::string driverName;
 	std::string driverVersion;
+	bool amd = false;
 	bool deviceReady = false;
 };
 extern DXContext theDXContext;
