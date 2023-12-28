@@ -685,7 +685,7 @@ static const std::map<u32, hook_fp*> hooks = {
 		{ SYSCALL_ADDR(0x8C001006), gdrom_hle_op },
 		{ SYSCALL_ADDR(0x8C001008), reios_sys_misc },
 
-		{ SYSCALL_ADDR(dc_bios_entrypoint_gd2), reios_boot },
+		{ SYSCALL_ADDR(dc_bios_entrypoint_gd2), gdrom_hle_op },
 };
 
 void DYNACALL reios_trap(u32 op) {
