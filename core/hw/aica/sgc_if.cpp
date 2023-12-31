@@ -1211,8 +1211,7 @@ void AegStep(ChannelEx* ch)
 		if (ch->AEG.GetValue() >= 0x3FF)
 		{
 			aeg_printf("[%d]AEG_step : EG_Release End @ %x", ch->ChannelNumber, ch->AEG.GetValue());
-			ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
-			ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
+			ch->AEG.SetValue(0x3FF);
 		}
 		break;
 	}
