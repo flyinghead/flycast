@@ -1,0 +1,30 @@
+////////////////////////////////////////////////////////////////////////////////
+//              _______  __   __  __   __  _______  _______  __   __          //
+//             / _____/ / /  / / / /  / / / ___  / / _____/ / /__/ /          //
+//            / /____  / /__/ / / /__/ / / /__/ / / /____  /      /           //
+//           /____  / / ___  / /____  / / ___  / /___   / / /__/ /            //
+//           ____/ / / /  / /      / / / /  / / ____/  / / /  / /             //
+//          /_____/ /_/  /_/      /_/ /_/  /_/ /______/ /_/  /_/              //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+                        sh4asm SuperH-4 assembler/emitter
+                          Copyright 2017, 2019 snickerbockers
+
+sh4asm is an assembler/disassembler/emitter framework for the SuperH-4
+instruction set.  It's designed and tested with SEGA Dreamcast homebrew in
+mind, but it should work perfectly fine with any other sh4-based computing
+platform.
+
+sh4asm includes two components: sh4asm_core, and sh4asm.  sh4asm_core is a
+library which can be used to easily add an sh4 assembler to your own programs.
+sh4asm is a frontend that uses that library to implement a minimalistic
+command-line assembler/disassembler.
+
+The primary motivation for this is to form part of a test-framework for
+Dreamcast emulators (specificly my own emulator dubbed WashingtonDC), but sh4asm
+is designed with the intention that it will be useful in any application that
+requires an sh4 emitter.
+
+sh4asm is distributed under the terms of a permissive 3-clause BSD-style
+license; see LICENSE for details.

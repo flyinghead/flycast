@@ -33,6 +33,9 @@ struct Stop { };
 	void debugTrap(u32 event);
 	void subroutineCall();
 	void subroutineReturn();
+	void interrupt();
+	void step();
+	void doContinue();
 
 #else
 	static inline void init(int port) {}

@@ -50,6 +50,7 @@ void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
 void gui_save();
 void gui_loadState();
 void gui_saveState();
+void gui_debugger();
 
 enum class GuiState {
 	Closed,
@@ -62,7 +63,8 @@ enum class GuiState {
 	SelectDisk,
 	Loading,
 	NetworkStart,
-	Cheats
+	Cheats,
+	Debugger
 };
 extern GuiState gui_state;
 
