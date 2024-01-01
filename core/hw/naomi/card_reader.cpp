@@ -383,7 +383,7 @@ public:
 		SCIFSerialPort::Instance().setPipe(this);
 	}
 
-	~InitialDCardReader() {
+	~InitialDCardReader() override {
 		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 };
@@ -396,7 +396,7 @@ public:
 		getMieDevice()->setPipe(this);
 	}
 
-	~DerbyBRCardReader() {
+	~DerbyBRCardReader() override {
 		getMieDevice()->setPipe(nullptr);
 	}
 };
@@ -408,7 +408,7 @@ public:
 		getMieDevice()->setPipe(this);
 	}
 
-	~DerbyLRCardReader() {
+	~DerbyLRCardReader() override {
 		getMieDevice()->setPipe(nullptr);
 	}
 };
@@ -478,7 +478,7 @@ public:
 	ClubKartCardReader() {
 		SCIFSerialPort::Instance().setPipe(this);
 	}
-	~ClubKartCardReader() {
+	~ClubKartCardReader() override {
 		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
@@ -685,7 +685,7 @@ public:
 		SCIFSerialPort::Instance().setPipe(this);
 	}
 
-	~BarcodeReader() {
+	~BarcodeReader() override {
 		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 

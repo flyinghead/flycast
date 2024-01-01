@@ -506,7 +506,7 @@ public:
 		schedId = sh4_sched_register(0, schedCallback, this);
 	}
 
-	~Touchscreen()
+	~Touchscreen() override
 	{
 		sh4_sched_unregister(schedId);
 	}

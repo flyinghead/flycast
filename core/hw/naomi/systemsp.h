@@ -50,7 +50,7 @@ public:
 	SerialPort(SystemSpCart *cart, int index) : cart(cart), index(index) {
 	}
 
-	~SerialPort() {
+	~SerialPort() override {
 		if (pipe != nullptr)
 			delete pipe;
 	}
@@ -145,7 +145,7 @@ class SystemSpCart : public M4Cartridge
 {
 public:
 	SystemSpCart(u32 size);
-	~SystemSpCart();
+	~SystemSpCart() override;
 
 	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 	void setMediaName(const char *mediaName, const char *parentName) {

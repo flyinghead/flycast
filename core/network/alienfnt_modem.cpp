@@ -32,7 +32,7 @@ struct ModemEmu : public SerialPort::Pipe
 		schedId = sh4_sched_register(0, schedCallback);
 	}
 
-	~ModemEmu() {
+	~ModemEmu() override {
 		sh4_sched_unregister(schedId);
 		stop_pico();
 		SCIFSerialPort::Instance().setPipe(nullptr);
