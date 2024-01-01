@@ -50,7 +50,7 @@ protected:
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 			vjoyTexture->SetCommandBuffer(cmdBuffer);
-			vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
+			vjoyTexture->UploadToGPU(w, h, image_data, false);
 			vjoyTexture->SetCommandBuffer(nullptr);
 			cmdBuffer.end();
 			texCommandPool.EndFrame();
