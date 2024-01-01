@@ -1190,6 +1190,12 @@ void retro_reset()
 	emu.start();
 }
 
+static void forceNativeDepthInterpolation()
+{
+	if (GraphicsContext::Instance()->isAMD())
+		config::NativeDepthInterpolation.override(true);
+}
+
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset()
 {
@@ -1199,6 +1205,7 @@ static void context_reset()
 	glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 	rend_term_renderer();
 	theGLContext.init();
+	forceNativeDepthInterpolation();
 	rend_init_renderer();
 }
 
@@ -1759,6 +1766,7 @@ static void retro_vk_context_reset()
 		return;
 	}
 	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
+	forceNativeDepthInterpolation();
 	rend_term_renderer();
 	rend_init_renderer();
 }
@@ -1890,6 +1898,7 @@ static void dx11_context_reset()
 	theDX11Context.term();
 
 	theDX11Context.init(hw_render->device, hw_render->context, hw_render->D3DCompile, hw_render->featureLevel);
+	forceNativeDepthInterpolation();
 	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT)
 		config::RendererType = RenderType::DirectX11_OIT;
 	else if (config::RendererType != RenderType::DirectX11_OIT)

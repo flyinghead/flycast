@@ -328,7 +328,8 @@ static void loadSpecialSettings()
 			config::ForceFreePlay.override(false);
 		}
 	}
-	if (GraphicsContext::Instance()->isAMD())
+	// Graphics context isn't available yet in libretro
+	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
 		config::NativeDepthInterpolation.override(true);
 }
 

@@ -182,6 +182,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			|| retro_render_if->interface_version != RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION)
 		return false;
 	this->retro_render_if = retro_render_if;
+	GraphicsContext::instance = this;
 
 	instance = vk::Instance(retro_render_if->instance);
 	physicalDevice = vk::PhysicalDevice(retro_render_if->gpu);
@@ -403,6 +404,7 @@ void VulkanContext::endFrame()
 
 void VulkanContext::term()
 {
+	GraphicsContext::instance = nullptr;
 	if (device)
 	{
 		device.waitIdle();
