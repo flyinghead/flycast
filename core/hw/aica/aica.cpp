@@ -95,8 +95,8 @@ static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
 
 void timeStep()
 {
-	for (std::size_t i = 0; i < std::size(timers); i++)
-		timers[i].StepTimer(1);
+	for (auto& timer : timers)
+		timer.StepTimer(1);
 
 	SCIPD->SAMPLE_DONE = 1;
 	MCIPD->SAMPLE_DONE = 1;
