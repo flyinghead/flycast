@@ -34,7 +34,7 @@ bool ZipArchive::Open(FILE *file)
 		std::fclose(file);
 		return false;
 	}
-	zip = zip_open_from_source(source, 0, NULL);
+	zip = zip_open_from_source(source, 0, nullptr);
 	if (zip == nullptr)
 		zip_source_free(source);
 	return zip != nullptr;
@@ -42,44 +42,42 @@ bool ZipArchive::Open(FILE *file)
 
 ArchiveFile* ZipArchive::OpenFile(const char* name)
 {
-	zip_file *zip_file = zip_fopen(zip, name, 0);
-	if (zip_file == NULL)
-		return NULL;
-
-	return new ZipArchiveFile(zip_file);
+	zip_file_t *zip_file = zip_fopen(zip, name, 0);
+	if (zip_file == nullptr)
+		return nullptr;
+	zip_stat_t stat;
+	zip_stat(zip, name, 0, &stat);
+	return new ZipArchiveFile(zip_file, stat.size);
 }
 
-struct zip_file *zip_fopen_by_crc(struct zip *za, u32 crc, int flags)
+static zip_file *zip_fopen_by_crc(zip_t *za, u32 crc, int flags, zip_uint64_t& index)
 {
-    zip_uint64_t i;
-    zip_int64_t n;
-    struct zip_stat stat;
+	if (crc == 0)
+		return nullptr;
 
-    if (crc == 0) {
-        return NULL;
-    }
+	zip_int64_t n = zip_get_num_entries(za, 0);
+	for (index = 0; index < (zip_uint64_t)n; index++)
+	{
+		zip_stat_t stat;
+		if (zip_stat_index(za, index, flags, &stat) < -1)
+			return nullptr;
+		if (stat.crc == crc)
+			return zip_fopen_index(za, index, flags);
+	}
 
-    n = zip_get_num_entries(za, 0);
-    for (i = 0; i < (zip_uint64_t)n; i++) {
-        if (zip_stat_index(za, i, flags, &stat) < -1) {
-            return NULL;
-        }
-
-        if (stat.crc == crc) {
-            return zip_fopen_index(za, i, flags);
-        }
-    }
-
-    return NULL;
+	return nullptr;
 }
 
 ArchiveFile* ZipArchive::OpenFileByCrc(u32 crc)
 {
-	zip_file *zip_file = zip_fopen_by_crc(zip, crc, 0);
-	if (zip_file == NULL)
-		return NULL;
+	zip_uint64_t index;
+	zip_file_t *zip_file = zip_fopen_by_crc(zip, crc, 0, index);
+	if (zip_file == nullptr)
+		return nullptr;
+	zip_stat_t stat;
+	zip_stat_index(zip, index, 0, &stat);
 
-	return new ZipArchiveFile(zip_file);
+	return new ZipArchiveFile(zip_file, stat.size);
 }
 
 u32 ZipArchiveFile::Read(void* buffer, u32 length)
@@ -93,7 +91,7 @@ bool ZipArchive::Open(const void *data, size_t size)
 	zip_source_t *source = zip_source_buffer_create(data, size, 0, &error);
 	if (source == nullptr)
 		return false;
-	zip = zip_open_from_source(source, 0, NULL);
+	zip = zip_open_from_source(source, 0, nullptr);
 	if (zip == nullptr)
 		zip_source_free(source);
 	return zip != nullptr;
@@ -101,8 +99,10 @@ bool ZipArchive::Open(const void *data, size_t size)
 
 ArchiveFile *ZipArchive::OpenFirstFile()
 {
-	zip_file *zipFile = zip_fopen_index(zip, 0, 0);
+	zip_file_t *zipFile = zip_fopen_index(zip, 0, 0);
 	if (zipFile == nullptr)
 		return nullptr;
-	return new ZipArchiveFile(zipFile);
+	zip_stat_t stat;
+	zip_stat_index(zip, 0, 0, &stat);
+	return new ZipArchiveFile(zipFile, stat.size);
 }

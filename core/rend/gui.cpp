@@ -22,7 +22,6 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui.h"
-#include "roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
@@ -45,6 +44,7 @@
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
 #include "hw/naomi/card_reader.h"
+#include "oslib/resources.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -213,7 +213,10 @@ void gui_initFonts()
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
 	const float fontSize = 17.f * settings.display.uiScale;
-	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
+	size_t dataSize;
+	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
+	verify(data != nullptr);
+	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
 #ifdef _WIN32

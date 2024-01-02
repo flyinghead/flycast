@@ -35,6 +35,4 @@ public final class JNIdc
 		JNIdc.vjoy(14, 1, 0, 0, 0);
 	}
 	public static native void hideOsd();
-
-	public static native void setButtons(byte[] data);
 }

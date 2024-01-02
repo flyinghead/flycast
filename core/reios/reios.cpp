@@ -26,11 +26,9 @@
 #include "imgread/common.h"
 #include "imgread/isofs.h"
 #include "hw/sh4/sh4_mmr.h"
-#include <cmrc/cmrc.hpp>
+#include "oslib/resources.h"
 
 #include <map>
-
-CMRC_DECLARE(flycast);
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
@@ -741,14 +739,9 @@ void reios_reset(u8* rom)
 	// 7078 24 × 24 pixels (72 bytes) characters
 	// 129 32 × 32 pixels (128 bytes) characters
 	memset(pFont, 0, 536496);
-	try {
-		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-		cmrc::file fontFile = fs.open("fonts/biosfont.bin");
-		memcpy(pFont, fontFile.begin(), fontFile.end() - fontFile.begin());
-	} catch (const std::system_error& e) {
-		ERROR_LOG(REIOS, "Failed to load the bios font: %s", e.what());
-		throw;
-	}
+	size_t size;
+	std::unique_ptr<u8[]> fontData = resource::load("fonts/biosfont.bin", size);
+	memcpy(pFont, fontData.get(), size);
 
 	gd_hle_state = {};
 }

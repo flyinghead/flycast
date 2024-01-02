@@ -977,10 +977,19 @@ cmrc_add_resources(flycast-resources
 		resources/picture/f355_print_template.png)
 
 cmrc_add_resources(flycast-resources
-		fonts/printer_ascii8x16.bin
-		fonts/printer_ascii12x24.bin
-		fonts/printer_kanji16x16.bin
-		fonts/printer_kanji24x24.bin)
+		fonts/printer_ascii8x16.bin.zip
+		fonts/printer_ascii12x24.bin.zip
+		fonts/printer_kanji16x16.bin.zip
+		fonts/printer_kanji24x24.bin.zip)
+
+if(NOT LIBRETRO)
+	cmrc_add_resources(flycast-resources fonts/Roboto-Medium.ttf.zip)
+	if(ANDROID)
+		cmrc_add_resources(flycast-resources
+			WHENCE resources
+			resources/picture/buttons.png)
+	endif()
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp
@@ -1097,6 +1106,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/oslib/directory.h
 		core/oslib/host_context.h
 		core/oslib/oslib.h
+		core/oslib/resources.cpp
+		core/oslib/resources.h
 		core/oslib/storage.cpp
 		core/oslib/storage.h
 		core/oslib/unwind_info.h
@@ -1129,7 +1140,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/reios/reios.h
 		core/reios/reios_elf.cpp
 		core/reios/reios_elf.h)
-cmrc_add_resources(flycast-resources fonts/biosfont.bin)
+cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h

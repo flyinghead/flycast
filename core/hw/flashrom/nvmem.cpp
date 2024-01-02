@@ -22,9 +22,7 @@
 #include "hw/aica/aica_if.h"
 #include "reios/reios.h"
 #include "oslib/oslib.h"
-#include "archive/ZipArchive.h"
-#include <cmrc/cmrc.hpp>
-CMRC_DECLARE(flycast);
+#include "oslib/resources.h"
 
 extern bool bios_loaded;
 
@@ -200,40 +198,7 @@ static void fixUpDCFlash()
 
 static std::unique_ptr<u8[]> loadFlashResource(const std::string& name, size_t& size)
 {
-	try {
-		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-		std::string fname = "flash/" + name + ".zip";
-		if (fs.exists(fname))
-		{
-			cmrc::file zipFile = fs.open(fname);
-			ZipArchive zip;
-			if (zip.Open(zipFile.cbegin(), zipFile.size()))
-			{
-				std::unique_ptr<ArchiveFile> flashFile;
-				flashFile.reset(zip.OpenFirstFile());
-				if (flashFile != nullptr)
-				{
-					std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
-					size = flashFile->Read(buffer.get(), size);
-
-					return buffer;
-				}
-			}
-		}
-		else
-		{
-			cmrc::file flashFile = fs.open("flash/" + name);
-			size = flashFile.size();
-			std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
-
-			return buffer;
-		}
-		DEBUG_LOG(FLASHROM, "Default flash not found");
-	} catch (const std::system_error& e) {
-		DEBUG_LOG(FLASHROM, "Default flash not found: %s", e.what());
-	}
-	size = 0;
-	return nullptr;
+	return resource::load("flash/" + name, size);
 }
 
 static void loadDefaultAWBiosFlash()

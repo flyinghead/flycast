@@ -34,8 +34,7 @@
 #undef ERROR_LOG
 #define ERROR_LOG INFO_LOG
 #else
-#include <cmrc/cmrc.hpp>
-CMRC_DECLARE(flycast);
+#include "oslib/resources.h"
 #endif
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
@@ -49,26 +48,16 @@ public:
 	BitmapWriter(int printerWidth) : printerWidth(printerWidth)
 	{
 #ifndef STANDALONE_TEST
-		try {
-			cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-			cmrc::file fontFile = fs.open("fonts/printer_ascii8x16.bin");
-			ascii8x16 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_ascii12x24.bin");
-			ascii12x24 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_kanji16x16.bin");
-			kanji16x16 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_kanji24x24.bin");
-			kanji24x24 = (const u8 *)fontFile.begin();
-		} catch (const std::system_error& e) {
-			ERROR_LOG(NAOMI, "Failed to load a printer font: %s", e.what());
-			throw;
-		}
-
+		size_t size;
+		ascii8x16 = resource::load("fonts/printer_ascii8x16.bin", size);
+		ascii12x24 = resource::load("fonts/printer_ascii12x24.bin", size);
+		kanji16x16 = resource::load("fonts/printer_kanji16x16.bin", size);
+		kanji24x24 = resource::load("fonts/printer_kanji24x24.bin", size);
 #else
-		loadFont("printer_ascii8x16.bin", (u8 **)&ascii8x16);
-		loadFont("printer_ascii12x24.bin", (u8 **)&ascii12x24);
-		loadFont("printer_kanji16x16.bin", (u8 **)&kanji16x16);
-		loadFont("printer_kanji24x24.bin", (u8 **)&kanji24x24);
+		ascii8x16 = loadFont("printer_ascii8x16.bin");
+		ascii12x24 = loadFont("printer_ascii12x24.bin");
+		kanji16x16 = loadFont("printer_kanji16x16.bin");
+		kanji24x24 = loadFont("printer_kanji24x24.bin");
 #endif
 	}
 
@@ -322,14 +311,9 @@ public:
 			u8 *data = nullptr;
 			int x, y, comp;
 #ifndef STANDALONE_TEST
-			try {
-				cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-				cmrc::file templateFile = fs.open("picture/f355_print_template.png");
-				const u8 *fileData = (const u8 *)templateFile.begin();
-				data = stbi_load_from_memory(fileData, templateFile.size(), &x, &y, &comp, STBI_rgb_alpha);
-			} catch (const std::system_error& e) {
-				ERROR_LOG(NAOMI, "Failed to load the printer template: %s", e.what());
-			}
+			size_t size;
+			std::unique_ptr<u8[]> fileData = resource::load("picture/f355_print_template.png", size);
+			data = stbi_load_from_memory(fileData.get(), size, &x, &y, &comp, STBI_rgb_alpha);
 #else
 			FILE *f = fopen("f355_print_template.png", "rb");
 			if (f != nullptr)
@@ -498,12 +482,12 @@ private:
 		int glyphSize;
 		if (bigFont)
 		{
-			glyph = ascii12x24;
+			glyph = ascii12x24.get();
 			glyphSize = 2 * 24;
 		}
 		else
 		{
-			glyph = ascii8x16;
+			glyph = ascii8x16.get();
 			glyphSize = 16;
 		}
 		if ((uint8_t)c < ' ')
@@ -518,12 +502,12 @@ private:
 		int glyphSize;
 		if (bigFont)
 		{
-			glyph = kanji24x24;
+			glyph = kanji24x24.get();
 			glyphSize = 3 * 24;
 		}
 		else
 		{
-			glyph = kanji16x16;
+			glyph = kanji16x16.get();
 			glyphSize = 2 * 16;
 		}
 		if (c == ' ')
@@ -549,20 +533,20 @@ private:
 		page.insert(page.end(), printerWidth * count, 0);
 	}
 
-	void loadFont(const char *fname, u8 **data)
+	std::unique_ptr<u8[]> loadFont(const char *fname)
 	{
 		FILE *f = fopen(fname, "rb");
-		if (!f)
+		if (!f) {
 			perror(fname);
-		else
-		{
-			fseek(f, 0, SEEK_END);
-			size_t sz = ftell(f);
-			fseek(f, 0, SEEK_SET);
-			*data = (u8 *)malloc(sz);
-			fread(*data, sz, 1, f);
-			fclose(f);
+			return nullptr;
 		}
+		fseek(f, 0, SEEK_END);
+		size_t sz = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		std::unique_ptr<u8[]> data = std::make_unique<u8[]>(sz);
+		fread(data.get(), sz, 1, f);
+		fclose(f);
+		return data;
 	}
 
 	int printerWidth = 920;
@@ -596,10 +580,10 @@ private:
 	int underline = 0;
 	int maxUnderline = 0;
 
-	const u8 *ascii8x16;
-	const u8 *ascii12x24;
-	const u8 *kanji16x16;
-	const u8 *kanji24x24;
+	std::unique_ptr<u8[]> ascii8x16;
+	std::unique_ptr<u8[]> ascii12x24;
+	std::unique_ptr<u8[]> kanji16x16;
+	std::unique_ptr<u8[]> kanji24x24;
 };
 
 //

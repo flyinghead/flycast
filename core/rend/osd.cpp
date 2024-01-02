@@ -22,8 +22,12 @@
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
 #endif
+#include "oslib/resources.h"
 
 #include <stb_image.h>
+
+#define OSD_TEX_W 512
+#define OSD_TEX_H 256
 
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 extern float vjoy_pos[15][8];
@@ -59,7 +63,6 @@ static const float vjoy_sz[2][15] = {
 };
 
 static std::vector<OSDVertex> osdVertices;
-std::vector<u8> DefaultOSDButtons;
 
 void HideOSD()
 {
@@ -163,9 +166,9 @@ u8 *loadOSDButtons(int &width, int &height)
 	}
 	if (image_data == nullptr)
 	{
-		if (DefaultOSDButtons.empty())
-			die("No default OSD buttons");
-		image_data = stbi_load_from_memory(DefaultOSDButtons.data(), DefaultOSDButtons.size(), &width, &height, &n, STBI_rgb_alpha);
+		size_t size;
+		std::unique_ptr<u8[]> data = resource::load("picture/buttons.png", size);
+		image_data = stbi_load_from_memory(data.get(), size, &width, &height, &n, STBI_rgb_alpha);
 	}
 	return image_data;
 }

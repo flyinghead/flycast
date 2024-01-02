@@ -35,8 +35,6 @@ import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.SipEmulator;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -116,7 +114,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         }
         Log.i("flycast", "Environment initialized");
         storage = new AndroidStorage(this);
-        installButtons();
         setStorageDirectories();
 
         boolean externalStorageLegacy = true;
@@ -396,21 +393,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 requestRecordAudioPermission();
         }
 
-    }
-
-    private void installButtons() {
-        try {
-            InputStream in = Emulator.getAppContext().getAssets().open("buttons.png");
-
-            if (in != null) {
-                byte[] buf = new byte[in.available()];
-                in.read(buf);
-                in.close();
-                JNIdc.setButtons(buf);
-            }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
     }
 
     // Called from native code

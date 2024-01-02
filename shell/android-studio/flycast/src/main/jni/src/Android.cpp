@@ -633,11 +633,6 @@ void vjoy_stop_editing(bool canceled)
     jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data)
-{
-	DefaultOSDButtons = jni::ByteArray(data, false);
-}
-
 void enableNetworkBroadcast(bool enable)
 {
     JNIEnv *env = jni::env();
