@@ -4,7 +4,9 @@
 #include "rend/osd.h"
 #include "naomi2.h"
 #include "rend/transform_matrix.h"
+#ifdef LIBRETRO
 #include "postprocess.h"
+#endif
 
 #include <memory>
 

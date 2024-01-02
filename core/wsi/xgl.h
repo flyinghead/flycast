@@ -25,7 +25,7 @@
 class XGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~XGLGraphicsContext() { term(); XFree(framebufferConfigs); }
+	~XGLGraphicsContext() override { term(); XFree(framebufferConfigs); }
 
 	bool init();
 	void term() override;

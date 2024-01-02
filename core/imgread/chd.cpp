@@ -21,7 +21,7 @@ struct CHDDisc : Disc
 
 	void tryOpen(const char* file);
 
-	~CHDDisc()
+	~CHDDisc() override
 	{
 		delete[] hunk_mem;
 

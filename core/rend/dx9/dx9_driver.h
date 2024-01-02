@@ -29,7 +29,7 @@ public:
 		ImGui_ImplDX9_Init(device);
 	}
 
-	~DX9Driver() {
+	~DX9Driver() override {
 		ImGui_ImplDX9_Shutdown();
 	}
 

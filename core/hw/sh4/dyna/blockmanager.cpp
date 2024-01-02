@@ -360,9 +360,8 @@ void bm_WriteBlockMap(const std::string& file)
 	if (f)
 	{
 		INFO_LOG(DYNAREC, "Writing block map !");
-		for (auto& it : blkmap)
+		for (const auto& [_, block] : blkmap)
 		{
-			RuntimeBlockInfoPtr& block = it.second;
 			fprintf(f, "block: %d:%08X:%p:%d:%d:%d\n", block->BlockType, block->addr, block->code, block->host_code_size, block->guest_cycles, block->guest_opcodes);
 			for(size_t j = 0; j < block->oplist.size(); j++)
 				fprintf(f,"\top: %zd:%d:%s\n", j, block->oplist[j].guest_offs, block->oplist[j].dissasm().c_str());
@@ -374,9 +373,8 @@ void bm_WriteBlockMap(const std::string& file)
 
 void sh4_jitsym(FILE* out)
 {
-	for (const auto& it : blkmap)
+	for (const auto& [_, block] : blkmap)
 	{
-		const RuntimeBlockInfoPtr& block = it.second;
 		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
 	}
 }
@@ -548,9 +546,8 @@ void print_blocks()
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}
 
-	for (auto it : blkmap)
+	for (const auto& [_, blk] : blkmap)
 	{
-		RuntimeBlockInfoPtr blk = it.second;
 		if (f)
 		{
 			fprintf(f,"block: %p\n",blk.get());

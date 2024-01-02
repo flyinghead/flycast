@@ -19,7 +19,6 @@
 #pragma once
 #include "build.h"
 #ifndef TARGET_UWP
-#include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
 #include "input/mouse.h"
 #include <windows.h>

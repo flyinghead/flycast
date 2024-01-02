@@ -17,7 +17,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "build.h"
 #include <string>
 
 namespace lua

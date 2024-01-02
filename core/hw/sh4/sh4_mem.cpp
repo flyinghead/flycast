@@ -9,7 +9,6 @@
 #include "sh4_mmr.h"
 #include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
-#include "cfg/option.h"
 #include "hw/mem/addrspace.h"
 #include "hw/sh4/modules/mmu.h"
 

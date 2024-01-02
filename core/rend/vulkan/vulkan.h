@@ -52,7 +52,7 @@ class Deleter : public Deletable
 {
 public:
 	Deleter(T *p) : p(p) {}
-	~Deleter() {
+	~Deleter() override {
 		delete p;
 	}
 private:

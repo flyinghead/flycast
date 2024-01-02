@@ -30,7 +30,7 @@ public:
 		ImGui_ImplDX11_Init(device, deviceContext);
 	}
 
-	~DX11Driver() {
+	~DX11Driver() override {
 		ImGui_ImplDX11_Shutdown();
 	}
 

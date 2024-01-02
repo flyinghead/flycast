@@ -1,5 +1,4 @@
 #pragma once
-#include "shil.h"
 #include "../sh4_if.h"
 
 #define mkbet(c,s,v) ((c<<3)|(s<<1)|v)

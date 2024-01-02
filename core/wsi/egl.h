@@ -27,7 +27,7 @@
 class EGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~EGLGraphicsContext() { term(); }
+	~EGLGraphicsContext() override { term(); }
 
 	bool init();
 	void term() override;

@@ -24,7 +24,7 @@ class NetDimm : public GDCartridge
 {
 public:
 	NetDimm(u32 size);
-	~NetDimm();
+	~NetDimm() override;
 
 	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 

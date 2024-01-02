@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include <vector>
 #if defined(__SWITCH__)
 #include <malloc.h>
 #endif
