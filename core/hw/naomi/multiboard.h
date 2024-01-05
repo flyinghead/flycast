@@ -68,9 +68,46 @@ public:
 
 class IpcConditionVariable
 {
-	HANDLE semaphore;
+	class Semaphore
+	{
+		HANDLE handle;
+
+	public:
+		Semaphore()
+		{
+			SECURITY_ATTRIBUTES secattr{ sizeof(SECURITY_ATTRIBUTES) };
+			secattr.bInheritHandle = TRUE;
+			handle = CreateSemaphore(&secattr, 0, std::numeric_limits<LONG>::max(), NULL);
+			if (handle == NULL)
+				throw std::runtime_error("Semaphore create failed");
+		}
+		~Semaphore() {
+			CloseHandle(handle);
+		}
+
+		bool wait(DWORD msecs = INFINITE)
+		{
+			DWORD rc = WaitForSingleObject(handle, msecs);
+			if (rc == WAIT_ABANDONED || rc == WAIT_FAILED)
+				throw std::runtime_error("Semaphore wait failure");
+			return rc != WAIT_TIMEOUT;
+		}
+
+		void signal(int n = 1) {
+			ReleaseSemaphore(handle, n, nullptr);
+		}
+	};
+
+	Semaphore semaphore;
 	IpcMutex mutex;
 	int waiters = 0;
+	// The unlock/wait/lock in wait() should be atomic so the h semaphore is used
+	// to make sure all processes about to wait (i.e. on the waiters list) are notified before any other.
+	// This race condition happens more frequently with one slave, where one process
+	// notifies the other that everybody is ready and ends up notifying itself,
+	// while the other process waits indefinitely.
+	// See https://birrell.org/andrew/papers/ImplementingCVs.pdf
+	Semaphore h;
 
 	std::cv_status waitMs(std::unique_lock<IpcMutex>& lock, DWORD msecs)
 	{
@@ -78,35 +115,28 @@ class IpcConditionVariable
 		waiters++;
 		mutex.unlock();
 
-		// The unlock/wait/lock should be atomical so this implementation isn't compliant
 		lock.unlock();
-		DWORD rc = WaitForSingleObject(semaphore, msecs);
+		std::cv_status status = semaphore.wait(msecs) ?
+				std::cv_status::no_timeout : std::cv_status::timeout;
+		// must be done before re-acquiring the lock
+		h.signal();
 		lock.lock();
-		if (rc == WAIT_ABANDONED || rc == WAIT_FAILED)
-			throw std::runtime_error("Semaphore wait failure");
-		return rc == WAIT_TIMEOUT ? std::cv_status::timeout : std::cv_status::no_timeout;
+		return status;
 	}
 
 public:
-	IpcConditionVariable()
-	{
-		SECURITY_ATTRIBUTES secattr{ sizeof(SECURITY_ATTRIBUTES) };
-		secattr.bInheritHandle = TRUE;
-		semaphore = CreateSemaphore(&secattr, 0, std::numeric_limits<LONG>::max(), NULL);
-		if (semaphore == NULL)
-			throw std::runtime_error("Semaphore create failed");
-	}
-
-	~IpcConditionVariable()
-	{
-		CloseHandle(semaphore);
-	}
-
 	void notify_all()
 	{
 		mutex.lock();
-		ReleaseSemaphore(semaphore, waiters, NULL);
-		waiters = 0;
+		if (waiters > 0)
+		{
+			semaphore.signal(waiters);
+			// make sure waiters are notified before moving on
+			do {
+				h.wait();
+				waiters--;
+			} while (waiters > 0);
+		}
 		mutex.unlock();
 	}
 
