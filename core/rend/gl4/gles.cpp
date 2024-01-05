@@ -671,8 +671,8 @@ struct OpenGL4Renderer : OpenGLRenderer
 		{
 			DrawOSD(false);
 			frameRendered = true;
+			renderVideoRouting();
 		}
-		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;
@@ -781,7 +781,8 @@ static void resize(int w, int h)
 
 bool OpenGL4Renderer::renderFrame(int width, int height)
 {
-	initVideoRoutingFrameBuffer();
+	if (!config::EmulateFramebuffer)
+		initVideoRoutingFrameBuffer();
 	
 	const bool is_rtt = pvrrc.isRTT;
 

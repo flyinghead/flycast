@@ -619,6 +619,7 @@ void DrawStrips()
 
 void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	initVideoRoutingFrameBuffer();
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
 	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
@@ -663,6 +664,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	DrawOSD(false);
 	frameRendered = true;
+	renderVideoRouting();
 	restoreCurrentFramebuffer();
 }
 

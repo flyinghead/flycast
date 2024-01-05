@@ -212,10 +212,6 @@ void DX11Context::term()
 		FreeLibrary(d3dcompilerHandle);
 		d3dcompilerHandle = NULL;
 	}
-#ifdef VIDEO_ROUTING
-	extern void os_VideoRoutingTermDX();
-	os_VideoRoutingTermDX();
-#endif
 }
 
 void DX11Context::Present()

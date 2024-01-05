@@ -26,6 +26,8 @@
 
 #include <memory>
 
+void os_VideoRoutingTermDX();
+
 const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (UINT)offsetof(Vertex, x), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -173,6 +175,9 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+#ifdef VIDEO_ROUTING
+	os_VideoRoutingTermDX();
+#endif
 	n2Helper.term();
 	vtxConstants.reset();
 	pxlConstants.reset();
@@ -1342,7 +1347,7 @@ void DX11Renderer::renderVideoRouting()
 		
 		ID3D11RenderTargetView* pRenderTargetView = theDX11Context.getRenderTarget().get();
 
-		// Backbuffer texture would be different after reszing, fetching new address everytime
+		// Backbuffer texture would be different after resizing, fetching new address everytime
 		ID3D11Resource* pResource = nullptr;
 		pRenderTargetView->GetResource(&pResource);
 		ID3D11Texture2D* backBufferTexture = nullptr;
@@ -1350,28 +1355,14 @@ void DX11Renderer::renderVideoRouting()
 		
 		if (config::VideoRoutingScale)
 		{
-			static int targetWidth, targetHeight, vrStagingWidth, vrStagingHeight;
-			static D3D11_VIEWPORT scaledViewPort{};
-
-			auto updateScaledTexture = [this]() -> void {
-				targetWidth = config::VideoRoutingVRes * settings.display.width / settings.display.height;
-				targetHeight = config::VideoRoutingVRes;
-
-				vrScaledTexture.reset();
-				vrScaledRenderTarget.reset();
-				createTexAndRenderTarget(vrScaledTexture, vrScaledRenderTarget, targetWidth, targetHeight);
-
-				scaledViewPort.Width = targetWidth;
-				scaledViewPort.Height = targetHeight;
-				scaledViewPort.MinDepth = 0.f;
-				scaledViewPort.MaxDepth = 1.f;
-			};
-
 			D3D11_TEXTURE2D_DESC bbDesc = {};
 			backBufferTexture->GetDesc(&bbDesc);
+			D3D11_TEXTURE2D_DESC vrsDesc = {};
+			if (vrStagingTexture)
+				vrStagingTexture->GetDesc(&vrsDesc);
 
-			// Window resized
-			if (bbDesc.Width != vrStagingWidth || bbDesc.Height != vrStagingHeight)
+			// Window resized?
+			if (!vrStagingTexture || bbDesc.Width != vrsDesc.Width || bbDesc.Height != vrsDesc.Height)
 			{
 				vrStagingTexture.reset();
 				vrStagingTextureSRV.reset();
@@ -1387,15 +1378,25 @@ void DX11Renderer::renderVideoRouting()
 				viewDesc.Texture2D.MipLevels = 1;
 				
 				device->CreateShaderResourceView(vrStagingTexture.get(), &viewDesc, &vrStagingTextureSRV.get());
-
-				updateScaledTexture();
 			}
 
-			// Scale down value changed
-			if (targetHeight != config::VideoRoutingVRes)
+			// Scale down value changed?
+			D3D11_TEXTURE2D_DESC vrscDesc = {};
+			if (vrScaledTexture)
+				vrScaledTexture->GetDesc(&vrscDesc);
+			int targetWidth = config::VideoRoutingVRes * settings.display.width / settings.display.height;
+			if (!vrScaledTexture || (int)vrscDesc.Height != config::VideoRoutingVRes)
 			{
-				updateScaledTexture();	
+
+				vrScaledTexture.reset();
+				vrScaledRenderTarget.reset();
+				createTexAndRenderTarget(vrScaledTexture, vrScaledRenderTarget, targetWidth, config::VideoRoutingVRes);
 			}
+			D3D11_VIEWPORT scaledViewPort{};
+			scaledViewPort.Width = targetWidth;
+			scaledViewPort.Height = config::VideoRoutingVRes;
+			scaledViewPort.MinDepth = 0.f;
+			scaledViewPort.MaxDepth = 1.f;
 
 			deviceContext->OMSetRenderTargets(1, &vrScaledRenderTarget.get(), nullptr);
 			deviceContext->RSSetViewports(1, &scaledViewPort);
@@ -1414,7 +1415,6 @@ void DX11Renderer::renderVideoRouting()
 	}
 	else
 	{
-		extern void os_VideoRoutingTermDX();
 		os_VideoRoutingTermDX();
 	}
 #endif

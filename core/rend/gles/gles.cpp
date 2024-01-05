@@ -379,6 +379,7 @@ void main()
 }
 )";
 
+void os_VideoRoutingTermGL();
 static void gl_free_osd_resources();
 
 GLCache glcache;
@@ -420,6 +421,8 @@ void do_swap_automation()
 		dump_screenshot(img, framebuffer->getWidth(), framebuffer->getHeight());
 		delete[] img;
 		dc_exit();
+		void sdl_window_destroy();
+		sdl_window_destroy(); // avoid crash
 		flycast_term();
 		exit(0);
 	}
@@ -443,6 +446,9 @@ static void gl_delete_shaders()
 
 void termGLCommon()
 {
+#ifdef VIDEO_ROUTING
+	os_VideoRoutingTermGL();
+#endif
 	termQuad();
 
 	// palette, fog
@@ -1170,7 +1176,8 @@ static void upload_vertex_indices()
 
 bool OpenGLRenderer::renderFrame(int width, int height)
 {
-	initVideoRoutingFrameBuffer();
+	if (!config::EmulateFramebuffer)
+		initVideoRoutingFrameBuffer();
 	
 	bool is_rtt = pvrrc.isRTT;
 
@@ -1448,9 +1455,9 @@ bool OpenGLRenderer::Render()
 	{
 		DrawOSD(false);
 		frameRendered = true;
+		renderVideoRouting();
 	}
 	
-	renderVideoRouting();
 	restoreCurrentFramebuffer();
 
 	return true;
@@ -1474,7 +1481,6 @@ void OpenGLRenderer::renderVideoRouting()
 	}
 	else
 	{
-		extern void os_VideoRoutingTermGL();
 		os_VideoRoutingTermGL();
 	}
 #endif

@@ -70,11 +70,6 @@ void GLGraphicsContext::preTerm()
 #ifndef LIBRETRO
 	imguiDriver.reset();
 #endif
-#ifdef VIDEO_ROUTING
-	extern void os_VideoRoutingTermGL();
-	os_VideoRoutingTermGL();
-#endif
-	
 	instance = nullptr;
 }
 
