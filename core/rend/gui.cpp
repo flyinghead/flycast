@@ -30,7 +30,7 @@
 #include "game_scanner.h"
 #include "version.h"
 #include "oslib/oslib.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"

@@ -4,7 +4,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "rend/osd.h"

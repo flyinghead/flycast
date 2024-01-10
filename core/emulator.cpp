@@ -30,7 +30,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/flashrom/nvmem.h"
 #include "cheats.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "debug/gdb_server.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/arm7/arm7_rec.h"

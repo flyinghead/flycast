@@ -3,7 +3,7 @@
 #include "maple_helper.h"
 #include "maple_if.h"
 #include "hw/pvr/spg.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"

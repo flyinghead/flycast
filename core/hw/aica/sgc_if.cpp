@@ -15,7 +15,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
 
     Some PLFO and FEG code from Highly_Theoretical lib by Neill Corlett
-    (https://github.com/kode54/Highly_Theoretical)
+    (https://gitlab.com/kode54/highly_theoretical)
  */
 
 #include "sgc_if.h"
@@ -23,7 +23,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 #include "dsp.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"

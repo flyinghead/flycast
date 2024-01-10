@@ -1087,22 +1087,22 @@ endif()
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-			core/oslib/audiobackend_alsa.cpp
-			core/oslib/audiobackend_coreaudio.cpp
-			core/oslib/audiobackend_directsound.cpp
-			core/oslib/audiobackend_libao.cpp
-			core/oslib/audiobackend_null.cpp
-			core/oslib/audiobackend_oboe.cpp
-			core/oslib/audiobackend_omx.cpp
-			core/oslib/audiobackend_oss.cpp
-			core/oslib/audiobackend_pulseaudio.cpp
-			core/oslib/audiobackend_sdl2.cpp
-			core/oslib/audiostream.cpp
+			core/audio/audiobackend_alsa.cpp
+			core/audio/audiobackend_coreaudio.cpp
+			core/audio/audiobackend_directsound.cpp
+			core/audio/audiobackend_libao.cpp
+			core/audio/audiobackend_null.cpp
+			core/audio/audiobackend_oboe.cpp
+			core/audio/audiobackend_omx.cpp
+			core/audio/audiobackend_oss.cpp
+			core/audio/audiobackend_pulseaudio.cpp
+			core/audio/audiobackend_sdl2.cpp
+			core/audio/audiostream.cpp
 			core/oslib/oslib.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-		core/oslib/audiostream.h
+		core/audio/audiostream.h
 		core/oslib/directory.h
 		core/oslib/host_context.h
 		core/oslib/oslib.h
