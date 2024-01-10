@@ -34,6 +34,7 @@
 #include "card_reader.h"
 #include "naomi_roms.h"
 #include "stdclass.h"
+#include "hw/mem/addrspace.h"
 #include <cerrno>
 #include <deque>
 
@@ -816,9 +817,6 @@ public:
 	// IN_PORT0
 	u8 getCN9_17_24() override
 	{
-		MapleInputState mapleInputState[4];
-		ggpo::getInput(mapleInputState);
-
 		u8 v = 0xff;
 		// 0: P1 start
 		// 1: P2 start
@@ -828,6 +826,7 @@ public:
 		// 5: P2 left
 		// 6: P1 up
 		// 7: P2 up
+		getInputState();
 		if (!(mapleInputState[0].kcode & DC_BTN_START))
 			v &= ~0x01;
 		if (!(mapleInputState[1].kcode & DC_BTN_START))
@@ -860,8 +859,7 @@ public:
 		// 5: P2 button 2
 		// 6: P1 button 3
 		// 7: P2 button 3
-		MapleInputState mapleInputState[4];
-		ggpo::getInput(mapleInputState);
+		getInputState();
 		if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))
 			v &= ~0x01;
 		if (!(mapleInputState[1].kcode & DC_DPAD_DOWN))
@@ -896,8 +894,7 @@ public:
 		// 2: P1 test
 		// 4: P1 coin
 		// 5: P2 coin
-		MapleInputState mapleInputState[4];
-		ggpo::getInput(mapleInputState);
+		getInputState();
 		if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
 			v &= ~0x01;
 		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
@@ -917,8 +914,7 @@ public:
 		// FIXME these are outputs??
 		// 0: P1 coin meter
 		// 1: P2 coin meter
-		MapleInputState mapleInputState[4];
-		ggpo::getInput(mapleInputState);
+		getInputState();
 		if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
 			v |= 1;
 		if (!(mapleInputState[1].kcode & DC_BTN_D))
@@ -926,6 +922,13 @@ public:
 		IO_LOG("systemsp::read IN_PORT4 %x", v);
 		return v;
 	}
+
+protected:
+	void getInputState() {
+		ggpo::getInput(mapleInputState);
+	}
+
+	MapleInputState mapleInputState[4];
 };
 
 class CardReaderInPortManager : public DefaultInPortManager
@@ -933,8 +936,7 @@ class CardReaderInPortManager : public DefaultInPortManager
 public:
 	u8 getCN9_17_24() override
 	{
-		MapleInputState mapleInputState[4];
-		ggpo::getInput(mapleInputState);
+		getInputState();
 		for (size_t i = 0; i < 2; i++)
 		{
 			if ((mapleInputState[i].kcode & DC_BTN_INSERT_CARD) == 0
@@ -971,6 +973,166 @@ public:
 	u8 getCN9_25_32() override {
 		return 0xff;
 	}
+};
+
+class HopperInPortManager : public DefaultInPortManager
+{
+	// IN_PORT1
+	u8 getCN9_41_48() override
+	{
+		u8 v = 0xbf;
+		// 0: P1 service
+		// 2: P1 test
+		// 4: P1 coin
+		// 5: P2 coin
+		// 6: must be 0 (hopper: not connected / mount error)
+		// 7: must be 1 (hopper: coin2 chute jammed)
+		getInputState();
+		if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
+			v &= ~0x01;
+		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
+			v &= ~0x04;
+		if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
+			v &= ~0x10;
+		if (!(mapleInputState[1].kcode & DC_BTN_D))
+			v &= ~0x20;
+		if (hopperActiveTime != 0)
+		{
+			if (sh4_sched_now64() - hopperActiveTime >= SH4_MAIN_CLOCK / 10)
+				hopperActiveTime = 0;
+			else
+				v |= 0x40;
+		}
+		IO_LOG("systemsp::read IN_PORT1 %x", v);
+		return v;
+	}
+
+	void setCN9_49_56(u8 v) override {
+		if ((v & 0x10) != 0 && hopperActiveTime == 0)
+			hopperActiveTime = sh4_sched_now64();
+	}
+
+	u64 hopperActiveTime = 0;
+};
+
+class ManpukuInPortManager : public HopperInPortManager
+{
+	// IN_PORT0
+	u8 getCN9_17_24() override
+	{
+		u8 v = 0xff;
+		// 4: Left
+		// 5: Middle
+		// 6: Right
+		getInputState();
+		if (!(mapleInputState[0].kcode & DC_DPAD_LEFT))
+			v &= ~0x10;
+		if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))
+			v &= ~0x20;
+		if (!(mapleInputState[0].kcode & DC_DPAD_RIGHT))
+			v &= ~0x40;
+		IO_LOG("systemsp::read IN_PORT0 %x", v);
+		return v;
+	}
+};
+
+class KingyoInPortManager : public HopperInPortManager
+{
+	// IN_PORT0
+	u8 getCN9_17_24() override
+	{
+		u8 v = 0xff;
+		// 0: Left
+		// 1: Right
+		// 2: Down
+		// 3: Up
+		// 4: Button 1
+		getInputState();
+		if (!(mapleInputState[0].kcode & DC_DPAD_LEFT))
+			v &= ~0x01;
+		if (!(mapleInputState[0].kcode & DC_DPAD_RIGHT))
+			v &= ~0x02;
+		if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))
+			v &= ~0x04;
+		if (!(mapleInputState[0].kcode & DC_DPAD_UP))
+			v &= ~0x08;
+		if (!(mapleInputState[0].kcode & DC_BTN_A))
+			v &= ~0x10;
+		IO_LOG("systemsp::read IN_PORT0 %x", v);
+		return v;
+	}
+};
+
+class MedalInPortManager : public DefaultInPortManager
+{
+	// IN_PORT0
+	u8 getCN9_17_24() override
+	{
+		u8 v = 0x50; // 0x51;
+		// 0: slope sensor up (active high)
+		// 1: slope sensor l (active high)
+		// 2: c.hopper rot. (active high)
+		// 3: c.hopper sensor (active high)
+		// 4: hopper sensor
+		// 5: puser sensor (active high)
+		// 6: tilt sensor bo
+		// 7: chacker 9 (active high)
+		return v;
+	}
+
+	// IN_PORT1
+	u8 getCN9_41_48() override
+	{
+		u8 v = 0x2f;
+		// 0: service/reset sw
+		// 1: left sw
+		// 2: test sw
+		// 3: center sw
+		// 4: door sensor up (active high)
+		// 5: right sw
+		// 6: door sensor left (active high)
+		// 7: tilt sensor br (active high)
+		getInputState();
+		if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
+			v &= ~0x01;
+		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
+			v &= ~0x04;
+		return v;
+	}
+
+	// IN_PORT3 / IO-0
+	u8 getCN9_25_32() override
+	{
+		u8 v = 0;
+		// 0: chacker 1 (active high)
+		// 1: chacker 2 (active high)
+		// 2: chacker 3 (active high)
+		// 3: chacker 4 (active high)
+		// 4: chacker 5 (active high)
+		// 5: chacker 6 (active high)
+		// 6: chacker 7 (active high)
+		// 7: chacker 8 (active high)
+		return v;
+	}
+
+	// OUT-0 (CN9 49-56)
+	// 4: sw lamp L
+	// 5: sw lamp R
+	// 6: patrol lamp
+	// 7: jackpot lamp
+
+	// OUT-1 (CN10 17-24)
+	// 0: sw.lamp c
+	// 1: jp solenoid
+	// 6: side lamp L
+	// 7: side lamp R
+
+	// IO-1 (CN9 33-40)
+	// 3: jpmec motor
+	// 4: c.hop motor
+	// 5: hoper motor
+	// 6: puser motor
+	// 7: slope motor
 };
 
 template<typename T>
@@ -1176,8 +1338,8 @@ T SystemSpCart::readMemArea0(u32 addr)
 				// 1: unknown, active low
 				// 2: monitor (1: 31 kHz, 0: 15 kHz)
 				// 3: unknown, must be on (active low)
-				// 4: JP5
-				// 5: JP6
+				// 4: JP5 (system service)
+				// 5: JP6 (system test)
 				// 6: JP7
 				// 7: JP8
 				IO_LOG("systemsp::read(%x) IN_PORT2 %x", addr, 7);
@@ -1405,7 +1567,11 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 			// 5: cd2 card pickout (not used)
 			// 6: cd1 jam reset
 			// 7: cd2 jam reset (not used)
+			// hopper:
+			// 4: payout?
+			// 7: ?
 			IO_LOG("systemsp::write(%x) OUT_PORT4 %x", addr, v & 0xfc);
+			inPortManager->setCN9_49_56(v);
 			break;
 		case 0x14: // OUT CN10 17-24
 			// dinosaur king, love & berry:
@@ -1802,6 +1968,19 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 		new Touchscreen(&uart1);
 		inPortManager = std::make_unique<IsshoniInPortManager>();
 	}
+	else if (!strcmp(game->name, "manpuku")) {
+		inPortManager = std::make_unique<ManpukuInPortManager>();
+	}
+	else if (!strncmp(game->name, "kingyo", 6) || !strcmp(game->name, "shateki")) {
+		inPortManager = std::make_unique<KingyoInPortManager>();
+	}
+	else if (!strcmp(game->name, "magicpop")
+			|| !strcmp(game->name, "ochaken")
+			|| !strcmp(game->name, "puyomedal")
+			|| !strcmp(game->name, "unomedal")
+			|| !strcmp(game->name, "westdrmg")) {
+		inPortManager = std::make_unique<MedalInPortManager>();
+	}
 	if (!strncmp(game->name, "dinoki", 6) || !strncmp(game->name, "loveber", 7))
 		inPortManager = std::make_unique<CardReaderInPortManager>();
 	if (!inPortManager)
@@ -1812,12 +1991,31 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 
 u32 SystemSpCart::ReadMem(u32 address, u32 size)
 {
-	return M4Cartridge::ReadMem(address, size);
+	if (address == NAOMI_DIMM_STATUS)
+	{
+		u32 rc =  DIMM_STATUS & ~(((SB_ISTEXT >> 3) & 1) << 8);
+		DEBUG_LOG(NAOMI, "DIMM STATUS read -> %x", rc);
+		return rc;
+	}
+	else {
+		return M4Cartridge::ReadMem(address, size);
+	}
 }
 
 void SystemSpCart::WriteMem(u32 address, u32 data, u32 size)
 {
-	M4Cartridge::WriteMem(address, data, size);
+	if (address == NAOMI_DIMM_STATUS)
+	{
+		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
+		if (data & 0x100)
+			asic_CancelInterrupt(holly_EXP_PCI);
+		if ((data & 2) == 0)
+			// irq to dimm
+			process();
+	}
+	else {
+		M4Cartridge::WriteMem(address, data, size);
+	}
 }
 
 bool SystemSpCart::Read(u32 offset, u32 size, void *dst)
@@ -1827,9 +2025,29 @@ bool SystemSpCart::Read(u32 offset, u32 size, void *dst)
 	if ((offset & 0x3f000000) == 0x3f000000)
 	{
 		// network card present
-		DEBUG_LOG(NAOMI, "SystemSpCart::Read<%d>%x: net card present -> 0", size, offset);
-		int rc = 0;
+		int rc = 1;
+		DEBUG_LOG(NAOMI, "SystemSpCart::Read<%d>%x: net card present -> %d", size, offset, rc);
 		memcpy(dst, &rc, size);
+		return true;
+	}
+	if ((offset & 0x3f000000) == 0x3d000000)
+	{
+		// network card mem
+		switch (size)
+		{
+		case 4:
+			*(u32 *)dst = readNetMem<u32>(offset);
+			break;
+		case 2:
+			*(u16 *)dst = readNetMem<u16>(offset);
+			break;
+		case 1:
+		default:
+			*(u8 *)dst = readNetMem<u8>(offset);
+			break;
+		}
+		u16 d = readNetMem<u16>(offset);
+		DEBUG_LOG(NAOMI, "SystemSpCart::Read<%d>%x: net mem -> %x", size, offset, d);
 		return true;
 	}
 	return M4Cartridge::Read(offset, size, dst);
@@ -1837,6 +2055,30 @@ bool SystemSpCart::Read(u32 offset, u32 size, void *dst)
 
 bool SystemSpCart::Write(u32 offset, u32 size, u32 data)
 {
+	if ((offset & 0x3f000000) == 0x3d000000)
+	{
+		// network card mem
+		switch (size)
+		{
+		case 4:
+			writeNetMem(offset, data);
+			break;
+		case 2:
+			writeNetMem(offset, (u16)data);
+			break;
+		case 1:
+		default:
+			writeNetMem(offset, (u8)data);
+			break;
+		}
+		DEBUG_LOG(NAOMI, "SystemSpCart::Write<%d>%x: net mem = %x", size, offset, data);
+		int idx = offset & (sizeof(netmem) - 2);
+		// FIXME
+		if (idx == 2)
+			memcpy(&netmem[idx + 0x200], &data, size);
+		return true;
+	}
+	// ??? if ((offset & 0x3f000000) == 0x39000000)
 	switch (flash.cmdState)
 	{
 	case CmdState::INIT:
@@ -2011,6 +2253,216 @@ void SystemSpCart::Deserialize(Deserializer& deser)
 void SystemSpCart::saveFiles()
 {
 	eeprom.Save(getEepromPath());
+}
+
+// TODO implement actual networking features. Only socket() and close() are currently functional.
+void SystemSpCart::process()
+{
+	DmaOffset |= 0x40000000; // needed by BIOS. why?
+	u8 reqId = readNetMem<u8>(0x200);
+	int cmd = readNetMem<u16>(0x202);
+	DEBUG_LOG(NAOMI, "SystemSpCart::process cmd %03x", cmd);
+	const u8 netmem4 = readNetMem<u8>(4); // FIXME memset should be done later on
+	memset(&netmem[0], 0, 32);
+	writeNetMem(0, reqId);
+	writeNetMem(1, (u8)0);
+	switch (cmd)
+	{
+	case 1: // init? nop?
+		INFO_LOG(NAOMI, "process: init/nop");
+		writeNetMem(2, NET_OK);
+		break;
+	case 0x100: // get dimm status
+		INFO_LOG(NAOMI, "process: get dimm status");
+		writeNetMem(2, NET_OK);
+		// 0 initializing
+		// 1 checking network
+		// 2 ?
+		// 3 testing prg
+		// 4 loading prg
+		// 5 ready
+		writeNetMem(4, 5);
+		break;
+	case 0x101: // get firmware version
+		INFO_LOG(NAOMI, "process: get firmware version");
+		writeNetMem(2, NET_OK);
+		writeNetMem(4, (u8)0x25);	// minor
+		writeNetMem(5, (u8)1);		// major
+		break;
+	case 0x104: // get network type and address
+		INFO_LOG(NAOMI, "process: get network type");
+		writeNetMem(2, NET_OK);
+		writeNetMem(4, 5);	// 4: ether (dhcp), 5: ether (static ip)
+		writeNetMem(0x24, inetaddr);
+		writeNetMem(0x28, netmask);
+		break;
+
+	case 0x204: // set network type and address
+		// 4: type (0 none, 3,4 ether)
+		inetaddr = readNetMem<u32>(0x24);
+		netmask = readNetMem<u32>(0x28);
+		INFO_LOG(NAOMI, "process: set net type %d ip %08x mask %08x", netmem4, inetaddr, netmask);
+		writeNetMem(2, NET_OK);
+		break;
+
+	case 0x301: // network test
+		{
+			// 204: 4
+			u32 addr = readNetMem<u32>(0x208);
+			INFO_LOG(NAOMI, "process: network_test(%x, %x)", readNetMem<u32>(0x204), addr);
+			bool isMem;
+			char *p = (char *)addrspace::writeConst(addr, isMem, 4);
+			strcpy(p, "CHECKING NETWORK\n");
+			p = (char *)addrspace::writeConst(addr + 0x11, isMem, 4);
+			strcpy(p, "PRETENDING... :P\n");
+			p = (char *)addrspace::writeConst(addr + 0x22, isMem, 4);
+			strcpy(p, "--- COMPLETED---\n");
+			writeNetMem(2, NET_OK);
+			writeNetMem(4, 1); // TODO how to signal the test progress/completion?
+		}
+		break;
+
+	case 0x401: // accept
+		INFO_LOG(NAOMI, "process: accept(%d)", readNetMem<u32>(0x208));
+		writeNetMem(2, NET_ERROR);
+		break;
+	case 0x402: // bind
+		{
+			u32 addr = readNetMem<u32>(0x20c);
+			u32 len = readNetMem<u32>(0x210);
+			sockaddr_in sa{};
+			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], len);
+			INFO_LOG(NAOMI, "process: bind(%d, %08x:%d)", readNetMem<u32>(0x208), htonl(sa.sin_addr.s_addr), htons(sa.sin_port));
+			writeNetMem(2, NET_OK);
+		}
+		break;
+	case 0x403: // close socket
+		{
+			const int sockidx = readNetMem<int>(0x208);
+			const sock_t sockfd = sockidx < 1 || sockidx > 0x3f || sockidx > (int)sockets.size() ? INVALID_SOCKET : sockets[sockidx - 1].fd;
+			u16 rc;
+			if (sockfd == INVALID_SOCKET)
+			{
+				INFO_LOG(NAOMI, "process: closesocket(%d) invalid socket", sockidx);
+				rc = NET_ERROR;
+			}
+			else
+			{
+				rc = sockets[sockidx - 1].close() != 0 ? NET_ERROR : NET_OK;
+				INFO_LOG(NAOMI, "process: closesocket(%d) %d -> %x", sockidx, sockfd, rc);
+			}
+			writeNetMem(2, rc);
+		}
+		break;
+	case 0x404: // connect
+		{
+			u32 addr = readNetMem<u32>(0x20c);
+			u32 len = readNetMem<u32>(0x210);
+			sockaddr_in sa{};
+			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], len);
+			INFO_LOG(NAOMI, "process: connect(%d, %08x:%d)", readNetMem<u32>(0x208), htonl(sa.sin_addr.s_addr), htons(sa.sin_port));
+			writeNetMem(2, NET_OK);
+		}
+		break;
+	case 0x406: // inet_addr
+		{
+			u32 addr = readNetMem<u32>(0x208);
+			//u32 len = readNetMem<u32>(0x20c);
+			const char *s = (const char *)&netmem[addr & (sizeof(netmem) - 1)];
+			INFO_LOG(NAOMI, "process: inet_addr(%s)", s);
+			u32 ipaddr = inet_addr(s);
+			writeNetMem(2, NET_OK);
+			writeNetMem(4, ipaddr);
+		}
+		break;
+	case 0x408: // listen
+		INFO_LOG(NAOMI, "process: listen(%d)", readNetMem<u32>(0x208)); // backlog??? or 208 is backlog and 201 is sockfd?
+		writeNetMem(2, NET_OK);
+		break;
+	case 0x409: // recv
+		{
+			u32 addr = readNetMem<u32>(0x20c);
+			u32 len = readNetMem<u32>(0x210);
+			INFO_LOG(NAOMI, "process: recv(%d, %x, %x)", readNetMem<u32>(0x208), addr, len);
+			writeNetMem(2, NET_OK);
+			//writeNetMem(4, len); // ??
+		}
+		break;
+	case 0x40a: // send
+		{
+			u32 addr = readNetMem<u32>(0x20c);
+			u32 len = readNetMem<u32>(0x210);
+			INFO_LOG(NAOMI, "process: send(%d, %x, %x)", readNetMem<u32>(0x208), addr, len);
+			writeNetMem(2, NET_OK);
+			writeNetMem(4, len); // ??
+		}
+		break;
+	case 0x40b: // openSocket
+		{
+			int domain = readNetMem<int>(0x208);
+			int type = readNetMem<int>(0x20c);
+			int protocol = readNetMem<int>(0x210);
+			const sock_t fd = socket(domain, type, protocol);
+			int sockidx = -1;
+			if (fd != INVALID_SOCKET)
+			{
+				// TODO?
+				//set_non_blocking(fd);
+				size_t i = 0;
+				for (; i < sockets.size(); i++)
+					if (sockets[i].fd == INVALID_SOCKET)
+						break;
+				if (i == sockets.size())
+					sockets.emplace_back(fd);
+				else
+					sockets[i].fd = fd;
+				sockidx = i + 1;
+			}
+			INFO_LOG(NAOMI, "process: openSocket(%d, %d, %d) %d -> %d", domain, type, protocol, fd, sockidx);
+			writeNetMem(2, sockidx != -1 ? NET_OK : NET_ERROR);
+			if (sockidx != -1)
+				writeNetMem(4, sockidx);
+		}
+		break;
+	case 0x40e: // setsockopt
+		{
+			// TODO socket option level/name are different (mips linux?)
+			u32 addr = readNetMem<u32>(0x214);
+			//u32 len = readNetMem<u32>(0x218);
+			INFO_LOG(NAOMI, "process: setsockopt(%d, level: %x, name: %x, value:%x)", readNetMem<u32>(0x208), readNetMem<u32>(0x20c), readNetMem<u32>(0x210),
+					readNetMem<u32>(addr));
+			writeNetMem(2, NET_OK);
+		}
+		break;
+	case 0x410: // settimeout
+		INFO_LOG(NAOMI, "process: settimeout(%d, %d, %d, %d)", readNetMem<u32>(0x208), readNetMem<u32>(0x20c), readNetMem<u32>(0x210), readNetMem<u32>(0x214));
+		writeNetMem(2, NET_OK);
+		break;
+	case 0x411: // geterrno
+		INFO_LOG(NAOMI, "process: getterrno(%d)", readNetMem<u32>(0x208));
+		writeNetMem(2, NET_OK);
+		writeNetMem(4, 111);	// FIXME errno values TBD
+		break;
+	case 0x414: // getParambyDHCP?
+		INFO_LOG(NAOMI, "process: getParambyDHCP");
+		writeNetMem(2, NET_OK);
+		writeNetMem(4, 1);	// ???
+		break;
+	case 0x415: // modifyMyIPaddr?
+		{
+			u32 addr = readNetMem<u32>(0x208);
+			//u32 len = readNetMem<u32>(0x20c);
+			INFO_LOG(NAOMI, "process: modifyMyIPaddr(%s, %08x)", &netmem[addr & (sizeof(netmem) - 1)], readNetMem<u32>(0x210));
+			writeNetMem(2, NET_OK);
+		}
+		break;
+
+	default:
+		WARN_LOG(NAOMI, "Unknown netdimm command: %x", cmd);
+		writeNetMem(2, NET_ERROR);
+		break;
+	}
+	updateInterrupt(INT_DIMM);
 }
 
 }
