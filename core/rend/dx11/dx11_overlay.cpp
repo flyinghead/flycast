@@ -136,7 +136,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			quad.draw(vmuTextureViews[i], samplers->getSampler(false));
 		}
 	}
-	if (crosshair)
+	if (crosshair && crosshairsNeeded())
 	{
 		if (!xhairTexture)
 		{

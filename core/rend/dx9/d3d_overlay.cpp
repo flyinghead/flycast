@@ -88,7 +88,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			drawQuad(rect, D3DCOLOR_ARGB(192, 255, 255, 255));
 		}
 	}
-	if (crosshair)
+	if (crosshair && crosshairsNeeded())
 	{
 		if (!xhairTexture)
 		{
