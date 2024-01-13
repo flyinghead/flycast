@@ -8397,7 +8397,7 @@ const Game Games[] =
     {
     	// Yataimura Kingyosukui (4-player, China, Ver 1.000)
     	"kingyoch",
-		nullptr,
+		"kingyo",
 		"Yataimura Kingyosukui (China)",
 		0x08000000,
 		0x5508,

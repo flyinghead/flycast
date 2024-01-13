@@ -131,7 +131,7 @@ union AtaDevCtrlRegister
 	};
 };
 
-class InPortManager
+class IOPortManager
 {
 public:
 	virtual u8 getCN9_17_24() = 0;
@@ -139,8 +139,11 @@ public:
 	virtual u8 getCN9_33_40() = 0;
 	virtual u8 getCN9_41_48() = 0;
 	virtual u8 getCN9_49_56() = 0;
+	virtual u8 getCN10_9_16() = 0;
+	virtual void setCN9_33_40(u8 v) {}
 	virtual void setCN9_49_56(u8 v) {}
-	virtual ~InPortManager() = default;
+	virtual void setCN10_17_24(u8 v) {}
+	virtual ~IOPortManager() = default;
 };
 
 class SystemSpCart : public M4Cartridge
@@ -219,7 +222,7 @@ private:
 	SerialPort uart2;
 	u16 bank = 0;
 	int region = 0;
-	std::unique_ptr<InPortManager> inPortManager;
+	std::unique_ptr<IOPortManager> ioPortManager;
 
 	static constexpr u32 SECTOR_SIZE = 512;
 

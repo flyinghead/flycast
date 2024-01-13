@@ -974,6 +974,11 @@ cmrc_add_resources(flycast-resources
 		resources/flash/vf4.nvmem.zip		# card all day, stage select
 		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
 		resources/flash/vf4tuned.nvmem.zip  # card all day, stage select, 45 sec time limit, 3 match
+		resources/flash/magicpop.nvmem.zip	# debug: comm and all errors disabled
+		resources/flash/ochaken.nvmem.zip	# debug: comm and all errors disabled
+		resources/flash/puyomedal.nvmem.zip	# debug: comm and all errors disabled
+		resources/flash/unomedal.nvmem.zip	# debug: comm and all errors disabled
+		resources/flash/westdrmg.nvmem.zip	# debug: comm and all errors disabled
 		resources/picture/f355_print_template.png)
 
 cmrc_add_resources(flycast-resources

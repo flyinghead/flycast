@@ -811,7 +811,7 @@ void SerialPort::updateStatus()
 	cart->updateInterrupt(index == 1 ? SystemSpCart::INT_UART1 : SystemSpCart::INT_UART2);
 }
 
-class DefaultInPortManager : public InPortManager
+class DefaultIOManager : public IOPortManager
 {
 public:
 	// IN_PORT0
@@ -847,7 +847,7 @@ public:
 		return v;
 	}
 
-	// IN_PORT3
+	// IN_PORT3 / IO-0
 	u8 getCN9_25_32() override
 	{
 		u8 v = 0xff;
@@ -880,6 +880,7 @@ public:
 		return v;
 	}
 
+	// IO-1
 	u8 getCN9_33_40() override
 	{
 		IO_LOG("systemsp::read IN CN9 33-40");
@@ -907,7 +908,7 @@ public:
 		return v;
 	}
 
-	// IN_PORT4
+	// IN_PORT4 / OUT-0
 	u8 getCN9_49_56() override
 	{
 		u8 v = 0;
@@ -923,7 +924,70 @@ public:
 		return v;
 	}
 
+	// IN G-PORT
+	u8 getCN10_9_16() override
+	{
+		u8 v = 0;
+		// dinosaur king, love & berry:
+		// 0: 232c sel status 1 (not used)
+		// 1: 232c sel status 2 (not used)
+		// 2: card status1 (not used)
+		// 3: card status2 (not used)
+		// 4: card status3 (not used)
+		// FIXME read sequentially after reading/writing reg24 (c0?), gives 4 shorts (8 reads)
+		IO_LOG("systemsp::read IN G-PORT %d", v);
+		return v;
+	}
+
 protected:
+	static constexpr u64 msAsCycles(int ms) {
+		return (u64)SH4_MAIN_CLOCK * ms / 1000;
+	}
+
+	// On and Period in SH4 ms
+	template<u64 On, u64 Period>
+	class PeriodicSensor
+	{
+	public:
+		bool get(bool actuator = true)
+		{
+			const u64 now = sh4_sched_now64();
+			if (actuator)
+				position = (position + now - lastTime) % msAsCycles(Period);
+			lastTime = now;
+			return position < msAsCycles(On);
+		}
+
+	private:
+		u64 position = msAsCycles(Period) / 2;
+		u64 lastTime = 0;
+	};
+
+	// Width in SH4 ms
+	template<u64 Width>
+	class PulseSensor
+	{
+	public:
+		bool get(bool actuator)
+		{
+			if (!actuator)
+			{
+				startTime = 0;
+				return false;
+			}
+			else
+			{
+				const u64 now = sh4_sched_now64();
+				if (startTime == 0)
+					startTime = now;
+				return now - startTime < msAsCycles(Width);
+			}
+		}
+
+	private:
+		u64 startTime = 0;
+	};
+
 	void getInputState() {
 		ggpo::getInput(mapleInputState);
 	}
@@ -931,7 +995,7 @@ protected:
 	MapleInputState mapleInputState[4];
 };
 
-class CardReaderInPortManager : public DefaultInPortManager
+class CardReaderIOManager : public DefaultIOManager
 {
 public:
 	u8 getCN9_17_24() override
@@ -944,7 +1008,7 @@ public:
 				card_reader::insertCard(i);
 			last_kcode[i] = mapleInputState[i].kcode;
 		}
-		return DefaultInPortManager::getCN9_17_24();
+		return DefaultIOManager::getCN9_17_24();
 	}
 
 	u8 getCN9_33_40() override
@@ -962,11 +1026,11 @@ private:
 	u32 last_kcode[2] = {};
 };
 
-class IsshoniInPortManager : public CardReaderInPortManager
+class IsshoniIOManager : public CardReaderIOManager
 {
 public:
 	u8 getCN9_17_24() override {
-		CardReaderInPortManager::getCN9_17_24();
+		CardReaderIOManager::getCN9_17_24();
 		return 0xff;
 	}
 
@@ -975,7 +1039,7 @@ public:
 	}
 };
 
-class HopperInPortManager : public DefaultInPortManager
+class HopperIOManager : public DefaultIOManager
 {
 	// IN_PORT1
 	u8 getCN9_41_48() override
@@ -992,30 +1056,32 @@ class HopperInPortManager : public DefaultInPortManager
 			v &= ~0x01;
 		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
 			v &= ~0x04;
-		if (!(mapleInputState[0].kcode & DC_BTN_D)) // coin
+		if (p1CoinSensor.get(!(mapleInputState[0].kcode & DC_BTN_D)))
 			v &= ~0x10;
-		if (!(mapleInputState[1].kcode & DC_BTN_D))
+		if (p2CoinSensor.get(!(mapleInputState[1].kcode & DC_BTN_D)))
 			v &= ~0x20;
-		if (hopperActiveTime != 0)
-		{
-			if (sh4_sched_now64() - hopperActiveTime >= SH4_MAIN_CLOCK / 10)
-				hopperActiveTime = 0;
-			else
-				v |= 0x40;
-		}
+		if (hopperSensor.get(hopperActive) && hopperActive)
+			v |= 0x40;
 		IO_LOG("systemsp::read IN_PORT1 %x", v);
 		return v;
 	}
 
-	void setCN9_49_56(u8 v) override {
-		if ((v & 0x10) != 0 && hopperActiveTime == 0)
-			hopperActiveTime = sh4_sched_now64();
+	void setCN9_49_56(u8 v) override
+	{
+		// 4: hopper
+		// 7: ?
+		hopperActive = (v & 0x10) != 0;
+		if (hopperActive)
+			IO_LOG("HOPPER ON");
 	}
 
-	u64 hopperActiveTime = 0;
+	bool hopperActive = false;
+	PulseSensor<100> p1CoinSensor;
+	PulseSensor<100> p2CoinSensor;
+	PeriodicSensor<10, 50> hopperSensor;
 };
 
-class ManpukuInPortManager : public HopperInPortManager
+class ManpukuIOManager : public HopperIOManager
 {
 	// IN_PORT0
 	u8 getCN9_17_24() override
@@ -1036,7 +1102,8 @@ class ManpukuInPortManager : public HopperInPortManager
 	}
 };
 
-class KingyoInPortManager : public HopperInPortManager
+// Yataimura Kingyosukui, Yataimura Shateki
+class KingyoIOManager : public HopperIOManager
 {
 	// IN_PORT0
 	u8 getCN9_17_24() override
@@ -1063,20 +1130,56 @@ class KingyoInPortManager : public HopperInPortManager
 	}
 };
 
-class MedalInPortManager : public DefaultInPortManager
+// Notes:
+// COUNT HOPPER JAM - LOCK SENSOR ON 1 SEC
+// 		00:19:308 hw/naomi/systemsp.cpp:1197 D[NAOMI]: OUT CN9_33-40  COUNT HOPPER HOPPER MTR
+// 		00:19:311 hw/naomi/systemsp.cpp:1223 D[NAOMI]: JP SOLENOID ON
+// -> fixed by timing countHopperRot sensor to 0.5 s max
+// HOPPER EMPTY/JAM - MOTOR DRIVE BUT SENSOR OFF
+// 		01:56:773 hw/naomi/systemsp.cpp:1197 D[NAOMI]: OUT CN9_33-40   HOPPER MTR
+// -> fixed by resetting hopper sensor when hopper motor is on.
+// SLOPE SENSOR TIMEOUT - MOTOR DRIVE BUT SENSOR OFF
+//		07:52:477 hw/naomi/systemsp.cpp:1218 D[NAOMI]: OUT CN9_33-40  COUNT HOPPER   SLOPE MTR
+// -> set slope sensor low when slope motor on
+// ILLEGAL CHACKER IN - MANY CHACKER IN BUT NO COIN IN
+// -> fixed by setting COIN L or R when checker on
+// COIN IN RATIO TOO HIGH - CTRL COIN IN RATIO OVER 105%
+// -> not enough coin L/R vs. checker in?
+// debug flag locations:
+// magicpop		0x8c2e729e
+// unomedal		0x8c22baf2
+// puyomedal	0x8c2b67de
+// ochaken		0x8c25c6da
+// westdmrg		0x8c22d1aa
+class MedalIOManager : public DefaultIOManager
 {
 	// IN_PORT0
 	u8 getCN9_17_24() override
 	{
-		u8 v = 0x50; // 0x51;
+		u8 v = 0x50;
 		// 0: slope sensor up (active high)
-		// 1: slope sensor l (active high)
-		// 2: c.hopper rot. (active high)
-		// 3: c.hopper sensor (active high)
+		// 1: slope sensor low (active high)
+		// 2: count hopper rot. (active high)
+		// 3: count hopper sensor (active high)
 		// 4: hopper sensor
-		// 5: puser sensor (active high)
-		// 6: tilt sensor bo
-		// 7: chacker 9 (active high)
+		// 5: pusher sensor (active high)
+		// 6: tilt bob sensor
+		// 7: checker 9 (active high)
+		if (countHopperRotSensor.get(countHopperMtr))
+			v |= 0x04;	// count hopper rot sensor
+		// FIXME generates FIELD P/O TOO HIGH errors. Activate the sensor 50% of the time?
+		//if (countHopperSensor.get(countHopperMtr))
+		//	v |= 0x08;	// count hopper sensor
+		if (hopperSensor.get(hopperMtr))
+			v &= ~0x10; // hopper sensor
+		if (slopeMtr)
+			v |= 2;	// slope sensor low
+		else
+			v |= 1;	// slope sensor up
+		if (pusherSensor.get(pusherMtr))
+			v |= 0x20;	// pusher sensor
+		if (!(mapleInputState[0].kcode & DC_BTN_START))
+			v |= 0x80; // checker 9
 		return v;
 	}
 
@@ -1093,10 +1196,17 @@ class MedalInPortManager : public DefaultInPortManager
 		// 6: door sensor left (active high)
 		// 7: tilt sensor br (active high)
 		getInputState();
-		if (!(mapleInputState[0].kcode & DC_DPAD2_UP)) // service
+		if (!(mapleInputState[0].kcode & DC_DPAD2_UP))		// service/reset
 			v &= ~0x01;
-		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN)) // test
+		if (!(mapleInputState[0].kcode & DC_DPAD2_DOWN))	// test
 			v &= ~0x04;
+		if (!(mapleInputState[0].kcode & DC_DPAD_LEFT))		// left sw
+			v &= ~0x02;
+		if (!(mapleInputState[0].kcode & DC_DPAD_DOWN))		// center sw
+			v &= ~0x08;
+		if (!(mapleInputState[0].kcode & DC_DPAD_RIGHT))	// right sw
+			v &= ~0x20;
+
 		return v;
 	}
 
@@ -1104,35 +1214,113 @@ class MedalInPortManager : public DefaultInPortManager
 	u8 getCN9_25_32() override
 	{
 		u8 v = 0;
-		// 0: chacker 1 (active high)
-		// 1: chacker 2 (active high)
-		// 2: chacker 3 (active high)
-		// 3: chacker 4 (active high)
-		// 4: chacker 5 (active high)
-		// 5: chacker 6 (active high)
-		// 6: chacker 7 (active high)
-		// 7: chacker 8 (active high)
+		// 0: checker 1 (active high)
+		// 1: checker 2 (active high)
+		// 2: checker 3 (active high)
+		// 3: checker 4 (active high)
+		// 4: checker 5 (active high)
+		// 5: checker 6 (active high)
+		// 6: checker 7 (active high)
+		// 7: checker 8 (active high)
+		if (!(mapleInputState[0].kcode & DC_BTN_A))
+			v |= 0x01;
+		if (!(mapleInputState[0].kcode & DC_BTN_B))
+			v |= 0x02;
+		if (!(mapleInputState[0].kcode & DC_BTN_C))
+			v |= 0x04;
+		if (!(mapleInputState[0].kcode & DC_BTN_X))
+			v |= 0x08;
+		if (!(mapleInputState[0].kcode & DC_BTN_Y))
+			v |= 0x10;
+		if (!(mapleInputState[0].kcode & DC_BTN_Z))
+			v |= 0x20;
+		if (!(mapleInputState[0].kcode & DC_DPAD2_LEFT))
+			v |= 0x40;
+		if (!(mapleInputState[0].kcode & DC_DPAD2_RIGHT))
+			v |= 0x80;
 		return v;
 	}
 
-	// OUT-0 (CN9 49-56)
-	// 4: sw lamp L
-	// 5: sw lamp R
-	// 6: patrol lamp
-	// 7: jackpot lamp
+	// IN G-PORT
+	u8 getCN10_9_16() override
+	{
+		u8 v = 0;
+		// 0: jp mecha sensor u (active high)
+		// 2: jp mecha sensor d (active high)
+		// 3: co. full sensor (active high)
+		// 4: coin in L (active high)
+		// 5: coin in R (active high)
+		// 7: jp solenoid sensor (active high)
+		if (jpmechaMtr)
+			v |= 4;
+		else
+			v |= 1;
+		// FIXME not enough coin ins if multiple checkers pressed at once -> COIN IN RATIO TOO HIGH
+		if ((mapleInputState[0].kcode & (DC_BTN_A | DC_BTN_B | DC_BTN_C | DC_BTN_X | DC_BTN_Y | DC_BTN_Z))
+				!= (DC_BTN_A | DC_BTN_B | DC_BTN_C | DC_BTN_X | DC_BTN_Y | DC_BTN_Z))
+			v |= 0x10;	// coin in L
+		if ((mapleInputState[0].kcode & (DC_DPAD2_LEFT | DC_DPAD2_RIGHT | DC_BTN_START))
+				!= (DC_DPAD2_LEFT | DC_DPAD2_RIGHT | DC_BTN_START))
+			v |= 0x20;	// coin in R
+		if (jpmechaSolenoid)
+			v |= 0x80;
 
-	// OUT-1 (CN10 17-24)
-	// 0: sw.lamp c
-	// 1: jp solenoid
-	// 6: side lamp L
-	// 7: side lamp R
+		return v;
+	}
 
 	// IO-1 (CN9 33-40)
-	// 3: jpmec motor
-	// 4: c.hop motor
-	// 5: hoper motor
-	// 6: puser motor
-	// 7: slope motor
+	void setCN9_33_40(u8 v) override
+	{
+		// 3: jp mecha motor
+		// 4: count hopper motor
+		// 5: hopper motor
+		// 6: pusher motor
+		// 7: slope motor
+		jpmechaMtr = !(v & 0x08);
+		countHopperMtr = !(v & 0x10);
+		hopperMtr = !(v & 0x20);
+		pusherMtr = !(v & 0x40);
+		slopeMtr = !(v & 0x80);
+		if ((v & 0xf8) != 0xf8)
+			IO_LOG("OUT CN9_33-40 %s %s %s %s %s",
+				v & 0x08 ? "" : "JP MECHA MTR",
+				v & 0x10 ? "" : "COUNT HOPPER",
+				v & 0x20 ? "" : "HOPPER MTR",
+				v & 0x40 ? "" : "PUSHER MTR",
+				v & 0x80 ? "" : "SLOPE MTR");
+	}
+
+	// OUT-0 (CN9 49-56)
+	void setCN9_49_56(u8 v) override
+	{
+		// 4: sw lamp L
+		// 5: sw lamp R
+		// 6: patrol lamp
+		// 7: jackpot lamp
+	}
+
+	// OUT-1 (CN10 17-24)
+	void setCN10_17_24(u8 v)
+	{
+		// 0: sw.lamp c
+		// 1: jp solenoid
+		// 6: side lamp L
+		// 7: side lamp R
+		jpmechaSolenoid = v & 2;
+		if (jpmechaSolenoid)
+			IO_LOG("JP SOLENOID ON");
+	}
+
+	bool jpmechaMtr = false;
+	bool countHopperMtr = false;
+	bool hopperMtr = false;
+	bool pusherMtr = false;
+	bool slopeMtr = false;
+	bool jpmechaSolenoid = false;
+	PeriodicSensor<50, 250> hopperSensor;
+	PeriodicSensor<100, 4300> pusherSensor;
+	PeriodicSensor<100, 500> countHopperRotSensor;
+	PeriodicSensor<50, 250> countHopperSensor;
 };
 
 template<typename T>
@@ -1317,19 +1505,19 @@ T SystemSpCart::readMemArea0(u32 addr)
 		switch (addr - 0x10100)
 		{
 		case 0x0: // IN_PORT0 (CN9 17-24)
-			return inPortManager->getCN9_17_24();
+			return ioPortManager->getCN9_17_24();
 
 		case 0x4: // IN_PORT1 (CN9 41-48)
-			return inPortManager->getCN9_41_48();
+			return ioPortManager->getCN9_41_48();
 
 		case 0x8: // IN_PORT3 (CN9 25-32)
-			return inPortManager->getCN9_25_32();
+			return ioPortManager->getCN9_25_32();
 
 		case 0xc: // IN CN9 33-40
-			return inPortManager->getCN9_33_40();
+			return ioPortManager->getCN9_33_40();
 
 		case 0x10: // IN_PORT4 (CN9 49-56)
-			return inPortManager->getCN9_49_56();
+			return ioPortManager->getCN9_49_56();
 
 		case 0x18: // IN_PORT2 (DIP switches and jumpers, and P1 service for older pcb rev)
 			{
@@ -1346,18 +1534,10 @@ T SystemSpCart::readMemArea0(u32 addr)
 				return 0xf7;
 			}
 		case 0x20: // IN G_PORT CN10 9-16
-			IO_LOG("systemsp::read(%x) IN CN10 9-16", addr);
- 			// dinosaur king, love & berry:
- 			// 0: 232c sel status 1 (not used)
- 			// 1: 232c sel status 2 (not used)
- 			// 2: card status1 (not used)
- 			// 3: card status2 (not used)
- 			// 4: card status3 (not used)
-			// FIXME read sequentially after reading/writing reg24 (c0?), gives 4 shorts (8 reads)
-			return 0;
+			return ioPortManager->getCN10_9_16();
 
 		case 0x24: // bios, write too
-			IO_LOG("systemsp::read(24) ??");
+			IO_LOG("systemsp::read(%x) ??", addr);
 			return 0;
 		default:
 			IO_LOG("systemsp::read(%x) inputs??", addr);
@@ -1547,8 +1727,8 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 		case 0x8: // OUT_PORT3 (CN9 25-32)?
 			IO_LOG("systemsp::write(%x) OUT CN9 25-32? %x", addr, v);
 			break;
-		case 0xc: // OUT CN9 33-40
-			IO_LOG("systemsp::write(%x) OUT CN10 9-16? %x", addr, v);
+		case 0xc: // IO-1 CN9 33-40
+			ioPortManager->setCN9_33_40(v);
 			break;
 		case 0x10: // OUT_PORT4 (CN9 49-56)
 			// 0: (P1 coin meter)
@@ -1570,8 +1750,7 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 			// hopper:
 			// 4: payout?
 			// 7: ?
-			IO_LOG("systemsp::write(%x) OUT_PORT4 %x", addr, v & 0xfc);
-			inPortManager->setCN9_49_56(v);
+			ioPortManager->setCN9_49_56(v);
 			break;
 		case 0x14: // OUT CN10 17-24
 			// dinosaur king, love & berry:
@@ -1583,7 +1762,7 @@ void SystemSpCart::writeMemArea0(u32 addr, T v)
 			// 5: rfid chip2 reset
 			// 6: rfid chip1 empty lamp
 			// 7: rfid chip2 empty lamp
-			IO_LOG("systemsp::write(%x) OUT CN10 17-24 %x", addr, v);
+			ioPortManager->setCN10_17_24(v);
 			break;
 		case 0x24: // read too
 		default:
@@ -1966,25 +2145,25 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	else if (!strcmp(game->name, "isshoni"))
 	{
 		new Touchscreen(&uart1);
-		inPortManager = std::make_unique<IsshoniInPortManager>();
+		ioPortManager = std::make_unique<IsshoniIOManager>();
 	}
 	else if (!strcmp(game->name, "manpuku")) {
-		inPortManager = std::make_unique<ManpukuInPortManager>();
+		ioPortManager = std::make_unique<ManpukuIOManager>();
 	}
 	else if (!strncmp(game->name, "kingyo", 6) || !strcmp(game->name, "shateki")) {
-		inPortManager = std::make_unique<KingyoInPortManager>();
+		ioPortManager = std::make_unique<KingyoIOManager>();
 	}
 	else if (!strcmp(game->name, "magicpop")
 			|| !strcmp(game->name, "ochaken")
 			|| !strcmp(game->name, "puyomedal")
 			|| !strcmp(game->name, "unomedal")
 			|| !strcmp(game->name, "westdrmg")) {
-		inPortManager = std::make_unique<MedalInPortManager>();
+		ioPortManager = std::make_unique<MedalIOManager>();
 	}
 	if (!strncmp(game->name, "dinoki", 6) || !strncmp(game->name, "loveber", 7))
-		inPortManager = std::make_unique<CardReaderInPortManager>();
-	if (!inPortManager)
-		inPortManager = std::make_unique<DefaultInPortManager>();
+		ioPortManager = std::make_unique<CardReaderIOManager>();
+	if (!ioPortManager)
+		ioPortManager = std::make_unique<DefaultIOManager>();
 
 	EventManager::listen(Event::Pause, handleEvent, this);
 }
@@ -2331,7 +2510,7 @@ void SystemSpCart::process()
 			u32 addr = readNetMem<u32>(0x20c);
 			u32 len = readNetMem<u32>(0x210);
 			sockaddr_in sa{};
-			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], len);
+			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], std::min<size_t>(len, sizeof(sa)));
 			INFO_LOG(NAOMI, "process: bind(%d, %08x:%d)", readNetMem<u32>(0x208), htonl(sa.sin_addr.s_addr), htons(sa.sin_port));
 			writeNetMem(2, NET_OK);
 		}
@@ -2359,7 +2538,7 @@ void SystemSpCart::process()
 			u32 addr = readNetMem<u32>(0x20c);
 			u32 len = readNetMem<u32>(0x210);
 			sockaddr_in sa{};
-			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], len);
+			memcpy(&sa, &netmem[addr & (sizeof(netmem) - 1)], std::min<size_t>(len, sizeof(sa)));
 			INFO_LOG(NAOMI, "process: connect(%d, %08x:%d)", readNetMem<u32>(0x208), htonl(sa.sin_addr.s_addr), htons(sa.sin_port));
 			writeNetMem(2, NET_OK);
 		}
