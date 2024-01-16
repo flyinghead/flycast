@@ -198,7 +198,7 @@ void gui_initFonts()
     ImGui::GetStyle().TabRounding = 0;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
-#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 	if (settings.display.uiScale > 1)
@@ -378,7 +378,7 @@ static void gui_newFrame()
 	else
 		io.AddMousePosEvent(mouseX, mouseY);
 	static bool delayTouch;
-#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
 	// Delay touch by one frame to allow widgets to be hovered before click
 	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
 	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
@@ -2798,7 +2798,7 @@ static void gui_display_content()
     ImGui::Unindent(10 * settings.display.uiScale);
 
     static ImGuiTextFilter filter;
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, 32 * settings.display.uiScale);
 	filter.Draw("Filter");
 #endif
@@ -2806,9 +2806,16 @@ static void gui_display_content()
     {
 #ifdef TARGET_UWP
     	void gui_load_game();
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
+				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
 			gui_load_game();
+		ImGui::SameLine();
+#elif defined(__SWITCH__)
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
+				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Exit").x);
+		if (ImGui::Button("Exit"))
+			dc_exit();
 		ImGui::SameLine();
 #else
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);

@@ -335,4 +335,11 @@ void __libnx_exception_handler(ThreadExceptionDump *ctx)
 }
 }
 #endif	// TARGET_NO_EXCEPTIONS
+
+#ifndef LIBRETRO
+[[noreturn]] void os_DebugBreak()
+{
+	diagAbortWithResult(MAKERESULT(350, 1));
+}
+#endif
 #endif	// __SWITCH__

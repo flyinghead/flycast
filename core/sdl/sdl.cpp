@@ -471,6 +471,38 @@ void input_sdl_handle()
 			case SDL_DROPFILE:
 				gui_start_game(event.drop.file);
 				break;
+
+			// Switch touchscreen support
+			case SDL_FINGERDOWN:
+			case SDL_FINGERMOTION:
+				{
+					int x = event.tfinger.x * settings.display.width;
+					int y = event.tfinger.y * settings.display.height;
+					gui_set_mouse_position(x, y);
+					if (mouseCaptured && gameRunning && event.type == SDL_FINGERMOTION)
+					{
+						int dx = event.tfinger.dx * settings.display.width;
+						int dy = event.tfinger.dy * settings.display.height;
+						sdl_mouse->setRelPos(dx, dy);
+					}
+					else
+						sdl_mouse->setAbsPos(x, y);
+					if (event.type == SDL_FINGERDOWN) {
+						sdl_mouse->setButton(Mouse::LEFT_BUTTON, true);
+						gui_set_mouse_button(0, true);
+					}
+				}
+				break;
+			case SDL_FINGERUP:
+				{
+					int x = event.tfinger.x * settings.display.width;
+					int y = event.tfinger.y * settings.display.height;
+					gui_set_mouse_position(x, y);
+					gui_set_mouse_button(0, false);
+					sdl_mouse->setAbsPos(x, y);
+					sdl_mouse->setButton(Mouse::LEFT_BUTTON, false);
+				}
+				break;
 		}
 	}
 }
