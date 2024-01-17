@@ -130,12 +130,13 @@ void Boxart::fetchBoxart()
 				}
 			}
 		}
+		saveDatabase(true);
 	});
 }
 
-void Boxart::saveDatabase()
+void Boxart::saveDatabase(bool internal)
 {
-	if (fetching.valid())
+	if (!internal && fetching.valid())
 		fetching.get();
 	if (!databaseDirty)
 		return;
