@@ -266,72 +266,32 @@ void context_switch_aarch64(void* context);
 
 void __libnx_exception_handler(ThreadExceptionDump *ctx)
 {
-   mcontext_t m_ctx;
+	alignas(16) static ucontext_t u_ctx;
+	u_ctx.uc_mcontext.pc = ctx->pc.x;
+	for (int i = 0; i < 29; i++)
+		u_ctx.uc_mcontext.regs[i] = ctx->cpu_gprs[i].x;
 
-   m_ctx.pc = ctx->pc.x;
+	siginfo_t sig_info;
+	sig_info.si_addr = (void*)ctx->far.x;
 
-   for(int i=0; i<29; i++)
-   {
-      // printf("X%d: %p\n", i, ctx->cpu_gprs[i].x);
-      m_ctx.regs[i] = ctx->cpu_gprs[i].x;
-   }
+	fault_handler(0, &sig_info, (void *)&u_ctx);
 
-   /*
-   printf("PC: %p\n", ctx->pc.x);
-   printf("FP: %p\n", ctx->fp.x);
-   printf("LR: %p\n", ctx->lr.x);
-   printf("SP: %p\n", ctx->sp.x);
-   */
+	alignas(16) static uint64_t savedRegisters[66];
+	uint64_t *ptr = savedRegisters;
+	// fpu registers (64 bits)
+	for (int i = 0; i < 32; i++)
+		ptr[i]  = *(u64 *)&ctx->fpu_gprs[i].d;
+	// cpu gp registers
+	for (int i = 0; i < 29; i++)
+		ptr[i + 32]  = u_ctx.uc_mcontext.regs[i];
+	// Special regs
+	ptr[29 + 32] = ctx->fp.x;	// frame pointer
+	ptr[30 + 32] = ctx->lr.x;	// link register
+	ptr[31 + 32] = ctx->pstate;	// sprs
+	ptr[32 + 32] = ctx->sp.x;	// stack pointer
+	ptr[33 + 32] = u_ctx.uc_mcontext.pc; // PC
 
-   ucontext_t u_ctx;
-   u_ctx.uc_mcontext = m_ctx;
-
-   siginfo_t sig_info;
-
-   sig_info.si_addr = (void*)ctx->far.x;
-
-   fault_handler(0, &sig_info, (void*) &u_ctx);
-
-   uint64_t handle[64] = { 0 };
-
-   uint64_t *ptr = (uint64_t*)handle;
-   ptr[0]  = m_ctx.regs[0]; /* x0 0  */
-   ptr[1]  = m_ctx.regs[1]; /* x1 8 */
-   ptr[2]  = m_ctx.regs[2]; /* x2 16 */
-   ptr[3]  = m_ctx.regs[3]; /* x3 24 */
-   ptr[4]  = m_ctx.regs[4]; /* x4 32 */
-   ptr[5]  = m_ctx.regs[5]; /* x5 40 */
-   ptr[6]  = m_ctx.regs[6]; /* x6 48 */
-   ptr[7]  = m_ctx.regs[7]; /* x7 56 */
-   /* Non-volatiles.  */
-   ptr[8]  = m_ctx.regs[8]; /* x8 64 */
-   ptr[9]  = m_ctx.regs[9]; /* x9 72 */
-   ptr[10]  = m_ctx.regs[10]; /* x10 80 */
-   ptr[11]  = m_ctx.regs[11]; /* x11 88 */
-   ptr[12]  = m_ctx.regs[12]; /* x12 96 */
-   ptr[13]  = m_ctx.regs[13]; /* x13 104 */
-   ptr[14]  = m_ctx.regs[14]; /* x14 112 */
-   ptr[15]  = m_ctx.regs[15]; /* x15 120 */
-   ptr[16]  = m_ctx.regs[16]; /* x16 128 */
-   ptr[17]  = m_ctx.regs[17]; /* x17 136 */
-   ptr[18]  = m_ctx.regs[18]; /* x18 144 */
-   ptr[19]  = m_ctx.regs[19]; /* x19 152 */
-   ptr[20] = m_ctx.regs[20]; /* x20 160 */
-   ptr[21] = m_ctx.regs[21]; /* x21 168 */
-   ptr[22] = m_ctx.regs[22]; /* x22 176 */
-   ptr[23] = m_ctx.regs[23]; /* x23 184 */
-   ptr[24] = m_ctx.regs[24]; /* x24 192 */
-   ptr[25] = m_ctx.regs[25]; /* x25 200 */
-   ptr[26] = m_ctx.regs[26]; /* x26 208 */
-   ptr[27] = m_ctx.regs[27]; /* x27 216 */
-   ptr[28] = m_ctx.regs[28]; /* x28 224 */
-   /* Special regs */
-   ptr[29] = ctx->fp.x; /* frame pointer 232 */
-   ptr[30] = ctx->lr.x; /* link register 240 */
-   ptr[31] = ctx->sp.x; /* stack pointer 248 */
-   ptr[32] = (uintptr_t)ctx->pc.x; /* PC 256 */
-
-   context_switch_aarch64(ptr);
+	context_switch_aarch64(ptr);
 }
 }
 #endif	// TARGET_NO_EXCEPTIONS
