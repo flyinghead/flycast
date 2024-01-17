@@ -124,6 +124,7 @@ static void setHostRoundingMode()
                 "MSR    FPCR, x10     \n\t"
                 :
                 : "r"(off_mask), "r"(on_mask)
+				: "x10"
             );
     #else
 	#error "SetFloatStatusReg: Unsupported platform"
