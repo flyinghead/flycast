@@ -410,11 +410,13 @@ public:
 			pair.second->update_rumble();
 	}
 
+protected:
+	double vib_stop_time = 0;
+	SDL_JoystickID sdl_joystick_instance;
+
 private:
 	SDL_Joystick* sdl_joystick;
-	SDL_JoystickID sdl_joystick_instance;
 	float vib_inclination = 0;
-	double vib_stop_time = 0;
 	SDL_GameController *sdl_controller = nullptr;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
 };

@@ -1037,7 +1037,10 @@ else()
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/linux/libnx_vmem.cpp
 				shell/switch/stubs.c
-				shell/switch/context_switch.S)
+				shell/switch/context_switch.S
+				shell/switch/nswitch.h
+				shell/switch/switch_gamepad.h
+				shell/switch/ucontext.h)
 	endif()
 endif()
 

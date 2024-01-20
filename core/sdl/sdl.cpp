@@ -26,6 +26,7 @@
 #endif
 #ifdef __SWITCH__
 #include "nswitch.h"
+#include "switch_gamepad.h"
 #endif
 
 static SDL_Window* window = NULL;
@@ -51,7 +52,7 @@ static struct SDLDeInit
 	}
 
 	bool initialized = false;
-} sqlDeinit;
+} sdlDeInit;
 
 static void sdl_open_joystick(int index)
 {
@@ -63,7 +64,11 @@ static void sdl_open_joystick(int index)
 		return;
 	}
 	try {
+#ifdef __SWITCH__
+		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+#else
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+#endif
 		SDLGamepad::AddSDLGamepad(gamepad);
 	} catch (const FlycastException& e) {
 	}
@@ -189,7 +194,7 @@ void input_sdl_init()
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");
 	}
-	sqlDeinit.initialized = true;
+	sdlDeInit.initialized = true;
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -720,7 +725,7 @@ void sdl_window_create()
 		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
 #endif
 	}
-	sqlDeinit.initialized = true;
+	sdlDeInit.initialized = true;
 	initRenderApi();
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
