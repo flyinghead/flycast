@@ -25,6 +25,9 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Mark git repository as safe
+        run: git config --global --add safe.directory $PWD
+
       - uses: actions/cache@v4
         with:
           path: ~/.ccache
