@@ -22,7 +22,7 @@ jobs:
           mkdir vcpkg\bincache
           vcpkg\bootstrap-vcpkg.bat
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
           key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}

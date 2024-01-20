@@ -79,7 +79,7 @@ jobs:
         run: ./shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh --disableSimulator
         if: matrix.config.name == 'apple-ios'
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.config.name }}-${{ github.sha }}
