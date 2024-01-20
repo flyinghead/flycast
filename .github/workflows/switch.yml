@@ -6,7 +6,9 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
-    container: devkitpro/devkita64:latest
+    container:
+      image: devkitpro/devkita64:latest
+      options: --user 1001		# run the container as the "runner" user to avoid security issues with git
 
     strategy:
       matrix:
