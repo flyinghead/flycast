@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.ccache
           key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
