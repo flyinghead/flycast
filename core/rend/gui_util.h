@@ -169,3 +169,5 @@ public:
 private:
 	bool disabled;
 };
+
+bool BeginListBox(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiWindowFlags windowFlags = 0);

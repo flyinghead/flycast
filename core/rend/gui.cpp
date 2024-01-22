@@ -421,15 +421,17 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
-
-#if defined(USE_SDL)
-	if (io.WantTextInput && !SDL_IsTextInputActive())
+#ifdef USE_SDL
+	else
 	{
-		SDL_StartTextInput();
-	}
-	else if (!io.WantTextInput && SDL_IsTextInputActive())
-	{
-		SDL_StopTextInput();
+		if (io.WantTextInput && !SDL_IsTextInputActive())
+		{
+			SDL_StartTextInput();
+		}
+		else if (!io.WantTextInput && SDL_IsTextInputActive())
+		{
+			SDL_StopTextInput();
+		}
 	}
 #endif
 }
@@ -1196,7 +1198,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		char key_id[32];
 
-		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_DragScrolling);
+		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
 
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
@@ -1582,7 +1584,7 @@ static void gui_display_settings()
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
             				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
 
-            if (ImGui::BeginListBox("Content Location", size))
+            if (BeginListBox("Content Location", size, ImGuiWindowFlags_NavFlattened))
             {
             	int to_delete = -1;
                 for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -1633,7 +1635,7 @@ static void gui_display_settings()
             size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-            if (ImGui::BeginListBox("Data Directory", size))
+            if (BeginListBox("Data Directory", size, ImGuiWindowFlags_NavFlattened))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_data_path("").c_str());
@@ -1642,7 +1644,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
 #else
-            if (ImGui::BeginListBox("Home Directory", size))
+            if (BeginListBox("Home Directory", size, ImGuiWindowFlags_NavFlattened))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
@@ -2828,7 +2830,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
