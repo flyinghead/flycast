@@ -73,7 +73,7 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	MemoryInfo meminfo;
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
-	ERROR_LOG(COMMON, ".text base: %p", (void*)meminfo.addr);
+	ERROR_LOG(COMMON, ".text base: %p -> offset: %lx", (void*)meminfo.addr, ctx.pc - meminfo.addr);
 #else
 	if (next_segv_handler.sa_sigaction != nullptr)
 		next_segv_handler.sa_sigaction(sn, si, segfault_ctx);

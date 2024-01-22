@@ -237,6 +237,7 @@ void bm_Reset()
 	protected_blocks = 0;
 	unprotected_blocks = 0;
 
+#ifndef __SWITCH__
 	if (addrspace::virtmemEnabled())
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
@@ -255,6 +256,7 @@ void bm_Reset()
 		}
 	}
 	else
+#endif
 	{
 		virtmem::region_unlock(&mem_b[0], RAM_SIZE);
 	}
@@ -483,6 +485,7 @@ void bm_RamWriteAccess(u32 addr)
 
 u32 bm_getRamOffset(void *p)
 {
+#ifndef __SWITCH__
 	if (addrspace::virtmemEnabled())
 	{
 		if ((u8 *)p < addrspace::ram_base || (u8 *)p >= addrspace::ram_base + 0x20000000)
@@ -493,6 +496,7 @@ u32 bm_getRamOffset(void *p)
 		return addr & RAM_MASK;
 	}
 	else
+#endif
 	{
 		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
 			return -1;
