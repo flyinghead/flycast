@@ -573,7 +573,8 @@ void findGLVersion()
 			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
 	}
 #endif
-	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
+	gl.mesa_nouveau = !stricmp((const char *)glGetString(GL_VENDOR), "nouveau")
+			|| !stricmp((const char *)glGetString(GL_RENDERER), "NVE4");
 	NOTICE_LOG(RENDERER, "OpenGL%s version %d.%d", gl.is_gles ? " ES" : "", gl.gl_major, gl.gl_minor);
 	while (glGetError() != GL_NO_ERROR)
 		;
