@@ -655,9 +655,9 @@ void Emulator::term()
 		pvr::term();
 		mem_Term();
 
-		addrspace::release();
 		state = Terminated;
 	}
+	addrspace::release();
 }
 
 void Emulator::stop()
@@ -726,6 +726,8 @@ void loadGameSpecificSettings()
 
 	if (config::ForceWindowsCE && !config::ExtraDepthScale.isReadOnly())
 		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
+	if (config::GGPOEnable)
+		config::Sh4Clock.override(200);
 }
 
 void Emulator::step()
@@ -767,8 +769,16 @@ void dc_loadstate(Deserializer& deser)
 void Emulator::setNetworkState(bool online)
 {
 	if (settings.network.online != online)
+	{
+		settings.network.online = online;
 		DEBUG_LOG(NETWORK, "Network state %d", online);
-	settings.network.online = online;
+		if (online && settings.platform.isConsole()
+				&& config::Sh4Clock != 200)
+		{
+			config::Sh4Clock.override(200);
+			sh4_cpu.ResetCache();
+		}
+	}
 	settings.input.fastForwardMode &= !online;
 }
 
