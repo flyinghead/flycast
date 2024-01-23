@@ -179,7 +179,7 @@ static void SetGPState(const PolyParam* gp)
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
 	gl4ShaderUniforms.Set(CurrentShader);
 
-	if (pass == Pass::Color && (Type == ListType_Translucent || Type == ListType_Punch_Through))
+	if (pass == Pass::Color)
 	{
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);

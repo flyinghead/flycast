@@ -455,11 +455,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-	{
-		devCache.SetRenderState(D3DRS_SRCBLEND, SrcBlendGL[gp->tsp.SrcInstr]);
-		devCache.SetRenderState(D3DRS_DESTBLEND, DstBlendGL[gp->tsp.DstInstr]);
-	}
+	devCache.SetRenderState(D3DRS_SRCBLEND, SrcBlendGL[gp->tsp.SrcInstr]);
+	devCache.SetRenderState(D3DRS_DESTBLEND, DstBlendGL[gp->tsp.DstInstr]);
 
 	devCache.SetRenderState(D3DRS_CULLMODE, CullMode[gp->isp.CullMode]);
 
@@ -768,11 +765,10 @@ void D3DRenderer::drawStrips()
 		{
 			devCache.SetRenderState(D3DRS_STENCILENABLE, FALSE);
 		}
-		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 
 		drawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 
-		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		devCache.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 		devCache.SetRenderState(D3DRS_ALPHAREF, PT_ALPHA_REF & 0xFF);

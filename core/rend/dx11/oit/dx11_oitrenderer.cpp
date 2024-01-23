@@ -284,13 +284,9 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 
 		if (pass == DX11OITShaders::Color)
-		{
 			// Apparently punch-through polys support blending, or at least some combinations
-			if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-				deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-			else
-				deviceContext->OMSetBlendState(blendStates.getState(false, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-		}
+			deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
+
 		if (useTexture)
 		{
 			for (int i = 0; i < 2; i++)

@@ -226,13 +226,9 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-	{
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
-	}
-	else
-		glcache.Disable(GL_BLEND);
+	// Opaque polygons support blending in list continuations (wild guess)
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
