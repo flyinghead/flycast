@@ -416,6 +416,11 @@ if(NOT LIBRETRO)
 		endif()
 
 		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+			# Use _HAS_STD_BYTE=0 as a workaround for "error C2872: 'byte': ambiguous symbol"
+			# https://github.com/libsdl-org/SDL/issues/8911
+			if(WINDOWS_STORE)
+				target_compile_definitions(SDL2-static PRIVATE _HAS_STD_BYTE=0)
+			endif()
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
