@@ -8,7 +8,6 @@ void gdrom_reg_Reset(bool hard);
 u32  ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
 void libCore_CDDA_Sector(s16* sector);
-void libCore_gdrom_disc_change();
 u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
 void gd_setdisc();
 

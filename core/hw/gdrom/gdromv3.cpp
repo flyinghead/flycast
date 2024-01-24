@@ -23,16 +23,16 @@ int sns_asc;
 int sns_ascq;
 int sns_key;
 
-u32 set_mode_offset;
-read_params_t read_params ;
-packet_cmd_t packet_cmd ;
-read_buff_t read_buff ;
-pio_buff_t pio_buff ;
-ata_cmd_t ata_cmd ;
-cdda_t cdda ;
+static u32 set_mode_offset;
+static read_params_t read_params;
+static packet_cmd_t packet_cmd;
+static read_buff_t read_buff;
+static pio_buff_t pio_buff;
+static ata_cmd_t ata_cmd;
+cdda_t cdda;
 
-gd_states gd_state;
-DiscType gd_disk_type;
+static gd_states gd_state;
+static DiscType gd_disk_type;
 /*
 	GD rom reset -> GDS_WAITCMD
 
@@ -41,19 +41,19 @@ DiscType gd_disk_type;
 
 	GDS_SPI_READSECTOR -> Depending on features , it can do quite a few things
 */
-u32 data_write_mode=0;
+static u32 data_write_mode=0;
 
 //Registers
-	u32 DriveSel;
-	GD_ErrRegT Error;
-	GD_InterruptReasonT IntReason;
-	GD_FeaturesT Features;
-	GD_SecCountT SecCount;
-	GD_SecNumbT SecNumber;
+static u32 DriveSel;
+static GD_ErrRegT Error;
+static GD_InterruptReasonT IntReason;
+static GD_FeaturesT Features;
+static GD_SecCountT SecCount;
+GD_SecNumbT SecNumber;
 	
-	GD_StatusT GDStatus;
+static GD_StatusT GDStatus;
 
-	ByteCount_t ByteCount;
+static ByteCount_t ByteCount;
 	
 //end
 GD_HardwareInfo_t GD_HardwareInfo;
@@ -94,9 +94,10 @@ void libCore_CDDA_Sector(s16* sector)
 		memset(sector,0,2352);
 	}
 }
-void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state = gds_pio_end);
-void gd_process_spi_cmd();
-void gd_process_ata_cmd();
+
+static void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state = gds_pio_end);
+static void gd_process_spi_cmd();
+static void gd_process_ata_cmd();
 
 static void FillReadBuffer()
 {
@@ -114,7 +115,7 @@ static void FillReadBuffer()
 }
 
 
-void gd_set_state(gd_states state)
+static void gd_set_state(gd_states state)
 {
 	gd_states prev=gd_state;
 	gd_state=state;
@@ -282,7 +283,7 @@ void gd_setdisc()
 	SecNumber.DiscFormat = gd_disk_type >> 4;
 }
 
-void gd_reset()
+static void gd_reset()
 {
 	//Reset the drive
 	gd_setdisc();
@@ -298,7 +299,7 @@ static u32 GetFAD(u8* data, bool msf)
 }
 
 //disk changes etc
-void libCore_gdrom_disc_change()
+static void gd_disc_change()
 {
 	gd_setdisc();
 	read_params = { 0 };
@@ -311,7 +312,7 @@ void libCore_gdrom_disc_change()
 }
 
 //This handles the work of setting up the pio regs/state :)
-void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state)
+static void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state)
 {
 	verify(len<0xFFFF);
 	pio_buff.index=0;
@@ -326,7 +327,7 @@ void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state)
 	else
 		gd_set_state(gds_pio_send_data);
 }
-void gd_spi_pio_read_end(u32 len, gd_states next_state)
+static void gd_spi_pio_read_end(u32 len, gd_states next_state)
 {
 	verify(len<0xFFFF);
 	pio_buff.index=0;
@@ -338,7 +339,7 @@ void gd_spi_pio_read_end(u32 len, gd_states next_state)
 	else
 		gd_set_state(gds_pio_get_data);
 }
-void gd_process_ata_cmd()
+static void gd_process_ata_cmd()
 {
 	//Any ATA command clears these bits, unless aborted/error :p
 	Error.ABRT=0;
@@ -644,7 +645,7 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 	return subc_info[3];
 }
 
-void gd_process_spi_cmd()
+static void gd_process_spi_cmd()
 {
 
 	printf_spi("Sense: %02x %02x %02x", sns_asc, sns_ascq, sns_key);
@@ -664,9 +665,7 @@ void gd_process_spi_cmd()
 	{
 	case SPI_TEST_UNIT:
 		printf_spicmd("SPI_TEST_UNIT");
-
-		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
-
+		// This device does not report the check condition status.
 		gd_set_state(gds_procpacketdone);
 		break;
 
@@ -776,8 +775,8 @@ void gd_process_spi_cmd()
 		
 	case SPI_REQ_STAT:
 		{
-			printf_spicmd("SPI_REQ_STAT");
 			u32 curFad = cdda.status == cdda_t::Playing || cdda.status == cdda_t::Paused ? cdda.CurrAddr.FAD : read_params.start_sector - 1;
+			printf_spicmd("SPI_REQ_STAT: status %d fmt %d fad %d", SecNumber.Status, SecNumber.DiscFormat, curFad);
 			u32 elapsed;
 			u32 tracknum = libGDR_GetTrackNumber(curFad, elapsed);
 			u8 stat[10];
@@ -833,7 +832,7 @@ void gd_process_spi_cmd()
 
 	case SPI_REQ_SES:
 		{
-			printf_spicmd("SPI_REQ_SES");
+			printf_spicmd("SPI_REQ_SES: status %d", SecNumber.Status);
 
 			u8 ses_inf[6];
 			libGDR_GetSessionInfo(ses_inf,packet_cmd.data_8[2]);
@@ -1301,7 +1300,7 @@ static void GDROM_DmaEnable(u32 addr, u32 data)
 void gdrom_reg_Init()
 {
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
-	libCore_gdrom_disc_change();
+	gd_disc_change();
 }
 
 void gdrom_reg_Term()
@@ -1327,6 +1326,7 @@ void gdrom_reg_Reset(bool hard)
 		memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
 		memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
 		memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
+		TermDrive();
 	}
 	SB_GDST = 0;
 	SB_GDEN = 0;
@@ -1354,7 +1354,7 @@ void gdrom_reg_Reset(bool hard)
 	GDStatus = {};
 	ByteCount = {};
 
-	libCore_gdrom_disc_change();
+	gd_disc_change();
 }
 
 namespace gdrom

@@ -357,9 +357,17 @@ static void reios_sys_misc()
 		break;
 
 	case 2:	// check disk
-		p_sh4rcb->cntx.r[0] = 0;
-		// Reload part of IP.BIN bootstrap
-		libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
+		{
+			u32 diskType = libGDR_GetDiscType();
+			if (diskType == NoDisk || diskType == Open) {
+				p_sh4rcb->cntx.r[0] = -1;
+			}
+			else {
+				p_sh4rcb->cntx.r[0] = 0;
+				// Reload part of IP.BIN bootstrap
+				libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
+			}
+		}
 		break;
 
 	case 3: // Exit to CD menu

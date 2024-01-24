@@ -412,6 +412,7 @@ void Emulator::init()
 	// Default platform
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
+	libGDR_init();
 	pvr::init();
 	aica::init();
 	mem_Init();
@@ -654,6 +655,7 @@ void Emulator::term()
 		aica::term();
 		pvr::term();
 		mem_Term();
+		libGDR_term();
 
 		state = Terminated;
 	}

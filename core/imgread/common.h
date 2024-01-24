@@ -273,6 +273,10 @@ bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 std::string libGDR_GetDiskCatalog();
 std::string libGDR_GetTrackIsrc(u32 trackNum);
 void libGDR_GetTrackAdrAndControl(u32 trackNum, u8& adr, u8& ctrl);
+void libGDR_init();
+void libGDR_term();
+void libGDR_serialize(Serializer& ser);
+void libGDR_deserialize(Deserializer& deser);
 
 namespace flycast
 {
