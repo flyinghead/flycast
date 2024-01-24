@@ -135,7 +135,6 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
  * Sega JVS I/O board
 */
 static bool old_coin_chute[4];
-static int coin_count[4];
 
 class jvs_io_board
 {
@@ -152,6 +151,10 @@ public:
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	virtual void serialize(Serializer& ser) const;
 	virtual void deserialize(Deserializer& deser);
+
+	u32 getDigitalOutput() const {
+		return digOutput;
+	}
 
 	bool lightgun_as_analog = false;
 
@@ -258,6 +261,7 @@ protected:
 	u32 light_gun_count = 0;
 	u32 output_count = 0;
 	bool init_in_progress = false;
+	maple_naomi_jamma *parent;
 
 private:
 	void init_mappings()
@@ -289,13 +293,13 @@ private:
 	}
 
 	u8 node_id;
-	maple_naomi_jamma *parent;
 	u8 first_player;
 
 	std::array<u32, 32> cur_mapping;
 	std::array<u32, 32> p1_mapping;
 	std::array<u32, 32> p2_mapping;
 	u32 digOutput = 0;
+	int coin_count[4] {};
 };
 
 // Most common JVS board
@@ -443,6 +447,52 @@ protected:
 	s16 prevRelY = 0;
 	float rotX = 0.f;
 	float rotY = 0.f;
+};
+
+class jvs_837_13938_crackindj : public jvs_837_13938
+{
+public:
+	jvs_837_13938_crackindj(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{}
+
+	void serialize(Serializer& ser) const override
+	{
+		jvs_837_13938::serialize(ser);
+		ser << motorRotation;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		jvs_837_13938::deserialize(deser);
+		if (deser.version() >= Deserializer::V46)
+			deser >> motorRotation;
+	}
+
+protected:
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		jvs_io_board& outputBoard = *parent->io_boards[1];
+		bool turntableOn = outputBoard.getDigitalOutput() & 0x10;
+		switch (channel)
+		{
+			case 0:	// Left turntable
+				if (turntableOn && relX == lastRel[0])
+					motorRotation[0] -= 10;
+				lastRel[0] = relX;
+				return -relX + motorRotation[0];
+			case 2: // Right turntable
+				if (turntableOn && relY == lastRel[1])
+					motorRotation[1] -= 10;
+				lastRel[1] = relY;
+				return relY + motorRotation[1];
+			default:
+				return 0;
+		}
+	}
+
+private:
+	s16 motorRotation[2]{};
+	s16 lastRel[2]{};
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -998,10 +1048,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 			settings.input.fourPlayerGames = true;
 		}
 		else if (gameId == "DYNAMIC GOLF"
-				|| gameId == "SHOOTOUT POOL"
-				|| gameId == "SHOOTOUT POOL MEDAL"
-				|| gameId == "CRACKIN'DJ  ver JAPAN"
-				|| gameId == "CRACKIN'DJ PART2  ver JAPAN"
+				|| gameId.substr(0, 13) == "SHOOTOUT POOL"
+				|| gameId.substr(0, 10) == "CRACKIN'DJ"
 				|| gameId == "KICK '4' CASH")
 		{
 			// Rotary encoders
@@ -1010,6 +1058,8 @@ maple_naomi_jamma::maple_naomi_jamma()
 				io_boards.push_back(std::make_unique<jvs_837_13938_shootout>(1, this));
 			else if (gameId == "KICK '4' CASH")
 				io_boards.push_back(std::make_unique<jvs_837_13938_kick4cash>(1, this));
+			else if (gameId.substr(0, 10) == "CRACKIN'DJ")
+				io_boards.push_back(std::make_unique<jvs_837_13938_crackindj>(1, this));
 			else
 				io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
@@ -1984,15 +2034,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
-									coin_count[first_player + slot] += 1;
+									coin_count[slot] += 1;
 							}
 							old_coin_chute[first_player + slot] = coin_chute;
 
 							LOGJVS("%d:%d ", slot + 1 + first_player, coin_count[first_player + slot]);
 							// status (2 highest bits, 0: normal), coin count MSB
-							JVS_OUT((coin_count[first_player + slot] >> 8) & 0x3F);
+							JVS_OUT((coin_count[slot] >> 8) & 0x3F);
 							// coin count LSB
-							JVS_OUT(coin_count[first_player + slot]);
+							JVS_OUT(coin_count[slot]);
 						}
 						cmdi += 2;
 					}
@@ -2141,8 +2191,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
-						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
+					if (buffer_in[cmdi + 1] > 0 && buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
+						coin_count[buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;
@@ -2197,9 +2247,14 @@ void jvs_io_board::serialize(Serializer& ser) const
 {
 	ser << node_id;
 	ser << lightgun_as_analog;
+	ser << coin_count;
 }
 void jvs_io_board::deserialize(Deserializer& deser)
 {
 	deser >> node_id;
 	deser >> lightgun_as_analog;
+	if (deser.version() >= Deserializer::V46)
+		deser >> coin_count;
+	else
+		memset(coin_count, 0, sizeof(coin_count));
 }

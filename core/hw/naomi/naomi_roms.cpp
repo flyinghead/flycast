@@ -1108,11 +1108,11 @@ const Game Games[] =
     // Crackin' DJ
     {
         "crackndj",
-        NULL,
+		nullptr,
         "Crackin' DJ",
         0x0a800000,
         0x281c2347,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
@@ -1127,17 +1127,19 @@ const Game Games[] =
             { "mpr-23532.ic8",  0x7800000, 0x1000000 },
             { "mpr-23533.ic9",  0x8800000, 0x1000000 },
             { "mpr-23534.ic10", 0x9800000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&crackindj_inputs,
+		crackndj_eeprom_dump,
     },
     // Crackin' DJ Part 2 (Japan)
     {
         "crakndj2",
-        NULL,
+		nullptr,
         "Crackin' DJ Part 2",
         0x0a800000,
         0x28428247,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
@@ -1165,9 +1167,10 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(08f27149) SHA1(3b8d53dcf2c09035b318022906c444cf8504d7fa) )
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&crackindj_inputs,
+		crakndj2_eeprom_dump,
     },
     // Crazy Taxi
     {
