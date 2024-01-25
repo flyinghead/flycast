@@ -305,7 +305,8 @@ void libGDR_ReadSubChannel(u8 * buff, u32 len)
 
 u32 libGDR_GetDiscType()
 {
-	if (SecNumber.Status != GD_BUSY && disc != nullptr)
+	// Pretend no disk is inserted if a disk swapping is in progress
+	if (!sh4_sched_is_scheduled(schedId) && disc != nullptr)
 		return disc->type;
 	else
 		return NullDriveDiscType;
@@ -319,8 +320,8 @@ static int discSwapCallback(int tag, int sch_cycl, int jitter, void *arg)
 	else
 		// No disc inserted at the time of power-on, reset or hard reset, or TOC cannot be read.
 		sns_asc = 0x29;
-	sns_ascq = 0x00;
-	sns_key = 0x6;
+	sns_ascq = 0;
+	sns_key = 6;
 	gd_setdisc();
 
 	return 0;
@@ -342,6 +343,7 @@ bool DiscSwap(const std::string& path)
 
 void libGDR_init()
 {
+	verify(schedId == -1);
 	schedId = sh4_sched_register(0, discSwapCallback);
 }
 void libGDR_term()
