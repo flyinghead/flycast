@@ -665,7 +665,8 @@ static void gd_process_spi_cmd()
 	{
 	case SPI_TEST_UNIT:
 		printf_spicmd("SPI_TEST_UNIT");
-		// This device does not report the check condition status.
+		// needed by Alone in the Dark and Resident Evil: Code Veronica disk swapping
+		GDStatus.CHECK = SecNumber.Status == GD_BUSY;
 		gd_set_state(gds_procpacketdone);
 		break;
 
