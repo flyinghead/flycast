@@ -43160,7 +43160,7 @@ struct retro_core_options_v2 options_it = {
 /* RETRO_LANGUAGE_JA */
 
 #define CATEGORY_SYSTEM_LABEL_JA "システム"
-#define CATEGORY_SYSTEM_INFO_0_JA "地域、言語、BIOS および基本的なハードウェアの設定を構成します。"
+#define CATEGORY_SYSTEM_INFO_0_JA "地域、言語、BIOS および基本的なハードウェアの設定を変更します。"
 #define CATEGORY_VIDEO_LABEL_JA "ビデオ"
 #define CATEGORY_VIDEO_INFO_0_JA NULL
 #define CATEGORY_PERFORMANCE_LABEL_JA "パフォーマンス"
@@ -43168,16 +43168,16 @@ struct retro_core_options_v2 options_it = {
 #define CATEGORY_HACKS_LABEL_JA "エミュレーションハック"
 #define CATEGORY_HACKS_INFO_0_JA NULL
 #define CATEGORY_INPUT_LABEL_JA "入力"
-#define CATEGORY_INPUT_INFO_0_JA "ゲームパッドとライトガンの設定を構成します。"
+#define CATEGORY_INPUT_INFO_0_JA "ゲームパッドとライトガンの設定を変更します。"
 #define CATEGORY_VMU_LABEL_JA "ビジュアルメモリユニット"
-#define CATEGORY_VMU_INFO_0_JA "ゲームごとの VMU セーブファイルと OSD VMU の表示設定を構成します。"
+#define CATEGORY_VMU_INFO_0_JA "ゲームごとの VMU セーブファイルと OSD VMU の表示設定を変更します。"
 #define CORE_OPTION_NAME_REGION_LABEL_JA "地域"
 #define OPTION_VAL_JAPAN_JA "日本"
 #define OPTION_VAL_USA_JA "アメリカ合衆国"
 #define OPTION_VAL_EUROPE_JA "ヨーロッパ"
 #define OPTION_VAL_DEFAULT_JA "デフォルト"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_JA "言語"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_JA NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_JA "BIOS や複数の言語を含むゲームで使用される言語を変更します。"
 #define OPTION_VAL_JAPANESE_JA "Japanese - 日本語"
 #define OPTION_VAL_ENGLISH_JA "英語"
 #define OPTION_VAL_GERMAN_JA "German - ドイツ語"
@@ -43185,9 +43185,9 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_SPANISH_JA "Spanish - スペイン語"
 #define OPTION_VAL_ITALIAN_JA "Italian - イタリア語"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_JA "HLE BIOS (再起動が必要)"
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_JA NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_JA NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_JA NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_JA "高レベルエミュレーション BIOS の使用を強制します。"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_JA "BIOS を起動する (再起動が必要)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_JA "Dreamcast の BIOS メニューを起動します。"
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_JA "DSP を有効にする"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_JA NULL
 #define CORE_OPTION_NAME_FORCE_WINCE_LABEL_JA "強制 Windows CE モード"
@@ -43199,7 +43199,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_JA "UPnP を有効にする"
-#define CORE_OPTION_NAME_UPNP_INFO_0_JA "オンラインゲーム用にルーターの UPnP を自動的に構成し使用します。"
+#define CORE_OPTION_NAME_UPNP_INFO_0_JA "オンラインゲーム用にルーターの UPnP を自動的に設定し使用します。"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_JA "内部解像度"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_JA "描画解像度を変更します。"
 #define OPTION_VAL_320X240_JA NULL
@@ -43283,7 +43283,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_JA NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_JA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_JA NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_JA NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_JA "GPU と CPU を別のスレッドで実行します。強く推奨されます。"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_JA "自動フレームスキップ"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_JA NULL
 #define OPTION_VAL_SOME_JA "通常"
@@ -43298,7 +43298,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_JA "GD-ROM の読み込みを高速化します。"
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_JA NULL
 #define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_JA NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_JA NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_JA "SH4 CPU アンダー/オーバークロック"
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_JA NULL
 #define OPTION_VAL_100_JA NULL
 #define OPTION_VAL_110_JA NULL
@@ -56388,8 +56388,8 @@ struct retro_core_options_v2 options_pt_br = {
 #define OPTION_VAL_2_PT_PT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_PT NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_PT NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_PT "Detetar alterações na taxa de fotogramas"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_PT "Notifica a interface quando a taxa de fotogramas interna muda (por exemplo, de 60 fps para 30 fps). Melhora o ritmo dos fotogramas em jogos que funcionam a 30 fps ou 20 fps bloqueados, mas deve ser desativado para jogos com taxas de fotogramas desbloqueadas (instáveis) (por exemplo, Ecco the Dolphin, Unreal Tournament). Nota: Não está disponível quando a opção \"Saltar fotogramas automaticamente\" está ativada."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_PT NULL
@@ -56402,7 +56402,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PT_PT NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_PT "Saltar fotogramas automaticamente"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_PT_PT NULL
 #define OPTION_VAL_SOME_PT_PT NULL
 #define OPTION_VAL_MORE_PT_PT NULL
