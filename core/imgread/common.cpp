@@ -135,9 +135,6 @@ void DiscOpenLid()
 	TermDrive();
 	NullDriveDiscType = Open;
 	gd_setdisc();
-	sns_asc = 0x29;
-	sns_ascq = 0x00;
-	sns_key = 0x6;
 }
 
 static bool doDiscSwap(const std::string& path)
