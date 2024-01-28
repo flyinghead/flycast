@@ -32,6 +32,7 @@ int maple_schid;
 
 static void maple_DoDma();
 static void maple_handle_reconnect();
+static int maple_schd(int tag, int cycles, int jitter, void *arg);
 
 //really hackish
 //misses delay , and stop/start implementation
@@ -40,30 +41,39 @@ static void maple_handle_reconnect();
 bool maple_ddt_pending_reset;
 // pending DMA xfers
 std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
+bool SDCKBOccupied;
 
 void maple_vblank()
 {
 	if (SB_MDEN & 1)
 	{
-		if (SB_MDTSEL == 1)
+		if (SDCKBOccupied)
 		{
-			if (maple_ddt_pending_reset)
-			{
-				DEBUG_LOG(MAPLE, "DDT vblank ; reset pending");
-			}
-			else
-			{
-				DEBUG_LOG(MAPLE, "DDT vblank");
-				SB_MDST = 1;
-				maple_DoDma();
-				// if trigger reset is manual, mark it as pending
-				if ((SB_MSYS >> 12) & 1)
-					maple_ddt_pending_reset = true;
-			}
+			maple_schd(0, 0, 0, nullptr);
+			SDCKBOccupied = false;
 		}
 		else
 		{
-			maple_ddt_pending_reset = false;
+			if (SB_MDTSEL == 1)
+			{
+				if (maple_ddt_pending_reset)
+				{
+					DEBUG_LOG(MAPLE, "DDT vblank ; reset pending");
+				}
+				else
+				{
+					DEBUG_LOG(MAPLE, "DDT vblank");
+					SB_MDST = 1;
+					maple_DoDma();
+					// if trigger reset is manual, mark it as pending
+					if ((SB_MSYS >> 12) & 1)
+						maple_ddt_pending_reset = true;
+				}
+			}
+			else
+			{
+				maple_ddt_pending_reset = false;
+			}
 		}
 	}
 	if (settings.platform.isConsole())
@@ -152,7 +162,6 @@ static void maple_DoDma()
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count = 0;
 	bool last = false;
-	bool occupy = false;
 	while (!last)
 	{
 		u32 header_1 = ReadMem32_nommu(addr);
@@ -245,7 +254,7 @@ static void maple_DoDma()
 		{
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5]) {
-				occupy = MapleDevices[bus][5]->get_lightgun_pos();
+				SDCKBOccupied = SDCKBOccupied || MapleDevices[bus][5]->get_lightgun_pos();
 				xfer_count++;
 			}
 			addr += 1 * 4;
@@ -253,6 +262,7 @@ static void maple_DoDma()
 		break;
 
 		case MP_SDCKBOccupyCancel:
+			SDCKBOccupied = false;
 			addr += 1 * 4;
 			break;
 
@@ -273,7 +283,7 @@ static void maple_DoDma()
 
 	// Maple bus max speed: 2 Mb/s, actual speed: 1 Mb/s
 	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (128 * 1024));
-	if (!occupy)
+	if (!SDCKBOccupied)
 		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (256 * 1024)), (u64)SH4_MAIN_CLOCK));
 }
 

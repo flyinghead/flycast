@@ -10,6 +10,7 @@
 MapleInputState mapleInputState[4];
 extern bool maple_ddt_pending_reset;
 extern std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
+extern bool SDCKBOccupied;
 
 void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
@@ -414,6 +415,7 @@ void mcfg_DestroyDevices(bool full)
 void mcfg_SerializeDevices(Serializer& ser)
 {
 	ser << maple_ddt_pending_reset;
+	ser << SDCKBOccupied;
 	ser << (u32)mapleDmaOut.size();
 	for (const auto& pair : mapleDmaOut)
 	{
@@ -446,6 +448,8 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 		deser.skip<bool>(); // EEPROM_loaded
 	}
 	deser >> maple_ddt_pending_reset;
+	if (deser.version() >= Deserializer::V47)
+		deser >> SDCKBOccupied;
 	mapleDmaOut.clear();
 	if (deser.version() >= Deserializer::V23)
 	{
