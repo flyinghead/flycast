@@ -382,7 +382,7 @@ ComPtr<ID3DXBuffer> D3DShaders::compileShader(const char* source, const char* fu
 	ComPtr<ID3DXBuffer> errors;
 	ComPtr<ID3DXBuffer> shader;
 	ComPtr<ID3DXConstantTable> constants;
-	D3DXCompileShader(source, strlen(source), pDefines, NULL, function, profile, SHADER_DEBUG, &shader.get(), &errors.get(), &constants.get());
+	pD3DXCompileShader(source, strlen(source), pDefines, NULL, function, profile, SHADER_DEBUG, &shader.get(), &errors.get(), &constants.get());
 	if (errors) {
 		char *text = (char *) errors->GetBufferPointer();
 		WARN_LOG(RENDERER, "%s", text);
@@ -392,7 +392,7 @@ ComPtr<ID3DXBuffer> D3DShaders::compileShader(const char* source, const char* fu
 
 ComPtr<IDirect3DVertexShader9> D3DShaders::compileVS(const char* source, const char* function, const D3DXMACRO* pDefines)
 {
-	ComPtr<ID3DXBuffer> buffer = compileShader(source, function, D3DXGetVertexShaderProfile(device), pDefines);
+	ComPtr<ID3DXBuffer> buffer = compileShader(source, function, pD3DXGetVertexShaderProfile(device), pDefines);
 	ComPtr<IDirect3DVertexShader9> shader;
 	if (buffer)
 		device->CreateVertexShader((DWORD *)buffer->GetBufferPointer(), &shader.get());
@@ -402,10 +402,49 @@ ComPtr<IDirect3DVertexShader9> D3DShaders::compileVS(const char* source, const c
 
 ComPtr<IDirect3DPixelShader9> D3DShaders::compilePS(const char* source, const char* function, const D3DXMACRO* pDefines)
 {
-	ComPtr<ID3DXBuffer> buffer = compileShader(source, function, D3DXGetPixelShaderProfile(device), pDefines);
+	ComPtr<ID3DXBuffer> buffer = compileShader(source, function, pD3DXGetPixelShaderProfile(device), pDefines);
 	ComPtr<IDirect3DPixelShader9> shader;
 	if (buffer)
 		device->CreatePixelShader((DWORD *)buffer->GetBufferPointer(), &shader.get());
 
 	return shader;
+}
+
+void D3DShaders::init(const ComPtr<IDirect3DDevice9>& device)
+{
+	this->device = device;
+	// d3dx9_24.dll is found in the Feb 2005 (!) release of the DirectX SDK so I doubt it will work but let's try
+	for (int ver = 43; ver >= 24; ver--)
+	{
+		std::string dllname = "d3dx9_" + std::to_string(ver) + ".dll";
+		d3dx9Library = LoadLibraryA(dllname.c_str());
+		if (d3dx9Library != NULL) {
+			DEBUG_LOG(RENDERER, "Loaded %s", dllname.c_str());
+			break;
+		}
+	}
+	if (d3dx9Library == NULL) {
+		ERROR_LOG(RENDERER, "Cannot load d3dx9_??.dll");
+		throw FlycastException("Cannot load d3dx9_??.dll");
+	}
+	pD3DXCompileShader = (decltype(D3DXCompileShader) *)GetProcAddress(d3dx9Library, "D3DXCompileShader");
+	pD3DXGetVertexShaderProfile = (decltype(D3DXGetVertexShaderProfile) *)GetProcAddress(d3dx9Library, "D3DXGetVertexShaderProfile");
+	pD3DXGetPixelShaderProfile = (decltype(D3DXGetPixelShaderProfile) *)GetProcAddress(d3dx9Library, "D3DXGetPixelShaderProfile");
+	if (pD3DXCompileShader == nullptr || pD3DXGetVertexShaderProfile == nullptr || pD3DXGetPixelShaderProfile == nullptr) {
+		ERROR_LOG(RENDERER, "Cannot find entry point in d3dx9_??.dll");
+		throw FlycastException("Cannot load d3dx9_??.dll");
+	}
+}
+
+void D3DShaders::term()
+{
+	shaders.clear();
+	for (auto& shader : vertexShaders)
+		shader.reset();
+	for (auto& shader : modVolShaders)
+		shader.reset();
+	device.reset();
+	if (d3dx9Library != NULL)
+		FreeLibrary(d3dx9Library);
+	d3dx9Library = NULL;
 }

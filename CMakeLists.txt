@@ -1342,15 +1342,8 @@ if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST A
 
 	if(NOT MINGW)
 		set_source_files_properties(${REND_DX9_FILES} PROPERTIES INCLUDE_DIRECTORIES "$ENV{DXSDK_DIR}/Include")
-		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x64")
-		else()
-			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x86")
-		endif()
 	endif()
-
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DX9)
-	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
 endif()
 
 if(WIN32 AND USE_DX11)

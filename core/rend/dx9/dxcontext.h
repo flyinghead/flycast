@@ -63,6 +63,7 @@ public:
 private:
 	void resetDevice();
 
+	HMODULE d3d9Library = NULL;
 	ComPtr<IDirect3D9> pD3D;
 	ComPtr<IDirect3DDevice9> pDevice;
 	D3DPRESENT_PARAMETERS d3dpp{};
