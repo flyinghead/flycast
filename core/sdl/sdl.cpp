@@ -642,6 +642,18 @@ bool sdl_recreate_window(u32 flags)
 	settings.display.width = windowPos.w * hdpiScaling;
 	settings.display.height = windowPos.h * hdpiScaling;
 
+#ifdef __linux__
+	if (flags & SDL_WINDOW_RESIZABLE)
+	{
+		// The position passed to SDL_CreateWindow doesn't take decorations into account on linux.
+		// SDL_ShowWindow retrieves the border dimensions and SDL_SetWindowPosition uses them
+		// to correctly (re)position the window if needed.
+		// TODO a similar issue happens when switching back from fullscreen
+		SDL_ShowWindow(window);
+		SDL_SetWindowPosition(window, windowPos.x, windowPos.y);
+	}
+#endif
+
 #if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__)
 	// Set the window icon
 	u32 pixels[48 * 48];
