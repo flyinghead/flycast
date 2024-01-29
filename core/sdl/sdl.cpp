@@ -46,6 +46,7 @@ static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
+static double lastBarcodeTime;
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -1132,16 +1133,24 @@ static bool handleBarcodeScanner(const SDL_Event& event)
 			return false;
 		}
 	}
+	double now = os_GetSeconds();
+	if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+	{
+		INFO_LOG(INPUT, "Barcode timeout");
+		barcode.clear();
+	}
 	char c = it->second;
 	if (c == '*')
 	{
-		if (barcode.empty()) {
+		if (barcode.empty())
+		{
 			DEBUG_LOG(INPUT, "Barcode start");
 			barcode += '*';
+			lastBarcodeTime = now;
 		}
 		else
 		{
-			card_reader::barcodeSetCard(barcode.substr(1));
+			card_reader::barcodeSetCard(barcode);
 			barcode.clear();
 			card_reader::insertCard(0);
 		}
@@ -1150,6 +1159,7 @@ static bool handleBarcodeScanner(const SDL_Event& event)
 	if (barcode.empty())
 		return false;
 	barcode += c;
+	lastBarcodeTime = now;
 
 	return true;
 }
