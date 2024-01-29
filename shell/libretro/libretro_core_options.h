@@ -984,7 +984,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -999,7 +999,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1014,7 +1014,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1029,7 +1029,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1044,7 +1044,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1059,7 +1059,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1074,7 +1074,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1089,7 +1089,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "expansions",
       {
          { "VMU",      NULL },
-         { "Purupuru", "Purupuru (Vibration Pack)" },
+         { "Purupuru", "Vibration Pack" },
          { "None",     NULL },
          { NULL, NULL },
       },
