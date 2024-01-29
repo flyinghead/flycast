@@ -689,10 +689,10 @@ const char *maple_device_types[] =
 
 const char *maple_expansion_device_types[] = 
 { 
-	"None", 
-	"Sega VMU", 
-	"Purupuru", 
-	"Microphone"
+	"None",
+	"Sega VMU",
+	"Vibration Pack",
+	"Microphone",
 };
 
 static const char *maple_device_name(MapleDeviceType type)
