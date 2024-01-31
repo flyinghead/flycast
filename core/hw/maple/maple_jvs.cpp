@@ -1132,7 +1132,9 @@ maple_naomi_jamma::maple_naomi_jamma()
 			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_encoders>(1, this));
 		}
-		else if (gameId == " TOUCH DE UNOH -------------" || gameId == " TOUCH DE UNOH 2 -----------")
+		else if (gameId == " TOUCH DE UNOH -------------"
+				|| gameId == " TOUCH DE UNOH 2 -----------"
+				|| gameId == "MIRAI YOSOU STUDIO")
 		{
 			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_touch>(1, this));

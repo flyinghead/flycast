@@ -4480,6 +4480,40 @@ const Game Games[] =
 			// ic 12-21 populated, empty
 		},
     },
+	// Nittere Shiki! Mirai Yosou Studio / NTV Future Forecast Studio (Japan)
+    {
+        "ntvmys",
+		nullptr,
+        "Nittere Shiki! Mirai Yosou Studio / NTV Future Forecast Studio",
+		0x9800000,
+		0x281a6263,
+        "naomi",
+        M2,
+        ROT0,
+        {
+        	{ "epr-23419a.ic22",   0x00000000, 0x00400000, 0x8639d1e5 },
+			{ "rom1.ic1s",   0x00800000, 0x00800000, 0x5f11a3ec },
+			{ "rom2.ic2s",   0x01000000, 0x00800000, 0x0d46bfe5 },
+			{ "rom3.ic3s",   0x01800000, 0x00800000, 0xac5c846e },
+			{ "rom4.ic4s",   0x02000000, 0x00800000, 0x6cb2153f },
+			{ "rom5.ic5s",   0x02800000, 0x00800000, 0xfd70ef17 },
+			{ "rom6.ic6s",   0x03000000, 0x00800000, 0xe52afefa },
+			{ "rom7.ic7s",   0x03800000, 0x00800000, 0x976b929d },
+			{ "rom8.ic8s",   0x04000000, 0x00800000, 0x7914b241 },
+			{ "rom9.ic9s",   0x04800000, 0x00800000, 0x2c50b20c },
+			{ "rom10.ic10s", 0x05000000, 0x00800000, 0xa4b8fbc8 },
+			{ "rom11.ic11s", 0x05800000, 0x00800000, 0x8a7dbf32 },
+			// ic 12s populated, empty (ff)
+			{ "rom11.ic11s", 0x06800000, 0x00800000, 0x523a20f9 },
+			{ "rom11.ic11s", 0x07000000, 0x00800000, 0x5ddf6931 },
+			{ "rom11.ic11s", 0x07800000, 0x00800000, 0x1ef1cbed },
+			{ "rom11.ic11s", 0x08000000, 0x00800000, 0x82fa259a },
+			{ "rom11.ic11s", 0x08800000, 0x00800000, 0x6c1207d4 },
+			{ "rom11.ic11s", 0x09000000, 0x00800000, 0xeb8201b0 },
+			//	ROM_REGION( 0x84, "some_eeprom", 0 )
+			//	ROM_LOAD( "sflash.ic37", 0x000000, 0x000084, CRC(44c05f0c) SHA1(daf3687282d2665837025261aadc4ac477bb43a1) )
+		},
+    },
 
 	// Naomi M4 Roms
     // Akatsuki Blitzkampf Ausf. Achse (Japan)

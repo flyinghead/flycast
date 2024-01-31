@@ -634,6 +634,10 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 			// Use better game names
 			if (romName == "sgdrvsim")
 				gameId = "SEGA DRIVING SIMULATOR";
+			else if (romName == "dragntr")
+				gameId = "DRAGON TREASURE";
+			else if (romName == "dragntr2")
+				gameId = "DRAGON TREASURE 2";
 			else if (romName == "dragntr3")
 				gameId = "DRAGON TREASURE 3";
 		}
@@ -683,7 +687,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"
-			|| (gameId == "F355 CHALLENGE JAPAN" && (config::MultiboardSlaves == 2 || romName == "f355")))
+			|| (gameId == "F355 CHALLENGE JAPAN" && (config::MultiboardSlaves == 2 || romName == "f355"))
+			|| gameId == "MIRAI YOSOU STUDIO")
 		{
 			printer::init();
 		}
@@ -1021,8 +1026,8 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		return;
 
 	case NAOMI_LED_addr:
-		DEBUG_LOG(NAOMI, "LED %d %d %d %d %d %d %d %d", (data >> 7) & 1, (data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1,
-				(data >> 3) & 1, (data >> 2) & 1, (data >> 1) & 1, data & 1);
+		//DEBUG_LOG(NAOMI, "LED %d %d %d %d %d %d %d %d", (data >> 7) & 1, (data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1,
+		//		(data >> 3) & 1, (data >> 2) & 1, (data >> 1) & 1, data & 1);
 		return;
 
 	default:
