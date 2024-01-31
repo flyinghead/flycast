@@ -466,6 +466,14 @@ public:
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
+
+	static void setUploadToGPUFlavor();
+
+private:
+	void UploadToGPUGl2(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded);
+	void UploadToGPUGl4(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded);
+
+	static void (TextureCacheData::*uploadToGpu)(int, int, const u8 *, bool, bool);
 };
 
 class GlTextureCache final : public BaseTextureCache<TextureCacheData>

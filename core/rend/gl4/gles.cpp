@@ -741,6 +741,7 @@ bool OpenGL4Renderer::Init()
 	fog_needs_update = true;
 	forcePaletteUpdate();
 	TextureCacheData::SetDirectXColorOrder(false);
+	TextureCacheData::setUploadToGPUFlavor();
 
 	return true;
 }
