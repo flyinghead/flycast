@@ -100,20 +100,25 @@ public:
 		samplers.clear();
 	}
 
+	vk::Sampler GetSampler(const PolyParam& poly, bool punchThrough, bool texture1 = false)
+	{
+		TSP tsp = texture1 ? poly.tsp1 : poly.tsp;
+		if (poly.texture != nullptr && poly.texture->gpuPalette)
+			tsp.FilterMode = 0;
+		else if (config::TextureFiltering == 1)
+			tsp.FilterMode = 0;
+		else if (config::TextureFiltering == 2)
+			tsp.FilterMode = 1;
+		return GetSampler(tsp, punchThrough);
+	}
+
 	vk::Sampler GetSampler(TSP tsp, bool punchThrough = false)
 	{
 		const u32 samplerHash = (tsp.full & TSP_Mask) | punchThrough;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter;
-		if (config::TextureFiltering == 0) {
-			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
-		} else if (config::TextureFiltering == 1) {
-			filter = vk::Filter::eNearest;
-		} else {
-			filter = vk::Filter::eLinear;
-		}
+		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
 		const vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		const vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge

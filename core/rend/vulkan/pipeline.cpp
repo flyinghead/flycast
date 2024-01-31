@@ -260,7 +260,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 					graphicsPipelineCreateInfo).value;
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette, bool dithering)
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 

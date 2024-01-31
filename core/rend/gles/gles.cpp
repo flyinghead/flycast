@@ -140,9 +140,12 @@ uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
-#if pp_Palette == 1
+#if pp_Palette != 0
 uniform sampler2D palette;
 uniform mediump int palette_index;
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+uniform lowp vec2 texSize;
+#endif
 #endif
 #if DITHERING == 1
 uniform lowp vec4 ditherColorMax;
@@ -180,23 +183,71 @@ highp vec4 fog_clamp(lowp vec4 col)
 #endif
 }
 
-#if pp_Palette == 1
+#if pp_Palette != 0
 
-lowp vec4 palettePixel(highp vec3 coords)
+lowp vec4 getPaletteEntry(highp float colorIndex)
 {
+	highp int color_idx = int(floor(colorIndex * 255.0 + 0.5)) + palette_index;
 #if TARGET_GL == GLES2 || TARGET_GL == GL2
-	highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
-	#if DIV_POS_Z == 1
-		highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-	#else
-		highp int color_idx = int(floor(textureProj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-	#endif
     highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 #endif
+}
+
+#endif
+
+#if pp_Palette == 1		// Nearest filtering
+
+lowp vec4 palettePixel(highp vec3 coords)
+{
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 && DIV_POS_Z != 1
+	coords.xy /= coords.z;
+#endif
+//	if (any(lessThan(coords.xy, vec2(0.0))) || any(greaterThan(coords.xy, vec2(1.0))))
+//		return vec4(1.0, 0.0, 0.0, 1.0);
+//	else
+		return getPaletteEntry(texture(tex, coords.xy).FOG_CHANNEL);
+}
+
+#elif pp_Palette == 2		// Bi-linear filtering
+
+lowp vec4 palettePixelBilinear(highp vec3 coords)
+{
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 && DIV_POS_Z != 1
+	coords.xy /= coords.z;
+#endif
+#if TARGET_GL != GLES2 && TARGET_GL != GL2
+	lowp vec2 texSize = vec2(textureSize(tex, 0));
+#endif
+	highp vec2 pixCoord = coords.xy * texSize - 0.5;		// coordinates of top left pixel
+	highp vec2 originPixCoord = floor(pixCoord);
+
+	highp vec2 sampleUV = (originPixCoord + 0.5) / texSize;	// UV coordinates of center of top left pixel
+
+    // Sample from all surrounding texels
+    lowp vec4 c00 = getPaletteEntry(texture(tex, sampleUV).FOG_CHANNEL);
+#if TARGET_GL != GLES2 && TARGET_GL != GL2
+    lowp vec4 c01 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(0, 1)).FOG_CHANNEL);
+    lowp vec4 c11 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 1)).FOG_CHANNEL);
+    lowp vec4 c10 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 0)).FOG_CHANNEL);
+#else
+	sampleUV = (originPixCoord + vec2(0.5, 1.5)) / texSize;
+    lowp vec4 c01 = getPaletteEntry(texture(tex, sampleUV).FOG_CHANNEL);
+	sampleUV = (originPixCoord + vec2(1.5, 1.5)) / texSize;
+    lowp vec4 c11 = getPaletteEntry(texture(tex, sampleUV).FOG_CHANNEL);
+	sampleUV = (originPixCoord + vec2(1.5, 0.5)) / texSize;
+    lowp vec4 c10 = getPaletteEntry(texture(tex, sampleUV).FOG_CHANNEL);
+#endif
+
+	highp vec2 weight = pixCoord - originPixCoord;
+
+    // Bi-linear mixing
+    lowp vec4 temp0 = mix(c00, c10, weight.x);
+    lowp vec4 temp1 = mix(c01, c11, weight.x);
+    return mix(temp0, temp1, weight.y);
 }
 
 #endif
@@ -236,8 +287,10 @@ void main()
 		  #else
 			lowp vec4 texcol = textureProj(tex, vtx_uv);
 		  #endif
-		#else
+		#elif pp_Palette == 1
 			lowp vec4 texcol = palettePixel(vtx_uv);
+		#else
+			lowp vec4 texcol = palettePixelBilinear(vtx_uv);
 		#endif
 		
 		#if pp_BumpMap == 1
@@ -677,7 +730,7 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette, bool naomi2, bool dithering)
+		int palette, bool naomi2, bool dithering)
 {
 	u32 rv=0;
 
@@ -693,7 +746,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	rv <<= 1; rv |= pp_BumpMap;
 	rv <<= 1; rv |= fog_clamping;
 	rv <<= 1; rv |= trilinear;
-	rv <<= 1; rv |= palette;
+	rv <<= 2; rv |= palette;
 	rv <<= 1; rv |= naomi2;
 	rv <<= 1, rv |= !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	rv <<= 1; rv |= dithering;
@@ -825,6 +878,7 @@ bool CompilePipelineShader(PipelineShader* s)
 	}
 	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
 	s->ditherColorMax = glGetUniformLocation(s->program, "ditherColorMax");
+	s->texSize = glGetUniformLocation(s->program, "texSize");
 
 	if (s->naomi2)
 		initN2Uniforms(s);

@@ -89,7 +89,7 @@ public:
 			vk::DescriptorImageInfo imageInfo;
 			if (poly.texture != nullptr)
 			{
-				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp, punchThrough),
+				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly, punchThrough),
 						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
 			}
@@ -211,9 +211,9 @@ public:
 		}
 	}
 
-	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette, bool dithering)
+	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
 	{
-		u32 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
+		u64 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
 		const auto &pipeline = pipelines.find(pipehash);
 		if (pipeline != pipelines.end())
 			return pipeline->second.get();
@@ -260,9 +260,9 @@ private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
 	void CreateDepthPassPipeline(int cullMode, bool naomi2);
 
-	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp, bool gpuPalette, bool dithering) const
+	u64 hash(u32 listType, bool sortTriangles, const PolyParam *pp, int gpuPalette, bool dithering) const
 	{
-		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
+		u64 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
 		hash |= ((listType >> 1) << 5);
 		bool ignoreTexAlpha = pp->tsp.IgnoreTexA || pp->tcw.PixelFmt == Pixel565;
@@ -270,10 +270,10 @@ private:
 			| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
-		hash |= ((u32)sortTriangles << 26) | ((u32)gpuPalette << 27) | ((u32)pp->isNaomi2() << 28);
-		hash |= (u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 29;
-		hash |= (u32)(pp->tcw.PixelFmt == PixelBumpMap) << 30;
-		hash |= (u32)dithering << 31;
+		hash |= ((u64)sortTriangles << 26) | ((u64)gpuPalette << 27) | ((u64)pp->isNaomi2() << 29);
+		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
+		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
+		hash |= (u64)dithering << 32;
 
 		return hash;
 	}
@@ -313,9 +313,9 @@ private:
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
-	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette, bool dithering);
+	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
-	std::map<u32, vk::UniquePipeline> pipelines;
+	std::map<u64, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> depthPassPipelines;
 

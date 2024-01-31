@@ -46,13 +46,20 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 
 	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
 
-	bool gpuPalette = poly.texture != nullptr ? poly.texture->gpuPalette : false;
-
+	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
+			: poly.tsp.FilterMode + 1;
 	float palette_index = 0.f;
-	if (poly.tcw.PixelFmt == PixelPal4)
-		palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
-	else
-		palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+		if (poly.tcw.PixelFmt == PixelPal4)
+			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+		else
+			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
 
 	OITDescriptorSets::PushConstants pushConstants = {
 			{

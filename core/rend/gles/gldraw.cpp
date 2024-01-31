@@ -107,15 +107,16 @@ static void SetBaseClipping()
 template <u32 Type, bool SortingEnabled>
 void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
+	float trilinear_alpha;
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
+		trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			ShaderUniforms.trilinear_alpha = 1.f - ShaderUniforms.trilinear_alpha;
+			trilinear_alpha = 1.f - trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.f;
+		trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
@@ -123,7 +124,15 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	TextureCacheData *texture = (TextureCacheData *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
 								  clipmode == TileClipping::Inside,
@@ -136,21 +145,27 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
-								  ShaderUniforms.trilinear_alpha != 1.f,
+								  trilinear_alpha != 1.f,
 								  gpuPalette,
 								  gp->isNaomi2(),
 								  ShaderUniforms.dithering);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
-		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
-	if (gpuPalette)
+		glUniform1f(CurrentShader->trilinear_alpha, trilinear_alpha);
+	if (gpuPalette != 0)
 	{
+		int paletteIndex;
 		if (gp->tcw.PixelFmt == PixelPal4)
-			ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
+			paletteIndex = gp->tcw.PalSelect << 4;
 		else
-			ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
-		glUniform1i(CurrentShader->palette_index, ShaderUniforms.palette_index);
+			paletteIndex = (gp->tcw.PalSelect >> 4) << 8;
+		glUniform1i(CurrentShader->palette_index, paletteIndex);
+		if (gpuPalette == 2 && CurrentShader->texSize != -1)
+		{
+			float texSize[] { (float)texture->width, (float)texture->height };
+			glUniform2fv(CurrentShader->texSize, 1, texSize);
+		}
 	}
 
 	if (clipmode == TileClipping::Inside)
@@ -180,13 +195,14 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		bool nearest_filter;
-		if (config::TextureFiltering == 0) {
-			nearest_filter = gp->tsp.FilterMode == 0 || gpuPalette;
-		} else if (config::TextureFiltering == 1) {
+		if (gpuPalette != 0)
 			nearest_filter = true;
-		} else {
+		else if (config::TextureFiltering == 0)
+			nearest_filter = gp->tsp.FilterMode == 0;
+		else if (config::TextureFiltering == 1)
+			nearest_filter = true;
+		else
 			nearest_filter = false;
-		}
 
 		bool mipmapped = texture->IsMipmapped();
 

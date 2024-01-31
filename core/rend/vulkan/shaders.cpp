@@ -89,7 +89,7 @@ layout (push_constant) uniform pushBlock
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
 #endif
-#if pp_Palette == 1
+#if pp_Palette != 0
 layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
 
@@ -127,17 +127,52 @@ vec4 colorClamp(vec4 col)
 #endif
 }
 
+#if pp_Palette != 0
+
+vec4 getPaletteEntry(float colIdx)
+{
+	vec2 c = vec2(colIdx * 255.0 / 1023.0 + pushConstants.palette_index, 0.5);
+	return texture(palette, c);
+}
+
+#endif
+
 #if pp_Palette == 1
 
 vec4 palettePixel(sampler2D tex, vec3 coords)
 {
 #if DIV_POS_Z == 1
-	float texIdx = texture(tex, coords.xy).r;
+	return getPaletteEntry(texture(tex, coords.xy).r);
 #else
-	float texIdx = textureProj(tex, coords).r;
+	return getPaletteEntry(textureProj(tex, coords).r);
 #endif
-	vec4 c = vec4(texIdx * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
-	return texture(palette, c.xy);
+}
+
+#elif pp_Palette == 2
+
+vec4 palettePixelBilinear(sampler2D tex, vec3 coords)
+{
+#if DIV_POS_Z == 0
+	coords.xy /= coords.z;
+#endif
+	vec2 texSize = vec2(textureSize(tex, 0));
+	vec2 pixCoord = coords.xy * texSize - 0.5;			// coordinates of top left pixel
+	vec2 originPixCoord = floor(pixCoord);
+
+	vec2 sampleUV = (originPixCoord + 0.5) / texSize;	// UV coordinates of center of top left pixel
+
+    // Sample from all surrounding texels
+    vec4 c00 = getPaletteEntry(texture(tex, sampleUV).r);
+    vec4 c01 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(0, 1)).r);
+    vec4 c11 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 1)).r);
+    vec4 c10 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 0)).r);
+
+	vec2 weight = pixCoord - originPixCoord;
+
+    // Bi-linear mixing
+    vec4 temp0 = mix(c00, c10, weight.x);
+    vec4 temp1 = mix(c01, c11, weight.x);
+    return mix(temp0, temp1, weight.y);
 }
 
 #endif
@@ -172,7 +207,11 @@ void main()
 				vec4 texcol = textureProj(tex, vtx_uv);
 			#endif
 		#else
-			vec4 texcol = palettePixel(tex, vtx_uv);
+			#if pp_Palette == 1
+				vec4 texcol = palettePixel(tex, vtx_uv);
+			#else
+				vec4 texcol = palettePixelBilinear(tex, vtx_uv);
+			#endif
 		#endif
 		
 		#if pp_BumpMap == 1
@@ -741,7 +780,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("pp_BumpMap", (int)params.bumpmap)
 		.addConstant("ColorClamping", (int)params.clamping)
 		.addConstant("pp_TriLinear", (int)params.trilinear)
-		.addConstant("pp_Palette", (int)params.palette)
+		.addConstant("pp_Palette", params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addConstant("DITHERING", (int)params.dithering)
 		.addSource(GouraudSource)

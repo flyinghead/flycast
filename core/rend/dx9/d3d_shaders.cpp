@@ -95,6 +95,7 @@ float4 trilinearAlpha : register(c5);
 float4 colorClampMin : register(c6);
 float4 colorClampMax : register(c7);
 float4 ditherColorMax : register(c8);
+float4 textureSize : register(c9);
 
 float fog_mode2(float w)
 {
@@ -121,18 +122,55 @@ float4 clampColor(float4 color)
 #endif
 }
 
+#if pp_Palette != 0
+
+float4 getPaletteEntry(float colIdx)
+{
+	int colorIdx = int(floor(colIdx * 255.0f + 0.5f) + paletteIndex.x);
+    float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
+	return tex2D(tex_pal, c);
+}
+
+#endif
+
 #if pp_Palette == 1
 
 float4 palettePixel(float4 coords)
 {
 #if DIV_POS_Z == 1
-	float texColIdx = tex2D(samplr, coords.xy).a;
+	return getPaletteEntry(tex2D(samplr, coords.xy).a);
 #else
-	float texColIdx = tex2Dproj(samplr, coords).a;
+	return getPaletteEntry(tex2Dproj(samplr, coords).a);
 #endif
-	int colorIdx = int(floor(texColIdx * 255.0f + 0.5f) + paletteIndex.x);
-    float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
-	return tex2D(tex_pal, c);
+}
+
+#elif pp_Palette == 2
+
+float4 palettePixelBilinear(float4 coords)
+{
+#if DIV_POS_Z == 0
+	coords.xy /= coords.w;
+#endif
+	float2 pixCoord = coords.xy * textureSize.xy - 0.5f;			// coordinates of top left pixel
+	float2 originPixCoord = floor(pixCoord);
+
+	float2 sampleUV = (originPixCoord + 0.5f) / textureSize.xy;	// UV coordinates of center of top left pixel
+
+    // Sample from all surrounding texels
+    float4 c00 = getPaletteEntry(tex2D(samplr, sampleUV).a);
+	sampleUV = (originPixCoord + float2(0.5f, 1.5f)) / textureSize.xy;
+    float4 c01 = getPaletteEntry(tex2D(samplr, sampleUV).a);
+	sampleUV = (originPixCoord + float2(1.5f, 1.5f)) / textureSize.xy;
+    float4 c11 = getPaletteEntry(tex2D(samplr, sampleUV).a);
+	sampleUV = (originPixCoord + float2(1.5f, 0.5f)) / textureSize.xy;
+    float4 c10 = getPaletteEntry(tex2D(samplr, sampleUV).a);
+
+	float2 weight = pixCoord - originPixCoord;
+
+    // Bi-linear mixing
+    float4 temp0 = lerp(c00, c10, weight.x);
+    float4 temp1 = lerp(c01, c11, weight.x);
+    return lerp(temp0, temp1, weight.y);
 }
 
 #endif
@@ -176,8 +214,10 @@ PSO main(in pixel inpix)
 			#else
 				float4 texcol = tex2Dproj(samplr, inpix.uv);
 			#endif
-		#else
+		#elif pp_Palette == 1
 			float4 texcol = palettePixel(inpix.uv);
+		#else
+			float4 texcol = palettePixelBilinear(inpix.uv);
 		#endif
 		
 		#if pp_BumpMap == 1
@@ -310,7 +350,7 @@ static D3DXMACRO PixelMacros[]
 
 const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool clipInside, bool dithering)
+		bool trilinear, int palette, bool gouraud, bool clipInside, bool dithering)
 {
 	u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -322,10 +362,10 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 			| (fog_clamping << 9)
 			| (trilinear << 10)
 			| (palette << 11)
-			| (gouraud << 12)
-			| (clipInside << 13)
-			| ((int)config::NativeDepthInterpolation << 14)
-			| (dithering << 15);
+			| (gouraud << 13)
+			| (clipInside << 14)
+			| ((int)config::NativeDepthInterpolation << 15)
+			| (dithering << 16);
 	auto it = shaders.find(hash);
 	if (it == shaders.end())
 	{

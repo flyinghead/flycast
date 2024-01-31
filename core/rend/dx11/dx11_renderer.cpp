@@ -611,7 +611,15 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
 	DX11Texture *texture = (DX11Texture *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud, gp->isNaomi2());
 	deviceContext->VSSetShader(vertexShader, nullptr, 0);
@@ -632,7 +640,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			dithering);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			constants.paletteIndex = (float)(gp->tcw.PalSelect << 4);
@@ -656,7 +664,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 		}
 	}
-	if (constants.trilinearAlpha != 1.f || gpuPalette || clipmode == TileClipping::Inside)
+	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside)
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedSubres;
 		deviceContext->Map(pxlPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
@@ -668,8 +676,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
 		bool linearFiltering;
-		if (config::TextureFiltering == 0)
-			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		if (gpuPalette != 0)
+			linearFiltering = false;
+		else if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0;
 		else if (config::TextureFiltering == 1)
 			linearFiltering = false;
 		else

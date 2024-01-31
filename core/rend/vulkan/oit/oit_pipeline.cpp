@@ -21,7 +21,7 @@
 #include "oit_pipeline.h"
 #include "../quad.h"
 
-void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette)
+void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 

@@ -177,17 +177,22 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			// Trilinear pass A
 			trilinearAlpha = 1.f - trilinearAlpha;
 	}
-	bool gpuPalette = poly.texture != nullptr ? poly.texture->gpuPalette : false;
+	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
+			: poly.tsp.FilterMode + 1;
 	float palette_index = 0.f;
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
 		if (poly.tcw.PixelFmt == PixelPal4)
 			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
 		else
 			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
 	}
 
-	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette)
+	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette != 0)
 	{
 		std::array<float, 6> pushConstants = {
 				(float)scissorRect.offset.x,

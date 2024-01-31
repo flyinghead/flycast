@@ -166,14 +166,14 @@ public:
 			vk::DescriptorImageInfo imageInfo0;
 			if (poly.texture != nullptr)
 			{
-				imageInfo0 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly.tsp, punchThrough), ((Texture *)poly.texture)->GetReadOnlyImageView(),
+				imageInfo0 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly, punchThrough, false), ((Texture *)poly.texture)->GetReadOnlyImageView(),
 						vk::ImageLayout::eShaderReadOnlyOptimal };
 				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo0);
 			}
 			vk::DescriptorImageInfo imageInfo1;
 			if (poly.texture1 != nullptr)
 			{
-				imageInfo1 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly.tsp1, punchThrough), ((Texture *)poly.texture1)->GetReadOnlyImageView(),
+				imageInfo1 = vk::DescriptorImageInfo{ samplerManager->GetSampler(poly, punchThrough, true), ((Texture *)poly.texture1)->GetReadOnlyImageView(),
 					vk::ImageLayout::eShaderReadOnlyOptimal };
 				writeDescriptorSets.emplace_back(perPolyDescSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo1);
 			}
@@ -327,9 +327,9 @@ public:
 		clearPipeline.reset();
 	}
 
-	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette)
+	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette)
 	{
-		u32 pipehash = hash(listType, autosort, &pp, pass, gpuPalette);
+		u64 pipehash = hash(listType, autosort, &pp, pass, gpuPalette);
 		const auto &pipeline = pipelines.find(pipehash);
 		if (pipeline != pipelines.end())
 			return pipeline->second.get();
@@ -389,15 +389,15 @@ private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
 	void CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
 
-	u32 hash(u32 listType, bool autosort, const PolyParam *pp, Pass pass, bool gpuPalette) const
+	u64 hash(u32 listType, bool autosort, const PolyParam *pp, Pass pass, int gpuPalette) const
 	{
-		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
+		u64 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
 		hash |= ((listType >> 1) << 5);
 		if (pp->tcw1.full != (u32)-1 || pp->tsp1.full != (u32)-1)
 		{
 			// Two-volume mode
-			hash |= (1 << 31) | (pp->tsp.ColorClamp << 11);
+			hash |= ((u64)1 << 33) | (pp->tsp.ColorClamp << 11);
 		}
 		else
 		{
@@ -407,9 +407,9 @@ private:
 				| (pp->tsp.SrcInstr << 14) | (pp->tsp.DstInstr << 17);
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);
-		hash |= ((u32)gpuPalette << 26) | ((u32)pass << 27) | ((u32)pp->isNaomi2() << 29);
-		hash |= (u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
-		hash |= (u32)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
+		hash |= ((u64)gpuPalette << 26) | ((u64)pass << 28) | ((u64)pp->isNaomi2() << 30);
+		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 31;
+		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 32;
 
 		return hash;
 	}
@@ -448,11 +448,11 @@ private:
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
-	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette);
+	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette);
 	void CreateFinalPipeline(bool dithering);
 	void CreateClearPipeline();
 
-	std::map<u32, vk::UniquePipeline> pipelines;
+	std::map<u64, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> trModVolPipelines;
 	vk::UniquePipeline finalPipelines[2];

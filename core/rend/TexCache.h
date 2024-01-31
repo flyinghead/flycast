@@ -681,12 +681,12 @@ public:
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU
-		// This is currently limited to textures using nearest filtering and not mipmapped.
+		// This is currently limited to textures using nearest or bilinear filtering and not mipmapped.
 		// Enabling texture upscaling or dumping also disables this mode.
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 				&& config::TextureUpscale == 1
 				&& !config::DumpTextures
-				&& tsp.FilterMode == 0
+				&& tsp.FilterMode <= 1
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;
 	}
