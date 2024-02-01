@@ -123,6 +123,9 @@ static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
 		if (block_len == 0)
 		{
 			INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+			for (u32 i = 0; i < len; i += 8, start += 8)
+				addrspace::write64(start, 0);
+			SB_GDLEND += len;
 			break;
 		}
 		WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
