@@ -62,9 +62,7 @@ void main()
 }
 )";
 
-static const char FragmentShaderSource[] = R"(
-#define PI 3.1415926
-
+static const char FragmentShaderTop[] = R"(
 layout (location = 0) out vec4 FragColor;
 #define gl_FragColor FragColor
 
@@ -89,6 +87,9 @@ layout (push_constant) uniform pushBlock
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
 #endif
+#if pp_FogCtrl != 2
+layout (set = 0, binding = 2) uniform sampler2D fog_table;
+#endif
 #if pp_Palette != 0
 layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
@@ -97,10 +98,12 @@ layout (set = 0, binding = 3) uniform sampler2D palette;
 layout (location = 0) INTERPOLATION in highp vec4 vtx_base;
 layout (location = 1) INTERPOLATION in highp vec4 vtx_offs;
 layout (location = 2) in highp vec3 vtx_uv;
+)";
 
-#if pp_FogCtrl != 2
-layout (set = 0, binding = 2) uniform sampler2D fog_table;
+const char *FragmentShaderCommon = R"(
+#define PI 3.1415926
 
+#if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 float fog_mode2(float w)
 {
 	float z = clamp(
@@ -176,7 +179,9 @@ vec4 palettePixelBilinear(sampler2D tex, vec3 coords)
 }
 
 #endif
+)";
 
+static const char FragmentShaderMain[] = R"(
 void main()
 {
 	// Clip inside the box
@@ -784,7 +789,9 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addConstant("DITHERING", (int)params.dithering)
 		.addSource(GouraudSource)
-		.addSource(FragmentShaderSource);
+		.addSource(FragmentShaderTop)
+		.addSource(FragmentShaderCommon)
+		.addSource(FragmentShaderMain);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
