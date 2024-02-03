@@ -677,7 +677,7 @@ static std::vector<u32> parseCodes(const std::string& s)
 			curCode += c;
 			if (curCode.length() == 8)
 			{
-				codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+				codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 				curCode.clear();
 			}
 		}
@@ -688,7 +688,7 @@ static std::vector<u32> parseCodes(const std::string& s)
 	{
 		if (curCode.length() != 8)
 			throw FlycastException("Invalid cheat code");
-		codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+		codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 	}
 
 	return codes;
