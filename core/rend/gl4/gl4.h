@@ -99,7 +99,7 @@ struct gl4PipelineShader
 	bool pp_Gouraud;
 	bool pp_BumpMap;
 	bool fog_clamping;
-	bool palette;
+	int palette;
 	bool naomi2;
 	bool divPosZ;
 };

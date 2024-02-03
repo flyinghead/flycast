@@ -20,8 +20,8 @@
 
 #include "types.h"
 #include "cfg/option.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
 
@@ -44,7 +44,8 @@ IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Defaul
 void ShowHelpMarker(const char* desc);
 template<bool PerGameOption>
 bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help = nullptr);
-bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr, const char *format = nullptr);
+template<bool PerGameOption>
+bool OptionSlider(const char *name, config::Option<int, PerGameOption>& option, int min, int max, const char *help = nullptr, const char *format = nullptr);
 template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
@@ -168,3 +169,5 @@ public:
 private:
 	bool disabled;
 };
+
+bool BeginListBox(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiWindowFlags windowFlags = 0);

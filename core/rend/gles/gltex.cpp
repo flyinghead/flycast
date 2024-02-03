@@ -6,95 +6,64 @@
 #include <memory>
 
 GlTextureCache TexCache;
+void (TextureCacheData::*TextureCacheData::uploadToGpu)(int, int, const u8 *, bool, bool) = &TextureCacheData::UploadToGPUGl2;
 
-void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+static void getOpenGLTexParams(TextureType texType, u32& bytesPerPixel, GLuint& gltype, GLuint& comps, GLuint& internalFormat)
 {
-	//upload to OpenGL !
-	glcache.BindTexture(GL_TEXTURE_2D, texID);
-	GLuint comps = tex_type == TextureType::_8 ? gl.single_channel_format : GL_RGBA;
-	GLuint gltype;
-	u32 bytes_per_pixel = 2;
-	switch (tex_type)
+	comps = GL_RGBA;
+	bytesPerPixel = 2;
+	switch (texType)
 	{
 	case TextureType::_5551:
 		gltype = GL_UNSIGNED_SHORT_5_5_5_1;
+		internalFormat = GL_RGB5_A1;
 		break;
 	case TextureType::_565:
 		gltype = GL_UNSIGNED_SHORT_5_6_5;
 		comps = GL_RGB;
+		internalFormat = GL_RGB565;
 		break;
 	case TextureType::_4444:
 		gltype = GL_UNSIGNED_SHORT_4_4_4_4;
+		internalFormat = GL_RGBA4;
 		break;
 	case TextureType::_8888:
-		bytes_per_pixel = 4;
+		bytesPerPixel = 4;
 		gltype = GL_UNSIGNED_BYTE;
+		internalFormat = GL_RGBA8;
 		break;
 	case TextureType::_8:
-		bytes_per_pixel = 1;
+		bytesPerPixel = 1;
 		gltype = GL_UNSIGNED_BYTE;
+		comps = gl.single_channel_format;
+		internalFormat = GL_R8;
 		break;
 	default:
 		die("Unsupported texture type");
-		gltype = 0;
 		break;
 	}
+}
+
+void TextureCacheData::UploadToGPUGl2(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+	glcache.BindTexture(GL_TEXTURE_2D, texID);
+	GLuint comps;
+	GLuint gltype;
+	GLuint internalFormat;
+	u32 bytes_per_pixel;
+	getOpenGLTexParams(tex_type, bytes_per_pixel, gltype, comps, internalFormat);
+
 	if (mipmapsIncluded)
 	{
 		int mipmapLevels = 0;
 		int dim = width;
-		while (dim != 0)
-		{
+		while (dim != 0) {
 			mipmapLevels++;
 			dim >>= 1;
 		}
-#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
-		// OpenGL 4.2 or GLES 3.0 min
-		if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
-				|| (gl.is_gles && gl.gl_major >= 3))
-		{
-			GLuint internalFormat;
-			switch (tex_type)
-			{
-			case TextureType::_5551:
-				internalFormat = GL_RGB5_A1;
-				break;
-			case TextureType::_565:
-				internalFormat = GL_RGB565;
-				break;
-			case TextureType::_4444:
-				internalFormat = GL_RGBA4;
-				break;
-			case TextureType::_8888:
-				internalFormat = GL_RGBA8;
-				break;
-			case TextureType::_8:
-				internalFormat = comps;
-				break;
-			default:
-				die("Unsupported texture format");
-				internalFormat = 0;
-				break;
-			}
-			if (Updates == 1)
-			{
-				glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
-				glCheck();
-			}
-			for (int i = 0; i < mipmapLevels; i++)
-			{
-				glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
-			}
-		}
-		else
-#endif
-		{
-			for (int i = 0; i < mipmapLevels; i++)
-			{
-				glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
-			}
+		for (int i = 0; i < mipmapLevels; i++) {
+			glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
+			temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 		}
 	}
 	else
@@ -103,9 +72,62 @@ void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buf
 		if (mipmapped)
 			glGenerateMipmap(GL_TEXTURE_2D);
 	}
+}
+
+void TextureCacheData::UploadToGPUGl4(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
+	glcache.BindTexture(GL_TEXTURE_2D, texID);
+	GLuint comps;
+	GLuint gltype;
+	GLuint internalFormat;
+	u32 bytes_per_pixel;
+	getOpenGLTexParams(tex_type, bytes_per_pixel, gltype, comps, internalFormat);
+
+	int mipmapLevels = 1;
+	if (mipmapped)
+	{
+		mipmapLevels = 0;
+		int dim = width;
+		while (dim != 0) {
+			mipmapLevels++;
+			dim >>= 1;
+		}
+	}
+	if (Updates == 1)
+		glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
+	if (mipmapsIncluded)
+	{
+		for (int i = 0; i < mipmapLevels; i++) {
+			glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
+			temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
+		}
+	}
+	else
+	{
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, comps, gltype, temp_tex_buffer);
+		if (mipmapped)
+			glGenerateMipmap(GL_TEXTURE_2D);
+	}
+#endif
+}
+
+void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+	((*this).*uploadToGpu)(width, height, temp_tex_buffer, mipmapped, mipmapsIncluded);
 	glCheck();
 }
 	
+void TextureCacheData::setUploadToGPUFlavor()
+{
+#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
+	// OpenGL 4.2 or GLES 3.0 min
+	if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
+			|| (gl.is_gles && gl.gl_major >= 3))
+		uploadToGpu = &TextureCacheData::UploadToGPUGl4;
+#endif
+}
+
 bool TextureCacheData::Delete()
 {
 	if (!BaseTextureCacheData::Delete())
@@ -190,7 +212,7 @@ void ReadRTTBuffer()
 		// Remove all vram locks before calling glReadPixels
 		// (deadlock on rpi)
 		u32 size = w * h * 2;
-		u32 page_tex_addr = tex_addr & PAGE_MASK;
+		u32 page_tex_addr = tex_addr & ~PAGE_MASK;
 		u32 page_size = size + tex_addr - page_tex_addr;
 		page_size = ((page_size - 1) / PAGE_SIZE + 1) * PAGE_SIZE;
 		for (u32 page = page_tex_addr; page < page_tex_addr + page_size; page += PAGE_SIZE)

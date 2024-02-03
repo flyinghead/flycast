@@ -19,14 +19,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #if defined(USE_SDL)
-#include <math.h>
-#include <algorithm>
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
 #include "cfg/option.h"
 
-extern "C" int eglGetError();
+#include <algorithm>
+#include <cmath>
 
 SDLGLGraphicsContext theGLContext;
 
@@ -100,44 +99,17 @@ bool SDLGLGraphicsContext::init()
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
 #ifdef GLES
-	load_gles_symbols();
-#elif !defined(__APPLE__)
-	if (gl3wInit() == -1 || !gl3wIsSupported(3, 0))
+	gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress);
+#else
+	if (!gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress) || !GLAD_GL_VERSION_3_0)
 	{
-		ERROR_LOG(RENDERER, "gl3wInit failed or GL 3.0 not supported");
+		ERROR_LOG(RENDERER, "gladLoadGL failed or GL 3.0 not supported");
 		return false;
 	}
 #endif
 	postInit();
-
-#ifdef TARGET_UWP
-	// Force link with libGLESv2.dll and libEGL.dll
-#undef glGetError
-	glGetError();
-	eglGetError();
-#endif
-	
-	initVideoRouting();
 	
 	return true;
-}
-
-void SDLGLGraphicsContext::initVideoRouting()
-{
-#ifdef VIDEO_ROUTING
-	extern void os_VideoRoutingTermGL();
-	os_VideoRoutingTermGL();
-	if (config::VideoRouting)
-	{
-#ifdef TARGET_MAC
-		extern void os_VideoRoutingInitSyphonWithGLContext(void* glContext);
-		os_VideoRoutingInitSyphonWithGLContext(glcontext);
-#elif defined(_WIN32)
-		extern void os_VideoRoutingInitSpout();
-		os_VideoRoutingInitSpout();
-#endif
-	}
-#endif
 }
 
 void SDLGLGraphicsContext::swap()

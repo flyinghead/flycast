@@ -36,7 +36,7 @@ GLuint depthSaveTexId;
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
-							bool palette, bool naomi2, Pass pass)
+							int palette, bool naomi2, Pass pass)
 {
 	u32 rv=0;
 
@@ -52,7 +52,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= (int)pp_Gouraud;
 	rv <<= 1; rv |= (int)pp_BumpMap;
 	rv <<= 1; rv |= (int)fog_clamping;
-	rv <<= 1; rv |= (int)palette;
+	rv <<= 2; rv |= palette;
 	rv <<= 1; rv |= (int)naomi2;
 	rv <<= 2; rv |= (int)pass;
 	rv <<= 1; rv |= (int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
@@ -117,11 +117,20 @@ static void SetGPState(const PolyParam* gp)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
-	bool gpuPalette;
+	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	if (pass == Pass::Depth)
 	{
-		gpuPalette = gp->texture != nullptr && Type == ListType_Punch_Through ? gp->texture->gpuPalette : false;
+		if (Type != ListType_Punch_Through)
+			gpuPalette = 0;
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : false,
@@ -143,9 +152,7 @@ static void SetGPState(const PolyParam* gp)
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
-
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
-		gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
@@ -165,7 +172,7 @@ static void SetGPState(const PolyParam* gp)
 	}
 	glcache.UseProgram(CurrentShader->program);
 
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			gl4ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
@@ -179,7 +186,7 @@ static void SetGPState(const PolyParam* gp)
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
 	gl4ShaderUniforms.Set(CurrentShader);
 
-	if (pass == Pass::Color && (Type == ListType_Translucent || Type == ListType_Punch_Through))
+	if (pass == Pass::Color)
 	{
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
@@ -224,13 +231,14 @@ static void SetGPState(const PolyParam* gp)
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
 				bool nearest_filter;
-				if (config::TextureFiltering == 0) {
-					nearest_filter = tsp.FilterMode == 0;
-				} else if (config::TextureFiltering == 1) {
+				if (gpuPalette != 0)
 					nearest_filter = true;
-				} else {
+				else if (config::TextureFiltering == 0)
+					nearest_filter = tsp.FilterMode == 0;
+				else if (config::TextureFiltering == 1)
+					nearest_filter = true;
+				else
 					nearest_filter = false;
-				}
 
 				bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 

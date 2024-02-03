@@ -70,7 +70,7 @@ typedef union
 	{
 		struct
 		{
-			u32 _pad0 : 28;
+			u32       : 28;
 			u32 V     : 1; //Bit 28
 			u32 C     : 1; //Bit 29
 			u32 Z     : 1; //Bit 30
@@ -79,7 +79,7 @@ typedef union
 
 		struct
 		{
-			u32 _pad1 : 28;
+			u32       : 28;
 			u32 NZCV  : 4; //Bits [31:28]
 		};
 	} FLG;
@@ -87,10 +87,10 @@ typedef union
 	struct
 	{
 		u32 M     : 5;  //mode, PSR[4:0]
-		u32 _pad0 : 1;  //not used / zero
+		u32       : 1;
 		u32 F     : 1;  //FIQ disable, PSR[6]
 		u32 I     : 1;  //IRQ disable, PSR[7]
-		u32 _pad1 : 20; //not used / zero
+		u32       : 20;
 		u32 NZCV  : 4;  //Bits [31:28]
 	} PSR;
 

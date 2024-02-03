@@ -1221,6 +1221,15 @@ static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 				break;
 			}
 
+		// Disable blending for opaque polys of the first pass
+		if (pass == 0)
+		{
+			for (PolyParam& pp : vd_rc.global_param_op) {
+				pp.tsp.DstInstr = 0;
+				pp.tsp.SrcInstr = 1;
+			}
+		}
+
 		bool empty_pass = vd_rc.global_param_op.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().op_count)
 				&& vd_rc.global_param_pt.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().pt_count)
 				&& vd_rc.global_param_tr.size() == (pass == 0 ? 0u : (int)vd_rc.render_passes.back().tr_count);
@@ -1284,6 +1293,14 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 	for (RenderPass& pass : ctx->rend.render_passes)
 	{
 		parseRenderPass(pass, previousPass, ctx->rend, primRestart);
+		// Disable blending for opaque polys of the first pass
+		if (&pass == &ctx->rend.render_passes[0])
+		{
+			for (PolyParam& pp : ctx->rend.global_param_op) {
+				pp.tsp.DstInstr = 0;
+				pp.tsp.SrcInstr = 1;
+			}
+		}
 		previousPass = pass;
 	}
 

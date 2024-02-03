@@ -26,11 +26,9 @@
 #include "imgread/common.h"
 #include "imgread/isofs.h"
 #include "hw/sh4/sh4_mmr.h"
-#include <cmrc/cmrc.hpp>
+#include "oslib/resources.h"
 
 #include <map>
-
-CMRC_DECLARE(flycast);
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
@@ -359,9 +357,17 @@ static void reios_sys_misc()
 		break;
 
 	case 2:	// check disk
-		p_sh4rcb->cntx.r[0] = 0;
-		// Reload part of IP.BIN bootstrap
-		libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
+		{
+			u32 diskType = libGDR_GetDiscType();
+			if (diskType == NoDisk || diskType == Open) {
+				p_sh4rcb->cntx.r[0] = -1;
+			}
+			else {
+				p_sh4rcb->cntx.r[0] = 0;
+				// Reload part of IP.BIN bootstrap
+				libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
+			}
+		}
 		break;
 
 	case 3: // Exit to CD menu
@@ -674,19 +680,25 @@ static void reios_boot()
 	}
 }
 
-static std::map<u32, hook_fp*> hooks;
+#define SYSCALL_ADDR(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
 
-#define SYSCALL_ADDR_MAP(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
+static const std::map<u32, hook_fp*> hooks = {
+		{ SYSCALL_ADDR(0xA0000000), reios_boot },
 
-static void register_hook(u32 pc, hook_fp* fn) {
-	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
-}
+		{ SYSCALL_ADDR(0x8C001000), reios_sys_system },
+		{ SYSCALL_ADDR(0x8C001002), reios_sys_font },
+		{ SYSCALL_ADDR(0x8C001004), reios_sys_flashrom },
+		{ SYSCALL_ADDR(0x8C001006), gdrom_hle_op },
+		{ SYSCALL_ADDR(0x8C001008), reios_sys_misc },
+
+		{ SYSCALL_ADDR(dc_bios_entrypoint_gd2), gdrom_hle_op },
+};
 
 void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
 	u32 pc = next_pc - 2;
 
-	u32 mapd = SYSCALL_ADDR_MAP(pc);
+	u32 mapd = SYSCALL_ADDR(pc);
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
@@ -705,18 +717,6 @@ void DYNACALL reios_trap(u32 op) {
 
 bool reios_init()
 {
-	INFO_LOG(REIOS, "reios: Init");
-
-	register_hook(0xA0000000, reios_boot);
-
-	register_hook(0x8C001000, reios_sys_system);
-	register_hook(0x8C001002, reios_sys_font);
-	register_hook(0x8C001004, reios_sys_flashrom);
-	register_hook(0x8C001006, gdrom_hle_op);
-	register_hook(0x8C001008, reios_sys_misc);
-
-	register_hook(dc_bios_entrypoint_gd2, gdrom_hle_op);
-
 	return true;
 }
 
@@ -747,14 +747,9 @@ void reios_reset(u8* rom)
 	// 7078 24 × 24 pixels (72 bytes) characters
 	// 129 32 × 32 pixels (128 bytes) characters
 	memset(pFont, 0, 536496);
-	try {
-		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-		cmrc::file fontFile = fs.open("fonts/biosfont.bin");
-		memcpy(pFont, fontFile.begin(), fontFile.end() - fontFile.begin());
-	} catch (const std::system_error& e) {
-		ERROR_LOG(REIOS, "Failed to load the bios font: %s", e.what());
-		throw;
-	}
+	size_t size;
+	std::unique_ptr<u8[]> fontData = resource::load("fonts/biosfont.bin", size);
+	memcpy(pFont, fontData.get(), size);
 
 	gd_hle_state = {};
 }

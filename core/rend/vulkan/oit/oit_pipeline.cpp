@@ -21,7 +21,7 @@
 #include "oit_pipeline.h"
 #include "../quad.h"
 
-void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, bool gpuPalette)
+void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -92,7 +92,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
 	vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (listType == ListType_Punch_Through || (listType == ListType_Translucent && pass == Pass::Color))
+	if (listType == ListType_Punch_Through || pass == Pass::Color)
 	{
 		u32 src = pp.tsp.SrcInstr;
 		u32 dst = pp.tsp.DstInstr;

@@ -223,6 +223,7 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
+			commandPool->addToFlight(new Deleter(mainBuffers[bufferIndex].release()));
 			mainBuffers[bufferIndex] = std::make_unique<BufferData>(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer);
 		}

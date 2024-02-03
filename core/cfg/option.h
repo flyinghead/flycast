@@ -373,6 +373,7 @@ extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;
 extern Option<bool, false> FetchBoxart;
 extern Option<bool, false> BoxartDisplayMode;
+extern Option<int, false> UIScaling;
 
 // Sound
 
@@ -412,7 +413,11 @@ extern Option<bool> VmuSound;
 
 class RendererOption : public Option<RenderType> {
 public:
+#ifdef LIBRETRO
+	RendererOption() : Option<RenderType>("",
+#else
 	RendererOption() : Option<RenderType>("pvr.rend",
+#endif
 #if defined(USE_DX11)
 			RenderType::DirectX11
 #elif defined(USE_DX9)
@@ -516,6 +521,7 @@ extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
+extern Option<bool> BattleCableEnable;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

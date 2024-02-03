@@ -164,7 +164,7 @@ uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
-#if pp_Palette == 1
+#if pp_Palette != 0
 uniform sampler2D palette;
 uniform int palette_index;
 #endif
@@ -213,18 +213,53 @@ vec4 fog_clamp(vec4 col)
 #endif
 }
 
+#if pp_Palette != 0
+
+vec4 getPaletteEntry(float colIdx)
+{
+	int color_idx = int(floor(colIdx * 255.0 + 0.5)) + palette_index;
+	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+	return texelFetch(palette, c, 0);
+}
+
+#endif
+
 #if pp_Palette == 1
 
 vec4 palettePixel(sampler2D tex, vec3 coords)
 {
 #if DIV_POS_Z == 1
-	float colIdx = texture(tex, coords.xy).r;
+	return getPaletteEntry(texture(tex, coords.xy).r);
 #else
-	float colIdx = textureProj(tex, coords).r;
+	return getPaletteEntry(textureProj(tex, coords).r);
 #endif
-	int color_idx = int(floor(colIdx * 255.0 + 0.5)) + palette_index;
-	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
-	return texelFetch(palette, c, 0);
+}
+
+#elif pp_Palette == 2
+
+vec4 palettePixelBilinear(sampler2D tex, vec3 coords)
+{
+#if DIV_POS_Z == 0
+	coords.xy /= coords.z;
+#endif
+	vec2 texSize = vec2(textureSize(tex, 0));
+	vec2 pixCoord = coords.xy * texSize - 0.5;			// coordinates of top left pixel
+	vec2 originPixCoord = floor(pixCoord);
+
+	vec2 sampleUV = (originPixCoord + 0.5) / texSize;	// UV coordinates of center of top left pixel
+
+    // Sample from all surrounding texels
+    vec4 c00 = getPaletteEntry(texture(tex, sampleUV).r);
+    vec4 c01 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(0, 1)).r);
+    vec4 c11 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 1)).r);
+    vec4 c10 = getPaletteEntry(textureOffset(tex, sampleUV, ivec2(1, 0)).r);
+
+	vec2 weight = pixCoord - originPixCoord;
+
+    // Bi-linear mixing
+    vec4 temp0 = mix(c00, c10, weight.x);
+    vec4 temp1 = mix(c01, c11, weight.x);
+    return mix(temp0, temp1, weight.y);
 }
 
 #endif
@@ -303,13 +338,20 @@ void main()
 				#endif
 						texcol = textureProj(tex0, vtx_uv);
 			#endif
-		#else
+		#elif pp_Palette == 1
 			#if pp_TwoVolumes == 1
 				if (area1)
 					texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
 				else
 			#endif
 					texcol = palettePixel(tex0, vtx_uv);
+		#else
+			#if pp_TwoVolumes == 1
+				if (area1)
+					texcol = palettePixelBilinear(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+				else
+			#endif
+					texcol = palettePixelBilinear(tex0, vtx_uv);
 		#endif
 
 		#if pp_BumpMap == 1
@@ -671,8 +713,8 @@ struct OpenGL4Renderer : OpenGLRenderer
 		{
 			DrawOSD(false);
 			frameRendered = true;
+			renderVideoRouting();
 		}
-		renderVideoRouting();
 		restoreCurrentFramebuffer();
 
 		return true;
@@ -741,6 +783,7 @@ bool OpenGL4Renderer::Init()
 	fog_needs_update = true;
 	forcePaletteUpdate();
 	TextureCacheData::SetDirectXColorOrder(false);
+	TextureCacheData::setUploadToGPUFlavor();
 
 	return true;
 }
@@ -781,7 +824,8 @@ static void resize(int w, int h)
 
 bool OpenGL4Renderer::renderFrame(int width, int height)
 {
-	initVideoRoutingFrameBuffer();
+	if (!config::EmulateFramebuffer)
+		initVideoRoutingFrameBuffer();
 	
 	const bool is_rtt = pvrrc.isRTT;
 

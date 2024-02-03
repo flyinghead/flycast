@@ -1108,11 +1108,11 @@ const Game Games[] =
     // Crackin' DJ
     {
         "crackndj",
-        NULL,
+		nullptr,
         "Crackin' DJ",
         0x0a800000,
         0x281c2347,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
@@ -1127,17 +1127,19 @@ const Game Games[] =
             { "mpr-23532.ic8",  0x7800000, 0x1000000 },
             { "mpr-23533.ic9",  0x8800000, 0x1000000 },
             { "mpr-23534.ic10", 0x9800000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&crackindj_inputs,
+		crackndj_eeprom_dump,
     },
     // Crackin' DJ Part 2 (Japan)
     {
         "crakndj2",
-        NULL,
+		nullptr,
         "Crackin' DJ Part 2",
         0x0a800000,
         0x28428247,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
@@ -1165,9 +1167,10 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(08f27149) SHA1(3b8d53dcf2c09035b318022906c444cf8504d7fa) )
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&crackindj_inputs,
+		crakndj2_eeprom_dump,
     },
     // Crazy Taxi
     {
@@ -1783,6 +1786,7 @@ const Game Games[] =
 		nullptr,
 		&wsbb_inputs,
     },
+#ifdef NAOMI_MULTIBOARD
     // Ferrari F355 Challenge (deluxe)
     {
         "f355",
@@ -1950,6 +1954,7 @@ const Game Games[] =
 		nullptr,
 		3,
     },
+#endif
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
     {
         "ggram2",
@@ -2277,7 +2282,7 @@ const Game Games[] =
         "hotd2p",
         "hotd2",
         "The House of the Dead 2 (prototype)",
-        0xa800000,
+        0xb000000,
         0xfffffff, // not populated
         "hod2bios",
         M2,
@@ -2305,7 +2310,7 @@ const Game Games[] =
             { "mpr-21403.ic18s", 0x9000000, 0x800000 },
             { "mpr-21404.ic19s", 0x9800000, 0x800000 },
             { "mpr-21405.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
+            { "rom21.ic21s",     0xa800000, 0x800000, 0x256603d7 },
         },
 		nullptr,
 		nullptr,
@@ -2405,20 +2410,19 @@ const Game Games[] =
         "Mazan: Flash of the Blade (World)",
         0x10000000,
         0x280fea94,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
-            { "maz2vera.2d", 0x0800000, 0x0800000 },
-            { "maz1ma1.4m",  0x1000000, 0x1000000 },
-            { "maz1ma2.4l",  0x2000000, 0x1000000 },
-            { "maz1ma3.4k",  0x3000000, 0x1000000 },
-            { "maz1ma4.4j",  0x4000000, 0x1000000 },
-            { "maz1ma5.4h",  0x5000000, 0x1000000 },
-            { "maz1ma6.4f",  0x6000000, 0x1000000 },
-            { "maz1ma7.4e",  0x7000000, 0x1000000 },
-            { "maz1ma8.4d",  0x8000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "maz2vera.2d", 0x0800000, 0x0800000, 0x620cdbb6 },
+            { "maz1ma1.4m",  0x1000000, 0x1000000, 0x68e12189 },
+            { "maz1ma2.4l",  0x2000000, 0x1000000, 0xc7a05b44 },
+            { "maz1ma3.4k",  0x3000000, 0x1000000, 0x48e1a8a5 },
+            { "maz1ma4.4j",  0x4000000, 0x1000000, 0x0187cdab },
+            { "maz1ma5.4h",  0x5000000, 0x1000000, 0xc6885ee7 },
+            { "maz1ma6.4f",  0x6000000, 0x1000000, 0xa6593c36 },
+            { "maz1ma7.4e",  0x7000000, 0x1000000, 0x6103ad9c },
+            { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
         },
 		nullptr,
         // ENTER, START BUTTON
@@ -2432,20 +2436,44 @@ const Game Games[] =
         "Mazan: Flash of the Blade (US)",
         0x10000000,
         0x280fea94,
-        NULL,
+		nullptr,
         M2,
         ROT0,
         {
-            { "maz3vera.2d", 0x0800000, 0x0800000 },
-            { "maz1ma1.4m",  0x1000000, 0x1000000 },
-            { "maz1ma2.4l",  0x2000000, 0x1000000 },
-            { "maz1ma3.4k",  0x3000000, 0x1000000 },
-            { "maz1ma4.4j",  0x4000000, 0x1000000 },
-            { "maz1ma5.4h",  0x5000000, 0x1000000 },
-            { "maz1ma6.4f",  0x6000000, 0x1000000 },
-            { "maz1ma7.4e",  0x7000000, 0x1000000 },
-            { "maz1ma8.4d",  0x8000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "maz3vera.2d", 0x0800000, 0x0800000, 0xa4344ec9 },
+            { "maz1ma1.4m",  0x1000000, 0x1000000, 0x68e12189 },
+            { "maz1ma2.4l",  0x2000000, 0x1000000, 0xc7a05b44 },
+            { "maz1ma3.4k",  0x3000000, 0x1000000, 0x48e1a8a5 },
+            { "maz1ma4.4j",  0x4000000, 0x1000000, 0x0187cdab },
+            { "maz1ma5.4h",  0x5000000, 0x1000000, 0xc6885ee7 },
+            { "maz1ma6.4f",  0x6000000, 0x1000000, 0xa6593c36 },
+            { "maz1ma7.4e",  0x7000000, 0x1000000, 0x6103ad9c },
+            { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
+        },
+		nullptr,
+		nullptr,
+		// no free play with eeprom
+    },
+    // Mazan: Flash of the Blade (Japan, MAZ1 Ver.A)
+    {
+        "mazanj",
+        "mazan",
+        "Mazan: Flash of the Blade (Japan)",
+        0x10000000,
+        0x280fea94,
+		nullptr,
+        M2,
+        ROT0,
+        {
+            { "maz1vera.2d", 0x0800000, 0x0800000, 0xd157f771 },
+            { "maz1ma1.4m",  0x1000000, 0x1000000, 0x68e12189 },
+            { "maz1ma2.4l",  0x2000000, 0x1000000, 0xc7a05b44 },
+            { "maz1ma3.4k",  0x3000000, 0x1000000, 0x48e1a8a5 },
+            { "maz1ma4.4j",  0x4000000, 0x1000000, 0x0187cdab },
+            { "maz1ma5.4h",  0x5000000, 0x1000000, 0xc6885ee7 },
+            { "maz1ma6.4f",  0x6000000, 0x1000000, 0xa6593c36 },
+            { "maz1ma7.4e",  0x7000000, 0x1000000, 0x6103ad9c },
+            { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
         },
 		nullptr,
 		nullptr,
@@ -3320,6 +3348,89 @@ const Game Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Star Horse 2002 (main screens)
+    {
+        "shors2k2m",
+        nullptr,
+        "Star Horse 2002 (main screens)",
+		0x6800000,
+        0xffffffff, // not populated
+		nullptr,
+        M2,
+		ROT0,
+		{
+			{ "epr-23851.ic22",  0x00000000, 0x00400000, 0x23dbad62 },
+			{ "mpr-23852.ic1",   0x00800000, 0x01000000, 0xb289b968 },
+    		{ "mpr-23853.ic2",   0x01800000, 0x01000000, 0xef43b551 },
+    		{ "mpr-23854.ic3",   0x02800000, 0x01000000, 0x1bb65979 },
+    		{ "mpr-23855.ic4",   0x03800000, 0x01000000, 0x04b725d8 },
+    		{ "mpr-23856.ic5",   0x04800000, 0x01000000, 0x8ef1691e },
+    		{ "mpr-23857.ic6",   0x05800000, 0x01000000, 0xb2900844 },
+        },
+    },
+    // Star Horse 2002 (sound and backup, Rev A)
+    {
+        "shors2k2s",
+        nullptr,
+        "Star Horse 2002 (sound and backup)",
+		0x5800000,
+        0xffffffff, // not populated
+		nullptr,
+        M2,
+		ROT0,
+		{
+			{ "epr-23866a.ic22", 0x00000000, 0x00400000, 0xabf21b86 },
+			{ "mpr-23888.ic1",   0x00800000, 0x01000000, 0xc55b45be },
+			{ "mpr-23889.ic2",   0x01800000, 0x01000000, 0xe3f0f02e },
+			{ "mpr-23890.ic3",   0x02800000, 0x01000000, 0x187eca4e },
+			{ "mpr-23891.ic4",   0x03800000, 0x01000000, 0x24783524 },
+			{ "mpr-23892.ic5",   0x04800000, 0x01000000, 0xc8785077 },
+        },
+    },
+    // Star Horse 2002 (live)
+    {
+        "shors2k2l",
+        nullptr,
+        "Star Horse 2002 (live)",
+		0x9800000,
+        0xffffffff, // not populated
+		nullptr,
+        M2,
+		ROT0,
+		{
+			{ "epr-23867.ic22",  0x00000000, 0x00400000, 0x25fbbf6e },
+			{ "mpr-23894.ic1",   0x00800000, 0x01000000, 0xfb87d357 },
+			{ "mpr-23895.ic2",   0x01800000, 0x01000000, 0x519743f5 },
+			{ "mpr-23896.ic3",   0x02800000, 0x01000000, 0xb0c597f5 },
+			{ "mpr-23897.ic4",   0x03800000, 0x01000000, 0x8e7a4d58 },
+			{ "mpr-23898.ic5",   0x04800000, 0x01000000, 0xc9bb098b },
+			{ "mpr-23899.ic6",   0x05800000, 0x01000000, 0x99a3f8c4 },
+			{ "mpr-23900.ic7",   0x06800000, 0x01000000, 0xe4b3a767 },
+			{ "mpr-23901.ic8",   0x07800000, 0x01000000, 0xd05001ce },
+			{ "mpr-23902.ic9",   0x08800000, 0x01000000, 0x48eb5457 },
+        },
+    },
+    // Star Horse 2002 (sound, Export/Taiwan)
+    {
+        "shors2k2",
+        nullptr,
+        "Star Horse 2002 (sound, Export/Taiwan)",
+		0x4000000,
+        0x403431d2,
+		nullptr,
+        M1,
+		ROT0,
+		{
+			{ "epr-23964.ic11",  0x0000000, 0x0400000, 0x26c53dac },
+	        { "opr-23965.ic17s", 0x1000000, 0x0800000, 0x28fceb93, InterleavedWord },
+	        { "opr-23966.ic18",  0x1000002, 0x0800000, 0xd3bb88b4, InterleavedWord },
+	        { "opr-23967.ic19s", 0x2000000, 0x0800000, 0x7dae177e, InterleavedWord },
+	        { "opr-23968.ic20",  0x2000002, 0x0800000, 0x20b3b237, InterleavedWord },
+	        { "opr-23969.ic21s", 0x3000000, 0x0800000, 0x1d8644b6, InterleavedWord },
+	        { "opr-23970.ic22",  0x3000002, 0x0800000, 0xdd0201a8, InterleavedWord },
+			{ "copy",            0x0400000, 0x0c00000, 0x00000000, Copy, 0x1000000 },
+        },
+    },
     // Super Major League '99
     {
         "smlg99",
@@ -3842,34 +3953,33 @@ const Game Games[] =
         "Virtua NBA (prototype)",
         0x0b000000,
         0x28068b58,
-        NULL,
+        nullptr,
         M2,
         ROT0,
         {
-            { "vnbaearly.ic22",  0x0000000, 0x0400000 },
-            { "mpr-22928.ic1",   0x0800000, 0x0800000 },
-            { "mpr-22929.ic2",   0x1000000, 0x0800000 },
-            { "mpr-22930.ic3",   0x1800000, 0x0800000 },
-            { "mpr-22931.ic4",   0x2000000, 0x0800000 },
-            { "mpr-22932.ic5",   0x2800000, 0x0800000 },
-            { "mpr-22933.ic6",   0x3000000, 0x0800000 },
-            { "mpr-22934.ic7",   0x3800000, 0x0800000 },
-            { "mpr-22935.ic8",   0x4000000, 0x0800000 },
-            { "mpr-22936.ic9",   0x4800000, 0x0800000 },
-            { "mpr-22937.ic10",  0x5000000, 0x0800000 },
-            { "mpr-22938.ic11",  0x5800000, 0x0800000 },
-            { "mpr-22939.ic12s", 0x6000000, 0x0800000 },
-            { "mpr-22940.ic13s", 0x6800000, 0x0800000 },
-            { "mpr-22941.ic14s", 0x7000000, 0x0800000 },
-            { "mpr-22942.ic15s", 0x7800000, 0x0800000 },
-            { "mpr-22943.ic16s", 0x8000000, 0x0800000 },
-            { "mpr-22944.ic17s", 0x8800000, 0x0800000 },
-            { "mpr-22945.ic18s", 0x9000000, 0x0800000 },
-            { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
-            { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
-            { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        	{ "vnbaearly.ic22",  0x0000000, 0x0400000, 0x5bbf7a45 },
+			{ "rom1.ic1s",       0x0800000, 0x0800000, 0x0ea48727 },
+			{ "rom2.ic2s",       0x1000000, 0x0800000, 0x2941a358 },
+			{ "rom3.ic3s",       0x1800000, 0x0800000, 0x0fa29eef },
+			{ "rom4.ic4s",       0x2000000, 0x0800000, 0x5cbcd7a5 },
+			{ "rom5.ic5s",       0x2800000, 0x0800000, 0xf026bf67 },
+			{ "rom6.ic6s",       0x3000000, 0x0800000, 0x91c452ab },
+			{ "rom7.ic7s",       0x3800000, 0x0800000, 0x11e4c24b },
+			{ "rom8.ic8s",       0x4000000, 0x0800000, 0x72629663 },
+			{ "rom9.ic9s",       0x4800000, 0x0800000, 0x54b660e6 },
+			{ "rom10.ic10s",     0x5000000, 0x0800000, 0x8fc00425 },
+			{ "rom11.ic11s",     0x5800000, 0x0800000, 0xd55234c4 },
+			{ "rom12.ic12s",     0x6000000, 0x0800000, 0x4b42b46d },
+			{ "rom13.ic13s",     0x6800000, 0x0800000, 0x6edbb058 },
+			{ "rom14.ic14s",     0x7000000, 0x0800000, 0xaa3885d5 },
+			{ "rom15.ic15s",     0x7800000, 0x0800000, 0xe4d59ed3 },
+			{ "rom16.ic16s",     0x8000000, 0x0800000, 0x9f7a587b },
+			{ "rom17.ic17s",     0x8800000, 0x0800000, 0x18b7df45 },
+			{ "rom18.ic18s",     0x9000000, 0x0800000, 0x27eae4d8 },
+			{ "rom19.ic19s",     0x9800000, 0x0800000, 0x7bb7ff29 },
+			{ "rom20.ic20s",     0xa000000, 0x0800000, 0x9a08015e },
+			{ "rom21.ic21s",     0xa800000, 0x0800000, 0x194594f2 },
+        },
     },
     // Virtua NBA (prototype, 15.11)
     {
@@ -4344,7 +4454,68 @@ const Game Games[] =
 			{ "epr-24083.ic11", 0x000000, 0x400000, 0x2733e65a },
 		},
 	},
-    // Naomi M4 Roms
+    // Virtua Golf / Dynamic Golf (prototype)
+    {
+        "dygolfp",
+		"dygolf",
+        "Virtua Golf / Dynamic Golf (prototype)",
+		0xb000000,
+		0xffffffff, // not populated
+        "naomi",
+        M2,
+        ROT0,
+        {
+        	{ "rom0.ic22",   0x00000000, 0x00400000, 0x2f391fdf },
+			{ "rom1.ic1s",   0x00800000, 0x00800000, 0x2c683edd },
+			{ "rom2.ic2s",   0x01000000, 0x00800000, 0x1795e6f4 },
+			{ "rom3.ic3s",   0x01800000, 0x00800000, 0x9b45cc32 },
+			{ "rom4.ic4s",   0x02000000, 0x00800000, 0x2c5a570a },
+			{ "rom5.ic5s",   0x02800000, 0x00800000, 0x48cc544e },
+			{ "rom6.ic6s",   0x03000000, 0x00800000, 0xe12db83b },
+			{ "rom7.ic7s",   0x03800000, 0x00800000, 0x36c313a6 },
+			{ "rom8.ic8s",   0x04000000, 0x00800000, 0x9868d078 },
+			{ "rom9.ic9s",   0x04800000, 0x00800000, 0x032cca1a },
+			{ "rom10.ic10s", 0x05000000, 0x00800000, 0x6d094477 },
+			{ "rom11.ic11s", 0x05800000, 0x00800000, 0x6c803ca0 },
+			// ic 12-21 populated, empty
+		},
+    },
+	// Nittere Shiki! Mirai Yosou Studio / NTV Future Forecast Studio (Japan)
+    {
+        "ntvmys",
+		nullptr,
+        "Nittere Shiki! Mirai Yosou Studio / NTV Future Forecast Studio",
+		0x9800000,
+		0x281a6263,
+        "naomi",
+        M2,
+        ROT0,
+        {
+        	{ "epr-23419a.ic22",   0x00000000, 0x00400000, 0x8639d1e5 },
+			{ "rom1.ic1s",   0x00800000, 0x00800000, 0x5f11a3ec },
+			{ "rom2.ic2s",   0x01000000, 0x00800000, 0x0d46bfe5 },
+			{ "rom3.ic3s",   0x01800000, 0x00800000, 0xac5c846e },
+			{ "rom4.ic4s",   0x02000000, 0x00800000, 0x6cb2153f },
+			{ "rom5.ic5s",   0x02800000, 0x00800000, 0xfd70ef17 },
+			{ "rom6.ic6s",   0x03000000, 0x00800000, 0xe52afefa },
+			{ "rom7.ic7s",   0x03800000, 0x00800000, 0x976b929d },
+			{ "rom8.ic8s",   0x04000000, 0x00800000, 0x7914b241 },
+			{ "rom9.ic9s",   0x04800000, 0x00800000, 0x2c50b20c },
+			{ "rom10.ic10s", 0x05000000, 0x00800000, 0xa4b8fbc8 },
+			{ "rom11.ic11s", 0x05800000, 0x00800000, 0x8a7dbf32 },
+			// ic 12s populated, empty (ff)
+			{ "rom11.ic11s", 0x06800000, 0x00800000, 0x523a20f9 },
+			{ "rom11.ic11s", 0x07000000, 0x00800000, 0x5ddf6931 },
+			{ "rom11.ic11s", 0x07800000, 0x00800000, 0x1ef1cbed },
+			{ "rom11.ic11s", 0x08000000, 0x00800000, 0x82fa259a },
+			{ "rom11.ic11s", 0x08800000, 0x00800000, 0x6c1207d4 },
+			{ "rom11.ic11s", 0x09000000, 0x00800000, 0xeb8201b0 },
+			//	ROM_REGION( 0x84, "some_eeprom", 0 )
+			//	ROM_LOAD( "sflash.ic37", 0x000000, 0x000084, CRC(44c05f0c) SHA1(daf3687282d2665837025261aadc4ac477bb43a1) )
+		},
+    },
+
+	// Naomi M4 Roms
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
     {
         "ausfache",
@@ -4378,11 +4549,11 @@ const Game Games[] =
         M4,
         ROT0,
         {
-            { "fpr-24382.ic8",  0x0000000, 0x4000000 },
-            { "fpr-24383.ic9",  0x4000000, 0x4000000 },
-            { "fpr-24384.ic10", 0x8000000, 0x4000000 },
-            { "fpr-24385.ic11", 0xc000000, 0x4000000 },
-            { "317-0495-com.ic3", 0, 0x800,  0x0000000, Key },
+            { "fpr-24382.ic8",  0x0000000, 0x4000000, 0x4daefde5 },
+            { "fpr-24383.ic9",  0x4000000, 0x4000000, 0x8ac2fe5d },
+            { "fpr-24384.ic10", 0x8000000, 0x4000000, 0x2e9116c4 },
+            { "fpr-24385.ic11", 0xc000000, 0x4000000, 0x2b79f45d },
+            { "317-0495-com.ic3", 0, 0x800, 0xc229a59b, Key },
             { NULL, 0, 0 },
         }
         // PUNCH, KICK, JUMP
@@ -4398,11 +4569,11 @@ const Game Games[] =
         M4,
         ROT0,
         {
-            { "fpr-24382.ic8",  0x0000000, 0x4000000 },
-            { "fpr-24383.ic9",  0x4000000, 0x4000000 },
-            { "fpr-24384.ic10", 0x8000000, 0x4000000 },
-            { "fpr-24385.ic11", 0xc000000, 0x4000000 },
-            { "317-0495-com.ic3", 0, 0x800,  0x0000000, Key },
+            { "fpr-24382.ic8",  0x0000000, 0x4000000, 0x5b4763fc },
+            { "fpr-24383.ic9",  0x4000000, 0x4000000, 0x8ac2fe5d },
+            { "fpr-24384.ic10", 0x8000000, 0x4000000, 0x2e9116c4 },
+            { "fpr-24385.ic11", 0xc000000, 0x4000000, 0x2b79f45d },
+            { "317-0495-com.ic3", 0, 0x800, 0xc229a59b, Key },
 
             { NULL, 0, 0 },
         }
@@ -5989,6 +6160,173 @@ const Game Games[] =
         },
         "cdp-10002b",
     },
+	// World Club Champion Football Serie A 2001-2002 Ver.2 (Japan) (CDP-10001C)
+	{
+		"wccf116",
+        nullptr,
+        "World Club Champion Football Serie A 2001-2002",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0329-jpn.pic", 0, 0x4000, 0x097f5f92 },
+        },
+        "cdp-10001c",
+	},
+	// World Club Champion Football Serie A 2001-2002 DIMM FIRM Ver.3.03 (CDP-10003)
+	{
+		"wccf1dup",
+        nullptr,
+        "World Club Champion Football Serie A 2001-2002 DIMM FIRM Ver.3.03",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0329-jpn.pic", 0, 0x4000, 0x097f5f92 },
+        },
+        "cdp-10003",
+	},
+	// World Club Champion Football Serie A 2002-2003 Ver.2.12 (Italy) (CDV-10002)
+	{
+		"wccf212e",
+        nullptr,
+        "World Club Champion Football Serie A 2002-2003 (Italy)",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0369-exp.pic", 0, 0x4000, 0xadf2d113 },
+	        // 837-14229 "IC BD FLAT READER"
+	        // SH4-based camera sensor board connected to MAPLE CN7
+        },
+        "cdv-10002",
+	},
+	// World Club Champion Football Serie A 2002-2003 Ver.2.34 (Japan) (CDV-10008)
+	{
+		"wccf234j",
+        nullptr,
+        "World Club Champion Football Serie A 2002-2003 (Japan)",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0369-jpn.pic", 0, 0x4000, 0xfb3672ba },
+        },
+        "cdv-10008",
+	},
+	// World Club Champion Football European Clubs 2004-2005 (Asia) (CDV-10013)
+	{
+		"wccf310j",
+        nullptr,
+        "World Club Champion Football European Clubs 2004-2005 (Asia)",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0419-jpn.pic", 0, 0x4000, 0x04fae86b },
+        },
+        "cdv-10013",
+	},
+	// World Club Champion Football European Clubs 2004-2005 Ver.1.1 (Export) (CDV-10015)
+	{
+		"wccf331e",
+        "wccf322e",
+        "World Club Champion Football European Clubs 2004-2005 v1.1 (Export)",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0419-exp.pic", 0, 0x4000, 0x3f5e1445 },
+        },
+        "cdv-10015",
+	},
+	// World Club Champion Football European Clubs 2004-2005 Ver.3.22 (Export) (CDV-10015P)
+	{
+		"wccf322e",
+        nullptr,
+        "World Club Champion Football European Clubs 2004-2005 (Export)",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        ROT0,
+        {
+            { "317-0419-exp.pic", 0, 0x4000, 0x3f5e1445 },
+        },
+        "cdv-10015p",
+	},
+	// World Club Champion Football European Clubs 2004-2005 Ver.1.1 (Japan) (CDV-10020)
+	{
+		"wccf331j",
+		"wccf341j",
+		"World Club Champion Football European Clubs 2004-2005 v1.1 (Japan)",
+		0x4000,
+		0,
+		"naomi",
+		GD,
+		ROT0,
+		{
+			{ "317-unk-jpn.pic", 0, 0x4000, 0xa4abd76b },
+		},
+		"cdv-10020",
+	},
+	// World Club Champion Football European Clubs 2004-2005 Ver.1.2 (Japan) (CDV-10021)
+	{
+		"wccf341j",
+		nullptr,
+		"World Club Champion Football European Clubs 2004-2005 (Japan)",
+		0x4000,
+		0,
+		"naomi",
+		GD,
+		ROT0,
+		{
+			{ "317-unk-jpn.pic", 0, 0x4000, 0xa4abd76b },
+		},
+		"cdv-10021",
+	},
+	// World Club Champion Football European Clubs 2005-2006 (Japan) (CDV-10025)
+	{
+		"wccf400j",
+		nullptr,
+		"World Club Champion Football European Clubs 2005-2006 (Japan)",
+		0x4000,
+		0,
+		"naomi",
+		GD,
+		ROT0,
+		{
+			{ "317-0456-jpn.pic", 0, 0x4000, 0xcf3bd834 },
+		},
+		"cdv-10025",
+	},
+	// World Club Champion Football European Clubs 2005-2006 (Export) (CDV-10027)
+	{
+		"wccf420e",
+		nullptr,
+		"World Club Champion Football European Clubs 2005-2006 (Export)",
+		0x4000,
+		0,
+		"naomi",
+		GD,
+		ROT0,
+		{
+			{ "317-0456-exp.pic", 0, 0x4000, 0xfb7dd592 },
+		},
+		"cdv-10027",
+	},
 
     // AtomisWave Roms
 
@@ -6685,7 +7023,7 @@ const Game Games[] =
     // Net Select Horse Racing: Victory Furlong"
     {
         "vfurlong",
-        NULL,
+        nullptr,
         "Net Select Horse Racing: Victory Furlong",
         0x9000000,
         0xdb,
@@ -6693,16 +7031,15 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax2001p01.ic18", 0x0000000, 0x0800000 },
-            { "ax2001m01.ic11", 0x1000000, 0x1000000 },
-            { "ax2002m01.ic12", 0x2000000, 0x1000000 },
-            { "ax2003m01.ic13", 0x3000000, 0x1000000 },
-            { "ax2004m01.ic14", 0x4000000, 0x1000000 },
-            { "ax2005m01.ic15", 0x5000000, 0x1000000 },
-            { "ax2006m01.ic16", 0x6000000, 0x1000000 },
-            { "ax2007m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+            { "ax2001p01.ic18", 0x0000000, 0x0800000, 0x17ea9aa9 },
+            { "ax2001m01.ic11", 0x1000000, 0x1000000, 0x64460b24 },
+            { "ax2002m01.ic12", 0x2000000, 0x1000000, 0xd4da357f },
+            { "ax2003m01.ic13", 0x3000000, 0x1000000, 0xaa1e1246 },
+            { "ax2004m01.ic14", 0x4000000, 0x1000000, 0x4d555d7c },
+            { "ax2005m01.ic15", 0x5000000, 0x1000000, 0x785208e2 },
+            { "ax2006m01.ic16", 0x6000000, 0x1000000, 0x8134ec55 },
+            { "ax2007m01.ic17", 0x7000000, 0x1000000, 0xd0557e8a },
+        },
     },
     // WaiWai Drive
     {
@@ -7016,7 +7353,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
 	{
     	"clubkrta",
@@ -7043,7 +7380,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkrtc",
@@ -7070,7 +7407,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkrt",
@@ -7097,7 +7434,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		clubkrt_eeprom_dump,
+		nullptr,
     },
     {
     	"clubkprz",
@@ -7300,6 +7637,7 @@ const Game Games[] =
 		nullptr,
 		&clubkart_inputs,
     },
+#ifdef NAOMI_MULTIBOARD
     {
     	"sgdrvsim",
 		nullptr,
@@ -7325,6 +7663,7 @@ const Game Games[] =
 		&drvsim_inputs,
 		sgdrvsim_eeprom_dump,
     },
+#endif
 	//
 	// Naomi 2 GD-ROM
 	//
@@ -7804,6 +8143,21 @@ const Game Games[] =
 		},
 	},
 	{
+		"galilfac",
+		nullptr,
+		"Galileo Factory (main)",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+		{
+			{ "ic62",  0x00000000, 0x4000000, 0x37fda864 },
+			{ "ic63",  0x04000000, 0x4000000, 0xc16707a7 },
+			{ "317-unk-jpn.ic15", 0, 0x800, 0xf2233b04, Key },
+		},
+	},
+	{
 		"isshoni",
 		nullptr,
 		"Isshoni Wanwan Waiwai Puppy 2008",
@@ -8073,14 +8427,14 @@ const Game Games[] =
 		M4,
 		ROT270,
         {
-			{ "317-unknown-jpn.ic15", 0, 0x800, 0x634e1994, Key },
+			{ "317-0606-jpn.ic15", 0, 0x800, 0x75638f59, Key },
         },
 		"tsb0-sega00001",
     },
     {
     	// Yataimura Kingyosukui (4-player, China, Ver 1.000)
     	"kingyoch",
-		nullptr,
+		"kingyo",
 		"Yataimura Kingyosukui (China)",
 		0x08000000,
 		0x5508,

@@ -55,6 +55,7 @@ struct PipelineShader
 	GLint ndcMat;
 	GLint palette_index;
 	GLint ditherColorMax;
+	GLint texSize;
 
 	// Naomi2
 	GLint mvMat;
@@ -108,7 +109,7 @@ struct PipelineShader
 	bool pp_BumpMap;
 	bool fog_clamping;
 	bool trilinear;
-	bool palette;
+	int palette;	// 1 if nearest, 2 if bilinear
 	bool naomi2;
 	bool divPosZ;
 	bool dithering;
@@ -390,7 +391,7 @@ void writeFramebufferToVRAM();
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette, bool naomi2, bool dithering);
+		int palette, bool naomi2, bool dithering);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader);
@@ -404,7 +405,6 @@ extern struct ShaderUniforms_t
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
-	float trilinear_alpha;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
 	glm::mat4 ndcMat;
@@ -415,7 +415,6 @@ extern struct ShaderUniforms_t
 		int width;
 		int height;
 	} base_clipping;
-	int palette_index;
 	bool dithering;
 	float ditherColorMax[4];
 
@@ -444,9 +443,6 @@ extern struct ShaderUniforms_t
 		if (s->ndcMat != -1)
 			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
-		if (s->palette_index != -1)
-			glUniform1i(s->palette_index, palette_index);
-
 		if (s->ditherColorMax != -1)
 			glUniform4fv(s->ditherColorMax, 1, ditherColorMax);
 	}
@@ -466,6 +462,14 @@ public:
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;
+
+	static void setUploadToGPUFlavor();
+
+private:
+	void UploadToGPUGl2(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded);
+	void UploadToGPUGl4(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded);
+
+	static void (TextureCacheData::*uploadToGpu)(int, int, const u8 *, bool, bool);
 };
 
 class GlTextureCache final : public BaseTextureCache<TextureCacheData>

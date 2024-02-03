@@ -36,9 +36,15 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 		const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		deviceContext->OMSetBlendState(blendStates.getState(true, 8, 8), blend_factor, 0xffffffff);
 #else
-		float vmu_padding = 8.f * config::RenderResolution / 480.f;
-		float vmu_height = 32.f * config::RenderResolution / 480.f;
-		float vmu_width = 48.f * config::RenderResolution / 480.f;
+		float vmu_padding_x = 8.f * width / 640.f;
+		float vmu_padding_y = 8.f * height / 480.f;
+		float vmu_width = 48.f * width / 640.f;
+		float vmu_height = 32.f * height / 480.f;
+		if (config::Widescreen)
+		{
+			vmu_padding_x = vmu_padding_x / 4.f * 3.f;
+			vmu_width = vmu_width / 4.f * 3.f;
+		}
 		deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
 #endif
 
@@ -91,20 +97,20 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			{
 			case UPPER_LEFT:
 			default:
-				x = vmu_padding;
-				y = vmu_padding;
+				x = vmu_padding_x;
+				y = vmu_padding_y;
 				break;
 			case UPPER_RIGHT:
-				x = width - vmu_padding - w;
-				y = vmu_padding;
+				x = width - vmu_padding_x - w;
+				y = vmu_padding_y;
 				break;
 			case LOWER_LEFT:
-				x = vmu_padding;
-				y = height - vmu_padding - h;
+				x = vmu_padding_x;
+				y = height - vmu_padding_y - h;
 				break;
 			case LOWER_RIGHT:
-				x = width - vmu_padding - w;
-				y = height - vmu_padding - h;
+				x = width - vmu_padding_x - w;
+				y = height - vmu_padding_y - h;
 				break;
 			}
 #else

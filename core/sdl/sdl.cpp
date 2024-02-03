@@ -17,7 +17,8 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
+#include "hw/naomi/card_reader.h"
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif
@@ -26,7 +27,9 @@
 #endif
 #ifdef __SWITCH__
 #include "nswitch.h"
+#include "switch_gamepad.h"
 #endif
+#include <unordered_map>
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;
@@ -42,6 +45,11 @@ static SDL_Rect windowPos { SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WI
 static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
+static std::string barcode;
+static double lastBarcodeTime;
+
+static KeyboardLayout detectKeyboardLayout();
+static bool handleBarcodeScanner(const SDL_Event& event);
 
 static struct SDLDeInit
 {
@@ -51,7 +59,7 @@ static struct SDLDeInit
 	}
 
 	bool initialized = false;
-} sqlDeinit;
+} sdlDeInit;
 
 static void sdl_open_joystick(int index)
 {
@@ -63,7 +71,11 @@ static void sdl_open_joystick(int index)
 		return;
 	}
 	try {
+#ifdef __SWITCH__
+		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+#else
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+#endif
 		SDLGamepad::AddSDLGamepad(gamepad);
 	} catch (const FlycastException& e) {
 	}
@@ -189,7 +201,7 @@ void input_sdl_init()
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");
 	}
-	sqlDeinit.initialized = true;
+	sdlDeInit.initialized = true;
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -221,6 +233,9 @@ void input_sdl_init()
 			}
 		});
 	}
+	if (settings.input.keyboardLangId == KeyboardLayout::US)
+		settings.input.keyboardLangId = detectKeyboardLayout();
+	barcode.clear();
 }
 
 void input_sdl_quit()
@@ -275,33 +290,40 @@ void input_sdl_handle()
 							return (sdl_keyboard->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE);
 						}
 					};
-					
-					if (event.type == SDL_KEYDOWN
-							&& ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
-									|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0)))
+					if (event.type == SDL_KEYDOWN)
 					{
-						if (window_fullscreen)
+						// Alt-Return and F11 toggle full screen
+						if ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
+								|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0))
 						{
-							SDL_SetWindowFullscreen(window, 0);
-							if (!gameRunning || !mouseCaptured)
-								SDL_ShowCursor(SDL_ENABLE);
+							if (window_fullscreen)
+							{
+								SDL_SetWindowFullscreen(window, 0);
+								if (!gameRunning || !mouseCaptured)
+									SDL_ShowCursor(SDL_ENABLE);
+							}
+							else
+							{
+								SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+								if (gameRunning)
+									SDL_ShowCursor(SDL_DISABLE);
+							}
+							window_fullscreen = !window_fullscreen;
+							break;
 						}
-						else
+						// Left-Alt + Left-CTRL toggles mouse capture
+						if ((event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL)
+								&& !(is_key_mapped(SDL_SCANCODE_LALT) || is_key_mapped(SDL_SCANCODE_LCTRL)))
 						{
-							SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-							if (gameRunning)
-								SDL_ShowCursor(SDL_DISABLE);
+							captureMouse(!mouseCaptured);
+							break;
 						}
-						window_fullscreen = !window_fullscreen;
+						// Barcode scanner
+						if (card_reader::barcodeAvailable() && handleBarcodeScanner(event))
+							break;
 					}
-					else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL) && !(is_key_mapped(SDL_SCANCODE_LALT) || is_key_mapped(SDL_SCANCODE_LCTRL)) )
-					{
-						captureMouse(!mouseCaptured);
-					}
-					else if (!config::UseRawInput)
-					{
+					if (!config::UseRawInput)
 						sdl_keyboard->input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
-					}
 				}
 				break;
 
@@ -467,6 +489,42 @@ void input_sdl_handle()
 			case SDL_JOYDEVICEREMOVED:
 				sdl_close_joystick((SDL_JoystickID)event.jdevice.which);
 				break;
+				
+			case SDL_DROPFILE:
+				gui_start_game(event.drop.file);
+				break;
+
+			// Switch touchscreen support
+			case SDL_FINGERDOWN:
+			case SDL_FINGERMOTION:
+				{
+					int x = event.tfinger.x * settings.display.width;
+					int y = event.tfinger.y * settings.display.height;
+					gui_set_mouse_position(x, y);
+					if (mouseCaptured && gameRunning && event.type == SDL_FINGERMOTION)
+					{
+						int dx = event.tfinger.dx * settings.display.width;
+						int dy = event.tfinger.dy * settings.display.height;
+						sdl_mouse->setRelPos(dx, dy);
+					}
+					else
+						sdl_mouse->setAbsPos(x, y);
+					if (event.type == SDL_FINGERDOWN) {
+						sdl_mouse->setButton(Mouse::LEFT_BUTTON, true);
+						gui_set_mouse_button(0, true);
+					}
+				}
+				break;
+			case SDL_FINGERUP:
+				{
+					int x = event.tfinger.x * settings.display.width;
+					int y = event.tfinger.y * settings.display.height;
+					gui_set_mouse_position(x, y);
+					gui_set_mouse_button(0, false);
+					sdl_mouse->setAbsPos(x, y);
+					sdl_mouse->setButton(Mouse::LEFT_BUTTON, false);
+				}
+				break;
 		}
 	}
 }
@@ -584,6 +642,18 @@ bool sdl_recreate_window(u32 flags)
 	settings.display.width = windowPos.w * hdpiScaling;
 	settings.display.height = windowPos.h * hdpiScaling;
 
+#ifdef __linux__
+	if (flags & SDL_WINDOW_RESIZABLE)
+	{
+		// The position passed to SDL_CreateWindow doesn't take decorations into account on linux.
+		// SDL_ShowWindow retrieves the border dimensions and SDL_SetWindowPosition uses them
+		// to correctly (re)position the window if needed.
+		// TODO a similar issue happens when switching back from fullscreen
+		SDL_ShowWindow(window);
+		SDL_SetWindowPosition(window, windowPos.x, windowPos.y);
+	}
+#endif
+
 #if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__)
 	// Set the window icon
 	u32 pixels[48 * 48];
@@ -684,7 +754,7 @@ void sdl_window_create()
 		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
 #endif
 	}
-	sqlDeinit.initialized = true;
+	sdlDeInit.initialized = true;
 	initRenderApi();
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
@@ -731,4 +801,377 @@ void sdl_fix_steamdeck_dpi(SDL_Window *window)
 			settings.display.dpi = 206;
 	}
 #endif
+}
+
+static KeyboardLayout detectKeyboardLayout()
+{
+	SDL_Keycode key = SDL_GetKeyFromScancode(SDL_SCANCODE_Q);
+	if (key == SDLK_a) {
+		INFO_LOG(INPUT, "French keyboard detected");
+		return KeyboardLayout::FR;
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_Y);
+	if (key == SDLK_z)
+	{
+		// GE or CH
+		key = SDL_GetKeyFromScancode(SDL_SCANCODE_MINUS);
+		if (key == '\'') {
+			// CH has no direct ss
+			INFO_LOG(INPUT, "Swiss keyboard detected");
+			return KeyboardLayout::CH;
+		}
+		else {
+			INFO_LOG(INPUT, "German keyboard detected");
+			return KeyboardLayout::GE;
+		}
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_SEMICOLON);
+	if (key == 0xf1) // n with tilde
+	{
+		// SP or LATAM
+		key = SDL_GetKeyFromScancode(SDL_SCANCODE_APOSTROPHE);
+		if (key == '{') {
+			INFO_LOG(INPUT, "Latam keyboard detected");
+			return KeyboardLayout::LATAM;
+		}
+		else {
+			INFO_LOG(INPUT, "Spanish keyboard detected");
+			return KeyboardLayout::SP;
+		}
+	}
+	if (key == 0xe7) // c with cedilla
+	{
+		// PT or BR
+		key = SDL_GetKeyFromScancode(SDL_SCANCODE_RIGHTBRACKET);
+		if (key == SDLK_LEFTBRACKET) {
+			INFO_LOG(INPUT, "Portuguese (BR) keyboard detected");
+			return KeyboardLayout::PT;
+		}
+		else {
+			INFO_LOG(INPUT, "Portuguese keyboard detected");
+			return KeyboardLayout::PT;
+		}
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_MINUS);
+	if (key == SDLK_PLUS) {
+		INFO_LOG(INPUT, "Swedish keyboard detected");
+		return KeyboardLayout::SW;
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_RIGHTBRACKET);
+	if (key == SDLK_ASTERISK) {
+		// Not on MacOS
+		INFO_LOG(INPUT, "Dutch keyboard detected");
+		return KeyboardLayout::NL;
+	}
+	if (key == SDLK_LEFTBRACKET)
+	{
+		key = SDL_GetKeyFromScancode(SDL_SCANCODE_SEMICOLON);
+		if (key == SDLK_SEMICOLON) {
+			// FIXME not working on MacOS
+			INFO_LOG(INPUT, "Japanese keyboard detected");
+			return KeyboardLayout::JP;
+		}
+	}
+	if (key == SDLK_PLUS)
+	{
+		// IT
+		key = SDL_GetKeyFromScancode(SDL_SCANCODE_GRAVE);
+		if (key == SDLK_BACKSLASH) {
+			INFO_LOG(INPUT, "Italian keyboard detected");
+			return KeyboardLayout::IT;
+		}
+	}
+	if (key == 0xe7) { // c with cedilla
+		// MacOS
+		INFO_LOG(INPUT, "FR_CA keyboard detected");
+		return KeyboardLayout::FR_CA;
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_GRAVE);
+	if (key == SDLK_HASH) {
+		// linux
+		INFO_LOG(INPUT, "FR_CA keyboard detected");
+		return KeyboardLayout::FR_CA;
+	}
+	key = SDL_GetKeyFromScancode(SDL_SCANCODE_BACKSLASH);
+	if (key == SDLK_HASH) {
+		// MacOS: regular British keyboard not detected, only British - PC
+		INFO_LOG(INPUT, "UK keyboard detected");
+		return KeyboardLayout::UK;
+	}
+	// TODO CN, KO have no special keyboard layout
+
+	INFO_LOG(INPUT, "Unknown or US keyboard");
+	return KeyboardLayout::US;
+}
+
+static bool handleBarcodeScanner(const SDL_Event& event)
+{
+	static const std::unordered_map<u16, char> keymapDefault {
+		{ SDL_SCANCODE_SPACE, ' ' },
+		{ 0x100 | SDL_SCANCODE_B, 'B' },
+		{ 0x100 | SDL_SCANCODE_C, 'C' },
+		{ 0x100 | SDL_SCANCODE_D, 'D' },
+		{ 0x100 | SDL_SCANCODE_E, 'E' },
+		{ 0x100 | SDL_SCANCODE_F, 'F' },
+		{ 0x100 | SDL_SCANCODE_G, 'G' },
+		{ 0x100 | SDL_SCANCODE_H, 'H' },
+		{ 0x100 | SDL_SCANCODE_I, 'I' },
+		{ 0x100 | SDL_SCANCODE_J, 'J' },
+		{ 0x100 | SDL_SCANCODE_K, 'K' },
+		{ 0x100 | SDL_SCANCODE_L, 'L' },
+		{ 0x100 | SDL_SCANCODE_N, 'N' },
+		{ 0x100 | SDL_SCANCODE_O, 'O' },
+		{ 0x100 | SDL_SCANCODE_P, 'P' },
+		{ 0x100 | SDL_SCANCODE_R, 'R' },
+		{ 0x100 | SDL_SCANCODE_S, 'S' },
+		{ 0x100 | SDL_SCANCODE_T, 'T' },
+		{ 0x100 | SDL_SCANCODE_U, 'U' },
+		{ 0x100 | SDL_SCANCODE_V, 'V' },
+		{ 0x100 | SDL_SCANCODE_X, 'X' },
+	};
+	static const std::unordered_map<u16, char> keymapUS {
+		{ 0x100 | SDL_SCANCODE_8, '*' },
+		{ SDL_SCANCODE_MINUS, '-' },
+		{ SDL_SCANCODE_PERIOD, '.' },
+		{ 0x100 | SDL_SCANCODE_4, '$' },
+		{ SDL_SCANCODE_SLASH, '/' },
+		{ 0x100 | SDL_SCANCODE_EQUALS, '+' },
+		{ 0x100 | SDL_SCANCODE_5, '%' },
+		{ 0x100 | SDL_SCANCODE_A, 'A' },
+		{ 0x100 | SDL_SCANCODE_M, 'M' },
+		{ 0x100 | SDL_SCANCODE_Q, 'Q' },
+		{ 0x100 | SDL_SCANCODE_W, 'W' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Y' },
+		{ 0x100 | SDL_SCANCODE_Z, 'Z' },
+		{ SDL_SCANCODE_0, '0' },
+		{ SDL_SCANCODE_1, '1' },
+		{ SDL_SCANCODE_2, '2' },
+		{ SDL_SCANCODE_3, '3' },
+		{ SDL_SCANCODE_4, '4' },
+		{ SDL_SCANCODE_5, '5' },
+		{ SDL_SCANCODE_6, '6' },
+		{ SDL_SCANCODE_7, '7' },
+		{ SDL_SCANCODE_8, '8' },
+		{ SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char> keymapFr {
+		{ SDL_SCANCODE_BACKSLASH, '*' },
+		{ SDL_SCANCODE_6, '-' },
+		{ 0x100 | SDL_SCANCODE_COMMA, '.' },
+		{ 0x100 | SDL_SCANCODE_RIGHTBRACKET, '$' },
+		{ 0x100 | SDL_SCANCODE_PERIOD, '/' },
+		{ 0x100 | SDL_SCANCODE_EQUALS, '+' },
+		{ 0x100 | SDL_SCANCODE_APOSTROPHE, '%' },
+		{ 0x100 | SDL_SCANCODE_Q, 'A' },
+		{ 0x100 | SDL_SCANCODE_SEMICOLON, 'M' },
+		{ 0x100 | SDL_SCANCODE_A, 'Q' },
+		{ 0x100 | SDL_SCANCODE_Z, 'W' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Y' },
+		{ 0x100 | SDL_SCANCODE_W, 'Z' },
+		{ 0x100 | SDL_SCANCODE_0, '0' },
+		{ 0x100 | SDL_SCANCODE_1, '1' },
+		{ 0x100 | SDL_SCANCODE_2, '2' },
+		{ 0x100 | SDL_SCANCODE_3, '3' },
+		{ 0x100 | SDL_SCANCODE_4, '4' },
+		{ 0x100 | SDL_SCANCODE_5, '5' },
+		{ 0x100 | SDL_SCANCODE_6, '6' },
+		{ 0x100 | SDL_SCANCODE_7, '7' },
+		{ 0x100 | SDL_SCANCODE_8, '8' },
+		{ 0x100 | SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char> keymapGe {
+		{ 0x100 | SDL_SCANCODE_RIGHTBRACKET, '*' },
+		{ SDL_SCANCODE_SLASH, '-' },
+		{ SDL_SCANCODE_PERIOD, '.' },
+		{ 0x100 | SDL_SCANCODE_4, '$' },
+		{ 0x100 | SDL_SCANCODE_7, '/' },
+		{ SDL_SCANCODE_RIGHTBRACKET, '+' },
+		{ 0x100 | SDL_SCANCODE_5, '%' },
+		{ 0x100 | SDL_SCANCODE_A, 'A' },
+		{ 0x100 | SDL_SCANCODE_M, 'M' },
+		{ 0x100 | SDL_SCANCODE_Q, 'Q' },
+		{ 0x100 | SDL_SCANCODE_W, 'W' },
+		{ 0x100 | SDL_SCANCODE_Z, 'Y' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Z' },
+		{ SDL_SCANCODE_0, '0' },
+		{ SDL_SCANCODE_1, '1' },
+		{ SDL_SCANCODE_2, '2' },
+		{ SDL_SCANCODE_3, '3' },
+		{ SDL_SCANCODE_4, '4' },
+		{ SDL_SCANCODE_5, '5' },
+		{ SDL_SCANCODE_6, '6' },
+		{ SDL_SCANCODE_7, '7' },
+		{ SDL_SCANCODE_8, '8' },
+		{ SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char> keymapItSp {
+		{ 0x100 | SDL_SCANCODE_RIGHTBRACKET, '*' },
+		{ SDL_SCANCODE_SLASH, '-' },
+		{ SDL_SCANCODE_PERIOD, '.' },
+		{ 0x100 | SDL_SCANCODE_4, '$' },
+		{ 0x100 | SDL_SCANCODE_7, '/' },
+		{ SDL_SCANCODE_RIGHTBRACKET, '+' },
+		{ 0x100 | SDL_SCANCODE_5, '%' },
+		{ 0x100 | SDL_SCANCODE_A, 'A' },
+		{ 0x100 | SDL_SCANCODE_M, 'M' },
+		{ 0x100 | SDL_SCANCODE_Q, 'Q' },
+		{ 0x100 | SDL_SCANCODE_W, 'W' },
+		{ 0x100 | SDL_SCANCODE_Z, 'Z' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Y' },
+		{ SDL_SCANCODE_0, '0' },
+		{ SDL_SCANCODE_1, '1' },
+		{ SDL_SCANCODE_2, '2' },
+		{ SDL_SCANCODE_3, '3' },
+		{ SDL_SCANCODE_4, '4' },
+		{ SDL_SCANCODE_5, '5' },
+		{ SDL_SCANCODE_6, '6' },
+		{ SDL_SCANCODE_7, '7' },
+		{ SDL_SCANCODE_8, '8' },
+		{ SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char> keymapCH {
+		{ 0x100 | SDL_SCANCODE_3, '*' },
+		{ SDL_SCANCODE_SLASH, '-' },
+		{ SDL_SCANCODE_PERIOD, '.' },
+		{ SDL_SCANCODE_BACKSLASH, '$' },
+		{ 0x100 | SDL_SCANCODE_7, '/' },
+		{ 0x100 | SDL_SCANCODE_1, '+' },
+		{ 0x100 | SDL_SCANCODE_5, '%' },
+		{ 0x100 | SDL_SCANCODE_A, 'A' },
+		{ 0x100 | SDL_SCANCODE_M, 'M' },
+		{ 0x100 | SDL_SCANCODE_Q, 'Q' },
+		{ 0x100 | SDL_SCANCODE_W, 'W' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Z' },
+		{ 0x100 | SDL_SCANCODE_Z, 'Y' },
+		{ SDL_SCANCODE_0, '0' },
+		{ SDL_SCANCODE_1, '1' },
+		{ SDL_SCANCODE_2, '2' },
+		{ SDL_SCANCODE_3, '3' },
+		{ SDL_SCANCODE_4, '4' },
+		{ SDL_SCANCODE_5, '5' },
+		{ SDL_SCANCODE_6, '6' },
+		{ SDL_SCANCODE_7, '7' },
+		{ SDL_SCANCODE_8, '8' },
+		{ SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char> keymapJp {
+		{ 0x100 | SDL_SCANCODE_APOSTROPHE, '*' },
+		{ SDL_SCANCODE_MINUS, '-' },
+		{ SDL_SCANCODE_PERIOD, '.' },
+		{ 0x100 | SDL_SCANCODE_4, '$' },
+		{ SDL_SCANCODE_SLASH, '/' },
+		{ 0x100 | SDL_SCANCODE_SEMICOLON, '+' },
+		{ 0x100 | SDL_SCANCODE_5, '%' },
+		{ 0x100 | SDL_SCANCODE_A, 'A' },
+		{ 0x100 | SDL_SCANCODE_M, 'M' },
+		{ 0x100 | SDL_SCANCODE_Q, 'Q' },
+		{ 0x100 | SDL_SCANCODE_W, 'W' },
+		{ 0x100 | SDL_SCANCODE_Y, 'Y' },
+		{ 0x100 | SDL_SCANCODE_Z, 'Z' },
+		{ SDL_SCANCODE_0, '0' },
+		{ SDL_SCANCODE_1, '1' },
+		{ SDL_SCANCODE_2, '2' },
+		{ SDL_SCANCODE_3, '3' },
+		{ SDL_SCANCODE_4, '4' },
+		{ SDL_SCANCODE_5, '5' },
+		{ SDL_SCANCODE_6, '6' },
+		{ SDL_SCANCODE_7, '7' },
+		{ SDL_SCANCODE_8, '8' },
+		{ SDL_SCANCODE_9, '9' },
+	};
+	static const std::unordered_map<u16, char>* keymap;
+
+	if (keymap == nullptr)
+	{
+		switch (settings.input.keyboardLangId)
+		{
+		case KeyboardLayout::FR:
+			keymap = &keymapFr;
+			break;
+		case KeyboardLayout::GE:
+			keymap = &keymapGe;
+			break;
+		case KeyboardLayout::CH:
+			keymap = &keymapCH;
+			break;
+		case KeyboardLayout::IT:
+		case KeyboardLayout::SP:
+		case KeyboardLayout::LATAM:
+			keymap = &keymapItSp;
+			break;
+		case KeyboardLayout::JP:
+			keymap = &keymapJp;
+			break;
+		case KeyboardLayout::US:
+		case KeyboardLayout::UK:
+		default:
+			keymap = &keymapUS;
+			break;
+		}
+	}
+	SDL_Scancode scancode = event.key.keysym.scancode;
+	if (scancode >= SDL_SCANCODE_LCTRL)
+		// Ignore modifier keys
+		return false;
+	u16 mod = event.key.keysym.mod;
+	if (mod & (KMOD_LALT | KMOD_CTRL | KMOD_GUI))
+		// Ignore unused modifiers
+		return false;
+
+	u16 k = 0;
+	if (mod & (KMOD_LSHIFT | KMOD_RSHIFT))
+		k |= 0x100;
+	if ((mod & KMOD_CAPS)
+			&& ((scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z)
+					|| settings.input.keyboardLangId == KeyboardLayout::FR
+					|| settings.input.keyboardLangId == KeyboardLayout::GE
+					|| settings.input.keyboardLangId == KeyboardLayout::CH))
+		// FIXME all this depends on the OS so best not to use caps lock for now
+		k ^= 0x100;
+	if (mod & KMOD_RALT)
+		k |= 0x200;
+	k |= scancode & 0xff;
+	auto it = keymap->find(k);
+	if (it == keymap->end())
+	{
+		it = keymapDefault.find(k);
+		if (it == keymapDefault.end())
+		{
+			if (!barcode.empty())
+			{
+				INFO_LOG(INPUT, "Unrecognized barcode scancode %d mod 0x%x", scancode, mod);
+				barcode.clear();
+			}
+			return false;
+		}
+	}
+	double now = os_GetSeconds();
+	if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+	{
+		INFO_LOG(INPUT, "Barcode timeout");
+		barcode.clear();
+	}
+	char c = it->second;
+	if (c == '*')
+	{
+		if (barcode.empty())
+		{
+			DEBUG_LOG(INPUT, "Barcode start");
+			barcode += '*';
+			lastBarcodeTime = now;
+		}
+		else
+		{
+			card_reader::barcodeSetCard(barcode);
+			barcode.clear();
+			card_reader::insertCard(0);
+		}
+		return true;
+	}
+	if (barcode.empty())
+		return false;
+	barcode += c;
+	lastBarcodeTime = now;
+
+	return true;
 }

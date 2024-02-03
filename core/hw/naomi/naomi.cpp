@@ -45,6 +45,8 @@ static X76F100SerialFlash romSerialId;
 static u8 midiTxBuf[4];
 static u32 midiTxBufIndex;
 
+static int dmaSchedId = -1;
+
 void NaomiBoardIDWrite(const u16 data)
 {
 	// bit 2: clock
@@ -109,43 +111,60 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		CurrentCartridge->WriteMem(address, data, size);
 }
 
+static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
+{
+	u32 start = SB_GDSTAR & 0x1FFFFFE0;
+	u32 len = (SB_GDLEN + 31) & ~31;
+	SB_GDLEND = 0;
+	while (len > 0)
+	{
+		u32 block_len = len;
+		void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+		if (block_len == 0)
+		{
+			INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+			for (u32 i = 0; i < len; i += 8, start += 8)
+				addrspace::write64(start, 0);
+			SB_GDLEND += len;
+			break;
+		}
+		WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+		CurrentCartridge->AdvancePtr(block_len);
+		len -= block_len;
+		start += block_len;
+		SB_GDLEND += block_len;
+	}
+	SB_GDSTARD = start;
+	SB_GDST = 0;
+	asic_RaiseInterrupt(holly_GDROM_DMA);
+
+	return 0;
+}
+
 //Dma Start
 static void Naomi_DmaStart(u32 addr, u32 data)
 {
-	if ((data & 1) == 0)
+	if ((data & 1) == 0 || SB_GDST == 1)
 		return;
 	if (SB_GDEN == 0)
 	{
-		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
+		INFO_LOG(NAOMI, "Invalid NAOMI-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
 	if (multiboard != nullptr && multiboard->dmaStart())
 	{
 	}
-	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
+	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != nullptr)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
-		u32 start = SB_GDSTAR & 0x1FFFFFE0;
-		u32 len = (SB_GDLEN + 31) & ~31;
-		SB_GDLEND = 0;
-		while (len > 0)
-		{
-			u32 block_len = len;
-			void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-			if (block_len == 0)
-			{
-				INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
-				break;
-			}
-			WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
-			CurrentCartridge->AdvancePtr(block_len);
-			len -= block_len;
-			start += block_len;
-			SB_GDLEND += block_len;
-		}
-		SB_GDSTARD = start;
+		SB_GDST = 1;
+		// Max G1 bus rate: 50 MHz x 16 bits
+		// SH4_access990312_e.xls: 14.4 MB/s from GD-ROM to system RAM
+		// Here: 7 MB/s
+		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * 27, SH4_MAIN_CLOCK));
+		return;
 	}
 	else
 	{
@@ -161,8 +180,9 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 	SB_GDEN = data & 1;
 	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
-		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
+		INFO_LOG(NAOMI, "NAOMI-DMA aborted");
 		SB_GDST = 0;
+		sh4_sched_request(dmaSchedId, -1);
 	}
 }
 
@@ -180,6 +200,8 @@ void naomi_reg_Init()
 	};
 	romSerialId.setData(romSerialData);
 	mainSerialId.setData(romSerialData);
+	if (dmaSchedId == -1)
+		dmaSchedId = sh4_sched_register(0, naomiDmaSched);
 }
 
 void setGameSerialId(const u8 *data)
@@ -194,6 +216,9 @@ void naomi_reg_Term()
 	multiboard = nullptr;
 	m3comm.closeNetwork();
 	networkOutput.term();
+	if (dmaSchedId != -1)
+		sh4_sched_unregister(dmaSchedId);
+	dmaSchedId = -1;
 }
 
 void naomi_reg_Reset(bool hard)
@@ -202,6 +227,7 @@ void naomi_reg_Reset(bool hard)
 	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
+	sh4_sched_request(dmaSchedId, -1);
 
 	aw_ram_test_skipped = false;
 
@@ -345,6 +371,7 @@ void naomi_Serialize(Serializer& ser)
 	ser << midiTxBufIndex;
 	// TODO serialize m3comm?
 	ser << ffbCalibrating;
+	sh4_sched_serialize(ser, dmaSchedId);
 }
 void naomi_Deserialize(Deserializer& deser)
 {
@@ -404,6 +431,8 @@ void naomi_Deserialize(Deserializer& deser)
 		deser >> ffbCalibrating;
 	else
 		ffbCalibrating = false;
+	if (deser.version() >= Deserializer::V45)
+		sh4_sched_deserialize(deser, dmaSchedId);
 }
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
@@ -437,7 +466,7 @@ static void forceFeedbackMidiReceiver(u8 data)
 			if (NaomiGameInputs != nullptr)
 				direction = NaomiGameInputs->axes[0].inverted ? 1 : -1;
 
-			position = std::clamp(mapleInputState[0].fullAxes[0] * direction * 64.f + 8192.f, 0.f, 16383.f);
+			position = std::clamp(mapleInputState[0].fullAxes[0] * direction / 4.f + 8192.f, 0.f, 16383.f);
 		}
 		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
 		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);

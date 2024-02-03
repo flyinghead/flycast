@@ -16,7 +16,7 @@
  */
 #include "types.h"
 #include "cfg/option.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "emulator.h"
 
 #include <libretro.h>

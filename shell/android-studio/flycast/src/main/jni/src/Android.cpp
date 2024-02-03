@@ -4,7 +4,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "rend/osd.h"
@@ -631,11 +631,6 @@ void vjoy_reset_editing()
 void vjoy_stop_editing(bool canceled)
 {
     jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data)
-{
-	DefaultOSDButtons = jni::ByteArray(data, false);
 }
 
 void enableNetworkBroadcast(bool enable)

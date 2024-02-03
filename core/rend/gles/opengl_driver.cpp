@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "opengl_driver.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 #include "wsi/gl_context.h"
 #include "rend/osd.h"
 #include "rend/gui.h"

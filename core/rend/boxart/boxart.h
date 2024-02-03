@@ -33,7 +33,7 @@ class Boxart
 {
 public:
 	GameBoxart getBoxart(const GameMedia& media);
-	void saveDatabase();
+	void saveDatabase(bool internal = false);
 
 private:
 	void loadDatabase();

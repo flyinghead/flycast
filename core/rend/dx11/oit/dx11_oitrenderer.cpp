@@ -180,7 +180,16 @@ struct DX11OITRenderer : public DX11Renderer
 
 		int clip_rect[4] = {};
 		TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
-		bool gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
+		int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
+				: gp->tsp.FilterMode + 1;
+		if (gpuPalette != 0)
+		{
+			if (config::TextureFiltering == 1)
+				gpuPalette = 1; // force nearest
+			else if (config::TextureFiltering == 2)
+				gpuPalette = 2; // force linear
+		}
+
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool useTexture;
@@ -231,7 +240,7 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 		deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
-		if (gpuPalette)
+		if (gpuPalette != 0)
 		{
 			if (gp->tcw.PixelFmt == PixelPal4)
 				constants.paletteIndex = (float)(gp->tcw.PalSelect << 4);
@@ -284,13 +293,9 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 
 		if (pass == DX11OITShaders::Color)
-		{
 			// Apparently punch-through polys support blending, or at least some combinations
-			if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-				deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-			else
-				deviceContext->OMSetBlendState(blendStates.getState(false, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-		}
+			deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
+
 		if (useTexture)
 		{
 			for (int i = 0; i < 2; i++)
@@ -302,8 +307,10 @@ struct DX11OITRenderer : public DX11Renderer
 				deviceContext->PSSetShaderResources(slot, 1, &texture->textureView.get());
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
 				bool linearFiltering;
-				if (config::TextureFiltering == 0)
-					linearFiltering = tsp.FilterMode != 0 && !gpuPalette;
+				if (gpuPalette != 0)
+					linearFiltering = false;
+				else if (config::TextureFiltering == 0)
+					linearFiltering = tsp.FilterMode != 0;
 				else if (config::TextureFiltering == 1)
 					linearFiltering = false;
 				else

@@ -22,6 +22,10 @@
 #include "types.h"
 #include "context.h"
 
+#if defined(USE_OPENGL) && !defined(LIBRETRO)
+	#include <glad/gl.h>
+#endif
+
 #ifdef TEST_AUTOMATION
 void do_swap_automation();
 #else
@@ -46,6 +50,9 @@ public:
 	std::string getDriverVersion() override {
 		return driverVersion;
 	}
+	bool isAMD() override {
+		return amd;
+	}
 	void resetUIDriver();
 
 	bool hasPerPixel() override
@@ -66,6 +73,7 @@ private:
 	bool _isGLES = false;
 	std::string driverName;
 	std::string driverVersion;
+	bool amd = false;
 };
 
 #if defined(LIBRETRO)
@@ -83,10 +91,6 @@ private:
 #elif defined(GLES) || defined(__ANDROID__) || defined(__SWITCH__)
 
 #include "egl.h"
-
-#elif defined(_WIN32)
-
-#include "wgl.h"
 
 #elif defined(SUPPORT_X11)
 

@@ -19,22 +19,9 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <SDL.h>
-#include "types.h"
-#if defined(__APPLE__) && !defined(TARGET_IPHONE)
-#include <OpenGL/gl3.h>
-#elif !defined(GLES)
-#include <GL4/gl3w.h>
-#else
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#else
-extern "C" void load_gles_symbols();
-#endif
-#endif
 #include "gl_context.h"
+
+#include <SDL.h>
 
 class SDLGLGraphicsContext : public GLGraphicsContext
 {
@@ -42,7 +29,6 @@ public:
 	bool init();
 	void term() override;
 	void swap();
-	void initVideoRouting() override;
 
 private:
 	SDL_GLContext glcontext = nullptr;

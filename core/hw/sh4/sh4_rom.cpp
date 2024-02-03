@@ -1,14 +1,14 @@
 #include "types.h"
 #include "sh4_rom.h"
 
-u32 sin_coefs[0x8000]=
+static u32 sin_coefs[0x8000]=
 {
 	#include "fsca-table.h"
 };
 
 f32_x2 sin_table[0x10000];
 
-void sh4rom_init()
+static void sh4rom_init()
 {
 	for (int i=0x0000;i<0x10000;i++)
 	{

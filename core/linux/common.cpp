@@ -65,13 +65,15 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 		context_to_segfault(&ctx, segfault_ctx);
 		return;
 	}
-#endif
+
 	ERROR_LOG(COMMON, "SIGSEGV @ %p invalid access to %p", (void *)ctx.pc, si->si_addr);
+#endif
+
 #ifdef __SWITCH__
 	MemoryInfo meminfo;
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
-	ERROR_LOG(COMMON, ".text base: %p", (void*)meminfo.addr);
+	ERROR_LOG(COMMON, ".text base: %p -> offset: %lx", (void*)meminfo.addr, ctx.pc - meminfo.addr);
 #else
 	if (next_segv_handler.sa_sigaction != nullptr)
 		next_segv_handler.sa_sigaction(sn, si, segfault_ctx);
@@ -125,7 +127,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if !defined(__unix__) && !defined(LIBRETRO)
+#if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__)
 [[noreturn]] void os_DebugBreak()
 {
 	__builtin_trap();

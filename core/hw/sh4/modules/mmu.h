@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "cfg/option.h"
 #include "hw/sh4/dyna/ngen.h"
 
 //Translation Types
@@ -117,6 +116,7 @@ template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
 
 void mmu_TranslateSQW(u32 adr, u32* out);
 
+#ifdef FAST_MMU
 // maps 4K virtual page number to physical address
 extern u32 mmuAddressLUT[0x100000];
 
@@ -130,7 +130,9 @@ static inline void mmuAddressLUTFlush(bool full)
 		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));		// flush slot 0
 	}
 }
+#endif
 
+#if FEAT_SHREC == DYNAREC_JIT
 static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
 	u32 paddr;
@@ -157,6 +159,7 @@ static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 
 	return paddr;
 }
+#endif
 
 void MMU_init();
 void MMU_reset();

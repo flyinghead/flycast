@@ -79,7 +79,7 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 	{
 		if (pos >= std::size(awave_button_mapping))
 			return nullptr;
-		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
+		const u32* mapping = settings.input.lightgunGame ? awavelg_button_mapping : awave_button_mapping;
 		arcade_key = mapping[pos];
 	}
 	for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
@@ -135,7 +135,6 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
  * Sega JVS I/O board
 */
 static bool old_coin_chute[4];
-static int coin_count[4];
 
 class jvs_io_board
 {
@@ -152,6 +151,10 @@ public:
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	virtual void serialize(Serializer& ser) const;
 	virtual void deserialize(Deserializer& deser);
+
+	u32 getDigitalOutput() const {
+		return digOutput;
+	}
 
 	bool lightgun_as_analog = false;
 
@@ -258,6 +261,7 @@ protected:
 	u32 light_gun_count = 0;
 	u32 output_count = 0;
 	bool init_in_progress = false;
+	maple_naomi_jamma *parent;
 
 private:
 	void init_mappings()
@@ -289,13 +293,13 @@ private:
 	}
 
 	u8 node_id;
-	maple_naomi_jamma *parent;
 	u8 first_player;
 
 	std::array<u32, 32> cur_mapping;
 	std::array<u32, 32> p1_mapping;
 	std::array<u32, 32> p2_mapping;
 	u32 digOutput = 0;
+	int coin_count[4] {};
 };
 
 // Most common JVS board
@@ -443,6 +447,52 @@ protected:
 	s16 prevRelY = 0;
 	float rotX = 0.f;
 	float rotY = 0.f;
+};
+
+class jvs_837_13938_crackindj : public jvs_837_13938
+{
+public:
+	jvs_837_13938_crackindj(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13938(node_id, parent, first_player)
+	{}
+
+	void serialize(Serializer& ser) const override
+	{
+		jvs_837_13938::serialize(ser);
+		ser << motorRotation;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		jvs_837_13938::deserialize(deser);
+		if (deser.version() >= Deserializer::V46)
+			deser >> motorRotation;
+	}
+
+protected:
+	s16 readRotaryEncoders(int channel, s16 relX, s16 relY) override
+	{
+		jvs_io_board& outputBoard = *parent->io_boards[1];
+		bool turntableOn = outputBoard.getDigitalOutput() & 0x10;
+		switch (channel)
+		{
+			case 0:	// Left turntable
+				if (turntableOn && relX == lastRel[0])
+					motorRotation[0] -= 10;
+				lastRel[0] = relX;
+				return -relX + motorRotation[0];
+			case 2: // Right turntable
+				if (turntableOn && relY == lastRel[1])
+					motorRotation[1] -= 10;
+				lastRel[1] = relY;
+				return relY + motorRotation[1];
+			default:
+				return 0;
+		}
+	}
+
+private:
+	s16 motorRotation[2]{};
+	s16 lastRel[2]{};
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -843,8 +893,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
-		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1] >> 8;
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1] >> 8;
 		limit_joystick_magnitude<64>(axis_x, axis_y);
 		return std::min(0xff, 0x80 - axis_x) << 8;
 	}
@@ -874,13 +924,13 @@ protected:
 		case 7:
 			return read_joystick_y(3);
 		case 8:
-			return mapleInputState[0].halfAxes[PJTI_R] << 8;
+			return mapleInputState[0].halfAxes[PJTI_R];
 		case 9:
-			return mapleInputState[1].halfAxes[PJTI_R] << 8;
+			return mapleInputState[1].halfAxes[PJTI_R];
 		case 10:
-			return mapleInputState[2].halfAxes[PJTI_R] << 8;
+			return mapleInputState[2].halfAxes[PJTI_R];
 		case 11:
-			return mapleInputState[3].halfAxes[PJTI_R] << 8;
+			return mapleInputState[3].halfAxes[PJTI_R];
 		default:
 			return 0x8000;
 		}
@@ -911,7 +961,7 @@ protected:
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
 		{
-			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 2;
+			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 10;
 					// Ball button
 			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
 					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
@@ -923,8 +973,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
-		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1] >> 8;
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1] >> 8;
 		limit_joystick_magnitude<48>(axis_x, axis_y);
 		return (axis_x + 128) << 8;
 	}
@@ -989,87 +1039,154 @@ maple_naomi_jamma::maple_naomi_jamma()
 {
 	if (settings.naomi.drivingSimSlave == 0 && !settings.naomi.slave)
 	{
-		switch (settings.input.JammaSetup)
+		const std::string& gameId = settings.content.gameId;
+		if (gameId == "POWER STONE 2 JAPAN")
 		{
-		case JVS::Default:
-		default:
-			if (settings.content.gameId.substr(0, 8) == "MKG TKOB" || settings.content.gameId.substr(0, 9) == "MUSHIKING"
-					|| settings.content.gameId == "MUSHIUSA '04 1ST VER0.900-")
-				io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
-			else if (settings.content.gameId == "ANPANMAN POPCORN KOUJOU 2")
-				io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
-			else
-				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
-			break;
-		case JVS::FourPlayers:
+			// 4 players
+			INFO_LOG(MAPLE, "Enabling 4-player setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13551_4P>(1, this));
-			break;
-		case JVS::RotaryEncoders:
-			if (settings.content.gameId.substr(0, 13) == "SHOOTOUT POOL")
+			settings.input.fourPlayerGames = true;
+		}
+		else if (gameId == "DYNAMIC GOLF"
+				|| gameId.substr(0, 13) == "SHOOTOUT POOL"
+				|| gameId.substr(0, 10) == "CRACKIN'DJ"
+				|| gameId == "KICK '4' CASH")
+		{
+			// Rotary encoders
+			INFO_LOG(MAPLE, "Enabling JVS rotary encoders for game %s", gameId.c_str());
+			if (gameId.substr(0, 13) == "SHOOTOUT POOL")
 				io_boards.push_back(std::make_unique<jvs_837_13938_shootout>(1, this));
-			else if (settings.content.gameId == "KICK '4' CASH")
+			else if (gameId == "KICK '4' CASH")
 				io_boards.push_back(std::make_unique<jvs_837_13938_kick4cash>(1, this));
+			else if (gameId.substr(0, 10) == "CRACKIN'DJ")
+				io_boards.push_back(std::make_unique<jvs_837_13938_crackindj>(1, this));
 			else
 				io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this));
-			break;
-		case JVS::OutTrigger:
+			settings.input.mouseGame = true;
+		}
+		else if (gameId == "OUTTRIGGER     JAPAN")
+		{
+			INFO_LOG(MAPLE, "Enabling JVS rotary encoders for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13938>(1, this));
 			io_boards.push_back(std::make_unique<jvs_837_13551_noanalog>(2, this));
-			break;
-		case JVS::SegaMarineFishing:
+		}
+		else if (gameId == "SEGA MARINE FISHING JAPAN")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
-			break;
-		case JVS::DualIOBoards4P:
-			if (settings.content.gameId == "RINGOUT 4X4 JAPAN")
-			{
-				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
-				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 2));
-			}
-			else
-			{
-				// reverse the board order so that P1 is P1
-				io_boards.push_back(std::make_unique<jvs_837_13551>(1, this, 2));
-				io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 0));
-			}
-			break;
-		case JVS::LightGun:
+		}
+		else if (gameId == "RINGOUT 4X4 JAPAN")
+		{
+			// Dual I/O boards 4P
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
+			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
+			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 2));
+			settings.input.fourPlayerGames = true;
+		}
+		else if (gameId == "VIRTUA ATHLETE"
+					|| gameId == "ROYAL RUMBLE"
+					|| gameId == "BEACH SPIKERS JAPAN"
+					|| gameId == "MJ JAPAN")
+		{
+			// Dual I/O boards 4P
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
+			// reverse the board order so that P1 is P1
+			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this, 2));
+			io_boards.push_back(std::make_unique<jvs_837_13551>(2, this, 0));
+			settings.input.fourPlayerGames = true;
+		}
+		else if (gameId == "NINJA ASSAULT")
+		{
+			// Light-gun game
+			INFO_LOG(MAPLE, "Enabling lightgun setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_namco_jyu>(1, this));
-			break;
-		case JVS::LightGunAsAnalog:
+			settings.input.lightgunGame = true;
+		}
+		else if (gameId == "THE MAZE OF THE KINGS"
+				|| gameId == " CONFIDENTIAL MISSION ---------"
+				|| gameId == "DEATH CRIMSON OX"
+				|| gameId.substr(0, 5) == "hotd2"	// House of the Dead 2
+				|| gameId == "LUPIN THE THIRD  -THE SHOOTING-")
+		{
+			INFO_LOG(MAPLE, "Enabling lightgun as analog setup for game %s", gameId.c_str());
 			// Regular board sending lightgun coords as axis 0/1
 			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 			io_boards.back()->lightgun_as_analog = true;
-			break;
-		case JVS::Mazan:
+			settings.input.lightgunGame = true;
+		}
+		else if (gameId == "MAZAN")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_namco_fcb>(1, this));
 			io_boards.push_back(std::make_unique<jvs_namco_fcb>(2, this));
-			break;
-		case JVS::GunSurvivor:
+			settings.input.lightgunGame = true;
+		}
+		else if (gameId == " BIOHAZARD  GUN SURVIVOR2")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_namco_fca>(1, this));
-			break;
-		case JVS::DogWalking:
+		}
+		else if (gameId == "INU NO OSANPO")	// Dog Walking
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_encoders>(1, this));
-			break;
-		case JVS::TouchDeUno:
+		}
+		else if (gameId == " TOUCH DE UNOH -------------"
+				|| gameId == " TOUCH DE UNOH 2 -----------"
+				|| gameId == "MIRAI YOSOU STUDIO")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_touch>(1, this));
-			break;
-		case JVS::WorldKicks:
+			settings.input.lightgunGame = true;
+		}
+		else if (gameId == "WORLD KICKS")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_namco_v226>(1, this));
-			break;
-		case JVS::WorldKicksPCB:
+			settings.input.fourPlayerGames = true;
+		}
+		else if (gameId == "WORLD KICKS PCB")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(1, this, 2));
 			io_boards.push_back(std::make_unique<jvs_namco_v226_pcb>(2, this));
-			break;
-		case JVS::WaveRunnerGP:
+			settings.input.fourPlayerGames = true;
+		}
+		else if (gameId == "WAVE RUNNER GP")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_wrungp>(1, this));
-			break;
-		case JVS::_18Wheeler:
+		}
+		else if (gameId == "  18WHEELER")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_18wheeler>(1, this));
-			break;
-		case JVS::F355:
+		}
+		else if (gameId == "F355 CHALLENGE JAPAN")
+		{
+			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_racing>(1, this));
-			break;
+		}
+		else if (gameId.substr(0, 8) == "MKG TKOB"
+				|| gameId.substr(0, 9) == "MUSHIKING"
+				|| gameId == "MUSHIUSA '04 1ST VER0.900-")
+		{
+			io_boards.push_back(std::make_unique<jvs_837_13551_mushiking>(1, this));
+		}
+		else if (gameId == "ANPANMAN POPCORN KOUJOU 2")
+		{
+			io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
+		}
+		else
+		{
+			if (gameId == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
+				|| gameId == "TOUCH DE ZUNO (JAPAN)")
+			{
+				settings.input.lightgunGame = true;
+			}
+			// Default JVS I/O board
+			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 		}
 	}
 
@@ -1725,10 +1842,10 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 {
 	u16 v;
 	if (player_axis >= 0 && player_axis < 4)
-		v = (mapleInputState[player_num].fullAxes[player_axis] + 128) << 8;
+		v = mapleInputState[player_num].fullAxes[player_axis] + 0x8000;
 	else
 		v = 0x8000;
-	return inverted ? 0xff00 - v : v;
+	return inverted ? 0xffff - v : v;
 }
 
 #define JVS_OUT(b) buffer_out[length++] = b
@@ -1919,15 +2036,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							{
 								coin_chute = true;
 								if (!old_coin_chute[first_player + slot])
-									coin_count[first_player + slot] += 1;
+									coin_count[slot] += 1;
 							}
 							old_coin_chute[first_player + slot] = coin_chute;
 
 							LOGJVS("%d:%d ", slot + 1 + first_player, coin_count[first_player + slot]);
 							// status (2 highest bits, 0: normal), coin count MSB
-							JVS_OUT((coin_count[first_player + slot] >> 8) & 0x3F);
+							JVS_OUT((coin_count[slot] >> 8) & 0x3F);
 							// coin count LSB
-							JVS_OUT(coin_count[first_player + slot]);
+							JVS_OUT(coin_count[slot]);
 						}
 						cmdi += 2;
 					}
@@ -1987,15 +2104,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									if (axisDesc.type == Half)
 									{
 										if (axisDesc.axis == 4)
-											axis_value = mapleInputState[player_num].halfAxes[PJTI_R] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_R];
 										else if (axisDesc.axis == 5)
-											axis_value = mapleInputState[player_num].halfAxes[PJTI_L] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_L];
 										else
 											axis_value = 0;
 										if (axisDesc.inverted)
-											axis_value = 0xff00u - axis_value;
+											axis_value = 0xffffu - axis_value;
 										// this fixes kingrt66 immediate win
-										if (axis_value == 0x8000)
+										if (axis_value >= 0x8000 && axis_value < 0x8100)
 											axis_value = 0x8100;
 									}
 									else
@@ -2076,8 +2193,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
-						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
+					if (buffer_in[cmdi + 1] > 0 && buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
+						coin_count[buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;
@@ -2132,9 +2249,14 @@ void jvs_io_board::serialize(Serializer& ser) const
 {
 	ser << node_id;
 	ser << lightgun_as_analog;
+	ser << coin_count;
 }
 void jvs_io_board::deserialize(Deserializer& deser)
 {
 	deser >> node_id;
 	deser >> lightgun_as_analog;
+	if (deser.version() >= Deserializer::V46)
+		deser >> coin_count;
+	else
+		memset(coin_count, 0, sizeof(coin_count));
 }

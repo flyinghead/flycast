@@ -20,7 +20,6 @@
 #include "rend/osd.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <tuple>
 
 void D3DOverlay::drawQuad(const RECT& rect, D3DCOLOR color)
 {

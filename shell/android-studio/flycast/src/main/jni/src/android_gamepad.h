@@ -107,11 +107,13 @@ public:
 		{
 			input_mapper = std::make_shared<IdentityInputMapping>();
 			rumbleEnabled = true;
+			// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
 		}
 		else
 		{
 			loadMapping();
 			save_mapping();
+			hasAnalogStick = !fullAxes.empty();
 		}
 	}
 	~AndroidGamepadDevice() override

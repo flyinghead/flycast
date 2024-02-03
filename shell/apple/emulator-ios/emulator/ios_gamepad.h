@@ -229,7 +229,7 @@ public:
 			[gcController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
 				gamepad_axis_input(IOS_AXIS_RY, (int)std::roundf(-32767.f * value));
 			}];
-
+			hasAnalogStick = true;
 		}
 		else
 		{
@@ -491,6 +491,7 @@ public:
 		_name = "Virtual Gamepad";
 		_unique_id = "ios-virtual-gamepad";
 		input_mapper = getDefaultMapping();
+		//hasAnalogStick = true;	// TODO has an analog stick but input mapping isn't persisted
 	}
 
 	bool is_virtual_gamepad() override { return true; }

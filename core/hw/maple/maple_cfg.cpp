@@ -10,12 +10,13 @@
 MapleInputState mapleInputState[4];
 extern bool maple_ddt_pending_reset;
 extern std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
+extern bool SDCKBOccupied;
 
 void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
-static u8 GetBtFromSgn(s8 val)
+static u8 GetBtFromSgn(s16 val)
 {
-	return val+128;
+	return (val + 32768) >> 8;
 }
 
 u32 awave_button_mapping[32] = {
@@ -81,17 +82,17 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		pjs->joy[PJAI_Y2] = GetBtFromSgn(inputState.fullAxes[PJAI_Y2]);
 		pjs->joy[PJAI_X3] = GetBtFromSgn(inputState.fullAxes[PJAI_X3]);
 		pjs->joy[PJAI_Y3] = GetBtFromSgn(inputState.fullAxes[PJAI_Y3]);
-		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
-		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
-		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2];
-		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2];
+		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R] >> 8;
+		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L] >> 8;
+		pjs->trigger[PJTI_L2] = inputState.halfAxes[PJTI_L2] >> 8;
+		pjs->trigger[PJTI_R2] = inputState.halfAxes[PJTI_R2] >> 8;
 	}
 	else if (settings.platform.isAtomiswave())
 	{
 #ifdef LIBRETRO
 		pjs->kcode = inputState.kcode;
 #else
-		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
+		const u32* mapping = settings.input.lightgunGame ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
 		for (u32 i = 0; i < std::size(awave_button_mapping); i++)
 		{
@@ -131,10 +132,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 4:
-							pjs->joy[axis] = inputState.halfAxes[PJTI_R];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R] >> 8;
 							break;
 						case 5:
-							pjs->joy[axis] = inputState.halfAxes[PJTI_L];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L] >> 8;
 							break;
 						default:
 							pjs->joy[axis] = 0;
@@ -154,8 +155,8 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		{
 			pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
 			pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
-			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R];
-			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L];
+			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R] >> 8;
+			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L] >> 8;
 		}
 	}
 }
@@ -216,16 +217,21 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 
 static void createNaomiDevices()
 {
+	const std::string& gameId = settings.content.gameId;
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
-	if (settings.input.JammaSetup == JVS::Keyboard)
+	if (gameId == "THE TYPING OF THE DEAD"
+			|| gameId == " LUPIN THE THIRD  -THE TYPING-"
+			|| gameId == "------La Keyboardxyu------")
 	{
+		INFO_LOG(MAPLE, "Enabling keyboard for game %s", gameId.c_str());
 		mcfg_Create(MDT_Keyboard, 1, 5, 0);
 		mcfg_Create(MDT_Keyboard, 2, 5, 1);
+		settings.input.keyboardGame = true;
 	}
-	else if (settings.content.gameId.substr(0, 8) == "MKG TKOB"
-			|| settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN"
-			|| settings.content.gameId == "VF4 EVOLUTION JAPAN"
-			|| settings.content.gameId == "VF4 FINAL TUNED JAPAN")
+	else if (gameId.substr(0, 8) == "MKG TKOB"
+			|| gameId == "VIRTUA FIGHTER 4 JAPAN"
+			|| gameId == "VF4 EVOLUTION JAPAN"
+			|| gameId == "VF4 FINAL TUNED JAPAN")
 	{
 		mcfg_Create(MDT_RFIDReaderWriter, 1, 5, 0);
 		mcfg_Create(MDT_RFIDReaderWriter, 2, 5, 1);
@@ -239,14 +245,15 @@ static void createNaomiDevices()
 		mcfg_Create(MDT_SegaController, 2, 5);
 		mcfg_Create(MDT_SegaVMU, 2, 0);
 	}
-	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------"
-			|| settings.content.gameId == " DERBY OWNERS CLUB ------------"
-			|| settings.content.gameId == " DERBY OWNERS CLUB II-----------")
+	if (gameId == " DERBY OWNERS CLUB WE ---------"
+			|| gameId == " DERBY OWNERS CLUB ------------"
+			|| gameId == " DERBY OWNERS CLUB II-----------")
 		card_reader::derbyInit();
 }
 
 static void createAtomiswaveDevices()
 {
+	const std::string& gameId = settings.content.gameId;
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
@@ -259,30 +266,39 @@ static void createAtomiswaveDevices()
 		// Faster Than Speed			needs 1 std controller on port 0 (digital inputs) and one on port 2 (analog axes)
 		// Maximum Speed				same
 	}
-	else if (settings.input.JammaSetup == JVS::FourPlayers)
+	else if (gameId == "GUILTY GEAR isuka"
+			|| gameId == "Dirty Pigskin Football")
 	{
 		// 4 players
+		INFO_LOG(MAPLE, "Enabling 4-player setup for game %s", gameId.c_str());
 		mcfg_Create(MDT_SegaController, 2, 5);
 		mcfg_Create(MDT_SegaController, 3, 5);
+		settings.input.fourPlayerGames = true;
 	}
-	else if (settings.input.JammaSetup == JVS::LightGun)
+	else if (gameId == "Sports Shooting USA"
+			|| gameId == "SEGA CLAY CHALLENGE"
+			|| gameId == "RANGER MISSION"
+			|| gameId == "EXTREME HUNTING"
+			|| gameId == "Fixed BOOT strapper")	// Extreme hunting 2
 	{
-		// Clay Challenge				needs 2 std controllers on port 0 & 1 (digital in) and light guns on port 2 & 3
-		// Sports Shooting				same
+		// needs 2 std controllers on port 0 & 1 (digital in) and light guns on port 2 & 3
+		INFO_LOG(MAPLE, "Enabling lightgun setup for game %s", gameId.c_str());
 		mcfg_Create(MDT_LightGun, 2, 5, 0);
 		mcfg_Create(MDT_LightGun, 3, 5, 1);
+		settings.input.lightgunGame = true;
 	}
-	else if (settings.input.JammaSetup == JVS::SegaMarineFishing || settings.input.JammaSetup == JVS::RotaryEncoders)
+	else if (gameId == "BASS FISHING SIMULATOR VER.A" || gameId == "DRIVE")
 	{
 		// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 2
 		// Waiwai drive needs two track-balls
 		mcfg_Create(MDT_Mouse, 2, 5, 0);
 		mcfg_Create(MDT_Mouse, 3, 5, 1);
-		if (settings.content.gameId == "DRIVE")
+		if (gameId == "DRIVE")
 		{
 			MapleDevices[2][5]->config->invertMouseY = true;
 			MapleDevices[3][5]->config->invertMouseY = true;
 		}
+		settings.input.mouseGame = true;
 	}
 }
 
@@ -354,6 +370,10 @@ static void vmuDigest()
 
 void mcfg_CreateDevices()
 {
+	settings.input.lightgunGame = false;
+	settings.input.keyboardGame = false;
+	settings.input.mouseGame = false;
+	settings.input.fourPlayerGames = false;
 	switch (settings.platform.system)
 	{
 	case DC_PLATFORM_DREAMCAST:
@@ -367,6 +387,8 @@ void mcfg_CreateDevices()
 		createAtomiswaveDevices();
 		break;
 	case DC_PLATFORM_SYSTEMSP:
+		if (settings.content.gameId == "INW PUPPY 2008 VER1.001")
+			settings.input.lightgunGame = true;
 		return;
 	default:
 		die("Unknown system");
@@ -393,6 +415,7 @@ void mcfg_DestroyDevices(bool full)
 void mcfg_SerializeDevices(Serializer& ser)
 {
 	ser << maple_ddt_pending_reset;
+	ser << SDCKBOccupied;
 	ser << (u32)mapleDmaOut.size();
 	for (const auto& pair : mapleDmaOut)
 	{
@@ -425,6 +448,8 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 		deser.skip<bool>(); // EEPROM_loaded
 	}
 	deser >> maple_ddt_pending_reset;
+	if (deser.version() >= Deserializer::V47)
+		deser >> SDCKBOccupied;
 	mapleDmaOut.clear();
 	if (deser.version() >= Deserializer::V23)
 	{

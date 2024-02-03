@@ -25,7 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx9_driver.h"
-#include "imgui/backends/imgui_impl_dx9.h"
+#include "imgui_impl_dx9.h"
 
 DXContext theDXContext;
 
@@ -34,13 +34,32 @@ bool DXContext::init(bool keepCurrentWindow)
 	NOTICE_LOG(RENDERER, "DX9 Context initializing");
 	GraphicsContext::instance = this;
 #ifdef USE_SDL
-	if (!keepCurrentWindow && !sdl_recreate_window(0))
+	if (!keepCurrentWindow && !sdl_recreate_window(0)) {
+		term();
 		return false;
+	}
 #endif
 
-	pD3D.reset(Direct3DCreate9(D3D_SDK_VERSION));
-	if (!pD3D) {
+	d3d9Library = LoadLibraryA("D3D9.DLL");
+	if (d3d9Library == NULL)
+	{
+		ERROR_LOG(RENDERER, "Cannot load D3D9.DLL");
+		term();
+		return false;
+	}
+	decltype(Direct3DCreate9) *pDirect3DCreate9 = (decltype(Direct3DCreate9) *)GetProcAddress(d3d9Library, "Direct3DCreate9");
+	if (pDirect3DCreate9 == nullptr)
+	{
+		ERROR_LOG(RENDERER, "Cannot find entry point Direct3DCreate9");
+		term();
+		return false;
+	}
+
+	pD3D.reset(pDirect3DCreate9(D3D_SDK_VERSION));
+	if (!pD3D)
+	{
 		ERROR_LOG(RENDERER, "Direct3DCreate9 failed");
+		term();
 		return false;
 	}
 	memset(&d3dpp, 0, sizeof(d3dpp));
@@ -79,6 +98,7 @@ bool DXContext::init(bool keepCurrentWindow)
 	if (FAILED(hr))
 	{
 		ERROR_LOG(RENDERER, "DirectX9 device creation failed: %x", hr);
+		term();
 	    return false;
 	}
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver(pDevice));
@@ -89,6 +109,7 @@ bool DXContext::init(bool keepCurrentWindow)
 	driverName = std::string(id.Description);
 	driverVersion = std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 		+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
+	amd = id.VendorId == 0x1002 || id.VendorId == 0x1022;
 	deviceReady = true;
 
 	return true;
@@ -102,6 +123,9 @@ void DXContext::term()
 	imguiDriver.reset();
 	pDevice.reset();
 	pD3D.reset();
+	if (d3d9Library != NULL)
+		FreeLibrary(d3d9Library);
+	d3d9Library = NULL;
 	deviceReady = false;
 }
 

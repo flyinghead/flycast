@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 #include "scraper.h"
 #include "json.hpp"
 
@@ -31,7 +32,7 @@ public:
 	bool initialize(const std::string& saveDirectory) override;
 	void scrape(GameBoxart& item) override;
 	void scrape(std::vector<GameBoxart>& items) override;
-	~TheGamesDb();
+	~TheGamesDb() override;
 
 private:
 	void fetchPlatforms();

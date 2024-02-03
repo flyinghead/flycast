@@ -17,7 +17,6 @@
 
 #include "serialize.h"
 #include "hw/arm7/arm_mem.h"
-#include "hw/arm7/arm7.h"
 #include "dsp.h"
 #include "sgc_if.h"
 #include "aica.h"
@@ -529,10 +528,10 @@ void serialize(Serializer& ser)
 
 	dsp::state.serialize(ser);
 
-	for (int i = 0 ; i < 3 ; i++)
+	for (const auto& timer : timers)
 	{
-		ser << timers[i].c_step;
-		ser << timers[i].m_step;
+		ser << timer.c_step;
+		ser << timer.m_step;
 	}
 
 	if (!ser.rollback())

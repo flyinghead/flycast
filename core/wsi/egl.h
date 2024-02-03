@@ -19,23 +19,15 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#else
-extern "C" void load_gles_symbols();
-#endif
 #include "gl_context.h"
 
 #define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
+#include <glad/egl.h>
 
 class EGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~EGLGraphicsContext() { term(); }
+	~EGLGraphicsContext() override { term(); }
 
 	bool init();
 	void term() override;

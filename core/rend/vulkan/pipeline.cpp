@@ -260,7 +260,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 					graphicsPipelineCreateInfo).value;
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette, bool dithering)
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -342,38 +342,21 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 
 	// Color flags and blending
 	vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (listType == ListType_Translucent || listType == ListType_Punch_Through)
+	// Opaque polygons support blending in list continuations (wild guess)
+	u32 src = pp.tsp.SrcInstr;
+	u32 dst = pp.tsp.DstInstr;
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState
 	{
-		u32 src = pp.tsp.SrcInstr;
-		u32 dst = pp.tsp.DstInstr;
-		pipelineColorBlendAttachmentState =
-		{
-		  true,                          // blendEnable
-		  getBlendFactor(src, true),     // srcColorBlendFactor
-		  getBlendFactor(dst, false),    // dstColorBlendFactor
-		  vk::BlendOp::eAdd,             // colorBlendOp
-		  getBlendFactor(src, true),     // srcAlphaBlendFactor
-		  getBlendFactor(dst, false),    // dstAlphaBlendFactor
-		  vk::BlendOp::eAdd,             // alphaBlendOp
-		  colorComponentFlags            // colorWriteMask
-		};
-	}
-	else
-	{
-		pipelineColorBlendAttachmentState =
-		{
-		  false,                      // blendEnable
-		  vk::BlendFactor::eZero,     // srcColorBlendFactor
-		  vk::BlendFactor::eZero,     // dstColorBlendFactor
-		  vk::BlendOp::eAdd,          // colorBlendOp
-		  vk::BlendFactor::eZero,     // srcAlphaBlendFactor
-		  vk::BlendFactor::eZero,     // dstAlphaBlendFactor
-		  vk::BlendOp::eAdd,          // alphaBlendOp
-		  colorComponentFlags         // colorWriteMask
-		};
-	}
+	  true,                          // blendEnable
+	  getBlendFactor(src, true),     // srcColorBlendFactor
+	  getBlendFactor(dst, false),    // dstColorBlendFactor
+	  vk::BlendOp::eAdd,             // colorBlendOp
+	  getBlendFactor(src, true),     // srcAlphaBlendFactor
+	  getBlendFactor(dst, false),    // dstAlphaBlendFactor
+	  vk::BlendOp::eAdd,             // alphaBlendOp
+	  colorComponentFlags            // colorWriteMask
+	};
 
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
 	(

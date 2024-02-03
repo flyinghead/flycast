@@ -3,13 +3,14 @@
 #include "maple_helper.h"
 #include "maple_if.h"
 #include "hw/pvr/spg.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
+#include "rend/gui.h"
 #include <zlib.h>
-#include <time.h>
-#include <errno.h>
+#include <cerrno>
+#include <ctime>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
@@ -1728,7 +1729,8 @@ struct RFIDReaderWriter : maple_base
 			w32(getStatus());
 			cardLocked = false;
 			cardInserted = false;
-			INFO_LOG(MAPLE, "RFID card %d unlocked", player_num);
+			NOTICE_LOG(MAPLE, "RFID card %d unlocked", player_num);
+			gui_display_notification("Card ejected", 2000);
 			return (MapleDeviceRV)0xfe;
 
 		case 0xB1:	// write to card
@@ -1847,7 +1849,8 @@ struct RFIDReaderWriter : maple_base
 			cardInserted = true;
 			loadCard();
 		}
-		else if (!cardLocked) {
+		else if (!cardLocked)
+		{
 			cardInserted = false;
 			if (!transientData)
 				memset(cardData, 0, sizeof(cardData));

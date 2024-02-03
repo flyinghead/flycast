@@ -23,6 +23,8 @@
 #include "rend/gl4/glsl.h"
 #include "cfg/option.h"
 
+extern const char *FragmentShaderCommon;
+
 static const char OITVertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
@@ -131,9 +133,7 @@ layout (set = 0, binding = 3, std430) readonly buffer TrPolyParamBuffer {
 
 )";
 
-static const char OITFragmentShaderSource[] = R"(
-#define PI 3.1415926
-
+static const char OITFragmentShaderTop[] = R"(
 #define PASS_DEPTH 0
 #define PASS_COLOR 1
 #define PASS_OIT 2
@@ -174,7 +174,7 @@ layout (set = 1, binding = 0) uniform sampler2D tex0;
 layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
 #endif
-#if pp_Palette == 1
+#if pp_Palette != 0
 layout (set = 0, binding = 6) uniform sampler2D palette;
 #endif
 
@@ -196,49 +196,10 @@ layout (location = 6) flat in uint vtx_index;
 
 #if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
-
-float fog_mode2(float w)
-{
-	float z = clamp(
-#if DIV_POS_Z == 1
-					uniformBuffer.sp_FOG_DENSITY / w
-#else
-					uniformBuffer.sp_FOG_DENSITY * w
 #endif
-													, 1.0, 255.9999);
-	float exp = floor(log2(z));
-	float m = z * 16.0 / pow(2.0, exp) - 16.0;
-	float idx = floor(m) + exp * 16.0 + 0.5;
-	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
-	return fog_coef.r;
-}
-#endif
+)";
 
-vec4 colorClamp(vec4 col)
-{
-// TODO This can change in two-volume mode
-#if ColorClamping == 1
-	return clamp(col, uniformBuffer.colorClampMin, uniformBuffer.colorClampMax);
-#else
-	return col;
-#endif
-}
-
-#if pp_Palette == 1
-
-vec4 palettePixel(sampler2D tex, vec3 coords)
-{
-#if DIV_POS_Z == 1
-	float texIdx = texture(tex, coords.xy).r;
-#else
-	float texIdx = textureProj(tex, coords).r;
-#endif
-	vec4 c = vec4(texIdx * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
-	return texture(palette, c.xy);
-}
-
-#endif
-
+static const char OITFragmentShaderMain[] = R"(
 void main()
 {
 	setFragDepth(vtx_uv.z);
@@ -305,8 +266,10 @@ void main()
 					#else
 						texcol = textureProj(tex1, vec3(vtx_uv1, vtx_uv.z));
 					#endif
-				#else
+				#elif pp_Palette == 1
 					texcol = palettePixel(tex1, vec3(vtx_uv1, vtx_uv.z));
+				#else
+					texcol = palettePixelBilinear(tex1, vec3(vtx_uv1, vtx_uv.z));
 				#endif
 			else
 		#endif
@@ -316,8 +279,10 @@ void main()
 			#else
 				texcol = textureProj(tex0, vtx_uv);
 			#endif
-		#else
+		#elif pp_Palette == 1
 				texcol = palettePixel(tex0, vtx_uv);
+		#else
+				texcol = palettePixelBilinear(tex0, vtx_uv);
 		#endif
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -798,12 +763,14 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 		.addConstant("pp_Gouraud", (int)params.gouraud)
 		.addConstant("pp_BumpMap", (int)params.bumpmap)
 		.addConstant("ColorClamping", (int)params.clamping)
-		.addConstant("pp_Palette", (int)params.palette)
+		.addConstant("pp_Palette", params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addConstant("PASS", (int)params.pass)
 		.addSource(GouraudSource)
 		.addSource(OITShaderHeader)
-		.addSource(OITFragmentShaderSource);
+		.addSource(OITFragmentShaderTop)
+		.addSource(FragmentShaderCommon)
+		.addSource(OITFragmentShaderMain);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 

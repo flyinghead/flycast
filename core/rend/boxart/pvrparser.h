@@ -141,12 +141,12 @@ static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vect
 		p += (OtherMipPoint[texU] - 2) * 2;
 	else if (imgType == PvrVQMipmaps)
 		p += VQMipPoint[texU];
+	else if (imgType == PvrVQ)
+		p += VQ_CODEBOOK_SIZE;
 
 	u32 expectedSize = width * height;
-	if (imgType == PvrVQ || imgType == PvrVQMipmaps) {
-		expectedSize /= 4;				// 4 pixels per byte
-		expectedSize += 256 * 4 * 2;	// VQ codebook size
-	}
+	if (imgType == PvrVQ || imgType == PvrVQMipmaps)
+		expectedSize /= 4;	// 4 pixels per byte
 	else
 		expectedSize *= 2;	// 2 bytes per pixel
 	if (end - p < expectedSize)

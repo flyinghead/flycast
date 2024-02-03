@@ -46,13 +46,20 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 
 	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
 
-	bool gpuPalette = poly.texture != nullptr ? poly.texture->gpuPalette : false;
-
+	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
+			: poly.tsp.FilterMode + 1;
 	float palette_index = 0.f;
-	if (poly.tcw.PixelFmt == PixelPal4)
-		palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
-	else
-		palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+		if (poly.tcw.PixelFmt == PixelPal4)
+			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+		else
+			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
 
 	OITDescriptorSets::PushConstants pushConstants = {
 			{
@@ -258,12 +265,16 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
 
-	if (needDepthTransition)
+	if (needAttachmentTransition)
 	{
-		needDepthTransition = false;
+		needAttachmentTransition = false;
 		// Not convinced that this is really needed but it makes validation layers happy
+		for (auto& attachment : colorAttachments)
+			setImageLayout(cmdBuffer, attachment->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 		for (auto& attachment : depthAttachments)
-			setImageLayout(cmdBuffer, attachment->GetImage(), GetContext()->GetDepthFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+			setImageLayout(cmdBuffer, attachment->GetImage(), GetContext()->GetDepthFormat(), 1,
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
 	}
 
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
@@ -463,7 +474,8 @@ void OITDrawer::MakeBuffers(int width, int height)
 		attachment = std::make_unique<FramebufferAttachment>(
 				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, vk::Format::eR8G8B8A8Unorm,
-				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+				"COLOR ATTACHMENT " + std::to_string(colorAttachments.size() - 1));
 	}
 
 	for (auto& attachment : depthAttachments)
@@ -472,9 +484,10 @@ void OITDrawer::MakeBuffers(int width, int height)
 		attachment = std::make_unique<FramebufferAttachment>(
 				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
-				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment,
+				"DEPTH ATTACHMENT " + std::to_string(colorAttachments.size() - 1));
 	}
-	needDepthTransition = true;
+	needAttachmentTransition = true;
 
 	std::array<vk::ImageView, 4> attachments = {
 			colorAttachments[1]->GetImageView(),
@@ -512,7 +525,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 		finalColorAttachments.push_back(std::make_unique<FramebufferAttachment>(
 				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 		finalColorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm,
-				usage);
+				usage, "FINAL ATTACHMENT " + std::to_string(finalColorAttachments.size() - 1));
 		std::array<vk::ImageView, 4> attachments = {
 				finalColorAttachments.back()->GetImageView(),
 				colorAttachments[0]->GetImageView(),
@@ -559,14 +572,15 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	if (!config::RenderToTextureBuffer)
 	{
 		texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
-		if (textureCache->IsInFlight(texture))
+		if (textureCache->IsInFlight(texture, false))
 		{
 			texture->readOnlyImageView = *texture->imageView;
-			textureCache->DestroyLater(texture);
+			texture->deferDeleteResource(commandPool);
 		}
 		textureCache->SetInFlight(texture);
 
-		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
+		if (!texture->image || texture->format != vk::Format::eR8G8B8A8Unorm
+				|| texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
@@ -591,7 +605,8 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
-					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc);
+					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+					"RTT COLOR ATTACHMENT");
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else
@@ -657,12 +672,10 @@ void OITTextureDrawer::EndFrame()
 
 	colorImage = nullptr;
 	currentCommandBuffer = nullptr;
-	commandPool->EndFrame();
 
 	if (config::RenderToTextureBuffer)
 	{
-		vk::Fence fence = commandPool->GetCurrentFence();
-		GetContext()->GetDevice().waitForFences(fence, true, UINT64_MAX);
+		commandPool->EndFrameAndWait();
 
 		u16 *dst = (u16 *)&vram[textureAddr];
 
@@ -673,6 +686,7 @@ void OITTextureDrawer::EndFrame()
 	}
 	else
 	{
+		commandPool->EndFrame();
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;

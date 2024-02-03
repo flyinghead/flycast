@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta.h"
@@ -49,7 +50,7 @@ protected:
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 			vjoyTexture->SetCommandBuffer(cmdBuffer);
-			vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
+			vjoyTexture->UploadToGPU(w, h, image_data, false);
 			vjoyTexture->SetCommandBuffer(nullptr);
 			cmdBuffer.end();
 			texCommandPool.EndFrame();
@@ -98,7 +99,7 @@ public:
 		if (tf->NeedsUpdate())
 		{
 			// This kills performance when a frame is skipped and lots of texture updated each frame
-			//if (textureCache.IsInFlight(tf))
+			//if (textureCache.IsInFlight(tf, true))
 			//	textureCache.DestroyLater(tf);
 			tf->SetCommandBuffer(texCommandBuffer);
 			if (!tf->Update())
@@ -109,7 +110,7 @@ public:
 		}
 		else if (tf->IsCustomTextureAvailable())
 		{
-			textureCache.DestroyLater(tf);
+			tf->deferDeleteResource(&texCommandPool);
 			tf->SetCommandBuffer(texCommandBuffer);
 			tf->CheckCustomTexture();
 		}

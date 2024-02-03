@@ -50,6 +50,9 @@ public:
 	std::string getDriverVersion() override {
 		return driverVersion;
 	}
+	bool isAMD() override {
+		return amd;
+	}
 	void setFrameRendered() {
 		frameRendered = true;
 	}
@@ -60,6 +63,7 @@ public:
 private:
 	void resetDevice();
 
+	HMODULE d3d9Library = NULL;
 	ComPtr<IDirect3D9> pD3D;
 	ComPtr<IDirect3DDevice9> pDevice;
 	D3DPRESENT_PARAMETERS d3dpp{};
@@ -69,6 +73,7 @@ private:
 	bool frameRendered = false;
 	std::string driverName;
 	std::string driverVersion;
+	bool amd = false;
 	bool deviceReady = false;
 };
 extern DXContext theDXContext;

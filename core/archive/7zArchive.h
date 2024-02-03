@@ -55,16 +55,21 @@ private:
 class SzArchiveFile : public ArchiveFile
 {
 public:
-	SzArchiveFile(u8 *data, u32 offset, u32 length) : data(data), offset(offset), length(length) {}
+	SzArchiveFile(u8 *data, u32 offset, u32 length)
+		: data(data), offset(offset), _length(length) {}
 	u32 Read(void *buffer, u32 length) override
 	{
-		length = std::min(length, this->length);
+		length = std::min(length, this->_length);
 		memcpy(buffer, data + offset, length);
 		return length;
+	}
+
+	size_t length() override {
+		return _length;
 	}
 
 private:
 	u8 *data;
 	u32 offset;
-	u32 length;
+	u32 _length;
 };

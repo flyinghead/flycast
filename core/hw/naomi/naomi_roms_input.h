@@ -717,3 +717,13 @@ static InputDescriptors drvsim_inputs = {
 			{ "Clutch", Full, 1 },
 	},
 };
+
+static InputDescriptors crackindj_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "FADER", Full, 0, true },
+	},
+};

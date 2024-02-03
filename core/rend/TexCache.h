@@ -12,6 +12,7 @@
 #include <utility>
 
 extern const u8 *vq_codebook;
+constexpr int VQ_CODEBOOK_SIZE = 256 * 8;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
@@ -446,7 +447,6 @@ void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u
 template<class PixelConvertor>
 void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
-	p_in += 256 * 4 * 2;	// Skip VQ codebook
 	pb->amove(0, 0);
 
 	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
@@ -578,10 +578,10 @@ public:
 		tsp = other.tsp;
 		tcw = other.tcw;
 		tex_type = other.tex_type;
-		sa_tex = other.sa_tex;
+		startAddress = other.startAddress;
 		dirty = other.dirty;
 		std::swap(lock_block, other.lock_block);
-		sa = other.sa;
+		mmStartAddress = other.mmStartAddress;
 		width = other.width;
 		height = other.height;
 		size = other.size;
@@ -605,12 +605,12 @@ public:
 
 	// Decoded/filtered texture format
 	TextureType tex_type;
-	u32 sa_tex;			// texture data start address in vram
+	u32 startAddress;	// texture data start address in vram
 
 	u32 dirty;			// frame number at which texture was overwritten
 	vram_block* lock_block;
 
-	u32 sa;         	// pixel data start address of max level mipmap
+	u32 mmStartAddress; // pixel data start address of max level mipmap
 	u16 width, height;	// width & height of the texture
 	u32 size;       	// size in bytes of max level mipmap in vram
 
@@ -624,6 +624,7 @@ public:
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_vqtexture_hash;		// legacy hash for vq textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
@@ -680,12 +681,12 @@ public:
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU
-		// This is currently limited to textures using nearest filtering and not mipmapped.
+		// This is currently limited to textures using nearest or bilinear filtering and not mipmapped.
 		// Enabling texture upscaling or dumping also disables this mode.
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 				&& config::TextureUpscale == 1
 				&& !config::DumpTextures
-				&& tsp.FilterMode == 0
+				&& tsp.FilterMode <= 1
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;
 	}
@@ -736,8 +737,8 @@ public:
 
 	Texture *getRTTexture(u32 address, u32 fb_packmode, u32 width, u32 height)
 	{
-		// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-		TCW tcw{ { address >> 3, 0, 0, 1 } };
+		// TexAddr : (address), StrideSel : 0, ScanOrder : 1
+		TCW tcw{ { address >> 3, 0, 1 } };
 		switch (fb_packmode)
 		{
 		case 0:
@@ -796,10 +797,10 @@ protected:
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7
 	const TSP TSPTextureCacheMask = { { 7, 7 } };
-	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+	//     TexAddr : 0x1FFFFF, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 1, 7, 1, 1 } };
 	//     TexAddr : 0x1FFFFF, PalSelect : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 0, 7, 1, 1 } };
+	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 7, 1, 1 } };
 };
 
 template<typename Packer = RGBAPacker>
@@ -824,6 +825,6 @@ static inline void MakeFogTexture(u8 *tex_data)
 	}
 }
 
-void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
+void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = false);
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;

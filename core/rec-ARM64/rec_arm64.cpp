@@ -2349,7 +2349,7 @@ public:
 			assembler->GenWriteMemorySlow(size);
 		assembler->Finalize(true);
 		delete assembler;
-		context.pc = (unat)CC_RW2RX(code_rewrite);
+		context.pc = (uintptr_t)CC_RW2RX(code_rewrite);
 		jitWriteProtect(*codeBuffer, true);
 
 		return true;

@@ -338,17 +338,17 @@ static const PvrTexInfo *pvrTexInfo = opengl::pvrTexInfo;
 
 extern const u32 VQMipPoint[11] =
 {
-	0x00000,//1
-	0x00001,//2
-	0x00002,//4
-	0x00006,//8
-	0x00016,//16
-	0x00056,//32
-	0x00156,//64
-	0x00556,//128
-	0x01556,//256
-	0x05556,//512
-	0x15556//1024
+	VQ_CODEBOOK_SIZE + 0x00000, // 1
+	VQ_CODEBOOK_SIZE + 0x00001, // 2
+	VQ_CODEBOOK_SIZE + 0x00002, // 4
+	VQ_CODEBOOK_SIZE + 0x00006, // 8
+	VQ_CODEBOOK_SIZE + 0x00016, // 16
+	VQ_CODEBOOK_SIZE + 0x00056, // 32
+	VQ_CODEBOOK_SIZE + 0x00156, // 64
+	VQ_CODEBOOK_SIZE + 0x00556, // 128
+	VQ_CODEBOOK_SIZE + 0x01556, // 256
+	VQ_CODEBOOK_SIZE + 0x05556, // 512
+	VQ_CODEBOOK_SIZE + 0x15556  // 1024
 };
 extern const u32 OtherMipPoint[11] =
 {
@@ -410,22 +410,22 @@ bool BaseTextureCacheData::NeedsUpdate() {
 
 void BaseTextureCacheData::protectVRam()
 {
-	u32 end = sa + size - 1;
+	u32 end = mmStartAddress + size - 1;
 	if (end >= VRAM_SIZE)
 	{
 		WARN_LOG(PVR, "protectVRam: end >= VRAM_SIZE. Tried to lock area out of vram");
 		end = VRAM_SIZE - 1;
 	}
 
-	if (sa_tex > end)
+	if (startAddress > end)
 	{
-		WARN_LOG(PVR, "vramlock_Lock: sa_tex > end. Tried to lock negative block");
+		WARN_LOG(PVR, "vramlock_Lock: startAddress > end. Tried to lock negative block");
 		return;
 	}
 
 	vram_block *block = new vram_block();
 	block->end = end;
-	block->start = sa_tex;
+	block->start = startAddress;
 	block->texture = this;
 
 	{
@@ -482,8 +482,8 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	//decode info from tsp/tcw into the texture struct
 	tex = &pvrTexInfo[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
 
-	sa_tex = (tcw.TexAddr << 3) & VRAM_MASK;	//texture start address
-	sa = sa_tex;								//data texture start address (modified for MIPs, as needed)
+	startAddress = (tcw.TexAddr << 3) & VRAM_MASK;	// texture start address
+	mmStartAddress = startAddress;					// data texture start address (modified for MIPs, as needed)
 	width = 8 << tsp.TexU;						//tex width
 	height = 8 << tsp.TexV;						//tex height
 
@@ -534,16 +534,18 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 		{
 			verify(tex->VQ != NULL || tex->VQ32 != NULL);
 			if (tcw.MipMapped)
-				sa += VQMipPoint[tsp.TexU + 3];
+				mmStartAddress += VQMipPoint[tsp.TexU + 3];
+			else
+				mmStartAddress += VQ_CODEBOOK_SIZE;
 			texconv = tex->VQ;
 			texconv32 = tex->VQ32;
-			size = width * height / 8 + 256 * 8;
+			size = width * height / 4;
 		}
 		else
 		{
 			verify(tex->TW != NULL || tex->TW32 != NULL);
 			if (tcw.MipMapped)
-				sa += OtherMipPoint[tsp.TexU + 3] * tex->bpp / 8;
+				mmStartAddress += OtherMipPoint[tsp.TexU + 3] * tex->bpp / 8;
 			texconv = tex->TW;
 			texconv32 = tex->TW32;
 			size = width * height * tex->bpp / 8;
@@ -554,21 +556,41 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 
 void BaseTextureCacheData::ComputeHash()
 {
-	u32 hashSize = size;
+	// Include everything but texaddr, reserved and stride. Palette textures don't have ScanOrder
+	const u32 tcwMask = IsPaletted() ? 0xF8000000 : 0xFC000000;
 	if (tcw.VQ_Comp)
 	{
 		// The size for VQ textures wasn't correctly calculated.
 		// We use the old size to compute the hash for backward-compatibility
 		// with existing custom texture packs.
-		hashSize = size - 256 * 8;
+		int oldSize = width * height / 8;
+		old_vqtexture_hash = XXH32(&vram[mmStartAddress - VQ_CODEBOOK_SIZE], oldSize, 7);
+		if (IsPaletted())
+			old_vqtexture_hash ^= palette_hash;
+		old_texture_hash = old_vqtexture_hash;
+		old_vqtexture_hash ^= tcw.full & tcwMask;
+		// New hash
+	    XXH32_state_t *state = XXH32_createState();
+	    XXH32_reset(state, 7);
+	    // hash vq codebook
+	    XXH32_update(state, &vram[startAddress], VQ_CODEBOOK_SIZE);
+	    // hash texture
+	    XXH32_update(state, &vram[mmStartAddress], size);
+	    texture_hash = XXH32_digest(state);
+	    XXH32_freeState(state);
+		if (IsPaletted())
+			texture_hash ^= palette_hash;
+		texture_hash ^= tcw.full & tcwMask;
 	}
-	texture_hash = XXH32(&vram[sa], hashSize, 7);
-	if (IsPaletted())
-		texture_hash ^= palette_hash;
-	old_texture_hash = texture_hash;
-	// Include everything but texaddr, reserved and stride. Palette textures don't have ScanOrder
-	const u32 tcwMask = IsPaletted() ? 0xF8000000 : 0xFC000000;
-	texture_hash ^= tcw.full & tcwMask;
+	else
+	{
+		old_vqtexture_hash = 0;
+		texture_hash = XXH32(&vram[mmStartAddress], size, 7);
+		if (IsPaletted())
+			texture_hash ^= palette_hash;
+		old_texture_hash = texture_hash;
+		texture_hash ^= tcw.full & tcwMask;
+	}
 }
 
 bool BaseTextureCacheData::Update()
@@ -609,7 +631,7 @@ bool BaseTextureCacheData::Update()
 	}
 
 	if (tcw.VQ_Comp)
-		::vq_codebook = &vram[sa_tex];    // might be used if VQ tex
+		::vq_codebook = &vram[startAddress];
 
 	//texture conversion work
 	u32 stride = width;
@@ -622,19 +644,19 @@ bool BaseTextureCacheData::Update()
 	}
 
 	const u32 original_h = height;
-	if (sa_tex > VRAM_SIZE || sa + size > VRAM_SIZE)
+	if (startAddress > VRAM_SIZE || mmStartAddress + size > VRAM_SIZE)
 	{
 		height = 0;
-		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder)
+		if (mmStartAddress < VRAM_SIZE && mmStartAddress + size > VRAM_SIZE && tcw.ScanOrder)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
-			height = (VRAM_SIZE - sa) * 8 / stride / tex->bpp;
+			height = (VRAM_SIZE - mmStartAddress) * 8 / stride / tex->bpp;
 			size = stride * height * tex->bpp/8;
 		}
 		if (height == 0)
 		{
-			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
+			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", startAddress, mmStartAddress, size);
 			dirty = 1;
 			height = original_h;
 			unprotectVRam();
@@ -685,7 +707,7 @@ bool BaseTextureCacheData::Update()
 				u32 vram_addr;
 				if (tcw.VQ_Comp)
 				{
-					vram_addr = sa_tex + VQMipPoint[i];
+					vram_addr = startAddress + VQMipPoint[i];
 					if (i == 0)
 					{
 						PixelBuffer<u32> pb0;
@@ -696,7 +718,7 @@ bool BaseTextureCacheData::Update()
 					}
 				}
 				else
-					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+					vram_addr = startAddress + OtherMipPoint[i] * tex->bpp / 8;
 				if (tcw.PixelFmt == PixelYUV && i == 0)
 					// Special case for YUV at 1x1 LoD
 					pvrTexInfo[Pixel565].TW32(&pb32, &vram[vram_addr], 1, 1);
@@ -708,7 +730,7 @@ bool BaseTextureCacheData::Update()
 		else
 		{
 			pb32.init(width, height);
-			texconv32(&pb32, (u8*)&vram[sa], stride, height);
+			texconv32(&pb32, (u8*)&vram[mmStartAddress], stride, height);
 
 			// xBRZ scaling
 			if (textureUpscaling)
@@ -736,7 +758,7 @@ bool BaseTextureCacheData::Update()
 			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb8.set_mipmap(i);
-				u32 vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+				u32 vram_addr = startAddress + OtherMipPoint[i] * tex->bpp / 8;
 				texconv8(&pb8, &vram[vram_addr], 1 << i, 1 << i);
 			}
 			pb8.set_mipmap(0);
@@ -744,7 +766,7 @@ bool BaseTextureCacheData::Update()
 		else
 		{
 			pb8.init(width, height);
-			texconv8(&pb8, &vram[sa], stride, height);
+			texconv8(&pb8, &vram[mmStartAddress], stride, height);
 		}
 		temp_tex_buffer = pb8.data();
 	}
@@ -759,7 +781,7 @@ bool BaseTextureCacheData::Update()
 				u32 vram_addr;
 				if (tcw.VQ_Comp)
 				{
-					vram_addr = sa_tex + VQMipPoint[i];
+					vram_addr = startAddress + VQMipPoint[i];
 					if (i == 0)
 					{
 						PixelBuffer<u16> pb0;
@@ -770,7 +792,7 @@ bool BaseTextureCacheData::Update()
 					}
 				}
 				else
-					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+					vram_addr = startAddress + OtherMipPoint[i] * tex->bpp / 8;
 				texconv(&pb16, (u8*)&vram[vram_addr], 1 << i, 1 << i);
 			}
 			pb16.set_mipmap(0);
@@ -778,7 +800,7 @@ bool BaseTextureCacheData::Update()
 		else
 		{
 			pb16.init(width, height);
-			texconv(&pb16,(u8*)&vram[sa],stride,height);
+			texconv(&pb16,(u8*)&vram[mmStartAddress],stride,height);
 		}
 		temp_tex_buffer = pb16.data();
 	}

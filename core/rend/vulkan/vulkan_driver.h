@@ -18,7 +18,7 @@
 */
 #pragma once
 #include "rend/imgui_driver.h"
-#include "imgui/backends/imgui_impl_vulkan.h"
+#include "imgui_impl_vulkan.h"
 #include "vulkan_context.h"
 #include "texture.h"
 #include <unordered_map>
@@ -33,6 +33,7 @@ public:
 	}
 
 	void newFrame() override {
+		ImGui_ImplVulkan_NewFrame();
 	}
 
 	void renderDrawData(ImDrawData *drawData, bool gui_open) override

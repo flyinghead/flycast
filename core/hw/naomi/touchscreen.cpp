@@ -44,8 +44,9 @@ public:
 		SCIFSerialPort::Instance().setPipe(this);
 	}
 
-	~TouchscreenPipe()
+	~TouchscreenPipe() override
 	{
+		SCIFSerialPort::Instance().setPipe(nullptr);
 		sh4_sched_unregister(schedId);
 	}
 

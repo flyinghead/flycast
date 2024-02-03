@@ -42,7 +42,7 @@ int armMode;
 
 bool Arm7Enabled = false;
 
-static u8 cpuBitsSet[256];
+u8 cpuBitsSet[256];
 
 static void CPUSwitchMode(int mode, bool saveState);
 static void CPUUpdateFlags();
@@ -89,13 +89,8 @@ void run(u32 samples)
 }
 #endif
 
-void init()
+void staticInit()
 {
-#if FEAT_AREC != DYNAREC_NONE
-	recompiler::init();
-#endif
-	reset();
-
 	for (std::size_t i = 0; i < std::size(cpuBitsSet); i++)
 	{
 		int count = 0;
@@ -105,6 +100,15 @@ void init()
 
 		cpuBitsSet[i] = count;
 	}
+}
+OnLoad _staticInit(staticInit);
+
+void init()
+{
+#if FEAT_AREC != DYNAREC_NONE
+	recompiler::init();
+#endif
+	reset();
 }
 
 void term()

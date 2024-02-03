@@ -20,7 +20,9 @@
 #include "cfg/option.h"
 #include "ggpo.h"
 #include "naomi_network.h"
-#include "net_serial_maxspeed.h"
+//#include "net_serial_maxspeed.h"
+#include "null_modem.h"
+#include "hw/naomi/naomi_flashrom.h"
 
 NetworkHandshake *NetworkHandshake::instance;
 
@@ -69,7 +71,13 @@ void NetworkHandshake::init()
 	else if (NaomiNetworkSupported())
 		instance = new NaomiNetworkHandshake();
 	else if (config::NetworkEnable && settings.content.gameId == "MAXIMUM SPEED")
-		instance = new MaxSpeedHandshake();
+//		instance = new MaxSpeedHandshake();
+	{
+		configure_maxspeed_flash(true, config::ActAsServer);
+		instance = new BattleCableHandshake();
+	}
+	else if (config::BattleCableEnable && !settings.platform.isNaomi())
+		instance = new BattleCableHandshake();
 	else
 		instance = nullptr;
 }

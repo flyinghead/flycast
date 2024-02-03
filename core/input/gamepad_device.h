@@ -70,6 +70,26 @@ public:
 			}
 		}
 	}
+	bool has_analog_stick() const { return hasAnalogStick; }
+	float get_dead_zone() const { return input_mapper->dead_zone; }
+	void set_dead_zone(float deadzone) {
+		if (deadzone != input_mapper->dead_zone)
+		{
+			input_mapper->dead_zone = deadzone;
+			input_mapper->set_dirty();
+			save_mapping();
+		}
+	}
+	float get_saturation() const { return input_mapper->saturation; }
+	void set_saturation(float saturation)
+	{
+		if (saturation != input_mapper->saturation)
+		{
+			input_mapper->saturation = saturation;
+			input_mapper->set_dirty();
+			save_mapping();
+		}
+	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 
@@ -109,6 +129,7 @@ protected:
 	std::string _unique_id;
 	std::shared_ptr<InputMapping> input_mapper;
 	bool rumbleEnabled = false;
+	bool hasAnalogStick = false;
 	int rumblePower = 100;
 	u32 leftTrigger = ~0;
 	u32 rightTrigger = ~0;
@@ -133,7 +154,7 @@ private:
 	};
 
 	template<DreamcastKey DcNegDir, DigAnalog NegDir, DigAnalog PosDir>
-	void buttonToAnalogInput(int port, DreamcastKey key, bool pressed, s8& joystick)
+	void buttonToAnalogInput(int port, DreamcastKey key, bool pressed, s16& joystick)
 	{
 		if (port < 0)
 			return;
@@ -146,9 +167,9 @@ private:
 		if (socd == 0 || socd == (NegDir | PosDir))
 			joystick = 0;
 		else if (socd == NegDir)
-			joystick = -128;
+			joystick = -32768;
 		else
-			joystick = 127;
+			joystick = 32767;
 
 	}
 
@@ -173,7 +194,7 @@ void replay_input();
 #endif
 
 extern u32 kcode[4];
-extern u8 rt[4], lt[4], rt2[4], lt2[4];
-extern s8 joyx[4], joyy[4];
-extern s8 joyrx[4], joyry[4];
-extern s8 joy3x[4], joy3y[4];
+extern u16 rt[4], lt[4], rt2[4], lt2[4];
+extern s16 joyx[4], joyy[4];
+extern s16 joyrx[4], joyry[4];
+extern s16 joy3x[4], joy3y[4];

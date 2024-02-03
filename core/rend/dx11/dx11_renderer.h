@@ -127,7 +127,6 @@ protected:
 	bool dithering = false;
 
 private:
-	void readDCFramebuffer();
 	void prepareRttRenderTarget(u32 texAddress);
 	void setBaseScissor();
 	void drawStrips();

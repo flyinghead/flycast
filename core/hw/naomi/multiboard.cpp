@@ -33,7 +33,6 @@ static Multiboard *multiboard;
 #include "naomi_roms.h"
 #include "cfg/option.h"
 #include "hw/sh4/sh4_sched.h"
-#include <thread>
 #include <chrono>
 
 constexpr int SyncCycles = 500000;

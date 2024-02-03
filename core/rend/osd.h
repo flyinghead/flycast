@@ -21,8 +21,6 @@
 #include <vector>
 
 #define VJOY_VISIBLE 14
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
 
 struct OSDVertex
 {
@@ -33,7 +31,6 @@ struct OSDVertex
 
 const std::vector<OSDVertex>& GetOSDVertices();
 
-extern std::vector<u8> DefaultOSDButtons;
 u8 *loadOSDButtons(int &width, int &height);
 void HideOSD();
 

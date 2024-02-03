@@ -358,7 +358,7 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 		//push the ptr itself
 		case CPT_ptr:
 			verify(param.is_reg());
-			push((unat)param.reg_ptr());
+			push((uintptr_t)param.reg_ptr());
 			CC_stackSize += 4;
 			unwinder.allocStackPtr(getCurr(), 4);
 			break;

@@ -81,7 +81,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
@@ -510,9 +510,9 @@ void startSession(int localPort, int localPlayerNum)
 		mouseGame = false;
 		if (settings.input.lightgunGame)
 			absPointerPos = true;
-		else if (settings.input.JammaSetup == JVS::Keyboard)
+		else if (settings.input.keyboardGame)
 			keyboardGame = true;
-		else if (settings.input.JammaSetup == JVS::RotaryEncoders)
+		else if (settings.input.mouseGame)
 			mouseGame = true;
 		else if (NaomiGameInputs != nullptr)
 		{
@@ -642,9 +642,9 @@ void getInput(MapleInputState inputState[4])
 		state.kcode = ~inputs->kcode;
 		if (analogAxes > 0)
 		{
-			state.fullAxes[PJAI_X1] = inputs->u.analog.x;
+			state.fullAxes[PJAI_X1] = inputs->u.analog.x << 8;
 			if (analogAxes >= 2)
-				state.fullAxes[PJAI_Y1] = inputs->u.analog.y;
+				state.fullAxes[PJAI_Y1] = inputs->u.analog.y << 8;
 		}
 		else if (absPointerPos)
 		{
@@ -663,8 +663,8 @@ void getInput(MapleInputState inputState[4])
 			state.relPos.wheel = inputs->u.relPos.wheel;
 			state.mouseButtons = ~inputs->mouseButtons;
 		}
-		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
-		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 0xffff : 0;
+		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 0xffff : 0;
 	}
 }
 
@@ -709,11 +709,11 @@ bool nextFrame()
 			UpdateInputState();
 		Inputs inputs;
 		inputs.kcode = ~kcode[0];
-		if (rt[0] >= 64)
+		if (rt[0] >= 0x4000)
 			inputs.kcode |= BTN_TRIGGER_RIGHT;
 		else
 			inputs.kcode &= ~BTN_TRIGGER_RIGHT;
-		if (lt[0] >= 64)
+		if (lt[0] >= 0x4000)
 			inputs.kcode |= BTN_TRIGGER_LEFT;
 		else
 			inputs.kcode &= ~BTN_TRIGGER_LEFT;
@@ -721,9 +721,9 @@ bool nextFrame()
 		inputs.kbModifiers = 0;
 		if (analogAxes > 0)
 		{
-			inputs.u.analog.x = joyx[0];
+			inputs.u.analog.x = joyx[0] >> 8;
 			if (analogAxes >= 2)
-				inputs.u.analog.y = joyy[0];
+				inputs.u.analog.y = joyy[0] >> 8;
 		}
 		else if (absPointerPos)
 		{

@@ -300,6 +300,7 @@ public:
 	public:
 		// Serial TX
 		virtual void write(u8 data) { }
+		virtual void sendBreak() { }
 		// RX buffer Size
 		virtual int available() { return 0; }
 		// Serial RX
@@ -310,6 +311,9 @@ public:
 
 	virtual void setPipe(Pipe *pipe) = 0;
 	virtual void updateStatus() = 0;
+	virtual void receiveBreak() {
+		die("unsupported");
+	}
 
 	virtual ~SerialPort() = default;
 };

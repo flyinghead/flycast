@@ -60,6 +60,7 @@ button_list[] =
 	{ DC_BTN_INSERT_CARD, "emulator", "insert_card" },
 	{ EMU_BTN_LOADSTATE, "emulator", "btn_jump_state" },
 	{ EMU_BTN_SAVESTATE, "emulator", "btn_quick_save" },
+	{ EMU_BTN_BYPASS_KB, "emulator", "btn_bypass_kb" },
 };
 
 static struct
@@ -196,6 +197,8 @@ void InputMapping::load(FILE* fp)
 	dz = std::min(dz, 100);
 	dz = std::max(dz, 0);
 	this->dead_zone = (float)dz / 100.f;
+	int sat = std::clamp(mf.get_int("emulator", "saturation", 100), 50, 200);
+	this->saturation = (float)sat / 100.f;
 	this->rumblePower = mf.get_int("emulator", "rumble_power", this->rumblePower);
 
 	version = mf.get_int("emulator", "version", 1);
@@ -428,6 +431,7 @@ bool InputMapping::save(const std::string& name)
 
 	mf.set("emulator", "mapping_name", this->name);
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
+	mf.set_int("emulator", "saturation", (int)std::round(this->saturation * 100.f));
 	mf.set_int("emulator", "rumble_power", this->rumblePower);
 	mf.set_int("emulator", "version", 3);
 

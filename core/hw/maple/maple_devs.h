@@ -272,7 +272,7 @@ struct maple_naomi_jamma : maple_base, SerialPort
 	u8 eeprom[128];
 
 	maple_naomi_jamma();
-	~maple_naomi_jamma();
+	~maple_naomi_jamma() override;
 
 	MapleDeviceType get_device_type() override
 	{

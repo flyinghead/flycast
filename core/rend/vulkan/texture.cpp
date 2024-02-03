@@ -180,7 +180,8 @@ void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped,
 		}
 	}
 	bool isNew = true;
-	if (width != (int)extent.width || height != (int)extent.height || format != this->format)
+	if (width != (int)extent.width || height != (int)extent.height
+			|| format != this->format || !this->image)
 		Init(width, height, format, dataSize, mipmapped, mipmapsIncluded);
 	else
 		isNew = false;
@@ -246,6 +247,12 @@ void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usa
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, vk::ComponentMapping(),
 			vk::ImageSubresourceRange(aspectMask, 0, mipmapLevels, 0, 1));
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
+#ifdef VK_DEBUG
+	char name[128];
+	sprintf(name, "texture @ %x", startAddress);
+	VulkanContext::Instance()->setObjectName((VkImage)image.get(), vk::Image::objectType, name);
+	VulkanContext::Instance()->setObjectName((VkImageView)imageView.get(), vk::ImageView::objectType, name);
+#endif
 }
 
 void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMipmaps)
@@ -396,7 +403,29 @@ void Texture::GenerateMipmaps()
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
-void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage)
+void Texture::deferDeleteResource(FlightManager *manager)
+{
+	class ResourceDeleter : public Deletable
+	{
+	public:
+		ResourceDeleter(Texture *texture)
+		{
+			std::swap(image, texture->image);
+			std::swap(imageView, texture->imageView);
+			std::swap(bufferData, texture->stagingBufferData);
+			std::swap(allocation, texture->allocation);
+		}
+
+	private:
+		vk::UniqueImage image;
+		vk::UniqueImageView imageView;
+		std::unique_ptr<BufferData> bufferData;
+		Allocation allocation;
+	};
+	manager->addToFlight(new ResourceDeleter(this));
+}
+
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage, const std::string& name)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };
@@ -412,6 +441,10 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 			vk::ImageTiling::eOptimal, usage,
 			vk::SharingMode::eExclusive, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
+#ifdef VK_DEBUG
+	if (!name.empty())
+		VulkanContext::Instance()->setObjectName((VkImage)image.get(), vk::Image::objectType, name);
+#endif
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
 	if (usage & vk::ImageUsageFlagBits::eTransientAttachment)
@@ -423,12 +456,20 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 		vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D,
 				format, vk::ComponentMapping(),	vk::ImageSubresourceRange(depth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 		imageView = device.createImageViewUnique(imageViewCreateInfo);
+#ifdef VK_DEBUG
+		if (!name.empty())
+			VulkanContext::Instance()->setObjectName((VkImageView)imageView.get(), vk::ImageView::objectType, name);
+#endif
 
 		if ((usage & vk::ImageUsageFlagBits::eDepthStencilAttachment) && (usage & vk::ImageUsageFlagBits::eInputAttachment))
 		{
 			// Also create an imageView for the stencil
 			imageViewCreateInfo.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1);
 			stencilView = device.createImageViewUnique(imageViewCreateInfo);
+#ifdef VK_DEBUG
+			if (!name.empty())
+				VulkanContext::Instance()->setObjectName((VkImageView)stencilView.get(), vk::ImageView::objectType, name);
+#endif
 		}
 	}
 }

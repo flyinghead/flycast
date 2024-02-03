@@ -18,7 +18,7 @@
 */
 #pragma once
 #include "rend/imgui_driver.h"
-#include "imgui/backends/imgui_impl_dx9.h"
+#include "imgui_impl_dx9.h"
 #include "dxcontext.h"
 #include <unordered_map>
 
@@ -29,7 +29,7 @@ public:
 		ImGui_ImplDX9_Init(device);
 	}
 
-	~DX9Driver() {
+	~DX9Driver() override {
 		ImGui_ImplDX9_Shutdown();
 	}
 

@@ -40,6 +40,7 @@ Option<int, false> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
+Option<int, false> UIScaling("UIScaling", 100);
 
 // Sound
 
@@ -154,6 +155,7 @@ Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
+Option<bool> BattleCableEnable("BattleCable", false, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

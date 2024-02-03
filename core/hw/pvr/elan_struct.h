@@ -50,13 +50,13 @@ union PCW
 
 		// Naomi 2
 		u32 n2Command   : 4;
-		u32 reserved    : 4;
+		u32             : 4;
 
 		// Group Control
 		u32 userClip    : 2;
 		u32 stripLen    : 2;
 		u32 parallelLight:1;
-		u32 res_2       : 2;
+		u32             : 2;
 		u32 groupEnable : 1;
 
 		// Para Control
@@ -78,10 +78,10 @@ struct Model : public ElanBase
 {
 	// 08000800
 	struct {
-		u32 _res:27;
+		u32 :27;
 		u32 cwCulling:1;
 		u32 openVolume:1;
-		u32 _res0:3;
+		u32 :3;
 	} param;
 	TSP tsp;
 	u32 zero; // 0
@@ -181,7 +181,7 @@ struct GMP : public ElanBase
 			u32 e0:1; // environmental mapping
 			u32 e1:1;
 
-			u32 _res:19;
+			u32 :19;
 		};
 		u32 full;
 	} paramSelect;
@@ -223,7 +223,7 @@ union HeaderAndNormal
 		u32 ny:8;
 		u32 nz:8;
 
-		u32 _res:5;
+		u32 :5;
 		u32 strip:1;
 		u32 fan:1;
 		u32 endOfStrip:1;
@@ -403,10 +403,10 @@ struct LightModel : public ElanBase
 		u32 useAmbientOffset1:1;
 		u32 useBaseOver:1;		// diffusion saturated light: overflow ambient+diffuse into specular
 
-		u32 _res:2;
+		u32 :2;
 		u32 bumpId1:4;
 		u32 bumpId2:4;
-		u32 _res0:12;
+		u32 :12;
 	};
 	u16 diffuseMask0;
 	u16 specularMask0;
@@ -469,7 +469,7 @@ struct ParallelLight : public ElanBase
 	// 08100400
 	struct {
 		u32 lightId:4;
-		u32 _res:4;
+		u32 :4;
 		u32 blue:8;
 		u32 green:8;
 		u32 red:8;
@@ -481,7 +481,7 @@ struct ParallelLight : public ElanBase
 
 		u32 routing:4;
 		u32 dmode:2;
-		u32 _res1:2;
+		u32 :2;
 	};
 	u32 _res2[5];
 
@@ -501,7 +501,7 @@ struct PointLight : public ElanBase
 	// 08000400
 	struct {
 		u32 lightId:4;
-		u32 _res:1;
+		u32 :1;
 		u32 dmode:3;
 		u32 blue:8;
 		u32 green:8;

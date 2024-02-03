@@ -29,7 +29,7 @@
 
 //#define HTTP_TRACE
 
-const char *SERVER_NAME = "vfnet.duckdns.org";
+const char *SERVER_NAME = "vfnet.flyca.st";
 
 NetDimm::NetDimm(u32 size) : GDCartridge(size)
 {

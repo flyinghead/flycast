@@ -17,17 +17,17 @@ union PCW
 		u32 Volume      : 1; //1
 		u32 Shadow      : 1; //1
 
-		u32 Reserved    : 8; //0000 0000
+		u32             : 8;
 
 		// Group Control
 		u32 User_Clip   : 2;
 		u32 Strip_Len   : 2;
-		u32 Res_2       : 3;
+		u32             : 3;
 		u32 Group_En    : 1;
 
 		// Para Control
 		u32 ListType    : 3;
-		u32 Res_1       : 1;
+		u32             : 1;
 		u32 EndOfStrip  : 1;
 		u32 ParaType    : 3;
 	};
@@ -42,7 +42,7 @@ union ISP_TSP
 {
 	struct
 	{
-		u32 Reserved    : 20;
+		u32             : 20;
 		u32 DCalcCtrl   : 1;
 		u32 CacheBypass : 1;
 		u32 UV_16b      : 1; //In TA they are replaced
@@ -110,7 +110,7 @@ union TCW
 	struct
 	{
 		u32 TexAddr   :21;
-		u32 Reserved  : 4;
+		u32           : 4;
 		u32 StrideSel : 1;
 		u32 ScanOrder : 1;
 		u32 PixelFmt  : 3;
@@ -119,7 +119,7 @@ union TCW
 	};
 	struct
 	{
-		u32 pading_0  :21;
+		u32           :21;
 		u32 PalSelect : 6;
 	};
 	u32 full;
@@ -691,10 +691,10 @@ union RegionArrayTile
 {
 	struct
 	{
-		u32 Reserved_0		: 2;
+		u32           		: 2;
 		u32 X				: 6;
 		u32 Y				: 6;
-		u32 Reserved_1		: 14;
+		u32           		: 14;
 		u32 FlushAccumulate	: 1;
 		u32 PreSort			: 1;	// For type 2 only. Ignored for type 1.
 		u32 NoZClear		: 1;

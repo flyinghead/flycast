@@ -501,6 +501,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		}
 		catch (const FlycastException& e)
 		{
+			WARN_LOG(NAOMI, "Opening chd failed: %s", e.what());
 			try {
 				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi", digest));
 			}
@@ -512,6 +513,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 					try {
 						gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
 					} catch (const FlycastException& e) {
+						WARN_LOG(NAOMI, "Opening parent chd failed: %s", e.what());
 						try {
 							gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi", digest));
 						} catch (const FlycastException& e) {}

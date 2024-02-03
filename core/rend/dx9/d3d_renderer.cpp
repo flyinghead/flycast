@@ -357,7 +357,15 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
 	D3DTexture *texture = (D3DTexture *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	devCache.SetPixelShader(shaders.getShader(
 			gp->pcw.Texture,
@@ -379,8 +387,10 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		float f[4] { trilinear_alpha, 0, 0, 0 };
 		device->SetPixelShaderConstantF(5, f, 1);
 	}
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
+		float textureSize[4] { (float)texture->width, (float)texture->height };
+		device->SetPixelShaderConstantF(9, textureSize, 1);
 		float paletteIndex[4];
 		if (gp->tcw.PixelFmt == PixelPal4)
 			paletteIndex[0] = (float)(gp->tcw.PalSelect << 4);
@@ -422,8 +432,10 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 
 		//set texture filter mode
 		bool linearFiltering;
-		if (config::TextureFiltering == 0)
-			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		if (gpuPalette != 0)
+			linearFiltering = false;
+		else if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0;
 		else if (config::TextureFiltering == 1)
 			linearFiltering = false;
 		else
@@ -455,11 +467,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-	{
-		devCache.SetRenderState(D3DRS_SRCBLEND, SrcBlendGL[gp->tsp.SrcInstr]);
-		devCache.SetRenderState(D3DRS_DESTBLEND, DstBlendGL[gp->tsp.DstInstr]);
-	}
+	devCache.SetRenderState(D3DRS_SRCBLEND, SrcBlendGL[gp->tsp.SrcInstr]);
+	devCache.SetRenderState(D3DRS_DESTBLEND, DstBlendGL[gp->tsp.DstInstr]);
 
 	devCache.SetRenderState(D3DRS_CULLMODE, CullMode[gp->isp.CullMode]);
 
@@ -768,11 +777,10 @@ void D3DRenderer::drawStrips()
 		{
 			devCache.SetRenderState(D3DRS_STENCILENABLE, FALSE);
 		}
-		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 
 		drawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 
-		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 		devCache.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
 		devCache.SetRenderState(D3DRS_ALPHAREF, PT_ALPHA_REF & 0xFF);

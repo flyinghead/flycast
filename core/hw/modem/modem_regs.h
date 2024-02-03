@@ -34,9 +34,9 @@ union modemreg_t
 		struct
 		{
 			u8 RXP:1;
-			u8 RXHF:1;
-			u8 TXHF:1;
-			u8 nil2:2;
+			u8 RXHF:1;		// Receiver FIFO Half Full
+			u8 TXHF:1;		// Transmitter FIFO Half Full
+			u8 :2;
 			u8 VPAUSE:1;
 			u8 VOLUME:2;
 		} reg01;
@@ -51,32 +51,32 @@ union modemreg_t
 					u8 V54PE:1;
 					u8 V54AE:1;
 					u8 V54TE:1;
-					u8 RTSDE:1;
-					u8 nil1:1;
+					u8 RTSDE:1;	// Remote RTS Pattern Detector Enable
+					u8 :1;
 					u8 S511:1;
 				} v0;
 				struct
 				{
 					u8 CODBITS:2;
-					u8 nil2:2;
+					u8 :2;
 					u8 CDEN:1;
 					u8 DCDEN:1;
 				} v1;
 				struct
 				{
-					u8 nila:6;
-					u8 TDE:1;
-					u8 SQDIS:1;
+					u8 :6;
+					u8 TDE:1;	// Tone Detectors Enable
+					u8 SQDIS:1;	// Squarer Disable (Tone Detector C)
 				};
 			};
 		} reg02;
 		//03 EPT SEPT SRCEN RLSDE - - GTE GTS
 		struct
 		{
-			u8 GTS:1;
-			u8 GTE:1;
-			u8 nil2:2;
-			u8 RLSDE:1;
+			u8 GTS:1;	// Guard Tone Select
+			u8 GTE:1;	// Guard Tone Enable
+			u8 :2;
+			u8 RLSDE:1;	// RLSD Enable
 			u8 SRCEN:1;
 			u8 SEPT:1;
 			u8 EPT:1;
@@ -87,65 +87,65 @@ union modemreg_t
 			u8 STRN:1;
 			u8 TOD:1;
 			u8 NRZIEN_VAGC:1;
-			u8 nil1_1:1;
-			u8 FIFOEN:1;
-			u8 nil1:2;
+			u8 :1;
+			u8 FIFOEN:1;		// FIFO Enable
+			u8 :2;
 			u8 RB:1;
 		} reg04;
 		//05 - - - TXSQ CEQ - STOFF -
 		struct
 		{
-			u8 nil1_2:1;
+			u8 :1;
 			u8 STOFF:1;
-			u8 nil1_1:1;
-			u8 CEQ:1;
+			u8 :1;
+			u8 CEQ:1;	// Compromise Equalizer Enable
 			u8 TXSQ:1;
-			u8 nil1:3;
+			u8 :3;
 		} reg05;
 		//06 - EXOS - HDLC PEN STB WDSZ/DECBITS
 		struct
 		{
 			u8 WDSZ_DECBITS:2;
 			u8 STB:1;
-			u8 PEN:1;
-			u8 HDLC:1;
-			u8 nil1_1:1;
+			u8 PEN:1;			// Parity Enable
+			u8 HDLC:1;			// HDLC Select
+			u8 :1;
 			u8 EXOS:1;
-			u8 nil1:1;
+			u8 :1;
 		} reg06;
 		//07 RDLE RDL L2ACT - L3ACT - RA MHLD
 		struct
 		{
 			u8 MHLD:1;
-			u8 RA:1;
-			u8 nil1_1:1;
+			u8 RA:1;	// Relay A Activate
+			u8 :1;
 			u8 L3ACT:1;
-			u8 nil1:1;
+			u8 :1;
 			u8 L2ACT:1;
-			u8 RDL:1;
-			u8 RDLE:1;
+			u8 RDL:1;	// Remote Digital Loopback
+			u8 RDLE:1;	// Remote Digital Loopback Response Enable
 		} reg07;
 		//08 ASYN TPDM V21S V54T V54A V54P RTRN RTS
 		struct
 		{
-			u8 RTS:1;
-			u8 RTRN:1;
+			u8 RTS:1;	// Request to Send
+			u8 RTRN:1;	// Retrain
 			u8 V54P:1;
 			u8 V54A:1;
 			u8 V54T:1;
 			u8 V21S:1;
-			u8 TPDM:1;
-			u8 ASYN:1;
+			u8 TPDM:1;	// Transmitter Parallel Data Mode
+			u8 ASYN:1;	// Asynchronous/Synchronous
 		} reg08;
 		//09 NV25 CC DTMF ORG LL DATA RRTSE DTR
 		struct
 		{
-			u8 DTR:1;
-			u8 RRTSE:1;
-			u8 DATA:1;
+			u8 DTR:1;	// Data Terminal Ready
+			u8 RRTSE:1;	// Remote RTS Signaling Enable
+			u8 DATA:1;	// Control bit DATA
 			u8 LL:1;
 			u8 ORG:1;
-			u8 DTMF:1;
+			u8 DTMF:1;	// DTMF Select
 			u8 CC:1;
 			u8 NV25:1;
 		} reg09;
@@ -153,12 +153,12 @@ union modemreg_t
 		struct
 		{
 			u8 SYNCD:1;
-			u8 FLAGS:1;
+			u8 FLAGS:1;		// Flag Sequence
 			u8 CRCS:1;
 			u8 OE:1;
-			u8 FE:1;
-			u8 PE:1;
-			u8 FLAGDT:1;
+			u8 FE:1;		// Framing Error
+			u8 PE:1;		// Parity Error
+			u8 FLAGDT:1;	// V.21 Channel 2 Flag Detected
 			u8 PNSUC:1;
 		} reg0a;
 		//0B TONEA TONEB TONEC ATV25 ATBEL - DISDET EQMAT
@@ -166,18 +166,18 @@ union modemreg_t
 		{
 			u8 EQMAT:1;
 			u8 DISDET:1;
-			u8 nil:1;
+			u8 :1;
 			u8 ATBEL:1;
-			u8 ATV25:1;
-			u8 TONEC:1;
-			u8 TONEB:1;
-			u8 TONEA:1;
+			u8 ATV25:1;	// V25 Answer Tone Detector
+			u8 TONEC:1;	// Tone C Detected
+			u8 TONEB:1;	// Tone B Detected
+			u8 TONEA:1;	// Tone A Detected
 		} reg0b;
 		//0C AADET ACDET CADET CCDET SDET SNDET RXFNE RSEQ
 		struct
 		{
-			u8 RSEQ:1;
-			u8 RXFNE:1;
+			u8 RSEQ:1;	// Rate Sequence Received
+			u8 RXFNE:1;	// Receiver FIFO Not Empty
 			u8 SNDET:1;
 			u8 SDET:1;
 			u8 CCDET:1;
@@ -188,9 +188,9 @@ union modemreg_t
 		//0D P2DET PNDET S1DET SCR1 U1DET - TXFNF -
 		struct
 		{
-			u8 nil2:1;
-			u8 TXFNF:1;
-			u8 nil1:1;
+			u8 :1;
+			u8 TXFNF:1;	// Transmitter FIFO Not Full
+			u8 :1;
 			u8 U1DET:1;
 			u8 SCR1:1;
 			u8 S1DET:1;
@@ -200,7 +200,7 @@ union modemreg_t
 		//0E RTDET BRKD RREDT SPEED
 		struct
 		{
-			u8 SPEED:5;
+			u8 SPEED:5;	// Speed Indication
 			u8 RREDT:1;
 			u8 BRKD:1;
 			u8 RTDET:1;
@@ -209,13 +209,13 @@ union modemreg_t
 		struct
 		{
 			u8 V54DT:1;
-			u8 RTSDT:1;
+			u8 RTSDT:1;	// Remote RTS Pattern Detected
 			u8 TM:1;
-			u8 RI:1;
-			u8 DSR:1;
-			u8 CTS:1;
-			u8 FED:1;
-			u8 RLSD:1;
+			u8 RI:1;	// Ring Indicator
+			u8 DSR:1;	// Data Set Ready
+			u8 CTS:1;	// Clear To Send
+			u8 FED:1;	// Fast Energy Detector
+			u8 RLSD:1;	// Received Line Signal Detector
 		} reg0f;
 		//10 Transmit Data Buffer (TBUFFER)/Voice Transmit Buffer (VBUFT)
 		u8 reg10;
@@ -227,7 +227,7 @@ union modemreg_t
 			u8 V23HDX:1;
 			u8 RXV:1;
 			u8 TXV:1;
-			u8 PARSL:2;
+			u8 PARSL:2;		// Parity Select
 			u8 BRKS:1;
 		} reg11;
 		//12 Configuration (CONF)
@@ -235,9 +235,9 @@ union modemreg_t
 		//13 TLVL RTH TXCLK
 		struct
 		{
-			u8 TLVL:4;
-			u8 RTH:2;
-			u8 TXCLK:2;
+			u8 TLVL:4;	// Transmit Level
+			u8 RTH:2;	// Receiver Threshold
+			u8 TXCLK:2;	// Transmit Clock Select
 		} reg13;
 		//14 ABCODE
 		u8 reg14;
@@ -247,9 +247,9 @@ union modemreg_t
 			u8 EARC:1;
 			u8 EXL3:1;
 			u8 RREN:1;
-			u8 AUTO:1;
-			u8 HWRWK:1;
-			u8 RDWK:1;
+			u8 AUTO:1;	// Automatic Mode Change Enable
+			u8 HWRWK:1;	// Host Write Wake up
+			u8 RDWK:1;	// Ring Detect Wake up
 			u8 STOP:1;
 			u8 SLEEP:1;
 		} reg15;
@@ -263,14 +263,14 @@ union modemreg_t
 		//1A SFRES RIEN RION DMAE - SCOBF SCIBE SECEN
 		struct
 		{
-			u8 SECEN:1;
-			u8 SCIBE:1;
-			u8 SCOBF:1;
-			u8 nil:1;
+			u8 SECEN:1;	// Secondary Channel Enable
+			u8 SCIBE:1;	// Secondary Channel Input Buffer Empty
+			u8 SCOBF:1;	// Secondary Channel Output Buffer Full
+			u8 :1;
 			u8 DMAE:1;
-			u8 RION:1;
-			u8 RIEN:1;
-			u8 SFRES:1;
+			u8 RION:1;	// Ring Indicator On
+			u8 RIEN:1;	// RION Enable
+			u8 SFRES:1;	// Soft Reset
 		} reg1a;
 		//1B EDET DTDET OTS DTMFD DTMFW
 		struct
@@ -285,36 +285,36 @@ union modemreg_t
 		//1D MEACC - MEMW MEMCR Memory Access Address High B11-B8 (MEADDH)
 		struct
 		{
-			u8 MEMADD_l:8;	//anything else exept u8 breaks it ? WTFH ?
-			u8 MEMADD_h:4;
-			u8 MEMCR:1;
-			u8 MEMW:1;
-			u8 nil:1;
-			u8 MEACC:1;
+			u8 MEMADD_l:8;	// Memory Access Address Low
+			u8 MEMADD_h:4;	// Memory Access Address High
+			u8 MEMCR:1;		// Memory Continuous Read
+			u8 MEMW:1;		// Memory Write
+			u8 :1;
+			u8 MEACC:1;		// Memory Access Enable
 		} reg1c_1d;
 		//1E TDBIA RDBIA TDBIE - TDBE RDBIE - RDBF
 		struct
 		{
-			u8 RDBF:1;
-			u8 nil:1;
-			u8 RDBIE:1;
-			u8 TDBE:1;
-			u8 nil2:1;
-			u8 TDBIE:1;
-			u8 RDBIA:1;
-			u8 TDBIA:1;
+			u8 RDBF:1;	// Receive Data Buffer Full
+			u8 :1;
+			u8 RDBIE:1;	// Receive Data Buffer Interrupt Enable
+			u8 TDBE:1;	// Transmit Data Buffer Empty
+			u8 :1;
+			u8 TDBIE:1;	// Transmit Data Buffer Interrupt Enable
+			u8 RDBIA:1;	// Receive Data Buffer Interrupt Active
+			u8 TDBIA:1;	// Transmit Data Buffer Interrupt Active
 		} reg1e;
 		//1F NSIA NCIA - NSIE NEWS NCIE - NEWC
 		struct
 		{
-			u8 NEWC:1;
-			u8 nil:1;
-			u8 NCIE:1;
-			u8 NEWS :1;
-			u8 NSIE:1;
-			u8 nil2:1;
-			u8 NCIA:1;
-			u8 NSIA:1;
+			u8 NEWC:1;	// New Configuration
+			u8 :1;
+			u8 NCIE:1;	// NEWC Interrupt Enable
+			u8 NEWS :1;	// New Status
+			u8 NSIE:1;	// NEWS Interrupt Enable
+			u8 :1;
+			u8 NCIA:1;	// NEWC Interrupt Active
+			u8 NSIA:1;	// NEWS Interrupt Active
 		} reg1f;
 	};
 };

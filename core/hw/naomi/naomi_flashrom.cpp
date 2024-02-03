@@ -149,11 +149,7 @@ static bool initEeprom(const RomBootID *bootId)
 	for (int i = 0; i < 4; i++)
 		write_naomi_eeprom(3 + i, bootId->gameID[i]);
 	write_naomi_eeprom(7, 9);	// FIXME 9 or 0x18?
-	if (bootId->cabinet == 0
-			&& (settings.input.JammaSetup == JVS::FourPlayers
-					|| settings.input.JammaSetup == JVS::DualIOBoards4P
-					|| settings.input.JammaSetup == JVS::WorldKicks
-					|| settings.input.JammaSetup == JVS::WorldKicksPCB))
+	if (bootId->cabinet == 0 && settings.input.fourPlayerGames)
 		write_naomi_eeprom(8, 0x30);
 	else if (bootId->cabinet & 8)
 		write_naomi_eeprom(8, 0x30);

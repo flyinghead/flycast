@@ -64,6 +64,7 @@ public:
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 	vk::Extent2D getSize() const { return extent; }
+	void deferDeleteResource(FlightManager *manager);
 
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -99,20 +100,25 @@ public:
 		samplers.clear();
 	}
 
+	vk::Sampler GetSampler(const PolyParam& poly, bool punchThrough, bool texture1 = false)
+	{
+		TSP tsp = texture1 ? poly.tsp1 : poly.tsp;
+		if (poly.texture != nullptr && poly.texture->gpuPalette)
+			tsp.FilterMode = 0;
+		else if (config::TextureFiltering == 1)
+			tsp.FilterMode = 0;
+		else if (config::TextureFiltering == 2)
+			tsp.FilterMode = 1;
+		return GetSampler(tsp, punchThrough);
+	}
+
 	vk::Sampler GetSampler(TSP tsp, bool punchThrough = false)
 	{
 		const u32 samplerHash = (tsp.full & TSP_Mask) | punchThrough;	// MipMapD, FilterMode, ClampU, ClampV, FlipU, FlipV
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter;
-		if (config::TextureFiltering == 0) {
-			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
-		} else if (config::TextureFiltering == 1) {
-			filter = vk::Filter::eNearest;
-		} else {
-			filter = vk::Filter::eLinear;
-		}
+		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
 		const vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		const vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
@@ -147,7 +153,7 @@ public:
 	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
 		: format(vk::Format::eUndefined), physicalDevice(physicalDevice), device(device)
 		{}
-	void Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage);
+	void Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage, const std::string& name = "");
 	void Reset() { image.reset(); imageView.reset(); }
 
 	vk::ImageView GetImageView() const { return *imageView; }
@@ -176,22 +182,23 @@ public:
 	TextureCache() {
 		Texture::SetDirectXColorOrder(false);
 	}
-	void SetCurrentIndex(int index) {
+	void SetCurrentIndex(int index)
+	{
+		if (index == (int)currentIndex)
+			return;
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
 				[](Texture *texture) { texture->readOnlyImageView = vk::ImageView(); });
 		currentIndex = index;
 		EmptyTrash(inFlightTextures);
-		EmptyTrash(trashedImageViews);
-		EmptyTrash(trashedImages);
-		EmptyTrash(trashedMem);
-		EmptyTrash(trashedBuffers);
 	}
 
-	bool IsInFlight(Texture *texture)
+	// Checks whether a given texture is in use by a previous frame, including the current one if previous is false
+	bool IsInFlight(Texture *texture, bool previous)
 	{
 		for (u32 i = 0; i < inFlightTextures.size(); i++)
-			if (i != currentIndex && inFlightTextures[i].find(texture) != inFlightTextures[i].end())
+			if ((!previous || i != currentIndex)
+					&& inFlightTextures[i].find(texture) != inFlightTextures[i].end())
 				return true;
 		return false;
 	}
@@ -201,17 +208,6 @@ public:
 		inFlightTextures[currentIndex].insert(texture);
 	}
 
-	void DestroyLater(Texture *texture)
-	{
-		if (!texture->image)
-			return;
-		trashedImages[currentIndex].push_back(std::move(texture->image));
-		trashedImageViews[currentIndex].push_back(std::move(texture->imageView));
-		trashedMem[currentIndex].push_back(std::move(texture->allocation));
-		trashedBuffers[currentIndex].push_back(std::move(texture->stagingBufferData));
-		texture->format = vk::Format::eUndefined;
-	}
-
 	void Cleanup();
 
 	void Clear()
@@ -219,14 +215,6 @@ public:
 		BaseTextureCache::Clear();
 		for (auto& set : inFlightTextures)
 			set.clear();
-		for (auto& v : trashedImageViews)
-			v.clear();
-		for (auto& v : trashedImages)
-			v.clear();
-		for (auto& v : trashedMem)
-			v.clear();
-		for (auto& v : trashedBuffers)
-			v.clear();
 	}
 
 private:
@@ -243,12 +231,10 @@ private:
 	{
 		if (v.size() < currentIndex + 1)
 			v.resize(currentIndex + 1);
-		v[currentIndex].clear();
+		else
+			v[currentIndex].clear();
 	}
+
 	std::vector<std::unordered_set<Texture *>> inFlightTextures;
-	std::vector<std::vector<vk::UniqueImageView>> trashedImageViews;
-	std::vector<std::vector<vk::UniqueImage>> trashedImages;
-	std::vector<std::vector<Allocation>> trashedMem;
-	std::vector<std::vector<std::unique_ptr<BufferData>>> trashedBuffers;
-	u32 currentIndex = 0;
+	u32 currentIndex = ~0;
 };

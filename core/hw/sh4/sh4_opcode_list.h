@@ -2,6 +2,8 @@
 #include "types.h"
 #include "sh4_interpreter.h"
 
+#include <cstring>
+
 extern OpCallFP* OpPtr[0x10000];
 
 typedef void OpDissasmFP(char* out,const char* const FormatString,u32 pc,u16 opcode);

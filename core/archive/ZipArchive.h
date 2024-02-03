@@ -26,7 +26,6 @@
 class ZipArchive : public Archive
 {
 public:
-	ZipArchive() : zip(NULL) {}
 	~ZipArchive() override;
 
 	ArchiveFile* OpenFile(const char* name) override;
@@ -39,16 +38,23 @@ protected:
 	bool Open(FILE *file) override;
 
 private:
-	struct zip *zip;
+	zip_t *zip = nullptr;
 };
 
 class ZipArchiveFile : public ArchiveFile
 {
 public:
-	ZipArchiveFile(struct zip_file *zip_file) : zip_file(zip_file) {}
-	~ZipArchiveFile() override { zip_fclose(zip_file); }
+	ZipArchiveFile(zip_file_t *zip_file, size_t length)
+		: zip_file(zip_file), _length(length) {}
+	~ZipArchiveFile() override {
+		zip_fclose(zip_file);
+	}
 	u32 Read(void* buffer, u32 length) override;
+	size_t length() override {
+		return _length;
+	}
 
 private:
-	struct zip_file *zip_file;
+	zip_file_t *zip_file;
+	size_t _length;
 };

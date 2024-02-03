@@ -31,10 +31,15 @@ u64 sh4_sched_now64();
 	Schedule a callback to be called sh4 *cycles* after the
 	invocation of this function. *Cycles* range is (0, 200M].
 	
-	Passing a value of 0 disables the callback.
+	Passing a value of -1 disables the callback.
 	If called multiple times, only the last call is in effect
 */
 void sh4_sched_request(int id, int cycles);
+
+/*
+	Returns true if the callback is scheduled to be called in the future.
+ */
+bool sh4_sched_is_scheduled(int id);
 
 /*
 	Tick for *cycles*

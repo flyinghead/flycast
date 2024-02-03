@@ -5,36 +5,40 @@
 
 #include <switch.h>
 #include <malloc.h>
+#include <unordered_set>
 
 namespace virtmem
 {
 
 #define siginfo_t switch_siginfo_t
 
-using mem_handle_t = uintptr_t;
-static mem_handle_t vmem_fd = -1;
-//static mem_handle_t vmem_fd_page = -1;
-static mem_handle_t vmem_fd_codememory = -1;
+// Allocated RAM
+static void *ramBase;
+static size_t ramSize;
 
+// Reserved memory space
 static void *reserved_base;
 static size_t reserved_size;
 static VirtmemReservation *virtmemReservation;
 
+// Mapped regions
+static Mapping *memMappings;
+static u32 memMappingCount;
+
+static void deleteMappings();
+
 bool region_lock(void *start, size_t len)
 {
-	size_t inpage = (uintptr_t)start & PAGE_MASK;
-	len += inpage;
-	size_t inlen = len & PAGE_MASK;
-	if (inlen)
-		len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
+	const size_t inpage = (uintptr_t)start & PAGE_MASK;
+	len = (len + inpage + PAGE_SIZE - 1) & ~PAGE_MASK;
 
 	Result rc;
 	uintptr_t start_addr = (uintptr_t)start - inpage;
 	for (uintptr_t addr = start_addr; addr < (start_addr + len); addr += PAGE_SIZE)
 	{
-		rc = svcSetMemoryPermission((void*)addr, PAGE_SIZE, Perm_R);
+		rc = svcSetMemoryPermission((void *)addr, PAGE_SIZE, Perm_R);
 		if (R_FAILED(rc))
-			WARN_LOG(VMEM, "Failed to SetPerm Perm_R on %p len 0x%x rc 0x%x", (void*)addr, PAGE_SIZE, rc);
+			ERROR_LOG(VMEM, "Failed to SetPerm Perm_R on %p len 0x%x rc 0x%x", (void*)addr, PAGE_SIZE, rc);
 	}
 
 	return true;
@@ -42,83 +46,20 @@ bool region_lock(void *start, size_t len)
 
 bool region_unlock(void *start, size_t len)
 {
-	size_t inpage = (uintptr_t)start & PAGE_MASK;
-	len += inpage;
-	size_t inlen = len & PAGE_MASK;
-	if (inlen)
-		len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
+	const size_t inpage = (uintptr_t)start & PAGE_MASK;
+	len = (len + inpage + PAGE_SIZE - 1) & ~PAGE_MASK;
 
 	Result rc;
 	uintptr_t start_addr = (uintptr_t)start - inpage;
 	for (uintptr_t addr = start_addr; addr < (start_addr + len); addr += PAGE_SIZE)
 	{
-		rc = svcSetMemoryPermission((void*)addr, PAGE_SIZE, Perm_Rw);
+		rc = svcSetMemoryPermission((void *)addr, PAGE_SIZE, Perm_Rw);
 		if (R_FAILED(rc))
-			WARN_LOG(VMEM, "Failed to SetPerm Perm_Rw on %p len 0x%x rc 0x%x", (void*)addr, PAGE_SIZE, rc);
+			ERROR_LOG(VMEM, "Failed to SetPerm Perm_Rw on %p len 0x%x rc 0x%x", (void*)addr, PAGE_SIZE, rc);
 	}
 
 	return true;
 }
-
-/*
-static bool region_set_exec(void *start, size_t len)
-{
-	size_t inpage = (uintptr_t)start & PAGE_MASK;
-
-	svcSetMemoryPermission((void*)((uintptr_t)start - inpage), len + inpage, Perm_R); // *shrugs*
-
-	return true;
-}
-
-static void *region_reserve(void *start, size_t len)
-{
-	virtmemLock();
-	void *p = virtmemFindAslr(len, 0);
-	if (p != nullptr)
-		virtmemReservation = virtmemAddReservation(p, len);
-	virtmemUnlock();
-	return p;
-}
-*/
-
-static bool region_release(void *start, size_t len)
-{
-	if (virtmemReservation != nullptr)
-	{
-		virtmemLock();
-		virtmemRemoveReservation(virtmemReservation);
-		virtmemUnlock();
-		virtmemReservation = nullptr;
-	}
-	return true;
-}
-
-static void *region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
-{
-	Result rc = svcMapProcessMemory(dest, envGetOwnProcessHandle(), (u64)(vmem_fd_codememory + offset), len);
-	if (R_FAILED(rc))
-		WARN_LOG(VMEM, "Fatal error creating the view... base: %p offset: 0x%zx size: 0x%zx src: %p err: 0x%x",
-				(void*)vmem_fd, offset, len, (void*)(vmem_fd_codememory + offset), rc);
-	else
-		INFO_LOG(VMEM, "Created the view... base: %p offset: 0x%zx size: 0x%zx src: %p err: 0x%x",
-				(void*)vmem_fd, offset, len, (void*)(vmem_fd_codememory + offset), rc);
-
-	return dest;
-}
-
-static bool region_unmap_file(void *start, size_t len)
-{
-	return region_release(start, len);
-}
-
-/*
-// Allocates memory via a fd on shmem/ahmem or even a file on disk
-static mem_handle_t allocate_shared_filemem(unsigned size)
-{
-	void* mem = memalign(0x1000, size);
-	return (uintptr_t)mem;
-}
-*/
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 
@@ -128,80 +69,170 @@ static mem_handle_t allocate_shared_filemem(unsigned size)
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
-	return false;
-#if 0
-	const unsigned size_aligned = ((RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + PAGE_SIZE) & (~(PAGE_SIZE-1)));
-	vmem_fd_page = allocate_shared_filemem(size_aligned);
-	if (vmem_fd_page < 0)
+	// Allocate RAM
+	ramSize += sizeof(Sh4RCB);
+	virtmem::ramSize = ramSize;
+	ramBase = memalign(PAGE_SIZE, ramSize);
+	if (ramBase == nullptr) {
+		ERROR_LOG(VMEM, "memalign(%zx) failed", ramSize);
 		return false;
-
-	vmem_fd_codememory = (uintptr_t)virtmemReserve(size_aligned);
-
-	if (R_FAILED(svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) vmem_fd_codememory, (u64) vmem_fd_page, size_aligned)))
-		WARN_LOG(VMEM, "Failed to Map memory (platform_int)...");
-
-	if (R_FAILED(svcSetProcessMemoryPermission(envGetOwnProcessHandle(), vmem_fd_codememory, size_aligned, Perm_Rx)))
-		WARN_LOG(VMEM, "Failed to set perms (platform_int)...");
-
-	// Now try to allocate a contiguous piece of memory.
-	if (reserved_base == NULL)
-	{
-		reserved_size = 512_MB + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-		reserved_base = region_reserve(NULL, reserved_size);
-		if (!reserved_base)
-			return false;
 	}
 
-	*sh4rcb_addr = reserved_base;
-	*vmem_base_addr = (char *)reserved_base + sizeof(Sh4RCB);
-	const size_t fpcb_size = sizeof(((Sh4RCB *)NULL)->fpcb);
-	void *sh4rcb_base_ptr  = (char *)reserved_base + fpcb_size;
+	// Reserve address space
+	reserved_size = 512_MB + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
+	virtmemLock();
+    // virtual mem
+    reserved_base = virtmemFindCodeMemory(reserved_size, PAGE_SIZE);
+	if (reserved_base != nullptr)
+		virtmemReservation = virtmemAddReservation(reserved_base, reserved_size);
+	virtmemUnlock();
+	if (reserved_base == nullptr || virtmemReservation == nullptr)
+	{
+		ERROR_LOG(VMEM, "virtmemReserve(%zx) failed: base %p res %p", reserved_size, reserved_base, virtmemReservation);
+		free(ramBase);
+		return false;
+	}
+
+	constexpr size_t fpcb_size = sizeof(Sh4RCB::fpcb);
+	void *sh4rcb_base_ptr  = (u8 *)reserved_base + fpcb_size;
+	Handle process = envGetOwnProcessHandle();
 
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
-	region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
+	size_t sz = sizeof(Sh4RCB) - fpcb_size;
+	DEBUG_LOG(VMEM, "mapping %lx to %p size %zx", (u64)ramBase + fpcb_size, sh4rcb_base_ptr, sz);
+	Result rc = svcMapProcessCodeMemory(process, (u64)sh4rcb_base_ptr, (u64)ramBase + fpcb_size, sz);
+	if (R_FAILED(rc))
+	{
+		ERROR_LOG(VMEM, "Failed to Map Sh4RCB (%p, %p, %zx) -> %x", sh4rcb_base_ptr, (u8 *)ramBase + fpcb_size, sz, rc);
+		destroy();
+		return false;
+	}
+	rc = svcSetProcessMemoryPermission(process, (u64)sh4rcb_base_ptr, sz, Perm_Rw);
+	if (R_FAILED(rc))
+	{
+		ERROR_LOG(VMEM, "Failed to set Sh4RCB perms (%p, %zx) -> %x", sh4rcb_base_ptr, sz, rc);
+		destroy();
+		return false;
+	}
+	*sh4rcb_addr = reserved_base;
+	*vmem_base_addr = (u8 *)reserved_base + sizeof(Sh4RCB);
+	NOTICE_LOG(VMEM, "virtmem::init successful");
 
 	return true;
-#endif
 }
 
-// Just tries to wipe as much as possible in the relevant area.
 void destroy()
 {
-	if (reserved_base != NULL)
-		region_release(reserved_base, reserved_size);
+	deleteMappings();
+	constexpr size_t fpcb_size = sizeof(Sh4RCB::fpcb);
+	Result rc = svcUnmapProcessCodeMemory(envGetOwnProcessHandle(), (u64)reserved_base + fpcb_size,
+			(u64)ramBase + fpcb_size, sizeof(Sh4RCB) - fpcb_size);
+	if (R_FAILED(rc))
+		ERROR_LOG(VMEM, "Failed to Unmap Sh4RCB -> %x", rc);
+	if (virtmemReservation != nullptr)
+	{
+		virtmemLock();
+		virtmemRemoveReservation(virtmemReservation);
+		virtmemUnlock();
+		virtmemReservation = nullptr;
+	}
+	free(ramBase);
+	ramBase = nullptr;
+	NOTICE_LOG(VMEM, "virtmem::destroy done");
 }
 
-// Resets a chunk of memory by deleting its data and setting its protection back.
-void reset_mem(void *ptr, unsigned size_bytes) {
-	svcSetMemoryPermission(ptr, size_bytes, Perm_None);
-}
-
-// Allocates a bunch of memory (page aligned and page-sized)
-void ondemand_page(void *address, unsigned size_bytes) {
-	bool rc = region_unlock(address, size_bytes);
-	verify(rc);
-}
-
-// Creates mappings to the underlying file including mirroring sections
-void create_mappings(const Mapping *vmem_maps, unsigned nummaps)
+// Flush (unmap) the FPCB array
+void reset_mem(void *ptr, unsigned size)
 {
-	for (unsigned i = 0; i < nummaps; i++) {
-		// Ignore unmapped stuff, it is already reserved as PROT_NONE
-		if (!vmem_maps[i].memsize)
+	u64 offset = (u8 *)ptr - (u8 *)reserved_base;
+	DEBUG_LOG(VMEM, "Unmapping %lx from %p size %x", (u64)ramBase + offset, ptr, size);
+	Handle process = envGetOwnProcessHandle();
+	for (; offset < size; offset += PAGE_SIZE)
+	{
+		svcUnmapProcessCodeMemory(process, (u64)ptr + offset, (u64)ramBase + offset, PAGE_SIZE);
+		// fails if page is unmapped, which isn't an error
+	}
+}
+
+// Allocates a memory page for the FPCB array
+void ondemand_page(void *address, unsigned size)
+{
+	u64 offset = (u8 *)address - (u8 *)reserved_base;
+	//DEBUG_LOG(VMEM, "Mapping %lx to %p size %x", (u64)ramBase + offset, address, size);
+	Result rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64)address, (u64)ramBase + offset, size);
+	if (R_FAILED(rc)) {
+		ERROR_LOG(VMEM, "svcMapProcessCodeMemory(%p, %lx, %x) failed: %x", address, (u64)ramBase + offset, size, rc);
+		return;
+	}
+	rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64)address, size, Perm_Rw);
+	if (R_FAILED(rc))
+		ERROR_LOG(VMEM, "svcSetProcessMemoryPermission(%p, %x) failed: %x", address, size, rc);
+}
+
+static void deleteMappings()
+{
+	if (memMappings == nullptr)
+		return;
+	std::unordered_set<u64> backingAddrs;
+	Handle process = envGetOwnProcessHandle();
+	for (u32 i = 0; i < memMappingCount; i++)
+	{
+		// Ignore unmapped stuff
+		if (memMappings[i].memsize == 0)
+			continue;
+		if (!memMappings[i].allow_writes) // don't (un)map ARAM read-only
 			continue;
 
-		// Calculate the number of mirrors
-		u64 address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
-		unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;
-		verify((address_range_size % vmem_maps[i].memsize) == 0 && num_mirrors >= 1);
+		u64 ramOffset = (u64)ramBase + sizeof(Sh4RCB) + memMappings[i].memoffset;
+		if (backingAddrs.count(ramOffset) != 0)
+			continue;
+		backingAddrs.insert(ramOffset);
+		u64 offset = memMappings[i].start_address + sizeof(Sh4RCB);
+		Result rc = svcUnmapProcessCodeMemory(process, (u64)reserved_base + offset,
+					ramOffset, memMappings[i].memsize);
+		if (R_FAILED(rc))
+			ERROR_LOG(VMEM, "deleteMappings: error unmapping offset %lx from %lx", memMappings[i].memoffset, offset);
+	}
+	delete [] memMappings;
+	memMappings = nullptr;
+	memMappingCount = 0;
+}
 
-		for (unsigned j = 0; j < num_mirrors; j++) {
-			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			bool rc = region_unmap_file(&addrspace::ram_base[offset], vmem_maps[i].memsize);
-			verify(rc);
-			void *p = region_map_file((void*)(uintptr_t)vmem_fd, &addrspace::ram_base[offset],
-					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes);
-			verify(p != nullptr);
+// Creates mappings to the underlying ram (not including mirroring sections)
+void create_mappings(const Mapping *vmem_maps, unsigned nummaps)
+{
+	deleteMappings();
+	memMappingCount = nummaps;
+	memMappings = new Mapping[nummaps];
+	memcpy(memMappings, vmem_maps, nummaps * sizeof(Mapping));
+
+	std::unordered_set<u64> backingAddrs;
+	Handle process = envGetOwnProcessHandle();
+	for (u32 i = 0; i < nummaps; i++)
+	{
+		// Ignore unmapped stuff, it is already reserved as PROT_NONE
+		if (vmem_maps[i].memsize == 0)
+			continue;
+		if (!vmem_maps[i].allow_writes) // don't map ARAM read-only
+			continue;
+
+		u64 ramOffset = (u64)ramBase + sizeof(Sh4RCB) + vmem_maps[i].memoffset;
+		if (backingAddrs.count(ramOffset) != 0)
+			// already mapped once so ignore other mirrors
+			continue;
+		backingAddrs.insert(ramOffset);
+		u64 offset = vmem_maps[i].start_address + sizeof(Sh4RCB);
+		Result rc = svcMapProcessCodeMemory(process, (u64)reserved_base + offset, ramOffset, vmem_maps[i].memsize);
+		if (R_FAILED(rc)) {
+			ERROR_LOG(VMEM, "create_mappings: error mapping offset %lx to %lx", vmem_maps[i].memoffset, offset);
+		}
+		else
+		{
+			rc = svcSetProcessMemoryPermission(process, (u64)reserved_base + offset, vmem_maps[i].memsize, Perm_Rw);
+			if (R_FAILED(rc))
+				ERROR_LOG(VMEM, "svcSetProcessMemoryPermission() failed: %x", rc);
+			else
+				DEBUG_LOG(VMEM, "create_mappings: mapped offset %lx to %lx size %lx", vmem_maps[i].memoffset, offset, vmem_maps[i].memsize);
 		}
 	}
 }
@@ -231,7 +262,7 @@ bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdif
 	virtmemUnlock();
 	if (failure)
 	{
-		WARN_LOG(DYNAREC, "Failed to map jit rw block...");
+		ERROR_LOG(DYNAREC, "Failed to map jit rw block...");
 		return false;
 	}
 
@@ -266,73 +297,40 @@ void context_switch_aarch64(void* context);
 
 void __libnx_exception_handler(ThreadExceptionDump *ctx)
 {
-   mcontext_t m_ctx;
+	alignas(16) static ucontext_t u_ctx;
+	u_ctx.uc_mcontext.pc = ctx->pc.x;
+	for (int i = 0; i < 29; i++)
+		u_ctx.uc_mcontext.regs[i] = ctx->cpu_gprs[i].x;
 
-   m_ctx.pc = ctx->pc.x;
+	siginfo_t sig_info;
+	sig_info.si_addr = (void*)ctx->far.x;
 
-   for(int i=0; i<29; i++)
-   {
-      // printf("X%d: %p\n", i, ctx->cpu_gprs[i].x);
-      m_ctx.regs[i] = ctx->cpu_gprs[i].x;
-   }
+	fault_handler(0, &sig_info, (void *)&u_ctx);
 
-   /*
-   printf("PC: %p\n", ctx->pc.x);
-   printf("FP: %p\n", ctx->fp.x);
-   printf("LR: %p\n", ctx->lr.x);
-   printf("SP: %p\n", ctx->sp.x);
-   */
+	alignas(16) static uint64_t savedRegisters[66];
+	uint64_t *ptr = savedRegisters;
+	// fpu registers (64 bits)
+	for (int i = 0; i < 32; i++)
+		ptr[i]  = *(u64 *)&ctx->fpu_gprs[i].d;
+	// cpu gp registers
+	for (int i = 0; i < 29; i++)
+		ptr[i + 32]  = u_ctx.uc_mcontext.regs[i];
+	// Special regs
+	ptr[29 + 32] = ctx->fp.x;	// frame pointer
+	ptr[30 + 32] = ctx->lr.x;	// link register
+	ptr[31 + 32] = ctx->pstate;	// sprs
+	ptr[32 + 32] = ctx->sp.x;	// stack pointer
+	ptr[33 + 32] = u_ctx.uc_mcontext.pc; // PC
 
-   ucontext_t u_ctx;
-   u_ctx.uc_mcontext = m_ctx;
-
-   siginfo_t sig_info;
-
-   sig_info.si_addr = (void*)ctx->far.x;
-
-   fault_handler(0, &sig_info, (void*) &u_ctx);
-
-   uint64_t handle[64] = { 0 };
-
-   uint64_t *ptr = (uint64_t*)handle;
-   ptr[0]  = m_ctx.regs[0]; /* x0 0  */
-   ptr[1]  = m_ctx.regs[1]; /* x1 8 */
-   ptr[2]  = m_ctx.regs[2]; /* x2 16 */
-   ptr[3]  = m_ctx.regs[3]; /* x3 24 */
-   ptr[4]  = m_ctx.regs[4]; /* x4 32 */
-   ptr[5]  = m_ctx.regs[5]; /* x5 40 */
-   ptr[6]  = m_ctx.regs[6]; /* x6 48 */
-   ptr[7]  = m_ctx.regs[7]; /* x7 56 */
-   /* Non-volatiles.  */
-   ptr[8]  = m_ctx.regs[8]; /* x8 64 */
-   ptr[9]  = m_ctx.regs[9]; /* x9 72 */
-   ptr[10]  = m_ctx.regs[10]; /* x10 80 */
-   ptr[11]  = m_ctx.regs[11]; /* x11 88 */
-   ptr[12]  = m_ctx.regs[12]; /* x12 96 */
-   ptr[13]  = m_ctx.regs[13]; /* x13 104 */
-   ptr[14]  = m_ctx.regs[14]; /* x14 112 */
-   ptr[15]  = m_ctx.regs[15]; /* x15 120 */
-   ptr[16]  = m_ctx.regs[16]; /* x16 128 */
-   ptr[17]  = m_ctx.regs[17]; /* x17 136 */
-   ptr[18]  = m_ctx.regs[18]; /* x18 144 */
-   ptr[19]  = m_ctx.regs[19]; /* x19 152 */
-   ptr[20] = m_ctx.regs[20]; /* x20 160 */
-   ptr[21] = m_ctx.regs[21]; /* x21 168 */
-   ptr[22] = m_ctx.regs[22]; /* x22 176 */
-   ptr[23] = m_ctx.regs[23]; /* x23 184 */
-   ptr[24] = m_ctx.regs[24]; /* x24 192 */
-   ptr[25] = m_ctx.regs[25]; /* x25 200 */
-   ptr[26] = m_ctx.regs[26]; /* x26 208 */
-   ptr[27] = m_ctx.regs[27]; /* x27 216 */
-   ptr[28] = m_ctx.regs[28]; /* x28 224 */
-   /* Special regs */
-   ptr[29] = ctx->fp.x; /* frame pointer 232 */
-   ptr[30] = ctx->lr.x; /* link register 240 */
-   ptr[31] = ctx->sp.x; /* stack pointer 248 */
-   ptr[32] = (uintptr_t)ctx->pc.x; /* PC 256 */
-
-   context_switch_aarch64(ptr);
+	context_switch_aarch64(ptr);
 }
 }
 #endif	// TARGET_NO_EXCEPTIONS
+
+#ifndef LIBRETRO
+[[noreturn]] void os_DebugBreak()
+{
+	diagAbortWithResult(MAKERESULT(350, 1));
+}
+#endif
 #endif	// __SWITCH__

@@ -17,10 +17,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "gui.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui_util.h"
 #include "cheats.h"
+#ifdef __ANDROID__
 #include "oslib/storage.h"
+#endif
 
 static bool addingCheat;
 
@@ -59,7 +61,7 @@ static void addCheat()
     ImGui::Unindent(10 * settings.display.uiScale);
     ImGui::PopStyleVar();
 
-	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), true);
+	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
     {
 		ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
 		ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
@@ -117,7 +119,7 @@ void gui_cheats()
     ImGui::Unindent(10 * settings.display.uiScale);
     ImGui::PopStyleVar();
 
-	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
+	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		if (cheatManager.cheatCount() == 0)
 			ImGui::Text("(No cheat loaded)");

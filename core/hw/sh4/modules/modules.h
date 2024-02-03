@@ -1,5 +1,6 @@
 #pragma once
 #include "hw/hwreg.h"
+#include <deque>
 
 extern u32 UBC[9];
 extern u32 BSC[19];
@@ -99,16 +100,62 @@ public:
 	void setPipe(Pipe *pipe) override {
 		this->pipe = pipe;
 	}
-	void updateStatus() override;
+	Pipe *getPipe() const {
+		return pipe;
+	}
+	void updateStatus() override {}
+	void receiveBreak() override;
+	void init();
+	void term();
+	void reset();
+	void serialize(Serializer& ser);
+	void deserialize(Deserializer& deser);
 
-	static u8 readData(u32 addr);
-	static void writeData(u32 addr, u8 data);
-	static u16 readStatus(u32 addr);
-	static void writeStatus(u32 addr, u16 data);
-	static u16 readSCFDR2(u32 addr);
+	u8 SCFRDR2_read();
+	void SCFTDR2_write(u8 data);
+	u16 readStatus();
+	void writeStatus(u16 data);
+	u16 SCFDR2_read();
+	static u16 SCFCR2_read(u32 addr);
+	void SCFCR2_write(u16 data);
+	void SCSPTR2_write(u16 data);
+	static void SCBRR2_write(u32 addr, u8 data);
+	static void SCSMR2_write(u32 addr, u16 data);
+	void SCSCR2_write(u16 data);
 
 	static SCIFSerialPort& Instance();
 
 private:
+	enum StatusBit {
+		DR = 0x01,
+		RDF = 0x02,
+		PER = 0x04,
+		FER = 0x08,
+		BRK = 0x10,
+		TDFE = 0x20,
+		TEND = 0x40,
+		ER = 0x80,
+	};
+
+	void setStatusBit(StatusBit bit);
+	bool isTDFE() const;
+	bool isRDF() const;
+	void updateBaudRate();
+	void setBreak(bool on);
+	void sendBreak();
+	bool txDone();
+	void rxSched();
+	static int schedCallback(int tag, int cycles, int lag, void *arg);
+
 	Pipe *pipe = nullptr;
+	int schedId = -1;
+	int brkSchedId = -1;
+	int frameSize = 10; // default 8 data bits, 1 stop bit, no parity
+	int cyclesPerBit = SH4_MAIN_CLOCK / 6103;
+	u16 statusLastRead = 0;
+	std::deque<u8> txFifo;
+	std::deque<u8> rxFifo;
+	bool transmitting = false;
 };
+
+void setupPtyPipe();

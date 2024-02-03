@@ -24,24 +24,13 @@
 class D3DShaders
 {
 public:
-	void init(const ComPtr<IDirect3DDevice9>& device)
-	{
-		this->device = device;
-	}
-
+	void init(const ComPtr<IDirect3DDevice9>& device);
 	const ComPtr<IDirect3DPixelShader9>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
-			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud,
+			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, int palette, bool gouraud,
 			bool clipInside, bool dithering);
 	const ComPtr<IDirect3DVertexShader9>& getVertexShader(bool gouraud);
 	const ComPtr<IDirect3DPixelShader9>& getModVolShader();
-	void term() {
-		shaders.clear();
-		for (auto& shader : vertexShaders)
-			shader.reset();
-		for (auto& shader : modVolShaders)
-			shader.reset();
-		device.reset();
-	}
+	void term();
 
 private:
 	ComPtr<ID3DXBuffer> compileShader(const char* source, const char* function, const char* profile, const D3DXMACRO* pDefines);
@@ -52,4 +41,8 @@ private:
 	std::unordered_map<u32, ComPtr<IDirect3DPixelShader9>> shaders;
 	ComPtr<IDirect3DVertexShader9> vertexShaders[4];
 	ComPtr<IDirect3DPixelShader9> modVolShaders[2];
+	HMODULE d3dx9Library = NULL;
+	decltype(D3DXCompileShader) *pD3DXCompileShader = nullptr;
+	decltype(D3DXGetVertexShaderProfile) *pD3DXGetVertexShaderProfile = nullptr;
+	decltype(D3DXGetPixelShaderProfile) *pD3DXGetPixelShaderProfile = nullptr;
 };

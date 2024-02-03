@@ -21,8 +21,7 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
-#include "imgui/imgui.h"
-#include "roboto_medium.h"
+#include "imgui.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
@@ -31,7 +30,7 @@
 #include "game_scanner.h"
 #include "version.h"
 #include "oslib/oslib.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
@@ -39,10 +38,13 @@
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
-#include "implot/implot.h"
+#if FC_PROFILER
+#include "implot.h"
+#endif
 #include "boxart/boxart.h"
 #include "profiler/fc_profiler.h"
 #include "hw/naomi/card_reader.h"
+#include "oslib/resources.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -77,6 +79,7 @@ static double osd_message_end;
 static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
+static bool uiUserScaleUpdated;
 
 static int map_system = 0;
 static void reset_vmus();
@@ -184,6 +187,7 @@ void gui_initFonts()
     if (settings.display.width <= 640 || settings.display.height <= 480)
     	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
 #endif
+    settings.display.uiScale *= config::UIScaling / 100.f;
 	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
 		return;
 	uiScale = settings.display.uiScale;
@@ -194,7 +198,7 @@ void gui_initFonts()
     ImGui::GetStyle().TabRounding = 0;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
-#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 	if (settings.display.uiScale > 1)
@@ -209,7 +213,10 @@ void gui_initFonts()
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
 	const float fontSize = 17.f * settings.display.uiScale;
-	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, fontSize, nullptr, ranges);
+	size_t dataSize;
+	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
+	verify(data != nullptr);
+	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
     ImFontConfig font_cfg;
     font_cfg.MergeMode = true;
 #ifdef _WIN32
@@ -371,7 +378,7 @@ static void gui_newFrame()
 	else
 		io.AddMousePosEvent(mouseX, mouseY);
 	static bool delayTouch;
-#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
 	// Delay touch by one frame to allow widgets to be hovered before click
 	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
 	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
@@ -401,28 +408,30 @@ static void gui_newFrame()
 	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
 	
 	float analog;
-	analog = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
+	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
-	analog = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
+	analog = joyx[0] > 0 ? (float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickRight, analog > 0.1f, analog);
-	analog = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
+	analog = joyy[0] < 0 ? -(float)joyy[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickUp, analog > 0.1f, analog);
-	analog = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
+	analog = joyy[0] > 0 ? (float)joyy[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickDown, analog > 0.1f, analog);
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
-
-#if defined(USE_SDL)
-	if (io.WantTextInput && !SDL_IsTextInputActive())
+#ifdef USE_SDL
+	else
 	{
-		SDL_StartTextInput();
-	}
-	else if (!io.WantTextInput && SDL_IsTextInputActive())
-	{
-		SDL_StopTextInput();
+		if (io.WantTextInput && !SDL_IsTextInputActive())
+		{
+			SDL_StartTextInput();
+		}
+		else if (!io.WantTextInput && SDL_IsTextInputActive())
+		{
+			SDL_StopTextInput();
+		}
 	}
 #endif
 }
@@ -669,7 +678,7 @@ const char *maple_device_types[] =
 	"Keyboard",
 	"Mouse",
 	"Twin Stick",
-	"Ascii Stick",
+	"Arcade/Ascii Stick",
 	"Maracas Controller",
 	"Fishing Controller",
 	"Pop'n Music controller",
@@ -680,10 +689,10 @@ const char *maple_device_types[] =
 
 const char *maple_expansion_device_types[] = 
 { 
-	"None", 
-	"Sega VMU", 
-	"Purupuru", 
-	"Microphone"
+	"None",
+	"Sega VMU",
+	"Vibration Pack",
+	"Microphone",
 };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -829,6 +838,7 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
+	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -879,6 +889,7 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
+	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -1136,11 +1147,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::SameLine();
 			if (ImGui::Button("No"))
 				ImGui::CloseCurrentPopup();
-			ImGui::PopStyleVar(2);;
+			ImGui::PopStyleVar(2);
 
 			ImGui::EndPopup();
 		}
-		ImGui::PopStyleVar(1);;
+		ImGui::PopStyleVar(1);
 
 		ImGui::SameLine();
 
@@ -1187,7 +1198,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		char key_id[32];
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_DragScrolling);
+		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
 
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
@@ -1246,8 +1257,63 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	    scrollWhenDraggingOnVoid();
 	    windowDragScroll();
 
-		ImGui::EndChildFrame();
+		ImGui::EndChild();
 		error_popup();
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar();
+}
+
+static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
+{
+	centerNextWindow();
+	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		{
+			ImGui::CloseCurrentPopup();
+			gamepad->save_mapping(map_system);
+			ImGui::EndPopup();
+			ImGui::PopStyleVar();
+			return;
+		}
+		ImGui::NewLine();
+		if (gamepad->is_virtual_gamepad())
+		{
+			header("Haptic");
+			OptionSlider("Power", config::VirtualGamepadVibration, 0, 60, "Haptic feedback power");
+		}
+		else if (gamepad->is_rumble_enabled())
+		{
+			header("Rumble");
+			int power = gamepad->get_rumble_power();
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Power", &power, 0, 100, "%d%%"))
+				gamepad->set_rumble_power(power);
+			ImGui::SameLine();
+			ShowHelpMarker("Rumble power");
+		}
+		if (gamepad->has_analog_stick())
+		{
+			header("Thumbsticks");
+			int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
+				gamepad->set_dead_zone(deadzone / 100.f);
+			ImGui::SameLine();
+			ShowHelpMarker("Minimum deflection to register as input");
+			int saturation = std::round(gamepad->get_saturation() * 100.f);
+			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			if (ImGui::SliderInt("Saturation", &saturation, 50, 200, "%d%%"))
+				gamepad->set_saturation(saturation / 100.f);
+			ImGui::SameLine();
+			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
+					"Values greater than 100% will saturate before full deflection of the thumbstick.");
+		}
+
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
@@ -1423,6 +1489,11 @@ static void gui_display_settings()
 
     if (ImGui::Button("Done", ScaledVec2(100, 30)))
     {
+    	if (uiUserScaleUpdated)
+    	{
+    		uiUserScaleUpdated = false;
+    		mainui_reinit();
+    	}
     	if (game_started)
     		gui_setState(GuiState::Commands);
     	else
@@ -1513,7 +1584,7 @@ static void gui_display_settings()
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
             				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
 
-            if (ImGui::BeginListBox("Content Location", size))
+            if (BeginListBox("Content Location", size, ImGuiWindowFlags_NavFlattened))
             {
             	int to_delete = -1;
                 for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -1544,6 +1615,9 @@ static void gui_display_settings()
 					return true;
                 });
 #endif
+                ImGui::SameLine();
+    			if (ImGui::Button("Rescan Content"))
+    				scanner.refresh();
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
@@ -1561,7 +1635,7 @@ static void gui_display_settings()
             size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-            if (ImGui::BeginListBox("Data Directory", size))
+            if (BeginListBox("Data Directory", size, ImGuiWindowFlags_NavFlattened))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_data_path("").c_str());
@@ -1570,7 +1644,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
 #else
-            if (ImGui::BeginListBox("Home Directory", size))
+            if (BeginListBox("Home Directory", size, ImGuiWindowFlags_NavFlattened))
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
@@ -1599,6 +1673,17 @@ static void gui_display_settings()
 					"Display game cover art in the game list.");
 			OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 					"Fetch cover images from TheGamesDB.net.");
+			if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
+				uiUserScaleUpdated = true;
+			if (uiUserScaleUpdated)
+			{
+				ImGui::SameLine();
+				if (ImGui::Button("Apply")) {
+					mainui_reinit();
+					uiUserScaleUpdated = false;
+				}
+			}
+
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -1667,23 +1752,23 @@ static void gui_display_settings()
 #ifdef __ANDROID__
 					if (gamepad->is_virtual_gamepad())
 					{
-						if (ImGui::Button("Edit"))
+						if (ImGui::Button("Edit Layout"))
 						{
 							vjoy_start_editing();
 							gui_setState(GuiState::VJoyEdit);
 						}
-						ImGui::SameLine();
-						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
-					else
 #endif
-					if (gamepad->is_rumble_enabled())
+					if (gamepad->is_rumble_enabled() || gamepad->has_analog_stick()
+#ifdef __ANDROID__
+							|| gamepad->is_virtual_gamepad()
+#endif
+							)
 					{
 						ImGui::SameLine(0, 16 * settings.display.uiScale);
-						int power = gamepad->get_rumble_power();
-						ImGui::SetNextItemWidth(150 * settings.display.uiScale);
-						if (ImGui::SliderInt("Rumble", &power, 0, 100))
-							gamepad->set_rumble_power(power);
+						if (ImGui::Button("Settings"))
+							ImGui::OpenPopup("Gamepad Settings");
+						gamepadSettingsPopup(gamepad);
 					}
 					ImGui::NextColumn();
 					ImGui::PopID();
@@ -2161,24 +2246,19 @@ static void gui_display_settings()
 			((renderApi == 0) || (renderApi == 3)) ? header("Video Routing (Spout)") : header("Video Routing (Only available with OpenGL or DirectX 11)");
 #endif
 			{
-#ifdef __APPLE__
-				if (OptionCheckbox("Send video content to another application", config::VideoRouting,
-								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
-#elif defined(_WIN32)
-				DisabledScope scope( !( (renderApi == 0) || (renderApi == 3)) );
-				if (OptionCheckbox("Send video content to another program", config::VideoRouting,
-								   "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"))
+#ifdef _WIN32
+				DisabledScope scope(!((renderApi == 0) || (renderApi == 3)));
 #endif
-				{
-					GraphicsContext::Instance()->initVideoRouting();
-				}
+				OptionCheckbox("Send video content to another program", config::VideoRouting,
+					"e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture");
+
 				{
 					DisabledScope scope(!config::VideoRouting);
 					OptionCheckbox("Scale down before sending", config::VideoRoutingScale, "Could increase performance when sharing a smaller texture, YMMV");
 					{
 						DisabledScope scope(!config::VideoRoutingScale);
 						static int vres = config::VideoRoutingVRes;
-						if( ImGui::InputInt("Output vertical resolution", &vres) )
+						if (ImGui::InputInt("Output vertical resolution", &vres))
 						{
 							config::VideoRoutingVRes = vres;
 						}
@@ -2320,39 +2400,61 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Advanced"))
+		if (ImGui::BeginTabItem("Network"))
 		{
+			ImGuiStyle& style = ImGui::GetStyle();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    header("CPU Mode");
-		    {
-				ImGui::Columns(2, "cpu_modes", false);
-				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
-					"Use the dynamic recompiler. Recommended in most cases");
+
+			header("Network Type");
+			{
+				DisabledScope scope(game_started);
+
+				int netType = 0;
+				if (config::GGPOEnable)
+					netType = 1;
+				else if (config::NetworkEnable)
+					netType = 2;
+				else if (config::BattleCableEnable)
+					netType = 3;
+				ImGui::Columns(4, "networkType", false);
+				ImGui::RadioButton("Disabled", &netType, 0);
 				ImGui::NextColumn();
-				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
-					"Use the interpreter. Very slow but may help in case of a dynarec problem");
-				ImGui::Columns(1, NULL, false);
+				ImGui::RadioButton("GGPO", &netType, 1);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Enable networking using GGPO");
+				ImGui::NextColumn();
+				ImGui::RadioButton("Naomi", &netType, 2);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Enable networking for supported Naomi and Atomiswave games");
+				ImGui::NextColumn();
+				ImGui::RadioButton("Battle Cable", &netType, 3);
+				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ShowHelpMarker("Emulate the Taisen (Battle) null modem cable for games that support it");
+				ImGui::Columns(1, nullptr, false);
 
-				OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
-						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
-						"%d MHz");
-		    }
-	    	ImGui::Spacing();
-		    header("Network");
-		    {
+				config::GGPOEnable = false;
+				config::NetworkEnable = false;
+				config::BattleCableEnable = false;
+				switch (netType) {
+				case 1:
+					config::GGPOEnable = true;
+					break;
+				case 2:
+					config::NetworkEnable = true;
+					break;
+				case 3:
+					config::BattleCableEnable = true;
+					break;
+				}
+			}
+			if (config::GGPOEnable || config::NetworkEnable || config::BattleCableEnable) {
+				ImGui::Spacing();
+				header("Configuration");
+			}
+			{
+				if (config::GGPOEnable)
 				{
-					DisabledScope scope(game_started);
-
-					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
-							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
-		    	}
-		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
-		    			"Enable networking using GGPO");
-		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
-		    			"Enable networking for supported Naomi games");
-		    	if (config::GGPOEnable)
-		    	{
-		    		config::NetworkEnable = false;
+					config::NetworkEnable = false;
 					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
 					char server_name[256];
@@ -2386,10 +2488,10 @@ static void gui_display_settings()
 						}
 					}
 					OptionCheckbox("Network Statistics", config::NetworkStats,
-			    			"Display network statistics on screen");
-		    	}
-		    	else if (config::NetworkEnable)
-		    	{
+							"Display network statistics on screen");
+				}
+				else if (config::NetworkEnable)
+				{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
 					if (!config::ActAsServer)
@@ -2407,17 +2509,65 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("The local UDP port to use");
 					config::LocalPort.set(atoi(localPort));
-		    	}
+				}
+				else if (config::BattleCableEnable)
+				{
+					char server_name[256];
+					strcpy(server_name, config::NetworkServer.get().c_str());
+					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
+					config::NetworkServer.set(server_name);
+					char localPort[256];
+					sprintf(localPort, "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
+				}
+			}
+			ImGui::Spacing();
+			header("Network Options");
+			{
 				OptionCheckbox("Enable UPnP", config::EnableUPnP, "Automatically configure your network router for netplay");
 				OptionCheckbox("Broadcast Digital Outputs", config::NetworkOutput, "Broadcast digital outputs and force-feedback state on TCP port 8000. "
 						"Compatible with the \"-output network\" MAME option. Arcade games only.");
+				{
+					DisabledScope scope(game_started);
+
+					OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
+							"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+				}
+			}
 #ifdef NAOMI_MULTIBOARD
-				ImGui::Text("Multiboard Screens:");
+			ImGui::Spacing();
+			header("Multiboard Screens");
+			{
 				//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
 				OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
 				ImGui::SameLine();
 				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
+			}
 #endif
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Advanced"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		    header("CPU Mode");
+		    {
+				ImGui::Columns(2, "cpu_modes", false);
+				OptionRadioButton("Dynarec", config::DynarecEnabled, true,
+					"Use the dynamic recompiler. Recommended in most cases");
+				ImGui::NextColumn();
+				OptionRadioButton("Interpreter", config::DynarecEnabled, false,
+					"Use the interpreter. Very slow but may help in case of a dynarec problem");
+				ImGui::Columns(1, NULL, false);
+
+				OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
+						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+						"%d MHz");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");
@@ -2650,7 +2800,7 @@ static void gui_display_content()
     ImGui::Unindent(10 * settings.display.uiScale);
 
     static ImGuiTextFilter filter;
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, 32 * settings.display.uiScale);
 	filter.Draw("Filter");
 #endif
@@ -2658,9 +2808,16 @@ static void gui_display_content()
     {
 #ifdef TARGET_UWP
     	void gui_load_game();
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
+				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
 			gui_load_game();
+		ImGui::SameLine();
+#elif defined(__SWITCH__)
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
+				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Exit").x);
+		if (ImGui::Button("Exit"))
+			dc_exit();
 		ImGui::SameLine();
 #else
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
@@ -2673,7 +2830,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		const int itemsPerLine = std::max<int>(ImGui::GetContentRegionMax().x / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = ImGui::GetContentRegionMax().x / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;

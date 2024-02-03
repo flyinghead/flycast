@@ -182,6 +182,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			|| retro_render_if->interface_version != RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION)
 		return false;
 	this->retro_render_if = retro_render_if;
+	GraphicsContext::instance = this;
 
 	instance = vk::Instance(retro_render_if->instance);
 	physicalDevice = vk::PhysicalDevice(retro_render_if->gpu);
@@ -316,7 +317,6 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	quadDrawer->Init(quadPipeline.get());
 	overlay = std::make_unique<VulkanOverlay>();
 	overlay->Init(quadPipelineWithAlpha.get());
-	textureCache = std::make_unique<TextureCache>();
 
 	return true;
 }
@@ -375,14 +375,14 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	cmdBuffer = commandPool.Allocate();
 	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	textureCache->SetCurrentIndex(currentImage);
-	overlay->Prepare(cmdBuffer, true, true, *textureCache);
+	overlay->Prepare(cmdBuffer, true, true);
 
 	if (colorAttachments[currentImage] == nullptr)
 	{
 		colorAttachments[currentImage] = std::make_unique<FramebufferAttachment>(physicalDevice, device);
 		colorAttachments[currentImage]->Init(extent.width, extent.height, vk::Format::eR8G8B8A8Unorm,
-				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+				"COLOR ATTACHMENT " + std::to_string(currentImage));
 		vk::ImageView imageView = colorAttachments[currentImage]->GetImageView();
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
 				imageView, extent.width, extent.height, 1);
@@ -404,6 +404,7 @@ void VulkanContext::endFrame()
 
 void VulkanContext::term()
 {
+	GraphicsContext::instance = nullptr;
 	if (device)
 	{
 		device.waitIdle();
@@ -424,7 +425,6 @@ void VulkanContext::term()
 	}
 	overlay->Term();
 	overlay.reset();
-	textureCache.reset();
 	framebuffers.clear();
 	colorAttachments.clear();
 	commandPool.Term();

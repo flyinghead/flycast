@@ -80,6 +80,26 @@ protected:
 
 	void input(u8 keycode, bool pressed, int modifier_keys)
 	{
+		const int port = maple_port();
+
+		// Checking if we're in-game with an emulated keyboard first,
+		// then check if the "Bypass Emulated Keyboard" hotkey is held and we're not in GUI,
+		// if so: send emu hotkeys only and return earlier.
+		if ((settings.platform.isConsole() && config::MapleMainDevices[port] == MDT_Keyboard)
+				|| (settings.platform.isArcade() && settings.input.keyboardGame))
+		{
+			if (keycode == input_mapper->get_button_code(0, EMU_BTN_BYPASS_KB))
+				bypass_kb = pressed && !gui_keyboard_captured();
+
+			if (bypass_kb)
+			{
+				set_maple_port(-1);
+				gamepad_btn_input(keycode, pressed);
+				set_maple_port(port);
+				return;
+			}
+		}
+
 		// Some OSes (Mac OS) don't distinguish left and right modifier keys so we set them both.
 		// But not for Alt since Right Alt is used as a special modifier keys on some international
 		// keyboards.
@@ -105,7 +125,6 @@ protected:
 			default:
 				break;
 		}
-		const int port = maple_port();
 		if (port >= 0 && port < (int)std::size(kb_shift))
 			kb_shift[port] = _modifier_keys;
 
@@ -157,9 +176,7 @@ protected:
 		else if (gui_is_open()
 				|| port == (int)std::size(kb_key)
 				|| (settings.platform.isConsole() && config::MapleMainDevices[port] != MDT_Keyboard)
-				|| (settings.platform.isNaomi() && settings.input.JammaSetup != JVS::Keyboard)
-				|| settings.platform.isAtomiswave()
-				|| settings.platform.isSystemSP())
+				|| (settings.platform.isArcade() && !settings.input.keyboardGame))
 			gamepad_btn_input(keycode, pressed);
 	}
 
@@ -472,4 +489,5 @@ private:
 
 	int _modifier_keys = 0;
 	u32 _kb_used = 0;
+	bool bypass_kb = false;
 };

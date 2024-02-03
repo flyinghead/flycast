@@ -18,7 +18,7 @@
 */
 #pragma once
 #include "rend/imgui_driver.h"
-#include "imgui/backends/imgui_impl_dx11.h"
+#include "imgui_impl_dx11.h"
 #include "dx11context.h"
 #include "rend/gui.h"
 #include <unordered_map>
@@ -30,7 +30,7 @@ public:
 		ImGui_ImplDX11_Init(device, deviceContext);
 	}
 
-	~DX11Driver() {
+	~DX11Driver() override {
 		ImGui_ImplDX11_Shutdown();
 	}
 

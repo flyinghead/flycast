@@ -17,7 +17,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "hopper.h"
-#include "network/ggpo.h"
 #include "input/gamepad.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
@@ -1287,6 +1286,7 @@ void init()
 
 void term()
 {
+	SCIFSerialPort::Instance().setPipe(nullptr);
 	delete hopper;
 	hopper = nullptr;
 }

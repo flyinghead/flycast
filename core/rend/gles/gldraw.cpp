@@ -4,7 +4,9 @@
 #include "rend/osd.h"
 #include "naomi2.h"
 #include "rend/transform_matrix.h"
+#ifdef LIBRETRO
 #include "postprocess.h"
+#endif
 
 #include <memory>
 
@@ -105,15 +107,16 @@ static void SetBaseClipping()
 template <u32 Type, bool SortingEnabled>
 void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
+	float trilinear_alpha;
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
+		trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			ShaderUniforms.trilinear_alpha = 1.f - ShaderUniforms.trilinear_alpha;
+			trilinear_alpha = 1.f - trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.f;
+		trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
@@ -121,7 +124,15 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	TextureCacheData *texture = (TextureCacheData *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
 								  clipmode == TileClipping::Inside,
@@ -134,21 +145,27 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
-								  ShaderUniforms.trilinear_alpha != 1.f,
+								  trilinear_alpha != 1.f,
 								  gpuPalette,
 								  gp->isNaomi2(),
 								  ShaderUniforms.dithering);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
-		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
-	if (gpuPalette)
+		glUniform1f(CurrentShader->trilinear_alpha, trilinear_alpha);
+	if (gpuPalette != 0)
 	{
+		int paletteIndex;
 		if (gp->tcw.PixelFmt == PixelPal4)
-			ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
+			paletteIndex = gp->tcw.PalSelect << 4;
 		else
-			ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
-		glUniform1i(CurrentShader->palette_index, ShaderUniforms.palette_index);
+			paletteIndex = (gp->tcw.PalSelect >> 4) << 8;
+		glUniform1i(CurrentShader->palette_index, paletteIndex);
+		if (gpuPalette == 2 && CurrentShader->texSize != -1)
+		{
+			float texSize[] { (float)texture->width, (float)texture->height };
+			glUniform2fv(CurrentShader->texSize, 1, texSize);
+		}
 	}
 
 	if (clipmode == TileClipping::Inside)
@@ -178,13 +195,14 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		bool nearest_filter;
-		if (config::TextureFiltering == 0) {
-			nearest_filter = gp->tsp.FilterMode == 0 || gpuPalette;
-		} else if (config::TextureFiltering == 1) {
+		if (gpuPalette != 0)
 			nearest_filter = true;
-		} else {
+		else if (config::TextureFiltering == 0)
+			nearest_filter = gp->tsp.FilterMode == 0;
+		else if (config::TextureFiltering == 1)
+			nearest_filter = true;
+		else
 			nearest_filter = false;
-		}
 
 		bool mipmapped = texture->IsMipmapped();
 
@@ -224,13 +242,9 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-	{
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
-	}
-	else
-		glcache.Disable(GL_BLEND);
+	// Opaque polygons support blending in list continuations (wild guess)
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
@@ -617,6 +631,7 @@ void DrawStrips()
 
 void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	initVideoRoutingFrameBuffer();
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
 	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
@@ -661,6 +676,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	DrawOSD(false);
 	frameRendered = true;
+	renderVideoRouting();
 	restoreCurrentFramebuffer();
 }
 
@@ -828,11 +844,10 @@ static void updateVmuTexture(int vmu_screen_number)
 
 void DrawVmuTexture(u8 vmu_screen_number, int width, int height)
 {
-	float vmu_padding = 8.f * config::RenderResolution / 480.f;
-	float x = vmu_padding;
-	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio * config::RenderResolution / 480.f;
-	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * config::RenderResolution / 480.f;
+	float x = 8.f * width / 640.f;
+	float y = 8.f * height / 480.f;
+	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio * width / 640.f;
+	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * height / 480.f;
 
 	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
 		updateVmuTexture(vmu_screen_number);

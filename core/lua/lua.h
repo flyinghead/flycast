@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "build.h"
+#pragma once
 #include <string>
 
 namespace lua

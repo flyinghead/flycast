@@ -34,8 +34,7 @@
 #undef ERROR_LOG
 #define ERROR_LOG INFO_LOG
 #else
-#include <cmrc/cmrc.hpp>
-CMRC_DECLARE(flycast);
+#include "oslib/resources.h"
 #endif
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
@@ -43,32 +42,30 @@ CMRC_DECLARE(flycast);
 namespace printer
 {
 
+static u8 reverseBits(u8 b)
+{
+   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+   return b;
+}
+
 class BitmapWriter
 {
 public:
 	BitmapWriter(int printerWidth) : printerWidth(printerWidth)
 	{
 #ifndef STANDALONE_TEST
-		try {
-			cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-			cmrc::file fontFile = fs.open("fonts/printer_ascii8x16.bin");
-			ascii8x16 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_ascii12x24.bin");
-			ascii12x24 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_kanji16x16.bin");
-			kanji16x16 = (const u8 *)fontFile.begin();
-			fontFile = fs.open("fonts/printer_kanji24x24.bin");
-			kanji24x24 = (const u8 *)fontFile.begin();
-		} catch (const std::system_error& e) {
-			ERROR_LOG(NAOMI, "Failed to load a printer font: %s", e.what());
-			throw;
-		}
-
+		size_t size;
+		ascii8x16 = resource::load("fonts/printer_ascii8x16.bin", size);
+		ascii12x24 = resource::load("fonts/printer_ascii12x24.bin", size);
+		kanji16x16 = resource::load("fonts/printer_kanji16x16.bin", size);
+		kanji24x24 = resource::load("fonts/printer_kanji24x24.bin", size);
 #else
-		loadFont("printer_ascii8x16.bin", (u8 **)&ascii8x16);
-		loadFont("printer_ascii12x24.bin", (u8 **)&ascii12x24);
-		loadFont("printer_kanji16x16.bin", (u8 **)&kanji16x16);
-		loadFont("printer_kanji24x24.bin", (u8 **)&kanji24x24);
+		ascii8x16 = loadFont("printer_ascii8x16.bin");
+		ascii12x24 = loadFont("printer_ascii12x24.bin");
+		kanji16x16 = loadFont("printer_kanji16x16.bin");
+		kanji24x24 = loadFont("printer_kanji24x24.bin");
 #endif
 	}
 
@@ -175,9 +172,9 @@ public:
 		printBufferEmpty = false;
 	}
 
-	void printImage(int hpos, int width, int height, const u8 *data)
+	void printImage(int hpos, int width, int height, const u8 *data, bool msb)
 	{
-		//printf("printImage: hpos %d w %d h %d\n", hpos, width, height);
+		//printf("printImage: hpos %d w %d h %d msb %d\n", hpos, width, height, msb);
 		const int savePenx = penx;
 		penx = hpos;
 		u8 *pen = getPenPosition(height);
@@ -185,7 +182,7 @@ public:
 		{
 			for (int x = 0; x < width; x++)
 			{
-				bool b = data[x / 8] & (msbBitmap ? 0x80 >> (x % 8) : 1 << (x % 8));
+				bool b = data[x / 8] & (msb ? 0x80 >> (x % 8) : 1 << (x % 8));
 				if (b)
 				{
 					if (xorMode)
@@ -233,21 +230,34 @@ public:
 	void setDoubleHeight(bool enabled) {
 		doubleHeight = enabled;
 	}
+	bool getBitmapMSB() const {
+		return msbBitmap;
+	}
 	void setBitmapMSB(bool enabled) {
 		msbBitmap = enabled;
 	}
 	void setXorMode(bool enabled) {
 		xorMode = enabled;
 	}
+	void setMaxCharWidth(int width) {
+		maxCharWidth = width;
+	}
 	void setCustomChar(char code, int width, int height, const u8 *data)
 	{
 		if ((u8)code >= customChars.size())
 			customChars.resize(code + 1);
 		CustomChar& cchar = customChars[code];
-		cchar.width = std::min(width, 48);
+		cchar.width = std::min(width, maxCharWidth);
 		cchar.height = height;
 		cchar.data.resize((cchar.width + 7) / 8 * height);
-		if (cchar.width == width) {
+		if (msbBitmap)
+		{
+			int widthBytes = (cchar.width + 7) / 8;
+			for (int y = 0; y < height; y++)
+				for (int x = 0; x < widthBytes; x++)
+					cchar.data[widthBytes * y + x] = reverseBits(data[(width + 7) / 8 * y + x]);
+		}
+		else if (cchar.width == width) {
 			memcpy(cchar.data.data(), data, cchar.data.size());
 		}
 		else
@@ -269,6 +279,20 @@ public:
 			ruledLine.resize(printerWidth);
 		for (int d = from; d <= to && d < (int)ruledLine.size(); d++)
 			ruledLine[d] = 0xff;
+	}
+	void drawRuledPattern(u8 n1, u8 n2)
+	{
+		if (ruledLine.empty())
+			ruledLine.resize(printerWidth);
+		u8 pattern[16];
+		for (int i = 0; i < 8; i++)
+		{
+			u8 mask = msbBitmap ? 0x80 >> i : 1 << i;
+			pattern[i] = (n1 & mask) ? 0xff : 0;
+			pattern[8 + i] = (n2 & mask) ? 0xff : 0;
+		}
+		for (int d = 0; d < (int)ruledLine.size(); d++)
+			ruledLine[d] = pattern[d % std::size(pattern)];
 	}
 	void clearRuledLine() {
 		ruledLine.clear();
@@ -322,14 +346,9 @@ public:
 			u8 *data = nullptr;
 			int x, y, comp;
 #ifndef STANDALONE_TEST
-			try {
-				cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-				cmrc::file templateFile = fs.open("picture/f355_print_template.png");
-				const u8 *fileData = (const u8 *)templateFile.begin();
-				data = stbi_load_from_memory(fileData, templateFile.size(), &x, &y, &comp, STBI_rgb_alpha);
-			} catch (const std::system_error& e) {
-				ERROR_LOG(NAOMI, "Failed to load the printer template: %s", e.what());
-			}
+			size_t size;
+			std::unique_ptr<u8[]> fileData = resource::load("picture/f355_print_template.png", size);
+			data = stbi_load_from_memory(fileData.get(), size, &x, &y, &comp, STBI_rgb_alpha);
 #else
 			FILE *f = fopen("f355_print_template.png", "rb");
 			if (f != nullptr)
@@ -498,12 +517,12 @@ private:
 		int glyphSize;
 		if (bigFont)
 		{
-			glyph = ascii12x24;
+			glyph = ascii12x24.get();
 			glyphSize = 2 * 24;
 		}
 		else
 		{
-			glyph = ascii8x16;
+			glyph = ascii8x16.get();
 			glyphSize = 16;
 		}
 		if ((uint8_t)c < ' ')
@@ -518,12 +537,12 @@ private:
 		int glyphSize;
 		if (bigFont)
 		{
-			glyph = kanji24x24;
+			glyph = kanji24x24.get();
 			glyphSize = 3 * 24;
 		}
 		else
 		{
-			glyph = kanji16x16;
+			glyph = kanji16x16.get();
 			glyphSize = 2 * 16;
 		}
 		if (c == ' ')
@@ -549,20 +568,20 @@ private:
 		page.insert(page.end(), printerWidth * count, 0);
 	}
 
-	void loadFont(const char *fname, u8 **data)
+	std::unique_ptr<u8[]> loadFont(const char *fname)
 	{
 		FILE *f = fopen(fname, "rb");
-		if (!f)
+		if (!f) {
 			perror(fname);
-		else
-		{
-			fseek(f, 0, SEEK_END);
-			size_t sz = ftell(f);
-			fseek(f, 0, SEEK_SET);
-			*data = (u8 *)malloc(sz);
-			fread(*data, sz, 1, f);
-			fclose(f);
+			return nullptr;
 		}
+		fseek(f, 0, SEEK_END);
+		size_t sz = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		std::unique_ptr<u8[]> data = std::make_unique<u8[]>(sz);
+		fread(data.get(), sz, 1, f);
+		fclose(f);
+		return data;
 	}
 
 	int printerWidth = 920;
@@ -590,16 +609,17 @@ private:
 		std::vector<u8> data;
 	};
 	std::vector<CustomChar> customChars;
+	int maxCharWidth = 48;	// depends on the printer type? 48 for tduno, 64 for ntvmys
 
 	std::vector<u8> ruledLine;
 	bool ruledLineMode = false;
 	int underline = 0;
 	int maxUnderline = 0;
 
-	const u8 *ascii8x16;
-	const u8 *ascii12x24;
-	const u8 *kanji16x16;
-	const u8 *kanji24x24;
+	std::unique_ptr<u8[]> ascii8x16;
+	std::unique_ptr<u8[]> ascii12x24;
+	std::unique_ptr<u8[]> kanji16x16;
+	std::unique_ptr<u8[]> kanji24x24;
 };
 
 //
@@ -609,6 +629,10 @@ private:
 class ThermalPrinter
 {
 public:
+	void setMaxCharWidth(int width) {
+		getWriter().setMaxCharWidth(width);
+	}
+
 	void print(char c)
 	{
 		if (expectedDataBytes > 0)
@@ -727,6 +751,7 @@ public:
 		{
 			ser << bm.width;
 			ser << bm.height;
+			ser << bm.msb;
 			ser << (u32)bm.data.size();
 			ser.serialize(bm.data.data(), bm.data.size());
 		}
@@ -761,6 +786,10 @@ public:
 		{
 			deser >> bm.width;
 			deser >> bm.height;
+			if (deser.version() >= Deserializer::V48)
+				deser >> bm.msb;
+			else
+				bm.msb = false;
 			deser >> size;
 			bm.data.resize(size);
 			deser.deserialize(bm.data.data(), bm.data.size());
@@ -897,6 +926,8 @@ private:
 			break;
 		case 'T':	// Create bitmap: n w yl yh [data...] where n is the bitmap id [0, 255], w is the width in bytes [1, 127],
 					// yl + yh * 256 is the number of lines [1, 1023]
+			expectedDataBytes = 4;
+			break;
 		case 'm':	// Mark position detection: s nl nh where n is the max feed amount until detection [0, 65535]
 					// s & 3 == 0: Feed the paper in the forward direction until it passes the marking position.
 					// s & 3 == 1: Feed the paper in the forward direction to the marking position.
@@ -958,15 +989,15 @@ private:
 				const size_t idx = (u8)dataBytes[0];
 				const int hpos = (u8)dataBytes[1] * 8;
 				if (idx < bitmaps.size())
-					getWriter().printImage(hpos, bitmaps[idx].width, bitmaps[idx].height, &bitmaps[idx].data[0]);
+					getWriter().printImage(hpos, bitmaps[idx].width, bitmaps[idx].height, &bitmaps[idx].data[0], bitmaps[idx].msb);
 			}
 			break;
 		case 'T':
 			{
 				// bitmap
-				if (expectedDataBytes == 3)
+				if (expectedDataBytes == 4)
 				{
-					expectedDataBytes += (u8)dataBytes[1] * (u8)dataBytes[2];
+					expectedDataBytes += ((u8)dataBytes[1] & 0x7f) * std::min((u8)dataBytes[2] | ((u8)dataBytes[3] << 8), 1023);
 				}
 				else
 				{
@@ -981,6 +1012,7 @@ private:
 						bitmaps.resize(idx + 1);
 					bitmaps[idx].width = w;
 					bitmaps[idx].height = h;
+					bitmaps[idx].msb = getWriter().getBitmapMSB();
 					std::swap(bitmaps[idx].data, bitmap);
 				}
 			}
@@ -1040,6 +1072,14 @@ private:
 				state = Default;
 			getWriter().clearRuledLine();
 			break;
+		case 'D': // Dot fill. Writes "1" (black) at dot position specified by (nh * 256 + nl) * dotpitch in the selected ruled line buffer.
+				  // nl[0-255] nh[0-3]
+			expectedDataBytes = 2;
+			break;
+		case 'F': // Pattern fill. Writes one line to the selected ruled line buffer using the data pattern specified by n1 and n2.
+				  // pattern is arranged horizontally from left to right. (Each byte obey image lsb/msb selection ESC =)
+			expectedDataBytes = 2;
+			break;
 		case 'P': // Prints the data in the print buffer and prints 1 line of the ruled line buffer
 			if (!dc3Lock)
 				state = Default;
@@ -1062,6 +1102,12 @@ private:
 	{
 		switch (curCommand)
 		{
+		case 'D':
+			getWriter().drawRuledLine((u8)dataBytes[0] + (u8)dataBytes[1]  * 256, (u8)dataBytes[0] + (u8)dataBytes[1]  * 256);
+			break;
+		case 'F':
+			getWriter().drawRuledPattern((u8)dataBytes[0], (u8)dataBytes[1]);
+			break;
 		case 'L':
 			getWriter().drawRuledLine((u8)dataBytes[0] + (u8)dataBytes[1]  * 256, (u8)dataBytes[2] + (u8)dataBytes[3] * 256);
 			break;
@@ -1087,6 +1133,7 @@ private:
 	{
 		int width;
 		int height;
+		bool msb;
 		std::vector<u8> data;
 	};
 	std::vector<Bitmap> bitmaps;
@@ -1107,6 +1154,8 @@ static std::unique_ptr<ThermalPrinter> printer;
 void init()
 {
 	printer = std::make_unique<ThermalPrinter>();
+	if (settings.content.gameId == "MIRAI YOSOU STUDIO")
+		printer->setMaxCharWidth(64);
 }
 
 void term()
@@ -1163,6 +1212,7 @@ int main(int argc, char *argv[])
 	}
 	settings.content.gameId = "F355 CHALLENGE";
 	printer::ThermalPrinter printer;
+//	printer.setMaxCharWidth(64);
 	for (;;)
 	{
 		int c = fgetc(f);

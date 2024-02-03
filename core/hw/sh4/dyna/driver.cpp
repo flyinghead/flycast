@@ -8,8 +8,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
 
-#include <ctime>
-
 #include "blockmanager.h"
 #include "ngen.h"
 #include "decoder.h"

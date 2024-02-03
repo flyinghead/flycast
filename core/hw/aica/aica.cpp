@@ -13,14 +13,6 @@ namespace aica
 
 #define SH4_IRQ_BIT (1 << (holly_SPU_IRQ & 31))
 
-CommonData_struct* CommonData;
-DSPData_struct* DSPData;
-InterruptInfo* MCIEB;
-InterruptInfo* MCIPD;
-InterruptInfo* MCIRE;
-InterruptInfo* SCIEB;
-InterruptInfo* SCIPD;
-InterruptInfo* SCIRE;
 std::deque<u8> midiSendBuffer;
 
 //Interrupts
@@ -103,8 +95,8 @@ static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
 
 void timeStep()
 {
-	for (std::size_t i = 0; i < std::size(timers); i++)
-		timers[i].StepTimer(1);
+	for (auto& timer : timers)
+		timer.StepTimer(1);
 
 	SCIPD->SAMPLE_DONE = 1;
 	MCIPD->SAMPLE_DONE = 1;
@@ -257,21 +249,6 @@ void init()
 {
 	initMem();
 	initRtc();
-
-	static_assert(sizeof(*CommonData) == 0x508, "Invalid CommonData size");
-	static_assert(sizeof(*DSPData) == 0x15C8, "Invalid DSPData size");
-
-	CommonData=(CommonData_struct*)&aica_reg[0x2800];
-	DSPData=(DSPData_struct*)&aica_reg[0x3000];
-	//slave cpu (arm7)
-
-	SCIEB=(InterruptInfo*)&aica_reg[0x289C];
-	SCIPD=(InterruptInfo*)&aica_reg[0x289C+4];
-	SCIRE=(InterruptInfo*)&aica_reg[0x289C+8];
-	//Main cpu (sh4)
-	MCIEB=(InterruptInfo*)&aica_reg[0x28B4];
-	MCIPD=(InterruptInfo*)&aica_reg[0x28B4+4];
-	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc::init();
 	if (aica_schid == -1)

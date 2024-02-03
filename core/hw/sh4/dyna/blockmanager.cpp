@@ -237,6 +237,7 @@ void bm_Reset()
 	protected_blocks = 0;
 	unprotected_blocks = 0;
 
+#ifndef __SWITCH__
 	if (addrspace::virtmemEnabled())
 	{
 		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
@@ -255,6 +256,7 @@ void bm_Reset()
 		}
 	}
 	else
+#endif
 	{
 		virtmem::region_unlock(&mem_b[0], RAM_SIZE);
 	}
@@ -360,9 +362,8 @@ void bm_WriteBlockMap(const std::string& file)
 	if (f)
 	{
 		INFO_LOG(DYNAREC, "Writing block map !");
-		for (auto& it : blkmap)
+		for (const auto& [_, block] : blkmap)
 		{
-			RuntimeBlockInfoPtr& block = it.second;
 			fprintf(f, "block: %d:%08X:%p:%d:%d:%d\n", block->BlockType, block->addr, block->code, block->host_code_size, block->guest_cycles, block->guest_opcodes);
 			for(size_t j = 0; j < block->oplist.size(); j++)
 				fprintf(f,"\top: %zd:%d:%s\n", j, block->oplist[j].guest_offs, block->oplist[j].dissasm().c_str());
@@ -374,9 +375,8 @@ void bm_WriteBlockMap(const std::string& file)
 
 void sh4_jitsym(FILE* out)
 {
-	for (const auto& it : blkmap)
+	for (const auto& [_, block] : blkmap)
 	{
-		const RuntimeBlockInfoPtr& block = it.second;
 		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
 	}
 }
@@ -485,6 +485,7 @@ void bm_RamWriteAccess(u32 addr)
 
 u32 bm_getRamOffset(void *p)
 {
+#ifndef __SWITCH__
 	if (addrspace::virtmemEnabled())
 	{
 		if ((u8 *)p < addrspace::ram_base || (u8 *)p >= addrspace::ram_base + 0x20000000)
@@ -495,6 +496,7 @@ u32 bm_getRamOffset(void *p)
 		return addr & RAM_MASK;
 	}
 	else
+#endif
 	{
 		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
 			return -1;
@@ -548,9 +550,8 @@ void print_blocks()
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}
 
-	for (auto it : blkmap)
+	for (const auto& [_, blk] : blkmap)
 	{
-		RuntimeBlockInfoPtr blk = it.second;
 		if (f)
 		{
 			fprintf(f,"block: %p\n",blk.get());
