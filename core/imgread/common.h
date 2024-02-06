@@ -112,18 +112,6 @@ struct Disc
 	DiscType type;
 	std::string catalog;
 
-	bool ReadSector(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
-	{
-		for (size_t i=tracks.size();i-->0;)
-		{
-			*subcode_type=SUBFMT_NONE;
-			if (tracks[i].Read(FAD,dst,sector_type,subcode,subcode_type))
-				return true;
-		}
-
-		return false;
-	}
-
 	void ReadSectors(u32 FAD, u32 count, u8 *dst, u32 fmt, LoadProgress *progress = nullptr);
 
 	virtual ~Disc() 
@@ -211,6 +199,9 @@ struct Disc
 		GetSessionInfo(ses, ses[2]);
 		return (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
 	}
+
+private:
+	bool readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type);
 };
 
 Disc* OpenDisc(const std::string& path, std::vector<u8> *digest = nullptr);

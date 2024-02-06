@@ -214,8 +214,7 @@ void libGDR_GetToc(u32* to, DiskArea area)
 	to[100] = createTrackInfoFirstLast(disc->tracks[last_track - 1], last_track);
 
 	if (disc->type == GdRom && area == SingleDensity)
-		// use smaller LEADOUT
-		to[101] = createTrackInfo(disc->LeadOut, 13085);
+		to[101] = createTrackInfo(disc->LeadOut, disc->tracks[1].EndFAD + 1);
 	else
 		to[101] = createTrackInfo(disc->LeadOut, disc->LeadOut.StartFAD);
 
@@ -241,6 +240,18 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return CdRom;
 }
 
+bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type)
+{
+	for (size_t i = tracks.size(); i-- > 0; )
+	{
+		*subcode_type = SUBFMT_NONE;
+		if (tracks[i].Read(FAD, dst, sector_type, subcode, subcode_type))
+			return true;
+	}
+
+	return false;
+}
+
 void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
 {
 	u8 temp[2448];
@@ -256,7 +267,7 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 			progress->label = "Loading...";
 			progress->progress = (float)i / count;
 		}
-		if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
+		if (readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 		{
 			//TODO: Proper sector conversions
 			if (secfmt==SECFMT_2352)
