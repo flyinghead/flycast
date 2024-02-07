@@ -125,7 +125,18 @@ static bool doDiscSwap(const std::string& path);
 bool InitDrive(const std::string& path)
 {
 	bool rc = doDiscSwap(path);
-	gd_setdisc();
+	if (rc && disc == nullptr)
+	{
+		// Drive is busy
+		sns_asc = 4;
+		sns_ascq = 1;
+		sns_key = 2;
+		SecNumber.Status = GD_BUSY;
+		sh4_sched_request(schedId, SH4_MAIN_CLOCK);
+	}
+	else {
+		gd_setdisc();
+	}
 
 	return rc;
 }
