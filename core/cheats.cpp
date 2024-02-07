@@ -505,6 +505,12 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000);
 			cheats.back().builtIn = true;
 		}
+		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M")
+		{
+			setActive(true);
+			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009); // nop (shift by 8 bits instead of 10)
+			cheats.back().builtIn = true;
+		}
 	}
 	if (config::WidescreenGameHacks)
 	{
