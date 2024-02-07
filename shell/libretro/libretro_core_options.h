@@ -190,20 +190,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #endif
    },
    {
-      CORE_OPTION_NAME "_force_wince",
-      "Force Windows CE Mode",
-      NULL,
-      "Enable full MMU (Memory Management Unit) emulation and other settings for Windows CE games.",
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
       CORE_OPTION_NAME "_allow_service_buttons",
       "Allow Arcade Service Buttons",
       NULL,
