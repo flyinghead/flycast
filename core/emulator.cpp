@@ -47,7 +47,6 @@
 #include <chrono>
 
 settings_t settings;
-constexpr float WINCE_DEPTH_SCALE = 0.01f;
 
 static void loadSpecialSettings()
 {
@@ -56,13 +55,6 @@ static void loadSpecialSettings()
 
 	if (settings.platform.isConsole())
 	{
-		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
-			config::ForceWindowsCE.override(true);
-		}
-
 		// Tony Hawk's Pro Skater 2
 		if (prod_id == "T13008D 05" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
@@ -172,9 +164,7 @@ static void loadSpecialSettings()
 			config::ExtraDepthScale.override(1e26f);
 		}
 		// Test Drive V-Rally
-		else if (prod_id == "T15110N" || prod_id == "T15105D 50"
-				// Caesars Palace 2000
-				|| prod_id == "T-12504N" || prod_id == "12502D-50")
+		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
@@ -283,7 +273,8 @@ static void loadSpecialSettings()
 			config::Broadcast.override(0);
 		}
 		else if (prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-			|| prod_id == "T-8112D-50")	// South Park Rally (EU)
+			|| prod_id == "T-8112D-50"		// South Park Rally (EU)
+			|| prod_id == "T7014D  50")		// Super Runabout (EU)
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
@@ -726,8 +717,6 @@ void loadGameSpecificSettings()
 	// Reload per-game settings
 	config::Settings::instance().load(true);
 
-	if (config::ForceWindowsCE && !config::ExtraDepthScale.isReadOnly())
-		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
 	if (config::GGPOEnable)
 		config::Sh4Clock.override(200);
 }

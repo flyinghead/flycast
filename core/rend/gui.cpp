@@ -2573,8 +2573,6 @@ static void gui_display_settings()
 		    header("Other");
 		    {
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
-	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
-	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
 	            		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID

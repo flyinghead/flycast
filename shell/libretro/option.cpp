@@ -32,7 +32,6 @@ Option<int> Cable("", 3);									// TV Composite
 Option<int> Region(CORE_OPTION_NAME "_region", 1);			// USA
 Option<int> Broadcast(CORE_OPTION_NAME "_broadcast", 0);	// NTSC
 Option<int> Language(CORE_OPTION_NAME "_language", 1);		// English
-Option<bool> ForceWindowsCE(CORE_OPTION_NAME "_force_wince");
 Option<bool> AutoLoadState("");
 Option<bool> AutoSaveState("");
 Option<int, false> SavestateSlot("");

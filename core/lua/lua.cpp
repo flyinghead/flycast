@@ -129,7 +129,6 @@ CONFIG_ACCESSORS(Cable);
 CONFIG_ACCESSORS(Region);
 CONFIG_ACCESSORS(Broadcast);
 CONFIG_ACCESSORS(Language);
-CONFIG_ACCESSORS(ForceWindowsCE);
 CONFIG_ACCESSORS(AutoLoadState);
 CONFIG_ACCESSORS(AutoSaveState);
 CONFIG_ACCESSORS(SavestateSlot);
@@ -505,7 +504,6 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(UseReios, bool)
 					CONFIG_PROPERTY(FastGDRomLoad, bool)
 					CONFIG_PROPERTY(OpenGlChecks, bool)
-					CONFIG_PROPERTY(ForceWindowsCE, bool)
 				.endNamespace()
 
 				.beginNamespace("network")

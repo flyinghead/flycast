@@ -31,7 +31,6 @@ protected:
 			die("addrspace::reserve failed");
 		emu.init();
 		dc_reset(true);
-		config::ForceWindowsCE = true;
 		CCN_MMUCR.AT = 1;
 		MMU_reset();
 	}

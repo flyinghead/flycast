@@ -1605,8 +1605,9 @@ void FillBGP(TA_context* ctx)
 		vertex_ptr += strip_vs;
 	}
 
-	f32 bg_depth = ISP_BACKGND_D.f;
-	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
+	// Apply a negative 1e-6 bias since the background plane is clipping too much
+	// (Fixes Xtreme Sports, Blue Stinger (JP) and many WinCE games using yuv FMV)
+	float bg_depth = std::max(ISP_BACKGND_D.f - 1e-6f, 1e-11f);
 	cv[0].z = bg_depth;
 	cv[1].z = bg_depth;
 	cv[2].z = bg_depth;
