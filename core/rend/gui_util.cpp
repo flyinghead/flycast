@@ -517,7 +517,7 @@ bool OptionSlider(const char *name, config::Option<int, PerGameOption>& option, 
 template bool OptionSlider(const char *name, config::Option<int, true>& option, int min, int max, const char *help, const char *format);
 template bool OptionSlider(const char *name, config::Option<int, false>& option, int min, int max, const char *help, const char *format);
 
-bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help)
+bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help, const char *format)
 {
 	const float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
@@ -526,7 +526,15 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	std::string id = "##" + std::string(name);
 	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
-	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0));
+	int size = snprintf(nullptr, 0, format, (int)option);
+	std::string value;
+	if (size >= 0)
+	{
+		value.resize(size + 1);
+		snprintf(value.data(), size + 1, format, (int)option);
+		value.resize(size);
+	}
+	ImGui::ButtonEx((value + id).c_str(), ImVec2(width, 0));
 	ImGui::EndDisabled();
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
