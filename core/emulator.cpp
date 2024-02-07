@@ -157,12 +157,6 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
 		}
-		// Samurai Shodown 6 dc port
-		else if (prod_id == "T0002M")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1e26f);
-		}
 		// Test Drive V-Rally
 		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
 		{
@@ -297,11 +291,6 @@ static void loadSpecialSettings()
 	}
 	else if (settings.platform.isArcade())
 	{
-		if (prod_id == "SAMURAI SPIRITS 6")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1e26f);
-		}
 		if (prod_id == "COSMIC SMASH IN JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
