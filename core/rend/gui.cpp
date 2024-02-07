@@ -650,7 +650,7 @@ static void gui_display_commands()
 	ImGui::Columns(1, nullptr, false);
 
 	// Exit
-	if (ImGui::Button("Exit", ScaledVec2(300, 50)
+	if (ImGui::Button(commandLineStart ? "Exit" : "Close Game", ScaledVec2(300, 50)
 			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
 	{
 		gui_stop_game();
@@ -2166,7 +2166,7 @@ static void gui_display_settings()
                 ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
-		    			"Stretch the screen horizontally");
+		    			"Stretch the screen horizontally", "%d%%");
 		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
 		    			"Number of frames to skip between two actually rendered frames");
 		    }
@@ -2232,7 +2232,7 @@ static void gui_display_settings()
 		    {
 #ifdef _OPENMP
 		    	OptionArrowButtons("Texture Upscaling", config::TextureUpscale, 1, 8,
-		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
+		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games", "x%d");
 		    	OptionSlider("Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
 		    			"Textures larger than this dimension squared will not be upscaled");
 		    	OptionArrowButtons("Max Threads", config::MaxThreads, 1, 8,
@@ -2295,7 +2295,7 @@ static void gui_display_settings()
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
             OptionCheckbox("Enable VMU Sounds", config::VmuSound, "Play VMU beeps when enabled.");
 
-			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
+			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level", "%d%%"))
 			{
 				config::AudioVolume.calcDbPower();
 			};
