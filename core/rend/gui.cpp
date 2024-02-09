@@ -570,7 +570,7 @@ static void gui_display_commands()
     	{
 			char cardBuf[64] {};
 			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
-			if (ImGui::InputText("Card", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr))
+			if (ImGui::InputText("Card", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
 				card_reader::barcodeSetCard(cardBuf);
     	}
 

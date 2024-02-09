@@ -268,7 +268,8 @@ static void loadSpecialSettings()
 			config::UseReios.override(false);
 		}
 		else if (prod_id == "T17708N"	// Stupid Invaders (US)
-			|| prod_id == "T17711D")	// Stupid Invaders (EU)
+			|| prod_id == "T17711D"		// Stupid Invaders (EU)
+			|| prod_id == "T46509M")	// Suika (JP)
 		{
 			NOTICE_LOG(BOOT, "Forcing HLE BIOS");
 			config::UseReios.override(true);
@@ -317,7 +318,9 @@ static void loadSpecialSettings()
 			config::TranslucentPolygonDepthMask.override(true);
 		}
 		if (prod_id == "BEACH SPIKERS JAPAN"
-				|| prod_id == "CHOCO MARKER")
+				|| prod_id == "CHOCO MARKER"
+				|| prod_id == "LOVE AND BERRY USA VER1.003"		// lovebero
+				|| prod_id == "LOVE AND BERRY USA VER2.000")	// lovebery
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
