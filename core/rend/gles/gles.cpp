@@ -49,7 +49,7 @@ const char* ShaderCompatSource = R"(
 #if TARGET_GL == GLES3						
 out highp vec4 FragColor;					
 #define gl_FragColor FragColor				
-#define FOG_CHANNEL a						
+#define FOG_CHANNEL r						
 #elif TARGET_GL == GL3						
 out highp vec4 FragColor;					
 #define gl_FragColor FragColor				
@@ -554,6 +554,7 @@ void findGLVersion()
 		    	gl.border_clamp_supported = true;
 			gl.prim_restart_supported = false;
 			gl.prim_restart_fixed_supported = true;
+			gl.single_channel_format = GL_RED;
 		}
 		else
 		{
@@ -562,8 +563,8 @@ void findGLVersion()
 			gl.index_type = GL_UNSIGNED_SHORT;
 			gl.prim_restart_supported = false;
 			gl.prim_restart_fixed_supported = false;
+			gl.single_channel_format = GL_ALPHA;
 		}
-		gl.single_channel_format = GL_ALPHA;
 		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
 		if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
 			gl.GL_OES_packed_depth_stencil_supported = true;
