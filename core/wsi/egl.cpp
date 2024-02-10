@@ -39,7 +39,12 @@ bool EGLGraphicsContext::makeCurrent()
 
 bool EGLGraphicsContext::init()
 {
-	gladLoaderLoadEGL(NULL);
+	int version = gladLoaderLoadEGL(EGL_NO_DISPLAY);
+	if (version == 0) {
+		ERROR_LOG(RENDERER, "Failed to load libEGL.so");
+		return false;
+	}
+	NOTICE_LOG(RENDERER, "EGL version %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
 	//try to get a display
 	display = eglGetDisplay((EGLNativeDisplayType)display);
