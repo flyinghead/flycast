@@ -430,39 +430,26 @@ void CheatManager::reset(const std::string& gameId)
 		if (!cheatFile.empty())
 			loadCheatFile(cheatFile);
 #endif
+		size_t cheatCount = cheats.size();
 		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
 		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0);
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check", true, 32, 0x00067b04, 1); // 1 skips initNetwork()
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check 2", true, 16, 0x0009acc8, 0x0009); // not acceptable by main board
-			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0, true);
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check", true, 32, 0x00067b04, 1, true); // 1 skips initNetwork()
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check 2", true, 16, 0x0009acc8, 0x0009, true); // not acceptable by main board
 			// ac010000 should be d202 9302, but is changed to 78c0 8c93
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "fix boot ifeq", true, 32, 0x00010000, 0x8c9378c0);
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202);
-			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "fix boot ifeq", true, 32, 0x00010000, 0x8c9378c0, true);
+			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202, true);
 		}
-		else if (gameId == "THE KING OF ROUTE66")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B); // rts, nop
-			cheats.back().builtIn = true;
+		else if (gameId == "THE KING OF ROUTE66") {
+			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B, true); // rts, nop
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB")
 		{
 			const auto& setMushikingCheats = [this](u32 addr) {
-				setActive(true);
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0); // rfid[0].error = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0); // rfid[1].error = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0); // rfid[0].data18 = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0); // rfid[1].data18 = 0
-				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0, true); // rfid[0].error = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0, true); // rfid[1].error = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0, true); // rfid[0].data18 = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0, true); // rfid[1].data18 = 0
 			};
 			if (gameId == "MKG TKOB 2 EXP VER1.001-")		// mushi2eo
 				setMushikingCheats(0x6fe1bc);
@@ -481,36 +468,23 @@ void CheatManager::reset(const std::string& gameId)
 			else if (gameId == "MKG TKOB 2 KOR VER1.000-")	// mushik2k
 				setMushikingCheats(0x706084);
 		}
-		else if (gameId == "T-8120N")		// Dave Mirra BMX (US)
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x0030b8cc, 0x42040000); // 33.0 ms
-			cheats.back().builtIn = true;
+		else if (gameId == "T-8120N") {		// Dave Mirra BMX (US)
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x0030b8cc, 0x42040000, true); // 33.0 ms
 		}
-		else if (gameId == "T8120D  50")	// Dave Mirra BMX (EU)
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000); // 40.0 ms
-			cheats.back().builtIn = true;
+		else if (gameId == "T8120D  50") {	// Dave Mirra BMX (EU)
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000, true); // 40.0 ms
 		}
-		else if (gameId == "MK-0100")	// F355 US
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000);
-			cheats.back().builtIn = true;
+		else if (gameId == "MK-0100") {		// F355 US
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000, true);
 		}
-		else if (gameId == "T8118D  50")	// F355 EU
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000);
-			cheats.back().builtIn = true;
+		else if (gameId == "T8118D  50") {	// F355 EU
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000, true);
 		}
-		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009); // nop (shift by 8 bits instead of 10)
-			cheats.back().builtIn = true;
+		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M") {
+			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009, true); // nop (shift by 8 bits instead of 10)
 		}
+		if (cheats.size() > cheatCount)
+			setActive(true);
 	}
 	if (config::WidescreenGameHacks)
 	{

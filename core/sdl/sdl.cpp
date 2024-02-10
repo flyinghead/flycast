@@ -843,14 +843,11 @@ static KeyboardLayout detectKeyboardLayout()
 	{
 		// PT or BR
 		key = SDL_GetKeyFromScancode(SDL_SCANCODE_RIGHTBRACKET);
-		if (key == SDLK_LEFTBRACKET) {
+		if (key == SDLK_LEFTBRACKET)
 			INFO_LOG(INPUT, "Portuguese (BR) keyboard detected");
-			return KeyboardLayout::PT;
-		}
-		else {
+		else
 			INFO_LOG(INPUT, "Portuguese keyboard detected");
-			return KeyboardLayout::PT;
-		}
+		return KeyboardLayout::PT;
 	}
 	key = SDL_GetKeyFromScancode(SDL_SCANCODE_MINUS);
 	if (key == SDLK_PLUS) {
@@ -904,6 +901,10 @@ static KeyboardLayout detectKeyboardLayout()
 	return KeyboardLayout::US;
 }
 
+// All known card games use simple Code 39 barcodes.
+// The barcode scanner should be configured to use HID-USB (act like a keyboard)
+// and use '*' as preamble and terminator, which are the Code 39 start and stop characters.
+// So disable the default terminator ('\n') and enable sending the Code 39 start and stop characters.
 static bool handleBarcodeScanner(const SDL_Event& event)
 {
 	static const std::unordered_map<u16, char> keymapDefault {

@@ -99,7 +99,11 @@ bool SDLGLGraphicsContext::init()
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
 #ifdef GLES
-	gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress);
+	if (gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress) == 0)
+	{
+		ERROR_LOG(RENDERER, "gladLoadGLES2 failed");
+		return false;
+	}
 #else
 	if (!gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress) || !GLAD_GL_VERSION_3_0)
 	{
