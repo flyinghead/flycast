@@ -20,6 +20,8 @@ static std::string user_data_dir;
 static std::vector<std::string> system_config_dirs;
 static std::vector<std::string> system_data_dirs;
 
+const std::string defaultWs(" \0", 2);
+
 bool file_exists(const std::string& filename)
 {
 	return (flycast::access(filename.c_str(), R_OK) == 0);

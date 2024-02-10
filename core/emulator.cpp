@@ -151,8 +151,8 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000000.f);	// Mali needs 1M, 10K is enough for others
 		}
-		// Re-Volt (US, EU)
-		else if (prod_id == "T-8109N" || prod_id == "T8107D  50")
+		// Re-Volt (US, EU, JP)
+		else if (prod_id == "T-8109N" || prod_id == "T8107D  50" || prod_id == "T-8101M")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
@@ -168,12 +168,6 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
-		}
-		// Re-Volt (JP)
-		else if (prod_id == "T-8101M")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(100.f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
@@ -311,9 +305,6 @@ static void loadSpecialSettings()
 			config::ForceFreePlay.override(false);
 		}
 	}
-	// Graphics context isn't available yet in libretro
-	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
-		config::NativeDepthInterpolation.override(true);
 }
 
 void dc_reset(bool hard)
@@ -510,6 +501,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				{
 					// Elf only supported with HLE BIOS
 					nvmem::loadHle();
+					InitDrive("");
 				}
 			}
 
@@ -692,6 +684,10 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
+	// Graphics context isn't available yet in libretro
+	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
+		config::NativeDepthInterpolation.override(true);
+
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();

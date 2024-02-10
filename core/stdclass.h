@@ -129,8 +129,10 @@ static inline std::string get_file_basename(const std::string& s)
 	return s.substr(0, dot);
 }
 
+extern const std::string defaultWs;
+
 static inline std::string trim_trailing_ws(const std::string& str,
-                 const std::string& whitespace = " ")
+                 const std::string& whitespace = defaultWs)
 {
     const auto strEnd = str.find_last_not_of(whitespace);
 	if (strEnd == std::string::npos)
@@ -140,7 +142,7 @@ static inline std::string trim_trailing_ws(const std::string& str,
 }
 
 static inline std::string trim_ws(const std::string& str,
-                 const std::string& whitespace = " ")
+                 const std::string& whitespace = defaultWs)
 {
     const auto strStart = str.find_first_not_of(whitespace);
 	if (strStart == std::string::npos)
