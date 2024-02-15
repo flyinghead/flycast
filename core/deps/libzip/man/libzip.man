@@ -1,9 +1,9 @@
 .\" Automatically generated from an mdoc input file.  Do not edit.
 .\" libzip.mdoc -- general overview of available functions
-.\" Copyright (C) 2005-2020 Dieter Baron and Thomas Klausner
+.\" Copyright (C) 2005-2022 Dieter Baron and Thomas Klausner
 .\"
 .\" This file is part of libzip, a library to manipulate ZIP archives.
-.\" The authors can be contacted at <libzip@nih.at>
+.\" The authors can be contacted at <info@libzip.org>
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH "LIBZIP" "3" "September 15, 2020" "NiH" "Library Functions Manual"
+.TH "LIBZIP" "3" "December 5, 2022" "NiH" "Library Functions Manual"
 .nh
 .if n .ad l
 .SH "NAME"
@@ -66,7 +66,31 @@ zip archive atomically.
 .PP
 Below there are two sections listing functions: one for how to read
 from zip archives and one for how to create/modify them.
-.SS "THREAD SAFETY"
+.SH "FILE NAMES"
+.SS "Encoding"
+Names of files in the host file system are expected in UTF-8 encoding.
+On Windows, variants for ASCII and UTF-16 are also available.
+.PP
+Names of files inside archives are by default expected in UTF-8 encoding.
+Other encodings can be requested by using the flags
+\fRZIP_FL_ENC_CP437\fR
+and
+\fRZIP_FL_ENC_RAW\fR.
+.PP
+For details see the relevant man pages.
+.SS "Directory Separator"
+The zip format requires the use of forward slash
+(\(oq/\(cq)
+as directory separator.
+Since backslash
+(\(oq\e\(cq)
+can be part of a valid file name on Unix systems,
+\fBlibzip\fR
+does not automatically convert them, even on Windows.
+It is the responsibility of the programmer to ensure that all
+directory separators are passed as forward slashes to
+\fBlibzip\fR.
+.SH "THREAD SAFETY"
 In general, different zip archives opened by
 \fBlibzip\fR
 are independent of each other and can be used by parallel-running
@@ -80,7 +104,7 @@ zip_file_replace(3),
 access to the target archive must be synchronized with access to the
 source archive as well.
 .SH "READING ZIP ARCHIVES"
-.SS "open archive"
+.SS "Open Archive"
 .TP 4n
 \fB\(bu\fR
 zip_open(3)
@@ -89,11 +113,11 @@ zip_open(3)
 \fB\(bu\fR
 zip_fdopen(3)
 .PD
-.SS "find files"
+.SS "Find Files"
 .TP 4n
 \fB\(bu\fR
 zip_name_locate(3)
-.SS "read files"
+.SS "Read Files"
 .TP 4n
 \fB\(bu\fR
 zip_fopen(3)
@@ -112,21 +136,23 @@ zip_fopen_index_encrypted(3)
 zip_fread(3)
 .TP 4n
 \fB\(bu\fR
+zip_file_is_seekable(3)
+.TP 4n
+\fB\(bu\fR
 zip_fseek(3)
 (uncompressed files only)
 .TP 4n
 \fB\(bu\fR
 zip_ftell(3)
-(uncompressed files only)
 .TP 4n
 \fB\(bu\fR
 zip_fclose(3)
 .PD
-.SS "close archive"
+.SS "Close Archive"
 .TP 4n
 \fB\(bu\fR
 zip_close(3)
-.SS "miscellaneous"
+.SS "Miscellaneous"
 .TP 4n
 \fB\(bu\fR
 zip_stat(3)
@@ -158,13 +184,16 @@ zip_get_num_entries(3)
 .TP 4n
 \fB\(bu\fR
 zip_set_default_password(3)
+.TP 4n
+\fB\(bu\fR
+zip_source_pass_to_lower_layer(3)
 .PD
 .SH "CREATING/MODIFYING ZIP ARCHIVES"
-.SS "create/open archive"
+.SS "Create/Open Archive"
 .TP 4n
 \fB\(bu\fR
 zip_open(3)
-.SS "add/change files and directories"
+.SS "Add/Change Files and Directories"
 .TP 4n
 \fB\(bu\fR
 zip_dir_add(3)
@@ -210,17 +239,20 @@ zip_source_free(3)
 zip_source_function(3)
 .TP 4n
 \fB\(bu\fR
+zip_source_layered(3)
+.TP 4n
+\fB\(bu\fR
 zip_source_zip(3)
 .PD
-.SS "rename files"
+.SS "Rename Files"
 .TP 4n
 \fB\(bu\fR
 zip_rename(3)
-.SS "delete files"
+.SS "Delete Files"
 .TP 4n
 \fB\(bu\fR
 zip_delete(3)
-.SS "revert changes"
+.SS "Revert Changes"
 .TP 4n
 \fB\(bu\fR
 zip_unchange(3)
@@ -232,20 +264,20 @@ zip_unchange_all(3)
 \fB\(bu\fR
 zip_unchange_archive(3)
 .PD
-.SS "read/modify extra fields"
-.TP 4n
-\fB\(bu\fR
-zip_file_extra_field_by_id(3)
-.PD 0
+.SS "Read/Modify Extra Fields"
 .TP 4n
 \fB\(bu\fR
 zip_file_extra_field_delete(3)
+.PD 0
 .TP 4n
 \fB\(bu\fR
 zip_file_extra_field_delete_by_id(3)
 .TP 4n
 \fB\(bu\fR
 zip_file_extra_field_get(3)
+.TP 4n
+\fB\(bu\fR
+zip_file_extra_field_get_by_id(3)
 .TP 4n
 \fB\(bu\fR
 zip_file_extra_field_set(3)
@@ -256,7 +288,7 @@ zip_file_extra_fields_count(3)
 \fB\(bu\fR
 zip_file_extra_fields_count_by_id(3)
 .PD
-.SS "close archive (writing)"
+.SS "Close Archive (Writing)"
 .TP 4n
 \fB\(bu\fR
 zip_close(3)
@@ -265,7 +297,7 @@ zip_close(3)
 \fB\(bu\fR
 zip_discard(3)
 .PD
-.SS "miscellaneous (writing)"
+.SS "Miscellaneous (Writing)"
 .TP 4n
 \fB\(bu\fR
 zip_file_attributes_init(3)
@@ -273,6 +305,9 @@ zip_file_attributes_init(3)
 .TP 4n
 \fB\(bu\fR
 zip_libzip_version(3)
+.TP 4n
+\fB\(bu\fR
+zip_register_cancel_callback_with_state(3)
 .TP 4n
 \fB\(bu\fR
 zip_register_progress_callback_with_state(3)
@@ -306,6 +341,12 @@ zip_get_error(3)
 .TP 4n
 \fB\(bu\fR
 zip_error_init_with_code(3)
+.TP 4n
+\fB\(bu\fR
+zip_error_set(3)
+.TP 4n
+\fB\(bu\fR
+zip_error_set_from_source(3)
 .TP 4n
 \fB\(bu\fR
 zip_error_system_type(3)

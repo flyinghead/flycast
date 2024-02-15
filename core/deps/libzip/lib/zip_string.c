@@ -1,9 +1,9 @@
 /*
   zip_string.c -- string handling (with encoding)
-  Copyright (C) 2012-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2012-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -150,7 +150,7 @@ _zip_string_new(const zip_uint8_t *raw, zip_uint16_t length, zip_flags_t flags, 
         return NULL;
     }
 
-    memcpy(s->raw, raw, length);
+    (void)memcpy_s(s->raw, length + 1, raw, length);
     s->raw[length] = '\0';
     s->length = length;
     s->encoding = ZIP_ENCODING_UNKNOWN;

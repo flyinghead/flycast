@@ -1,9 +1,9 @@
 /*
   zip_source_open.c -- open zip_source (prepare for reading)
-  Copyright (C) 2009-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -53,7 +53,7 @@ zip_source_open(zip_source_t *src) {
     else {
         if (ZIP_SOURCE_IS_LAYERED(src)) {
             if (zip_source_open(src->src) < 0) {
-                _zip_error_set_from_source(&src->error, src->src);
+                zip_error_set_from_source(&src->error, src->src);
                 return -1;
             }
         }

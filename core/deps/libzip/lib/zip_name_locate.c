@@ -1,9 +1,9 @@
 /*
   zip_name_locate.c -- get index by name
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2022 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -49,18 +49,38 @@ zip_name_locate(zip_t *za, const char *fname, zip_flags_t flags) {
 zip_int64_t
 _zip_name_locate(zip_t *za, const char *fname, zip_flags_t flags, zip_error_t *error) {
     int (*cmp)(const char *, const char *);
+    size_t fname_length;
+    zip_string_t *str = NULL;
     const char *fn, *p;
     zip_uint64_t i;
 
-    if (za == NULL)
+    if (za == NULL) {
         return -1;
+    }
 
     if (fname == NULL) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return -1;
     }
 
-    if (flags & (ZIP_FL_NOCASE | ZIP_FL_NODIR | ZIP_FL_ENC_CP437)) {
+    fname_length = strlen(fname);
+
+    if (fname_length > ZIP_UINT16_MAX) {
+        zip_error_set(error, ZIP_ER_INVAL, 0);
+        return -1;
+    }
+
+    if ((flags & (ZIP_FL_ENC_UTF_8 | ZIP_FL_ENC_RAW)) == 0 && fname[0] != '\0') {
+        if ((str = _zip_string_new((const zip_uint8_t *)fname, (zip_uint16_t)strlen(fname), flags, error)) == NULL) {
+            return -1;
+        }
+        if ((fname = (const char *)_zip_string_get(str, NULL, 0, error)) == NULL) {
+            _zip_string_free(str);
+            return -1;
+        }
+    }
+
+    if (flags & (ZIP_FL_NOCASE | ZIP_FL_NODIR | ZIP_FL_ENC_RAW | ZIP_FL_ENC_STRICT)) {
         /* can't use hash table */
         cmp = (flags & ZIP_FL_NOCASE) ? strcasecmp : strcmp;
 
@@ -79,14 +99,18 @@ _zip_name_locate(zip_t *za, const char *fname, zip_flags_t flags, zip_error_t *e
 
             if (cmp(fname, fn) == 0) {
                 _zip_error_clear(error);
+                _zip_string_free(str);
                 return (zip_int64_t)i;
             }
         }
 
         zip_error_set(error, ZIP_ER_NOENT, 0);
+        _zip_string_free(str);
         return -1;
     }
     else {
-        return _zip_hash_lookup(za->names, (const zip_uint8_t *)fname, flags, error);
+        zip_int64_t ret = _zip_hash_lookup(za->names, (const zip_uint8_t *)fname, flags, error);
+        _zip_string_free(str);
+        return ret;
     }
 }

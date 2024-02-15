@@ -1,9 +1,9 @@
 /*
   zip_crypto_mbedtls.c -- mbed TLS wrapper
-  Copyright (C) 2018-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2018-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -117,6 +117,8 @@ _zip_crypto_pbkdf2(const zip_uint8_t *key, zip_uint64_t key_length, const zip_ui
     mbedtls_md_context_t sha1_ctx;
     bool ok = true;
 
+#if MBEDTLS_VERSION_NUMBER < 0x03030000
+
     mbedtls_md_init(&sha1_ctx);
 
     if (mbedtls_md_setup(&sha1_ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), 1) != 0) {
@@ -128,6 +130,13 @@ _zip_crypto_pbkdf2(const zip_uint8_t *key, zip_uint64_t key_length, const zip_ui
     }
 
     mbedtls_md_free(&sha1_ctx);
+
+#else
+
+    ok = mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, (const unsigned char *)key, (size_t)key_length, (const unsigned char *)salt, (size_t)salt_length, (unsigned int)iterations, (uint32_t)output_length, (unsigned char *)output) == 0;
+
+#endif // !defined(MBEDTLS_DEPRECATED_REMOVED) || MBEDTLS_VERSION_NUMBER < 0x03030000
+
     return ok;
 }
 

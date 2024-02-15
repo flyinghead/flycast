@@ -1,6 +1,6 @@
 # Copyright (C) 2020 Dieter Baron and Thomas Klausner
 #
-# The authors can be contacted at <libzip@nih.at>
+# The authors can be contacted at <info@libzip.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -85,7 +85,16 @@ find_library(MbedTLS_LIBRARY
 
 # Extract version information from the header file
 if(MbedTLS_INCLUDE_DIR)
-  if(EXISTS ${MbedTLS_INCLUDE_DIR}/mbedtls/version.h)
+  # for major version 3
+  if(EXISTS ${MbedTLS_INCLUDE_DIR}/mbedtls/build_info.h)
+    file(STRINGS ${MbedTLS_INCLUDE_DIR}/mbedtls/build_info.h _ver_line
+        REGEX "^#define MBEDTLS_VERSION_STRING  *\"[0-9]+\\.[0-9]+\\.[0-9]+\""
+        LIMIT_COUNT 1)
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+"
+        MbedTLS_VERSION "${_ver_line}")
+    unset(_ver_line)
+  # for major version 2
+  elseif(EXISTS ${MbedTLS_INCLUDE_DIR}/mbedtls/version.h)
     file(STRINGS ${MbedTLS_INCLUDE_DIR}/mbedtls/version.h _ver_line
          REGEX "^#define MBEDTLS_VERSION_STRING  *\"[0-9]+\\.[0-9]+\\.[0-9]+\""
          LIMIT_COUNT 1)

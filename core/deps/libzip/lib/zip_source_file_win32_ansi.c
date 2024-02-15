@@ -3,7 +3,7 @@
   Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@ static char *ansi_allocate_tempname(const char *name, size_t extra_chars, size_t
 static void ansi_make_tempname(char *buf, size_t len, const char *name, zip_uint32_t i);
 
 /* clang-format off */
+DONT_WARN_INCOMPATIBLE_FN_PTR_BEGIN
 
 zip_win32_file_operations_t ops_ansi = {
     ansi_allocate_tempname,
@@ -50,6 +51,7 @@ zip_win32_file_operations_t ops_ansi = {
     strdup
 };
 
+DONT_WARN_INCOMPATIBLE_FN_PTR_END
 /* clang-format on */
 
 ZIP_EXTERN zip_source_t *
@@ -63,7 +65,7 @@ zip_source_win32a(zip_t *za, const char *fname, zip_uint64_t start, zip_int64_t 
 
 ZIP_EXTERN zip_source_t *
 zip_source_win32a_create(const char *fname, zip_uint64_t start, zip_int64_t length, zip_error_t *error) {
-    if (fname == NULL || length < -1) {
+    if (fname == NULL || length < ZIP_LENGTH_UNCHECKED) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return NULL;
     }
@@ -81,5 +83,5 @@ ansi_allocate_tempname(const char *name, size_t extra_chars, size_t *lengthp) {
 
 static void
 ansi_make_tempname(char *buf, size_t len, const char *name, zip_uint32_t i) {
-    snprintf(buf, len, "%s.%08x", name, i);
+    snprintf_s(buf, len, "%s.%08x", name, i);
 }

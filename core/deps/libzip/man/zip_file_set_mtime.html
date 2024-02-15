@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_file_set_mtime.mdoc -- set mtime for file in zip
-   Copyright (C) 2014-2020 Dieter Baron and Thomas Klausner
+   Copyright (C) 2014-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP files.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -124,6 +124,9 @@ Upon successful completion 0 is returned. Otherwise, -1 is returned and the
       <var class="Ar">archive</var>.</dd>
   <dt>[<a class="permalink" href="#ZIP_ER_MEMORY"><code class="Er" id="ZIP_ER_MEMORY">ZIP_ER_MEMORY</code></a>]</dt>
   <dd>Required memory could not be allocated.</dd>
+  <dt>[<a class="permalink" href="#ZIP_ER_OPNOTSUPP"><code class="Er" id="ZIP_ER_OPNOTSUPP">ZIP_ER_OPNOTSUPP</code></a>]</dt>
+  <dd>Traditional PKWare encryption uses the file's mtime, therefore it cannot
+      be changed without re-encrypting the data.</dd>
   <dt>[<a class="permalink" href="#ZIP_ER_RDONLY"><code class="Er" id="ZIP_ER_RDONLY">ZIP_ER_RDONLY</code></a>]</dt>
   <dd>The <var class="Ar">archive</var> was opened in read-only mode.</dd>
 </dl>
@@ -156,7 +159,7 @@ Following historical practice, the <code class="Fn">zip_file_set_mtime</code>()
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">August 24, 2020</td>
+    <td class="foot-date">June 18, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

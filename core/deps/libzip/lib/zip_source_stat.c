@@ -1,9 +1,9 @@
 /*
   zip_source_stat.c -- get meta information from zip_source
-  Copyright (C) 2009-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -45,11 +45,15 @@ zip_source_stat(zip_source_t *src, zip_stat_t *st) {
         return -1;
     }
 
+    if (src->write_state == ZIP_SOURCE_WRITE_REMOVED) {
+        zip_error_set(&src->error, ZIP_ER_READ, ENOENT);
+    }
+
     zip_stat_init(st);
 
     if (ZIP_SOURCE_IS_LAYERED(src)) {
         if (zip_source_stat(src->src, st) < 0) {
-            _zip_error_set_from_source(&src->error, src->src);
+            zip_error_set_from_source(&src->error, src->src);
             return -1;
         }
     }

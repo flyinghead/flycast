@@ -5,7 +5,7 @@
    Copyright (C) 2008-2017 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -70,7 +70,21 @@ libzip (-lzip)
 The <code class="Fn">zip_set_archive_flag</code>() function sets the flag
   <var class="Ar">flag</var> for the archive <var class="Ar">archive</var> to
   the value <var class="Ar">value</var>.
-<p class="Pp">Currently there are no supported flags.</p>
+<p class="Pp">Supported flags are:</p>
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE"><code class="Dv" id="ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE">ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE</code></a></dt>
+  <dd>If this flag is cleared, the archive file will be removed if the archive
+      is empty. If it is set, an empty archive will be created, which is not
+      recommended by the zip specification.</dd>
+  <dt><a class="permalink" href="#ZIP_AFL_RDONLY"><code class="Dv" id="ZIP_AFL_RDONLY">ZIP_AFL_RDONLY</code></a></dt>
+  <dd>If this flag is set, no modification to the archive are allowed. This flag
+      can only be cleared if it was manually set with
+      <code class="Nm">zip_set_archive_flag</code>, not if the archive was
+      opened read-only.</dd>
+  <dt><a class="permalink" href="#ZIP_AFL_WANT_TORRENTZIP"><code class="Dv" id="ZIP_AFL_WANT_TORRENTZIP">ZIP_AFL_WANT_TORRENTZIP</code></a></dt>
+  <dd>If this flag is set, the archive will be written in torrentzip
+    format.</dd>
+</dl>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="RETURN_VALUES"><a class="permalink" href="#RETURN_VALUES">RETURN
@@ -88,6 +102,8 @@ Upon successful completion 0 is returned, and -1 if an error occurred.
 <code class="Fn">zip_set_archive_flag</code>() was added in libzip 0.9. In
   libzip 0.11 the type of <var class="Ar">flag</var> was changed from
   <var class="Vt">int</var> to <var class="Vt">zip_flags_t</var>.
+  <code class="Dv">ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE</code> and
+  <code class="Dv">ZIP_AFL_WANT_TORRENTZIP</code> were added in libzip 1.10.0.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
@@ -99,7 +115,7 @@ Upon successful completion 0 is returned, and -1 if an error occurred.
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">July 19, 2023</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

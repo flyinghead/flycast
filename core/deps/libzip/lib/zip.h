@@ -3,10 +3,10 @@
 
 /*
   zip.h -- exported declarations.
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -58,6 +58,16 @@ extern "C" {
 #endif
 #endif
 
+#ifndef ZIP_DEPRECATED
+#if defined(__GNUC__) || defined(__clang__)
+#define ZIP_DEPRECATED(x) __attribute__((deprecated(x)))
+#elif defined(_MSC_VER)
+#define ZIP_DEPRECATED(x) __declspec(deprecated(x))
+#else
+#define ZIP_DEPRECATED(x)
+#endif
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
@@ -77,7 +87,7 @@ extern "C" {
 #define ZIP_FL_NODIR 2u        /* ignore directory component */
 #define ZIP_FL_COMPRESSED 4u   /* read compressed data */
 #define ZIP_FL_UNCHANGED 8u    /* use original data, ignoring changes */
-#define ZIP_FL_RECOMPRESS 16u  /* force recompression of data */
+/* 16u was ZIP_FL_RECOMPRESS, which is deprecated */
 #define ZIP_FL_ENCRYPTED 32u   /* read encrypted data (implies ZIP_FL_COMPRESSED) */
 #define ZIP_FL_ENC_GUESS 0u    /* guess string encoding (is default) */
 #define ZIP_FL_ENC_RAW 64u     /* get unmodified string */
@@ -91,7 +101,10 @@ extern "C" {
 
 /* archive global flags flags */
 
-#define ZIP_AFL_RDONLY 2u /* read only -- cannot be cleared */
+#define ZIP_AFL_RDONLY  2u /* read only -- cannot be cleared */
+#define ZIP_AFL_IS_TORRENTZIP	4u /* current archive is torrentzipped */
+#define ZIP_AFL_WANT_TORRENTZIP	8u /* write archive in torrentzip format */
+#define ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE 16u /* don't remove file if archive is empty */
 
 
 /* create a new extra field */
@@ -99,6 +112,10 @@ extern "C" {
 #define ZIP_EXTRA_FIELD_ALL ZIP_UINT16_MAX
 #define ZIP_EXTRA_FIELD_NEW ZIP_UINT16_MAX
 
+/* length parameter to various functions */
+
+#define ZIP_LENGTH_TO_END 0
+#define ZIP_LENGTH_UNCHECKED (-2) /* only supported by zip_source_file and its variants */
 
 /* libzip error codes */
 
@@ -123,7 +140,7 @@ extern "C" {
 #define ZIP_ER_INVAL 18           /* N Invalid argument */
 #define ZIP_ER_NOZIP 19           /* N Not a zip archive */
 #define ZIP_ER_INTERNAL 20        /* N Internal error */
-#define ZIP_ER_INCONS 21          /* N Zip archive inconsistent */
+#define ZIP_ER_INCONS 21          /* L Zip archive inconsistent */
 #define ZIP_ER_REMOVE 22          /* S Can't remove file */
 #define ZIP_ER_DELETED 23         /* N Entry has been deleted */
 #define ZIP_ER_ENCRNOTSUPP 24     /* N Encryption method not supported */
@@ -135,12 +152,15 @@ extern "C" {
 #define ZIP_ER_TELL 30            /* S Tell error */
 #define ZIP_ER_COMPRESSED_DATA 31 /* N Compressed data invalid */
 #define ZIP_ER_CANCELLED 32       /* N Operation cancelled */
+#define ZIP_ER_DATA_LENGTH 33     /* N Unexpected length of data */
+#define ZIP_ER_NOT_ALLOWED 34     /* N Not allowed in torrentzip */
 
 /* type of system error value */
 
-#define ZIP_ET_NONE 0 /* sys_err unused */
-#define ZIP_ET_SYS 1  /* sys_err is errno */
-#define ZIP_ET_ZLIB 2 /* sys_err is zlib error code */
+#define ZIP_ET_NONE 0   /* sys_err unused */
+#define ZIP_ET_SYS 1    /* sys_err is errno */
+#define ZIP_ET_ZLIB 2   /* sys_err is zlib error code */
+#define ZIP_ET_LIBZIP 3 /* sys_err is libzip error code */
 
 /* compression methods */
 
@@ -235,11 +255,14 @@ enum zip_source_cmd {
     ZIP_SOURCE_RESERVED_1,          /* previously used internally */
     ZIP_SOURCE_BEGIN_WRITE_CLONING, /* like ZIP_SOURCE_BEGIN_WRITE, but keep part of original file */
     ZIP_SOURCE_ACCEPT_EMPTY,        /* whether empty files are valid archives */
-    ZIP_SOURCE_GET_FILE_ATTRIBUTES  /* get additional file attributes */
+    ZIP_SOURCE_GET_FILE_ATTRIBUTES, /* get additional file attributes */
+    ZIP_SOURCE_SUPPORTS_REOPEN      /* allow reading from changed entry */
 };
 typedef enum zip_source_cmd zip_source_cmd_t;
 
 #define ZIP_SOURCE_MAKE_COMMAND_BITMASK(cmd) (((zip_int64_t)1) << (cmd))
+
+#define ZIP_SOURCE_CHECK_SUPPORTED(supported, cmd)  (((supported) & ZIP_SOURCE_MAKE_COMMAND_BITMASK(cmd)) != 0)
 
 /* clang-format off */
 
@@ -344,24 +367,29 @@ typedef struct zip_buffer_fragment zip_buffer_fragment_t;
 typedef zip_uint32_t zip_flags_t;
 
 typedef zip_int64_t (*zip_source_callback)(void *_Nullable, void *_Nullable, zip_uint64_t, zip_source_cmd_t);
+typedef zip_int64_t (*zip_source_layered_callback)(zip_source_t *_Nonnull, void *_Nullable, void *_Nullable, zip_uint64_t, enum zip_source_cmd);
 typedef void (*zip_progress_callback)(zip_t *_Nonnull, double, void *_Nullable);
 typedef int (*zip_cancel_callback)(zip_t *_Nonnull, void *_Nullable);
 
 #ifndef ZIP_DISABLE_DEPRECATED
-typedef void (*zip_progress_callback_t)(double);
-ZIP_EXTERN void zip_register_progress_callback(zip_t *_Nonnull, zip_progress_callback_t _Nullable); /* use zip_register_progress_callback_with_state */
+#define ZIP_FL_RECOMPRESS 16u  /* force recompression of data */
 
-ZIP_EXTERN zip_int64_t zip_add(zip_t *_Nonnull, const char *_Nonnull, zip_source_t *_Nonnull);             /* use zip_file_add */
-ZIP_EXTERN zip_int64_t zip_add_dir(zip_t *_Nonnull, const char *_Nonnull);                                 /* use zip_dir_add */
-ZIP_EXTERN const char *_Nullable zip_get_file_comment(zip_t *_Nonnull, zip_uint64_t, int *_Nullable, int); /* use zip_file_get_comment */
-ZIP_EXTERN int zip_get_num_files(zip_t *_Nonnull);                                                         /* use zip_get_num_entries instead */
-ZIP_EXTERN int zip_rename(zip_t *_Nonnull, zip_uint64_t, const char *_Nonnull);                            /* use zip_file_rename */
-ZIP_EXTERN int zip_replace(zip_t *_Nonnull, zip_uint64_t, zip_source_t *_Nonnull);                         /* use zip_file_replace */
-ZIP_EXTERN int zip_set_file_comment(zip_t *_Nonnull, zip_uint64_t, const char *_Nullable, int);            /* use zip_file_set_comment */
-ZIP_EXTERN int zip_error_get_sys_type(int);                                                                /* use zip_error_system_type */
-ZIP_EXTERN void zip_error_get(zip_t *_Nonnull, int *_Nullable, int *_Nullable);                            /* use zip_get_error, zip_error_code_zip / zip_error_code_system */
-ZIP_EXTERN int zip_error_to_str(char *_Nonnull, zip_uint64_t, int, int);                                   /* use zip_error_init_with_code / zip_error_strerror */
-ZIP_EXTERN void zip_file_error_get(zip_file_t *_Nonnull, int *_Nullable, int *_Nullable);                  /* use zip_file_get_error, zip_error_code_zip / zip_error_code_system */
+typedef void (*zip_progress_callback_t)(double);
+ZIP_DEPRECATED("use 'zip_register_progress_callback_with_state' instead") ZIP_EXTERN void zip_register_progress_callback(zip_t *_Nonnull, zip_progress_callback_t _Nullable);
+
+ZIP_DEPRECATED("use 'zip_file_add' instead") ZIP_EXTERN zip_int64_t zip_add(zip_t *_Nonnull, const char *_Nonnull, zip_source_t *_Nonnull);
+ZIP_DEPRECATED("use 'zip_dir_add' instead") ZIP_EXTERN zip_int64_t zip_add_dir(zip_t *_Nonnull, const char *_Nonnull);
+ZIP_DEPRECATED("use 'zip_file_get_comment' instead") ZIP_EXTERN const char *_Nullable zip_get_file_comment(zip_t *_Nonnull, zip_uint64_t, int *_Nullable, int);
+ZIP_DEPRECATED("use 'zip_get_num_entries' instead") ZIP_EXTERN int zip_get_num_files(zip_t *_Nonnull);
+ZIP_DEPRECATED("use 'zip_file_rename' instead") ZIP_EXTERN int zip_rename(zip_t *_Nonnull, zip_uint64_t, const char *_Nonnull);
+ZIP_DEPRECATED("use 'zip_file_replace' instead") ZIP_EXTERN int zip_replace(zip_t *_Nonnull, zip_uint64_t, zip_source_t *_Nonnull);
+ZIP_DEPRECATED("use 'zip_file_set_comment' instead") ZIP_EXTERN int zip_set_file_comment(zip_t *_Nonnull, zip_uint64_t, const char *_Nullable, int);
+ZIP_DEPRECATED("use 'zip_error_init_with_code' and 'zip_error_system_type' instead") ZIP_EXTERN int zip_error_get_sys_type(int);
+ZIP_DEPRECATED("use 'zip_get_error' instead") ZIP_EXTERN void zip_error_get(zip_t *_Nonnull, int *_Nullable, int *_Nullable);
+ZIP_DEPRECATED("use 'zip_error_strerror' instead") ZIP_EXTERN int zip_error_to_str(char *_Nonnull, zip_uint64_t, int, int);
+ZIP_DEPRECATED("use 'zip_file_get_error' instead") ZIP_EXTERN void zip_file_error_get(zip_file_t *_Nonnull, int *_Nullable, int *_Nullable);
+ZIP_DEPRECATED("use 'zip_source_zip_file' instead") ZIP_EXTERN zip_source_t *_Nullable zip_source_zip(zip_t *_Nonnull, zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint64_t, zip_int64_t);
+ZIP_DEPRECATED("use 'zip_source_zip_file_create' instead") ZIP_EXTERN zip_source_t *_Nullable zip_source_zip_create(zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint64_t, zip_int64_t, zip_error_t *_Nullable);
 #endif
 
 ZIP_EXTERN int zip_close(zip_t *_Nonnull);
@@ -377,6 +405,7 @@ ZIP_EXTERN void zip_error_fini(zip_error_t *_Nonnull);
 ZIP_EXTERN void zip_error_init(zip_error_t *_Nonnull);
 ZIP_EXTERN void zip_error_init_with_code(zip_error_t *_Nonnull, int);
 ZIP_EXTERN void zip_error_set(zip_error_t *_Nullable, int, int);
+ZIP_EXTERN void zip_error_set_from_source(zip_error_t *_Nonnull, zip_source_t *_Nullable);
 ZIP_EXTERN const char *_Nonnull zip_error_strerror(zip_error_t *_Nonnull);
 ZIP_EXTERN int zip_error_system_type(const zip_error_t *_Nonnull);
 ZIP_EXTERN zip_int64_t zip_error_to_data(const zip_error_t *_Nonnull, void *_Nonnull, zip_uint64_t);
@@ -396,6 +425,7 @@ ZIP_EXTERN const zip_uint8_t *_Nullable zip_file_extra_field_get_by_id(zip_t *_N
 ZIP_EXTERN const char *_Nullable zip_file_get_comment(zip_t *_Nonnull, zip_uint64_t, zip_uint32_t *_Nullable, zip_flags_t);
 ZIP_EXTERN zip_error_t *_Nonnull zip_file_get_error(zip_file_t *_Nonnull);
 ZIP_EXTERN int zip_file_get_external_attributes(zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint8_t *_Nullable, zip_uint32_t *_Nullable);
+ZIP_EXTERN int zip_file_is_seekable(zip_file_t *_Nonnull);
 ZIP_EXTERN int zip_file_rename(zip_t *_Nonnull, zip_uint64_t, const char *_Nonnull, zip_flags_t);
 ZIP_EXTERN int zip_file_replace(zip_t *_Nonnull, zip_uint64_t, zip_source_t *_Nonnull, zip_flags_t);
 ZIP_EXTERN int zip_file_set_comment(zip_t *_Nonnull, zip_uint64_t, const char *_Nullable, zip_uint16_t, zip_flags_t);
@@ -443,9 +473,13 @@ ZIP_EXTERN zip_source_t *_Nullable zip_source_function(zip_t *_Nonnull, zip_sour
 ZIP_EXTERN zip_source_t *_Nullable zip_source_function_create(zip_source_callback _Nonnull, void *_Nullable, zip_error_t *_Nullable);
 ZIP_EXTERN int zip_source_get_file_attributes(zip_source_t *_Nonnull, zip_file_attributes_t *_Nonnull);
 ZIP_EXTERN int zip_source_is_deleted(zip_source_t *_Nonnull);
+ZIP_EXTERN int zip_source_is_seekable(zip_source_t *_Nonnull);
 ZIP_EXTERN void zip_source_keep(zip_source_t *_Nonnull);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_layered(zip_t *_Nullable, zip_source_t *_Nonnull, zip_source_layered_callback _Nonnull, void *_Nullable);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_layered_create(zip_source_t *_Nonnull, zip_source_layered_callback _Nonnull, void *_Nullable, zip_error_t *_Nullable);
 ZIP_EXTERN zip_int64_t zip_source_make_command_bitmap(zip_source_cmd_t, ...);
 ZIP_EXTERN int zip_source_open(zip_source_t *_Nonnull);
+ZIP_EXTERN zip_int64_t zip_source_pass_to_lower_layer(zip_source_t *_Nonnull, void *_Nullable, zip_uint64_t, zip_source_cmd_t);
 ZIP_EXTERN zip_int64_t zip_source_read(zip_source_t *_Nonnull, void *_Nonnull, zip_uint64_t);
 ZIP_EXTERN void zip_source_rollback_write(zip_source_t *_Nonnull);
 ZIP_EXTERN int zip_source_seek(zip_source_t *_Nonnull, zip_int64_t, int);
@@ -455,15 +489,17 @@ ZIP_EXTERN int zip_source_stat(zip_source_t *_Nonnull, zip_stat_t *_Nonnull);
 ZIP_EXTERN zip_int64_t zip_source_tell(zip_source_t *_Nonnull);
 ZIP_EXTERN zip_int64_t zip_source_tell_write(zip_source_t *_Nonnull);
 #ifdef _WIN32
-ZIP_EXTERN zip_source_t *zip_source_win32a(zip_t *, const char *, zip_uint64_t, zip_int64_t);
-ZIP_EXTERN zip_source_t *zip_source_win32a_create(const char *, zip_uint64_t, zip_int64_t, zip_error_t *);
-ZIP_EXTERN zip_source_t *zip_source_win32handle(zip_t *, void *, zip_uint64_t, zip_int64_t);
-ZIP_EXTERN zip_source_t *zip_source_win32handle_create(void *, zip_uint64_t, zip_int64_t, zip_error_t *);
-ZIP_EXTERN zip_source_t *zip_source_win32w(zip_t *, const wchar_t *, zip_uint64_t, zip_int64_t);
-ZIP_EXTERN zip_source_t *zip_source_win32w_create(const wchar_t *, zip_uint64_t, zip_int64_t, zip_error_t *);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32a(zip_t *_Nonnull, const char *_Nonnull, zip_uint64_t, zip_int64_t);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32a_create(const char *_Nonnull, zip_uint64_t, zip_int64_t, zip_error_t *_Nullable);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32handle(zip_t *_Nonnull, void *_Nonnull, zip_uint64_t, zip_int64_t);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32handle_create(void *_Nonnull, zip_uint64_t, zip_int64_t, zip_error_t *_Nullable);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32w(zip_t *_Nonnull, const wchar_t *_Nonnull, zip_uint64_t, zip_int64_t);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_win32w_create(const wchar_t *_Nonnull, zip_uint64_t, zip_int64_t, zip_error_t *_Nullable);
 #endif
+ZIP_EXTERN zip_source_t *_Nullable zip_source_window_create(zip_source_t *_Nonnull, zip_uint64_t, zip_int64_t, zip_error_t *_Nullable);
 ZIP_EXTERN zip_int64_t zip_source_write(zip_source_t *_Nonnull, const void *_Nullable, zip_uint64_t);
-ZIP_EXTERN zip_source_t *_Nullable zip_source_zip(zip_t *_Nonnull, zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint64_t, zip_int64_t);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_zip_file(zip_t *_Nonnull, zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint64_t, zip_int64_t, const char *_Nullable);
+ZIP_EXTERN zip_source_t *_Nullable zip_source_zip_file_create(zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_uint64_t, zip_int64_t, const char *_Nullable, zip_error_t *_Nullable);
 ZIP_EXTERN int zip_stat(zip_t *_Nonnull, const char *_Nonnull, zip_flags_t, zip_stat_t *_Nonnull);
 ZIP_EXTERN int zip_stat_index(zip_t *_Nonnull, zip_uint64_t, zip_flags_t, zip_stat_t *_Nonnull);
 ZIP_EXTERN void zip_stat_init(zip_stat_t *_Nonnull);

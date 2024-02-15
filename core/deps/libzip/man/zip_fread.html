@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_fread.mdoc -- read from file
-   Copyright (C) 2003-2017 Dieter Baron and Thomas Klausner
+   Copyright (C) 2003-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -66,15 +66,18 @@ libzip (-lzip)
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-The <code class="Fn">zip_fread</code>() function reads at most
+The <code class="Fn">zip_fread</code>() function reads up to
   <var class="Ar">nbytes</var> bytes from <var class="Ar">file</var> into
-  <var class="Ar">buf</var>.
+  <var class="Ar">buf</var> from the current position in the file (see
+  <a class="Xr" href="zip_fseek.html">zip_fseek(3)</a>). After reading, the
+  current position is updated by the number of bytes read.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="RETURN_VALUES"><a class="permalink" href="#RETURN_VALUES">RETURN
   VALUES</a></h1>
-If successful, the number of bytes actually read is returned. Otherwise, -1 is
-  returned.
+If successful, the number of bytes actually read is returned. When
+  <code class="Fn">zip_fread</code>() is called after reaching the end of the
+  file, 0 is returned. In case of error, -1 is returned.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
@@ -102,7 +105,7 @@ If successful, the number of bytes actually read is returned. Otherwise, -1 is
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">November 3, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

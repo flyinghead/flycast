@@ -1,9 +1,9 @@
 /*
   zip_unchange.c -- undo changes to file in zip archive
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2022 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -46,14 +46,18 @@ zip_unchange(zip_t *za, zip_uint64_t idx) {
 int
 _zip_unchange(zip_t *za, zip_uint64_t idx, int allow_duplicates) {
     zip_int64_t i;
-    const char *orig_name, *changed_name;
+    bool renamed;
 
     if (idx >= za->nentry) {
         zip_error_set(&za->error, ZIP_ER_INVAL, 0);
         return -1;
     }
 
-    if (!allow_duplicates && za->entry[idx].changes && (za->entry[idx].changes->changed & ZIP_DIRENT_FILENAME)) {
+    renamed = za->entry[idx].changes && (za->entry[idx].changes->changed & ZIP_DIRENT_FILENAME);
+    if (!allow_duplicates && (renamed || za->entry[idx].deleted)) {
+        const char *orig_name = NULL;
+        const char *changed_name = NULL;
+
         if (za->entry[idx].orig != NULL) {
             if ((orig_name = _zip_get_name(za, idx, ZIP_FL_UNCHANGED, &za->error)) == NULL) {
                 return -1;
@@ -65,12 +69,11 @@ _zip_unchange(zip_t *za, zip_uint64_t idx, int allow_duplicates) {
                 return -1;
             }
         }
-        else {
-            orig_name = NULL;
-        }
 
-        if ((changed_name = _zip_get_name(za, idx, 0, &za->error)) == NULL) {
-            return -1;
+        if (renamed) {
+            if ((changed_name = _zip_get_name(za, idx, 0, &za->error)) == NULL) {
+                return -1;
+            }
         }
 
         if (orig_name) {
@@ -78,9 +81,11 @@ _zip_unchange(zip_t *za, zip_uint64_t idx, int allow_duplicates) {
                 return -1;
             }
         }
-        if (_zip_hash_delete(za->names, (const zip_uint8_t *)changed_name, &za->error) == false) {
-            _zip_hash_delete(za->names, (const zip_uint8_t *)orig_name, NULL);
-            return -1;
+        if (changed_name) {
+            if (_zip_hash_delete(za->names, (const zip_uint8_t *)changed_name, &za->error) == false) {
+                _zip_hash_delete(za->names, (const zip_uint8_t *)orig_name, NULL);
+                return -1;
+            }
         }
     }
 

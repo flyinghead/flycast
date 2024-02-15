@@ -86,6 +86,7 @@ add_library(zip
   zip_source_is_deleted.c
   zip_source_layered.c
   zip_source_open.c
+  zip_source_pass_to_lower_layer.c
   zip_source_pkware_decode.c
   zip_source_pkware_encode.c
   zip_source_read.c
@@ -123,7 +124,6 @@ if(WIN32)
     zip_source_file_win32_utf8.c
     )
   if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
-    target_compile_definitions(zip PRIVATE _WIN32_WINNT=0x0A00)
     target_sources(zip PRIVATE zip_random_uwp.c)
   else()
     target_sources(zip PRIVATE zip_source_file_win32_ansi.c zip_random_win32.c)
@@ -131,7 +131,6 @@ if(WIN32)
   endif()
 else(WIN32)
   target_sources(zip PRIVATE
-    zip_mkstempm.c
     zip_source_file_stdio_named.c
     zip_random_unix.c
     )
@@ -149,7 +148,7 @@ endif()
 
 if(HAVE_LIBZSTD)
   target_sources(zip PRIVATE zip_algorithm_zstd.c)
-  target_link_libraries(zip PRIVATE Zstd::Zstd)
+  target_link_libraries(zip PRIVATE ${zstd_TARGET})
 endif()
 
 if(HAVE_COMMONCRYPTO)
@@ -173,7 +172,7 @@ if(HAVE_CRYPTO)
 endif()
 
 if(SHARED_LIB_VERSIONNING)
-  set_target_properties(zip PROPERTIES VERSION 5.3 SOVERSION 5)
+  set_target_properties(zip PROPERTIES VERSION 5.5 SOVERSION 5)
 endif()
 
 target_link_libraries(zip PRIVATE ZLIB::ZLIB)
@@ -194,36 +193,16 @@ if(LIBZIP_DO_INSTALL)
   install(FILES zip.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-# create zip_err_str.h from zip.h
-file(READ ${PROJECT_SOURCE_DIR}/lib/zip.h zip_h)
-string(REGEX MATCHALL "#define ZIP_ER_([A-Z_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z ']*)/" zip_h_err ${zip_h})
-set(zip_err_str [=[
-/*
-  This file was generated automatically by CMake
-  from zip.h\; make changes there.
-*/
-
-#include "zipint.h"
-
-const char * const _zip_err_str[] = {
-]=])
-set(zip_err_type)
-foreach(errln ${zip_h_err})
-  string(REGEX MATCH "#define ZIP_ER_([A-Z_]+) ([0-9]+)[ \t]+/([-*0-9a-zA-Z ']*)/" err_t_tt ${errln})
-  string(REGEX MATCH "([N|S|Z]+) ([-0-9a-zA-Z ']*)" err_t_tt "${CMAKE_MATCH_3}")
-  string(APPEND zip_err_type "    ${CMAKE_MATCH_1},\n")
-  string(STRIP "${CMAKE_MATCH_2}" err_t_tt)
-  string(APPEND zip_err_str "    \"${err_t_tt}\",\n")
-endforeach()
-string(APPEND zip_err_str [=[}\;
-
-const int _zip_nerr_str = sizeof(_zip_err_str)/sizeof(_zip_err_str[0])\;
-
-#define N ZIP_ET_NONE
-#define S ZIP_ET_SYS
-#define Z ZIP_ET_ZLIB
-
-const int _zip_err_type[] = {
-]=])
-string(APPEND zip_err_str "${zip_err_type}}\;\n")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/zip_err_str.c ${zip_err_str})
+# create zip_err_str.c from zip.h and zipint.h
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zip_err_str.c
+  COMMAND "${CMAKE_COMMAND}"
+    "-DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+    "-DCMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    "-P" "${PROJECT_SOURCE_DIR}/cmake/GenerateZipErrorStrings.cmake"
+  DEPENDS
+    ${PROJECT_SOURCE_DIR}/cmake/GenerateZipErrorStrings.cmake
+    ${PROJECT_SOURCE_DIR}/lib/zip.h
+    ${PROJECT_SOURCE_DIR}/lib/zipint.h
+  COMMENT "Generating zip_err_str.c"
+)
