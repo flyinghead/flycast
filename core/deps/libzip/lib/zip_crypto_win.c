@@ -1,9 +1,9 @@
 /*
   zip_crypto_win.c -- Windows Crypto API wrapper.
-  Copyright (C) 2018-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2018-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -254,7 +254,7 @@ pbkdf2(PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, DWORD c
         for (j = 0; j < cIterations; j++) {
             if (j == 0) {
                 /* construct first input for PRF */
-                memcpy(U, pbSalt, cbSalt);
+                (void)memcpy_s(U, cbSalt, pbSalt, cbSalt);
                 U[cbSalt] = (BYTE)((i & 0xFF000000) >> 24);
                 U[cbSalt + 1] = (BYTE)((i & 0x00FF0000) >> 16);
                 U[cbSalt + 2] = (BYTE)((i & 0x0000FF00) >> 8);
@@ -262,7 +262,7 @@ pbkdf2(PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, DWORD c
                 dwULen = cbSalt + 4;
             }
             else {
-                memcpy(U, V, DIGEST_SIZE);
+                (void)memcpy_s(U, DIGEST_SIZE, V, DIGEST_SIZE);
                 dwULen = DIGEST_SIZE;
             }
 
@@ -274,11 +274,11 @@ pbkdf2(PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, DWORD c
         }
 
         if (i != l) {
-            memcpy(&pbDerivedKey[(i - 1) * DIGEST_SIZE], Ti, DIGEST_SIZE);
+            (void)memcpy_s(&pbDerivedKey[(i - 1) * DIGEST_SIZE], cbDerivedKey - (i - 1) * DIGEST_SIZE, Ti, DIGEST_SIZE);
         }
         else {
             /* Take only the first r bytes */
-            memcpy(&pbDerivedKey[(i - 1) * DIGEST_SIZE], Ti, r);
+            (void)memcpy_s(&pbDerivedKey[(i - 1) * DIGEST_SIZE], cbDerivedKey - (i - 1) * DIGEST_SIZE, Ti, r);
         }
     }
 

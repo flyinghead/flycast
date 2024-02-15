@@ -1,9 +1,9 @@
 /*
   zip_source_file_common.c -- create data source from file
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -54,6 +54,7 @@ zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zi
     zip_source_file_context_t *ctx;
     zip_source_t *zs;
     zip_source_file_stat_t sb;
+    zip_uint64_t length;
 
     if (ops == NULL) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
@@ -82,10 +83,17 @@ zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zi
     }
 
     if (len < 0) {
-        len = 0;
+        if (len == -1) {
+            len = ZIP_LENGTH_TO_END;
+        }
+        // TODO: return ZIP_ER_INVAL if len != ZIP_LENGTH_UNCHECKED?
+        length = 0;
+    }
+    else {
+        length = (zip_uint64_t)len;
     }
 
-    if (start > ZIP_INT64_MAX || start + (zip_uint64_t)len < start) {
+    if (start > ZIP_INT64_MAX || start + length < start) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return NULL;
     }
@@ -107,9 +115,9 @@ zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zi
     }
     ctx->f = file;
     ctx->start = start;
-    ctx->len = (zip_uint64_t)len;
+    ctx->len = length;
     if (st) {
-        memcpy(&ctx->st, st, sizeof(ctx->st));
+        (void)memcpy_s(&ctx->st, sizeof(ctx->st), st, sizeof(*st));
         ctx->st.name = NULL;
         ctx->st.valid &= ~ZIP_STAT_NAME;
     }
@@ -130,7 +138,7 @@ zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zi
     zip_error_init(&ctx->error);
     zip_file_attributes_init(&ctx->attributes);
 
-    ctx->supports = ZIP_SOURCE_SUPPORTS_READABLE | zip_source_make_command_bitmap(ZIP_SOURCE_SUPPORTS, ZIP_SOURCE_TELL, -1);
+    ctx->supports = ZIP_SOURCE_SUPPORTS_READABLE | zip_source_make_command_bitmap(ZIP_SOURCE_SUPPORTS, ZIP_SOURCE_TELL, ZIP_SOURCE_SUPPORTS_REOPEN, -1);
 
     zip_source_file_stat_init(&sb);
     if (!ops->stat(ctx, &sb)) {
@@ -169,9 +177,11 @@ zip_source_file_common_new(const char *fname, void *file, zip_uint64_t start, zi
             }
 
             if (ctx->len == 0) {
-                ctx->len = sb.size - ctx->start;
-                ctx->st.size = ctx->len;
-                ctx->st.valid |= ZIP_STAT_SIZE;
+                if (len != ZIP_LENGTH_UNCHECKED) {
+                    ctx->len = sb.size - ctx->start;
+                    ctx->st.size = ctx->len;
+                    ctx->st.valid |= ZIP_STAT_SIZE;
+                }
 
                 /* when using a partial file, don't allow writing */
                 if (ctx->fname && start == 0 && ops->write != NULL) {
@@ -262,7 +272,7 @@ read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd) {
             zip_error_set(&ctx->error, ZIP_ER_INVAL, 0);
             return -1;
         }
-        memcpy(data, &ctx->attributes, sizeof(ctx->attributes));
+        (void)memcpy_s(data, sizeof(ctx->attributes), &ctx->attributes, sizeof(ctx->attributes));
         return sizeof(ctx->attributes);
 
     case ZIP_SOURCE_OPEN:
@@ -272,7 +282,7 @@ read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd) {
             }
         }
 
-        if (ctx->start > 0) { // TODO: rewind on re-open
+        if (ctx->start > 0) { /* TODO: rewind on re-open */
             if (ctx->ops->seek(ctx, ctx->f, (zip_int64_t)ctx->start, SEEK_SET) == false) {
                 /* TODO: skip by reading */
                 return -1;
@@ -355,7 +365,7 @@ read_file(void *state, void *data, zip_uint64_t len, zip_source_cmd_t cmd) {
             return -1;
         }
 
-        memcpy(data, &ctx->st, sizeof(ctx->st));
+        (void)memcpy_s(data, sizeof(ctx->st), &ctx->st, sizeof(ctx->st));
         return sizeof(ctx->st);
     }
 

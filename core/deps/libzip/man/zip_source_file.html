@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_source_file.mdoc -- create data source from a file
-   Copyright (C) 2004-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2004-2021 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -79,9 +79,24 @@ libzip (-lzip)
 The functions <code class="Fn">zip_source_file</code>() and
   <code class="Fn">zip_source_file_create</code>() create a zip source from a
   file. They open <var class="Ar">fname</var> and read <var class="Ar">len</var>
-  bytes from offset <var class="Ar">start</var> from it. If
-  <var class="Ar">len</var> is 0 or -1, the whole file (starting from
-  <var class="Ar">start</var>) is used.
+  bytes from offset <var class="Ar">start</var> from it.
+<p class="Pp">When passing <code class="Dv">ZIP_LENGTH_TO_END</code> (or -1,
+    which is deprecated) as <var class="Ar">len</var>,
+    <code class="Nm">zip_source_file</code> determines the file size when it is
+    called and uses that as the expected file size. If the file size grows
+    between creating and reading from the source, the additional data is
+    ignored. If the file shrinks, <code class="Nm">libzip</code> treats it as an
+    error (<code class="Dv">ZIP_ER_DATA_LENGTH</code>).</p>
+<p class="Pp">When passing <code class="Dv">ZIP_LENGTH_UNCHECKED</code> as
+    <var class="Ar">len</var>, <code class="Nm">zip_source_file</code> assumes
+    the file's size is unknown. Reading from the source returns as much data as
+    is there at that time (usually when calling
+    <a class="Xr" href="zip_close.html">zip_close(3)</a>).</p>
+<p class="Pp"><code class="Nm">libzip</code> can do various optimizations if the
+    size of a source is known when it's created, so
+    <code class="Dv">ZIP_LENGTH_TO_END</code> is preferrable. If you deal with
+    files that are likely to change while you are processing them, you can use
+    the less efficient <code class="Dv">ZIP_LENGTH_UNCHECKED</code>.</p>
 <p class="Pp">If the file supports seek, the source can be used to open a zip
     archive from.</p>
 <p class="Pp">The file is opened and read when the data from the source is used,
@@ -122,6 +137,9 @@ Upon successful completion, the created source is returned. Otherwise,
 <h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
 <code class="Fn">zip_source_file</code>() and
   <code class="Fn">zip_source_file_create</code>() were added in libzip 1.0.
+<p class="Pp"><code class="Dv">ZIP_LENGTH_TO_END</code> and
+    <code class="Dv">ZIP_LENGTH_UNCHECKED</code> were added in libzip
+  1.10.1.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
@@ -133,7 +151,7 @@ Upon successful completion, the created source is returned. Otherwise,
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">June 30, 2023</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zipcmp.mdoc -- compare zip archives
-   Copyright (C) 2003-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2003-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -56,7 +56,7 @@
 <table class="Nm">
   <tr>
     <td><code class="Nm">zipcmp</code></td>
-    <td>[<code class="Fl">-hipqtVv</code>] <var class="Ar">archive1
+    <td>[<code class="Fl">-ChipqstVv</code>] <var class="Ar">archive1
       archive2</var></td>
   </tr>
 </table>
@@ -69,15 +69,21 @@
   CRCs. File order and compressed size differences are ignored.
 <p class="Pp">Supported options:</p>
 <dl class="Bl-tag">
+  <dt><a class="permalink" href="#C"><code class="Fl" id="C">-C</code></a></dt>
+  <dd>Check consistency of archives. Results in an error if archive is
+      inconsistent or not valid according to the zip specification.</dd>
   <dt><a class="permalink" href="#h"><code class="Fl" id="h">-h</code></a></dt>
   <dd>Display a short help message and exit.</dd>
   <dt><a class="permalink" href="#i"><code class="Fl" id="i">-i</code></a></dt>
   <dd>Compare names ignoring case distinctions.</dd>
   <dt><a class="permalink" href="#p"><code class="Fl" id="p">-p</code></a></dt>
-  <dd>Enable paranoid checks. Compares extra fields and other meta data.
-      (Automatically disabled if one of the archives is a directory.)</dd>
+  <dd>Enable paranoid checks. Compares extra fields, comments, and other meta
+      data. (Automatically disabled if one of the archives is a directory.)
+      These checks are skipped for files where the data differs.</dd>
   <dt><a class="permalink" href="#q"><code class="Fl" id="q">-q</code></a></dt>
   <dd>Quiet mode. Compare <code class="Fl">-v</code>.</dd>
+  <dt><a class="permalink" href="#s"><code class="Fl" id="s">-s</code></a></dt>
+  <dd>Print a summary of how many files where added and removed.</dd>
   <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a></dt>
   <dd>Test zip files by comparing the contents to their checksums.</dd>
   <dt><a class="permalink" href="#V"><code class="Fl" id="V">-V</code></a></dt>
@@ -114,7 +120,7 @@
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">March 19, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

@@ -3,7 +3,7 @@
   Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -99,7 +99,6 @@ _zip_win32_named_op_create_temp_output(zip_source_file_context_t *ctx) {
 
     zip_uint32_t value, i;
     HANDLE th = INVALID_HANDLE_VALUE;
-    void *temp = NULL;
     PSECURITY_DESCRIPTOR psd = NULL;
     PSECURITY_ATTRIBUTES psa = NULL;
     SECURITY_ATTRIBUTES sa;

@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zipmerge.mdoc -- merge zip archives
-   Copyright (C) 2004-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2004-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -80,12 +80,16 @@
       many files.</dd>
   <dt><a class="permalink" href="#i"><code class="Fl" id="i">-i</code></a></dt>
   <dd>Ask before overwriting files. See also <code class="Fl">-s</code>.</dd>
+  <dt><a class="permalink" href="#k"><code class="Fl" id="k">-k</code></a></dt>
+  <dd>Do not compress files that were uncompressed in
+      <var class="Ar">source-zip</var>, otherwise they are compressed with the
+      default compression method.</dd>
   <dt><a class="permalink" href="#S"><code class="Fl" id="S">-S</code></a></dt>
   <dd>Do not overwrite files that have the same size and CRC32 in both the
       source and target archives.</dd>
   <dt><a class="permalink" href="#s"><code class="Fl" id="s">-s</code></a></dt>
-  <dd>When <code class="Fl">-i</code> is given, do not before overwriting files
-      that have the same size and CRC32.</dd>
+  <dd>When <code class="Fl">-i</code> is given, do not ask before overwriting
+      files that have the same size and CRC32.</dd>
   <dt><a class="permalink" href="#V"><code class="Fl" id="V">-V</code></a></dt>
   <dd>Display version information and exit.</dd>
 </dl>
@@ -114,10 +118,17 @@
   <span class="An">Thomas Klausner</span>
   &lt;<a class="Mt" href="mailto:tk@giga.or.at">tk@giga.or.at</a>&gt;
 </section>
+<section class="Sh">
+<h1 class="Sh" id="CAVEATS"><a class="permalink" href="#CAVEATS">CAVEATS</a></h1>
+<code class="Nm">zipmerge</code> uses one open file descriptor per zip archive.
+  If you need to merge a lot of zip archives, check your shell's file descriptor
+  ulimit and either increase it or run <code class="Nm">zipmerge</code> multiple
+  times with e.g. 1000 source zip archives each time.
+</section>
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">December 5, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>
