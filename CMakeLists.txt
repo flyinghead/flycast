@@ -453,15 +453,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
 
 if(NOT WITH_SYSTEM_ZLIB)
-	set(ZLIB_RELATIVE_PATH "core/deps/libchdr/deps/zlib-1.2.12")
+	set(ZLIB_RELATIVE_PATH "core/deps/libchdr/deps/zlib-1.3.1")
 	target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
 	# help libzip find the package
 	set(ZLIB_FOUND TRUE)
 	set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
 	
 	cmake_policy(SET CMP0026 OLD)
-	get_target_property(ZLIB_LIBRARY_RELEASE zlib LOCATION)
-	get_target_property(ZLIB_LIBRARY_DEBUG zlib LOCATION_Debug)
+	get_target_property(ZLIB_LIBRARY_RELEASE zlibstatic LOCATION)
+	get_target_property(ZLIB_LIBRARY_DEBUG zlibstatic LOCATION_Debug)
 endif()
 
 find_package(PkgConfig)
