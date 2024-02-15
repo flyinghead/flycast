@@ -6,7 +6,7 @@
   Copyright (C) 2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -72,5 +72,13 @@ zip_int64_t _zip_win32_op_tell(zip_source_file_context_t *ctx, void *f);
 
 bool _zip_filetime_to_time_t(FILETIME ft, time_t *t);
 int _zip_win32_error_to_errno(DWORD win32err);
+
+#ifdef __clang__
+#define DONT_WARN_INCOMPATIBLE_FN_PTR_BEGIN _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wincompatible-function-pointer-types\"")
+#define DONT_WARN_INCOMPATIBLE_FN_PTR_END _Pragma("GCC diagnostic pop")
+#else
+#define DONT_WARN_INCOMPATIBLE_FN_PTR_BEGIN
+#define DONT_WARN_INCOMPATIBLE_FN_PTR_END
+#endif
 
 #endif /* _HAD_ZIP_SOURCE_FILE_WIN32_H */

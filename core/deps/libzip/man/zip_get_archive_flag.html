@@ -5,7 +5,7 @@
    Copyright (C) 2008-2017 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP files.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -75,8 +75,20 @@ The <code class="Fn">zip_get_archive_flag</code>() function returns if the flag
   flags are tested.
 <p class="Pp">Supported flags are:</p>
 <dl class="Bl-tag">
+  <dt><a class="permalink" href="#ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE"><code class="Dv" id="ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE">ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE</code></a></dt>
+  <dd>If this flag is cleared, the archive file will be removed if the archive
+      is empty. If it is set, an empty archive will be created, which is not
+      recommended by the zip specification. This flag is always cleared unless
+      explicitly set by the user with
+      <a class="Xr" href="zip_set_archive_flag.html">zip_set_archive_flag(3)</a>.</dd>
+  <dt><a class="permalink" href="#ZIP_AFL_IS_TORRENTZIP"><code class="Dv" id="ZIP_AFL_IS_TORRENTZIP">ZIP_AFL_IS_TORRENTZIP</code></a></dt>
+  <dd>The archive is in torrentzip format.</dd>
   <dt><a class="permalink" href="#ZIP_AFL_RDONLY"><code class="Dv" id="ZIP_AFL_RDONLY">ZIP_AFL_RDONLY</code></a></dt>
   <dd>The archive is read-only.</dd>
+  <dt><a class="permalink" href="#ZIP_AFL_WANT_TORRENTZIP"><code class="Dv" id="ZIP_AFL_WANT_TORRENTZIP">ZIP_AFL_WANT_TORRENTZIP</code></a></dt>
+  <dd>If the flag is set, the archive will be written in torrentzip format. This
+      flag is always cleared unless explicitly set by the user with
+      <a class="Xr" href="zip_set_archive_flag.html">zip_set_archive_flag(3)</a>.</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -99,6 +111,9 @@ The <code class="Fn">zip_get_archive_flag</code>() function returns if the flag
   <var class="Vt">int</var> to <var class="Vt">zip_flags_t m</var> and the type
   of <var class="Ar">flags</var> was changed from <var class="Vt">int</var> to
   <var class="Vt">zip_flags_t</var>.
+  <code class="Dv">ZIP_AFL_CREATE_OR_KEEP_FILE_FOR_EMPTY_ARCHIVE</code>,
+  <code class="Dv">ZIP_AFL_IS_TORRENTZIP</code>, and
+  <code class="Dv">ZIP_AFL_WANT_TORRENTZIP</code> were added in libzip 1.10.0.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
@@ -110,7 +125,7 @@ The <code class="Fn">zip_get_archive_flag</code>() function returns if the flag
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">January 23, 2023</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

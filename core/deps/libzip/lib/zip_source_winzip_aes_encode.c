@@ -1,9 +1,9 @@
 /*
   zip_source_winzip_aes_encode.c -- Winzip AES encryption routines
-  Copyright (C) 2009-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2009-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -36,13 +36,13 @@
 #include <string.h>
 
 #include "zipint.h"
-
+#include "zip_crypto.h"
 
 struct winzip_aes {
     char *password;
     zip_uint16_t encryption_method;
 
-    zip_uint8_t data[ZIP_MAX(WINZIP_AES_MAX_HEADER_LENGTH, SHA1_LENGTH)];
+    zip_uint8_t data[ZIP_MAX(WINZIP_AES_MAX_HEADER_LENGTH, ZIP_CRYPTO_SHA1_LENGTH)];
     zip_buffer_t *buffer;
 
     zip_winzip_aes_t *aes_ctx;
@@ -139,7 +139,7 @@ winzip_aes_encrypt(zip_source_t *src, void *ud, void *data, zip_uint64_t length,
         }
 
         if ((ret = zip_source_read(src, data, length)) < 0) {
-            _zip_error_set_from_source(&ctx->error, src);
+            zip_error_set_from_source(&ctx->error, src);
             return -1;
         }
 
@@ -207,8 +207,7 @@ winzip_aes_encrypt(zip_source_t *src, void *ud, void *data, zip_uint64_t length,
         return 0;
 
     default:
-        zip_error_set(&ctx->error, ZIP_ER_INVAL, 0);
-        return -1;
+        return zip_source_pass_to_lower_layer(src, data, length, cmd);
     }
 }
 

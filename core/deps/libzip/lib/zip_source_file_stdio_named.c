@@ -1,9 +1,9 @@
 /*
   zip_source_file_stdio_named.c -- source for stdio file opened by name
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2022 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 #include "zip_source_file.h"
 #include "zip_source_file_stdio.h"
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
@@ -53,6 +54,8 @@
 #define CAN_CLONE
 #endif
 
+static int create_temp_file(zip_source_file_context_t *ctx, bool create_file);
+
 static zip_int64_t _zip_stdio_op_commit_write(zip_source_file_context_t *ctx);
 static zip_int64_t _zip_stdio_op_create_temp_output(zip_source_file_context_t *ctx);
 #ifdef CAN_CLONE
@@ -63,6 +66,7 @@ static zip_int64_t _zip_stdio_op_remove(zip_source_file_context_t *ctx);
 static void _zip_stdio_op_rollback_write(zip_source_file_context_t *ctx);
 static char *_zip_stdio_op_strdup(zip_source_file_context_t *ctx, const char *string);
 static zip_int64_t _zip_stdio_op_write(zip_source_file_context_t *ctx, const void *data, zip_uint64_t len);
+static FILE *_zip_fopen_close_on_exec(const char *name, bool writeable);
 
 /* clang-format off */
 static zip_source_file_operations_t ops_stdio_named = {
@@ -97,7 +101,7 @@ zip_source_file(zip_t *za, const char *fname, zip_uint64_t start, zip_int64_t le
 
 ZIP_EXTERN zip_source_t *
 zip_source_file_create(const char *fname, zip_uint64_t start, zip_int64_t length, zip_error_t *error) {
-    if (fname == NULL || length < -1) {
+    if (fname == NULL || length < ZIP_LENGTH_UNCHECKED) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return NULL;
     }
@@ -123,42 +127,20 @@ _zip_stdio_op_commit_write(zip_source_file_context_t *ctx) {
 
 static zip_int64_t
 _zip_stdio_op_create_temp_output(zip_source_file_context_t *ctx) {
-    char *temp;
-    int tfd;
-    int mode;
-    FILE *tfp;
-    struct stat st;
-
-    if ((temp = (char *)malloc(strlen(ctx->fname) + 8)) == NULL) {
-        zip_error_set(&ctx->error, ZIP_ER_MEMORY, 0);
+    int fd = create_temp_file(ctx, true);
+    
+    if (fd < 0) {
         return -1;
     }
-
-    if (stat(ctx->fname, &st) == 0) {
-        mode = st.st_mode;
-    }
-    else {
-        mode = -1;
-    }
-
-    sprintf(temp, "%s.XXXXXX", ctx->fname);
-
-    if ((tfd = _zip_mkstempm(temp, mode)) == -1) {
+    
+    if ((ctx->fout = fdopen(fd, "r+b")) == NULL) {
         zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-        free(temp);
+        close(fd);
+        (void)remove(ctx->tmpname);
+        free(ctx->tmpname);
+        ctx->tmpname = NULL;
         return -1;
     }
-
-    if ((tfp = fdopen(tfd, "r+b")) == NULL) {
-        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-        close(tfd);
-        (void)remove(temp);
-        free(temp);
-        return -1;
-    }
-
-    ctx->fout = tfp;
-    ctx->tmpname = temp;
 
     return 0;
 }
@@ -166,39 +148,30 @@ _zip_stdio_op_create_temp_output(zip_source_file_context_t *ctx) {
 #ifdef CAN_CLONE
 static zip_int64_t
 _zip_stdio_op_create_temp_output_cloning(zip_source_file_context_t *ctx, zip_uint64_t offset) {
-    char *temp;
     FILE *tfp;
-
+    
     if (offset > ZIP_OFF_MAX) {
         zip_error_set(&ctx->error, ZIP_ER_SEEK, E2BIG);
         return -1;
     }
-
-    if ((temp = (char *)malloc(strlen(ctx->fname) + 8)) == NULL) {
-        zip_error_set(&ctx->error, ZIP_ER_MEMORY, 0);
-        return -1;
-    }
-    sprintf(temp, "%s.XXXXXX", ctx->fname);
-
+    
 #ifdef HAVE_CLONEFILE
-#ifndef __clang_analyzer__
-    /* we can't use mkstemp, since clonefile insists on creating the file */
-    if (mktemp(temp) == NULL) {
-        zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-        free(temp);
+    /* clonefile insists on creating the file, so just create a name */
+    if (create_temp_file(ctx, false) < 0) {
         return -1;
     }
-#endif
-
-    if (clonefile(ctx->fname, temp, 0) < 0) {
+    
+    if (clonefile(ctx->fname, ctx->tmpname, 0) < 0) {
         zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-        free(temp);
+        free(ctx->tmpname);
+        ctx->tmpname = NULL;
         return -1;
     }
-    if ((tfp = _zip_fopen_close_on_exec(temp, true)) == NULL) {
+    if ((tfp = _zip_fopen_close_on_exec(ctx->tmpname, true)) == NULL) {
         zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-        (void)remove(temp);
-        free(temp);
+        (void)remove(ctx->tmpname);
+        free(ctx->tmpname);
+        ctx->tmpname = NULL;
         return -1;
     }
 #else
@@ -206,19 +179,16 @@ _zip_stdio_op_create_temp_output_cloning(zip_source_file_context_t *ctx, zip_uin
         int fd;
         struct file_clone_range range;
         struct stat st;
-
+        
         if (fstat(fileno(ctx->f), &st) < 0) {
             zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-            free(temp);
             return -1;
         }
-
-        if ((fd = mkstemp(temp)) < 0) {
-            zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
-            free(temp);
+        
+        if ((fd = create_temp_file(ctx, true)) < 0) {
             return -1;
         }
-
+            
         range.src_fd = fileno(ctx->f);
         range.src_offset = 0;
         range.src_length = ((offset + st.st_blksize - 1) / st.st_blksize) * st.st_blksize;
@@ -229,16 +199,18 @@ _zip_stdio_op_create_temp_output_cloning(zip_source_file_context_t *ctx, zip_uin
         if (ioctl(fd, FICLONERANGE, &range) < 0) {
             zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
             (void)close(fd);
-            (void)remove(temp);
-            free(temp);
+            (void)remove(ctx->tmpname);
+            free(ctx->tmpname);
+            ctx->tmpname = NULL;
             return -1;
         }
 
         if ((tfp = fdopen(fd, "r+b")) == NULL) {
             zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
             (void)close(fd);
-            (void)remove(temp);
-            free(temp);
+            (void)remove(ctx->tmpname);
+            free(ctx->tmpname);
+            ctx->tmpname = NULL;
             return -1;
         }
     }
@@ -246,19 +218,21 @@ _zip_stdio_op_create_temp_output_cloning(zip_source_file_context_t *ctx, zip_uin
 
     if (ftruncate(fileno(tfp), (off_t)offset) < 0) {
         (void)fclose(tfp);
-        (void)remove(temp);
-        free(temp);
+        (void)remove(ctx->tmpname);
+        free(ctx->tmpname);
+        ctx->tmpname = NULL;
         return -1;
     }
     if (fseeko(tfp, (off_t)offset, SEEK_SET) < 0) {
-        (void)fclose(tfp);
-        (void)remove(temp);
-        free(temp);
         zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+        (void)fclose(tfp);
+        (void)remove(ctx->tmpname);
+        free(ctx->tmpname);
+        ctx->tmpname = NULL;
+        return -1;
     }
 
     ctx->fout = tfp;
-    ctx->tmpname = temp;
 
     return 0;
 }
@@ -310,4 +284,109 @@ _zip_stdio_op_write(zip_source_file_context_t *ctx, const void *data, zip_uint64
     }
 
     return (zip_int64_t)ret;
+}
+
+
+static int create_temp_file(zip_source_file_context_t *ctx, bool create_file) {
+    char *temp;
+    int mode;
+    struct stat st;
+    int fd = 0;
+    char *start, *end;
+    
+    if (stat(ctx->fname, &st) == 0) {
+        mode = st.st_mode;
+    }
+    else {
+        mode = -1;
+    }
+    
+    size_t temp_size = strlen(ctx->fname) + 13;
+    if ((temp = (char *)malloc(temp_size)) == NULL) {
+        zip_error_set(&ctx->error, ZIP_ER_MEMORY, 0);
+        return -1;
+    }
+    snprintf_s(temp, temp_size, "%s.XXXXXX.part", ctx->fname);
+    end = temp + strlen(temp) - 5;
+    start = end - 6;
+    
+    for (;;) {
+        zip_uint32_t value = zip_random_uint32();
+        char *xs = start;
+        
+        while (xs < end) {
+            char digit = value % 36;
+            if (digit < 10) {
+                *(xs++) = digit + '0';
+            }
+            else {
+                *(xs++) = digit - 10 + 'a';
+            }
+            value /= 36;
+        }
+        
+        if (create_file) {
+            if ((fd = open(temp, O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, mode == -1 ? 0666 : (mode_t)mode)) >= 0) {
+                if (mode != -1) {
+                    /* open() honors umask(), which we don't want in this case */
+#ifdef HAVE_FCHMOD
+                    (void)fchmod(fd, (mode_t)mode);
+#else
+                    (void)chmod(temp, (mode_t)mode);
+#endif
+                }
+                break;
+            }
+            if (errno != EEXIST) {
+                zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+                free(temp);
+                return -1;
+            }
+        }
+        else {
+            if (stat(temp, &st) < 0) {
+                if (errno == ENOENT) {
+                    break;
+                }
+                else {
+                    zip_error_set(&ctx->error, ZIP_ER_TMPOPEN, errno);
+                    free(temp);
+                    return -1;
+                }
+            }
+        }
+    }
+    
+    ctx->tmpname = temp;
+    
+    return fd; /* initialized to 0 if !create_file */
+}
+
+
+/*
+ * fopen replacement that sets the close-on-exec flag
+ * some implementations support an fopen 'e' flag for that,
+ * but e.g. macOS doesn't.
+ */
+static FILE *_zip_fopen_close_on_exec(const char *name, bool writeable) {
+    int fd;
+    int flags;
+    FILE *fp;
+
+    flags = O_CLOEXEC;
+    if (writeable) {
+        flags |= O_RDWR;
+    }
+    else {
+        flags |= O_RDONLY;
+    }
+
+    /* mode argument needed on Windows */
+    if ((fd = open(name, flags, 0666)) < 0) {
+        return NULL;
+    }
+    if ((fp = fdopen(fd, writeable ? "r+b" : "rb")) == NULL) {
+        return NULL;
+    }
+    return fp;
 }

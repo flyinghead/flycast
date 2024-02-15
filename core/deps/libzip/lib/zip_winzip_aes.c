@@ -1,9 +1,9 @@
 /*
   zip_winzip_aes.c -- Winzip AES de/encryption backend routines
-  Copyright (C) 2017-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2017-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -125,7 +125,7 @@ _zip_winzip_aes_new(const zip_uint8_t *password, zip_uint64_t password_length, c
     }
 
     if (password_verify) {
-        memcpy(password_verify, buffer + (2 * key_size / 8), WINZIP_AES_PASSWORD_VERIFY_LENGTH);
+        (void)memcpy_s(password_verify, WINZIP_AES_PASSWORD_VERIFY_LENGTH, buffer + (2 * key_size / 8), WINZIP_AES_PASSWORD_VERIFY_LENGTH);
     }
 
     return ctx;

@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_fdopen.mdoc -- open zip archive using existing file descriptor
-   Copyright (C) 2009-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2009-2021 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -118,6 +118,8 @@ The file specified by <var class="Ar">fd</var> is prepared for use by
   <dt>[<a class="permalink" href="#ZIP_ER_OPEN"><code class="Er" id="ZIP_ER_OPEN">ZIP_ER_OPEN</code></a>]</dt>
   <dd>The file specified by <var class="Ar">fd</var> could not be prepared for
       use by <a class="Xr" href="libzip.html">libzip(3)</a>.</dd>
+  <dt>[<a class="permalink" href="#ZIP_ER_OPNOTSUPP"><code class="Er" id="ZIP_ER_OPNOTSUPP">ZIP_ER_OPNOTSUPP</code></a>]</dt>
+  <dd>This functionality has been disabled at compile time.</dd>
   <dt>[<a class="permalink" href="#ZIP_ER_READ"><code class="Er" id="ZIP_ER_READ">ZIP_ER_READ</code></a>]</dt>
   <dd>A read error occurred; see <var class="Va">errno</var> for details.</dd>
   <dt>[<a class="permalink" href="#ZIP_ER_SEEK"><code class="Er" id="ZIP_ER_SEEK">ZIP_ER_SEEK</code></a>]</dt>
@@ -146,7 +148,7 @@ The file specified by <var class="Ar">fd</var> is prepared for use by
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">September 23, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

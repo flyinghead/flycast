@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_set_file_compression.mdoc -- set compression method and its flags
-   Copyright (C) 2012-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2012-2021 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP files.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -88,14 +88,28 @@ The <code class="Fn">zip_set_file_compression</code>() function sets the
   <dt><a class="permalink" href="#ZIP_CM_DEFLATE"><code class="Dv" id="ZIP_CM_DEFLATE">ZIP_CM_DEFLATE</code></a></dt>
   <dd>Deflate the file with the <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/zlib.html">zlib(3)</a>
       algorithm and default options.</dd>
+  <dt><a class="permalink" href="#ZIP_CM_XZ"><code class="Dv" id="ZIP_CM_XZ">ZIP_CM_XZ</code></a></dt>
+  <dd>Use the <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/xz.html">xz(1)</a> algorithm for
+    compression</dd>
+  <dt><a class="permalink" href="#ZIP_CM_ZSTD"><code class="Dv" id="ZIP_CM_ZSTD">ZIP_CM_ZSTD</code></a></dt>
+  <dd>Use the <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/zstd.html">zstd(1)</a> algorithm for
+      compression</dd>
 </dl>
 <p class="Pp"><i class="Em">NOTE</i>: Only the deflate and store methods can be
     assumed to be universally supported.</p>
 <p class="Pp">The <var class="Ar">comp_flags</var> argument defines the
-    compression level, 1 being fastest compression and 9 highest. Allowed values
-    are 0 (which uses the default compression for the algorithm) and 1-9, other
-    values are undefined. Further compression method specific flags might be
-    added over time.</p>
+    compression level. This value is dependent on the compression algorithm. In
+    general, lower numbers mean faster de/compression and higher numbers mean
+    slower de/compression. For <code class="Dv">ZIP_CM_BZIP</code>,
+    <code class="Dv">ZIP_CM_DEFLATE</code>, and
+    <code class="Dv">ZIP_CM_XZ</code> 1 is the fastest compression and 9 the
+    best, 0 chooses the default. For <code class="Dv">ZIP_CM_ZSTD</code>
+    possible values are
+    <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/ZSTD_minCLevel.html">ZSTD_minCLevel(3)</a> to
+    <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/ZSTD_maxCLevel.html">ZSTD_maxCLevel(3)</a>; negative
+    values must be cast to <var class="Ft">zip_uint32_t</var>.</p>
+<p class="Pp">Further compression method specific flags might be added over
+    time.</p>
 <p class="Pp">The current compression method for a file in a zip archive can be
     determined using <a class="Xr" href="zip_stat.html">zip_stat(3)</a>.</p>
 </section>
@@ -141,7 +155,7 @@ Upon successful completion 0 is returned. Otherwise, -1 is returned and the
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">April 2, 2020</td>
+    <td class="foot-date">February 2, 2023</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

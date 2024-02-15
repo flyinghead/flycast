@@ -1,9 +1,9 @@
 /*
   zip_extra_field_api.c -- public extra fields API functions
-  Copyright (C) 2012-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2012-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -56,6 +56,10 @@ zip_file_extra_field_delete(zip_t *za, zip_uint64_t idx, zip_uint16_t ef_idx, zi
         zip_error_set(&za->error, ZIP_ER_RDONLY, 0);
         return -1;
     }
+    if (ZIP_WANT_TORRENTZIP(za)) {
+        zip_error_set(&za->error, ZIP_ER_NOT_ALLOWED, 0);
+        return -1;
+    }
 
     if (_zip_file_extra_field_prepare_for_change(za, idx) < 0)
         return -1;
@@ -86,6 +90,10 @@ zip_file_extra_field_delete_by_id(zip_t *za, zip_uint64_t idx, zip_uint16_t ef_i
 
     if (ZIP_IS_RDONLY(za)) {
         zip_error_set(&za->error, ZIP_ER_RDONLY, 0);
+        return -1;
+    }
+    if (ZIP_WANT_TORRENTZIP(za)) {
+        zip_error_set(&za->error, ZIP_ER_NOT_ALLOWED, 0);
         return -1;
     }
 
@@ -234,6 +242,10 @@ zip_file_extra_field_set(zip_t *za, zip_uint64_t idx, zip_uint16_t ef_id, zip_ui
 
     if (ZIP_IS_RDONLY(za)) {
         zip_error_set(&za->error, ZIP_ER_RDONLY, 0);
+        return -1;
+    }
+    if (ZIP_WANT_TORRENTZIP(za)) {
+        zip_error_set(&za->error, ZIP_ER_NOT_ALLOWED, 0);
         return -1;
     }
 

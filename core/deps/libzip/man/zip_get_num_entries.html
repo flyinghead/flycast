@@ -5,7 +5,7 @@
    Copyright (C) 2011-2017 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -49,7 +49,7 @@
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
 <code class="Nm">zip_get_num_entries</code> &#x2014;
-<div class="Nd">get number of files in archive</div>
+<div class="Nd">get number of entries in archive</div>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="LIBRARY"><a class="permalink" href="#LIBRARY">LIBRARY</a></h1>
@@ -67,15 +67,20 @@ libzip (-lzip)
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 The <code class="Fn">zip_get_num_entries</code>() function returns the number of
-  files in <var class="Ar">archive</var>. If <var class="Ar">flags</var> is set
-  to <code class="Dv">ZIP_FL_UNCHANGED</code>, the original number of entries is
-  returned.
+  entries in <var class="Ar">archive</var>. Entries are all files that are
+  present in the original archive or that were added while the archive is open.
+  This includes deleted files, since indices are not renumbered until the
+  archive is closed. (This allows to refer to deleted files, e. g. to undelete
+  them.)
+<p class="Pp">If <var class="Ar">flags</var> is set to
+    <code class="Dv">ZIP_FL_UNCHANGED</code>, the original number of files is
+    returned.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="RETURN_VALUES"><a class="permalink" href="#RETURN_VALUES">RETURN
   VALUES</a></h1>
-<code class="Fn">zip_get_num_entries</code>() returns the number of files in the
-  zip archive, or -1 if <var class="Ar">archive</var> is
+<code class="Fn">zip_get_num_entries</code>() returns the number of entries in
+  the zip archive, or -1 if <var class="Ar">archive</var> is
   <code class="Dv">NULL</code>.
 </section>
 <section class="Sh">
@@ -103,7 +108,7 @@ The <code class="Fn">zip_get_num_entries</code>() function returns the number of
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">August 19, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>
