@@ -278,16 +278,8 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		XVisualInfo* x11Visual = nullptr;
-		Colormap     x11Colormap = 0;
-#if !defined(GLES)
-
-		if (!theGLContext.ChooseVisual(x11_disp, &x11Visual, &depth))
-			exit(1);
-		x11Colormap = XCreateColormap(x11_disp, RootWindow(x11_disp, x11Screen), x11Visual->visual, AllocNone);
-#else
 		int i32Depth = DefaultDepth(x11_disp, x11Screen);
-		x11Visual = new XVisualInfo;
+		XVisualInfo* x11Visual = new XVisualInfo;
 		if (!XMatchVisualInfo(x11_disp, x11Screen, i32Depth, TrueColor, x11Visual))
 		{
 			ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
@@ -296,8 +288,8 @@ void x11_window_create()
 		}
 		// Gets the window parameters
 		Window sRootWindow = RootWindow(x11_disp, x11Screen);
-		x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
-#endif
+		Colormap x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
+
 		XSetWindowAttributes sWA;
 		sWA.colormap = x11Colormap;
 
@@ -326,11 +318,8 @@ void x11_window_create()
 		// Creates the X11 window
 		x11_win = XCreateWindow(x11_disp, RootWindow(x11_disp, x11Screen), 0, 0, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
-#if !defined(GLES)
-		XFree(x11Visual);
-#else
+
 		delete x11Visual;
-#endif
 
 		XSetWindowBackground(x11_disp, x11_win, 0);
 

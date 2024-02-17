@@ -108,8 +108,8 @@ bool EGLGraphicsContext::init()
 		}
 		if (try_full_gl)
 		{
-			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
-									  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR,
+			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION, 3,
+									  EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
 									  EGL_NONE };
 			context = eglCreateContext(display, config,  EGL_NO_CONTEXT, contextAttrs);
 			if (context != EGL_NO_CONTEXT)
