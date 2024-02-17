@@ -88,13 +88,9 @@ private:
 
 #include "sdl.h"
 
-#elif defined(GLES) || defined(__ANDROID__) || defined(__SWITCH__)
+#elif defined(__ANDROID__) || defined(SUPPORT_DISPMANX) || defined(SUPPORT_X11)
 
 #include "egl.h"
-
-#elif defined(SUPPORT_X11)
-
-#include "xgl.h"
 
 #else
 

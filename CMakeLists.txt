@@ -1165,9 +1165,7 @@ if(USE_OPENGL)
 			core/wsi/osx.cpp
 			core/wsi/osx.h
 			core/wsi/sdl.cpp
-			core/wsi/sdl.h
-			core/wsi/xgl.cpp
-			core/wsi/xgl.h)
+			core/wsi/sdl.h)
 
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/gles/glcache.h
@@ -1483,13 +1481,9 @@ endif()
 
 if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
 	add_library(glad STATIC core/deps/glad/src/gl.c)
-	if(NOT SDL2_FOUND)
-		if(X11_FOUND)
-			target_sources(glad PRIVATE core/deps/glad/src/glx.c)
-		endif()
-		if(ANDROID OR USE_GLES2 OR USE_GLES)
-			target_sources(glad PRIVATE core/deps/glad/src/egl.c)
-		endif()
+	if(NOT APPLE AND NOT WIN32 AND NOT SDL2_FOUND)
+		# When SDL2 is not found, we can use EGL with ANativeWindow (Android), DispmanX (Raspberry Pi) or X11
+		target_sources(glad PRIVATE core/deps/glad/src/egl.c)
 	endif()
 	target_include_directories(glad PUBLIC core/deps/glad/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE glad)
