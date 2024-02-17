@@ -294,6 +294,7 @@ void VulkanContext::InitImgui()
 	initInfo.Queue = (VkQueue)graphicsQueue;
 	initInfo.PipelineCache = (VkPipelineCache)*pipelineCache;
 	initInfo.DescriptorPool = (VkDescriptorPool)*descriptorPool;
+	initInfo.RenderPass = (VkRenderPass)*renderPass;
 	initInfo.MinImageCount = 2;
 	initInfo.ImageCount = GetSwapChainSize();
 #ifdef VK_DEBUG
@@ -306,7 +307,7 @@ void VulkanContext::InitImgui()
 	});
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
+	if (!ImGui_ImplVulkan_Init(&initInfo))
 	{
 		die("ImGui initialization failed");
 	}
