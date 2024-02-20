@@ -92,6 +92,7 @@ Option<int64_t> PixelBufferSize("", 512_MB);
 IntOption PerPixelLayers(CORE_OPTION_NAME "_oit_layers");
 Option<bool> NativeDepthInterpolation(CORE_OPTION_NAME "_native_depth_interpolation");
 Option<bool> EmulateFramebuffer(CORE_OPTION_NAME "_emulate_framebuffer", false);
+Option<bool> FixUpscaleBleedingEdge(CORE_OPTION_NAME "_fix_upscale_bleeding_edge", true);
 
 // Misc
 
