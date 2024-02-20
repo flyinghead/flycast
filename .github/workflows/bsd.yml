@@ -1,0 +1,48 @@
+name: BSD CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        operating_system: [ freebsd, netbsd, openbsd ]
+        architecture: [ arm64, x86-64 ]
+        include:
+          - operating_system: freebsd
+            version: '14.0'
+            pkginstall: sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip miniupnpc ninja pkgconf pulseaudio sdl2
+          - operating_system: netbsd
+            version: '9.3'
+            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache cmake gcc12 git libao libzip miniupnpc ninja-build pkgconf pulseaudio SDL2 && export PATH=/usr/pkg/gcc12/bin:$PATH
+          - operating_system: openbsd
+            version: '7.4'
+            pkginstall: sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2
+        exclude:
+          - architecture: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
+
+      - uses: cross-platform-actions/action@v0.23.0
+        with:
+          operating_system: ${{ matrix.operating_system }}
+          architecture: ${{ matrix.architecture }}
+          version: ${{ matrix.version }}
+          environment_variables: CCACHE_DIR
+          run: |
+            ${{ matrix.pkginstall }}
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+            cmake --build build --config Release
