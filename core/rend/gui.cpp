@@ -2064,6 +2064,8 @@ static void gui_display_settings()
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	OptionCheckbox("Fix Upscale Bleeding Edge", config::FixUpscaleBleedingEdge,
+		    			"Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)");
 		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
 		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
 		    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,

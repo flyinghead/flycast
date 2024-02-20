@@ -474,6 +474,7 @@ extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
+extern Option<bool> FixUpscaleBleedingEdge;
 #ifdef VIDEO_ROUTING
 extern Option<bool, false> VideoRouting;
 extern Option<bool, false> VideoRoutingScale;
