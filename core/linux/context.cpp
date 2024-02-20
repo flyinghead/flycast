@@ -65,6 +65,15 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 	#if defined(__APPLE__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(->__ss.__pc));
 		bicopy<ToSegfault>(hostctx->x0, MCTX(->__ss.__x[0]));
+	#elif defined(__FreeBSD__)
+		bicopy<ToSegfault>(hostctx->pc, MCTX(.mc_gpregs.gp_elr));
+		bicopy<ToSegfault>(hostctx->x0, MCTX(.mc_gpregs.gp_x[0]));
+	#elif defined(__NetBSD__)
+		bicopy<ToSegfault>(hostctx->pc, MCTX(.__gregs[_REG_ELR]));
+		bicopy<ToSegfault>(hostctx->x0, MCTX(.__gregs[_REG_X0]));
+	#elif defined(__OpenBSD__)
+		bicopy<ToSegfault>(hostctx->pc, MCTX(->sc_elr));
+		bicopy<ToSegfault>(hostctx->x0, MCTX(->sc_x[0]));
  	#else
  		bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));
  		bicopy<ToSegfault>(hostctx->x0, MCTX(.regs[0]));
