@@ -37,7 +37,7 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
-static std::shared_ptr<SDLMouse> sdl_mouse;
+static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
 static bool window_maximized;
@@ -140,14 +140,15 @@ static void emuEventCallback(Event event, void *)
 static void checkRawInput()
 {
 #if defined(_WIN32) && !defined(TARGET_UWP)
-	if ((bool)config::UseRawInput != (bool)sdl_mouse)
+	if ((bool)config::UseRawInput != (bool)sdl_keyboard)
 		return;
 	if (config::UseRawInput)
 	{
 		GamepadDevice::Unregister(sdl_keyboard);
 		sdl_keyboard = nullptr;
-		GamepadDevice::Unregister(sdl_mouse);
-		sdl_mouse = nullptr;
+		for (auto& it : sdl_mice)
+			GamepadDevice::Unregister(it.second);
+		sdl_mice.clear();
 		rawinput::init();
 	}
 	else
@@ -155,19 +156,12 @@ static void checkRawInput()
 		rawinput::term();
 		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
 		GamepadDevice::Register(sdl_keyboard);
-		sdl_mouse = std::make_shared<SDLMouse>();
-		GamepadDevice::Register(sdl_mouse);
 	}
 #else
 	if (!sdl_keyboard)
 	{
 		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
 		GamepadDevice::Register(sdl_keyboard);
-	}
-	if (!sdl_mouse)
-	{
-		sdl_mouse = std::make_shared<SDLMouse>();
-		GamepadDevice::Register(sdl_mouse);
 	}
 #endif
 }
@@ -249,6 +243,17 @@ inline void SDLMouse::setAbsPos(int x, int y) {
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
 		Mouse::setAbsPos(x, y, width, height);
+}
+
+static std::shared_ptr<SDLMouse> getMouse(u64 mouseId)
+{
+	auto& mouse = sdl_mice[mouseId];
+	if (mouse == nullptr)
+	{
+		mouse = std::make_shared<SDLMouse>(mouseId);
+		GamepadDevice::Register(mouse);
+	}
+	return mouse;
 }
 
 void input_sdl_handle()
@@ -422,10 +427,11 @@ void input_sdl_handle()
 				checkRawInput();
 				if (!config::UseRawInput)
 				{
+					auto mouse = getMouse(event.motion.which);
 					if (mouseCaptured && gameRunning)
-						sdl_mouse->setRelPos(event.motion.xrel, event.motion.yrel);
+						mouse->setRelPos(event.motion.xrel, event.motion.yrel);
 					else
-						sdl_mouse->setAbsPos(event.motion.x, event.motion.y);
+						mouse->setAbsPos(event.motion.x, event.motion.y);
 				}
 				else if (mouseCaptured && gameRunning)
 				{
@@ -451,24 +457,25 @@ void input_sdl_handle()
 					checkRawInput();
 					if (!config::UseRawInput)
 					{
+						auto mouse = getMouse(event.button.which);
 						if (!mouseCaptured || !gameRunning)
-							sdl_mouse->setAbsPos(event.button.x, event.button.y);
+							mouse->setAbsPos(event.button.x, event.button.y);
 						bool pressed = event.button.state == SDL_PRESSED;
 						switch (event.button.button) {
 						case SDL_BUTTON_LEFT:
-							sdl_mouse->setButton(Mouse::LEFT_BUTTON, pressed);
+							mouse->setButton(Mouse::LEFT_BUTTON, pressed);
 							break;
 						case SDL_BUTTON_RIGHT:
-							sdl_mouse->setButton(Mouse::RIGHT_BUTTON, pressed);
+							mouse->setButton(Mouse::RIGHT_BUTTON, pressed);
 							break;
 						case SDL_BUTTON_MIDDLE:
-							sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, pressed);
+							mouse->setButton(Mouse::MIDDLE_BUTTON, pressed);
 							break;
 						case SDL_BUTTON_X1:
-							sdl_mouse->setButton(Mouse::BUTTON_4, pressed);
+							mouse->setButton(Mouse::BUTTON_4, pressed);
 							break;
 						case SDL_BUTTON_X2:
-							sdl_mouse->setButton(Mouse::BUTTON_5, pressed);
+							mouse->setButton(Mouse::BUTTON_5, pressed);
 							break;
 						}
 					}
@@ -478,8 +485,10 @@ void input_sdl_handle()
 			case SDL_MOUSEWHEEL:
 				gui_set_mouse_wheel(-event.wheel.y * 35);
 				checkRawInput();
-				if (!config::UseRawInput)
-					sdl_mouse->setWheel(-event.wheel.y);
+				if (!config::UseRawInput) {
+					auto mouse = getMouse(event.wheel.which);
+					mouse->setWheel(-event.wheel.y);
+				}
 				break;
 
 			case SDL_JOYDEVICEADDED:
@@ -498,6 +507,7 @@ void input_sdl_handle()
 			case SDL_FINGERDOWN:
 			case SDL_FINGERMOTION:
 				{
+					auto mouse = getMouse(0);
 					int x = event.tfinger.x * settings.display.width;
 					int y = event.tfinger.y * settings.display.height;
 					gui_set_mouse_position(x, y);
@@ -505,24 +515,25 @@ void input_sdl_handle()
 					{
 						int dx = event.tfinger.dx * settings.display.width;
 						int dy = event.tfinger.dy * settings.display.height;
-						sdl_mouse->setRelPos(dx, dy);
+						mouse->setRelPos(dx, dy);
 					}
 					else
-						sdl_mouse->setAbsPos(x, y);
+						mouse->setAbsPos(x, y);
 					if (event.type == SDL_FINGERDOWN) {
-						sdl_mouse->setButton(Mouse::LEFT_BUTTON, true);
+						mouse->setButton(Mouse::LEFT_BUTTON, true);
 						gui_set_mouse_button(0, true);
 					}
 				}
 				break;
 			case SDL_FINGERUP:
 				{
+					auto mouse = getMouse(0);
 					int x = event.tfinger.x * settings.display.width;
 					int y = event.tfinger.y * settings.display.height;
 					gui_set_mouse_position(x, y);
 					gui_set_mouse_button(0, false);
-					sdl_mouse->setAbsPos(x, y);
-					sdl_mouse->setButton(Mouse::LEFT_BUTTON, false);
+					mouse->setAbsPos(x, y);
+					mouse->setButton(Mouse::LEFT_BUTTON, false);
 				}
 				break;
 		}

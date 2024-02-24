@@ -426,10 +426,16 @@ std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 class SDLMouse : public Mouse
 {
 public:
-	SDLMouse() : Mouse("SDL")
+	SDLMouse(u64 mouseId) : Mouse("SDL")
 	{
-		this->_name = "Default Mouse";
-		this->_unique_id = "sdl_mouse";
+		if (mouseId == 0) {
+			this->_name = "Default Mouse";
+			this->_unique_id = "sdl_mouse";
+		}
+		else {
+			this->_name = "Mouse " + std::to_string(mouseId);
+			this->_unique_id = "sdl_mouse_" + std::to_string(mouseId);
+		}
 		loadMapping();
 	}
 
