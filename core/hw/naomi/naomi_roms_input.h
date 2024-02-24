@@ -727,3 +727,21 @@ static InputDescriptors crackindj_inputs = {
 			{ "FADER", Full, 0, true },
 	},
 };
+
+static InputDescriptors shaktam_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ NAOMI_BTN0_KEY, "SHAKE L" },
+			{ NAOMI_BTN1_KEY, "SHAKE R" },
+			{ NAOMI_BTN2_KEY, "KNOCK", NAOMI_DOWN_KEY },
+			{ NAOMI_DOWN_KEY, "DOWN", NAOMI_LEFT_KEY },
+			{ NAOMI_UP_KEY, "UP", NAOMI_RIGHT_KEY },
+	},
+	{
+			{ "TAMBOURINE X", Full, 0 },
+			{ "TAMBOURINE Y", Full, 1 },
+			{ "", Full, 2 }, // unused but P2 starts at axis 4
+			{ "", Full, 3 }, // unused but P2 starts at axis 4
+	},
+};
