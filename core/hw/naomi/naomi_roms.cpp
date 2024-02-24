@@ -5792,6 +5792,7 @@ const Game Games[] =
             { NULL, 0, 0 },
         },
         "gds-0002b",
+		&shaktam_inputs,
     },
     // Shakatto Tambourine Cho Powerup Chu (2K1 AUT)
     {
@@ -5808,6 +5809,7 @@ const Game Games[] =
             { NULL, 0, 0 },
         },
         "gds-0016",
+		&shaktam_inputs,
     },
     // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR)
     {
@@ -5824,6 +5826,7 @@ const Game Games[] =
             { NULL, 0, 0 },
         },
         "gds-0013",
+		&shaktam_inputs,
     },
     // Shikigami No Shiro II / The Castle of Shikigami II
     {
