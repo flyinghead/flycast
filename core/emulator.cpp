@@ -149,7 +149,7 @@ static void loadSpecialSettings()
 		if (prod_id == "MK-51182")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1000000.f);	// Mali needs 1M, 10K is enough for others
+			config::ExtraDepthScale.override(1e8f);
 		}
 		// Re-Volt (US, EU, JP)
 		else if (prod_id == "T-8109N" || prod_id == "T8107D  50" || prod_id == "T-8101M")
