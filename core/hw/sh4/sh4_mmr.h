@@ -6,12 +6,8 @@
 #include "modules/dmac.h"
 
 //For mem mapping
-void map_area7_init();
-void map_area7(u32 base);
+void map_area7();
 void map_p4();
-
-#define OnChipRAM_SIZE (0x2000)
-#define OnChipRAM_MASK (OnChipRAM_SIZE-1)
 
 #define sq_both (sh4rcb.sq_buffer)
 
@@ -1086,17 +1082,17 @@ union DMAC_DMAOR_type
 {
 	struct
 	{
-		u32 DME  : 1;
-		u32 NMIF : 1;
-		u32 AE   : 1;
+		u32 DME  : 1;	// DMAC master enable
+		u32 NMIF : 1;	// NMI flag
+		u32 AE   : 1;	// address error flag
 		u32      : 1;
-		u32 COD  : 1;
+		u32 COD  : 1;	// check overrun for DREQ
 		u32      : 3;
 
-		u32 PR0  : 1;
-		u32 PR1  : 1;
+		u32 PR0  : 1;	// priority mode:
+		u32 PR1  : 1;	// PR0: 0, PR1: 1 => CH2 > CH0 > CH1 > CH3
 		u32      : 5;
-		u32 DDT  : 1;
+		u32 DDT  : 1;	// 0: normal DMA mode, 1: on-demand data transfer mode
 
 		u32      : 16;
 	};
