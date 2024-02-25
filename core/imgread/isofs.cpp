@@ -61,41 +61,69 @@ IsoFs::Directory *IsoFs::getRoot()
 	return root;
 }
 
+void IsoFs::Directory::reset()
+{
+	index = 0;
+	if (data.empty() && len != 0)
+	{
+		data.resize(len);
+		fs->disc->ReadSectors(startFad, len / 2048, data.data(), 2048);
+	}
+}
+
+IsoFs::Entry *IsoFs::Directory::nextEntry()
+{
+	if (index >= data.size())
+		return nullptr;
+	const iso9660_dir_t *dir = (const iso9660_dir_t *)&data[index];
+	if (dir->length == 0)
+	{
+		if ((index & 2047) == 0)
+			return nullptr;
+		index = ((index + 2047) / 2048) * 2048;
+		if (index >= data.size())
+			return nullptr;
+		dir = (const iso9660_dir_t *)&data[index];
+		if (dir->length == 0)
+			return nullptr;
+	}
+	std::string name(dir->filename.str + 1, dir->filename.str[0]);
+
+	u32 startFad = decode_iso733(dir->extent) + 150;
+	u32 len = decode_iso733(dir->size);
+	Entry *entry;
+	if ((dir->file_flags & ISO_DIRECTORY) == 0)
+	{
+		File *file = new File(fs);
+		entry = file;
+	}
+	else
+	{
+		Directory *directory = new Directory(fs);
+		len = ((len + 2047) / 2048) * 2048;
+		entry = directory;
+	}
+	entry->startFad = startFad;
+	entry->len = len;
+	entry->name = name;
+	index += dir->length;
+
+	return entry;
+}
+
 IsoFs::Entry *IsoFs::Directory::getEntry(const std::string& name)
 {
 	std::string isoname = name + ';';
-	for (u32 i = 0; i < data.size(); )
+	reset();
+	while (true)
 	{
-		const iso9660_dir_t *dir = (const iso9660_dir_t *)&data[i];
-		if (dir->length == 0)
-			break;
-
-		if ((u8)dir->filename.str[0] > isoname.size()
-				&& memcmp(dir->filename.str + 1, isoname.c_str(), isoname.size()) == 0)
-		{
-			DEBUG_LOG(GDROM, "Found %s at offset %X", name.c_str(), i);
-			u32 startFad = decode_iso733(dir->extent) + 150;
-			u32 len = decode_iso733(dir->size);
-			if ((dir->file_flags & ISO_DIRECTORY) == 0)
-			{
-				File *file = new File(fs);
-				file->startFad = startFad;
-				file->len = len;
-
-				return file;
-			}
-			else
-			{
-				Directory *directory = new Directory(fs);
-				directory->data.resize(len);
-				fs->disc->ReadSectors(startFad, len / 2048, directory->data.data(), 2048);
-
-				return directory;
-			}
-		}
-		i += dir->length;
+		Entry *entry = nextEntry();
+		if (entry == nullptr)
+			return nullptr;
+		if (entry->getName().substr(0, isoname.size()) == isoname)
+			return entry;
+		delete entry;
 	}
-	return nullptr;
 }
 
 u32 IsoFs::File::read(u8 *buf, u32 size, u32 offset) const
@@ -111,4 +139,18 @@ u32 IsoFs::File::read(u8 *buf, u32 size, u32 offset) const
 		memcpy(buf + sectors * 2048, temp, size);
 	}
 	return sectors * 2048 + size;
+}
+
+std::vector<IsoFs::Entry*> IsoFs::Directory::list()
+{
+	std::vector<IsoFs::Entry*> v;
+	reset();
+	while (true)
+	{
+		Entry *entry = nextEntry();
+		if (entry == nullptr)
+			break;
+		v.push_back(entry);
+	}
+	return v;
 }
