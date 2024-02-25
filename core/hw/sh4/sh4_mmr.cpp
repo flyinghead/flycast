@@ -17,9 +17,7 @@
 #include <array>
 #include <map>
 
-//64bytes of sq // now on context ~
-
-static std::array<u8, OnChipRAM_SIZE> OnChipRAM;
+static std::array<u8, 0x2000> OnChipRAM;	// 8 KB
 
 //All registers are 4 byte aligned
 
@@ -390,7 +388,8 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 template <class T>
 T DYNACALL ReadMem_p4mmr(u32 addr)
 {
-	DEBUG_LOG(SH4, "read %s", regName(addr));
+	if ((addr & 0x1fffffff) != TMU_TCNT0_addr)
+		DEBUG_LOG(SH4, "read %s", regName(addr));
 
 	/*
 	if (likely(addr == 0xffd80024))
@@ -558,11 +557,16 @@ void DYNACALL WriteMem_p4mmr(u32 addr, T data)
 //***********
 //On Chip Ram
 //***********
+
+inline static u32 onChipRamOffset(u32 addr) {
+	return ((addr >> (CCN_CCR.OIX == 1 ? 13 : 1)) & 0x1000) | (addr & 0xfff);
+}
+
 template <class T>
 T DYNACALL ReadMem_area7_OCR(u32 addr)
 {
 	if (CCN_CCR.ORA == 1)
-		return *(T *)&OnChipRAM[addr & OnChipRAM_MASK];
+		return *(T *)&OnChipRAM[onChipRamOffset(addr)];
 
 	INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled. addr %x", addr);
 	return 0;
@@ -572,7 +576,7 @@ template <class T>
 void DYNACALL WriteMem_area7_OCR(u32 addr, T data)
 {
 	if (CCN_CCR.ORA == 1)
-		*(T *)&OnChipRAM[addr & OnChipRAM_MASK] = data;
+		*(T *)&OnChipRAM[onChipRamOffset(addr)] = data;
 	else
 		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled. addr %x", addr);
 }
@@ -630,40 +634,28 @@ void sh4_mmr_term()
 	bsc.term();
 }
 
-// AREA 7--Sh4 Regs
-static addrspace::handler p4mmr_handler;
-static addrspace::handler area7_ocr_handler;
-
-void map_area7_init()
-{
-	p4mmr_handler = addrspaceRegisterHandlerTemplate(ReadMem_p4mmr, WriteMem_p4mmr);
-	area7_ocr_handler = addrspaceRegisterHandlerTemplate(ReadMem_area7_OCR, WriteMem_area7_OCR);
-}
-
-void map_area7(u32 base)
+// AREA 7
+void map_area7()
 {
 	// on-chip RAM: 7C000000-7FFFFFFF
-	if (base == 0x60)
-		addrspace::mapHandler(area7_ocr_handler, 0x7C, 0x7F);
+	addrspace::handler area7_ocr_handler = addrspaceRegisterHandlerTemplate(ReadMem_area7_OCR, WriteMem_area7_OCR);
+	addrspace::mapHandler(area7_ocr_handler, 0x7C, 0x7F);
 }
 
-//P4
+// P4
 void map_p4()
 {
-	//P4 Region :
-	addrspace::handler p4_handler = addrspaceRegisterHandlerTemplate(ReadMem_P4, WriteMem_P4);
+	// Store Queues -- Write only 32bit
+	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE0, 0xE0, 63);
+	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE1, 0xE1, 63);
+	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE2, 0xE2, 63);
+	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE3, 0xE3, 63);
 
-	//register this before mmr and SQ so they overwrite it and handle em
-	//default P4 handler
-	//0xE0000000-0xFFFFFFFF
-	addrspace::mapHandler(p4_handler, 0xE0, 0xFF);
-
-	//Store Queues -- Write only 32bit
-	addrspace::mapBlock(sq_both, 0xE0, 0xE0, 63);
-	addrspace::mapBlock(sq_both, 0xE1, 0xE1, 63);
-	addrspace::mapBlock(sq_both, 0xE2, 0xE2, 63);
-	addrspace::mapBlock(sq_both, 0xE3, 0xE3, 63);
-
+	// sh4 IC, OC and TLB arrays
+	addrspace::handler p4arrays_handler = addrspaceRegisterHandlerTemplate(ReadMem_P4, WriteMem_P4);
+	addrspace::mapHandler(p4arrays_handler, 0xF0, 0xF7);
+	// sh4 system registers
+	addrspace::handler p4mmr_handler = addrspaceRegisterHandlerTemplate(ReadMem_p4mmr, WriteMem_p4mmr);
 	addrspace::mapHandler(p4mmr_handler, 0xFF, 0xFF);
 }
 
