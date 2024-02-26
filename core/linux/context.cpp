@@ -100,6 +100,9 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 #elif HOST_CPU == CPU_X64
 	#if defined(__FreeBSD__) || defined(__DragonFly__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.mc_rip));
+		bicopy<ToSegfault>(hostctx->rsp, MCTX(.mc_rsp));
+		bicopy<ToSegfault>(hostctx->r9, MCTX(.mc_r9));
+		bicopy<ToSegfault>(hostctx->rdi, MCTX(.mc_rdi));
 	#elif defined(__OpenBSD__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(->sc_rip));
 		bicopy<ToSegfault>(hostctx->rsp, MCTX(->sc_rsp));
