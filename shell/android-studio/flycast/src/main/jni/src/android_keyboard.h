@@ -18,6 +18,8 @@
  */
 #pragma once
 #include "input/keyboard_device.h"
+#include "hw/naomi/card_reader.h"
+#include <unordered_map>
 
 const u8 AndroidKeycodes[] {
         /** Unknown key code. */
@@ -572,9 +574,152 @@ public:
 
 	void input(int androidKeycode, bool pressed)
 	{
+		if (card_reader::barcodeAvailable() && handleBarcodeScanner(androidKeycode, pressed))
+			return;
 		u8 keycode = 0;
 		if (androidKeycode >= 0 && androidKeycode < std::size(AndroidKeycodes))
 			keycode = AndroidKeycodes[androidKeycode];
 		KeyboardDevice::input(keycode, pressed, 0);
     }
+
+private:
+	// All known card games use simple Code 39 barcodes.
+	// The barcode scanner should be configured to use HID-USB (act like a keyboard)
+	// and use '*' as preamble and terminator, which are the Code 39 start and stop characters.
+	// So disable the default terminator ('\n') and enable sending the Code 39 start and stop characters.
+	// Only US QWERTY layout is supported.
+	bool handleBarcodeScanner(int keycode, bool pressed)
+	{
+		static const std::unordered_map<u16, char> keymap {
+			{ 0x3e, ' ' },
+			{ 0x10f, '*' }, // Shift-8
+			{ 0x45, '-' },
+			{ 0x38, '.' },
+			{ 0x10b, '$' }, // Shift-4
+			{ 0x4c, '/' },
+			{ 0x146, '+' }, // Shift-=
+			{ 0x10c, '%' }, // Shift-5
+			{ 0x11d, 'A' },
+			{ 0x11e, 'B' },
+			{ 0x11f, 'C' },
+			{ 0x120, 'D' },
+			{ 0x121, 'E' },
+			{ 0x122, 'F' },
+			{ 0x123, 'G' },
+			{ 0x124, 'H' },
+			{ 0x125, 'I' },
+			{ 0x126, 'J' },
+			{ 0x127, 'K' },
+			{ 0x128, 'L' },
+			{ 0x129, 'M' },
+			{ 0x12a, 'N' },
+			{ 0x12b, 'O' },
+			{ 0x12c, 'P' },
+			{ 0x12d, 'Q' },
+			{ 0x12e, 'R' },
+			{ 0x12f, 'S' },
+			{ 0x130, 'T' },
+			{ 0x131, 'U' },
+			{ 0x132, 'V' },
+			{ 0x133, 'W' },
+			{ 0x134, 'X' },
+			{ 0x135, 'Y' },
+			{ 0x136, 'Z' },
+			{ 0x07, '0' },
+			{ 0x08, '1' },
+			{ 0x09, '2' },
+			{ 0x0a, '3' },
+			{ 0x0b, '4' },
+			{ 0x0c, '5' },
+			{ 0x0d, '6' },
+			{ 0x0e, '7' },
+			{ 0x0f, '8' },
+			{ 0x10, '9' },
+		};
+
+		switch (keycode)
+		{
+		case 0x39:	// alt left
+			if (pressed)
+				modifiers |= 4;
+			else
+				modifiers &= ~4;
+			return false;
+		case 0x3a:	// alt right
+			if (pressed)
+				modifiers |= 8;
+			else
+				modifiers &= ~8;
+			return false;
+		case 0x3b:	// shift left
+		case 0x3c:	// shift right
+			if (pressed)
+				modifiers |= 1;
+			else
+				modifiers &= ~1;
+			return false;
+		case 0x71:	// ctrl left
+		case 0x72:	// ctrl right
+			if (pressed)
+				modifiers |= 2;
+			else
+				modifiers &= ~2;
+			return false;
+
+		default:
+			break;
+		}
+		if (!pressed || (modifiers & ~1) != 0)
+			// Ignore key releases and unused modifiers
+			return false;
+		u16 k = keycode & 0xff;
+		if (modifiers & 1)
+			// shift
+			k |= 0x100;
+
+		auto it = keymap.find(k);
+		if (it == keymap.end())
+		{
+			if (!barcode.empty())
+			{
+				INFO_LOG(INPUT, "Unrecognized barcode scancode %d mod 0x%x", keycode, modifiers);
+				barcode.clear();
+			}
+			return false;
+		}
+
+		double now = os_GetSeconds();
+		if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+		{
+			INFO_LOG(INPUT, "Barcode timeout");
+			barcode.clear();
+		}
+		char c = it->second;
+		if (c == '*')
+		{
+			if (barcode.empty())
+			{
+				DEBUG_LOG(INPUT, "Barcode start");
+				barcode += '*';
+				lastBarcodeTime = now;
+			}
+			else
+			{
+				card_reader::barcodeSetCard(barcode);
+				barcode.clear();
+				card_reader::insertCard(0);
+			}
+			return true;
+		}
+		if (barcode.empty())
+			return false;
+
+		barcode += c;
+		lastBarcodeTime = now;
+		return true;
+	}
+
+	int modifiers = 0;
+	std::string barcode;
+	double lastBarcodeTime = 0.0;
 };
