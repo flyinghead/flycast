@@ -410,12 +410,9 @@ static void findDevices()
 						deviceId = deviceId.substr(8);
 					uniqueId = (device.dwType == RIM_TYPEMOUSE ? "raw_mouse_" : "raw_keyboard_") + deviceId;
 					if (name.empty())
-					{
-						name = deviceId;
-						if (name.length() > 17 && name.substr(0, 4) == "VID_" && name.substr(8, 5) == "&PID_")
-							name = name.substr(0, 17);
-						name = (device.dwType == RIM_TYPEMOUSE ? "Mouse " : "Keyboard ") + name;
-					}
+						name = device.dwType == RIM_TYPEMOUSE ? "Mouse" : "Keyboard";
+					size_t hash = deviceId.find('#');
+					name += " [" + deviceId.substr(0, hash) + "]";
 				}
 			}
 			uintptr_t handle = (uintptr_t)device.hDevice;
