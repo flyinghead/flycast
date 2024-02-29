@@ -206,10 +206,7 @@ lowp vec4 palettePixel(highp vec3 coords)
 #if TARGET_GL != GLES2 && TARGET_GL != GL2 && DIV_POS_Z != 1
 	coords.xy /= coords.z;
 #endif
-//	if (any(lessThan(coords.xy, vec2(0.0))) || any(greaterThan(coords.xy, vec2(1.0))))
-//		return vec4(1.0, 0.0, 0.0, 1.0);
-//	else
-		return getPaletteEntry(texture(tex, coords.xy).FOG_CHANNEL);
+	return getPaletteEntry(texture(tex, coords.xy).FOG_CHANNEL);
 }
 
 #elif pp_Palette == 2		// Bi-linear filtering
