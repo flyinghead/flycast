@@ -256,7 +256,8 @@ static void loadSpecialSettings()
 			|| prod_id == "MK-51146"	// Sega Smash Pack - Volume 1
 			|| prod_id == "T-9702D-50"	// Hydro Thunder (PAL)
 			|| prod_id == "T41601N"		// Elemental Gimmick Gear (US)
-			|| prod_id == "T-8116N")	// South Park Rally (US)
+			|| prod_id == "T-8116N"		// South Park Rally (US)
+			|| prod_id == "T1206N")		// JoJo's Bizarre Adventure (US)
 		{
 			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
 			config::Broadcast.override(0);
