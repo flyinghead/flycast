@@ -1300,7 +1300,7 @@ class MedalIOManager : public DefaultIOManager
 	}
 
 	// OUT-1 (CN10 17-24)
-	void setCN10_17_24(u8 v)
+	void setCN10_17_24(u8 v) override
 	{
 		// 0: sw.lamp c
 		// 1: jp solenoid

@@ -47,10 +47,10 @@ bool reios_loadElf(const std::string& elf) {
 		u8* ptr = GetMemPtr(dest, len);
 		if (ptr == NULL)
 		{
-			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", i, (long)dest);
+			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", (int)i, (long)dest);
 			continue;
 		}
-		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", i, (long)dest, (long)(dest + len - 1));
+		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", (int)i, (long)dest, (long)(dest + len - 1));
 		memcpy(ptr, src, len);
 		ptr += len;
 		memset(ptr, 0, elf_getProgramHeaderMemorySize(&elfFile, i) - len);
