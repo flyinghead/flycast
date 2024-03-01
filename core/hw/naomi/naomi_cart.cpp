@@ -627,8 +627,10 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		bool systemSP = memcmp(bootId.boardName, "SystemSP", 8) == 0;
 		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[systemSP ? 1 : 0], &bootId.gameTitle[systemSP ? 1 : 0][32]));
 		std::string romName;
-		if (CurrentCartridge->game != nullptr)
+		if (CurrentCartridge->game != nullptr) {
 			romName = CurrentCartridge->game->name;
+			settings.content.title = CurrentCartridge->game->description;
+		}
 		if (gameId == "SAMPLE GAME MAX LONG NAME-")
 		{
 			// Use better game names
@@ -885,7 +887,7 @@ void* NaomiCartridge::GetDmaPtr(u32& size)
 {
 	if ((DmaOffset & 0x1fffffff) >= RomSize)
 	{
-		INFO_LOG(NAOMI, "Error: DmaOffset >= RomSize");
+		INFO_LOG(NAOMI, "Error: DmaOffset (%x) >= RomSize (%x)", DmaOffset, RomSize);
 		size = 0;
 		return nullptr;
 	}

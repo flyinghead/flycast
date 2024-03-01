@@ -88,6 +88,14 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 		gamepad->close();
 }
 
+static void setWindowTitleGame()
+{
+	if (settings.naomi.slave)
+		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + cfgLoadStr("naomi", "BoardId", "")).c_str());
+	else
+		SDL_SetWindowTitle(window, ("Flycast - " + settings.content.title).c_str());
+}
+
 static void captureMouse(bool capture)
 {
 	if (window == nullptr || !gameRunning)
@@ -98,7 +106,7 @@ static void captureMouse(bool capture)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		else
 			SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		setWindowTitleGame();
 		mouseCaptured = false;
 	}
 	else
@@ -118,12 +126,15 @@ static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
+	case Event::Terminate:
+		SDL_SetWindowTitle(window, "Flycast");
+		break;
 	case Event::Pause:
 		gameRunning = false;
 		if (!config::UseRawInput)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		setWindowTitleGame();
 		break;
 	case Event::Resume:
 		gameRunning = true;
@@ -199,6 +210,9 @@ void input_sdl_init()
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
+	// Event::Start is called on a background thread, so we can't use it to change the window title (macOS)
+	// However it's followed by Event::Resume which is fine.
+	EventManager::listen(Event::Terminate, emuEventCallback);
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
 
@@ -234,6 +248,9 @@ void input_sdl_init()
 
 void input_sdl_quit()
 {
+	EventManager::unlisten(Event::Terminate, emuEventCallback);
+	EventManager::unlisten(Event::Pause, emuEventCallback);
+	EventManager::unlisten(Event::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }

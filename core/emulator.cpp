@@ -447,6 +447,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
 				settings.content.fileName = info.name;
+				settings.content.title = get_file_basename(info.name);
 			}
 		}
 		else
@@ -504,6 +505,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					InitDrive("");
 				}
 			}
+			if (settings.content.path.empty())
+				settings.content.title = "Dreamcast BIOS";
 
 			if (progress)
 				progress->progress = 1.0f;
@@ -760,8 +763,6 @@ void Emulator::setNetworkState(bool online)
 	}
 	settings.input.fastForwardMode &= !online;
 }
-
-EventManager EventManager::Instance;
 
 void EventManager::registerEvent(Event event, Callback callback, void *param)
 {

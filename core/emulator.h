@@ -54,25 +54,28 @@ public:
 	using Callback = void (*)(Event, void *);
 
 	static void listen(Event event, Callback callback, void *param = nullptr) {
-		Instance.registerEvent(event, callback, param);
+		instance().registerEvent(event, callback, param);
 	}
 
 	static void unlisten(Event event, Callback callback, void *param = nullptr) {
-		Instance.unregisterEvent(event, callback, param);
+		instance().unregisterEvent(event, callback, param);
 	}
 
 	static void event(Event event) {
-		Instance.broadcastEvent(event);
+		instance().broadcastEvent(event);
 	}
 
 private:
 	EventManager() = default;
+	static EventManager& instance() {
+		static EventManager _instance;
+		return _instance;
+	}
 
 	void registerEvent(Event event, Callback callback, void *param);
 	void unregisterEvent(Event event, Callback callback, void *param);
 	void broadcastEvent(Event event);
 
-	static EventManager Instance;
 	std::map<Event, std::vector<std::pair<Callback, void *>>> callbacks;
 };
 
