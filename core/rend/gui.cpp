@@ -1694,6 +1694,9 @@ static void gui_display_settings()
 			OptionCheckbox("Save", config::AutoSaveState,
 					"Save the state of the game when stopping");
 			OptionCheckbox("Naomi Free Play", config::ForceFreePlay, "Configure Naomi games in Free Play mode.");
+#if USE_DISCORD
+			OptionCheckbox("Discord Presence", config::DiscordPresence, "Show which game you are playing on Discord");
+#endif
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();

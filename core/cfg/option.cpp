@@ -129,6 +129,7 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 Option<bool, false> UploadCrashLogs("UploadCrashLogs", true);
+Option<bool, false> DiscordPresence("DiscordPresence", true);
 
 // Profiler
 Option<bool> ProfilerEnabled("Profiler.Enabled");

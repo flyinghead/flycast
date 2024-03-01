@@ -495,6 +495,7 @@ extern Option<bool> OpenGlChecks;
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 extern Option<bool, false> UploadCrashLogs;
+extern Option<bool, false> DiscordPresence;
 
 // Profiling
 extern Option<bool> ProfilerEnabled;
