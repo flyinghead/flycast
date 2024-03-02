@@ -58669,7 +58669,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PT_BR "Define o dispositivo conectado no encaixe de expansão D2 (porta D, compartimento 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PT_BR "VMU por jogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PT_BR "VMU por jogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR "\"DESLIGADO\": todos os jogos compartilham até 8 arquivos de salvamento (A1/A2/B1/B2/C1/C2/D1/D2), localizados no diretório de sistema do RetroArch.\n\\"VMU A1\": cria um único arquivo para todos os jogos.\n\\"Todos os VMU\": cria até 8 arquivos (A1/A2/B1/B2/C1/C2/D1/D2) para cada jogo."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR "\"DESLIGADO\": todos os jogos compartilham até 8 arquivos de salvamento (A1/A2/B1/B2/C1/C2/D1/D2), localizados no diretório de sistema do RetroArch.\n\"VMU A1\": cria um único arquivo para todos os jogos.\n\"Todos os VMU\": cria até 8 arquivos (A1/A2/B1/B2/C1/C2/D1/D2) para cada jogo."
 #define OPTION_VAL_VMU_A1_PT_BR NULL
 #define OPTION_VAL_ALL_VMUS_PT_BR "Todos os VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR "Som do VMU"
