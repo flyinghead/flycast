@@ -72,7 +72,7 @@ jobs:
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@v1
+        uses: mathieu-bour/setup-sentry-cli@v2
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         with:
