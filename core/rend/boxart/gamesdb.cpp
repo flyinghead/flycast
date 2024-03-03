@@ -226,12 +226,14 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 			{
 				copyFile(cached->second, filename);
 				item.setBoxartPath(filename);
+				item.boxartUrl = url;
 			}
 			else
 			{
 				if (downloadImage(url, filename))
 				{
 					item.setBoxartPath(filename);
+					item.boxartUrl = url;
 					boxartCache[url] = filename;
 				}
 			}
@@ -394,8 +396,11 @@ void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 			else if (item.gamePath.empty())
 			{
 				std::string localPath = makeUniqueFilename("dreamcast_logo_grey.png");
-				if (downloadImage("https://flyinghead.github.io/flycast-builds/dreamcast_logo_grey.png", localPath))
+				std::string biosArtUrl{ "https://flyinghead.github.io/flycast-builds/dreamcast_logo_grey.png" };
+				if (downloadImage(biosArtUrl, localPath)) {
 					item.setBoxartPath(localPath);
+					item.boxartUrl = biosArtUrl;
+				}
 			}
 			item.scraped = true;
 		}

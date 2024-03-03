@@ -50,6 +50,7 @@ void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
 void gui_save();
 void gui_loadState();
 void gui_saveState();
+std::string gui_getCurGameBoxartUrl();
 
 enum class GuiState {
 	Closed,

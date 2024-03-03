@@ -46,6 +46,7 @@ enum class Event {
 	Terminate,
 	LoadState,
 	VBlank,
+	Network,
 };
 
 class EventManager

@@ -2852,7 +2852,7 @@ static void gui_display_content()
 			{
 				ImTextureID textureId{};
 				GameMedia game;
-				GameBoxart art = boxart.getBoxart(game);
+				GameBoxart art = boxart.getBoxartAndLoad(game);
 				if (getGameImage(art, textureId, loadedImages < 10))
 					loadedImages++;
 				if (textureId != ImTextureID())
@@ -2885,7 +2885,7 @@ static void gui_display_content()
 				GameBoxart art;
 				if (config::BoxartDisplayMode)
 				{
-					art = boxart.getBoxart(game);
+					art = boxart.getBoxartAndLoad(game);
 					gameName = art.name;
 				}
 				if (filter.PassFilter(gameName.c_str()))
@@ -2927,6 +2927,11 @@ static void gui_display_content()
 						}
 						else
 						{
+							if (!config::BoxartDisplayMode)
+								art = boxart.getBoxart(game);
+							settings.content.title = art.name;
+							if (settings.content.title.empty() || settings.content.title == game.fileName)
+								settings.content.title = get_file_basename(game.fileName);
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
 							gui_start_game(gamePath);
@@ -3397,6 +3402,15 @@ void gui_setState(GuiState newState)
 		io.WantCaptureKeyboard = false;
 		io.WantCaptureMouse = false;
 	}
+}
+
+std::string gui_getCurGameBoxartUrl()
+{
+	GameMedia game;
+	game.fileName = settings.content.fileName;
+	game.path = settings.content.path;
+	GameBoxart art = boxart.getBoxart(game);
+	return art.boxartUrl;
 }
 
 #ifdef TARGET_UWP

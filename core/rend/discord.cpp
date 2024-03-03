@@ -20,6 +20,7 @@
 #include "emulator.h"
 #include "stdclass.h"
 #include "cfg/option.h"
+#include "gui.h"
 #include "discord_rpc.h"
 #include <cstring>
 #include <time.h>
@@ -34,6 +35,7 @@ public:
 		EventManager::listen(Event::Start, handleEmuEvent, this);
 		EventManager::listen(Event::Terminate, handleEmuEvent, this);
 		EventManager::listen(Event::Resume, handleEmuEvent, this);
+		EventManager::listen(Event::Network, handleEmuEvent, this);
 	}
 
 	~DiscordPresence()
@@ -42,6 +44,7 @@ public:
 		EventManager::unlisten(Event::Start, handleEmuEvent, this);
 		EventManager::unlisten(Event::Terminate, handleEmuEvent, this);
 		EventManager::unlisten(Event::Resume, handleEmuEvent, this);
+		EventManager::unlisten(Event::Network, handleEmuEvent, this);
 	}
 
 private:
@@ -63,10 +66,23 @@ private:
 	{
 		initialize();
         DiscordRichPresence discordPresence{};
-        std::string state = settings.content.title.substr(0, 128);
-        discordPresence.state = state.c_str();
-        discordPresence.startTimestamp = time(0);
-        discordPresence.largeImageKey = "icon-512";
+        discordPresence.state = settings.content.title.c_str();
+       	discordPresence.startTimestamp = startTimestamp;
+        std::string imageUrl = gui_getCurGameBoxartUrl();
+        if (!imageUrl.empty())
+        {
+        	discordPresence.largeImageKey = imageUrl.c_str();
+        	discordPresence.largeImageText = settings.content.title.c_str();
+        	discordPresence.smallImageKey = "icon-512";
+        	discordPresence.smallImageText = "Flycast is a Dreamcast, Naomi and Atomiswave emulator";
+        }
+        else
+        {
+        	discordPresence.largeImageKey = "icon-512";
+        	discordPresence.largeImageText = "Flycast is a Dreamcast, Naomi and Atomiswave emulator";
+        }
+        if (settings.network.online)
+        	discordPresence.details = "Online";
         Discord_UpdatePresence(&discordPresence);
 	}
 
@@ -78,6 +94,9 @@ private:
 		switch (event)
 		{
 		case Event::Start:
+			inst->startTimestamp = time(nullptr);
+			[[fallthrough]];
+		case Event::Network:
 			if (config::DiscordPresence)
 				inst->sendPresence();
 			break;
@@ -95,6 +114,7 @@ private:
 		case Event::Terminate:
 			if (inst->initialized)
 				Discord_ClearPresence();
+			inst->startTimestamp = 0;
 			break;
 		default:
 			break;
@@ -102,6 +122,7 @@ private:
 	}
 
 	bool initialized = false;
+	int64_t startTimestamp = 0;
 };
 
 static DiscordPresence discordPresence;

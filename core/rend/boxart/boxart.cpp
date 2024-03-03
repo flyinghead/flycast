@@ -29,6 +29,19 @@ GameBoxart Boxart::getBoxart(const GameMedia& media)
 		std::lock_guard<std::mutex> guard(mutex);
 		auto it = games.find(media.fileName);
 		if (it != games.end())
+			boxart = it->second;
+	}
+	return boxart;
+}
+
+GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
+{
+	loadDatabase();
+	GameBoxart boxart;
+	{
+		std::lock_guard<std::mutex> guard(mutex);
+		auto it = games.find(media.fileName);
+		if (it != games.end())
 		{
 			boxart = it->second;
 			if (config::FetchBoxart && !boxart.busy && !boxart.scraped)

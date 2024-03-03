@@ -447,7 +447,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
 				settings.content.fileName = info.name;
-				settings.content.title = get_file_basename(info.name);
+				if (settings.content.title.empty())
+					settings.content.title = get_file_basename(info.name);
 			}
 		}
 		else
@@ -615,6 +616,7 @@ void Emulator::unloadGame()
 		settings.content.path.clear();
 		settings.content.gameId.clear();
 		settings.content.fileName.clear();
+		settings.content.title.clear();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		state = Init;
 		EventManager::event(Event::Terminate);
@@ -760,6 +762,7 @@ void Emulator::setNetworkState(bool online)
 			config::Sh4Clock.override(200);
 			sh4_cpu.ResetCache();
 		}
+		EventManager::event(Event::Network);
 	}
 	settings.input.fastForwardMode &= !online;
 }
