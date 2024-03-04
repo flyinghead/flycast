@@ -403,7 +403,7 @@ void SCIFSerialPort::serialize(Serializer& ser)
 	for (u8 b : txFifo)
 		ser << b;
 	ser << (int)rxFifo.size();
-	for (u8 b : txFifo)
+	for (u8 b : rxFifo)
 		ser << b;
 	ser << transmitting;
 }
