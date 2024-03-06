@@ -394,6 +394,12 @@ void mcfg_CreateDevices()
 		die("Unknown system");
 		break;
 	}
+	if (settings.platform.isArcade() && !settings.input.fourPlayerGames)
+	{
+		// No known 4-player lightgun/touchscreen game so far
+		config::CrosshairColor[2].override(0);
+		config::CrosshairColor[3].override(0);
+	}
 	vmuDigest();
 }
 
