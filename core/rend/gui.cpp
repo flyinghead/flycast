@@ -81,7 +81,6 @@ static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 static bool uiUserScaleUpdated;
 
-static int map_system = 0;
 static void reset_vmus();
 void error_popup();
 
@@ -1055,6 +1054,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
 		const float scaling = settings.display.uiScale;
 
+		static int map_system;
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
 
@@ -1274,8 +1274,39 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
+			gamepad->save_mapping();
+			// Update both console and arcade profile/mapping
+			int rumblePower = gamepad->get_rumble_power();
+			float deadzone = gamepad->get_dead_zone();
+			float saturation = gamepad->get_saturation();
+			int otherPlatform = settings.platform.isConsole() ? DC_PLATFORM_NAOMI : DC_PLATFORM_DREAMCAST;
+			if (!gamepad->find_mapping(otherPlatform))
+				if (otherPlatform == DC_PLATFORM_DREAMCAST || !gamepad->find_mapping(DC_PLATFORM_DREAMCAST))
+					gamepad->resetMappingToDefault(otherPlatform != DC_PLATFORM_DREAMCAST, true);
+			std::shared_ptr<InputMapping> mapping = gamepad->get_input_mapping();
+			if (mapping != nullptr)
+			{
+				if (gamepad->is_rumble_enabled() && rumblePower != mapping->rumblePower) {
+					mapping->rumblePower = rumblePower;
+					mapping->set_dirty();
+				}
+				if (gamepad->has_analog_stick())
+				{
+					if (deadzone != mapping->dead_zone) {
+						mapping->dead_zone = deadzone;
+						mapping->set_dirty();
+					}
+					if (saturation != mapping->saturation) {
+						mapping->saturation = saturation;
+						mapping->set_dirty();
+					}
+				}
+				if (mapping->is_dirty())
+					gamepad->save_mapping(otherPlatform);
+			}
+			gamepad->find_mapping();
+
 			ImGui::CloseCurrentPopup();
-			gamepad->save_mapping(map_system);
 			ImGui::EndPopup();
 			ImGui::PopStyleVar();
 			return;
