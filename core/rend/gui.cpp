@@ -520,6 +520,8 @@ void gui_open_settings()
 void gui_start_game(const std::string& path)
 {
 	const LockGuard lock(guiMutex);
+	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands)
+		return;
 	emu.unloadGame();
 	reset_vmus();
     chat.reset();
