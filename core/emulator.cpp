@@ -685,10 +685,6 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
-	// Graphics context isn't available yet in libretro
-	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
-		config::NativeDepthInterpolation.override(true);
-
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();
