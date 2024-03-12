@@ -875,6 +875,8 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_NONE, "Triggers" },
 	{ DC_AXIS_LT, "Left Trigger" },
 	{ DC_AXIS_RT, "Right Trigger" },
+	{ DC_AXIS_LT2,   "Left Trigger 2" },
+	{ DC_AXIS_RT2,   "Right Trigger 2" },
 
 	{ EMU_BTN_NONE, "System Buttons" },
 	{ DC_BTN_START, "Start" },

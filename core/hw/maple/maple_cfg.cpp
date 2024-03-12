@@ -137,6 +137,12 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						case 5:
 							pjs->joy[axis] = inputState.halfAxes[PJTI_L] >> 8;
 							break;
+						case 6:
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R2] >> 8;
+							break;
+						case 7:
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L2] >> 8;
+							break;
 						default:
 							pjs->joy[axis] = 0;
 							break;
