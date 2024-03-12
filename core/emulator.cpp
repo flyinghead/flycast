@@ -264,7 +264,8 @@ static void loadSpecialSettings()
 		}
 		else if (prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
 			|| prod_id == "T-8112D-50"		// South Park Rally (EU)
-			|| prod_id == "T7014D  50")		// Super Runabout (EU)
+			|| prod_id == "T7014D  50"		// Super Runabout (EU)
+			|| prod_id == "T10001D 50")		// MTV Sport - Skateboarding (PAL)
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
