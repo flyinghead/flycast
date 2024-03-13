@@ -52,6 +52,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T6801M",     nullptr,    { 0x042F3C }, { 0x4384BC09 } },		// Buggy Heat (JP)
 		{ "T46601D 05", nullptr,    { 0xBB3D14 }, { 0x440A7C9A } },		// Cannon Spike (PAL)
 		{ "T1215N",     nullptr,    { 0xBB3C74 }, { 0x440A7C9A } },		// Cannon Spike (USA)
+		{ "HDR-0115",     nullptr,    { 0x10ACFC }, { 0x3F400000 } },		// Cardcaptor Sakura: Tomoyo no Video Daisakusen (JPN)
 		{ "T44901D 50", nullptr,    { 0xB0109C, 0xB010CC }, { 0x43F00000, 0x3F400000 } },	// Carrier (PAL)
 		{ "T5701N",     nullptr,    { 0xAFD93C, 0xAFD96C }, { 0x43F00000, 0x3F400000 } },	// Carrier (USA)
 		// Capcom vs. SNK Pro (JP)
@@ -66,6 +67,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-5104950", nullptr,    { 0x2D2D40, 0x2D2D70 }, { 0x3F400000, 0xC2700000 } },	// ChuChu Rocket! (PAL)
 		{ "T44903D 50", nullptr,    { 0x315300, 0x315334 }, { 0x43F00000, 0x3FAAAAAB } },	// Coaster Works (PAL)
 		// Confidential Mission (PAL) 022F0D58 43700000 - Only works on real Dreamcast
+		{ "(MK-?)51010)",    nullptr,    { 0x1C8A98 }, { 0x3F400000 } },		// Cool Boarders (USA)
 		{ "T36901M",    nullptr,    { 0x1C8A98 }, { 0x3F400000 } },		// Cool Boarders (JP)
 		{ "T3106M",     nullptr,    { 0x60B59C }, { 0x3F400000 } },		// Cool Cool Toon (JP)
 		{ "HDR-0176",   nullptr,    { 0x240FAC }, { 0x3F400000 } },		// Cosmic Smash (JP)
@@ -81,7 +83,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		// D2 (JP)
 		{ "T30006M",    nullptr,    { 0x4CF42C, 0x4CF45C, 0x3E1A36, 0x3E1A34, 0x3E1A3C, 0x3E1A54, 0x3E1A5C },
 				{ 0x43F00000, 0x3F400000, 0x08010000, 0, 0, 0, 0 } },
-		{ "MK-5103750", nullptr,    { 0x1FE270 }, { 0x43700000 } },		// Daytona USA (PAL)
+		{ "MK-5103750", nullptr,    { 0x1FE270 }, { 0x43700000 } },		// Daytona USA 2001 (PAL)
 		{ "MK-51037",   nullptr,    { 0x1FC6D0 }, { 0x43700000 } },		// Daytona USA (USA)
 		{ "T9501N-50",  nullptr,    { 0x9821D4 }, { 0x3F400000 } },		// Deadly Skies (PAL)
 		{ "T8116D  50", nullptr,    { 0x2E5530 }, { 0x43700000 } },		// Dead or Alive 2 (PAL)
@@ -102,9 +104,11 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T40203N",    nullptr,    { 0x49D7F4, 0x49D8CC, 0x49D6F8 }, { 0x3F07C3BB, 0x447A0000, 0x3FAAAAAB } },
 		// Ecco the Dolphin: Defender of the Future (PAL)
 		{ "MK-5103350", nullptr,    { 0x275418, 0x040E68, 0x040D1C }, { 0x49D9A5DA, 0x3F100000, 0x3F100000 } },
+		{ "T17705D 05", nullptr,    { 0x2135E0 }, { 0x3F400000 } },		// Evolution - The World of Sacred Device (PAL) (WIDER POV)
 		{ "T17705D 05", nullptr,    { 0x304870 }, { 0x3F400000 } },		// Evolution - The World of Sacred Device (PAL)
 		{ "T45005D 50", nullptr,    { 0x36CE5C, 0x36CE8C }, { 0x43F00000, 0x3F400000 } },	// Evolution 2 - Far Off Promise (PAL)
 		{ "T1711N",     nullptr,    { 0x36C76C, 0x36C73C }, { 0x3F400000, 0x43F00000 } },	// Evolution 2 - Far Off Promise (USA)
+		{ "T1711N",     nullptr,    { 0x36C76C, 0x36C73C }, { 0x3F400000, 0x43A00000 } },	// Evolution 2 - Far Off Promise (USA) (WIDER FOV)
 		{ "T8118D  50", nullptr,    { 0x2C6B7C }, { 0x00004000 } },		// Ferrari F355 Challenge (PAL) vga mode only
 		{ "HDR-0100",   nullptr,    { 0x3235D4 }, { 0x00004000 } },		// Ferrari F355 Challenge (JP) vga mode only
 		{ "MK-5115450", nullptr,    { 0x3D3B10 }, { 0x43700000 } },		// Fighting Vipers 2 (PAL)
@@ -120,6 +124,10 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "HDR-0004",   nullptr,    { 0x364A64 }, { 0x43BA0000 } },		// Godzilla Generations (JP)
 		{ "HDR-0047",   nullptr,    { 0x7C3F24, 0x7C3F54 }, { 0x43F00000, 0x3F400000 } },	// Godzilla Generations Maximum Impact (JP)
 		{ "T41501M",    nullptr,    { 0x282604, 0x282634 }, { 0x43F00000, 0x3F400000 } },	// Golem no Maigo (aka The Lost Golem) (JP)
+		{ "T-17716N",    nullptr,    { 0x3FB91C, 0x3FB8E0 }, { 0x3FA66666, 0x3F400000 } },	// Grandia II (USA) VERFY
+		{ "T-17715D-05",    nullptr,    { 0x3FB91C, 0x3FB8E0 }, { 0x3FA66666, 0x3F400000 } },	// Grandia II (PAL) VERFY
+	    { "T-17715D-05	",    nullptr,    { 0x225F8C, 0x225F5C }, { 0x3F400000, 0x43F00000 } },	// Grandia II (For Battles) (PAL)VERFY
+		{ "T-17716N",    nullptr,    { 0x225F8C, 0x225F5C }, { 0x3F400000, 0x43F00000 } },	// Grandia II (For Battles) (USA) VERFY
 		{ "T1219M",     nullptr,    { 0xBC3C94 }, { 0x440A7C9A } },		// Gun Spike (JP)
 		{ "T13301N",    nullptr,    { 0x88E780 }, { 0x3F400000 } },		// Gundam Side Story (USA)
 //		{ "T11001N",    nullptr,    { 0xC3D6BC, 0xD204A8, 0xD32FC8, 0xC7CF84, 0xD20548 },
@@ -128,7 +136,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		// gun coords issue
 		//{ "MK-5100250", nullptr,    { 0x4C6708 }, { 0x43700000 } },		// House of the Dead 2, The (PAL)
 		//{ "MK-51002",   nullptr,    { 0x4C6088 }, { 0x43700000 } },		// House of the Dead 2, The (USA)
-		//not working { "T38706M",    nullptr,    { 0xC0CFA0 }, { 0x3F400000 } },		// Ikaruga (JP)
+		{ "T38706M",    nullptr,    { 0xC0CFA0 }, { 0x3F400000 } },		// Ikaruga (JP) HORIZONTAL ONLY
 		{ "T46001N",    nullptr,    { 0x1C8A98 }, { 0x3F400000 } },		// Illbleed (USA)
 		{ "T44904D 50", nullptr,    { 0x18C15C, 0x18C18C }, { 0x43F00000, 0x3F400000 } },	// Iron Aces (PAL)
 		{ "MK-51058",   nullptr,    { 0x32E0FC, 0x32E12C }, { 0x43F00000, 0x3F400000 } },	// Jet Grind Radio (USA)
@@ -140,7 +148,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 //		{ "T41901N",    nullptr,    { 0x53F580, 0xEFB748, 0xEFB750 }, { 0xC4200000, 0x43A00000, 0x43200000 } },	// KISS Psycho Circus – The Nightmare Child (USA)
 		{ "T2501M",     nullptr,    { 0x24A878, 0x24A8A8 }, { 0x43F00000, 0x3F400000 } },	// Langrisser Millenium (JP)
 		{ "T15111D 50", nullptr,    { 0x29B90C }, { 0x3F400000 } },		// Le Mans 24 Hours (PAL)
-		{ "T15116N",    nullptr,    { 0x2198EC }, { 0x3F400000 } },		// Looney Tunes: Space Race (USA)
+		{ "T-36803D-05", nullptr,    { 0x129FA0, 0x12A9BC }, { 0x3EF55555, 0x3EF55555 } },		// Legacy of Kain: Soul Reaver (PAL)
+		{ "T15116N",    nullptr,    { 0x2198EC }, { 0x3F400000 } },		// Looney Tunes: Space Race (USA) (HUD CUT OFF?)
 		{ "MK-5105050", nullptr,    { 0x33818C }, { 0x3FA66666 } },		// Maken X (PAL)
 		{ "MK-51050",   nullptr,    { 0x30CB4C }, { 0x3F400000 } },		// Maken X (USA)
 		{ "T1212N",     nullptr,    { 0x2D6B18, 0x268390, 0x268ED8, 0x268934, 0x26947C, 0x269A20, 0x269FC4 },
@@ -181,10 +190,11 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T36812D 50", nullptr,    { 0x868BA8 }, { 0x43700000 } },		// Power Stone 2 (PAL)
 		{ "T1211N",     nullptr,    { 0x8689A8 }, { 0x43700000 } },		// Power Stone 2 (USA)
 		{ "T1218M",     nullptr,    { 0x849AA0 }, { 0x43700000 } },		// Power Stone 2 (JP)
-		{ "T7022D  50", nullptr,    { 0x33414C }, { 0x43F00000 } },		// Project Justice (PAL)
+		{ "T7022D  50", nullptr,    { 0x33414C }, { 0x43F00000 } },		// Project Justice: Rival Schools 2 (PAL)
 		{ "T1219N",     nullptr,    { 0x33374C }, { 0x43F00000 } },		// Project Justice (USA)
 		{ "MK-51162",   nullptr,    { 0x204308 }, { 0x3FE38E39 } },		// Propeller Arena
 		{ "T-8106D-50", nullptr,    { 0x7DA39C }, { 0x3F400000 } },		// Psychic Force 2012 (PAL)
+		{ "(MK-?)51061", nullptr,    { 0x0FCE04 }, { 0x3F400000 } },		// Quake III Arena (in-game) (USA) 
 		{ "T9901M",     nullptr,    { 0x1AD848 }, { 0x3F400000 } },		// Rainbow Cotton (JP)
 		{ "T9711D  50", nullptr,    { 0x1574D8 }, { 0x43700000 } },		// Ready 2 Rumble Boxing Round 2 (PAL)
 		{ "T7012D  05", nullptr,    { 0x4FF93C, 0x4FF96C }, { 0x43F00000, 0x3F400000 } },	// Record of Lodoss War (En) (PAL)
@@ -221,15 +231,19 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "HDR-0044",   nullptr,    { 0x298A94, 0x298AC4 }, { 0x43F00000, 0x3F400000 } },	// Roommania #203 (JP)
 		{ "MK-5109250", nullptr,    { 0x29E6C4 }, { 0x3F400000 } },		// Samba De Amigo (PAL)
 		{ "T41301N",    nullptr,    { 0x77A178 }, { 0x3F400000 } },		// Seventh Cross Evolution (USA)
-		{ "T8104D  58", nullptr,    { 0x2C03F8 }, { 0x44558000 } },		// Shadow Man (PAL)
-		{ "T-8106N",    nullptr,    { 0x2C03F4 }, { 0x3F400000 } },		// Shadow Man (USA)
+	//	{ "T8104D  58", nullptr,    { 0x2C03F8 }, { 0x44558000 } },		// Shadow Man (PAL) Is a dup of line 246, but ID/info is different, needs verify
+	//	{ "T-8106N",    nullptr,    { 0x2C03F4 }, { 0x3F400000 } },		// Shadow Man (USA) is a dup of 245, but my infos different, needs verfy
 		{ "MK-51048",   nullptr,    { 0x4AA4DC, 0x2B4E30 }, { 0x3F400000, 0x3F400000 } },	// Seaman (USA)
+		{ "MK-51006-05", nullptr,    { 0x25F470 }, { 0x43700000 } },		// Sega BASS FISHING (PAL)
 		{ "MK-5105350", nullptr,    { 0x5D613C }, { 0x3F400000 } },		// Sega GT (PAL)
 		{ "MK-51096",   nullptr,    { 0x495050 }, { 0x43700000 } },		// Sega Marine Fishing (USA)
-//		{ "MK-51019",   nullptr,    { 0xB83A48 }, { 0x3F400000 } },		// Sega Rally 2 (USA) not working?
-//		{ "HDR0010",    nullptr,    { 0xBD9BA0 }, { 0x3F400000 } },		// Sega Rally 2 (JP) not working?
+//		{ "MK-51019",   nullptr,    { 0xB83A48 }, { 0x3F400000 } },		// Sega Rally 2 (USA)NOT WORKING? MUST TEST, CODES VERIFIED 2X
+//		{ "HDR0010",    nullptr,    { 0xBD9BA0 }, { 0x3F400000 } },		// Sega Rally 2 (JP) not working? MUST TEST, CODES VERIFIED 2X
 		{ "HDR-0151",   nullptr,    { 0xAF57DC, 0xAF580C, 0x2122A0 },
 				{ 0x43F00000, 0x3F400000, 0x3F400000 } },					// SGGG – Segagaga (JP)
+       // { "T-8106N", nullptr,    { 0x2BFB54 }, { 0x3F400000 } },	//Shadow Man (USA) BELIEVE THIS TO BE THE REAL USA CODE. NEEDS VERFY
+	//	{ "T-8104D-05", nullptr,    { 0x2C03F4 }, { 0x3F400000 } },	// Shadow Man (PAL) MORE DEMANDING NO CLIP VERSION
+     //   { "T-8104D-05", nullptr,    { 0x2C03F8 }, { 0x44558000 } },	//Shadow Man  (PAL) LESS DEMANDING CLIP VRSION.
 		{ "MK-5105950", nullptr,    { 0x231EF8, 0x1EF370 }, { 0x43800000, 0x7C1EF400 } },	// Shenmue (PAL) code 1 reduces clipping
 		{ "MK-51059",   nullptr,    { 0x230250 }, { 0x43800000 }, { 0x43a00000 } },		// Shenmue (USA) Clipping
 		{ "HDR-0016",   nullptr,    { 0x22E8A0, 0x1EBE70 }, { 0x43800000, 0x7C1EBF00 } },	// Shenmue (JP) code 1 reduces clipping
@@ -257,27 +271,31 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T1216M",     nullptr, { 0x017C38, 0x17F00 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.003 (JP)
 		{ "T1216N",     nullptr, { 0x017C58, 0x17F20 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (US)
 		{ "T36816D 50", nullptr, { 0x017C78, 0x17F40 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (EU)
+        { "T-1213N/US_T-1209M/JP_T-7013D-50/UK", nullptr, { 0xE18DA0, 0xE18DA4 }, { 0x3FCCCCCD, 0x40000000 } }, // Street Fighter III (US?): 3rd Strike Black Bars Removal
+        { "T-1213N/US_T-1209M/JP_T-7013D-50/UK", nullptr, { 0xE18DA0, 0xE18DA0, 0xE18DA8 }, { 0x3FCCCCCD, 0x40000000, 0xBE99999A  } }, // Street Fighter III ,(us?): 3rd Strike Widescreen WIP
+
 		// Star Wars Episode I Racer (USA)
 		// Code 1-4 removes the black bars on top and bottom in FMV
 		{ "T23001N",    nullptr,    { 0x17AE20, 0x29A96C, 0x29A98C, 0x29A9AC, 0x29A9CC },
 				{ 0x3F400000, 0x42900000, 0x42900000, 0x43CE0000, 0x43CE0000 } },
 		{ "T40206N",    nullptr,    { 0x43296C }, { 0x3F400000 } },	// Super Magnetic Neo (US)
 		{ "T40206D 50", nullptr,    { 0x43E34C }, { 0x3F400000 } },	// Super Magnetic Neo (EU)
-//		{ "T7014D  50", nullptr,    { 0xE2B234 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work?
+//		{ "T-22101M", nullptr,    { 0xE2B234 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work? (I BELIEVE THIS TO BE JAP VEERSION,CHANGED GAME ID NUMBER TO JAP VERSION NEEDS VERFY)
 		{ "T17721D 50", nullptr,    { 0x45CED4 }, { 0x3F400000 } },		// Surf Rocket Racers (PAL) alt: 021EBF40 3F400000
 		{ "T17703D 50", nullptr,    { 0xCD8950 }, { 0x3F111111 } },		// Suzuki Alstare Extreme Racing
 		{ "T36807D 05", nullptr,    { 0x140F74, 0x140FA4 }, { 0x43FA0000, 0x3F400000 } },	// Sword of Bersek (PAL)
 		{ "T-36805N",   nullptr,    { 0x13F1C4, 0x13F194 }, { 0x3F400000, 0x43F00000 } },	// Sword of Bersek (USA)
 		{ "MK-51186",   nullptr,    { 0x4A19B0 }, { 0x43700000 } },		// Tennis 2K2 (USA)
-		{ "T15123N",    nullptr,    { 0x29B7BC }, { 0x3F400000 } },		// Test Drive Le Mans (USA) doesn't work?
+		{ "T15123N",    nullptr,    { 0x29B7BC }, { 0x3F400000 } },		// Test Drive Le Mans (USA) doesn't work? (test jp/T-15111D-91 AND UK/T-15111D-91  BUT ON THIS SITE, IT SHOWS THE CODES ARE RIGHT THE id IS RIGHT AND IT IS FOR usa, BUT MAYBE OTHER REGION? INCLUDED ID #'S NEEDS VERFY) 
 		{ "T20801M",    nullptr,    { 0x1AAC80, 0x1AACB0 }, { 0x43F00000, 0x3F400000 } },	// Tetris 4D (JP)
+        { "(MK-?)51144",    nullptr,    { 0x54D1F0 }, { 0x43700000 } },		// The Typing of the Dead (USA)
 		{ "MK-5101153", nullptr,    { 0x14EFA8, 0x14EFD8 }, { 0x43F00000, 0x3F400000 } },	// Timestalkers (PAL)
 		{ "T7009D50",   nullptr,    { 0x39173C }, { 0x3F400000 } },		// Tech Romancer (PAL)
-		{ "T35402M",    nullptr,    { 0x315370, 0x3153A0 }, { 0x43F00000, 0x3F400000 } },	// Tokyo Bus Guide (JP) doesn't work?
+		{ "T35402M",    nullptr,    { 0x315370, 0x3153A0 }, { 0x43F00000, 0x3F400000 } },	// Tokyo Bus Guide (JP) doesn't work? (try alt id T35402M NEEDS VERFY)
 		{ "T40201D 50", nullptr,    { 0x1D9F10 }, { 0x3F400000 } },		// Tokyo Highway Challenge (PAL)
 		{ "T40210D 50", nullptr,    { 0x21E4F8 }, { 0x43700000 } },		// Tokyo Highway Challenge 2 (PAL)
 		{ "xxxxxxxxxx", nullptr,    { 0x21DEF8 }, { 0x3F400000 } },		// Tokyo Street Racer 2 (USA)
-//		{ "T36804D05",  nullptr,    { 0xB75E28 }, { 0x3EC00000 } },		// Tomb Raider: The Last Revelation (UK) (PAL) clipping, use hex patch instead
+//		{ "T36804D05",  nullptr,    { 0xC0BC74 }, { 0x3FA66666 } },		// Tomb Raider: The Last Revelation (UK) (PAL) clipping, use hex patch instead (TRY THIS NEW CROPPED CODE NEEDS VERFY)
 		{ "T13008D 05", nullptr,    { 0x1D7C20 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (PAL)
 		{ "T13006N",    nullptr,    { 0x1D77A0 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (USA)
 		{ "MK-5102050", nullptr,    { 0x0D592C }, { 0x3FD00000 } },		// Toy Commander (PAL)
@@ -294,6 +312,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-5105450", nullptr,    { 0x456378 }, { 0x43700000 } },		// Virtua Tennis (v1.001) (PAL)
 		{ "MK-51054",   nullptr,    { 0x450A90 }, { 0x43700000 } },		// Virtua Tennis (USA)
 		{ "MK-5118650", nullptr,    { 0x4A4A20 }, { 0x43700000 } },		// Virtua Tennis 2 (PAL)
+        { "(MK-?)51186", nullptr,    { 0x4A19B0 }, { 0x43700000 } },		// Virtua Tennis 2 (US?)
 //		{ "T0000",      nullptr,    { 0x3A514C, 0x3A6170 }, { 0x3F400000, 0x00000356 } },	// Volgarr the Viking. Not working
 		{ "xxxxxxxxxx", nullptr,    { 0x20BB68, 0x1ACBD0, 0x1B9ADC },	// Code 1 reduces clipping.	Code 2 fixes the clock.
 				{ 0x43700000, 0x7C1ACC60, 0x3F400000 } },					// What's Shenmue (JP)
