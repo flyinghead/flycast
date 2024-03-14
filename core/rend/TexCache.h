@@ -592,6 +592,7 @@ public:
 		Updates = other.Updates;
 		palette_hash = other.palette_hash;
 		texture_hash = other.texture_hash;
+		old_vqtexture_hash = other.old_vqtexture_hash;
 		old_texture_hash = other.old_texture_hash;
 		std::swap(custom_image_data, other.custom_image_data);
 		custom_width = other.custom_width;
