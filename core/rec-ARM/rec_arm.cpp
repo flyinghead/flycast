@@ -1136,7 +1136,11 @@ bool Arm32Assembler::writeMemImmediate(RuntimeBlockInfo* block, shil_opcode* op,
 		if (optp == SZ_64F)
 			die("SZ_64F not supported");
 		Mov(r0, op->rs1._imm);
-		if (optp == SZ_32F)
+		if (optp == SZ_8)
+			Uxtb(r1, rs2);
+		else if (optp == SZ_16)
+			Uxth(r1, rs2);
+		else if (optp == SZ_32F)
 			Vmov(r1, rs2f);
 		else if (!rs2.Is(r1))
 			Mov(r1, rs2);
@@ -2472,12 +2476,17 @@ void Arm32Assembler::genMainLoop()
 				continue;
 
 			const void *v;
-			if (i == 0)
+			if (i == 0 && s != 3 && s != 4) {
 				v = fn;
+			}
 			else
 			{
 				v = GetCursorAddress<const void *>();
 				Mov(r0, Register(i));
+				if (s == 3)
+					Uxtb(r1, r1);
+				else if (s == 4)
+					Uxth(r1, r1);
 				jump(fn);
 			}
 
