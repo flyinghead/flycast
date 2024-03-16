@@ -2732,18 +2732,23 @@ static void gui_display_settings()
 						"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
 						"%d MHz");
 		    }
-	    	ImGui::Spacing();
 #ifdef __vita__
-			ImGui::Text("Self-Modifying Code Checks:");
-			ImGui::Columns(3, "DynarecSmcChecks", false);
-			OptionRadioButton("Off", config::DynarecSmcChecks, 0, "Disables checks for self-modifying code");
-			ImGui::NextColumn();
-			OptionRadioButton("Reduced", config::DynarecSmcChecks, 1, "Performs a simplified check for self-modifying code");
-			ImGui::NextColumn();
-			OptionRadioButton("Full", config::DynarecSmcChecks, 2, "Checks the whole code block for self-modifying code");
-			ImGui::Columns(1, nullptr, false);
-			ImGui::Spacing();
+			if (config::DynarecEnabled)
+			{
+				ImGui::Spacing();
+				header("Dynarec Options");
+				ImGui::Text("Self-Modifying Code Checks:");
+				ImGui::Columns(3, "DynarecSmcChecks", false);
+				OptionRadioButton("Off", config::DynarecSmcChecks, 0, "Disables checks for self-modifying code");
+				ImGui::NextColumn();
+				OptionRadioButton("Reduced", config::DynarecSmcChecks, 1, "Performs a simplified check for self-modifying code");
+				ImGui::NextColumn();
+				OptionRadioButton("Full", config::DynarecSmcChecks, 2, "Checks the whole code block for self-modifying code");
+				ImGui::Columns(1, nullptr, false);
+				ImGui::Spacing();
+			}
 #endif
+	    	ImGui::Spacing();
 		    header("Other");
 		    {
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
