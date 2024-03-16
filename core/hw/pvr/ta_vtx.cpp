@@ -1160,7 +1160,7 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 			|| config::RendererType == RenderType::Vulkan_OIT;
 	const bool mergeTranslucent = config::PerStripSorting || perPixel;
 
-	if (config::RenderResolution > 480 && !config::EmulateFramebuffer)
+	if (config::RenderResolution > 480 && !config::EmulateFramebuffer && config::FixUpscaleBleedingEdge)
 	{
 		fix_texture_bleeding(ctx.global_param_op, previousPass.op_count, pass.op_count, ctx);
 		fix_texture_bleeding(ctx.global_param_pt, previousPass.pt_count, pass.pt_count, ctx);

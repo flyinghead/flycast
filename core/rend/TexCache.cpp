@@ -643,22 +643,23 @@ bool BaseTextureCacheData::Update()
 			stride = width;
 	}
 
-	const u32 original_h = height;
+	u32 heightLimit = height;
+	const u32 originalSize = size;
 	if (startAddress > VRAM_SIZE || mmStartAddress + size > VRAM_SIZE)
 	{
-		height = 0;
+		heightLimit = 0;
 		if (mmStartAddress < VRAM_SIZE && mmStartAddress + size > VRAM_SIZE && tcw.ScanOrder)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
-			height = (VRAM_SIZE - mmStartAddress) * 8 / stride / tex->bpp;
-			size = stride * height * tex->bpp/8;
+			heightLimit = (VRAM_SIZE - mmStartAddress) * 8 / stride / tex->bpp;
+			size = stride * heightLimit * tex->bpp/8;
 		}
-		if (height == 0)
+		if (heightLimit == 0)
 		{
+			size = originalSize;
 			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", startAddress, mmStartAddress, size);
 			dirty = 1;
-			height = original_h;
 			unprotectVRam();
 			return false;
 		}
@@ -730,7 +731,7 @@ bool BaseTextureCacheData::Update()
 		else
 		{
 			pb32.init(width, height);
-			texconv32(&pb32, (u8*)&vram[mmStartAddress], stride, height);
+			texconv32(&pb32, (u8*)&vram[mmStartAddress], stride, heightLimit);
 
 			// xBRZ scaling
 			if (textureUpscaling)
@@ -800,7 +801,7 @@ bool BaseTextureCacheData::Update()
 		else
 		{
 			pb16.init(width, height);
-			texconv(&pb16,(u8*)&vram[mmStartAddress],stride,height);
+			texconv(&pb16, (u8*)&vram[mmStartAddress], stride, heightLimit);
 		}
 		temp_tex_buffer = pb16.data();
 	}
@@ -813,9 +814,6 @@ bool BaseTextureCacheData::Update()
 		temp_tex_buffer = pb16.data();
 		mipmapped = false;
 	}
-	// Restore the original texture height if it was constrained to VRAM limits above
-	height = original_h;
-
 	//lock the texture to detect changes in it
 	protectVRam();
 
@@ -827,6 +825,8 @@ bool BaseTextureCacheData::Update()
 		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();
+	// Restore the original texture size if it was constrained to VRAM limits above
+	size = originalSize;
 
 	return true;
 }

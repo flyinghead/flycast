@@ -122,6 +122,14 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
 			if (axis != DC_AXIS_LT)
 				continue;
 			break;
+		case 6:
+			if (axis != DC_AXIS_RT2)
+				continue;
+			break;
+		case 7:
+			if (axis != DC_AXIS_LT2)
+				continue;
+			break;
 		default:
 			continue;
 		}
@@ -2103,12 +2111,24 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									const AxisDescriptor& axisDesc = NaomiGameInputs->axes[player_axis];
 									if (axisDesc.type == Half)
 									{
-										if (axisDesc.axis == 4)
+										switch (axisDesc.axis)
+										{
+										case 4:
 											axis_value = mapleInputState[player_num].halfAxes[PJTI_R];
-										else if (axisDesc.axis == 5)
+											break;
+										case 5:
 											axis_value = mapleInputState[player_num].halfAxes[PJTI_L];
-										else
+											break;
+										case 6:
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_R2];
+											break;
+										case 7:
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_L2];
+											break;
+										default:
 											axis_value = 0;
+											break;
+										}
 										if (axisDesc.inverted)
 											axis_value = 0xffffu - axis_value;
 										// this fixes kingrt66 immediate win

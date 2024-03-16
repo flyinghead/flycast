@@ -137,6 +137,12 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						case 5:
 							pjs->joy[axis] = inputState.halfAxes[PJTI_L] >> 8;
 							break;
+						case 6:
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R2] >> 8;
+							break;
+						case 7:
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L2] >> 8;
+							break;
 						default:
 							pjs->joy[axis] = 0;
 							break;
@@ -393,6 +399,12 @@ void mcfg_CreateDevices()
 	default:
 		die("Unknown system");
 		break;
+	}
+	if (settings.platform.isArcade() && !settings.input.fourPlayerGames)
+	{
+		// No known 4-player lightgun/touchscreen game so far
+		config::CrosshairColor[2].override(0);
+		config::CrosshairColor[3].override(0);
 	}
 	vmuDigest();
 }

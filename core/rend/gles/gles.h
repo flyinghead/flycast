@@ -452,13 +452,13 @@ extern struct ShaderUniforms_t
 class TextureCacheData final : public BaseTextureCacheData
 {
 public:
-	TextureCacheData(TSP tsp, TCW tcw) : BaseTextureCacheData(tsp, tcw), texID(glcache.GenTexture()) {
+	TextureCacheData(TSP tsp, TCW tcw) : BaseTextureCacheData(tsp, tcw) {
 	}
 	TextureCacheData(TextureCacheData&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texID, other.texID);
 	}
 
-	GLuint texID;   //gl texture
+	GLuint texID = 0;   //gl texture
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool Delete() override;

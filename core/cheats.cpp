@@ -52,6 +52,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T6801M",     nullptr,    { 0x042F3C }, { 0x4384BC09 } },		// Buggy Heat (JP)
 		{ "T46601D 05", nullptr,    { 0xBB3D14 }, { 0x440A7C9A } },		// Cannon Spike (PAL)
 		{ "T1215N",     nullptr,    { 0xBB3C74 }, { 0x440A7C9A } },		// Cannon Spike (USA)
+		{ "HDR-0115",	nullptr,	{ 0x10ACFC }, { 0x3F400000 } },		// Cardcaptor Sakura: Tomoyo no Video Daisakusen (JPN)
 		{ "T44901D 50", nullptr,    { 0xB0109C, 0xB010CC }, { 0x43F00000, 0x3F400000 } },	// Carrier (PAL)
 		{ "T5701N",     nullptr,    { 0xAFD93C, 0xAFD96C }, { 0x43F00000, 0x3F400000 } },	// Carrier (USA)
 		// Capcom vs. SNK Pro (JP)
@@ -278,6 +279,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T40210D 50", nullptr,    { 0x21E4F8 }, { 0x43700000 } },		// Tokyo Highway Challenge 2 (PAL)
 		{ "xxxxxxxxxx", nullptr,    { 0x21DEF8 }, { 0x3F400000 } },		// Tokyo Street Racer 2 (USA)
 //		{ "T36804D05",  nullptr,    { 0xB75E28 }, { 0x3EC00000 } },		// Tomb Raider: The Last Revelation (UK) (PAL) clipping, use hex patch instead
+//		{ "T40205N",    nullptr,    { 0x160D80, 0x160D7C }, { 0xA, 0xA } },	// Tony Hawk's Pro Skater (USA) -> missing character on selection screen
 		{ "T13008D 05", nullptr,    { 0x1D7C20 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (PAL)
 		{ "T13006N",    nullptr,    { 0x1D77A0 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (USA)
 		{ "MK-5102050", nullptr,    { 0x0D592C }, { 0x3FD00000 } },		// Toy Commander (PAL)

@@ -50,7 +50,7 @@ jobs:
       - name: Extract symbols
         run: |
           DUMP_SYMS=./core/deps/breakpad/bin/dump_syms
-          SO_DIR=shell/android-studio/flycast/build/intermediates/merged_native_libs/release/out/lib
+          SO_DIR=shell/android-studio/flycast/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
           for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
             $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
             BUILD_ID=`head -1 libflycast.so.sym | awk '{ print $4 }'`
@@ -72,7 +72,7 @@ jobs:
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@v1
+        uses: mathieu-bour/setup-sentry-cli@v2
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         with:

@@ -15,16 +15,20 @@ namespace virtmem
 bool region_lock(void *start, size_t len)
 {
 	DWORD old;
-	if (!VirtualProtect(start, len, PAGE_READONLY, &old))
-		die("VirtualProtect failed ..\n");
+	if (!VirtualProtect(start, len, PAGE_READONLY, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, RO) failed: %d", start, (u32)len, GetLastError());
+		die("VirtualProtect(ro) failed");
+	}
 	return true;
 }
 
 bool region_unlock(void *start, size_t len)
 {
 	DWORD old;
-	if (!VirtualProtect(start, len, PAGE_READWRITE, &old))
-		die("VirtualProtect failed ..\n");
+	if (!VirtualProtect(start, len, PAGE_READWRITE, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, RW) failed: %d", start, (u32)len, GetLastError());
+		die("VirtualProtect(rw) failed");
+	}
 	return true;
 }
 
@@ -268,8 +272,10 @@ void jit_set_exec(void* code, size_t size, bool enable)
 {
 #ifdef TARGET_UWP
 	DWORD old;
-	if (!VirtualProtect(code, size, enable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old))
-		die("VirtualProtect failed");
+	if (!VirtualProtect(code, size, enable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, %s) failed: %d", code, (u32)size, enable ? "RX" : "RW", GetLastError());
+		die("VirtualProtect(rx/rw) failed");
+	}
 #endif
 }
 
