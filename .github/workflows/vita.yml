@@ -27,7 +27,7 @@ jobs:
           cmake --build SDL_build --config Release
           cmake --install SDL_build
           git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git
-          make -C vitaGL HAVE_WRAPPED_ALLOCATORS=1 -j4 install
+          make -C vitaGL HAVE_WRAPPED_ALLOCATORS=1 HAVE_SHADER_CACHE=1 NO_DEBUG=1 -j4 install
 
       - uses: actions/checkout@v4
         with:
