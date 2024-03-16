@@ -125,6 +125,9 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+static bool perPixelChecked = false;
+#endif
 static bool autoSkipFrameEnabled = false;
 #ifdef _OPENMP
 static bool textureUpscaleEnabled = false;
@@ -1241,6 +1244,42 @@ void retro_reset()
 	emu.start();
 }
 
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+void check_per_pixel_opt(void)
+{
+	// Check if per-pixel is supported, if not we hide the option
+	if (!GraphicsContext::Instance()->hasPerPixel())
+	{
+		for (unsigned i = 0; option_defs_us[i].key != NULL; i++)
+		{
+			// Looking for the alpha sorting core option...
+			if (!strcmp(option_defs_us[i].key, CORE_OPTION_NAME "_alpha_sorting"))
+			{
+				for (unsigned j = 0; option_defs_us[i].values[j].value != NULL; j++)
+				{
+					// ... then for the per-pixel choice...
+					if (!strcmp(option_defs_us[i].values[j].value, "per-pixel (accurate)"))
+					{
+						// ... null it out...
+						option_defs_us[i].values[j] = { NULL, NULL };
+
+						// ... and finally refresh core options.
+						bool optionCategoriesSupported = false;
+						libretro_set_core_options(environ_cb, &optionCategoriesSupported);
+						categoriesSupported |= optionCategoriesSupported;
+
+						break;
+					}
+				}
+				break;
+			}
+		}
+		NOTICE_LOG(RENDERER, "Current renderer does not support 'Per-Pixel' Alpha Sorting.");
+	}
+	perPixelChecked = true;
+}
+#endif
+
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset()
 {
@@ -1251,6 +1290,10 @@ static void context_reset()
 	rend_term_renderer();
 	theGLContext.init();
 	rend_init_renderer();
+#ifdef HAVE_OIT
+	if (!perPixelChecked)
+		check_per_pixel_opt();
+#endif
 }
 
 static void context_destroy()
@@ -1812,6 +1855,8 @@ static void retro_vk_context_reset()
 	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
+	if (!perPixelChecked)
+		check_per_pixel_opt();
 }
 
 static void retro_vk_context_destroy()
@@ -1946,6 +1991,8 @@ static void dx11_context_reset()
 	else if (config::RendererType != RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::DirectX11;
 	rend_init_renderer();
+	if (!perPixelChecked)
+		check_per_pixel_opt();
 }
 
 static void dx11_context_destroy()
