@@ -22,7 +22,7 @@
 #include "types.h"
 #include "context.h"
 
-#if defined(USE_OPENGL) && !defined(LIBRETRO)
+#if defined(USE_OPENGL) && !defined(LIBRETRO) && !defined(TARGET_IPHONE)
 	#include <glad/gl.h>
 #endif
 
