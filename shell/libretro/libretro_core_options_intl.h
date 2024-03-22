@@ -50367,8 +50367,8 @@ struct retro_core_options_v2 options_ja = {
 #define CATEGORY_HACKS_INFO_0_KO "와이드스크린 핵, GD롬 로딩 속도 조절 및 텍스쳐 변경 설정등을 구성합니다."
 #define CATEGORY_INPUT_LABEL_KO "입력"
 #define CATEGORY_INPUT_INFO_0_KO "게임패드 및 라이트 건 설정을 구성합니다."
-#define CATEGORY_EXPANSIONS_LABEL_KO NULL
-#define CATEGORY_EXPANSIONS_INFO_0_KO NULL
+#define CATEGORY_EXPANSIONS_LABEL_KO "컨트롤러 확장 슬롯"
+#define CATEGORY_EXPANSIONS_INFO_0_KO "컨트롤러의 각 확장 슬롯에 연결할 장치(VMU, 진동 장치)를 선택합니다."
 #define CATEGORY_VMU_LABEL_KO "비쥬얼 메모리 유닛"
 #define CATEGORY_VMU_INFO_0_KO "게임 별 VMU 저장 파일 및 VMU OSD 설정을 구성합니다."
 #define CORE_OPTION_NAME_REGION_LABEL_KO "지역"
@@ -50390,8 +50390,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_KO "드림캐스트 BIOS 메뉴로 부팅합니다."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_KO "HDR 활성화"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_KO "Dreamcast의 오디오 DSP(디지털 신호 프로세서)의 에뮬레이션을 활성화합니다. 사운드의 정확도는 향상되지만 성능 요구 사항이 증가합니다."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO "아케이드 서비스 버튼 허용"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO "아케이드 게임에서 캐비넷 설정에 들어가기 위한 서비스 버튼을 활성화합니다."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO "NAOMI 게임을 무료 플레이로 설정"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO "무료 플레이를 위해 게임의 코인 설정을 수정합니다."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO "브로드밴드 어댑터 에뮬레이션"
@@ -50400,8 +50400,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
-#define OPTION_VAL_320X240_KO NULL
-#define OPTION_VAL_640X480_KO NULL
+#define OPTION_VAL_320X240_KO "320x240 (절반)"
+#define OPTION_VAL_640X480_KO "640x480 (네이티브)"
 #define OPTION_VAL_800X600_KO NULL
 #define OPTION_VAL_960X720_KO NULL
 #define OPTION_VAL_1024X768_KO NULL
@@ -50441,7 +50441,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_HORIZONTAL_KO "가로"
 #define OPTION_VAL_VERTICAL_KO "세로"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_KO "알파 정렬"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_KO "투명 폴리곤을 정렬할 방식을 선택합니다."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_KO "줄당 (빠름, 가장 부정확)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_KO "삼각형당 (중간)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_KO "픽셀당 (정확, 가장 느림)"
@@ -50458,7 +50458,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO "RTT (Render To Texture) 버퍼 사용"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO "렌더된 텍스쳐를 GPU에서 VRAM으로 복사합니다. 이 옵션은 이 옵션을 필요로 하는 게임에서는 기본적으로 활성화됩니다. 활성화할 경우, 텍스쳐 업스케일링이 비활성화되며 성능에 큰 영향을 끼칠 수 있습니다."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_KO "밉맵"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_KO NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_KO "활성화할 경우 멀리 떨어진 곳에 텍스처를 그릴 때 작은 버전의 텍스처를 사용하여 성능을 개선하고 번쩍이는 효과를 억제합니다."
 #define CORE_OPTION_NAME_FOG_LABEL_KO "안개 효과"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_KO "볼륨 모디파이어"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_KO "드림캐스트 GPU의 기능으로 보통 개체의 그림자를 그리는 데 사용됩니다. 이 기능은 보통 활성화해두어야 하며 성능에 미치는 영향은 아주 적습니다."
@@ -50480,11 +50480,11 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_6_KO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO "텍스쳐 업스케일링 필터 최대 크기"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_KO "텍스처를 업스케일할 최대 크기를 선택합니다. 텍스처의 크기가 설정한 크기보다 클 경우에는 텍스처를 업스케일하지 않습니다."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_KO "네이티브 깊이 보간"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_KO "AMD GPU에서 깊이 문제와 텍스쳐 망가짐 증상을 개선하는 데 도움이 됩니다. 일부 상황에서는 인텔 GPU에서도 도움이 될 수 있습니다."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_KO NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_KO "업스케일 시 테두리 블리딩 억제"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_KO "업스케일 시 텍스처 블리딩 문제를 완화합니다. 비활성화할 경우 일부 2D 게임(MVC2, CVS, KOF 등)에서 픽셀이 뒤틀리는 현상이 해결될 수 있습니다."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_KO "스레드 렌더링"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_KO "GPU와 CPU를 별도의 스레드에서 실행합니다. 사용하는 것이 매우 권장됩니다."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_KO "자동 프레임 건너뛰기"
@@ -50545,11 +50545,11 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_490_KO NULL
 #define OPTION_VAL_500_KO NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO "사용자 텍스처 불러오기"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_KO NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_KO "'system/dc/textures/<game-id>/' 폴더에서 커스텀 텍스처를 불러옵니다."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_KO "텍스쳐 덤프하기"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_KO "게임이 새로운 텍스처를 사용할 때마다, 'system/dc/texdump/<game-id>/' 폴더 안에 .png 파일로 저장되게 합니다."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO "아날로그 스틱 데드존"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_KO "아날로그 스틱을 얼마나 기울여야 입력으로 인식할지를 선택합니다."
 #define OPTION_VAL_0_KO NULL
 #define OPTION_VAL_5_KO NULL
 #define OPTION_VAL_10_KO NULL
@@ -50558,9 +50558,9 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_25_KO NULL
 #define OPTION_VAL_30_KO NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_KO "트리거 데드존"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_KO "트리거를 얼마나 눌러야 입력으로 인식할지를 선택합니다."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_KO "디지털 트리거"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_KO "활성화할 경우 트리거가 평범한 버튼으로 취급되며, 중간 상태 없이 완전히 눌리거나 눌리지 않은 상태로만 처리됩니다."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_KO "디지털 출력 송출하기"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_KO "디지털 출력과 포스 피드백 상태를 TCP 포트 8000번으로 송출합니다. MAME의 \"-output network\" 옵션과 호환됩니다."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO "라이트 건 설정 표시"
@@ -50600,28 +50600,28 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_KO "라이트건 조준선 2 표시"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_KO "라이트건 조준선 3 표시"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_KO "라이트건 조준선 4 표시"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_KO "확장 슬롯 A1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_KO "확장 슬롯 A1(포트 A 슬롯 1)에 연결할 장치를 선택합니다."
 #define OPTION_VAL_VMU_KO NULL
-#define OPTION_VAL_PURUPURU_KO NULL
+#define OPTION_VAL_PURUPURU_KO "진동 팩"
 #define OPTION_VAL_NONE_KO "없음"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_KO "확장 슬롯 A2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_KO "확장 슬롯 A2(포트 A 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_KO "확장 슬롯 B1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_KO "확장 슬롯 B1(포트 B 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_KO "확장 슬롯 B2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_KO "확장 슬롯 B2(포트 B 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_KO "확장 슬롯 C1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_KO "확장 슬롯 C1(포트 C 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_KO "확장 슬롯 C2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_KO "확장 슬롯 C2(포트 C 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_KO "확장 슬롯 D1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_KO "확장 슬롯 D1(포트 D 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_KO "확장 슬롯 D2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO "확장 슬롯 D2(포트 D 슬롯 2)에 연결할 장치를 선택합니다."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO "게임당 별도 Visual Memory Units/Systems(VMU) 사용"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO "게임당 별도 VMU 사용"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 최대 8개의 VMU 저장 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 공유합니다.\n\ 'VMU A1' 옵션은 RetroArch의 저장 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다.\n\ '모든 VMU'는 게임 하나 당 최대 8개의 VMU 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
