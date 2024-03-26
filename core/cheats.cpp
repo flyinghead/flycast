@@ -265,6 +265,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T40206N",    nullptr,    { 0x43296C }, { 0x3F400000 } },	// Super Magnetic Neo (US)
 		{ "T40206D 50", nullptr,    { 0x43E34C }, { 0x3F400000 } },	// Super Magnetic Neo (EU)
 //		{ "T7014D  50", nullptr,    { 0xE2B234 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work?
+		{ "T40216N",	nullptr,    { 0x45CE54 }, { 0x3F400000 } },		// Surf Rocket Racers (US)
 		{ "T17721D 50", nullptr,    { 0x45CED4 }, { 0x3F400000 } },		// Surf Rocket Racers (PAL) alt: 021EBF40 3F400000
 		{ "T17703D 50", nullptr,    { 0xCD8950 }, { 0x3F111111 } },		// Suzuki Alstare Extreme Racing
 		{ "T36807D 05", nullptr,    { 0x140F74, 0x140FA4 }, { 0x43FA0000, 0x3F400000 } },	// Sword of Bersek (PAL)
@@ -349,6 +350,8 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "GUN SPIKE", nullptr, { 0xBACD7C }, { 0x440A7C9A } },
 		{ " JAMBO SAFARI ------------", nullptr, { 0x2B1DE0 }, { 0x3FE38E39 } },
 		{ "SOUL SURFER IN JAPAN", nullptr, { 0x8962C8 }, { 0x3FE38E39 } },
+		{ "LOVE AND BERRY 3 EXP VER1.002", nullptr, { 0x3C16E4 }, { 0x3F400000 } },	// loveber3
+		{ "LOVE AND BERRY USA VER2.000", nullptr, { 0x4E92D0 }, { 0x3F400000 } },	// lovebery
 
 		{ nullptr },
 };
