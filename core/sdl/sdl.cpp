@@ -19,7 +19,7 @@
 #include "stdclass.h"
 #include "imgui.h"
 #include "hw/naomi/card_reader.h"
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__) && !defined(__vita__)
 #include "linux-dist/icon.h"
 #endif
 #ifdef _WIN32
@@ -204,6 +204,10 @@ void input_sdl_init()
 
 	checkRawInput();
 
+#ifdef __vita__
+	for (int joy = 0; joy < SDL_NumJoysticks(); joy++)
+		sdl_open_joystick(joy);
+#endif
 #if defined(__SWITCH__) || defined(__OpenBSD__)
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
@@ -498,7 +502,7 @@ void input_sdl_handle()
 			case SDL_JOYDEVICEREMOVED:
 				sdl_close_joystick((SDL_JoystickID)event.jdevice.which);
 				break;
-				
+
 			case SDL_DROPFILE:
 				gui_start_game(event.drop.file);
 				break;
@@ -665,7 +669,7 @@ bool sdl_recreate_window(u32 flags)
 	}
 #endif
 
-#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__)
+#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__) && !defined(__vita__)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
@@ -778,7 +782,7 @@ void sdl_window_create()
 
 void sdl_window_destroy()
 {
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__vita__)
 	if (!settings.naomi.slave && settings.naomi.drivingSimSlave == 0)
 	{
 		get_window_state();

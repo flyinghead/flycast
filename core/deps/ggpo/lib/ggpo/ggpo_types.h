@@ -56,7 +56,7 @@ public:
  */
 #if defined(_WIN32)
 #  include "platform_windows.h"
-#elif defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
+#elif defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__vita__)
 #  include "platform_linux.h"
 #else
 #  error Unsupported platform

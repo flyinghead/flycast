@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "cfg/cfg.h"
+#include "cfg/option.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
 #include <algorithm>
@@ -130,6 +132,11 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
 	}
 
 	//sort them
+#ifdef __vita__
+	if (config::FastSorting)
+		std::sort(triangleList.begin(), triangleList.end());
+	else
+#endif
 	std::stable_sort(triangleList.begin(), triangleList.end());
 
 	//Merge pids/draw cmds if two different pids are actually equal
@@ -254,6 +261,11 @@ void sortPolyParams(std::vector<PolyParam>& polys, int first, int end, rend_cont
 		}
 	}
 
+#ifdef __vita__
+	if (config::FastSorting)
+		std::sort(&polys[first], pp_end);
+	else
+#endif
 	std::stable_sort(&polys[first], pp_end);
 }
 

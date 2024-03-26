@@ -24,6 +24,11 @@
 #include "oslib/storage.h"
 #endif
 
+#ifdef __vita__
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 static bool addingCheat;
 
 static void addCheat()
@@ -84,7 +89,11 @@ void gui_cheats()
 		return;
 	}
     centerNextWindow();
+#ifdef __vita__
+    ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(800.f, 400.f)));
+#else
     ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(600.f, 400.f)));
+#endif
 
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -92,13 +101,65 @@ void gui_cheats()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
     ImGui::Indent(10 * settings.display.uiScale);
+#ifndef __vita__
     ImGui::Text("CHEATS");
 
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Add").x  - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 6.f
     	- ImGui::CalcTextSize("Load").x - ImGui::GetStyle().ItemSpacing.x * 2);
+#endif
 	if (ImGui::Button("Add"))
 		addingCheat = true;
 	ImGui::SameLine();
+#ifdef __vita__
+	if (ImGui::Button("Load from ux0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+    	ImGui::OpenPopup("Select cheat file 1");
+	}
+	select_file_popup("Select cheat file 1", [](bool cancelled, std::string selection)
+		{
+			if (!cancelled)
+				cheatManager.loadCheatFile(selection);
+			return true;
+		}, true, "cht", "ux0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Load from uma0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+    	ImGui::OpenPopup("Select cheat file 2");
+	}
+	select_file_popup("Select cheat file 2", [](bool cancelled, std::string selection)
+		{
+			if (!cancelled)
+				cheatManager.loadCheatFile(selection);
+			return true;
+		}, true, "cht", "uma0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Load from imc0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+    	ImGui::OpenPopup("Select cheat file 3");
+	}
+	select_file_popup("Select cheat file 3", [](bool cancelled, std::string selection)
+		{
+			if (!cancelled)
+				cheatManager.loadCheatFile(selection);
+			return true;
+		}, true, "cht", "imc0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Load from xmc0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+    	ImGui::OpenPopup("Select cheat file 4");
+	}
+	select_file_popup("Select cheat file 4", [](bool cancelled, std::string selection)
+		{
+			if (!cancelled)
+				cheatManager.loadCheatFile(selection);
+			return true;
+		}, true, "cht", "xmc0:/");
+	ImGui::SameLine();
+#else
 #ifdef __ANDROID__
 	if (ImGui::Button("Load"))
 		hostfs::addStorage(false, true, cheatFileSelected);
@@ -110,6 +171,7 @@ void gui_cheats()
 			cheatFileSelected(cancelled, selection);
 			return true;
 		}, true, "cht");
+#endif
 #endif
 
 	ImGui::SameLine();

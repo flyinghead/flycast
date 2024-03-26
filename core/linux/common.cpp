@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__vita__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -29,12 +29,12 @@ extern "C" char __start__;
 #define siginfo_t switch_siginfo_t
 #endif // __SWITCH__
 
-#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__vita__)
 
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__vita__)
 static struct sigaction next_segv_handler;
 #endif
 #if defined(__APPLE__)
@@ -74,6 +74,8 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
 	ERROR_LOG(COMMON, ".text base: %p -> offset: %lx", (void*)meminfo.addr, ctx.pc - meminfo.addr);
+#elif defined(__vita__)
+	//TODO
 #else
 	if (next_segv_handler.sa_sigaction != nullptr)
 		next_segv_handler.sa_sigaction(sn, si, segfault_ctx);
@@ -83,9 +85,10 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 }
 #undef HOST_CTX_READY
 
+#if !defined(__vita__)
 void os_InstallFaultHandler()
 {
-#ifndef __SWITCH__
+#if !defined(__SWITCH__)
 	struct sigaction act;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
@@ -101,15 +104,16 @@ void os_InstallFaultHandler()
 
 void os_UninstallFaultHandler()
 {
-#ifndef __SWITCH__
+#if !defined(__SWITCH__)
 	sigaction(SIGSEGV, &next_segv_handler, nullptr);
 #endif
 #if defined(__APPLE__)
 	sigaction(SIGBUS, &next_bus_handler, nullptr);
 #endif
 }
+#endif
 
-#else  // !defined(TARGET_NO_EXCEPTIONS)
+#elif !defined(__vita__)  // !defined(TARGET_NO_EXCEPTIONS)
 
 void os_InstallFaultHandler()
 {
@@ -188,7 +192,9 @@ void common_linux_setup()
 	os_InstallFaultHandler();
 	signal(SIGINT, exit);
 	
+#ifndef __vita__
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }
 #endif	// __unix__ or __APPLE__ or __SWITCH__
