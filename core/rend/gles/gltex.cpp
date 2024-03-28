@@ -374,9 +374,7 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, GLuint textu
 			// Use a renderbuffer and glBlitFramebuffer
 			glGenRenderbuffers(1, &colorBuffer);
 			glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-#ifdef GL_RGBA8
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
-#endif
 		}
 	}
 	makeFramebuffer(withDepth);
@@ -454,9 +452,7 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, bool withTex
 		// Use a renderbuffer and glBlitFramebuffer
 		glGenRenderbuffers(1, &colorBuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-#ifdef GL_RGBA8
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
-#endif
 	}
 
 	makeFramebuffer(withDepth);
