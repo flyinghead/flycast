@@ -72522,8 +72522,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_TR "Doğrudan Dreamcast BIOS menüsüne önyükleme yapın."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_TR "DSP'yi Etkinleştir"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TR "Dreamcast ses DSP (dijital sinyal işlemcisi) taklidini etkinleştirin. Üretilen sesin doğruluğunu artırır, ancak performans gereksinimlerini artırır."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TR NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TR "Arcade Hizmet Düğmelerine İzin Ver"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR "Arcade oyunları için kabin ayarlarına girmek üzere SERVİS düğmesini etkinleştirir."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR "Geniş Bant Adaptör Taklidi"
@@ -72573,7 +72573,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_HORIZONTAL_TR "Yatay"
 #define OPTION_VAL_VERTICAL_TR "Dikey"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TR "Alfabetik Sıralama"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TR "Saydam çokgenlerin nasıl sıralanacağını seçin."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TR "Şerit Başına (hızlı, en az doğru)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_TR "Üçgen Başına (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_TR "Piksel Başına (doğru, ancak en yavaş)"
@@ -72612,7 +72612,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_6_TR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TR "Doku Yükseltme Azami Filtre Boyutu"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR "Yükseltilecek doku için maksimum boyut değerini seçin; eğer doku boyutu seçilen değerden yüksekse büyütülmeyecektir."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR "Yerel Derinlik Enterpolasyonu"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR "AMD GPU'larda doku bozulması ve derinlik sorunlarına yardımcı olur. Bazı durumlarda Intel GPU'lara da yardımcı olabilir."
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR NULL
@@ -72677,7 +72677,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_490_TR NULL
 #define OPTION_VAL_500_TR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR "'system/dc/textures/<game-id>/' klasöründe bulunan özel dokuları yükleyin."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
@@ -72732,24 +72732,24 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 2 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 3 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 4 Görüntüle"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR "Genişletme Yuvası A1'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR NULL
 #define OPTION_VAL_VMU_TR NULL
-#define OPTION_VAL_PURUPURU_TR NULL
+#define OPTION_VAL_PURUPURU_TR "Titreşim Paketi"
 #define OPTION_VAL_NONE_TR "Yok"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR "Genişletme Yuvası A2'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR "Genişletme Yuvası B1'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR "Genişletme Yuvası B2'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR "Genişletme Yuvası C1'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR "Genişletme Yuvası C2'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR "Genişletme Yuvası D1'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR "Genişletme Yuvası D2'deki Cihaz"
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
