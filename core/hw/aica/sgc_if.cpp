@@ -149,80 +149,88 @@ class VmuBeep
 public:
 	void init()
 	{
-		beepOn = 0;
-		beepPeriod = 0;
-		beepCounter = 0;
-		beepValue = 0;
+		active = false;
+		att = 256;
+		waveIdx.full = 0;
+		waveStep = 0;
 	}
 
-	void update(int on, int period)
+	void update(int period, int on)
 	{
-		if (on == 0 || period == 0 || on < period)
-		{
-			beepOn = 0;
-			beepPeriod = 0;
+		if (on == 0 || period == 0 || on >= period) {
+			active = false;
 		}
 		else
 		{
-			// The maple doc may be wrong on this. It looks like the raw values of T1LR and T1LC are set.
-			// So the period is (256 - T1LR) / (32768 / 6)
-			// and the duty cycle is (256 - T1LC) / (32768 / 6)
-			beepOn = (256 - on) * 8;
-			beepPeriod = (256 - period) * 8;
-			beepCounter = 0;
+			// on (duty cycle) is ignored
+			active = true;
+			// 6 MHz clock
+			int freq = 6000000 / 6 / period;
+			waveStep = freq * 1024 / 2698;
 		}
 	}
 
 	SampleType getSample()
 	{
-		constexpr int Slope = 500;
-		if (beepPeriod == 0)
-		{
-			if (beepValue > 0)
-				beepValue = std::max(0, beepValue - Slope);
-			else if (beepValue < 0)
-				beepValue = std::min(0, beepValue + Slope);
-		}
-		else
-		{
-			if (beepCounter <= beepOn)
-				beepValue = std::min(16383, beepValue + Slope);
-			else
-				beepValue = std::max(-16384, beepValue - Slope);
-			beepCounter = (beepCounter + 1) % beepPeriod;
-		}
+		if (!active && att >= 256)
+			return 0;
 
-		return beepValue;
+		waveIdx.full += waveStep;
+		waveIdx.ip %= std::size(wave);
+		int nextIdx = (waveIdx.ip + 1) % std::size(wave);
+		SampleType s = (FPMul(wave[waveIdx.ip], 1024 - waveIdx.fp, 10) + FPMul(wave[nextIdx], (int)waveIdx.fp, 10)) * 2;
+
+		s = FPMul(s, tl_lut[att], 15);
+		if (active)
+			att = std::max(att - 2, 0);
+		else
+			att = std::min(att + 2, 256);
+		return s;
 	}
 
 	void serialize(Serializer& ser)
 	{
-		ser << beepOn;
-		ser << beepPeriod;
-		ser << beepCounter;
+		ser << active;
+		ser << att;
+		ser << waveIdx;
+		ser << waveStep;
 	}
 
 	void deserialize(Deserializer& deser)
 	{
-		if (deser.version() >= Deserializer::V22)
+		if (deser.version() < Deserializer::V49)
 		{
-			deser >> beepOn;
-			deser >> beepPeriod;
-			deser >> beepCounter;
+			if (deser.version() >= Deserializer::V22)
+			{
+				deser.skip<int>();	// beepOn
+				deser.skip<int>();	// beepPeriod
+				deser.skip<int>();	// beepCounter
+			}
+			init();
 		}
 		else
 		{
-			beepOn = 0;
-			beepPeriod = 0;
-			beepCounter = 0;
+			deser >> active;
+			deser >> att;
+			deser >> waveIdx;
+			deser >> waveStep;
 		}
 	}
 
 private:
-	int beepOn = 0;
-	int beepPeriod = 0;
-	int beepCounter = 0;
-	SampleType beepValue = 0;
+	bool active = false;
+	int att = 256;
+	fp_22_10 waveIdx {};
+	int waveStep = 0;
+
+	// 2698 Hz
+	static constexpr SampleType wave[] = {   503, -3519,
+		-7540, -8214, -8209, -8214, -8209, -5199, -1172,  2843,
+		 6873,  8207,  8214,  8209,  8212,  5866,  1840, -2175,
+		-6203, -8210, -8215, -8209, -8214, -6533, -2516,  1507,
+		 5526,  8212,  8210,  8212,  8210,  7206,  3187,  -841,
+		-4856, -8215, -8209, -8214, -8208, -7882, -3850,   162,
+		 4187,  8213,  8208,  8213,  8209,  8211,  4525 };
 };
 static VmuBeep beep;
 
