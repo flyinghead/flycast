@@ -178,7 +178,7 @@ public:
 		waveIdx.full += waveStep;
 		waveIdx.ip %= std::size(wave);
 		int nextIdx = (waveIdx.ip + 1) % std::size(wave);
-		SampleType s = (FPMul(wave[waveIdx.ip], 1024 - waveIdx.fp, 10) + FPMul(wave[nextIdx], (int)waveIdx.fp, 10)) * 2;
+		SampleType s = (FPMul(wave[waveIdx.ip], (int)(1024 - waveIdx.fp), 10) + FPMul(wave[nextIdx], (int)waveIdx.fp, 10)) * 2;
 
 		s = FPMul(s, tl_lut[att], 15);
 		if (active)
