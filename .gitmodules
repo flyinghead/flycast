@@ -32,3 +32,6 @@
 [submodule "core/deps/discord-rpc"]
 	path = core/deps/discord-rpc
 	url = https://github.com/flyinghead/discord-rpc
+[submodule "core/deps/libadrenotools"]
+	path = core/deps/libadrenotools
+	url = https://github.com/bylaws/libadrenotools

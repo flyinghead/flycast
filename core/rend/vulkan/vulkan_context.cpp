@@ -33,6 +33,9 @@
 #include "oslib/oslib.h"
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
+#include "adreno.h"
+#endif
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -139,8 +142,13 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	try
 	{
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = nullptr;
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
+		vkGetInstanceProcAddr = loadVulkanDriver();
+#else
 		static vk::DynamicLoader dl;
-		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+		vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+#endif
 		if (vkGetInstanceProcAddr == nullptr) {
 			ERROR_LOG(RENDERER, "Vulkan entry point vkGetInstanceProcAddr not found");
 			return false;
@@ -1042,6 +1050,9 @@ void VulkanContext::term()
 #endif
 #endif
 	instance.reset();
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
+	unloadVulkanDriver();
+#endif
 }
 
 void VulkanContext::DoSwapAutomation()

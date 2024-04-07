@@ -51,6 +51,9 @@
 
 #ifdef __ANDROID__
 #include "gui_android.h"
+#if HOST_CPU == CPU_ARM64 && USE_VULKAN
+#include "rend/vulkan/adreno.h"
+#endif
 #endif
 
 #ifdef _WIN32
@@ -2762,6 +2765,75 @@ static void gui_display_settings()
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
+			if (isVulkan(config::RendererType))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+				if (config::CustomGpuDriver)
+				{
+					std::string name, description, vendor, version;
+					if (getCustomGpuDriverInfo(name, description, vendor, version))
+					{
+						ImGui::Text("Custom Driver:");
+						ImGui::Indent();
+						ImGui::Text("%s - %s", name.c_str(), description.c_str());
+						ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
+						ImGui::Unindent();
+					}
+
+					if (ImGui::Button("Use Default Driver")) {
+						config::CustomGpuDriver = false;
+						ImGui::OpenPopup("Reset Vulkan");
+					}
+				}
+				else if (ImGui::Button("Upload Custom Driver"))
+			    	ImGui::OpenPopup("Select custom GPU driver");
+
+				static bool driverDirty;
+				const auto& callback = [](bool cancelled, std::string selection) {
+					if (!cancelled) {
+						try {
+							uploadCustomGpuDriver(selection);
+							config::CustomGpuDriver = true;
+							driverDirty = true;
+						} catch (const FlycastException& e) {
+							gui_error(e.what());
+							config::CustomGpuDriver = false;
+						}
+					}
+					return true;
+				};
+				select_file_popup("Select custom GPU driver", callback, true, "zip");
+
+				if (driverDirty) {
+					ImGui::OpenPopup("Reset Vulkan");
+					driverDirty = false;
+				}
+
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
+				if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+				{
+					ImGui::Text("Do you want to reset Vulkan to use new driver?");
+					ImGui::NewLine();
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * settings.display.uiScale, ImGui::GetStyle().ItemSpacing.y));
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+					if (ImGui::Button("Yes"))
+					{
+						mainui_reinit();
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("No"))
+						ImGui::CloseCurrentPopup();
+					ImGui::PopStyleVar(2);
+
+					ImGui::EndPopup();
+				}
+				ImGui::PopStyleVar();
+
+				ImGui::PopStyleVar();
+			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}

@@ -415,4 +415,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
     private static native void register(BaseGLActivity activity);
+    
+	public String getNativeLibDir() {
+        return getApplicationContext().getApplicationInfo().nativeLibraryDir;
+    }
+    
+	public String getInternalFilesDir() {
+        return getFilesDir().getAbsolutePath();
+    }
 }

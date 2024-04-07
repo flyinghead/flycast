@@ -73,6 +73,10 @@ android {
             excludes += ['META-INF/DEPENDENCIES']
         }
     }
+    packaging {
+        // This is necessary for libadrenotools custom driver loading
+        jniLibs.useLegacyPackaging = true
+    }
 }
 
 dependencies {

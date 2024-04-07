@@ -105,9 +105,10 @@ if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 		string(REPLACE "-" "." MS_VERSION ${MS_VERSION})
 		string(REGEX REPLACE "\.g[0-9a-f]+" "" MS_VERSION ${MS_VERSION})
 		string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" VERSION_3PARTS ${MS_VERSION})
+		string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" VERSION_4PARTS ${MS_VERSION})
 		if(VERSION_3PARTS STREQUAL "")
 			string(APPEND MS_VERSION ".0.0")
-		else()
+		elseif(VERSION_4PARTS STREQUAL "")
 			string(APPEND MS_VERSION ".0")
 		endif()
 	endif()
@@ -1283,6 +1284,11 @@ if(USE_VULKAN)
 	target_compile_options(VulkanMemoryAllocator INTERFACE $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:AppleClang,Clang>>:-Wno-nullability-completeness>)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GPUOpen::VulkanMemoryAllocator)
 
+	if(ANDROID AND NOT LIBRETRO AND "arm64" IN_LIST ARCHITECTURE)
+		add_subdirectory(core/deps/libadrenotools)
+		target_link_libraries(${PROJECT_NAME} PRIVATE adrenotools)
+	endif()
+
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/vulkan/oit/oit_buffer.h
@@ -1295,6 +1301,7 @@ if(USE_VULKAN)
 			core/rend/vulkan/oit/oit_renderpass.h
 			core/rend/vulkan/oit/oit_shaders.cpp
 			core/rend/vulkan/oit/oit_shaders.h
+			core/rend/vulkan/adreno.cpp
 			core/rend/vulkan/buffer.cpp
 			core/rend/vulkan/buffer.h
 			core/rend/vulkan/commandpool.cpp
