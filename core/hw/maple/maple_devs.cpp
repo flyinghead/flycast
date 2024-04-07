@@ -154,7 +154,15 @@ struct maple_sega_controller: maple_base
 			//2 (Maximum current consumption)
 			w16(get_device_current(1));
 
-			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+			if (cmd == MDC_AllStatusReq)
+			{
+				const char *extra = "Version 1.010,1998/09/28,315-6211-AB   ,Analog Module : The 4th Edition.5/8  +DF";
+				wptr(extra, strlen(extra));
+				return MDRS_DeviceStatusAll;
+			}
+			else {
+				return MDRS_DeviceStatus;
+			}
 
 			//controller condition
 		case MDCF_GetCondition:
@@ -441,7 +449,15 @@ struct maple_sega_vmu: maple_base
 			//2
 			w16(0x0082);	// 13 mA
 
-			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+			if (cmd == MDC_AllStatusReq)
+			{
+				const char *extra = "Version 1.005,1999/04/15,315-6208-03,SEGA Visual Memory System BIOS Produced by ";
+				wptr(extra, strlen(extra));
+				return MDRS_DeviceStatusAll;
+			}
+			else {
+				return MDRS_DeviceStatus;
+			}
 
 			//in[0] is function used
 			//out[0] is function used
