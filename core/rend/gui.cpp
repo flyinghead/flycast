@@ -2002,9 +2002,55 @@ static void gui_display_settings()
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
+
+	    	constexpr int apiCount = 0
+				#ifdef USE_VULKAN
+	    			+ 1
+				#endif
+				#ifdef USE_DX9
+					+ 1
+				#endif
+				#ifdef USE_OPENGL
+					+ 1
+				#endif
+				#ifdef USE_DX11
+					+ 1
+				#endif
+					;
+
+	    	if (apiCount > 1)
+	    	{
+				header("Graphics API");
+				{
+					ImGui::Columns(apiCount, "renderApi", false);
+#ifdef USE_OPENGL
+					ImGui::RadioButton("OpenGL", &renderApi, 0);
+					ImGui::NextColumn();
+#endif
+#ifdef USE_VULKAN
+#ifdef __APPLE__
+					ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
+					ImGui::SameLine(0, style.ItemInnerSpacing.x);
+					ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
+#else
+					ImGui::RadioButton("Vulkan", &renderApi, 1);
+#endif // __APPLE__
+					ImGui::NextColumn();
+#endif
+#ifdef USE_DX9
+					ImGui::RadioButton("DirectX 9", &renderApi, 2);
+					ImGui::NextColumn();
+#endif
+#ifdef USE_DX11
+					ImGui::RadioButton("DirectX 11", &renderApi, 3);
+					ImGui::NextColumn();
+#endif
+					ImGui::Columns(1, nullptr, false);
+		    	}
+		    }
 		    header("Transparent Sorting");
 		    {
+				const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
 		    	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
@@ -2043,151 +2089,6 @@ static void gui_display_settings()
 
 		    header("Rendering Options");
 		    {
-		    	ImGui::Text("Automatic Frame Skipping:");
-		    	ImGui::Columns(3, "autoskip", false);
-		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
-		    	ImGui::Columns(1, nullptr, false);
-
-		    	OptionCheckbox("Shadows", config::ModifierVolumes,
-		    			"Enable modifier volumes, usually used for shadows");
-		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
-		    	OptionCheckbox("Widescreen", config::Widescreen,
-		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
-				{
-					DisabledScope scope(!config::Widescreen);
-
-					ImGui::Indent();
-					OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-							"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
-					ImGui::Unindent();
-		    	}
-		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
-		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-
-				const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
-	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
-	            u32 afSelected = 0;
-	            for (u32 i = 0; i < aniso.size(); i++)
-	            {
-	            	if (aniso[i] == config::AnisotropicFiltering)
-	            		afSelected = i;
-	            }
-
-                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
-                {
-                	for (u32 i = 0; i < aniso.size(); i++)
-                    {
-                        bool is_selected = aniso[i] == config::AnisotropicFiltering;
-                        if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
-                        	config::AnisotropicFiltering = aniso[i];
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::PopItemWidth();
-                ImGui::SameLine(0, innerSpacing);
-
-                if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
-                {
-                    if (afSelected > 0)
-                    	config::AnisotropicFiltering = aniso[afSelected - 1];
-                }
-                ImGui::SameLine(0, innerSpacing);
-                if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
-                {
-                    if (afSelected < aniso.size() - 1)
-                    	config::AnisotropicFiltering = aniso[afSelected + 1];
-                }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
-
-                ImGui::Text("Anisotropic Filtering");
-                ImGui::SameLine();
-                ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
-
-		    	ImGui::Text("Texture Filtering:");
-		    	ImGui::Columns(3, "textureFiltering", false);
-		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
-            	ImGui::NextColumn();
-		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
-		    	ImGui::Columns(1, nullptr, false);
-
-#ifndef TARGET_IPHONE
-		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-		    	if (isVulkan(config::RendererType))
-		    	{
-			    	ImGui::Indent();
-					{
-						DisabledScope scope(!config::VSync);
-
-						OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			    	}
-			    	ImGui::Unindent();
-		    	}
-#endif
-		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
-		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
-		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
-		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
-		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-		    	OptionCheckbox("Fix Upscale Bleeding Edge", config::FixUpscaleBleedingEdge,
-		    			"Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)");
-		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
-		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
-		    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
-		    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
-		    			"Very slow and incompatible with upscaling and wide screen.");
-		    	constexpr int apiCount = 0
-					#ifdef USE_VULKAN
-		    			+ 1
-					#endif
-					#ifdef USE_DX9
-						+ 1
-					#endif
-					#ifdef USE_OPENGL
-						+ 1
-					#endif
-					#ifdef USE_DX11
-						+ 1
-					#endif
-						;
-
-		    	if (apiCount > 1)
-		    	{
-		    		ImGui::Text("Graphics API:");
-					ImGui::Columns(apiCount, "renderApi", false);
-#ifdef USE_OPENGL
-					ImGui::RadioButton("OpenGL", &renderApi, 0);
-					ImGui::NextColumn();
-#endif
-#ifdef USE_VULKAN
-#ifdef __APPLE__
-					ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
-					ImGui::SameLine(0, style.ItemInnerSpacing.x);
-					ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
-#else
-					ImGui::RadioButton("Vulkan", &renderApi, 1);
-#endif // __APPLE__
-					ImGui::NextColumn();
-#endif
-#ifdef USE_DX9
-					ImGui::RadioButton("DirectX 9", &renderApi, 2);
-					ImGui::NextColumn();
-#endif
-#ifdef USE_DX11
-					ImGui::RadioButton("DirectX 11", &renderApi, 3);
-					ImGui::NextColumn();
-#endif
-					ImGui::Columns(1, nullptr, false);
-		    	}
-
 	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
 	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
 	            std::array<int, scalings.size()> vres;
@@ -2238,10 +2139,44 @@ static void gui_display_settings()
                 ImGui::SameLine();
                 ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
+#ifndef TARGET_IPHONE
+		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+		    	if (isVulkan(config::RendererType))
+		    	{
+			    	ImGui::Indent();
+					{
+						DisabledScope scope(!config::VSync);
+
+						OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+			    	}
+			    	ImGui::Unindent();
+		    	}
+#endif
+		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+		    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
+		    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
+		    			"Very slow and incompatible with upscaling and wide screen.");
+		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
+		    			"Load custom/high-res textures from data/textures/<game id>");
+		    }
+	    	ImGui::Spacing();
+		    header("Aspect Ratio");
+		    {
+		    	OptionCheckbox("Widescreen", config::Widescreen,
+		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
+				{
+					DisabledScope scope(!config::Widescreen);
+
+					ImGui::Indent();
+					OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+							"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					ImGui::Unindent();
+		    	}
+		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
 		    			"Stretch the screen horizontally", "%d%%");
-		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
-		    			"Number of frames to skip between two actually rendered frames");
+		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    }
 			if (perPixel)
 			{
@@ -2295,10 +2230,86 @@ static void gui_display_settings()
                 		"Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.");
 			}
 	    	ImGui::Spacing();
-		    header("Render to Texture");
+		    header("Performance");
 		    {
-		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
+		    	ImGui::Text("Automatic Frame Skipping:");
+		    	ImGui::Columns(3, "autoskip", false);
+		    	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Normal", config::AutoSkipFrame, 1, "Skip a frame when the GPU and CPU are both running slow");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
+		    	ImGui::Columns(1, nullptr, false);
+
+		    	OptionArrowButtons("Frame Skipping", config::SkipFrame, 0, 6,
+		    			"Number of frames to skip between two actually rendered frames");
+		    	OptionCheckbox("Shadows", config::ModifierVolumes,
+		    			"Enable modifier volumes, usually used for shadows");
+		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
+		    }
+		    ImGui::Spacing();
+	    	header("Advanced");
+		    {
+		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
+		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	OptionCheckbox("Fix Upscale Bleeding Edge", config::FixUpscaleBleedingEdge,
+		    			"Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)");
+		    	OptionCheckbox("Native Depth Interpolation", config::NativeDepthInterpolation,
+		    			"Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.");
+		    	OptionCheckbox("Copy Rendered Textures to VRAM", config::RenderToTextureBuffer,
 		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
+				const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
+	            const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
+	            u32 afSelected = 0;
+	            for (u32 i = 0; i < aniso.size(); i++)
+	            {
+	            	if (aniso[i] == config::AnisotropicFiltering)
+	            		afSelected = i;
+	            }
+
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Anisotropic Filtering", anisoText[afSelected].c_str(), ImGuiComboFlags_NoArrowButton))
+                {
+                	for (u32 i = 0; i < aniso.size(); i++)
+                    {
+                        bool is_selected = aniso[i] == config::AnisotropicFiltering;
+                        if (ImGui::Selectable(anisoText[i].c_str(), is_selected))
+                        	config::AnisotropicFiltering = aniso[i];
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, innerSpacing);
+
+                if (ImGui::ArrowButton("##Decrease Anisotropic Filtering", ImGuiDir_Left))
+                {
+                    if (afSelected > 0)
+                    	config::AnisotropicFiltering = aniso[afSelected - 1];
+                }
+                ImGui::SameLine(0, innerSpacing);
+                if (ImGui::ArrowButton("##Increase Anisotropic Filtering", ImGuiDir_Right))
+                {
+                    if (afSelected < aniso.size() - 1)
+                    	config::AnisotropicFiltering = aniso[afSelected + 1];
+                }
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+
+                ImGui::Text("Anisotropic Filtering");
+                ImGui::SameLine();
+                ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
+
+		    	ImGui::Text("Texture Filtering:");
+		    	ImGui::Columns(3, "textureFiltering", false);
+		    	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Nearest-Neighbor", config::TextureFiltering, 1, "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.");
+            	ImGui::NextColumn();
+		    	OptionRadioButton("Force Linear", config::TextureFiltering, 2, "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.");
+		    	ImGui::Columns(1, nullptr, false);
+
+		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    }
 	    	ImGui::Spacing();
 		    header("Texture Upscaling");
@@ -2311,8 +2322,6 @@ static void gui_display_settings()
 		    	OptionArrowButtons("Max Threads", config::MaxThreads, 1, 8,
 		    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 #endif
-		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
-		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }
 #ifdef VIDEO_ROUTING
 #ifdef __APPLE__
