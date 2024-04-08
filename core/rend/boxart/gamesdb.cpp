@@ -323,7 +323,8 @@ void TheGamesDb::scrape(GameBoxart& item)
 		return;
 	fetchPlatforms();
 
-	if (!item.uniqueId.empty())
+	// Ignore default disk ids used by kos and katana
+	if (!item.uniqueId.empty() && item.uniqueId != "T0000" && item.uniqueId != "T0000M")
 	{
 		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview,uids&include=boxart&filter%5Bplatform%5D="
 			+ std::to_string(dreamcastPlatformId) + "&uid=" + http::urlEncode(item.uniqueId);
