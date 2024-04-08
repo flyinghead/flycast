@@ -2018,6 +2018,7 @@ static void gui_display_settings()
 				#endif
 					;
 
+            float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
 	    	if (apiCount > 1)
 	    	{
 				header("Graphics API");
@@ -2030,7 +2031,7 @@ static void gui_display_settings()
 #ifdef USE_VULKAN
 #ifdef __APPLE__
 					ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
-					ImGui::SameLine(0, style.ItemInnerSpacing.x);
+					ImGui::SameLine(0, innerSpacing);
 					ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
 #else
 					ImGui::RadioButton("Vulkan", &renderApi, 1);
@@ -2084,8 +2085,6 @@ static void gui_display_settings()
 		    	}
 		    }
 	    	ImGui::Spacing();
-            ImGuiStyle& style = ImGui::GetStyle();
-            float innerSpacing = style.ItemInnerSpacing.x;
 
 		    header("Rendering Options");
 		    {
@@ -2133,7 +2132,7 @@ static void gui_display_settings()
                     if (selected < vres.size() - 1)
                     	config::RenderResolution = vres[selected + 1];
                 }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                ImGui::SameLine(0, innerSpacing);
 
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
@@ -2220,7 +2219,7 @@ static void gui_display_settings()
 					if (selected < bufSizes.size() - 1)
 						config::PixelBufferSize = bufSizes[selected + 1];
 				}
-				ImGui::SameLine(0, style.ItemInnerSpacing.x);
+				ImGui::SameLine(0, innerSpacing);
 
                 ImGui::Text("Pixel Buffer Size");
                 ImGui::SameLine();
@@ -2294,7 +2293,7 @@ static void gui_display_settings()
                     if (afSelected < aniso.size() - 1)
                     	config::AnisotropicFiltering = aniso[afSelected + 1];
                 }
-                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                ImGui::SameLine(0, innerSpacing);
 
                 ImGui::Text("Anisotropic Filtering");
                 ImGui::SameLine();
