@@ -9,6 +9,7 @@
 #include <thread>
 #include "stdclass.h"
 #include "windows/comptr.h"
+#include "oslib/oslib.h"
 
 HWND getNativeHwnd();
 #define verifyc(x) verify(!FAILED(x))
@@ -46,6 +47,7 @@ class DirectSoundBackend : public AudioBackend
 
 	void audioThreadMain()
 	{
+		ThreadName _("FlyDirectSound");
 		audioThreadRunning = true;
 		while (true)
 		{

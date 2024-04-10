@@ -211,7 +211,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         else
         {
 			static std::string crashPath;
-			static cThread uploadThread(uploadCrashThread, &crashPath);
+			static cThread uploadThread(uploadCrashThread, &crashPath, "SentryUpload");
 			crashPath = get_writable_config_path("");
 			uploadThread.Start();
         }
@@ -337,7 +337,7 @@ static void *render_thread_func(void *)
     return NULL;
 }
 
-static cThread render_thread(render_thread_func, NULL);
+static cThread render_thread(render_thread_func, nullptr, "Flycast-rend");
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {

@@ -783,6 +783,7 @@ std::future<bool> startNetwork()
 	synchronized = false;
 	return std::async(std::launch::async, []{
 		{
+			ThreadName _("GGPO-start");
 			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
 			startSession(0, 0);

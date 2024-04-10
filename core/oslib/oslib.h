@@ -14,6 +14,20 @@ void os_TermInput();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
 void os_RunInstance(int argc, const char *argv[]);
+void os_SetThreadName(const char *name);
+
+// raii thread name setter
+class ThreadName
+{
+public:
+	ThreadName(const char *name) {
+		os_SetThreadName(name);
+	}
+	~ThreadName() {
+		// default name
+		os_SetThreadName("flycast");
+	}
+};
 
 #ifdef _MSC_VER
 #include <intrin.h>

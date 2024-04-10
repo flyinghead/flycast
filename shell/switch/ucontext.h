@@ -1,5 +1,5 @@
 #pragma once
-#include <switch.h>
+#include "nswitch.h"
 
 typedef struct
 {

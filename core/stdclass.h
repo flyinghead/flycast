@@ -28,12 +28,13 @@ private:
 	typedef void* ThreadEntryFP(void* param);
 	ThreadEntryFP* entry;
 	void* param;
+	const char *name;
 
 public:
 	std::thread thread;
 
-	cThread(ThreadEntryFP* function, void* param)
-		:entry(function), param(param) {}
+	cThread(ThreadEntryFP* function, void* param, const char *name)
+		:entry(function), param(param), name(name) {}
 	~cThread() { WaitToEnd(); }
 	void Start();
 	void WaitToEnd();

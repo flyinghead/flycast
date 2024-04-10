@@ -1569,6 +1569,7 @@ if(NOT LIBRETRO)
 
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
+					shell/apple/common/util.mm
 					shell/apple/emulator-ios/emulator/AppDelegate.h
 					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
@@ -1664,6 +1665,7 @@ if(NOT LIBRETRO)
 
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/common/http_client.mm
+					shell/apple/common/util.mm
 					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.h
 					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)

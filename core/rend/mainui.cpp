@@ -85,6 +85,7 @@ void mainui_term()
 
 void mainui_loop()
 {
+	ThreadName _("Flycast-rend");
 	mainui_enabled = true;
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;

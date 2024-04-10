@@ -850,6 +850,7 @@ void Emulator::start()
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
 		threadResult = std::async(std::launch::async, [this] {
+				ThreadName _("Flycast-emu");
 				InitAudio();
 
 				try {

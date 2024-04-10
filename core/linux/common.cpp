@@ -15,6 +15,9 @@
   #include <dlfcn.h>
 #endif
 #include <unistd.h>
+#ifdef __linux__
+#include <pthread.h>
+#endif
 
 #include "oslib/host_context.h"
 
@@ -22,6 +25,7 @@
 #include "rend/TexCache.h"
 #include "hw/mem/addrspace.h"
 #include "hw/mem/mem_watch.h"
+#include "emulator.h"
 
 #ifdef __SWITCH__
 #include <ucontext.h>
@@ -179,6 +183,13 @@ void linux_rpi2_init() {
 #endif
 }
 
+#if defined(__unix__) && !defined(LIBRETRO)
+static void sigintHandler(int)
+{
+	dc_exit();
+}
+#endif
+
 void common_linux_setup()
 {
 	linux_fix_personality();
@@ -186,9 +197,30 @@ void common_linux_setup()
 
 	enable_runfast();
 	os_InstallFaultHandler();
-	signal(SIGINT, exit);
+#if defined(__unix__) && !defined(LIBRETRO)
+	// exit cleanly on ^C
+	signal(SIGINT, sigintHandler);
+#endif
 	
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
+
+#ifndef __APPLE__
+
+void os_SetThreadName(const char *name)
+{
+#ifdef __linux__
+	if (strlen(name) > 16)
+	{
+		static char tmp[17];
+		strncpy(tmp, name, 16);
+		name = tmp;
+	}
+	pthread_setname_np(pthread_self(), name);
+#endif
+}
+
+#endif
+
 #endif	// __unix__ or __APPLE__ or __SWITCH__

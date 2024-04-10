@@ -130,7 +130,10 @@ bool make_directory(const std::string& path)
 void cThread::Start()
 {
 	verify(!thread.joinable());
-	thread = std::thread(entry, param);
+	thread = std::thread([this]() {
+		ThreadName _(name);
+		entry(param);
+	});
 }
 
 void cThread::WaitToEnd()

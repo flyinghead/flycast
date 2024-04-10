@@ -25,6 +25,7 @@
 #include "types.h"
 #include "stdclass.h"
 #include "hw/naomi/naomi_roms.h"
+#include "oslib/oslib.h"
 #include "oslib/storage.h"
 #include "cfg/option.h"
 
@@ -163,6 +164,7 @@ public:
 		scan_thread = std::unique_ptr<std::thread>(
 			new std::thread([this]()
 			{
+				ThreadName _("GameScanner");
 				if (arcade_games.empty())
 					for (int gameid = 0; Games[gameid].name != nullptr; gameid++)
 					{

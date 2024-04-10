@@ -51,6 +51,7 @@ extern "C" {
 #include "miniupnp.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <map>
 #include <mutex>
@@ -951,6 +952,7 @@ static void *pico_thread_func(void *)
 	std::future<MiniUPnP> upnp =
 		std::async(std::launch::async, [ports]() {
 			// Initialize miniupnpc and map network ports
+			ThreadName _("UPNP-init");
 			MiniUPnP upnp;
 			if (ports != nullptr && config::EnableUPnP)
 			{
@@ -1145,7 +1147,7 @@ static void *pico_thread_func(void *)
 	return NULL;
 }
 
-static cThread pico_thread(pico_thread_func, NULL);
+static cThread pico_thread(pico_thread_func, nullptr, "PicoTCP");
 
 bool start_pico()
 {

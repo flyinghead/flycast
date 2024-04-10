@@ -19,6 +19,7 @@
 #include "boxart.h"
 #include "gamesdb.h"
 #include "../game_scanner.h"
+#include "oslib/oslib.h"
 #include <chrono>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
@@ -75,6 +76,7 @@ void Boxart::fetchBoxart()
 	if (toFetch.empty())
 		return;
 	fetching = std::async(std::launch::async, [this]() {
+		ThreadName _("BoxArt-scraper");
 		if (offlineScraper == nullptr)
 		{
 			offlineScraper = std::unique_ptr<Scraper>(new OfflineScraper());

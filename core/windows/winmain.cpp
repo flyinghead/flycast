@@ -508,6 +508,24 @@ void os_RunInstance(int argc, const char *argv[])
 	}
 }
 
+void os_SetThreadName(const char *name)
+{
+	nowide::wstackstring wname;
+	if (wname.convert(name))
+	{
+		static HRESULT (*SetThreadDescription)(HANDLE, PCWSTR);
+		if (SetThreadDescription == nullptr)
+		{
+			// supported in Windows 10, version 1607 or Windows Server 2016
+			HINSTANCE libh = LoadLibraryW(L"KernelBase.dll");
+			if (libh != NULL)
+				SetThreadDescription = (HRESULT (*)(HANDLE, PCWSTR))GetProcAddress(libh, "SetThreadDescription");
+		}
+		if (SetThreadDescription != nullptr)
+			SetThreadDescription(GetCurrentThread(), wname.get());
+	}
+}
+
 #ifdef VIDEO_ROUTING
 #include "SpoutSender.h"
 #include "SpoutDX.h"
