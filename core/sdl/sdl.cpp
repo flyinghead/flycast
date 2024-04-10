@@ -14,6 +14,7 @@
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
+#include "sdl_keyboard_mac.h"
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
@@ -171,7 +172,11 @@ static void checkRawInput()
 #else
 	if (!sdl_keyboard)
 	{
+#ifdef __APPLE__
+		sdl_keyboard = std::make_shared<SDLMacKeyboard>(0);
+#else
 		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
+#endif
 		GamepadDevice::Register(sdl_keyboard);
 	}
 #endif

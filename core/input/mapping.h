@@ -36,6 +36,7 @@ public:
 		name = other.name;
 		dead_zone = other.dead_zone;
 		saturation = other.saturation;
+		rumblePower = other.rumblePower;
 		for (int port = 0; port < 4; port++)
 		{
 			buttons[port] = other.buttons[port];

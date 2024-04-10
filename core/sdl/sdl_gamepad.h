@@ -208,6 +208,7 @@ public:
 #endif
 
 		hasAnalogStick = SDL_JoystickNumAxes(sdl_joystick) > 0;
+		set_maple_port(maple_port);
 	}
 
 	bool gamepad_axis_input(u32 code, int value) override
@@ -215,6 +216,12 @@ public:
 		if (code == leftTrigger || code == rightTrigger)
 			value = (u16)(value + 32768) / 2;
 		return GamepadDevice::gamepad_axis_input(code, value);
+	}
+
+	void set_maple_port(int port) override
+	{
+		GamepadDevice::set_maple_port(port);
+		SDL_JoystickSetPlayerIndex(sdl_joystick, port <= 3 ? port : -1);
 	}
 
 	u16 getRumbleIntensity(float power)	{

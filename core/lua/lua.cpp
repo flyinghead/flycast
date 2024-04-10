@@ -71,6 +71,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::VBlank:
 			key = "vblank";
 			break;
+		case Event::Network:
+			key = "network";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();
@@ -619,6 +622,7 @@ void init()
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
     EventManager::listen(Event::VBlank, emuEventCallback);
+    EventManager::listen(Event::Network, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -633,6 +637,7 @@ void term()
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
     EventManager::unlisten(Event::VBlank, emuEventCallback);
+    EventManager::unlisten(Event::Network, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }
