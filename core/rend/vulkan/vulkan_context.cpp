@@ -1030,10 +1030,6 @@ void VulkanContext::term()
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
 	allocator.Term();
-#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
-	extern void os_VideoRoutingTermVk();
-	os_VideoRoutingTermVk();
-#endif
 #ifndef USE_SDL
 	surface.reset();
 #else

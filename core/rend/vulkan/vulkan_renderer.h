@@ -31,6 +31,8 @@
 #include <memory>
 #include <vector>
 
+void os_VideoRoutingTermVk();
+
 class BaseVulkanRenderer : public Renderer
 {
 protected:
@@ -76,6 +78,9 @@ public:
 	{
 		GetContext()->WaitIdle();
 		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D(), 0);
+#if defined(VIDEO_ROUTING) && defined(TARGET_MAC)
+		os_VideoRoutingTermVk();
+#endif
 		framebufferDrawer.reset();
 		quadPipeline.reset();
 		osdBuffer.reset();
@@ -248,6 +253,10 @@ public:
 			
 			extern void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h);
 			os_VideoRoutingPublishFrameTexture(device, srcImage, graphicsQueue, 0, 0, targetWidth, targetHeight);
+		}
+		else
+		{
+			os_VideoRoutingTermVk();
 		}
 #endif
 	}
