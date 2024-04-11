@@ -19,7 +19,7 @@
 
 #include "gamepad_device.h"
 #include "cfg/cfg.h"
-#include "oslib/oslib.h"
+#include "stdclass.h"
 #include "rend/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
@@ -152,7 +152,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	if (_input_detected != nullptr && _detecting_button
-			&& os_GetSeconds() >= _detection_start_time && pressed)
+			&& getTimeMs() >= _detection_start_time && pressed)
 	{
 		_input_detected(code, false, false);
 		_input_detected = nullptr;
@@ -207,7 +207,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
 	bool positive = value >= 0;
 	if (_input_detected != NULL && _detecting_axis
-			&& os_GetSeconds() >= _detection_start_time && std::abs(value) >= 16384)
+			&& getTimeMs() >= _detection_start_time && std::abs(value) >= 16384)
 	{
 		_input_detected(code, true, positive);
 		_input_detected = nullptr;
@@ -505,7 +505,7 @@ void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
 	_input_detected = button_pressed;
 	_detecting_button = true;
 	_detecting_axis = false;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
@@ -513,7 +513,7 @@ void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 	_input_detected = axis_moved;
 	_detecting_button = false;
 	_detecting_axis = true;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
@@ -521,7 +521,7 @@ void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
 	_input_detected = input_changed;
 	_detecting_button = true;
 	_detecting_axis = true;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 #ifdef TEST_AUTOMATION

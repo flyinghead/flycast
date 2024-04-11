@@ -59,23 +59,23 @@ public:
 		memcpy(&vibValues[1], &vibValues[0], sizeof(HidVibrationValue));
 		hidSendVibrationValues(getDeviceHandle(), vibValues, 2);
 		if (power != 0.f)
-			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+			vib_stop_time = getTimeMs() + duration_ms;
 		else
-			vib_stop_time = 0.0;
+			vib_stop_time = 0;
 	}
 
 	void update_rumble() override
 	{
 		if (!rumbleEnabled || vib_stop_time == 0.0)
 			return;
-		int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+		int rem_time = vib_stop_time - getTimeMs();
 		if (rem_time <= 0)
 		{
 			HidVibrationValue vibValues[2]{};
 			vibValues[0].freq_low  = vibValues[1].freq_low  = 160.f;
 			vibValues[0].freq_high  = vibValues[1].freq_high  = 320.f;
 			hidSendVibrationValues(getDeviceHandle(), vibValues, 2);
-			vib_stop_time = 0.0;
+			vib_stop_time = 0;
 		}
 	}
 

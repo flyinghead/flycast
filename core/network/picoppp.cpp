@@ -26,9 +26,6 @@
 #include "stdclass.h"
 
 //#define BBA_PCAPNG_DUMP
-#ifdef BBA_PCAPNG_DUMP
-#include "oslib/oslib.h"
-#endif
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -883,7 +880,7 @@ static void dumpFrame(const u8 *frame, u32 size)
 	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
 	u32 ifId = 0;
 	fwrite(&ifId, sizeof(ifId), 1, pcapngDump);
-	u64 now = (u64)(os_GetSeconds() * 1000000.0);
+	u64 now = getTimeMs() * 1000;
 	fwrite((u32 *)&now + 1, 4, 1, pcapngDump);
 	fwrite(&now, 4, 1, pcapngDump);
 	fwrite(&size, sizeof(size), 1, pcapngDump);

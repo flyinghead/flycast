@@ -738,11 +738,11 @@ void pickIosFile()
 
 const char *getIosJitStatus()
 {
-	static double lastCheckTime;
-	if (!iosJitAuthorized && os_GetSeconds() - lastCheckTime > 10.0)
+	static u64 lastCheckTime;
+	if (!iosJitAuthorized && getTimeMs() - lastCheckTime > 10000)
 	{
 		[flycastViewController altKitStart];
-		lastCheckTime = os_GetSeconds();
+		lastCheckTime = getTimeMs();
 	}
 	return iosJitStatus.c_str();
 }

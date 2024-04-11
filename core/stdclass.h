@@ -197,3 +197,5 @@ public:
 		return v;
 	}
 };
+
+u64 getTimeMs();

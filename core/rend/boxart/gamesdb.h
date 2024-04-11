@@ -47,7 +47,7 @@ private:
 
 	int dreamcastPlatformId = 0;
 	int arcadePlatformId = 0;
-	double blackoutPeriod = 0.0;
+	u64 blackoutPeriod = 0;
 
 	std::map<std::string, std::string> boxartCache;	// key: url, value: local file path
 };

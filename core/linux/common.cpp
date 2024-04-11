@@ -11,9 +11,6 @@
 #if defined(__linux__) && !defined(__ANDROID__)
   #include <sys/personality.h>
 #endif
-#if !defined(TARGET_BSD) && !defined(__ANDROID__) && defined(TARGET_VIDEOCORE)
-  #include <dlfcn.h>
-#endif
 #include <unistd.h>
 #ifdef __linux__
 #include <pthread.h>
@@ -123,14 +120,6 @@ void os_UninstallFaultHandler()
 }
 #endif // !defined(TARGET_NO_EXCEPTIONS)
 
-double os_GetSeconds()
-{
-	timeval a;
-	gettimeofday (&a,0);
-	static u64 tvs_base=a.tv_sec;
-	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
-}
-
 #if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__)
 [[noreturn]] void os_DebugBreak()
 {
@@ -138,11 +127,15 @@ double os_GetSeconds()
 }
 #endif
 
-void enable_runfast()
+// RunFast mode is the combination of the following conditions:
+// * the VFP11 coprocessor is in flush-to-zero mode
+// * the VFP11 coprocessor is in default NaN mode
+// * all exception enable bits are cleared.
+static void enable_runfast()
 {
-	#if HOST_CPU==CPU_ARM && !defined(ARMCC)
-	static const unsigned int x = 0x04086060;
-	static const unsigned int y = 0x03000000;
+#if HOST_CPU == CPU_ARM && !defined(ARMCC)
+	static const unsigned int x = 0x04086060;	// reset and disable FP exceptions, flush-to-zero, default NaN mode
+	static const unsigned int y = 0x03000000;	// round to zero
 	int r;
 	asm volatile (
 		"fmrx	%0, fpscr			\n\t"	//r0 = FPSCR
@@ -154,32 +147,18 @@ void enable_runfast()
 	);
 
 	DEBUG_LOG(BOOT, "ARM VFP-Run Fast (NFP) enabled !");
-	#endif
-}
-
-void linux_fix_personality() {
-#if defined(__linux__) && !defined(__ANDROID__)
-	DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
-	personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-	DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
 #endif
 }
 
-void linux_rpi2_init() {
-#if !defined(TARGET_BSD) && !defined(__ANDROID__) && defined(TARGET_VIDEOCORE)
-	void* handle;
-	void (*rpi_bcm_init)(void);
-
-	handle = dlopen("libbcm_host.so", RTLD_LAZY);
-	
-	if (handle) {
-		DEBUG_LOG(BOOT, "found libbcm_host");
-		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
-		if (rpi_bcm_init) {
-			DEBUG_LOG(BOOT, "rpi2: bcm_init");
-			rpi_bcm_init();
-		}
-	}
+// Some old CPUs lack the NX (no exec) flag so READ_IMPLIES_EXEC is set by default on these platforms.
+// However resetting the flag isn't going to magically change the way the CPU works. So I wonder how useful this is.
+// It's not needed on modern 64-bit architectures anyway.
+static void linux_fix_personality()
+{
+#if defined(__linux__) && !defined(__ANDROID__) && (HOST_CPU == CPU_X86 || HOST_CPU == CPU_ARM)
+	DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
+	personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+	DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
 #endif
 }
 
@@ -193,7 +172,6 @@ static void sigintHandler(int)
 void common_linux_setup()
 {
 	linux_fix_personality();
-	linux_rpi2_init();
 
 	enable_runfast();
 	os_InstallFaultHandler();

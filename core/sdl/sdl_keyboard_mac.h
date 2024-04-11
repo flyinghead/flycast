@@ -19,6 +19,7 @@
 #pragma once
 #ifdef __APPLE__
 #include "sdl_keyboard.h"
+#include "stdclass.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOTypes.h>
 #include <stack>
@@ -55,7 +56,7 @@ public:
 		if (!rumbleEnabled)
 			return;
 
-		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+		vib_stop_time = getTimeMs() + duration_ms;
 
 		__block int pattern;
 		if (power >= 0.75)
@@ -82,7 +83,7 @@ public:
 		dispatch_source_set_timer(_timer, DISPATCH_TIME_NOW, 10 * NSEC_PER_MSEC * rumblePower / 100.f, 0);
 
 		dispatch_source_set_event_handler(_timer, ^{
-			if ( vib_stop_time - os_GetSeconds() < 0 )
+			if (vib_stop_time < getTimeMs())
 			{
 				dispatch_source_cancel(_timer);
 				return;
@@ -105,7 +106,7 @@ public:
 private:
 	std::stack<dispatch_source_t> vib_timer_stack;
 	CFTypeRef vib_device = NULL;
-	double vib_stop_time = 0;
+	u64 vib_stop_time = 0;
 };
 
 #endif // _APPLE_

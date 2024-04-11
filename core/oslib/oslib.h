@@ -5,7 +5,6 @@
 #endif
 
 void os_SetWindowText(const char* text);
-double os_GetSeconds();
 
 void os_DoEvents();
 void os_CreateWindow();

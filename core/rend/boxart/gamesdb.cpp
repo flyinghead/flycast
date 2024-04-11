@@ -19,7 +19,6 @@
 #include "gamesdb.h"
 #include "http_client.h"
 #include "stdclass.h"
-#include "oslib/oslib.h"
 #include "emulator.h"
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
@@ -74,9 +73,9 @@ void TheGamesDb::copyFile(const std::string& from, const std::string& to)
 
 json TheGamesDb::httpGet(const std::string& url)
 {
-	if (os_GetSeconds() < blackoutPeriod)
+	if (getTimeMs() < blackoutPeriod)
 		throw std::runtime_error("");
-	blackoutPeriod = 0.0;
+	blackoutPeriod = 0;
 
 	DEBUG_LOG(COMMON, "TheGameDb: GET %s", url.c_str());
 	std::vector<u8> receivedData;
@@ -84,9 +83,9 @@ json TheGamesDb::httpGet(const std::string& url)
 	bool success = http::success(status);
 	if (status == 403)
 		// hit rate-limit cap
-		blackoutPeriod = os_GetSeconds() + 60.0;
+		blackoutPeriod = getTimeMs() + 60 * 1000;
 	else if (!success)
-		blackoutPeriod = os_GetSeconds() + 1.0;
+		blackoutPeriod = getTimeMs() + 1000;
 	if (!success || receivedData.empty())
 		throw std::runtime_error("http error");
 
@@ -382,7 +381,7 @@ void TheGamesDb::fetchByUids(std::vector<GameBoxart>& items)
 
 void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 {
-	if (os_GetSeconds() < blackoutPeriod)
+	if (getTimeMs() < blackoutPeriod)
 		throw std::runtime_error("");
 	blackoutPeriod = 0.0;
 

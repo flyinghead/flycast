@@ -47,7 +47,7 @@ static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
-static double lastBarcodeTime;
+static u64 lastBarcodeTime;
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -1179,8 +1179,8 @@ static bool handleBarcodeScanner(const SDL_Event& event)
 			return false;
 		}
 	}
-	double now = os_GetSeconds();
-	if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+	u64 now = getTimeMs();
+	if (!barcode.empty() && now - lastBarcodeTime >= 500)
 	{
 		INFO_LOG(INPUT, "Barcode timeout");
 		barcode.clear();

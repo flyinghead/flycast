@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <chrono>
 
 #ifdef _WIN32
 	#include <algorithm>
@@ -210,4 +211,13 @@ void RamRegion::free()
 	if (ownsMemory)
 		freeAligned(data);
 	data = nullptr;
+}
+
+u64 getTimeMs()
+{
+	using the_clock = std::chrono::steady_clock;
+	std::chrono::time_point<the_clock> now = the_clock::now();
+	static std::chrono::time_point<the_clock> start = now;
+
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
 }

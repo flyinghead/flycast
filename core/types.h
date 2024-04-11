@@ -80,9 +80,6 @@ inline static void JITWriteProtect(bool enabled) {
 
 #include "log/Log.h"
 
-#define VER_EMUNAME		"Flycast"
-#define VER_SHORTNAME	VER_EMUNAME
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif

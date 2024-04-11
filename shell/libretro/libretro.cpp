@@ -2502,11 +2502,6 @@ void retro_rend_present()
 		is_dupe = false;
 }
 
-static uint32_t get_time_ms()
-{
-   return (uint32_t)(os_GetSeconds() * 1000.0);
-}
-
 static void get_analog_stick( retro_input_state_t input_state_cb,
                        int player_index,
                        int stick,
@@ -2963,14 +2958,14 @@ static void UpdateInputState(u32 port)
 	}
 	if (rumble.set_rumble_state != NULL && vib_stop_time[port] > 0)
 	{
-		if (get_time_ms() >= vib_stop_time[port])
+		if (getTimeMs() >= vib_stop_time[port])
 		{
 			vib_stop_time[port] = 0;
 			rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 0);
 		}
 		else if (vib_delta[port] > 0.0)
 		{
-			u32 rem_time = vib_stop_time[port] - get_time_ms();
+			u32 rem_time = vib_stop_time[port] - getTimeMs();
 			rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 65535 * vib_strength[port] * rem_time * vib_delta[port]);
 		}
 	}
@@ -3378,7 +3373,7 @@ static void updateVibration(u32 port, float power, float inclination, u32 durati
 	vib_strength[port] = power;
 
 	rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * power));
-	vib_stop_time[port] = get_time_ms() + durationMs;
+	vib_stop_time[port] = getTimeMs() + durationMs;
 	vib_delta[port] = inclination;
 }
 

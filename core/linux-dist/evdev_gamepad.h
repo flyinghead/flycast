@@ -1,7 +1,7 @@
 #pragma once
 #include "evdev.h"
 #include "input/gamepad_device.h"
-#include "oslib/oslib.h"
+#include "stdclass.h"
 
 #include <fcntl.h>
 #include <linux/input.h>
@@ -81,7 +81,7 @@ public:
 	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
-		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+		vib_stop_time = getTimeMs() + duration_ms;
 
 		do_rumble(power, duration_ms);
 	}
@@ -89,7 +89,7 @@ public:
 	{
 		if (vib_inclination > 0)
 		{
-			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			int rem_time = vib_stop_time - getTimeMs();
 			if (rem_time <= 0)
 				vib_inclination = 0;
 			else
@@ -308,7 +308,7 @@ private:
 	std::string _devnode;
 	int _rumble_effect_id = -1;
 	float vib_inclination = 0;
-	double vib_stop_time = 0;
+	u64 vib_stop_time = 0;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;
 	static std::map<std::string, std::shared_ptr<EvdevGamepadDevice>> evdev_gamepads;

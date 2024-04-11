@@ -78,7 +78,7 @@ static float mouseWheel;
 static std::string error_msg;
 static bool error_msg_shown;
 static std::string osd_message;
-static double osd_message_end;
+static u64 osd_message_end;
 static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
@@ -920,7 +920,7 @@ static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
 static bool analogAxis;
 static bool positiveDirection;
-static double map_start_time;
+static u64 map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
 
@@ -986,8 +986,8 @@ static void detect_input_popup(const Mapping *mapping)
 	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::Text("Waiting for control '%s'...", mapping->name);
-		double now = os_GetSeconds();
-		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
+		u64 now = getTimeMs();
+		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time) / 1000));
 		if (mapped_code != (u32)-1)
 		{
 			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
@@ -1012,7 +1012,7 @@ static void detect_input_popup(const Mapping *mapping)
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
 		}
-		else if (now - map_start_time >= 5)
+		else if (now - map_start_time >= 5000)
 		{
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
@@ -1239,7 +1239,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
-				map_start_time = os_GetSeconds();
+				map_start_time = getTimeMs();
 				ImGui::OpenPopup("Map Control");
 				mapped_device = gamepad;
 				mapped_code = -1;
@@ -2859,13 +2859,13 @@ void gui_display_notification(const char *msg, int duration)
 {
 	std::lock_guard<std::mutex> lock(osd_message_mutex);
 	osd_message = msg;
-	osd_message_end = os_GetSeconds() + (double)duration / 1000.0;
+	osd_message_end = getTimeMs() + duration;
 }
 
 static std::string get_notification()
 {
 	std::lock_guard<std::mutex> lock(osd_message_mutex);
-	if (!osd_message.empty() && os_GetSeconds() >= osd_message_end)
+	if (!osd_message.empty() && getTimeMs() >= osd_message_end)
 		osd_message.clear();
 	return osd_message;
 }
@@ -3348,7 +3348,7 @@ void gui_display_ui()
 		emu.start();
 }
 
-static float LastFPSTime;
+static u64 LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
 
@@ -3356,9 +3356,9 @@ static std::string getFPSNotification()
 {
 	if (config::ShowFPS)
 	{
-		double now = os_GetSeconds();
-		if (now - LastFPSTime >= 1.0) {
-			fps = (MainFrameCount - lastFrameCount) / (now - LastFPSTime);
+		u64 now = getTimeMs();
+		if (now - LastFPSTime >= 1000) {
+			fps = ((float)MainFrameCount - lastFrameCount) * 1000.f / (now - LastFPSTime);
 			LastFPSTime = now;
 			lastFrameCount = MainFrameCount;
 		}
