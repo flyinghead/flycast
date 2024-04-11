@@ -525,10 +525,6 @@ extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
 extern Option<bool> BattleCableEnable;
 
-#ifdef SUPPORT_DISPMANX
-extern Option<bool> DispmanxMaintainAspect;
-#endif
-
 #ifdef USE_OMX
 extern Option<int> OmxAudioLatency;
 extern Option<bool> OmxAudioHdmi;

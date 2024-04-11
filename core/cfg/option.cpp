@@ -159,10 +159,6 @@ Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 Option<bool> BattleCableEnable("BattleCable", false, "network");
 
-#ifdef SUPPORT_DISPMANX
-Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
-#endif
-
 #ifdef USE_OMX
 Option<int> OmxAudioLatency("audio_latency", 100, "omx");
 Option<bool> OmxAudioHdmi("audio_hdmi", true, "omx");

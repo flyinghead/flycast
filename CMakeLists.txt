@@ -528,6 +528,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 	if(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
 		if(USE_VIDEOCORE)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_VIDEOCORE USE_OMX)
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lbrcmGLESv2")
 			target_link_directories(${PROJECT_NAME} PRIVATE "/opt/vc/lib")
 		endif()
@@ -1051,19 +1052,18 @@ else()
 			core/linux/unwind_info.cpp)
 	if(NINTENDO_SWITCH)
 		target_sources(${PROJECT_NAME} PRIVATE
-				core/linux/libnx_vmem.cpp
+				shell/switch/libnx_vmem.cpp
 				shell/switch/stubs.c
 				shell/switch/context_switch.S
 				shell/switch/nswitch.h
 				shell/switch/switch_gamepad.h
+				shell/switch/switch_main.cpp
 				shell/switch/ucontext.h)
 	endif()
 endif()
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-			core/linux-dist/dispmanx.cpp
-			core/linux-dist/dispmanx.h
 			core/linux-dist/evdev.cpp
 			core/linux-dist/evdev.h
 			core/linux-dist/icon.h
@@ -1505,7 +1505,7 @@ endif()
 if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
 	add_library(glad STATIC core/deps/glad/src/gl.c)
 	if(NOT APPLE AND NOT WIN32 AND NOT SDL2_FOUND)
-		# When SDL2 is not found, we can use EGL with ANativeWindow (Android), DispmanX (Raspberry Pi) or X11
+		# When SDL2 is not found, we can use EGL with ANativeWindow (Android) or X11
 		target_sources(glad PRIVATE core/deps/glad/src/egl.c)
 	endif()
 	target_include_directories(glad PUBLIC core/deps/glad/include)
@@ -1721,7 +1721,7 @@ if(NOT LIBRETRO)
 					${CMAKE_CURRENT_BINARY_DIR}/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 			endif()
 		endif()
-	elseif(UNIX OR NINTENDO_SWITCH)
+	elseif(UNIX)
 		if(NOT BUILD_TESTING)
 			target_sources(${PROJECT_NAME} PRIVATE
 					core/linux-dist/main.cpp)

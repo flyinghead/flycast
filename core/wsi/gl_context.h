@@ -88,7 +88,7 @@ private:
 
 #include "sdl.h"
 
-#elif defined(__ANDROID__) || defined(SUPPORT_DISPMANX) || defined(SUPPORT_X11)
+#elif defined(__ANDROID__) || defined(SUPPORT_X11)
 
 #include "egl.h"
 
