@@ -53,7 +53,7 @@ int darw_printf(const char* Text,...);
 #ifndef TARGET_IPHONE
 #if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
 #define TARGET_ARM_MAC
-#include "pthread.h"
+#include <pthread.h>
 inline static void JITWriteProtect(bool enabled) {
 	if (__builtin_available(macOS 11.0, *))
 		pthread_jit_write_protect_np(enabled);
