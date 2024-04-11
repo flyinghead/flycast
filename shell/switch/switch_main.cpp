@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef LIBRETRO
 #include "nswitch.h"
 #include "stdclass.h"
 #include "sdl/sdl.h"
@@ -50,7 +51,6 @@ int main(int argc, char *argv[])
 	sdl_window_destroy();
 	flycast_term();
 
-
 	socketExit();
 
 	return 0;
@@ -79,3 +79,5 @@ void os_CreateWindow()
 {
 	sdl_window_create();
 }
+
+#endif	//!LIBRETRO
