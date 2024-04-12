@@ -42319,8 +42319,8 @@ struct retro_core_options_v2 options_hr = {
 #define CATEGORY_HACKS_INFO_0_HU "A szélesvásznú módosítások, GD-ROM betöltés sebessége, és a textúracserék beállításai."
 #define CATEGORY_INPUT_LABEL_HU "Bemenet"
 #define CATEGORY_INPUT_INFO_0_HU "A kontroller és fénypisztoly beállításai."
-#define CATEGORY_EXPANSIONS_LABEL_HU NULL
-#define CATEGORY_EXPANSIONS_INFO_0_HU NULL
+#define CATEGORY_EXPANSIONS_LABEL_HU "Kontroller bővítőhelyek"
+#define CATEGORY_EXPANSIONS_INFO_0_HU "Az egyes kontroller bővítőhelyekbe csatlakoztatott eszköz (VMU, rezgő eszköz)."
 #define CATEGORY_VMU_LABEL_HU NULL
 #define CATEGORY_VMU_INFO_0_HU "A játékonkénti VMU mentések és a képernyőn látható VMU beállításai."
 #define CORE_OPTION_NAME_REGION_LABEL_HU "Régió"
@@ -42342,8 +42342,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU "Belépés a Dreamcast BIOS menüjébe rögtön Indításkor."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU "DSP engedélyezése"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU "A Dreamcast DSP (digitális jelfeldolgozó) emulálásának engedélyezése. Javítja a generált hang pontosságát, de megnöveli a teljesítményigényt."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU "Játéktermi szervizgombok engedélyezése"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A játéktermi SERVICE gomb engedélyezése, a játékgép beállításaihoz."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
@@ -42352,8 +42352,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
-#define OPTION_VAL_320X240_HU NULL
-#define OPTION_VAL_640X480_HU NULL
+#define OPTION_VAL_320X240_HU "320x240 (Felezett)"
+#define OPTION_VAL_640X480_HU "640x480 (Eredeti)"
 #define OPTION_VAL_800X600_HU NULL
 #define OPTION_VAL_960X720_HU NULL
 #define OPTION_VAL_1024X768_HU NULL
@@ -42393,7 +42393,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_HORIZONTAL_HU "Vízszintes"
 #define OPTION_VAL_VERTICAL_HU "Függőleges"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU "Alfa rendezés"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_HU "Az átlátszó poligonok rendezése."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU "Per-strip (gyors, legkevésbé pontos)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_HU "Per-triangle (normál)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_HU "Per-pixel (pontos, de a leglassabb)"
@@ -42410,7 +42410,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU "Az előállított textúrák visszamásolása a GPU-ból a VRAM-ba. Ez a lehetőség rendszerint be van kapcsolva azoknál a játékoknál, amelyek igénylik. Bekapcsolt állapotban a textúra előállítás felméretezése kikapcsol, és hatással lehet a teljesítményre."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_HU NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_HU "Bekapcsolva a textúrák saját maguk kisebb változatát használják, amikor távolabb tűnnek fel. Javítja a teljesítményt és csökkenti a remegést."
 #define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU "A Dreamcast GPU-jának egy szolgáltatása, amit a játékok rendszerint tárgyak árnyékának megrajzolásához használnak. Normál esetben legyen bekapcsolva, hatása a teljesítményre rendszerint minimális vagy elhanyagolható."
@@ -42432,11 +42432,11 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU "Textúra felméretezés maximális szűrt mérete"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_HU "A textúra legnagyobb mérete felméretezéshez. Ha a textúra mérete nagyobb, mint az itt kiválasztott, nem lesz felméretezve."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HU "Natív mélységi interpoláció"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HU "Segíthet a textúrahibákon és mélységi problémákon AMD GPU-k, vagy néhány esetben Intel GPU-k használatakor is."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_HU NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_HU "Felméretezés széleinek javítása"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_HU "Segít a textúrák túlcsordulásán felméretezéskor. Kikapcsolva segíthet a 2D játékok (MVC2, CVS, KOF stb.) felméretezésekor jelentkező pixeltorzuláson."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HU "Többszálas képelőállítás"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HU "A CPU és GPU külön szálon futnak. Erősen ajánlott."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HU "Automatikus képkocka kihagyás"
@@ -42497,11 +42497,11 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_490_HU NULL
 #define OPTION_VAL_500_HU NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU "Egyedi textúrák betöltése"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_HU "Egyedi textúrák betöltése a 'system/dc/textures/<game-id>/' mappából."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU "A textúrák lementése .png fájlként a 'system/dc/texdump/<game-id>/' mappába, amint a játék új textúrát használ."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_HU "Az analóg kart ilyen mértékben kell elmozdítani ahhoz, hogy hatása legyen."
 #define OPTION_VAL_0_HU NULL
 #define OPTION_VAL_5_HU NULL
 #define OPTION_VAL_10_HU NULL
@@ -42510,9 +42510,9 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_25_HU NULL
 #define OPTION_VAL_30_HU NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HU "Ravasz holtsávja"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_HU "A ravaszt ilyen mértékben kell elmozdítani ahhoz, hogy hatása legyen."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HU "Digitális ravasz"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_HU "Bekapcsolva a ravaszok normális gombokként működnek, teljesen vagy egyáltalán nem lenyomott állapotot visszaadva, köztes érték nélkül."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HU "Digitális kimenetek sugárzása"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU "A digitális kimenetek és az erővisszacsatolás állapotának közzététele a 8000-es TCP porton. Kompatibilis a MAME \"-output network\" opciójával."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU "Fénypisztoly beállítások megjelenítése"
@@ -42552,28 +42552,28 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU "2. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU "3. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU "4. fénypisztoly célkeresztjének megjelenítése"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_HU "Az A1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HU "Az A1 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 1. hely)."
 #define OPTION_VAL_VMU_HU NULL
 #define OPTION_VAL_PURUPURU_HU NULL
 #define OPTION_VAL_NONE_HU "Nincs"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HU "Az A2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HU "Az A2 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_HU "A B1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_HU "A B1 bővítőhelybe csatlakoztatott eszköz (B csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_HU "A B2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_HU "A B2 bővítőhelybe csatlakoztatott eszköz (B csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_HU "A C1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_HU "A C1 bővítőhelybe csatlakoztatott eszköz (C csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_HU "A C2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_HU "A C2 bővítőhelybe csatlakoztatott eszköz (C csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_HU "A D1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_HU "A D1 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_HU "A D2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU "A D2 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 2. hely)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a legfeljebb 8 VMU mentés fájlt (A1/A2/B1/B2/C1/C2/D1/D2) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak legfeljebb 8 külön VMU fájlt (A1/A2/B1/B2/C1/C2/D1/D2) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
