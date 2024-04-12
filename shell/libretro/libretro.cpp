@@ -221,7 +221,6 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
-void UpdateInputState();
 static bool set_variable_visibility(void);
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -1170,7 +1169,7 @@ void retro_run()
 		emu.start();
 
 	poll_cb();
-	UpdateInputState();
+	os_UpdateInputState();
 	bool fastforward = false;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
 		settings.input.fastForwardMode = fastforward;
@@ -3357,7 +3356,7 @@ static void UpdateInputState(u32 port)
 	}
 }
 
-void UpdateInputState()
+void os_UpdateInputState()
 {
 	UpdateInputState(0);
 	UpdateInputState(1);
@@ -3710,5 +3709,3 @@ void gui_display_notification(const char *msg, int duration)
 	retromsg.frames = duration / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }
-
-void os_RunInstance(int argc, const char *argv[]) { }

@@ -99,26 +99,7 @@ void os_DoEvents()
 {
 }
 
-void os_CreateWindow()
-{
-}
-
-void UpdateInputState()
-{
-}
-
 void common_linux_setup();
-
-void os_SetupInput()
-{
-}
-void os_TermInput()
-{
-}
-
-void os_SetWindowText(char const *Text)
-{
-}
 
 #if defined(USE_BREAKPAD)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)

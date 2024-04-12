@@ -34,14 +34,12 @@ static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
-void UpdateInputState();
-
 bool mainui_rend_frame()
 {
 	FC_PROFILE_SCOPE;
 
 	os_DoEvents();
-	UpdateInputState();
+	os_UpdateInputState();
 
 	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
 	{

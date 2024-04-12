@@ -21,6 +21,8 @@
 #define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
 
+static void x11_window_set_text(const char *text);
+
 static Window x11_win;
 Display *x11_disp;
 
@@ -356,7 +358,7 @@ void x11_window_create()
 	}
 }
 
-void x11_window_set_text(const char* text)
+static void x11_window_set_text(const char* text)
 {
 	if (x11_win)
 	{

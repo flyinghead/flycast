@@ -24,6 +24,7 @@
 #include "imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <algorithm>
 #include <chrono>
@@ -78,6 +79,7 @@ public:
 	{
 		progress.reset();
 		future = std::async(std::launch::async, [this, path] {
+			ThreadName _("GameLoader");
 			emu.loadGame(path.c_str(), &progress);
 		});
 	}

@@ -17,7 +17,6 @@
 #ifndef LIBRETRO
 #include "nswitch.h"
 #include "stdclass.h"
-#include "sdl/sdl.h"
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
@@ -48,7 +47,6 @@ int main(int argc, char *argv[])
 
 	mainui_loop();
 
-	sdl_window_destroy();
 	flycast_term();
 
 	socketExit();
@@ -56,28 +54,8 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void os_SetupInput()
-{
-	input_sdl_init();
-}
-
-void os_TermInput()
-{
-	input_sdl_quit();
-}
-
-void UpdateInputState()
-{
-	input_sdl_handle();
-}
-
 void os_DoEvents()
 {
-}
-
-void os_CreateWindow()
-{
-	sdl_window_create();
 }
 
 #endif	//!LIBRETRO

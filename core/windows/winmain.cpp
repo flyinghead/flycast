@@ -28,8 +28,6 @@
 #include <nowide/convert.hpp>
 #include "cfg/option.h"
 #include "rend/gui.h"
-#else
-#include "rawinput.h"
 #endif
 #include "oslib/oslib.h"
 #include "stdclass.h"
@@ -50,26 +48,6 @@
 
 #include <windows.h>
 #include <windowsx.h>
-
-void os_SetupInput()
-{
-	input_sdl_init();
-
-#ifndef TARGET_UWP
-	if (config::UseRawInput)
-		rawinput::init();
-#endif
-}
-
-void os_TermInput()
-{
-	input_sdl_quit();
-
-#ifndef TARGET_UWP
-	if (config::UseRawInput)
-		rawinput::term();
-#endif
-}
 
 static void setupPath()
 {
@@ -108,23 +86,6 @@ static void setupPath()
 	SetEnvironmentVariable(L"HOMEPATH", localFolder->Path->Data());
 	SetEnvironmentVariable(L"HOMEDRIVE", nullptr);
 #endif
-}
-
-void UpdateInputState()
-{
-	FC_PROFILE_SCOPE;
-
-	input_sdl_handle();
-}
-
-void os_CreateWindow()
-{
-	sdl_window_create();
-}
-
-void os_SetWindowText(const char* text)
-{
-	sdl_window_set_text(text);
 }
 
 static void reserveBottomMemory()
@@ -432,8 +393,6 @@ int main(int argc, char* argv[])
 	os_InstallFaultHandler();
 
 	mainui_loop();
-
-	sdl_window_destroy();
 
 	flycast_term();
 	os_UninstallFaultHandler();

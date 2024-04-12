@@ -4,12 +4,12 @@
 #include <malloc.h>
 #endif
 
-void os_SetWindowText(const char* text);
-
 void os_DoEvents();
 void os_CreateWindow();
+void os_DestroyWindow();
 void os_SetupInput();
 void os_TermInput();
+void os_UpdateInputState();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
 void os_RunInstance(int argc, const char *argv[]);

@@ -162,7 +162,7 @@ static void linux_fix_personality()
 #endif
 }
 
-#if defined(__unix__) && !defined(LIBRETRO)
+#if defined(__unix__) && !defined(LIBRETRO) && !defined(__ANDROID__)
 static void sigintHandler(int)
 {
 	dc_exit();
@@ -175,7 +175,7 @@ void common_linux_setup()
 
 	enable_runfast();
 	os_InstallFaultHandler();
-#if defined(__unix__) && !defined(LIBRETRO)
+#if defined(__unix__) && !defined(LIBRETRO) && !defined(__ANDROID__)
 	// exit cleanly on ^C
 	signal(SIGINT, sigintHandler);
 #endif

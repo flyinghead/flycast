@@ -15,22 +15,7 @@ HWND getNativeHwnd()
 }
 #endif
 
-void os_SetupInput()
-{
-}
-void os_TermInput()
-{
-}
-
-void UpdateInputState()
-{
-}
-
 void os_DoEvents()
-{
-}
-
-void os_CreateWindow()
 {
 }
 

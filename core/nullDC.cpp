@@ -83,6 +83,7 @@ void SaveSettings()
 
 void flycast_term()
 {
+	os_DestroyWindow();
 	gui_cancel_load();
 	lua::term();
 	emu.term();

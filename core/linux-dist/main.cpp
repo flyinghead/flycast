@@ -24,49 +24,9 @@
 	#include "sdl/sdl.h"
 #endif
 
-#if defined(USE_EVDEV)
-	#include "evdev.h"
-#endif
-
 #ifdef USE_BREAKPAD
 #include "breakpad/client/linux/handler/exception_handler.h"
 #endif
-
-void os_SetupInput()
-{
-#if defined(USE_EVDEV)
-	input_evdev_init();
-#endif
-
-#if defined(SUPPORT_X11)
-	input_x11_init();
-#endif
-
-#if defined(USE_SDL)
-	input_sdl_init();
-#endif
-}
-
-void os_TermInput()
-{
-#if defined(USE_EVDEV)
-	input_evdev_close();
-#endif
-#if defined(USE_SDL)
-	input_sdl_quit();
-#endif
-}
-
-void UpdateInputState()
-{
-	#if defined(USE_EVDEV)
-		input_evdev_handle();
-	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_handle();
-	#endif
-}
 
 void os_DoEvents()
 {
@@ -76,31 +36,11 @@ void os_DoEvents()
 	#endif
 }
 
-void os_SetWindowText(const char * text)
-{
-	#if defined(SUPPORT_X11)
-		x11_window_set_text(text);
-	#endif
-	#if defined(USE_SDL)
-		sdl_window_set_text(text);
-	#endif
-}
-
-void os_CreateWindow()
-{
-	#if defined(SUPPORT_X11)
-		x11_window_create();
-	#endif
-	#if defined(USE_SDL)
-		sdl_window_create();
-	#endif
-}
-
 void common_linux_setup();
 
 // Find the user config directory.
 // $HOME/.config/flycast on linux
-std::string find_user_config_dir()
+static std::string find_user_config_dir()
 {
 	std::string xdg_home;
 	if (nowide::getenv("XDG_CONFIG_HOME") != nullptr)
@@ -129,7 +69,7 @@ std::string find_user_config_dir()
 
 // Find the user data directory.
 // $HOME/.local/share/flycast on linux
-std::string find_user_data_dir()
+static std::string find_user_data_dir()
 {
 	std::string xdg_home;
 	if (nowide::getenv("XDG_DATA_HOME") != nullptr)
@@ -181,7 +121,7 @@ static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::st
 //   /etc/flycast/
 //   /etc/xdg/flycast/
 // .
-std::vector<std::string> find_system_config_dirs()
+static std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
@@ -225,7 +165,7 @@ std::vector<std::string> find_system_config_dirs()
 // <$FLYCAST_BIOS_PATH>
 // ./
 // ./data
-std::vector<std::string> find_system_data_dirs()
+static std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
@@ -327,13 +267,6 @@ int main(int argc, char* argv[])
 #endif
 
 	mainui_loop();
-
-#if defined(SUPPORT_X11)
-	x11_window_destroy();
-#endif
-#if defined(USE_SDL)
-	sdl_window_destroy();
-#endif
 
 	flycast_term();
 	os_UninstallFaultHandler();

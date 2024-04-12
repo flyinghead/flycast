@@ -25,6 +25,20 @@
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#else
+	#if defined(SUPPORT_X11)
+		#include "linux-dist/x11.h"
+	#endif
+	#if defined(USE_EVDEV)
+		#include "linux-dist/evdev.h"
+	#endif
+#endif
+#if defined(_WIN32) && !defined(TARGET_UWP)
+#include "windows/rawinput.h"
+#endif
+#include "profiler/fc_profiler.h"
 
 namespace hostfs
 {
@@ -137,6 +151,70 @@ std::string getTextureDumpPath()
 	return get_writable_data_path("texdump/");
 }
 
+}
+
+void os_CreateWindow()
+{
+#if defined(USE_SDL)
+	sdl_window_create();
+#elif defined(SUPPORT_X11)
+	x11_window_create();
+#endif
+}
+
+void os_DestroyWindow()
+{
+#if defined(USE_SDL)
+	sdl_window_destroy();
+#elif defined(SUPPORT_X11)
+	x11_window_destroy();
+#endif
+}
+
+void os_SetupInput()
+{
+#if defined(USE_SDL)
+	input_sdl_init();
+#else
+	#if defined(SUPPORT_X11)
+		input_x11_init();
+	#endif
+	#if defined(USE_EVDEV)
+		input_evdev_init();
+	#endif
+#endif
+#if defined(_WIN32) && !defined(TARGET_UWP)
+	if (config::UseRawInput)
+		rawinput::init();
+#endif
+}
+
+void os_TermInput()
+{
+#if defined(USE_SDL)
+	input_sdl_quit();
+#else
+	#if defined(USE_EVDEV)
+		input_evdev_close();
+	#endif
+#endif
+#if defined(_WIN32) && !defined(TARGET_UWP)
+	if (config::UseRawInput)
+		rawinput::term();
+#endif
+}
+
+void os_UpdateInputState()
+{
+	FC_PROFILE_SCOPE;
+
+#if defined(USE_SDL)
+	input_sdl_handle();
+#else
+	#if defined(USE_EVDEV)
+		input_evdev_handle();
+	#endif
+#endif
 }
 
 #ifdef USE_BREAKPAD

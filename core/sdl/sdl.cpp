@@ -562,12 +562,6 @@ void input_sdl_handle()
 	}
 }
 
-void sdl_window_set_text(const char* text)
-{
-	if (window != nullptr)
-		SDL_SetWindowTitle(window, text);
-}
-
 static float hdpiScaling = 1.f;
 
 static inline void get_window_state()

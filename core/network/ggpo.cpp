@@ -23,9 +23,8 @@
 #include "input/keyboard_device.h"
 #include "input/mouse.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 #include <algorithm>
-
-void UpdateInputState();
 
 namespace ggpo
 {
@@ -35,7 +34,7 @@ bool inRollback;
 static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
-		UpdateInputState();
+		os_UpdateInputState();
 	std::lock_guard<std::mutex> lock(relPosMutex);
 	for (int player = 0; player < 4; player++)
 	{
@@ -706,7 +705,7 @@ bool nextFrame()
 	// may call save_game_state
 	do {
 		if (!config::ThreadedRendering)
-			UpdateInputState();
+			os_UpdateInputState();
 		Inputs inputs;
 		inputs.kcode = ~kcode[0];
 		if (rt[0] >= 0x4000)
