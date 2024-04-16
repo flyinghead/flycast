@@ -1412,8 +1412,6 @@ void deserialize(Deserializer& deser)
 	deser.skip<u32>(Deserializer::V44); // set_mode_offset (repeat)
 	deser >> ata_cmd;
 	deser >> cdda;
-	if (deser.version() < Deserializer::V10)
-		cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
 	deser >> gd_state;
 	deser >> gd_disk_type;
 	deser >> data_write_mode;
@@ -1426,8 +1424,6 @@ void deserialize(Deserializer& deser)
 	deser >> SecNumber;
 	deser >> GDStatus;
 	deser >> ByteCount;
-	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-		deser.skip<u32>(); 			// GDROM_TICK
 }
 
 }

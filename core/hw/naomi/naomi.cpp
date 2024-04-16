@@ -409,10 +409,7 @@ void naomi_Deserialize(Deserializer& deser)
 		deser.skip<u32>(); // reg_dimm_parameterh;
 		deser.skip<u32>(); // reg_dimm_status;
 	}
-	if (deser.version() < Deserializer::V11)
-		deser.skip<u8>();
-	else if (deser.version() >= Deserializer::V14)
-		deser >> aw_maple_devs;
+	deser >> aw_maple_devs;
 	if (deser.version() >= Deserializer::V20)
 	{
 		deser >> coin_chute_time;

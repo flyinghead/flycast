@@ -54,62 +54,8 @@ void dc_serialize(Serializer& ser)
 	DEBUG_LOG(SAVESTATE, "Saved %d bytes", (u32)ser.size());
 }
 
-static void dc_deserialize_libretro(Deserializer& deser)
-{
-	aica::deserialize(deser);
-
-	sb_deserialize(deser);
-
-	nvmem::deserialize(deser);
-
-	gdrom::deserialize(deser);
-
-	mcfg_DeserializeDevices(deser);
-
-	pvr::deserialize(deser);
-
-	sh4::deserialize(deser);
-
-	if (deser.version() >= Deserializer::V13_LIBRETRO)
-		deser.skip<bool>();		// settings.network.EmulateBBA
-	config::EmulateBBA.override(false);
-
-	ModemDeserialize(deser);
-
-	sh4::deserialize2(deser);
-
-	libGDR_deserialize(deser);
-
-	deser.skip<u32>();	// FLASH_SIZE
-	deser.skip<u32>();	// BBSRAM_SIZE
-	deser.skip<u32>();	// BIOS_SIZE
-	deser.skip<u32>();	// RAM_SIZE
-	deser.skip<u32>();	// ARAM_SIZE
-	deser.skip<u32>();	// VRAM_SIZE
-	deser.skip<u32>();	// RAM_MASK
-	deser.skip<u32>();	// ARAM_MASK
-	deser.skip<u32>();	// VRAM_MASK
-
-	naomi_Deserialize(deser);
-
-	deser >> config::Broadcast.get();
-	deser >> config::Cable.get();
-	deser >> config::Region.get();
-
-	naomi_cart_deserialize(deser);
-	gd_hle_state.Deserialize(deser);
-
-	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", (u32)deser.size());
-}
-
 void dc_deserialize(Deserializer& deser)
 {
-	if (deser.version() >= Deserializer::V9_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
-		dc_deserialize_libretro(deser);
-		sh4_sched_ffts();
-		return;
-	}
 	DEBUG_LOG(SAVESTATE, "Loading state version %d", deser.version());
 
 	aica::deserialize(deser);
@@ -126,10 +72,7 @@ void dc_deserialize(Deserializer& deser)
 
 	sh4::deserialize(deser);
 
-	if (deser.version() >= Deserializer::V13)
-		deser >> config::EmulateBBA.get();
-	else
-		config::EmulateBBA.override(false);
+	deser >> config::EmulateBBA.get();
 	if (config::EmulateBBA)
 		bba_Deserialize(deser);
 	ModemDeserialize(deser);

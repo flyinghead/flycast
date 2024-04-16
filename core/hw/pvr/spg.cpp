@@ -315,19 +315,11 @@ void spg_Deserialize(Deserializer& deser)
 	if (deser.version() < Deserializer::V30)
 		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
-	if (deser.version() >= Deserializer::V12)
-	{
-		deser >> maple_int_pending;
-		if (deser.version() >= Deserializer::V14)
-		{
-			deser >> pvr_numscanlines;
-			deser >> prv_cur_scanline;
-			deser >> Line_Cycles;
-			deser >> Frame_Cycles;
-			deser >> lightgun_line;
-			deser >> lightgun_hpos;
-		}
-	}
-	if (deser.version() < Deserializer::V14)
-		CalculateSync();
+	deser >> maple_int_pending;
+	deser >> pvr_numscanlines;
+	deser >> prv_cur_scanline;
+	deser >> Line_Cycles;
+	deser >> Frame_Cycles;
+	deser >> lightgun_line;
+	deser >> lightgun_hpos;
 }

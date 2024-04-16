@@ -536,11 +536,7 @@ void rend_serialize(Serializer& ser)
 }
 void rend_deserialize(Deserializer& deser)
 {
-	if ((deser.version() >= Deserializer::V12_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
-			|| deser.version() >= Deserializer::V12)
-		deser >> fb_w_cur;
-	else
-		fb_w_cur = 1;
+	deser >> fb_w_cur;
 	if (deser.version() >= Deserializer::V20)
 	{
 		deser >> render_called;

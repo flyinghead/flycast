@@ -104,8 +104,7 @@ void deserialize(Deserializer& deser)
 		deser >> taRenderPass;
 	else
 		taRenderPass = 0;
-	if (deser.version() >= Deserializer::V11 || (deser.version() >= Deserializer::V10_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		DeserializeTAContext(deser);
+	DeserializeTAContext(deser);
 
 	if (!deser.rollback())
 		vram.deserialize(deser);

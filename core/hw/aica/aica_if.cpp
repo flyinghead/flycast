@@ -581,8 +581,7 @@ void deserialize(Deserializer& deser)
 	deser >> VREG;
 	deser >> ARMRST;
 	deser >> rtc_EN;
-	if (deser.version() >= Deserializer::V9)
-		deser >> RealTimeClock;
+	deser >> RealTimeClock;
 
 	deser >> aica_reg;
 

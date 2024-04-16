@@ -777,7 +777,7 @@ void naomi_cart_serialize(Serializer& ser)
 
 void naomi_cart_deserialize(Deserializer& deser)
 {
-	if (CurrentCartridge != nullptr && (!settings.platform.isAtomiswave() || deser.version() >= Deserializer::V10_LIBRETRO))
+	if (CurrentCartridge != nullptr)
 		CurrentCartridge->Deserialize(deser);
 	touchscreen::deserialize(deser);
 	printer::deserialize(deser);

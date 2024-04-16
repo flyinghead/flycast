@@ -26,22 +26,7 @@ class SerializeBase
 {
 public:
 	enum Version : int32_t {
-		V9_LIBRETRO = 8,
-		V10_LIBRETRO,
-		V11_LIBRETRO,
-		V12_LIBRETRO,
-		V13_LIBRETRO,
-		VLAST_LIBRETRO = V13_LIBRETRO,
-
-		V8 = 803,
-		V9,
-		V10,
-		V11,
-		V12,
-		V13,
-		V14,
-		V15,
-		V16,
+		V16 = 811,
 		V17,
 		V18,
 		V19,
@@ -111,7 +96,7 @@ public:
 			this->limit -= 16;
 		}
 		deserialize(_version);
-		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
+		if (_version < V16)
 			throw Exception("Unsupported version");
 		if (_version > Current)
 			throw Exception("Version too recent");
@@ -120,10 +105,9 @@ public:
 		{
 			u32 ramSize;
 			deserialize(ramSize);
-			if (ramSize != settings.platform.ram_size) {
+			if (ramSize != settings.platform.ram_size)
 				throw Exception("Selected RAM Size doesn't match Save State");
 		}
-	}
 	}
 
 	template<typename T>

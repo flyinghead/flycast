@@ -591,8 +591,6 @@ void mmu_deserialize(Deserializer& deser)
 	deser >> UTLB;
 	deser >> ITLB;
 
-	if (deser.version() >= Deserializer::V11
-			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		deser >> sq_remap;
+	deser >> sq_remap;
 	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
 }

@@ -142,8 +142,7 @@ struct maple_device
 		ser << player_num;
 	}
 	virtual void deserialize(Deserializer& deser) {
-		if (deser.version() >= Deserializer::V14)
-			deser >> player_num;
+		deser >> player_num;
 	}
 
 	virtual MapleDeviceType get_device_type() = 0;

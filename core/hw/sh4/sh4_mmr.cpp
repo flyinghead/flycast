@@ -692,59 +692,24 @@ void serialize(Serializer& ser)
 	sh4_sched_serialize(ser);
 }
 
-template<typename T>
-static void register_deserialize_libretro(T& regs, Deserializer& deser)
-{
-	for (auto& reg : regs)
-	{
-		deser.skip<u32>(); // regs.data[i].flags
-		deser >> reg;
-	}
-}
-
 void deserialize(Deserializer& deser)
 {
 	deser >> OnChipRAM;
 
-	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
-		register_deserialize_libretro(CCN, deser);
-		register_deserialize_libretro(UBC, deser);
-		register_deserialize_libretro(BSC, deser);
-		register_deserialize_libretro(DMAC, deser);
-		register_deserialize_libretro(CPG, deser);
-		register_deserialize_libretro(RTC, deser);
-		register_deserialize_libretro(INTC, deser);
-		register_deserialize_libretro(TMU, deser);
-		register_deserialize_libretro(SCI, deser);
-		register_deserialize_libretro(SCIF, deser);
-	}
-	else
-	{
-		deser >> CCN;
-		deser >> UBC;
-		deser >> BSC;
-		deser >> DMAC;
-		deser >> CPG;
-		deser >> RTC;
-		deser >> INTC;
-		deser >> TMU;
-		deser >> SCI;
-		deser >> SCIF;
-	}
+	deser >> CCN;
+	deser >> UBC;
+	deser >> BSC;
+	deser >> DMAC;
+	deser >> CPG;
+	deser >> RTC;
+	deser >> INTC;
+	deser >> TMU;
+	deser >> SCI;
+	deser >> SCIF;
+
 	SCIFSerialPort::Instance().deserialize(deser);
-	if (deser.version() >= Deserializer::V9
-			// Note (lr): was added in V11 fa49de29 24/12/2020 but ver not updated until V12 (13/4/2021)
-			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		icache.Deserialize(deser);
-	else
-		icache.Reset(true);
-	if (deser.version() >= Deserializer::V10
-			// Note (lr): was added in V11 2eb66879 27/12/2020 but ver not updated until V12 (13/4/2021)
-			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		ocache.Deserialize(deser);
-	else
-		ocache.Reset(true);
+	icache.Deserialize(deser);
+	ocache.Deserialize(deser);
 
 	if (!deser.rollback())
 		mem_b.deserialize(deser);
@@ -778,11 +743,7 @@ void deserialize2(Deserializer& deser)
 	if (deser.version() <= Deserializer::V32)
 	{
 		deser >> SCIF_SCFSR2;
-		if (deser.version() >= Deserializer::V11
-				|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-			deser >> SCIF_SCSCR2;
-		else 
-			SCIF_SCSCR2.full = 0;
+		deser >> SCIF_SCSCR2;
 		deser >> BSC_PDTRA;
 	}
 
