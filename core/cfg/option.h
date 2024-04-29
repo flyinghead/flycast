@@ -547,4 +547,11 @@ constexpr bool UseRawInput = false;
 extern Option<std::string, false> LuaFileName;
 #endif
 
+// RetroAchievements
+
+extern Option<bool> EnableAchievements;
+extern Option<bool> AchievementsHardcoreMode;
+extern OptionString AchievementsUserName;
+extern OptionString AchievementsToken;
+
 } // namespace config

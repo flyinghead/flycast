@@ -60,7 +60,8 @@ public:
 		V47,
 		V48,
 		V49,
-		Current = V49,
+		V50,
+		Current = V50,
 
 		Next = Current + 1,
 	};

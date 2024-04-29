@@ -469,6 +469,7 @@ void os_RunInstance(int argc, const char *argv[])
 
 void os_SetThreadName(const char *name)
 {
+#ifndef TARGET_UWP
 	nowide::wstackstring wname;
 	if (wname.convert(name))
 	{
@@ -483,6 +484,7 @@ void os_SetThreadName(const char *name)
 		if (SetThreadDescription != nullptr)
 			SetThreadDescription(GetCurrentThread(), wname.get());
 	}
+#endif
 }
 
 #ifdef VIDEO_ROUTING

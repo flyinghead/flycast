@@ -35,3 +35,6 @@
 [submodule "core/deps/libadrenotools"]
 	path = core/deps/libadrenotools
 	url = https://github.com/bylaws/libadrenotools
+[submodule "core/deps/rcheevos"]
+	path = core/deps/rcheevos
+	url = https://github.com/RetroAchievements/rcheevos.git

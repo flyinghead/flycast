@@ -197,4 +197,11 @@ Option<bool, false> UseRawInput("RawInput", false, "input");
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
 #endif
 
+// RetroAchievements
+
+Option<bool> EnableAchievements("Enabled", false, "achievements");
+Option<bool> AchievementsHardcoreMode("HardcoreMode", false, "achievements");
+OptionString AchievementsUserName("UserName", "", "achievements");
+OptionString AchievementsToken("Token", "", "achievements");
+
 } // namespace config

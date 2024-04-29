@@ -16,6 +16,7 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "imgread/common.h"
+#include "achievements/achievements.h"
 
 void dc_serialize(Serializer& ser)
 {
@@ -50,6 +51,7 @@ void dc_serialize(Serializer& ser)
 
 	naomi_cart_serialize(ser);
 	gd_hle_state.Serialize(ser);
+	achievements::serialize(ser);
 
 	DEBUG_LOG(SAVESTATE, "Saved %d bytes", (u32)ser.size());
 }
@@ -92,6 +94,7 @@ void dc_deserialize(Deserializer& deser)
 
 	naomi_cart_deserialize(deser);
 	gd_hle_state.Deserialize(deser);
+	achievements::deserialize(deser);
 	sh4_sched_ffts();
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes", (u32)deser.size());

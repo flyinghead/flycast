@@ -45,6 +45,7 @@
 #include "profiler/fc_profiler.h"
 #include "hw/naomi/card_reader.h"
 #include "oslib/resources.h"
+#include "achievements/achievements.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -1739,7 +1740,35 @@ static void gui_display_settings()
 #if USE_DISCORD
 			OptionCheckbox("Discord Presence", config::DiscordPresence, "Show which game you are playing on Discord");
 #endif
-
+			OptionCheckbox("Enable RetroAchievements", config::EnableAchievements, "Track your game achievements using RetroAchievements.org");
+			{
+				DisabledScope _(!config::EnableAchievements);
+				ImGui::Indent();
+				char username[256];
+				strcpy(username, config::AchievementsUserName.get().c_str());
+				ImGui::InputText("Username", username, sizeof(username), ImGuiInputTextFlags_None, nullptr, nullptr);
+				config::AchievementsUserName = username;
+				if (config::EnableAchievements)
+				{
+					achievements::init();
+					if (achievements::isLoggedOn())
+						ImGui::Text("Authentication successful");
+					else
+					{
+						static char password[256];
+						ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password, nullptr, nullptr);
+						if (ImGui::Button("Login", ScaledVec2(100, 0)))
+						{
+							try {
+								achievements::login(config::AchievementsUserName.get().c_str(), password);
+							} catch (const FlycastException& e) {
+								gui_error(e.what());
+							}
+						}
+					}
+				}
+				ImGui::Unindent();
+			}
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}

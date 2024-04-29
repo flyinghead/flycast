@@ -46,6 +46,38 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	return [httpResponse statusCode];
 }
 
+int post(const std::string& url, const char *payload, std::vector<u8>& reply)
+{
+	NSString *nsurl = [NSString stringWithCString:url.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
+	[request setHTTPMethod:@"POST"];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setHTTPShouldHandleCookies:NO];
+	
+	size_t payloadSize = strlen(payload);
+	[request setHTTPBody:[NSData dataWithBytes:payload length:payloadSize]];
+	NSString *postLength = [NSString stringWithFormat:@"%ld", (unsigned long)payloadSize];
+    [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+    NSString *contentType = @"application/x-www-form-urlencoded";
+    [request setValue:contentType forHTTPHeaderField:@"Content-Type"];
+    
+	NSURLResponse *response = nil;
+	NSError *error = nil;
+	NSData *data = [NSURLConnection sendSynchronousRequest:request
+                          returningResponse:&response
+                                      error:&error];
+	if (error != nil)
+		return 500;
+
+	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response; 
+		
+	reply.clear();
+	reply.insert(reply.begin(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);
+
+	return [httpResponse statusCode];
+}
+
 int post(const std::string& url, const std::vector<PostField>& fields)
 {
 	NSString *nsurl = [NSString stringWithCString:url.c_str() 

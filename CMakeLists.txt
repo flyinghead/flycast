@@ -1167,6 +1167,44 @@ target_sources(${PROJECT_NAME} PRIVATE
 cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
 
 target_sources(${PROJECT_NAME} PRIVATE
+			core/achievements/achievements.cpp
+			core/achievements/achievements.h)
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/deps/rcheevos/src/rc_client_raintegration.c
+			core/deps/rcheevos/src/rc_client.c
+			core/deps/rcheevos/src/rc_compat.c
+			core/deps/rcheevos/src/rc_util.c
+			core/deps/rcheevos/src/rc_version.c
+			core/deps/rcheevos/src/rapi/rc_api_common.c
+			core/deps/rcheevos/src/rapi/rc_api_editor.c
+			core/deps/rcheevos/src/rapi/rc_api_info.c
+			core/deps/rcheevos/src/rapi/rc_api_runtime.c
+			core/deps/rcheevos/src/rapi/rc_api_user.c
+			core/deps/rcheevos/src/rcheevos/alloc.c
+			core/deps/rcheevos/src/rcheevos/condition.c
+			core/deps/rcheevos/src/rcheevos/condset.c
+			core/deps/rcheevos/src/rcheevos/consoleinfo.c
+			core/deps/rcheevos/src/rcheevos/format.c
+			core/deps/rcheevos/src/rcheevos/lboard.c
+			core/deps/rcheevos/src/rcheevos/memref.c
+			core/deps/rcheevos/src/rcheevos/operand.c
+			core/deps/rcheevos/src/rcheevos/rc_validate.c
+			core/deps/rcheevos/src/rcheevos/richpresence.c
+			core/deps/rcheevos/src/rcheevos/runtime_progress.c
+			core/deps/rcheevos/src/rcheevos/runtime.c
+			core/deps/rcheevos/src/rcheevos/trigger.c
+			core/deps/rcheevos/src/rcheevos/value.c
+			core/deps/rcheevos/src/rhash/aes.c
+			core/deps/rcheevos/src/rhash/cdreader.c
+			core/deps/rcheevos/src/rhash/hash.c
+			core/deps/rcheevos/src/rhash/md5.c
+			core/deps/rcheevos/src/rurl/url.c)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/rcheevos/include)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_RACHIEVEMENTS RC_DISABLE_LUA)
+endif()
+
+target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h
 		core/wsi/libretro.cpp
 		core/wsi/libretro.h
