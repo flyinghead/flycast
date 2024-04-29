@@ -17,7 +17,7 @@
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #import <Foundation/Foundation.h>
-#include "rend/boxart/http_client.h"
+#include "oslib/http_client.h"
 
 namespace http {
 

@@ -219,7 +219,7 @@ void os_UpdateInputState()
 
 #ifdef USE_BREAKPAD
 
-#include "rend/boxart/http_client.h"
+#include "http_client.h"
 #include "version.h"
 #include "log/InMemoryListener.h"
 #include "wsi/context.h"

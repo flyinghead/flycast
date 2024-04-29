@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gamesdb.h"
-#include "http_client.h"
+#include "oslib/http_client.h"
 #include "stdclass.h"
 #include "emulator.h"
 

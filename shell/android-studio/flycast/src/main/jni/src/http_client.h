@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/boxart/http_client.h"
+#include "oslib/http_client.h"
 #include "jni_util.h"
 
 namespace http {

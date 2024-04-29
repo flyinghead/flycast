@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "scraper.h"
-#include "http_client.h"
+#include "oslib/http_client.h"
 #include "stdclass.h"
 #include "emulator.h"
 #include "imgread/common.h"
@@ -148,7 +148,7 @@ void OfflineScraper::scrape(GameBoxart& item)
 							FILE *f = nowide::fopen((const char *)context, "wb");
 							if (f == nullptr)
 							{
-								WARN_LOG(COMMON, "can't create local file %s: error %d", context, errno);
+								WARN_LOG(COMMON, "can't create local file %s: error %d", (const char *)context, errno);
 							}
 							else
 							{

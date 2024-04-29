@@ -1129,6 +1129,8 @@ if(NOT LIBRETRO)
 			core/audio/audiobackend_pulseaudio.cpp
 			core/audio/audiobackend_sdl2.cpp
 			core/audio/audiostream.cpp
+			core/oslib/http_client.cpp
+			core/oslib/http_client.h
 			core/oslib/oslib.cpp)
 endif()
 
@@ -1302,8 +1304,6 @@ if(NOT LIBRETRO)
 			core/rend/boxart/boxart.h
 			core/rend/boxart/gamesdb.cpp
 			core/rend/boxart/gamesdb.h
-			core/rend/boxart/http_client.cpp
-			core/rend/boxart/http_client.h
 			core/rend/boxart/scraper.cpp
 			core/rend/boxart/scraper.h)
 endif()

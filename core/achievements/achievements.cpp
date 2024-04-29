@@ -20,7 +20,7 @@
 #include "achievements.h"
 #include "serialize.h"
 #ifdef USE_RACHIEVEMENTS
-#include "rend/boxart/http_client.h"	// TODO move to oslib?
+#include "oslib/http_client.h"
 #include "hw/sh4/sh4_mem.h"
 #include "rend/gui.h"
 #include "imgread/common.h"
