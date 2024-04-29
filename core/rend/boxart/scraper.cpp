@@ -144,7 +144,19 @@ void OfflineScraper::scrape(GameBoxart& item)
 					{
 						stbi_flip_vertically_on_write(0);
 						item.setBoxartPath(makeUniqueFilename("gdtex.png"));
-						stbi_write_png(item.boxartPath.c_str(), w, h, 4, out.data(), 0);
+						const auto& savefunc = [](void *context, void *data, int size) {
+							FILE *f = nowide::fopen((const char *)context, "wb");
+							if (f == nullptr)
+							{
+								WARN_LOG(COMMON, "can't create local file %s: error %d", context, errno);
+							}
+							else
+							{
+								fwrite(data, 1, size, f);
+								fclose(f);
+							}
+						};
+						stbi_write_png_to_func(savefunc, (void *)item.boxartPath.c_str(), w, h, 4, out.data(), 0);
 					}
 				}
 			}

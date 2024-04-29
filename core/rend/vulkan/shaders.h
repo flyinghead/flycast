@@ -20,7 +20,7 @@
 */
 #pragma once
 #include "vulkan.h"
-#include "SPIRV/GlslangToSpv.h"
+#include <glslang/SPIRV/GlslangToSpv.h>
 
 #include <glm/glm.hpp>
 #include <map>

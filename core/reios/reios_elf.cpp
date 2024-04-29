@@ -36,6 +36,11 @@ bool reios_loadElf(const std::string& elf) {
 	bool phys = false;
 	for (size_t i = 0; i < elf_getNumProgramHeaders(&elfFile); i++)
 	{
+		uint32_t type = elf_getProgramHeaderType(&elfFile, i);
+		if (type != PT_LOAD) {
+			DEBUG_LOG(REIOS, "Ignoring section %d type %d", (int)i, type);
+			continue;
+		}
 		// Load that section
 		uint64_t dest;
 		if (phys)

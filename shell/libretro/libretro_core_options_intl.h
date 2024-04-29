@@ -40544,7 +40544,7 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HR NULL
 #define OPTION_VAL_VMU_HR NULL
 #define OPTION_VAL_PURUPURU_HR NULL
-#define OPTION_VAL_NONE_HR NULL
+#define OPTION_VAL_NONE_HR "Ništa"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_HR NULL
@@ -42319,8 +42319,8 @@ struct retro_core_options_v2 options_hr = {
 #define CATEGORY_HACKS_INFO_0_HU "A szélesvásznú módosítások, GD-ROM betöltés sebessége, és a textúracserék beállításai."
 #define CATEGORY_INPUT_LABEL_HU "Bemenet"
 #define CATEGORY_INPUT_INFO_0_HU "A kontroller és fénypisztoly beállításai."
-#define CATEGORY_EXPANSIONS_LABEL_HU NULL
-#define CATEGORY_EXPANSIONS_INFO_0_HU NULL
+#define CATEGORY_EXPANSIONS_LABEL_HU "Kontroller bővítőhelyek"
+#define CATEGORY_EXPANSIONS_INFO_0_HU "Az egyes kontroller bővítőhelyekbe csatlakoztatott eszköz (VMU, rezgő eszköz)."
 #define CATEGORY_VMU_LABEL_HU NULL
 #define CATEGORY_VMU_INFO_0_HU "A játékonkénti VMU mentések és a képernyőn látható VMU beállításai."
 #define CORE_OPTION_NAME_REGION_LABEL_HU "Régió"
@@ -42342,8 +42342,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_HU "Belépés a Dreamcast BIOS menüjébe rögtön Indításkor."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_HU "DSP engedélyezése"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_HU "A Dreamcast DSP (digitális jelfeldolgozó) emulálásának engedélyezése. Javítja a generált hang pontosságát, de megnöveli a teljesítményigényt."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_HU "Játéktermi szervizgombok engedélyezése"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_HU "A játéktermi SERVICE gomb engedélyezése, a játékgép beállításaihoz."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
@@ -42352,8 +42352,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
-#define OPTION_VAL_320X240_HU NULL
-#define OPTION_VAL_640X480_HU NULL
+#define OPTION_VAL_320X240_HU "320x240 (Felezett)"
+#define OPTION_VAL_640X480_HU "640x480 (Eredeti)"
 #define OPTION_VAL_800X600_HU NULL
 #define OPTION_VAL_960X720_HU NULL
 #define OPTION_VAL_1024X768_HU NULL
@@ -42393,7 +42393,7 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_HORIZONTAL_HU "Vízszintes"
 #define OPTION_VAL_VERTICAL_HU "Függőleges"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_HU "Alfa rendezés"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_HU "Az átlátszó poligonok rendezése."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_HU "Per-strip (gyors, legkevésbé pontos)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_HU "Per-triangle (normál)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_HU "Per-pixel (pontos, de a leglassabb)"
@@ -42410,7 +42410,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_HU "RTT (Render to texture) puffer engedélyezése"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_HU "Az előállított textúrák visszamásolása a GPU-ból a VRAM-ba. Ez a lehetőség rendszerint be van kapcsolva azoknál a játékoknál, amelyek igénylik. Bekapcsolt állapotban a textúra előállítás felméretezése kikapcsol, és hatással lehet a teljesítményre."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_HU NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_HU NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_HU "Bekapcsolva a textúrák saját maguk kisebb változatát használják, amikor távolabb tűnnek fel. Javítja a teljesítményt és csökkenti a remegést."
 #define CORE_OPTION_NAME_FOG_LABEL_HU "Köd effekt"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_HU "Térfogatmódosító"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_HU "A Dreamcast GPU-jának egy szolgáltatása, amit a játékok rendszerint tárgyak árnyékának megrajzolásához használnak. Normál esetben legyen bekapcsolva, hatása a teljesítményre rendszerint minimális vagy elhanyagolható."
@@ -42432,11 +42432,11 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_4_HU NULL
 #define OPTION_VAL_6_HU NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_HU "Textúra felméretezés maximális szűrt mérete"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_HU "A textúra legnagyobb mérete felméretezéshez. Ha a textúra mérete nagyobb, mint az itt kiválasztott, nem lesz felméretezve."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_HU "Natív mélységi interpoláció"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_HU "Segíthet a textúrahibákon és mélységi problémákon AMD GPU-k, vagy néhány esetben Intel GPU-k használatakor is."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_HU NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_HU "Felméretezés széleinek javítása"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_HU "Segít a textúrák túlcsordulásán felméretezéskor. Kikapcsolva segíthet a 2D játékok (MVC2, CVS, KOF stb.) felméretezésekor jelentkező pixeltorzuláson."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_HU "Többszálas képelőállítás"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_HU "A CPU és GPU külön szálon futnak. Erősen ajánlott."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_HU "Automatikus képkocka kihagyás"
@@ -42497,11 +42497,11 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_490_HU NULL
 #define OPTION_VAL_500_HU NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU "Egyedi textúrák betöltése"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_HU "Egyedi textúrák betöltése a 'system/dc/textures/<game-id>/' mappából."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU "A textúrák lementése .png fájlként a 'system/dc/texdump/<game-id>/' mappába, amint a játék új textúrát használ."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_HU "Az analóg kart ilyen mértékben kell elmozdítani ahhoz, hogy hatása legyen."
 #define OPTION_VAL_0_HU NULL
 #define OPTION_VAL_5_HU NULL
 #define OPTION_VAL_10_HU NULL
@@ -42510,9 +42510,9 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_25_HU NULL
 #define OPTION_VAL_30_HU NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_HU "Ravasz holtsávja"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_HU NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_HU "A ravaszt ilyen mértékben kell elmozdítani ahhoz, hogy hatása legyen."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_HU "Digitális ravasz"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_HU "Bekapcsolva a ravaszok normális gombokként működnek, teljesen vagy egyáltalán nem lenyomott állapotot visszaadva, köztes érték nélkül."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_HU "Digitális kimenetek sugárzása"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_HU "A digitális kimenetek és az erővisszacsatolás állapotának közzététele a 8000-es TCP porton. Kompatibilis a MAME \"-output network\" opciójával."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_HU "Fénypisztoly beállítások megjelenítése"
@@ -42552,28 +42552,28 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_HU "2. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_HU "3. fénypisztoly célkeresztjének megjelenítése"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_HU "4. fénypisztoly célkeresztjének megjelenítése"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_HU "Az A1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HU "Az A1 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 1. hely)."
 #define OPTION_VAL_VMU_HU NULL
 #define OPTION_VAL_PURUPURU_HU NULL
 #define OPTION_VAL_NONE_HU "Nincs"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_HU NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HU "Az A2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HU "Az A2 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_HU "A B1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_HU "A B1 bővítőhelybe csatlakoztatott eszköz (B csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_HU "A B2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_HU "A B2 bővítőhelybe csatlakoztatott eszköz (B csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_HU "A C1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_HU "A C1 bővítőhelybe csatlakoztatott eszköz (C csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_HU "A C2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_HU "A C2 bővítőhelybe csatlakoztatott eszköz (C csatlakozó, 2. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_HU "A D1 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_HU "A D1 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 1. hely)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_HU "A D2 bővítőhelyen található eszköz"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU "A D2 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 2. hely)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a legfeljebb 8 VMU mentés fájlt (A1/A2/B1/B2/C1/C2/D1/D2) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak legfeljebb 8 külön VMU fájlt (A1/A2/B1/B2/C1/C2/D1/D2) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
@@ -50367,8 +50367,8 @@ struct retro_core_options_v2 options_ja = {
 #define CATEGORY_HACKS_INFO_0_KO "와이드스크린 핵, GD롬 로딩 속도 조절 및 텍스쳐 변경 설정등을 구성합니다."
 #define CATEGORY_INPUT_LABEL_KO "입력"
 #define CATEGORY_INPUT_INFO_0_KO "게임패드 및 라이트 건 설정을 구성합니다."
-#define CATEGORY_EXPANSIONS_LABEL_KO NULL
-#define CATEGORY_EXPANSIONS_INFO_0_KO NULL
+#define CATEGORY_EXPANSIONS_LABEL_KO "컨트롤러 확장 슬롯"
+#define CATEGORY_EXPANSIONS_INFO_0_KO "컨트롤러의 각 확장 슬롯에 연결할 장치(VMU, 진동 장치)를 선택합니다."
 #define CATEGORY_VMU_LABEL_KO "비쥬얼 메모리 유닛"
 #define CATEGORY_VMU_INFO_0_KO "게임 별 VMU 저장 파일 및 VMU OSD 설정을 구성합니다."
 #define CORE_OPTION_NAME_REGION_LABEL_KO "지역"
@@ -50390,8 +50390,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_KO "드림캐스트 BIOS 메뉴로 부팅합니다."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_KO "HDR 활성화"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_KO "Dreamcast의 오디오 DSP(디지털 신호 프로세서)의 에뮬레이션을 활성화합니다. 사운드의 정확도는 향상되지만 성능 요구 사항이 증가합니다."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_KO "아케이드 서비스 버튼 허용"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_KO "아케이드 게임에서 캐비넷 설정에 들어가기 위한 서비스 버튼을 활성화합니다."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_KO "NAOMI 게임을 무료 플레이로 설정"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_KO "무료 플레이를 위해 게임의 코인 설정을 수정합니다."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_KO "브로드밴드 어댑터 에뮬레이션"
@@ -50400,8 +50400,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
-#define OPTION_VAL_320X240_KO NULL
-#define OPTION_VAL_640X480_KO NULL
+#define OPTION_VAL_320X240_KO "320x240 (절반)"
+#define OPTION_VAL_640X480_KO "640x480 (네이티브)"
 #define OPTION_VAL_800X600_KO NULL
 #define OPTION_VAL_960X720_KO NULL
 #define OPTION_VAL_1024X768_KO NULL
@@ -50441,7 +50441,7 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_HORIZONTAL_KO "가로"
 #define OPTION_VAL_VERTICAL_KO "세로"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_KO "알파 정렬"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_KO "투명 폴리곤을 정렬할 방식을 선택합니다."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_KO "줄당 (빠름, 가장 부정확)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_KO "삼각형당 (중간)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_KO "픽셀당 (정확, 가장 느림)"
@@ -50458,7 +50458,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_KO "RTT (Render To Texture) 버퍼 사용"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_KO "렌더된 텍스쳐를 GPU에서 VRAM으로 복사합니다. 이 옵션은 이 옵션을 필요로 하는 게임에서는 기본적으로 활성화됩니다. 활성화할 경우, 텍스쳐 업스케일링이 비활성화되며 성능에 큰 영향을 끼칠 수 있습니다."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_KO "밉맵"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_KO NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_KO "활성화할 경우 멀리 떨어진 곳에 텍스처를 그릴 때 작은 버전의 텍스처를 사용하여 성능을 개선하고 번쩍이는 효과를 억제합니다."
 #define CORE_OPTION_NAME_FOG_LABEL_KO "안개 효과"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_KO "볼륨 모디파이어"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_KO "드림캐스트 GPU의 기능으로 보통 개체의 그림자를 그리는 데 사용됩니다. 이 기능은 보통 활성화해두어야 하며 성능에 미치는 영향은 아주 적습니다."
@@ -50480,11 +50480,11 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_4_KO NULL
 #define OPTION_VAL_6_KO NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_KO "텍스쳐 업스케일링 필터 최대 크기"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_KO "텍스처를 업스케일할 최대 크기를 선택합니다. 텍스처의 크기가 설정한 크기보다 클 경우에는 텍스처를 업스케일하지 않습니다."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_KO "네이티브 깊이 보간"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_KO "AMD GPU에서 깊이 문제와 텍스쳐 망가짐 증상을 개선하는 데 도움이 됩니다. 일부 상황에서는 인텔 GPU에서도 도움이 될 수 있습니다."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_KO NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_KO "업스케일 시 테두리 블리딩 억제"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_KO "업스케일 시 텍스처 블리딩 문제를 완화합니다. 비활성화할 경우 일부 2D 게임(MVC2, CVS, KOF 등)에서 픽셀이 뒤틀리는 현상이 해결될 수 있습니다."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_KO "스레드 렌더링"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_KO "GPU와 CPU를 별도의 스레드에서 실행합니다. 사용하는 것이 매우 권장됩니다."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_KO "자동 프레임 건너뛰기"
@@ -50545,11 +50545,11 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_490_KO NULL
 #define OPTION_VAL_500_KO NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_KO "사용자 텍스처 불러오기"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_KO NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_KO "'system/dc/textures/<game-id>/' 폴더에서 커스텀 텍스처를 불러옵니다."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_KO "텍스쳐 덤프하기"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_KO "게임이 새로운 텍스처를 사용할 때마다, 'system/dc/texdump/<game-id>/' 폴더 안에 .png 파일로 저장되게 합니다."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_KO "아날로그 스틱 데드존"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_KO "아날로그 스틱을 얼마나 기울여야 입력으로 인식할지를 선택합니다."
 #define OPTION_VAL_0_KO NULL
 #define OPTION_VAL_5_KO NULL
 #define OPTION_VAL_10_KO NULL
@@ -50558,9 +50558,9 @@ struct retro_core_options_v2 options_ja = {
 #define OPTION_VAL_25_KO NULL
 #define OPTION_VAL_30_KO NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_KO "트리거 데드존"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_KO NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_KO "트리거를 얼마나 눌러야 입력으로 인식할지를 선택합니다."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_KO "디지털 트리거"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_KO "활성화할 경우 트리거가 평범한 버튼으로 취급되며, 중간 상태 없이 완전히 눌리거나 눌리지 않은 상태로만 처리됩니다."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_KO "디지털 출력 송출하기"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_KO "디지털 출력과 포스 피드백 상태를 TCP 포트 8000번으로 송출합니다. MAME의 \"-output network\" 옵션과 호환됩니다."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_KO "라이트 건 설정 표시"
@@ -50600,28 +50600,28 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_KO "라이트건 조준선 2 표시"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_KO "라이트건 조준선 3 표시"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_KO "라이트건 조준선 4 표시"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_KO "확장 슬롯 A1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_KO "확장 슬롯 A1(포트 A 슬롯 1)에 연결할 장치를 선택합니다."
 #define OPTION_VAL_VMU_KO NULL
-#define OPTION_VAL_PURUPURU_KO NULL
+#define OPTION_VAL_PURUPURU_KO "진동 팩"
 #define OPTION_VAL_NONE_KO "없음"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_KO NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_KO "확장 슬롯 A2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_KO "확장 슬롯 A2(포트 A 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_KO "확장 슬롯 B1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_KO "확장 슬롯 B1(포트 B 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_KO "확장 슬롯 B2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_KO "확장 슬롯 B2(포트 B 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_KO "확장 슬롯 C1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_KO "확장 슬롯 C1(포트 C 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_KO "확장 슬롯 C2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_KO "확장 슬롯 C2(포트 C 슬롯 2)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_KO "확장 슬롯 D1의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_KO "확장 슬롯 D1(포트 D 슬롯 1)에 연결할 장치를 선택합니다."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_KO "확장 슬롯 D2의 장치"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO "확장 슬롯 D2(포트 D 슬롯 2)에 연결할 장치를 선택합니다."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO "게임당 별도 Visual Memory Units/Systems(VMU) 사용"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO "게임당 별도 VMU 사용"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 최대 8개의 VMU 저장 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 공유합니다.\n\ 'VMU A1' 옵션은 RetroArch의 저장 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다.\n\ '모든 VMU'는 게임 하나 당 최대 8개의 VMU 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
@@ -72522,8 +72522,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_TR "Doğrudan Dreamcast BIOS menüsüne önyükleme yapın."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_TR "DSP'yi Etkinleştir"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TR "Dreamcast ses DSP (dijital sinyal işlemcisi) taklidini etkinleştirin. Üretilen sesin doğruluğunu artırır, ancak performans gereksinimlerini artırır."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TR NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TR "Kabin Hizmet Düğmelerine İzin Ver"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TR "Atari salonu oyunlarının kabin ayarlarına girmek üzere SERVİS düğmesini etkinleştirir."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR "Geniş Bant Adaptör Taklidi"
@@ -72573,7 +72573,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_HORIZONTAL_TR "Yatay"
 #define OPTION_VAL_VERTICAL_TR "Dikey"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TR "Alfabetik Sıralama"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TR "Saydam çokgenlerin nasıl sıralanacağını seçin."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TR "Şerit Başına (hızlı, en az doğru)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_TR "Üçgen Başına (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_TR "Piksel Başına (doğru, ancak en yavaş)"
@@ -72612,7 +72612,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_4_TR NULL
 #define OPTION_VAL_6_TR NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TR "Doku Yükseltme Azami Filtre Boyutu"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR "Yükseltilecek doku için azami boyut değerini seçin; eğer doku boyutu seçilen değerden yüksekse büyütülmeyecektir."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR "Yerel Derinlik Enterpolasyonu"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR "AMD GPU'larda doku bozulması ve derinlik sorunlarına yardımcı olur. Bazı durumlarda Intel GPU'lara da yardımcı olabilir."
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR NULL
@@ -72677,7 +72677,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_490_TR NULL
 #define OPTION_VAL_500_TR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR "'system/dc/textures/<game-id>/' klasöründe bulunan özel dokuları yükleyin."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
@@ -72732,24 +72732,24 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 2 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 3 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 4 Görüntüle"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz A1"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR NULL
 #define OPTION_VAL_VMU_TR NULL
-#define OPTION_VAL_PURUPURU_TR NULL
+#define OPTION_VAL_PURUPURU_TR "Titreşim Paketi"
 #define OPTION_VAL_NONE_TR "Yok"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz B1"
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz B2"
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz C1"
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz C2"
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz D1"
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz D2"
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
@@ -78529,7 +78529,7 @@ struct retro_core_options_v2 options_val = {
 #define CATEGORY_SYSTEM_INFO_0_VN NULL
 #define CATEGORY_VIDEO_LABEL_VN "Hình ảnh"
 #define CATEGORY_VIDEO_INFO_0_VN NULL
-#define CATEGORY_PERFORMANCE_LABEL_VN NULL
+#define CATEGORY_PERFORMANCE_LABEL_VN "Hiệu năng"
 #define CATEGORY_PERFORMANCE_INFO_0_VN NULL
 #define CATEGORY_HACKS_LABEL_VN "Hacks giả lập"
 #define CATEGORY_HACKS_INFO_0_VN NULL

@@ -86,7 +86,7 @@ public:
 	}
 
 	void load() override {
-		if (!name.empty())
+		if (!name.empty() && !overridden)
 			set(doLoad(name));
 	}
 

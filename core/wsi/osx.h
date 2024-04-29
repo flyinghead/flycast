@@ -21,6 +21,8 @@
 #pragma once
 #if defined(TARGET_IPHONE)
 #include "gl_context.h"
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
 
 class OSXGraphicsContext : public GLGraphicsContext
 {
