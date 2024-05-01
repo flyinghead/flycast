@@ -772,33 +772,22 @@ void Emulator::setNetworkState(bool online)
 void EventManager::registerEvent(Event event, Callback callback, void *param)
 {
 	unregisterEvent(event, callback, param);
-	auto it = callbacks.find(event);
-	if (it != callbacks.end())
-		it->second.push_back(std::make_pair(callback, param));
-	else
-		callbacks.insert({ event, { std::make_pair(callback, param) } });
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	vector.push_back(std::make_pair(callback, param));
 }
 
 void EventManager::unregisterEvent(Event event, Callback callback, void *param)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	auto it2 = std::find(it->second.begin(), it->second.end(), std::make_pair(callback, param));
-	if (it2 == it->second.end())
-		return;
-
-	it->second.erase(it2);
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	auto it = std::find(vector.begin(), vector.end(), std::make_pair(callback, param));
+	if (it != vector.end())
+		vector.erase(it);
 }
 
 void EventManager::broadcastEvent(Event event)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	for (auto& pair : it->second)
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	for (auto& pair : vector)
 		pair.first(event, pair.second);
 }
 

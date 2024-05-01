@@ -98,10 +98,7 @@ static int post(const std::string& url, const char *headers, const u8 *payload, 
 	if (payloadSize > 0)
 	{
 		char clen[128];
-		if (headers == nullptr)
-			snprintf(clen, sizeof(clen), "Content-Length: %d\r\nContent-Type: application/x-www-form-urlencoded\r\n", payloadSize);
-		else
-			snprintf(clen, sizeof(clen), "Content-Length: %d\r\n", payloadSize);
+		snprintf(clen, sizeof(clen), "Content-Length: %d\r\n", payloadSize);
 		HttpAddRequestHeaders(hreq, clen, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
 	}
 	if (!HttpSendRequest(hreq, headers, -1, (void *)payload, payloadSize))
@@ -141,9 +138,14 @@ static int post(const std::string& url, const char *headers, const u8 *payload, 
 	return rc;
 }
 
-int post(const std::string& url, const char *payload, std::vector<u8>& reply)
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply)
 {
-	return post(url, nullptr, (const u8 *)payload, strlen(payload), reply);
+	char buf[512];
+	if (contentType != nullptr) {
+		sprintf(buf, "Content-Type: %s", contentType);
+		contentType = buf;
+	}
+	return post(url, contentType, (const u8 *)payload, strlen(payload), reply);
 }
 
 int post(const std::string& url, const std::vector<PostField>& fields)
@@ -272,13 +274,19 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	return (int)httpCode;
 }
 
-int post(const std::string& url, const char *payload, std::vector<u8>& reply)
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply)
 {
 	CURL *curl = makeCurlEasy(url);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 
 	curl_easy_setopt(curl, CURLOPT_POST, 1);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
+	curl_slist *headers = nullptr;
+	if (contentType != nullptr)
+	{
+		headers = curl_slist_append(headers, ("Content-Type: " + std::string(contentType)).c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	}
 
 	std::vector<u8> recvBuffer;
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
@@ -291,6 +299,7 @@ int post(const std::string& url, const char *payload, std::vector<u8>& reply)
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
 		reply = recvBuffer;
 	}
+	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 
 	return (int)httpCode;

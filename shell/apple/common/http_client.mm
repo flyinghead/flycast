@@ -46,7 +46,7 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	return [httpResponse statusCode];
 }
 
-int post(const std::string& url, const char *payload, std::vector<u8>& reply)
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply)
 {
 	NSString *nsurl = [NSString stringWithCString:url.c_str() 
                                          encoding:[NSString defaultCStringEncoding]];
@@ -59,8 +59,10 @@ int post(const std::string& url, const char *payload, std::vector<u8>& reply)
 	[request setHTTPBody:[NSData dataWithBytes:payload length:payloadSize]];
 	NSString *postLength = [NSString stringWithFormat:@"%ld", (unsigned long)payloadSize];
     [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
-    NSString *contentType = @"application/x-www-form-urlencoded";
-    [request setValue:contentType forHTTPHeaderField:@"Content-Type"];
+    NSString *nscontentType = contentType != nullptr ? [NSString stringWithCString:contentType 
+                                         encoding:[NSString defaultCStringEncoding]]
+    	: @"application/x-www-form-urlencoded";
+    [request setValue:nscontentType forHTTPHeaderField:@"Content-Type"];
     
 	NSURLResponse *response = nil;
 	NSError *error = nil;

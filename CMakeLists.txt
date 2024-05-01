@@ -712,6 +712,7 @@ if(NOT LIBRETRO)
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_stdlib.cpp
 		core/deps/imgui/imgui_tables.cpp
 		core/deps/imgui/imgui_widgets.cpp)
 
@@ -1012,7 +1013,9 @@ cmrc_add_resources(flycast-resources
 		fonts/printer_kanji24x24.bin.zip)
 
 if(NOT LIBRETRO)
-	cmrc_add_resources(flycast-resources fonts/Roboto-Medium.ttf.zip)
+	cmrc_add_resources(flycast-resources
+		fonts/Roboto-Medium.ttf.zip
+		fonts/Roboto-Regular.ttf.zip)
 	if(ANDROID)
 		cmrc_add_resources(flycast-resources
 			WHENCE resources
@@ -1292,6 +1295,7 @@ if(NOT LIBRETRO)
 			core/rend/imgui_driver.h
 			core/rend/gui.cpp
 			core/rend/gui.h
+			core/rend/gui_achievements.cpp
 			core/rend/gui_android.cpp
 			core/rend/gui_android.h
 			core/rend/gui_chat.h

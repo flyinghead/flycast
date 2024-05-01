@@ -22,6 +22,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
@@ -46,6 +47,7 @@
 #include "hw/naomi/card_reader.h"
 #include "oslib/resources.h"
 #include "achievements/achievements.h"
+#include "gui_achievements.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -94,6 +96,8 @@ static Boxart boxart;
 static Chat chat;
 static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;
+
+ImFont *largeFont;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -215,6 +219,7 @@ void gui_initFonts()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
+	largeFont = nullptr;
 	const float fontSize = 17.f * settings.display.uiScale;
 	size_t dataSize;
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
@@ -304,7 +309,13 @@ void gui_initFonts()
 
     // TODO Linux, iOS, ...
 #endif
-	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
+    // Large font without Asian glyphs
+	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
+	verify(data != nullptr);
+	const float largeFontSize = 21.f * settings.display.uiScale;
+	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
+
+    NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 
 void gui_keyboard_input(u16 wc)
@@ -1744,26 +1755,42 @@ static void gui_display_settings()
 			{
 				DisabledScope _(!config::EnableAchievements);
 				ImGui::Indent();
-				char username[256];
-				strcpy(username, config::AchievementsUserName.get().c_str());
-				ImGui::InputText("Username", username, sizeof(username), ImGuiInputTextFlags_None, nullptr, nullptr);
-				config::AchievementsUserName = username;
+				ImGui::InputText("Username", &config::AchievementsUserName.get(),
+						achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None, nullptr, nullptr);
 				if (config::EnableAchievements)
 				{
+					static std::future<void> futureLogin;
 					achievements::init();
 					if (achievements::isLoggedOn())
+					{
 						ImGui::Text("Authentication successful");
+						if (futureLogin.valid())
+							futureLogin.get();
+						if (ImGui::Button("Logout", ScaledVec2(100, 0)))
+							achievements::logout();
+					}
 					else
 					{
 						static char password[256];
 						ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password, nullptr, nullptr);
-						if (ImGui::Button("Login", ScaledVec2(100, 0)))
+						if (futureLogin.valid())
 						{
-							try {
-								achievements::login(config::AchievementsUserName.get().c_str(), password);
-							} catch (const FlycastException& e) {
-								gui_error(e.what());
+							if (futureLogin.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout) {
+								ImGui::Text("Authenticating...");
 							}
+							else
+							{
+								try {
+									futureLogin.get();
+								} catch (const FlycastException& e) {
+									gui_error(e.what());
+								}
+							}
+						}
+						if (ImGui::Button("Login", ScaledVec2(100, 0)) && !futureLogin.valid())
+						{
+							futureLogin = achievements::login(config::AchievementsUserName.get().c_str(), password);
+							memset(password, 0, sizeof(password));
 						}
 					}
 				}
@@ -2569,12 +2596,9 @@ static void gui_display_settings()
 					config::NetworkEnable = false;
 					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
-					char server_name[256];
-					strcpy(server_name, config::NetworkServer.get().c_str());
-					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("Your peer IP address and optional port");
-					config::NetworkServer.set(server_name);
 					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
 						"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
@@ -2608,12 +2632,9 @@ static void gui_display_settings()
 							"Create a local server for Naomi network games");
 					if (!config::ActAsServer)
 					{
-						char server_name[256];
-						strcpy(server_name, config::NetworkServer.get().c_str());
-						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+						ImGui::InputText("Server", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 						ImGui::SameLine();
 						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
-						config::NetworkServer.set(server_name);
 					}
 					char localPort[256];
 					sprintf(localPort, "%d", (int)config::LocalPort);
@@ -2624,12 +2645,9 @@ static void gui_display_settings()
 				}
 				else if (config::BattleCableEnable)
 				{
-					char server_name[256];
-					strcpy(server_name, config::NetworkServer.get().c_str());
-					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
-					config::NetworkServer.set(server_name);
 					char localPort[256];
 					sprintf(localPort, "%d", (int)config::LocalPort);
 					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
@@ -2721,14 +2739,9 @@ static void gui_display_settings()
 			#ifdef USE_LUA
 			header("Lua Scripting");
 			{
-				char LuaFileName[256];
-
-				strcpy(LuaFileName, config::LuaFileName.get().c_str());
-				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
 				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
-				config::LuaFileName = LuaFileName;
-
 			}
 			#endif
 		}
@@ -3416,7 +3429,7 @@ void gui_display_osd()
 		gui_newFrame();
 		ImGui::NewFrame();
 
-		if (!message.empty())
+		if (!achievements::notifier.draw() && !message.empty())
 		{
 			ImGui::SetNextWindowBgAlpha(0);
 			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner

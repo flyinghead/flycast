@@ -14,6 +14,7 @@
 #include "emulator.h"
 #include "hw/bba/bba.h"
 #include "serialize.h"
+#include <map>
 
 u32 sb_regs[0x540];
 HollyRegisters hollyRegs;

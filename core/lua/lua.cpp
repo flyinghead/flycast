@@ -74,6 +74,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::Network:
 			key = "network";
 			break;
+		case Event::DiskChange:
+			key = "diskChange";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();

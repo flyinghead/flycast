@@ -89,7 +89,7 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	}
 }
 
-int post(const std::string& url, const char *payload, std::vector<u8>& reply)
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply)
 {
 	nowide::wstackstring wurl;
 	if (!wurl.convert(url.c_str()))
@@ -97,12 +97,16 @@ int post(const std::string& url, const char *payload, std::vector<u8>& reply)
 	nowide::wstackstring wpayload;
 	if (!wpayload.convert(payload))
 		return 500;
+	nowide::wstackstring wcontentType;
+	if (contentType != nullptr && !wcontentType.convert(contentType))
+		return 500;
 	try
 	{
 		Uri^ uri = ref new Uri(ref new String(wurl.get()));
 		HttpStringContent^ content = ref new HttpStringContent(ref new String(wpayload.get()));
 		content->Headers->ContentLength = strlen(payload);
-		content->Headers->ContentType = ref new HttpMediaTypeHeaderValue("application/x-www-form-urlencoded");
+		if (contentType != nullptr)
+			content->Headers->ContentType = ref new HttpMediaTypeHeaderValue(ref new String(wcontentType.get()));
 
 		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->PostAsync(uri, content);
 		cResetEvent asyncEvent;

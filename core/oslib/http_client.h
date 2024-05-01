@@ -50,7 +50,7 @@ struct PostField
 };
 
 int post(const std::string& url, const std::vector<PostField>& fields);
-int post(const std::string& url, const char *payload, std::vector<u8>& reply);
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply);
 
 static inline bool success(int status) {
 	return status >= 200 && status < 300;

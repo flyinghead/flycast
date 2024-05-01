@@ -23,7 +23,7 @@
 
 #include <atomic>
 #include <future>
-#include <map>
+#include <array>
 #include <mutex>
 #include <utility>
 #include <vector>
@@ -47,6 +47,8 @@ enum class Event {
 	LoadState,
 	VBlank,
 	Network,
+	DiskChange,
+	max = DiskChange
 };
 
 class EventManager
@@ -77,7 +79,7 @@ private:
 	void unregisterEvent(Event event, Callback callback, void *param);
 	void broadcastEvent(Event event);
 
-	std::map<Event, std::vector<std::pair<Callback, void *>>> callbacks;
+	std::array<std::vector<std::pair<Callback, void *>>, static_cast<size_t>(Event::max) + 1> callbacks;
 };
 
 struct LoadProgress

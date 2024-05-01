@@ -1,4 +1,6 @@
 /*
+	Copyright 2024 flyinghead
+
 	This file is part of Flycast.
 
     Flycast is free software: you can redistribute it and/or modify
@@ -14,23 +16,41 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#pragma once
 #include "types.h"
-#include <future>
+#include "imgui.h"
+#include <mutex>
 
 namespace achievements
 {
-#ifdef USE_RACHIEVEMENTS
 
-bool init();
-void term();
-std::future<void> login(const char *username, const char *password);
-void logout();
-bool isLoggedOn();
+class Notification
+{
+public:
+	enum Type {
+		None,
+		Login,
+		GameLoaded,
+		Unlocked,
+		Progress,
+		Mastery,
+		Error
+	};
+	void notify(Type type, const std::string& image, const std::string& text1,
+			const std::string& text2 = {}, const std::string& text3 = {});
+	bool draw();
 
-#endif
+private:
+	void getImage();
 
-void serialize(Serializer& ser);
-void deserialize(Deserializer& deser);
+	u64 startTime = 0;
+	u64 endTime = 0;
+	Type type = Type::None;
+	std::string imagePath;
+	ImTextureID imageId {};
+	std::string text[3];
+	std::mutex mutex;
+};
+
+extern Notification notifier;
 
 }

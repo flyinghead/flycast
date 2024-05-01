@@ -78,12 +78,12 @@ public class HttpClient {
         return 500;
     }
 
-    public int post(String urlString, String payload, byte[][] reply) {
+    public int post(String urlString, String payload, String contentType, byte[][] reply) {
         try {
             if (httpClient == null)
                 httpClient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(urlString);
-            httpPost.setEntity(new StringEntity(payload, ContentType.APPLICATION_FORM_URLENCODED));
+            httpPost.setEntity(new StringEntity(payload, contentType != null ? ContentType.create(contentType) : ContentType.APPLICATION_FORM_URLENCODED));
             CloseableHttpResponse response = httpClient.execute(httpPost);
             InputStream is = response.getEntity().getContent();
 

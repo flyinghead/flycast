@@ -47,15 +47,17 @@ namespace http {
         return httpStatus;
     }
 
-    int post(const std::string &url, const char *payload, std::vector<u8>& reply)
+    int post(const std::string &url, const char *payload, const char *contentType, std::vector<u8>& reply)
     {
         jni::String jurl(url);
         jni::String jpayload(payload);
+        jni::String jcontentType(contentType);
         jni::ObjectArray<jni::ByteArray> replyOut(1);
 
         int httpStatus = jni::env()->CallIntMethod(HttpClient, postRawMid,
         		static_cast<jstring>(jurl),
 				static_cast<jstring>(jpayload),
+				static_cast<jstring>(jcontentType),
 				static_cast<jobjectArray>(replyOut));
         reply = replyOut[0];
 
@@ -95,5 +97,5 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_HttpClient_nativ
     http::HttpClient = env->NewGlobalRef(obj);
     http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
     http::postMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)I");
-    http::postRawMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;Ljava/lang/String;[[B)I");
+    http::postRawMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[[B)I");
 }

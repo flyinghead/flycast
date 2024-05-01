@@ -350,6 +350,7 @@ bool DiscSwap(const std::string& path)
 {
 	if (!doDiscSwap(path))
 		throw FlycastException("This media cannot be loaded");
+	EventManager::event(Event::DiskChange);
 	// Drive is busy after the lid was closed
 	sns_asc = 4;
 	sns_ascq = 1;
