@@ -36273,51 +36273,51 @@ struct retro_core_options_v2 options_fr = {
 
 /* RETRO_LANGUAGE_GL */
 
-#define CATEGORY_SYSTEM_LABEL_GL NULL
-#define CATEGORY_SYSTEM_INFO_0_GL NULL
+#define CATEGORY_SYSTEM_LABEL_GL "Sistema"
+#define CATEGORY_SYSTEM_INFO_0_GL "Configure a rexión, o idioma, a BIOS e a configuración do hardware base."
 #define CATEGORY_VIDEO_LABEL_GL "Vídeo"
-#define CATEGORY_VIDEO_INFO_0_GL NULL
-#define CATEGORY_PERFORMANCE_LABEL_GL NULL
-#define CATEGORY_PERFORMANCE_INFO_0_GL NULL
+#define CATEGORY_VIDEO_INFO_0_GL "Configure a resolución, a transparencia independente da orde e os axustes de efectos visuais."
+#define CATEGORY_PERFORMANCE_LABEL_GL "Rendemento"
+#define CATEGORY_PERFORMANCE_INFO_0_GL "Configure as opcións de renderizado en fíos e omitir marcos."
 #define CATEGORY_HACKS_LABEL_GL "Hacks de emulación"
-#define CATEGORY_HACKS_INFO_0_GL NULL
+#define CATEGORY_HACKS_INFO_0_GL "Configura substitucións de pantalla panorámica, velocidade de carga de GD-ROM e configuración de substitución de texturas."
 #define CATEGORY_INPUT_LABEL_GL "Entrada"
-#define CATEGORY_INPUT_INFO_0_GL NULL
-#define CATEGORY_EXPANSIONS_LABEL_GL NULL
-#define CATEGORY_EXPANSIONS_INFO_0_GL NULL
-#define CATEGORY_VMU_LABEL_GL NULL
-#define CATEGORY_VMU_INFO_0_GL NULL
-#define CORE_OPTION_NAME_REGION_LABEL_GL NULL
-#define OPTION_VAL_JAPAN_GL NULL
+#define CATEGORY_INPUT_INFO_0_GL "Configura a configuración do gamepad e da pistola lixeira."
+#define CATEGORY_EXPANSIONS_LABEL_GL "Ranuras de expansión do controlador"
+#define CATEGORY_EXPANSIONS_INFO_0_GL "Seleccione o dispositivo (VMU, dispositivo rumble) conectado a cada ranura de expansión do controlador."
+#define CATEGORY_VMU_LABEL_GL "Unidade de Memoria Visual"
+#define CATEGORY_VMU_INFO_0_GL "Configura os ficheiros de gardar VMU por xogo e os axustes de visibilidade da VMU en pantalla."
+#define CORE_OPTION_NAME_REGION_LABEL_GL "Rexión"
+#define OPTION_VAL_JAPAN_GL "Xapón"
 #define OPTION_VAL_USA_GL NULL
-#define OPTION_VAL_EUROPE_GL NULL
-#define OPTION_VAL_DEFAULT_GL NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_GL NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GL NULL
-#define OPTION_VAL_JAPANESE_GL NULL
-#define OPTION_VAL_ENGLISH_GL NULL
-#define OPTION_VAL_GERMAN_GL NULL
-#define OPTION_VAL_FRENCH_GL NULL
-#define OPTION_VAL_SPANISH_GL NULL
-#define OPTION_VAL_ITALIAN_GL NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL NULL
+#define OPTION_VAL_EUROPE_GL "Europa"
+#define OPTION_VAL_DEFAULT_GL "Por defecto"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_GL "Idioma"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GL "Cambia o idioma que usa a BIOS e os xogos que conteñan varios idiomas."
+#define OPTION_VAL_JAPANESE_GL "Xaponés"
+#define OPTION_VAL_ENGLISH_GL "Inglés"
+#define OPTION_VAL_GERMAN_GL "Alemán"
+#define OPTION_VAL_FRENCH_GL "Francés"
+#define OPTION_VAL_SPANISH_GL "Español"
+#define OPTION_VAL_ITALIAN_GL "Italiano"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL "BIOS HLE (reinicio necesario)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GL "Forza o uso de emulación BIOS de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GL "Arranca na BIOS (requírese reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GL "Arranca directamente no menú da BIOS de Dreamcast."
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GL NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GL NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GL NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_GL NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GL "Activar DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GL "Activa a emulación do DSP de audio (procesador de sinal dixital) do Dreamcast. Mellora a precisión do son xerado, pero aumenta os requisitos de rendemento."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GL "Permitir botóns de servizo de Arcade"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL "Activa o botón SERVICE para xogos de arcade para entrar na configuración do armario."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL "Configura NAOMI Games Para Xogar de Balde"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL "Modifica a configuración de moedas do xogo para xogar libremente."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL "Emulación de adaptador de banda ancha"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emule o adaptador de banda ancha ethernet en lugar do módem. (Reiniciar obrigatorio)"
+#define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
-#define OPTION_VAL_320X240_GL NULL
-#define OPTION_VAL_640X480_GL NULL
+#define OPTION_VAL_320X240_GL "320 x 240 (a metade)"
+#define OPTION_VAL_640X480_GL "640 x 480 (nativo)"
 #define OPTION_VAL_800X600_GL NULL
 #define OPTION_VAL_960X720_GL NULL
 #define OPTION_VAL_1024X768_GL NULL
@@ -36343,51 +36343,51 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_11520X8640_GL NULL
 #define OPTION_VAL_12160X9120_GL NULL
 #define OPTION_VAL_12800X9600_GL NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GL NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GL "Tipo de cable"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GL "O tipo de sinal de saída. 'TV (Composite)' é o máis soportado."
 #define OPTION_VAL_VGA_GL NULL
 #define OPTION_VAL_TV_RGB_GL NULL
-#define OPTION_VAL_TV_COMPOSITE_GL NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_GL NULL
+#define OPTION_VAL_TV_COMPOSITE_GL "TV (composto)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_GL "Estándar de emisión"
 #define OPTION_VAL_NTSC_GL NULL
-#define OPTION_VAL_PAL_GL NULL
-#define OPTION_VAL_PAL_N_GL NULL
-#define OPTION_VAL_PAL_M_GL NULL
+#define OPTION_VAL_PAL_GL "PAL (Mundo)"
+#define OPTION_VAL_PAL_N_GL "PAL-N (Arxentina, Paraguai, Uruguai)"
+#define OPTION_VAL_PAL_M_GL "PAL-M (Brasil)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_GL "Orientación da Pantalla"
 #define OPTION_VAL_HORIZONTAL_GL NULL
 #define OPTION_VAL_VERTICAL_GL NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_GL "Clasificación Alpha"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GL "Seleccione como se ordenan os polígonos transparentes."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GL "Por franxa (rápido, menos preciso)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_GL "Por triángulo (normal)"
-#define OPTION_VAL_PER_PIXEL_ACCURATE_GL NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_GL "Por píxel (preciso, pero máis lento)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL "Tamaño do búfer de píxeles de acumulación"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_GL "É posible que se precisen valores máis altos para que as resolucións máis altas saian correctamente."
 #define OPTION_VAL_512MB_GL NULL
 #define OPTION_VAL_1GB_GL NULL
 #define OPTION_VAL_2GB_GL NULL
 #define OPTION_VAL_4GB_GL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL "Máximo de capas transparentes"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL "Poden ser necesarios valores máis altos para escenas complexas."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL "Emulación completa de framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL "Activa a emulación completa de framebuffer na VRAM. Isto é útil para xogos que len ou escriben directamente o framebuffer na VRAM. Cando está activada, a resolución interna é obrigada a 640 x 480 e o rendemento pode verse gravemente afectado."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL "Activa o buffer RTT (Render To Texture)"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FOG_LABEL_GL NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL "Copia texturas renderizadas de volta da GPU á VRAM. Esta opción normalmente está habilitada para xogos que o requiran. Cando se activa, a ampliación da renderización de texturas está desactivada e o rendemento pode verse afectado."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL "Mapeo mip"
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GL "Cando as texturas activadas usarán unha versión máis pequena de si mesmas cando aparezan máis lonxe, pode aumentar o rendemento e reducir o brillo."
+#define CORE_OPTION_NAME_FOG_LABEL_GL "Efectos néboa"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL "Modificador de volume"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GL "Unha función GPU de Dreamcast que normalmente usan os xogos para debuxar sombras de obxectos. Normalmente debería estar activado: o impacto no rendemento adoita ser mínimo ou insignificante."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_GL "Filtrado anisotrópico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL "Mellora a calidade das texturas en superficies que están en ángulos de visión oblicuos con respecto á cámara. Os valores máis altos son máis esixentes na GPU. Os cambios nesta configuración só se aplican despois de reiniciar."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GL "Filtrado de Texturas"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL NULL
-#define OPTION_VAL_1_GL NULL
-#define OPTION_VAL_2_GL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL "O modo de filtrado de texturas a usar. Isto pódese usar para forzar un determinado modo de filtrado de texturas en todas as texturas para obter unha aparencia máis nítida (ou máis suave) que a predeterminada. Os valores distintos do predeterminado poden causar varios problemas de renderización. Os cambios nesta configuración só se aplican despois de reiniciar."
+#define OPTION_VAL_1_GL "Forza: Veciño máis próximo"
+#define OPTION_VAL_2_GL "Forza lineal"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GL "Intercambio de fotogramas con retardo"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GL "Útil para evitar o parpadeo nas pantallas ou os vídeos con fallos. Non recomendado en plataformas lentas."
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL "Detectar cambios na taxa de Fotogramas"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL "Notificar a interface cando cambie a velocidade de fotogramas interna (por exemplo, de 60 fps a 30 fps). Mellora o ritmo de cadros nos xogos que se executan a 30 ou 20 fps bloqueados, pero que debería desactivarse para xogos con velocidades de cadros desbloqueadas (inestables) (por exemplo, Ecco the Dolphin, Unreal Tournament). Nota: Non está dispoñible cando se activa \"Saltar marco automático\"."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_GL "Filtrado de postprocesado PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GL "Postproceso da imaxe renderizada para simular efectos específicos da PowerVR2 GPU e os sinais analóxicos de vídeo."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL "Aumento das texturas (xBRZ)"
@@ -36396,11 +36396,11 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_4_GL NULL
 #define OPTION_VAL_6_GL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GL "Aumento da escala das texturas. Tamaño filtrado"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GL "Seleccione un valor de tamaño máximo para unha textura a escalar, se o tamaño da textura é superior ao valor seleccionado, non se ampliará."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL "Interpolación de profundidade nativa"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL "Axuda coa corrupción da textura e os problemas de profundidade nas GPU AMD. Tamén pode axudar ás GPU Intel nalgúns casos."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GL "Corrixir Bleeding Edge de luxo"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GL "Axuda co caso de sangramento da textura ao aumentar a escala. Desactivalo pode axudar se os píxeles se deforman ao aumentar a escala en xogos en 2D (MVC2, CVS, KOF, etc.)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GL "Renderizado de fíos"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_GL "Fai funcionar a GPU e a CPU en fíos diferentes. Altamente recomendado."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_GL "Salto de fotograma automático"
@@ -36409,16 +36409,16 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_MORE_GL "Máximo"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GL "Salto de fotogramas"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GL "Especifica o número de fotogramas para saltar entre cada fotograma que é mostrado."
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GL "Trucos de pantalla ancha (necesario reiniciar)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GL "Activa trucos que permiten que determinados xogos se mostren en formato de pantalla panorámica."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GL "Corte de pantalla ancha"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL "Debuxa xeometría fóra da relación de aspecto normal de 4:3. Pode producir fallas gráficas nas áreas reveladas."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL "Carga rápida de GD-ROM (inexacta)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL "Acelera a carga de GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GL NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL "Activa 32 MB de RAM Mod para Dreamcast. Pode afectar á compatibilidade"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL "CPU SH4 under/overclock"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL "Cambia o reloxo da CPU principal do SH4 dos 200 MHz predeterminados. O underclocking pode axudar a ralentizar as plataformas. O overclocking pode aumentar a velocidade de fotogramas nalgúns xogos. Use con precaución."
 #define OPTION_VAL_100_GL NULL
 #define OPTION_VAL_110_GL NULL
 #define OPTION_VAL_120_GL NULL
@@ -36461,11 +36461,11 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_490_GL NULL
 #define OPTION_VAL_500_GL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL "Carga as texturas personalizadas"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL "Carga texturas personalizadas situadas no cartafol \"system/dc/textures/<game-id>/\"."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta stick analóxico"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL NULL
 #define OPTION_VAL_5_GL NULL
 #define OPTION_VAL_10_GL NULL
@@ -36473,15 +36473,15 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_20_GL NULL
 #define OPTION_VAL_25_GL NULL
 #define OPTION_VAL_30_GL NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GL NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL "Activar zona morta"
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL "Seleccione canto ten que premer o gatillo antes de comezar a procesarse."
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GL "Disparadores dixitais"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GL "Cando estean activados, os disparadores actuarán como botóns normais, o que significa que se procesarán como totalmente presionados ou sen presionar nada, sen intermediarios."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL "Saídas dixitais de emisión"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL "Saídas dixitais de transmisión e estado de retroalimentación forzada no porto TCP 8000. Compatible coa opción MAME \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL "Mostrar a configuración da arma lixeira"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL "Activa a configuración das opcións de visualización do punto de mira de pistola lixeira. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL "Escala do tamaño da mira de pistola"
 #define OPTION_VAL_50_GL NULL
 #define OPTION_VAL_60_GL NULL
 #define OPTION_VAL_70_GL NULL
@@ -36508,44 +36508,44 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_280_O45_GL NULL
 #define OPTION_VAL_290_O45_GL NULL
 #define OPTION_VAL_300_O45_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 1"
 #define OPTION_VAL_WHITE_GL "Branco"
 #define OPTION_VAL_RED_GL "Vermello"
 #define OPTION_VAL_GREEN_GL "Verde"
 #define OPTION_VAL_BLUE_GL "Azul"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GL NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GL "Dispositivo no ranura de expansión A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión A1 (porto A slot 1)."
 #define OPTION_VAL_VMU_GL NULL
-#define OPTION_VAL_PURUPURU_GL NULL
+#define OPTION_VAL_PURUPURU_GL "Paquete de vibracións"
 #define OPTION_VAL_NONE_GL "Ningún"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GL "Dispositivo no slot de expansión A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión A2 (porto A slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GL "Dispositivo no slot de expansión B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión B1 (port B slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GL "Dispositivo no slot de expansión B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado á ranura de expansión B2 (rañura do porto B 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GL "Dispositivo no slot de expansión C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión C1 (port C slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GL "Dispositivo no slot de expansión C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión C2 (port C slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GL "Dispositivo na ranura de expansión D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión D1 (port D1 slot)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GL "Dispositivo na ranura de expansión D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión D2 (port D2 slot)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_GL "Unidades/sistemas de memoria visual (VMU) por xogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_GL "VMUs por xogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL "Cando está desactivado, todos os xogos comparten ata 8 ficheiros de gardado VMU (A1/A2/B1/B2/C1/C2/D1/D2) situados no directorio do sistema de RetroArch.\n\A configuración \"VMU A1\" crea un ficheiro VMU \"A1\" único no directorio de gardado de RetroArch para cada xogo que se inicia.\n\A configuración \"Todas as VMU\" crea ata 8 ficheiros VMU únicos (A1/A2/B1/B2/C1/C2/D1/D2) para cada xogo que se inicia."
 #define OPTION_VAL_VMU_A1_GL NULL
 #define OPTION_VAL_ALL_VMUS_GL "Todas as VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL "Sons de sistemas/unidades de memoria visual (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL "Sons VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL "Cando está activado, reprodúcense os pitidos VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL "Amosa as opcións de pantalla da Unidade/Sistema de Memoria visual (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL "Amosa as opcións de pantalla da VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL "Activa a configuración da visibilidade, tamaño, posición e cor da pantalla LCD VMU emulada. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_GL "Pantalla 1 da VMU"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_GL "Posición da pantalla 1 VMU"
 #define OPTION_VAL_UPPER_LEFT_GL "Superior esquerda"
