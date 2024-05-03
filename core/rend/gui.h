@@ -63,7 +63,8 @@ enum class GuiState {
 	SelectDisk,
 	Loading,
 	NetworkStart,
-	Cheats
+	Cheats,
+	Achievements,
 };
 extern GuiState gui_state;
 

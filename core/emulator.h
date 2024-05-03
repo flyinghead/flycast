@@ -38,6 +38,7 @@ void dc_exit();
 void dc_savestate(int index = 0);
 void dc_loadstate(int index = 0);
 void dc_loadstate(Deserializer& deser);
+std::string dc_getStateUpdateDate(int index);
 
 enum class Event {
 	Start,

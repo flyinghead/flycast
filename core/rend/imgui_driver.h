@@ -36,19 +36,12 @@ public:
 	virtual void displayVmus() {}
 	virtual void displayCrosshairs() {}
 
-	virtual void present() = 0;
-	virtual void setFrameRendered() {}
-
-	virtual ImTextureID getTexture(const std::string& name) = 0;
-	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) = 0;
-
-	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height)
-	{
-		ImTextureID textureId = updateTexture(name, data, width, height);
-		if (textureId != ImTextureID())
-			aspectRatios[textureId] = (float)width / height;
-		return textureId;
+	void doPresent() {
+		textureLoadCount = 0;
+		present();
 	}
+
+	virtual void setFrameRendered() {}
 
 	float getAspectRatio(ImTextureID textureId) {
 		auto it = aspectRatios.find(textureId);
@@ -58,8 +51,25 @@ public:
 			return 1;
 	}
 
+	ImTextureID getOrLoadTexture(const std::string& path);
+
+protected:
+	virtual ImTextureID getTexture(const std::string& name) = 0;
+	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) = 0;
+	virtual void present() = 0;
+
 private:
+	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height)
+	{
+		textureLoadCount++;
+		ImTextureID textureId = updateTexture(name, data, width, height);
+		if (textureId != ImTextureID())
+			aspectRatios[textureId] = (float)width / height;
+		return textureId;
+	}
+
 	std::unordered_map<ImTextureID, float> aspectRatios;
+	int textureLoadCount = 0;
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

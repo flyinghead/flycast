@@ -18,7 +18,9 @@
 */
 #include "types.h"
 #include "imgui.h"
+#include "gui_util.h"
 #include <mutex>
+#include <vector>
 
 namespace achievements
 {
@@ -33,24 +35,27 @@ public:
 		Unlocked,
 		Progress,
 		Mastery,
+		Challenge,
 		Error
 	};
 	void notify(Type type, const std::string& image, const std::string& text1,
 			const std::string& text2 = {}, const std::string& text3 = {});
+	void showChallenge(const std::string& image);
+	void hideChallenge(const std::string& image);
 	bool draw();
 
 private:
-	void getImage();
-
 	u64 startTime = 0;
 	u64 endTime = 0;
 	Type type = Type::None;
-	std::string imagePath;
-	ImTextureID imageId {};
+	ImguiTexture image;
 	std::string text[3];
 	std::mutex mutex;
+	std::vector<ImguiTexture> challenges;
 };
 
 extern Notification notifier;
+
+void achievementList();
 
 }

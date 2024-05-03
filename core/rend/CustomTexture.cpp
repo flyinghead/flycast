@@ -284,7 +284,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 		FILE *f = nowide::fopen((const char *)context, "wb");
 		if (f == nullptr)
 		{
-			WARN_LOG(RENDERER, "Dump texture: can't save to file %s: error %d", context, errno);
+			WARN_LOG(RENDERER, "Dump texture: can't save to file %s: error %d", (const char *)context, errno);
 		}
 		else
 		{

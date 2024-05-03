@@ -59,16 +59,6 @@ static inline void centerNextWindow()
 			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 }
 
-static inline bool operator==(const ImVec2& l, const ImVec2& r)
-{
-	return l.x == r.x && l.y == r.y;
-}
-
-static inline bool operator!=(const ImVec2& l, const ImVec2& r)
-{
-	return !(l == r);
-}
-
 void fullScreenWindow(bool modal);
 void windowDragScroll();
 
@@ -130,20 +120,6 @@ struct ScaledVec2 : public ImVec2
 inline static ImVec2 min(const ImVec2& l, const ImVec2& r) {
 	return ImVec2(std::min(l.x, r.x), std::min(l.y, r.y));
 }
-inline static ImVec2 operator+(const ImVec2& l, const ImVec2& r) {
-	return ImVec2(l.x + r.x, l.y + r.y);
-}
-inline static ImVec2 operator-(const ImVec2& l, const ImVec2& r) {
-	return ImVec2(l.x - r.x, l.y - r.y);
-}
-inline static ImVec2 operator*(const ImVec2& v, float f) {
-	return ImVec2(v.x * f, v.y * f);
-}
-inline static ImVec2 operator/(const ImVec2& v, float f) {
-	return ImVec2(v.x / f, v.y / f);
-}
-
-u8 *loadImage(const std::string& path, int& width, int& height);
 
 class DisabledScope
 {
@@ -173,3 +149,69 @@ private:
 };
 
 bool BeginListBox(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiWindowFlags windowFlags = 0);
+
+class ImguiID
+{
+public:
+	ImguiID(const std::string& id)
+		: ImguiID(id.c_str()) {}
+	ImguiID(const char *id) {
+		ImGui::PushID(id);
+	}
+	~ImguiID() {
+		ImGui::PopID();
+	}
+};
+
+class ImguiStyleVar
+{
+public:
+	ImguiStyleVar(ImGuiStyleVar idx, const ImVec2& val) {
+		ImGui::PushStyleVar(idx, val);
+	}
+	ImguiStyleVar(ImGuiStyleVar idx, float val) {
+		ImGui::PushStyleVar(idx, val);
+	}
+	~ImguiStyleVar() {
+		ImGui::PopStyleVar();
+	}
+};
+
+class ImguiStyleColor
+{
+public:
+	ImguiStyleColor(ImGuiCol idx, const ImVec4& col) {
+		ImGui::PushStyleColor(idx, col);
+	}
+	ImguiStyleColor(ImGuiCol idx, ImU32 col) {
+		ImGui::PushStyleColor(idx, col);
+	}
+	~ImguiStyleColor() {
+		ImGui::PopStyleColor();
+	}
+};
+
+class ImguiTexture
+{
+public:
+	ImguiTexture() = default;
+	ImguiTexture(const std::string& path) : path(path) {}
+
+	void draw(const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
+			const ImVec4& border_col = ImVec4(0, 0, 0, 0)) const;
+	bool button(const char* str_id, const ImVec2& image_size, const std::string& title = {}, const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
+			const ImVec4& tint_col = ImVec4(1, 1, 1, 1)) const;
+
+	ImTextureID getId() const;
+
+	operator ImTextureID() {
+		return getId();
+	}
+
+	bool operator==(const ImguiTexture& other) const {
+		return other.path == path;
+	}
+
+private:
+	std::string path;
+};

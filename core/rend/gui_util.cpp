@@ -25,11 +25,9 @@
 #include "types.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
+#include "imgui_driver.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#define STBI_ONLY_JPEG
-#define STBI_ONLY_PNG
-#include <stb_image.h>
 
 static std::string select_current_directory = "**home**";
 static std::vector<hostfs::FileInfo> subfolders;
@@ -697,17 +695,58 @@ void windowDragScroll()
 	}
 }
 
-u8 *loadImage(const std::string& path, int& width, int& height)
+ImTextureID ImguiTexture::getId() const
 {
-	FILE *file = nowide::fopen(path.c_str(), "rb");
-	if (file == nullptr)
-		return nullptr;
+	if (path.empty())
+		return {};
+	return imguiDriver->getOrLoadTexture(path);
+}
 
-	int channels;
-	stbi_set_flip_vertically_on_load(0);
-	u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
-	std::fclose(file);
-	return imgData;
+static void setUV(float ar, ImVec2& uv0, ImVec2& uv1)
+{
+	uv0 = { 0.f, 0.f };
+	uv1 = { 1.f, 1.f };
+	if (ar > 1)
+	{
+		uv0.y = -(ar - 1) / 2;
+		uv1.y = 1 + (ar - 1) / 2;
+	}
+	else if (ar != 0)
+	{
+		ar = 1 / ar;
+		uv0.x = -(ar - 1) / 2;
+		uv1.x = 1 + (ar - 1) / 2;
+	}
+}
+
+void ImguiTexture::draw(const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col) const
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		ImGui::Dummy(size);
+	else
+	{
+		float ar = imguiDriver->getAspectRatio(id);
+		ImVec2 uv0, uv1;
+		setUV(ar, uv0, uv1);
+		ImGui::Image(id, size, uv0, uv1, tint_col, border_col);
+	}
+}
+
+bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
+		const ImVec4& bg_col, const ImVec4& tint_col) const
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		return ImGui::Button(title.c_str(), image_size);
+	else
+	{
+		float ar = imguiDriver->getAspectRatio(id);
+		ImVec2 uv0, uv1;
+		setUV(ar, uv0, uv1);
+		ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
+		return ImGui::ImageButton(str_id, id, size, uv0, uv1, bg_col, tint_col);
+	}
 }
 
 // Custom version of ImGui::BeginListBox that allows passing window flags

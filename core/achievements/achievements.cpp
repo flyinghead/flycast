@@ -36,6 +36,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <atomic>
+#include <tuple>
 #include <xxhash.h>
 
 namespace achievements
@@ -51,6 +52,9 @@ public:
 	std::future<void> login(const char *username, const char *password);
 	void logout();
 	bool isLoggedOn() const { return loggedOn; }
+	bool isActive() const { return active; }
+	Game getCurrentGame();
+	std::vector<Achievement> getAchievementList();
 	void serialize(Serializer& ser);
 	void deserialize(Deserializer& deser);
 
@@ -66,6 +70,7 @@ private:
 	void resumeGame();
 	void loadCache();
 	std::string getOrDownloadImage(const char *url);
+	std::tuple<std::string, bool> getCachedImage(const char *url);
 	void diskChange();
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -96,6 +101,8 @@ private:
 	cResetEvent resetEvent;
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
+	std::mutex cacheMutex;
+	std::future<void> asyncImageDownload;
 };
 
 bool init()
@@ -121,6 +128,21 @@ void logout()
 bool isLoggedOn()
 {
 	return Achievements::Instance().isLoggedOn();
+}
+
+bool isActive()
+{
+	return Achievements::Instance().isActive();
+}
+
+Game getCurrentGame()
+{
+	return Achievements::Instance().getCurrentGame();
+}
+
+std::vector<Achievement> getAchievementList()
+{
+	return Achievements::Instance().getAchievementList();
 }
 
 void serialize(Serializer& ser)
@@ -224,39 +246,63 @@ void Achievements::loadCache()
 				continue;
 			std::string s = get_file_basename(name);
 			u64 v = strtoull(s.c_str(), nullptr, 16);
+			std::lock_guard<std::mutex> _(cacheMutex);
 			cacheMap[v] = name;
 		}
+		closedir(dir);
+	}
+}
+
+static u64 hashUrl(const char *url) {
+	return XXH64(url, strlen(url), 13);
+}
+
+std::tuple<std::string, bool> Achievements::getCachedImage(const char *url)
+{
+	u64 hash = hashUrl(url);
+	std::lock_guard<std::mutex> _(cacheMutex);
+	auto it = cacheMap.find(hash);
+	if (it != cacheMap.end()) {
+		return make_tuple(cachePath + it->second, true);
+	}
+	else
+	{
+		std::stringstream stream;
+		stream << std::hex << hash << ".png";
+		return make_tuple(cachePath + stream.str(), false);
 	}
 }
 
 std::string Achievements::getOrDownloadImage(const char *url)
 {
-	u64 hash = XXH64(url, strlen(url), 13);
-	auto it = cacheMap.find(hash);
-	if (it != cacheMap.end())
-		return cachePath + it->second;
+	u64 hash = hashUrl(url);
+	{
+		std::lock_guard<std::mutex> _(cacheMutex);
+		auto it = cacheMap.find(hash);
+		if (it != cacheMap.end())
+			return cachePath + it->second;
+	}
 	std::vector<u8> content;
 	std::string content_type;
 	int rc = http::get(url, content, content_type);
 	if (!http::success(rc))
 		return {};
 	std::stringstream stream;
-	stream << std::hex << hash;
-	if (content_type == "image/jpeg")
-		stream << ".jpg";
-	else
-		stream << ".png";
-	std::string path = cachePath + stream.str();
-	FILE *f = nowide::fopen(path.c_str(), "wb");
+	stream << std::hex << hash << ".png";
+	std::string localPath = cachePath + stream.str();
+	FILE *f = nowide::fopen(localPath.c_str(), "wb");
 	if (f == nullptr) {
-		WARN_LOG(COMMON, "Can't save image to %s", path.c_str());
+		WARN_LOG(COMMON, "Can't save image to %s", localPath.c_str());
 		return {};
 	}
 	fwrite(content.data(), 1, content.size(), f);
 	fclose(f);
-	cacheMap[hash] = stream.str();
-	DEBUG_LOG(COMMON, "RA: downloaded %s to %s", url, path.c_str());
-	return path;
+	{
+		std::lock_guard<std::mutex> _(cacheMutex);
+		cacheMap[hash] = stream.str();
+	}
+	DEBUG_LOG(COMMON, "RA: downloaded %s to %s", url, localPath.c_str());
+	return localPath;
 }
 
 void Achievements::term()
@@ -264,6 +310,8 @@ void Achievements::term()
 	if (rc_client == nullptr)
 		return;
 	unloadGame();
+	if (asyncImageDownload.valid())
+		asyncImageDownload.get();
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
 }
@@ -507,15 +555,26 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 
 void Achievements::handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t *event)
 {
-	// TODO there might be more than one. Need to display an icon.
-	//std::string msg = "Challenge: " + std::string(event->achievement->title);
-	//gui_display_notification(msg.c_str(), 10000);
 	INFO_LOG(COMMON, "RA: Challenge: %s", event->achievement->title);
+	char url[128];
+	int rc = rc_client_achievement_get_image_url(event->achievement, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
+	if (rc == RC_OK)
+	{
+		std::string image = getOrDownloadImage(url);
+		notifier.showChallenge(image);
+	}
 }
 
 void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t *event)
 {
-	// TODO
+	INFO_LOG(COMMON, "RA: Challenge hidden: %s", event->achievement->title);
+	char url[128];
+	int rc = rc_client_achievement_get_image_url(event->achievement, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
+	if (rc == RC_OK)
+	{
+		std::string image = getOrDownloadImage(url);
+		notifier.hideChallenge(image);
+	}
 }
 
 void Achievements::handleGameCompleted(const rc_client_event_t *event)
@@ -551,6 +610,7 @@ void Achievements::handleUpdateAchievementProgress(const rc_client_event_t *even
 	notifier.notify(Notification::Progress, image, event->achievement->measured_progress);
 }
 
+static Disc *hashDisk;
 static bool add150;
 
 static void *cdreader_open_track(const char* path, u32 track)
@@ -558,54 +618,31 @@ static void *cdreader_open_track(const char* path, u32 track)
 	DEBUG_LOG(COMMON, "RA: cdreader_open_track %s track %d", path, track);
 	if (track == RC_HASH_CDTRACK_FIRST_DATA)
 	{
-		u32 toc[102];
-		libGDR_GetToc(toc, SingleDensity);
-		for (int i = 0; i < 99; i++)
-			if (toc[i] != 0xffffffff)
-			{
-				if (((toc[i] >> 4) & 0xf) & 4)
-					return reinterpret_cast<void *>(i + 1);
-			}
-		if (libGDR_GetDiscType() == GdRom)
-		{
-			libGDR_GetToc(toc, DoubleDensity);
-			for (int i = 0; i < 99; i++)
-				if (toc[i] != 0xffffffff)
-				{
-					if (((toc[i] >> 4) & 0xf) & 4)
-						return reinterpret_cast<void *>(i + 1);
-				}
-		}
-	}
-	u32 start, end;
-	if (!libGDR_GetTrack(track, start, end))
+		for (const Track& track : hashDisk->tracks)
+			if (track.isDataTrack())
+				return const_cast<Track *>(&track);
 		return nullptr;
+	}
+	if (track <= hashDisk->tracks.size())
+		return const_cast<Track *>(&hashDisk->tracks[track - 1]);
 	else
-		return reinterpret_cast<void *>(track);
+		return nullptr;
 }
 
 static size_t cdreader_read_sector(void* track_handle, u32 sector, void* buffer, size_t requested_bytes)
 {
-	//DEBUG_LOG(COMMON, "RA: cdreader_read_sector track %zd sec %d num %zd", reinterpret_cast<uintptr_t>(track_handle), sector, requested_bytes);
 	if (requested_bytes == 2048)
 		// add 150 sectors to FAD corresponding to files
+		// FIXME get rid of this
 		add150 = true;
-	if (add150)	// FIXME how to get rid of this?
+	//DEBUG_LOG(COMMON, "RA: cdreader_read_sector track %p sec %d+%d num %zd", track_handle, sector, add150 ? 150 : 0, requested_bytes);
+	if (add150)
 		sector += 150;
-	u32 count = requested_bytes;
-	u32 secNum = count / 2048;
-	if (secNum > 0)
-	{
-		libGDR_ReadSector((u8 *)buffer, sector, secNum, 2048);
-		buffer = (u8 *)buffer + secNum * 2048;
-		count -= secNum * 2048;
-	}
-	if (count > 0)
-	{
-		u8 locbuf[2048];
-		libGDR_ReadSector(locbuf, sector + secNum, 1, 2048);
-		memcpy(buffer, locbuf, count);
-	}
+	u8 locbuf[2048];
+	hashDisk->ReadSectors(sector, 1, locbuf, 2048);
+	requested_bytes = std::min<size_t>(requested_bytes, 2048);
+	memcpy(buffer, locbuf, requested_bytes);
+
 	return requested_bytes;
 }
 
@@ -615,12 +652,9 @@ static void cdreader_close_track(void* track_handle)
 
 static u32 cdreader_first_track_sector(void* track_handle)
 {
-	u32 trackNum = reinterpret_cast<uintptr_t>(track_handle);
-	u32 start, end;
-	if (!libGDR_GetTrack(trackNum, start, end))
-		return 0;
-	DEBUG_LOG(COMMON, "RA: cdreader_first_track_sector track %d -> %d", trackNum, start);
-	return start;
+	Track& track = *static_cast<Track *>(track_handle);
+	DEBUG_LOG(COMMON, "RA: cdreader_first_track_sector track %p -> %d", track_handle, track.StartFAD);
+	return track.StartFAD;
 }
 
 std::string Achievements::getGameHash()
@@ -629,7 +663,13 @@ std::string Achievements::getGameHash()
 	{
 		const u32 diskType = libGDR_GetDiscType();
 		if (diskType == NoDisk || diskType == Open)
-			return "";
+			return {};
+		// Reopen the disk locally to avoid threading issues (CHD)
+		try {
+			hashDisk = OpenDisc(settings.content.path);
+		} catch (const FlycastException& e) {
+			return {};
+		}
 		add150 = false;
 		rc_hash_cdreader hooks = {
 				cdreader_open_track,
@@ -641,7 +681,7 @@ std::string Achievements::getGameHash()
 		rc_hash_init_error_message_callback([](const char *msg) {
 			WARN_LOG(COMMON, "cdreader: %s", msg);
 		});
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 		rc_hash_init_verbose_message_callback([](const char *msg) {
 			DEBUG_LOG(COMMON, "cdreader: %s", msg);
 		});
@@ -650,6 +690,8 @@ std::string Achievements::getGameHash()
 	char hash[33] {};
 	rc_hash_generate_from_file(hash, settings.platform.isConsole() ? RC_CONSOLE_DREAMCAST : RC_CONSOLE_ARCADE,
 			settings.content.fileName.c_str());	// fileName is only used for arcade
+	delete hashDisk;
+	hashDisk = nullptr;
 
 	return hash;
 }
@@ -724,7 +766,7 @@ void Achievements::loadGame()
 	}
 	if (!init() || !isLoggedOn()) {
 		if (!isLoggedOn())
-			WARN_LOG(COMMON, "Not logged on. Not loading game yet");
+			INFO_LOG(COMMON, "Not logged on. Not loading game yet");
 		loadingGame = false;
 		return;
 	}
@@ -734,6 +776,10 @@ void Achievements::loadGame()
 		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char *error_message, rc_client_t *client, void *userdata) {
 				((Achievements *)userdata)->gameLoaded(result, error_message);
 			}, this);
+	}
+	else {
+		INFO_LOG(COMMON, "RA: empty hash. Aborting load");
+		loadingGame = false;
 	}
 }
 
@@ -809,6 +855,93 @@ void Achievements::diskChange()
 				notifier.notify(Notification::Login, "", "Media change failed", errorMessage);
 			}
 		}, this);
+}
+
+Game Achievements::getCurrentGame()
+{
+	if (!active)
+		return Game{};
+	const rc_client_game_t *info = rc_client_get_game_info(rc_client);
+	if (info == nullptr)
+		return Game{};
+	char url[128];
+	std::string image;
+	if (rc_client_game_get_image_url(info, url, sizeof(url)) == RC_OK)
+	{
+		bool cached;
+		std::tie(image, cached) = getCachedImage(url);
+		if (!cached)
+		{
+			if (asyncImageDownload.valid())
+			{
+				if (asyncImageDownload.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
+					INFO_LOG(COMMON, "Async image download already in progress");
+				else
+					asyncImageDownload.get();
+			}
+			if (!asyncImageDownload.valid())
+			{
+				std::string surl = url;
+				asyncImageDownload = std::async(std::launch::async, [this, surl]() {
+					getOrDownloadImage(surl.c_str());
+				});
+			}
+		}
+	}
+	rc_client_user_game_summary_t summary;
+	rc_client_get_user_game_summary(rc_client, &summary);
+
+	return Game{ image, info->title, summary.num_unlocked_achievements, summary.num_core_achievements, summary.points_unlocked, summary.points_core };
+}
+
+std::vector<Achievement> Achievements::getAchievementList()
+{
+	std::vector<Achievement> achievements;
+	rc_client_achievement_list_t *list = rc_client_create_achievement_list(rc_client,
+		RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL,
+		RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS);
+	std::vector<std::string> uncachedImages;
+	for (u32 i = 0; i < list->num_buckets; i++)
+	{
+		const char *label = list->buckets[i].label;
+		for (u32 j = 0; j < list->buckets[i].num_achievements; j++)
+		{
+			const rc_client_achievement_t *achievement = list->buckets[i].achievements[j];
+			char url[128];
+			std::string image;
+			if (rc_client_achievement_get_image_url(achievement, achievement->state, url, sizeof(url)) == RC_OK)
+			{
+				bool cached;
+				std::tie(image, cached) = getCachedImage(url);
+				if (!cached)
+					uncachedImages.push_back(url);
+			}
+			std::string status;
+			if (achievement->measured_percent)
+				status = achievement->measured_progress;
+			achievements.emplace_back(image, achievement->title, achievement->description, label, status);
+		}
+	}
+	rc_client_destroy_achievement_list(list);
+	if (!uncachedImages.empty())
+	{
+		if (asyncImageDownload.valid())
+		{
+			if (asyncImageDownload.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
+				INFO_LOG(COMMON, "Async image download already in progress");
+			else
+				asyncImageDownload.get();
+		}
+		if (!asyncImageDownload.valid())
+		{
+			asyncImageDownload = std::async(std::launch::async, [this, uncachedImages]() {
+				for (const std::string& url : uncachedImages)
+					getOrDownloadImage(url.c_str());
+			});
+		}
+	}
+
+	return achievements;
 }
 
 void Achievements::serialize(Serializer& ser)

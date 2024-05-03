@@ -48,6 +48,7 @@
 #include "oslib/resources.h"
 #include "achievements/achievements.h"
 #include "gui_achievements.h"
+#include "IconsFontAwesome6.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -309,6 +310,12 @@ void gui_initFonts()
 
     // TODO Linux, iOS, ...
 #endif
+	// Font Awesome symbols (added to default font)
+	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	verify(data != nullptr);
+	const float symbolFontSize = 21.f * settings.display.uiScale;
+	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, symbolFontSize, &font_cfg, faRanges);
     // Large font without Asian glyphs
 	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
 	verify(data != nullptr);
@@ -574,104 +581,159 @@ static bool savestateAllowed()
 
 static void gui_display_commands()
 {
-   	imguiDriver->displayVmus();
+	imguiDriver->displayVmus();
+	fullScreenWindow(false);
+	ImGui::SetNextWindowBgAlpha(0.8f);
+	ImguiStyleVar _{ImGuiStyleVar_WindowBorderSize, 0};
 
-    centerNextWindow();
-    ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoDecoration);
+	{
+		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
-    ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+		float buttonHeight = 50.f;	// not scaled
+		bool lowH = ImGui::GetContentRegionAvail().y < ((100 + 50 * 6) * settings.display.uiScale
+				+ ImGui::GetStyle().FramePadding.y * 2 + ImGui::GetStyle().ItemSpacing.y * 5);
+		if (lowH)
+		{
+			// Low height available (phone): Put game icon in first column without text
+			// Button columns in next 2 columns
+			float emptyW = ImGui::GetContentRegionAvail().x - (100 + 150 * 2) * settings.display.uiScale - ImGui::GetStyle().WindowPadding.x * 2;
+			ImGui::Columns(3, "buttons", false);
+			ImGui::SetColumnWidth(0, 100 * settings.display.uiScale + ImGui::GetStyle().FramePadding.x * 2 + emptyW / 3);
+			bool veryLowH = ImGui::GetContentRegionAvail().y < (50 * 6 * settings.display.uiScale
+					+ ImGui::GetStyle().ItemSpacing.y * 5);
+			if (veryLowH)
+				buttonHeight = (ImGui::GetContentRegionAvail().y - ImGui::GetStyle().ItemSpacing.y * 5)
+					/ 6 / settings.display.uiScale;
+		}
+		GameMedia game;
+		game.path = settings.content.path;
+		game.fileName = settings.content.fileName;
+		GameBoxart art = boxart.getBoxart(game);
+		ImguiTexture tex(art.boxartPath);
+		// TODO use placeholder image if not available
+		tex.draw(ScaledVec2(100, 100));
 
-    {
-    	if (card_reader::barcodeAvailable())
-    	{
+		if (!lowH)
+		{
+			ImGui::SameLine();
+			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+			ImGui::PushFont(largeFont);
+			ImGui::Text("%s", art.name.c_str());
+			ImGui::PopFont();
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+			ImGui::TextWrapped("%s", art.fileName.c_str());
+			ImGui::PopStyleColor();
+			ImGui::EndChild();
+
+			ImGui::Columns(3, "buttons", false);
+			ImGui::SetColumnWidth(0, 100.f * settings.display.uiScale  + ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetColumnWidth(1, 200.f * settings.display.uiScale);
+		}
+		ImGui::NextColumn();
+		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
+
+		// Resume
+		if (ImGui::Button(ICON_FA_PLAY "  Resume", ScaledVec2(150, buttonHeight)))
+		{
+			GamepadDevice::load_system_mappings();
+			gui_setState(GuiState::Closed);
+		}
+		// Cheats
+		{
+			DisabledScope _{settings.network.online};
+
+			if (ImGui::Button(ICON_FA_MASK "  Cheats", ScaledVec2(150, buttonHeight)) && !settings.network.online)
+				gui_setState(GuiState::Cheats);
+		}
+		// Achievements
+		{
+			DisabledScope _{!achievements::isActive()};
+
+			if (ImGui::Button(ICON_FA_TROPHY "  Achievements", ScaledVec2(150, buttonHeight)) && achievements::isActive())
+				gui_setState(GuiState::Achievements);
+		}
+		// Insert/Eject Disk
+		const char *disk_label = libGDR_GetDiscType() == Open ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
+		if (ImGui::Button(disk_label, ScaledVec2(150, buttonHeight)))
+		{
+			if (libGDR_GetDiscType() == Open) {
+				gui_setState(GuiState::SelectDisk);
+			}
+			else {
+				DiscOpenLid();
+				gui_setState(GuiState::Closed);
+			}
+		}
+		// Settings
+		if (ImGui::Button(ICON_FA_GEAR "  Settings", ScaledVec2(150, buttonHeight)))
+			gui_setState(GuiState::Settings);
+		// Exit
+		if (ImGui::Button(commandLineStart ? ICON_FA_POWER_OFF "  Exit" : ICON_FA_POWER_OFF "  Close Game", ScaledVec2(150, buttonHeight)))
+			gui_stop_game();
+
+		ImGui::NextColumn();
+		{
+			DisabledScope _{!savestateAllowed()};
+
+			// Load State
+			if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
+			{
+				gui_setState(GuiState::Closed);
+				dc_loadstate(config::SavestateSlot);
+			}
+
+			// Save State
+			if (ImGui::Button(ICON_FA_DOWNLOAD "  Save State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
+			{
+				gui_setState(GuiState::Closed);
+				dc_savestate(config::SavestateSlot);
+			}
+
+			// Slot #
+			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
+			{
+				if (config::SavestateSlot == 0)
+					config::SavestateSlot = 9;
+				else
+					config::SavestateSlot--;
+				SaveSettings();
+			}
+			std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+			float spacingW = (150.f * settings.display.uiScale - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
+			ImGui::SameLine(0, spacingW);
+			ImGui::Text("%s", slot.c_str());
+			ImGui::SameLine(0, spacingW);
+			if (ImGui::ArrowButton("##next-slot", ImGuiDir_Right))
+			{
+				 if (config::SavestateSlot == 9)
+					 config::SavestateSlot = 0;
+				 else
+					config::SavestateSlot++;
+				 SaveSettings();
+			}
+			std::string date = dc_getStateUpdateDate(config::SavestateSlot);
+			{
+				ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
+				if (date.empty())
+					ImGui::TextColored(gray, "Empty");
+				else
+					ImGui::TextColored(gray, "%s", date.c_str());
+			}
+		}
+		// Barcode
+		if (card_reader::barcodeAvailable())
+		{
+			ImGui::NewLine();
+			ImGui::Text("Barcode Card");
 			char cardBuf[64] {};
 			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
-			if (ImGui::InputText("Card", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
+			if (ImGui::InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
 				card_reader::barcodeSetCard(cardBuf);
-    	}
-
-    	DisabledScope scope(!savestateAllowed());
-
-		// Load State
-		if (ImGui::Button("Load State", ScaledVec2(110, 50)) && savestateAllowed())
-		{
-			gui_setState(GuiState::Closed);
-			dc_loadstate(config::SavestateSlot);
 		}
-		ImGui::SameLine();
 
-		// Slot #
-		std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-		if (ImGui::Button(slot.c_str(), ImVec2(80 * settings.display.uiScale - ImGui::GetStyle().FramePadding.x, 50 * settings.display.uiScale)))
-			ImGui::OpenPopup("slot_select_popup");
-		if (ImGui::BeginPopup("slot_select_popup"))
-		{
-			for (int i = 0; i < 10; i++)
-				if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
-						ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
-					config::SavestateSlot = i;
-					SaveSettings();
-				}
-			ImGui::EndPopup();
-		}
-		ImGui::SameLine();
-
-		// Save State
-		if (ImGui::Button("Save State", ScaledVec2(110, 50)) && savestateAllowed())
-		{
-			gui_setState(GuiState::Closed);
-			dc_savestate(config::SavestateSlot);
-		}
-    }
-
-	ImGui::Columns(2, "buttons", false);
-
-	// Settings
-	if (ImGui::Button("Settings", ScaledVec2(150, 50)))
-	{
-		gui_setState(GuiState::Settings);
+		ImGui::Columns(1, nullptr, false);
 	}
-	ImGui::NextColumn();
-	if (ImGui::Button("Resume", ScaledVec2(150, 50)))
-	{
-		GamepadDevice::load_system_mappings();
-		gui_setState(GuiState::Closed);
-	}
-
-	ImGui::NextColumn();
-
-	// Insert/Eject Disk
-	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
-	if (ImGui::Button(disk_label, ScaledVec2(150, 50)))
-	{
-		if (libGDR_GetDiscType() == Open)
-		{
-			gui_setState(GuiState::SelectDisk);
-		}
-		else
-		{
-			DiscOpenLid();
-			gui_setState(GuiState::Closed);
-		}
-	}
-	ImGui::NextColumn();
-
-	// Cheats
-	{
-		DisabledScope scope(settings.network.online);
-
-		if (ImGui::Button("Cheats", ScaledVec2(150, 50)) && !settings.network.online)
-			gui_setState(GuiState::Cheats);
-	}
-	ImGui::Columns(1, nullptr, false);
-
-	// Exit
-	if (ImGui::Button(commandLineStart ? "Exit" : "Close Game", ScaledVec2(300, 50)
-			+ ImVec2(ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1, 0)))
-	{
-		gui_stop_game();
-	}
-
 	ImGui::End();
 }
 
@@ -2929,49 +2991,9 @@ static void gameTooltip(const std::string& tip)
     }
 }
 
-static bool getGameImage(const GameBoxart& art, ImTextureID& textureId, bool allowLoad)
+static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
 {
-	textureId = ImTextureID{};
-	if (art.boxartPath.empty())
-		return false;
-
-	// Get the boxart texture. Load it if needed.
-	textureId = imguiDriver->getTexture(art.boxartPath);
-	if (textureId == ImTextureID() && allowLoad)
-	{
-		int width, height;
-		u8 *imgData = loadImage(art.boxartPath, width, height);
-		if (imgData != nullptr)
-		{
-			try {
-				textureId = imguiDriver->updateTextureAndAspectRatio(art.boxartPath, imgData, width, height);
-			} catch (...) {
-				// vulkan can throw during resizing
-			}
-			free(imgData);
-		}
-		return true;
-	}
-	return false;
-}
-
-static bool gameImageButton(ImTextureID textureId, const std::string& tooltip, ImVec2 size)
-{
-	float ar = imguiDriver->getAspectRatio(textureId);
-	ImVec2 uv0 { 0.f, 0.f };
-	ImVec2 uv1 { 1.f, 1.f };
-	if (ar > 1)
-	{
-		uv0.y = -(ar - 1) / 2;
-		uv1.y = 1 + (ar - 1) / 2;
-	}
-	else if (ar != 0)
-	{
-		ar = 1 / ar;
-		uv0.x = -(ar - 1) / 2;
-		uv1.x = 1 + (ar - 1) / 2;
-	}
-	bool pressed = ImGui::ImageButton("", textureId, size - ImGui::GetStyle().FramePadding * 2, uv0, uv1);
+	bool pressed = texture.button("", size, gameName);
 	gameTooltip(tooltip);
 
     return pressed;
@@ -3036,22 +3058,16 @@ static void gui_display_content()
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		int counter = 0;
-		int loadedImages = 0;
 		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
 		{
 			ImGui::PushID("bios");
 			bool pressed;
 			if (config::BoxartDisplayMode)
 			{
-				ImTextureID textureId{};
 				GameMedia game;
 				GameBoxart art = boxart.getBoxartAndLoad(game);
-				if (getGameImage(art, textureId, loadedImages < 10))
-					loadedImages++;
-				if (textureId != ImTextureID())
-					pressed = gameImageButton(textureId, "Dreamcast BIOS", responsiveBoxVec2);
-				else
-					pressed = ImGui::Button("Dreamcast BIOS", responsiveBoxVec2);
+				ImguiTexture tex(art.boxartPath);
+				pressed = gameImageButton(tex, "Dreamcast BIOS", responsiveBoxVec2, "Dreamcast BIOS");
 			}
 			else
 			{
@@ -3084,23 +3100,19 @@ static void gui_display_content()
 				if (filter.PassFilter(gameName.c_str()))
 				{
 					ImGui::PushID(game.path.c_str());
-					bool pressed;
+					bool pressed = false;
 					if (config::BoxartDisplayMode)
 					{
 						if (counter % itemsPerLine != 0)
 							ImGui::SameLine();
 						counter++;
-						ImTextureID textureId{};
-						// Get the boxart texture. Load it if needed (max 10 per frame).
-						if (getGameImage(art, textureId, loadedImages < 10))
-							loadedImages++;
-						if (textureId != ImTextureID())
-							pressed = gameImageButton(textureId, game.name, responsiveBoxVec2);
-						else
+						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
+						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None))
 						{
-							pressed = ImGui::Button(gameName.c_str(), responsiveBoxVec2);
-							gameTooltip(game.name);
+							ImguiTexture tex(art.boxartPath);
+							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
 						}
+						ImGui::EndChild();
 					}
 					else
 					{
@@ -3380,6 +3392,9 @@ void gui_display_ui()
 		break;
 	case GuiState::Cheats:
 		gui_cheats();
+		break;
+	case GuiState::Achievements:
+		achievements::achievementList();
 		break;
 	default:
 		die("Unknown UI state");

@@ -706,7 +706,7 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7
 add_subdirectory(core/deps/libelf)
 target_link_libraries(${PROJECT_NAME} PRIVATE elf)
 if(NOT LIBRETRO)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_DISABLE_DEMO_WINDOWS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_DISABLE_DEMO_WINDOWS IMGUI_DEFINE_MATH_OPERATORS)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/imgui core/deps/imgui/backends)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/imgui/imgui.cpp
@@ -1015,7 +1015,8 @@ cmrc_add_resources(flycast-resources
 if(NOT LIBRETRO)
 	cmrc_add_resources(flycast-resources
 		fonts/Roboto-Medium.ttf.zip
-		fonts/Roboto-Regular.ttf.zip)
+		fonts/Roboto-Regular.ttf.zip
+		fonts/fa-solid-900.ttf.zip)
 	if(ANDROID)
 		cmrc_add_resources(flycast-resources
 			WHENCE resources
@@ -1292,6 +1293,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/game_scanner.h
+			core/rend/imgui_driver.cpp
 			core/rend/imgui_driver.h
 			core/rend/gui.cpp
 			core/rend/gui.h
