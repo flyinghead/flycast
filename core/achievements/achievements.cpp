@@ -249,7 +249,7 @@ void Achievements::loadCache()
 			std::lock_guard<std::mutex> _(cacheMutex);
 			cacheMap[v] = name;
 		}
-		closedir(dir);
+		flycast::closedir(dir);
 	}
 }
 
