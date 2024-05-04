@@ -292,8 +292,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 void VulkanContext::InitImgui()
 {
-	imguiDriver.reset();
-	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
+	VulkanDriver *vkDriver = dynamic_cast<VulkanDriver *>(imguiDriver.get());
+	if (vkDriver == nullptr) {
+		imguiDriver.reset();
+		imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
+	}
+	else {
+		vkDriver->reset();
+	}
 	ImGui_ImplVulkan_InitInfo initInfo{};
 	initInfo.Instance = (VkInstance)*instance;
 	initInfo.PhysicalDevice = (VkPhysicalDevice)physicalDevice;

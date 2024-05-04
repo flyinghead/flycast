@@ -26,10 +26,16 @@
 class VulkanDriver final : public ImGuiDriver
 {
 public:
-	~VulkanDriver() {
+	void reset()
+	{
 		textures.clear();
 		linearSampler.reset();
 		ImGui_ImplVulkan_Shutdown();
+		justStarted = true;
+	}
+
+	~VulkanDriver() {
+		reset();
 	}
 
 	void newFrame() override {
@@ -44,11 +50,7 @@ public:
 		try {
 			bool rendering = context->IsRendering();
 			if (!rendering)
-			{
-				if (context->recreateSwapChainIfNeeded())
-					return;
-				context->NewFrame();
-			}
+				context->NewFrame(); // may reset this driver
 			vk::CommandBuffer vmuCmdBuffer{};
 			if (!rendering || newFrameStarted)
 			{
@@ -69,7 +71,7 @@ public:
 	}
 
 	void present() override {
-		getContext()->Present(); // may destroy this driver
+		getContext()->Present(); // may reset this driver
 	}
 
 	ImTextureID getTexture(const std::string& name) override {
