@@ -271,7 +271,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T36807D 05", nullptr,    { 0x140F74, 0x140FA4 }, { 0x43FA0000, 0x3F400000 } },	// Sword of Bersek (PAL)
 		{ "T-36805N",   nullptr,    { 0x13F1C4, 0x13F194 }, { 0x3F400000, 0x43F00000 } },	// Sword of Bersek (USA)
 		{ "MK-51186",   nullptr,    { 0x4A19B0 }, { 0x43700000 } },		// Tennis 2K2 (USA)
-		{ "T15123N",    nullptr,    { 0x29B7BC }, { 0x3F400000 } },		// Test Drive Le Mans (USA) doesn't work?
+		{ "T15123N",    nullptr,    { 0x29B7BC }, { 0x3F400000 } },		// Test Drive Le Mans (USA)
 		{ "T20801M",    nullptr,    { 0x1AAC80, 0x1AACB0 }, { 0x43F00000, 0x3F400000 } },	// Tetris 4D (JP)
 		{ "MK-5101153", nullptr,    { 0x14EFA8, 0x14EFD8 }, { 0x43F00000, 0x3F400000 } },	// Timestalkers (PAL)
 		{ "T7009D50",   nullptr,    { 0x39173C }, { 0x3F400000 } },		// Tech Romancer (PAL)
@@ -300,7 +300,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 //		{ "T0000",      nullptr,    { 0x3A514C, 0x3A6170 }, { 0x3F400000, 0x00000356 } },	// Volgarr the Viking. Not working
 		{ "xxxxxxxxxx", nullptr,    { 0x20BB68, 0x1ACBD0, 0x1B9ADC },	// Code 1 reduces clipping.	Code 2 fixes the clock.
 				{ 0x43700000, 0x7C1ACC60, 0x3F400000 } },					// What's Shenmue (JP)
-		{ "T40504D 50", nullptr,    { 0x75281C }, { 0x3F400000 } },		// Wetrix+ (PAL) not working?
+		{ "T40504D 50", nullptr,    { 0x75281C }, { 0x3F400000 } },		// Wetrix+ (PAL)
 		{ "MK-51152",   nullptr,    { 0x014E90 }, { 0x43700000 } },		// World Series Baseball 2K2 (USA)
 		{ "T20401M",    nullptr,    { 0x323CB0, 0x1ACBD0, 0x1B9ADC },	// Code 1 reduces clipping. Code 2 fixes the HUD.
 				{ 0x43700000, 0x1ACC60, 0x3F400000 } },						// Zero Gunner 2 (JP)
