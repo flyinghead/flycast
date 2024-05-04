@@ -641,7 +641,7 @@ static void gui_display_commands()
 		}
 		// Cheats
 		{
-			DisabledScope _{settings.network.online};
+			DisabledScope _{settings.network.online || settings.raHardcoreMode};
 
 			if (ImGui::Button(ICON_FA_MASK "  Cheats", ScaledVec2(150, buttonHeight)) && !settings.network.online)
 				gui_setState(GuiState::Cheats);
@@ -676,11 +676,14 @@ static void gui_display_commands()
 		{
 			DisabledScope _{!savestateAllowed()};
 
-			// Load State
-			if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
 			{
-				gui_setState(GuiState::Closed);
-				dc_loadstate(config::SavestateSlot);
+				DisabledScope _{settings.raHardcoreMode};
+				// Load State
+				if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
+				{
+					gui_setState(GuiState::Closed);
+					dc_loadstate(config::SavestateSlot);
+				}
 			}
 
 			// Save State
@@ -1813,10 +1816,13 @@ static void gui_display_settings()
 #if USE_DISCORD
 			OptionCheckbox("Discord Presence", config::DiscordPresence, "Show which game you are playing on Discord");
 #endif
+#ifdef USE_RACHIEVEMENTS
 			OptionCheckbox("Enable RetroAchievements", config::EnableAchievements, "Track your game achievements using RetroAchievements.org");
 			{
 				DisabledScope _(!config::EnableAchievements);
 				ImGui::Indent();
+				OptionCheckbox("Hardcore Mode", config::AchievementsHardcoreMode,
+						"Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode.");
 				ImGui::InputText("Username", &config::AchievementsUserName.get(),
 						achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None, nullptr, nullptr);
 				if (config::EnableAchievements)
@@ -1858,6 +1864,7 @@ static void gui_display_settings()
 				}
 				ImGui::Unindent();
 			}
+#endif
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
@@ -3394,8 +3401,10 @@ void gui_display_ui()
 		gui_cheats();
 		break;
 	case GuiState::Achievements:
+#ifdef USE_RACHIEVEMENTS
 		achievements::achievementList();
 		break;
+#endif
 	default:
 		die("Unknown UI state");
 		break;
@@ -3439,12 +3448,13 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-//	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
-	{
-		gui_newFrame();
-		ImGui::NewFrame();
+	gui_newFrame();
+	ImGui::NewFrame();
 
-		if (!achievements::notifier.draw() && !message.empty())
+#ifdef USE_RACHIEVEMENTS
+	if (!achievements::notifier.draw())
+#endif
+		if (!message.empty())
 		{
 			ImGui::SetNextWindowBgAlpha(0);
 			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
@@ -3456,20 +3466,20 @@ void gui_display_osd()
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
 			ImGui::End();
 		}
-		imguiDriver->displayCrosshairs();
-		if (config::FloatVMUs)
-			imguiDriver->displayVmus();
-//		gui_plot_render_time(settings.display.width, settings.display.height);
-		if (ggpo::active())
-		{
-			if (config::NetworkStats)
-				ggpo::displayStats();
-			chat.display();
-		}
+	imguiDriver->displayCrosshairs();
+	if (config::FloatVMUs)
+		imguiDriver->displayVmus();
+
+	if (ggpo::active())
+	{
+		if (config::NetworkStats)
+			ggpo::displayStats();
+		chat.display();
+	}
+	if (!settings.raHardcoreMode)
 		lua::overlay();
 
-		gui_endFrame(gui_is_open());
-	}
+	gui_endFrame(gui_is_open());
 }
 
 void gui_display_profiler()

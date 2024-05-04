@@ -54,6 +54,12 @@ bool isActive();
 Game getCurrentGame();
 std::vector<Achievement> getAchievementList();
 
+#else
+
+static inline bool isActive() {
+	return false;
+}
+
 #endif
 
 void serialize(Serializer& ser);

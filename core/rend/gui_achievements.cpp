@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifdef USE_RACHIEVEMENTS
 #include "gui_achievements.h"
 #include "gui.h"
 #include "gui_util.h"
@@ -219,6 +220,8 @@ void achievementList()
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
 		ImGui::TextWrapped("%s", ss.str().c_str());
 		ImGui::PopStyleColor();
+		if (settings.raHardcoreMode)
+			ImGui::Text("Hardcore Mode");
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -274,3 +277,4 @@ void achievementList()
 }
 
 }	// namespace achievements
+#endif // USE_RACHIEVEMENTS

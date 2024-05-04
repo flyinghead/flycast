@@ -36,7 +36,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <atomic>
-#include <tuple>
+#include <utility>
 #include <xxhash.h>
 
 namespace achievements
@@ -70,7 +70,7 @@ private:
 	void resumeGame();
 	void loadCache();
 	std::string getOrDownloadImage(const char *url);
-	std::tuple<std::string, bool> getCachedImage(const char *url);
+	std::pair<std::string, bool> getCachedImage(const char *url);
 	void diskChange();
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -105,57 +105,46 @@ private:
 	std::future<void> asyncImageDownload;
 };
 
-bool init()
-{
+bool init() {
 	return Achievements::Instance().init();
 }
 
-void term()
-{
+void term() {
 	Achievements::Instance().term();
 }
 
-std::future<void> login(const char *username, const char *password)
-{
+std::future<void> login(const char *username, const char *password) {
 	return Achievements::Instance().login(username, password);
 }
 
-void logout()
-{
+void logout() {
 	Achievements::Instance().logout();
 }
 
-bool isLoggedOn()
-{
+bool isLoggedOn() {
 	return Achievements::Instance().isLoggedOn();
 }
 
-bool isActive()
-{
+bool isActive() {
 	return Achievements::Instance().isActive();
 }
 
-Game getCurrentGame()
-{
+Game getCurrentGame() {
 	return Achievements::Instance().getCurrentGame();
 }
 
-std::vector<Achievement> getAchievementList()
-{
+std::vector<Achievement> getAchievementList() {
 	return Achievements::Instance().getAchievementList();
 }
 
-void serialize(Serializer& ser)
-{
+void serialize(Serializer& ser) {
 	Achievements::Instance().serialize(ser);
 }
-void deserialize(Deserializer& deser)
-{
+void deserialize(Deserializer& deser) {
 	Achievements::Instance().deserialize(deser);
 }
 
-Achievements& Achievements::Instance()
-{
+Achievements& Achievements::Instance() {
 	static Achievements instance;
 	return instance;
 }
@@ -190,9 +179,8 @@ bool Achievements::init()
 		return false;
 
 	rc_client_set_event_handler(rc_client, clientEventHandler);
-
-	//TODO
 	rc_client_set_hardcore_enabled(rc_client, 0);
+	// TODO Expose these settings?
 	//rc_client_set_encore_mode_enabled(rc_client, 0);
 	//rc_client_set_unofficial_enabled(rc_client, 0);
 	//rc_client_set_spectator_mode_enabled(rc_client, 0);
@@ -257,19 +245,19 @@ static u64 hashUrl(const char *url) {
 	return XXH64(url, strlen(url), 13);
 }
 
-std::tuple<std::string, bool> Achievements::getCachedImage(const char *url)
+std::pair<std::string, bool> Achievements::getCachedImage(const char *url)
 {
 	u64 hash = hashUrl(url);
 	std::lock_guard<std::mutex> _(cacheMutex);
 	auto it = cacheMap.find(hash);
 	if (it != cacheMap.end()) {
-		return make_tuple(cachePath + it->second, true);
+		return std::make_pair(cachePath + it->second, true);
 	}
 	else
 	{
 		std::stringstream stream;
 		stream << std::hex << hash << ".png";
-		return make_tuple(cachePath + stream.str(), false);
+		return std::make_pair(cachePath + stream.str(), false);
 	}
 }
 
@@ -473,6 +461,12 @@ static void handleServerError(const rc_client_server_error_t* error)
 	notifier.notify(Notification::Error, "", error->api, error->error_message);
 }
 
+static void notifyError(const std::string& msg)
+{
+	WARN_LOG(COMMON, "RA error: %s", msg.c_str());
+	notifier.notify(Notification::Error, "", msg);
+}
+
 void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_t* client)
 {
 	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
@@ -521,9 +515,15 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
-	case RC_CLIENT_EVENT_DISCONNECTED:
-	case RC_CLIENT_EVENT_RECONNECTED:
 */
+	case RC_CLIENT_EVENT_DISCONNECTED:
+		notifyError("RetroAchievements disconnected");
+		break;
+
+	case RC_CLIENT_EVENT_RECONNECTED:
+		notifyError("RetroAchievements reconnected");
+		break;
+
 	default:
 		WARN_LOG(COMMON, "RA: Unhandled event: %u", event->type);
 		break;
@@ -532,6 +532,7 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 
 void Achievements::handleResetEvent(const rc_client_event_t *event)
 {
+	// This never seems to be called, probably because hardcore mode is enabled before starting the game.
 	INFO_LOG(COMMON, "RA: Resetting runtime due to reset event");
 	rc_client_reset(rc_client);
 }
@@ -722,7 +723,14 @@ void Achievements::resumeGame()
 	if (asyncServerCall.valid())
 		asyncServerCall.get();
 	if (config::EnableAchievements)
+	{
 		loadGame();
+		if (settings.raHardcoreMode && !config::AchievementsHardcoreMode)
+		{
+			settings.raHardcoreMode = false;
+			rc_client_set_hardcore_enabled(rc_client, 0);
+		}
+	}
 	else
 		term();
 }
@@ -773,6 +781,8 @@ void Achievements::loadGame()
 	std::string gameHash = getGameHash();
 	if (!gameHash.empty())
 	{
+		// settings.raHardcoreMode is set before enabling cheats and loading the initial savestate
+		rc_client_set_hardcore_enabled(rc_client, settings.raHardcoreMode);
 		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char *error_message, rc_client_t *client, void *userdata) {
 				((Achievements *)userdata)->gameLoaded(result, error_message);
 			}, this);
@@ -780,6 +790,7 @@ void Achievements::loadGame()
 	else {
 		INFO_LOG(COMMON, "RA: empty hash. Aborting load");
 		loadingGame = false;
+		settings.raHardcoreMode = false;
 	}
 }
 
@@ -796,6 +807,7 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 		}
 		else
 			WARN_LOG(COMMON, "RA Loading game failed: %s", errorMessage);
+		settings.raHardcoreMode = false;
 		loadingGame = false;
 		return;
 	}
@@ -803,6 +815,7 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	if (info == nullptr)
 	{
 		WARN_LOG(COMMON, "RA: rc_client_get_game_info() returned NULL");
+		settings.raHardcoreMode = false;
 		loadingGame = false;
 		return;
 	}
@@ -811,6 +824,10 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	EventManager::listen(Event::VBlank, emuEventCallback, this);
 	NOTICE_LOG(COMMON, "RA: game %d loaded: %s, achievements %d leaderboards %d rich presence %d", info->id, info->title,
 			rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
+	if (!rc_client_has_achievements(rc_client))
+		settings.raHardcoreMode = false;
+	else
+		settings.raHardcoreMode = (bool)rc_client_get_hardcore_enabled(rc_client);
 	std::string image;
 	char url[512];
 	if (rc_client_game_get_image_url(info, url, sizeof(url)) == RC_OK)
@@ -819,7 +836,8 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	rc_client_get_user_game_summary(rc_client, &summary);
 	std::string text = "You have " + std::to_string(summary.num_unlocked_achievements)
 			+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked";
-	notifier.notify(Notification::Login, image, info->title, text);
+	std::string text2 = settings.raHardcoreMode ? "Hardcore Mode" : "";
+	notifier.notify(Notification::Login, image, info->title, text, text2);
 }
 
 void Achievements::unloadGame()
@@ -833,6 +851,7 @@ void Achievements::unloadGame()
 		asyncServerCall.get();
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
 	rc_client_unload_game(rc_client);
+	settings.raHardcoreMode = false;
 }
 
 void Achievements::diskChange()
@@ -846,10 +865,12 @@ void Achievements::diskChange()
 	}
 	rc_client_begin_change_media_from_hash(rc_client, hash.c_str(), [](int result, const char *errorMessage, rc_client_t *client, void *userdata) {
 			if (result == RC_HARDCORE_DISABLED) {
-				notifier.notify(Notification::Login, "", "Hardcore disabled", "Unrecognized media inserted");
+				settings.raHardcoreMode = false;
+				notifier.notify(Notification::Login, "", "Hardcore mode disabled", "Unrecognized media inserted");
 			}
 			else if (result != RC_OK)
 			{
+				settings.raHardcoreMode = false;
 				if (errorMessage == nullptr)
 					errorMessage = rc_error_str(result);
 				notifier.notify(Notification::Login, "", "Media change failed", errorMessage);

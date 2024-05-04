@@ -210,7 +210,7 @@ struct settings_t
 		int drivingSimSlave;
 	} naomi;
 
-	bool disableRenderer;
+	bool raHardcoreMode;
 };
 
 extern settings_t settings;

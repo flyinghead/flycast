@@ -153,6 +153,8 @@ void dc_savestate(int index)
 
 void dc_loadstate(int index)
 {
+	if (settings.raHardcoreMode)
+		return;
 	u32 total_size = 0;
 	FILE *f = nullptr;
 

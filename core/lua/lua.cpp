@@ -43,7 +43,7 @@ using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 static void emuEventCallback(Event event, void *)
 {
-	if (L == nullptr)
+	if (L == nullptr || settings.raHardcoreMode)
 		return;
 	lock_guard lock(mutex);
 	try {

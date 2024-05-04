@@ -431,9 +431,12 @@ void CheatManager::reset(const std::string& gameId)
 		setActive(false);
 		this->gameId = gameId;
 #ifndef LIBRETRO
-		std::string cheatFile = cfgLoadStr("cheats", gameId, "");
-		if (!cheatFile.empty())
-			loadCheatFile(cheatFile);
+		if (!settings.raHardcoreMode)
+		{
+			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
+			if (!cheatFile.empty())
+				loadCheatFile(cheatFile);
+		}
 #endif
 		size_t cheatCount = cheats.size();
 		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
@@ -491,7 +494,7 @@ void CheatManager::reset(const std::string& gameId)
 		if (cheats.size() > cheatCount)
 			setActive(true);
 	}
-	if (config::WidescreenGameHacks)
+	if (config::WidescreenGameHacks && !settings.raHardcoreMode)
 	{
 		if (settings.platform.isConsole())
 		{
