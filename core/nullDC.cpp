@@ -248,13 +248,6 @@ std::string dc_getStateUpdateDate(int index)
 	struct stat st;
 	if (flycast::stat(filename.c_str(), &st) != 0)
 		return {};
-	time_t ago = time(nullptr) - st.st_mtime;
-	if (ago < 60)
-		return std::to_string(ago) + " seconds ago";
-	if (ago < 3600)
-		return std::to_string(ago / 60) + " minutes ago";
-	if (ago < 3600 * 24)
-		return std::to_string(ago / 3600) + " hours ago";
 	tm t;
 	if (localtime_r(&st.st_mtime, &t) == nullptr)
 		return {};

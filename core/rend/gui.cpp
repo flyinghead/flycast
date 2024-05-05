@@ -313,9 +313,8 @@ void gui_initFonts()
 	// Font Awesome symbols (added to default font)
 	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
 	verify(data != nullptr);
-	const float symbolFontSize = 21.f * settings.display.uiScale;
 	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, symbolFontSize, &font_cfg, faRanges);
+	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &font_cfg, faRanges);
     // Large font without Asian glyphs
 	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
 	verify(data != nullptr);
@@ -590,22 +589,17 @@ static void gui_display_commands()
 	{
 		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
-		float buttonHeight = 50.f;	// not scaled
-		bool lowH = ImGui::GetContentRegionAvail().y < ((100 + 50 * 6) * settings.display.uiScale
-				+ ImGui::GetStyle().FramePadding.y * 2 + ImGui::GetStyle().ItemSpacing.y * 5);
-		if (lowH)
-		{
-			// Low height available (phone): Put game icon in first column without text
-			// Button columns in next 2 columns
-			float emptyW = ImGui::GetContentRegionAvail().x - (100 + 150 * 2) * settings.display.uiScale - ImGui::GetStyle().WindowPadding.x * 2;
-			ImGui::Columns(3, "buttons", false);
-			ImGui::SetColumnWidth(0, 100 * settings.display.uiScale + ImGui::GetStyle().FramePadding.x * 2 + emptyW / 3);
-			bool veryLowH = ImGui::GetContentRegionAvail().y < (50 * 6 * settings.display.uiScale
-					+ ImGui::GetStyle().ItemSpacing.y * 5);
-			if (veryLowH)
-				buttonHeight = (ImGui::GetContentRegionAvail().y - ImGui::GetStyle().ItemSpacing.y * 5)
-					/ 6 / settings.display.uiScale;
-		}
+		float columnWidth = std::min(200.f,
+				(ImGui::GetContentRegionAvail().x - (100 + 150) * settings.display.uiScale - ImGui::GetStyle().FramePadding.x * 2)
+				/ 2 / settings.display.uiScale);
+		float buttonWidth = 150.f;	// not scaled
+		bool lowW = ImGui::GetContentRegionAvail().x < ((100 + buttonWidth * 3) * settings.display.uiScale
+				+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2);
+		if (lowW)
+			buttonWidth = std::min(150.f,
+					(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2)
+					/ 3 / settings.display.uiScale);
+
 		GameMedia game;
 		game.path = settings.content.path;
 		game.fileName = settings.content.fileName;
@@ -614,27 +608,31 @@ static void gui_display_commands()
 		// TODO use placeholder image if not available
 		tex.draw(ScaledVec2(100, 100));
 
-		if (!lowH)
-		{
-			ImGui::SameLine();
-			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
-			ImGui::PushFont(largeFont);
-			ImGui::Text("%s", art.name.c_str());
-			ImGui::PopFont();
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-			ImGui::TextWrapped("%s", art.fileName.c_str());
-			ImGui::PopStyleColor();
-			ImGui::EndChild();
+		ImGui::SameLine();
+		ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+		ImGui::PushFont(largeFont);
+		ImGui::Text("%s", art.name.c_str());
+		ImGui::PopFont();
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+		ImGui::TextWrapped("%s", art.fileName.c_str());
+		ImGui::PopStyleColor();
+		ImGui::EndChild();
 
+		if (lowW) {
 			ImGui::Columns(3, "buttons", false);
-			ImGui::SetColumnWidth(0, 100.f * settings.display.uiScale  + ImGui::GetStyle().ItemSpacing.x);
-			ImGui::SetColumnWidth(1, 200.f * settings.display.uiScale);
 		}
-		ImGui::NextColumn();
+		else
+		{
+			ImGui::Columns(4, "buttons", false);
+			ImGui::SetColumnWidth(0, 100.f * settings.display.uiScale  + ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetColumnWidth(1, columnWidth * settings.display.uiScale);
+			ImGui::SetColumnWidth(2, columnWidth * settings.display.uiScale);
+			ImGui::NextColumn();
+		}
 		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
 
 		// Resume
-		if (ImGui::Button(ICON_FA_PLAY "  Resume", ScaledVec2(150, buttonHeight)))
+		if (ImGui::Button(ICON_FA_PLAY "  Resume", ScaledVec2(buttonWidth, 50)))
 		{
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
@@ -643,19 +641,21 @@ static void gui_display_commands()
 		{
 			DisabledScope _{settings.network.online || settings.raHardcoreMode};
 
-			if (ImGui::Button(ICON_FA_MASK "  Cheats", ScaledVec2(150, buttonHeight)) && !settings.network.online)
+			if (ImGui::Button(ICON_FA_MASK "  Cheats", ScaledVec2(buttonWidth, 50)) && !settings.network.online)
 				gui_setState(GuiState::Cheats);
 		}
 		// Achievements
 		{
 			DisabledScope _{!achievements::isActive()};
 
-			if (ImGui::Button(ICON_FA_TROPHY "  Achievements", ScaledVec2(150, buttonHeight)) && achievements::isActive())
+			if (ImGui::Button(ICON_FA_TROPHY "  Achievements", ScaledVec2(buttonWidth, 50)) && achievements::isActive())
 				gui_setState(GuiState::Achievements);
 		}
+		ImGui::NextColumn();
+
 		// Insert/Eject Disk
 		const char *disk_label = libGDR_GetDiscType() == Open ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
-		if (ImGui::Button(disk_label, ScaledVec2(150, buttonHeight)))
+		if (ImGui::Button(disk_label, ScaledVec2(buttonWidth, 50)))
 		{
 			if (libGDR_GetDiscType() == Open) {
 				gui_setState(GuiState::SelectDisk);
@@ -666,10 +666,10 @@ static void gui_display_commands()
 			}
 		}
 		// Settings
-		if (ImGui::Button(ICON_FA_GEAR "  Settings", ScaledVec2(150, buttonHeight)))
+		if (ImGui::Button(ICON_FA_GEAR "  Settings", ScaledVec2(buttonWidth, 50)))
 			gui_setState(GuiState::Settings);
 		// Exit
-		if (ImGui::Button(commandLineStart ? ICON_FA_POWER_OFF "  Exit" : ICON_FA_POWER_OFF "  Close Game", ScaledVec2(150, buttonHeight)))
+		if (ImGui::Button(commandLineStart ? ICON_FA_POWER_OFF "  Exit" : ICON_FA_POWER_OFF "  Close Game", ScaledVec2(buttonWidth, 50)))
 			gui_stop_game();
 
 		ImGui::NextColumn();
@@ -679,7 +679,7 @@ static void gui_display_commands()
 			{
 				DisabledScope _{settings.raHardcoreMode};
 				// Load State
-				if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
+				if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
 					dc_loadstate(config::SavestateSlot);
@@ -687,7 +687,7 @@ static void gui_display_commands()
 			}
 
 			// Save State
-			if (ImGui::Button(ICON_FA_DOWNLOAD "  Save State", ScaledVec2(150, buttonHeight)) && savestateAllowed())
+			if (ImGui::Button(ICON_FA_DOWNLOAD "  Save State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
 			{
 				gui_setState(GuiState::Closed);
 				dc_savestate(config::SavestateSlot);
@@ -703,7 +703,7 @@ static void gui_display_commands()
 				SaveSettings();
 			}
 			std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-			float spacingW = (150.f * settings.display.uiScale - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
+			float spacingW = (buttonWidth * settings.display.uiScale - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
 			ImGui::SameLine(0, spacingW);
 			ImGui::Text("%s", slot.c_str());
 			ImGui::SameLine(0, spacingW);
@@ -1520,7 +1520,7 @@ static void contentpath_warning_popup()
 
 static inline void gui_debug_tab()
 {
-	if (ImGui::BeginTabItem("Debug"))
+	if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
 	{
 		ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -1649,11 +1649,15 @@ static void gui_display_settings()
 	    ImGui::PopStyleVar();
 	}
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
+	if (ImGui::GetContentRegionAvail().x / settings.display.uiScale >= 650.f)
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
+	else
+		// low width
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(4, 6));
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
-		if (ImGui::BeginTabItem("General"))
+		if (ImGui::BeginTabItem(ICON_FA_TOOLBOX " General"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			{
@@ -1868,7 +1872,7 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Controls"))
+		if (ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
@@ -2089,7 +2093,7 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Video"))
+		if (ImGui::BeginTabItem(ICON_FA_DISPLAY " Video"))
 		{
 			int renderApi;
 			bool perPixel;
@@ -2494,7 +2498,7 @@ static void gui_display_settings()
 		    	break;
 		    }
 		}
-		if (ImGui::BeginTabItem("Audio"))
+		if (ImGui::BeginTabItem(ICON_FA_MUSIC " Audio"))	// or ICON_FA_VOLUME_OFF?
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
@@ -2608,7 +2612,7 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Network"))
+		if (ImGui::BeginTabItem(ICON_FA_WIFI " Network"))
 		{
 			ImGuiStyle& style = ImGui::GetStyle();
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -2751,7 +2755,7 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Advanced"))
+		if (ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    header("CPU Mode");
@@ -2802,24 +2806,24 @@ static void gui_display_settings()
 	            		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
 #endif
 		    }
-			ImGui::PopStyleVar();
-			ImGui::EndTabItem();
 
-			#ifdef USE_LUA
+#ifdef USE_LUA
 			header("Lua Scripting");
 			{
 				ImGui::InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
 				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
 			}
-			#endif
+#endif
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
 		}
 
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
 		gui_debug_tab();
 #endif
 
-		if (ImGui::BeginTabItem("About"))
+		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    header("Flycast");
@@ -3021,30 +3025,31 @@ static void gui_display_content()
     ImGui::Unindent(10 * settings.display.uiScale);
 
     static ImGuiTextFilter filter;
+    const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, "Settings");
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, 32 * settings.display.uiScale);
 	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - 32 * settings.display.uiScale
-			- ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::GetStyle().ItemSpacing.x);
+			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
 #ifdef TARGET_UWP
     	void gui_load_game();
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
-				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
+				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__SWITCH__)
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x
-				- ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Exit").x);
-		if (ImGui::Button("Exit"))
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
+				- ImGui::GetStyle().ItemSpacing.x - iconButtonWidth(ICON_FA_POWER_OFF, "Exit"));
+		if (iconButton(ICON_FA_POWER_OFF, "Exit"))
 			dc_exit();
 		ImGui::SameLine();
 #else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW);
 #endif
-		if (ImGui::Button("Settings"))
+		if (iconButton(ICON_FA_GEAR, "Settings"))
 			gui_setState(GuiState::Settings);
     }
     ImGui::PopStyleVar();
@@ -3462,8 +3467,9 @@ void gui_display_osd()
 
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-			ImGui::SetWindowFontScale(1.5);
+			ImGui::PushFont(largeFont);
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
+			ImGui::PopFont();
 			ImGui::End();
 		}
 	imguiDriver->displayCrosshairs();
