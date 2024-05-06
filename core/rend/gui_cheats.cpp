@@ -39,7 +39,7 @@ static void addCheat()
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 		ImGui::AlignTextToFramePadding();
-		ImGui::Indent(10 * settings.display.uiScale);
+		ImGui::Indent(uiScaled(10));
 		ImGui::Text("ADD CHEAT");
 
 		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Cancel").x - ImGui::GetStyle().FramePadding.x * 4.f
@@ -59,7 +59,7 @@ static void addCheat()
 			}
 		}
 
-		ImGui::Unindent(10 * settings.display.uiScale);
+		ImGui::Unindent(uiScaled(10));
     }
 
 	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
@@ -93,7 +93,7 @@ void gui_cheats()
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 		ImGui::AlignTextToFramePadding();
-		ImGui::Indent(10 * settings.display.uiScale);
+		ImGui::Indent(uiScaled(10));
 		ImGui::Text("CHEATS");
 
 		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Add").x  - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 6.f
@@ -118,7 +118,7 @@ void gui_cheats()
 		if (ImGui::Button("Close"))
 			gui_setState(GuiState::Commands);
 
-		ImGui::Unindent(10 * settings.display.uiScale);
+		ImGui::Unindent(uiScaled(10));
     }
 
 	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);

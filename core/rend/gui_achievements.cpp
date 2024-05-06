@@ -133,7 +133,7 @@ bool Notification::draw()
 	float y = ImGui::GetIO().DisplaySize.y;
 	if (now - startTime < START_ANIM_TIME)
 		// Slide up
-		y += 80.f * settings.display.uiScale * (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
+		y += uiScaled(80.f) * (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
 
 	ImGui::SetNextWindowPos(ImVec2(0, y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
 	if (type == Challenge)
@@ -205,12 +205,12 @@ void achievementList()
 
 	{
 		float w = ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::GetStyle().WindowPadding.x
-				- (80.f + 20.f * 2) * settings.display.uiScale;	// image width and button frame padding
+				- uiScaled(80.f + 20.f * 2);	// image width and button frame padding
 		Game game = getCurrentGame();
 		ImguiTexture tex(game.image);
 		tex.draw(ScaledVec2(80.f, 80.f));
 		ImGui::SameLine();
-		ImGui::BeginChild("game_info", ImVec2(w, 80.f * settings.display.uiScale), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+		ImGui::BeginChild("game_info", ImVec2(w, uiScaled(80.f)), ImGuiChildFlags_None, ImGuiWindowFlags_None);
 		ImGui::PushFont(largeFont);
 		ImGui::Text("%s", game.title.c_str());
 		ImGui::PopFont();
@@ -241,7 +241,7 @@ void achievementList()
 			if (ach.category != category)
 			{
 				category = ach.category;
-				ImGui::Indent(10 * settings.display.uiScale);
+				ImGui::Indent(uiScaled(10));
 				if (category == "Locked" || category == "Active Challenges" || category == "Almost There")
 					ImGui::Text(ICON_FA_LOCK);
 				else if (category == "Unlocked" || category == "Recently Unlocked")
@@ -250,7 +250,7 @@ void achievementList()
 				ImGui::PushFont(largeFont);
 				ImGui::Text("%s", category.c_str());
 				ImGui::PopFont();
-				ImGui::Unindent(10 * settings.display.uiScale);
+				ImGui::Unindent(uiScaled(10));
 			}
 			ImguiID _("achiev" + std::to_string(id++));
 			ImguiTexture tex(ach.image);

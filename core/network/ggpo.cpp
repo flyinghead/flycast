@@ -861,14 +861,14 @@ void displayStats()
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(95 * settings.display.uiScale, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(95, 0));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
 	ImguiStyleColor _2(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
 	// Send Queue
 	ImGui::Text("Send Q");
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, uiScaled(10.f)), "");
 
 	// Frame Delay
 	ImGui::Text("Delay");
@@ -890,7 +890,7 @@ void displayStats()
 		// yellow
 	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
 	ImGui::Text("Predicted");
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, uiScaled(10.f)), "");
 	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
@@ -899,7 +899,7 @@ void displayStats()
 	if (timesync > 0)
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
 	ImGui::Text("Behind");
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, uiScaled(10.f)), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();

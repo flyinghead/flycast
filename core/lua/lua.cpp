@@ -22,6 +22,7 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include "rend/gui.h"
+#include "rend/gui_util.h"
 #include "hw/mem/addrspace.h"
 #include "cfg/option.h"
 #include "emulator.h"
@@ -369,7 +370,7 @@ static void beginWindow(const char *title, int x, int y, int w, int h)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(x, y));
-	ImGui::SetNextWindowSize(ImVec2(w * settings.display.uiScale, h * settings.display.uiScale));
+	ImGui::SetNextWindowSize(ScaledVec2(w, h));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin(title, NULL, ImGuiWindowFlags_AlwaysAutoResize |  ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
@@ -395,7 +396,7 @@ static void uiTextRightAligned(const std::string& text)
 
 static void uiBargraph(float v)
 {
-	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(v, ImVec2(-1, uiScaled(10.f)), "");
 }
 
 static int uiButton(lua_State *L)

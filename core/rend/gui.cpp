@@ -222,7 +222,7 @@ void gui_initFonts()
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
 	largeFont = nullptr;
-	const float fontSize = 17.f * settings.display.uiScale;
+	const float fontSize = uiScaled(17.f);
 	size_t dataSize;
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
 	verify(data != nullptr);
@@ -320,7 +320,7 @@ void gui_initFonts()
     // Large font without Asian glyphs
 	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
 	verify(data != nullptr);
-	const float largeFontSize = 21.f * settings.display.uiScale;
+	const float largeFontSize = uiScaled(21.f);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
 
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
@@ -591,15 +591,15 @@ static void gui_display_commands()
 		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
 		float columnWidth = std::min(200.f,
-				(ImGui::GetContentRegionAvail().x - (100 + 150) * settings.display.uiScale - ImGui::GetStyle().FramePadding.x * 2)
-				/ 2 / settings.display.uiScale);
+				(ImGui::GetContentRegionAvail().x - uiScaled(100 + 150) - ImGui::GetStyle().FramePadding.x * 2)
+				/ 2 / uiScaled(1));
 		float buttonWidth = 150.f;	// not scaled
-		bool lowW = ImGui::GetContentRegionAvail().x < ((100 + buttonWidth * 3) * settings.display.uiScale
+		bool lowW = ImGui::GetContentRegionAvail().x < (uiScaled(100 + buttonWidth * 3)
 				+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2);
 		if (lowW)
 			buttonWidth = std::min(150.f,
 					(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2)
-					/ 3 / settings.display.uiScale);
+					/ 3 / uiScaled(1));
 
 		GameMedia game;
 		game.path = settings.content.path;
@@ -626,9 +626,9 @@ static void gui_display_commands()
 		else
 		{
 			ImGui::Columns(4, "buttons", false);
-			ImGui::SetColumnWidth(0, 100.f * settings.display.uiScale  + ImGui::GetStyle().ItemSpacing.x);
-			ImGui::SetColumnWidth(1, columnWidth * settings.display.uiScale);
-			ImGui::SetColumnWidth(2, columnWidth * settings.display.uiScale);
+			ImGui::SetColumnWidth(0, uiScaled(100.f)  + ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetColumnWidth(1, uiScaled(columnWidth));
+			ImGui::SetColumnWidth(2, uiScaled(columnWidth));
 			const ImVec2 vmuPos = ImGui::GetStyle().WindowPadding + ScaledVec2(0.f, 100.f)
 					+ ImVec2(insetLeft, ImGui::GetStyle().ItemSpacing.y);
 			imguiDriver->displayVmus(vmuPos);
@@ -708,7 +708,7 @@ static void gui_display_commands()
 				SaveSettings();
 			}
 			std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
-			float spacingW = (buttonWidth * settings.display.uiScale - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
+			float spacingW = (uiScaled(buttonWidth) - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
 			ImGui::SameLine(0, spacingW);
 			ImGui::Text("%s", slot.c_str());
 			ImGui::SameLine(0, spacingW);
@@ -1138,7 +1138,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
-		const float scaling = settings.display.uiScale;
 
 		static int map_system;
 		static int item_current_map_idx = 0;
@@ -1160,7 +1159,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		if (gamepad->maple_port() == MAPLE_PORTS)
 		{
 			ImGui::SameLine();
-			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (uiScaled(30) - ImGui::GetFontSize()) / 2));
 			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
 			ImGui::SetNextItemWidth(portWidth);
 			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
@@ -1181,7 +1180,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		float gameConfigWidth = 0;
 		if (!settings.content.gameId.empty())
 			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
-		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - uiScaled(100) * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
 
@@ -1222,7 +1221,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 						hitbox = true;
 				}
 				ImGui::NewLine();
-				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
+				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
 				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 				if (ImGui::Button("Yes"))
 				{
@@ -1250,7 +1249,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::SetNextItemWidth(comboWidth);
 		// Make the combo height the same as the Done and Reset buttons
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (uiScaled(30) - ImGui::GetFontSize()) / 2));
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
 		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
@@ -1404,7 +1403,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		{
 			header("Rumble");
 			int power = gamepad->get_rumble_power();
-			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			ImGui::SetNextItemWidth(uiScaled(300));
 			if (ImGui::SliderInt("Power", &power, 0, 100, "%d%%"))
 				gamepad->set_rumble_power(power);
 			ImGui::SameLine();
@@ -1414,13 +1413,13 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		{
 			header("Thumbsticks");
 			int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
-			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			ImGui::SetNextItemWidth(uiScaled(300));
 			if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
 				gamepad->set_dead_zone(deadzone / 100.f);
 			ImGui::SameLine();
 			ShowHelpMarker("Minimum deflection to register as input");
 			int saturation = std::round(gamepad->get_saturation() * 100.f);
-			ImGui::SetNextItemWidth(300 * settings.display.uiScale);
+			ImGui::SetNextItemWidth(uiScaled(300));
 			if (ImGui::SliderInt("Saturation", &saturation, 50, 200, "%d%%"))
 				gamepad->set_saturation(saturation / 100.f);
 			ImGui::SameLine();
@@ -1442,11 +1441,11 @@ void error_popup()
 		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
 			ImGui::TextWrapped("%s", error_msg.c_str());
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosX((currentwidth - uiScaled(80.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
 			{
 				error_msg.clear();
@@ -1469,11 +1468,11 @@ static void contentpath_warning_popup()
         ImGui::OpenPopup("Incorrect Content Location?");
         if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
             ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
             float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * settings.display.uiScale);
+            ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x - uiScaled(55.f));
             if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
             {
             	scanner.content_path_looks_incorrect = false;
@@ -1482,7 +1481,7 @@ static void contentpath_warning_popup()
             }
 
             ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * settings.display.uiScale);
+            ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x + uiScaled(55.f));
             if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
             {
             	scanner.content_path_looks_incorrect = false;
@@ -1623,7 +1622,7 @@ static void gui_display_settings()
 	if (game_started)
 	{
 	    ImGui::SameLine();
-		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(uiScaled(16), normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
 			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
@@ -1640,7 +1639,7 @@ static void gui_display_settings()
 		}
 	}
 
-	if (ImGui::GetContentRegionAvail().x / settings.display.uiScale >= 650.f)
+	if (ImGui::GetContentRegionAvail().x >= uiScaled(650.f))
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 6));
 	else
 		// low width
@@ -1917,7 +1916,7 @@ static void gui_display_settings()
 						}
 
 						ImGui::TableSetColumnIndex(3);
-						ImGui::SameLine(0, 8 * settings.display.uiScale);
+						ImGui::SameLine(0, uiScaled(8));
 						if (gamepad->remappable() && ImGui::Button("Map"))
 						{
 							gamepad_port = 0;
@@ -1942,7 +1941,7 @@ static void gui_display_settings()
 #endif
 							)
 						{
-							ImGui::SameLine(0, 16 * settings.display.uiScale);
+							ImGui::SameLine(0, uiScaled(16));
 							if (ImGui::Button("Settings"))
 								ImGui::OpenPopup("Gamepad Settings");
 							gamepadSettingsPopup(gamepad);
@@ -1963,7 +1962,7 @@ static void gui_display_settings()
 		    {
 				bool is_there_any_xhair = false;
 				if (ImGui::BeginTable("dreamcastDevices", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings,
-						ImVec2(0, 0), 8 * settings.display.uiScale))
+						ImVec2(0, 0), uiScaled(8)))
 				{
 					const float mainComboWidth = calcComboWidth(maple_device_types[11]); 			// densha de go! controller
 					const float expComboWidth = calcComboWidth(maple_expansion_device_types[2]);	// vibration pack
@@ -2918,7 +2917,7 @@ static void gui_display_settings()
 				{
 					ImGui::Text("Do you want to reset Vulkan to use new driver?");
 					ImGui::NewLine();
-					ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(20 * settings.display.uiScale, ImGui::GetStyle().ItemSpacing.y));
+					ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
 					ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 					if (ImGui::Button("Yes"))
 					{
@@ -2999,15 +2998,15 @@ static void gui_display_content()
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
-    ImGui::Indent(10 * settings.display.uiScale);
+    ImGui::Indent(uiScaled(10));
     ImGui::Text("GAMES");
-    ImGui::Unindent(10 * settings.display.uiScale);
+    ImGui::Unindent(uiScaled(10));
 
     static ImGuiTextFilter filter;
     const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, "Settings");
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
-	ImGui::SameLine(0, 32 * settings.display.uiScale);
-	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - 32 * settings.display.uiScale
+	ImGui::SameLine(0, uiScaled(32));
+	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
 			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
 #endif
     if (gui_state != GuiState::SelectDisk)
@@ -3039,7 +3038,7 @@ static void gui_display_content()
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		const float totalWidth = ImGui::GetContentRegionMax().x - (!ImGui::GetCurrentWindow()->ScrollbarY ? ImGui::GetStyle().ScrollbarSize : 0);
-		const int itemsPerLine = std::max<int>(totalWidth / (150 * settings.display.uiScale + ImGui::GetStyle().ItemSpacing.x), 1);
+		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = totalWidth / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
 		
@@ -3219,7 +3218,7 @@ static void gui_network_start()
 
 	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
-	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+	ImGui::SetCursorPosX(uiScaled(20.f));
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
@@ -3242,8 +3241,8 @@ static void gui_network_start()
 	ImGui::Text("%s", get_notification().c_str());
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
-	ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+	ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
+	ImGui::SetCursorPosY(uiScaled(126.f));
 	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
@@ -3269,7 +3268,7 @@ static void gui_display_loadscreen()
 
     ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
     ImGui::AlignTextToFramePadding();
-    ImGui::SetCursorPosX(20.f * settings.display.uiScale);
+    ImGui::SetCursorPosX(uiScaled(20.f));
 	try {
 		const char *label = gameLoader.getProgress().label;
 		if (label == nullptr)
@@ -3298,12 +3297,12 @@ static void gui_display_loadscreen()
 			ImGui::Text("%s", label);
 			{
 				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-				ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
+				ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, uiScaled(20.f)), "");
 			}
 
 			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			ImGui::SetCursorPosY(126.f * settings.display.uiScale);
+			ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(uiScaled(126.f));
 			if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 				gameLoader.cancel();
 		}
