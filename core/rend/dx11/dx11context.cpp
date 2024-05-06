@@ -260,10 +260,6 @@ void DX11Context::EndImGuiFrame()
 			if (crosshairsNeeded() || config::FloatVMUs)
 				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
 		}
-		else
-		{
-			overlay.draw(settings.display.width, settings.display.height, true, false);
-		}
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 	frameRendered = true;

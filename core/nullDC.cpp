@@ -105,7 +105,7 @@ void dc_savestate(int index)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", (int)ser.size());
-		gui_display_notification("Save state failed - memory full", 2000);
+		gui_display_notification("Save state failed - memory full", 5000);
     	return;
 	}
 
@@ -119,7 +119,7 @@ void dc_savestate(int index)
 	if ( f == NULL )
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
-		gui_display_notification("Cannot open save file", 2000);
+		gui_display_notification("Cannot open save file", 5000);
 		free(data);
     	return;
 	}
@@ -131,14 +131,14 @@ void dc_savestate(int index)
 	if (!zipFile.Open(filename, true))
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
-		gui_display_notification("Cannot open save file", 2000);
+		gui_display_notification("Cannot open save file", 5000);
 		free(data);
     	return;
 	}
 	if (zipFile.Write(data, ser.size()) != ser.size())
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
-		gui_display_notification("Error saving state", 2000);
+		gui_display_notification("Error saving state", 5000);
 		zipFile.Close();
 		free(data);
     	return;
@@ -148,7 +148,7 @@ void dc_savestate(int index)
 
 	free(data);
 	NOTICE_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size());
-	gui_display_notification("State saved", 1000);
+	gui_display_notification("State saved", 2000);
 }
 
 void dc_loadstate(int index)
@@ -194,7 +194,7 @@ void dc_loadstate(int index)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
-		gui_display_notification("Failed to load state - memory full", 2000);
+		gui_display_notification("Failed to load state - memory full", 5000);
 		if (f != nullptr)
 			std::fclose(f);
 		else
@@ -216,7 +216,7 @@ void dc_loadstate(int index)
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
-		gui_display_notification("Failed to load state - I/O error", 2000);
+		gui_display_notification("Failed to load state - I/O error", 5000);
 		free(data);
 		return;
 	}

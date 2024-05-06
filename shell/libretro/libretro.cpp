@@ -1015,7 +1015,7 @@ static void update_variables(bool first_startup)
 										| 0xff000000;
 
 		vmu_lcd_status[i * 2] = false;
-		vmu_lcd_changed[i * 2] = true;
+		vmuLastChanged[i * 2] = getTimeMs();
 		vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
 		vmu_screen_params[i].vmu_screen_size_mult = 1;
 		vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r;

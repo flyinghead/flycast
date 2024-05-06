@@ -217,9 +217,10 @@ void achievementList()
 		std::stringstream ss;
 		ss << "You have unlocked " << game.unlockedAchievements << " of " << game.totalAchievements
 				<< " achievements and " << game.points << " of " << game.totalPoints << " points.";
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-		ImGui::TextWrapped("%s", ss.str().c_str());
-		ImGui::PopStyleColor();
+		{
+			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+			ImGui::TextWrapped("%s", ss.str().c_str());
+		}
 		if (settings.raHardcoreMode)
 			ImGui::Text("Hardcore Mode");
 		ImGui::EndChild();
@@ -260,10 +261,11 @@ void achievementList()
 			ImGui::Text("%s", ach.title.c_str());
 			ImGui::PopFont();
 
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-			ImGui::TextWrapped("%s", ach.description.c_str());
-			ImGui::TextWrapped("%s", ach.status.c_str());
-			ImGui::PopStyleColor();
+			{
+				ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+				ImGui::TextWrapped("%s", ach.description.c_str());
+				ImGui::TextWrapped("%s", ach.status.c_str());
+			}
 
 			scrollWhenDraggingOnVoid();
 			ImGui::EndChild();

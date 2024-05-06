@@ -36,30 +36,31 @@ static void addCheat()
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-    ImGui::AlignTextToFramePadding();
-    ImGui::Indent(10 * settings.display.uiScale);
-    ImGui::Text("ADD CHEAT");
+    {
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+		ImGui::AlignTextToFramePadding();
+		ImGui::Indent(10 * settings.display.uiScale);
+		ImGui::Text("ADD CHEAT");
 
-	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Cancel").x - ImGui::GetStyle().FramePadding.x * 4.f
-    	- ImGui::CalcTextSize("OK").x - ImGui::GetStyle().ItemSpacing.x);
-	if (ImGui::Button("Cancel"))
-		addingCheat = false;
-	ImGui::SameLine();
-	if (ImGui::Button("OK"))
-	{
-		try {
-			cheatManager.addGameSharkCheat(cheatName, cheatCode);
+		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Cancel").x - ImGui::GetStyle().FramePadding.x * 4.f
+			- ImGui::CalcTextSize("OK").x - ImGui::GetStyle().ItemSpacing.x);
+		if (ImGui::Button("Cancel"))
 			addingCheat = false;
-			cheatName[0] = 0;
-			cheatCode[0] = 0;
-		} catch (const FlycastException& e) {
-			gui_error(e.what());
+		ImGui::SameLine();
+		if (ImGui::Button("OK"))
+		{
+			try {
+				cheatManager.addGameSharkCheat(cheatName, cheatCode);
+				addingCheat = false;
+				cheatName[0] = 0;
+				cheatCode[0] = 0;
+			} catch (const FlycastException& e) {
+				gui_error(e.what());
+			}
 		}
-	}
 
-    ImGui::Unindent(10 * settings.display.uiScale);
-    ImGui::PopStyleVar();
+		ImGui::Unindent(10 * settings.display.uiScale);
+    }
 
 	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
     {
@@ -89,35 +90,36 @@ void gui_cheats()
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-    ImGui::AlignTextToFramePadding();
-    ImGui::Indent(10 * settings.display.uiScale);
-    ImGui::Text("CHEATS");
+    {
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+		ImGui::AlignTextToFramePadding();
+		ImGui::Indent(10 * settings.display.uiScale);
+		ImGui::Text("CHEATS");
 
-	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Add").x  - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 6.f
-    	- ImGui::CalcTextSize("Load").x - ImGui::GetStyle().ItemSpacing.x * 2);
-	if (ImGui::Button("Add"))
-		addingCheat = true;
-	ImGui::SameLine();
+		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Add").x  - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 6.f
+			- ImGui::CalcTextSize("Load").x - ImGui::GetStyle().ItemSpacing.x * 2);
+		if (ImGui::Button("Add"))
+			addingCheat = true;
+		ImGui::SameLine();
 #ifdef __ANDROID__
-	if (ImGui::Button("Load"))
-		hostfs::addStorage(false, true, cheatFileSelected);
+		if (ImGui::Button("Load"))
+			hostfs::addStorage(false, true, cheatFileSelected);
 #else
-	if (ImGui::Button("Load"))
-    	ImGui::OpenPopup("Select cheat file");
-	select_file_popup("Select cheat file", [](bool cancelled, std::string selection)
-		{
-			cheatFileSelected(cancelled, selection);
-			return true;
-		}, true, "cht");
+		if (ImGui::Button("Load"))
+			ImGui::OpenPopup("Select cheat file");
+		select_file_popup("Select cheat file", [](bool cancelled, std::string selection)
+			{
+				cheatFileSelected(cancelled, selection);
+				return true;
+			}, true, "cht");
 #endif
 
-	ImGui::SameLine();
-	if (ImGui::Button("Close"))
-		gui_setState(GuiState::Commands);
+		ImGui::SameLine();
+		if (ImGui::Button("Close"))
+			gui_setState(GuiState::Commands);
 
-    ImGui::Unindent(10 * settings.display.uiScale);
-    ImGui::PopStyleVar();
+		ImGui::Unindent(10 * settings.display.uiScale);
+    }
 
 	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
@@ -126,11 +128,10 @@ void gui_cheats()
 		else
 			for (size_t i = 0; i < cheatManager.cheatCount(); i++)
 			{
-				ImGui::PushID(("cheat" + std::to_string(i)).c_str());
+				ImguiID _(("cheat" + std::to_string(i)).c_str());
 				bool v = cheatManager.cheatEnabled(i);
 				if (ImGui::Checkbox(cheatManager.cheatDescription(i).c_str(), &v))
 					cheatManager.enableCheat(i, v);
-				ImGui::PopID();
 			}
     }
     scrollWhenDraggingOnVoid();

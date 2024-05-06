@@ -99,6 +99,7 @@ static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 ImFont *largeFont;
+static Toast toast;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -581,7 +582,6 @@ static bool savestateAllowed()
 
 static void gui_display_commands()
 {
-	imguiDriver->displayVmus();
 	fullScreenWindow(false);
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _{ImGuiStyleVar_WindowBorderSize, 0};
@@ -614,9 +614,10 @@ static void gui_display_commands()
 		ImGui::PushFont(largeFont);
 		ImGui::Text("%s", art.name.c_str());
 		ImGui::PopFont();
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-		ImGui::TextWrapped("%s", art.fileName.c_str());
-		ImGui::PopStyleColor();
+		{
+			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+			ImGui::TextWrapped("%s", art.fileName.c_str());
+		}
 		ImGui::EndChild();
 
 		if (lowW) {
@@ -628,6 +629,9 @@ static void gui_display_commands()
 			ImGui::SetColumnWidth(0, 100.f * settings.display.uiScale  + ImGui::GetStyle().ItemSpacing.x);
 			ImGui::SetColumnWidth(1, columnWidth * settings.display.uiScale);
 			ImGui::SetColumnWidth(2, columnWidth * settings.display.uiScale);
+			const ImVec2 vmuPos = ImGui::GetStyle().WindowPadding + ScaledVec2(0.f, 100.f)
+					+ ImVec2(insetLeft, ImGui::GetStyle().ItemSpacing.y);
+			imguiDriver->displayVmus(vmuPos);
 			ImGui::NextColumn();
 		}
 		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
@@ -743,13 +747,11 @@ static void gui_display_commands()
 
 inline static void header(const char *title)
 {
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+	ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
 	ImGui::ButtonEx(title, ImVec2(-1, 0));
 	ImGui::EndDisabled();
-	ImGui::PopStyleVar();
-	ImGui::PopStyleVar();
 }
 
 const char *maple_device_types[] =
@@ -1059,8 +1061,8 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 static void detect_input_popup(const Mapping *mapping)
 {
 	ImVec2 padding = ScaledVec2(20, 20);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
+	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
+	ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::Text("Waiting for control '%s'...", mapping->name);
@@ -1097,7 +1099,6 @@ static void detect_input_popup(const Mapping *mapping)
 		}
 		ImGui::EndPopup();
 	}
-	ImGui::PopStyleVar(2);
 }
 
 static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
@@ -1129,7 +1130,7 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	fullScreenWindow(true);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		const ImGuiStyle& style = ImGui::GetStyle();
@@ -1159,7 +1160,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		if (gamepad->maple_port() == MAPLE_PORTS)
 		{
 			ImGui::SameLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
 			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
 			ImGui::SetNextItemWidth(portWidth);
 			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
@@ -1175,7 +1176,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				ImGui::EndCombo();
 			}
 			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
-			ImGui::PopStyleVar();
 		}
 		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
 		float gameConfigWidth = 0;
@@ -1206,37 +1206,37 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		if (ImGui::Button("Reset...", ScaledVec2(100, 30)))
 			ImGui::OpenPopup("Confirm Reset");
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-		if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
-			ImGui::Text("Are you sure you want to reset the mappings to default?");
-			static bool hitbox;
-			if (arcade_button_mode)
+			ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
+			if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 			{
-				ImGui::Text("Controller Type:");
-				if (ImGui::RadioButton("Gamepad", !hitbox))
-					hitbox = false;
+				ImGui::Text("Are you sure you want to reset the mappings to default?");
+				static bool hitbox;
+				if (arcade_button_mode)
+				{
+					ImGui::Text("Controller Type:");
+					if (ImGui::RadioButton("Gamepad", !hitbox))
+						hitbox = false;
+					ImGui::SameLine();
+					if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
+						hitbox = true;
+				}
+				ImGui::NewLine();
+				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
+				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+				if (ImGui::Button("Yes"))
+				{
+					gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
+					gamepad->save_mapping(map_system);
+					ImGui::CloseCurrentPopup();
+				}
 				ImGui::SameLine();
-				if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
-					hitbox = true;
-			}
-			ImGui::NewLine();
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-			if (ImGui::Button("Yes"))
-			{
-				gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
-				gamepad->save_mapping(map_system);
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("No"))
-				ImGui::CloseCurrentPopup();
-			ImGui::PopStyleVar(2);
+				if (ImGui::Button("No"))
+					ImGui::CloseCurrentPopup();
 
-			ImGui::EndPopup();
+				ImGui::EndPopup();
+			}
 		}
-		ImGui::PopStyleVar(1);
 
 		ImGui::SameLine();
 
@@ -1297,7 +1297,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				continue;
 			}
 			sprintf(key_id, "key_id%d", systemMapping->key);
-			ImGui::PushID(key_id);
+			ImguiID _(key_id);
 
 			const char *game_btn_name = nullptr;
 			if (arcade_button_mode)
@@ -1336,7 +1336,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				unmapControl(input_mapping, gamepad_port, systemMapping->key);
 			}
 			ImGui::NextColumn();
-			ImGui::PopID();
 		}
 		ImGui::Columns(1, nullptr, false);
 	    scrollWhenDraggingOnVoid();
@@ -1346,7 +1345,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		error_popup();
 		ImGui::EndPopup();
 	}
-	ImGui::PopStyleVar();
 }
 
 static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
@@ -1354,7 +1352,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	centerNextWindow();
 	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
@@ -1432,7 +1430,6 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 
 		ImGui::EndPopup();
 	}
-	ImGui::PopStyleVar();
 }
 
 void error_popup()
@@ -1440,14 +1437,14 @@ void error_popup()
 	if (!error_msg_shown && !error_msg.empty())
 	{
 		ImVec2 padding = ScaledVec2(20, 20);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
+		ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
+		ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
 			ImGui::TextWrapped("%s", error_msg.c_str());
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 80.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
@@ -1456,12 +1453,9 @@ void error_popup()
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SetItemDefaultFocus();
-			ImGui::PopStyleVar();
 			ImGui::PopTextWrapPos();
 			ImGui::EndPopup();
 		}
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar();
 		error_msg_shown = true;
 	}
 }
@@ -1477,7 +1471,7 @@ static void contentpath_warning_popup()
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * settings.display.uiScale);
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
+            ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
             float currentwidth = ImGui::GetContentRegionAvail().x;
             ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * settings.display.uiScale);
             if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
@@ -1497,7 +1491,6 @@ static void contentpath_warning_popup()
                 config::ContentPath.get().clear();
             }
             ImGui::SetItemDefaultFocus();
-            ImGui::PopStyleVar();
             ImGui::EndPopup();
         }
     }
@@ -1519,12 +1512,11 @@ static void contentpath_warning_popup()
     }
 }
 
-static inline void gui_debug_tab()
+static void gui_debug_tab(const ImVec2& normal_padding)
 {
 	if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
 	{
-		ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 	    header("Logging");
 	    {
 	    	LogManager *logManager = LogManager::GetInstance();
@@ -1576,7 +1568,6 @@ static inline void gui_debug_tab()
 			}
 	    }
 #endif
-		ImGui::PopStyleVar();
 		ImGui::EndTabItem();
 	}
 }
@@ -1601,7 +1592,7 @@ static void gui_display_settings()
 	static bool maple_devices_changed;
 
 	fullScreenWindow(false);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 
     ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -1632,7 +1623,7 @@ static void gui_display_settings()
 	if (game_started)
 	{
 	    ImGui::SameLine();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(16 * settings.display.uiScale, normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
 			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
@@ -1647,7 +1638,6 @@ static void gui_display_settings()
 			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
-	    ImGui::PopStyleVar();
 	}
 
 	if (ImGui::GetContentRegionAvail().x / settings.display.uiScale >= 650.f)
@@ -1660,7 +1650,7 @@ static void gui_display_settings()
     {
 		if (ImGui::BeginTabItem(ICON_FA_TOOLBOX " General"))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			{
 				DisabledScope scope(settings.platform.isArcade());
 
@@ -1713,15 +1703,14 @@ static void gui_display_settings()
             	int to_delete = -1;
                 for (u32 i = 0; i < config::ContentPath.get().size(); i++)
                 {
-                	ImGui::PushID(config::ContentPath.get()[i].c_str());
+                	ImguiID _(config::ContentPath.get()[i].c_str());
                     ImGui::AlignTextToFramePadding();
                 	ImGui::Text("%s", config::ContentPath.get()[i].c_str());
                 	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
                 	if (ImGui::Button("X"))
                 		to_delete = i;
-                	ImGui::PopID();
                 }
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+                ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
 #ifdef __ANDROID__
                 if (ImGui::Button("Add"))
                 {
@@ -1742,7 +1731,6 @@ static void gui_display_settings()
                 ImGui::SameLine();
     			if (ImGui::Button("Rescan Content"))
     				scanner.refresh();
-                ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
 
         		ImGui::EndListBox();
@@ -1870,12 +1858,11 @@ static void gui_display_settings()
 				ImGui::Unindent();
 			}
 #endif
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls"))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			header("Physical Devices");
 		    {
 				if (ImGui::BeginTable("physicalDevices", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
@@ -1913,7 +1900,7 @@ static void gui_display_settings()
 						ImGui::TableSetColumnIndex(2);
 						char port_name[32];
 						sprintf(port_name, "##mapleport%d", i);
-						ImGui::PushID(port_name);
+						ImguiID _(port_name);
 						ImGui::SetNextItemWidth(portComboWidth);
 						if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
 						{
@@ -1960,7 +1947,6 @@ static void gui_display_settings()
 								ImGui::OpenPopup("Gamepad Settings");
 							gamepadSettingsPopup(gamepad);
 						}
-						ImGui::PopID();
 					}
 					ImGui::EndTable();
 				}
@@ -2026,7 +2012,7 @@ static void gui_display_settings()
 						{
 							ImGui::TableSetColumnIndex(2 + port);
 							sprintf(device_name, "##device%d.%d", bus, port + 1);
-							ImGui::PushID(device_name);
+							ImguiID _(device_name);
 							ImGui::SetNextItemWidth(expComboWidth);
 							if (ImGui::BeginCombo(device_name, maple_expansion_device_name(config::MapleExpansionDevices[bus][port]), ImGuiComboFlags_None))
 							{
@@ -2043,13 +2029,12 @@ static void gui_display_settings()
 								}
 								ImGui::EndCombo();
 							}
-							ImGui::PopID();
 						}
 						if (config::MapleMainDevices[bus] == MDT_LightGun)
 						{
 							ImGui::TableSetColumnIndex(3);
 							sprintf(device_name, "##device%d.xhair", bus);
-							ImGui::PushID(device_name);
+							ImguiID _(device_name);
 							u32 color = config::CrosshairColor[bus];
 							float xhairColor[4] {
 								(color & 0xff) / 255.f,
@@ -2078,7 +2063,6 @@ static void gui_display_settings()
 								}
 							}
 							is_there_any_xhair |= enabled;
-							ImGui::PopID();
 						}
 						ImGui::PopItemWidth();
 					}
@@ -2091,7 +2075,6 @@ static void gui_display_settings()
 				OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
 		    }
 
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem(ICON_FA_DISPLAY " Video"))
@@ -2131,7 +2114,7 @@ static void gui_display_settings()
 				break;
 			}
 
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 
 	    	constexpr int apiCount = 0
 				#ifdef USE_VULKAN
@@ -2480,7 +2463,6 @@ static void gui_display_settings()
 				}
 			}
 #endif
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 
 		    switch (renderApi)
@@ -2501,7 +2483,7 @@ static void gui_display_settings()
 		}
 		if (ImGui::BeginTabItem(ICON_FA_MUSIC " Audio"))	// or ICON_FA_VOLUME_OFF?
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
             OptionCheckbox("Enable VMU Sounds", config::VmuSound, "Play VMU beeps when enabled.");
@@ -2610,13 +2592,12 @@ static void gui_display_settings()
 				}
 			}
 
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem(ICON_FA_WIFI " Network"))
 		{
 			ImGuiStyle& style = ImGui::GetStyle();
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 
 			header("Network Type");
 			{
@@ -2753,12 +2734,11 @@ static void gui_display_settings()
 				OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
 			}
 #endif
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced"))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 		    header("CPU Mode");
 		    {
 				ImGui::Columns(2, "cpu_modes", false);
@@ -2816,17 +2796,16 @@ static void gui_display_settings()
 				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
 			}
 #endif
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
-		gui_debug_tab();
+		gui_debug_tab(normal_padding);
 #endif
 
 		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 		    header("Flycast");
 		    {
 				ImGui::Text("Version: %s", GIT_VERSION);
@@ -2892,7 +2871,7 @@ static void gui_display_settings()
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 			if (isVulkan(config::RendererType))
 			{
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 				if (config::CustomGpuDriver)
 				{
 					std::string name, description, vendor, version;
@@ -2934,13 +2913,13 @@ static void gui_display_settings()
 					driverDirty = false;
 				}
 
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
+				ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 				if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 				{
 					ImGui::Text("Do you want to reset Vulkan to use new driver?");
 					ImGui::NewLine();
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * settings.display.uiScale, ImGui::GetStyle().ItemSpacing.y));
-					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+					ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(20 * settings.display.uiScale, ImGui::GetStyle().ItemSpacing.y));
+					ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
 					if (ImGui::Button("Yes"))
 					{
 						mainui_reinit();
@@ -2949,16 +2928,10 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					if (ImGui::Button("No"))
 						ImGui::CloseCurrentPopup();
-					ImGui::PopStyleVar(2);
-
 					ImGui::EndPopup();
 				}
-				ImGui::PopStyleVar();
-
-				ImGui::PopStyleVar();
 			}
 #endif
-			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -2968,14 +2941,19 @@ static void gui_display_settings()
     scrollWhenDraggingOnVoid();
     windowDragScroll();
     ImGui::End();
-    ImGui::PopStyleVar();
 }
 
 void gui_display_notification(const char *msg, int duration)
 {
-	std::lock_guard<std::mutex> lock(osd_message_mutex);
-	osd_message = msg;
-	osd_message_end = getTimeMs() + duration;
+	if (gui_state != GuiState::Closed)
+	{
+		std::lock_guard<std::mutex> _{osd_message_mutex};
+		osd_message = msg;
+		osd_message_end = getTimeMs() + duration;
+	}
+	else {
+		toast.show(msg, "", duration);
+	}
 }
 
 static std::string get_notification()
@@ -3014,8 +2992,8 @@ static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, I
 static void gui_display_content()
 {
 	fullScreenWindow(false);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
@@ -3073,7 +3051,7 @@ static void gui_display_content()
 		int counter = 0;
 		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
 		{
-			ImGui::PushID("bios");
+			ImguiID _("bios");
 			bool pressed;
 			if (config::BoxartDisplayMode)
 			{
@@ -3088,7 +3066,6 @@ static void gui_display_content()
 			}
 			if (pressed)
 				gui_start_game("");
-			ImGui::PopID();
 			counter++;
 		}
 		{
@@ -3112,7 +3089,7 @@ static void gui_display_content()
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
-					ImGui::PushID(game.path.c_str());
+					ImguiID _(game.path.c_str());
 					bool pressed = false;
 					if (config::BoxartDisplayMode)
 					{
@@ -3158,7 +3135,6 @@ static void gui_display_content()
 							break;
 						}
 					}
-					ImGui::PopID();
 				}
 			}
 			scanner.get_mutex().unlock();
@@ -3169,8 +3145,6 @@ static void gui_display_content()
     windowDragScroll();
 	ImGui::EndChild();
 	ImGui::End();
-    ImGui::PopStyleVar();
-    ImGui::PopStyleVar();
 
     contentpath_warning_popup();
 }
@@ -3243,7 +3217,7 @@ static void gui_network_start()
 
 	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
 	ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 
@@ -3280,8 +3254,6 @@ static void gui_network_start()
 		}
 		gui_stop_game();
 	}
-	ImGui::PopStyleVar();
-
 	ImGui::End();
 
 	if ((kcode[0] & DC_BTN_START) == 0 && NetworkHandshake::instance != nullptr)
@@ -3295,7 +3267,7 @@ static void gui_display_loadscreen()
 
     ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+    ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
     ImGui::AlignTextToFramePadding();
     ImGui::SetCursorPosX(20.f * settings.display.uiScale);
 	try {
@@ -3324,9 +3296,10 @@ static void gui_display_loadscreen()
 		else
 		{
 			ImGui::Text("%s", label);
-			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
-			ImGui::PopStyleColor();
+			{
+				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+				ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * settings.display.uiScale), "");
+			}
 
 			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 100.f * settings.display.uiScale) / 2.f + ImGui::GetStyle().WindowPadding.x);
@@ -3341,8 +3314,6 @@ static void gui_display_loadscreen()
 #endif
 		gui_stop_game(ex.what());
 	}
-	ImGui::PopStyleVar();
-
     ImGui::End();
 }
 
@@ -3438,7 +3409,7 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			snprintf(text, sizeof(text), "F:%.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
+			snprintf(text, sizeof(text), "F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
 
 			return std::string(text);
 		}
@@ -3450,32 +3421,34 @@ void gui_display_osd()
 {
 	if (gui_state == GuiState::VJoyEdit)
 		return;
-	std::string message = get_notification();
-	if (message.empty())
-		message = getFPSNotification();
-
 	gui_newFrame();
 	ImGui::NewFrame();
 
 #ifdef USE_RACHIEVEMENTS
 	if (!achievements::notifier.draw())
 #endif
-		if (!message.empty())
+		if (!toast.draw())
 		{
-			ImGui::SetNextWindowBgAlpha(0);
-			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 0));
-
-			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-			ImGui::PushFont(largeFont);
-			ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", message.c_str());
-			ImGui::PopFont();
-			ImGui::End();
+			std::string message = getFPSNotification();
+			if (!message.empty())
+			{
+				const float maxW = uiScaled(640.f);
+				ImDrawList *dl = ImGui::GetForegroundDrawList();
+				const ScaledVec2 padding(5.f, 5.f);
+				const ImVec2 size = largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1)
+						+ padding * 2.f;
+				ImVec2 pos(0, ImGui::GetIO().DisplaySize.y - size.y);
+				constexpr float alpha = 0.7f;
+				const ImU32 bg_col = alphaOverride(0x00202020, alpha / 2.f);
+				dl->AddRectFilled(pos, pos + size, bg_col, 0.f);
+				pos += padding;
+				const ImU32 col = alphaOverride(0x0000FFFF, alpha);
+				dl->AddText(largeFont, largeFont->FontSize, pos, col, &message.front(), &message.back() + 1, maxW);
+			}
 		}
-	imguiDriver->displayCrosshairs();
+	imguiDriver->displayCrosshairs();	// OpenGL only
 	if (config::FloatVMUs)
-		imguiDriver->displayVmus();
+		imguiDriver->displayVmus();		// OpenGL only
 
 	if (ggpo::active())
 	{
@@ -3497,22 +3470,22 @@ void gui_display_profiler()
 
 	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
 
-	ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-
-	std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
-	
-	for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
-		char text[256];
-		std::snprintf(text, 256, "%.3f : Thread %s", (float)profileThread->cachedTime, profileThread->threadName.c_str());
-		ImGui::TreeNode(text);
+		ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
 
-		ImGui::Indent();
-		fc_profiler::drawGUI(profileThread->cachedResultTree);
-		ImGui::Unindent();
+		std::unique_lock<std::recursive_mutex> lock(fc_profiler::ProfileThread::s_allThreadsLock);
+
+		for(const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
+		{
+			char text[256];
+			std::snprintf(text, 256, "%.3f : Thread %s", (float)profileThread->cachedTime, profileThread->threadName.c_str());
+			ImGui::TreeNode(text);
+
+			ImGui::Indent();
+			fc_profiler::drawGUI(profileThread->cachedResultTree);
+			ImGui::Unindent();
+		}
 	}
-
-	ImGui::PopStyleColor();
 	
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{

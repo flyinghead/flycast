@@ -37,7 +37,7 @@ void HideOSD();
 // VMUs
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
-extern bool vmu_lcd_changed[8];
+extern u64 vmuLastChanged[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 
@@ -59,5 +59,5 @@ static inline bool crosshairsNeeded()
 static inline void blankVmus()
 {
 	memset(vmu_lcd_data, 0, sizeof(vmu_lcd_data));
-	memset(vmu_lcd_changed, true, sizeof(vmu_lcd_changed));
+	memset(vmuLastChanged, 0, sizeof(vmuLastChanged));
 }

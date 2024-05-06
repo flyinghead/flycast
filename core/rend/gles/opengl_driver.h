@@ -46,7 +46,7 @@ public:
 			return ImTextureID{};
 	}
 
-	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override;
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override;
 
 private:
 	void emuEvent(Event event)
@@ -67,7 +67,6 @@ private:
 		((OpenGLDriver *)p)->emuEvent(event);
 	}
 
-	ImTextureID vmu_lcd_tex_ids[8];
 	ImTextureID crosshairTexId = ImTextureID();
 	bool gameStarted = false;
 	bool frameRendered = false;

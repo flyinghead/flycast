@@ -17,9 +17,24 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "imgui_driver.h"
+#include "gui_util.h"
+#include "osd.h"
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>
+
+constexpr float VMU_WIDTH = 96.f;
+constexpr float VMU_HEIGHT = 64.f;
+constexpr float VMU_PADDING = 8.f;
+
+void ImGuiDriver::reset()
+{
+	aspectRatios.clear();
+	for (auto& tex : vmu_lcd_tex_ids)
+		tex = ImTextureID{};
+	textureLoadCount = 0;
+	vmuLastChanged.fill({});
+}
 
 static u8 *loadImage(const std::string& path, int& width, int& height)
 {
@@ -34,7 +49,7 @@ static u8 *loadImage(const std::string& path, int& width, int& height)
 	return imgData;
 }
 
-ImTextureID ImGuiDriver::getOrLoadTexture(const std::string& path)
+ImTextureID ImGuiDriver::getOrLoadTexture(const std::string& path, bool nearestSampling)
 {
 	ImTextureID id = getTexture(path);
 	if (id == ImTextureID() && textureLoadCount < 10)
@@ -45,7 +60,7 @@ ImTextureID ImGuiDriver::getOrLoadTexture(const std::string& path)
 		if (imgData != nullptr)
 		{
 			try {
-				id = updateTextureAndAspectRatio(path, imgData, width, height);
+				id = updateTextureAndAspectRatio(path, imgData, width, height, nearestSampling);
 			} catch (...) {
 				// vulkan can throw during resizing
 			}
@@ -54,3 +69,42 @@ ImTextureID ImGuiDriver::getOrLoadTexture(const std::string& path)
 	}
 	return id;
 }
+
+void ImGuiDriver::updateVmuTextures()
+{
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		if (this->vmuLastChanged[i] != ::vmuLastChanged[i] || vmu_lcd_tex_ids[i] == ImTextureID())
+		{
+			try {
+				vmu_lcd_tex_ids[i] = updateTexture("__vmu" + std::to_string(i), (const u8 *)vmu_lcd_data[i], 48, 32, true);
+			} catch (...) {
+				 continue;
+			}
+			if (vmu_lcd_tex_ids[i] != ImTextureID())
+				this->vmuLastChanged[i] = ::vmuLastChanged[i];
+		}
+	}
+}
+
+void ImGuiDriver::displayVmus(const ImVec2& pos)
+{
+	updateVmuTextures();
+	const ScaledVec2 size(VMU_WIDTH, VMU_HEIGHT);
+	const float padding = uiScaled(VMU_PADDING);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	ImVec2 cpos(pos + ScaledVec2(2.f, 0));	// 96 pixels wide + 2 * 2 -> 100
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		ImVec2 pos_b = cpos + size;
+		dl->AddImage(vmu_lcd_tex_ids[i], cpos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0x80ffffff);
+		cpos.y += size.y + padding;
+	}
+}
+

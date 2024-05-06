@@ -57,12 +57,12 @@ public:
 	ImTextureID getTexture(const std::string& name) override {
 		auto it = textures.find(name);
 		if (it != textures.end())
-			return (ImTextureID)it->second.textureView.get();
+			return (ImTextureID)&it->second.imTexture;
 		else
 			return ImTextureID{};
 	}
 
-	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override
 	{
 		Texture& texture = textures[name];
 		texture.texture.reset();
@@ -86,8 +86,10 @@ public:
 		theDX11Context.getDevice()->CreateShaderResourceView(texture.texture, &viewDesc, &texture.textureView.get());
 
 		theDX11Context.getDeviceContext()->UpdateSubresource(texture.texture, 0, nullptr, data, width * 4, width * 4 * height);
+		texture.imTexture.shaderResourceView = texture.textureView.get();
+		texture.imTexture.pointSampling = nearestSampling;
 
-	    return (ImTextureID)texture.textureView.get();
+	    return (ImTextureID)&texture.imTexture;
 	}
 
 private:
@@ -95,6 +97,7 @@ private:
 	{
 		ComPtr<ID3D11Texture2D> texture;
 		ComPtr<ID3D11ShaderResourceView> textureView;
+		ImTextureDX11 imTexture;
 	};
 
 	bool frameRendered = false;

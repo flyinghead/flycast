@@ -30,6 +30,7 @@
 #include <chrono>
 #include <future>
 #include <string>
+#include <mutex>
 
 typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
@@ -109,12 +110,16 @@ private:
 	std::future<void> future;
 };
 
+static inline float uiScaled(float f) {
+	return f * settings.display.uiScale;
+}
+
 struct ScaledVec2 : public ImVec2
 {
 	ScaledVec2()
 		: ImVec2() {}
 	ScaledVec2(float x, float y)
-		: ImVec2(x * settings.display.uiScale, y * settings.display.uiScale) {}
+		: ImVec2(uiScaled(x), uiScaled(y)) {}
 };
 
 inline static ImVec2 min(const ImVec2& l, const ImVec2& r) {
@@ -231,3 +236,24 @@ static inline float iconButtonWidth(const char *icon, const std::string& label)
 	s.resize(sprintf(s.data(), "%s  %s", icon, label.c_str()));
 	return ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
 }
+
+static inline ImU32 alphaOverride(ImU32 color, float alpha) {
+	return (color & ~IM_COL32_A_MASK) | (IM_F32_TO_INT8_SAT(alpha) << IM_COL32_A_SHIFT);
+}
+
+class Toast
+{
+public:
+	void show(const std::string& title, const std::string& message, u32 durationMs);
+	bool draw();
+
+private:
+	static constexpr u64 START_ANIM_TIME = 500;
+	static constexpr u64 END_ANIM_TIME = 1000;
+
+	std::string title;
+	std::string message;
+	u64 startTime = 0;
+	u64 endTime = 0;
+	std::mutex mutex;
+};

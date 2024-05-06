@@ -41,6 +41,7 @@ void VulkanOverlay::Init(QuadPipeline *pipeline)
 	}
 	xhairDrawer = std::make_unique<QuadDrawer>();
 	xhairDrawer->Init(pipeline);
+	vmuLastChanged.fill({});
 }
 
 void VulkanOverlay::Term()
@@ -81,7 +82,7 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 				}
 				continue;
 			}
-			if (texture != nullptr && !vmu_lcd_changed[i])
+			if (texture != nullptr && ::vmuLastChanged[i] == this->vmuLastChanged[i])
 				continue;
 
 			if (texture)
@@ -90,7 +91,7 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 #ifdef VK_DEBUG
 			VulkanContext::Instance()->setObjectName((VkImageView)texture->GetImageView(), vk::ImageView::objectType, "VMU " + std::to_string(i));
 #endif
-			vmu_lcd_changed[i] = false;
+			this->vmuLastChanged[i] = ::vmuLastChanged[i];
 		}
 	}
 	if (crosshair && !xhairTexture)

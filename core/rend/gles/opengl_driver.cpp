@@ -21,6 +21,7 @@
 #include "wsi/gl_context.h"
 #include "rend/osd.h"
 #include "rend/gui.h"
+#include "rend/gui_util.h"
 #include "glcache.h"
 #include "gles.h"
 
@@ -41,14 +42,12 @@ static constexpr int vmu_coords[8][2] = {
 		{ 1 , 1 },
 		{ 1 , 1 },
 };
-constexpr int VMU_WIDTH = 70 * 48 / 32;
-constexpr int VMU_HEIGHT = 70;
+constexpr int VMU_WIDTH = 96;
+constexpr int VMU_HEIGHT = 64;
 constexpr int VMU_PADDING = 8;
 
 OpenGLDriver::OpenGLDriver()
 {
-	for (auto& tex : vmu_lcd_tex_ids)
-		tex = ImTextureID();
 	ImGui_ImplOpenGL3_Init();
 	EventManager::listen(Event::Resume, emuEventCallback, this);
 	EventManager::listen(Event::Terminate, emuEventCallback, this);
@@ -60,10 +59,7 @@ OpenGLDriver::~OpenGLDriver()
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
 	std::vector<GLuint> texIds;
-	texIds.reserve(std::size(vmu_lcd_tex_ids) + 1 + textures.size());
-	for (ImTextureID texId : vmu_lcd_tex_ids)
-		if (texId != ImTextureID())
-			texIds.push_back((GLuint)(uintptr_t)texId);
+	texIds.reserve(1 + textures.size());
 	if (crosshairTexId != ImTextureID())
 		texIds.push_back((GLuint)(uintptr_t)crosshairTexId);
 	for (const auto& it : textures)
@@ -77,22 +73,14 @@ void OpenGLDriver::displayVmus()
 {
 	if (!gameStarted)
 		return;
-	ImGui::SetNextWindowBgAlpha(0);
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-	ImGui::Begin("vmu-window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-			| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	const float width = VMU_WIDTH * settings.display.uiScale;
-	const float height = VMU_HEIGHT * settings.display.uiScale;
-	const float padding = VMU_PADDING * settings.display.uiScale;
+	updateVmuTextures();
+	const ScaledVec2 size(VMU_WIDTH, VMU_HEIGHT);
+	const float padding = uiScaled(VMU_PADDING);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
 	for (int i = 0; i < 8; i++)
 	{
 		if (!vmu_lcd_status[i])
 			continue;
-
-		if (vmu_lcd_changed[i] || vmu_lcd_tex_ids[i] == ImTextureID())
-			vmu_lcd_tex_ids[i] = updateTexture("__vmu" + std::to_string(i), (const u8 *)vmu_lcd_data[i], 48, 32);
 
 		int x = vmu_coords[i][0];
 		int y = vmu_coords[i][1];
@@ -100,23 +88,22 @@ void OpenGLDriver::displayVmus()
 		if (x == 0)
 			pos.x = padding;
 		else
-			pos.x = ImGui::GetIO().DisplaySize.x - width - padding;
+			pos.x = ImGui::GetIO().DisplaySize.x - size.x - padding;
 		if (y == 0)
 		{
 			pos.y = padding;
 			if (i & 1)
-				pos.y += height + padding;
+				pos.y += size.y + padding;
 		}
 		else
 		{
-			pos.y = ImGui::GetIO().DisplaySize.y - height - padding;
+			pos.y = ImGui::GetIO().DisplaySize.y - size.y - padding;
 			if (i & 1)
-				pos.y -= height + padding;
+				pos.y -= size.y + padding;
 		}
-		ImVec2 pos_b(pos.x + width, pos.y + height);
-		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
+		ImVec2 pos_b = pos + size;
+		dl->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
 	}
-	ImGui::End();
 }
 
 void OpenGLDriver::displayCrosshairs()
@@ -127,7 +114,7 @@ void OpenGLDriver::displayCrosshairs()
 		return;
 
 	if (crosshairTexId == ImTextureID())
-		crosshairTexId = updateTexture("__crosshair", (const u8 *)getCrosshairTextureData(), 16, 16);
+		crosshairTexId = updateTexture("__crosshair", (const u8 *)getCrosshairTextureData(), 16, 16, true);
 
 	ImGui::SetNextWindowBgAlpha(0);
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -172,15 +159,21 @@ void OpenGLDriver::present()
 	frameRendered = false;
 }
 
-ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data, int width, int height)
+ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling)
 {
 	ImTextureID oldId = getTexture(name);
 	if (oldId != ImTextureID())
 		glcache.DeleteTextures(1, (GLuint *)&oldId);
 	GLuint texId = glcache.GenTexture();
-    glcache.BindTexture(GL_TEXTURE_2D, texId);
-    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glcache.BindTexture(GL_TEXTURE_2D, texId);
+	if (nearestSampling) {
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else {
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
     if (gl.border_clamp_supported)
 	{
 		float color[] = { 0.0f, 0.0f, 0.0f, 0.0f };

@@ -175,7 +175,7 @@ u8 *loadOSDButtons(int &width, int &height)
 
 u32 vmu_lcd_data[8][48 * 32];
 bool vmu_lcd_status[8];
-bool vmu_lcd_changed[8];
+u64 vmuLastChanged[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
@@ -195,7 +195,7 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 #ifndef LIBRETRO
 	vmu_lcd_status[vmu_id] = true;
 #endif
-	vmu_lcd_changed[vmu_id] = true;
+	vmuLastChanged[vmu_id] = getTimeMs();
 }
 
 static const int lightgunCrosshairData[16 * 16] =

@@ -73,6 +73,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include "ggponet.h"
 #include "emulator.h"
 #include "rend/gui.h"
+#include "rend/gui_util.h"
 #include "hw/mem/mem_watch.h"
 #include <string.h>
 #include <chrono>
@@ -857,13 +858,13 @@ void displayStats()
 	GGPONetworkStats stats;
 	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::SetNextWindowSize(ImVec2(95 * settings.display.uiScale, 0));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+	ImguiStyleColor _2(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
 	// Send Queue
 	ImGui::Text("Send Q");
@@ -905,9 +906,7 @@ void displayStats()
 		timesyncOccurred--;
 	}
 
-	ImGui::PopStyleColor();
 	ImGui::End();
-	ImGui::PopStyleVar(2);
 }
 
 void endOfFrame()
