@@ -313,6 +313,7 @@ void gui_initFonts()
 	// Font Awesome symbols (added to default font)
 	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
 	verify(data != nullptr);
+    font_cfg.FontNo = 0;
 	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
 	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &font_cfg, faRanges);
     // Large font without Asian glyphs
