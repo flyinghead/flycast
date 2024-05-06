@@ -824,7 +824,7 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	EventManager::listen(Event::VBlank, emuEventCallback, this);
 	NOTICE_LOG(COMMON, "RA: game %d loaded: %s, achievements %d leaderboards %d rich presence %d", info->id, info->title,
 			rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
-	if (!rc_client_has_achievements(rc_client))
+	if (!rc_client_is_processing_required(rc_client))
 		settings.raHardcoreMode = false;
 	else
 		settings.raHardcoreMode = (bool)rc_client_get_hardcore_enabled(rc_client);
@@ -834,8 +834,12 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 		image = getOrDownloadImage(url);
 	rc_client_user_game_summary_t summary;
 	rc_client_get_user_game_summary(rc_client, &summary);
-	std::string text = "You have " + std::to_string(summary.num_unlocked_achievements)
-			+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked";
+	std::string text;
+	if (summary.num_core_achievements > 0)
+		text = "You have " + std::to_string(summary.num_unlocked_achievements)
+				+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked.";
+	else
+		text = "This game has no achievements.";
 	std::string text2 = settings.raHardcoreMode ? "Hardcore Mode" : "";
 	notifier.notify(Notification::Login, image, info->title, text, text2);
 }
