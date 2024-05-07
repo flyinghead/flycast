@@ -21,6 +21,7 @@
 #include "gui_util.h"
 #include <mutex>
 #include <vector>
+#include <map>
 
 namespace achievements
 {
@@ -35,13 +36,16 @@ public:
 		Unlocked,
 		Progress,
 		Mastery,
-		Challenge,
+		Challenge,   // internal use
+		Leaderboard, // internal use
 		Error
 	};
 	void notify(Type type, const std::string& image, const std::string& text1,
 			const std::string& text2 = {}, const std::string& text3 = {});
 	void showChallenge(const std::string& image);
 	void hideChallenge(const std::string& image);
+	void showLeaderboard(u32 id, const std::string& text);
+	void hideLeaderboard(u32 id);
 	bool draw();
 
 private:
@@ -52,6 +56,7 @@ private:
 	std::string text[3];
 	std::mutex mutex;
 	std::vector<ImguiTexture> challenges;
+	std::map<u32, std::string> leaderboards;
 };
 
 extern Notification notifier;

@@ -36,6 +36,7 @@ static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
+extern ImFont *largeFont;
 void error_popup();
 
 namespace hostfs
@@ -728,6 +729,19 @@ void ImguiTexture::draw(const ImVec2& size, const ImVec4& tint_col, const ImVec4
 	}
 }
 
+void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha) const
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		return;
+	float ar = imguiDriver->getAspectRatio(id);
+	ImVec2 uv0, uv1;
+	setUV(ar, uv0, uv1);
+	ImVec2 pos_b = pos + size;
+	u32 col = alphaOverride(0xffffff, alpha);
+	drawList->AddImage(id, pos, pos_b, uv0, uv1, col);
+}
+
 bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
 		const ImVec4& bg_col, const ImVec4& tint_col) const
 {
@@ -813,19 +827,19 @@ bool Toast::draw()
 		// Fade out
 		alpha = (std::cos((now - endTime) / (float)END_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
 
-	extern ImFont *largeFont; // FIXME
 	ImFont *regularFont = ImGui::GetFont();
 	const float maxW = uiScaled(640.f);
 	const ImVec2 titleSize = title.empty() ? ImVec2()
 			: largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
 	const ImVec2 msgSize = message.empty() ? ImVec2()
 			: regularFont->CalcTextSizeA(regularFont->FontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
-	const ScaledVec2 padding(10.f, 10.f);
-	const ScaledVec2 spacing(0.f, 5.f);
-	const ImVec2 totalSize = titleSize + spacing + msgSize + padding * 2.f;
+	const ScaledVec2 padding(5.f, 4.f);
+	const ScaledVec2 spacing(0.f, 2.f);
+	ImVec2 totalSize(std::max(titleSize.x, msgSize.x), titleSize.y + msgSize.y);
+	totalSize += padding * 2.f + spacing * (float)(!title.empty() && !message.empty());
 
 	const ImVec2 displaySize(ImGui::GetIO().DisplaySize);
-	ImVec2 pos(0.f, displaySize.y - totalSize.y);
+	ImVec2 pos(insetLeft, displaySize.y - totalSize.y);
 	if (now - startTime < START_ANIM_TIME)
 		// Slide up
 		pos.y += totalSize.y * (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
@@ -840,7 +854,7 @@ bool Toast::draw()
 	{
 		const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), alpha);
 		dl->AddText(largeFont, largeFont->FontSize, pos, col, &title.front(), &title.back() + 1, maxW);
-		pos += spacing + ImVec2(0.f, titleSize.y);
+		pos.y += spacing.y + titleSize.y;
 	}
 	if (!message.empty())
 	{

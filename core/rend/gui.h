@@ -25,7 +25,7 @@ void gui_init();
 void gui_initFonts();
 void gui_open_settings();
 void gui_display_ui();
-void gui_display_notification(const char *msg, int duration);
+void gui_display_notification(const char *msg, int duration, const char *details = nullptr);
 void gui_display_osd();
 void gui_display_profiler();
 void gui_open_onboarding();

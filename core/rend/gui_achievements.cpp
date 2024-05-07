@@ -28,6 +28,7 @@
 #include <sstream>
 
 extern ImFont *largeFont;
+extern int insetLeft;
 
 namespace achievements
 {
@@ -42,6 +43,7 @@ static constexpr u64 NEVER_ENDS = 1000000000000;
 void Notification::notify(Type type, const std::string& image, const std::string& text1,
 		const std::string& text2, const std::string& text3)
 {
+	verify(type != Challenge && type != Leaderboard);
 	std::lock_guard<std::mutex> _(mutex);
 	u64 now = getTimeMs();
 	if (type == Progress)
@@ -98,6 +100,36 @@ void Notification::hideChallenge(const std::string& image)
 		endTime = getTimeMs();
 }
 
+void Notification::showLeaderboard(u32 id, const std::string& text)
+{
+	std::lock_guard<std::mutex> _(mutex);
+	auto it = leaderboards.find(id);
+	if (it == leaderboards.end())
+	{
+		if (leaderboards.empty())
+		{
+			this->type = Leaderboard;
+			startTime = getTimeMs();
+			endTime = NEVER_ENDS;
+		}
+		leaderboards[id] = text;
+	}
+	else {
+		it->second = text;
+	}
+}
+
+void Notification::hideLeaderboard(u32 id)
+{
+	std::lock_guard<std::mutex> _(mutex);
+	auto it = leaderboards.find(id);
+	if (it == leaderboards.end())
+		return;
+	leaderboards.erase(it);
+	if (this->type == Leaderboard && leaderboards.empty())
+		endTime = getTimeMs();
+}
+
 bool Notification::draw()
 {
 	std::lock_guard<std::mutex> _(mutex);
@@ -106,7 +138,14 @@ bool Notification::draw()
 	u64 now = getTimeMs();
 	if (now > endTime + END_ANIM_TIME)
 	{
-		if (!challenges.empty())
+		if (!leaderboards.empty())
+		{
+			// Show current leaderboards
+			type = Leaderboard;
+			startTime = getTimeMs();
+			endTime = NEVER_ENDS;
+		}
+		else if (!challenges.empty())
 		{
 			// Show current challenge indicators
 			type = Challenge;
@@ -120,78 +159,114 @@ bool Notification::draw()
 			return false;
 		}
 	}
+	float alpha = 1.f;
 	if (now > endTime)
-	{
 		// Fade out
-		float alpha = (std::cos((now - endTime) / (float)END_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
-		ImGui::GetStyle().Alpha = alpha;
-		ImGui::SetNextWindowBgAlpha(alpha / 2.f);
-	}
-	else {
-		ImGui::SetNextWindowBgAlpha(0.5f);
-	}
-	float y = ImGui::GetIO().DisplaySize.y;
+		alpha = (std::cos((now - endTime) / (float)END_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
+	float animY = 0.f;
 	if (now - startTime < START_ANIM_TIME)
 		// Slide up
-		y += uiScaled(80.f) * (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
+		animY = (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
 
-	ImGui::SetNextWindowPos(ImVec2(0, y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+	const ImVec2 padding = ImGui::GetStyle().WindowPadding;
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const ImU32 bg_col = alphaOverride(ImGui::GetColorU32(ImGuiCol_WindowBg), alpha / 2.f);
+	const ImU32 borderCol = alphaOverride(ImGui::GetColorU32(ImGuiCol_Border), alpha);
 	if (type == Challenge)
 	{
-		ImGui::Begin("##achievement", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-				| ImGuiWindowFlags_NoInputs);
-		for (const auto& img : challenges)
-		{
-			img.draw(ScaledVec2(60.f, 60.f));
-			ImGui::SameLine();
+		const ScaledVec2 size(60.f, 60.f);
+		const ImVec2 spacing(ImGui::GetStyle().ItemSpacing.x, 0.f);
+		const ImVec2 totalSize = size * challenges.size() + spacing * (challenges.size() - 1) + padding * 2.f;
+		ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - totalSize.y * (1.f - animY));
+		dl->AddRectFilled(pos, pos + totalSize, bg_col, 0.f);
+		dl->AddRect(pos, pos + totalSize, borderCol, 0.f);
+
+		pos += padding;
+		for (const auto& img : challenges) {
+			img.draw(dl, pos, size, alpha);
+			pos += spacing;
 		}
-		ImGui::End();
+	}
+	else if (type == Leaderboard)
+	{
+		ImFont *font = ImGui::GetFont();
+		const ImVec2 padding = ImGui::GetStyle().FramePadding;
+		// iterate from the end
+		ImVec2 pos(insetLeft + padding.x, ImGui::GetIO().DisplaySize.y - padding.y);
+		for (auto it = leaderboards.rbegin(); it != leaderboards.rend(); ++it)
+		{
+			const std::string& text = it->second;
+			ImVec2 size = font->CalcTextSizeA(font->FontSize, FLT_MAX, -1.f, text.c_str());
+			ImVec2 psize = size + padding * 2;
+			pos.y -= psize.y;
+			dl->AddRectFilled(pos, pos + psize, bg_col, 0.f);
+			ImVec2 tpos = pos + padding;
+			const ImU32 col = alphaOverride(0xffffff, alpha);
+			dl->AddText(font, font->FontSize, tpos, col, &text.front(), &text.back() + 1, FLT_MAX);
+			pos.y -= padding.y;
+		}
 	}
 	else
 	{
-		ImGui::SetNextWindowSizeConstraints(ScaledVec2(80.f, 80.f) + ImVec2(ImGui::GetStyle().WindowPadding.x * 2, 0.f), ImVec2(FLT_MAX, FLT_MAX));
-		const float winPaddingX = ImGui::GetStyle().WindowPadding.x;
-		ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ImVec2{});
-
-		ImGui::Begin("##achievement", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-				| ImGuiWindowFlags_NoInputs);
-		ImTextureID imageId = image.getId();
-		const bool hasPic = imageId != ImTextureID{};
-		if (ImGui::BeginTable("achievementNotif", hasPic ? 2 : 1, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
+		const float hspacing = ImGui::GetStyle().ItemSpacing.x;
+		const float vspacing = ImGui::GetStyle().ItemSpacing.y;
+		const ScaledVec2 imgSize = image.getId() != ImTextureID{} ? ScaledVec2(80.f, 80.f) : ScaledVec2();
+		// text size
+		const float maxW = std::min(ImGui::GetIO().DisplaySize.x, uiScaled(640.f)) - padding.x
+				- (imgSize.x != 0.f ? imgSize.x + hspacing : padding.x);
+		ImFont *regularFont = ImGui::GetFont();
+		ImVec2 textSize[3] {};
+		ImVec2 totalSize(0.f, padding.y * 2);
+		for (size_t i = 0; i < std::size(text); i++)
 		{
-			if (hasPic)
-				ImGui::TableSetupColumn("icon", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("text", ImGuiTableColumnFlags_WidthStretch);
-
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			if (hasPic)
-			{
-				image.draw(ScaledVec2(80.f, 80.f));
-				ImGui::TableSetColumnIndex(1);
-			}
-
-			float w = largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, -1.f, text[0].c_str()).x;
-			w = std::max(w, ImGui::CalcTextSize(text[1].c_str()).x);
-			w = std::max(w, ImGui::CalcTextSize(text[2].c_str()).x) + winPaddingX * 2;
-			int lines = (int)!text[0].empty() + (int)!text[1].empty() + (int)!text[2].empty();
-			ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ImVec2{ hasPic ? 0.f : winPaddingX, (3 - lines) * ImGui::GetTextLineHeight() / 2 });
-			if (ImGui::BeginChild("##text", ImVec2(w, 0), ImGuiChildFlags_AlwaysUseWindowPadding, ImGuiWindowFlags_None))
-			{
-				ImGui::PushFont(largeFont);
-				ImGui::Text("%s", text[0].c_str());
-				ImGui::PopFont();
-				if (!text[1].empty())
-					ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", text[1].c_str());
-				if (!text[2].empty())
-					ImGui::TextColored(ImVec4(1, 1, 0, 0.7f), "%s", text[2].c_str());
-			}
-			ImGui::EndChild();
-			ImGui::EndTable();
+			if (text[i].empty())
+				continue;
+			const ImFont *font = i == 0 ? largeFont : regularFont;
+			textSize[i] = font->CalcTextSizeA(font->FontSize, FLT_MAX, maxW, text[i].c_str());
+			totalSize.x = std::max(totalSize.x, textSize[i].x);
+			totalSize.y += textSize[i].y;
 		}
-		ImGui::End();
+		float topMargin = 0.f;
+		// image / left padding
+		if (imgSize.x != 0.f)
+		{
+			if (totalSize.y < imgSize.y)
+				topMargin = (imgSize.y - totalSize.y) / 2.f;
+			totalSize.x += imgSize.x + hspacing;
+			totalSize.y = std::max(totalSize.y, imgSize.y);
+		}
+		else {
+			totalSize.x += padding.x;
+		}
+		// right padding
+		totalSize.x += padding.x;
+		// border
+		totalSize += ImVec2(2.f, 2.f);
+		// draw background, border
+		ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - totalSize.y * (1.f - animY));
+		dl->AddRectFilled(pos, pos + totalSize, bg_col, 0.f);
+		dl->AddRect(pos, pos + totalSize, borderCol, 0.f);
+
+		// draw image and text
+		pos += ImVec2(1.f, 1.f); // border
+		if (imgSize.x != 0.f) {
+			image.draw(dl, pos, imgSize, alpha);
+			pos.x += imgSize.x + hspacing;
+		}
+		else {
+			pos.x += padding.x;
+		}
+		pos.y += topMargin;
+		for (size_t i = 0; i < std::size(text); i++)
+		{
+			if (text[i].empty())
+				continue;
+			const ImFont *font = i == 0 ? largeFont : regularFont;
+			const ImU32 col = alphaOverride(i == 0 ? 0xffffff : 0x00ffff, alpha);
+			dl->AddText(font, font->FontSize, pos, col, &text[i].front(), &text[i].back() + 1, maxW);
+			pos.y += textSize[i].y + vspacing;
+		}
 	}
-	ImGui::GetStyle().Alpha = 1.f;
 
 	return true;
 }

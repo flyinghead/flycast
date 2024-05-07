@@ -89,6 +89,12 @@ private:
 	void handleShowAchievementProgress(const rc_client_event_t *event);
 	void handleHideAchievementProgress(const rc_client_event_t *event);
 	void handleUpdateAchievementProgress(const rc_client_event_t *event);
+	void handleLeaderboardStarted(const rc_client_event_t *event);
+	void handleLeaderboardFailed(const rc_client_event_t *event);
+	void handleLeaderboardSubmitted(const rc_client_event_t *event);
+	void handleShowLeaderboardTracker(const rc_client_event_t *event);
+	void handleHideLeaderboardTracker(const rc_client_event_t *event);
+	void handleUpdateLeaderboardTracker(const rc_client_event_t *event);
 	static void emuEventCallback(Event event, void *arg);
 
 	rc_client_t *rc_client = nullptr;
@@ -506,16 +512,26 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 		achievements->handleUpdateAchievementProgress(event);
 		break;
 
-/*
- TODO
 	case RC_CLIENT_EVENT_LEADERBOARD_STARTED:
+		achievements->handleLeaderboardStarted(event);
+		break;
 	case RC_CLIENT_EVENT_LEADERBOARD_FAILED:
+		achievements->handleLeaderboardFailed(event);
+		break;
 	case RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED:
-	case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
+		achievements->handleLeaderboardSubmitted(event);
+		break;
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
+		achievements->handleShowLeaderboardTracker(event);
+		break;
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
+		achievements->handleHideLeaderboardTracker(event);
+		break;
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
-*/
+		achievements->handleUpdateLeaderboardTracker(event);
+		break;
+// TODO case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
+
 	case RC_CLIENT_EVENT_DISCONNECTED:
 		notifyError("RetroAchievements disconnected");
 		break;
@@ -576,6 +592,46 @@ void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_
 		std::string image = getOrDownloadImage(url);
 		notifier.hideChallenge(image);
 	}
+}
+
+void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
+	std::string text = "Leaderboard " + std::string(leaderboard->title) + " started";
+	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+}
+void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
+	std::string text = "Leaderboard " + std::string(leaderboard->title) + " failed";
+	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+}
+void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
+	std::string text = "Leaderboard " + std::string(leaderboard->title) + " submitted";
+	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+}
+void Achievements::handleShowLeaderboardTracker(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	DEBUG_LOG(COMMON, "RA: Show leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
+	notifier.showLeaderboard(leaderboard->id, leaderboard->display);
+}
+void Achievements::handleHideLeaderboardTracker(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	DEBUG_LOG(COMMON, "RA: Hide leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
+	notifier.hideLeaderboard(leaderboard->id);
+}
+void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event)
+{
+	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	DEBUG_LOG(COMMON, "RA: Update leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
+	notifier.showLeaderboard(leaderboard->id, leaderboard->display);
 }
 
 void Achievements::handleGameCompleted(const rc_client_event_t *event)

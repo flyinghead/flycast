@@ -196,7 +196,7 @@ static retro_rumble_interface rumble;
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
-void gui_display_notification(const char *msg, int duration);
+void gui_display_notification(const char *msg, int duration, const char *details = nullptr);
 static void updateVibration(u32 port, float power, float inclination, u32 durationMs);
 
 static std::string game_data;
@@ -3702,7 +3702,7 @@ static bool read_m3u(const char *file)
 	return disk_index != 0;
 }
 
-void gui_display_notification(const char *msg, int duration)
+void gui_display_notification(const char *msg, int duration, const char *details)
 {
 	retro_message retromsg;
 	retromsg.msg = msg;

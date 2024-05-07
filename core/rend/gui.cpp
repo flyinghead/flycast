@@ -2971,7 +2971,7 @@ static void gui_display_settings()
     ImGui::End();
 }
 
-void gui_display_notification(const char *msg, int duration)
+void gui_display_notification(const char *msg, int duration, const char *details)
 {
 	if (gui_state != GuiState::Closed)
 	{
@@ -2980,7 +2980,7 @@ void gui_display_notification(const char *msg, int duration)
 		osd_message_end = getTimeMs() + duration;
 	}
 	else {
-		toast.show(msg, "", duration);
+		toast.show(msg, details != nullptr ? details : "", duration);
 	}
 }
 
@@ -3465,7 +3465,7 @@ void gui_display_osd()
 				const ScaledVec2 padding(5.f, 5.f);
 				const ImVec2 size = largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1)
 						+ padding * 2.f;
-				ImVec2 pos(0, ImGui::GetIO().DisplaySize.y - size.y);
+				ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - size.y);
 				constexpr float alpha = 0.7f;
 				const ImU32 bg_col = alphaOverride(0x00202020, alpha / 2.f);
 				dl->AddRectFilled(pos, pos + size, bg_col, 0.f);
@@ -3560,7 +3560,7 @@ void fatal_error(const char* text, ...)
     va_end(args);
     ERROR_LOG(COMMON, "%s", temp);
 
-    gui_display_notification(temp, 2000);
+    gui_display_notification("Fatal Error", 20000, temp);
 }
 
 extern bool subfolders_read;

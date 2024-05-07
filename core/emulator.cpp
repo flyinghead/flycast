@@ -541,7 +541,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			gui_display_notification("Widescreen cheat activated", 1000);
+			gui_display_notification("Widescreen cheat activated", 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
