@@ -20,7 +20,7 @@
 #include "dx11context.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "rend/tileclip.h"
 #include "rend/sorter.h"
 

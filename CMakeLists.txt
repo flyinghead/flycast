@@ -734,7 +734,7 @@ if(USE_DISCORD AND NOT LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/discord-rpc/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE discord-rpc)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
-	target_sources(${PROJECT_NAME} PRIVATE core/rend/discord.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE core/ui/discord.cpp)
 endif()
 
 cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
@@ -1292,26 +1292,26 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-			core/rend/game_scanner.h
-			core/rend/imgui_driver.cpp
-			core/rend/imgui_driver.h
-			core/rend/gui.cpp
-			core/rend/gui.h
-			core/rend/gui_achievements.cpp
-			core/rend/gui_android.cpp
-			core/rend/gui_android.h
-			core/rend/gui_chat.h
-			core/rend/gui_cheats.cpp
-			core/rend/gui_util.cpp
-			core/rend/gui_util.h
-			core/rend/mainui.cpp
-			core/rend/mainui.h
-			core/rend/boxart/boxart.cpp
-			core/rend/boxart/boxart.h
-			core/rend/boxart/gamesdb.cpp
-			core/rend/boxart/gamesdb.h
-			core/rend/boxart/scraper.cpp
-			core/rend/boxart/scraper.h)
+			core/ui/game_scanner.h
+			core/ui/imgui_driver.cpp
+			core/ui/imgui_driver.h
+			core/ui/gui.cpp
+			core/ui/gui.h
+			core/ui/gui_achievements.cpp
+			core/ui/gui_android.cpp
+			core/ui/gui_android.h
+			core/ui/gui_chat.h
+			core/ui/gui_cheats.cpp
+			core/ui/gui_util.cpp
+			core/ui/gui_util.h
+			core/ui/mainui.cpp
+			core/ui/mainui.h
+			core/ui/boxart/boxart.cpp
+			core/ui/boxart/boxart.h
+			core/ui/boxart/gamesdb.cpp
+			core/ui/boxart/gamesdb.h
+			core/ui/boxart/scraper.cpp
+			core/ui/boxart/scraper.h)
 endif()
 
 if(USE_VULKAN)

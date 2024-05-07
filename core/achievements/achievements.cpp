@@ -23,7 +23,7 @@
 #include "oslib/directory.h"
 #include "oslib/http_client.h"
 #include "hw/sh4/sh4_mem.h"
-#include "rend/gui_achievements.h"
+#include "ui/gui_achievements.h"
 #include "imgread/common.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"

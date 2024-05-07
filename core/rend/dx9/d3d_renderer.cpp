@@ -20,7 +20,7 @@
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/tileclip.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "rend/sorter.h"
 
 const u32 DstBlendGL[]

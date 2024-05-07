@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #include "imgui_impl_dx9.h"
 #include "dxcontext.h"
 #include <unordered_map>

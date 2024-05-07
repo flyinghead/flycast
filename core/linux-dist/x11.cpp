@@ -6,7 +6,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "x11.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "input/gamepad.h"
 #include "input/mouse.h"
 #include "icon.h"

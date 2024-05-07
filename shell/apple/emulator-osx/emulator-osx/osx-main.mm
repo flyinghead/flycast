@@ -21,7 +21,7 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include <future>
 
 int darw_printf(const char* text, ...)

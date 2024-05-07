@@ -28,7 +28,7 @@
 #include "emulator.h"
 #include "log/LogManager.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 static bool emulatorRunning;
 

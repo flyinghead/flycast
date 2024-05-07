@@ -21,8 +21,8 @@
 #ifdef USE_LUA
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
-#include "rend/gui.h"
-#include "rend/gui_util.h"
+#include "ui/gui.h"
+#include "ui/gui_util.h"
 #include "hw/mem/addrspace.h"
 #include "cfg/option.h"
 #include "emulator.h"

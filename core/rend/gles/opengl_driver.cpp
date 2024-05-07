@@ -20,8 +20,8 @@
 #include "imgui_impl_opengl3.h"
 #include "wsi/gl_context.h"
 #include "rend/osd.h"
-#include "rend/gui.h"
-#include "rend/gui_util.h"
+#include "ui/gui.h"
+#include "ui/gui_util.h"
 #include "glcache.h"
 #include "gles.h"
 

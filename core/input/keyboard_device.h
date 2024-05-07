@@ -20,7 +20,7 @@
 #include "types.h"
 #include "cfg/option.h"
 #include "gamepad_device.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <memory>
 
 extern u8 kb_key[4][6];	// normal keys pressed

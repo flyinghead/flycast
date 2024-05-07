@@ -23,7 +23,7 @@
 #include <cmath>
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 enum IOSButton {
 	IOS_BTN_A = 1,

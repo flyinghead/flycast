@@ -72,8 +72,8 @@ static void getLocalInput(MapleInputState inputState[4])
 #ifdef USE_GGPO
 #include "ggponet.h"
 #include "emulator.h"
-#include "rend/gui.h"
-#include "rend/gui_util.h"
+#include "ui/gui.h"
+#include "ui/gui_util.h"
 #include "hw/mem/mem_watch.h"
 #include <string.h>
 #include <chrono>

@@ -20,7 +20,7 @@
 #include "gamepad_device.h"
 #include "cfg/cfg.h"
 #include "stdclass.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
 #include "mouse.h"

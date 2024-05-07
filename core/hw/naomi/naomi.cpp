@@ -30,7 +30,7 @@
 #include "serialize.h"
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "printer.h"
 #include "hw/flashrom/x76f100.h"
 

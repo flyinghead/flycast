@@ -27,7 +27,7 @@
 #include <nowide/config.hpp>
 #include <nowide/convert.hpp>
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #endif
 #include "oslib/oslib.h"
 #include "stdclass.h"
@@ -35,7 +35,7 @@
 #include "log/LogManager.h"
 #include "sdl/sdl.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "oslib/directory.h"
 #ifdef USE_BREAKPAD
 #include "breakpad/client/windows/handler/exception_handler.h"

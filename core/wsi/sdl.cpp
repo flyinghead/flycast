@@ -20,7 +20,7 @@
 */
 #if defined(USE_SDL)
 #include "gl_context.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "sdl/sdl.h"
 #include "cfg/option.h"
 

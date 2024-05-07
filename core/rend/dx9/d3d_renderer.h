@@ -25,7 +25,7 @@
 #include "rend/transform_matrix.h"
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 
 class RenderStateCache
 {

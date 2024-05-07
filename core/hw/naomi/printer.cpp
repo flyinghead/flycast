@@ -20,7 +20,7 @@
 #include "stdclass.h"
 #include "printer.h"
 #include "serialize.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <cassert>
 #include <memory>
 #include <vector>

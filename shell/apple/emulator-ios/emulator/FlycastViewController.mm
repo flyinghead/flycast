@@ -33,7 +33,7 @@
 
 #include "types.h"
 #include "wsi/context.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "emulator.h"
 #include "log/LogManager.h"
 #include "stdclass.h"

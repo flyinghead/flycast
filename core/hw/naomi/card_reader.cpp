@@ -21,7 +21,7 @@
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <deque>
 #include <memory>
 #include <cerrno>

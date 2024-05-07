@@ -7,7 +7,7 @@
 #include "glcache.h"
 #include "rend/shader_util.h"
 #ifndef LIBRETRO
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #endif
 
 #include <unordered_map>

@@ -18,7 +18,7 @@
 */
 #include "imgui_driver.h"
 #include "gui_util.h"
-#include "osd.h"
+#include "rend/osd.h"
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>

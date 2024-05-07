@@ -25,7 +25,7 @@
 #include "rend/osd.h"
 #include "rend/transform_matrix.h"
 #ifndef LIBRETRO
-#include "rend/gui.h"
+#include "ui/gui.h"
 #endif
 
 #include <memory>

@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gui.h"
-#include "osd.h"
+#include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
@@ -35,7 +35,7 @@
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "mainui.h"
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"

@@ -30,7 +30,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "network/naomi_network.h"
 #include "emulator.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 #include <chrono>
 #include <memory>

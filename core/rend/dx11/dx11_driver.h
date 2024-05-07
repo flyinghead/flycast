@@ -17,10 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #include "imgui_impl_dx11.h"
 #include "dx11context.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <unordered_map>
 
 class DX11Driver final : public ImGuiDriver

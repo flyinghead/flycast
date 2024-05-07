@@ -7,7 +7,7 @@
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <zlib.h>
 #include <cerrno>
 #include <ctime>

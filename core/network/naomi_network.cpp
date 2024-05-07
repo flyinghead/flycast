@@ -19,7 +19,7 @@
 #include "naomi_network.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 #include <chrono>
 #include <thread>

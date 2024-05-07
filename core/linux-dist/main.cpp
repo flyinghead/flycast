@@ -6,7 +6,7 @@
 #if defined(__unix__)
 #include "log/LogManager.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
