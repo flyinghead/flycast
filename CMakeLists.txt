@@ -1292,6 +1292,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
+			core/ui/game_scanner.cpp
 			core/ui/game_scanner.h
 			core/ui/imgui_driver.cpp
 			core/ui/imgui_driver.h
@@ -1778,12 +1779,12 @@ if(NOT LIBRETRO)
 					core/linux-dist/main.cpp)
 		endif()
 	elseif(WIN32)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/windows/clock.c
+			core/windows/rawinput.cpp
+			core/windows/rawinput.h)
 		if(NOT BUILD_TESTING)
-			target_sources(${PROJECT_NAME} PRIVATE
-				core/windows/clock.c
-				core/windows/rawinput.cpp
-				core/windows/rawinput.h
-				core/windows/winmain.cpp)
+			target_sources(${PROJECT_NAME} PRIVATE core/windows/winmain.cpp)
 		endif()
 		if(WINDOWS_STORE)
 			file(READ shell/uwp/Package.appxmanifest MANIFEST)

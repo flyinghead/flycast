@@ -40,7 +40,7 @@ enum PvrDataFormat {
     PvrSquareTwiddledMipmapsAlt = 0x12,
 };
 
-static bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vector<u8>& out)
+static inline bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, std::vector<u8>& out)
 {
 	if (len < 16)
 		return false;

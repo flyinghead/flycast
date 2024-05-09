@@ -20,6 +20,7 @@
 #include "gamesdb.h"
 #include "../game_scanner.h"
 #include "oslib/oslib.h"
+#include "cfg/option.h"
 #include <chrono>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)

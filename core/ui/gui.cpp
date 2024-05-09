@@ -49,6 +49,7 @@
 #include "achievements/achievements.h"
 #include "gui_achievements.h"
 #include "IconsFontAwesome6.h"
+#include "oslib/storage.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -698,6 +699,11 @@ static void gui_display_commands()
 				dc_savestate(config::SavestateSlot);
 			}
 
+			{
+				// Help with navigation with gamepad/keyboard
+				ImguiStyleVar _{ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 2.f)};
+				ImGui::Spacing();
+			}
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
 			{
@@ -1150,7 +1156,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			gamepad->save_mapping(map_system);
 			last_item_current_map_idx = 2;
 			ImGui::EndPopup();
-			ImGui::PopStyleVar();
 			return;
 		}
 		ImGui::SetItemDefaultFocus();
@@ -1390,7 +1395,6 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 
 			ImGui::CloseCurrentPopup();
 			ImGui::EndPopup();
-			ImGui::PopStyleVar();
 			return;
 		}
 		ImGui::NewLine();
@@ -1426,7 +1430,6 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
 					"Values greater than 100% will saturate before full deflection of the thumbstick.");
 		}
-
 		ImGui::EndPopup();
 	}
 }
@@ -3125,7 +3128,7 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
-						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None))
+						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
 						{
 							ImguiTexture tex(art.boxartPath);
 							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
@@ -3159,7 +3162,6 @@ static void gui_display_content()
 							scanner.get_mutex().unlock();
 							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
-							ImGui::PopID();
 							break;
 						}
 					}

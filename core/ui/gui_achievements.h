@@ -17,7 +17,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "types.h"
-#include "imgui.h"
 #include "gui_util.h"
 #include <mutex>
 #include <vector>

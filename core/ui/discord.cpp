@@ -18,7 +18,6 @@
 */
 #include "types.h"
 #include "emulator.h"
-#include "stdclass.h"
 #include "cfg/option.h"
 #include "gui.h"
 #include "discord_rpc.h"

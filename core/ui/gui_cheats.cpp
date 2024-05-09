@@ -20,11 +20,10 @@
 #include "imgui.h"
 #include "gui_util.h"
 #include "cheats.h"
+#include "IconsFontAwesome6.h"
 #ifdef __ANDROID__
 #include "oslib/storage.h"
 #endif
-
-static bool addingCheat;
 
 static void addCheat()
 {
@@ -32,43 +31,45 @@ static void addCheat()
 	static char cheatCode[128];
     centerNextWindow();
     ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(600.f, 400.f)));
+    ImguiStyleVar _(ImGuiStyleVar_WindowBorderSize, 1);
 
-    ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
-    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
-
+    if (ImGui::BeginPopupModal("addCheat", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
+    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize))
     {
-		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-		ImGui::AlignTextToFramePadding();
-		ImGui::Indent(uiScaled(10));
-		ImGui::Text("ADD CHEAT");
+    	{
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+			ImGui::AlignTextToFramePadding();
+			ImGui::Indent(uiScaled(10));
+			ImGui::Text("ADD CHEAT");
 
-		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Cancel").x - ImGui::GetStyle().FramePadding.x * 4.f
-			- ImGui::CalcTextSize("OK").x - ImGui::GetStyle().ItemSpacing.x);
-		if (ImGui::Button("Cancel"))
-			addingCheat = false;
-		ImGui::SameLine();
-		if (ImGui::Button("OK"))
-		{
-			try {
-				cheatManager.addGameSharkCheat(cheatName, cheatCode);
-				addingCheat = false;
-				cheatName[0] = 0;
-				cheatCode[0] = 0;
-			} catch (const FlycastException& e) {
-				gui_error(e.what());
+			ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Cancel").x - ImGui::GetStyle().FramePadding.x * 4.f
+				- ImGui::CalcTextSize("OK").x - ImGui::GetStyle().ItemSpacing.x);
+			if (ImGui::Button("Cancel"))
+				ImGui::CloseCurrentPopup();
+			ImGui::SameLine();
+			if (ImGui::Button("OK"))
+			{
+				try {
+					cheatManager.addGameSharkCheat(cheatName, cheatCode);
+					ImGui::CloseCurrentPopup();
+					cheatName[0] = 0;
+					cheatCode[0] = 0;
+				} catch (const FlycastException& e) {
+					gui_error(e.what());
+				}
 			}
+
+			ImGui::Unindent(uiScaled(10));
 		}
 
-		ImGui::Unindent(uiScaled(10));
+		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
+		{
+			ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
+			ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
+		}
+		ImGui::EndChild();
+		ImGui::EndPopup();
     }
-
-	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
-    {
-		ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
-		ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
-    }
-	ImGui::EndChild();
-	ImGui::End();
 }
 
 static void cheatFileSelected(bool cancelled, std::string path)
@@ -79,13 +80,8 @@ static void cheatFileSelected(bool cancelled, std::string path)
 
 void gui_cheats()
 {
-	if (addingCheat)
-	{
-		addCheat();
-		return;
-	}
-    centerNextWindow();
-    ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(600.f, 400.f)));
+	fullScreenWindow(false);
+	ImguiStyleVar _(ImGuiStyleVar_WindowBorderSize, 0);
 
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -94,12 +90,13 @@ void gui_cheats()
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 		ImGui::AlignTextToFramePadding();
 		ImGui::Indent(uiScaled(10));
-		ImGui::Text("CHEATS");
+		ImGui::Text(ICON_FA_MASK "  CHEATS");
 
 		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Add").x  - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 6.f
 			- ImGui::CalcTextSize("Load").x - ImGui::GetStyle().ItemSpacing.x * 2);
 		if (ImGui::Button("Add"))
-			addingCheat = true;
+			ImGui::OpenPopup("addCheat");
+		addCheat();
 		ImGui::SameLine();
 #ifdef __ANDROID__
 		if (ImGui::Button("Load"))
