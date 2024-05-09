@@ -175,8 +175,9 @@ bool Notification::draw()
 	if (type == Challenge)
 	{
 		const ScaledVec2 size(60.f, 60.f);
-		const ImVec2 spacing(ImGui::GetStyle().ItemSpacing.x, 0.f);
-		const ImVec2 totalSize = size * challenges.size() + spacing * (challenges.size() - 1) + padding * 2.f;
+		const float hspacing = ImGui::GetStyle().ItemSpacing.x;
+		ImVec2 totalSize = padding * 2 + size;
+		totalSize.x += (size.x + hspacing) * (challenges.size() - 1);
 		ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - totalSize.y * (1.f - animY));
 		dl->AddRectFilled(pos, pos + totalSize, bg_col, 0.f);
 		dl->AddRect(pos, pos + totalSize, borderCol, 0.f);
@@ -184,7 +185,7 @@ bool Notification::draw()
 		pos += padding;
 		for (const auto& img : challenges) {
 			img.draw(dl, pos, size, alpha);
-			pos += spacing;
+			pos.x += hspacing + size.x;
 		}
 	}
 	else if (type == Leaderboard)
