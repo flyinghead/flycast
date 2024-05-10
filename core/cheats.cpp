@@ -278,6 +278,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T35402M",    nullptr,    { 0x315370, 0x3153A0 }, { 0x43F00000, 0x3F400000 } },	// Tokyo Bus Guide (JP) doesn't work?
 		{ "T40201D 50", nullptr,    { 0x1D9F10 }, { 0x3F400000 } },		// Tokyo Highway Challenge (PAL)
 		{ "T40210D 50", nullptr,    { 0x21E4F8 }, { 0x43700000 } },		// Tokyo Highway Challenge 2 (PAL)
+		{ "T40202N", nullptr,    { 0x1D9EB0 }, { 0x3F400000 } },		// Tokyo Xtreme Racer (USA)		
 		{ "T40211N", nullptr,    { 0x21DEF8 }, { 0x43700000 } },		// Tokyo Xtreme Racer 2 (USA)
 //		{ "T36804D05",  nullptr,    { 0xB75E28 }, { 0x3EC00000 } },		// Tomb Raider: The Last Revelation (UK) (PAL) clipping, use hex patch instead
 //		{ "T40205N",    nullptr,    { 0x160D80, 0x160D7C }, { 0xA, 0xA } },	// Tony Hawk's Pro Skater (USA) -> missing character on selection screen
